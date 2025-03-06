@@ -73,11 +73,11 @@ class http_function : public http_function_base_t {
   const std::vector<capture_data_t> capture_vector_;
   std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
 
- public:
-  using capture_t = capture_t;
-
   explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
       : http_function_base_t(in_verb), capture_vector_(set_cap_bit(in_url)) {}
+
+ public:
+  using capture_t = capture_t;
 
   explicit http_function(
       boost::beast::http::verb in_verb, std::string in_url,
