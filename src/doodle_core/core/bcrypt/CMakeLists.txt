@@ -9,3 +9,5 @@ target_sources(
         blowfish.cpp
 
 )
+
+# copy from https://github.com/hilch/Bcrypt.cpp
