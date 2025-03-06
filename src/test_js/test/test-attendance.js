@@ -13,14 +13,16 @@ describe('考勤测试', function () {
     {
       const req = await request.post(`${URL}/api/doodle/attendance/${user_id}/custom`).send({
         create_date: create_date,
-        start_time: '2025-3-5 9:00:00',
-        end_time: '2025-3-5 18:00:00',
+        start_time: '2025-03-05 09:00:00',
+        end_time: '2025-03-05 18:00:00',
         remark: '测试自定义考勤',
         type: 'leave',
       });
       expect(req.status).to.equal(200);
       expect(req.body).to.have.keys('id',
         'start_time', 'end_time', 'remark', 'type', 'is_custom');
+      expect(req.body.start_time).to.equal('2025-03-05 09:00:00.000000');
+      expect(req.body.end_time).to.equal('2025-03-05 18:00:00.000000');
       l_id = req.body.id;
     }
 
