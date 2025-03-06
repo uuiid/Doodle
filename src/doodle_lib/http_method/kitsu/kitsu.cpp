@@ -22,6 +22,7 @@
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/assets.h>
+#include <doodle_lib/http_method/base/config.h>
 #include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
@@ -48,6 +49,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   kitsu::thumbnail_reg(*l_router);
   kitsu::project_reg(*l_router);
   kitsu::assets_reg2(*l_router);
+  register_config(*l_router);
   up_file_reg(*l_router);
   reg_file_association_http(*l_router);
   reg_kitsu_front_end_http(*l_router, in_root);
