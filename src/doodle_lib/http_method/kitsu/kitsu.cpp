@@ -43,6 +43,8 @@ namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   auto l_router = std::make_shared<kitsu::http_route_proxy>();
+  l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
+      .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
   kitsu::user_reg(*l_router);
   kitsu::task_reg(*l_router);
   kitsu::assets_reg(*l_router);
