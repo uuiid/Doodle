@@ -128,5 +128,46 @@ struct DOODLE_CORE_API person {
     j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
     j.at("ldap_uid").get_to(p.ldap_uid_);
   }
+  // from json
+  template <typename BasicJsonType>
+  friend void to_json(BasicJsonType& j, const person& p) {
+    j["first_name"] = p.first_name_;
+    j["last_name"]  = p.last_name_;
+    j["email"]      = p.email_;
+    j["phone"]      = p.phone_;
+    j["contract_type"] = p.contract_type_;
+    j["active"]     = p.active_;
+    j["archived"]   = p.archived_;
+    j["last_presence"] = p.last_presence_;
+    j["desktop_login"] = p.desktop_login_;
+    j["login_failed_attemps"] = p.login_failed_attemps_;
+    j["last_login_failed"] = p.last_login_failed_;
+    j["totp_enabled"] = p.totp_enabled_;
+    j["totp_secret"] = p.totp_secret_;
+    j["email_otp_enabled"] = p.email_otp_enabled_;
+    j["email_otp_secret"] = p.email_otp_secret_;
+    j["fido_enabled"] = p.fido_enabled_;
+    j["fido_credentials"] = p.fido_credentials_;
+    j["otp_recovery_codes"] = p.otp_recovery_codes_;
+    j["preferred_two_factor_authentication"] = p.preferred_two_factor_authentication_;
+    j["shotgun_id"] = p.shotgun_id_;
+    j["timezone"] = p.timezone_;
+    j["locale"] = p.locale_;
+    j["data"] = p.data_;
+    j["role"] = p.role_;
+    j["has_avatar"] = p.has_avatar_;
+    j["notifications_enabled"] = p.notifications_enabled_;
+    j["notifications_slack_enabled"] = p.notifications_slack_enabled_;
+    j["notifications_slack_userid"] = p.notifications_slack_userid_;
+    j["notifications_mattermost_enabled"] = p.notifications_mattermost_enabled_;
+    j["notifications_mattermost_userid"] = p.notifications_mattermost_userid_;
+    j["notifications_discord_enabled"] = p.notifications_discord_enabled_;
+    j["notifications_discord_userid"] = p.notifications_discord_userid_;
+    j["is_bot"] = p.is_bot_;
+    j["expiration_date"] = p.expiration_date_;
+    j["studio_id"] = p.studio_id_;
+    j["is_generated_from_ldap"] = p.is_generated_from_ldap_;
+    j["ldap_uid"] = p.ldap_uid_;
+  }
 };
 }  // namespace doodle
