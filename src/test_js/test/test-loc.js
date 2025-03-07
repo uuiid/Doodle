@@ -79,7 +79,7 @@ describe('doodle 本地服务器测试', function () {
         source_computer: '本机',
         submitter: uuidv4(),
         run_computer_id: uuidv4(),
-        type: 'check_maya',
+        type: 'replace_maya_ref',
         task_data: {
           path: 'C:\\Users\\63418\\Desktop\\JJ_EP001_SC001.ma',
           file_list: [
@@ -108,6 +108,7 @@ describe('doodle 本地服务器测试', function () {
         'submitter',
         'type',
       );
+      expect(req.body.type).to.equal('replace_maya_ref');
     });
   });
 });

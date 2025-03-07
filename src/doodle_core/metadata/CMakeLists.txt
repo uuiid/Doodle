@@ -35,6 +35,7 @@ target_sources(
         task_status.h
         status_automation.h
         entity.h
+        organisation.h
 
 
         PRIVATE

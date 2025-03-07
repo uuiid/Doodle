@@ -14,6 +14,7 @@
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
+#include <doodle_core/metadata/organisation.h>
 #include <doodle_core/metadata/preview_background_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
@@ -446,6 +447,22 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("out_task_status_id", &status_automation::out_task_status_id_),      //
           make_column("import_last_revision", &status_automation::import_last_revision_),  //
           make_column("archived", &status_automation::archived_)                           //
+      ),
+      make_table<organisation>(
+          "organisation",                                                                     //
+          make_column("id", &organisation::id_, primary_key().autoincrement()),               //
+          make_column("uuid", &organisation::uuid_id_, not_null(), unique()),                 //
+          make_column("name", &organisation::name_),                                          //
+          make_column("hours_by_day", &organisation::hours_by_day_),                          //
+          make_column("has_avatar", &organisation::has_avatar_),                              //
+          make_column("use_original_file_name", &organisation::use_original_file_name_),      //
+          make_column("timesheets_locked", &organisation::timesheets_locked_),                //
+          make_column("format_duration_in_hours", &organisation::format_duration_in_hours_),  //
+          make_column("hd_by_default", &organisation::hd_by_default_),                        //
+          make_column("chat_token_slack", &organisation::chat_token_slack_),                  //
+          make_column("chat_webhook_mattermost", &organisation::chat_webhook_mattermost_),    //
+          make_column("chat_token_discord", &organisation::chat_token_discord_),              //
+          make_column("dark_theme_by_default", &organisation::dark_theme_by_default_)         //
       )
   ));
 }
