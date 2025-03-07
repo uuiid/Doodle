@@ -88,10 +88,10 @@ class http_function : public http_function_base_t {
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
   boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 };
-#define DOODLE_HTTP_FUN(fun_name, verb_, url)                                                   \
-  class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::http_function { \
+#define DOODLE_HTTP_FUN(fun_name, verb_, url, base_fun)                                         \
+  class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::base_fun { \
    public:                                                                                      \
-    BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_)() : http_function(boost::beast::http::verb::verb_, url) {}
+    BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_)() : base_fun(boost::beast::http::verb::verb_, url) {}
 
 #define DOODLE_HTTP_FUN_END() \
   }                           \
