@@ -402,6 +402,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   computing_time_run(l_data.year_month_, l_time_clock, l_user, l_data, *l_block_ptr);
 
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
+  *l_block_ptr |= ranges::actions::sort;
 
   if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
@@ -468,6 +469,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
+  *l_block_ptr |= ranges::actions::sort;
   if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   } else
@@ -533,6 +535,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
+  *l_block_ptr |= ranges::actions::sort;
   if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   } else
@@ -585,6 +588,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   recomputing_time_run(l_year_month, l_time_clock, *l_block_sort);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_sort);
   nlohmann::json l_json_res{};
+  *l_block_sort |= ranges::actions::sort;
   l_json_res["data"] = *l_block_sort;
   co_return in_handle->make_msg(l_json_res.dump());
 }
@@ -603,6 +607,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   auto l_time_clock = create_time_clock(l_year_month, l_user_id);
   average_time_run(l_year_month, l_time_clock, *l_block);
   co_await g_ctx().get<sqlite_database>().install_range(l_block);
+  *l_block |= ranges::actions::sort;
   nlohmann::json l_json_res{};
   l_json_res["data"] = *l_block;
   co_return in_handle->make_msg(l_json_res.dump());
@@ -618,7 +623,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
 
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.id_, chrono::local_days{l_year_month / 1});
-
+  *l_block_ptr |= ranges::actions::sort;
   if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
   } else
@@ -688,6 +693,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     co_await g_ctx().get<sqlite_database>().install(l_block_ptr_value);
   }
   nlohmann::json l_json_res{};
+  *l_block_ptr |= ranges::actions::sort;
   l_json_res["data"] = *l_block_ptr;
 
   co_return in_handle->make_msg(l_json_res.dump());
@@ -715,7 +721,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
 
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
-
+  *l_block_ptr |= ranges::actions::sort;
   l_json_res["data"] = *l_block_ptr;
   co_return in_handle->make_msg(l_json_res.dump());
 }

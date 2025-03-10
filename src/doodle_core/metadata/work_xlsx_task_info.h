@@ -4,7 +4,7 @@
 namespace doodle {
 
 namespace work_xlsx_task_info_helper {
-struct database_t {
+struct database_t : boost::totally_ordered<database_t> {
   using zoned_time = chrono::zoned_time<chrono::microseconds>;
   std::int32_t id_{};
   uuid uuid_id_{};
@@ -25,6 +25,11 @@ struct database_t {
   std::string name_{};
   std::string grade_{};
   uuid project_id_;
+
+  friend bool operator<(const database_t& lhs, const database_t& rhs) {
+    return lhs.start_time_.get_sys_time() < rhs.start_time_.get_sys_time();
+  }
+  friend bool operator==(const database_t& lhs, const database_t& rhs) { return lhs.uuid_id_ == rhs.uuid_id_; }
 
   // to json
   friend void to_json(nlohmann::json& j, const database_t& p) {
