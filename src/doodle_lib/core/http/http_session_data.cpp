@@ -629,6 +629,10 @@ boost::beast::http::response<boost::beast::http::string_body> session_data::make
   l_res.prepare_payload();
   return l_res;
 }
-
+nlohmann::json session_data::get_json() {
+  if (content_type_ == content_type::application_json && std::holds_alternative<nlohmann::json>(body_))
+    return std::get<nlohmann::json>(body_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "body 不是 json"});
+}
 }  // namespace detail
 }  // namespace doodle::http
