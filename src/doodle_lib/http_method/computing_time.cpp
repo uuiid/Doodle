@@ -240,6 +240,45 @@ void recomputing_time_run(
     }
   }
 }
+// 平均时间
+void average_time_run(
+    const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock,
+    std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
+) {
+  auto l_end_time  = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+  auto l_all_works = in_time_clock(chrono::local_days{in_year_month / chrono::day{1}}, l_end_time);
+
+  // 进行排序
+  std::ranges::sort(in_out_data, [](auto&& l_left, auto&& l_right) {
+    return l_left.start_time_.get_sys_time() < l_right.start_time_.get_sys_time();
+  });
+  // });
+
+  {
+    // 平均时间
+    std::vector<chrono::seconds> l_work{};
+    using rational_int = boost::rational<std::int64_t>;
+    for (auto i = 0; i < in_out_data.size(); ++i) {
+      l_work.push_back(
+          chrono::seconds{boost::rational_cast<std::int64_t>(rational_int{1, in_out_data.size()} * l_all_works.count())}
+      );
+    }
+
+    chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
+    for (auto i = 0; i < in_out_data.size(); ++i) {
+      auto l_end = in_time_clock.next_time(l_begin_time, l_work[i]);
+      if (i + 1 == in_out_data.size()) l_end = l_end_time;
+      auto l_info                = in_time_clock.get_time_info(l_begin_time, l_end);
+      std::string l_remark       = fmt::format("{}", fmt::join(l_info, ", "));
+      in_out_data[i].start_time_ = {chrono::current_zone(), l_begin_time};
+      in_out_data[i].end_time_   = {chrono::current_zone(), l_end};
+      in_out_data[i].duration_   = in_time_clock(l_begin_time, l_end);
+      in_out_data[i].remark_     = l_remark;
+      in_out_data[i].year_month_ = chrono::local_days{in_year_month / 1};
+      l_begin_time               = l_end;
+    }
+  }
+}
 
 std::string patch_time(
     const business::work_clock2& in_time_clock, std::vector<work_xlsx_task_info_helper::database_t>& in_block,
@@ -549,6 +588,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   l_json_res["data"] = *l_block_sort;
   co_return in_handle->make_msg(l_json_res.dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_average(session_data_ptr in_handle) {
+  if (in_handle->content_type_ != http::detail::content_type::application_json)
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
+        "不是json请求"
+    );
+  auto l_user_uuid  = from_uuid_str(in_handle->capture_->get("user_id"));
+  auto l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
+  auto l_user_id    = g_ctx().get<sqlite_database>().uuid_to_id<user_helper::database_t>(l_user_uuid);
+  auto l_block      = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user_id, chrono::local_days{l_year_month / 1});
+
+  auto l_time_clock = create_time_clock(l_year_month, l_user_id);
+  average_time_run(l_year_month, l_time_clock, *l_block);
+  co_await g_ctx().get<sqlite_database>().install_range(l_block);
+  nlohmann::json l_json_res{};
+  l_json_res["data"] = *l_block;
+  co_return in_handle->make_msg(l_json_res.dump());
+}
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get(session_data_ptr in_handle) {
   auto l_logger                   = in_handle->logger_;
 
@@ -696,6 +754,12 @@ void reg_computing_time(http_route& in_route) {
           std::make_shared<http_function>(
               boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/sort",
               computing_time_post_sort
+          )
+      )
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/average",
+              computing_time_post_average
           )
       )
       .reg(
