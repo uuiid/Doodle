@@ -10,6 +10,7 @@
 
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
+#include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http::kitsu {
 namespace {
@@ -82,6 +83,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   }
   co_return std::move(l_res);
 }
+
+DOODLE_HTTP_FUN(user_context, get, "api/data/user/context", http_jwt_fun)
+
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  co_return in_handle->make_msg("{}");
+}
+DOODLE_HTTP_FUN_END()
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
