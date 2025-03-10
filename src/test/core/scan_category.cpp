@@ -1,5 +1,6 @@
 
 #include "doodle_lib/core/scan_assets/character_scan_category.h"
+#include <doodle_lib/core/scan_assets/prop_scan_category.h>
 #include <doodle_lib/core/scan_assets/scene_scan_category.h>
 
 #include <boost/asio.hpp>
@@ -14,6 +15,16 @@ BOOST_AUTO_TEST_CASE(ZM_scene) {
   // l_s.scan(doodle::details::scan_category_data_t::project_root_t{
   //     "宗门里除了我都是卧底", R"(//192.168.10.240/public/ZMLCLWDSWD)", "ZMLCLWDSWD", "ZM", R"(C:\sy\ZMLCLWDSWD)", ""
   // });
+}
+
+BOOST_AUTO_TEST_CASE(ZM_prop) {
+  doodle::details::prop_scan_category_t l_s{};
+  l_s.logger_ = spdlog::default_logger();
+  l_s.scan(
+      std::make_shared<doodle::project_helper::database_t>(doodle::project_helper::database_t{
+          .name_ = "宗门里除了我都是卧底", .path_ = R"(//192.168.10.240/public/ZMLCLWDSWD)"
+      })
+  );
 }
 BOOST_AUTO_TEST_CASE(ZM_character) {
   doodle::details::character_scan_category_t l_s{};
