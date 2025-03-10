@@ -20,9 +20,10 @@ BOOST_AUTO_TEST_CASE(ZM_scene) {
 BOOST_AUTO_TEST_CASE(ZM_prop) {
   doodle::details::prop_scan_category_t l_s{};
   l_s.logger_ = spdlog::default_logger();
+  // std::string{
   l_s.scan(
       std::make_shared<doodle::project_helper::database_t>(doodle::project_helper::database_t{
-          .name_ = "宗门里除了我都是卧底", .path_ = R"(//192.168.10.240/public/ZMLCLWDSWD)"
+          .name_ = "我的师兄太强了", .path_ = R"(\\192.168.10.242\public\WDSXTQL)"
       })
   );
 }
