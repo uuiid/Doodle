@@ -31,9 +31,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
   auto& l_user    = l_json["user"];
   auto l_user_id  = l_user["id"].get<uuid>();
 
-  auto l_user_ptr = std::make_shared<user_helper::database_t>(
-      g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id)
-  );
+  auto l_user_ptr = std::make_shared<user_helper::database_t>();
+  if (g_ctx().get<sqlite_database>().uuid_to_id<user_helper::database_t>(l_user_id))
+    *l_user_ptr = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
   std::string l_phone{};
   if (l_user["phone"].is_string()) l_phone = l_user["phone"].get<std::string>();
 

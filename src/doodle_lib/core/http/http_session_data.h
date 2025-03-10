@@ -53,6 +53,8 @@ class session_data {
   // 每次连接自定义数据
   std::any user_data_;
 
+  nlohmann::json get_json();
+
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
   ) {
