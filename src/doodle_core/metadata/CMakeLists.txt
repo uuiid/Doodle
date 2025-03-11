@@ -37,6 +37,7 @@ target_sources(
         entity.h
         organisation.h
         notification.h
+        task.h
 
         PRIVATE
         assets.cpp
