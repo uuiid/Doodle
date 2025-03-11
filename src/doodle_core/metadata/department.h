@@ -18,5 +18,13 @@ struct DOODLE_CORE_API department {
     j.at("color").get_to(p.color_);
     j.at("archived").get_to(p.archived_);
   }
+  // to json
+  template <typename BasicJsonType>
+  friend void to_json(BasicJsonType& j, const department& p) {
+    j["name"]     = p.name_;
+    j["color"]    = p.color_;
+    j["archived"] = p.archived_;
+    j["id"]       = p.uuid_id_;
+  }
 };
 }  // namespace doodle

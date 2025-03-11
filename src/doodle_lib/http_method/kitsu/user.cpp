@@ -4,6 +4,8 @@
 
 #include "user.h"
 
+#include "doodle_core/metadata/department.h"
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -85,8 +87,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
 }
 
 DOODLE_HTTP_FUN(user_context, get, "api/data/user/context", http_jwt_fun)
-
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  nlohmann::json l_ret{};
+  auto& l_sql             = g_ctx().get<sqlite_database>();
+  l_ret["asset_types"]    = l_sql.get_all<asset_type>();
+  l_ret["custom_actions"] = nlohmann::json::value_t::array;
+  l_ret["departments"]    = l_sql.get_all<department>();
+  auto l_cs = g_ctx().get<dingding::dingding_company>();
+  for (auto& l_v : l_cs.company_info_map_ | std::views::values) {
+    l_ret["dingding_companys"].emplace_back(l_v);
+  }
   co_return in_handle->make_msg("{}");
 }
 DOODLE_HTTP_FUN_END()

@@ -30,5 +30,18 @@ struct DOODLE_CORE_API asset_type {
     if (j.contains("task_types")) j.at("task_types").get_to(p.task_types_);
     j.at("archived").get_to(p.archived_);
   }
+  // to json
+  template <typename BasicJsonType>
+  friend void to_json(BasicJsonType& j, const asset_type& p) {
+    j["id"]         = p.uuid_id_;
+    j["name"]       = p.name_;
+    j["short_name"] = p.short_name_;
+    if (p.description_.empty())
+      j["description"] = nlohmann::json::value_t::null;
+    else
+      j["description"] = p.description_;
+    j["task_types"] = p.task_types_;
+    j["archived"]   = p.archived_;
+  }
 };
 }  // namespace doodle
