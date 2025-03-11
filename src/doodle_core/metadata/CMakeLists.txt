@@ -38,6 +38,7 @@ target_sources(
         organisation.h
         notification.h
         task.h
+        preview_file.h
 
         PRIVATE
         assets.cpp
