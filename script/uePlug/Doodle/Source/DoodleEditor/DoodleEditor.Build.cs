@@ -152,7 +152,8 @@ public class doodleEditor : ModuleRules
 				"SlateCore",
 				"ImageCore",
 				"OpenColorIOWrapper",
-			}
+                "Blutility",
+            }
 		);
 
 

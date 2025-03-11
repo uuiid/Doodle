@@ -31,6 +31,7 @@
 //文件夹整理
 #include "DoodleOrganizeCompoundWidget.h"
 #include "DoodleEffectLibraryWidget.h"
+#include "EditorUtilityLibrary.h"
 
 
 namespace
@@ -185,7 +186,18 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 				SNew(STextBlock).Text(FText::FromString(TEXT("修复崩溃")))
 			]
 			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("修复5.4 材质参数集崩溃")); })
-		]
+		] + SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{ 1.f, 1.f })
+				[
+					SNew(SButton).OnClicked_Lambda([this]() -> FReply
+						{
+							UnlockTextrue();
+							return FReply::Handled();
+						})
+						[
+							SNew(STextBlock).Text(FText::FromString(TEXT("解锁贴图")))
+						]
+						.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("解锁贴图")); })
+				]
 	];
 	/// clang-format on
 }
@@ -376,6 +388,17 @@ void DoodleCopyMat::FindErrorMaterials()
 		L_MatName += TEXT("会在渲染中出现多次编译的情况");
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(L_MatName));
 		FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser").Get().SyncBrowserToAssets(ErrorMaterials);
+	}
+}
+
+void DoodleCopyMat::UnlockTextrue()
+{
+	TArray<UObject*> SelectedAssets = UEditorUtilityLibrary::GetSelectedAssets();
+	for (UObject* SelectedAsset : SelectedAssets) {
+		FString ObjectPath = SelectedAsset->GetPathName();
+		UPackage* Package = SelectedAsset->GetOutermost();
+		//Package->SetPackageFlags(EPackageFlags::PKG_DisallowExport);
+		Package->ClearPackageFlags(EPackageFlags::PKG_DisallowExport);//EPackageFlags::PKG_DisallowExport);
 	}
 }
 

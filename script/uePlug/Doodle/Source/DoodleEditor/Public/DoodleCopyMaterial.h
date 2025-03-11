@@ -22,7 +22,7 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
   FReply BathReameAss();
 
   void FindErrorMaterials();
-
+  void UnlockTextrue();
   bool bEnableSeparateTranslucency;
   FReply set_marteral_deep();
 
