@@ -14,6 +14,7 @@
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
+#include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/organisation.h>
 #include <doodle_core/metadata/preview_background_file.h>
 #include <doodle_core/metadata/project.h>
@@ -202,6 +203,24 @@ inline auto make_storage_doodle(const std::string& in_path) {
       )
       /// 这个下方是模拟kitsu的表
       ,
+
+      make_table<notification>(
+          "notification",                                                        //
+          make_column("id", &notification::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &notification::uuid_id_, unique(), not_null()),    //
+          make_column("read", &notification::read_),                             //
+          make_column("change", &notification::change_),                         //
+          make_column("type", &notification::type_),                             //
+          make_column("person_id", &notification::person_id_),                   //
+          make_column("author_id", &notification::author_id_),                   //
+          make_column("comment_id", &notification::comment_id_),                 //
+          make_column("task_id", &notification::task_id_),                       //
+          foreign_key(&notification::person_id_).references(&person::uuid_id_),  //
+          foreign_key(&notification::author_id_).references(&person::uuid_id_)   //
+          // foreign_key(&notification::comment_id_).references(&comment::uuid_id_),//
+          // foreign_key(&notification::task_id_).references(&task::uuid_id_)
+      ),
+
       make_table(
           "task_type_asset_type_link",                                                           //
           make_column("id", &task_type_asset_type_link::id_, primary_key().autoincrement()),     //
