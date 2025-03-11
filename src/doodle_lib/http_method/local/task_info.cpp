@@ -315,7 +315,8 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     } catch (...) {
       task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
       task_info_->status_   = server_task_info_status::failed;
-      task_info_->last_line_log_ = boost::current_exception_diagnostic_information();
+      task_info_->last_line_log_ = boost::current_exception_diagnostic_information() |
+                                   ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n'; });
       logger_->error(task_info_->last_line_log_);
     }
 
@@ -442,7 +443,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> post_task_local(se
 
 boost::asio::awaitable<boost::beast::http::message_generator> patch_task_local(session_data_ptr in_handle) {
   auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
-  auto l_server_task_info = std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid));
+  auto l_server_task_info =
+      std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid));
 
   server_task_info l_server_task_info_org{*l_server_task_info};
   auto l_sr   = l_server_task_info->status_;
