@@ -36,7 +36,7 @@ target_sources(
         status_automation.h
         entity.h
         organisation.h
-
+        notification.h
 
         PRIVATE
         assets.cpp
