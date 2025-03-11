@@ -83,9 +83,9 @@ function Initialize-Doodle
     {
         &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /np /njh /njs /ns /nc /ndl /fp /ts
         $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
-        # 寻找版本号 3.6.588 并放在最后
-        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.588" }
-        $DoodleVersionList = $DoodleVersionList + "3.6.588"
+        #         寻找版本号 3.6.588 并放在最后
+        #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.588" }
+        #        $DoodleVersionList = $DoodleVersionList + "3.6.588"
         Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
     }
 
