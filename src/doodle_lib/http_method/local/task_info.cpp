@@ -154,6 +154,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
   void set_state() {
     task_info_->status_   = server_task_info_status::running;
     task_info_->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+    socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_, "/socket.io/");
     boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached);
   }
 };
