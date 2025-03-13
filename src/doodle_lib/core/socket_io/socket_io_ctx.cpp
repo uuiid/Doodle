@@ -15,7 +15,7 @@ void sid_ctx::signal_type::message(const socket_io_packet_ptr& in_data) {
 }
 
 sid_ctx::sid_ctx()
-    : handshake_data_{.upgrades_ = {transport_type::websocket}, .ping_interval_ = chrono::milliseconds{2500}, .ping_timeout_ = chrono::milliseconds{200}, .max_payload_ = 1000000},
+    : handshake_data_{.upgrades_ = {transport_type::websocket}, .ping_interval_ = chrono::milliseconds{25000}, .ping_timeout_ = chrono::milliseconds{20000}, .max_payload_ = 1000000},
       /// 默认的命名空间
       signal_map_{{std::string{}, std::make_shared<signal_type>()}} {}
 
