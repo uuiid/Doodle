@@ -228,6 +228,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("width", &preview_file::width_),                           //
           make_column("height", &preview_file::height_),                         //
           make_column("duration", &preview_file::duration_),                     //
+          make_column("task_id", &preview_file::task_id_),                       //
+          make_column("person_id", &preview_file::person_id_),                   //
+          make_column("source_file_id", &preview_file::source_file_id_),         //
           foreign_key(&preview_file::task_id_).references(&task::uuid_id_),      //
           foreign_key(&preview_file::person_id_).references(&person::uuid_id_)   //
           // foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
