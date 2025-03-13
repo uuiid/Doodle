@@ -59,6 +59,7 @@ class sid_data {
   std::atomic_bool is_upgrade_to_websocket_;
   std::atomic_int lock_count_;
   std::atomic_bool close_;
+  socket_io_websocket_core_wptr websocket_;
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   boost::signals2::signal<void(const std::string&)> socket_io_signal_{};

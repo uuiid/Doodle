@@ -48,6 +48,7 @@ boost::asio::awaitable<std::string> sid_data::async_event() {
 }
 void sid_data::set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket) {
   is_upgrade_to_websocket_ = true;
+  websocket_               = in_websocket;
   for (auto& l_value : socket_io_contexts_ | std::views::values) {
     l_value->set_websocket(in_websocket);
   }
@@ -56,6 +57,7 @@ std::string sid_data::connect_namespace(const std::string& in_namespace) {
   auto l_ptr                        = std::make_shared<socket_io_core>(ctx_, in_namespace, nlohmann::json{});
   socket_io_contexts_[in_namespace] = l_ptr;
   ctx_->emit_connect(l_ptr);
+  if (auto l_web = websocket_.lock()) l_ptr->set_websocket(l_web);
   socket_io_packet l_p{};
   l_p.type_      = socket_io_packet_type::connect;
   l_p.namespace_ = in_namespace;
@@ -79,6 +81,7 @@ std::string sid_data::parse_socket_io(socket_io_packet& in_body) {
       auto l_ptr = std::make_shared<socket_io_core>(ctx_, in_body.namespace_, in_body.json_data_);
       socket_io_contexts_[in_body.namespace_] = l_ptr;
       ctx_->emit_connect(l_ptr);
+      if (auto l_web = websocket_.lock()) l_ptr->set_websocket(l_web);
       in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
       auto l_str         = in_body.dump();
       socket_io_signal_(l_str);
