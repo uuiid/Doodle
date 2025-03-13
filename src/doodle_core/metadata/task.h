@@ -37,11 +37,11 @@ struct DOODLE_CORE_API task {
   uuid last_preview_file_id_;
 
   // 外键
-  uuid project_id;
-  uuid task_type_id;
-  uuid task_status_id;
-  uuid entity_id;
-  uuid assigner_id;
+  uuid project_id_;
+  uuid task_type_id_;
+  uuid task_status_id_;
+  uuid entity_id_;
+  uuid assigner_id_;
   // 一对多
   std::vector<uuid> assignees_{};
 };

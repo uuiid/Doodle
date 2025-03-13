@@ -17,10 +17,12 @@
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/organisation.h>
 #include <doodle_core/metadata/preview_background_file.h>
+#include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/status_automation.h>
+#include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
@@ -32,6 +34,8 @@
 #include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
+
+#include "doodle_lib/core/ContainerDevice.h"
 
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
@@ -46,6 +50,8 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::metadata_descriptor_data_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::two_factor_authentication_types);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::person_role_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::status_automation_change_type);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_statuses);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_validation_statuses);
 DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
@@ -203,7 +209,29 @@ inline auto make_storage_doodle(const std::string& in_path) {
       )
       /// 这个下方是模拟kitsu的表
       ,
-
+      make_table<preview_file>(
+          "preview_file",                                                                  //
+          make_column("id", &preview_file::id_, primary_key().autoincrement()),            //
+          make_column("uuid", &preview_file::uuid_id_, unique(), not_null()),              //
+          make_column("name", &preview_file::name_),                                       //
+          make_column("original_name", &preview_file::original_name_),                     //
+          make_column("revision", &preview_file::revision_),                               //
+          make_column("position", &preview_file::position_),                               //
+          make_column("extension", &preview_file::extension_),                             //
+          make_column("description", &preview_file::description_),                         //
+          make_column("path", &preview_file::path_),                                       //
+          make_column("source", &preview_file::source_),                                   //
+          make_column("file_size", &preview_file::file_size_),                             //
+          make_column("status", &preview_file::status_),                                   //
+          make_column("validation_status", &preview_file::validation_status_),             //
+          make_column("annotations", &preview_file::annotations_),                         //
+          make_column("width", &preview_file::width_),                                     //
+          make_column("height", &preview_file::height_),                                   //
+          make_column("duration", &preview_file::duration_),                               //
+          foreign_key(&preview_file::task_id_).references(&task::uuid_id_),                //
+          foreign_key(&preview_file::person_id_).references(&person::uuid_id_),            //
+          foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
+      ),
       make_table<notification>(
           "notification",                                                        //
           make_column("id", &notification::id_, primary_key().autoincrement()),  //
@@ -219,6 +247,40 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&notification::author_id_).references(&person::uuid_id_)   //
           // foreign_key(&notification::comment_id_).references(&comment::uuid_id_),//
           // foreign_key(&notification::task_id_).references(&task::uuid_id_)
+      ),
+      make_table<task>(
+          "task",                                                                  //
+          make_column("id", &task::id_, primary_key().autoincrement()),            //
+          make_column("uuid_id", &task::uuid_id_, unique(), not_null()),           //
+          make_column("name", &task::name_),                                       //
+          make_column("description", &task::description_),                         //
+          make_column("priority", &task::priority_),                               //
+          make_column("difficulty", &task::difficulty_),                           //
+          make_column("duration", &task::duration_),                               //
+          make_column("estimation", &task::estimation_),                           //
+          make_column("completion_rate", &task::completion_rate_),                 //
+          make_column("retake_count", &task::retake_count_),                       //
+          make_column("sort_order", &task::sort_order_),                           //
+          make_column("start_date", &task::start_date_),                           //
+          make_column("due_date", &task::due_date_),                               //
+          make_column("real_start_date", &task::real_start_date_),                 //
+          make_column("end_date", &task::end_date_),                               //
+          make_column("done_date", &task::done_date_),                             //
+          make_column("last_comment_date", &task::last_comment_date_),             //
+          make_column("nb_assets_ready", &task::nb_assets_ready_),                 //
+          make_column("data", &task::data_),                                       //
+          make_column("shotgun_id", &task::shotgun_id_),                           //
+          make_column("last_preview_file_id", &task::last_preview_file_id_),       //
+          make_column("project_id", &task::project_id_),                           //
+          make_column("task_type_id", &task::task_type_id_),                       //
+          make_column("task_status_id", &task::task_status_id_),                   //
+          make_column("entity_id", &task::entity_id_),                             //
+          make_column("assigner_id", &task::assigner_id_),                         //
+          foreign_key(&task::project_id_).references(&project::uuid_id_),          //
+          foreign_key(&task::task_type_id_).references(&task_type::uuid_id_),      //
+          foreign_key(&task::task_status_id_).references(&task_status::uuid_id_),  //
+          // foreign_key(&task::entity_id_).references(&en::uuid_id_),        //
+          foreign_key(&task::assigner_id_).references(&person::uuid_id_)
       ),
 
       make_table(
