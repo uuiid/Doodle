@@ -210,27 +210,27 @@ inline auto make_storage_doodle(const std::string& in_path) {
       /// 这个下方是模拟kitsu的表
       ,
       make_table<preview_file>(
-          "preview_file",                                                                  //
-          make_column("id", &preview_file::id_, primary_key().autoincrement()),            //
-          make_column("uuid", &preview_file::uuid_id_, unique(), not_null()),              //
-          make_column("name", &preview_file::name_),                                       //
-          make_column("original_name", &preview_file::original_name_),                     //
-          make_column("revision", &preview_file::revision_),                               //
-          make_column("position", &preview_file::position_),                               //
-          make_column("extension", &preview_file::extension_),                             //
-          make_column("description", &preview_file::description_),                         //
-          make_column("path", &preview_file::path_),                                       //
-          make_column("source", &preview_file::source_),                                   //
-          make_column("file_size", &preview_file::file_size_),                             //
-          make_column("status", &preview_file::status_),                                   //
-          make_column("validation_status", &preview_file::validation_status_),             //
-          make_column("annotations", &preview_file::annotations_),                         //
-          make_column("width", &preview_file::width_),                                     //
-          make_column("height", &preview_file::height_),                                   //
-          make_column("duration", &preview_file::duration_),                               //
-          foreign_key(&preview_file::task_id_).references(&task::uuid_id_),                //
-          foreign_key(&preview_file::person_id_).references(&person::uuid_id_),            //
-          foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
+          "preview_file",                                                        //
+          make_column("id", &preview_file::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &preview_file::uuid_id_, unique(), not_null()),    //
+          make_column("name", &preview_file::name_),                             //
+          make_column("original_name", &preview_file::original_name_),           //
+          make_column("revision", &preview_file::revision_),                     //
+          make_column("position", &preview_file::position_),                     //
+          make_column("extension", &preview_file::extension_),                   //
+          make_column("description", &preview_file::description_),               //
+          make_column("path", &preview_file::path_),                             //
+          make_column("source", &preview_file::source_),                         //
+          make_column("file_size", &preview_file::file_size_),                   //
+          make_column("status", &preview_file::status_),                         //
+          make_column("validation_status", &preview_file::validation_status_),   //
+          make_column("annotations", &preview_file::annotations_),               //
+          make_column("width", &preview_file::width_),                           //
+          make_column("height", &preview_file::height_),                         //
+          make_column("duration", &preview_file::duration_),                     //
+          foreign_key(&preview_file::task_id_).references(&task::uuid_id_),      //
+          foreign_key(&preview_file::person_id_).references(&person::uuid_id_)   //
+          // foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
       ),
       make_table<notification>(
           "notification",                                                        //
