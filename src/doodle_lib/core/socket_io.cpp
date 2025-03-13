@@ -55,12 +55,15 @@ class socket_io_http_get : public socket_io_http_base_fun {
     auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
 
     // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
-    if (!l_sid_data || l_sid_data->is_timeout() || l_sid_data->is_upgrade_to_websocket())
+    if (!l_sid_data || l_sid_data->is_timeout())
       throw_exception(
           http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
       );
+    if (l_sid_data->is_upgrade_to_websocket())
+      co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
+
     auto l_event = co_await l_sid_data->async_event();
-    default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
+    // default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
     co_return in_handle->make_msg(std::move(l_event));
   }
 
