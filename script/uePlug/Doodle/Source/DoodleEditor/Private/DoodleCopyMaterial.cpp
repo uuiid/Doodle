@@ -399,6 +399,7 @@ void DoodleCopyMat::UnlockTextrue()
 		UPackage* Package = SelectedAsset->GetOutermost();
 		//Package->SetPackageFlags(EPackageFlags::PKG_DisallowExport);
 		Package->ClearPackageFlags(EPackageFlags::PKG_DisallowExport);//EPackageFlags::PKG_DisallowExport);
+		Package->SetDirtyFlag(true);
 	}
 }
 
