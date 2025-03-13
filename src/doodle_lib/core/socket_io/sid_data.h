@@ -44,6 +44,7 @@ class sid_data {
   boost::asio::awaitable<std::string> async_event();
 
   void set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket);
+  std::string connect_namespace(const std::string& in_namespace);
 
  private:
   struct lock_type {

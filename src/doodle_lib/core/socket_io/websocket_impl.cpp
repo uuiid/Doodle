@@ -97,6 +97,8 @@ boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::stri
       co_await async_close_websocket();
       break;
     case engine_io_packet_type::upgrade:
+      // 发出连接事件
+      co_await async_write_websocket(sid_data_->connect_namespace(std::string{handle_->url_.segments().buffer()}));
     case engine_io_packet_type::open:
     case engine_io_packet_type::noop:
       break;

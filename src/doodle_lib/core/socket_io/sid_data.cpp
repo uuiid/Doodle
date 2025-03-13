@@ -52,6 +52,19 @@ void sid_data::set_websocket_connect(const socket_io_websocket_core_ptr& in_webs
     l_value->set_websocket(in_websocket);
   }
 }
+std::string sid_data::connect_namespace(const std::string& in_namespace) {
+  auto l_ptr                        = std::make_shared<socket_io_core>(ctx_, in_namespace, nlohmann::json{});
+  socket_io_contexts_[in_namespace] = l_ptr;
+  ctx_->emit_connect(l_ptr);
+  socket_io_packet l_p{};
+  l_p.type_      = socket_io_packet_type::connect;
+  l_p.namespace_ = in_namespace;
+  l_p.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
+  auto l_str     = l_p.dump();
+  socket_io_signal_(l_p.dump());
+  return l_str;
+}
+
 std::string sid_data::parse_socket_io(socket_io_packet& in_body) {
   if (!ctx_->has_register(in_body.namespace_)) {
     in_body.type_      = socket_io_packet_type::connect_error;
