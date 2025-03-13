@@ -65,7 +65,17 @@ describe('doodle 本地服务器测试', function () {
       return new Promise((resolve) => {
         socket.onAny((eventName, data) => {
           expect(eventName).to.equal('doodle:task_info:update');
-          expect(data).to.have.keys('task_info_id', 'log');
+          expect(data).to.have.keys("end_time",
+            "id",
+            "last_line_log",
+            "name",
+            "run_computer_id",
+            "run_time",
+            "source_computer",
+            "status",
+            "submit_time",
+            "submitter",
+            "type");
           socket.close();
           resolve();
         });
