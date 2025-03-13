@@ -211,7 +211,11 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   boost::asio::awaitable<void> wait() const {
     auto l_timer = boost::asio::system_timer{co_await boost::asio::this_coro::executor};
     l_timer.expires_from_now(std::chrono::seconds(1));
-    co_await l_timer.async_wait(boost::asio::use_awaitable);
+    try {
+      co_await l_timer.async_wait(boost::asio::use_awaitable);
+    } catch (...) {
+      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    }
   }
 
  public:
