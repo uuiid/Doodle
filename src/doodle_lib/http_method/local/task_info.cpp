@@ -207,6 +207,12 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>>
       arg_;
   logger_ptr logger_{};
+  // 强制等待一秒
+  boost::asio::awaitable<void> wait() const {
+    auto l_timer = boost::asio::system_timer{co_await boost::asio::this_coro::executor};
+    l_timer.expires_from_now(std::chrono::seconds(1));
+    co_await l_timer.async_wait(boost::asio::use_awaitable);
+  }
 
  public:
   std::shared_ptr<server_task_info> task_info_{};
@@ -280,6 +286,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
 
   boost::asio::awaitable<void> operator()(std::shared_ptr<maya_exe_ns::arg>& in_arg) const {
+    co_await wait();
     auto l_r              = co_await async_run_maya(in_arg, logger_);
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     // 用户取消
@@ -307,6 +314,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) const {
     in_arg->logger_ptr_ = logger_;
     try {
+      co_await wait();
       auto l_r              = co_await in_arg->run();
       task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
       // 用户取消
@@ -338,6 +346,8 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) const {
     co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
+
+    co_await wait();
     std::vector<FSys::path> l_paths{};
     for (auto&& l_path_info : FSys::directory_iterator{in_arg->path_}) {
       auto l_ext = l_path_info.path().extension();
@@ -367,6 +377,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
   boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
     co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
+    co_await wait();
     in_arg->file_list_ |=
         ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
     auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
