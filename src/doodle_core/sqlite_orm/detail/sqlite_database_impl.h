@@ -10,6 +10,7 @@
 #include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/department.h>
+#include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
@@ -52,6 +53,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::person_role_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::status_automation_change_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_statuses);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_validation_statuses);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::entity_status);
 DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
@@ -286,6 +288,35 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&task::assigner_id_).references(&person::uuid_id_)
       ),
 
+      make_table<entity>(
+          "entity",                                                                    //
+          make_column("id", &entity::id_, primary_key().autoincrement()),              //
+          make_column("uuid_id", &entity::uuid_id_, unique(), not_null()),             //
+          make_column("name", &entity::name_),                                         //
+          make_column("code", &entity::code_),                                         //
+          make_column("shotgun_id", &entity::shotgun_id_),                             //
+          make_column("canceled", &entity::canceled_),                                 //
+          make_column("nb_frames", &entity::nb_frames_),                               //
+          make_column("nb_entities_out", &entity::nb_entities_out_),                   //
+          make_column("is_casting_standby", &entity::is_casting_standby_),             //
+          make_column("is_shared", &entity::is_shared_),                               //
+          make_column("status", &entity::status_),                                     //
+          make_column("project_id", &entity::project_id_),                             //
+          make_column("entity_type_id", &entity::entity_type_id_),                     //
+          make_column("parent_id", &entity::parent_id_),                               //
+          make_column("source_id", &entity::source_id_),                               //
+          make_column("preview_file_id", &entity::preview_file_id_),                   //
+          make_column("data", &entity::data_),                                         //
+          make_column("ready_for", &entity::ready_for_),                               //
+          make_column("created_by", &entity::created_by_),                             //
+          foreign_key(&entity::project_id_).references(&project::uuid_id_),            //
+          foreign_key(&entity::entity_type_id_).references(&asset_type::uuid_id_),     //
+          foreign_key(&entity::preview_file_id_).references(&preview_file::uuid_id_),  //
+          foreign_key(&entity::ready_for_).references(&task_type::uuid_id_),           //
+          foreign_key(&entity::created_by_).references(&person::uuid_id_),             //
+          foreign_key(&entity::parent_id_).references(&entity::uuid_id_),              //
+          foreign_key(&entity::source_id_).references(&entity::uuid_id_)               //
+      ),
       make_table(
           "task_type_asset_type_link",                                                           //
           make_column("id", &task_type_asset_type_link::id_, primary_key().autoincrement()),     //
