@@ -288,6 +288,25 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&task::assigner_id_).references(&person::uuid_id_)
       ),
 
+      make_table<entity_link>(
+          "entity_link",                                                           //
+          make_column("id", &entity_link::id_, primary_key().autoincrement()),     //
+          make_column("entity_in_id", &entity_link::entity_in_id_),                //
+          make_column("entity_out_id", &entity_link::entity_out_id_),              //
+          make_column("data", &entity_link::data_),                                //
+          make_column("nb_occurences", &entity_link::nb_occurences_),              //
+          foreign_key(&entity_link::entity_in_id_).references(&entity::uuid_id_),  //
+          foreign_key(&entity_link::entity_out_id_).references(&entity::uuid_id_)
+      ),
+
+      make_table<entity_concept_link>(                                                     //
+          "entity_concept_link",                                                           //
+          make_column("id", &entity_concept_link::id_, primary_key().autoincrement()),     //
+          make_column("entity_id", &entity_concept_link::entity_id_),                      //
+          make_column("entity_out_id", &entity_concept_link::entity_out_id_),              //
+          foreign_key(&entity_concept_link::entity_id_).references(&entity::uuid_id_),     //
+          foreign_key(&entity_concept_link::entity_out_id_).references(&entity::uuid_id_)  //
+      ),
       make_table<entity>(
           "entity",                                                                    //
           make_column("id", &entity::id_, primary_key().autoincrement()),              //
