@@ -41,7 +41,7 @@ struct DOODLE_CORE_API comment {
   // 外键
   uuid task_status_id_;
   uuid person_id_;
-  uuid editor_id_;
+  uuid editor_id_;// 编辑人
   uuid preview_file_id_;
   std::vector<uuid> previews_;
   std::vector<uuid> mentions_;

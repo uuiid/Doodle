@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/attendance.h>
+#include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity.h>
@@ -211,6 +212,14 @@ inline auto make_storage_doodle(const std::string& in_path) {
       )
       /// 这个下方是模拟kitsu的表
       ,
+      make_table<comment_preview_link>(
+          "comment_preview_link",                                                                   //
+          make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),             //
+          make_column("comment_id", &comment_preview_link::comment_id_),                            //
+          make_column("preview_file_id", &comment_preview_link::preview_file_id_),                  //
+          foreign_key(&comment_preview_link::comment_id_).references(&comment::uuid_id_),           //
+          foreign_key(&comment_preview_link::preview_file_id_).references(&preview_file::uuid_id_)  //
+      ),
       make_table<preview_file>(
           "preview_file",                                                        //
           make_column("id", &preview_file::id_, primary_key().autoincrement()),  //
@@ -238,20 +247,65 @@ inline auto make_storage_doodle(const std::string& in_path) {
           // foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
       ),
       make_table<notification>(
-          "notification",                                                        //
-          make_column("id", &notification::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &notification::uuid_id_, unique(), not_null()),    //
-          make_column("read", &notification::read_),                             //
-          make_column("change", &notification::change_),                         //
-          make_column("type", &notification::type_),                             //
-          make_column("person_id", &notification::person_id_),                   //
-          make_column("author_id", &notification::author_id_),                   //
-          make_column("comment_id", &notification::comment_id_),                 //
-          make_column("task_id", &notification::task_id_),                       //
-          foreign_key(&notification::person_id_).references(&person::uuid_id_),  //
-          foreign_key(&notification::author_id_).references(&person::uuid_id_)   //
-          // foreign_key(&notification::comment_id_).references(&comment::uuid_id_),//
-          // foreign_key(&notification::task_id_).references(&task::uuid_id_)
+          "notification",                                                          //
+          make_column("id", &notification::id_, primary_key().autoincrement()),    //
+          make_column("uuid", &notification::uuid_id_, unique(), not_null()),      //
+          make_column("read", &notification::read_),                               //
+          make_column("change", &notification::change_),                           //
+          make_column("type", &notification::type_),                               //
+          make_column("person_id", &notification::person_id_),                     //
+          make_column("author_id", &notification::author_id_),                     //
+          make_column("comment_id", &notification::comment_id_),                   //
+          make_column("task_id", &notification::task_id_),                         //
+          foreign_key(&notification::person_id_).references(&person::uuid_id_),    //
+          foreign_key(&notification::author_id_).references(&person::uuid_id_),    //
+          foreign_key(&notification::comment_id_).references(&comment::uuid_id_),  //
+          foreign_key(&notification::task_id_).references(&task::uuid_id_)
+      ),
+      make_table<comment_mentions>(
+          "comment_mentions",                                                          //
+          make_column("id", &comment_mentions::id_, primary_key().autoincrement()),    //
+          make_column("comment_id", &comment_mentions::comment_id_),                   //
+          make_column("person_id", &comment_mentions::person_id_),                     //
+          foreign_key(&comment_mentions::comment_id_).references(&comment::uuid_id_),  //
+          foreign_key(&comment_mentions::person_id_).references(&person::uuid_id_)
+      ),
+      make_table<comment_department_mentions>(
+          "comment_department_mentions",                                                          //
+          make_column("id", &comment_department_mentions::id_, primary_key().autoincrement()),    //
+          make_column("comment_id", &comment_department_mentions::comment_id_),                   //
+          make_column("department_id", &comment_department_mentions::department_id_),             //
+          foreign_key(&comment_department_mentions::comment_id_).references(&comment::uuid_id_),  //
+          foreign_key(&comment_department_mentions::department_id_).references(&department::uuid_id_)
+      ),
+      make_table<comment_acknoledgments>(
+          "comment_acknoledgments",                                                          //
+          make_column("id", &comment_acknoledgments::id_, primary_key().autoincrement()),    //
+          make_column("comment_id", &comment_acknoledgments::comment_id_),                   //
+          make_column("person_id", &comment_acknoledgments::person_id_),                     //
+          foreign_key(&comment_acknoledgments::comment_id_).references(&comment::uuid_id_),  //
+          foreign_key(&comment_acknoledgments::person_id_).references(&person::uuid_id_)
+      ),
+      make_table<comment>(
+          "comment",                                                                                       //
+          make_column("id", &comment::id_, primary_key().autoincrement()),                                 //
+          make_column("uuid_id", &comment::uuid_id_, unique(), not_null()),                                //
+          make_column("shotgun_id", &comment::shotgun_id_),                                                //
+          make_column("object_id", &comment::object_id_),                                                  //
+          make_column("object_type", &comment::object_type_),                                              //
+          make_column("text", &comment::text_),                                                            //
+          make_column("data", &comment::data_),                                                            //
+          make_column("replies", &comment::replies_),                                                      //
+          make_column("checklist", &comment::checklist_),                                                  //
+          make_column("pinned", &comment::pinned_),                                                        //
+          make_column("link", &comment::links), make_column("task_status_id", &comment::task_status_id_),  //
+          make_column("person_id", &comment::person_id_),                                                  //
+          make_column("editor_id", &comment::editor_id_),                                                  //
+          make_column("preview_file_id", &comment::preview_file_id_),                                      //
+          foreign_key(&comment::task_status_id_).references(&task::uuid_id_),                              //
+          foreign_key(&comment::person_id_).references(&person::uuid_id_),                                 //
+          foreign_key(&comment::editor_id_).references(&person::uuid_id_),                                 //
+          foreign_key(&comment::preview_file_id_).references(&preview_file::uuid_id_)                      //
       ),
       make_table<task>(
           "task",                                                                  //
