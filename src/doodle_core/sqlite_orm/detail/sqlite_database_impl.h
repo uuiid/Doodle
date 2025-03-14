@@ -284,7 +284,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&task::project_id_).references(&project::uuid_id_),          //
           foreign_key(&task::task_type_id_).references(&task_type::uuid_id_),      //
           foreign_key(&task::task_status_id_).references(&task_status::uuid_id_),  //
-          // foreign_key(&task::entity_id_).references(&en::uuid_id_),        //
+          foreign_key(&task::entity_id_).references(&entity::uuid_id_),            //
           foreign_key(&task::assigner_id_).references(&person::uuid_id_)
       ),
 
