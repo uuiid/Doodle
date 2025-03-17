@@ -35,6 +35,7 @@
 #include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
 #include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
+#include <doodle_core/sqlite_orm/detail/std_vector_string.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
 #include "doodle_lib/core/ContainerDevice.h"
@@ -68,6 +69,10 @@ struct type_is_nullable<boost::uuids::uuid> : std::true_type {
 template <>
 struct type_is_nullable<nlohmann::json> : std::true_type {
   bool operator()(const nlohmann::json& t) const { return t.is_null(); }
+};
+template <>
+struct type_is_nullable<std::vector<std::string>> : std::true_type {
+  bool operator()(const std::vector<std::string>& t) const { return t.empty(); }
 };
 }  // namespace sqlite_orm
 

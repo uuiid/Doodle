@@ -9,6 +9,7 @@ target_sources(
         uuid_to_blob.h
         macro.h
         sqlite_database_impl.h
+        std_vector_string.h
 
         PRIVATE
         sqlite_database_impl.cpp
