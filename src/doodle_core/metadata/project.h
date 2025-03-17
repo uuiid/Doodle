@@ -2,6 +2,7 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
+#include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/person.h>
 namespace doodle {
 
@@ -115,7 +116,56 @@ struct project {
     if (j.contains("default_preview_background_file_id"))
       j.at("default_preview_background_file_id").get_to(p.default_preview_background_file_id_);
   }
+  friend void to_json(nlohmann::json& j, const project& p) {
+    j["id"]                                 = p.uuid_id_;
+    j["name"]                               = p.name_;
+    j["code"]                               = p.code_;
+    j["description"]                        = p.description_;
+    j["shotgun_id"]                         = p.shotgun_id_;
+    j["file_tree"]                          = p.file_tree_;
+    j["data"]                               = p.data_;
+    j["has_avatar"]                         = p.has_avatar_;
+    j["fps"]                                = p.fps_;
+    j["ratio"]                              = p.ratio_;
+    j["resolution"]                         = p.resolution_;
+    j["production_type"]                    = p.production_type_;
+    j["production_style"]                   = p.production_style_;
+    j["start_date"]                         = p.start_date_;
+    j["end_date"]                           = p.end_date_;
+    j["man_days"]                           = p.man_days_;
+    j["nb_episodes"]                        = p.nb_episodes_;
+    j["episode_span"]                       = p.episode_span_;
+    j["max_retakes"]                        = p.max_retakes_;
+    j["is_clients_isolated"]                = p.is_clients_isolated_;
+    j["is_preview_download_allowed"]        = p.is_preview_download_allowed_;
+    j["is_set_preview_automated"]           = p.is_set_preview_automated_;
+    j["homepage"]                           = p.homepage_;
+    j["is_publish_default_for_artists"]     = p.is_publish_default_for_artists_;
+    j["hd_bitrate_compression"]             = p.hd_bitrate_compression_;
+    j["ld_bitrate_compression"]             = p.ld_bitrate_compression_;
+    j["project_status_id"]                  = p.project_status_id_;
+    j["default_preview_background_file_id"] = p.default_preview_background_file_id_;
+
+    j["team"]                               = p.team_;
+    j["asset_types"]                        = p.asset_types_;
+    j["task_statuses"]                      = p.task_statuses_;
+    j["task_types"]                         = p.task_types_;
+    j["status_automations"]                 = p.status_automations_;
+    j["preview_background_files"]           = p.preview_background_files_;
+  }
 };
+
+struct project_with_extra_data : project {
+  std::vector<metadata_descriptor> descriptors_;
+  std::vector<project_task_type_link> task_types_priority_;
+  std::vector<project_task_status_link> task_statuses_link_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const project_with_extra_data& p) {
+    to_json(j, static_cast<const project&>(p));
+  }
+};
+
 namespace project_helper {
 
 struct database_t : boost::equality_comparable<database_t> {

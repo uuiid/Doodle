@@ -5,6 +5,7 @@
 #include "user.h"
 
 #include "doodle_core/metadata/department.h"
+#include "doodle_core/metadata/project_status.h"
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
@@ -93,10 +94,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
   l_ret["asset_types"]    = l_sql.get_all<asset_type>();
   l_ret["custom_actions"] = nlohmann::json::value_t::array;
   l_ret["departments"]    = l_sql.get_all<department>();
-  auto l_cs = g_ctx().get<dingding::dingding_company>();
+  auto l_cs               = g_ctx().get<dingding::dingding_company>();
   for (auto& l_v : l_cs.company_info_map_ | std::views::values) {
     l_ret["dingding_companys"].emplace_back(l_v);
   }
+  l_ret["notification_count"]       = l_sql.get_notification_count(person_->uuid_id_);
+  l_ret["persons"]                  = l_sql.get_all<person>();
+  l_ret["project_status"]           = l_sql.get_all<project_status>();
+  l_ret["preview_background_files"] = nlohmann::json::value_t::array;
+  l_ret["projects"]                 = l_sql.get_all<project>();
+
   co_return in_handle->make_msg("{}");
 }
 DOODLE_HTTP_FUN_END()

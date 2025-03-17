@@ -90,5 +90,7 @@ class sqlite_database {
   std::vector<server_task_info> get_server_task_info_by_type(const server_task_info_type& in_user_id);
 
   std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name);
+  std::int32_t get_notification_count(const uuid& in_user_id);
+  std::vector<project> get_project_for_user(const person& in_user);
 };
 }  // namespace doodle

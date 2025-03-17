@@ -54,6 +54,68 @@ std::vector<server_task_info> sqlite_database::get_server_task_info_by_type(cons
   return impl_->get_server_task_info_by_type(in_user_id);
 }
 
+std::int32_t sqlite_database::get_notification_count(const uuid& in_user_id) {
+  return impl_->get_notification_count(in_user_id);
+}
+
+std::vector<project> sqlite_database::get_project_for_user(const person& in_user) {
+  std::vector<project> l_projects{};
+  if (in_user.role_ == person_role_type::admin)
+    l_projects = impl_->get_all<project>();
+  else {
+    auto l_project_person_link = impl_->storage_any_.get_all<project_person_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_person_link::person_id_) == in_user.uuid_id_)
+    );
+    auto l_project_ids = l_project_person_link |
+                         ranges::views::transform([](const project_person_link& in) { return in.project_id_; }) |
+                         ranges::to_vector;
+    l_projects =
+        impl_->storage_any_.get_all<project>(sqlite_orm::where(sqlite_orm::c(&project::id_).in(l_project_ids)));
+  }
+
+  for (auto&& i : l_projects) {
+    auto l_project_person_link = impl_->storage_any_.get_all<project_person_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_person_link::project_id_) == i.id_)
+    );
+    i.team_ = l_project_person_link |
+              ranges::views::transform([](const project_person_link& in) { return in.person_id_; }) | ranges::to_vector;
+    auto l_asset_type_link = impl_->storage_any_.get_all<project_asset_type_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_asset_type_link::project_id_) == i.id_)
+    );
+    i.asset_types_ = l_asset_type_link |
+                     ranges::views::transform([](const project_asset_type_link& in) { return in.asset_type_id_; }) |
+                     ranges::to_vector;
+    auto l_task_status_link = impl_->storage_any_.get_all<project_task_status_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_task_status_link::project_id_) == i.id_)
+    );
+    i.task_statuses_ = l_task_status_link |
+                       ranges::views::transform([](const project_task_status_link& in) { return in.task_status_id_; }) |
+                       ranges::to_vector;
+    auto l_task_type_link = impl_->storage_any_.get_all<project_task_type_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_task_type_link::project_id_) == i.id_)
+    );
+    i.task_types_ = l_task_type_link |
+                    ranges::views::transform([](const project_task_type_link& in) { return in.task_type_id_; }) |
+                    ranges::to_vector;
+    auto l_status_automations = impl_->storage_any_.get_all<project_status_automation_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_status_automation_link::project_id_) == i.id_)
+    );
+    i.status_automations_ =
+        l_status_automations |
+        ranges::views::transform([](const project_status_automation_link& in) { return in.status_automation_id_; }) |
+        ranges::to_vector;
+    auto l_preview_background_files = impl_->storage_any_.get_all<project_preview_background_file_link>(
+        sqlite_orm::where(sqlite_orm::c(&project_preview_background_file_link::project_id_) == i.id_)
+    );
+    i.preview_background_files_ = l_preview_background_files |
+                                  ranges::views::transform([](const project_preview_background_file_link& in) {
+                                    return in.preview_background_file_id_;
+                                  }) |
+                                  ranges::to_vector;
+  }
+  return l_projects;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
@@ -64,7 +126,6 @@ DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
-
 
 DOODLE_ID_TO_UUID(project_helper::database_t)
 DOODLE_ID_TO_UUID(user_helper::database_t)
@@ -82,6 +143,18 @@ work_xlsx_task_info_helper::database_t sqlite_database::get_by_uuid<work_xlsx_ta
   l_list.user_id_ = impl_->id_to_uuid<user_helper::database_t>(l_list.user_ref_);
   return l_list;
 }
+template <>
+person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
+  auto l_p    = impl_->get_by_uuid<person>(in_uuid);
+  auto l_list = impl_->storage_any_.select(
+      sqlite_orm::columns(&person_department_link::department_id_),
+      sqlite_orm::where(sqlite_orm::c(&person_department_link::person_id_) == in_uuid)
+  );
+  l_p.departments_ = l_list | ranges::views::transform([](const std::tuple<uuid>& in) { return std::get<uuid>(in); }) |
+                     ranges::to_vector;
+  return l_p;
+}
+
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_BY_UUID_SQL(assets_file_helper::database_t)
@@ -104,7 +177,6 @@ DOODLE_GET_ALL_SQL(project_status)
 DOODLE_GET_ALL_SQL(task_status)
 DOODLE_GET_ALL_SQL(task_type)
 DOODLE_GET_ALL_SQL(department)
-DOODLE_GET_ALL_SQL(person)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
   auto l_list = impl_->get_all<asset_type>();
@@ -116,6 +188,21 @@ std::vector<asset_type> sqlite_database::get_all() {
   for (auto&& i : impl_->get_all<task_type_asset_type_link>()) {
     if (l_map.contains(i.asset_type_id_)) l_map.at(i.asset_type_id_)->task_types_.emplace_back(i.task_type_id_);
   }
+  return l_list;
+}
+template <>
+std::vector<person> sqlite_database::get_all() {
+  auto l_list = impl_->get_all<person>();
+  for (auto&& i : l_list) {
+    auto l_list_dep = impl_->storage_any_.select(
+        sqlite_orm::columns(&person_department_link::department_id_),
+        sqlite_orm::where(sqlite_orm::c(&person_department_link::person_id_) == i.uuid_id_)
+    );
+    i.departments_ = l_list_dep |
+                     ranges::views::transform([](const std::tuple<uuid>& in) { return std::get<uuid>(in); }) |
+                     ranges::to_vector;
+  }
+
   return l_list;
 }
 

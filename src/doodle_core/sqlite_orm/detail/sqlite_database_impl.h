@@ -734,6 +734,12 @@ struct sqlite_database_impl {
     using namespace sqlite_orm;
     return storage_any_.get_all<server_task_info>(where(c(&server_task_info::type_) == in_user_id));
   }
+
+  std::int32_t get_notification_count(const uuid& in_user_id) {
+    using namespace sqlite_orm;
+    return storage_any_.count<notification>(where(c(&notification::person_id_) == in_user_id));
+  }
+
 #define DOODLE_TO_SQLITE_THREAD()                                 \
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
