@@ -450,6 +450,21 @@ inline auto make_storage_doodle(const std::string& in_path) {
               .references(&status_automation::uuid_id_)
               .on_delete.cascade()
       ),
+      make_table<project_preview_background_file_link>(//
+          "project_preview_background_file_link",//
+          make_column("id", &project_preview_background_file_link::id_, primary_key().autoincrement()),//
+          make_column("project_id", &project_preview_background_file_link::project_id_, not_null()),//
+          make_column(
+              "preview_background_file_id", &project_preview_background_file_link::preview_background_file_id_,
+              not_null()
+          ),//
+          foreign_key(&project_preview_background_file_link::project_id_)
+              .references(&project::uuid_id_)
+              .on_delete.cascade(),//
+          foreign_key(&project_preview_background_file_link::preview_background_file_id_)
+              .references(&preview_background_file::uuid_id_)
+              .on_delete.cascade()//
+      ),
       make_table<project>(
           "project",                                                                                         //
           make_column("id", &project::id_, primary_key().autoincrement()),                                   //
