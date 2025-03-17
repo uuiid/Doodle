@@ -390,7 +390,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&entity::parent_id_).references(&entity::uuid_id_),              //
           foreign_key(&entity::source_id_).references(&entity::uuid_id_)               //
       ),
-      make_table(
+      make_table<task_type_asset_type_link>(
           "task_type_asset_type_link",                                                           //
           make_column("id", &task_type_asset_type_link::id_, primary_key().autoincrement()),     //
           make_column("asset_type_id", &task_type_asset_type_link::asset_type_id_, not_null()),  //
@@ -398,7 +398,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&task_type_asset_type_link::asset_type_id_).references(&asset_type::uuid_id_).on_delete.cascade(),
           foreign_key(&task_type_asset_type_link::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
-      make_table(
+      make_table<project_person_link>(
           "project_person_link",  //
           make_column("id", &project_person_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_person_link::project_id_, not_null()),
@@ -406,7 +406,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_person_link::project_id_).references(&project::uuid_id_),
           foreign_key(&project_person_link::person_id_).references(&person::uuid_id_)
       ),
-      make_table(
+      make_table<project_task_type_link>(
           "project_task_type_link",  //
           make_column("id", &project_task_type_link::id_, primary_key().autoincrement()),
           make_column("uuid", &project_task_type_link::uuid_id_, unique(), not_null()),
@@ -416,7 +416,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_task_type_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_task_type_link::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
-      make_table(
+      make_table<project_task_status_link>(
           "project_task_status_link",  //
           make_column("id", &project_task_status_link::id_, primary_key().autoincrement()),
           make_column("uuid", &project_task_status_link::uuid_id_, unique(), not_null()),
@@ -427,7 +427,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_task_status_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_task_status_link::task_status_id_).references(&task_status::uuid_id_).on_delete.cascade()
       ),
-      make_table(
+      make_table<project_asset_type_link>(
           "project_asset_type_link",  //
           make_column("id", &project_asset_type_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_asset_type_link::project_id_, not_null()),
@@ -435,7 +435,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_asset_type_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_asset_type_link::asset_type_id_).references(&asset_type::uuid_id_).on_delete.cascade()
       ),
-      make_table(
+      make_table<project_status_automation_link>(
           "project_status_automation_link",
           make_column("id", &project_status_automation_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_status_automation_link::project_id_, not_null()),
@@ -445,7 +445,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
               .references(&status_automation::uuid_id_)
               .on_delete.cascade()
       ),
-      make_table(
+      make_table<project>(
           "project",                                                                                         //
           make_column("id", &project::id_, primary_key().autoincrement()),                                   //
           make_column("uuid", &project::uuid_id_, not_null(), unique()),                                     //
@@ -479,7 +479,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
               .references(&preview_background_file::uuid_id_)
               .on_delete.cascade()
       ),
-      make_table(
+      make_table<metadata_descriptor_department_link>(
           "metadata_descriptor_department_link",  //
           make_column("id", &metadata_descriptor_department_link::id_, primary_key().autoincrement()),
           make_column("metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_),
@@ -491,7 +491,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
               .references(&department::uuid_id_)
               .on_delete.cascade()
       ),
-      make_table(
+      make_table<metadata_descriptor>(
           "metadata_descriptor",                                                        //
           make_column("id", &metadata_descriptor::id_, primary_key().autoincrement()),  //
           make_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique()),    //
@@ -503,7 +503,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("choices", &metadata_descriptor::choices_),                       //
           make_column("for_client", &metadata_descriptor::for_client_)
       ),
-      make_table(
+      make_table<project_status>(
           "project_status",                                                        //
           make_column("id", &project_status::id_, primary_key().autoincrement()),  //
           make_column("uuid", &project_status::uuid_id_, not_null(), unique()),    //
@@ -511,14 +511,14 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("color", &project_status::color_)
       ),
 
-      make_table(
+      make_table<person_department_link>(
           "department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
           make_column("person_id", &person_department_link::person_id_),
           make_column("department_id", &person_department_link::department_id_),
           foreign_key(&person_department_link::person_id_).references(&person::uuid_id_).on_delete.cascade(),
           foreign_key(&person_department_link::department_id_).references(&department::uuid_id_).on_delete.cascade()
       ),
-      make_table(
+      make_table<person>(
           "person",                                                                                           //
           make_column("id", &person::id_, primary_key().autoincrement()),                                     //
           make_column("uuid", &person::uuid_id_, not_null(), unique()),                                       //
@@ -562,7 +562,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("is_generated_from_ldap", &person::is_generated_from_ldap_),                            //
           make_column("ldap_uid", &person::ldap_uid_)
       ),
-      make_table(
+      make_table<department>(
           "department",                                                        //
           make_column("id", &department::id_, primary_key().autoincrement()),  //
           make_column("uuid", &department::uuid_id_, not_null(), unique()),    //
@@ -570,7 +570,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("color", &department::color_),                           //
           make_column("archived", &department::archived_)                      //
       ),
-      make_table(
+      make_table<preview_background_file>(
           "preview_background_file",                                                        //
           make_column("id", &preview_background_file::id_, primary_key().autoincrement()),  //
           make_column("uuid", &preview_background_file::uuid_id_, not_null(), unique()),    //
@@ -581,7 +581,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("extension", &preview_background_file::extension_),                   //
           make_column("file_size", &preview_background_file::file_size_)                    //
       ),
-      make_table(
+      make_table<task_type>(
           "task_type",                                                        //
           make_column("id", &task_type::id_, primary_key().autoincrement()),  //
           make_column("uuid", &task_type::uuid_id_, not_null(), unique()),    //
@@ -595,7 +595,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("archived", &task_type::archived_),                     //
           make_column("shotgun_id", &task_type::shotgun_id_)                  //
       ),
-      make_table(
+      make_table<task_status>(
           "task_status",                                                           //
           make_column("id", &task_status::id_, primary_key().autoincrement()),     //
           make_column("uuid", &task_status::uuid_id_, not_null(), unique()),       //
@@ -614,7 +614,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("shotgun_id", &task_status::shotgun_id_),                    //
           make_column("for_concept", &task_status::for_concept_)                   //
       ),
-      make_table(
+      make_table<asset_type>(
           "asset_type",                                                        //
           make_column("id", &asset_type::id_, primary_key().autoincrement()),  //
           make_column("uuid", &asset_type::uuid_id_, not_null(), unique()),    //
@@ -623,7 +623,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("description", &asset_type::description_),               //
           make_column("archived", &asset_type::archived_)                      //
       ),
-      make_table(
+      make_table<status_automation>(
           "status_automation",                                                             //
           make_column("id", &status_automation::id_, primary_key().autoincrement()),       //
           make_column("uuid", &status_automation::uuid_id_, not_null(), unique()),         //
