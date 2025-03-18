@@ -24,6 +24,7 @@
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/status_automation.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
@@ -655,6 +656,13 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("out_task_status_id", &status_automation::out_task_status_id_),      //
           make_column("import_last_revision", &status_automation::import_last_revision_),  //
           make_column("archived", &status_automation::archived_)                           //
+      ),
+      make_table<studio>(
+          "studio",                                                                     //
+          make_column("id", &studio::id_, primary_key().autoincrement()),               //
+          make_column("uuid", &studio::uuid_id_, not_null(), unique()),                 //
+          make_column("name", &studio::name_),                                          //
+          make_column("archived", &studio::archived_)                           //
       ),
       make_table<organisation>(
           "organisation",                                                                     //

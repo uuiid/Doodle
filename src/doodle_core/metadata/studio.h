@@ -11,13 +11,13 @@ struct DOODLE_CORE_API studio {
   DOODLE_BASE_FIELDS();
   std::string name_;
   std::string color_;
-  bool active_;
+  bool archived_;
   // to json
   friend void to_json(nlohmann::json& j, const studio& p) {
     j["id"] = p.uuid_id_;
     j["name"] = p.name_;
     j["color"] = p.color_;
-    j["active"] = p.active_;
+    j["archived"] = p.archived_;
   }
 };
 }  // namespace doodle
