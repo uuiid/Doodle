@@ -333,7 +333,10 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     } catch (...) {
       task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
       task_info_->status_   = server_task_info_status::failed;
-      logger_->error(task_info_->last_line_log_);
+      logger_->error(
+          boost::current_exception_diagnostic_information() |
+          ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; })
+      );
     }
     logger_->flush();
 
