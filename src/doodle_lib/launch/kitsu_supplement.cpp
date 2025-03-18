@@ -120,7 +120,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     if (auto l_str = in_arh({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
-      l_args.port_ = 50024;
+      l_args.port_ = 0;
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(core_set::get_set().get_cache_root("database") / "kitsu.database");
     // 初始化授权上下文
@@ -135,7 +135,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     if (auto l_str = in_arh({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
-      l_args.port_ = 50024;
+      l_args.port_ = 0;
     // 调整一些特有的上下文
     l_args.db_path_               = register_file_type::program_location().parent_path() / "epiboly.database";
     l_args.kitsu_front_end_path_  = register_file_type::program_location().parent_path() / "dist";
