@@ -7,10 +7,17 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 namespace doodle {
-struct DOODLE_CORE_API studio   {
+struct DOODLE_CORE_API studio {
   DOODLE_BASE_FIELDS();
-        std::string name_;
-        std::string color_;
-        bool active_;
+  std::string name_;
+  std::string color_;
+  bool active_;
+  // to json
+  friend void to_json(nlohmann::json& j, const studio& p) {
+    j["id"] = p.uuid_id_;
+    j["name"] = p.name_;
+    j["color"] = p.color_;
+    j["active"] = p.active_;
+  }
 };
 }  // namespace doodle
