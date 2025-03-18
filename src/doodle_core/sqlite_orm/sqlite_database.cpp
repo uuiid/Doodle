@@ -71,7 +71,8 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     auto l_project_ids = l_project_person_link |
                          ranges::views::transform([](const project_person_link& in) { return in.project_id_; }) |
                          ranges::to_vector;
-    auto l_t = impl_->storage_any_.get_all<project>(sqlite_orm::where(sqlite_orm::in(&project::uuid_id_, l_project_ids)));
+    auto l_t =
+        impl_->storage_any_.get_all<project>(sqlite_orm::where(sqlite_orm::in(&project::uuid_id_, l_project_ids)));
     l_projects = l_t | ranges::views::transform([](const project& in) { return project_with_extra_data{in}; }) |
                  ranges::to_vector;
   }
@@ -115,6 +116,20 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
                                     return in.preview_background_file_id_;
                                   }) |
                                   ranges::to_vector;
+
+    auto l_descriptors = impl_->storage_any_.get_all<metadata_descriptor>(
+        sqlite_orm::left_join<metadata_descriptor_department_link>(sqlite_orm::on(
+            sqlite_orm::c(&metadata_descriptor::uuid_id_) ==
+            sqlite_orm::c(&metadata_descriptor_department_link::metadata_descriptor_uuid_)
+        )),
+        sqlite_orm::where(
+            sqlite_orm::in(&metadata_descriptor_department_link::department_uuid_, in_user.departments_) ||
+            sqlite_orm::is_null(&metadata_descriptor_department_link::department_uuid_)
+        )
+    );
+    i.descriptors_         = l_descriptors;
+    i.task_types_priority_ = l_task_type_link;
+    i.task_statuses_link_  = l_task_status_link;
   }
   return {};
 }
