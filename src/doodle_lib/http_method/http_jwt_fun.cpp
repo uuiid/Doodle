@@ -18,6 +18,7 @@ void http_jwt_fun::get_person(const session_data_ptr& in_data) {
     l_jwt = l_jwt.substr(l_it, l_jwt.find(';', l_it) - l_it);
   else if (auto l_it_b = l_jwt.find("Bearer "); l_it_b != std::string::npos)
     l_jwt = l_jwt.substr(l_it_b, l_jwt.find(' ', l_it_b) - l_it_b);
+  if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
 
   auto l_uuid = from_uuid_str(jwt::decode(l_jwt).get_payload_claim("id").as_string());
   auto& l_sql = g_ctx().get<sqlite_database>();
