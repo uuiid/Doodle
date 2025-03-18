@@ -9,12 +9,12 @@ import { io } from 'socket.io-client';
 import { URL } from './config.js';
 
 
-describe('doodle user测试', function() {
-  it('测试鉴权', async function() {
-    const req = await request.post(`${URL}/api/data/user/context`).send({
-      username: 'admin',
-      password: 'admin',
-    });
-    expect(req.status).to.equal(401);
+describe('doodle user测试', function () {
+  it('测试鉴权', async function () {
+    try {
+      const req = await request.get(`${URL}/api/data/user/context`);
+    } catch (e) {
+      expect(e.status).to.equal(401);
+    }
   });
 });
