@@ -163,6 +163,31 @@ struct project_with_extra_data : project {
   // to json
   friend void to_json(nlohmann::json& j, const project_with_extra_data& p) {
     to_json(j, static_cast<const project&>(p));
+
+    j["descriptors"] = nlohmann::json::value_t::array;
+    for (const auto& d : p.descriptors_) {
+      j["descriptors"].push_back(
+          nlohmann::json{
+              {"id", d.uuid_id_},
+              {"name", d.name_},
+              {"field_name", d.field_name_},
+              {"data_type", d.data_type_},
+              {"choices", d.choices_},
+              {"for_client", d.for_client_},
+              {"entity_type", d.entity_type_},
+              {"department", d.department_},
+          }
+      );
+    }
+
+    for (const auto& d : p.task_types_priority_) {
+      j["task_types_priority"][fmt::to_string(d.uuid_id_)] = d.priority_;
+    }
+
+    for (const auto& d : p.task_statuses_link_) {
+      j["task_statuses_link"][fmt::to_string(d.uuid_id_)] =
+          nlohmann::json{{"priority", d.priority_}, {"roles_for_board", d.roles_for_board_}};
+    }
   }
 };
 
