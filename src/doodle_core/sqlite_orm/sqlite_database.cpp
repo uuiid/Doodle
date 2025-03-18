@@ -143,6 +143,7 @@ DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
+DOODLE_UUID_TO_ID(person)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
 
 DOODLE_ID_TO_UUID(project_helper::database_t)
@@ -196,6 +197,7 @@ DOODLE_GET_ALL_SQL(task_status)
 DOODLE_GET_ALL_SQL(task_type)
 DOODLE_GET_ALL_SQL(department)
 DOODLE_GET_ALL_SQL(studio)
+DOODLE_GET_ALL_SQL(status_automation)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
   auto l_list = impl_->get_all<asset_type>();
