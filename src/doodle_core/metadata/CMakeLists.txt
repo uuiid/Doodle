@@ -39,6 +39,7 @@ target_sources(
         notification.h
         task.h
         preview_file.h
+        studio.h
 
         PRIVATE
         assets.cpp
