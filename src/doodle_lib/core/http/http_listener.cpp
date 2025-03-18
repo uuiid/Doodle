@@ -19,27 +19,31 @@ boost::asio::awaitable<void> detail::run_http_listener(
 
   endpoint_type l_end_point{boost::asio::ip::tcp::v4(), in_port};
   auto l_executor = in_io_context.get_executor();
-
-  acceptor_type l_acceptor{
-      co_await boost::asio::this_coro::executor,
-      l_end_point,
-  };
-  l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
-  auto l_local_endpoint = l_acceptor.local_endpoint();
-  std::cout << l_local_endpoint.port() << std::endl;
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
-    if (l_ec) {
-      if (l_ec == boost::asio::error::operation_aborted) {
-        continue;
+  try {
+    acceptor_type l_acceptor{
+        co_await boost::asio::this_coro::executor,
+        l_end_point,
+    };
+    l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
+    auto l_local_endpoint = l_acceptor.local_endpoint();
+    std::cout << l_local_endpoint.port() << std::endl;
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
+      if (l_ec) {
+        if (l_ec == boost::asio::error::operation_aborted) {
+          continue;
+        }
+        default_logger_raw()->log(log_loc(), level::err, "on_accept error: {}", l_ec.message());
+      } else {
+        boost::asio::co_spawn(
+            l_executor, detail::async_session(std::move(l_socket), in_route_ptr),
+            boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+        );
       }
-      default_logger_raw()->log(log_loc(), level::err, "on_accept error: {}", l_ec.message());
-    } else {
-      boost::asio::co_spawn(
-          l_executor, detail::async_session(std::move(l_socket), in_route_ptr),
-          boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-      );
     }
+  }catch (...) {
+    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
+    app_base::Get().stop_app();
   }
 }
 void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port) {
