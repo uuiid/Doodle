@@ -93,6 +93,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
 
 DOODLE_HTTP_FUN(user_context, get, "api/data/user/context", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  get_person(in_handle);
   nlohmann::json l_ret{};
   auto& l_sql             = g_ctx().get<sqlite_database>();
   l_ret["asset_types"]    = l_sql.get_all<asset_type>();
