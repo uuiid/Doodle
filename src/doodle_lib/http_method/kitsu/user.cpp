@@ -6,8 +6,12 @@
 
 #include "doodle_core/metadata/department.h"
 #include "doodle_core/metadata/project_status.h"
+#include "doodle_core/metadata/status_automation.h"
+#include "doodle_core/metadata/task_status.h"
+#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -102,9 +106,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
   l_ret["persons"]                  = l_sql.get_all<person>();
   l_ret["project_status"]           = l_sql.get_all<project_status>();
   l_ret["preview_background_files"] = nlohmann::json::value_t::array;
-  l_ret["projects"]                 = l_sql.get_all<project>();
+  l_ret["projects"]                 = l_sql.get_project_for_user(*person_);
+  l_ret["status_automations"]       = l_sql.get_all<status_automation>();
+  l_ret["studios"]                  = l_sql.get_all<studio>();
+  l_ret["task_status"]              = l_sql.get_all<task_status>();
+  l_ret["task_types"]               = l_sql.get_all<task_type>();
+  l_ret["user_limit"]               = 9999;
+  l_ret["search_filter_groups"]     = nlohmann::json::value_t::object;
+  l_ret["search_filters"]           = nlohmann::json::value_t::object;
 
-  co_return in_handle->make_msg("{}");
+  co_return in_handle->make_msg(l_ret.dump());
 }
 DOODLE_HTTP_FUN_END()
 

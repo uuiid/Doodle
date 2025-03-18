@@ -34,5 +34,19 @@ struct task_type {
     j.at("archived").get_to(p.archived_);
     j.at("shotgun_id").get_to(p.shotgun_id_);
   }
+  // to json
+  template <typename BasicJsonType>
+  friend void to_json(BasicJsonType& j, const task_type& p) {
+    j["id"]            = p.uuid_id_;
+    j["name"]          = p.name_;
+    j["short_name"]    = p.short_name_;
+    j["description"]   = p.description_;
+    j["color"]         = p.color_;
+    j["priority"]      = p.priority_;
+    j["for_entity"]    = p.for_entity_;
+    j["allow_timelog"] = p.allow_timelog_;
+    j["archived"]      = p.archived_;
+    j["shotgun_id"]    = p.shotgun_id_;
+  }
 };
 }  // namespace doodle

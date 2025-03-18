@@ -43,5 +43,23 @@ struct DOODLE_CORE_API task_status {
     in_json.at("shotgun_id").get_to(out_obj.shotgun_id_);
     in_json.at("for_concept").get_to(out_obj.for_concept_);
   }
+  // to json
+  friend void to_json(nlohmann::json& in_json, const task_status& out_obj) {
+    in_json["id"]                  = out_obj.uuid_id_;
+    in_json["name"]                = out_obj.name_;
+    in_json["archived"]            = out_obj.archived_;
+    in_json["short_name"]          = out_obj.short_name_;
+    in_json["description"]         = out_obj.description_;
+    in_json["color"]               = out_obj.color_;
+    in_json["priority"]            = out_obj.priority_;
+    in_json["is_done"]             = out_obj.is_done_;
+    in_json["is_artist_allowed"]   = out_obj.is_artist_allowed_;
+    in_json["is_client_allowed"]   = out_obj.is_client_allowed_;
+    in_json["is_retake"]           = out_obj.is_retake_;
+    in_json["is_feedback_request"] = out_obj.is_feedback_request_;
+    in_json["is_default"]          = out_obj.is_default_;
+    in_json["shotgun_id"]          = out_obj.shotgun_id_;
+    in_json["for_concept"]         = out_obj.for_concept_;
+  }
 };
 }  // namespace doodle

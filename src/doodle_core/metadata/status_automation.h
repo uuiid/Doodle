@@ -18,5 +18,17 @@ struct status_automation {
   uuid out_task_status_id_;
   bool import_last_revision_;
   bool archived_;
+  // to json
+  friend void to_json(nlohmann::json& j, const status_automation& p) {
+    j["id"] = p.uuid_id_;
+    j["entity_type"] = p.entity_type_;
+    j["in_task_type_id"] = p.in_task_type_id_;
+    j["in_task_status_id"] = p.in_task_status_id_;
+    j["out_field_type"] = p.out_field_type_;
+    j["out_task_type_id"] = p.out_task_type_id_;
+    j["out_task_status_id"] = p.out_task_status_id_;
+    j["import_last_revision"] = p.import_last_revision_;
+    j["archived"] = p.archived_;
+  }
 };
 }  // namespace doodle
