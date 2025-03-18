@@ -170,7 +170,11 @@ void user_reg(http_route& in_http_route) {
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", user_authenticated))
       .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/persons/{id}", user_persons_post))
       .reg(
+#ifdef DOODLE_KITSU
+          std::make_shared<user_context_get>()
+#elif
           std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context)
+#endif
 
       );
 }
