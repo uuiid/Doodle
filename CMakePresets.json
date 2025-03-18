@@ -65,6 +65,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "Photoshop_Version": "120.0",
         "BUILD_USD": "ON",
+        "DOODLE_KITSU": "ON",
         "PXR_USD_ROOT": "E:/Doodle/external/USD/debug"
       }
     },

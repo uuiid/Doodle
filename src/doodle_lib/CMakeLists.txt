@@ -78,6 +78,7 @@ target_link_libraries(doodle_lib
 target_compile_definitions(doodle_lib
         PUBLIC
         WIN32_LEAN_AND_MEAN
+        $<$<BOOL:DOODLE_KITSU>:DOODLE_KITSU>
         PRIVATE
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
 )
