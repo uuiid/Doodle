@@ -699,8 +699,11 @@ struct sqlite_database_impl {
         storage_any_(std::move(details::make_storage_doodle(in_path.generic_string()))) {
     storage_any_.open_forever();
     try {
-      auto l_g = storage_any_.transaction_guard();
-      storage_any_.sync_schema(true);
+      auto l_g   = storage_any_.transaction_guard();
+      auto l_map = storage_any_.sync_schema(true);
+      for (auto& [l_k, l_v] : l_map) {
+        default_logger_raw()->info("数据库更新 {} {}", l_k, magic_enum::enum_name(l_v));
+      }
       l_g.commit();
     } catch (...) {
       default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
