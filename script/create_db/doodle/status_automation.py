@@ -25,20 +25,20 @@ class StatusAutomation(BaseMixin):
     entity_type = orm.mapped_column(sqlalchemy.String(40), default="asset")
 
     in_task_type_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
     )
     in_task_status_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
     )
 
     out_field_type = orm.mapped_column(
         ChoiceType(CHANGE_TYPES), default="status", nullable=False
     )
     out_task_type_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
     )
     out_task_status_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("task_status.uuid_id"),
         index=True,
         nullable=True,

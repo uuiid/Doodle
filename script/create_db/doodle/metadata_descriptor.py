@@ -12,12 +12,12 @@ from zou.app.models.metadata_descriptor import DepartmentMetadataDescriptorLink 
 class DepartmentMetadataDescriptorLink(BaseMixin):
     __tablename__ = "department_metadata_descriptor_link"
     metadata_descriptor_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("metadata_descriptor.uuid_id"),
         index=True
     )
     department_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("department.uuid_id"),
         index=True
     )
@@ -58,7 +58,7 @@ class MetadataDescriptor(BaseMixin):
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     project_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid_id"),
         nullable=False,
         index=True,

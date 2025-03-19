@@ -17,13 +17,13 @@ class AttachmentFile(BaseMixin):
     extension = orm.mapped_column(sqlalchemy.String(6))
     mimetype = orm.mapped_column(sqlalchemy.String(255))
     comment_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("comment.id"),
         index=True,
         nullable=True,
     )
     chat_message_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("chat_message.id"),
         index=True,
         nullable=True,

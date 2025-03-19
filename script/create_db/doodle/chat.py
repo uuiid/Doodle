@@ -12,12 +12,12 @@ from zou.app.models.chat import Chat as ZouChat
 class ChatParticipant(orm.DeclarativeBase):
     __tablename__ = "chat_participant"
     chat_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("chat.id"),
         primary_key=True,
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.id"),
         primary_key=True,
     )
@@ -33,7 +33,7 @@ class Chat(BaseMixin):
     Message shared in the entity chat feeds.
     """
 
-    object_id = orm.mapped_column(UUIDType(binary=False), nullable=False, index=True)
+    object_id = orm.mapped_column(UUIDType(binary=True), nullable=False, index=True)
     object_type = orm.mapped_column(
         sqlalchemy.String(80), nullable=False, index=True, default="entity"
     )

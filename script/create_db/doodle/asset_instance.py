@@ -17,6 +17,9 @@ class AssetInstance(BaseMixin):
     a battle field).
     """
     __tablename__ = "asset_instance"
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
     asset_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.id"),
@@ -30,10 +33,10 @@ class AssetInstance(BaseMixin):
     data = orm.mapped_column(JSONB)
 
     scene_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.id"), index=True
     )
     target_asset_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.id"), index=True
     )
 
     __table_args__ = (
@@ -48,9 +51,9 @@ class AssetInstance(BaseMixin):
 
     # Do not use these column. They are deprecated and will be dropped in
     # upcoming version
-    entity_id = orm.mapped_column(UUIDType(binary=False), sqlalchemy.ForeignKey("entity.id"))
+    entity_id = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("entity.id"))
     entity_type_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity_type.id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("asset_type.id")
     )
 
     def from_zou(self, zou_asset_instance: ZouAssetInstance):

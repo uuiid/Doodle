@@ -14,7 +14,7 @@ class DayOff(BaseMixin):
     end_date = db.Column(db.Date, nullable=False)
     description = db.Column(db.Text)
     person_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("person.id"), index=True
     )
     __table_args__ = (
         db.UniqueConstraint("person_id", "date", name="day_off_uc"),

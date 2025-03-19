@@ -9,13 +9,13 @@ from doodle.base import BaseMixin
 
 class CommentPreviewLink(db.Model):
     comment = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("comment.id"),
         primary_key=True,
         index=True,
     )
     preview_file = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("preview_file.id"),
         primary_key=True,
         index=True,
@@ -26,13 +26,13 @@ mentions_table = db.Table(
     "comment_mentions",
     db.Column(
         "comment",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("comment.id"),
         primary_key=True,
     ),
     db.Column(
         "person",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         primary_key=True,
     ),
@@ -42,13 +42,13 @@ department_mentions_table = db.Table(
     "comment_department_mentions",
     db.Column(
         "comment",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("comment.id"),
         primary_key=True,
     ),
     db.Column(
         "department",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("department.id"),
         primary_key=True,
     ),
@@ -58,13 +58,13 @@ acknowledgements_table = db.Table(
     "comment_acknoledgments",
     db.Column(
         "comment",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("comment.id"),
         primary_key=True,
     ),
     db.Column(
         "person",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         primary_key=True,
     ),
@@ -82,7 +82,7 @@ class Comment(BaseMixin):
 
     shotgun_id = db.Column(db.Integer)
 
-    object_id = db.Column(UUIDType(binary=False), nullable=False, index=True)
+    object_id = db.Column(UUIDType(binary=True), nullable=False, index=True)
     object_type = db.Column(db.String(80), nullable=False, index=True)
     text = db.Column(db.Text())
     data = db.Column(JSONB)
@@ -92,22 +92,22 @@ class Comment(BaseMixin):
     links = db.Column(db.ARRAY(db.String()))
 
     task_status_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_status.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_status.id"), index=True
     )
     person_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         nullable=False,
         index=True,
     )
     editor_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         default=None,
         index=True,
     )
     preview_file_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("preview_file.id")
+        UUIDType(binary=True), db.ForeignKey("preview_file.id")
     )
     previews = db.relationship(
         "PreviewFile",

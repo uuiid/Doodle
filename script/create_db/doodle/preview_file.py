@@ -3,9 +3,7 @@ from sqlalchemy_utils import UUIDType, ChoiceType
 from sqlalchemy import orm
 import sqlalchemy
 from doodle.base import BaseMixin
-from zou.app.utils import fields
-
-from sqlalchemy.dialects.postgresql import JSONB
+from zou.app.models.preview_file import PreviewFile as ZouPreviewFile
 
 STATUSES = [
     ("processing", "Processing"),
@@ -25,77 +23,74 @@ class PreviewFile(BaseMixin):
     Describes a file which is aimed at being reviewed. It is not a publication
     neither a working file.
     """
+    __tablename__ = "preview_file"
 
-    name = db.Column(db.String(250))
-    original_name = db.Column(db.String(250))
-    revision = db.Column(db.Integer(), default=1)
-    position = db.Column(db.Integer(), default=1)
-    extension = db.Column(db.String(6))
-    description = db.Column(db.Text())
-    path = db.Column(db.String(400))
-    source = db.Column(db.String(40))
-    file_size = db.Column(db.BigInteger(), default=0)
-    status = db.Column(
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
+    name = orm.mapped_column(sqlalchemy.String(250))
+    original_name = orm.mapped_column(sqlalchemy.String(250))
+    revision = orm.mapped_column(sqlalchemy.Integer(), default=1)
+    position = orm.mapped_column(sqlalchemy.Integer(), default=1)
+    extension = orm.mapped_column(sqlalchemy.String(6))
+    description = orm.mapped_column(sqlalchemy.Text())
+    path = orm.mapped_column(sqlalchemy.String(400))
+    source = orm.mapped_column(sqlalchemy.String(40))
+    file_size = orm.mapped_column(sqlalchemy.BigInteger(), default=0)
+    status = orm.mapped_column(
         ChoiceType(STATUSES), default="processing", nullable=False
     )
-    validation_status = db.Column(
+    validation_status = orm.mapped_column(
         ChoiceType(VALIDATION_STATUSES), default="neutral", nullable=False
     )
-    annotations = db.Column(JSONB)
-    width = db.Column(db.Integer(), default=0)
-    height = db.Column(db.Integer(), default=0)
-    duration = db.Column(db.Float, default=0)
+    annotations = orm.mapped_column(sqlalchemy.Text())
+    width = orm.mapped_column(sqlalchemy.Integer(), default=0)
+    height = orm.mapped_column(sqlalchemy.Integer(), default=0)
+    duration = orm.mapped_column(sqlalchemy.Float, default=0)
 
-    task_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task.id"), index=True
+    task_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid_id"), index=True
     )
-    person_id = db.Column(UUIDType(binary=False), db.ForeignKey("person.id"))
-    source_file_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("output_file.id")
+    person_id = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"))
+    source_file_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("output_file.uuid_id")
     )
 
     __table_args__ = (
-        db.UniqueConstraint("name", "task_id", "revision", name="preview_uc"),
+        sqlalchemy.UniqueConstraint("name", "task_id", "revision", name="preview_uc"),
     )
 
-    shotgun_id = db.Column(db.Integer, unique=True)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, unique=True)
 
-    is_movie = db.Column(db.Boolean, default=False)  # deprecated
-    url = db.Column(db.String(600))  # deprecated
-    uploaded_movie_url = db.Column(db.String(600))  # deprecated
-    uploaded_movie_name = db.Column(db.String(150))  # deprecated
+    is_movie = orm.mapped_column(sqlalchemy.Boolean, default=False)  # deprecated
+    url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
+    uploaded_movie_url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
+    uploaded_movie_name = orm.mapped_column(sqlalchemy.String(150))  # deprecated
 
-    def __repr__(self):
-        return "<PreviewFile %s>" % self.id
+    def from_zou(self, preview_file: ZouPreviewFile):
+        self.uuid_id = preview_file.id
+        self.name = preview_file.name
+        self.original_name = preview_file.original_name
+        self.revision = preview_file.revision
+        self.position = preview_file.position
+        self.extension = preview_file.extension
+        self.description = preview_file.description
+        self.path = preview_file.path
+        self.source = preview_file.source
+        self.file_size = preview_file.file_size
+        self.status = preview_file.status
+        self.validation_status = preview_file.validation_status
+        self.annotations = preview_file.annotations
+        self.width = preview_file.width
+        self.height = preview_file.height
+        self.duration = preview_file.duration
+        self.task_id = preview_file.task_id
+        self.person_id = preview_file.person_id
+        self.source_file_id = preview_file.source_file_id
+        self.shotgun_id = preview_file.shotgun_id
+        self.is_movie = preview_file.is_movie
+        self.url = preview_file.url
+        self.uploaded_movie_url = preview_file.uploaded_movie_url
+        self.uploaded_movie_name = preview_file.uploaded_movie_name
 
-    @classmethod
-    def create_from_import(cls, data):
-        del data["type"]
-        if "comments" in data:
-            del data["comments"]
-        previous_data = cls.get(data["id"])
-        if "status" not in data or data["status"] is None:
-            data["status"] = "ready"
-        if previous_data is None:
-            return (cls.create(**data), False)
-        else:
-            previous_data.update(data)
-            return (previous_data, True)
-
-    def present(self):
-        return fields.serialize_dict(
-            {
-                "id": self.id,
-                "name": self.name,
-                "original_name": self.original_name,
-                "extension": self.extension,
-                "revision": self.revision,
-                "position": self.position,
-                "file_size": self.file_size,
-                "status": self.status,
-                "validation_status": self.validation_status,
-                "task_id": self.task_id,
-                "person_id": self.person_id,
-                "created_at": self.created_at,
-            }
-        )
+        return self

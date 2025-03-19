@@ -31,6 +31,7 @@ import doodle.person
 import doodle.metadata_descriptor
 import doodle.project
 import doodle.entity
+import doodle.asset_instance
 
 PASS = getenv("KITSU_PASS")
 
@@ -102,5 +103,5 @@ def main():
 
 
 if __name__ == "__main__":
-    os.remove("D:\\zou2.db")
+    # os.remove("D:\\zou2.db")
     main()

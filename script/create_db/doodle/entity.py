@@ -23,10 +23,10 @@ ENTITY_STATUSES = [
 class AssetInstanceLink(BaseMixin):
     __tablename__ = "asset_instance_link"
     entity_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id")
     )
     asset_instance_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("asset_instance.uuid_id"),
     )
     def from_zou(self, asset_instance_link: ZouAssetInstanceLink):
@@ -38,12 +38,12 @@ class AssetInstanceLink(BaseMixin):
 class EntityLink(BaseMixin):
     __tablename__ = "entity_link"
     entity_in_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.uuid_id"),
         index=True,
     )
     entity_out_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.uuid_id"),
         index=True,
     )
@@ -71,11 +71,11 @@ class EntityLink(BaseMixin):
 class EntityConceptLink(BaseMixin):
     __tablename__ = "entity_concept_link"
     entity_in_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.uuid_id"),
     )
     entity_out_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.uuid_id"),
     )
     def from_zou(self, entity_concept_link: ZouEntityConceptLink):
@@ -112,42 +112,42 @@ class Entity(BaseMixin):
     )
 
     project_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid_id"),
         nullable=False,
         index=True,
     )
     entity_type_id = orm.mapped_column(
-        UUIDType(binary=False),
-        sqlalchemy.ForeignKey("entity_type.uuid_id"),
+        UUIDType(binary=True),
+        sqlalchemy.ForeignKey("asset_type.uuid_id"),
         nullable=False,
         index=True,
     )
 
     parent_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
     )  # sequence or episode
 
     source_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.uuid_id"),
         index=True,
         nullable=True,
     )  # if the entity is generated from another one (like shots from scene).
 
     preview_file_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("preview_file.uuid_id", name="fk_main_preview"),
     )
     data = orm.mapped_column(sqlalchemy.TEXT())
 
     ready_for = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("task_type.uuid_id", name="fk_ready_for"),
     )
 
     created_by = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid_id"),
         nullable=True,
     )
@@ -208,10 +208,10 @@ class EntityVersion(BaseMixin):
     name = orm.mapped_column(sqlalchemy.String(160), nullable=False)
     data = orm.mapped_column(sqlalchemy.TEXT())
     entity_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("person.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
     )
     def from_zou(self, entity_version: ZouEntityVersion):
         self.name = entity_version.name

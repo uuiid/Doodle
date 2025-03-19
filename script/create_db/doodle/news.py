@@ -12,25 +12,25 @@ class News(BaseMixin):
 
     change = db.Column(db.Boolean, nullable=False, default=False)
     author_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         nullable=False,
         index=True,
     )
     comment_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("comment.id"),
         nullable=True,
         index=True,
     )
     task_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("task.id"),
         nullable=False,
         index=True,
     )
     preview_file_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("preview_file.id"),
         nullable=True,
         index=True,

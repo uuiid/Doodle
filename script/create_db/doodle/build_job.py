@@ -27,7 +27,7 @@ class BuildJob(BaseMixin):
     ended_at = orm.mapped_column(sqlalchemy.DateTime)
 
     playlist_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("playlist.id"),
         nullable=False,
         index=True,

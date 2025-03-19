@@ -9,13 +9,13 @@ assignees_table = db.Table(
     "assignations",
     db.Column(
         "task",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("task.id"),
         primary_key=True,
     ),
     db.Column(
         "person",
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         primary_key=True,
     ),
@@ -50,22 +50,22 @@ class Task(BaseMixin):
     nb_drawings = db.Column(db.Integer, default=0)
 
     shotgun_id = db.Column(db.Integer)
-    last_preview_file_id = db.Column(UUIDType(binary=False))
+    last_preview_file_id = db.Column(UUIDType(binary=True))
 
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("project.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("project.id"), index=True
     )
     task_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_type.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_type.id"), index=True
     )
     task_status_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_status.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_status.id"), index=True
     )
     entity_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("entity.id"), index=True
     )
     assigner_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("person.id"), index=True
     )
     assignees = db.relationship("Person", secondary=assignees_table)
 

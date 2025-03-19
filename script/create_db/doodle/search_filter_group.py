@@ -22,8 +22,8 @@ class SearchFilterGroup(BaseMixin):
         nullable=False,
     )
 
-    person_id = db.Column(UUIDType(binary=False), db.ForeignKey("person.id"))
-    project_id = db.Column(UUIDType(binary=False), db.ForeignKey("project.id"))
+    person_id = db.Column(UUIDType(binary=True), db.ForeignKey("person.id"))
+    project_id = db.Column(UUIDType(binary=True), db.ForeignKey("project.id"))
     department_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("department.id")
+        UUIDType(binary=True), db.ForeignKey("department.id")
     )

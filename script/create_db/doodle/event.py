@@ -15,9 +15,9 @@ class ApiEvent(BaseMixin):
 
     name = db.Column(db.String(80), nullable=False, index=True)
     user_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("person.id"), index=True
     )
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("project.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("project.id"), index=True
     )
     data = db.Column(JSONB)

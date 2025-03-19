@@ -26,30 +26,30 @@ class Notification(BaseMixin):
     change = db.Column(db.Boolean, nullable=False, default=False)
     type = db.Column(ChoiceType(TYPES), nullable=False)
     person_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         nullable=False,
         index=True,
     )
     author_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         nullable=False,
         index=True,
     )
     comment_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("comment.id"),
         nullable=True,
         index=True,
     )
     task_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("task.id"),
         nullable=False,
         index=True,
     )
-    reply_id = db.Column(UUIDType(binary=False), nullable=True, index=True)
+    reply_id = db.Column(UUIDType(binary=True), nullable=True, index=True)
 
     __table_args__ = (
         db.UniqueConstraint(

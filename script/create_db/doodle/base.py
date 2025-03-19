@@ -13,7 +13,7 @@ class BaseMixin(DeclarativeBase):
     #     UUIDType(binary=True), unique=True
     # )
     # id = db.Column(
-    #     UUIDType(binary=False), primary_key=True, default=fields.gen_uuid
+    #     UUIDType(binary=True), primary_key=True, default=fields.gen_uuid
     # )
 
     # Audit fields

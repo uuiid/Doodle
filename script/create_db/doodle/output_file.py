@@ -5,9 +5,7 @@ from sqlalchemy import orm
 import sqlalchemy
 
 from doodle.base import BaseMixin
-
-from sqlalchemy.dialects.postgresql import JSONB
-
+ 
 
 class OutputFile(BaseMixin):
     """
@@ -15,58 +13,62 @@ class OutputFile(BaseMixin):
     publication.
     It is linked to a working file, an entity and a task type.
     """
+    __tablename__ = "output_file"
 
-    shotgun_id = db.Column(db.Integer())
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer())
 
-    name = db.Column(db.String(250), nullable=False)
-    canceled = db.Column(db.Boolean(), default=False, nullable=False)
-    size = db.Column(db.Integer())
-    checksum = db.Column(db.String(32))
-    description = db.Column(db.Text())
-    comment = db.Column(db.Text())
-    extension = db.Column(db.String(10))
-    revision = db.Column(db.Integer(), nullable=False)
-    representation = db.Column(db.String(20), index=True)
-    nb_elements = db.Column(db.Integer(), default=1)
-    source = db.Column(db.String(40))
-    path = db.Column(db.String(400))
-    data = db.Column(JSONB)
+    name = orm.mapped_column(sqlalchemy.String(250), nullable=False)
+    canceled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    size = orm.mapped_column(sqlalchemy.Integer())
+    checksum = orm.mapped_column(sqlalchemy.String(32))
+    description = orm.mapped_column(sqlalchemy.Text())
+    comment = orm.mapped_column(sqlalchemy.Text())
+    extension = orm.mapped_column(sqlalchemy.String(10))
+    revision = orm.mapped_column(sqlalchemy.Integer(), nullable=False)
+    representation = orm.mapped_column(sqlalchemy.String(20), index=True)
+    nb_elements = orm.mapped_column(sqlalchemy.Integer(), default=1)
+    source = orm.mapped_column(sqlalchemy.String(40))
+    path = orm.mapped_column(sqlalchemy.String(400))
+    data = orm.mapped_column(JSONB)
 
-    file_status_id = db.Column(
-        UUIDType(binary=False),
-        db.ForeignKey("file_status.id"),
+    file_status_id = orm.mapped_column(
+        UUIDType(binary=True),
+        sqlalchemy.ForeignKey("file_status.uuid_id"),
         nullable=False,
         index=True,
     )
-    entity_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
+    entity_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
     )
-    asset_instance_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("asset_instance.id"), index=True
+    asset_instance_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("asset_instance.uuid_id"), index=True
     )
-    output_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("output_type.id"), index=True
+    output_type_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("output_type.uuid_id"), index=True
     )
-    task_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_type.id"), index=True
+    task_type_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
     )
-    person_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+    person_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
     )
-    source_file_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("working_file.id"), index=True
+    source_file_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("working_file.uuid_id"), index=True
     )
     source_file = relationship("WorkingFile", back_populates="outputs")
-    temporal_entity_id = db.Column(
-        UUIDType(binary=False),
-        db.ForeignKey("entity.id"),
+    temporal_entity_id = orm.mapped_column(
+        UUIDType(binary=True),
+        sqlalchemy.ForeignKey("entity.uuid_id"),
         default=None,
         nullable=True,
         index=True,
     )
 
     __table_args__ = (
-        db.UniqueConstraint(
+        sqlalchemy.UniqueConstraint(
             "name",
             "entity_id",
             "asset_instance_id",
@@ -78,6 +80,4 @@ class OutputFile(BaseMixin):
             name="output_file_uc",
         ),
     )
-
-    def __repr__(self):
-        return "<OutputFile %s>" % self.id
+ 

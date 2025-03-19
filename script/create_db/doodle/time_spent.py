@@ -14,10 +14,10 @@ class TimeSpent(BaseMixin):
     date = db.Column(db.Date, nullable=False)
 
     task_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task.id"), index=True
     )
     person_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("person.id"), index=True
     )
 
     __table_args__ = (

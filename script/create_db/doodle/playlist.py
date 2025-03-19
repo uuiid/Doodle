@@ -17,13 +17,13 @@ class Playlist(BaseMixin):
     shots = db.Column(JSONB)
 
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("project.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("project.id"), index=True
     )
     episode_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("entity.id"), index=True
     )
     task_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_type.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_type.id"), index=True
     )
     for_client = db.Column(db.Boolean(), default=False, index=True)
     for_entity = db.Column(db.String(10), default="shot", index=True)

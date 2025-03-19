@@ -11,20 +11,20 @@ class Subscription(BaseMixin):
     """
 
     person_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         nullable=False,
         index=True,
     )
     task_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task.id"), index=True
     )
 
     entity_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("entity.id"), index=True
     )  # Deprecated
     task_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_type.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_type.id"), index=True
     )  # Deprecated
 
     __table_args__ = (

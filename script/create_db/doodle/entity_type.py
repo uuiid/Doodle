@@ -13,12 +13,12 @@ class TaskTypeAssetTypeLink(BaseMixin):
     __tablename__ = "task_type_asset_type_link"
 
     asset_type_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("asset_type.uuid_id"),
         index=True
     )
     task_type_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey(TaskType.uuid_id),
         index=True
     )

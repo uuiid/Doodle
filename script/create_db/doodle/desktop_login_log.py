@@ -13,7 +13,7 @@ class DesktopLoginLog(BaseMixin):
     """
 
     person_id = db.Column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         db.ForeignKey("person.id"),
         nullable=False,
         index=True,

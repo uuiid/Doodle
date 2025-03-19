@@ -26,16 +26,16 @@ class WorkingFile(BaseMixin):
     data = db.Column(JSONB)
 
     task_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task.id"), index=True
     )
     entity_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("entity.id"), index=True
     )
     person_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("person.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("person.id"), index=True
     )
     software_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("software.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("software.id"), index=True
     )
     outputs = relationship("OutputFile", back_populates="source_file")
 

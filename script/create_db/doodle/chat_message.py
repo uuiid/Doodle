@@ -14,13 +14,13 @@ class ChatMessage(BaseMixin):
     """
 
     chat_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("chat.uuid_id"),
         nullable=False,
         index=True,
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid_id"),
         nullable=False,
         index=True,

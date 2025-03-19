@@ -26,7 +26,7 @@ class TaskType(BaseMixin):
     shotgun_id = orm.mapped_column(sqlalchemy.Integer, index=True)
 
     department_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("department.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("department.uuid_id"), index=True
     )
 
     __table_args__ = (

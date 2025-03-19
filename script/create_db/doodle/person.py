@@ -46,12 +46,12 @@ ROLE_TYPES = [
 class DepartmentLink(BaseMixin):
     __tablename__ = "department_link"
     person_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid_id"),
         index=True,
     )
     department_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("department.uuid_id"),
         index=True,
     )
@@ -131,7 +131,7 @@ class Person(BaseMixin):
         "Department", secondary="department_link", lazy="joined"
     )
     studio_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("studio.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("studio.uuid_id"), index=True
     )
 
     is_generated_from_ldap = orm.mapped_column(sqlalchemy.Boolean(), default=False)

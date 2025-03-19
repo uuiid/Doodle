@@ -38,13 +38,13 @@ PROJECT_STYLES = [
 class ProjectPersonLink(BaseMixin):
     __tablename__ = "project_person_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid_id"),
 
         index=True,
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid_id"),
 
         index=True,
@@ -61,13 +61,13 @@ class ProjectPersonLink(BaseMixin):
 class ProjectTaskTypeLink(BaseMixin):
     __tablename__ = "project_task_type_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid_id"),
 
         index=True,
     )
     task_type_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("task_type.uuid_id"),
 
         index=True,
@@ -89,13 +89,13 @@ class ProjectTaskTypeLink(BaseMixin):
 class ProjectTaskStatusLink(BaseMixin):
     __tablename__ = "project_task_status_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid_id"),
 
         index=True,
     )
     task_status_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("task_status.uuid_id"),
 
         index=True,
@@ -122,10 +122,10 @@ class ProjectTaskStatusLink(BaseMixin):
 class ProjectAssetTypeLink(BaseMixin):
     __tablename__ = "project_asset_type_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("project.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid_id")
     )
     asset_type_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("asset_type.uuid_id"),
 
     )
@@ -137,13 +137,13 @@ class ProjectAssetTypeLink(BaseMixin):
 class ProjectStatusAutomationLink(BaseMixin):
     __tablename__ = "project_status_automation_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid_id"),
 
         index=True,
     )
     status_automation_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("status_automation.uuid_id"),
 
         index=True,
@@ -157,10 +157,10 @@ class ProjectStatusAutomationLink(BaseMixin):
 class ProjectPreviewBackgroundFileLink(BaseMixin):
     __tablename__ = "project_preview_background_file_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("project.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid_id")
     )
     preview_background_file_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("preview_background_file.uuid_id"),
 
     )
@@ -207,11 +207,11 @@ class Project(BaseMixin):
     ld_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=6)
 
     project_status_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("project_status.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project_status.id"), index=True
     )
 
     default_preview_background_file_id = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("preview_background_file.id"),
         default=None,
         index=True,

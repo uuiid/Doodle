@@ -18,13 +18,13 @@ class ScheduleItem(BaseMixin):
     man_days = db.Column(db.Integer)
 
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("project.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("project.id"), index=True
     )
     task_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_type.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_type.id"), index=True
     )
     object_id = db.Column(
-        UUIDType(binary=False), index=True
+        UUIDType(binary=True), index=True
     )  # Sequence or Episode or Asset Type
 
     __table_args__ = (

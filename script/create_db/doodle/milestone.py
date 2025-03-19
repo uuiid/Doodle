@@ -16,10 +16,10 @@ class Milestone(BaseMixin):
     name = db.Column(db.String(40), nullable=False)
 
     project_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("project.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("project.id"), index=True
     )
     task_type_id = db.Column(
-        UUIDType(binary=False), db.ForeignKey("task_type.id"), index=True
+        UUIDType(binary=True), db.ForeignKey("task_type.id"), index=True
     )
 
     def present(self):
