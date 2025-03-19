@@ -46,7 +46,7 @@ add_custom_command(
 add_custom_command(
         TARGET doodle_maya
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Fbx::Fbx> $<TARGET_FILE_DIR:doodle_maya>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Fbx::Fbx> ${CMAKE_BINARY_DIR}/plug/maya/plug-ins
 )
 
 # 定义安装逻辑

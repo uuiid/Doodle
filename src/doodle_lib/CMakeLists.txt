@@ -37,7 +37,7 @@ set_target_properties(doodle_lib
 add_custom_command(
         TARGET doodle_lib
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Fbx::Fbx> $<TARGET_FILE_DIR:doodle_lib>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Fbx::Fbx> ${CMAKE_BINARY_DIR}/bin
 )
 
 # 如果使用mysql mariadb  连接器则需要这个函数
@@ -93,4 +93,4 @@ target_include_directories(doodle_lib
         ${PROJECT_SOURCE_DIR}/src
 )
 #add_custom_target(genexdebug
-#        COMMAND ${CMAKE_COMMAND} -E echo "$<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:'is lib'>")
+#        COMMAND ${CMAKE_COMMAND} -E echo "$<TARGET_FILE:Fbx::Fbx> $<TARGET_RUNTIME_DLLS:doodle_lib>")
