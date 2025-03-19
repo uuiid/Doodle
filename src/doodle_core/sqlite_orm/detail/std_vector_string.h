@@ -56,7 +56,7 @@ struct row_extractor<std::vector<std::string>> : row_extractor<std::string> {
   std::vector<std::string> extract(sqlite3_stmt* stmt, int columnIndex) const {
     // static std::locale g_utf_8_locale{"UTF-8"};
     const auto l_str = row_extractor<std::string>::extract(stmt, columnIndex);
-    std::string l_str_u8{l_str.begin(), l_str.end()};
+    // std::string l_str_u8{l_str.begin(), l_str.end()};
     nlohmann::json l_json = nlohmann::json::parse(l_str);
     return l_json.get<std::vector<std::string>>();
   }
