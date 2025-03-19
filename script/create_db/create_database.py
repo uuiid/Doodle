@@ -32,6 +32,10 @@ import doodle.metadata_descriptor
 import doodle.project
 import doodle.entity
 import doodle.asset_instance
+import doodle.preview_file
+import doodle.software
+import doodle.working_file
+import doodle.output_file
 
 PASS = getenv("KITSU_PASS")
 
@@ -50,7 +54,7 @@ def main():
         l_department : list[zou.app.models.department.Department] = zou.app.models.department.Department.query.all()
         l_preview_background_file : list[zou.app.models.preview_background_file.PreviewBackgroundFile] = zou.app.models.preview_background_file.PreviewBackgroundFile.query.all()
         l_person : list[zou.app.models.person.Person] = zou.app.models.person.Person.query.all()
-        l_DepartmentLink : list[zou.app.models.studio.DepartmentLink] = zou.app.models.person.DepartmentLink.query.all()
+        l_DepartmentLink : list[zou.app.models.person.DepartmentLink] = zou.app.models.person.DepartmentLink.query.all()
         l_metadata_descriptor : list[zou.app.models.metadata_descriptor.MetadataDescriptor] = zou.app.models.metadata_descriptor.MetadataDescriptor.query.all()
         l_DepartmentMetadataDescriptorLink : list[zou.app.models.metadata_descriptor.DepartmentMetadataDescriptorLink] = zou.app.models.metadata_descriptor.DepartmentMetadataDescriptorLink.query.all()
         l_project : list[zou.app.models.project.Project] = zou.app.models.project.Project.query.all()

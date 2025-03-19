@@ -1,25 +1,20 @@
 from sqlalchemy_utils import UUIDType
 from sqlalchemy.dialects.postgresql import JSONB
+from doodle.base import BaseMixin
+
 from sqlalchemy import orm
 import sqlalchemy
 
-from doodle.base import BaseMixin
-
-assignees_table = db.Table(
-    "assignations",
-    db.Column(
-        "task",
-        UUIDType(binary=True),
-        db.ForeignKey("task.id"),
-        primary_key=True,
-    ),
-    db.Column(
-        "person",
-        UUIDType(binary=True),
-        db.ForeignKey("person.id"),
-        primary_key=True,
-    ),
-)
+class Assignations(BaseMixin):
+    __table__ = "assignations"
+    task = orm.mapped_column(
+        UUIDType(binary=False),
+        sqlalchemy.ForeignKey("task.uuid_id"),
+    )
+    person = orm.mapped_column(
+        UUIDType(binary=False),
+        sqlalchemy.ForeignKey("person.uuid_id"),
+    )
 
 
 class Task(BaseMixin):
@@ -28,88 +23,56 @@ class Task(BaseMixin):
     The task has a state and assigned to people. It handles notion of time like
     duration, start date and end date.
     """
+    __tablename__ = "task"
 
-    name = db.Column(db.String(80), nullable=False)
-    description = db.Column(db.Text())
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
+    name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
+    description = orm.mapped_column(sqlalchemy.Text())
 
-    priority = db.Column(db.Integer, default=0)
-    difficulty = db.Column(db.Integer, default=3, nullable=False)
-    duration = db.Column(db.Float, default=0)
-    estimation = db.Column(db.Float, default=0)
-    completion_rate = db.Column(db.Integer, default=0)
-    retake_count = db.Column(db.Integer, default=0)
-    sort_order = db.Column(db.Integer, default=0)
-    start_date = db.Column(db.DateTime)
-    due_date = db.Column(db.DateTime)
-    real_start_date = db.Column(db.DateTime)
-    end_date = db.Column(db.DateTime)
-    done_date = db.Column(db.DateTime)
-    last_comment_date = db.Column(db.DateTime)
-    nb_assets_ready = db.Column(db.Integer, default=0)
-    data = db.Column(JSONB)
-    nb_drawings = db.Column(db.Integer, default=0)
+    priority = orm.mapped_column(sqlalchemy.Integer, default=0)
+    difficulty = orm.mapped_column(sqlalchemy.Integer, default=3, nullable=False)
+    duration = orm.mapped_column(sqlalchemy.Float, default=0)
+    estimation = orm.mapped_column(sqlalchemy.Float, default=0)
+    completion_rate = orm.mapped_column(sqlalchemy.Integer, default=0)
+    retake_count = orm.mapped_column(sqlalchemy.Integer, default=0)
+    sort_order = orm.mapped_column(sqlalchemy.Integer, default=0)
+    start_date = orm.mapped_column(sqlalchemy.DateTime)
+    due_date = orm.mapped_column(sqlalchemy.DateTime)
+    real_start_date = orm.mapped_column(sqlalchemy.DateTime)
+    end_date = orm.mapped_column(sqlalchemy.DateTime)
+    done_date = orm.mapped_column(sqlalchemy.DateTime)
+    last_comment_date = orm.mapped_column(sqlalchemy.DateTime)
+    nb_assets_ready = orm.mapped_column(sqlalchemy.Integer, default=0)
+    data = orm.mapped_column(JSONB)
+    nb_drawings = orm.mapped_column(sqlalchemy.Integer, default=0)
 
-    shotgun_id = db.Column(db.Integer)
-    last_preview_file_id = db.Column(UUIDType(binary=True))
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer)
+    last_preview_file_id = orm.mapped_column(UUIDType(binary=False))
 
-    project_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("project.id"), index=True
+    project_id = orm.mapped_column(
+        UUIDType(binary=False), sqlalchemy.ForeignKey("project.uuid_id"), index=True
     )
-    task_type_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("task_type.id"), index=True
+    task_type_id = orm.mapped_column(
+        UUIDType(binary=False), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
     )
-    task_status_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("task_status.id"), index=True
+    task_status_id = orm.mapped_column(
+        UUIDType(binary=False), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
     )
-    entity_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("entity.id"), index=True
+    entity_id = orm.mapped_column(
+        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
     )
-    assigner_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("person.id"), index=True
+    assigner_id = orm.mapped_column(
+        UUIDType(binary=False), sqlalchemy.ForeignKey("person.uuid_id"), index=True
     )
-    assignees = db.relationship("Person", secondary=assignees_table)
+    assignees = orm.relationship("Person", secondary=Assignations.__table__)
 
     __table_args__ = (
-        db.UniqueConstraint(
+        sqlalchemy.UniqueConstraint(
             "name", "project_id", "task_type_id", "entity_id", name="task_uc"
         ),
-        db.CheckConstraint(
+        sqlalchemy.CheckConstraint(
             "difficulty > 0 AND difficulty < 6", name="check_difficulty"
         ),
     )
-
-    def assignees_as_string(self):
-        return ", ".join([x.full_name for x in self.assignees])
-
-    def set_assignees(self, person_ids):
-        from zou.app.models.person import Person
-
-        self.assignees = []
-        for person_id in person_ids:
-            person = Person.get(person_id)
-            if person is not None:
-                self.assignees.append(person)
-        self.save()
-
-    @classmethod
-    def create_from_import(cls, data):
-        previous_task = cls.get(data["id"])
-        person_ids = data.get("assignees", None)
-        is_update = False
-        if "assignees" in data:
-            data.pop("assignees", None)
-        if "type" in data:
-            data.pop("type", None)
-
-        if previous_task is None:
-            previous_task = cls.create(**data)
-            previous_task.save()
-        else:
-            is_update = True
-            previous_task.update(data)
-            previous_task.save()
-
-        if person_ids is not None:
-            previous_task.set_assignees(person_ids)
-
-        return (previous_task, is_update)

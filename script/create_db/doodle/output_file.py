@@ -32,7 +32,7 @@ class OutputFile(BaseMixin):
     nb_elements = orm.mapped_column(sqlalchemy.Integer(), default=1)
     source = orm.mapped_column(sqlalchemy.String(40))
     path = orm.mapped_column(sqlalchemy.String(400))
-    data = orm.mapped_column(JSONB)
+    data = orm.mapped_column(sqlalchemy.TEXT())
 
     file_status_id = orm.mapped_column(
         UUIDType(binary=True),

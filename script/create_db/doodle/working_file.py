@@ -29,16 +29,16 @@ class WorkingFile(BaseMixin):
     data = orm.mapped_column(sqlalchemy.Text())
 
     task_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid_id"), index=True
     )
     entity_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("person.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
     )
     software_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("software.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("software.uuid_id"), index=True
     )
     outputs = relationship("OutputFile", back_populates="source_file")
 
