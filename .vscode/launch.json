@@ -11,6 +11,13 @@
             "name": "Python 调试程序: 当前文件",
             "type": "debugpy",
             "request": "launch",
+            "program": "${workspaceFolder}/script/create_db/create_database.py",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python usd",
+            "type": "debugpy",
+            "request": "launch",
             "program": "${file}",
             "args": [
                 "E:/cache/Kitchen_set/Kitchen_set.usd"
