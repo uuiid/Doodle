@@ -36,6 +36,9 @@ import doodle.preview_file
 import doodle.software
 import doodle.working_file
 import doodle.output_file
+import doodle.file_status
+import doodle.output_type
+import doodle.task
 
 PASS = getenv("KITSU_PASS")
 
@@ -79,9 +82,6 @@ def main():
             session.add_all([doodle.project_status.ProjectStatus().from_zou(i) for i in l_prj_list])
             session.add_all([doodle.organisation.Organisation().from_zou(i) for i in l_organisation])
 
-            # l_tmp = [doodle.person.Person().from_zou(i) for i in l_person]
-            # l_tmp2 = [x for x in l_tmp if x.first_name == "朱丽飞"]
-            # print(l_tmp2)
             session.add_all([doodle.task_status.TaskStatus().from_zou(i) for i in l_task_status])
             session.add_all([doodle.task_type.TaskType().from_zou(i) for i in l_task_type])
             session.add_all([doodle.entity_type.EntityType().from_zou(i) for i in l_entity_type])
@@ -97,11 +97,18 @@ def main():
             session.add_all([doodle.project.ProjectTaskStatusLink().from_zou(i) for i in l_ProjectTaskStatusLink])
             session.add_all([doodle.project.ProjectTaskTypeLink().from_zou(i) for i in l_ProjectTaskTypeLink])
             session.add_all([doodle.project.ProjectPersonLink().from_zou(i) for i in l_ProjectPersonLink])
+
+            # l_tmp = [doodle.entity.Entity().from_zou(i) for i in l_Entity]
+            # l_tmp2 = [x for x in l_tmp if x.first_name == "朱丽飞"]
+            # print(l_tmp)
+            
+            
             session.add_all([doodle.entity.Entity().from_zou(i) for i in l_Entity])
             session.add_all([doodle.entity.AssetInstanceLink().from_zou(i) for i in l_AssetInstanceLink])
             session.add_all([doodle.entity.EntityLink().from_zou(i) for i in l_EntityLink])
             session.add_all([doodle.entity.EntityConceptLink().from_zou(i) for i in l_EntityConceptLink])
             session.add_all([doodle.entity.EntityVersion().from_zou(i) for i in l_EntityVersion])
+
             session.commit()
 
 

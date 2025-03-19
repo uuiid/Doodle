@@ -30,7 +30,7 @@ class AssetInstance(BaseMixin):
     number = orm.mapped_column(sqlalchemy.Integer())
     description = orm.mapped_column(sqlalchemy.String(200))
     active = orm.mapped_column(sqlalchemy.Boolean(), default=True)
-    data = orm.mapped_column(JSONB)
+    data = orm.mapped_column(sqlalchemy.TEXT())
 
     scene_id = orm.mapped_column(
         UUIDType(binary=True), sqlalchemy.ForeignKey("entity.id"), index=True

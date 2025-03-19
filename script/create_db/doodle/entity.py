@@ -155,16 +155,16 @@ class Entity(BaseMixin):
     entities_out = orm.relationship(
         "Entity",
         secondary="entity_link",
-        primaryjoin=(id == EntityLink.entity_in_id),
-        secondaryjoin=(id == EntityLink.entity_out_id),
+        primaryjoin=(uuid_id == EntityLink.entity_in_id),
+        secondaryjoin=(uuid_id == EntityLink.entity_out_id),
         backref="entities_in",
     )
 
     entity_concept_links = orm.relationship(
         "Entity",
         secondary="entity_concept_link",
-        primaryjoin=(id == EntityConceptLink.entity_in_id),
-        secondaryjoin=(id == EntityConceptLink.entity_out_id),
+        primaryjoin=(uuid_id == EntityConceptLink.entity_in_id),
+        secondaryjoin=(uuid_id == EntityConceptLink.entity_out_id),
         lazy="joined",
     )
 
@@ -201,6 +201,7 @@ class Entity(BaseMixin):
         self.data = f"{entity.data}"
         self.ready_for = entity.ready_for
         self.created_by = entity.created_by
+        return self
  
 
 class EntityVersion(BaseMixin):

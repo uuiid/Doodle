@@ -6,13 +6,13 @@ from sqlalchemy import orm
 import sqlalchemy
 
 class Assignations(BaseMixin):
-    __table__ = "assignations"
+    __tablename__ = "assignations"
     task = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("task.uuid_id"),
     )
     person = orm.mapped_column(
-        UUIDType(binary=False),
+        UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid_id"),
     )
 
@@ -45,26 +45,26 @@ class Task(BaseMixin):
     done_date = orm.mapped_column(sqlalchemy.DateTime)
     last_comment_date = orm.mapped_column(sqlalchemy.DateTime)
     nb_assets_ready = orm.mapped_column(sqlalchemy.Integer, default=0)
-    data = orm.mapped_column(JSONB)
+    data = orm.mapped_column(sqlalchemy.TEXT())
     nb_drawings = orm.mapped_column(sqlalchemy.Integer, default=0)
 
     shotgun_id = orm.mapped_column(sqlalchemy.Integer)
-    last_preview_file_id = orm.mapped_column(UUIDType(binary=False))
+    last_preview_file_id = orm.mapped_column(UUIDType(binary=True))
 
     project_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("project.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid_id"), index=True
     )
     task_type_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
     )
     task_status_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
     )
     entity_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
     )
     assigner_id = orm.mapped_column(
-        UUIDType(binary=False), sqlalchemy.ForeignKey("person.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
     )
     assignees = orm.relationship("Person", secondary=Assignations.__table__)
 
