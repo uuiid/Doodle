@@ -42,7 +42,12 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
 )
-
+# 添加fbx动态库复制
+add_custom_command(
+        TARGET doodle_maya
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Fbx::Fbx> $<TARGET_FILE_DIR:doodle_maya>
+)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
