@@ -1,13 +1,11 @@
 from sqlalchemy_utils import UUIDType, ChoiceType
 
-from sqlalchemy.inspection import inspect
 
 from sqlalchemy import orm
 import sqlalchemy
 
-from zou.app.utils.fields import serialize_value
 from doodle.base import BaseMixin
-
+from zou.app.models.notification import Notification as ZouNotification
 TYPES = [
     ("comment", "Comment"),
     ("mention", "Mention"),
@@ -21,38 +19,42 @@ class Notification(BaseMixin):
     """
     A notification is stored each time a comment is posted.
     """
+    __tablename__ = "notification"
 
-    read = db.Column(db.Boolean, nullable=False, default=False)
-    change = db.Column(db.Boolean, nullable=False, default=False)
-    type = db.Column(ChoiceType(TYPES), nullable=False)
-    person_id = db.Column(
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
+    read = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)
+    change = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)
+    type = orm.mapped_column(ChoiceType(TYPES), nullable=False)
+    person_id = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("person.id"),
+        sqlalchemy.ForeignKey("person.uuid_id"),
         nullable=False,
         index=True,
     )
-    author_id = db.Column(
+    author_id = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("person.id"),
+        sqlalchemy.ForeignKey("person.uuid_id"),
         nullable=False,
         index=True,
     )
-    comment_id = db.Column(
+    comment_id = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("comment.id"),
+        sqlalchemy.ForeignKey("comment.uuid_id"),
         nullable=True,
         index=True,
     )
-    task_id = db.Column(
+    task_id = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("task.id"),
+        sqlalchemy.ForeignKey("task.uuid_id"),
         nullable=False,
         index=True,
     )
-    reply_id = db.Column(UUIDType(binary=True), nullable=True, index=True)
+    reply_id = orm.mapped_column(UUIDType(binary=True), nullable=True, index=True)
 
     __table_args__ = (
-        db.UniqueConstraint(
+        sqlalchemy.UniqueConstraint(
             "person_id",
             "author_id",
             "comment_id",
@@ -62,28 +64,15 @@ class Notification(BaseMixin):
         ),
     )
 
-    def serialize(self, obj_type=None, relations=False, milliseconds=False):
-        attrs = inspect(self).attrs.keys()
-        obj_dict = {
-            attr: serialize_value(
-                getattr(self, attr), milliseconds=milliseconds
-            )
-            for attr in attrs
-        }
-        obj_dict["notification_type"] = obj_dict["type"]
-        obj_dict["type"] = obj_type or type(self).__name__
-        return obj_dict
+    def from_zou(self, notification: ZouNotification):
+        self.uuid_id = notification.id
+        self.read = notification.read
+        self.change = notification.change
+        self.type = notification.type
+        self.person_id = notification.person_id
+        self.author_id = notification.author_id
+        self.comment_id = notification.comment_id
+        self.task_id = notification.task_id
+        self.reply_id = notification.reply_id
 
-    @classmethod
-    def create_from_import(cls, data):
-        notification_type = ""
-        if "notification_type" in data:
-            notification_type = data.get("notification_type", "")
-            del data["notification_type"]
-        data["type"] = notification_type
-        previous_data = cls.get(data["id"])
-        if previous_data is None:
-            return (cls.create(**data), False)
-        else:
-            previous_data.update(data)
-            return (previous_data, True)
+        return self

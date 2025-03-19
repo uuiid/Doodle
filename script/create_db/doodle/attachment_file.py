@@ -11,20 +11,24 @@ class AttachmentFile(BaseMixin):
     """
     Describes a file which is attached to a comment.
     """
+    __tablename__ = "attachment_file"
 
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
     name = orm.mapped_column(sqlalchemy.String(250))
     size = orm.mapped_column(sqlalchemy.Integer(), default=1)
     extension = orm.mapped_column(sqlalchemy.String(6))
     mimetype = orm.mapped_column(sqlalchemy.String(255))
     comment_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.id"),
+        sqlalchemy.ForeignKey("comment.uuid_id"),
         index=True,
         nullable=True,
     )
     chat_message_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("chat_message.id"),
+        sqlalchemy.ForeignKey("chat_message.uuid_id"),
         index=True,
         nullable=True,
     )

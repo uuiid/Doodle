@@ -7,69 +7,57 @@ import sqlalchemy
 from doodle.base import BaseMixin
 
 
-class CommentPreviewLink(db.Model):
-    comment = db.Column(
+class CommentPreviewLink(BaseMixin):
+    __tablename__ = "comment_preview_link"
+    comment = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("comment.id"),
-        primary_key=True,
+        sqlalchemy.ForeignKey("comment.uuid_id"),
         index=True,
     )
-    preview_file = db.Column(
+    preview_file = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("preview_file.id"),
-        primary_key=True,
+        sqlalchemy.ForeignKey("preview_file.uuid_id"),
         index=True,
     )
 
+class CommentMentions(BaseMixin):
+    __tablename__ = "comment_mentions"
+    comment = orm.mapped_column(
+        UUIDType(binary=True),
+        sqlalchemy.ForeignKey("comment.uuid_id"),
+        index=True,
+    )
+    person = orm.mapped_column(
+        UUIDType(binary=True),
+        sqlalchemy.ForeignKey("person.uuid_id"),
+        index=True,
+    )
 
-mentions_table = db.Table(
-    "comment_mentions",
-    db.Column(
-        "comment",
+class CommentDepartmentMentions(BaseMixin):
+    __tablename__ = "comment_department_mentions"
+    comment = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("comment.id"),
-        primary_key=True,
-    ),
-    db.Column(
-        "person",
+        sqlalchemy.ForeignKey("comment.uuid_id"),
+        index=True,
+    )
+    department = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("person.id"),
-        primary_key=True,
-    ),
-)
+        sqlalchemy.ForeignKey("department.uuid_id"),
+        index=True,
+    )
 
-department_mentions_table = db.Table(
-    "comment_department_mentions",
-    db.Column(
-        "comment",
+class CommentAcknoledgments(BaseMixin):
+    __tablename__ = "comment_acknoledgments"
+    comment = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("comment.id"),
-        primary_key=True,
-    ),
-    db.Column(
-        "department",
+        sqlalchemy.ForeignKey("comment.uuid_id"),
+        index=True,
+    )
+    person = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("department.id"),
-        primary_key=True,
-    ),
-)
-
-acknowledgements_table = db.Table(
-    "comment_acknoledgments",
-    db.Column(
-        "comment",
-        UUIDType(binary=True),
-        db.ForeignKey("comment.id"),
-        primary_key=True,
-    ),
-    db.Column(
-        "person",
-        UUIDType(binary=True),
-        db.ForeignKey("person.id"),
-        primary_key=True,
-    ),
-)
-
+        sqlalchemy.ForeignKey("person.uuid_id"),
+        index=True,
+    )
 
 class Comment(BaseMixin):
     """
@@ -80,121 +68,52 @@ class Comment(BaseMixin):
     means that the comment relates to this preview in the context of the task.
     """
 
-    shotgun_id = db.Column(db.Integer)
-
-    object_id = db.Column(UUIDType(binary=True), nullable=False, index=True)
-    object_type = db.Column(db.String(80), nullable=False, index=True)
-    text = db.Column(db.Text())
-    data = db.Column(JSONB)
-    replies = db.Column(JSONB, default=[])
-    checklist = db.Column(JSONB)
-    pinned = db.Column(db.Boolean)
-    links = db.Column(db.ARRAY(db.String()))
-
-    task_status_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("task_status.id"), index=True
+    __tablename__ = "comment"
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
     )
-    person_id = db.Column(
+
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer)
+
+    object_id = orm.mapped_column(UUIDType(binary=True), nullable=False, index=True)
+    object_type = orm.mapped_column(sqlalchemy.String(80), nullable=False, index=True)
+    text = orm.mapped_column(sqlalchemy.Text())
+    data = orm.mapped_column(sqlalchemy.TEXT())
+    replies = orm.mapped_column(sqlalchemy.TEXT())
+    checklist = orm.mapped_column(sqlalchemy.TEXT())
+    pinned = orm.mapped_column(sqlalchemy.Boolean)
+    links = orm.mapped_column(sqlalchemy.TEXT())
+
+    task_status_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
+    )
+    person_id = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("person.id"),
+        sqlalchemy.ForeignKey("person.uuid_id"),
         nullable=False,
         index=True,
     )
-    editor_id = db.Column(
+    editor_id = orm.mapped_column(
         UUIDType(binary=True),
-        db.ForeignKey("person.id"),
+        sqlalchemy.ForeignKey("person.uuid_id"),
         default=None,
         index=True,
     )
-    preview_file_id = db.Column(
-        UUIDType(binary=True), db.ForeignKey("preview_file.id")
+    preview_file_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("preview_file.uuid_id")
     )
-    previews = db.relationship(
+    previews = orm.relationship(
         "PreviewFile",
         secondary=CommentPreviewLink.__table__,
         backref="comments",
     )
-    mentions = db.relationship("Person", secondary=mentions_table)
-    department_mentions = db.relationship(
-        "Department", secondary=department_mentions_table
+    mentions = orm.relationship("Person", secondary=CommentMentions.__table__)
+    department_mentions = orm.relationship(
+        "Department", secondary=CommentDepartmentMentions.__table__
     )
-    acknowledgements = db.relationship(
-        "Person", secondary=acknowledgements_table
+    acknowledgements = orm.relationship(
+        "Person", secondary=CommentAcknoledgments.__table__
     )
-    attachment_files = db.relationship("AttachmentFile", backref="comment")
+    attachment_files = orm.relationship("AttachmentFile", backref="comment")
 
-    def __repr__(self):
-        return "<Comment of %s>" % self.object_id
-
-    def set_preview_files(self, preview_file_ids):
-        from zou.app.models.preview_file import PreviewFile
-
-        self.set_many_to_one("previews", PreviewFile, preview_file_ids)
-
-    def set_mentions(self, person_ids):
-        from zou.app.models.person import Person
-
-        self.mentions = []
-        self.set_many_to_one("mentions", Person, person_ids)
-
-    def set_department_mentions(self, department_ids):
-        from zou.app.models.department import Department
-
-        self.mentions = []
-        self.set_many_to_one("department_mentions", Department, department_ids)
-
-    def set_acknowledgements(self, person_ids):
-        from zou.app.models.person import Person
-
-        self.set_many_to_one("acknowledgements", Person, person_ids)
-
-    def set_attachment_files(self, attachment_file_ids):
-        from zou.app.models.attachment_file import AttachmentFile
-
-        self.set_many_to_one(
-            "attachment_files", AttachmentFile, attachment_file_ids
-        )
-
-    def set_many_to_one(self, field_name, model, model_ids):
-        setattr(self, field_name, [])
-        for model_id in model_ids:
-            instance = model.get(model_id)
-            if instance is not None:
-                getattr(self, field_name).append(instance)
-        self.save()
-
-    @classmethod
-    def create_from_import(cls, data):
-        is_update = False
-        previous_comment = cls.get(data["id"])
-        data.pop("type", None)
-        preview_file_ids = data.pop("previews", None)
-        mention_ids = data.pop("mentions", None)
-        department_mention_ids = data.pop("department_mentions", None)
-        acknowledgement_ids = data.pop("acknowledgements", None)
-        attachment_file_ids = data.pop("attachment_files", None)
-
-        if previous_comment is None:
-            previous_comment = cls.create(**data)
-            previous_comment.save()
-        else:
-            is_update = True
-            previous_comment.update(data)
-            previous_comment.save()
-
-        if preview_file_ids is not None:
-            previous_comment.set_preview_files(preview_file_ids)
-
-        if mention_ids is not None:
-            previous_comment.set_mentions(mention_ids)
-
-        if department_mention_ids is not None:
-            previous_comment.set_department_mentions(department_mention_ids)
-
-        if acknowledgement_ids is not None:
-            previous_comment.set_acknowledgements(acknowledgement_ids)
-
-        if attachment_file_ids is not None:
-            previous_comment.set_attachment_files(attachment_file_ids)
-
-        return (previous_comment, is_update)
+   

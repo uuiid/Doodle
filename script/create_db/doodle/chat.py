@@ -9,17 +9,15 @@ from zou.app.models.chat import ChatParticipant as ZouChatParticipant
 from zou.app.models.chat import Chat as ZouChat
 
 
-class ChatParticipant(orm.DeclarativeBase):
+class ChatParticipant(BaseMixin):
     __tablename__ = "chat_participant"
     chat_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("chat.id"),
-        primary_key=True,
+        sqlalchemy.ForeignKey("chat.uuid_id")
     )
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.id"),
-        primary_key=True,
+        sqlalchemy.ForeignKey("person.uuid_id")
     )
 
     def from_zou(self, chat_participant: ZouChatParticipant):
@@ -32,13 +30,16 @@ class Chat(BaseMixin):
     """
     Message shared in the entity chat feeds.
     """
-
+    __tablename__ = "chat"
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
     object_id = orm.mapped_column(UUIDType(binary=True), nullable=False, index=True)
     object_type = orm.mapped_column(
         sqlalchemy.String(80), nullable=False, index=True, default="entity"
     )
     last_message = orm.mapped_column(sqlalchemy.DateTime, nullable=True)
-    participants = sqlalchemy.relationship(
+    participants = orm.relationship(
         "Person", secondary="chat_participant", lazy="joined"
     )
 

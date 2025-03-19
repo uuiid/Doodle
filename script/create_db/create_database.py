@@ -16,6 +16,7 @@ import zou.app.models.person
 import zou.app.models.metadata_descriptor
 import zou.app.models.project
 import zou.app.models.entity
+import zou.app.models.notification
 
 import doodle.project_status
 import doodle.organisation
@@ -39,6 +40,11 @@ import doodle.output_file
 import doodle.file_status
 import doodle.output_type
 import doodle.task
+import doodle.notification
+import doodle.comment
+import doodle.attachment_file
+import doodle.chat_message
+import doodle.chat
 
 PASS = getenv("KITSU_PASS")
 
@@ -72,6 +78,7 @@ def main():
         l_EntityLink : list[zou.app.models.entity.EntityLink] = zou.app.models.entity.EntityLink.query.all()
         l_EntityConceptLink : list[zou.app.models.entity.EntityConceptLink] = zou.app.models.entity.EntityConceptLink.query.all()
         l_EntityVersion : list[zou.app.models.entity.EntityVersion] = zou.app.models.entity.EntityVersion.query.all()
+        l_Notification : list[zou.app.models.notification.Notification] = zou.app.models.notification.Notification.query.all()
 
         with Session(engine) as session:
             doodle.base.BaseMixin.metadata.create_all(engine)
@@ -108,6 +115,7 @@ def main():
             session.add_all([doodle.entity.EntityLink().from_zou(i) for i in l_EntityLink])
             session.add_all([doodle.entity.EntityConceptLink().from_zou(i) for i in l_EntityConceptLink])
             session.add_all([doodle.entity.EntityVersion().from_zou(i) for i in l_EntityVersion])
+            session.add_all([doodle.notification.Notification().from_zou(i) for i in l_Notification])
 
             session.commit()
 

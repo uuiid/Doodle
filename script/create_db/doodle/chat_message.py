@@ -5,14 +5,18 @@ import sqlalchemy
 
 from doodle.base import BaseMixin
 
-from zou.app.models.attachment_file import AttachmentFile as ZouAttachmentFile
+from zou.app.models.chat_message import ChatMessage as ZouChatMessage
 
 
 class ChatMessage(BaseMixin):
     """
     Message shared in the entity chat feeds.
     """
+    __tablename__ = "chat_message"
 
+    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
     chat_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("chat.uuid_id"),
@@ -26,7 +30,7 @@ class ChatMessage(BaseMixin):
         index=True,
     )
     text = orm.mapped_column(sqlalchemy.Text())
-    attachment_files = sqlalchemy.relationship(
+    attachment_files = orm.relationship(
         "AttachmentFile", backref="chat_message", lazy="joined"
     )
 
