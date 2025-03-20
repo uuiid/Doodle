@@ -32,16 +32,13 @@
             "name": "Doodle_debug",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Ninja_debug/bin/DoodleExe.exe",
-            "args": [],
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
+            "args": [
+                "--config=${workspaceFolder}/build/my_debug_server.json"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
-            "environment": [
-                {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/doodle_maya/plug/maya"
-                }
-            ],
+            "environment": [],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
