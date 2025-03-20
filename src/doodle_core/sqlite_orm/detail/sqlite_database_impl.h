@@ -519,11 +519,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "metadata_descriptor",                                                        //
           make_column("id", &metadata_descriptor::id_, primary_key().autoincrement()),  //
           make_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique()),    //
-          make_column("name", &metadata_descriptor::name_),                             //
-          make_column("entity_type", &metadata_descriptor::entity_type_),               //
-          make_column("project_id", &metadata_descriptor::project_uuid_),             //
-          make_column("data_type", &metadata_descriptor::data_type_),                   //
-          make_column("field_name", &metadata_descriptor::field_name_),                 //
+          make_column("name", &metadata_descriptor::name_,  not_null()),                             //
+          make_column("entity_type", &metadata_descriptor::entity_type_, not_null()),               //
+          make_column("project_id", &metadata_descriptor::project_uuid_, not_null()),             //
+          make_column("data_type", &metadata_descriptor::data_type_, not_null()),                   //
+          make_column("field_name", &metadata_descriptor::field_name_, not_null()),                 //
           make_column("choices", &metadata_descriptor::choices_),                       //
           make_column("for_client", &metadata_descriptor::for_client_)
       ),

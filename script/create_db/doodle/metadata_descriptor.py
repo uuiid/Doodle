@@ -65,7 +65,7 @@ class MetadataDescriptor(BaseMixin):
     )
     entity_type = orm.mapped_column(sqlalchemy.String(60), nullable=False, index=True)
     name = orm.mapped_column(sqlalchemy.String(120), nullable=False)
-    data_type = orm.mapped_column(ChoiceType(METADATA_DESCRIPTOR_TYPES))
+    data_type = orm.mapped_column(ChoiceType(METADATA_DESCRIPTOR_TYPES), nullable=False)
     field_name = orm.mapped_column(sqlalchemy.String(120), nullable=False)
     choices = orm.mapped_column(sqlalchemy.Text())
     for_client = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True)
