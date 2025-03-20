@@ -33,7 +33,7 @@ class Task(BaseMixin):
     description = orm.mapped_column(sqlalchemy.Text())
 
     priority = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
-    difficulty = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=3, nullable=False)
+    difficulty = orm.mapped_column(sqlalchemy.Integer, default=3, nullable=False)
     duration = orm.mapped_column(sqlalchemy.Float, default=0)
     estimation = orm.mapped_column(sqlalchemy.Float, default=0)
     completion_rate = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)

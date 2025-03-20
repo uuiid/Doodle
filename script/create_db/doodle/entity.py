@@ -104,7 +104,7 @@ class Entity(BaseMixin):
     shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False)
     canceled = orm.mapped_column(sqlalchemy.Boolean, default=False, nullable=False)
 
-    nb_frames = orm.mapped_column(sqlalchemy.Integer, nullable=False)  # Specific to shots
+    nb_frames = orm.mapped_column(sqlalchemy.Integer)  # Specific to shots
     nb_entities_out = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     is_casting_standby = orm.mapped_column(sqlalchemy.Boolean, default=False, nullable=False)
 
@@ -190,7 +190,7 @@ class Entity(BaseMixin):
         self.name = entity.name
         self.code = entity.code
         self.description = entity.description
-        self.shotgun_id = entity.shotgun_id
+        self.shotgun_id = 0
         self.canceled = entity.canceled
         self.nb_frames = entity.nb_frames
         self.nb_entities_out = entity.nb_entities_out

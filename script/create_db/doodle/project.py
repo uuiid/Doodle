@@ -202,7 +202,7 @@ class Project(BaseMixin):
     )
     start_date = orm.mapped_column(sqlalchemy.Date())
     end_date = orm.mapped_column(sqlalchemy.Date())
-    man_days = orm.mapped_column(sqlalchemy.Integer, nullable=False)
+    man_days = orm.mapped_column(sqlalchemy.Integer)
     nb_episodes = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)
     episode_span = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)
     max_retakes = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)

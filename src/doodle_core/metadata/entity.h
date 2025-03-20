@@ -43,7 +43,7 @@ struct DOODLE_CORE_API entity {
   std::int32_t shotgun_id_;
   bool canceled_;
 
-  std::int32_t nb_frames_;
+  std::optional<std::int32_t> nb_frames_;
   std::int32_t nb_entities_out_;
   bool is_casting_standby_;
 

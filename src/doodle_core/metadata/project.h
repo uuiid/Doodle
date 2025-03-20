@@ -65,7 +65,7 @@ struct project {
   std::string production_style_;
   chrono::system_zoned_time start_date_;
   chrono::system_zoned_time end_date_;
-  std::int32_t man_days_;
+  std::optional<std::int32_t> man_days_;
   std::int32_t nb_episodes_;
   std::int32_t episode_span_;
   std::int32_t max_retakes_;
