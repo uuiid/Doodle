@@ -22,14 +22,14 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                        {person_role_type::client, "client"},
                        {person_role_type::vendor, "vendor"}}
 )
-// enum class contract_types {
-//   open_ended,
-//   fixed_term,
-//   short_term,
-//   freelance,
-//   apprentice,
-//   internship,
-// };
+enum class contract_types {
+  open_ended,
+  fixed_term,
+  short_term,
+  freelance,
+  apprentice,
+  internship,
+};
 
 enum class two_factor_authentication_types {
   totp,
@@ -50,7 +50,7 @@ struct DOODLE_CORE_API person {
   std::string last_name_;
   std::string email_;
   std::string phone_;
-  std::string contract_type_;
+  contract_types contract_type_;
 
   bool active_;
   bool archived_;
@@ -58,7 +58,7 @@ struct DOODLE_CORE_API person {
 
   std::string password_;
   std::string desktop_login_;
-  std::int32_t login_failed_attemps_;
+  std::optional<std::int32_t> login_failed_attemps_;
   std::optional<chrono::system_zoned_time> last_login_failed_;
   bool totp_enabled_;
   std::string totp_secret_;

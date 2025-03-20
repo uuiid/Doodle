@@ -57,6 +57,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::status_automation_change_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_statuses);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_validation_statuses);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::entity_status);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::contract_types);
 DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
