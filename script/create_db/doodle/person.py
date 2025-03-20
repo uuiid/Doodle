@@ -25,9 +25,9 @@ TWO_FACTOR_AUTHENTICATION_TYPES = [
 ]
 
 CONTRACT_TYPES = [
-    ("open-ended", "Open-ended"),
-    ("fixed-term", "Fixed-term"),
-    ("short-term", "Short-term"),
+    ("open_ended", "Open-ended"),
+    ("fixed_term", "Fixed-term"),
+    ("short_term", "Short-term"),
     ("freelance", "Freelance"),
     ("apprentice", "Apprentice"),
     ("internship", "Internship"),
@@ -79,8 +79,8 @@ class Person(BaseMixin):
     uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
-    first_name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
-    last_name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
+    first_name = orm.mapped_column(sqlalchemy.String(80), nullable=True)
+    last_name = orm.mapped_column(sqlalchemy.String(80), nullable=True)
     email = orm.mapped_column(EmailType)
     phone = orm.mapped_column(sqlalchemy.String(30))
     contract_type = orm.mapped_column(
@@ -153,7 +153,7 @@ class Person(BaseMixin):
         self.last_name = person.last_name
         self.email = person.email
         self.phone = person.phone
-        self.contract_type = person.contract_type
+        self.contract_type = person.contract_type.value
         self.active = person.active
         self.archived = person.archived
         self.last_presence = person.last_presence
