@@ -20,6 +20,7 @@ struct task_type {
   bool allow_timelog_;
   bool archived_;
   std::optional<std::int32_t> shotgun_id_;
+  uuid department_id_;
 
   // from json
   template <typename BasicJsonType>

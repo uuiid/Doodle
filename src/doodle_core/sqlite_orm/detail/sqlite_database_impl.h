@@ -259,10 +259,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("read", &notification::read_),                               //
           make_column("change", &notification::change_),                           //
           make_column("type", &notification::type_),                               //
-          make_column("person_id", &notification::person_id_),                     //
-          make_column("author_id", &notification::author_id_),                     //
-          make_column("comment_id", &notification::comment_id_),                   //
-          make_column("task_id", &notification::task_id_),                         //
+          make_column("person_id", &notification::person_id_, not_null()),                     //
+          make_column("author_id", &notification::author_id_, not_null()),                     //
+          make_column("comment_id", &notification::comment_id_, not_null()),                   //
+          make_column("task_id", &notification::task_id_, not_null()),                         //
           foreign_key(&notification::person_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::author_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::comment_id_).references(&comment::uuid_id_),  //
@@ -484,12 +484,14 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("production_style", &project::production_style_),                                      //
           make_column("start_date", &project::start_date_),                                                  //
           make_column("end_date", &project::end_date_),                                                      //
+          make_column("man_days", &project::man_days_),                                                      //
           make_column("nb_episodes", &project::nb_episodes_),                                                //
           make_column("episode_span", &project::episode_span_),                                              //
           make_column("max_retakes", &project::max_retakes_),                                                //
           make_column("is_clients_isolated", &project::is_clients_isolated_),                                //
           make_column("is_preview_download_allowed", &project::is_preview_download_allowed_),                //
           make_column("is_set_preview_automated", &project::is_set_preview_automated_),                      //
+          make_column("homepage", &project::homepage_),                                                      //
           make_column("is_publish_default_for_artists", &project::is_publish_default_for_artists_),          //
           make_column("hd_bitrate_compression", &project::hd_bitrate_compression_),                          //
           make_column("ld_bitrate_compression", &project::ld_bitrate_compression_),                          //
@@ -518,7 +520,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique()),    //
           make_column("name", &metadata_descriptor::name_),                             //
           make_column("entity_type", &metadata_descriptor::entity_type_),               //
-          make_column("project_uuid", &metadata_descriptor::project_uuid_),             //
+          make_column("project_id", &metadata_descriptor::project_uuid_),             //
           make_column("data_type", &metadata_descriptor::data_type_),                   //
           make_column("field_name", &metadata_descriptor::field_name_),                 //
           make_column("choices", &metadata_descriptor::choices_),                       //
@@ -528,8 +530,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "project_status",                                                        //
           make_column("id", &project_status::id_, primary_key().autoincrement()),  //
           make_column("uuid", &project_status::uuid_id_, not_null(), unique()),    //
-          make_column("name", &project_status::name_),                             //
-          make_column("color", &project_status::color_)
+          make_column("name", &project_status::name_, not_null()),                             //
+          make_column("color", &project_status::color_, not_null())
       ),
 
       make_table<person_department_link>(
@@ -583,30 +585,39 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("is_generated_from_ldap", &person::is_generated_from_ldap_),                            //
           make_column("ldap_uid", &person::ldap_uid_)
       ),
-      make_table<department>(
-          "department",                                                        //
-          make_column("id", &department::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &department::uuid_id_, not_null(), unique()),    //
-          make_column("name", &department::name_),                             //
-          make_column("color", &department::color_),                           //
-          make_column("archived", &department::archived_)                      //
-      ),
       make_table<preview_background_file>(
           "preview_background_file",                                                        //
           make_column("id", &preview_background_file::id_, primary_key().autoincrement()),  //
           make_column("uuid", &preview_background_file::uuid_id_, not_null(), unique()),    //
-          make_column("name", &preview_background_file::name_),                             //
+          make_column("name", &preview_background_file::name_, not_null()),                             //
           make_column("archived", &preview_background_file::archived_),                     //
           make_column("is_default", &preview_background_file::is_default_),                 //
           make_column("original_name", &preview_background_file::original_name_),           //
           make_column("extension", &preview_background_file::extension_),                   //
           make_column("file_size", &preview_background_file::file_size_)                    //
       ),
+      make_table<status_automation>(
+          "status_automation",                                                             //
+          make_column("id", &status_automation::id_, primary_key().autoincrement()),       //
+          make_column("uuid", &status_automation::uuid_id_, not_null(), unique()),         //
+          make_column("entity_type", &status_automation::entity_type_),                    //
+          make_column("in_task_type_id", &status_automation::in_task_type_id_),            //
+          make_column("in_task_status_id", &status_automation::in_task_status_id_),        //
+          make_column("out_field_type", &status_automation::out_field_type_),              //
+          make_column("out_task_type_id", &status_automation::out_task_type_id_),          //
+          make_column("out_task_status_id", &status_automation::out_task_status_id_),      //
+          make_column("import_last_revision", &status_automation::import_last_revision_),  //
+          make_column("archived", &status_automation::archived_),                           //
+          foreign_key(&status_automation::in_task_type_id_).references(&task_type::uuid_id_),          //
+          foreign_key(&status_automation::in_task_status_id_).references(&task_status::uuid_id_),      //
+          foreign_key(&status_automation::out_task_type_id_).references(&task_type::uuid_id_),         //
+          foreign_key(&status_automation::out_task_status_id_).references(&task_status::uuid_id_)      //
+      ),
       make_table<task_type>(
           "task_type",                                                        //
           make_column("id", &task_type::id_, primary_key().autoincrement()),  //
           make_column("uuid", &task_type::uuid_id_, not_null(), unique()),    //
-          make_column("name", &task_type::name_),                             //
+          make_column("name", &task_type::name_, not_null()),                             //
           make_column("short_name", &task_type::short_name_),                 //
           make_column("description", &task_type::description_),               //
           make_column("color", &task_type::color_),                           //
@@ -614,7 +625,17 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("for_entity", &task_type::for_entity_),                 //
           make_column("allow_timelog", &task_type::allow_timelog_),           //
           make_column("archived", &task_type::archived_),                     //
-          make_column("shotgun_id", &task_type::shotgun_id_)                  //
+          make_column("shotgun_id", &task_type::shotgun_id_),                  //
+          make_column("department_id", &task_type::department_id_),          //
+          foreign_key(&task_type::department_id_).references(&department::uuid_id_)
+      ),
+      make_table<department>(
+          "department",                                                        //
+          make_column("id", &department::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &department::uuid_id_, not_null(), unique()),    //
+          make_column("name", &department::name_, not_null()),                             //
+          make_column("color", &department::color_, not_null()),                           //
+          make_column("archived", &department::archived_)                      //
       ),
       make_table<task_status>(
           "task_status",                                                           //
@@ -639,37 +660,26 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "asset_type",                                                        //
           make_column("id", &asset_type::id_, primary_key().autoincrement()),  //
           make_column("uuid", &asset_type::uuid_id_, not_null(), unique()),    //
-          make_column("name", &asset_type::name_),                             //
+          make_column("name", &asset_type::name_, not_null()),                 //
           make_column("short_name", &asset_type::short_name_),                 //
           make_column("description", &asset_type::description_),               //
           make_column("archived", &asset_type::archived_)                      //
-      ),
-      make_table<status_automation>(
-          "status_automation",                                                             //
-          make_column("id", &status_automation::id_, primary_key().autoincrement()),       //
-          make_column("uuid", &status_automation::uuid_id_, not_null(), unique()),         //
-          make_column("entity_type", &status_automation::entity_type_),                    //
-          make_column("in_task_type_id", &status_automation::in_task_type_id_),            //
-          make_column("in_task_status_id", &status_automation::in_task_status_id_),        //
-          make_column("out_field_type", &status_automation::out_field_type_),              //
-          make_column("out_task_type_id", &status_automation::out_task_type_id_),          //
-          make_column("out_task_status_id", &status_automation::out_task_status_id_),      //
-          make_column("import_last_revision", &status_automation::import_last_revision_),  //
-          make_column("archived", &status_automation::archived_)                           //
       ),
       make_table<studio>(
           "studio",                                                                     //
           make_column("id", &studio::id_, primary_key().autoincrement()),               //
           make_column("uuid", &studio::uuid_id_, not_null(), unique()),                 //
-          make_column("name", &studio::name_),                                          //
+          make_column("color", &studio::color_, not_null()),                                        //
+          make_column("name", &studio::name_, not_null()),                                          //
           make_column("archived", &studio::archived_)                           //
       ),
+      make_index("organisation_tab_uuid_id_index", &organisation::uuid_id_),
       make_table<organisation>(
           "organisation",                                                                     //
           make_column("id", &organisation::id_, primary_key().autoincrement()),               //
           make_column("uuid", &organisation::uuid_id_, not_null(), unique()),                 //
-          make_column("name", &organisation::name_),                                          //
-          make_column("hours_by_day", &organisation::hours_by_day_),                          //
+          make_column("name", &organisation::name_, not_null()),                              //
+          make_column("hours_by_day", &organisation::hours_by_day_, not_null()),              //
           make_column("has_avatar", &organisation::has_avatar_),                              //
           make_column("use_original_file_name", &organisation::use_original_file_name_),      //
           make_column("timesheets_locked", &organisation::timesheets_locked_),                //
