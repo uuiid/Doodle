@@ -98,7 +98,7 @@ struct project {
   std::string ratio_;
   std::string resolution_;
   std::string production_type_;
-  std::string production_style_;
+  project_styles production_style_;
   std::optional<chrono::system_zoned_time> start_date_;
   std::optional<chrono::system_zoned_time> end_date_;
   std::optional<std::int32_t> man_days_;
