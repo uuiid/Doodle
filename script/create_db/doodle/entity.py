@@ -11,7 +11,6 @@ from zou.app.models.entity import EntityLink as ZouEntityLink
 from zou.app.models.entity import EntityConceptLink as ZouEntityConceptLink
 from zou.app.models.entity import EntityVersion as ZouEntityVersion
 
-
 ENTITY_STATUSES = [
     ("standby", "Stand By"),
     ("running", "Running"),
@@ -29,11 +28,13 @@ class AssetInstanceLink(BaseMixin):
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("asset_instance.uuid"),
     )
+
     def from_zou(self, asset_instance_link: ZouAssetInstanceLink):
         self.entity_id = asset_instance_link.entity_id
         self.asset_instance_id = asset_instance_link.asset_instance_id
 
         return self
+
 
 class EntityLink(BaseMixin):
     __tablename__ = "entity_link"
@@ -48,7 +49,7 @@ class EntityLink(BaseMixin):
         index=True,
     )
     data = orm.mapped_column(sqlalchemy.TEXT())
-    nb_occurences = orm.mapped_column(sqlalchemy.Integer, default=1)
+    nb_occurences = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=1)
     label = orm.mapped_column(sqlalchemy.String(80), default="")
 
     __table_args__ = (
@@ -58,6 +59,7 @@ class EntityLink(BaseMixin):
             name="entity_link_uc",
         ),
     )
+
     def from_zou(self, entity_link: ZouEntityLink):
         self.entity_in_id = entity_link.entity_in_id
         self.entity_out_id = entity_link.entity_out_id
@@ -78,6 +80,7 @@ class EntityConceptLink(BaseMixin):
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("entity.uuid"),
     )
+
     def from_zou(self, entity_concept_link: ZouEntityConceptLink):
         self.entity_in_id = entity_concept_link.entity_in_id
         self.entity_out_id = entity_concept_link.entity_out_id
@@ -92,18 +95,18 @@ class Entity(BaseMixin):
     tasks and files.
     """
     __tablename__ = "entity"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(160), nullable=False)
     code = orm.mapped_column(sqlalchemy.String(160))  # To store sanitized version of name
     description = orm.mapped_column(sqlalchemy.Text())
-    shotgun_id = orm.mapped_column(sqlalchemy.Integer)
-    canceled = orm.mapped_column(sqlalchemy.Boolean, default=False)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False)
+    canceled = orm.mapped_column(sqlalchemy.Boolean, default=False, nullable=False)
 
-    nb_frames = orm.mapped_column(sqlalchemy.Integer)  # Specific to shots
-    nb_entities_out = orm.mapped_column(sqlalchemy.Integer, default=0)
-    is_casting_standby = orm.mapped_column(sqlalchemy.Boolean, default=False)
+    nb_frames = orm.mapped_column(sqlalchemy.Integer, nullable=False)  # Specific to shots
+    nb_entities_out = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
+    is_casting_standby = orm.mapped_column(sqlalchemy.Boolean, default=False, nullable=False)
 
     is_shared = orm.mapped_column(sqlalchemy.Boolean, default=False, nullable=False)
 
@@ -181,6 +184,7 @@ class Entity(BaseMixin):
             name="entity_uc",
         ),
     )
+
     def from_zou(self, entity: ZouEntity):
         self.uuid = entity.id
         self.name = entity.name
@@ -202,7 +206,7 @@ class Entity(BaseMixin):
         self.ready_for = entity.ready_for
         self.created_by = entity.created_by
         return self
- 
+
 
 class EntityVersion(BaseMixin):
     __tablename__ = "entity_version"
@@ -214,6 +218,7 @@ class EntityVersion(BaseMixin):
     person_id = orm.mapped_column(
         UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid"), index=True
     )
+
     def from_zou(self, entity_version: ZouEntityVersion):
         self.name = entity_version.name
         self.data = f"{entity_version.data}"

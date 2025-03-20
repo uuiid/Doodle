@@ -31,7 +31,7 @@ class Chat(BaseMixin):
     Message shared in the entity chat feeds.
     """
     __tablename__ = "chat"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     object_id = orm.mapped_column(UUIDType(binary=True), nullable=False, index=True)

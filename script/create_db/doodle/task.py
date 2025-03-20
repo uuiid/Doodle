@@ -5,6 +5,7 @@ from doodle.base import BaseMixin
 from sqlalchemy import orm
 import sqlalchemy
 
+
 class Assignations(BaseMixin):
     __tablename__ = "assignations"
     task = orm.mapped_column(
@@ -25,30 +26,30 @@ class Task(BaseMixin):
     """
     __tablename__ = "task"
 
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
     description = orm.mapped_column(sqlalchemy.Text())
 
-    priority = orm.mapped_column(sqlalchemy.Integer, default=0)
-    difficulty = orm.mapped_column(sqlalchemy.Integer, default=3, nullable=False)
+    priority = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
+    difficulty = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=3, nullable=False)
     duration = orm.mapped_column(sqlalchemy.Float, default=0)
     estimation = orm.mapped_column(sqlalchemy.Float, default=0)
-    completion_rate = orm.mapped_column(sqlalchemy.Integer, default=0)
-    retake_count = orm.mapped_column(sqlalchemy.Integer, default=0)
-    sort_order = orm.mapped_column(sqlalchemy.Integer, default=0)
-    start_date = orm.mapped_column(sqlalchemy.DateTime)
-    due_date = orm.mapped_column(sqlalchemy.DateTime)
-    real_start_date = orm.mapped_column(sqlalchemy.DateTime)
-    end_date = orm.mapped_column(sqlalchemy.DateTime)
-    done_date = orm.mapped_column(sqlalchemy.DateTime)
-    last_comment_date = orm.mapped_column(sqlalchemy.DateTime)
-    nb_assets_ready = orm.mapped_column(sqlalchemy.Integer, default=0)
+    completion_rate = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
+    retake_count = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
+    sort_order = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
+    start_date = orm.mapped_column(sqlalchemy.DateTime, nullable=False)
+    due_date = orm.mapped_column(sqlalchemy.DateTime, nullable=False)
+    real_start_date = orm.mapped_column(sqlalchemy.DateTime, nullable=False)
+    end_date = orm.mapped_column(sqlalchemy.DateTime, nullable=False)
+    done_date = orm.mapped_column(sqlalchemy.DateTime, nullable=False)
+    last_comment_date = orm.mapped_column(sqlalchemy.DateTime, nullable=False)
+    nb_assets_ready = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     data = orm.mapped_column(sqlalchemy.TEXT())
-    nb_drawings = orm.mapped_column(sqlalchemy.Integer, default=0)
+    nb_drawings = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
 
-    shotgun_id = orm.mapped_column(sqlalchemy.Integer)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False)
     last_preview_file_id = orm.mapped_column(UUIDType(binary=True))
 
     project_id = orm.mapped_column(

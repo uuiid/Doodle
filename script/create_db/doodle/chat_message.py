@@ -14,7 +14,7 @@ class ChatMessage(BaseMixin):
     """
     __tablename__ = "chat_message"
 
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     chat_id = orm.mapped_column(

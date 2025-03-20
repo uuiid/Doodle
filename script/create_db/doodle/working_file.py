@@ -14,7 +14,7 @@ class WorkingFile(BaseMixin):
     used as source of output files published for a given entity.
     """
     __tablename__ = "working_file"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     shotgun_id = orm.mapped_column(sqlalchemy.Integer(), index=True)
@@ -47,5 +47,3 @@ class WorkingFile(BaseMixin):
             "name", "task_id", "entity_id", "revision", name="working_file_uc"
         ),
     )
-
- 

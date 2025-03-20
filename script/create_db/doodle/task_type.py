@@ -19,10 +19,10 @@ class TaskType(BaseMixin):
     short_name = orm.mapped_column(sqlalchemy.String(20))
     description = orm.mapped_column(sqlalchemy.Text())
     color = orm.mapped_column(sqlalchemy.String(7), default="#FFFFFF")
-    priority = orm.mapped_column(sqlalchemy.Integer, default=1)
+    priority = orm.mapped_column(sqlalchemy.Integer, default=1, nullable=False)
     for_entity = orm.mapped_column(sqlalchemy.String(30), default="Asset")
-    allow_timelog = orm.mapped_column(sqlalchemy.Boolean, default=True)
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    allow_timelog = orm.mapped_column(sqlalchemy.Boolean, default=True, nullable=False)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     shotgun_id = orm.mapped_column(sqlalchemy.Integer, index=True)
 
     department_id = orm.mapped_column(

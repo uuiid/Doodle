@@ -46,7 +46,7 @@
 		"cmake.configureOnEdit": false,
 		"cmake.configureOnOpen": false,
 		"cmake.automaticReconfigure": false,
-		"cmake.skipConfigureIfCachePresent": false,
+		"cmake.skipConfigureIfCachePresent": true,
 		"sqltools.useNodeRuntime": true,
 		"todo-tree.tree.scanMode": "workspace only",
 		"todo-tree.filtering.excludeGlobs": [
@@ -175,6 +175,9 @@
 			"*.inc": "cpp",
 			"eigen": "cpp",
 			"*.rh": "cpp"
-		}
+		},
+		"cmake.allowUnsupportedPresetsVersions": true,
+		"codeium.disableSupercomplete": false,
+		"codeium.detectProxy": false
 	}
 }

@@ -17,7 +17,7 @@ class AssetInstance(BaseMixin):
     a battle field).
     """
     __tablename__ = "asset_instance"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     asset_id = orm.mapped_column(

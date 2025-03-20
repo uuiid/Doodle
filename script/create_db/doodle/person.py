@@ -87,19 +87,19 @@ class Person(BaseMixin):
         ChoiceType(CONTRACT_TYPES), default="open-ended", nullable=False
     )
 
-    active = orm.mapped_column(sqlalchemy.Boolean(), default=True)
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    active = orm.mapped_column(sqlalchemy.Boolean(), default=True, nullable=False)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     last_presence = orm.mapped_column(sqlalchemy.Date())
 
     password = orm.mapped_column(sqlalchemy.LargeBinary(60))
     desktop_login = orm.mapped_column(sqlalchemy.String(80))
     login_failed_attemps = orm.mapped_column(sqlalchemy.Integer, default=0)
     last_login_failed = orm.mapped_column(sqlalchemy.DateTime())
-    totp_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    totp_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     totp_secret = orm.mapped_column(sqlalchemy.String(32), default=None)
-    email_otp_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    email_otp_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     email_otp_secret = orm.mapped_column(sqlalchemy.String(32), default=None)
-    fido_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    fido_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     fido_credentials = orm.mapped_column(sqlalchemy.TEXT())
     otp_recovery_codes = orm.mapped_column(sqlalchemy.TEXT())
     preferred_two_factor_authentication = orm.mapped_column(
@@ -113,19 +113,19 @@ class Person(BaseMixin):
     locale = orm.mapped_column(LocaleType)
     data = orm.mapped_column(sqlalchemy.TEXT())
     role = orm.mapped_column(ChoiceType(ROLE_TYPES), default="user", nullable=False)
-    has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
 
-    notifications_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    notifications_slack_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    notifications_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    notifications_slack_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     notifications_slack_userid = orm.mapped_column(sqlalchemy.String(60), default="")
-    notifications_mattermost_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    notifications_mattermost_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     notifications_mattermost_userid = orm.mapped_column(sqlalchemy.String(60), default="")
-    notifications_discord_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    notifications_discord_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     notifications_discord_userid = orm.mapped_column(sqlalchemy.String(60), default="")
 
     is_bot = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     jti = orm.mapped_column(sqlalchemy.String(60), nullable=True, unique=True)
-    expiration_date = orm.mapped_column(sqlalchemy.Date(), nullable=True)
+    expiration_date = orm.mapped_column(sqlalchemy.Date())
 
     departments = orm.relationship(
         "Department", secondary="department_link", lazy="joined"
@@ -134,7 +134,7 @@ class Person(BaseMixin):
         UUIDType(binary=True), sqlalchemy.ForeignKey("studio.uuid"), index=True
     )
 
-    is_generated_from_ldap = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    is_generated_from_ldap = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     ldap_uid = orm.mapped_column(sqlalchemy.String(60), unique=True, default=None)
 
     __table_args__ = (

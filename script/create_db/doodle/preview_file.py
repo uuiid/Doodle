@@ -25,18 +25,18 @@ class PreviewFile(BaseMixin):
     """
     __tablename__ = "preview_file"
 
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(250))
     original_name = orm.mapped_column(sqlalchemy.String(250))
-    revision = orm.mapped_column(sqlalchemy.Integer(), default=1)
-    position = orm.mapped_column(sqlalchemy.Integer(), default=1)
+    revision = orm.mapped_column(sqlalchemy.Integer(), nullable=False, default=1)
+    position = orm.mapped_column(sqlalchemy.Integer(), nullable=False, default=1)
     extension = orm.mapped_column(sqlalchemy.String(6))
     description = orm.mapped_column(sqlalchemy.Text())
     path = orm.mapped_column(sqlalchemy.String(400))
     source = orm.mapped_column(sqlalchemy.String(40))
-    file_size = orm.mapped_column(sqlalchemy.BigInteger(), default=0)
+    file_size = orm.mapped_column(sqlalchemy.BigInteger(), nullable=False, default=0)
     status = orm.mapped_column(
         ChoiceType(STATUSES), default="processing", nullable=False
     )
@@ -44,9 +44,9 @@ class PreviewFile(BaseMixin):
         ChoiceType(VALIDATION_STATUSES), default="neutral", nullable=False
     )
     annotations = orm.mapped_column(sqlalchemy.Text())
-    width = orm.mapped_column(sqlalchemy.Integer(), default=0)
-    height = orm.mapped_column(sqlalchemy.Integer(), default=0)
-    duration = orm.mapped_column(sqlalchemy.Float, default=0)
+    width = orm.mapped_column(sqlalchemy.Integer(), nullable=False, default=0)
+    height = orm.mapped_column(sqlalchemy.Integer(), nullable=False, default=0)
+    duration = orm.mapped_column(sqlalchemy.Float, nullable=False, default=0)
 
     task_id = orm.mapped_column(
         UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid"), index=True
@@ -60,9 +60,9 @@ class PreviewFile(BaseMixin):
         sqlalchemy.UniqueConstraint("name", "task_id", "revision", name="preview_uc"),
     )
 
-    shotgun_id = orm.mapped_column(sqlalchemy.Integer, unique=True)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False, unique=True)
 
-    is_movie = orm.mapped_column(sqlalchemy.Boolean, default=False)  # deprecated
+    is_movie = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)  # deprecated
     url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
     uploaded_movie_url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
     uploaded_movie_name = orm.mapped_column(sqlalchemy.String(150))  # deprecated

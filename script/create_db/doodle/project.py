@@ -79,6 +79,7 @@ class ProjectTaskTypeLink(BaseMixin):
             "project_id", "task_type_id", name="project_tasktype_uc"
         ),
     )
+
     def from_zou(self, project_task_type_link: ZouProjectTaskTypeLink):
         self.project_id = project_task_type_link.project_id
         self.task_type_id = project_task_type_link.task_type_id
@@ -111,11 +112,13 @@ class ProjectTaskStatusLink(BaseMixin):
             "project_id", "task_status_id", name="project_taskstatus_uc"
         ),
     )
+
     def from_zou(self, project_task_status_link: ZouProjectTaskStatusLink):
         self.project_id = project_task_status_link.project_id
         self.task_status_id = project_task_status_link.task_status_id
         self.priority = project_task_status_link.priority
-        self.roles_for_board = "[{}]".format(", ".join([f'{role.code}' for role in project_task_status_link.roles_for_board]))
+        self.roles_for_board = "[{}]".format(
+            ", ".join([f'{role.code}' for role in project_task_status_link.roles_for_board]))
         return self
 
 
@@ -129,10 +132,12 @@ class ProjectAssetTypeLink(BaseMixin):
         sqlalchemy.ForeignKey("asset_type.uuid"),
 
     )
+
     def from_zou(self, project_asset_type_link: ZouProjectAssetTypeLink):
         self.project_id = project_asset_type_link.project_id
         self.asset_type_id = project_asset_type_link.asset_type_id
         return self
+
 
 class ProjectStatusAutomationLink(BaseMixin):
     __tablename__ = "project_status_automation_link"
@@ -148,6 +153,7 @@ class ProjectStatusAutomationLink(BaseMixin):
 
         index=True,
     )
+
     def from_zou(self, project_status_automation_link: ZouProjectStatusAutomationLink):
         self.project_id = project_status_automation_link.project_id
         self.status_automation_id = project_status_automation_link.status_automation_id
@@ -164,10 +170,12 @@ class ProjectPreviewBackgroundFileLink(BaseMixin):
         sqlalchemy.ForeignKey("preview_background_file.uuid"),
 
     )
+
     def from_zou(self, project_preview_background_file_link: ZouProjectPreviewBackgroundFileLink):
         self.project_id = project_preview_background_file_link.project_id
         self.preview_background_file_id = project_preview_background_file_link.preview_background_file_id
         return self
+
 
 class Project(BaseMixin):
     """
@@ -184,7 +192,7 @@ class Project(BaseMixin):
     shotgun_id = orm.mapped_column(sqlalchemy.Integer)
     file_tree = orm.mapped_column(sqlalchemy.TEXT())
     data = orm.mapped_column(sqlalchemy.TEXT())
-    has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     fps = orm.mapped_column(sqlalchemy.String(10), default=25)
     ratio = orm.mapped_column(sqlalchemy.String(10), default="16:9")
     resolution = orm.mapped_column(sqlalchemy.String(12), default="1920x1080")
@@ -194,13 +202,13 @@ class Project(BaseMixin):
     )
     start_date = orm.mapped_column(sqlalchemy.Date())
     end_date = orm.mapped_column(sqlalchemy.Date())
-    man_days = orm.mapped_column(sqlalchemy.Integer)
-    nb_episodes = orm.mapped_column(sqlalchemy.Integer, default=0)
-    episode_span = orm.mapped_column(sqlalchemy.Integer, default=0)
-    max_retakes = orm.mapped_column(sqlalchemy.Integer, default=0)
-    is_clients_isolated = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    is_preview_download_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    is_set_preview_automated = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    man_days = orm.mapped_column(sqlalchemy.Integer, nullable=False)
+    nb_episodes = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)
+    episode_span = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)
+    max_retakes = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)
+    is_clients_isolated = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    is_preview_download_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    is_set_preview_automated = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     homepage = orm.mapped_column(sqlalchemy.String(80), default="assets")
     is_publish_default_for_artists = orm.mapped_column(sqlalchemy.Boolean(), default=False)
     hd_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=28)

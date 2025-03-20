@@ -43,9 +43,9 @@ class StatusAutomation(BaseMixin):
         index=True,
         nullable=True,
     )
-    import_last_revision = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    import_last_revision = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
 
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
 
     def from_zou(self, status_automation: ZouStatusAutomation):
         self.entity_type = status_automation.entity_type
@@ -54,7 +54,7 @@ class StatusAutomation(BaseMixin):
         self.out_field_type = status_automation.out_field_type
         self.out_task_type_id = status_automation.out_task_type_id
         self.out_task_status_id = status_automation.out_task_status_id
-        self.import_last_revision = status_automation.import_last_revision
-        self.archived = status_automation.archived
+        self.import_last_revision = bool(status_automation.import_last_revision)
+        self.archived = bool(status_automation.archived)
         self.uuid = status_automation.id
         return self

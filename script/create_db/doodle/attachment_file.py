@@ -13,7 +13,7 @@ class AttachmentFile(BaseMixin):
     """
     __tablename__ = "attachment_file"
 
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(250))

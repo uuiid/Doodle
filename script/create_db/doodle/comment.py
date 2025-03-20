@@ -20,6 +20,7 @@ class CommentPreviewLink(BaseMixin):
         index=True,
     )
 
+
 class CommentMentions(BaseMixin):
     __tablename__ = "comment_mentions"
     comment = orm.mapped_column(
@@ -32,6 +33,7 @@ class CommentMentions(BaseMixin):
         sqlalchemy.ForeignKey("person.uuid"),
         index=True,
     )
+
 
 class CommentDepartmentMentions(BaseMixin):
     __tablename__ = "comment_department_mentions"
@@ -46,6 +48,7 @@ class CommentDepartmentMentions(BaseMixin):
         index=True,
     )
 
+
 class CommentAcknoledgments(BaseMixin):
     __tablename__ = "comment_acknoledgments"
     comment = orm.mapped_column(
@@ -59,6 +62,7 @@ class CommentAcknoledgments(BaseMixin):
         index=True,
     )
 
+
 class Comment(BaseMixin):
     """
     Comment can occur on any object but they are mainly used on tasks.
@@ -69,11 +73,11 @@ class Comment(BaseMixin):
     """
 
     __tablename__ = "comment"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
 
-    shotgun_id = orm.mapped_column(sqlalchemy.Integer)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False)
 
     object_id = orm.mapped_column(UUIDType(binary=True), nullable=False, index=True)
     object_type = orm.mapped_column(sqlalchemy.String(80), nullable=False, index=True)
@@ -81,7 +85,7 @@ class Comment(BaseMixin):
     data = orm.mapped_column(sqlalchemy.TEXT())
     replies = orm.mapped_column(sqlalchemy.TEXT())
     checklist = orm.mapped_column(sqlalchemy.TEXT())
-    pinned = orm.mapped_column(sqlalchemy.Boolean)
+    pinned = orm.mapped_column(sqlalchemy.Boolean, nullable=False)
     links = orm.mapped_column(sqlalchemy.TEXT())
 
     task_status_id = orm.mapped_column(
@@ -115,5 +119,3 @@ class Comment(BaseMixin):
         "Person", secondary=CommentAcknoledgments.__table__
     )
     attachment_files = orm.relationship("AttachmentFile", backref="comment")
-
-   

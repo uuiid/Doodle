@@ -55,7 +55,7 @@ class EntityType(BaseMixin):
         secondary=TaskTypeAssetTypeLink.__table__,
         lazy="joined",
     )
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
 
     def from_zou(self, entity_type: ZouEntityType):
         self.name = entity_type.name

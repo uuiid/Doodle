@@ -1,11 +1,11 @@
 from sqlalchemy_utils import UUIDType, ChoiceType
 
-
 from sqlalchemy import orm
 import sqlalchemy
 
 from doodle.base import BaseMixin
 from zou.app.models.notification import Notification as ZouNotification
+
 TYPES = [
     ("comment", "Comment"),
     ("mention", "Mention"),
@@ -21,7 +21,7 @@ class Notification(BaseMixin):
     """
     __tablename__ = "notification"
 
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     read = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)

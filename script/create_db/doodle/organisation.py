@@ -15,16 +15,15 @@ class Organisation(BaseMixin):
     )
     name = orm.mapped_column(sqlalchemy.String(80), unique=True, nullable=False)
     hours_by_day = orm.mapped_column(sqlalchemy.Float, default=8, nullable=False)
-    has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    use_original_file_name = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    timesheets_locked = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    use_original_file_name = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    timesheets_locked = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     format_duration_in_hours = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    hd_by_default = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    hd_by_default = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     chat_token_slack = orm.mapped_column(sqlalchemy.String(80), default="")
     chat_webhook_mattermost = orm.mapped_column(sqlalchemy.String(80), default="")
     chat_token_discord = orm.mapped_column(sqlalchemy.String(80), default="")
     dark_theme_by_default = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    format_duration_in_hours = orm.mapped_column(sqlalchemy.Boolean(), default=False)
 
     def from_zou(self, organisation: ZouOrganisation):
         self.name = organisation.name
@@ -38,6 +37,5 @@ class Organisation(BaseMixin):
         self.chat_webhook_mattermost = organisation.chat_webhook_mattermost
         self.chat_token_discord = organisation.chat_token_discord
         self.dark_theme_by_default = organisation.dark_theme_by_default
-        self.format_duration_in_hours = organisation.format_duration_in_hours
         self.uuid = organisation.id
         return self

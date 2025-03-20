@@ -5,7 +5,7 @@ from sqlalchemy import orm
 import sqlalchemy
 
 from doodle.base import BaseMixin
- 
+
 
 class OutputFile(BaseMixin):
     """
@@ -15,7 +15,7 @@ class OutputFile(BaseMixin):
     """
     __tablename__ = "output_file"
 
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     shotgun_id = orm.mapped_column(sqlalchemy.Integer())
@@ -80,4 +80,3 @@ class OutputFile(BaseMixin):
             name="output_file_uc",
         ),
     )
- 

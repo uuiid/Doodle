@@ -15,7 +15,7 @@ class Studio(BaseMixin):
     )
     name = orm.mapped_column(sqlalchemy.String(80), unique=True, nullable=False)
     color = orm.mapped_column(sqlalchemy.String(7), nullable=False)
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
 
     def from_zou(self, studio: ZouStudio.Studio):
         self.name = studio.name

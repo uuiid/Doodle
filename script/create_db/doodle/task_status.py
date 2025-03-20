@@ -16,24 +16,24 @@ class TaskStatus(BaseMixin):
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), nullable=False)
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     short_name = orm.mapped_column(
         sqlalchemy.String(10), unique=True, nullable=False, index=True
     )
     description = orm.mapped_column(sqlalchemy.Text())
     color = orm.mapped_column(sqlalchemy.String(7), nullable=False)
-    priority = orm.mapped_column(sqlalchemy.Integer, default=1)
+    priority = orm.mapped_column(sqlalchemy.Integer, default=1, nullable=False)
 
-    is_done = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True)
-    is_artist_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=True)
-    is_client_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=True)
-    is_retake = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    is_feedback_request = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True)
-    is_default = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True)
+    is_done = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True, nullable=False)
+    is_artist_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=True, nullable=False)
+    is_client_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=True, nullable=False)
+    is_retake = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    is_feedback_request = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True, nullable=False)
+    is_default = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True, nullable=False)
     shotgun_id = orm.mapped_column(sqlalchemy.Integer)
 
     for_concept = orm.mapped_column(
-        sqlalchemy.Boolean(), server_default=expression.false(), default=False
+        sqlalchemy.Boolean(), server_default=expression.false(), default=False, nullable=False
     )
 
     def from_zou(self, task_status: ZouTaskStatus.TaskStatus):

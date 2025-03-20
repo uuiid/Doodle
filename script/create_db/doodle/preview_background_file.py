@@ -15,11 +15,11 @@ class PreviewBackgroundFile(BaseMixin):
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), nullable=False)
-    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False)
-    is_default = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True)
+    archived = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
+    is_default = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True, nullable=False)
     original_name = orm.mapped_column(sqlalchemy.String(250))
     extension = orm.mapped_column(sqlalchemy.String(6))
-    file_size = orm.mapped_column(sqlalchemy.BigInteger(), default=0)
+    file_size = orm.mapped_column(sqlalchemy.BigInteger(), default=0, nullable=False)
 
     def from_zou(self, preview_background_file: ZouPreviewBackgroundFile):
         self.uuid = preview_background_file.id

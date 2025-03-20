@@ -3,6 +3,7 @@ from sqlalchemy import orm
 import sqlalchemy
 from sqlalchemy_utils import UUIDType
 
+
 class OutputType(BaseMixin):
     """
     Type of an output files (geometry, cache, etc.)
