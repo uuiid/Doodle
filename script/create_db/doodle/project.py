@@ -17,10 +17,10 @@ from zou.app.models.project import ProjectStatusAutomationLink as ZouProjectStat
 from zou.app.models.project import ProjectPreviewBackgroundFileLink as ZouProjectPreviewBackgroundFileLink
 
 PROJECT_STYLES = [
-    ("2d", "2D Animation"),
-    ("2dpaper", "2D Animation (Paper)"),
-    ("3d", "3D Animation"),
-    ("2d3d", "2D/3D Animation"),
+    ("e2d", "2D Animation"),
+    ("e2dpaper", "2D Animation (Paper)"),
+    ("e3d", "3D Animation"),
+    ("e2d3d", "2D/3D Animation"),
     ("ar", "Augmented Reality"),
     ("vfx", "VFX"),
     ("stop-motion", "Stop Motion"),
@@ -209,7 +209,7 @@ class Project(BaseMixin):
     is_clients_isolated = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     is_preview_download_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     is_set_preview_automated = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
-    homepage = orm.mapped_column(sqlalchemy.String(80), default="assets")
+    homepage = orm.mapped_column(sqlalchemy.String(80), default="assets", nullable=False)
     is_publish_default_for_artists = orm.mapped_column(sqlalchemy.Boolean(), default=False)
     hd_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=28)
     ld_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=6)
@@ -257,6 +257,11 @@ class Project(BaseMixin):
         self.resolution = project.resolution
         self.production_type = project.production_type
         self.production_style = project.production_style
+
+        data_map = {"2d":"e2d","2dpaper":"e2dpaper","3d":"e3d","2d3d":"e2d3d",}
+        if(self.production_style.code in data_map.keys()):
+            self.production_style.code = data_map[self.production_style.code]
+
         self.start_date = project.start_date
         self.end_date = project.end_date
         self.man_days = project.man_days

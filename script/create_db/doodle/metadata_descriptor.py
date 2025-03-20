@@ -68,7 +68,7 @@ class MetadataDescriptor(BaseMixin):
     data_type = orm.mapped_column(ChoiceType(METADATA_DESCRIPTOR_TYPES), nullable=False)
     field_name = orm.mapped_column(sqlalchemy.String(120), nullable=False)
     choices = orm.mapped_column(sqlalchemy.Text())
-    for_client = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True)
+    for_client = orm.mapped_column(sqlalchemy.Boolean(), default=False, index=True, nullable=False)
     departments = orm.relationship(
         Department,
         secondary=DepartmentMetadataDescriptorLink.__table__,
@@ -93,7 +93,7 @@ class MetadataDescriptor(BaseMixin):
         self.data_type = metadata_descriptor.data_type
         self.field_name = metadata_descriptor.field_name
         self.choices = f"{metadata_descriptor.choices}"
-        self.for_client = metadata_descriptor.for_client
+        self.for_client = bool(metadata_descriptor.for_client)
 
         self.uuid = metadata_descriptor.id
         return self

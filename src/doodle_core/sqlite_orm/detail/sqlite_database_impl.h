@@ -47,6 +47,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::power_enum)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_type)
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::project_styles)
 // DOODLE_SQLITE_ENUM_TYPE_(doodle::details::assets_type_enum)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::details::assets_type_enum);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::attendance_helper::att_enum);
@@ -471,7 +472,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "project",                                                                                         //
           make_column("id", &project::id_, primary_key().autoincrement()),                                   //
           make_column("uuid", &project::uuid_id_, not_null(), unique()),                                     //
-          make_column("name", &project::name_),                                                              //
+          make_column("name", &project::name_, not_null()),                                                              //
           make_column("code", &project::code_),                                                              //
           make_column("description", &project::description_),                                                //
           make_column("shotgun_id", &project::shotgun_id_),                                                  //

@@ -6,6 +6,42 @@
 #include <doodle_core/metadata/person.h>
 namespace doodle {
 
+enum class project_styles {
+  e2d,
+  e2dpaper,
+  e3d,
+  e2d3d,
+  ar,
+  vfx,
+  stop,
+  motion,
+  archviz,
+  commercial,
+  catalog,
+  immersive,
+  nft,
+  video,
+  vr,
+};
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    project_styles, {{project_styles::e2d, "2D Animation"},
+                     {project_styles::e2dpaper, "2D Animation (Paper)"},
+                     {project_styles::e3d, "3D Animation"},
+                     {project_styles::e2d3d, "2D/3D Animation"},
+                     {project_styles::ar, "Augmented Reality"},
+                     {project_styles::vfx, "VFX"},
+                     {project_styles::stop, "Stop Motion"},
+                     {project_styles::motion, "Motion Design"},
+                     {project_styles::archviz, "Commercial"},
+                     {project_styles::commercial, "commercial"},
+                     {project_styles::catalog, "Catalog"},
+                     {project_styles::immersive, "Immersive Experience"},
+                     {project_styles::nft, "NFT Collection"},
+                     {project_styles::video, "Video Game"},
+                     {project_styles::vr, "Virtual Reality"}}
+);
+
 namespace project_helper {
 struct database_t;
 }
@@ -63,8 +99,8 @@ struct project {
   std::string resolution_;
   std::string production_type_;
   std::string production_style_;
-  chrono::system_zoned_time start_date_;
-  chrono::system_zoned_time end_date_;
+  std::optional<chrono::system_zoned_time> start_date_;
+  std::optional<chrono::system_zoned_time> end_date_;
   std::optional<std::int32_t> man_days_;
   std::int32_t nb_episodes_;
   std::int32_t episode_span_;
