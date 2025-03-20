@@ -12,7 +12,7 @@ class ProjectStatus(BaseMixin):
     Describes the state of the project (mainly open or closed).
     """
     __tablename__ = "project_status"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(20), unique=True, nullable=False, index=True)
@@ -21,5 +21,5 @@ class ProjectStatus(BaseMixin):
     def from_zou(self, project_status: ZouProjectStatus):
         self.name = project_status.name
         self.color = project_status.color
-        self.uuid_id = project_status.id
+        self.uuid = project_status.id
         return self

@@ -13,11 +13,11 @@ class ChatParticipant(BaseMixin):
     __tablename__ = "chat_participant"
     chat_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("chat.uuid_id")
+        sqlalchemy.ForeignKey("chat.uuid")
     )
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id")
+        sqlalchemy.ForeignKey("person.uuid")
     )
 
     def from_zou(self, chat_participant: ZouChatParticipant):
@@ -31,7 +31,7 @@ class Chat(BaseMixin):
     Message shared in the entity chat feeds.
     """
     __tablename__ = "chat"
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     object_id = orm.mapped_column(UUIDType(binary=True), nullable=False, index=True)
@@ -44,7 +44,7 @@ class Chat(BaseMixin):
     )
 
     def from_zou(self, chat: ZouChat):
-        self.uuid_id = chat.id
+        self.uuid = chat.id
         self.object_id = chat.object_id
         self.object_type = chat.object_type
         self.last_message = chat.last_message

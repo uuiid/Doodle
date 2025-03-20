@@ -13,7 +13,7 @@ class AttachmentFile(BaseMixin):
     """
     __tablename__ = "attachment_file"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(250))
@@ -22,13 +22,13 @@ class AttachmentFile(BaseMixin):
     mimetype = orm.mapped_column(sqlalchemy.String(255))
     comment_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.uuid_id"),
+        sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
         nullable=True,
     )
     chat_message_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("chat_message.uuid_id"),
+        sqlalchemy.ForeignKey("chat_message.uuid"),
         index=True,
         nullable=True,
     )
@@ -41,5 +41,5 @@ class AttachmentFile(BaseMixin):
         self.comment_id = attachment_file.comment_id
         self.chat_message_id = attachment_file.chat_message_id
 
-        self.uuid_id = attachment_file.id
+        self.uuid = attachment_file.id
         return self

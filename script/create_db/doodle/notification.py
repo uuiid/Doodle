@@ -21,7 +21,7 @@ class Notification(BaseMixin):
     """
     __tablename__ = "notification"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     read = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)
@@ -29,25 +29,25 @@ class Notification(BaseMixin):
     type = orm.mapped_column(ChoiceType(TYPES), nullable=False)
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         nullable=False,
         index=True,
     )
     author_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         nullable=False,
         index=True,
     )
     comment_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.uuid_id"),
+        sqlalchemy.ForeignKey("comment.uuid"),
         nullable=True,
         index=True,
     )
     task_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("task.uuid_id"),
+        sqlalchemy.ForeignKey("task.uuid"),
         nullable=False,
         index=True,
     )
@@ -65,7 +65,7 @@ class Notification(BaseMixin):
     )
 
     def from_zou(self, notification: ZouNotification):
-        self.uuid_id = notification.id
+        self.uuid = notification.id
         self.read = notification.read
         self.change = notification.change
         self.type = notification.type

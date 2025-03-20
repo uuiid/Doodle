@@ -10,7 +10,7 @@ class Organisation(BaseMixin):
     Model to represent current organisation settings.
     """
     __tablename__ = "organisation"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(80), unique=True, nullable=False)
@@ -39,5 +39,5 @@ class Organisation(BaseMixin):
         self.chat_token_discord = organisation.chat_token_discord
         self.dark_theme_by_default = organisation.dark_theme_by_default
         self.format_duration_in_hours = organisation.format_duration_in_hours
-        self.uuid_id = organisation.id
+        self.uuid = organisation.id
         return self

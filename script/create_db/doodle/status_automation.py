@@ -19,27 +19,27 @@ class StatusAutomation(BaseMixin):
     """
     __tablename__ = "status_automation"
 
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     entity_type = orm.mapped_column(sqlalchemy.String(40), default="asset")
 
     in_task_type_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid"), index=True
     )
     in_task_status_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid"), index=True
     )
 
     out_field_type = orm.mapped_column(
         ChoiceType(CHANGE_TYPES), default="status", nullable=False
     )
     out_task_type_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid"), index=True
     )
     out_task_status_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("task_status.uuid_id"),
+        sqlalchemy.ForeignKey("task_status.uuid"),
         index=True,
         nullable=True,
     )
@@ -56,5 +56,5 @@ class StatusAutomation(BaseMixin):
         self.out_task_status_id = status_automation.out_task_status_id
         self.import_last_revision = status_automation.import_last_revision
         self.archived = status_automation.archived
-        self.uuid_id = status_automation.id
+        self.uuid = status_automation.id
         return self

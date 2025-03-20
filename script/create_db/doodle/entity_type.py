@@ -14,12 +14,12 @@ class TaskTypeAssetTypeLink(BaseMixin):
 
     asset_type_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("asset_type.uuid_id"),
+        sqlalchemy.ForeignKey("asset_type.uuid"),
         index=True
     )
     task_type_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey(TaskType.uuid_id),
+        sqlalchemy.ForeignKey(TaskType.uuid),
         index=True
     )
 
@@ -44,7 +44,7 @@ class EntityType(BaseMixin):
     entity is a shot, sequence, episode or layout scene.
     """
     __tablename__ = "asset_type"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(30), unique=True, nullable=False, index=True)
@@ -62,6 +62,6 @@ class EntityType(BaseMixin):
         self.short_name = entity_type.short_name
         self.description = entity_type.description
         self.archived = entity_type.archived
-        self.uuid_id = entity_type.id
+        self.uuid = entity_type.id
 
         return self

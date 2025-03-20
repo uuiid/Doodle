@@ -9,7 +9,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 class BaseMixin(DeclarativeBase):
     id: orm.Mapped[int] = orm.mapped_column(primary_key=True, autoincrement=True)
-    # uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    # uuid : orm.Mapped[UUIDType] = orm.mapped_column(
     #     UUIDType(binary=True), unique=True
     # )
     # id = db.Column(

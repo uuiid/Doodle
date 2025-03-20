@@ -11,7 +11,7 @@ class Software(BaseMixin):
     Describes software used by working files.
     """
     __tablename__ = "software"
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), unique=True, nullable=False)

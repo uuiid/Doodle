@@ -10,7 +10,7 @@ class FileStatus(BaseMixin):
     """
     __tablename__ = "file_status"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), unique=True, nullable=False)

@@ -12,7 +12,7 @@ class TaskStatus(BaseMixin):
     preview file linked to relate comment.
     """
     __tablename__ = "task_status"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), nullable=False)
@@ -52,5 +52,5 @@ class TaskStatus(BaseMixin):
         self.shotgun_id = task_status.shotgun_id
         self.for_concept = task_status.for_concept
 
-        self.uuid_id = task_status.id
+        self.uuid = task_status.id
         return self

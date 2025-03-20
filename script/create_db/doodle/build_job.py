@@ -34,7 +34,7 @@ class BuildJob(BaseMixin):
     )
 
     def from_zou(self, build_job: ZouBuildJob):
-        self.uuid_id = build_job.id
+        self.uuid = build_job.id
         self.status = build_job.status
         self.job_type = build_job.job_type
         self.ended_at = build_job.ended_at

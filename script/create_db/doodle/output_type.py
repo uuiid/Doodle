@@ -8,7 +8,7 @@ class OutputType(BaseMixin):
     Type of an output files (geometry, cache, etc.)
     """
     __tablename__ = "output_type"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), unique=True, nullable=False, index=True)

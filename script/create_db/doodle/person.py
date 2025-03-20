@@ -47,12 +47,12 @@ class DepartmentLink(BaseMixin):
     __tablename__ = "department_link"
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         index=True,
     )
     department_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("department.uuid_id"),
+        sqlalchemy.ForeignKey("department.uuid"),
         index=True,
     )
 
@@ -76,7 +76,7 @@ class Person(BaseMixin):
     Describe a member of the studio (and an API user).
     """
     __tablename__ = "person"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     first_name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
@@ -131,7 +131,7 @@ class Person(BaseMixin):
         "Department", secondary="department_link", lazy="joined"
     )
     studio_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("studio.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("studio.uuid"), index=True
     )
 
     is_generated_from_ldap = orm.mapped_column(sqlalchemy.Boolean(), default=False)
@@ -148,7 +148,7 @@ class Person(BaseMixin):
     )
 
     def from_zou(self, person: ZouPerson):
-        self.uuid_id = person.id
+        self.uuid = person.id
         self.first_name = person.first_name
         self.last_name = person.last_name
         self.email = person.email

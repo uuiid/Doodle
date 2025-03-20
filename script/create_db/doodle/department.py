@@ -10,7 +10,7 @@ class Department(BaseMixin):
     Studio department like modeling, animation, etc.
     """
     __tablename__ = "department"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(80), unique=True, nullable=False)
@@ -21,5 +21,5 @@ class Department(BaseMixin):
         self.name = department.name
         self.color = department.color
         self.archived = department.archived
-        self.uuid_id = department.id
+        self.uuid = department.id
         return self

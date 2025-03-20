@@ -15,7 +15,7 @@ class OutputFile(BaseMixin):
     """
     __tablename__ = "output_file"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     shotgun_id = orm.mapped_column(sqlalchemy.Integer())
@@ -36,32 +36,32 @@ class OutputFile(BaseMixin):
 
     file_status_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("file_status.uuid_id"),
+        sqlalchemy.ForeignKey("file_status.uuid"),
         nullable=False,
         index=True,
     )
     entity_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid"), index=True
     )
     asset_instance_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("asset_instance.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("asset_instance.uuid"), index=True
     )
     output_type_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("output_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("output_type.uuid"), index=True
     )
     task_type_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid"), index=True
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid"), index=True
     )
     source_file_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("working_file.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("working_file.uuid"), index=True
     )
     source_file = relationship("WorkingFile", back_populates="outputs")
     temporal_entity_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("entity.uuid_id"),
+        sqlalchemy.ForeignKey("entity.uuid"),
         default=None,
         nullable=True,
         index=True,

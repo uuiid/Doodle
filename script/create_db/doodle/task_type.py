@@ -12,7 +12,7 @@ class TaskType(BaseMixin):
     Categorize tasks in domain areas: modeling, animation, etc.
     """
     __tablename__ = "task_type"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), nullable=False)
@@ -26,7 +26,7 @@ class TaskType(BaseMixin):
     shotgun_id = orm.mapped_column(sqlalchemy.Integer, index=True)
 
     department_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("department.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("department.uuid"), index=True
     )
 
     __table_args__ = (
@@ -46,5 +46,5 @@ class TaskType(BaseMixin):
         self.archived = task_type.archived
         self.shotgun_id = task_type.shotgun_id
         self.department_id = task_type.department_id
-        self.uuid_id = task_type.id
+        self.uuid = task_type.id
         return self

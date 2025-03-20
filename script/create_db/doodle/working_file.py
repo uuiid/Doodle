@@ -14,7 +14,7 @@ class WorkingFile(BaseMixin):
     used as source of output files published for a given entity.
     """
     __tablename__ = "working_file"
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     shotgun_id = orm.mapped_column(sqlalchemy.Integer(), index=True)
@@ -29,16 +29,16 @@ class WorkingFile(BaseMixin):
     data = orm.mapped_column(sqlalchemy.Text())
 
     task_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid"), index=True
     )
     entity_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid"), index=True
     )
     person_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid"), index=True
     )
     software_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("software.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("software.uuid"), index=True
     )
     outputs = relationship("OutputFile", back_populates="source_file")
 

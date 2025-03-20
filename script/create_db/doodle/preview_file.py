@@ -25,7 +25,7 @@ class PreviewFile(BaseMixin):
     """
     __tablename__ = "preview_file"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(250))
@@ -49,11 +49,11 @@ class PreviewFile(BaseMixin):
     duration = orm.mapped_column(sqlalchemy.Float, default=0)
 
     task_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task.uuid"), index=True
     )
-    person_id = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"))
+    person_id = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid"))
     source_file_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("output_file.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("output_file.uuid")
     )
 
     __table_args__ = (
@@ -68,7 +68,7 @@ class PreviewFile(BaseMixin):
     uploaded_movie_name = orm.mapped_column(sqlalchemy.String(150))  # deprecated
 
     def from_zou(self, preview_file: ZouPreviewFile):
-        self.uuid_id = preview_file.id
+        self.uuid = preview_file.id
         self.name = preview_file.name
         self.original_name = preview_file.original_name
         self.revision = preview_file.revision

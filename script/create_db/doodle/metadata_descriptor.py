@@ -13,12 +13,12 @@ class DepartmentMetadataDescriptorLink(BaseMixin):
     __tablename__ = "department_metadata_descriptor_link"
     metadata_descriptor_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("metadata_descriptor.uuid_id"),
+        sqlalchemy.ForeignKey("metadata_descriptor.uuid"),
         index=True
     )
     department_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("department.uuid_id"),
+        sqlalchemy.ForeignKey("department.uuid"),
         index=True
     )
 
@@ -54,12 +54,12 @@ class MetadataDescriptor(BaseMixin):
     """
 
     __tablename__ = "metadata_descriptor"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     project_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("project.uuid_id"),
+        sqlalchemy.ForeignKey("project.uuid"),
         nullable=False,
         index=True,
     )
@@ -95,5 +95,5 @@ class MetadataDescriptor(BaseMixin):
         self.choices = f"{metadata_descriptor.choices}"
         self.for_client = metadata_descriptor.for_client
 
-        self.uuid_id = metadata_descriptor.id
+        self.uuid = metadata_descriptor.id
         return self

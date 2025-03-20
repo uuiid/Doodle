@@ -2,6 +2,7 @@ from os import getenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 import os
+
 import zou.app
 import zou.app.models.project_status
 import zou.app.models.organisation
@@ -47,9 +48,9 @@ import doodle.chat_message
 import doodle.chat
 
 PASS = getenv("KITSU_PASS")
-
+DB_NAME = "my_zou.database"
 def main():
-    engine = create_engine("sqlite:///D:\\zou2.db")
+    engine = create_engine(f"sqlite:///D:\\{DB_NAME}")
 
     with zou.app.app.app_context():
         l_prj_list : list[zou.app.models.project_status.ProjectStatus]= zou.app.models.project_status.ProjectStatus.query.all()
@@ -122,5 +123,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # os.remove("D:\\zou2.db")
+    if(os.path.exists(f"D:\\{DB_NAME}")):
+        os.remove(f"D:\\{DB_NAME}")
     main()

@@ -11,12 +11,12 @@ class CommentPreviewLink(BaseMixin):
     __tablename__ = "comment_preview_link"
     comment = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.uuid_id"),
+        sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
     preview_file = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("preview_file.uuid_id"),
+        sqlalchemy.ForeignKey("preview_file.uuid"),
         index=True,
     )
 
@@ -24,12 +24,12 @@ class CommentMentions(BaseMixin):
     __tablename__ = "comment_mentions"
     comment = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.uuid_id"),
+        sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
     person = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         index=True,
     )
 
@@ -37,12 +37,12 @@ class CommentDepartmentMentions(BaseMixin):
     __tablename__ = "comment_department_mentions"
     comment = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.uuid_id"),
+        sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
     department = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("department.uuid_id"),
+        sqlalchemy.ForeignKey("department.uuid"),
         index=True,
     )
 
@@ -50,12 +50,12 @@ class CommentAcknoledgments(BaseMixin):
     __tablename__ = "comment_acknoledgments"
     comment = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("comment.uuid_id"),
+        sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
     person = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         index=True,
     )
 
@@ -69,7 +69,7 @@ class Comment(BaseMixin):
     """
 
     __tablename__ = "comment"
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
 
@@ -85,22 +85,22 @@ class Comment(BaseMixin):
     links = orm.mapped_column(sqlalchemy.TEXT())
 
     task_status_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid"), index=True
     )
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         nullable=False,
         index=True,
     )
     editor_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         default=None,
         index=True,
     )
     preview_file_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("preview_file.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("preview_file.uuid")
     )
     previews = orm.relationship(
         "PreviewFile",

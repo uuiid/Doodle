@@ -14,18 +14,18 @@ class ChatMessage(BaseMixin):
     """
     __tablename__ = "chat_message"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     chat_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("chat.uuid_id"),
+        sqlalchemy.ForeignKey("chat.uuid"),
         nullable=False,
         index=True,
     )
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
         nullable=False,
         index=True,
     )
@@ -40,4 +40,4 @@ class ChatMessage(BaseMixin):
         self.text = chat_message.text
         self.attachment_files = chat_message.attachment_files
 
-        self.uuid_id = chat_message.id
+        self.uuid = chat_message.id

@@ -10,7 +10,7 @@ class Studio(BaseMixin):
     Describe a studio.
     """
     __tablename__ = "studio"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(80), unique=True, nullable=False)
@@ -21,5 +21,5 @@ class Studio(BaseMixin):
         self.name = studio.name
         self.color = studio.color
         self.archived = studio.archived
-        self.uuid_id = studio.id
+        self.uuid = studio.id
         return self

@@ -9,11 +9,11 @@ class Assignations(BaseMixin):
     __tablename__ = "assignations"
     task = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("task.uuid_id"),
+        sqlalchemy.ForeignKey("task.uuid"),
     )
     person = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
     )
 
 
@@ -25,7 +25,7 @@ class Task(BaseMixin):
     """
     __tablename__ = "task"
 
-    uuid_id : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
@@ -52,19 +52,19 @@ class Task(BaseMixin):
     last_preview_file_id = orm.mapped_column(UUIDType(binary=True))
 
     project_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid"), index=True
     )
     task_type_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_type.uuid"), index=True
     )
     task_status_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid"), index=True
     )
     entity_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid"), index=True
     )
     assigner_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid_id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("person.uuid"), index=True
     )
     assignees = orm.relationship("Person", secondary=Assignations.__table__)
 

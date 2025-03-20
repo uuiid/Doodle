@@ -39,13 +39,13 @@ class ProjectPersonLink(BaseMixin):
     __tablename__ = "project_person_link"
     project_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("project.uuid_id"),
+        sqlalchemy.ForeignKey("project.uuid"),
 
         index=True,
     )
     person_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("person.uuid_id"),
+        sqlalchemy.ForeignKey("person.uuid"),
 
         index=True,
     )
@@ -62,13 +62,13 @@ class ProjectTaskTypeLink(BaseMixin):
     __tablename__ = "project_task_type_link"
     project_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("project.uuid_id"),
+        sqlalchemy.ForeignKey("project.uuid"),
 
         index=True,
     )
     task_type_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("task_type.uuid_id"),
+        sqlalchemy.ForeignKey("task_type.uuid"),
 
         index=True,
     )
@@ -90,13 +90,13 @@ class ProjectTaskStatusLink(BaseMixin):
     __tablename__ = "project_task_status_link"
     project_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("project.uuid_id"),
+        sqlalchemy.ForeignKey("project.uuid"),
 
         index=True,
     )
     task_status_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("task_status.uuid_id"),
+        sqlalchemy.ForeignKey("task_status.uuid"),
 
         index=True,
     )
@@ -122,11 +122,11 @@ class ProjectTaskStatusLink(BaseMixin):
 class ProjectAssetTypeLink(BaseMixin):
     __tablename__ = "project_asset_type_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid")
     )
     asset_type_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("asset_type.uuid_id"),
+        sqlalchemy.ForeignKey("asset_type.uuid"),
 
     )
     def from_zou(self, project_asset_type_link: ZouProjectAssetTypeLink):
@@ -138,13 +138,13 @@ class ProjectStatusAutomationLink(BaseMixin):
     __tablename__ = "project_status_automation_link"
     project_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("project.uuid_id"),
+        sqlalchemy.ForeignKey("project.uuid"),
 
         index=True,
     )
     status_automation_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("status_automation.uuid_id"),
+        sqlalchemy.ForeignKey("status_automation.uuid"),
 
         index=True,
     )
@@ -157,11 +157,11 @@ class ProjectStatusAutomationLink(BaseMixin):
 class ProjectPreviewBackgroundFileLink(BaseMixin):
     __tablename__ = "project_preview_background_file_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid_id")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid")
     )
     preview_background_file_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("preview_background_file.uuid_id"),
+        sqlalchemy.ForeignKey("preview_background_file.uuid"),
 
     )
     def from_zou(self, project_preview_background_file_link: ZouProjectPreviewBackgroundFileLink):
@@ -175,7 +175,7 @@ class Project(BaseMixin):
     """
 
     __tablename__ = "project"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(80), nullable=False, unique=True, index=True)
@@ -236,7 +236,7 @@ class Project(BaseMixin):
     )
 
     def from_zou(self, project: ZouProject):
-        self.uuid_id = project.id
+        self.uuid = project.id
         self.name = project.name
         self.code = project.code
         self.description = project.description

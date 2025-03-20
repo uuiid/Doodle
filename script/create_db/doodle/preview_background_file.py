@@ -11,7 +11,7 @@ class PreviewBackgroundFile(BaseMixin):
     Describe a preview background file.
     """
     __tablename__ = "preview_background_file"
-    uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(40), nullable=False)
@@ -22,7 +22,7 @@ class PreviewBackgroundFile(BaseMixin):
     file_size = orm.mapped_column(sqlalchemy.BigInteger(), default=0)
 
     def from_zou(self, preview_background_file: ZouPreviewBackgroundFile):
-        self.uuid_id = preview_background_file.id
+        self.uuid = preview_background_file.id
         self.name = preview_background_file.name
         self.archived = preview_background_file.archived
         self.is_default = preview_background_file.is_default
