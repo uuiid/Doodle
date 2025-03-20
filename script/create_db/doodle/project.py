@@ -92,19 +92,20 @@ class ProjectTaskStatusLink(BaseMixin):
     project_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid"),
-
+        nullable=False,
         index=True,
     )
     task_status_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("task_status.uuid"),
-
+        nullable=False,
         index=True,
     )
     priority = orm.mapped_column(sqlalchemy.Integer, default=None)
     roles_for_board = orm.mapped_column(
         sqlalchemy.TEXT(),
-        default=["user", "admin", "supervisor", "manager", "vendor"],
+        default="[user,admin,supervisor,manager,vendor]",
+        nullable=False,
     )
 
     __table_args__ = (
