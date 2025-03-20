@@ -17,7 +17,6 @@ class SearchFilterGroup(BaseMixin):
     color = db.Column(db.String(8), nullable=False, default="")
     is_shared = db.Column(
         db.Boolean,
-        server_default=expression.false(),
         default=False,
         nullable=False,
     )

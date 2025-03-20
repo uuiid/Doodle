@@ -18,7 +18,6 @@ class SearchFilter(BaseMixin):
     search_query = db.Column(db.String(500), nullable=False, default="")
     is_shared = db.Column(
         db.Boolean,
-        server_default=expression.false(),
         default=False,
         nullable=False,
     )

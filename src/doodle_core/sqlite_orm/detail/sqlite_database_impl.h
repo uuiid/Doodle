@@ -641,11 +641,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "task_status",                                                           //
           make_column("id", &task_status::id_, primary_key().autoincrement()),     //
           make_column("uuid", &task_status::uuid_id_, not_null(), unique()),       //
-          make_column("name", &task_status::name_),                                //
+          make_column("name", &task_status::name_, not_null()),                                //
           make_column("archived", &task_status::archived_),                        //
-          make_column("short_name", &task_status::short_name_),                    //
+          make_column("short_name", &task_status::short_name_, not_null()),                    //
           make_column("description", &task_status::description_),                  //
-          make_column("color", &task_status::color_),                              //
+          make_column("color", &task_status::color_, not_null()),                              //
           make_column("priority", &task_status::priority_),                        //
           make_column("is_done", &task_status::is_done_),                          //
           make_column("is_artist_allowed", &task_status::is_artist_allowed_),      //
@@ -711,9 +711,12 @@ struct sqlite_database_impl {
     try {
       auto l_g   = storage_any_.transaction_guard();
       auto l_map = storage_any_.sync_schema(true);
-      for (auto& [l_k, l_v] : l_map) {
-        default_logger_raw()->info("数据库更新 {} {}", l_k, magic_enum::enum_name(l_v));
-      }
+      l_map      = l_map | ranges::views::filter([](const std::pair<std::string, sqlite_orm::sync_schema_result>& in) {
+                return in.second != sqlite_orm::sync_schema_result::already_in_sync;
+              }) |
+              ranges::to<std::map<std::string, sqlite_orm::sync_schema_result>>();
+      if (!l_map.empty())
+        for (auto&& [t, m] : l_map) default_logger_raw()->info("数据库更新 {} {}", t, magic_enum::enum_name(m));
       l_g.commit();
     } catch (...) {
       default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
