@@ -153,7 +153,8 @@ class Person(BaseMixin):
         self.last_name = person.last_name
         self.email = person.email
         self.phone = person.phone
-        self.contract_type = person.contract_type.value
+        self.contract_type = person.contract_type
+        self.contract_type.code = self.contract_type.code.replace("-", "_")
         self.active = person.active
         self.archived = person.archived
         self.last_presence = person.last_presence
