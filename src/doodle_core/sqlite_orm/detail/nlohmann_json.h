@@ -20,7 +20,7 @@ struct statement_binder<nlohmann::json> : public statement_binder<std::string> {
 
 template <>
 struct field_printer<nlohmann::json> : field_printer<std::string> {
-  std::string operator()(const nlohmann::json& value) const { return '{' + value.dump() + '}'; }
+  std::string operator()(const nlohmann::json& value) const { return value.dump(); }
 };
 
 template <>
