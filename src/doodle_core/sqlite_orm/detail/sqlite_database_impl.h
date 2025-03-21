@@ -253,11 +253,13 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("height", &preview_file::height_),                         //
           make_column("duration", &preview_file::duration_),                     //
           make_column("task_id", &preview_file::task_id_),                       //
-          make_column("person_id", &preview_file::person_id_),                   //
           make_column("shotgun_id", &preview_file::shotgun_id_),         //
+          make_column("person_id", &preview_file::person_id_),                   //
+          make_column("source_file_id", &preview_file::source_file_id_),                   //
           make_column("is_movie", &preview_file::is_movie_),         //
           make_column("url", &preview_file::url_),         //
           make_column("uploaded_movie_url", &preview_file::uploaded_movie_url_),         //
+          make_column("uploaded_movie_name", &preview_file::uploaded_movie_name_),         //
           foreign_key(&preview_file::task_id_).references(&task::uuid_id_),      //
           foreign_key(&preview_file::person_id_).references(&person::uuid_id_)   //
           // foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
