@@ -7,15 +7,24 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 namespace doodle {
+
+enum class notification_type {
+  comment,
+  mention,
+  assignation,
+  reply,
+  reply_mention,
+};
+
 struct DOODLE_CORE_API notification {
   DOODLE_BASE_FIELDS();
   bool read_{};
   bool change_{};
-  std::string type_;
+  notification_type type_;
   uuid person_id_;
   uuid author_id_;
   uuid comment_id_;
   uuid task_id_;
   uuid reply_id_;
 };
-}
+}  // namespace doodle

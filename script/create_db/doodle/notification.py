@@ -11,7 +11,7 @@ TYPES = [
     ("mention", "Mention"),
     ("assignation", "Assignation"),
     ("reply", "Reply"),
-    ("reply-mention", "Reply Mention"),
+    ("reply_mention", "Reply Mention"),
 ]
 
 
@@ -69,6 +69,7 @@ class Notification(BaseMixin):
         self.read = notification.read
         self.change = notification.change
         self.type = notification.type
+        self.type.code = notification.type.code.replace("-", "_")
         self.person_id = notification.person_id
         self.author_id = notification.author_id
         self.comment_id = notification.comment_id

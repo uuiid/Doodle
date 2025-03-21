@@ -59,6 +59,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_statuses);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::preview_file_validation_statuses);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::entity_status);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::contract_types);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::notification_type);
 DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
@@ -263,7 +264,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("type", &notification::type_),                               //
           make_column("person_id", &notification::person_id_, not_null()),                     //
           make_column("author_id", &notification::author_id_, not_null()),                     //
-          make_column("comment_id", &notification::comment_id_, not_null()),                   //
+          make_column("comment_id", &notification::comment_id_),                   //
           make_column("task_id", &notification::task_id_, not_null()),                         //
           foreign_key(&notification::person_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::author_id_).references(&person::uuid_id_),    //
