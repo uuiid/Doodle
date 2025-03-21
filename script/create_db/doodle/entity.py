@@ -98,7 +98,7 @@ class Entity(BaseMixin):
     uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
-    name = orm.mapped_column(sqlalchemy.String(160), nullable=False)
+    name = orm.mapped_column(sqlalchemy.String(160))
     code = orm.mapped_column(sqlalchemy.String(160))  # To store sanitized version of name
     description = orm.mapped_column(sqlalchemy.Text())
     shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False)

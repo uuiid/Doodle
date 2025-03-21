@@ -297,7 +297,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_table<comment>(
           "comment",                                                                                       //
           make_column("id", &comment::id_, primary_key().autoincrement()),                                 //
-          make_column("uuid_id", &comment::uuid_id_, unique(), not_null()),                                //
+          make_column("uuid", &comment::uuid_id_, unique(), not_null()),                                //
           make_column("shotgun_id", &comment::shotgun_id_),                                                //
           make_column("object_id", &comment::object_id_),                                                  //
           make_column("object_type", &comment::object_type_),                                              //
@@ -318,7 +318,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_table<task>(
           "task",                                                                  //
           make_column("id", &task::id_, primary_key().autoincrement()),            //
-          make_column("uuid_id", &task::uuid_id_, unique(), not_null()),           //
+          make_column("uuid", &task::uuid_id_, unique(), not_null()),           //
           make_column("name", &task::name_),                                       //
           make_column("description", &task::description_),                         //
           make_column("priority", &task::priority_),                               //
@@ -372,9 +372,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_table<entity>(
           "entity",                                                                    //
           make_column("id", &entity::id_, primary_key().autoincrement()),              //
-          make_column("uuid_id", &entity::uuid_id_, unique(), not_null()),             //
+          make_column("uuid", &entity::uuid_id_, unique(), not_null()),             //
           make_column("name", &entity::name_),                                         //
           make_column("code", &entity::code_),                                         //
+          make_column("description", &entity::description_),                                         //
           make_column("shotgun_id", &entity::shotgun_id_),                             //
           make_column("canceled", &entity::canceled_),                                 //
           make_column("nb_frames", &entity::nb_frames_),                               //
@@ -382,8 +383,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("is_casting_standby", &entity::is_casting_standby_),             //
           make_column("is_shared", &entity::is_shared_),                               //
           make_column("status", &entity::status_),                                     //
-          make_column("project_id", &entity::project_id_),                             //
-          make_column("entity_type_id", &entity::entity_type_id_),                     //
+          make_column("project_id", &entity::project_id_, not_null()),                             //
+          make_column("entity_type_id", &entity::entity_type_id_, not_null()),                     //
           make_column("parent_id", &entity::parent_id_),                               //
           make_column("source_id", &entity::source_id_),                               //
           make_column("preview_file_id", &entity::preview_file_id_),                   //
