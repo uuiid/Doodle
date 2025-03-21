@@ -310,8 +310,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &comment::id_, primary_key().autoincrement()),                                 //
           make_column("uuid", &comment::uuid_id_, unique(), not_null()),                                //
           make_column("shotgun_id", &comment::shotgun_id_),                                                //
-          make_column("object_id", &comment::object_id_),                                                  //
-          make_column("object_type", &comment::object_type_),                                              //
+          make_column("object_id", &comment::object_id_, not_null()),                                                  //
+          make_column("object_type", &comment::object_type_, not_null()),                                              //
           make_column("text", &comment::text_),                                                            //
           make_column("data", &comment::data_),                                                            //
           make_column("replies", &comment::replies_),                                                      //

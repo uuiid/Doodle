@@ -40,13 +40,13 @@ class ProjectPersonLink(BaseMixin):
     project_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid"),
-
+        nullable=False,
         index=True,
     )
     person_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid"),
-
+        nullable=False,
         index=True,
     )
     shotgun_id = orm.mapped_column(sqlalchemy.Integer)

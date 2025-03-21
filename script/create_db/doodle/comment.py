@@ -9,12 +9,12 @@ from doodle.base import BaseMixin
 
 class CommentPreviewLink(BaseMixin):
     __tablename__ = "comment_preview_link"
-    comment = orm.mapped_column(
+    comment_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
-    preview_file = orm.mapped_column(
+    preview_file_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("preview_file.uuid"),
         index=True,
@@ -23,12 +23,12 @@ class CommentPreviewLink(BaseMixin):
 
 class CommentMentions(BaseMixin):
     __tablename__ = "comment_mentions"
-    comment = orm.mapped_column(
+    comment_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
-    person = orm.mapped_column(
+    person_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid"),
         index=True,
@@ -37,12 +37,12 @@ class CommentMentions(BaseMixin):
 
 class CommentDepartmentMentions(BaseMixin):
     __tablename__ = "comment_department_mentions"
-    comment = orm.mapped_column(
+    comment_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
-    department = orm.mapped_column(
+    department_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("department.uuid"),
         index=True,
@@ -51,12 +51,12 @@ class CommentDepartmentMentions(BaseMixin):
 
 class CommentAcknoledgments(BaseMixin):
     __tablename__ = "comment_acknoledgments"
-    comment = orm.mapped_column(
+    comment_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("comment.uuid"),
         index=True,
     )
-    person = orm.mapped_column(
+    person_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid"),
         index=True,
