@@ -19,6 +19,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> login(session_data
 
 DOODLE_HTTP_FUN(authenticated, get, "api/auth/authenticated", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  get_person(in_handle);
   nlohmann::json l_r{};
   l_r["authenticated"] = true;
   l_r["user"]          = *person_;
@@ -30,7 +31,9 @@ DOODLE_HTTP_FUN_END()
 
 }  // namespace
 void register_login(http_route& in_r) {
+#ifdef DOODLE_KITSU
   in_r.reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/auth/login", login))
       .reg(std::make_shared<authenticated_get>());
+#endif
 }
 }  // namespace doodle::http
