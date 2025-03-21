@@ -31,22 +31,23 @@
 
 template <typename T>
 std::string enum_array_to_string(const T& t) {
-  std::string l_ret{'{'};
+  std::string l_ret{'['};
   for (const auto& v : t) {
     l_ret += fmt::format(", {}", magic_enum::enum_name(v));
   }
-  l_ret += '}';
+  l_ret += ']';
   return l_ret;
 }
 
 template <typename T>
 std::vector<T> string_to_enum_array(const std::string& t) {
   std::vector<T> l_ret;
-  if (t.empty()) return l_ret;
-  auto l_begin = ++t.begin();
-  while (l_begin != t.end()) {
-    auto l_end = std::find(l_begin, t.end(), ',');
-    l_ret.emplace_back(magic_enum::enum_cast<T>(std::string_view{l_begin, l_end}).value());
+  if (t.empty() || t.size() <= 2) return l_ret;
+  std::string_view l_value{++t.begin(), --t.end()};
+  auto l_begin = l_value.begin();
+  while (l_begin != l_value.end()) {
+    auto l_end = std::find(l_begin, l_value.end(), ',');
+    l_ret.emplace_back(magic_enum::enum_cast<T>(std::string_view{l_begin + 2, l_end}).value());
     l_begin = l_end + 1;
   }
   return l_ret;
