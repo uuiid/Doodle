@@ -131,7 +131,14 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     i.task_types_priority_ = l_task_type_link;
     i.task_statuses_link_  = l_task_status_link;
   }
-  return {};
+  return l_projects;
+}
+person sqlite_database::get_person_for_email(const std::string& in_email) {
+  auto l_p = impl_->storage_any_.get_all<person>(
+      sqlite_orm::where(sqlite_orm::c(&person::email_) == in_email)
+  );
+  if (l_p.empty()) throw_exception(doodle_error{"未知的用户"});
+  return l_p.front();
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);

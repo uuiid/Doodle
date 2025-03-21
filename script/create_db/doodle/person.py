@@ -93,7 +93,7 @@ class Person(BaseMixin):
 
     password = orm.mapped_column(sqlalchemy.LargeBinary(60))
     desktop_login = orm.mapped_column(sqlalchemy.String(80))
-    login_failed_attemps = orm.mapped_column(sqlalchemy.Integer, default=0)
+    login_failed_attemps = orm.mapped_column(sqlalchemy.Integer, default=0, nullable=False)
     last_login_failed = orm.mapped_column(sqlalchemy.DateTime())
     totp_enabled = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     totp_secret = orm.mapped_column(sqlalchemy.String(32), default=None)

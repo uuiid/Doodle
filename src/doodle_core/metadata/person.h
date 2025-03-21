@@ -58,7 +58,7 @@ struct DOODLE_CORE_API person {
 
   std::string password_;
   std::string desktop_login_;
-  std::optional<std::int32_t> login_failed_attemps_;
+  std::int32_t login_failed_attemps_;
   std::optional<chrono::system_zoned_time> last_login_failed_;
   bool totp_enabled_;
   std::string totp_secret_;

@@ -59,4 +59,10 @@ describe('doodle user测试', function () {
       'user_limit',
     );
   });
+  it('组织', async function () {
+    const req = await request.get(`${URL}/api/data/organisations`).set(
+      'Cookie', `access_token_cookie=${l_jwt}`,
+    );
+    expect(req.status).to.equal(200);
+  });
 });
