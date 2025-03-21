@@ -22,7 +22,7 @@ void http_jwt_fun::get_person(const session_data_ptr& in_data) {
 
   auto l_uuid = from_uuid_str(jwt::decode(l_jwt).get_payload_claim("id").as_string());
   auto& l_sql = g_ctx().get<sqlite_database>();
-  default_logger_raw()->warn("{}", l_uuid);
+  // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   person_ = std::make_shared<person>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
