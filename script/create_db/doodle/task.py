@@ -29,13 +29,13 @@ class Task(BaseMixin):
     uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
-    name = orm.mapped_column(sqlalchemy.String(80), nullable=False)
+    name = orm.mapped_column(sqlalchemy.String(80))
     description = orm.mapped_column(sqlalchemy.Text())
 
     priority = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     difficulty = orm.mapped_column(sqlalchemy.Integer, default=3, nullable=False)
-    duration = orm.mapped_column(sqlalchemy.Float, default=0)
-    estimation = orm.mapped_column(sqlalchemy.Float, default=0)
+    duration = orm.mapped_column(sqlalchemy.Float, default=0, nullable=False)
+    estimation = orm.mapped_column(sqlalchemy.Float, default=0, nullable=False)
     completion_rate = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     retake_count = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     sort_order = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)

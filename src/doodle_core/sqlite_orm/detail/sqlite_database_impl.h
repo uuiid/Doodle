@@ -317,7 +317,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("replies", &comment::replies_),                                                      //
           make_column("checklist", &comment::checklist_),                                                  //
           make_column("pinned", &comment::pinned_),                                                        //
-          make_column("link", &comment::links), make_column("task_status_id", &comment::task_status_id_),  //
+          make_column("links", &comment::links),//
+          make_column("task_status_id", &comment::task_status_id_),  //
           make_column("person_id", &comment::person_id_),                                                  //
           make_column("editor_id", &comment::editor_id_),                                                  //
           make_column("preview_file_id", &comment::preview_file_id_),                                      //
@@ -423,6 +424,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &project_person_link::id_, primary_key().autoincrement()),
           make_column("project_id", &project_person_link::project_id_, not_null()),
           make_column("person_id", &project_person_link::person_id_, not_null()),
+          make_column("shotgun_id", &project_person_link::shotgun_id_),
           foreign_key(&project_person_link::project_id_).references(&project::uuid_id_),
           foreign_key(&project_person_link::person_id_).references(&person::uuid_id_)
       ),

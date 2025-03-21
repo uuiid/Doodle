@@ -50,6 +50,7 @@ struct project_person_link {
   std::int64_t id_;
   uuid project_id_;
   uuid person_id_;
+  std::optional<std::int32_t> shotgun_id_;
 };
 struct project_task_type_link {
   DOODLE_BASE_FIELDS();

@@ -134,11 +134,11 @@ class ProjectTaskStatusLink(BaseMixin):
 class ProjectAssetTypeLink(BaseMixin):
     __tablename__ = "project_asset_type_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid"), nullable=False
     )
     asset_type_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("asset_type.uuid"),
+        sqlalchemy.ForeignKey("asset_type.uuid"), nullable=False
 
     )
 
@@ -153,13 +153,13 @@ class ProjectStatusAutomationLink(BaseMixin):
     project_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid"),
-
+        nullable=False,
         index=True,
     )
     status_automation_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("status_automation.uuid"),
-
+        nullable=False,
         index=True,
     )
 
@@ -172,11 +172,11 @@ class ProjectStatusAutomationLink(BaseMixin):
 class ProjectPreviewBackgroundFileLink(BaseMixin):
     __tablename__ = "project_preview_background_file_link"
     project_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid")
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project.uuid"), nullable=False
     )
     preview_background_file_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("preview_background_file.uuid"),
+        sqlalchemy.ForeignKey("preview_background_file.uuid"), nullable=False
 
     )
 
