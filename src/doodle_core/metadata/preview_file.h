@@ -30,6 +30,12 @@ struct preview_file {
   std::int32_t height_;
   std::int32_t duration_;
 
+  std::int32_t shotgun_id_;
+  bool is_movie_;
+  std::string url_;
+  std::string uploaded_movie_url_;
+  std::string uploaded_movie_name_;
+
   // 外键
   uuid task_id_;
   uuid person_id_;
