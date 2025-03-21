@@ -60,16 +60,19 @@ class ProjectPersonLink(BaseMixin):
 
 class ProjectTaskTypeLink(BaseMixin):
     __tablename__ = "project_task_type_link"
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
     project_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid"),
-
+        nullable=False,
         index=True,
     )
     task_type_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("task_type.uuid"),
-
+        nullable=False,
         index=True,
     )
     priority = orm.mapped_column(sqlalchemy.Integer, default=None)
@@ -81,6 +84,7 @@ class ProjectTaskTypeLink(BaseMixin):
     )
 
     def from_zou(self, project_task_type_link: ZouProjectTaskTypeLink):
+        self.uuid = project_task_type_link.id
         self.project_id = project_task_type_link.project_id
         self.task_type_id = project_task_type_link.task_type_id
         self.priority = project_task_type_link.priority
@@ -89,6 +93,9 @@ class ProjectTaskTypeLink(BaseMixin):
 
 class ProjectTaskStatusLink(BaseMixin):
     __tablename__ = "project_task_status_link"
+    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
     project_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("project.uuid"),
@@ -115,6 +122,7 @@ class ProjectTaskStatusLink(BaseMixin):
     )
 
     def from_zou(self, project_task_status_link: ZouProjectTaskStatusLink):
+        self.uuid = project_task_status_link.id
         self.project_id = project_task_status_link.project_id
         self.task_status_id = project_task_status_link.task_status_id
         self.priority = project_task_status_link.priority
