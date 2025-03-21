@@ -11,6 +11,8 @@
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+
+#include <jwt-cpp/jwt.h>
 namespace doodle::http {
 namespace {
 struct login_data {
@@ -50,13 +52,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> login(session_data
   }
   nlohmann::json l_json{};
 
-  l_json["user"]          = *l_p;
-  auto l_org              = g_ctx().get<sqlite_database>().get_all<organisation>();
-  l_json["organisation"]  = l_org.empty() ? organisation::get_default() : l_org.front();
-  l_json["login"]         = true;
-  l_json["access_token"]  = true;
-  l_json["refresh_token"] = true;
-
+  l_json["user"]         = *l_p;
+  auto l_org             = g_ctx().get<sqlite_database>().get_all<organisation>();
+  l_json["organisation"] = l_org.empty() ? organisation::get_default() : l_org.front();
+  l_json["login"]        = true;
+  auto l_access_token    = jwt::create()
+                            .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
+                            .sign(jwt::algorithm::hs256{"tset"});
+  l_json["access_token"] = l_access_token;
+  auto l_refresh_token   = jwt::create()
+                             .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
+                             .sign(jwt::algorithm::hs256{"tset"});
+  l_json["refresh_token"] = l_refresh_token;
   boost::beast::http::response<boost::beast::http::string_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };
@@ -68,9 +75,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> login(session_data
   //   l_res.body() = zlib_compress(std::move(in_body));
   //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
   // } else
-  l_res.set(boost::beast::http::field::set_cookie, "");
-  l_res.set(boost::beast::http::field::set_cookie, "");
-  l_res.body()                                 = l_json.dump();
+  l_res.set(
+      boost::beast::http::field::set_cookie,
+      fmt::format("{}; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax", l_access_token)
+  );
+  l_res.set(
+      boost::beast::http::field::set_cookie,
+      fmt::format("{}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token)
+  );
+  l_res.body() = l_json.dump();
 
   l_res.prepare_payload();
 
