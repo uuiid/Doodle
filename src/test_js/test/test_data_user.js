@@ -10,6 +10,16 @@ import { URL } from './config.js';
 import jwt_encode from 'jwt-encode';
 
 describe('doodle user测试', function () {
+  const l_jwt = jwt_encode({
+    'id': 'b5a1383a-8bdc-4a79-ad33-f601fa0fc26d',
+  }, 'secret');
+
+  it('配置', async function () {
+    const req = await request.get(`${URL}/api/config`)
+    expect(req.status).to.equal(200);
+  });
+
+
   it('测试鉴权', async function () {
     try {
       const req = await request.get(`${URL}/api/data/user/context`);
@@ -17,10 +27,14 @@ describe('doodle user测试', function () {
       expect(e.status).to.equal(401);
     }
   });
+  it('测试授权', async function () {
+    const req = await request.get(`${URL}/api/auth/authenticated`).set(
+      'Cookie', `access_token_cookie=${l_jwt}`,
+    );
+    expect(req.status).to.equal(200);
+
+  })
   it('测试登录用户的上下文', async function () {
-    const l_jwt = jwt_encode({
-      'id': 'b5a1383a-8bdc-4a79-ad33-f601fa0fc26d',
-    }, 'secret');
     const req = await request.get(`${URL}/api/data/user/context`).set(
       'Cookie', `access_token_cookie=${l_jwt}`,
     );
