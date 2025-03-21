@@ -27,7 +27,7 @@ template <>
 struct row_extractor<nlohmann::json> : row_extractor<std::string> {
   nlohmann::json extract(sqlite3_stmt* stmt, int columnIndex) const {
     const auto l_str = row_extractor<std::string>::extract(stmt, columnIndex);
-    return nlohmann::json::parse(l_str);
+    return l_str.empty() ? nlohmann::json{} : nlohmann::json::parse(l_str);
   }
 };
 }  // namespace sqlite_orm
