@@ -9,15 +9,15 @@ import { io } from 'socket.io-client';
 import { URL } from './config.js';
 import jwt_encode from 'jwt-encode';
 
-describe('doodle user测试', function() {
-  it('测试鉴权', async function() {
+describe('doodle user测试', function () {
+  it('测试鉴权', async function () {
     try {
       const req = await request.get(`${URL}/api/data/user/context`);
     } catch (e) {
       expect(e.status).to.equal(401);
     }
   });
-  it('测试登录用户的上下文', async function() {
+  it('测试登录用户的上下文', async function () {
     const l_jwt = jwt_encode({
       'id': 'b5a1383a-8bdc-4a79-ad33-f601fa0fc26d',
     }, 'secret');
@@ -25,6 +25,24 @@ describe('doodle user测试', function() {
       'Cookie', `access_token_cookie=${l_jwt}`,
     );
     expect(req.status).to.equal(200);
-    expect(req.body).to.have.keys('user_id', 'name');
+    // console.log(req.body);
+    expect(req.body).to.have.keys(
+      'asset_types',
+      'custom_actions',
+      'departments',
+      'dingding_companys',
+      'notification_count',
+      'persons',
+      'preview_background_files',
+      'project_status',
+      'projects',
+      'search_filter_groups',
+      'search_filters',
+      'status_automations',
+      'studios',
+      'task_status',
+      'task_types',
+      'user_limit',
+    );
   });
 });
