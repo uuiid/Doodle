@@ -47,8 +47,9 @@ std::vector<T> string_to_enum_array(const std::string& t) {
   auto l_begin = l_value.begin();
   while (l_begin != l_value.end()) {
     auto l_end = std::find(l_begin, l_value.end(), ',');
-    l_ret.emplace_back(magic_enum::enum_cast<T>(std::string_view{l_begin + 2, l_end}).value());
-    l_begin = l_end + 1;
+    l_ret.emplace_back(magic_enum::enum_cast<T>(std::string_view{l_begin, l_end}).value());
+    if (l_end == l_value.end()) break;
+    l_begin = l_end + 2;
   }
   return l_ret;
 }
