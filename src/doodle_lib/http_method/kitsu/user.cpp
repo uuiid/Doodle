@@ -171,7 +171,7 @@ void user_reg(http_route& in_http_route) {
       .reg(
 #ifdef DOODLE_KITSU
           std::make_shared<user_context_get>()
-#elif
+#else
           std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context)
 #endif
 
