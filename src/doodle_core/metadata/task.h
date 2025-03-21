@@ -35,6 +35,7 @@ struct DOODLE_CORE_API task {
   nlohmann::json data_;
   std::int32_t shotgun_id_;
   uuid last_preview_file_id_;
+  std::int32_t nb_drawings_;
 
   // 外键
   uuid project_id_;
