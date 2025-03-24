@@ -19,6 +19,14 @@ describe('doodle user测试', function () {
     expect(req.status).to.equal(200);
   });
 
+  it('登录', async function () {
+    const req = await request.post(`${URL}/api/auth/login`).send({
+      email: 'test_mod@qq.com',
+      password: 'test_mod'
+    });
+    expect(req.status).to.equal(200);
+  });
+
 
   it('测试鉴权', async function () {
     try {
@@ -65,4 +73,5 @@ describe('doodle user测试', function () {
     );
     expect(req.status).to.equal(200);
   });
+
 });
