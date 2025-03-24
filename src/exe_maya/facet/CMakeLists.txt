@@ -5,7 +5,7 @@ target_sources(
         export_fbx.h
         replace_file.h
         inspect_file.h
-
+        export_rig_facet.h
 
         PRIVATE
         cloth_sim.cpp
@@ -13,4 +13,5 @@ target_sources(
         export_fbx.cpp
         replace_file.cpp
         inspect_file.cpp
+        export_rig_facet.cpp
 )
