@@ -22,30 +22,29 @@
 namespace doodle {
 
 namespace import_and_render_ue_ns {
-void copy_diff_impl(const FSys::path& from, const FSys::path& to) {
+bool copy_diff_impl(const FSys::path& from, const FSys::path& to) {
+  if (FSys::is_hidden(from) || from.extension() == doodle_config::doodle_flag_name) return false;
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
       FSys::last_write_time(from) != FSys::last_write_time(to)) {
     if (!FSys::exists(to) || FSys::last_write_time(from) > FSys::last_write_time(to)) {
       if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
-      FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
+      return FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
     }
   }
+  return false;
 }
 
-void copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
-  if (!FSys::exists(from)) return;
+bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
+  if (!FSys::exists(from)) return false;
   in_logger->warn("复制 {} -> {}", from, to);
-  if (FSys::is_regular_file(from) && !FSys::is_hidden(from) && from.extension() != doodle_config::doodle_flag_name) {
-    copy_diff_impl(from, to);
-    return;
+  if (FSys::is_regular_file(from)) {
+    return copy_diff_impl(from, to);
   }
   for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
     auto l_to_file = to / l_file.path().lexically_proximate(from);
-    if (l_file.is_regular_file() && !FSys::is_hidden(l_file.path()) &&
-        l_file.path().extension() != doodle_config::doodle_flag_name) {
-      copy_diff_impl(l_file.path(), l_to_file);
-    }
+    if (l_file.is_regular_file()) return copy_diff_impl(l_file.path(), l_to_file);
   }
+  return false;
 }
 void fix_project(const FSys::path& in_project_path) {
   auto l_json                = nlohmann::json::parse(FSys::ifstream{in_project_path});
