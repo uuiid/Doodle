@@ -24,8 +24,8 @@ struct login_data {
   friend void from_json(const nlohmann::json& j, login_data& v) {
     j.at("email").get_to(v.email_);
     j.at("password").get_to(v.password_);
-    j.at("isTrusted").get_to(v.is_trusted_);
-    j.at("_vts").get_to(v._vts_);
+    if (j.contains("isTrusted")) j.at("isTrusted").get_to(v.is_trusted_);
+    if (j.contains("_vts")) j.at("_vts").get_to(v._vts_);
   }
 };
 
