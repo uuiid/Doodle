@@ -112,8 +112,6 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   l_arg->file_path        = in_args->maya_rig_file_;
   for (int i = 0; i < 3; ++i) {
     l_out = co_await async_run_maya(l_arg, in_logger);
-    if (l_out) break;
-
     in_logger->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
   }
   if (!l_out) co_return std::tuple(l_ec, "maya绑定文件错误");
