@@ -141,17 +141,15 @@ FSys::path find_ue_project_file(const FSys::path& in_path) {
 }
 }  // namespace ue_exe_ns
 
-boost::asio::awaitable<tl::expected<void, std::string>> async_run_ue(
-    const std::vector<std::string>& in_arg, logger_ptr in_logger
-) {
+boost::asio::awaitable<void> async_run_ue(const std::vector<std::string>& in_arg, logger_ptr in_logger) {
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
 
   in_logger->info(" 开始检查 UE 版本");
   auto l_e1 = chick_ue_plug();
-  if (l_e1) co_return tl::make_unexpected(fmt::format("检查并安装 UE 版本失败: {}", l_e1.message()));
+  if (l_e1) throw_exception(doodle_error{"检查并安装 UE 版本失败: {}", l_e1.message()});
 
   auto l_ue_path = core_set::get_set().ue4_path / doodle_config::ue_path_obj;
-  if (l_ue_path.empty()) co_return tl::make_unexpected("ue_exe 路径为空, 无法启动UE"s);
+  if (l_ue_path.empty()) throw_exception(doodle_error{"ue_exe 路径为空, 无法启动UE"});
 
   in_logger->info("开始运行 ue_exe: {} {}", l_ue_path, in_arg);
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(co_await boost::asio::this_coro::executor);
@@ -189,12 +187,11 @@ boost::asio::awaitable<tl::expected<void, std::string>> async_run_ue(
 
   switch (l_array_completion_order[0]) {
     case 0:
-      if (l_exit_code != 0 || l_ec) co_return tl::make_unexpected(fmt::format("UE进程返回值错误 {}", l_exit_code));
-      co_return tl::expected<void, std::string>{};
+      if (l_exit_code != 0 || l_ec) throw_exception(doodle_error{"UE进程返回值错误 {}", l_exit_code});
+      co_return;
     case 1:
-      if (l_ec) co_return tl::make_unexpected(fmt::format("ue 运行超时: {}", l_ec.message()));
     default:
-      co_return tl::make_unexpected(fmt::format("ue 运行超时: {}", l_ec.message()));
+      throw_exception(doodle_error{"UE进程返回值错误 {}", l_exit_code});
   }
 }
 }  // namespace doodle
