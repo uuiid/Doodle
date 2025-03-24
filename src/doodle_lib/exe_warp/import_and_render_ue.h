@@ -128,10 +128,12 @@ struct args {
     FSys::path skin_{};                 // 对应的骨骼文件
     details::assets_type_enum type_{};  // 类型
     FSys::path maya_file_{};            // 对应的maya文件
-    FSys::path ue_file_{};              // 对应的ue文件
-    FSys::path ue_prj_path_{};          // 对应的ue工程文件
+    FSys::path maya_local_file_{};      // 对应的maya文件(从服务器中复制到本地的文件)
 
-    bool update_files{}; // UE 文件是否被更新
+    FSys::path ue_file_{};      // 对应的ue文件
+    FSys::path ue_prj_path_{};  // 对应的ue工程文件
+
+    bool update_files{};  // UE 文件是否被更新
 
     /// 需要隐藏的材质名称
     std::vector<std::string> hide_materials_{};
