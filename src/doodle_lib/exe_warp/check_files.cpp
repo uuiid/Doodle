@@ -147,12 +147,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   // 添加三次重试
   for (int i = 0; i < 3; ++i) {
-    auto l_r = co_await async_run_ue(
+    co_await async_run_ue(
         {in_args->local_ue_project_path_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
          "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Check={}", l_tmp_path)},
         in_logger
     );
-    if (l_r) break;
     in_logger->warn("导入文件失败 开始第 {} 重试", i + 1);
     l_ec = make_error_code(std::errc::bad_file_descriptor);
   }
@@ -171,14 +170,14 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
     co_return std::tuple(boost::system::error_code{boost::asio::error::operation_aborted}, std::string{});
   }
   for (int i = 0; i < 3; ++i) {
-    auto l_r = co_await async_run_ue(
+    co_await async_run_ue(
         {in_args->local_ue_project_path_.generic_string(), l_check_arg.render_map_.generic_string(), "-game",
          fmt::format(R"(-LevelSequence="{}")", l_check_arg.level_sequence_import_),
          fmt::format(R"(-MoviePipelineConfig="{}")", l_check_arg.movie_pipeline_config_), "-windowed", "-log",
          "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
         in_logger
     );
-    if (l_r) break;
+
     in_logger->warn("渲染失败 开始第 {} 重试", i + 1);
     // 这个错误可以忽略, 有错误的情况下, 将状态设置为运行
     l_ec = make_error_code(std::errc::bad_file_descriptor);

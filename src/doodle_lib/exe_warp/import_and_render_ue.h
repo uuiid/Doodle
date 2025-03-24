@@ -84,6 +84,15 @@ struct import_data_t {
   }
 };
 
+struct import_skin_file {
+  FSys::path fbx_file_{};
+  FSys::path import_dir_{};
+  friend void to_json(nlohmann::json& j, const import_skin_file& p) {
+    j["fbx_file"]   = p.fbx_file_;
+    j["import_dir"] = p.import_dir_;
+  }
+};
+
 struct association_data {
   boost::uuids::uuid id_{};
   FSys::path maya_file_{};
@@ -114,7 +123,7 @@ struct args {
   void up_files(const FSys::path& in_out_image_path, const FSys::path& in_move_path) const;
   /// 检查文件的材质名称, 错误直接抛出异常
   void check_materials();
-
+  boost::asio::awaitable<void> crate_skin();
   FSys::path create_move(const FSys::path& in_out_image_path) const;
 
   FSys::path render_project_{};  // 渲染工程文件(.project)

@@ -180,17 +180,19 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
     co_return tl::make_unexpected("用户取消操作");
 
   // 添加三次重试
-  tl::expected<maya_exe_ns::maya_out_arg, std::string> l_out{};
+  maya_exe_ns::maya_out_arg l_out{};
   for (int i = 0; i < 3; ++i) {
-    l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
-    if (l_out) break;
-    if (i == 2) co_return tl::make_unexpected(l_out.error());
-    logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
+    try {
+      l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
+    } catch (const doodle_error& err) {
+      logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", err.what(), i + 1);
+      if (i == 2) throw;
+    }
   }
   /// 将导出数据转移到数据块中
-  begin_time_ = l_out->begin_time;
-  end_time_   = l_out->end_time;
-  for (auto&& i : l_out->out_file_list) {
+  begin_time_ = l_out.begin_time;
+  end_time_   = l_out.end_time;
+  for (auto&& i : l_out.out_file_list) {
     auto&& l_data     = import_files_.emplace_back();
     l_data.file_      = i.out_file;
     l_data.maya_file_ = i.ref_file;
@@ -209,7 +211,10 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
     // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
     auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
     down_files();
+    fix_config(render_project_);
+    fix_project(render_project_);
   }
+  co_await crate_skin();
   auto l_ret = co_await async_import_and_render_ue();
   if (!l_ret) co_return l_ret;
 
@@ -250,8 +255,6 @@ void args::up_files(const FSys::path& in_out_image_path, const FSys::path& in_mo
 }
 boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import_and_render_ue() {
   // 导入文件
-  fix_config(render_project_);
-  fix_project(render_project_);
   auto l_import_data = gen_import_config();
   nlohmann::json l_json{};
   l_json          = l_import_data;
@@ -262,14 +265,16 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
 
   // 添加三次重试
   for (int i = 0; i < 3; ++i) {
-    auto l_r = co_await async_run_ue(
-        {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
-         "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
-        logger_ptr_
-    );
-    if (l_r) break;
-    if (i == 2) co_return tl::make_unexpected(l_r.error());
-    logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
+    try {
+      co_await async_run_ue(
+          {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
+           "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
+          logger_ptr_
+      );
+    } catch (const doodle_error& err) {
+      logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
+      if (i == 2) throw;
+    }
   }
 
   logger_ptr_->warn("导入文件完成");
@@ -285,16 +290,18 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
     co_return tl::make_unexpected("用户取消操作");
 
   for (int i = 0; i < 3; ++i) {
-    auto l_r = co_await async_run_ue(
-        {render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
-         fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
-         fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log",
-         "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-        logger_ptr_
-    );
-    if (l_r) break;
-    if (i == 2) co_return tl::make_unexpected(l_r.error());
-    logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
+    try {
+      co_await async_run_ue(
+          {render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
+           fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
+           fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log",
+           "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
+          logger_ptr_
+      );
+    } catch (const doodle_error& err) {
+      logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
+      if (i == 2) throw;
+    }
   }
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
@@ -410,8 +417,8 @@ void args::down_files() {
       case details::assets_type_enum::prop: {
         auto l_prop_path = l_data.ue_file_.lexically_relative(l_root / "Prop");
         if (l_prop_path.empty()) continue;
-        auto l_prop_path_name  = *l_prop_path.begin();
-        l_data.update_files = copy_diff(
+        auto l_prop_path_name = *l_prop_path.begin();
+        l_data.update_files   = copy_diff(
             l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
             l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
         );
@@ -430,11 +437,58 @@ void args::down_files() {
   for (auto&& l_data : import_files_) {
     if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop))
       continue;
-    auto l_local_path = g_root / project_.code_ / "maya_file";
+    auto l_local_path       = g_root / project_.code_ / "maya_file";
     l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
     l_data.update_files |= copy_diff(l_data.maya_local_file_, l_data.maya_file_, logger_ptr_);
   }
 }
+
+boost::asio::awaitable<void> args::crate_skin() {
+  std::vector<import_file*> l_files =
+      import_files_ | ranges::views::transform([](import_file& in_arg) { return &in_arg; }) |
+      ranges::views::filter([](import_file* in_arg) -> bool {
+        auto l_path = in_arg->file_;
+        return l_path.extension() == ".abc" && FSys::exists(l_path.replace_extension(".fbx"));
+      }) |
+      ranges::to_vector;
+
+  for (auto&& l_data : import_files_) {
+    if (l_data.is_camera_) continue;
+    if (l_data.file_.extension() == ".abc") continue;
+    auto l_import_local_path = render_project_.parent_path() / FSys::path{doodle_config::ue4_content} / "auto_light" /
+                               l_data.maya_local_file_.filename();
+    l_import_local_path.replace_extension(".uasset");
+    if (FSys::exists(l_import_local_path) && !l_data.update_files) continue;
+
+    auto l_maya_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
+    l_maya_arg->file_path = l_data.maya_local_file_;
+    auto l_maya_file      = co_await async_run_maya(l_maya_arg, logger_ptr_);
+    if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", l_data.maya_file_});
+
+    auto l_fbx              = l_maya_file.out_file_list.front().out_file;
+    auto l_import_game_path = FSys::path{doodle_config::ue4_game} / "auto_light";
+
+    nlohmann::json l_json{};
+    l_json          = import_skin_file{.fbx_file_ = l_fbx, .import_dir_ = l_import_game_path};
+    auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+    logger_ptr_->warn("排队导入skin文件 {} ", render_project_);
+    // 添加三次重试
+    for (int i = 0; i < 3; ++i) {
+      try {
+        co_await async_run_ue(
+            {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
+             "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
+            logger_ptr_
+        );
+
+      } catch (const doodle_error& error) {
+        logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
+        if (i == 2) throw;
+      }
+    }
+  }
+}
+
 import_data_t args::gen_import_config() {
   auto l_maya_out_arg = import_files_ | ranges::views::filter([](const import_file& in_arg) {
                           return in_arg.type_ != details::assets_type_enum::scene;

@@ -152,10 +152,21 @@ class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
   }
 };
 
+class DOODLELIB_API export_rig_arg : public maya_exe_ns::arg {
+ public:
+  constexpr static std::string_view k_name{"export_rig"};
+  // to json
+  friend void to_json(nlohmann::json& in_json, const export_rig_arg& out_obj) {
+    to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+  }
+
+  std::tuple<std::string, std::string> get_json_str() override {
+    return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
+  }
+};
+
 enum class inspect_file_type { model_maya };
-
 NLOHMANN_JSON_SERIALIZE_ENUM(inspect_file_type, {{inspect_file_type::model_maya, "model_maya"}});
-
 class DOODLELIB_API inspect_file_arg : public maya_exe_ns::arg {
  public:
   constexpr static std::string_view k_name{"inspect_file"};
@@ -224,6 +235,7 @@ class DOODLELIB_API inspect_file_arg : public maya_exe_ns::arg {
     in_json["too_many_point_check"]      = out_obj.too_many_point_check_;
   }
 };
+
 struct maya_out_arg {
   struct out_file_t {
     // 输出文件
