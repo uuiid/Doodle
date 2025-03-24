@@ -46,44 +46,40 @@ tl::expected<FSys::path, std::string> find_maya_path_impl() {
   return {FSys::path{}};
 }
 
-tl::expected<FSys::path, std::string> install_maya_exe(FSys::path in_maya_path) {
+FSys::path install_maya_exe(FSys::path in_maya_path) {
   static bool is_run{false};
-  tl::expected<FSys::path, std::string> l_out{};
-  try {
-    auto l_target_path = FSys::get_cache_path() / "maya" / "exe" / fmt::to_string(core_set::get_set().maya_version) /
-                         version::build_info::get().version_str;
-    const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
-    l_out                 = l_target_path / l_run_name;
-    if (is_run) return l_out;
+  FSys::path l_out{};
+  auto l_target_path = FSys::get_cache_path() / "maya" / "exe" / fmt::to_string(core_set::get_set().maya_version) /
+                       version::build_info::get().version_str;
+  const auto l_run_name = fmt::format("doodle_maya_exe_{}.exe", core_set::get_set().maya_version);
+  l_out                 = l_target_path / l_run_name;
+  if (is_run) return l_out;
 
-    if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
+  if (!FSys::exists(l_target_path)) FSys::create_directories(l_target_path);
 
-    FSys::copy(
-        in_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment",
-        FSys::copy_options::recursive | FSys::copy_options::update_existing
-    );
+  FSys::copy(
+      in_maya_path / "bin" / "ShadeFragment", l_target_path / "ShadeFragment",
+      FSys::copy_options::recursive | FSys::copy_options::update_existing
+  );
 
-    FSys::copy(
-        in_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment",
-        FSys::copy_options::recursive | FSys::copy_options::update_existing
-    );
+  FSys::copy(
+      in_maya_path / "bin" / "ScriptFragment", l_target_path / "ScriptFragment",
+      FSys::copy_options::recursive | FSys::copy_options::update_existing
+  );
 
-    FSys::copy(
-        register_file_type::program_location() / l_run_name, l_target_path / l_run_name,
-        FSys::copy_options::update_existing
-    );
+  FSys::copy(
+      register_file_type::program_location() / l_run_name, l_target_path / l_run_name,
+      FSys::copy_options::update_existing
+  );
 
-    auto l_program_path = register_file_type::program_location();
-    for (auto&& l_it : FSys::directory_iterator(l_program_path)) {
-      if (l_it.is_regular_file() && l_it.path().extension() == ".dll") {
-        auto l_path_dll = l_target_path / l_it.path().filename();
-        FSys::copy(l_it, l_path_dll, FSys::copy_options::update_existing);
-      }
+  auto l_program_path = register_file_type::program_location();
+  for (auto&& l_it : FSys::directory_iterator(l_program_path)) {
+    if (l_it.is_regular_file() && l_it.path().extension() == ".dll") {
+      auto l_path_dll = l_target_path / l_it.path().filename();
+      FSys::copy(l_it, l_path_dll, FSys::copy_options::update_existing);
     }
-    is_run = true;
-  } catch (const FSys::filesystem_error& in_err) {
-    l_out = tl::make_unexpected(std::string{in_err.what()});
   }
+  is_run = true;
   return l_out;
 }
 
@@ -119,21 +115,17 @@ FSys::path find_maya_path() {
 }
 }  // namespace maya_exe_ns
 
-boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> async_run_maya(
+boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
     std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
 ) {
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
   in_logger->warn("开始运行maya");
-  tl::expected<maya_exe_ns::maya_out_arg, std::string> l_ret{};
   auto l_maya_path = find_maya_path_impl();
-  if (!l_maya_path) co_return tl::make_unexpected(fmt::format("查找Maya路径失败: {}", l_maya_path.error()));
+  if (!l_maya_path) throw_exception(doodle_error{"查找Maya路径失败: {}", l_maya_path.error()});
 
   auto l_this_exe = co_await boost::asio::this_coro::executor;
-
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_run_path = install_maya_exe(*l_maya_path);
-  if (!l_run_path) co_return tl::make_unexpected(l_run_path.error());
-
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
@@ -156,7 +148,7 @@ boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> asy
 
   l_env[L"MAYA_LOCATION"] = l_maya_path->generic_wstring();
   l_env[L"Path"].push_back((*l_maya_path / "bin").generic_wstring());
-  l_env[L"Path"].push_back(l_run_path->parent_path().generic_wstring());
+  l_env[L"Path"].push_back(l_run_path.parent_path().generic_wstring());
   l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
   add_maya_module();
   auto l_out_pipe     = std::make_shared<boost::asio::readable_pipe>(g_io_context());
@@ -164,7 +156,7 @@ boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> asy
 
   auto l_process_maya = boost::process::v2::process{
       g_io_context(),
-      *l_run_path,
+      l_run_path,
       {fmt::format("--{}", l_key), fmt::format("--config={}", l_arg_path)},
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
@@ -187,31 +179,29 @@ boost::asio::awaitable<tl::expected<maya_exe_ns::maya_out_arg, std::string>> asy
       if (l_exit_code != 0 || l_ec) {
         switch (maya_enum::maya_error_t{l_exit_code}) {
           case maya_enum::maya_error_t::unknown_error:
-            l_ret = tl::make_unexpected("maya 运行未知错误"s);
+            throw_exception(doodle_error{"maya 运行未知错误"});
             break;
           case maya_enum::maya_error_t::camera_name_error:
-            l_ret = tl::make_unexpected("maya 中没有正确的 camera 名字"s);
+            throw_exception(doodle_error{"maya 中没有正确的 camera 名字"});
             break;
           case maya_enum::maya_error_t::bone_scale_error:
-            l_ret = tl::make_unexpected("maya 中骨骼有缩放值为 0 的情况"s);
+            throw_exception(doodle_error{"maya 中骨骼有缩放值为 0 的情况"});
             break;
           case maya_enum::maya_error_t::camera_aspect_error:
-            l_ret = tl::make_unexpected("maya 中摄像机的宽高比不正确"s);
+            throw_exception(doodle_error{"maya 中摄像机的宽高比不正确"});
             break;
           case maya_enum::maya_error_t::cache_path_error:
-            l_ret = tl::make_unexpected("maya 中解算缓存路径不存在"s);
+            throw_exception(doodle_error{"maya 中解算缓存路径不存在"});
             break;
           default:
-            l_ret = tl::make_unexpected(fmt::format("maya 运行未知错误 {}", l_exit_code));
+            throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
         }
-      } else {
-        l_ret = get_out_arg(l_out_path_file_);
       }
-      co_return l_ret;
     case 1:
-      l_ret = tl::make_unexpected(fmt::format("maya 运行超时 {}", l_ec.message()));
+      throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
     default:
-      co_return l_ret;
+      break;
   }
+  co_return get_out_arg(l_out_path_file_);
 }
 }  // namespace doodle
