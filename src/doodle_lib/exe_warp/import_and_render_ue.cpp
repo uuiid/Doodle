@@ -379,7 +379,7 @@ void args::down_files() {
       )
           ->ue_prj_path_.parent_path()
           .filename();
-
+  // 复制UE文件
   for (auto&& l_data : import_files_) {
     auto l_down_path  = l_data.ue_prj_path_.parent_path();
     auto l_root       = l_data.ue_prj_path_.parent_path() / doodle_config::ue4_content;
@@ -402,15 +402,16 @@ void args::down_files() {
 
       // 角色文件
       case details::assets_type_enum::character:
-        copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+        l_data.update_files =
+            copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
         break;
 
       // 道具文件
       case details::assets_type_enum::prop: {
         auto l_prop_path = l_data.ue_file_.lexically_relative(l_root / "Prop");
         if (l_prop_path.empty()) continue;
-        auto l_prop_path_name = *l_prop_path.begin();
-        copy_diff(
+        auto l_prop_path_name  = *l_prop_path.begin();
+        l_data.update_files = copy_diff(
             l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
             l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
         );
@@ -423,6 +424,14 @@ void args::down_files() {
       default:
         break;
     }
+  }
+
+  // 复制maya文件
+  for (auto&& l_data : import_files_) {
+    if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop))
+      continue;
+    auto l_local_path = g_root / project_.code_ / "maya_file";
+    l_data.update_files |= copy_diff(l_local_path / l_data.maya_file_.filename(), l_data.maya_file_, logger_ptr_);
   }
 }
 import_data_t args::gen_import_config() {

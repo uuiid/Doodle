@@ -21,7 +21,7 @@ enum class assets_type_enum {
   animation,
   vfx,
   cfx,
-  other,
+  other,// 基本是相机
 };
 }
 namespace assets_helper {
