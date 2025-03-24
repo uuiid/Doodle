@@ -37,9 +37,8 @@ bool copy_diff_impl(const FSys::path& from, const FSys::path& to) {
 bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
   if (!FSys::exists(from)) return false;
   in_logger->warn("复制 {} -> {}", from, to);
-  if (FSys::is_regular_file(from)) {
-    return copy_diff_impl(from, to);
-  }
+  if (FSys::is_regular_file(from)) return copy_diff_impl(from, to);
+
   for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
     auto l_to_file = to / l_file.path().lexically_proximate(from);
     if (l_file.is_regular_file()) return copy_diff_impl(l_file.path(), l_to_file);
