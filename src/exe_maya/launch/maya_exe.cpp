@@ -12,6 +12,7 @@
 #include <exe_maya/facet/cloth_sim.h>
 #include <exe_maya/facet/export_fbx.h>
 #include <exe_maya/facet/inspect_file.h>
+#include <exe_maya/facet/export_rig_facet.h>
 #include <exe_maya/facet/replace_file.h>
 namespace doodle::launch {
 
@@ -51,9 +52,10 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
     auto l_ptr = std::make_shared<doodle::maya_plug::inspect_file>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
     in_vector.emplace_back(l_ptr);
-  } else if(in_arh[export_rig_config]) {
-
-
+  } else if (in_arh[export_rig_config]) {
+    auto l_ptr = std::make_shared<doodle::maya_plug::export_rig_facet>();
+    boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
+    in_vector.emplace_back(l_ptr);
   }
 
   else {
