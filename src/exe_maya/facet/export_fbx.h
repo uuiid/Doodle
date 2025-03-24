@@ -7,13 +7,8 @@
 
 #include <maya_plug/data/reference_file.h>
 
-#include "entt/entity/fwd.hpp"
 #include "exe_maya/core/maya_lib_guard.h"
-#include "maya/MApiNamespace.h"
-#include <cstdint>
 #include <maya/MTime.h>
-#include <memory>
-#include <string>
 #include <vector>
 namespace doodle::maya_plug {
 class export_fbx_facet final {

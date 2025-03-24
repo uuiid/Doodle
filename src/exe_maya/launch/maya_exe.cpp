@@ -20,6 +20,7 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
   static constexpr auto export_fbx_config{"export_fbx"};
   static constexpr auto replace_file_config{"replace_file"};
   static constexpr auto inspect_file_config{"inspect_file"};
+  static constexpr auto export_rig_config{"export_rig"};
 
   default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", register_file_type::program_location());
   nlohmann::json l_json;
@@ -50,6 +51,9 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
     auto l_ptr = std::make_shared<doodle::maya_plug::inspect_file>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
     in_vector.emplace_back(l_ptr);
+  } else if(in_arh[export_rig_config]) {
+
+
   }
 
   else {
