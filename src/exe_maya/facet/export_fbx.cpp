@@ -81,21 +81,21 @@ void export_fbx_facet::export_fbx() {
 }
 
 void export_fbx_facet::rig_file_export() {
-  export_file_fbx l_ex{};
-  maya_exe_ns::maya_out_arg l_out_arg{};
-  auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
-  l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
-  l_out_arg.begin_time  = anim_begin_time_.value();
-  l_out_arg.end_time    = MAnimControl::maxTime().value();
-  auto l_out_path       = l_ex.export_rig();
-  l_out_arg.out_file_list.emplace_back(l_out_path, FSys::path{});
-  nlohmann::json l_json = l_out_arg;
-  if (!out_path_file_.empty()) {
-    if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
-    default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
-    FSys::ofstream{out_path_file_} << l_json.dump(4);
-  } else
-    log_info(fmt::format("导出文件 {}", l_json.dump(4)));
+  // export_file_fbx l_ex{};
+  // maya_exe_ns::maya_out_arg l_out_arg{};
+  // auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
+  // l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
+  // l_out_arg.begin_time  = anim_begin_time_.value();
+  // l_out_arg.end_time    = MAnimControl::maxTime().value();
+  // auto l_out_path       = l_ex.export_rig();
+  // l_out_arg.out_file_list.emplace_back(l_out_path, FSys::path{});
+  // nlohmann::json l_json = l_out_arg;
+  // if (!out_path_file_.empty()) {
+  //   if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
+  //   default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
+  //   FSys::ofstream{out_path_file_} << l_json.dump(4);
+  // } else
+  //   log_info(fmt::format("导出文件 {}", l_json.dump(4)));
 }
 
 void export_fbx_facet::play_blast() {
