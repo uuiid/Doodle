@@ -39,7 +39,7 @@ class export_file_fbx {
 
   FSys::path export_cam(const generate_file_path_ptr& in_gen, std::double_t in_film_aperture);
 
-  FSys::path export_rig();
+  FSys::path export_rig(const reference_file& in_ref, const std::vector<cloth_interface>& in_cloth);
 };
 
 }  // namespace doodle::maya_plug

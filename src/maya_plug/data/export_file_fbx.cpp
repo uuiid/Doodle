@@ -121,7 +121,7 @@ FSys::path export_file_fbx::export_anim(
   return l_file_path;
 }
 
-FSys::path export_file_fbx::export_rig() {
+FSys::path export_file_fbx::export_rig(const reference_file& in_ref, const std::vector<cloth_interface>& in_cloth) {
   MSelectionList l_select{};
   MDagPath l_main_path{};
   if (auto l_s = l_select.add(d_str{fmt::format(":{}", "UE4")}, true); l_s) {
@@ -141,11 +141,21 @@ FSys::path export_file_fbx::export_rig() {
     l_path.pop();
     l_export_list.push_back(l_path);
   }
+
+  if (!in_cloth.empty()) {
+    std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj(in_cloth);
+    // 排除 export_sim 中的物体
+    std::erase_if(l_export_list, [&](const MDagPath& in) {
+      return std::ranges::find(l_export_sim, in) != l_export_sim.end();
+    });
+  }
+
   default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
   fbx_write l_fbx_write{};
   auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / maya_file_io::get_current_path().filename();
   l_file.replace_extension(".fbx");
+  default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file));
   l_fbx_write.set_path(l_file);
   l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
   return l_file;
@@ -212,9 +222,12 @@ FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen, std
   {
     fbx_write l_fbx_write{};
     l_fbx_write.set_path(l_path);
-    l_fbx_write.write(get_dag_path(l_cam.p_path.transform()), in_gen->begin_end_time.first, in_gen->begin_end_time.second,in_film_aperture);
+    l_fbx_write.write(
+        get_dag_path(l_cam.p_path.transform()), in_gen->begin_end_time.first, in_gen->begin_end_time.second,
+        in_film_aperture
+    );
   }
 
   return l_path;
 }
-} // namespace doodle::maya_plug
+}  // namespace doodle::maya_plug

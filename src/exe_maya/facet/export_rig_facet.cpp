@@ -4,11 +4,6 @@
 
 #include "export_rig_facet.h"
 
-
-
-
-#include "export_fbx.h"
-
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/logger/logger.h"
@@ -16,9 +11,9 @@
 
 #include "doodle_lib/exe_warp/maya_exe.h"
 
-
 #include "maya_plug/data/export_file_fbx.h"
 
+#include "export_fbx.h"
 #include <filesystem>
 #include <fmt/format.h>
 #include <memory>
@@ -28,10 +23,10 @@
 #endif
 #include <doodle_lib/long_task/image_to_move.h>
 
-
 #include "maya_plug/data/maya_file_io.h"
 #include "maya_plug/main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
+#include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/maya_comm/file_info_edit.h>
 
 #include <cmath>
@@ -39,8 +34,6 @@
 #include <maya/MAnimControl.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
-
-
 
 namespace doodle::maya_plug {
 
@@ -62,14 +55,20 @@ bool export_rig_facet::post(const nlohmann::json& in_argh) {
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
 
-
   export_file_fbx l_ex{};
   maya_exe_ns::maya_out_arg l_out_arg{};
   auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
   l_out_arg.begin_time  = anim_begin_time_.value();
   l_out_arg.end_time    = MAnimControl::maxTime().value();
-  auto l_out_path       = l_ex.export_rig();
+  reference_file l_ref{};
+  cloth_factory_interface l_cf{};
+  std::vector<cloth_interface> l_cloth_interfaces{};
+  if (qcloth_factory::has_cloth()) {
+    l_cf = std::make_shared<qcloth_factory>();
+    l_cloth_interfaces = l_cf->create_cloth();
+  }
+  auto l_out_path = l_ex.export_rig(l_ref, l_cloth_interfaces);
   l_out_arg.out_file_list.emplace_back(l_out_path, FSys::path{});
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
