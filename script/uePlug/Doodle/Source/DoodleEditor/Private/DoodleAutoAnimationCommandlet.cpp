@@ -90,16 +90,34 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 		RunAutoLight(ParamsMap[Key]);
 		return 0;
 	}
-	else if (const FString& Key2 = TEXT("Check"); ParamsMap.Contains(Key2))
+	if (const FString& Key2 = TEXT("Check"); ParamsMap.Contains(Key2))
 	{
 		RunCheckFiles(ParamsMap[Key2]);
 		return 0;
 	}
-	else
+	if (const FString& Key3 = TEXT("ImportRig"); ParamsMap.Contains(Key3))
 	{
-		UE_LOG(LogTemp, Error, TEXT("No params field in cmd arguments"));
-		return -1;
+		ImportRig(ParamsMap[Key3]);
+		return 0;
 	}
+	UE_LOG(LogTemp, Error, TEXT("No params field in cmd arguments"));
+	return -1;
+}
+
+void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
+{
+	TSharedPtr<FJsonObject> JsonObject;
+	if (FString JsonString; FFileHelper::LoadFileToString(JsonString, *InCondigPath))
+	{
+		const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonString);
+		FJsonSerializer::Deserialize(JsonReader, JsonObject);
+	}
+	FString ImportDirPath = JsonObject->GetStringField(TEXT("import_dir"));
+	ImportPath = ImportDirPath;
+	FString FbxPath = JsonObject->GetStringField(TEXT("fbx_file"));
+	UAssetImportTask* L_Task = CreateCharacterImportTask(FbxPath, nullptr, false);
+	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	AssetTools.ImportAssetTasks(TArray{L_Task});
 }
 
 void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
@@ -826,7 +844,7 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const
 	return Task;
 }
 
-UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton) const
+UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton, bool bImportAnimations) const
 {
 	UFbxFactory* K_FBX_F = NewObject<UFbxFactory>(UFbxFactory::StaticClass());
 	K_FBX_F->ImportUI = NewObject<UFbxImportUI>(K_FBX_F);
@@ -836,7 +854,7 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(cons
 	K_FBX_F->ImportUI->bImportAsSkeletal = !InSkeleton;
 	K_FBX_F->ImportUI->bCreatePhysicsAsset = true;
 	K_FBX_F->ImportUI->bImportMesh = !InSkeleton;
-	K_FBX_F->ImportUI->bImportAnimations = true;
+	K_FBX_F->ImportUI->bImportAnimations = bImportAnimations;
 	K_FBX_F->ImportUI->bImportRigidMesh = true;
 	K_FBX_F->ImportUI->bImportMaterials = false;
 	K_FBX_F->ImportUI->bImportTextures = false;
