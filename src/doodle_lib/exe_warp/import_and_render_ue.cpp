@@ -204,7 +204,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   }
 
   co_await fetch_association_data();
-  if (bind_skin_) check_materials();
+  // if (bind_skin_) check_materials();
 
   {
     // 开始复制文件
@@ -214,7 +214,8 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
     fix_config(render_project_);
     fix_project(render_project_);
   }
-  co_await crate_skin();
+  if (bind_skin_) co_await crate_skin();
+
   auto l_ret = co_await async_import_and_render_ue();
   if (!l_ret) co_return l_ret;
 
@@ -350,17 +351,6 @@ boost::asio::awaitable<void> args::fetch_association_data() {
     }
   }
   if (l_scene_uuid.is_nil()) throw_exception(doodle_error{"未查找到主项目文件(没有找到场景文件)"});
-
-  // 添加导入问价对应的sk文件
-  if (bind_skin_)
-    for (auto&& l_data : import_files_) {
-      if (l_data.is_camera_) continue;
-      if (l_data.type_ == details::assets_type_enum::scene) continue;
-
-      auto l_root     = l_data.ue_prj_path_.parent_path() / doodle_config::ue4_content;
-      auto l_original = l_data.ue_file_.lexically_relative(l_root);
-      l_data.skin_    = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-    }
 }
 FSys::path args::create_move(const FSys::path& in_out_image_path) const {
   // 合成视屏
@@ -434,13 +424,14 @@ void args::down_files() {
   }
 
   // 复制maya文件
-  for (auto&& l_data : import_files_) {
-    if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop))
-      continue;
-    auto l_local_path       = g_root / project_.code_ / "maya_file";
-    l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
-    l_data.update_files |= copy_diff(l_data.maya_local_file_, l_data.maya_file_, logger_ptr_);
-  }
+  if (bind_skin_)
+    for (auto&& l_data : import_files_) {
+      if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop))
+        continue;
+      auto l_local_path       = g_root / project_.code_ / "maya_file";
+      l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
+      l_data.update_files |= copy_diff(l_data.maya_local_file_, l_data.maya_file_, logger_ptr_);
+    }
 }
 
 boost::asio::awaitable<void> args::crate_skin() {
