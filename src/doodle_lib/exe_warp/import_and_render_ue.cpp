@@ -467,6 +467,7 @@ boost::asio::awaitable<void> args::crate_skin() {
 
     auto l_fbx              = l_maya_file.out_file_list.front().out_file;
     auto l_import_game_path = FSys::path{doodle_config::ue4_game} / "auto_light";
+    l_data.skin_            = l_import_game_path / l_data.maya_local_file_.stem();
 
     nlohmann::json l_json{};
     l_json          = import_skin_file{.fbx_file_ = l_fbx, .import_dir_ = l_import_game_path};

@@ -197,6 +197,7 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
             throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
         }
       }
+      break;
     case 1:
       throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
     default:
