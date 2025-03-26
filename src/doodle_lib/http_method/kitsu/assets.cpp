@@ -36,7 +36,9 @@ DOODLE_HTTP_FUN(with_tasks, get, "api/data/assets/with-tasks", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   get_person(in_handle);
   uuid l_prj_id{};
-  if (auto l_str = in_handle->capture_->get("project_id"); !l_str.empty()) l_prj_id = from_uuid_str(l_str);
+  for (auto &&l_i : in_handle->url_.params())
+    if (l_i.key == "project_id")
+       l_prj_id = from_uuid_str(l_i.value);
   auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_prj_id, *person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }

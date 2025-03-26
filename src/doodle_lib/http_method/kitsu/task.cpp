@@ -169,11 +169,13 @@ void task_reg(http_route& in_http_route) {
               boost::beast::http::verb::get, "api/doodle/task/{task_id}/full", get_task_info_full
           )
       )
+#ifndef DOODLE_KITSU
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::get, "api/data/assets/with-tasks", get_task_with_tasks
           )
       )
+#endif
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/tasks", create_task))
       .reg(
           std::make_shared<http_function>(

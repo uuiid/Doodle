@@ -2,7 +2,7 @@ from sqlalchemy_utils import UUIDType, ChoiceType
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy import orm
 import sqlalchemy
-
+import json
 from doodle.base import BaseMixin
 from doodle.department import Department
 from zou.app.models.metadata_descriptor import MetadataDescriptor as ZouMetadataDescriptor
@@ -92,7 +92,7 @@ class MetadataDescriptor(BaseMixin):
         self.name = metadata_descriptor.name
         self.data_type = metadata_descriptor.data_type
         self.field_name = metadata_descriptor.field_name
-        self.choices = f"{metadata_descriptor.choices}"
+        self.choices = json.dumps(metadata_descriptor.choices) if metadata_descriptor.choices else None
         self.for_client = bool(metadata_descriptor.for_client)
 
         self.uuid = metadata_descriptor.id

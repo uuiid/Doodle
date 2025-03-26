@@ -19,6 +19,7 @@ import zou.app.models.project
 import zou.app.models.entity
 import zou.app.models.notification
 import zou.app.models.subscription
+import zou.app.models.task
 
 import doodle.project_status
 import doodle.organisation
@@ -48,9 +49,10 @@ import doodle.attachment_file
 import doodle.chat_message
 import doodle.chat
 import doodle.subscription
+import doodle.task
 
 PASS = getenv("KITSU_PASS")
-DB_NAME = "my_zou1.database"
+DB_NAME = "my_zou.database"
 def main():
     engine = create_engine(f"sqlite:///D:\\{DB_NAME}")
 
@@ -83,6 +85,8 @@ def main():
         l_EntityVersion : list[zou.app.models.entity.EntityVersion] = zou.app.models.entity.EntityVersion.query.all()
         l_Notification : list[zou.app.models.notification.Notification] = zou.app.models.notification.Notification.query.all()
         l_subscription : list[zou.app.models.subscription.Subscription] = zou.app.models.subscription.Subscription.query.all()
+        l_task : list[zou.app.models.task.Task] = zou.app.models.task.Task.query.all()
+        l_assignee = zou.app.db.session.query(zou.app.models.task.assignees_table).all()
         with Session(engine) as session:
             doodle.base.BaseMixin.metadata.create_all(engine)
             session.add_all([doodle.studio.Studio().from_zou(i) for i in l_studio])
@@ -120,6 +124,8 @@ def main():
             session.add_all([doodle.entity.EntityVersion().from_zou(i) for i in l_EntityVersion])
             session.add_all([doodle.notification.Notification().from_zou(i) for i in l_Notification])
             session.add_all([doodle.subscription.Subscription().from_zou(i) for i in l_subscription])
+            session.add_all([doodle.task.Task().from_zou(i) for i in l_task])
+            session.add_all([doodle.task.Assignations().from_zou(i) for i in l_assignee])
 
             session.commit()
 

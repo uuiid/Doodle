@@ -25,12 +25,12 @@ struct DOODLE_CORE_API task {
   std::int32_t completion_rate_;
   std::int32_t retake_count_;
   std::int32_t sort_order_;
-  chrono::system_zoned_time start_date_;
-  chrono::system_zoned_time due_date_;
-  chrono::system_zoned_time real_start_date_;
-  chrono::system_zoned_time end_date_;
-  chrono::system_zoned_time done_date_;
-  chrono::system_zoned_time last_comment_date_;
+  std::optional<chrono::system_zoned_time> start_date_;
+  std::optional<chrono::system_zoned_time> due_date_;
+  std::optional<chrono::system_zoned_time> real_start_date_;
+  std::optional<chrono::system_zoned_time> end_date_;
+  std::optional<chrono::system_zoned_time> done_date_;
+  std::optional<chrono::system_zoned_time> last_comment_date_;
   std::int32_t nb_assets_ready_;
   nlohmann::json data_;
   std::int32_t shotgun_id_;
