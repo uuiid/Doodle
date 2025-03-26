@@ -175,10 +175,7 @@ void args::check_materials() {
     l_file->hide_materials_ = l_fbx_mat;
   }
 }
-boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
-  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    co_return tl::make_unexpected("用户取消操作");
-
+boost::asio::awaitable<void> args::run() {
   // 添加三次重试
   maya_exe_ns::maya_out_arg l_out{};
   for (int i = 0; i < 3; ++i) {
@@ -217,12 +214,10 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::run() {
   if (bind_skin_) co_await crate_skin();
 
   auto l_ret = co_await async_import_and_render_ue();
-  if (!l_ret) co_return l_ret;
-
   // 合成视屏, 并上传文件
-  up_files(*l_ret, create_move(*l_ret));
+  up_files(l_ret, create_move(l_ret));
 
-  co_return tl::expected<FSys::path, std::string>{FSys::path{}};
+  co_return;
 }
 void args::up_files(const FSys::path& in_out_image_path, const FSys::path& in_move_path) const {
   auto l_u_project = render_project_;
@@ -254,16 +249,13 @@ void args::up_files(const FSys::path& in_out_image_path, const FSys::path& in_mo
       logger_ptr_
   );
 }
-boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import_and_render_ue() {
+boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
   // 导入文件
   auto l_import_data = gen_import_config();
   nlohmann::json l_json{};
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   logger_ptr_->warn("排队导入文件 {} ", render_project_);
-  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    co_return tl::make_unexpected("用户取消操作"s);
-
   // 添加三次重试
   for (int i = 0; i < 3; ++i) {
     try {
@@ -287,9 +279,6 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
       logger_ptr_->error("渲染删除上次输出错误:{}", err.what());
     }
   }
-  if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-    co_return tl::make_unexpected("用户取消操作");
-
   for (int i = 0; i < 3; ++i) {
     try {
       co_await async_run_ue(
@@ -306,7 +295,7 @@ boost::asio::awaitable<tl::expected<FSys::path, std::string>> args::async_import
   }
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
-  co_return tl::expected<FSys::path, std::string>{l_import_data.out_file_dir};
+  co_return l_import_data.out_file_dir;
 }
 
 boost::asio::awaitable<void> args::fetch_association_data() {

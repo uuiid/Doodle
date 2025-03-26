@@ -112,10 +112,10 @@ struct args {
   bool bind_skin_{};
   logger_ptr logger_ptr_{};
 
-  boost::asio::awaitable<tl::expected<FSys::path, std::string>> run();
+  boost::asio::awaitable<void> run();
 
  private:
-  boost::asio::awaitable<tl::expected<FSys::path, std::string>> async_import_and_render_ue();
+  boost::asio::awaitable<FSys::path> async_import_and_render_ue();
   import_data_t gen_import_config();
 
   boost::asio::awaitable<void> fetch_association_data();
