@@ -181,6 +181,7 @@ boost::asio::awaitable<void> args::run() {
   for (int i = 0; i < 3; ++i) {
     try {
       l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
+      break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", err.what(), i + 1);
       if (i == 2) throw;
@@ -264,6 +265,7 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
            "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
           logger_ptr_
       );
+      break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
       if (i == 2) throw;
@@ -288,6 +290,7 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
            "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
           logger_ptr_
       );
+      break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
       if (i == 2) throw;
