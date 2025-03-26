@@ -169,13 +169,27 @@ std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(const uuid& in_
   auto l_entt_id_list =
       l_entt_list | ranges::views::transform([](const entity& in) { return in.uuid_id_; }) | ranges::to_vector;
   auto l_task = impl_->storage_any_.get_all<task>(sqlite_orm::where(sqlite_orm::in(&task::entity_id_, l_entt_id_list)));
+  {
+    std::map<uuid, uuid> l_task_person_ids{};
+    auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
+    auto l_r        = impl_->storage_any_.get_all<assignees_table>(
+        sqlite_orm::where(sqlite_orm::in(&assignees_table::task_id_, l_task_ids))
+    );
+    l_task_person_ids =
+        l_r |
+        ranges::views::transform([](const assignees_table& in) { return std::make_pair(in.task_id_, in.person_id_); }) |
+        ranges::to<std::map<uuid, uuid>>();
+
+    for (auto&& l_t : l_task) {
+      if (l_task_person_ids.contains(l_t.uuid_id_)) l_t.assignees_.emplace_back(l_task_person_ids.at(l_t.uuid_id_));
+    }
+  }
   l_result.reserve(l_entt_list.size());
   for (auto&& l_entt : l_entt_list) l_result.emplace_back(l_entt);
   std::map<uuid, entity_task_t*> l_map =
       l_result | ranges::views::transform([](entity_task_t& in) { return std::make_pair(in.uuid_id_, &in); }) |
       ranges::to<std::map<uuid, entity_task_t*>>();
   for (auto&& l_t : l_task) l_map[l_t.entity_id_]->tasks_.emplace_back(l_t);
-
   for (auto&& l_entt : l_result) {
     if (l_asset_types.contains(l_entt.entity_type_id_)) l_entt.asset_type_ = l_asset_types.at(l_entt.entity_type_id_);
   }

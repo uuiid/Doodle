@@ -28,6 +28,29 @@ struct DOODLE_CORE_API entity_task_t : entity {
     j["is_shared"]           = is_shared_;
     j["data"]                = data_;
     j["tasks"]               = nlohmann::json::array();
+    auto& l_task_json        = j["tasks"];
+    for (const auto& task : tasks_) {
+      nlohmann::json l_j_task{};
+      l_j_task["id"]                   = task.uuid_id_;
+      l_j_task["due_date"]             = task.due_date_;
+      l_j_task["done_date"]            = task.done_date_;
+      l_j_task["duration"]             = task.duration_;
+      l_j_task["entity_id"]            = task.entity_id_;
+      l_j_task["estimation"]           = task.estimation_;
+      l_j_task["end_date"]             = task.end_date_;
+      l_j_task["is_subscribed"]        = false;
+      l_j_task["last_comment_date"]    = task.last_comment_date_;
+      l_j_task["last_preview_file_id"] = task.last_preview_file_id_;
+      l_j_task["priority"]             = task.priority_;
+      l_j_task["real_start_date"]      = task.real_start_date_;
+      l_j_task["retake_count"]         = task.retake_count_;
+      l_j_task["start_date"]           = task.start_date_;
+      l_j_task["difficulty"]           = task.difficulty_;
+      l_j_task["task_status_id"]       = task.task_status_id_;
+      l_j_task["task_type_id"]         = task.task_type_id_;
+      l_j_task["assignees"]            = task.assignees_;
+      l_task_json.emplace_back(std::move(l_j_task));
+    }
   }
 };
 }  // namespace doodle
