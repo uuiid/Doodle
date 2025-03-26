@@ -312,9 +312,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 
     boost::asio::co_spawn(
         g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
-        boost::asio::bind_cancellation_slot(
-            app_base::Get().on_cancel.slot(), boost::asio::detached
-        )
+        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
     );
     emit_signal();
     co_return;
@@ -323,14 +321,11 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     in_arg->logger_ptr_ = logger_;
     try {
       co_await wait();
-      auto l_r = co_await in_arg->run();
+      co_await in_arg->run();
       // 用户取消
       if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
         task_info_->status_ = server_task_info_status::canceled;
         logger_->error("用户取消");
-      } else if (!l_r) {
-        task_info_->status_ = server_task_info_status::failed;
-        logger_->error(l_r.error());
       } else
         task_info_->status_ = server_task_info_status::completed;
     } catch (...) {
