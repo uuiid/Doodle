@@ -19,6 +19,7 @@
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
+
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle {
@@ -146,6 +147,25 @@ std::vector<uuid> sqlite_database::get_temporal_type_ids() {
 }
 std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(const uuid& in_project) {
   auto l_temporal_type_ids = get_temporal_type_ids();
+  std::vector<entity_task_t> l_result;
+  auto l_entt_list = in_project.is_nil()
+                         ? impl_->storage_any_.get_all<entity>(
+                               sqlite_orm::where(sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids))
+                           )
+                         : impl_->storage_any_.get_all<entity>(sqlite_orm::where(
+                               sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
+                               sqlite_orm::c(&entity::project_id_) == in_project
+                           ));
+  auto l_entt_id_list =
+      l_entt_list | ranges::views::transform([](const entity& in) { return in.uuid_id_; }) | ranges::to_vector;
+  auto l_task = impl_->storage_any_.get_all<task>(sqlite_orm::where(sqlite_orm::in(&task::entity_id_, l_entt_id_list)));
+  l_result.reserve(l_entt_list.size());
+  for (auto&& l_entt : l_entt_list) l_result.emplace_back(l_entt);
+  std::map<uuid, entity_task_t*> l_map =
+      l_result | ranges::views::transform([](entity_task_t& in) { return std::make_pair(in.uuid_id_, &in); }) |
+      ranges::to<std::map<uuid, entity_task_t*>>();
+  for (auto&& l_t : l_task) l_map[l_t.entity_id_]->tasks_.emplace_back(l_t);
+  return l_result;
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
