@@ -40,6 +40,7 @@ target_sources(
         task.h
         preview_file.h
         studio.h
+        subscription.h
 
         PRIVATE
         assets.cpp
