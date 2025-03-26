@@ -43,7 +43,7 @@ struct DOODLE_CORE_API entity_task_t : entity {
       l_j_task["entity_id"]            = task.entity_id_;
       l_j_task["estimation"]           = task.estimation_;
       l_j_task["end_date"]             = task.end_date_;
-      l_j_task["is_subscribed"]        = false;
+      l_j_task["is_subscribed"]        = task.is_subscribed_;
       l_j_task["last_comment_date"]    = task.last_comment_date_;
       l_j_task["last_preview_file_id"] = task.last_preview_file_id_;
       l_j_task["priority"]             = task.priority_;
