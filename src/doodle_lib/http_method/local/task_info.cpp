@@ -144,10 +144,6 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
  public:
   explicit run_post_task_local_impl_sink(std::shared_ptr<server_task_info> in_task_info) : task_info_(in_task_info) {}
   void sink_it_(const spdlog::details::log_msg& msg) override {
-    spdlog::memory_buf_t l_formatted;
-    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, l_formatted);
-    task_info_->last_line_log_ = fmt::to_string(l_formatted);
-    // std::call_once(flag_, &set_state, this);
     std::call_once(flag_, [this]() { set_state(); });
   }
   void flush_() override {}
@@ -302,10 +298,10 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         task_info_->status_ = server_task_info_status::completed;
     } catch (...) {
       task_info_->status_ = server_task_info_status::failed;
-      logger_->error(
-          boost::current_exception_diagnostic_information() |
-          ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; })
-      );
+      auto l_err_str      = boost::current_exception_diagnostic_information() |
+                       ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; });
+      logger_->error(l_err_str);
+      task_info_->last_line_log_ = l_err_str;
     }
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     logger_->flush();
@@ -330,10 +326,11 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         task_info_->status_ = server_task_info_status::completed;
     } catch (...) {
       task_info_->status_ = server_task_info_status::failed;
-      logger_->error(
-          boost::current_exception_diagnostic_information() |
-          ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; })
-      );
+
+      auto l_err_str      = boost::current_exception_diagnostic_information() |
+                       ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; });
+      logger_->error(l_err_str);
+      task_info_->last_line_log_ = l_err_str;
     }
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     logger_->flush();
