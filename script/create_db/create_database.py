@@ -50,7 +50,7 @@ import doodle.chat
 import doodle.subscription
 
 PASS = getenv("KITSU_PASS")
-DB_NAME = "my_zou.database"
+DB_NAME = "my_zou1.database"
 def main():
     engine = create_engine(f"sqlite:///D:\\{DB_NAME}")
 

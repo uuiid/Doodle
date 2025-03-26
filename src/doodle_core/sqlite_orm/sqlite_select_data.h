@@ -6,6 +6,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/entity_type.h>
 
 namespace doodle {
 
