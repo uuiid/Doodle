@@ -57,7 +57,7 @@ struct DOODLE_CORE_API entity {
   uuid entity_type_id_;
   /// 父外键(未知)
   uuid parent_id_;
-  /// 源外键(未知)
+  /// 源外键(指向集数uuid)
   uuid source_id_;
   uuid preview_file_id_;
   nlohmann::json data_;
