@@ -401,6 +401,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     emit_signal();
   }
   void emit_signal() const {
+    default_logger_raw()->warn(
+        "写出事件 {} {} {}", "doodle:task_info:update", (nlohmann::json{} = *task_info_).dump(), "/socket.io/"
+    );
     socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_, "/socket.io/");
   }
 };
