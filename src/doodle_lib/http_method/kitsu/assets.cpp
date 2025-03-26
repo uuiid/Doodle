@@ -36,14 +36,18 @@ DOODLE_HTTP_FUN(with_tasks, get, "api/data/assets/with-tasks", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   get_person(in_handle);
   uuid l_prj_id{};
-  for (auto &&l_i : in_handle->url_.params())
-    if (l_i.key == "project_id")
-       l_prj_id = from_uuid_str(l_i.value);
+  for (auto&& l_i : in_handle->url_.params())
+    if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
   auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_prj_id, *person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_END()
-
+DOODLE_HTTP_FUN(shared_used, get, "api/data/projects/${project_id}/assets/shared-used", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  get_person(in_handle);
+  co_return in_handle->make_msg("[]");
+}
+DOODLE_HTTP_FUN_END()
 }  // namespace
 void assets_reg2(http_route& in_http_route) {
   in_http_route
@@ -55,6 +59,7 @@ void assets_reg2(http_route& in_http_route) {
       )
 #ifdef DOODLE_KITSU
       .reg(std::make_shared<with_tasks_get>())
+      .reg(std::make_shared<shared_used_get>())
 #endif
       ;
 }
