@@ -18,7 +18,7 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-
+#include <doodle_core/sqlite_orm/sqlite_select_data.h>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle {
@@ -134,11 +134,18 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
   return l_projects;
 }
 person sqlite_database::get_person_for_email(const std::string& in_email) {
-  auto l_p = impl_->storage_any_.get_all<person>(
-      sqlite_orm::where(sqlite_orm::c(&person::email_) == in_email)
-  );
+  auto l_p = impl_->storage_any_.get_all<person>(sqlite_orm::where(sqlite_orm::c(&person::email_) == in_email));
   if (l_p.empty()) throw_exception(doodle_error{"未知的用户"});
   return l_p.front();
+}
+std::vector<uuid> sqlite_database::get_temporal_type_ids() {
+  return impl_->storage_any_.select(
+      &asset_type::uuid_id_,
+      sqlite_orm::where(sqlite_orm::in(&asset_type::name_, {"Episode", "Sequence", "Shot", "Edit", "Scene", "Concept"}))
+  );
+}
+std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(const uuid& in_project) {
+  auto l_temporal_type_ids = get_temporal_type_ids();
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);

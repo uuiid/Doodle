@@ -29,9 +29,14 @@ namespace work_xlsx_task_info_helper {
 struct database_t;
 }
 
+
+struct entity_task_t;
+
 struct sqlite_database_impl;
 class sqlite_database {
   std::shared_ptr<sqlite_database_impl> impl_;
+
+  std::vector<uuid> get_temporal_type_ids();
 
  public:
   sqlite_database()  = default;
@@ -94,5 +99,7 @@ class sqlite_database {
   std::vector<project_with_extra_data> get_project_for_user(const person& in_user);
 
   person get_person_for_email(const std::string& in_email);
+
+  std::vector<entity_task_t> get_assets_and_tasks(const uuid& in_project);
 };
 }  // namespace doodle

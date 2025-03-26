@@ -11,6 +11,7 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
+#include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http::kitsu {
 namespace {
@@ -29,13 +30,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_new(session
   }
   co_return std::move(l_res);
 }
+
+DOODLE_HTTP_FUN(with_tasks, get, "api/data/assets/with-tasks", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  get_person(in_handle);
+  uuid l_prj_id{};
+  if (auto l_str = in_handle->capture_->get("project_id"); !l_str.empty()) l_prj_id = from_uuid_str(l_str);
+}
+DOODLE_HTTP_FUN_END()
+
 }  // namespace
 void assets_reg2(http_route& in_http_route) {
-  in_http_route.reg(
-      std::make_shared<http_function>(
-          boost::beast::http::verb::post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new",
-          assets_new
+  in_http_route
+      .reg(
+          std::make_shared<http_function>(
+              boost::beast::http::verb::post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new",
+              assets_new
+          )
       )
-  );
+#ifdef DOODLE_KITSU
+      .reg(std::make_shared<with_tasks_get>())
+#endif
+      ;
 }
 }  // namespace doodle::http::kitsu
