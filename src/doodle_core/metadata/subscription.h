@@ -10,9 +10,9 @@
 namespace doodle {
 struct DOODLE_CORE_API subscription {
   DOODLE_BASE_FIELDS();
-  uuid person_id;
-  uuid task_id;
-  uuid entity_id;
-  uuid task_type_id;
+  uuid person_id_;
+  uuid task_id_;
+  uuid entity_id_;
+  uuid task_type_id_;
 };
 }  // namespace doodle

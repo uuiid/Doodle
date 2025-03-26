@@ -25,6 +25,7 @@
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/status_automation.h>
 #include <doodle_core/metadata/studio.h>
+#include <doodle_core/metadata/subscription.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
@@ -225,6 +226,21 @@ inline auto make_storage_doodle(const std::string& in_path) {
       )
       /// 这个下方是模拟kitsu的表
       ,
+
+      make_table<subscription>(
+          "subscription",  //
+          make_column("id", &subscription::id_, primary_key().autoincrement()),
+          make_column("uuid", &subscription::uuid_id_, unique(), not_null()),
+          make_column("person_id", &subscription::person_id_, not_null()),
+          make_column("task_id", &subscription::task_id_),
+          make_column("entity_id", &subscription::entity_id_),
+          make_column("task_type_id", &subscription::task_type_id_),
+          foreign_key(&subscription::person_id_).references(&person::id_),
+          foreign_key(&subscription::task_id_).references(&task::uuid_id_),
+          foreign_key(&subscription::entity_id_).references(&entity::uuid_id_),
+          foreign_key(&subscription::task_type_id_).references(&task_type::uuid_id_)
+      ),
+
       make_table<comment_preview_link>(
           "comment_preview_link",                                                                   //
           make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),             //
