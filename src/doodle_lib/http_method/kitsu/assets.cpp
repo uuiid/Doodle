@@ -37,7 +37,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
   get_person(in_handle);
   uuid l_prj_id{};
   if (auto l_str = in_handle->capture_->get("project_id"); !l_str.empty()) l_prj_id = from_uuid_str(l_str);
-  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_prj_id);
+  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_prj_id, *person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_END()
