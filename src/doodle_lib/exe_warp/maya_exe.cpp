@@ -33,7 +33,7 @@
 
 namespace doodle {
 namespace {
-tl::expected<FSys::path, std::string> find_maya_path_impl() {
+FSys::path find_maya_path_impl() {
   try {
     auto l_key_str = fmt::format(LR"(SOFTWARE\Autodesk\Maya\{}\Setup\InstallPath)", core_set::get_set().maya_version);
     winreg::RegKey l_key{};
@@ -41,9 +41,9 @@ tl::expected<FSys::path, std::string> find_maya_path_impl() {
     auto l_maya_path = l_key.GetStringValue(LR"(MAYA_INSTALL_LOCATION)");
     return {l_maya_path};
   } catch (const winreg::RegException& in_err) {
-    return tl::make_unexpected(in_err.what());
+    throw_exception(doodle_error{"寻找maya路径失败: {}", in_err.what()});
   }
-  return {FSys::path{}};
+  return {};
 }
 
 FSys::path install_maya_exe(FSys::path in_maya_path) {
@@ -108,11 +108,7 @@ maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
 }  // namespace
 
 namespace maya_exe_ns {
-FSys::path find_maya_path() {
-  auto l_v = find_maya_path_impl();
-  if (!l_v) throw_exception(std::runtime_error{l_v.error()});
-  return l_v.value();
-}
+FSys::path find_maya_path() { return find_maya_path_impl(); }
 }  // namespace maya_exe_ns
 
 boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
@@ -121,11 +117,10 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
   in_logger->warn("开始运行maya");
   auto l_maya_path = find_maya_path_impl();
-  if (!l_maya_path) throw_exception(doodle_error{"查找Maya路径失败: {}", l_maya_path.error()});
 
   auto l_this_exe = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
-  auto l_run_path = install_maya_exe(*l_maya_path);
+  auto l_run_path = install_maya_exe(l_maya_path);
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
   auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
@@ -146,8 +141,8 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
     if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH") l_env.emplace(l_it.key(), l_it.value());
   }
 
-  l_env[L"MAYA_LOCATION"] = l_maya_path->generic_wstring();
-  l_env[L"Path"].push_back((*l_maya_path / "bin").generic_wstring());
+  l_env[L"MAYA_LOCATION"] = l_maya_path.generic_wstring();
+  l_env[L"Path"].push_back((l_maya_path / "bin").generic_wstring());
   l_env[L"Path"].push_back(l_run_path.parent_path().generic_wstring());
   l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
   add_maya_module();
@@ -160,7 +155,7 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
       {fmt::format("--{}", l_key), fmt::format("--config={}", l_arg_path)},
       boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
       boost::process::v2::process_environment{l_env},
-      boost::process::v2::process_start_dir{*l_maya_path / "bin"},
+      boost::process::v2::process_start_dir{l_maya_path / "bin"},
       details::hide_and_not_create_windows
   };
   boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info), boost::asio::detached);

@@ -24,7 +24,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_local_setting(
   try {
     l_maya_path = maya_exe_ns::find_maya_path();
   } catch (const doodle_error& e) {
-    default_logger_raw()->error("获取maya路径失败 {}", e.what());
+    default_logger_raw()->error(e.what());
   }
   co_return in_handle->make_msg(
       nlohmann::json{
