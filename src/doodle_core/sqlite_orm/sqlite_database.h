@@ -100,6 +100,6 @@ class sqlite_database {
 
   person get_person_for_email(const std::string& in_email);
 
-  std::vector<entity_task_t> get_assets_and_tasks(const uuid& in_project);
+  std::vector<entity_task_t> get_assets_and_tasks(const uuid& in_project, const person& in_current_user);
 };
 }  // namespace doodle

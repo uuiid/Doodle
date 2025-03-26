@@ -5,13 +5,17 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/entity.h>
-#include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/task.h>
 
 namespace doodle {
 
 struct DOODLE_CORE_API entity_task_t : entity {
-  std::vector<task> tasks_;
+  struct task_impl : task {
+    bool is_subscribed_;
+  };
+
+  std::vector<task_impl> tasks_;
   std::shared_ptr<asset_type> asset_type_;
   // to json
   friend void to_json(nlohmann::json& j, const entity_task_t& p) {

@@ -43,7 +43,7 @@ struct DOODLE_CORE_API task {
   uuid task_status_id_;
   uuid entity_id_;
   uuid assigner_id_;
-  // 一对多
+  // 一对多(任务分配的人员)
   std::vector<uuid> assignees_{};
 };
 }  // namespace doodle

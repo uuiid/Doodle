@@ -145,7 +145,9 @@ std::vector<uuid> sqlite_database::get_temporal_type_ids() {
       sqlite_orm::where(sqlite_orm::in(&asset_type::name_, {"Episode", "Sequence", "Shot", "Edit", "Scene", "Concept"}))
   );
 }
-std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(const uuid& in_project) {
+std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(
+    const uuid& in_project, const person& in_current_user
+) {
   auto l_temporal_type_ids = get_temporal_type_ids();
   std::map<uuid, std::shared_ptr<asset_type>> l_asset_types;  // <uuid, std::shared_ptr<asset_type>>
   {
@@ -169,12 +171,20 @@ std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(const uuid& in_
   auto l_entt_id_list =
       l_entt_list | ranges::views::transform([](const entity& in) { return in.uuid_id_; }) | ranges::to_vector;
   auto l_task = impl_->storage_any_.get_all<task>(sqlite_orm::where(sqlite_orm::in(&task::entity_id_, l_entt_id_list)));
+  std::set<uuid> l_current_user_subscribed_tasks;
   {
     std::map<uuid, uuid> l_task_person_ids{};
     auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
     auto l_r        = impl_->storage_any_.get_all<assignees_table>(
         sqlite_orm::where(sqlite_orm::in(&assignees_table::task_id_, l_task_ids))
     );
+    auto l_subscription             = impl_->storage_any_.get_all<subscription>(sqlite_orm::where(
+        sqlite_orm::in(&subscription::task_id_, l_task_ids) &&
+        sqlite_orm::c(&subscription::person_id_) == in_current_user.uuid_id_
+    ));
+    l_current_user_subscribed_tasks = l_subscription |
+                                      ranges::views::transform([](const subscription& in) { return in.task_id_; }) |
+                                      ranges::to<std::set<uuid>>();
     l_task_person_ids =
         l_r |
         ranges::views::transform([](const assignees_table& in) { return std::make_pair(in.task_id_, in.person_id_); }) |
@@ -189,7 +199,9 @@ std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(const uuid& in_
   std::map<uuid, entity_task_t*> l_map =
       l_result | ranges::views::transform([](entity_task_t& in) { return std::make_pair(in.uuid_id_, &in); }) |
       ranges::to<std::map<uuid, entity_task_t*>>();
-  for (auto&& l_t : l_task) l_map[l_t.entity_id_]->tasks_.emplace_back(l_t);
+  for (auto&& l_t : l_task)
+    l_map[l_t.entity_id_]->tasks_.emplace_back(l_t).is_subscribed_ =
+        l_current_user_subscribed_tasks.contains(l_t.uuid_id_);
   for (auto&& l_entt : l_result) {
     if (l_asset_types.contains(l_entt.entity_type_id_)) l_entt.asset_type_ = l_asset_types.at(l_entt.entity_type_id_);
   }
