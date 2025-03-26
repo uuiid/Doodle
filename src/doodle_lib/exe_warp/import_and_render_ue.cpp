@@ -464,7 +464,7 @@ boost::asio::awaitable<void> args::crate_skin() {
              "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
             logger_ptr_
         );
-
+        break;
       } catch (const doodle_error& error) {
         logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
         if (i == 2) throw;
