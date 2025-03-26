@@ -240,7 +240,14 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&subscription::entity_id_).references(&entity::uuid_id_),
           foreign_key(&subscription::task_type_id_).references(&task_type::uuid_id_)
       ),
-
+      make_table<assignees_table>(
+          "assignees",  //
+          make_column("id", &assignees_table::id_, primary_key().autoincrement()),
+          make_column("person_id", &assignees_table::person_id_, not_null()),
+          make_column("task_id", &assignees_table::task_id_, not_null()),
+          foreign_key(&assignees_table::person_id_).references(&person::id_),
+          foreign_key(&assignees_table::task_id_).references(&task::uuid_id_)
+      ),
       make_table<comment_preview_link>(
           "comment_preview_link",                                                                   //
           make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),             //

@@ -11,10 +11,12 @@ class Assignations(BaseMixin):
     task = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("task.uuid"),
+        nullable=False
     )
     person = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid"),
+        nullable=False
     )
 
 
