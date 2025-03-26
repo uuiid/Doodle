@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -36,7 +37,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
   get_person(in_handle);
   uuid l_prj_id{};
   if (auto l_str = in_handle->capture_->get("project_id"); !l_str.empty()) l_prj_id = from_uuid_str(l_str);
-  co_return in_handle->make_msg("");
+  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_prj_id);
+  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_END()
 

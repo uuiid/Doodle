@@ -13,23 +13,23 @@ struct DOODLE_CORE_API entity_task_t : entity {
   std::vector<task> tasks_;
   std::shared_ptr<asset_type> asset_type_;
   // to json
-  void to_json(nlohmann::json& j) const {
-    j["id"]                  = uuid_id_;
-    j["name"]                = name_;
-    j["preview_file_id"]     = preview_file_id_;
-    j["description"]         = description_;
-    j["asset_type_name"]     = asset_type_ ? asset_type_->name_ : std::string{};
-    j["asset_type_id"]       = asset_type_ ? asset_type_->uuid_id_ : uuid{};
-    j["canceled"]            = canceled_;
-    j["ready_for"]           = ready_for_;
-    j["episode_id"]          = source_id_;
+  friend void to_json(nlohmann::json& j, const entity_task_t& p) {
+    j["id"]                  = p.uuid_id_;
+    j["name"]                = p.name_;
+    j["preview_file_id"]     = p.preview_file_id_;
+    j["description"]         = p.description_;
+    j["asset_type_name"]     = p.asset_type_ ? p.asset_type_->name_ : std::string{};
+    j["asset_type_id"]       = p.asset_type_ ? p.asset_type_->uuid_id_ : uuid{};
+    j["canceled"]            = p.canceled_;
+    j["ready_for"]           = p.ready_for_;
+    j["episode_id"]          = p.source_id_;
     j["casting_episode_ids"] = nlohmann::json::array();
-    j["is_casting_standby"]  = is_casting_standby_;
-    j["is_shared"]           = is_shared_;
-    j["data"]                = data_;
+    j["is_casting_standby"]  = p.is_casting_standby_;
+    j["is_shared"]           = p.is_shared_;
+    j["data"]                = p.data_;
     j["tasks"]               = nlohmann::json::array();
     auto& l_task_json        = j["tasks"];
-    for (const auto& task : tasks_) {
+    for (const auto& task : p.tasks_) {
       nlohmann::json l_j_task{};
       l_j_task["id"]                   = task.uuid_id_;
       l_j_task["due_date"]             = task.due_date_;
