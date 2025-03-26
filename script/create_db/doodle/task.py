@@ -58,7 +58,7 @@ class Task(BaseMixin):
     data = orm.mapped_column(sqlalchemy.TEXT())
     nb_drawings = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
 
-    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     last_preview_file_id = orm.mapped_column(UUIDType(binary=True))
 
     project_id = orm.mapped_column(
