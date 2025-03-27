@@ -152,7 +152,7 @@ std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(
   std::map<uuid, std::shared_ptr<asset_type>> l_asset_types;  // <uuid, std::shared_ptr<asset_type>>
   {
     auto l_ass_types = impl_->storage_any_.get_all<asset_type>(
-        sqlite_orm::where(sqlite_orm::in(&asset_type::uuid_id_, l_temporal_type_ids))
+        sqlite_orm::where(sqlite_orm::not_in(&asset_type::uuid_id_, l_temporal_type_ids))
     );
     l_asset_types = l_ass_types | ranges::views::transform([](const asset_type& in) {
                       return std::make_pair(in.uuid_id_, std::make_shared<asset_type>(in));
