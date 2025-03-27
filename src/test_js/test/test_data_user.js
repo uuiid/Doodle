@@ -11,7 +11,7 @@ import jwt_encode from 'jwt-encode';
 
 describe('doodle user测试', function() {
   const l_jwt = jwt_encode({
-    'id': 'b5a1383a-8bdc-4a79-ad33-f601fa0fc26d',
+    'sub': 'b5a1383a-8bdc-4a79-ad33-f601fa0fc26d',
   }, 'secret');
   const l_project_id = 'eb2b5cde-c1cf-47a0-aba4-e196b6f774dd';
   it('配置', async function() {
