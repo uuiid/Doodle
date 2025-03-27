@@ -44,7 +44,6 @@ bool export_rig_facet::post(const nlohmann::json& in_argh) {
   if (l_arg.file_path.empty()) return l_ret;
   out_path_file_ = l_arg.out_path_file_;
 
-  l_ret          = true;
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
   maya_file_io::set_workspace(l_arg.file_path);
@@ -77,6 +76,7 @@ bool export_rig_facet::post(const nlohmann::json& in_argh) {
     FSys::ofstream{out_path_file_} << l_json.dump(4);
   } else
     log_info(fmt::format("导出文件 {}", l_json.dump(4)));
+  app_base::Get().stop_app(true);
   return l_ret;
 }
 }  // namespace doodle::maya_plug
