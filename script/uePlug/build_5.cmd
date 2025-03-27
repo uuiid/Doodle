@@ -6,6 +6,7 @@ set l_time=%l_time:.=_%
 set l_time=%l_time: =%
 call %UE_5% BuildPlugin -Plugin=%work_dir%Doodle\Doodle.uplugin -TargetPlatforms=Win64 -Package=%work_dir%%UE_VERSION%\Plugins\Doodle -Rocket
 robocopy %work_dir%%UE_VERSION%\Plugins\Doodle %work_dir%%UE_VERSION%\Plugins\Doodle_%l_time% /mir /ndl /np /njh /njs /ns /nc /nfl
+robocopy %work_dir%Doodle\ThirdParty %work_dir%%UE_VERSION%\Plugins\Doodle\ThirdParty /mir /ndl /np /njh /njs /ns /nc /nfl
 
 rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\Doodle\Intermediate
 rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\Doodle\Source
