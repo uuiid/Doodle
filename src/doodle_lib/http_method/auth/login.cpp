@@ -102,11 +102,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
 }
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN(organisations, get, "api/data/organisations", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+  get_person(in_handle);
+  auto l_org = g_ctx().get<sqlite_database>().get_all<organisation>();
+  co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
+}
+DOODLE_HTTP_FUN_END()
+
 }  // namespace
 void register_login(http_route& in_r) {
 #ifdef DOODLE_KITSU
   in_r.reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/auth/login", login))
-      .reg(std::make_shared<authenticated_get>());
+      .reg(std::make_shared<authenticated_get>())
+      .reg(std::make_shared<organisations_get>());
 #endif
 }
 }  // namespace doodle::http
