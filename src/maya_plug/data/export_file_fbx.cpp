@@ -155,7 +155,9 @@ FSys::path export_file_fbx::export_rig(const reference_file& in_ref, const std::
   fbx_write l_fbx_write{};
   auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / maya_file_io::get_current_path().filename();
   l_file.replace_extension(".fbx");
-  default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file));
+  if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path))
+    FSys::create_directories(l_p_path);
+  default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
   l_fbx_write.set_path(l_file);
   l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
   return l_file;
