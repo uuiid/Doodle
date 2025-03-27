@@ -42,7 +42,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(shared_used, get, "api/data/projects/${project_id}/assets/shared-used", http_jwt_fun)
+DOODLE_HTTP_FUN(shared_used, get, "api/data/projects/{project_id}/assets/shared-used", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   get_person(in_handle);
   co_return in_handle->make_msg("[]");
