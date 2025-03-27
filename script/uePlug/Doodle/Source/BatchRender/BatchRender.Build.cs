@@ -31,7 +31,7 @@ public class BatchRender : ModuleRules
 				"MovieRenderPipelineCore",
                 "MovieRenderPipelineEditor",
 				"MovieRenderPipelineRenderPasses",
-				"MOvieRenderPipelineSettings",
+				"MovieRenderPipelineSettings",
                 "MovieSceneTracks",
                 "LevelSequence",
                 "Engine",
