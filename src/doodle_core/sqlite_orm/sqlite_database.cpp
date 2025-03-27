@@ -87,6 +87,24 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
           sqlite_orm::is_null(&metadata_descriptor_department_link::department_uuid_)
       )
   );
+  {
+    l_descriptors |= ranges::actions::unique([](const metadata_descriptor& in_r, const metadata_descriptor& in_l) {
+      return in_r.uuid_id_ == in_l.uuid_id_;
+    });
+    auto l_metadata_descriptor_department_link = impl_->storage_any_.get_all<metadata_descriptor_department_link>();
+
+    auto l_metadata_descriptor_department_link_map =
+        l_metadata_descriptor_department_link |
+        ranges::views::transform([](const metadata_descriptor_department_link& in) {
+          return std::make_pair(in.metadata_descriptor_uuid_, in);
+        }) |
+        ranges::to<std::map<uuid, metadata_descriptor_department_link>>;
+    for (auto&& i : l_descriptors) {
+      if (l_metadata_descriptor_department_link_map.contains(i.uuid_id_)) {
+        i.department_.emplace_back(l_metadata_descriptor_department_link_map.at(i.uuid_id_).department_uuid_);
+      }
+    }
+  }
   for (auto&& i : l_projects) {
     auto l_project_person_link = impl_->storage_any_.get_all<project_person_link>(
         sqlite_orm::where(sqlite_orm::c(&project_person_link::project_id_) == i.uuid_id_)
