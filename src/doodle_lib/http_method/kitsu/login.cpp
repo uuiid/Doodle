@@ -2,17 +2,16 @@
 // Created by TD on 25-3-6.
 //
 
-#include "login.h"
+#include "../auth/login.h"
 
-#include "doodle_core/metadata/organisation.h"
-#include <doodle_core/core/bcrypt/bcrypt.h>
-#include <doodle_core/metadata/person.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include "../../../doodle_core/metadata/organisation.h"
+#include <../../../doodle_core/core/bcrypt/bcrypt.h>
+#include <../../../doodle_core/metadata/person.h>
+#include <../../../doodle_core/sqlite_orm/sqlite_database.h>
 
-#include <doodle_lib/core/http/http_function.h>
-#include <doodle_lib/http_method/http_jwt_fun.h>
-
-#include <jwt-cpp/jwt.h>
+#include <../../../../build/Ninja_debug/vcpkg_installed/x64-windows/include/jwt-cpp/jwt.h>
+#include <../../core/http/http_function.h>
+#include <../http_jwt_fun.h>
 namespace doodle::http {
 namespace {
 struct login_data {

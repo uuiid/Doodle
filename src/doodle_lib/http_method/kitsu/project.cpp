@@ -2,7 +2,7 @@
 // Created by TD on 24-11-7.
 //
 
-#include "project.h"
+#include "kitsu.h"
 
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>

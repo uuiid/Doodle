@@ -2,9 +2,9 @@
 // Created by TD on 25-3-6.
 //
 
-#include "config.h"
+#include "../base/config.h"
 
-#include <doodle_lib/core/http/http_function.h>
+#include <../../core/http/http_function.h>
 namespace doodle::http {
 namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> config(session_data_ptr in_handle) {

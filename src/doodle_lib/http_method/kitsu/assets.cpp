@@ -2,7 +2,7 @@
 // Created by TD on 24-12-30.
 //
 
-#include "assets.h"
+#include "kitsu.h"
 
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>

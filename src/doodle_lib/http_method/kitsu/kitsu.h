@@ -43,6 +43,14 @@ uuid get_url_project_id(const boost::urls::url& in_url);
 void init_context();
 
 std::string_view mime_type(const FSys::path& in_ext);
+void assets_reg2(http_route& in_http_route);
+void project_reg(http_route& in_http_route);
+void task_reg(http_route& in_http_route);
+void user_reg(http_route& in_http_route);
+
 }  // namespace kitsu
+void preview_reg(http_route& in_http_route);
+void register_login(http_route& in_r);
+void register_config(http_route& in_r);
 
 }  // namespace doodle::http

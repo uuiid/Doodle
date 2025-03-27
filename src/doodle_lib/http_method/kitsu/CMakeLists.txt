@@ -1,15 +1,10 @@
 target_sources(
         doodle_lib
         PUBLIC
-        task.h
         kitsu.h
-        user.h
         kitsu_front_end.h
         http_route_proxy.h
-        project.h
         epiboly.h
-        assets.h
-        preview.h
 
         PRIVATE
         task.cpp
@@ -21,4 +16,6 @@ target_sources(
         epiboly.cpp
         assets.cpp
         preview.cpp
+        login.cpp
+        config.cpp
 )

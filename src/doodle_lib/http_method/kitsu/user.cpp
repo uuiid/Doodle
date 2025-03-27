@@ -2,8 +2,6 @@
 // Created by TD on 24-8-21.
 //
 
-#include "user.h"
-
 #include "doodle_core/metadata/department.h"
 #include "doodle_core/metadata/project_status.h"
 #include "doodle_core/metadata/status_automation.h"
@@ -19,6 +17,8 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+
+#include "kitsu.h"
 namespace doodle::http::kitsu {
 namespace {
 

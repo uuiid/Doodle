@@ -2,7 +2,7 @@
 // Created by TD on 24-8-20.
 //
 
-#include "task.h"
+#include "kitsu.h"
 
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
