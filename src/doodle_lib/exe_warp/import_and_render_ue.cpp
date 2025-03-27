@@ -422,7 +422,7 @@ void args::down_files() {
         continue;
       auto l_local_path       = g_root / project_.code_ / "maya_file";
       l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
-      l_data.update_files |= copy_diff(l_data.maya_local_file_, l_data.maya_file_, logger_ptr_);
+      l_data.update_files |= copy_diff(l_data.maya_file_, l_data.maya_local_file_, logger_ptr_);
     }
 }
 
