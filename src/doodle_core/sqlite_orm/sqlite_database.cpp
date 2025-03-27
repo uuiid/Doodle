@@ -162,12 +162,16 @@ std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(
   std::vector<entity_task_t> l_result;
   auto l_entt_list = in_project.is_nil()
                          ? impl_->storage_any_.get_all<entity>(
-                               sqlite_orm::where(sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids))
+                               sqlite_orm::where(sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids)),
+                               sqlite_orm::order_by(&entity::name_)
                            )
-                         : impl_->storage_any_.get_all<entity>(sqlite_orm::where(
-                               sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
-                               sqlite_orm::c(&entity::project_id_) == in_project
-                           ));
+                         : impl_->storage_any_.get_all<entity>(
+                               sqlite_orm::where(
+                                   sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
+                                   sqlite_orm::c(&entity::project_id_) == in_project
+                               ),
+                               sqlite_orm::order_by(&entity::name_)
+                           );
   auto l_entt_id_list =
       l_entt_list | ranges::views::transform([](const entity& in) { return in.uuid_id_; }) | ranges::to_vector;
   auto l_task = impl_->storage_any_.get_all<task>(sqlite_orm::where(sqlite_orm::in(&task::entity_id_, l_entt_id_list)));

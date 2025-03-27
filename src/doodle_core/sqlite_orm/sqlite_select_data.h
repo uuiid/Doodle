@@ -54,6 +54,7 @@ struct DOODLE_CORE_API entity_task_t : entity {
       l_j_task["task_status_id"]       = task.task_status_id_;
       l_j_task["task_type_id"]         = task.task_type_id_;
       l_j_task["assignees"]            = task.assignees_;
+      l_j_task["path"]                 = "";
       l_task_json.emplace_back(std::move(l_j_task));
     }
   }
