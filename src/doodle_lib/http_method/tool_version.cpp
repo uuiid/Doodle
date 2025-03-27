@@ -28,7 +28,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_tool_version(s
     std::ranges::reverse(l_version);
     co_return in_handle->make_msg((nlohmann::json{} = l_version).dump());
   }
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return in_handle->make_msg(nlohmann::json{}.dump());
 }
 }  // namespace
 void tool_version_reg(http_route& in_route) {
