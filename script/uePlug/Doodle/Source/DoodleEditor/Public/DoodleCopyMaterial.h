@@ -23,6 +23,9 @@ class DoodleCopyMat : public SCompoundWidget, public FGCObject {
 
   void FindErrorMaterials();
   void UnlockTextrue();
+  void OnBatchRenderExecutorFinished(int32 Num);
+  void CopyLightMap();
+  void RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath);
   bool bEnableSeparateTranslucency;
   FReply set_marteral_deep();
 

@@ -153,6 +153,7 @@ public class doodleEditor : ModuleRules
 				"ImageCore",
 				"OpenColorIOWrapper",
                 "Blutility",
+				"BatchRender"
             }
 		);
 

@@ -30,6 +30,7 @@
 //----------------文件管理
 #include "DoodleOrganizeCompoundWidget.h"
 #include "DoodleEffectLibraryWidget.h"
+#include "Interfaces/IPluginManager.h"
 
 static const FName doodleTabName("doodleEditor");
 #define LOCTEXT_NAMESPACE "FdoodleEditorModule"
@@ -217,11 +218,12 @@ void FdoodleEditorModule::ShutdownModule() {
 TSharedRef<SDockTab> FdoodleEditorModule::OnSpawnPluginTab(
     const FSpawnTabArgs &SpawnTabArgs
 ) {
+    TSharedRef<DoodleCopyMat>  DoodleUI = SNew(DoodleCopyMat);
   return SNew(SDockTab).TabRole(ETabRole::NomadTab)[
       // Put your tab content here!
       SNew(SBox)
-          .HAlign(HAlign_Left)
-          .VAlign(VAlign_Top)[SNew(DoodleCopyMat)  // 这里创建我们自己的界面
+          .HAlign(HAlign_Fill)
+          .VAlign(VAlign_Top)[DoodleUI  // 这里创建我们自己的界面
   ]];
 }
 

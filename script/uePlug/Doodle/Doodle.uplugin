@@ -53,14 +53,22 @@
                 "Win64"
             ]
         },
-        {
-            "Name": "doodleUI",
-            "Type": "Editor",
-            "LoadingPhase": "PostEngineInit",
-            "WhitelistPlatforms": [
-                "Win64"
-            ]
-        }
+      {
+        "Name": "doodleUI",
+        "Type": "Editor",
+        "LoadingPhase": "PostEngineInit",
+        "WhitelistPlatforms": [
+          "Win64"
+        ]
+      },
+      {
+        "Name": "BatchRender",
+        "Type": "Editor",
+        "LoadingPhase": "PostEngineInit",
+        "WhitelistPlatforms": [
+          "Win64"
+        ]
+      }
     ],
 	"Plugins": [
 		{

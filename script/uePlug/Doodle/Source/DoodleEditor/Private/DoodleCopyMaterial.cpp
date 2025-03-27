@@ -32,6 +32,9 @@
 #include "DoodleOrganizeCompoundWidget.h"
 #include "DoodleEffectLibraryWidget.h"
 #include "EditorUtilityLibrary.h"
+#include <BatchRenderQueue.h>
+#include <EditorLevelLibrary.h>
+#include "Interfaces/IPluginManager.h"
 
 
 namespace
@@ -72,132 +75,192 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 {
 	// 这个是ue界面的创建方法
 	/// clang-format off
-	ChildSlot[SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin(1.f, 1.f))
+	FString ResourceDir = IPluginManager::Get().FindPlugin(TEXT("Doodle"))->GetBaseDir() / TEXT("Resources");
+	TSharedRef<SBorder> WaitBorder = SNew(SBorder)
+		.BorderImage(new FSlateImageBrush(ResourceDir / TEXT("Selection.png"), FVector2D(8.f, 8.f), FSlateColor(FLinearColor(0, 0, 0, 0.6f))))
 		[
-			SNew(SButton) // 创建按钮
-			.OnClicked(this, &DoodleCopyMat::getSelect) // 添加回调函数
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("获得选择物体"))) // 按钮中的字符
-			]
-			.ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("获得选中物体")); })
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin(1.f, 1.f))
-		[
-			SNew(SButton) // 创建按钮
-			.OnClicked(this, &DoodleCopyMat::CopyMateral) // 添加回调函数
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("复制材质列表"))) // 按钮中的字符
-			]
-			.ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("复制选中物体的材质列表")); })
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin(1.f, 1.f))
-		[
-			SNew(SButton).OnClicked_Lambda([]() -> FReply
-			{
-				FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name);
-				return FReply::Handled();
-			}) // 批量导入
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("批量导入")))
-			]
-			.ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("批量导入fbx和abc文件")); })
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin(1.f, 1.f))
-		[
-			SNew(SButton).OnClicked(this, &DoodleCopyMat::BathReameAss) // 批量重命名
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("批量修改材质名称")))
-			]
-			.ToolTipText_Lambda([=]() -> FText
-			{
-				return FText::FromString(TEXT("选中骨骼物体," "会将材料名称和骨骼物体的插槽名称统一"));
-			})
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin(1.f, 1.f))
-		[
-			SNew(SButton).OnClicked_Lambda([this]()
-			{
-				FindErrorMaterials();
-
-				return FReply::Handled();
-			}) // 批量重命名
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("查找超限材质")))
-			]
-			.ToolTipText_Lambda([=]() -> FText
-			{
-				return FText::FromString(TEXT("查找贴图使用数量大于16个的材质"));
-			})
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{1.f, 1.f})
-		[
-			SNew(SButton).OnClicked_Lambda([this]() -> FReply
-			{
-				return FReply::Handled();
-			})
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("test")))
-			]
-			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("测试使用")); })
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{1.f, 1.f})
-		[
-			SNew(SButton).OnClicked_Lambda([this]() -> FReply
-			{
-				FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name);
-				return FReply::Handled();
-			})
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("整理文件夹")))
-			]
-			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类整理文件夹")); })
-		]
-		//------------------------------
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{1.f, 1.f})
-		[
-			SNew(SButton).OnClicked_Lambda([this]() -> FReply
-			{
-				FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryWidget::Name);
-				return FReply::Handled();
-			})
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("特效资源库")))
-			]
-			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类特效资源库")); })
-		]
-		+ SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{1.f, 1.f})
-		[
-			SNew(SButton).OnClicked_Lambda([this]() -> FReply
-			{
-				FARFilter LFilter{};
-				LFilter.bIncludeOnlyOnDiskAssets = false;
-				LFilter.bRecursivePaths = true;
-				LFilter.bRecursiveClasses = true;
-				LFilter.ClassPaths.Add(UMaterialParameterCollection::StaticClass()->GetClassPathName());
-				IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
-				{
-					UObject* LObj =	InAss.GetAsset();
-				    return true;
-				});
-				return FReply::Handled();
-			})
-			[
-				SNew(STextBlock).Text(FText::FromString(TEXT("修复崩溃")))
-			]
-			.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("修复5.4 材质参数集崩溃")); })
-		] + SHorizontalBox::Slot().AutoWidth().HAlign(HAlign_Left).Padding(FMargin{ 1.f, 1.f })
+			SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot()
+				.HAlign(HAlign_Center)
+				.VAlign(VAlign_Center)
 				[
-					SNew(SButton).OnClicked_Lambda([this]() -> FReply
-						{
-							UnlockTextrue();
-							return FReply::Handled();
-						})
-						[
-							SNew(STextBlock).Text(FText::FromString(TEXT("解锁贴图")))
-						]
-						.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("解锁贴图")); })
+					SNew(STextBlock)
+						.Text(FText::FromString(TEXT("去喝杯茶吧，正在处理中...")))
+						.Font(FCoreStyle::GetDefaultFontStyle("Regular", 15))
 				]
+		];
+	// 初始状态下把等待页面隐藏
+	WaitBorder->SetVisibility(EVisibility::Hidden);
+	ChildSlot[
+		SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
+			.FillHeight(1)
+			.VAlign(VAlign_Center)
+			.HAlign(HAlign_Fill)
+			[
+				SNew(SBorder)
+					.BorderImage(FAppStyle::GetBrush("NoBorder"))
+					.Padding(FMargin(8.f, 6.f, 8.f, 8.f))
+					.HAlign(HAlign_Fill)
+					[
+						SNew(SUniformWrapPanel)
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton) // 创建按钮
+									.OnClicked(this, &DoodleCopyMat::getSelect) // 添加回调函数
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("获得选择物体"))) // 按钮中的字符
+									]
+									.ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("获得选中物体")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton) // 创建按钮
+								.OnClicked(this, &DoodleCopyMat::CopyMateral) // 添加回调函数
+								[
+									SNew(STextBlock).Text(FText::FromString(TEXT("复制材质列表"))) // 按钮中的字符
+								]
+								.ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("复制选中物体的材质列表")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([]() -> FReply
+									{
+										FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name);
+										return FReply::Handled();
+									}) // 批量导入
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("批量导入")))
+									]
+									.ToolTipText_Lambda([=]() -> FText { return FText::FromString(TEXT("批量导入fbx和abc文件")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked(this, &DoodleCopyMat::BathReameAss) // 批量重命名
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("批量修改材质名称")))
+									]
+									.ToolTipText_Lambda([=]() -> FText
+										{
+											return FText::FromString(TEXT("选中骨骼物体," "会将材料名称和骨骼物体的插槽名称统一"));
+										})
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]()
+									{
+										FindErrorMaterials();
+
+										return FReply::Handled();
+									}) // 批量重命名
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("查找超限材质")))
+									]
+									.ToolTipText_Lambda([=]() -> FText
+										{
+											return FText::FromString(TEXT("查找贴图使用数量大于16个的材质"));
+										})
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("test")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("测试使用")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										FGlobalTabmanager::Get()->TryInvokeTab(UDoodleOrganizeCompoundWidget::Name);
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("整理文件夹")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类整理文件夹")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										FGlobalTabmanager::Get()->TryInvokeTab(UDoodleEffectLibraryWidget::Name);
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("特效资源库")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("分类特效资源库")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										FARFilter LFilter{};
+										LFilter.bIncludeOnlyOnDiskAssets = false;
+										LFilter.bRecursivePaths = true;
+										LFilter.bRecursiveClasses = true;
+										LFilter.ClassPaths.Add(UMaterialParameterCollection::StaticClass()->GetClassPathName());
+										IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
+											{
+												UObject* LObj = InAss.GetAsset();
+												return true;
+											});
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("修复崩溃")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("修复5.4 材质参数集崩溃")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										UnlockTextrue();
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("解锁贴图")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("解锁贴图")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										CopyLightMap();
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("加载灯光关卡")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("加载灯光关卡")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
+										FString SequencePath = TEXT("/Doodle/LightTest/Level/Sequence");
+										FString MapPath = TEXT("/Doodle/LightTest/Level/Environment");
+										FString OutPath = TEXT("E:/d/project/myPlugins/Saved/ChRender/Temp");
+										RenderCharacter(SequencePath, MapPath, OutPath);
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("渲染角色")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("渲染角色")); })
+							]
+
+					]
+			]
+			
 	];
 	/// clang-format on
 }
@@ -401,6 +464,39 @@ void DoodleCopyMat::UnlockTextrue()
 		Package->ClearPackageFlags(EPackageFlags::PKG_DisallowExport);//EPackageFlags::PKG_DisallowExport);
 		Package->SetDirtyFlag(true);
 	}
+}
+
+void DoodleCopyMat::CopyLightMap() {
+	/*FString LightMapPath;
+	FPackageName::TryConvertGameRelativePackagePathToLocalPath(TEXT("/Doodle"), LightMapPath);
+	LightMapPath = LightMapPath / TEXT("eye_fun");
+	FString DestinationDirectory = FPaths::ProjectContentDir() / TEXT("eye_fun");
+	IPlatformFile::GetPlatformPhysical().CopyDirectoryTree(*DestinationDirectory, *LightMapPath, false);
+	UE_LOG(LogTemp, Error, TEXT("DestinationDirectory：%s"),*DestinationDirectory);
+	UE_LOG(LogTemp, Error, TEXT("LightMapPath：%s"), *LightMapPath);*/
+
+	FString LightMap = TEXT("/Doodle/LightTest/Level/Environment");
+	UEditorLevelLibrary::LoadLevel(LightMap);
+	//LightMapPath = FPaths::ConvertRelativePathToFull(LightMapPath.Replace(TEXT("Content/"), TEXT("")));
+}
+void DoodleCopyMat::RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath)
+{
+	TArray<URenderJobInfo> RenderJobInfos;
+	URenderJobInfo RenderJobInfo;
+	RenderJobInfo.OutputDir = OutPath;
+	RenderJobInfo.Sequence = SequencePath;
+	RenderJobInfo.Map = MapPath;
+	RenderJobInfos.Add(RenderJobInfo);
+	if (RenderJobInfos.Num() > 0)
+	{
+		UBatchRenderQueue* BatchRenderQueue = NewObject<UBatchRenderQueue>();
+		BatchRenderQueue->BatchJobs = RenderJobInfos;
+		BatchRenderQueue->RenderMovies();
+	}
+}
+
+void DoodleCopyMat::OnBatchRenderExecutorFinished(int32 Num) {
+	UE_LOG(LogTemp, Error, TEXT("OnBatchRenderExecutorFinished"));
 }
 
 FReply DoodleCopyMat::set_marteral_deep()
