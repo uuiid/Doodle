@@ -26,6 +26,6 @@ class ue_ctx {
 };
 
 boost::asio::awaitable<void> async_run_ue(
-    const std::vector<std::string>& in_arg, logger_ptr in_logger
+    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock = true
 );
 }  // namespace doodle

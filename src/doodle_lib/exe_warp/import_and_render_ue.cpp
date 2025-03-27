@@ -427,6 +427,7 @@ void args::down_files() {
 }
 
 boost::asio::awaitable<void> args::crate_skin() {
+  auto l_ue_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
   std::vector<import_file*> l_files =
       import_files_ | ranges::views::transform([](import_file& in_arg) { return &in_arg; }) |
       ranges::views::filter([](import_file* in_arg) -> bool {
@@ -462,7 +463,7 @@ boost::asio::awaitable<void> args::crate_skin() {
         co_await async_run_ue(
             {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
              "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
-            logger_ptr_
+            logger_ptr_, false
         );
         break;
       } catch (const doodle_error& error) {

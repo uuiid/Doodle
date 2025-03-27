@@ -141,8 +141,11 @@ FSys::path find_ue_project_file(const FSys::path& in_path) {
 }
 }  // namespace ue_exe_ns
 
-boost::asio::awaitable<void> async_run_ue(const std::vector<std::string>& in_arg, logger_ptr in_logger) {
-  auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+boost::asio::awaitable<void> async_run_ue(
+    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock
+) {
+  auto l_g = create_lock ? co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable)
+                         : awaitable_queue_limitation::queue_guard_ptr{};
 
   in_logger->info(" 开始检查 UE 版本");
   auto l_e1 = chick_ue_plug();
