@@ -10,7 +10,7 @@ from zou.app.models.metadata_descriptor import DepartmentMetadataDescriptorLink 
 
 
 class DepartmentMetadataDescriptorLink(BaseMixin):
-    __tablename__ = "department_metadata_descriptor_link"
+    __tablename__ = "metadata_descriptor_department_link"
     metadata_descriptor_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("metadata_descriptor.uuid"),
