@@ -428,13 +428,6 @@ void args::down_files() {
 
 boost::asio::awaitable<void> args::crate_skin() {
   auto l_ue_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
-  std::vector<import_file*> l_files =
-      import_files_ | ranges::views::transform([](import_file& in_arg) { return &in_arg; }) |
-      ranges::views::filter([](import_file* in_arg) -> bool {
-        auto l_path = in_arg->file_;
-        return l_path.extension() == ".abc" && FSys::exists(l_path.replace_extension(".fbx"));
-      }) |
-      ranges::to_vector;
 
   for (auto&& l_data : import_files_) {
     if (l_data.is_camera_) continue;
