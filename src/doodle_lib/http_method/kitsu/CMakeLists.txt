@@ -9,6 +9,7 @@ target_sources(
         project.h
         epiboly.h
         assets.h
+        preview.h
 
         PRIVATE
         task.cpp
@@ -19,4 +20,5 @@ target_sources(
         project.cpp
         epiboly.cpp
         assets.cpp
+        preview.cpp
 )
