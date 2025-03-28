@@ -41,7 +41,7 @@ bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logge
     auto l_to_file = to / l_file.path().lexically_proximate(from);
     if (l_file.is_regular_file()) l_ret |= copy_diff_impl(l_file.path(), l_to_file);
   }
-  return false;
+  return l_ret;
 }
 void fix_project(const FSys::path& in_project_path) {
   auto l_json                = nlohmann::json::parse(FSys::ifstream{in_project_path});
