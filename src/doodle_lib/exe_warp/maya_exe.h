@@ -262,7 +262,7 @@ struct maya_out_arg {
   std::uint32_t begin_time{};
   std::uint32_t end_time{};
   std::vector<out_file_t> out_file_list{};
-
+  std::string error_str_{};/// 主要是 async_run_maya 这个函数傻逼一样抛出异常无法捕获, 所以使用这个变量记录错误信息
   friend void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_json_t) {
     nlohmann_json_j["begin_time"].get_to(nlohmann_json_t.begin_time);
     nlohmann_json_j["end_time"].get_to(nlohmann_json_t.end_time);
