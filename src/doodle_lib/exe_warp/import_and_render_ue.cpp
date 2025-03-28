@@ -195,7 +195,7 @@ boost::asio::awaitable<void> args::run() {
     l_data.file_      = i.out_file;
     l_data.maya_file_ = i.ref_file;
     l_data.is_camera_ = i.out_file.generic_string().find("_camera_") != std::string::npos;
-    if (!FSys::exists(i.ref_file)) continue;
+    if (i.ref_file.empty() || !FSys::exists(i.ref_file)) continue;
     logger_ptr_->info("引用文件:{}", i.ref_file);
     l_data.id = FSys::software_flag_file(i.ref_file);
     if (l_data.id.is_nil()) throw_exception(doodle_error{"获取引用文件失败 {}", i.ref_file});
