@@ -118,7 +118,7 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
   in_logger->warn("开始运行maya");
   auto l_maya_path = find_maya_path_impl();
 
-  auto l_this_exe  = co_await boost::asio::this_coro::executor;
+  auto l_this_exe = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_run_path = install_maya_exe(l_maya_path);
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
@@ -168,39 +168,36 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
           l_timer->async_wait(boost::asio::deferred)
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
-  maya_exe_ns::maya_out_arg l_ret{};
+
   switch (l_array_completion_order[0]) {
     case 0:
       if (l_exit_code != 0 || l_ec) {
         switch (maya_enum::maya_error_t{l_exit_code}) {
           case maya_enum::maya_error_t::unknown_error:
-            l_ret.error_str_ = {"maya 运行未知错误"};
+            throw_exception(doodle_error{"maya 运行未知错误"});
             break;
           case maya_enum::maya_error_t::camera_name_error:
-            l_ret.error_str_ = {"maya 中没有正确的 camera 名字"};
+            throw_exception(doodle_error{"maya 中没有正确的 camera 名字"});
             break;
           case maya_enum::maya_error_t::bone_scale_error:
-            l_ret.error_str_ = {"maya 中骨骼有缩放值为 0 的情况"};
+            throw_exception(doodle_error{"maya 中骨骼有缩放值为 0 的情况"});
             break;
           case maya_enum::maya_error_t::camera_aspect_error:
-            l_ret.error_str_ = {"maya 中摄像机的宽高比不正确"};
+            throw_exception(doodle_error{"maya 中摄像机的宽高比不正确"});
             break;
           case maya_enum::maya_error_t::cache_path_error:
-            l_ret.error_str_ = {"maya 中解算缓存路径不存在"};
+            throw_exception(doodle_error{"maya 中解算缓存路径不存在"});
             break;
           default:
-            l_ret.error_str_ = fmt::format("maya 运行未知错误 {}", l_exit_code);
+            throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
         }
       }
       break;
     case 1:
     default:
-      l_ret.error_str_ = fmt::format("maya 运行超时 {}", l_ec.message());
+      throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
       break;
   }
-  if (l_ret.error_str_.empty())
-    co_return get_out_arg(l_out_path_file_);
-  else
-    co_return l_ret;
+  co_return get_out_arg(l_out_path_file_);
 }
 }  // namespace doodle

@@ -177,10 +177,13 @@ boost::asio::awaitable<void> args::run() {
   // 添加三次重试
   maya_exe_ns::maya_out_arg l_out{};
   for (int i = 0; i < 3; ++i) {
-    l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
-    if (l_out.error_str_.empty()) break;
-    logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", l_out.error_str_, i + 1);
-    if (i == 2) throw doodle_error{"{}", l_out.error_str_};
+    try {
+      l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
+      break;
+    } catch (const doodle_error& err) {
+      logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", err.what(), i + 1);
+      if (i == 2) throw;
+    }
   }
   /// 将导出数据转移到数据块中
   begin_time_ = l_out.begin_time;
