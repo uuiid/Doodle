@@ -26,9 +26,11 @@ class awaitable_queue_limitation {
     awaitable_queue_limitation* queue_{};
 
     void operator()() const {
-      boost::asio::post(boost::asio::bind_executor(
-          executor_, boost::asio::prepend(std::move(*handler_), std::make_shared<queue_guard>(*queue_))
-      ));
+      boost::asio::post(
+          boost::asio::bind_executor(
+              executor_, boost::asio::prepend(std::move(*handler_), std::make_shared<queue_guard>(*queue_))
+          )
+      );
     }
   };
 
@@ -54,7 +56,7 @@ class awaitable_queue_limitation {
   };
 
   template <typename CompletionToken>
-  auto queue(CompletionToken&& in_token) {
+  auto queue(CompletionToken&& in_token = boost::asio::use_awaitable) {
     boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_token);
     return boost::asio::async_initiate<CompletionToken, void(queue_guard_ptr)>(
         [](auto&& in_compl, awaitable_queue_limitation* in_self, const boost::asio::any_io_executor& in_exe) {
