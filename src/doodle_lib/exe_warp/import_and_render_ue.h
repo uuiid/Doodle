@@ -24,7 +24,7 @@ struct import_files_t {
   friend void to_json(nlohmann::json& j, const import_files_t& p) {
     j["type"]           = p.type_;
     j["path"]           = p.path_;
-    j["skin_path"]      = p.skin_path_;
+    j["skin_path"]      = p.skin_path_.generic_string();
     j["hide_materials"] = p.hide_materials_;
   }
 };
