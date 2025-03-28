@@ -440,6 +440,12 @@ boost::asio::awaitable<void> args::crate_skin() {
     l_import_local_path.replace_extension(".uasset");
     if (FSys::exists(l_import_local_path) && !l_data.update_files) continue;
 
+    if (FSys::exists(l_import_local_path)) {
+      FSys::remove(l_import_local_path);
+      FSys::remove(l_import_local_path.parent_path() / fmt::format("{}_PhysicsAsset.uasset", l_data.maya_local_file_.stem()));
+      FSys::remove(l_import_local_path.parent_path() / fmt::format("{}_Skeleton.uasset", l_data.maya_local_file_.stem()));
+    }
+
     auto l_maya_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
     l_maya_arg->file_path = l_data.maya_local_file_;
     auto l_maya_file      = co_await async_run_maya(l_maya_arg, logger_ptr_);
