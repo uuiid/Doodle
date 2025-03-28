@@ -432,6 +432,7 @@ boost::asio::awaitable<void> args::crate_skin() {
   for (auto&& l_data : import_files_) {
     if (l_data.is_camera_) continue;
     if (l_data.file_.extension() == ".abc") continue;
+    if (l_data.maya_file_.empty()) continue;  // 这个是相机, 直接跳过
     auto l_import_local_path = render_project_.parent_path() / FSys::path{doodle_config::ue4_content} / "auto_light" /
                                l_data.maya_local_file_.filename();
     l_import_local_path.replace_extension(".uasset");
