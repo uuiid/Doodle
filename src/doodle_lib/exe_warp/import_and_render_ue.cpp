@@ -451,7 +451,6 @@ boost::asio::awaitable<void> args::crate_skin() {
     auto l_maya_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
     l_maya_arg->file_path = l_data.maya_local_file_;
     auto l_maya_file      = co_await async_run_maya(l_maya_arg, logger_ptr_);
-    if (!l_maya_file.error_str_.empty()) throw_exception(doodle_error{"{}", l_maya_file.error_str_});
     if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", l_data.maya_file_});
     auto l_fbx = l_maya_file.out_file_list.front().out_file;
     nlohmann::json l_json{};
