@@ -23,7 +23,6 @@ namespace doodle {
 
 namespace import_and_render_ue_ns {
 bool copy_diff_impl(const FSys::path& from, const FSys::path& to) {
-  default_logger_raw()->warn("复制 {} -> {}", from, to);
   if (from.extension() == doodle_config::doodle_flag_name) return false;
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
       FSys::last_write_time(from) > FSys::last_write_time(to)) {
@@ -37,10 +36,10 @@ bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logge
   if (!FSys::exists(from)) return false;
   in_logger->warn("复制 {} -> {}", from, to);
   if (FSys::is_regular_file(from)) return copy_diff_impl(from, to);
-
+  bool l_ret{};
   for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
     auto l_to_file = to / l_file.path().lexically_proximate(from);
-    if (l_file.is_regular_file()) return copy_diff_impl(l_file.path(), l_to_file);
+    if (l_file.is_regular_file()) l_ret |= copy_diff_impl(l_file.path(), l_to_file);
   }
   return false;
 }
