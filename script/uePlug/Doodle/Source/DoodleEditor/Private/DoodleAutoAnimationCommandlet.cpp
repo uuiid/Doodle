@@ -118,6 +118,7 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	UAssetImportTask* L_Task = CreateCharacterImportTask(FbxPath, nullptr, false);
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
 	AssetTools.ImportAssetTasks(TArray{L_Task});
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 }
 
 void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
