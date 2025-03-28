@@ -21,6 +21,9 @@ void awaitable_queue_limitation::awaitable_queue_impl::next() {
 }
 
 void awaitable_queue_limitation::awaitable_queue_impl::maybe_invoke() {
-  while (run_task_ < limit_) next();
+  while (run_task_ < limit_) {
+    next();
+    if (!run_task_) break;
+  }
 }
 }  // namespace doodle
