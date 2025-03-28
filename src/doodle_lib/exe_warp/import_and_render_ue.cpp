@@ -23,13 +23,11 @@ namespace doodle {
 
 namespace import_and_render_ue_ns {
 bool copy_diff_impl(const FSys::path& from, const FSys::path& to) {
-  if (FSys::is_hidden(from) || from.extension() == doodle_config::doodle_flag_name) return false;
+  if (from.extension() == doodle_config::doodle_flag_name) return false;
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
-      FSys::last_write_time(from) != FSys::last_write_time(to)) {
-    if (!FSys::exists(to) || FSys::last_write_time(from) > FSys::last_write_time(to)) {
-      if (!FSys::exists(to.parent_path())) FSys::create_directories(to.parent_path());
-      return FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
-    }
+      FSys::last_write_time(from) > FSys::last_write_time(to)) {
+    if (auto l_p = to.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    return FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
   }
   return false;
 }
