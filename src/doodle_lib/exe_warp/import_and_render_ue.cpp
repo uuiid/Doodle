@@ -431,9 +431,11 @@ boost::asio::awaitable<void> args::crate_skin() {
   auto l_ue_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
 
   for (auto&& l_data : import_files_) {
-    if (l_data.is_camera_) continue;
+    if (l_data.is_camera_) continue;  // 相机文件
     if (l_data.file_.extension() == ".abc") continue;
     if (l_data.maya_local_file_.empty()) continue;  // 这个场景文件
+    auto l_import_game_path  = FSys::path{doodle_config::ue4_game} / "auto_light";
+    l_data.skin_             = l_import_game_path / l_data.maya_local_file_.stem();
 
     auto l_import_local_path = render_project_.parent_path() / FSys::path{doodle_config::ue4_content} / "auto_light" /
                                l_data.maya_local_file_.filename();
@@ -444,11 +446,7 @@ boost::asio::awaitable<void> args::crate_skin() {
     l_maya_arg->file_path = l_data.maya_local_file_;
     auto l_maya_file      = co_await async_run_maya(l_maya_arg, logger_ptr_);
     if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", l_data.maya_file_});
-
-    auto l_fbx              = l_maya_file.out_file_list.front().out_file;
-    auto l_import_game_path = FSys::path{doodle_config::ue4_game} / "auto_light";
-    l_data.skin_            = l_import_game_path / l_data.maya_local_file_.stem();
-
+    auto l_fbx = l_maya_file.out_file_list.front().out_file;
     nlohmann::json l_json{};
     l_json          = import_skin_file{.fbx_file_ = l_fbx, .import_dir_ = l_import_game_path};
     auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
