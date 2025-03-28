@@ -120,5 +120,37 @@ describe('doodle 本地服务器测试', function () {
       );
       expect(req.body.type).to.equal('replace_maya_ref');
     });
+    it('自动灯光作业', async function () {
+      const req = await request.post(`${URL}/api/doodle/task`).send({
+        name: '测试maya 自动灯光作业',
+        source_computer: '本机',
+        submitter: uuidv4(),
+        run_computer_id: uuidv4(),
+        type: 'auto_light',
+        task_data: {
+          path: "consequat anim occaecat",
+          is_sim: true,
+          camera_film_aperture: 1.75,
+          episodes: 91,
+          shot: {
+            shot: 14,
+            shot_enum: "J"
+          },
+          image_size: {
+            width: 1920,
+            height: 1080
+          },
+          layering: false,
+          project: {
+            name: "面领二族",
+            path: "sunt",
+            en_str: "cillum Excepteur",
+            code: "17",
+            auto_upload_path: "nisi id sed quis voluptate"
+          },
+          bind_skin: true
+        },
+      });
+    });
   });
 });
