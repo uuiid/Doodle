@@ -17,7 +17,6 @@ void awaitable_queue_limitation::awaitable_queue_impl::next() {
   if (!next_list_.empty()) {
     next_list_.front()();
     next_list_.pop();
-    ++run_task_;
   }
 }
 

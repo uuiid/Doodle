@@ -47,7 +47,9 @@ class awaitable_queue_limitation {
     std::shared_ptr<awaitable_queue_impl> impl_;
 
    public:
-    explicit queue_guard(awaitable_queue_limitation& in_queue) : impl_{in_queue.impl_} {}
+    explicit queue_guard(awaitable_queue_limitation& in_queue) : impl_{in_queue.impl_} {
+      ++impl_->run_task_;
+    }
 
     ~queue_guard() {
       --impl_->run_task_;
