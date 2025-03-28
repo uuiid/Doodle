@@ -23,6 +23,7 @@ namespace doodle {
 
 namespace import_and_render_ue_ns {
 bool copy_diff_impl(const FSys::path& from, const FSys::path& to) {
+  default_logger_raw()->warn("复制 {} -> {}", from, to);
   if (from.extension() == doodle_config::doodle_flag_name) return false;
   if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
       FSys::last_write_time(from) > FSys::last_write_time(to)) {
