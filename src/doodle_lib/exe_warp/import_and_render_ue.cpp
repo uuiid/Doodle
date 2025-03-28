@@ -210,8 +210,8 @@ boost::asio::awaitable<void> args::run() {
     down_files();
     fix_config(render_project_);
     fix_project(render_project_);
+    if (bind_skin_) co_await crate_skin();
   }
-  if (bind_skin_) co_await crate_skin();
 
   auto l_ret = co_await async_import_and_render_ue();
   // 合成视屏, 并上传文件
@@ -426,8 +426,6 @@ void args::down_files() {
 }
 
 boost::asio::awaitable<void> args::crate_skin() {
-  auto l_ue_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
-
   for (auto&& l_data : import_files_) {
     if (l_data.is_camera_) continue;  // 相机文件
     if (l_data.file_.extension() == ".abc") continue;
@@ -442,8 +440,12 @@ boost::asio::awaitable<void> args::crate_skin() {
 
     if (FSys::exists(l_import_local_path)) {
       FSys::remove(l_import_local_path);
-      FSys::remove(l_import_local_path.parent_path() / fmt::format("{}_PhysicsAsset.uasset", l_data.maya_local_file_.stem()));
-      FSys::remove(l_import_local_path.parent_path() / fmt::format("{}_Skeleton.uasset", l_data.maya_local_file_.stem()));
+      FSys::remove(
+          l_import_local_path.parent_path() / fmt::format("{}_PhysicsAsset.uasset", l_data.maya_local_file_.stem())
+      );
+      FSys::remove(
+          l_import_local_path.parent_path() / fmt::format("{}_Skeleton.uasset", l_data.maya_local_file_.stem())
+      );
     }
 
     auto l_maya_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
