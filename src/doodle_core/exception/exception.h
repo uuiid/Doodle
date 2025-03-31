@@ -85,7 +85,7 @@ class DOODLE_CORE_API http_request_error : public std::runtime_error {
  public:
   boost::beast::http::status code_status_;
   explicit http_request_error(boost::beast::http::status in_status, const std::string& message)
-      : code_status_{in_status}, std::runtime_error(message) {};
+      : std::runtime_error(message), code_status_{in_status} {};
 };
 
 class DOODLE_CORE_API doodle_category : public bsys::error_category {

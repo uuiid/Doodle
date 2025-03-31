@@ -35,7 +35,7 @@ class websocket_route {
   boost::signals2::signal<void(const http_websocket_data_ptr&)> close_signal_;
 
  public:
-  websocket_route() : not_function_{not_function}, actions_{} {}
+  websocket_route() : actions_{}, not_function_{not_function} {}
 
   ~websocket_route() = default;
 
