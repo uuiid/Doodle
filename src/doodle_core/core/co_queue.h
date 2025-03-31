@@ -95,7 +95,7 @@ class awaitable_queue_limitation {
     ~awaitable_queue_impl() = default;
     void await_suspend(std::function<void()> in_handle);
 
-    void next();
+    bool next();
     void maybe_invoke();
   };
 

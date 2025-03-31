@@ -12,18 +12,15 @@ void awaitable_queue_limitation::awaitable_queue_impl::await_suspend(std::functi
   }
 }
 
-void awaitable_queue_limitation::awaitable_queue_impl::next() {
+bool awaitable_queue_limitation::awaitable_queue_impl::next() {
   const std::lock_guard l{lock_};
   if (!next_list_.empty()) {
     next_list_.front()();
     next_list_.pop();
+    return true;
   }
+  return false;
 }
 
-void awaitable_queue_limitation::awaitable_queue_impl::maybe_invoke() {
-  while (run_task_ < limit_) {
-    next();
-    if (!run_task_) break;
-  }
-}
+void awaitable_queue_limitation::awaitable_queue_impl::maybe_invoke() { while (run_task_ < limit_ && next()); }
 }  // namespace doodle
