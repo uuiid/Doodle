@@ -2,8 +2,6 @@
 // Created by TD on 24-11-7.
 //
 
-#include "kitsu.h"
-
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -11,6 +9,8 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+
+#include "kitsu.h"
 namespace doodle::http::kitsu {
 namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> put_project(session_data_ptr in_handle) {
@@ -19,14 +19,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
   uuid l_uuid        = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
   const auto& l_json = std::get<nlohmann::json>(in_handle->body_);
-
+  auto l_sql         = g_ctx().get<sqlite_database>();
   auto l_prj         = std::make_shared<project_helper::database_t>(
-      g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid)
+      l_sql.uuid_to_id<project_helper::database_t>(l_uuid) ? l_sql.get_by_uuid<project_helper::database_t>(l_uuid)
+                                                           : project_helper::database_t{}
   );
 
   auto l_org_prj = *l_prj;
   l_json.get_to(*l_prj);
-  if (l_org_prj != *l_prj) co_await g_ctx().get<sqlite_database>().install(l_prj);
+  if (l_org_prj != *l_prj) co_await l_sql.install(l_prj);
 
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
@@ -39,7 +40,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
 
   auto l_json_r = nlohmann::json::parse(l_res.body());
   nlohmann::json l_j{};
-  l_j = g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_uuid);
+  l_j = l_sql.get_by_uuid<project_helper::database_t>(l_uuid);
   l_j.update(l_json_r);
   l_res.body() = l_j.dump();
   l_res.prepare_payload();
