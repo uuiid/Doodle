@@ -24,7 +24,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> put_project(sessio
       l_sql.uuid_to_id<project_helper::database_t>(l_uuid) ? l_sql.get_by_uuid<project_helper::database_t>(l_uuid)
                                                            : project_helper::database_t{}
   );
-
+  if (l_prj->uuid_id_.is_nil()) l_prj->uuid_id_ = l_uuid;
   auto l_org_prj = *l_prj;
   l_json.get_to(*l_prj);
   if (l_org_prj != *l_prj) co_await l_sql.install(l_prj);
