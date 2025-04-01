@@ -5,6 +5,7 @@ target_sources(
         kitsu_front_end.h
         http_route_proxy.h
         epiboly.h
+        kitsu_reg_url.h
 
         PRIVATE
         task.cpp
