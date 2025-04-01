@@ -17,9 +17,40 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include "kitsu.h"
+
+namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::callback(session_data_ptr in_handle) {
+  get_person(in_handle);
+  nlohmann::json l_ret{};
+  auto& l_sql             = g_ctx().get<sqlite_database>();
+  l_ret["asset_types"]    = l_sql.get_all<asset_type>();
+  l_ret["custom_actions"] = nlohmann::json::value_t::array;
+  l_ret["departments"]    = l_sql.get_all<department>();
+  for (auto& l_v : g_ctx().get<dingding::dingding_company>().company_info_map_ | std::views::values) {
+    l_ret["dingding_companys"].emplace_back(l_v);
+  }
+  l_ret["notification_count"]       = l_sql.get_notification_count(person_->uuid_id_);
+  l_ret["persons"]                  = l_sql.get_all<person>();
+  l_ret["project_status"]           = l_sql.get_all<project_status>();
+  l_ret["preview_background_files"] = nlohmann::json::value_t::array;
+  l_ret["projects"]                 = l_sql.get_project_for_user(*person_);
+  l_ret["status_automations"]       = l_sql.get_all<status_automation>();
+  l_ret["studios"]                  = l_sql.get_all<studio>();
+  l_ret["task_status"]              = l_sql.get_all<task_status>();
+  l_ret["task_types"]               = l_sql.get_all<task_type>();
+  l_ret["user_limit"]               = 9999;
+  l_ret["search_filter_groups"]     = nlohmann::json::value_t::object;
+  l_ret["search_filters"]           = nlohmann::json::value_t::object;
+
+  co_return in_handle->make_msg(l_ret.dump());
+}
+}  // namespace doodle::http
+
 namespace doodle::http::kitsu {
+
 namespace {
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated(session_data_ptr in_handle) {
@@ -90,34 +121,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   }
   co_return std::move(l_res);
 }
-
-DOODLE_HTTP_FUN(user_context, get, "api/data/user/context", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
-  get_person(in_handle);
-  nlohmann::json l_ret{};
-  auto& l_sql             = g_ctx().get<sqlite_database>();
-  l_ret["asset_types"]    = l_sql.get_all<asset_type>();
-  l_ret["custom_actions"] = nlohmann::json::value_t::array;
-  l_ret["departments"]    = l_sql.get_all<department>();
-  for (auto& l_v : g_ctx().get<dingding::dingding_company>().company_info_map_ | std::views::values) {
-    l_ret["dingding_companys"].emplace_back(l_v);
-  }
-  l_ret["notification_count"]       = l_sql.get_notification_count(person_->uuid_id_);
-  l_ret["persons"]                  = l_sql.get_all<person>();
-  l_ret["project_status"]           = l_sql.get_all<project_status>();
-  l_ret["preview_background_files"] = nlohmann::json::value_t::array;
-  l_ret["projects"]                 = l_sql.get_project_for_user(*person_);
-  l_ret["status_automations"]       = l_sql.get_all<status_automation>();
-  l_ret["studios"]                  = l_sql.get_all<studio>();
-  l_ret["task_status"]              = l_sql.get_all<task_status>();
-  l_ret["task_types"]               = l_sql.get_all<task_type>();
-  l_ret["user_limit"]               = 9999;
-  l_ret["search_filter_groups"]     = nlohmann::json::value_t::object;
-  l_ret["search_filters"]           = nlohmann::json::value_t::object;
-
-  co_return in_handle->make_msg(l_ret.dump());
-}
-DOODLE_HTTP_FUN_END()
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);

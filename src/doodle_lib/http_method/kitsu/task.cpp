@@ -160,6 +160,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> create_task2(sessi
     g_ctx().get<cache_manger>().erase(l_json["id"].get<uuid>());
   co_return std::move(l_res);
 }
+
 }  // namespace
 void task_reg(http_route& in_http_route) {
   in_http_route
