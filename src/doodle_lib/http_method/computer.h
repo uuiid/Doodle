@@ -15,5 +15,4 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                              {computer_websocket_fun::logger, "logger"}}
 );
 
-void computer_reg(http_route& in_route);
 }  // namespace doodle::http

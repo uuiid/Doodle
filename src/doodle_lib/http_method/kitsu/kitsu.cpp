@@ -24,6 +24,7 @@
 #include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/http_route_proxy.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
+#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
 #include <doodle_lib/http_method/local/event.h>
 #include <doodle_lib/http_method/local/local_setting.h>
@@ -36,12 +37,11 @@
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
+  g_ctx().emplace<cache_manger>();
   auto l_router = std::make_shared<kitsu::http_route_proxy>();
 #ifndef DOODLE_KITSU
   l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
       .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
-#endif
-
   kitsu::user_reg(*l_router);
   kitsu::task_reg(*l_router);
   kitsu::assets_reg(*l_router);
@@ -49,14 +49,22 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   kitsu::thumbnail_reg(*l_router);
   kitsu::project_reg(*l_router);
   kitsu::assets_reg2(*l_router);
-  register_login(*l_router);
-  register_config(*l_router);
+#else
+  (*l_router)
+      .reg(std::make_shared<with_tasks_get>())
+      .reg(std::make_shared<data_user_tasks_get>())
+      .reg(std::make_shared<shared_used_get>())
+      .reg(std::make_shared<auth_login_post>())
+      .reg(std::make_shared<authenticated_get>())
+      .reg(std::make_shared<organisations_get>())
+      .reg(std::make_shared<config_get>())
+      .reg(std::make_shared<user_context_get>());
+#endif
+
   up_file_reg(*l_router);
   reg_file_association_http(*l_router);
   reg_kitsu_front_end_http(*l_router, in_root);
-  computer_reg(*l_router);
   tool_version_reg(*l_router);
-  g_ctx().emplace<cache_manger>();
   return l_router;
 }
 

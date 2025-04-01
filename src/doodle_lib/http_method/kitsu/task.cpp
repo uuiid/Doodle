@@ -2,8 +2,6 @@
 // Created by TD on 24-8-20.
 //
 
-#include "kitsu.h"
-
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -13,6 +11,19 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include "kitsu.h"
+
+namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_get::callback(
+    session_data_ptr in_handle
+) {
+  get_person(in_handle);
+  co_return in_handle->make_msg("[]");
+}
+}  // namespace doodle::http
+
 namespace doodle::http::kitsu {
 
 namespace {
@@ -170,13 +181,11 @@ void task_reg(http_route& in_http_route) {
               boost::beast::http::verb::get, "api/doodle/task/{task_id}/full", get_task_info_full
           )
       )
-#ifndef DOODLE_KITSU
       .reg(
           std::make_shared<http_function>(
               boost::beast::http::verb::get, "api/data/assets/with-tasks", get_task_with_tasks
           )
       )
-#endif
       .reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/data/tasks", create_task))
       .reg(
           std::make_shared<http_function>(

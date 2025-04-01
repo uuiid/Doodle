@@ -169,17 +169,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
 }  // namespace
 void user_reg(http_route& in_http_route) {
   in_http_route
-#ifndef DOODLE_KITSU
       .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", user_authenticated))
-#endif
       .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/persons/{id}", user_persons_post))
-      .reg(
-#ifdef DOODLE_KITSU
-          std::make_shared<user_context_get>()
-#else
-          std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context)
-#endif
-
-      );
+      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context));
 }
 }  // namespace doodle::http::kitsu

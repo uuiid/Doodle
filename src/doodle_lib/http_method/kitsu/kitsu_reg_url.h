@@ -30,4 +30,11 @@ DOODLE_HTTP_FUN(shared_used, get, "api/data/projects/{project_id}/assets/shared-
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN(data_user_tasks, get, "api/data/user/tasks", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+
+DOODLE_HTTP_FUN(config, get, "api/config", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

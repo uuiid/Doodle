@@ -107,11 +107,4 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login_post::c
   co_return boost::beast::http::message_generator{std::move(l_res)};
 }
 
-void register_login(http_route& in_r) {
-#ifdef DOODLE_KITSU
-  in_r.reg(std::make_shared<auth_login_post>())
-      .reg(std::make_shared<authenticated_get>())
-      .reg(std::make_shared<organisations_get>());
-#endif
-}
 }  // namespace doodle::http

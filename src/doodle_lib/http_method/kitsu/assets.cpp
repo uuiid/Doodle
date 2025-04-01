@@ -51,17 +51,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_new(session
 }  // namespace
 
 void assets_reg2(http_route& in_http_route) {
-  in_http_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new",
-              assets_new
-          )
+  in_http_route.reg(
+      std::make_shared<http_function>(
+          boost::beast::http::verb::post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new",
+          assets_new
       )
-#ifdef DOODLE_KITSU
-      .reg(std::make_shared<with_tasks_get>())
-      .reg(std::make_shared<shared_used_get>())
-#endif
+  )
+
       ;
 }
 }  // namespace doodle::http::kitsu

@@ -50,7 +50,5 @@ void user_reg(http_route& in_http_route);
 
 }  // namespace kitsu
 void preview_reg(http_route& in_http_route);
-void register_login(http_route& in_r);
-void register_config(http_route& in_r);
 
 }  // namespace doodle::http
