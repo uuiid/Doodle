@@ -24,7 +24,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_ge
   auto& sql = g_ctx().get<sqlite_database>();
   auto l_p1 = sql.get_todos(*person_);
 
-  co_return in_handle->make_msg("[]");
+  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 }  // namespace doodle::http
 

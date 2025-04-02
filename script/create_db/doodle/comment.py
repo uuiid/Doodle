@@ -5,7 +5,7 @@ from sqlalchemy import orm
 import sqlalchemy
 
 from doodle.base import BaseMixin
-
+import datetime
 
 class CommentPreviewLink(BaseMixin):
     __tablename__ = "comment_preview_link"
@@ -87,6 +87,10 @@ class Comment(BaseMixin):
     checklist = orm.mapped_column(sqlalchemy.TEXT())
     pinned = orm.mapped_column(sqlalchemy.Boolean, nullable=False)
     links = orm.mapped_column(sqlalchemy.TEXT())
+
+    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+
 
     task_status_id = orm.mapped_column(
         UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid"), index=True

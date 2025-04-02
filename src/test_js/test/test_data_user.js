@@ -6,12 +6,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { io } from 'socket.io-client';
 // globalThis.chai = chai;
 
+// const fs = require('node:fs');
 import { URL } from './config.js';
 import jwt_encode from 'jwt-encode';
 
 describe('doodle user测试', function() {
   const l_jwt = jwt_encode({
-    'sub': 'b5a1383a-8bdc-4a79-ad33-f601fa0fc26d',
+    'sub': '69a8d093-dcab-4890-8f9d-c51ef065d03b',
   }, 'secret');
   const l_project_id = 'eb2b5cde-c1cf-47a0-aba4-e196b6f774dd';
   it('配置', async function() {

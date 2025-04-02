@@ -235,6 +235,7 @@ std::vector<project> sqlite_database::get_person_projects(const person& in_user)
   return l_result;
 }
 std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
+  using namespace sqlite_orm;
   auto l_prjs    = get_person_projects(in_user);
   auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
   static constexpr auto sql_orm_todo_t = sqlite_orm::struct_<todo_t>(
@@ -279,25 +280,15 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
       &task_status::short_name_      //
   );
   auto l_task = impl_->storage_any_.select(
-      sql_orm_todo_t,
-      sqlite_orm::left_join<project>(
-          sqlite_orm::on(sqlite_orm::c(&task::project_id_) == sqlite_orm::c(&project::uuid_id_))
-      ),
-      sqlite_orm::left_join<task_type>(
-          sqlite_orm::on(sqlite_orm::c(&task::task_type_id_) == sqlite_orm::c(&task_type::uuid_id_))
-      ),
+      sql_orm_todo_t, join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
+      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
 
-      sqlite_orm::left_join<task_status>(
-          sqlite_orm::on(sqlite_orm::c(&task::task_status_id_) == sqlite_orm::c(&task_status::uuid_id_))
-      ),
-      sqlite_orm::left_join<entity>(sqlite_orm::on(sqlite_orm::c(&task::entity_id_) == sqlite_orm::c(&entity::uuid_id_))
-      ),
-      sqlite_orm::left_join<assignees_table>(
-          sqlite_orm::on(sqlite_orm::c(&task::uuid_id_) == sqlite_orm::c(&assignees_table::task_id_))
-      ),
-      sqlite_orm::where(
-          sqlite_orm::in(&task::project_id_, l_pej_ids) &&
-          sqlite_orm::c(&assignees_table::person_id_) == in_user.uuid_id_
+      join<task_status>(on(c(&task::task_status_id_) == c(&task_status::uuid_id_))),
+      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<assignees_table>(on(c(&task::uuid_id_) == c(&assignees_table::task_id_))),
+      where(
+          // in(&task::project_id_, l_pej_ids) &&
+          c(&assignees_table::person_id_) == in_user.uuid_id_
       )
   );
   auto l_task_ids = l_task | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;

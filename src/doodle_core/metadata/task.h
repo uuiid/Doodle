@@ -37,6 +37,9 @@ struct DOODLE_CORE_API task {
   uuid last_preview_file_id_;
   std::int32_t nb_drawings_;
 
+  chrono::system_zoned_time created_at_;
+  chrono::system_zoned_time updated_at_;
+
   // 外键
   uuid project_id_;
   uuid task_type_id_;

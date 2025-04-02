@@ -241,7 +241,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&subscription::task_type_id_).references(&task_type::uuid_id_)
       ),
       make_table<assignees_table>(
-          "assignees",  //
+          "assignations",  //
           make_column("id", &assignees_table::id_, primary_key().autoincrement()),
           make_column("person_id", &assignees_table::person_id_, not_null()),
           make_column("task_id", &assignees_table::task_id_, not_null()),
@@ -381,6 +381,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("nb_drawings", &task::nb_drawings_),                   //
           make_column("entity_id", &task::entity_id_),                             //
           make_column("assigner_id", &task::assigner_id_),                         //
+          make_column("created_at", &task::created_at_),                         //
+          make_column("updated_at", &task::updated_at_),                         //
           foreign_key(&task::project_id_).references(&project::uuid_id_),          //
           foreign_key(&task::task_type_id_).references(&task_type::uuid_id_),      //
           foreign_key(&task::task_status_id_).references(&task_status::uuid_id_),  //

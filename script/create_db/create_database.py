@@ -49,7 +49,6 @@ import doodle.attachment_file
 import doodle.chat_message
 import doodle.chat
 import doodle.subscription
-import doodle.task
 
 PASS = getenv("KITSU_PASS")
 DB_NAME = "my_zou.database"
