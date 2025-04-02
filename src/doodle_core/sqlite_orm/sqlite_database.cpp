@@ -288,7 +288,7 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
       join<assignees_table>(on(c(&task::uuid_id_) == c(&assignees_table::task_id_))),
       join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
       where(
-          // in(&task::project_id_, l_pej_ids) &&
+          in(&task::project_id_, l_pej_ids) &&
           c(&assignees_table::person_id_) == in_user.uuid_id_
       )
   );

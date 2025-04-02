@@ -9,20 +9,20 @@ from zou.app.models.task import Task as ZouTask
 import datetime
 class Assignations(BaseMixin):
     __tablename__ = "assignations"
-    task = orm.mapped_column(
+    task_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("task.uuid"),
         nullable=False
     )
-    person = orm.mapped_column(
+    person_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("person.uuid"),
         nullable=False
     )
 
     def from_zou(self, assignation):
-        self.task = assignation[0]
-        self.person = assignation[1]
+        self.task_id = assignation[0]
+        self.person_id = assignation[1]
         return self
     
 
