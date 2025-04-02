@@ -81,5 +81,11 @@ describe('doodle user测试', function() {
     expect(req.status).to.equal(200);
     console.log(req.body);
   });
+  it('查询 todo', async function() {
+    const req = await request.get(`${URL}/api/data/user/tasks`).set(
+      'Cookie', `access_token_cookie=${l_jwt}`,
+    );
+    expect(req.status).to.equal(200);
+  });
 
 });

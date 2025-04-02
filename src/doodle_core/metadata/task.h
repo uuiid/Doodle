@@ -16,8 +16,8 @@ struct assignees_table {
 
 struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
-  std::string name_{};
-  std::string description_{};
+  std::string name_;
+  std::string description_;
   std::int32_t priority_;
   std::int32_t difficulty_;
   std::float_t duration_;
@@ -45,5 +45,30 @@ struct DOODLE_CORE_API task {
   uuid assigner_id_;
   // 一对多(任务分配的人员)
   std::vector<uuid> assignees_{};
+
+  // to json
+  friend void to_json(nlohmann::json& j, const task& p) {
+    j["id"] = p.uuid_id_;
+    j["name"] = p.name_;
+    j["description"] = p.description_;
+    j["priority"] = p.priority_;
+    j["difficulty"] = p.difficulty_;
+    j["duration"] = p.duration_;
+    j["estimation"] = p.estimation_;
+    j["completion_rate"] = p.completion_rate_;
+    j["retake_count"] = p.retake_count_;
+    j["sort_order"] = p.sort_order_;
+    j["start_date"] = p.start_date_;
+    j["due_date"] = p.due_date_;
+    j["real_start_date"] = p.real_start_date_;
+    j["end_date"] = p.end_date_;
+    j["done_date"] = p.done_date_;
+    j["last_comment_date"] = p.last_comment_date_;
+    j["nb_assets_ready"] = p.nb_assets_ready_;
+    j["data"] = p.data_;
+    j["shotgun_id"] = p.shotgun_id_;
+    j["last_preview_file_id"] = p.last_preview_file_id_;
+    j["nb_drawings"] = p.nb_drawings_;
+  }
 };
 }  // namespace doodle

@@ -341,6 +341,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("checklist", &comment::checklist_),                                                  //
           make_column("pinned", &comment::pinned_),                                                        //
           make_column("links", &comment::links),//
+          make_column("created_at", &comment::created_at_),                                                //
+          make_column("updated_at", &comment::updated_at_),
           make_column("task_status_id", &comment::task_status_id_),  //
           make_column("person_id", &comment::person_id_, not_null()),                                                                        //
           make_column("editor_id", &comment::editor_id_),                                                  //

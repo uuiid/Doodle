@@ -5,6 +5,7 @@
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_function.h>
@@ -20,6 +21,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_ge
     session_data_ptr in_handle
 ) {
   get_person(in_handle);
+  auto& sql = g_ctx().get<sqlite_database>();
+  auto l_p1 = sql.get_todos(*person_);
+
   co_return in_handle->make_msg("[]");
 }
 }  // namespace doodle::http

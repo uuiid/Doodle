@@ -66,14 +66,7 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     l_projects = l_t | ranges::views::transform([](const project& in) { return project_with_extra_data{in}; }) |
                  ranges::to_vector;
   } else {
-    auto l_project_person_link = impl_->storage_any_.get_all<project_person_link>(
-        sqlite_orm::where(sqlite_orm::c(&project_person_link::person_id_) == in_user.uuid_id_)
-    );
-    auto l_project_ids = l_project_person_link |
-                         ranges::views::transform([](const project_person_link& in) { return in.project_id_; }) |
-                         ranges::to_vector;
-    auto l_t =
-        impl_->storage_any_.get_all<project>(sqlite_orm::where(sqlite_orm::in(&project::uuid_id_, l_project_ids)));
+    auto l_t   = get_person_projects(in_user);
     l_projects = l_t | ranges::views::transform([](const project& in) { return project_with_extra_data{in}; }) |
                  ranges::to_vector;
   }
@@ -222,6 +215,121 @@ std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(
   }
 
   return l_result;
+}
+std::vector<project> sqlite_database::get_person_projects(const person& in_user) {
+  std::vector<project> l_result;
+  auto l_ids = impl_->storage_any_.get_all<project>(
+      sqlite_orm::left_join<project_status>(
+          sqlite_orm::on(sqlite_orm::c(&project_status::uuid_id_) == sqlite_orm::c(&project::project_status_id_))
+      ),
+      sqlite_orm::left_join<project_person_link>(
+          sqlite_orm::on(sqlite_orm::c(&project_person_link::project_id_) == sqlite_orm::c(&project::uuid_id_))
+      ),
+      sqlite_orm::where(
+          sqlite_orm::c(&project_person_link::person_id_) == in_user.uuid_id_ &&
+          sqlite_orm::in(&project_status::name_, {"Active", "open", "Open"})
+      )
+  );
+  l_result.reserve(l_ids.size());
+  for (auto&& l_id : l_ids) l_result.emplace_back(l_id);
+  return l_result;
+}
+std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
+  auto l_prjs    = get_person_projects(in_user);
+  auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
+  static constexpr auto sql_orm_todo_t = sqlite_orm::struct_<todo_t>(
+      &task::uuid_id_,               //
+      &task::name_,                  //
+      &task::description_,           //
+      &task::priority_,              //
+      &task::difficulty_,            //
+      &task::duration_,              //
+      &task::estimation_,            //
+      &task::completion_rate_,       //
+      &task::retake_count_,          //
+      &task::sort_order_,            //
+      &task::start_date_,            //
+      &task::due_date_,              //
+      &task::real_start_date_,       //
+      &task::end_date_,              //
+      &task::done_date_,             //
+      &task::last_comment_date_,     //
+      &task::nb_assets_ready_,       //
+      &task::data_,                  //
+      &task::shotgun_id_,            //
+      &task::last_preview_file_id_,  //
+      &task::nb_drawings_,           //
+      &task::project_id_,            //
+      &project::name_,               //
+      &project::has_avatar_,         //
+      &entity::uuid_id_,             //
+      &entity::name_,                //
+      &entity::description_,         //
+      &entity::data_,                //
+      &entity::preview_file_id_,     //
+      &asset_type::name_,            //
+      &entity::canceled_,            //
+      &entity::parent_id_,           //
+      &entity::source_id_,           //
+      &task_type::name_,             //
+      &task_type::for_entity_,       //
+      &task_type::color_,            //
+      &task_status::name_,           //
+      &task_status::color_,          //
+      &task_status::short_name_      //
+  );
+  auto l_task = impl_->storage_any_.select(
+      sql_orm_todo_t,
+      sqlite_orm::left_join<project>(
+          sqlite_orm::on(sqlite_orm::c(&task::project_id_) == sqlite_orm::c(&project::uuid_id_))
+      ),
+      sqlite_orm::left_join<task_type>(
+          sqlite_orm::on(sqlite_orm::c(&task::task_type_id_) == sqlite_orm::c(&task_type::uuid_id_))
+      ),
+
+      sqlite_orm::left_join<task_status>(
+          sqlite_orm::on(sqlite_orm::c(&task::task_status_id_) == sqlite_orm::c(&task_status::uuid_id_))
+      ),
+      sqlite_orm::left_join<entity>(sqlite_orm::on(sqlite_orm::c(&task::entity_id_) == sqlite_orm::c(&entity::uuid_id_))
+      ),
+      sqlite_orm::left_join<assignees_table>(
+          sqlite_orm::on(sqlite_orm::c(&task::uuid_id_) == sqlite_orm::c(&assignees_table::task_id_))
+      ),
+      sqlite_orm::where(
+          sqlite_orm::in(&task::project_id_, l_pej_ids) &&
+          sqlite_orm::c(&assignees_table::person_id_) == in_user.uuid_id_
+      )
+  );
+  auto l_task_ids = l_task | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
+
+  std::map<uuid, const comment*> l_map_comm;
+  for (auto l_comms = impl_->storage_any_.get_all<comment>(
+           sqlite_orm::where(sqlite_orm::in(&comment::object_id_, l_task_ids)),
+           sqlite_orm::order_by(&comment::created_at_)
+       );
+       auto&& i : l_comms) {
+    if (!l_map_comm.contains(i.object_id_)) l_map_comm[i.object_id_] = &i;
+  }
+
+  for (auto& i : l_task) {
+    if (l_map_comm.contains(i.uuid_id_)) {
+      auto&& l_c = l_map_comm.at(i.uuid_id_);
+      i.last_comment_.emplace_back(
+          todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->data_, .person_id_ = l_c->person_id_}
+      );
+    }
+  }
+  std::map<uuid, todo_t*> l_map_task;
+  for (auto&& i : l_task) l_map_task[i.uuid_id_] = &i;
+
+  for (auto l_ass = impl_->storage_any_.get_all<assignees_table>(
+           sqlite_orm::where(sqlite_orm::in(&assignees_table::task_id_, l_task_ids))
+       );
+       auto&& i : l_ass) {
+    if (l_map_task.contains(i.task_id_)) l_map_task.at(i.task_id_)->assignees_.emplace_back(i.person_id_);
+  }
+
+  return l_task;
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);

@@ -37,6 +37,8 @@ struct DOODLE_CORE_API comment {
   nlohmann::json checklist_;
   bool pinned_;
   std::vector<std::string> links;
+  chrono::system_zoned_time created_at_;
+  chrono::system_zoned_time updated_at_;
 
   // 外键
   uuid task_status_id_;

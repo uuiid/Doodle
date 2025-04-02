@@ -17,6 +17,7 @@ enum server_task_info_type : int;
 }
 namespace doodle {
 class server_task_info;
+struct todo_t;
 }
 namespace doodle {
 namespace attendance_helper {
@@ -28,7 +29,6 @@ struct database_t;
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
-
 
 struct entity_task_t;
 
@@ -101,5 +101,9 @@ class sqlite_database {
   person get_person_for_email(const std::string& in_email);
 
   std::vector<entity_task_t> get_assets_and_tasks(const uuid& in_project, const person& in_current_user);
+  /// 获取用户所在的团队对应的项目
+  std::vector<project> get_person_projects(const person& in_user);
+  /// 获取用户需要做的任务
+  std::vector<todo_t> get_todos(const person& in_user);
 };
 }  // namespace doodle
