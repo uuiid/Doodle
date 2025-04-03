@@ -38,6 +38,66 @@ describe('doodle user测试', function () {
     );
     expect(req.status).to.equal(200);
 
+
+    expect(req.body.authenticated).to.equal(true);
+    expect(req.body.user).to.have.keys(
+      'active',
+      'archived',
+      'contract_type',
+      'data',
+      'departments',
+      'desktop_login',
+      'dingding_company_id',
+      'email',
+      'email_otp_enabled',
+      'expiration_date',
+      'fido_devices',
+      'fido_enabled',
+      'first_name',
+      'full_name',
+      'has_avatar',
+      'id',
+      'is_bot',
+      'is_generated_from_ldap',
+      'last_login_failed',
+      'last_name',
+      'last_presence',
+      'ldap_uid',
+      'locale',
+      'login_failed_attemps',
+      'notifications_discord_enabled',
+      'notifications_discord_userid',
+      'notifications_enabled',
+      'notifications_mattermost_enabled',
+      'notifications_mattermost_userid',
+      'notifications_slack_enabled',
+      'notifications_slack_userid',
+      'phone',
+      'preferred_two_factor_authentication',
+      'role',
+      'shotgun_id',
+      'studio_id',
+      'timezone',
+      'totp_enabled',
+    );
+    expect(req.body.organisation).to.have.keys(
+      'chat_token_discord',
+      'chat_token_slack',
+      'chat_webhook_mattermost',
+      'created_at',
+      'dark_theme_by_default',
+      'format_duration_in_hours',
+      'has_avatar',
+      'hd_by_default',
+      'hours_by_day',
+      'id',
+      'name',
+      'timesheets_locked',
+      'type',
+      'updated_at',
+      'use_original_file_name',
+    );
+
   });
   it('测试登录用户的上下文', async function () {
     const req = await request.get(`${URL}/api/data/user/context`).set(

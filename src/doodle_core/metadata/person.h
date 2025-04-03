@@ -94,10 +94,6 @@ struct DOODLE_CORE_API person {
   bool is_generated_from_ldap_;
   std::string ldap_uid_;
 
-
-
-
-
   // from json
   template <typename BasicJsonType>
   friend void from_json(const BasicJsonType& j, person& p) {
@@ -155,7 +151,6 @@ struct DOODLE_CORE_API person {
     j["login_failed_attemps"]                = p.login_failed_attemps_;
     j["last_login_failed"]                   = p.last_login_failed_;
     j["totp_enabled"]                        = p.totp_enabled_;
-    j["totp_secret"]                         = p.totp_secret_;
     j["email_otp_enabled"]                   = p.email_otp_enabled_;
     j["email_otp_secret"]                    = p.email_otp_secret_;
     j["fido_enabled"]                        = p.fido_enabled_;
@@ -180,6 +175,12 @@ struct DOODLE_CORE_API person {
     j["studio_id"]                           = p.studio_id_;
     j["is_generated_from_ldap"]              = p.is_generated_from_ldap_;
     j["ldap_uid"]                            = p.ldap_uid_;
+    j["departments"]                         = p.departments_;
+    j["dingding_company_id"]                 = "";
+    j["fido_devices"]                        = nlohmann::json::array();
+    j["full_name"]                           = p.first_name_ + " " + p.last_name_;
+    j["id"]                                  = p.uuid_id_;
+
   }
 };
 }  // namespace doodle
