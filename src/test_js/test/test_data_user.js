@@ -141,6 +141,8 @@ describe('doodle user测试', function () {
       'task_status_short_name',
       'last_comment',
     );
+    expect(req.body[0].last_comment).to.have.keys('text', 'date', 'person_id');
+
   });
 
 });
