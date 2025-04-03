@@ -152,10 +152,7 @@ struct DOODLE_CORE_API person {
     j["last_login_failed"]                   = p.last_login_failed_;
     j["totp_enabled"]                        = p.totp_enabled_;
     j["email_otp_enabled"]                   = p.email_otp_enabled_;
-    j["email_otp_secret"]                    = p.email_otp_secret_;
     j["fido_enabled"]                        = p.fido_enabled_;
-    j["fido_credentials"]                    = p.fido_credentials_;
-    j["otp_recovery_codes"]                  = p.otp_recovery_codes_;
     j["preferred_two_factor_authentication"] = p.preferred_two_factor_authentication_;
     j["shotgun_id"]                          = p.shotgun_id_;
     j["timezone"]                            = p.timezone_;
