@@ -39,6 +39,7 @@ struct DOODLE_CORE_API organisation {
   // to json
   template <typename BasicJsonType>
   friend void to_json(BasicJsonType& j, const organisation& p) {
+    j["id"]                       = p.uuid_id_;
     j["name"]                     = p.name_;
     j["hours_by_day"]             = p.hours_by_day_;
     j["has_avatar"]               = p.has_avatar_;

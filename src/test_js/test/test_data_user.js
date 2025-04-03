@@ -84,7 +84,6 @@ describe('doodle user测试', function () {
       'chat_token_discord',
       'chat_token_slack',
       'chat_webhook_mattermost',
-      'created_at',
       'dark_theme_by_default',
       'format_duration_in_hours',
       'has_avatar',
@@ -94,7 +93,6 @@ describe('doodle user测试', function () {
       'name',
       'timesheets_locked',
       'type',
-      'updated_at',
       'use_original_file_name',
     );
 
