@@ -86,8 +86,12 @@ struct todo_t {
   decltype(task::data_) data_;
   decltype(task::shotgun_id_) shotgun_id_;
   decltype(task::last_preview_file_id_) last_preview_file_id_;
-  decltype(task::nb_drawings_) nb_drawings_;
   decltype(task::project_id_) project_id_;
+  decltype(task::task_type_id_) task_type_id_;
+  decltype(task::task_status_id_) task_status_id_;
+  decltype(task::assigner_id_) assigner_id_;
+  decltype(task::created_at_) created_at_;
+  decltype(task::updated_at_) updated_at_;
 
   decltype(project::name_) project_name_;
   decltype(project::has_avatar_) project_has_avatar_;
@@ -116,6 +120,12 @@ struct todo_t {
     std::string text_;
     chrono::system_zoned_time date_;
     uuid person_id_;
+    // to json
+    friend void to_json(nlohmann::json& j, const comment_t& p) {
+      j["text"]   = p.text_;
+      j["date"]   = p.date_;
+      j["person"] = p.person_id_;
+    }
   };
 
   std::vector<comment_t> last_comment_;
@@ -141,8 +151,12 @@ struct todo_t {
     j["data"]                   = p.data_;
     j["shotgun_id"]             = p.shotgun_id_;
     j["last_preview_file_id"]   = p.last_preview_file_id_;
-    j["nb_drawings"]            = p.nb_drawings_;
+    j["task_type_id"]           = p.task_type_id_;
+    j["task_status_id"]         = p.task_status_id_;
+    j["assigner_id"]            = p.assigner_id_;
     j["assignees"]              = p.assignees_;
+    j["created_at"]             = p.created_at_;
+    j["updated_at"]             = p.updated_at_;
 
     j["project_name"]           = p.project_name_;
     j["project_id"]             = p.project_id_;
@@ -172,6 +186,8 @@ struct todo_t {
     j["task_type_color"]        = p.task_type_color_;
     j["task_status_color"]      = p.task_status_color_;
     j["task_status_short_name"] = p.task_status_short_name_;
+
+    j["last_comment"]           = p.last_comment_;
   }
 };
 

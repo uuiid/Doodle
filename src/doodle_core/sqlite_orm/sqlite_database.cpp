@@ -259,8 +259,12 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
       &task::data_,                  //
       &task::shotgun_id_,            //
       &task::last_preview_file_id_,  //
-      &task::nb_drawings_,           //
       &task::project_id_,            //
+      &task::task_type_id_,          //
+      &task::task_status_id_,        //
+      &task::assigner_id_,           //
+      &task::created_at_,            //
+      &task::updated_at_,            //
       &project::name_,               //
       &project::has_avatar_,         //
       &entity::uuid_id_,             //
@@ -287,10 +291,7 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
       join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       join<assignees_table>(on(c(&task::uuid_id_) == c(&assignees_table::task_id_))),
       join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-      where(
-          in(&task::project_id_, l_pej_ids) &&
-          c(&assignees_table::person_id_) == in_user.uuid_id_
-      )
+      where(in(&task::project_id_, l_pej_ids) && c(&assignees_table::person_id_) == in_user.uuid_id_)
   );
   auto l_task_ids = l_task | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
 
