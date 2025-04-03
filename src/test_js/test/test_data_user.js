@@ -92,7 +92,6 @@ describe('doodle user测试', function () {
       'id',
       'name',
       'timesheets_locked',
-      'type',
       'use_original_file_name',
     );
 
@@ -202,5 +201,11 @@ describe('doodle user测试', function () {
       'Cookie', `access_token_cookie=${l_jwt}`,
     );
     expect(req.status).to.equal(200);
+  });
+  it('查询 时间', async function () {
+    const req = await request.get(`${URL}/api/data/persons/69a8d093-dcab-4890-8f9d-c51ef065d03b/day-offs/`);
+    expect(req.status).to.equal(200);
+    expect(req.body).to.be.an('array');
+    expect(req.body).to.have.lengthOf(0); 
   });
 });

@@ -29,7 +29,7 @@ std::vector<http_function::capture_data_t> http_function::set_cap_bit(std::strin
 
   std::vector<capture_data_t> l_capture_vector{l_vector.size()};
   for (size_t i = 0; i < l_vector.size(); ++i) {
-    if (l_vector[i].front() == '{' && l_vector[i].back() == '}') {
+    if (!l_vector[i].empty() && l_vector[i].front() == '{' && l_vector[i].back() == '}') {
       l_capture_vector[i].name       = l_vector[i].substr(1, l_vector[i].size() - 2);
       l_capture_vector[i].is_capture = true;
     } else {
@@ -44,17 +44,21 @@ std::tuple<bool, http_function::capture_t> http_function::set_match_url(
     boost::urls::segments_ref in_segments_ref
 ) const {
   std::map<std::string, std::string> l_str{};
-  if (in_segments_ref.size() != capture_vector_.size()) {
+
+  std::vector<std::string> l_segments_ref_not_null = in_segments_ref |
+                                                     ranges::views::filter([](auto&& i) { return !i.empty(); }) |
+                                                     ranges::to<std::vector<std::string>>;
+
+  if (l_segments_ref_not_null.size() != capture_vector_.size()) {
     return {false, {}};
   }
-  for (const auto& [l_cap, l_seg] : ranges::zip_view(capture_vector_, in_segments_ref)) {
+  for (const auto& [l_cap, l_seg] : ranges::zip_view(capture_vector_, l_segments_ref_not_null)) {
     if (!l_cap.is_capture && l_cap.name != l_seg) {
       return {false, {}};
     }
-    if (l_cap.is_capture && !l_seg.empty())
-      l_str.emplace(l_cap.name, l_seg);
-    else if (l_seg.empty())
-      return {false, {}};
+    if (l_cap.is_capture && !l_seg.empty()) l_str.emplace(l_cap.name, l_seg);
+    // else if (l_seg.empty())
+    //   return {false, {}};
   }
   return {true, capture_t{l_str}};
 }
