@@ -295,21 +295,22 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
   );
   auto l_task_ids = l_task | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
 
-  std::map<uuid, const comment*> l_map_comm;
-  for (auto l_comms = impl_->storage_any_.get_all<comment>(
-           sqlite_orm::where(sqlite_orm::in(&comment::object_id_, l_task_ids)),
-           sqlite_orm::order_by(&comment::created_at_)
-       );
-       auto&& i : l_comms) {
-    if (!l_map_comm.contains(i.object_id_)) l_map_comm[i.object_id_] = &i;
-  }
+  {
+    std::map<uuid, const comment*> l_map_comm;
+    auto l_comms = impl_->storage_any_.get_all<comment>(
+        sqlite_orm::where(sqlite_orm::in(&comment::object_id_, l_task_ids)), sqlite_orm::order_by(&comment::created_at_)
+    );
+    for (auto&& i : l_comms) {
+      if (!l_map_comm.contains(i.object_id_)) l_map_comm[i.object_id_] = &i;
+    }
 
-  for (auto& i : l_task) {
-    if (l_map_comm.contains(i.uuid_id_)) {
-      auto&& l_c = l_map_comm.at(i.uuid_id_);
-      i.last_comment_.emplace_back(
-          todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->data_, .person_id_ = l_c->person_id_}
-      );
+    for (auto& i : l_task) {
+      if (l_map_comm.contains(i.uuid_id_)) {
+        auto&& l_c = l_map_comm.at(i.uuid_id_);
+        i.last_comment_.emplace_back(
+            todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->data_, .person_id_ = l_c->person_id_}
+        );
+      }
     }
   }
   std::map<uuid, todo_t*> l_map_task;
