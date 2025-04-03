@@ -15,11 +15,11 @@ void http_jwt_fun::get_person(const session_data_ptr& in_data) {
   if (l_jwt.empty()) l_jwt = in_data->req_header_[boost::beast::http::field::authorization];
 
   if (auto l_it = l_jwt.find("access_token_cookie="); l_it != std::string::npos)
-    l_jwt = l_jwt.substr(l_it + 20, l_jwt.find(';', l_it) - l_it);
+    l_jwt = l_jwt.substr(l_it + 20, l_jwt.find(';', l_it) - l_it - 20);
   else if (auto l_it_b = l_jwt.find("Bearer "); l_it_b != std::string::npos)
-    l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b);
+    l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
-
+  // std::string l_l_jwt_str{l_jwt};
   auto l_uuid = from_uuid_str(jwt::decode(l_jwt).get_payload_claim("sub").as_string());
   auto& l_sql = g_ctx().get<sqlite_database>();
   // default_logger_raw()->warn("{}", l_uuid);
