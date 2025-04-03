@@ -22,10 +22,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_ge
 ) {
   get_person(in_handle);
   auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_todos(*person_);
-
+  auto l_p1 = sql.get_person_tasks(*person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks_get::callback(
+    session_data_ptr in_handle
+) {
+  get_person(in_handle);
+  auto& sql = g_ctx().get<sqlite_database>();
+  auto l_p1 = sql.get_person_tasks(*person_, true);
+  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+}
+
+
 }  // namespace doodle::http
 
 namespace doodle::http::kitsu {

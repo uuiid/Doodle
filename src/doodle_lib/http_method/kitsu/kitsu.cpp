@@ -52,12 +52,13 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
 #else
   (*l_router)
       .reg(std::make_shared<with_tasks_get>())
-      .reg(std::make_shared<data_user_tasks_get>())
       .reg(std::make_shared<shared_used_get>())
       .reg(std::make_shared<auth_login_post>())
       .reg(std::make_shared<authenticated_get>())
       .reg(std::make_shared<organisations_get>())
       .reg(std::make_shared<config_get>())
+      .reg(std::make_shared<data_user_tasks_get>())
+      .reg(std::make_shared<data_user_done_tasks_get>())
       .reg(std::make_shared<user_context_get>());
 #endif
 

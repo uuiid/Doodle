@@ -234,7 +234,7 @@ std::vector<project> sqlite_database::get_person_projects(const person& in_user)
   for (auto&& l_id : l_ids) l_result.emplace_back(l_id);
   return l_result;
 }
-std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
+std::vector<todo_t> sqlite_database::get_person_tasks(const person& in_user, bool is_done) {
   using namespace sqlite_orm;
   auto l_prjs    = get_person_projects(in_user);
   auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
@@ -283,6 +283,14 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
       &task_status::color_,          //
       &task_status::short_name_      //
   );
+  auto l_order_by = dynamic_order_by(impl_->storage_any_);
+  if (is_done) {
+    l_order_by.push_back(order_by(&task::end_date_).desc());
+    l_order_by.push_back(order_by(&task_type::name_));
+    l_order_by.push_back(order_by(&entity::name_));
+  } else
+    l_order_by.push_back(order_by(&entity::name_));
+
   auto l_task = impl_->storage_any_.select(
       sql_orm_todo_t, join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
       join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
@@ -291,7 +299,11 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
       join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       join<assignees_table>(on(c(&task::uuid_id_) == c(&assignees_table::task_id_))),
       join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-      where(in(&task::project_id_, l_pej_ids) && c(&assignees_table::person_id_) == in_user.uuid_id_)
+      where(
+          in(&task::project_id_, l_pej_ids) && c(&assignees_table::person_id_) == in_user.uuid_id_ &&
+          c(&task_status::is_done_) == is_done
+      ),
+      l_order_by
   );
   auto l_task_ids = l_task | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
 

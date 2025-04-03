@@ -104,6 +104,6 @@ class sqlite_database {
   /// 获取用户所在的团队对应的项目
   std::vector<project> get_person_projects(const person& in_user);
   /// 获取用户需要做的任务
-  std::vector<todo_t> get_todos(const person& in_user);
+  std::vector<todo_t> get_person_tasks(const person& in_user, bool is_done = false);
 };
 }  // namespace doodle

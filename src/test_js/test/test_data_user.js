@@ -1,10 +1,6 @@
 // const superagent = require('superagent');
 import request from 'superagent';
 import { expect } from 'chai';
-import { v4 as uuidv4 } from 'uuid';
-
-import { io } from 'socket.io-client';
-// globalThis.chai = chai;
 
 // const fs = require('node:fs');
 import { URL } from './config.js';
@@ -141,8 +137,12 @@ describe('doodle user测试', function () {
       'task_status_short_name',
       'last_comment',
     );
-    expect(req.body[0].last_comment).to.have.keys('text', 'date', 'person_id');
-
+    expect(req.body[1].last_comment).to.have.keys('text', 'date', 'person_id');
   });
-
+  it('查询 done todo', async function () {
+    const req = await request.get(`${URL}/api/data/user/done-tasks`).set(
+      'Cookie', `access_token_cookie=${l_jwt}`,
+    );
+    expect(req.status).to.equal(200);
+  });
 });
