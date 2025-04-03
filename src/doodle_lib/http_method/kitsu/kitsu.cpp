@@ -59,6 +59,8 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<config_get>())
       .reg(std::make_shared<data_user_tasks_get>())
       .reg(std::make_shared<data_user_done_tasks_get>())
+      .reg(std::make_shared<data_user_time_spents_all_get>())
+      .reg(std::make_shared<data_user_time_spents_get>())
       .reg(std::make_shared<user_context_get>());
 #endif
 

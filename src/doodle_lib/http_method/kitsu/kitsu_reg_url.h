@@ -38,6 +38,13 @@ DOODLE_HTTP_FUN(data_user_done_tasks, get, "api/data/user/done-tasks", http_jwt_
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN(data_user_time_spents_all, get, "api/data/user/time-spents", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_user_time_spents, get, "api/data/user/time-spents/{date}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+
 DOODLE_HTTP_FUN(config, get, "api/config", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()

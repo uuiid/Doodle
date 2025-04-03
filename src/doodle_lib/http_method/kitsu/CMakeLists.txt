@@ -19,4 +19,5 @@ target_sources(
         preview.cpp
         login.cpp
         config.cpp
+        time.cpp
 )
