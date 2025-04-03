@@ -101,12 +101,12 @@ class Comment(db.Model, BaseMixin, SerializerMixin):
         nullable=False,
         index=True,
     )
-    editor_id = db.Column(
-        UUIDType(binary=False),
-        db.ForeignKey("person.id"),
-        default=None,
-        index=True,
-    )
+    # editor_id = db.Column(
+    #     UUIDType(binary=False),
+    #     db.ForeignKey("person.id"),
+    #     default=None,
+    #     index=True,
+    # )
     preview_file_id = db.Column(
         UUIDType(binary=False), db.ForeignKey("preview_file.id")
     )

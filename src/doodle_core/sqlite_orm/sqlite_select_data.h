@@ -124,11 +124,11 @@ struct todo_t {
     friend void to_json(nlohmann::json& j, const comment_t& p) {
       j["text"]   = p.text_;
       j["date"]   = p.date_;
-      j["person"] = p.person_id_;
+      j["person_id"] = p.person_id_;
     }
   };
 
-  std::vector<comment_t> last_comment_;
+  std::optional<comment_t> last_comment_;
   // to json
   friend void to_json(nlohmann::json& j, const todo_t& p) {
     j["id"]                     = p.uuid_id_;
@@ -186,8 +186,10 @@ struct todo_t {
     j["task_type_color"]        = p.task_type_color_;
     j["task_status_color"]      = p.task_status_color_;
     j["task_status_short_name"] = p.task_status_short_name_;
-
-    j["last_comment"]           = p.last_comment_;
+    if (p.last_comment_)
+      j["last_comment"] = p.last_comment_;
+    else
+      j["last_comment"] = nlohmann::json::value_t::object;
   }
 };
 

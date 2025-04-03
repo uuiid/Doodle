@@ -20,6 +20,7 @@ import zou.app.models.entity
 import zou.app.models.notification
 import zou.app.models.subscription
 import zou.app.models.task
+import zou.app.models.comment
 
 import doodle.project_status
 import doodle.organisation
@@ -86,6 +87,13 @@ def main():
         l_subscription : list[zou.app.models.subscription.Subscription] = zou.app.models.subscription.Subscription.query.all()
         l_task : list[zou.app.models.task.Task] = zou.app.models.task.Task.query.all()
         l_assignee = zou.app.db.session.query(zou.app.models.task.assignees_table).all()
+
+        l_comment : list[zou.app.models.comment.Comment] = zou.app.models.comment.Comment.query.all()
+        l_comment_preview_link : list[zou.app.models.comment.CommentPreviewLink] = zou.app.models.comment.CommentPreviewLink.query.all()
+        l_comment_mentions  = zou.app.db.session.query(zou.app.models.comment.mentions_table).all()
+        l_comment_department_mentions = zou.app.db.session.query(zou.app.models.comment.department_mentions_table).all()
+        l_comment_acknowledgements = zou.app.db.session.query(zou.app.models.comment.acknowledgements_table).all()
+
         with Session(engine) as session:
             doodle.base.BaseMixin.metadata.create_all(engine)
             session.add_all([doodle.studio.Studio().from_zou(i) for i in l_studio])
@@ -125,6 +133,12 @@ def main():
             session.add_all([doodle.subscription.Subscription().from_zou(i) for i in l_subscription])
             session.add_all([doodle.task.Task().from_zou(i) for i in l_task])
             session.add_all([doodle.task.Assignations().from_zou(i) for i in l_assignee])
+
+            session.add_all([doodle.comment.Comment().from_zou(i) for i in l_comment])
+            session.add_all([doodle.comment.CommentPreviewLink().from_zou(i) for i in l_comment_preview_link])
+            session.add_all([doodle.comment.CommentMentions().from_zou(i) for i in l_comment_mentions])
+            session.add_all([doodle.comment.CommentDepartmentMentions().from_zou(i) for i in l_comment_department_mentions])
+            session.add_all([doodle.comment.CommentAcknoledgments().from_zou(i) for i in l_comment_acknowledgements])
 
             session.commit()
 

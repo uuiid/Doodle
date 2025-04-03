@@ -307,9 +307,8 @@ std::vector<todo_t> sqlite_database::get_todos(const person& in_user) {
     for (auto& i : l_task) {
       if (l_map_comm.contains(i.uuid_id_)) {
         auto&& l_c = l_map_comm.at(i.uuid_id_);
-        i.last_comment_.emplace_back(
-            todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->created_at_, .person_id_ = l_c->person_id_}
-        );
+        i.last_comment_ =
+            todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->created_at_, .person_id_ = l_c->person_id_};
       }
     }
   }
