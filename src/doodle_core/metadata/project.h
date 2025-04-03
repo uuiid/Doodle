@@ -212,7 +212,7 @@ struct project_with_extra_data : project {
               {"choices", d.choices_},
               {"for_client", d.for_client_},
               {"entity_type", d.entity_type_},
-              {"department", d.department_},
+              {"departments", d.department_},
           }
       );
     }
