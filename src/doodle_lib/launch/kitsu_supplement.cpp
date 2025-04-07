@@ -68,26 +68,41 @@ struct kitsu_supplement_args_t {
 
 void get_register_info(kitsu_supplement_args_t& in_args) {
   try {
-    winreg::RegKey l_key{};
-    l_key.Open(
-        HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY | KEY_ENUMERATE_SUB_KEYS
-    );
-    for (auto&& l_sub : l_key.EnumSubKeys()) {
-      winreg::RegKey l_sub_key{};
-      l_sub_key.Open(
-          HKEY_LOCAL_MACHINE, fmt::format(LR"(SOFTWARE\Doodle\MainConfig\{})", l_sub), KEY_QUERY_VALUE | KEY_WOW64_64KEY
+    {
+      winreg::RegKey l_key{};
+      l_key.Open(
+          HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)",
+          KEY_QUERY_VALUE | KEY_WOW64_64KEY | KEY_ENUMERATE_SUB_KEYS
       );
-      auto l_id         = boost::lexical_cast<uuid>(conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"id")));
-      auto l_app_key    = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_key"));
-      auto l_app_secret = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_secret"));
-      auto l_name       = conv::utf_to_utf<char>(l_sub);
+      for (auto&& l_sub : l_key.EnumSubKeys()) {
+        winreg::RegKey l_sub_key{};
+        l_sub_key.Open(
+            HKEY_LOCAL_MACHINE, fmt::format(LR"(SOFTWARE\Doodle\MainConfig\{})", l_sub),
+            KEY_QUERY_VALUE | KEY_WOW64_64KEY
+        );
+        auto l_id         = boost::lexical_cast<uuid>(conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"id")));
+        auto l_app_key    = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_key"));
+        auto l_app_secret = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_secret"));
+        auto l_name       = conv::utf_to_utf<char>(l_sub);
 
-      in_args.dingding_company_list_.emplace_back(
-          kitsu_supplement_args_t::dingding_company_t{
-              .id_ = l_id, .app_key_ = l_app_key, .app_secret_ = l_app_secret, .name_ = l_name
-          }
-      );
+        in_args.dingding_company_list_.emplace_back(
+            kitsu_supplement_args_t::dingding_company_t{
+                .id_ = l_id, .app_key_ = l_app_key, .app_secret_ = l_app_secret, .name_ = l_name
+            }
+        );
+      }
     }
+
+    {
+      winreg::RegKey l_key{};
+      l_key.Open(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+      auto l_value_w = l_key.GetMultiStringValue(L"Deepseek");
+      in_args.deepseek_keys_ =
+          l_value_w |
+          ranges::views::transform([](const std::wstring& in) -> std::string { return conv::utf_to_utf<char>(in); }) |
+          ranges::to_vector;
+    }
+
   } catch (...) {
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
   }
@@ -173,7 +188,8 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_
+        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_,
+        l_args.deepseek_keys_
     );
 
     // 初始化钉钉客户端
