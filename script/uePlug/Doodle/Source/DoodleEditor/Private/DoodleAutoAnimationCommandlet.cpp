@@ -1009,6 +1009,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 					L_Actor->SetActorLabel(TempGeometryCache->GetName());
 					L_Actor->GetGeometryCacheComponent()->SetGeometryCache(TempGeometryCache);
 					L_Actor->GetGeometryCacheComponent()->SetLightingChannels(false, true, false);
+					L_Actor->GetGeometryCacheComponent()->SetReceivesDecals(false);
 					//---------------------------------
 					const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
 					TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
