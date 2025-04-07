@@ -34,7 +34,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tas
   auto l_p1 = sql.get_person_tasks(*person_, true);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get::callback(session_data_ptr in_handle) {
+  get_person(in_handle);
 
+  switch (person_->role_) {
+    case person_role_type::admin:
+    case person_role_type::supervisor:
+    case person_role_type::manager:
+      break;
+
+    case person_role_type::user:
+    case person_role_type::client:
+    case person_role_type::vendor:
+      co_return in_handle->make_msg("[]");
+      break;
+  }
+
+  auto& sql = g_ctx().get<sqlite_database>();
+  auto l_p1 = sql.get_preson_tasks_to_check(*person_);
+  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+}
 
 }  // namespace doodle::http
 
