@@ -27,6 +27,7 @@ struct kitsu_supplement_args_t {
   FSys::path kitsu_front_end_path_{};
 
   FSys::path kitsu_thumbnails_path_{};
+  std::vector<std::string> deepseek_keys_{};
 
   // 公司
   struct dingding_company_t {
@@ -61,6 +62,7 @@ struct kitsu_supplement_args_t {
     in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
     in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
     in_json.at("kitsu_thumbnails_path").get_to(out_obj.kitsu_thumbnails_path_);
+    in_json.at("deepseek_keys").get_to(out_obj.deepseek_keys_);
   }
 };
 
@@ -171,7 +173,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     );
     l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
+        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_
     );
 
     // 初始化钉钉客户端

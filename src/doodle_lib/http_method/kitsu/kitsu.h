@@ -23,6 +23,8 @@ struct kitsu_ctx_t {
   std::filesystem::path root_;
   /// 前端部署的问价所在位置
   std::filesystem::path front_end_root_;
+  /// deepseek ai 的key
+  std::vector<std::string> deepseek_keys_;
 };
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root);
