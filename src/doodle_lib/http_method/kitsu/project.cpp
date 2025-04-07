@@ -4,6 +4,7 @@
 
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -11,6 +12,22 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include "kitsu.h"
+#include "kitsu_reg_url.h"
+
+namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::callback(session_data_ptr in_handle) {
+  get_person(in_handle);
+  auto& l_sql = g_ctx().get<sqlite_database>();
+
+  if (person_->role_ == person_role_type::admin) co_return in_handle->make_msg("[]");
+
+  auto l_list = person_->role_ == person_role_type::admin ? l_sql.get_project_and_status(nullptr)
+                                                          : l_sql.get_project_and_status(person_);
+  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+}
+
+}  // namespace doodle::http
+
 namespace doodle::http::kitsu {
 namespace {
 boost::asio::awaitable<boost::beast::http::message_generator> put_project(session_data_ptr in_handle) {

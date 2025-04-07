@@ -3,12 +3,13 @@
 //
 
 #pragma once
-#include "doodle_core/metadata/task_status.h"
-#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/task_status.h>
+#include <doodle_core/metadata/task_type.h>
 
 #include <sqlite_orm/sqlite_orm.h>
 namespace doodle {
@@ -190,6 +191,72 @@ struct todo_t {
       j["last_comment"] = p.last_comment_;
     else
       j["last_comment"] = nlohmann::json::value_t::object;
+  }
+};
+
+struct project_and_status_t {
+  decltype(project::uuid_id_) uuid_id_;
+  decltype(project::name_) name_;
+  decltype(project::code_) code_;
+  decltype(project::description_) description_;
+  decltype(project::shotgun_id_) shotgun_id_;
+  decltype(project::file_tree_) file_tree_;
+  decltype(project::data_) data_;
+  decltype(project::has_avatar_) has_avatar_;
+  decltype(project::fps_) fps_;
+  decltype(project::ratio_) ratio_;
+  decltype(project::resolution_) resolution_;
+  decltype(project::production_type_) production_type_;
+  decltype(project::production_style_) production_style_;
+  decltype(project::start_date_) start_date_;
+  decltype(project::end_date_) end_date_;
+  decltype(project::man_days_) man_days_;
+  decltype(project::nb_episodes_) nb_episodes_;
+  decltype(project::episode_span_) episode_span_;
+  decltype(project::max_retakes_) max_retakes_;
+  decltype(project::is_clients_isolated_) is_clients_isolated_;
+  decltype(project::is_preview_download_allowed_) is_preview_download_allowed_;
+  decltype(project::is_set_preview_automated_) is_set_preview_automated_;
+  decltype(project::homepage_) homepage_;
+  decltype(project::is_publish_default_for_artists_) is_publish_default_for_artists_;
+  decltype(project::hd_bitrate_compression_) hd_bitrate_compression_;
+  decltype(project::ld_bitrate_compression_) ld_bitrate_compression_;
+  decltype(project::project_status_id_) project_status_id_;
+
+  decltype(project::default_preview_background_file_id_) default_preview_background_file_id_;
+  decltype(project_status::name_) project_status_name_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const project_and_status_t& p) {
+    j["id"] = p.uuid_id_;
+    j["name"] = p.name_;
+    j["code"] = p.code_;
+    j["description"] = p.description_;
+    j["shotgun_id"] = p.shotgun_id_;
+    j["file_tree"] = p.file_tree_;
+    j["data"] = p.data_;
+    j["has_avatar"] = p.has_avatar_;
+    j["fps"] = p.fps_;
+    j["ratio"] = p.ratio_;
+    j["resolution"] = p.resolution_;
+    j["production_type"] = p.production_type_;
+    j["production_style"] = p.production_style_;
+    j["start_date"] = p.start_date_;
+    j["end_date"] = p.end_date_;
+    j["man_days"] = p.man_days_;
+    j["nb_episodes"] = p.nb_episodes_;
+    j["episode_span"] = p.episode_span_;
+    j["max_retakes"] = p.max_retakes_;
+    j["is_clients_isolated"] = p.is_clients_isolated_;
+    j["is_preview_download_allowed"] = p.is_preview_download_allowed_;
+    j["is_set_preview_automated"] = p.is_set_preview_automated_;
+    j["homepage"] = p.homepage_;
+    j["is_publish_default_for_artists"] = p.is_publish_default_for_artists_;
+    j["hd_bitrate_compression"] = p.hd_bitrate_compression_;
+    j["ld_bitrate_compression"] = p.ld_bitrate_compression_;
+    j["project_status_id"] = p.project_status_id_;
+    j["default_preview_background_file_id"] = p.default_preview_background_file_id_;
+    j["project_status_name"] = p.project_status_name_;
   }
 };
 

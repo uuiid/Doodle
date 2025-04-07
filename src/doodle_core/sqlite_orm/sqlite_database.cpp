@@ -371,6 +371,30 @@ std::vector<todo_t> sqlite_database::get_preson_tasks_to_check(const person& in_
   todo_post_processing(l_task);
   return l_task;
 }
+std::vector<project_and_status_t> sqlite_database::get_project_and_status(const std::shared_ptr<person>& in_user) {
+  using namespace sqlite_orm;
+  static constexpr auto sql_orm_project_and_status_t = sqlite_orm::struct_<project_and_status_t>(
+      &project::uuid_id_, &project::name_, &project::code_, &project::description_, &project::shotgun_id_,
+      &project::file_tree_, &project::data_, &project::has_avatar_, &project::fps_, &project::ratio_,
+      &project::resolution_, &project::production_type_, &project::production_style_, &project::start_date_,
+      &project::end_date_, &project::man_days_, &project::nb_episodes_, &project::episode_span_, &project::max_retakes_,
+      &project::is_clients_isolated_, &project::is_preview_download_allowed_, &project::is_set_preview_automated_,
+      &project::homepage_, &project::is_publish_default_for_artists_, &project::hd_bitrate_compression_,
+      &project::ld_bitrate_compression_, &project::project_status_id_, &project::default_preview_background_file_id_,
+      &project_status::name_
+  );
+  auto l_r = in_user ? impl_->storage_any_.select(
+                           sql_orm_project_and_status_t,
+                           join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_))),
+                           join<project_person_link>(on(c(&project_person_link::project_id_) == c(&project::uuid_id_))),
+                           where(c(&project_person_link::person_id_) == in_user->uuid_id_)
+                       )
+                     : impl_->storage_any_.select(
+                           sql_orm_project_and_status_t,
+                           join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_)))
+                       );
+  return l_r;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
