@@ -95,7 +95,10 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 
     {
       winreg::RegKey l_key{};
-      l_key.Open(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+      if (auto l_r =
+              l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
+          l_r.Failed())
+        return default_logger_raw()->error(conv::utf_to_utf<char>(l_r.ErrorMessage()));
       auto l_value_w = l_key.GetMultiStringValue(L"Deepseek");
       in_args.deepseek_keys_ =
           l_value_w |
