@@ -122,8 +122,8 @@ struct todo_t {
     uuid person_id_;
     // to json
     friend void to_json(nlohmann::json& j, const comment_t& p) {
-      j["text"]   = p.text_;
-      j["date"]   = p.date_;
+      j["text"]      = p.text_;
+      j["date"]      = p.date_;
       j["person_id"] = p.person_id_;
     }
   };
@@ -168,9 +168,9 @@ struct todo_t {
     j["entity_data"]            = p.entity_data_;
     j["entity_preview_file_id"] = p.entity_preview_file_id_;
     j["entity_source_id"]       = p.entity_source_id_;
+    j["entity_type_name"]       = p.asset_type_name_;
     j["entity_canceled"]        = p.entity_canceled_;
 
-    j["entity_type_name"]       = p.asset_type_name_;
     j["sequence_name"]          = nlohmann::json::value_t::null;
     j["episode_id"]             = "";
     j["episode_name"]           = nlohmann::json::value_t::null;

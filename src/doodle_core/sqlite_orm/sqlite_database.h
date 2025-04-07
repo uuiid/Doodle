@@ -18,7 +18,7 @@ enum server_task_info_type : int;
 namespace doodle {
 class server_task_info;
 struct todo_t;
-}
+}  // namespace doodle
 namespace doodle {
 namespace attendance_helper {
 struct database_t;
@@ -37,6 +37,7 @@ class sqlite_database {
   std::shared_ptr<sqlite_database_impl> impl_;
 
   std::vector<uuid> get_temporal_type_ids();
+  void todo_post_processing(std::vector<todo_t>& in);
 
  public:
   sqlite_database()  = default;
@@ -105,5 +106,6 @@ class sqlite_database {
   std::vector<project> get_person_projects(const person& in_user);
   /// 获取用户需要做的任务
   std::vector<todo_t> get_person_tasks(const person& in_user, bool is_done = false);
+  std::vector<todo_t> get_preson_tasks_to_check(const person& in_user);
 };
 }  // namespace doodle
