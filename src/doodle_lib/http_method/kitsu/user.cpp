@@ -47,6 +47,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::
 
   co_return in_handle->make_msg(l_ret.dump());
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::callback(session_data_ptr in_handle) {
+  get_person(in_handle);
+  auto l_p = g_ctx().get<sqlite_database>().get_all<person>();
+  // for (auto&& [l_k, l_v, l_has] : in_handle->url_.params()) {
+  //   if (l_k == "relations")
+  //     for (auto&& i : l_p) i.write_departments_ = true;
+  // }
+  co_return in_handle->make_msg((nlohmann::json{} = l_p).dump());
+}
+
 }  // namespace doodle::http
 
 namespace doodle::http::kitsu {

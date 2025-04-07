@@ -44,6 +44,10 @@ DOODLE_HTTP_FUN(project_all, get, "api/data/projects/all", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN(person_all, get, "api/data/persons", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+
 
 DOODLE_HTTP_FUN(data_user_time_spents_all, get, "api/data/user/time-spents", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;

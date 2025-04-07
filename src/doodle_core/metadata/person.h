@@ -93,6 +93,8 @@ struct DOODLE_CORE_API person {
 
   bool is_generated_from_ldap_;
   std::string ldap_uid_;
+  /// 控制 departments_ 是否写入json 中
+  // bool write_departments_{true};
 
   // from json
   template <typename BasicJsonType>
@@ -177,7 +179,6 @@ struct DOODLE_CORE_API person {
     j["fido_devices"]                        = nlohmann::json::array();
     j["full_name"]                           = p.first_name_ + " " + p.last_name_;
     j["id"]                                  = p.uuid_id_;
-
   }
 };
 }  // namespace doodle

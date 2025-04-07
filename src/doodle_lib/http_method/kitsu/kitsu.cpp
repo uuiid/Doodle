@@ -64,6 +64,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<tasks_to_check_get>())
       .reg(std::make_shared<person_day_off_get>())
       .reg(std::make_shared<project_all_get>())
+      .reg(std::make_shared<person_all_get>())
       .reg(std::make_shared<person_day_off_all_get>())
       .reg(std::make_shared<user_context_get>());
 #endif
