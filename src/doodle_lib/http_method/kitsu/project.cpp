@@ -19,8 +19,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::c
   get_person(in_handle);
   auto& l_sql = g_ctx().get<sqlite_database>();
 
-  if (person_->role_ == person_role_type::admin) co_return in_handle->make_msg("[]");
-
   auto l_list = person_->role_ == person_role_type::admin ? l_sql.get_project_and_status(nullptr)
                                                           : l_sql.get_project_and_status(person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
