@@ -51,6 +51,7 @@ struct computing_time_post_req_data {
 
 struct computing_time_post_req_custom_data {
   uuid project_id;
+  std::string project_name_;
   std::int32_t season;
   std::int32_t episode;
   std::string name;
@@ -62,7 +63,11 @@ struct computing_time_post_req_custom_data {
   boost::uuids::uuid user_id_;
 
   friend void from_json(const nlohmann::json& j, computing_time_post_req_custom_data& p) {
-    j.at("project_id").get_to(p.project_id);
+    if (j.contains("project_id"))
+      j.at("project_id").get_to(p.project_id);
+    else
+      j.at("project_name").get_to(p.project_name_);
+
     j.at("season").get_to(p.season);
     j.at("episode").get_to(p.episode);
     j.at("name").get_to(p.name);
@@ -494,10 +499,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
         "开始时间大于结束时间"
     );
-  if (l_data.project_id.is_nil())
+  if (l_data.project_id.is_nil() && l_data.project_name_.empty())
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "project_id 不可为空"
+        "project 不可为空"
     );
 
   user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id_);
@@ -520,14 +525,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
                   chrono::current_zone(),
                   chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.end_time)
               },
-          .user_remark_ = l_data.remark,
-          .year_month_  = chrono::local_days{l_data.year_month_ / 1},
-          .user_ref_    = l_user.id_,
-          .season_      = l_data.season,
-          .episode_     = l_data.episode,
-          .name_        = l_data.name,
-          .grade_       = l_data.grade,
-          .project_id_  = l_data.project_id
+          .user_remark_  = l_data.remark,
+          .year_month_   = chrono::local_days{l_data.year_month_ / 1},
+          .user_ref_     = l_user.id_,
+          .season_       = l_data.season,
+          .episode_      = l_data.episode,
+          .name_         = l_data.name,
+          .grade_        = l_data.grade,
+          .project_id_   = l_data.project_id,
+          .project_name_ = l_data.project_name_
       }
   );
 

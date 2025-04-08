@@ -25,6 +25,7 @@ struct database_t : boost::totally_ordered<database_t> {
   std::string name_{};
   std::string grade_{};
   uuid project_id_;
+  std::string project_name_{};
 
   friend bool operator<(const database_t& lhs, const database_t& rhs) {
     return lhs.start_time_.get_sys_time() < rhs.start_time_.get_sys_time();
@@ -45,7 +46,10 @@ struct database_t : boost::totally_ordered<database_t> {
     if (p.episode_) j["episode"] = *p.episode_;
     if (!p.name_.empty()) j["name"] = p.name_;
     if (!p.grade_.empty()) j["grade"] = p.grade_;
-    if (!p.project_id_.is_nil()) j["project_id"] = p.project_id_;
+    if (!p.project_id_.is_nil())
+      j["project_id"] = p.project_id_;
+    else
+      j["project_name"] = p.project_name_;
   }
 };
 }  // namespace work_xlsx_task_info_helper

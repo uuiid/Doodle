@@ -200,6 +200,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("name", &work_xlsx_task_info_helper::database_t::name_),
           make_column("grade", &work_xlsx_task_info_helper::database_t::grade_),
           make_column("project_id", &work_xlsx_task_info_helper::database_t::project_id_),
+          make_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_),
           foreign_key(&work_xlsx_task_info_helper::database_t::user_ref_).references(&user_helper::database_t::id_)
       ),
       make_index("user_tab_dingding_index", &user_helper::database_t::dingding_id_),
