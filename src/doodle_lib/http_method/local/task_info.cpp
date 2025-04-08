@@ -240,7 +240,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         l_arg_t->touch_sim                  = true;
         l_arg_t->export_anim_file           = true;
         l_arg_t->create_play_blast_         = true;
+
         l_import_and_render_args->maya_arg_ = l_arg_t;
+        l_import_and_render_args->is_sim_   = true;
       } else {
         auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
         in_json.get_to(*l_arg_t);

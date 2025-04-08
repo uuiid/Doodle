@@ -111,6 +111,7 @@ struct args {
   bool layering_{};
   bool bind_skin_{};
   logger_ptr logger_ptr_{};
+  bool is_sim_{};
 
   boost::asio::awaitable<void> run();
 
@@ -137,6 +138,7 @@ struct args {
     FSys::path skin_{};                 // 对应的骨骼文件
     details::assets_type_enum type_{};  // 类型
     FSys::path maya_file_{};            // 对应的maya文件
+    FSys::path maya_solve_file_{};      // 对应的解算文件
     FSys::path maya_local_file_{};      // 对应的maya文件(从服务器中复制到本地的文件)
 
     FSys::path ue_file_{};      // 对应的ue文件

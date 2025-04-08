@@ -321,11 +321,12 @@ boost::asio::awaitable<void> args::fetch_association_data() {
     if (l_res.result() != boost::beast::http::status::ok)
       throw_exception(doodle_error{"未找到关联数据: {} {}", l_data.id, l_data.maya_file_});
 
-    auto l_json         = nlohmann::json::parse(l_res.body());
+    auto l_json             = nlohmann::json::parse(l_res.body());
 
-    l_data.ue_file_     = l_json.at("ue_file").get<std::string>();
-    l_data.type_        = l_json.at("type").get<details::assets_type_enum>();
-    l_data.ue_prj_path_ = ue_exe_ns::find_ue_project_file(l_data.ue_file_);
+    l_data.ue_file_         = l_json.at("ue_file").get<std::string>();
+    l_data.type_            = l_json.at("type").get<details::assets_type_enum>();
+    l_data.maya_solve_file_ = l_json.at("solve_file_").get<std::string>();
+    l_data.ue_prj_path_     = ue_exe_ns::find_ue_project_file(l_data.ue_file_);
   }
   // 检查文件
   auto l_scene_uuid = boost::uuids::nil_uuid();
@@ -419,9 +420,14 @@ void args::down_files() {
     for (auto&& l_data : import_files_) {
       if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop))
         continue;
-      auto l_local_path       = g_root / project_.code_ / "maya_file";
-      l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
-      l_data.update_files |= copy_diff(l_data.maya_file_, l_data.maya_local_file_, logger_ptr_);
+      auto l_local_path = g_root / project_.code_ / "maya_file";
+      if (is_sim_ && !l_data.maya_solve_file_.empty()) {
+        l_data.maya_local_file_ = l_local_path / l_data.maya_solve_file_.filename();
+        l_data.update_files |= copy_diff(l_data.maya_solve_file_, l_data.maya_local_file_, logger_ptr_);
+      } else {
+        l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
+        l_data.update_files |= copy_diff(l_data.maya_file_, l_data.maya_local_file_, logger_ptr_);
+      }
     }
 }
 
