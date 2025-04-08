@@ -66,6 +66,8 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<project_all_get>())
       .reg(std::make_shared<person_all_get>())
       .reg(std::make_shared<person_day_off_all_get>())
+      .reg(std::make_shared<person_time_spents_day_table_get>())
+      .reg(std::make_shared<person_day_off_1_get>())
       .reg(std::make_shared<user_context_get>());
 #endif
   (*l_router).reg(std::make_shared<deepseek_key_get>());

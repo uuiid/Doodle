@@ -24,5 +24,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> person_day_off_all
 ) {
   co_return in_handle->make_msg("[]");
 }
+boost::asio::awaitable<boost::beast::http::message_generator> person_time_spents_day_table_get::callback(
+    session_data_ptr in_handle
+) {
+  co_return in_handle->make_msg("[]");
+}
+boost::asio::awaitable<boost::beast::http::message_generator> person_day_off_1_get::callback(
+    session_data_ptr in_handle
+) {
+  co_return in_handle->make_msg("[]");
+}
 
 }  // namespace doodle::http

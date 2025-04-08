@@ -6,6 +6,7 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
+// clang-format off
 DOODLE_HTTP_FUN(user_context, get, "api/data/user/context", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
@@ -61,6 +62,12 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(person_day_off_all, get, "api/data/persons/{person_id}/day-offs", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(person_time_spents_day_table, get, "api/data/persons/time-spents/day-table/{year}/{month}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(person_day_off_1, get, "api/data/persons/day-offs/{year}/{month}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(config, get, "api/config", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
@@ -69,4 +76,5 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(deepseek_key, get, "api/doodle/deepseek/key", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+// clang-format on
 }  // namespace doodle::http
