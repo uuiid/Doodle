@@ -436,7 +436,7 @@ boost::asio::awaitable<void> args::crate_skin() {
   for (auto&& l_data : import_files_) {
     if (l_data.is_camera_) continue;  // 相机文件
     if (l_data.file_.extension() == ".abc") continue;
-    if (l_data.maya_local_file_.empty()) continue;  // 这个场景文件
+    if (l_data.maya_local_file_.empty()) continue;  // 防止空文件打开卡死进程
     auto l_import_game_path  = FSys::path{doodle_config::ue4_game} / "auto_light";
     l_data.skin_             = l_import_game_path / l_data.maya_local_file_.stem();
 
