@@ -378,8 +378,8 @@ void args::down_files() {
       case details::assets_type_enum::scene: {
         auto l_original = l_data.ue_file_.lexically_relative(l_root);
         scene_file_     = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-
-        copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+        l_data.update_files =
+            copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
         // 配置文件夹复制
         copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
         // 复制项目文件
@@ -418,7 +418,8 @@ void args::down_files() {
   // 复制maya文件
   if (bind_skin_)
     for (auto&& l_data : import_files_) {
-      if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop))
+      if (!(l_data.type_ == details::assets_type_enum::character || l_data.type_ == details::assets_type_enum::prop ||
+            l_data.type_ == details::assets_type_enum::scene))
         continue;
       auto l_local_path = g_root / project_.code_ / "maya_file";
       if (is_sim_ && !l_data.maya_solve_file_.empty()) {
