@@ -188,6 +188,8 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
           case maya_enum::maya_error_t::cache_path_error:
             throw_exception(doodle_error{"maya 中解算缓存路径不存在"});
             break;
+          case maya_enum::maya_error_t::check_error:
+            throw_exception(doodle_error{"maya 文件中有错误, 具体请点击查看日志"});
           default:
             throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
         }
