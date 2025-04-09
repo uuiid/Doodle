@@ -384,7 +384,7 @@ MSelectionList reference_file::get_all_object() const {
   return l_select;
 }
 std::optional<MDagPath> reference_file::export_group_attr() const {
-  if (get_file_namespace().empty()) return {};
+  // if (get_file_namespace().empty()) return {};
 
   MStatus k_s{};
 

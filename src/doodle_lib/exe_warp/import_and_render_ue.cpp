@@ -482,10 +482,6 @@ boost::asio::awaitable<void> args::crate_skin() {
 }
 
 import_data_t args::gen_import_config() {
-  auto l_maya_out_arg = import_files_ | ranges::views::filter([](const import_file& in_arg) {
-                          return in_arg.type_ != details::assets_type_enum::scene;
-                        }) |
-                        ranges::to_vector;
   import_data_t l_import_data;
   l_import_data.episode    = episodes_;
   l_import_data.shot       = shot_;
@@ -535,7 +531,7 @@ import_data_t args::gen_import_config() {
     );
   }
 
-  l_import_data.files = l_maya_out_arg | ranges::views::transform([](const import_file& in_arg) {
+  l_import_data.files = import_files_ | ranges::views::transform([](const import_file& in_arg) {
                           auto l_file_name_str = in_arg.file_.filename().generic_string();
                           auto l_ext           = in_arg.file_.extension().generic_string();
                           std::string l_type{};

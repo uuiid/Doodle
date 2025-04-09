@@ -243,7 +243,10 @@ MDagPath qcloth_shape::get_shape() const {
   return maya_plug::get_dag_path(obj);
 }
 
-std::string qcloth_shape::get_namespace() const { return m_namespace::get_namespace_from_name(get_node_name(obj)); };
+std::string qcloth_shape::get_namespace() const {
+  auto l_ = m_namespace::get_namespace_from_name(get_node_name(obj));
+  return l_;
+};
 
 void qcloth_shape::cover_cloth_attr(const reference_file& in_handle) const {
   auto l_node    = in_handle.get_file_info_node();
