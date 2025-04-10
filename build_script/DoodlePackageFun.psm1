@@ -72,6 +72,7 @@ function Initialize-Doodle
     Write-Host "开始复制文件"
     &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+    &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
     # 复制安装包
     if ($OnlyOne)
     {
