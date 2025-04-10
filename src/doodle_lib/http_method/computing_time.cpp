@@ -644,6 +644,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
                                   : std::nullopt;
   std::optional<std::string> l_comment =
       l_json.contains("user_remark") ? std::optional{l_json["user_remark"].get<std::string>()} : std::nullopt;
+  std::optional<std::int32_t> l_eps =
+      l_json.contains("episodes") ? std::optional{l_json["episodes"].get<std::int32_t>()} : std::nullopt;
 
   if (l_duration && l_duration->count() <= 0) {
     co_return in_handle->make_error_code_msg(
@@ -680,6 +682,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     for (auto&& l_b : *l_block_ptr) {
       if (l_b.uuid_id_ == l_task_id) {
         l_b.user_remark_   = *l_comment;
+        *l_block_ptr_value = l_b;
+        break;
+      }
+    }
+    co_await g_ctx().get<sqlite_database>().install(l_block_ptr_value);
+  } else if (l_eps) {
+    auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
+    for (auto&& l_b : *l_block_ptr) {
+      if (l_b.uuid_id_ == l_task_id) {
+        l_b.episode_       = *l_eps;
         *l_block_ptr_value = l_b;
         break;
       }
