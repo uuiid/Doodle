@@ -48,4 +48,26 @@ describe('考勤测试', function () {
       expect(req.status).to.equal(200);
     }
   });
+
+  it('自定义任务条目', async function () {
+    const req = await request.post(`${URL}/api/doodle/computing_time/${user_id}/${create_date}/custom`).send({
+      project_name: "测试",
+      season: 1,
+      episode: 1,
+      name: "test",
+      grade: "",
+      user_remark: "",
+      start_time: "2025-04-10 10:26:54",
+      end_time: "2025-04-10 10:26:55"
+    });
+    expect(req.status).to.equal(200);
+    expect(req.body).to.have.keys('id',
+      'start_time', 'end_time',
+      'project_name', 'season', 'episode', 'name', 'grade', 'user_remark'
+    );
+    expect(req.body.start_time).to.equal('2025-03-05 09:00:00.000000');
+    expect(req.body.end_time).to.equal('2025-03-05 18:00:00.000000');
+    const l_id = req.body.id;
+
+  });
 });

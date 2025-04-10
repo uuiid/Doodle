@@ -79,7 +79,7 @@ struct computing_time_post_req_custom_data {
     // 检查数据
     if (p.start_time > p.end_time)
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "开始时间大于结束时间"});
-    if (p.project_id.is_nil())
+    if (p.project_id.is_nil() && p.project_name_.empty())
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "project_id 不能为空"});
   }
 };
@@ -492,18 +492,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   l_data.user_id_ = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
   std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
   l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
-
-  // 检查数据
-  if (l_data.start_time > l_data.end_time)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "开始时间大于结束时间"
-    );
-  if (l_data.project_id.is_nil() && l_data.project_name_.empty())
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "project 不可为空"
-    );
 
   user_helper::database_t l_user = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_data.user_id_);
   auto l_block_ptr               = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
