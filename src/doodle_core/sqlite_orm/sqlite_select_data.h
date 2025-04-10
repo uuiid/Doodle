@@ -355,8 +355,8 @@ struct project_and_status_t {
   std::vector<uuid> mentions_;
   std::vector<uuid> department_mentions_;
 
-  std::vector<person_t> persons_;
-  std::vector<person_t> editors_;
+  person_t persons_;
+  std::optional<person_t> editors_;
   std::vector<task_status_t> task_statuses_;
   std::vector<previews_t> previews_;
   std::vector<attachment_files_t> attachment_files_;

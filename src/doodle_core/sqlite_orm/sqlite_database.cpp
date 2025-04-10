@@ -505,14 +505,12 @@ std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id
         .preview_file_id_ = l_c.preview_file_id_,
     };
     if (l_map_person.contains(l_c.person_id_))
-      l_comment.persons_.emplace_back(
-          get_comments_t::person_t{
-              .uuid_id_    = l_c.person_id_,
-              .first_name_ = l_map_person[l_c.person_id_]->first_name_,
-              .last_name_  = l_map_person[l_c.person_id_]->last_name_,
-              .has_avatar_ = l_map_person[l_c.person_id_]->has_avatar_,
-          }
-      );
+      l_comment.persons_ = get_comments_t::person_t{
+          .uuid_id_    = l_c.person_id_,
+          .first_name_ = l_map_person[l_c.person_id_]->first_name_,
+          .last_name_  = l_map_person[l_c.person_id_]->last_name_,
+          .has_avatar_ = l_map_person[l_c.person_id_]->has_avatar_,
+      };
     if (l_map_task_status.contains(l_c.task_status_id_))
       l_comment.task_statuses_.emplace_back(
           get_comments_t::task_status_t{
@@ -523,14 +521,12 @@ std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id
           }
       );
     if (l_map_editor.contains(l_c.editor_id_))
-      l_comment.editors_.emplace_back(
-          get_comments_t::person_t{
-              .uuid_id_    = l_c.editor_id_,
-              .first_name_ = l_map_editor[l_c.editor_id_]->first_name_,
-              .last_name_  = l_map_editor[l_c.editor_id_]->last_name_,
-              .has_avatar_ = l_map_editor[l_c.editor_id_]->has_avatar_,
-          }
-      );
+      l_comment.editors_ = get_comments_t::person_t{
+          .uuid_id_    = l_c.editor_id_,
+          .first_name_ = l_map_editor[l_c.editor_id_]->first_name_,
+          .last_name_  = l_map_editor[l_c.editor_id_]->last_name_,
+          .has_avatar_ = l_map_editor[l_c.editor_id_]->has_avatar_,
+      };
     if (l_map_acknowledgements.contains(l_c.uuid_id_))
       l_comment.acknowledgements_ = l_map_acknowledgements[l_c.uuid_id_];
     if (l_map_previews.contains(l_c.uuid_id_)) {
