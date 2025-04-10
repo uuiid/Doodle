@@ -55,7 +55,7 @@ function Initialize-Doodle
     $DoodleSource = Convert-Path (Get-ChildItem "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP" -Directory)[0]
     $DoodleBuildRelease = Convert-Path "$DoodleBuildRoot/Ninja_release"
     $DoodleKitsuRoot = "E:\source\kitsu"
-    $DoodleTimePath = "$DoodleKitsuRoot\dist\time"
+    $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
 
     if ($BuildKitsu)
@@ -150,6 +150,7 @@ function Initialize-Doodle
     )
 
     &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+    &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
 }
 
 
