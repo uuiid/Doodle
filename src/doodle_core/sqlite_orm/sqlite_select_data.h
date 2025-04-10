@@ -4,8 +4,11 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/attachment_file.h>
+#include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
@@ -228,35 +231,162 @@ struct project_and_status_t {
 
   // to json
   friend void to_json(nlohmann::json& j, const project_and_status_t& p) {
-    j["id"] = p.uuid_id_;
-    j["name"] = p.name_;
-    j["code"] = p.code_;
-    j["description"] = p.description_;
-    j["shotgun_id"] = p.shotgun_id_;
-    j["file_tree"] = p.file_tree_;
-    j["data"] = p.data_;
-    j["has_avatar"] = p.has_avatar_;
-    j["fps"] = p.fps_;
-    j["ratio"] = p.ratio_;
-    j["resolution"] = p.resolution_;
-    j["production_type"] = p.production_type_;
-    j["production_style"] = p.production_style_;
-    j["start_date"] = p.start_date_;
-    j["end_date"] = p.end_date_;
-    j["man_days"] = p.man_days_;
-    j["nb_episodes"] = p.nb_episodes_;
-    j["episode_span"] = p.episode_span_;
-    j["max_retakes"] = p.max_retakes_;
-    j["is_clients_isolated"] = p.is_clients_isolated_;
-    j["is_preview_download_allowed"] = p.is_preview_download_allowed_;
-    j["is_set_preview_automated"] = p.is_set_preview_automated_;
-    j["homepage"] = p.homepage_;
-    j["is_publish_default_for_artists"] = p.is_publish_default_for_artists_;
-    j["hd_bitrate_compression"] = p.hd_bitrate_compression_;
-    j["ld_bitrate_compression"] = p.ld_bitrate_compression_;
-    j["project_status_id"] = p.project_status_id_;
+    j["id"]                                 = p.uuid_id_;
+    j["name"]                               = p.name_;
+    j["code"]                               = p.code_;
+    j["description"]                        = p.description_;
+    j["shotgun_id"]                         = p.shotgun_id_;
+    j["file_tree"]                          = p.file_tree_;
+    j["data"]                               = p.data_;
+    j["has_avatar"]                         = p.has_avatar_;
+    j["fps"]                                = p.fps_;
+    j["ratio"]                              = p.ratio_;
+    j["resolution"]                         = p.resolution_;
+    j["production_type"]                    = p.production_type_;
+    j["production_style"]                   = p.production_style_;
+    j["start_date"]                         = p.start_date_;
+    j["end_date"]                           = p.end_date_;
+    j["man_days"]                           = p.man_days_;
+    j["nb_episodes"]                        = p.nb_episodes_;
+    j["episode_span"]                       = p.episode_span_;
+    j["max_retakes"]                        = p.max_retakes_;
+    j["is_clients_isolated"]                = p.is_clients_isolated_;
+    j["is_preview_download_allowed"]        = p.is_preview_download_allowed_;
+    j["is_set_preview_automated"]           = p.is_set_preview_automated_;
+    j["homepage"]                           = p.homepage_;
+    j["is_publish_default_for_artists"]     = p.is_publish_default_for_artists_;
+    j["hd_bitrate_compression"]             = p.hd_bitrate_compression_;
+    j["ld_bitrate_compression"]             = p.ld_bitrate_compression_;
+    j["project_status_id"]                  = p.project_status_id_;
     j["default_preview_background_file_id"] = p.default_preview_background_file_id_;
-    j["project_status_name"] = p.project_status_name_;
+    j["project_status_name"]                = p.project_status_name_;
+  }
+};
+
+  struct get_comments_t {
+  decltype(comment::uuid_id_) uuid_id_;
+  decltype(comment::shotgun_id_) shotgun_id_;
+  decltype(comment::object_id_) object_id_;
+  decltype(comment::object_type_) object_type_;
+  decltype(comment::text_) text_;
+  decltype(comment::data_) data_;
+  decltype(comment::replies_) replies_;
+  decltype(comment::checklist_) checklist_;
+  decltype(comment::pinned_) pinned_;
+  decltype(comment::links) links_;
+  decltype(comment::created_at_) created_at_;
+  decltype(comment::updated_at_) updated_at_;
+  decltype(comment::task_status_id_) task_status_id_;
+  decltype(comment::person_id_) person_id_;
+  decltype(comment::editor_id_) editor_id_;  // 编辑人
+  decltype(comment::preview_file_id_) preview_file_id_;
+
+  struct person_t {
+    decltype(person::uuid_id_) uuid_id_;
+    decltype(person::first_name_) first_name_;
+    decltype(person::last_name_) last_name_;
+    decltype(person::has_avatar_) has_avatar_;
+
+    // to json
+    friend void to_json(nlohmann::json& j, const person_t& p) {
+      j["id"]         = p.uuid_id_;
+      j["first_name"] = p.first_name_;
+      j["last_name"]  = p.last_name_;
+      j["has_avatar"] = p.has_avatar_;
+    }
+  };
+  struct task_status_t {
+    decltype(task_status::uuid_id_) uuid_id_;
+    decltype(task_status::name_) name_;
+    decltype(task_status::color_) color_;
+    decltype(task_status::short_name_) short_name_;
+    // to json
+    friend void to_json(nlohmann::json& j, const task_status_t& p) {
+      j["id"]         = p.uuid_id_;
+      j["name"]       = p.name_;
+      j["color"]      = p.color_;
+      j["short_name"] = p.short_name_;
+    }
+  };
+  struct previews_t {
+    decltype(preview_file::uuid_id_) uuid_id_;
+    decltype(preview_file::task_id_) task_id_;
+    decltype(preview_file::revision_) revision_;
+    decltype(preview_file::extension_) extension_;
+    decltype(preview_file::width_) width_;
+    decltype(preview_file::height_) height_;
+    decltype(preview_file::duration_) duration_;
+    decltype(preview_file::status_) status_;
+    decltype(preview_file::validation_status_) validation_status_;
+    decltype(preview_file::original_name_) original_name_;
+    decltype(preview_file::position_) position_;
+    decltype(preview_file::annotations_) annotations_;
+    // to json
+    friend void to_json(nlohmann::json& j, const previews_t& p) {
+      j["id"]                = p.uuid_id_;
+      j["task_id"]           = p.task_id_;
+      j["revision"]          = p.revision_;
+      j["extension"]         = p.extension_;
+      j["width"]             = p.width_;
+      j["height"]            = p.height_;
+      j["duration"]          = p.duration_;
+      j["status"]            = p.status_;
+      j["validation_status"] = p.validation_status_;
+      j["original_name"]     = p.original_name_;
+      j["position"]          = p.position_;
+      j["annotations"]       = p.annotations_;
+    }
+  };
+  struct attachment_files_t {
+    decltype(attachment_file::uuid_id_) uuid_id_;
+    decltype(attachment_file::name_) name_;
+    decltype(attachment_file::extension_) extension_;
+    decltype(attachment_file::size_) size_;
+    // to json
+    friend void to_json(nlohmann::json& j, const attachment_files_t& p) {
+      j["id"]        = p.uuid_id_;
+      j["name"]      = p.name_;
+      j["extension"] = p.extension_;
+      j["size"]      = p.size_;
+    }
+  };
+
+  std::vector<uuid> acknowledgements_;
+  std::vector<uuid> mentions_;
+  std::vector<uuid> department_mentions_;
+
+  std::vector<person_t> persons_;
+  std::vector<person_t> editors_;
+  std::vector<task_status_t> task_statuses_;
+  std::vector<previews_t> previews_;
+  std::vector<attachment_files_t> attachment_files_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const get_comments_t& p) {
+    j["id"]                  = p.uuid_id_;
+    j["shotgun_id"]          = p.shotgun_id_;
+    j["object_id"]           = p.object_id_;
+    j["object_type"]         = p.object_type_;
+    j["text"]                = p.text_;
+    j["data"]                = p.data_;
+    j["replies"]             = p.replies_;
+    j["checklist"]           = p.checklist_;
+    j["pinned"]              = p.pinned_;
+    j["links"]               = p.links_;
+    j["created_at"]          = p.created_at_;
+    j["updated_at"]          = p.updated_at_;
+    j["task_status_id"]      = p.task_status_id_;
+    j["person_id"]           = p.person_id_;
+    j["editor_id"]           = p.editor_id_;
+    j["preview_file_id"]     = p.preview_file_id_;
+    j["acknowledgements"]    = p.acknowledgements_;
+    j["mentions"]            = p.mentions_;
+    j["department_mentions"] = p.department_mentions_;
+    j["persons"]             = p.persons_;
+    j["editors"]             = p.editors_;
+    j["task_statuses"]       = p.task_statuses_;
+    j["previews"]            = p.previews_;
+    j["attachment_files"]    = p.attachment_files_;
   }
 };
 

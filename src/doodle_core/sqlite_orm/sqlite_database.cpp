@@ -396,6 +396,183 @@ std::vector<project_and_status_t> sqlite_database::get_project_and_status(const 
   return l_r;
 }
 
+std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id) {
+  using namespace sqlite_orm;
+  auto l_comm = impl_->storage_any_.get_all<comment>(
+      where(c(&comment::object_id_) == in_task_id), order_by(&comment::created_at_).desc()
+  );
+
+  auto l_person_ids =
+      l_comm | ranges::views::transform([](const comment& in) { return in.person_id_; }) | ranges::to_vector;
+  l_person_ids |= ranges::actions::remove_if([](const uuid& in) { return in.is_nil(); }) | ranges::actions::unique;
+  auto l_task_status_ids =
+      l_comm | ranges::views::transform([](const comment& in) { return in.task_status_id_; }) | ranges::to_vector;
+  l_task_status_ids |= ranges::actions::remove_if([](const uuid& in) { return in.is_nil(); }) | ranges::actions::unique;
+  auto l_editor_ids =
+      l_comm | ranges::views::transform([](const comment& in) { return in.editor_id_; }) | ranges::to_vector;
+  l_editor_ids |= ranges::actions::remove_if([](const uuid& in) { return in.is_nil(); }) | ranges::actions::unique;
+  auto l_comment_ids =
+      l_comm | ranges::views::transform([](const comment& in) { return in.uuid_id_; }) | ranges::to_vector;
+  auto l_persons       = impl_->storage_any_.get_all<person>(where(in(&person::uuid_id_, l_person_ids)));
+  auto l_task_statuses = impl_->storage_any_.get_all<task_status>(where(in(&task_status::uuid_id_, l_task_status_ids)));
+  auto l_editors       = impl_->storage_any_.get_all<person>(where(in(&person::uuid_id_, l_editor_ids)));
+  auto l_acknowledgements =
+      impl_->storage_any_.get_all<comment_acknoledgments>(where(in(&comment_acknoledgments::comment_id_, l_comment_ids))
+      );
+
+  struct previews_and_comment_id_t {
+    decltype(preview_file::uuid_id_) uuid_id_;
+    decltype(preview_file::task_id_) task_id_;
+    decltype(preview_file::revision_) revision_;
+    decltype(preview_file::extension_) extension_;
+    decltype(preview_file::width_) width_;
+    decltype(preview_file::height_) height_;
+    decltype(preview_file::duration_) duration_;
+    decltype(preview_file::status_) status_;
+    decltype(preview_file::validation_status_) validation_status_;
+    decltype(preview_file::original_name_) original_name_;
+    decltype(preview_file::position_) position_;
+    decltype(preview_file::annotations_) annotations_;
+
+    decltype(comment_preview_link::comment_id_) comment_id_;
+  };
+  constexpr auto sql_orm_previews_and_comment_id_t = struct_<previews_and_comment_id_t>(
+      &preview_file::uuid_id_, &preview_file::task_id_, &preview_file::revision_, &preview_file::extension_,
+      &preview_file::width_, &preview_file::height_, &preview_file::duration_, &preview_file::status_,
+      &preview_file::validation_status_, &preview_file::original_name_, &preview_file::position_,
+      &preview_file::annotations_, &comment_preview_link::comment_id_
+  );
+  auto l_previews = impl_->storage_any_.select(
+      sql_orm_previews_and_comment_id_t,
+      join<comment_preview_link>(on(c(&comment_preview_link::comment_id_) == c(&comment::uuid_id_))),
+      where(in(&comment_preview_link::comment_id_, l_comment_ids))
+  );
+  auto l_mention =
+      impl_->storage_any_.get_all<comment_mentions>(where(in(&comment_mentions::comment_id_, l_comment_ids)));
+  auto l_department_mention = impl_->storage_any_.get_all<comment_department_mentions>(
+      where(in(&comment_department_mentions::comment_id_, l_comment_ids))
+  );
+  auto l_attachment_file =
+      impl_->storage_any_.get_all<attachment_file>(where(in(&attachment_file::comment_id_, l_comment_ids)));
+
+  auto l_map_person = l_persons |
+                      ranges::views::transform([](const person& in) { return std::make_pair(in.uuid_id_, &in); }) |
+                      ranges::to<std::map<uuid, const person*>>();
+
+  auto l_map_task_status =
+      l_task_statuses |
+      ranges::views::transform([](const task_status& in) { return std::make_pair(in.uuid_id_, &in); }) |
+      ranges::to<std::map<uuid, const task_status*>>();
+
+  auto l_map_editor = l_editors |
+                      ranges::views::transform([](const person& in) { return std::make_pair(in.uuid_id_, &in); }) |
+                      ranges::to<std::map<uuid, const person*>>();
+
+  std::map<uuid, std::vector<uuid>> l_map_acknowledgements;
+  for (auto&& l_a : l_acknowledgements) l_map_acknowledgements[l_a.comment_id_].push_back(l_a.person_id_);
+
+  std::map<uuid, std::vector<previews_and_comment_id_t*>> l_map_previews{};
+  for (auto&& l_p : l_previews) l_map_previews[l_p.comment_id_].push_back(&l_p);
+
+  std::map<uuid, std::vector<uuid>> l_map_mentions{};
+  for (auto&& l_m : l_mention) l_map_mentions[l_m.comment_id_].push_back(l_m.person_id_);
+
+  std::map<uuid, std::vector<uuid>> l_map_department_mentions{};
+  for (auto&& l_m : l_department_mention) l_map_department_mentions[l_m.comment_id_].push_back(l_m.department_id_);
+
+  std::map<uuid, std::vector<attachment_file*>> l_map_attachment_file{};
+  for (auto&& l_m : l_attachment_file) l_map_attachment_file[l_m.comment_id_].push_back(&l_m);
+
+  std::vector<get_comments_t> l_result;
+  l_result.reserve(l_comm.size());
+  for (auto&& l_c : l_comm) {
+    get_comments_t l_comment{
+        .uuid_id_         = l_c.uuid_id_,
+        .shotgun_id_      = l_c.shotgun_id_,
+        .object_id_       = l_c.object_id_,
+        .object_type_     = l_c.object_type_,
+        .text_            = l_c.text_,
+        .data_            = l_c.data_,
+        .replies_         = l_c.replies_,
+        .checklist_       = l_c.checklist_,
+        .pinned_          = l_c.pinned_,
+        .links_           = l_c.links,
+        .created_at_      = l_c.created_at_,
+        .updated_at_      = l_c.updated_at_,
+        .task_status_id_  = l_c.task_status_id_,
+        .person_id_       = l_c.person_id_,
+        .editor_id_       = l_c.editor_id_,
+        .preview_file_id_ = l_c.preview_file_id_,
+    };
+    if (l_map_person.contains(l_c.person_id_))
+      l_comment.persons_.emplace_back(
+          get_comments_t::person_t{
+              .uuid_id_    = l_c.person_id_,
+              .first_name_ = l_map_person[l_c.person_id_]->first_name_,
+              .last_name_  = l_map_person[l_c.person_id_]->last_name_,
+              .has_avatar_ = l_map_person[l_c.person_id_]->has_avatar_,
+          }
+      );
+    if (l_map_task_status.contains(l_c.task_status_id_))
+      l_comment.task_statuses_.emplace_back(
+          get_comments_t::task_status_t{
+              .uuid_id_    = l_c.task_status_id_,
+              .name_       = l_map_task_status[l_c.task_status_id_]->name_,
+              .color_      = l_map_task_status[l_c.task_status_id_]->color_,
+              .short_name_ = l_map_task_status[l_c.task_status_id_]->short_name_,
+          }
+      );
+    if (l_map_editor.contains(l_c.editor_id_))
+      l_comment.editors_.emplace_back(
+          get_comments_t::person_t{
+              .uuid_id_    = l_c.editor_id_,
+              .first_name_ = l_map_editor[l_c.editor_id_]->first_name_,
+              .last_name_  = l_map_editor[l_c.editor_id_]->last_name_,
+              .has_avatar_ = l_map_editor[l_c.editor_id_]->has_avatar_,
+          }
+      );
+    if (l_map_acknowledgements.contains(l_c.uuid_id_))
+      l_comment.acknowledgements_ = l_map_acknowledgements[l_c.uuid_id_];
+    if (l_map_previews.contains(l_c.uuid_id_)) {
+      l_comment.previews_.reserve(l_map_previews.at(l_c.uuid_id_).size());
+      for (auto&& i : l_map_previews[l_c.uuid_id_])
+        l_comment.previews_.emplace_back(
+            get_comments_t::previews_t{
+                .uuid_id_           = i->uuid_id_,
+                .task_id_           = i->task_id_,
+                .revision_          = i->revision_,
+                .extension_         = i->extension_,
+                .width_             = i->width_,
+                .height_            = i->height_,
+                .duration_          = i->duration_,
+                .status_            = i->status_,
+                .validation_status_ = i->validation_status_,
+                .original_name_     = i->original_name_,
+                .position_          = i->position_,
+                .annotations_       = i->annotations_
+            }
+        );
+    }
+    if (l_map_mentions.contains(l_c.uuid_id_)) l_comment.mentions_ = l_map_mentions.at(l_c.uuid_id_);
+    if (l_map_department_mentions.contains(l_c.uuid_id_))
+      l_comment.department_mentions_ = l_map_department_mentions.at(l_c.uuid_id_);
+    if (l_map_attachment_file.contains(l_c.uuid_id_)) {
+      l_comment.attachment_files_.reserve(l_map_attachment_file.at(l_c.uuid_id_).size());
+      for (auto&& i : l_map_attachment_file[l_c.uuid_id_])
+        l_comment.attachment_files_.emplace_back(
+            get_comments_t::attachment_files_t{
+                .uuid_id_   = i->uuid_id_,
+                .name_      = i->name_,
+                .extension_ = i->extension_,
+                .size_      = i->size_,
+            }
+        );
+    }
+    l_result.emplace_back(std::move(l_comment));
+  }
+  return l_result;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
