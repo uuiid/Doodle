@@ -54,6 +54,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get
   auto l_p1 = sql.get_preson_tasks_to_check(*person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get::callback(session_data_ptr in_handle) {
+  get_person(in_handle);
+  auto l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
+
+  auto& sql = g_ctx().get<sqlite_database>();
+  auto l_p1 = sql.get_comments(l_task_id);
+  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+}
 
 }  // namespace doodle::http
 
