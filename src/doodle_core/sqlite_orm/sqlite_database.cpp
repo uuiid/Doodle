@@ -619,13 +619,11 @@ work_xlsx_task_info_helper::database_t sqlite_database::get_by_uuid<work_xlsx_ta
 }
 template <>
 person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
-  auto l_p    = impl_->get_by_uuid<person>(in_uuid);
-  auto l_list = impl_->storage_any_.select(
-      sqlite_orm::columns(&person_department_link::department_id_),
+  auto l_p         = impl_->get_by_uuid<person>(in_uuid);
+  l_p.departments_ = impl_->storage_any_.select(
+      &person_department_link::department_id_,
       sqlite_orm::where(sqlite_orm::c(&person_department_link::person_id_) == in_uuid)
   );
-  l_p.departments_ = l_list | ranges::views::transform([](const std::tuple<uuid>& in) { return std::get<uuid>(in); }) |
-                     ranges::to_vector;
   return l_p;
 }
 
