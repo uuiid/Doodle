@@ -53,6 +53,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
 
   if (l_json.contains("UE_path")) core_set::get_set().ue4_path = l_json["UE_path"].get<std::string>();
   if (l_json.contains("UE_version")) core_set::get_set().ue4_version = l_json["UE_version"].get<std::string>();
+  // D:\Program Files\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor.exe
+  if (!FSys::exists(core_set::get_set().ue4_path / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"))
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "UE4路径不正确"});
+
   core_set::get_set().save();
   FSys::path l_maya_path{};
   try {
