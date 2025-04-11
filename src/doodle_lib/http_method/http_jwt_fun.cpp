@@ -27,6 +27,20 @@ void http_jwt_fun::get_person(const session_data_ptr& in_data) {
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   person_ = std::make_shared<person>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
 }
+
+void http_jwt_fun::is_project_manager(const uuid& in_project_id) const;
+{
+  if (!person_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  if (!(  //
+          person_->role_ == person_role_type::admin ||
+          (person_->role_ == person_role_type::manager &&
+           g_ctx().get<sqlite_database>().is_person_in_project(*person_, in_project_id))  //
+      )                                                                                   //
+  )
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+bool http_jwt_fun::is_admin() const { return person_ && person_->role_ == person_role_type::admin; }
+
 boost::asio::awaitable<boost::beast::http::message_generator> http_jwt_fun::callback(session_data_ptr in_handle) {
   get_person(in_handle);
   return http_function::callback(in_handle);
