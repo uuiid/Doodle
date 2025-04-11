@@ -113,5 +113,6 @@ class sqlite_database {
   std::vector<project_and_status_t> get_project_and_status(const std::shared_ptr<person>& in_user);
 
   std::vector<get_comments_t> get_comments(const uuid& in_task_id);
+  std::optional<project_task_type_link> get_project_task_type_link(const uuid& in_project_id, const uuid& in_task_type_id);
 };
 }  // namespace doodle

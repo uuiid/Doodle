@@ -57,6 +57,13 @@ struct project_task_type_link {
   uuid project_id_;
   uuid task_type_id_;
   std::optional<std::int32_t> priority_;
+
+  // form json
+  friend void from_json(const nlohmann::json& j, project_task_type_link& p) {
+
+    j.at("task_type_id").get_to(p.task_type_id_);
+    if (j.contains("priority")) j.at("priority").get_to(p.priority_);
+  }
 };
 
 struct project_task_status_link {

@@ -567,6 +567,17 @@ std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id
   return l_result;
 }
 
+std::optional<project_task_type_link> sqlite_database::get_project_task_type_link(
+    const uuid& in_project_id, const uuid& in_task_type_id
+) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<project_task_type_link>(where(
+      c(&project_task_type_link::project_id_) == in_project_id &&
+      c(&project_task_type_link::task_type_id_) == in_task_type_id
+  ));
+  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
