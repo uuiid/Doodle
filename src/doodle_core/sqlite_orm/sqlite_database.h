@@ -119,5 +119,8 @@ class sqlite_database {
   std::optional<project_task_status_link> get_project_task_status_link(
       const uuid& in_project_id, const uuid& in_task_status_uuid
   );
+  std::optional<project_asset_type_link> get_project_asset_type_link(
+      const uuid& in_project_id, const uuid& in_asset_type_uuid
+  );
 };
 }  // namespace doodle

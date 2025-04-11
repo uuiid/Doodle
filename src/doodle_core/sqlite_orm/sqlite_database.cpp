@@ -589,6 +589,18 @@ std::optional<project_task_status_link> sqlite_database::get_project_task_status
   return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
 }
 
+std::optional<project_asset_type_link> sqlite_database::get_project_asset_type_link(
+    const uuid& in_project_id, const uuid& in_asset_type_uuid
+) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<project_asset_type_link>(where(
+      c(&project_asset_type_link::project_id_) == in_project_id &&
+      c(&project_asset_type_link::asset_type_id_) == in_asset_type_uuid
+  ));
+  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+}
+
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
