@@ -122,5 +122,7 @@ class sqlite_database {
   std::optional<project_asset_type_link> get_project_asset_type_link(
       const uuid& in_project_id, const uuid& in_asset_type_uuid
   );
+  // 查询人员是否在项目团队中
+  bool is_person_in_project(const person& in_person, const uuid& in_project_id);
 };
 }  // namespace doodle
