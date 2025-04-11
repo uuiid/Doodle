@@ -31,10 +31,10 @@ void http_jwt_fun::get_person(const session_data_ptr& in_data) {
 void http_jwt_fun::is_project_manager(const uuid& in_project_id) const;
 {
   if (!person_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
-  if (!(  //
-          person_->role_ == person_role_type::admin ||
-          (person_->role_ == person_role_type::manager &&
-           g_ctx().get<sqlite_database>().is_person_in_project(*person_, in_project_id))  //
+  if (!(                                                                                  //
+          person_->role_ == person_role_type::admin ||                                    // 是管理员
+          (person_->role_ == person_role_type::manager &&                                 //
+           g_ctx().get<sqlite_database>().is_person_in_project(*person_, in_project_id))  // 是项目经理并且在项目中
       )                                                                                   //
   )
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
