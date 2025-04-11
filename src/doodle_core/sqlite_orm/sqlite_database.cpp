@@ -512,14 +512,12 @@ std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id
           .has_avatar_ = l_map_person[l_c.person_id_]->has_avatar_,
       };
     if (l_map_task_status.contains(l_c.task_status_id_))
-      l_comment.task_statuses_.emplace_back(
-          get_comments_t::task_status_t{
-              .uuid_id_    = l_c.task_status_id_,
-              .name_       = l_map_task_status[l_c.task_status_id_]->name_,
-              .color_      = l_map_task_status[l_c.task_status_id_]->color_,
-              .short_name_ = l_map_task_status[l_c.task_status_id_]->short_name_,
-          }
-      );
+      l_comment.task_statuses_ = get_comments_t::task_status_t{
+          .uuid_id_    = l_c.task_status_id_,
+          .name_       = l_map_task_status[l_c.task_status_id_]->name_,
+          .color_      = l_map_task_status[l_c.task_status_id_]->color_,
+          .short_name_ = l_map_task_status[l_c.task_status_id_]->short_name_,
+      };
     if (l_map_editor.contains(l_c.editor_id_))
       l_comment.editors_ = get_comments_t::person_t{
           .uuid_id_    = l_c.editor_id_,

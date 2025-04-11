@@ -263,7 +263,7 @@ struct project_and_status_t {
   }
 };
 
-  struct get_comments_t {
+struct get_comments_t {
   decltype(comment::uuid_id_) uuid_id_;
   decltype(comment::shotgun_id_) shotgun_id_;
   decltype(comment::object_id_) object_id_;
@@ -357,7 +357,7 @@ struct project_and_status_t {
 
   person_t persons_;
   std::optional<person_t> editors_;
-  std::vector<task_status_t> task_statuses_;
+  task_status_t task_statuses_;
   std::vector<previews_t> previews_;
   std::vector<attachment_files_t> attachment_files_;
 
@@ -384,7 +384,7 @@ struct project_and_status_t {
     j["department_mentions"] = p.department_mentions_;
     j["persons"]             = p.persons_;
     j["editors"]             = p.editors_;
-    j["task_statuses"]       = p.task_statuses_;
+    j["task_status"]         = p.task_statuses_;
     j["previews"]            = p.previews_;
     j["attachment_files"]    = p.attachment_files_;
   }
