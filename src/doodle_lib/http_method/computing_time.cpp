@@ -645,7 +645,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   std::optional<std::string> l_comment =
       l_json.contains("user_remark") ? std::optional{l_json["user_remark"].get<std::string>()} : std::nullopt;
   std::optional<std::int32_t> l_eps =
-      l_json.contains("episodes") ? std::optional{l_json["episodes"].get<std::int32_t>()} : std::nullopt;
+      l_json.contains("episode") ? std::optional{l_json["episode"].get<std::int32_t>()} : std::nullopt;
 
   if (l_duration && l_duration->count() <= 0) {
     co_return in_handle->make_error_code_msg(
