@@ -615,6 +615,8 @@ DOODLE_GET_BY_UUID_SQL(project_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(server_task_info)
+DOODLE_GET_BY_UUID_SQL(project_status)
+DOODLE_GET_BY_UUID_SQL(project)
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 
 DOODLE_GET_ALL_SQL(project_helper::database_t)

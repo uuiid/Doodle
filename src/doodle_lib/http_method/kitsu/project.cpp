@@ -27,7 +27,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::c
 boost::asio::awaitable<boost::beast::http::message_generator> project_get::callback(session_data_ptr in_handle) {
   get_person(in_handle);
   const auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("project_id"));
-  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project>(l_uuid);
+  auto l_list       = g_ctx().get<sqlite_database>().get_by_uuid<project>(l_uuid);
+  nlohmann::json l_j{l_list};
+  l_j["project_status_name"] =
+      g_ctx().get<sqlite_database>().get_by_uuid<project_status>(l_list.project_status_id_).name_;
   co_return in_handle->make_msg(nlohmann::json{l_list}.dump());
 }
 
