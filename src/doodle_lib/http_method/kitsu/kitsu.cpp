@@ -55,6 +55,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<auth_login_post>())
       .reg(std::make_shared<project_c_post>())
       .reg(std::make_shared<project_settings_task_types_post>())
+      .reg(std::make_shared<project_settings_task_status_post>())
       // get
       .reg(std::make_shared<with_tasks_get>())
       .reg(std::make_shared<project_get>())

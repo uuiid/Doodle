@@ -578,6 +578,17 @@ std::optional<project_task_type_link> sqlite_database::get_project_task_type_lin
   return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
 }
 
+std::optional<project_task_status_link> sqlite_database::get_project_task_status_link(
+    const uuid& in_project_id, const uuid& in_task_status_uuid
+) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<project_task_status_link>(where(
+      c(&project_task_status_link::project_id_) == in_project_id &&
+      c(&project_task_status_link::task_status_id_) == in_task_status_uuid
+  ));
+  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
@@ -627,7 +638,32 @@ DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(server_task_info)
 DOODLE_GET_BY_UUID_SQL(project_status)
-DOODLE_GET_BY_UUID_SQL(project)
+template <>
+project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
+  using namespace sqlite_orm;
+  auto l_prj  = impl_->get_by_uuid<project>(in_uuid);
+  l_prj.team_ = impl_->storage_any_.select(
+      &project_person_link::person_id_, where(c(&project_person_link::project_id_) == in_uuid)
+  );
+  l_prj.asset_types_ = impl_->storage_any_.select(
+      &project_asset_type_link::asset_type_id_, where(c(&project_asset_type_link::project_id_) == in_uuid)
+  );
+  l_prj.task_statuses_ = impl_->storage_any_.select(
+      &project_task_status_link::uuid_id_, where(c(&project_task_status_link::project_id_) == in_uuid)
+  );
+  l_prj.task_types_ = impl_->storage_any_.select(
+      &project_task_type_link::task_type_id_, where(c(&project_task_type_link::project_id_) == in_uuid)
+  );
+  l_prj.status_automations_ = impl_->storage_any_.select(
+      &project_status_automation_link::status_automation_id_,
+      where(c(&project_status_automation_link::project_id_) == in_uuid)
+  );
+  l_prj.preview_background_files_ = impl_->storage_any_.select(
+      &project_preview_background_file_link::preview_background_file_id_,
+      where(c(&project_preview_background_file_link::project_id_) == in_uuid)
+  );
+  return l_prj;
+}
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 
 DOODLE_GET_ALL_SQL(project_helper::database_t)
@@ -688,6 +724,8 @@ DOODLE_INSTALL_SQL(task_status)
 DOODLE_INSTALL_SQL(task_type)
 DOODLE_INSTALL_SQL(asset_type)
 DOODLE_INSTALL_SQL(task_type_asset_type_link)
+DOODLE_INSTALL_SQL(project_task_type_link)
+DOODLE_INSTALL_SQL(project_task_status_link)
 DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(person)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)

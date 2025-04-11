@@ -67,6 +67,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
       nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(l_project_id)}.dump()
   );
 }
+boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_status_post::callback(
+    session_data_ptr in_handle
+) {
+  get_person(in_handle);
+  if (person_->role_ != person_role_type::admin && person_->role_ != person_role_type::manager)
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_json       = in_handle->get_json();
+  auto l_project_id = boost::lexical_cast<uuid>(in_handle->capture_->get("project_id"));
+  auto l_status_id  = l_json["task_status_id"].get<uuid>();
+  auto l_prj_task_status_link = std::make_shared<project_task_status_link>();
+  l_prj_task_status_link->project_id_ = l_project_id;
+  l_prj_task_status_link->task_status_id_ = l_status_id;
+  if (!g_ctx().get<sqlite_database>().get_project_task_status_link(l_project_id, l_status_id))
+    co_await g_ctx().get<sqlite_database>().install(l_prj_task_status_link);
+  co_return in_handle->make_msg(
+      nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(l_project_id)}.dump()
+  );
+}
 
 }  // namespace doodle::http
 
