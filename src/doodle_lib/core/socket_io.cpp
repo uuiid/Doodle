@@ -117,7 +117,7 @@ class socket_io_http_post : public socket_io_http_base_fun {
     l_body.erase(0, 1);
     auto l_pack = socket_io_packet::parse(l_body);
     l_sid_data->parse_socket_io(l_pack);
-    co_return in_handle->make_msg("{}");
+    co_return in_handle->make_msg("{}", boost::beast::http::status::ok);
   }
 };
 

@@ -613,14 +613,10 @@ tl::expected<boost::beast::http::message_generator, std::string> session_data::m
   return tl::expected<boost::beast::http::message_generator, std::string>{std::move(l_res)};
 }
 boost::beast::http::response<boost::beast::http::string_body> session_data::make_msg(
-    std::string&& in_body, const std::string_view& mine_type
+    std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
 ) {
   ;
-  boost::beast::http::response<boost::beast::http::string_body> l_res{
-      req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
-                                                             : boost::beast::http::status::ok,
-      version_
-  };
+  boost::beast::http::response<boost::beast::http::string_body> l_res{in_status, version_};
   l_res.set(boost::beast::http::field::content_type, mine_type);
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_res.set(boost::beast::http::field::access_control_allow_origin, "*");

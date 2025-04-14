@@ -66,10 +66,20 @@ class session_data {
   );
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body) {
-    return make_msg(std::move(in_body), "application/json; charset=utf-8");
+    return make_msg(
+        std::move(in_body), "application/json; charset=utf-8",
+        req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
+                                                               : boost::beast::http::status::ok
+    );
   }
   boost::beast::http::response<boost::beast::http::string_body> make_msg(
-      std::string&& in_body, const std::string_view& mine_type
+      std::string&& in_body, boost::beast::http::status in_status
+  ) {
+    return make_msg(std::move(in_body), "application/json; charset=utf-8", in_status);
+  }
+
+  boost::beast::http::response<boost::beast::http::string_body> make_msg(
+      std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
   );
   tl::expected<boost::beast::http::message_generator, std::string> make_msg(
       const FSys::path& in_path, const std::string_view& mine_type
