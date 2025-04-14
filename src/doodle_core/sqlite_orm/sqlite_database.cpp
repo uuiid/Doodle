@@ -602,13 +602,10 @@ std::optional<project_asset_type_link> sqlite_database::get_project_asset_type_l
 bool sqlite_database::is_person_in_project(const person& in_person, const uuid& in_project_id) {
   using namespace sqlite_orm;
   auto l_t = impl_->storage_any_.get_all<project_person_link>(where(
-      c(&project_person_link::project_id_) == in_project_id &&
-      c(&project_person_link::person_id_) == in_person.uuid_id_
+      c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person.uuid_id_
   ));
   return !l_t.empty();
 }
-
-
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
@@ -657,6 +654,8 @@ DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(server_task_info)
 DOODLE_GET_BY_UUID_SQL(project_status)
+DOODLE_GET_BY_UUID_SQL(task_type)
+DOODLE_GET_BY_UUID_SQL(asset_type)
 template <>
 project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
   using namespace sqlite_orm;
@@ -747,6 +746,7 @@ DOODLE_INSTALL_SQL(project_task_type_link)
 DOODLE_INSTALL_SQL(project_task_status_link)
 DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(person)
+DOODLE_INSTALL_SQL(project_asset_type_link)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
