@@ -141,7 +141,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     l_task_json["task_type_color"]        = l_task_type.color_;
     l_task_json["task_type_priority"]     = l_task_type.priority_;
 
-    co_return in_handle->make_msg(nlohmann::json{*l_task}.dump());
+    co_return in_handle->make_msg(l_json_r.dump());
   }
   auto l_tasks = std::make_shared<std::vector<task>>();
   for (auto&& i : l_entities) {
