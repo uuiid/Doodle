@@ -670,6 +670,7 @@ DOODLE_GET_BY_UUID_SQL(server_task_info)
 DOODLE_GET_BY_UUID_SQL(project_status)
 DOODLE_GET_BY_UUID_SQL(task_type)
 DOODLE_GET_BY_UUID_SQL(asset_type)
+DOODLE_GET_BY_UUID_SQL(entity)
 template <>
 project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
   using namespace sqlite_orm;
@@ -760,6 +761,7 @@ DOODLE_INSTALL_SQL(project_task_type_link)
 DOODLE_INSTALL_SQL(project_task_status_link)
 DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(person)
+DOODLE_INSTALL_SQL(task)
 DOODLE_INSTALL_SQL(project_asset_type_link)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
 
