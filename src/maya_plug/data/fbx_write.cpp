@@ -431,7 +431,7 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
     MFnTransform l_transform{dag_path};
     std::double_t l_scale[3];
     l_transform.getScale(l_scale);
-    if (l_scale[0] < 0.0000000001 && l_scale[1] < 0.0000000001 && l_scale[2] < 0.0000000001) {
+    if (l_scale[0] < 0.0000000001 || l_scale[1] < 0.0000000001 || l_scale[2] < 0.0000000001) {
       default_logger_raw()->error("{} 缩放为 {} 近 0", dag_path, l_scale);
       throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
     }
