@@ -34,7 +34,7 @@ boost::system::error_code connect_video(
   }
 
   const cv::Size k_size{in_size.width, in_size.height};
-  auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
+  auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('H', '2', '6', '4'), 25, k_size};
   auto l_video_cap       = cv::VideoCapture{};
   const auto &k_size_len = in_vector.size();
   cv::Mat l_image{};

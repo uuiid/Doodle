@@ -126,7 +126,7 @@ boost::system::error_code create_move(
   }
 
   const cv::Size k_size{in_image_size.width, in_image_size.height};
-  auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 25, k_size};
+  auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('H', '2', '6', '4'), 25, k_size};
   auto k_image = cv::Mat{};
   const auto& k_size_len = l_vector.size();
   auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
