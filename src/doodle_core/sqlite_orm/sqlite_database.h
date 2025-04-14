@@ -20,6 +20,7 @@ class server_task_info;
 struct todo_t;
 struct project_and_status_t;
 struct get_comments_t;
+struct task_status;
 }  // namespace doodle
 namespace doodle {
 namespace attendance_helper {
@@ -124,5 +125,9 @@ class sqlite_database {
   );
   // 查询人员是否在项目团队中
   bool is_person_in_project(const person& in_person, const uuid& in_project_id);
+  // 查询对应的task是否存在
+  bool is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id);
+
+  task_status get_task_status_by_name(const std::string& in_name);
 };
 }  // namespace doodle

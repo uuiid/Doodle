@@ -601,11 +601,25 @@ std::optional<project_asset_type_link> sqlite_database::get_project_asset_type_l
 }
 bool sqlite_database::is_person_in_project(const person& in_person, const uuid& in_project_id) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<project_person_link>(where(
+  auto l_t = impl_->storage_any_.count<project_person_link>(where(
       c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person.uuid_id_
   ));
-  return !l_t.empty();
+  return l_t > 0;
 }
+
+bool sqlite_database::is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.count<task>(where(
+      c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id
+  ));
+  return l_t > 0;
+}
+task_status sqlite_database::get_task_status_by_name(const std::string& in_name) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<task_status>(where(c(&task_status::name_) == in_name));
+  return l_t.empty() ? task_status{} : l_t.front();
+}
+
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
@@ -760,6 +774,7 @@ DOODLE_INSTALL_RANGE(computer)
 DOODLE_INSTALL_RANGE(task_status)
 DOODLE_INSTALL_RANGE(task_type)
 DOODLE_INSTALL_RANGE(asset_type)
+DOODLE_INSTALL_RANGE(task)
 
 DOODLE_REMOVE_RANGE(attendance_helper::database_t)
 DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
