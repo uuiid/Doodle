@@ -18,17 +18,6 @@
 #include <sqlite_orm/sqlite_orm.h>
 namespace doodle {
 
-struct DOODLE_CORE_API entity_task_t : entity {
-  struct task_impl : task {
-    bool is_subscribed_;
-  };
-
-  std::vector<task_impl> tasks_;
-  std::shared_ptr<asset_type> asset_type_;
-  // to json
-  friend void to_json(nlohmann::json& j, const entity_task_t& p);
-};
-
 struct todo_t {
   // std::shared_ptr<project> project_;
   // std::shared_ptr<entity> entity_;

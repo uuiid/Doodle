@@ -20,6 +20,7 @@
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_core/metadata/asset_instance.h>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle {
@@ -160,73 +161,7 @@ std::vector<uuid> sqlite_database::get_temporal_type_ids() {
       sqlite_orm::where(sqlite_orm::in(&asset_type::name_, {"Episode", "Sequence", "Shot", "Edit", "Scene", "Concept"}))
   );
 }
-std::vector<entity_task_t> sqlite_database::get_assets_and_tasks(
-    const uuid& in_project, const person& in_current_user
-) {
-  auto l_temporal_type_ids = get_temporal_type_ids();
-  std::map<uuid, std::shared_ptr<asset_type>> l_asset_types;  // <uuid, std::shared_ptr<asset_type>>
-  {
-    auto l_ass_types = impl_->storage_any_.get_all<asset_type>(
-        sqlite_orm::where(sqlite_orm::not_in(&asset_type::uuid_id_, l_temporal_type_ids))
-    );
-    l_asset_types = l_ass_types | ranges::views::transform([](const asset_type& in) {
-                      return std::make_pair(in.uuid_id_, std::make_shared<asset_type>(in));
-                    }) |
-                    ranges::to<std::map<uuid, std::shared_ptr<asset_type>>>();
-  }
-  std::vector<entity_task_t> l_result;
-  auto l_entt_list = in_project.is_nil()
-                         ? impl_->storage_any_.get_all<entity>(
-                               sqlite_orm::where(sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids)),
-                               sqlite_orm::order_by(&entity::name_)
-                           )
-                         : impl_->storage_any_.get_all<entity>(
-                               sqlite_orm::where(
-                                   sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
-                                   sqlite_orm::c(&entity::project_id_) == in_project
-                               ),
-                               sqlite_orm::order_by(&entity::name_)
-                           );
-  auto l_entt_id_list =
-      l_entt_list | ranges::views::transform([](const entity& in) { return in.uuid_id_; }) | ranges::to_vector;
-  auto l_task = impl_->storage_any_.get_all<task>(sqlite_orm::where(sqlite_orm::in(&task::entity_id_, l_entt_id_list)));
-  std::set<uuid> l_current_user_subscribed_tasks;
-  {
-    std::map<uuid, uuid> l_task_person_ids{};
-    auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
-    auto l_r        = impl_->storage_any_.get_all<assignees_table>(
-        sqlite_orm::where(sqlite_orm::in(&assignees_table::task_id_, l_task_ids))
-    );
-    auto l_subscription             = impl_->storage_any_.get_all<subscription>(sqlite_orm::where(
-        sqlite_orm::in(&subscription::task_id_, l_task_ids) &&
-        sqlite_orm::c(&subscription::person_id_) == in_current_user.uuid_id_
-    ));
-    l_current_user_subscribed_tasks = l_subscription |
-                                      ranges::views::transform([](const subscription& in) { return in.task_id_; }) |
-                                      ranges::to<std::set<uuid>>();
-    l_task_person_ids =
-        l_r |
-        ranges::views::transform([](const assignees_table& in) { return std::make_pair(in.task_id_, in.person_id_); }) |
-        ranges::to<std::map<uuid, uuid>>();
 
-    for (auto&& l_t : l_task) {
-      if (l_task_person_ids.contains(l_t.uuid_id_)) l_t.assignees_.emplace_back(l_task_person_ids.at(l_t.uuid_id_));
-    }
-  }
-  l_result.reserve(l_entt_list.size());
-  for (auto&& l_entt : l_entt_list) l_result.emplace_back(l_entt);
-  std::map<uuid, entity_task_t*> l_map =
-      l_result | ranges::views::transform([](entity_task_t& in) { return std::make_pair(in.uuid_id_, &in); }) |
-      ranges::to<std::map<uuid, entity_task_t*>>();
-  for (auto&& l_t : l_task)
-    l_map[l_t.entity_id_]->tasks_.emplace_back(l_t).is_subscribed_ =
-        l_current_user_subscribed_tasks.contains(l_t.uuid_id_);
-  for (auto&& l_entt : l_result) {
-    if (l_asset_types.contains(l_entt.entity_type_id_)) l_entt.asset_type_ = l_asset_types.at(l_entt.entity_type_id_);
-  }
-
-  return l_result;
-}
 std::vector<project> sqlite_database::get_person_projects(const person& in_user) {
   std::vector<project> l_result;
   auto l_ids = impl_->storage_any_.get_all<project>(
@@ -807,7 +742,24 @@ DOODLE_GET_BY_UUID_SQL(server_task_info)
 DOODLE_GET_BY_UUID_SQL(project_status)
 DOODLE_GET_BY_UUID_SQL(task_type)
 DOODLE_GET_BY_UUID_SQL(asset_type)
-DOODLE_GET_BY_UUID_SQL(entity)
+template <>
+entity sqlite_database::get_by_uuid<entity>(const uuid& in_uuid) {
+  using namespace sqlite_orm;
+  auto l_ret = impl_->get_by_uuid<entity>(in_uuid);
+  l_ret.entities_out = impl_->storage_any_.select(
+      &entity::uuid_id_,
+      where(c(&entity::parent_id_) == in_uuid)
+  );
+  l_ret.entity_concept_links_ = impl_->storage_any_.select(
+      &entity_concept_link::entity_id_,
+      where(c(&entity_concept_link::entity_id_) == in_uuid)
+  );
+  return l_ret;
+  // l_ret.instance_casting_ = impl_->storage_any_.select(
+  //     &asset_instance::instance_id_,
+  //     where(c(&asset_instance::entity_id_) == in_uuid)
+  // )
+}
 template <>
 project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
   using namespace sqlite_orm;

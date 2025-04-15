@@ -104,8 +104,6 @@ class sqlite_database {
   std::vector<project_with_extra_data> get_project_for_user(const person& in_user);
 
   person get_person_for_email(const std::string& in_email);
-
-  std::vector<entity_task_t> get_assets_and_tasks(const uuid& in_project, const person& in_current_user);
   /// 获取用户所在的团队对应的项目
   std::vector<project> get_person_projects(const person& in_user);
   /// 获取用户需要做的任务
@@ -135,13 +133,6 @@ class sqlite_database {
   std::set<uuid> get_person_subscriptions(
       const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
   );
-
-  struct get_assets_and_tasks_t {
-    uuid id_;
-    uuid project_id_;
-    uuid episode_id_;
-    uuid assigned_to_;
-  };
 
   std::vector<assets_and_tasks_t> get_assets_and_tasks(
       const person& in_person, const uuid& in_project_id, const uuid& in_id = {}

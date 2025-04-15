@@ -22,7 +22,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::ca
   uuid l_prj_id{};
   for (auto&& l_i : in_handle->url_.params())
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
-  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_prj_id, *person_);
+  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(*person_, l_prj_id);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback(session_data_ptr in_handle) {
