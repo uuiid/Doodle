@@ -6,5 +6,6 @@ target_sources(
 
         PRIVATE
         sqlite_database.cpp
+        sqlite_select_data.cpp
 )
 add_subdirectory(detail)
