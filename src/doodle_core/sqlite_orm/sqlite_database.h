@@ -129,5 +129,10 @@ class sqlite_database {
   bool is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id);
 
   task_status get_task_status_by_name(const std::string& in_name);
+
+  // 获取用户的订阅
+  std::set<uuid> get_person_subscriptions(
+      const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
+  );
 };
 }  // namespace doodle

@@ -609,9 +609,9 @@ bool sqlite_database::is_person_in_project(const person& in_person, const uuid& 
 
 bool sqlite_database::is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.count<task>(where(
-      c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id
-  ));
+  auto l_t = impl_->storage_any_.count<task>(
+      where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id)
+  );
   return l_t > 0;
 }
 task_status sqlite_database::get_task_status_by_name(const std::string& in_name) {
@@ -620,6 +620,34 @@ task_status sqlite_database::get_task_status_by_name(const std::string& in_name)
   return l_t.empty() ? task_status{} : l_t.front();
 }
 
+std::set<uuid> sqlite_database::get_person_subscriptions(
+    const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
+) {
+  using namespace sqlite_orm;
+  std::vector<subscription> l_t{};
+  if (!in_asset_type_uuid.is_nil())
+    l_t = impl_->storage_any_.get_all<subscription>(
+        join<task>(on(c(&subscription::task_id_) == c(&task::uuid_id_))),
+        join<entity>(on(c(&entity::id_) == c(&task::entity_id_))),
+        where(
+            c(&subscription::person_id_) == in_person.uuid_id_ && c(&task::project_id_) == in_project_id &&
+            c(&entity::entity_type_id_) == in_asset_type_uuid
+        )
+    );
+  else
+    l_t = impl_->storage_any_.get_all<subscription>(
+        join<task>(on(c(&subscription::task_id_) == c(&task::uuid_id_))),
+        join<entity>(on(c(&entity::id_) == c(&task::entity_id_))),
+        where(
+            c(&subscription::person_id_) == in_person.uuid_id_ && c(&task::project_id_) == in_project_id &&
+            in(&entity::entity_type_id_, get_temporal_type_ids())
+        )
+    );
+
+  std::set<uuid> l_result;
+  for (auto&& i : l_t) l_result.insert(i.task_id_);
+  return l_result;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
