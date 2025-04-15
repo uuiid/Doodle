@@ -210,7 +210,7 @@ struct assets_and_tasks_t {
   decltype(entity::preview_file_id_) preview_file_id_;
   decltype(entity::description_) description_;
   decltype(asset_type::name_) asset_type_name_;
-  decltype(asset_type::id_) asset_type_id_;
+  decltype(asset_type::uuid_id_) asset_type_id_;
   decltype(entity::canceled_) canceled_;
   decltype(entity::ready_for_) ready_for_;
   decltype(entity::source_id_) source_id_;
@@ -236,7 +236,7 @@ struct assets_and_tasks_t {
     decltype(task::difficulty_) difficulty_;
     decltype(task::task_type_id_) task_type_id_;
     decltype(task::task_status_id_) task_status_id_;
-    decltype(task::assigner_id_) assigner_id_;
+    std::vector<decltype(task::assigner_id_)> assigner_ids_;
     bool is_subscribed_;
 
     // to json

@@ -21,6 +21,7 @@ struct todo_t;
 struct project_and_status_t;
 struct get_comments_t;
 struct task_status;
+struct assets_and_tasks_t;
 }  // namespace doodle
 namespace doodle {
 namespace attendance_helper {
@@ -133,6 +134,17 @@ class sqlite_database {
   // 获取用户的订阅
   std::set<uuid> get_person_subscriptions(
       const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
+  );
+
+  struct get_assets_and_tasks_t {
+    uuid id_;
+    uuid project_id_;
+    uuid episode_id_;
+    uuid assigned_to_;
+  };
+
+  std::vector<assets_and_tasks_t> get_assets_and_tasks(
+      const person& in_person, const uuid& in_project_id, const uuid& in_id = {}
   );
 };
 }  // namespace doodle

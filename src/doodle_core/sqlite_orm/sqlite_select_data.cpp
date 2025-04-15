@@ -220,7 +220,7 @@ void to_json(nlohmann::json& j, const assets_and_tasks_t::task_t& p) {
   j["difficulty"]        = p.difficulty_;
   j["task_type_id"]      = p.task_type_id_;
   j["task_status_id"]    = p.task_status_id_;
-  j["assigner_id"]       = p.assigner_id_;
+  j["assignees"]      = p.assigner_ids_;
   j["is_subscribed"]     = p.is_subscribed_;
 }
 
