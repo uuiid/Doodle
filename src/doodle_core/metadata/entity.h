@@ -68,5 +68,31 @@ struct DOODLE_CORE_API entity {
   std::vector<uuid> entities_out;
   std::vector<uuid> entity_concept_links_;
   std::vector<uuid> instance_casting_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const entity& p) {
+    j["id"]                   = p.uuid_id_;
+    j["name"]                 = p.name_;
+    j["code"]                 = p.code_;
+    j["description"]          = p.description_;
+    j["shotgun_id"]           = p.shotgun_id_;
+    j["canceled"]             = p.canceled_;
+    j["nb_frames"]            = p.nb_frames_;
+    j["nb_entities_out"]      = p.nb_entities_out_;
+    j["is_casting_standby"]   = p.is_casting_standby_;
+    j["is_shared"]            = p.is_shared_;
+    j["status"]               = p.status_;
+    j["project_id"]           = p.project_id_;
+    j["entity_type_id"]       = p.entity_type_id_;
+    j["parent_id"]            = p.parent_id_;
+    j["source_id"]            = p.source_id_;
+    j["preview_file_id"]      = p.preview_file_id_;
+    j["data"]                 = p.data_;
+    j["ready_for"]            = p.ready_for_;
+    j["created_by"]           = p.created_by_;
+    j["entities_out"]         = p.entities_out;
+    j["entity_concept_links"] = p.entity_concept_links_;
+    j["instance_casting"]     = p.instance_casting_;
+  }
 };
 }  // namespace doodle
