@@ -17,6 +17,29 @@
 #include "kitsu.h"
 
 namespace doodle::http {
+
+boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback(session_data_ptr in_handle) {
+  get_person(in_handle);
+  auto l_asset_id = from_uuid_str(in_handle->capture_->get("asset_id"));
+  auto&& l_sql    = g_ctx().get<sqlite_database>();
+  auto l_t        = l_sql.get_assets_and_tasks(*person_, {}, l_asset_id);
+  if (l_t.empty())
+    throw_exception(
+        http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", l_asset_id)}
+    );
+  auto l_ass                = l_sql.get_by_uuid<entity>(l_asset_id);
+  auto l_project            = l_sql.get_by_uuid<project>(l_ass.project_id_);
+  auto l_ass_type           = l_sql.get_by_uuid<asset_type>(l_ass.entity_type_id_);
+
+  auto l_json               = nlohmann::json{};
+  l_json                    = l_ass;
+  l_json["project_name"]    = l_project.name_;
+  l_json["asset_type_id"]   = l_ass_type.uuid_id_;
+  l_json["asset_type_name"] = l_ass_type.name_;
+  l_json.update(l_t[0]);
+  co_return in_handle->make_msg(l_json.dump());
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::callback(session_data_ptr in_handle) {
   get_person(in_handle);
   uuid l_prj_id{};
