@@ -15,7 +15,8 @@
             "cStandard": "c17",
             "cppStandard": "c++20",
             "intelliSenseMode": "windows-msvc-x64",
-            "configurationProvider": "ms-vscode.cmake-tools",
+            // "configurationProvider": "ms-vscode.cmake-tools",
+            "compileCommands": "${workspaceFolder}/build/Ninja_debug/compile_commands.json",
             "browse": {
                 "databaseFilename": "${workspaceFolder}/.vscode/browse.vc.db"
             }
