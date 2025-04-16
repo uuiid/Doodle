@@ -117,7 +117,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
   else
     for (auto&& [l_k, l_v, l_has] : in_handle->url_.params())
       if (l_k == "id" && l_has) l_entities.emplace_back(l_sql.get_by_uuid<entity>(from_uuid_str(l_v)));
-  auto l_task_status = l_sql.get_task_status_by_name("todo");
+  auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
 
   if (l_entities.size() == 1) {
     auto l_task             = std::make_shared<task>();
@@ -126,7 +126,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     l_task->project_id_     = l_project_id;
     l_task->task_type_id_   = l_task_type.uuid_id_;
     l_task->entity_id_      = l_entities[0].uuid_id_;
-    l_task->task_status_id_ = l_sql.get_task_status_by_name("todo").uuid_id_;
+    l_task->task_status_id_ = l_task_status.uuid_id_;
     co_await l_sql.install(l_task);
 
     nlohmann::json l_json_r{};
