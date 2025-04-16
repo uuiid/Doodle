@@ -563,7 +563,8 @@ bool sqlite_database::is_task_exist(const uuid& in_entity_id, const uuid& in_tas
 task_status sqlite_database::get_task_status_by_name(const std::string& in_name) {
   using namespace sqlite_orm;
   auto l_t = impl_->storage_any_.get_all<task_status>(where(c(&task_status::name_) == in_name));
-  return l_t.empty() ? task_status{} : l_t.front();
+  if (l_t.empty()) throw_exception(doodle_error{"未知的任务状态 {}", in_name});
+  return l_t.front();
 }
 
 std::set<uuid> sqlite_database::get_person_subscriptions(
