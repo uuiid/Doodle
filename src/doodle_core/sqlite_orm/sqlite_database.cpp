@@ -849,6 +849,7 @@ DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(person)
 DOODLE_INSTALL_SQL(task)
 DOODLE_INSTALL_SQL(project_asset_type_link)
+DOODLE_INSTALL_SQL(entity)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
