@@ -5,6 +5,7 @@
 #include "sqlite_database.h"
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/computer.h>
@@ -20,7 +21,6 @@
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
-#include <doodle_core/metadata/asset_instance.h>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle {
@@ -642,11 +642,11 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
       l_sql_orm, join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
       left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
-      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_)),
       where(
           (!in_id.is_nil() && c(&entity::uuid_id_) == in_id) &&
           (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id)
-      )
+      ),
+      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
   );
   std::map<uuid, assets_and_tasks_t::task_t> l_task_map{};
   std::map<uuid, assets_and_tasks_t> l_ret{};
@@ -745,14 +745,10 @@ DOODLE_GET_BY_UUID_SQL(asset_type)
 template <>
 entity sqlite_database::get_by_uuid<entity>(const uuid& in_uuid) {
   using namespace sqlite_orm;
-  auto l_ret = impl_->get_by_uuid<entity>(in_uuid);
-  l_ret.entities_out = impl_->storage_any_.select(
-      &entity::uuid_id_,
-      where(c(&entity::parent_id_) == in_uuid)
-  );
+  auto l_ret                  = impl_->get_by_uuid<entity>(in_uuid);
+  l_ret.entities_out          = impl_->storage_any_.select(&entity::uuid_id_, where(c(&entity::parent_id_) == in_uuid));
   l_ret.entity_concept_links_ = impl_->storage_any_.select(
-      &entity_concept_link::entity_id_,
-      where(c(&entity_concept_link::entity_id_) == in_uuid)
+      &entity_concept_link::entity_id_, where(c(&entity_concept_link::entity_id_) == in_uuid)
   );
   return l_ret;
   // l_ret.instance_casting_ = impl_->storage_any_.select(
