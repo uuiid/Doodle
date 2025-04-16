@@ -71,7 +71,7 @@ struct computing_time_post_req_custom_data {
     j.at("season").get_to(p.season);
     j.at("episode").get_to(p.episode);
     j.at("name").get_to(p.name);
-    j.at("grade").get_to(p.grade);
+    if (j.contains("grade")) j.at("grade").get_to(p.grade);
     j.at("user_remark").get_to(p.remark);
     j.at("start_time").get_to(p.start_time);
     j.at("end_time").get_to(p.end_time);
