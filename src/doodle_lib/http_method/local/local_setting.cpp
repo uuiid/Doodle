@@ -42,22 +42,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不是json请求");
   }
 
-  auto& l_json                     = std::get<nlohmann::json>(in_handle->body_);
-  core_set::get_set().p_max_thread = l_json["maya_parallel_quantity"];
-  g_ctx().get<maya_ctx>().queue_->set_limit(core_set::get_set().p_max_thread);
+  auto& l_set        = core_set::get_set();
+  auto& l_json       = std::get<nlohmann::json>(in_handle->body_);
+  l_set.p_max_thread = l_json["maya_parallel_quantity"];
+  g_ctx().get<maya_ctx>().queue_->set_limit(l_set.p_max_thread);
   auto& l_au = g_ctx().get<authorization>();
   if (l_json.contains("authorize") && l_json["authorize"].is_string())
     if (auto& l_a = l_json["authorize"];
         l_a.is_string() && (l_au.load_authorization_data(l_a.get<std::string>()), l_au.is_expire()))
-      core_set::get_set().authorize_ = l_a.get<std::string>();
+      l_set.authorize_ = l_a.get<std::string>();
 
-  if (l_json.contains("UE_path")) core_set::get_set().ue4_path = l_json["UE_path"].get<std::string>();
-  if (l_json.contains("UE_version")) core_set::get_set().ue4_version = l_json["UE_version"].get<std::string>();
+  if (l_json.contains("UE_path")) l_set.ue4_path = l_json["UE_path"].get<std::string>();
+  if (l_json.contains("UE_version")) l_set.ue4_version = l_json["UE_version"].get<std::string>();
   // D:\Program Files\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor.exe
-  if (!FSys::exists(core_set::get_set().ue4_path / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"))
+  if (!l_set.ue4_path.empty() && !FSys::exists(l_set.ue4_path / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "UE4路径不正确"});
 
-  core_set::get_set().save();
+  l_set.save();
   FSys::path l_maya_path{};
   try {
     l_maya_path = maya_exe_ns::find_maya_path();
@@ -66,11 +67,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> set_local_setting(
   }
   co_return in_handle->make_msg(
       nlohmann::json{
-          {"maya_parallel_quantity", core_set::get_set().p_max_thread},
+          {"maya_parallel_quantity", l_set.p_max_thread},
           {"authorize", g_ctx().get<authorization>().is_expire()},
           {"maya_path", l_maya_path},
-          {"UE_path", core_set::get_set().ue4_path},
-          {"UE_version", core_set::get_set().ue4_version},
+          {"UE_path", l_set.ue4_path},
+          {"UE_version", l_set.ue4_version},
 
       }
           .dump()
