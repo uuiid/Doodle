@@ -32,6 +32,7 @@
 #include <doodle_lib/http_method/model_library/assets.h>
 #include <doodle_lib/http_method/model_library/assets_tree.h>
 #include <doodle_lib/http_method/model_library/thumbnail.h>
+#include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
 namespace doodle::http {
@@ -86,7 +87,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<tasks_comments_get>())
       .reg(std::make_shared<user_context_get>());
 #endif
-  (*l_router).reg(std::make_shared<deepseek_key_get>());
+  (*l_router).reg(std::make_shared<deepseek_key_get>()).reg(std::make_shared<other::ke_ling_au_get>());
   up_file_reg(*l_router);
   reg_file_association_http(*l_router);
   reg_kitsu_front_end_http(*l_router, in_root);
