@@ -653,21 +653,21 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
   std::map<uuid, assets_and_tasks_t::task_t> l_task_map{};
   std::map<uuid, assets_and_tasks_t> l_ret{};
   for (auto&& i : l_t) {
-    if (l_ret.contains(i.uuid_id_)) continue;
-    l_ret[i.uuid_id_] = assets_and_tasks_t{
-        .uuid_id_            = i.uuid_id_,
-        .name_               = i.name_,
-        .preview_file_id_    = i.preview_file_id_,
-        .description_        = i.description_,
-        .asset_type_name_    = i.asset_type_name_,
-        .asset_type_id_      = i.asset_type_uuid_id_,
-        .canceled_           = i.canceled_,
-        .ready_for_          = i.ready_for_,
-        .source_id_          = i.source_id_,
-        .is_casting_standby_ = i.is_casting_standby_,
-        .is_shared_          = i.is_shared_,
-        .data_               = i.data_,
-    };
+    if (!l_ret.contains(i.uuid_id_))
+      l_ret[i.uuid_id_] = assets_and_tasks_t{
+          .uuid_id_            = i.uuid_id_,
+          .name_               = i.name_,
+          .preview_file_id_    = i.preview_file_id_,
+          .description_        = i.description_,
+          .asset_type_name_    = i.asset_type_name_,
+          .asset_type_id_      = i.asset_type_uuid_id_,
+          .canceled_           = i.canceled_,
+          .ready_for_          = i.ready_for_,
+          .source_id_          = i.source_id_,
+          .is_casting_standby_ = i.is_casting_standby_,
+          .is_shared_          = i.is_shared_,
+          .data_               = i.data_,
+      };
     if (i.task_uuid_id_.is_nil()) continue;
     if (!l_task_map.contains(i.task_uuid_id_)) {
       l_task_map[i.task_uuid_id_] = assets_and_tasks_t::task_t{
