@@ -19,7 +19,7 @@ struct DOODLE_CORE_API task {
   std::string name_;
   std::string description_;
   std::int32_t priority_;
-  std::int32_t difficulty_;
+  std::int32_t difficulty_{3};
   std::float_t duration_;
   std::float_t estimation_;
   std::int32_t completion_rate_;
