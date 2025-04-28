@@ -237,4 +237,44 @@ struct assets_and_tasks_t {
   friend void to_json(nlohmann::json& j, const assets_and_tasks_t& p);
 };
 
+struct entities_and_tasks_t {
+  decltype(entity::uuid_id_) uuid_id_;
+  decltype(entity::name_) name_;
+  decltype(entity::status_) status_;
+  decltype(entity::uuid_id_) episode_id_;
+  decltype(entity::description_) description_;
+  decltype(entity::preview_file_id_) preview_file_id_;
+  decltype(entity::canceled_) canceled_;
+  decltype(entity::data_) data_;
+
+  std::int32_t frame_in_;
+  std::int32_t frame_out_;
+  std::int32_t fps_;
+
+  struct task_t {
+    decltype(task::uuid_id_) uuid_id_;
+    decltype(task::estimation_) estimation_;
+    decltype(entity::uuid_id_) entity_id_;
+    decltype(task::end_date_) end_date_;
+    decltype(task::due_date_) due_date_;
+    decltype(task::done_date_) done_date_;
+    decltype(task::duration_) duration_;
+    decltype(task::last_comment_date_) last_comment_date_;
+    decltype(task::last_preview_file_id_) last_preview_file_id_;
+    decltype(task::priority_) priority_;
+    decltype(task::real_start_date_) real_start_date_;
+    decltype(task::retake_count_) retake_count_;
+    decltype(task::start_date_) start_date_;
+    decltype(task::difficulty_) difficulty_;
+    decltype(task::task_status_id_) task_status_id_;
+    decltype(task::task_type_id_) task_type_id_;
+    std::vector<uuid> assigners_;
+    bool is_subscribed_;
+    friend void to_json(nlohmann::json& j, const task_t& p);
+  };
+  std::vector<task_t> tasks_;
+  // to json
+  friend void to_json(nlohmann::json& j, const entities_and_tasks_t& p);
+};
+
 }  // namespace doodle

@@ -22,6 +22,7 @@ struct project_and_status_t;
 struct get_comments_t;
 struct task_status;
 struct assets_and_tasks_t;
+struct entities_and_tasks_t;
 }  // namespace doodle
 namespace doodle {
 namespace attendance_helper {
@@ -33,8 +34,6 @@ struct database_t;
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
-
-struct entity_task_t;
 
 struct sqlite_database_impl;
 class sqlite_database {
@@ -133,8 +132,17 @@ class sqlite_database {
   std::set<uuid> get_person_subscriptions(
       const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
   );
-
+  /**
+   *
+   * @param in_person 传入的角色
+   * @param in_project_id 传入的项目id
+   * @param in_id 传入的资产准确id从逻辑上和项目id互斥
+   * @return 查询结果
+   */
   std::vector<assets_and_tasks_t> get_assets_and_tasks(
+      const person& in_person, const uuid& in_project_id, const uuid& in_id = {}
+  );
+  std::vector<entities_and_tasks_t> get_entities_and_tasks(
       const person& in_person, const uuid& in_project_id, const uuid& in_id = {}
   );
 };

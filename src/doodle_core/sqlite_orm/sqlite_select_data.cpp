@@ -202,4 +202,42 @@ void to_json(nlohmann::json& j, const assets_and_tasks_t& p) {
   j["casting_episode_ids"] = p.casting_episode_ids_;
   j["tasks"]               = p.tasks_;
 }
+
+void to_json(nlohmann::json& j, const entities_and_tasks_t::task_t& p) {
+  j["id"]                = p.uuid_id_;
+  j["estimation"]        = p.estimation_;
+  j["entity_id"]         = p.entity_id_;
+  j["end_date"]          = p.end_date_;
+  j["due_date"]          = p.due_date_;
+  j["done_date"]         = p.done_date_;
+  j["duration"]          = p.duration_;
+  j["is_subscribed"]     = p.is_subscribed_;
+  j["last_comment_date"] = p.last_comment_date_;
+  j["last_preview_file"] = p.last_preview_file_id_;
+  j["priority"]          = p.priority_;
+  j["real_start_date"]   = p.real_start_date_;
+  j["retake_count"]      = p.retake_count_;
+  j["start_date"]        = p.start_date_;
+  j["difficulty"]        = p.difficulty_;
+  j["task_type_id"]      = p.task_type_id_;
+  j["task_status_id"]    = p.task_status_id_;
+  j["assignees"]         = p.assigners_;
+}
+
+void to_json(nlohmann::json& j, const entities_and_tasks_t& p) {
+  j["id"]              = p.uuid_id_;
+  j["name"]            = p.name_;
+  j["status"]          = p.status_;
+  j["episode_id"]      = p.episode_id_;
+  j["description"]     = p.description_;
+
+  j["frame_in"]        = p.frame_in_ ? nlohmann::json{p.frame_in_} : nlohmann::json{nlohmann::json::value_t::null};
+  j["frame_out"]       = p.frame_out_ ? nlohmann::json{p.frame_out_} : nlohmann::json{nlohmann::json::value_t::null};
+  j["fps"]             = p.fps_ ? nlohmann::json{p.fps_} : nlohmann::json{nlohmann::json::value_t::null};
+  j["preview_file_id"] = p.preview_file_id_;
+  j["canceled"]        = p.canceled_;
+  j["data"]            = p.data_;
+  j["tasks"]           = p.tasks_;
+}
+
 }  // namespace doodle

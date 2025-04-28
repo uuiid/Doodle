@@ -691,6 +691,14 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
   return l_ret | ranges::views::values | ranges::to_vector;
 }
 
+std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
+    const person& in_person, const uuid& in_project_id, const uuid& in_id
+) {
+  std::vector<entities_and_tasks_t> l_ret{};
+  return l_ret;
+}
+
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
