@@ -15,34 +15,9 @@
 
 #include <cpp-base64/base64.h>
 namespace doodle::http {
-namespace {
 
-/// 从json中生成路径
-FSys::path gen_path_from_json_ma(const nlohmann::json& in_json) {
-  if (in_json["task_type"]["name"].get_ref<const std::string&>() != "角色")
-    throw_exception(doodle_error{"未知的 task_type 类型"});
-
-  auto l_data = in_json["entity"]["data"];
-
-  std::int32_t l_gui_dang{};
-  if (l_data["gui_dang"].is_number())
-    l_gui_dang = l_data["gui_dang"].get<std::int32_t>();
-  else if (l_data["gui_dang"].is_string() && !l_data["gui_dang"].get<std::string>().empty())
-    l_gui_dang = std::stoi(l_data["gui_dang"].get<std::string>());
-  std::int32_t l_kai_shi_ji_shu{};
-  if (l_data["kai_shi_ji_shu"].is_number())
-    l_kai_shi_ji_shu = l_data["kai_shi_ji_shu"].get<std::int32_t>();
-  else if (l_data["kai_shi_ji_shu"].is_string() && !l_data["kai_shi_ji_shu"].get<std::string>().empty())
-    l_kai_shi_ji_shu = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
-
-  auto l_str = fmt::format(
-      "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", l_gui_dang, l_kai_shi_ji_shu, l_data["bian_hao"].get_ref<const std::string&>()
-  );
-  return l_str;
-}
-
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(
-    std::shared_ptr<std::function<std::string(const nlohmann::json&)>> in_path, session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> http::up_file_asset::callback(
+    session_data_ptr in_handle
 ) {
   uuid l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
@@ -61,29 +36,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(
   }
 
   nlohmann::json l_json;
-  if (auto l_task = g_ctx().get<cache_manger>().get(l_task_id); l_task) {
-    l_json = std::move(*l_task);
+  // if (auto l_task = g_ctx().get<cache_manger>().get(l_task_id); l_task) {
+  //   l_json = std::move(*l_task);
+  // } else {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{in_handle->req_header_};
+  l_req.target(fmt::format("/api/data/tasks/{}/full", l_task_id));
+  l_req.method(boost::beast::http::verb::get);
+  l_req.erase(boost::beast::http::field::content_disposition);
+  l_req.erase(boost::beast::http::field::content_type);
+  l_req.erase(boost::beast::http::field::content_length);
+  l_req.prepare_payload();
 
-  } else {
-    boost::beast::http::request<boost::beast::http::empty_body> l_req{in_handle->req_header_};
-    l_req.target(fmt::format("/api/data/tasks/{}/full", l_task_id));
-    l_req.method(boost::beast::http::verb::get);
-    l_req.erase(boost::beast::http::field::content_disposition);
-    l_req.erase(boost::beast::http::field::content_type);
-    l_req.erase(boost::beast::http::field::content_length);
-    l_req.prepare_payload();
+  auto [l_ec, l_res] =
+      co_await detail::read_and_write<boost::beast::http::string_body>(kitsu::create_kitsu_proxy(in_handle), l_req);
+  if (l_ec) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
 
-    auto [l_ec, l_res] =
-        co_await detail::read_and_write<boost::beast::http::string_body>(kitsu::create_kitsu_proxy(in_handle), l_req);
-    if (l_ec) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
-
-    l_json = nlohmann::json::parse(l_res.body());
-    g_ctx().get<cache_manger>().set(l_task_id, l_json);
-  }
+  l_json = nlohmann::json::parse(l_res.body());
+  g_ctx().get<cache_manger>().set(l_task_id, l_json);
+  // }
+  check_data(l_json);
+  task_data_ = l_json;
 
   auto l_prj =
       g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
-  l_d             = l_prj.path_ / gen_path_from_json_ma(l_json) / (*in_path)(l_json) / l_d;
+  l_d             = l_prj.path_ / gen_file_path() / l_d;
 
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
   if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
@@ -91,46 +67,68 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset(
   co_return in_handle->make_msg("{}");
 }
 
-}  // namespace
-void up_file_reg(http_route& in_route) {
-  in_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/maya",
-              std::bind_front(
-                  up_file_asset, std::make_shared<std::function<std::string(const nlohmann::json&)>>(
-                                     [](const nlohmann::json&) -> std::string { return {"Mod"}; }
-                                 )
-              )
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/ue",
-              std::bind_front(
-                  up_file_asset,
-                  std::make_shared<std::function<std::string(const nlohmann::json&)>>(
-                      [](const nlohmann::json& in_json) -> std::string {
-                        auto l_data = in_json["entity"]["data"];
-                        return fmt::format("{}_UE5", l_data["pin_yin_ming_cheng"].get_ref<const std::string&>());
-                      }
-                  )
-              )
+void up_file_asset::check_data(const nlohmann::json& in_data) {
+  if (auto l_type = in_data["task_type"]["name"].get_ref<const std::string&>();
+      !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
+    throw_exception(doodle_error{"未知的 task_type 类型"});
 
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/data/asset/{task_id}/file/image",
-              std::bind_front(
-                  up_file_asset, std::make_shared<std::function<std::string(const nlohmann::json&)>>(
-                                     [](const nlohmann::json&) -> std::string { return ""; }
-                                 )
-              )
+  entity_type_       = in_data["entity_type"]["name"].get_ref<const std::string&>();
 
-          )
-      )
+  const auto& l_data = in_data["entity"]["data"];
+  std::int32_t l_gui_dang{};
+  if (l_data["gui_dang"].is_number())
+    gui_dang_ = l_data["gui_dang"].get<std::int32_t>();
+  else if (l_data["gui_dang"].is_string() && !l_data["gui_dang"].get<std::string>().empty())
+    gui_dang_ = std::stoi(l_data["gui_dang"].get<std::string>());
+  std::int32_t l_kai_shi_ji_shu{};
+  if (l_data["kai_shi_ji_shu"].is_number())
+    kai_shi_ji_shu_ = l_data["kai_shi_ji_shu"].get<std::int32_t>();
+  else if (l_data["kai_shi_ji_shu"].is_string() && !l_data["kai_shi_ji_shu"].get<std::string>().empty())
+    kai_shi_ji_shu_ = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
 
-      ;
+  if (l_data.contains("bian_hao")) bian_hao_ = l_data["bian_hao"].get_ref<const std::string&>();
+  if (l_data.contains("pin_yin_ming_cheng"))
+    pin_yin_ming_cheng_ = l_data["pin_yin_ming_cheng"].get_ref<const std::string&>();
+
+  if (l_data.contains("ban_ben")) version_ = l_data["ban_ben"].get_ref<const std::string&>();
+  if (!version_.empty()) version_.insert(version_.begin(), '_');
 }
+
+FSys::path up_file_asset_maya_post::gen_file_path() {
+  if (entity_type_ == "角色")
+    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+  if (entity_type_ == "道具")
+    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+  if (entity_type_ == "地编")
+    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/BG{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
+}
+
+FSys::path up_file_asset_ue_post::gen_file_path() {
+  if (entity_type_ == "角色")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_
+    );
+  if (entity_type_ == "道具")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", gui_dang_, kai_shi_ji_shu_, gui_dang_, kai_shi_ji_shu_
+    );
+  if (entity_type_ == "地编")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/{}", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_
+    );
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
+}
+
+FSys::path up_file_asset_image_post::gen_file_path() {
+  if (entity_type_ == "角色")
+    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+  if (entity_type_ == "道具")
+    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+  if (entity_type_ == "地编")
+    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/BG{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
+}
+
 }  // namespace doodle::http
