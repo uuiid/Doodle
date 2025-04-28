@@ -31,10 +31,10 @@ struct login_data {
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> authenticated_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
+  auto l_ptr = get_person(in_handle);
   nlohmann::json l_r{};
   l_r["authenticated"] = true;
-  l_r["user"]          = *person_;
+  l_r["user"]          = l_ptr->person_;
   auto l_org           = g_ctx().get<sqlite_database>().get_all<organisation>();
   l_r["organisation"]  = l_org.empty() ? organisation::get_default() : l_org.front();
   co_return in_handle->make_msg(l_r.dump());

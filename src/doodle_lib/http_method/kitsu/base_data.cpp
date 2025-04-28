@@ -12,39 +12,34 @@
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> departments_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
-  if (person_->role_ != person_role_type::admin)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
   auto l_list = g_ctx().get<sqlite_database>().get_all<department>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> studios_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
-  if (person_->role_ != person_role_type::admin)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
   auto l_list = g_ctx().get<sqlite_database>().get_all<studio>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_types_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
-  if (person_->role_ != person_role_type::admin)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
   auto l_list = g_ctx().get<sqlite_database>().get_all<task_type>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> custom_actions_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
-  if (person_->role_ != person_role_type::admin)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
 
   co_return in_handle->make_msg("[]");
 }
 boost::asio::awaitable<boost::beast::http::message_generator> status_automations_get::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
-  if (person_->role_ != person_role_type::admin)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
   auto l_list = g_ctx().get<sqlite_database>().get_all<status_automation>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }

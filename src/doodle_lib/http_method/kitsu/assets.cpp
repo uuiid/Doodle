@@ -40,10 +40,10 @@ struct projects_assets_new_post_data {
 boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new_post::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
+  auto l_ptr = get_person(in_handle);
   projects_assets_new_post_data l_data{};
   l_data.project_id = from_uuid_str(in_handle->capture_->get("project_id"));
-  is_project_manager(l_data.project_id);
+  l_ptr->is_project_manager(l_data.project_id);
   l_data.asset_type_id = from_uuid_str(in_handle->capture_->get("asset_type_id"));
   in_handle->get_json().get_to(l_data);
 
@@ -56,7 +56,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .entity_type_id_ = l_data.asset_type_id,
       .source_id_      = l_data.source_id,
       .data_           = l_data.data,
-      .created_by_     = person_->uuid_id_,
+      .created_by_     = l_ptr->person_.uuid_id_,
   });
 
   auto l_sql    = g_ctx().get<sqlite_database>();
@@ -65,10 +65,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
+  auto l_ptr      = get_person(in_handle);
   auto l_asset_id = from_uuid_str(in_handle->capture_->get("asset_id"));
   auto&& l_sql    = g_ctx().get<sqlite_database>();
-  auto l_t        = l_sql.get_assets_and_tasks(*person_, {}, l_asset_id);
+  auto l_t        = l_sql.get_assets_and_tasks(l_ptr->person_, {}, l_asset_id);
   if (l_t.empty())
     throw_exception(
         http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", l_asset_id)}
@@ -87,11 +87,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get:
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
+  auto l_ptr = get_person(in_handle);
   uuid l_prj_id{};
   for (auto&& l_i : in_handle->url_.params())
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
-  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(*person_, l_prj_id);
+  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_ptr->person_, l_prj_id);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback(session_data_ptr in_handle) {

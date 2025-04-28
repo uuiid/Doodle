@@ -10,7 +10,7 @@
 #include <jwt-cpp/jwt.h>
 namespace doodle::http {
 
-void http_jwt_fun::get_person(const session_data_ptr& in_data) {
+std::shared_ptr<http_jwt_fun::http_jwt_t> http_jwt_fun::get_person(const session_data_ptr& in_data) {
   auto l_jwt = in_data->req_header_[boost::beast::http::field::cookie];
   if (l_jwt.empty()) l_jwt = in_data->req_header_[boost::beast::http::field::authorization];
 
@@ -25,23 +25,33 @@ void http_jwt_fun::get_person(const session_data_ptr& in_data) {
   // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
-  person_ = std::make_shared<person>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
+
+  return std::make_shared<http_jwt_t>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
 }
 
-void http_jwt_fun::is_project_manager(const uuid& in_project_id) const {
-  if (!person_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
-  if (!(                                                                                  //
-          person_->role_ == person_role_type::admin ||                                    // 是管理员
-          (person_->role_ == person_role_type::manager &&                                 //
-           g_ctx().get<sqlite_database>().is_person_in_project(*person_, in_project_id))  // 是项目经理并且在项目中
-      )                                                                                   //
+void http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) const {
+  if (person_.uuid_id_.is_nil())
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  if (!(                                                                                 //
+          person_.role_ == person_role_type::admin ||                                    // 是管理员
+          (person_.role_ == person_role_type::manager &&                                 //
+           g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id))  // 是项目经理并且在项目中
+      )                                                                                  //
   )
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
-bool http_jwt_fun::is_admin() const { return person_ && person_->role_ == person_role_type::admin; }
+void http_jwt_fun::http_jwt_t::is_admin() const {
+  if (!person_.uuid_id_.is_nil() && person_.role_ == person_role_type::admin) return;
 
-boost::asio::awaitable<boost::beast::http::message_generator> http_jwt_fun::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
-  return http_function::callback(in_handle);
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+
+void http_jwt_fun::http_jwt_t::is_manager() const {
+  if (!person_.uuid_id_.is_nil() &&
+      (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::admin))
+    return;
+
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+
 }  // namespace doodle::http

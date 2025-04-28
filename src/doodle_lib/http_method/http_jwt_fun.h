@@ -3,8 +3,9 @@
 //
 
 #pragma once
-#include <doodle_lib/core/http/http_function.h>
+#include <doodle_core/metadata/person.h>
 
+#include <doodle_lib/core/http/http_function.h>
 namespace doodle {
 struct person;
 }
@@ -12,17 +13,19 @@ struct person;
 namespace doodle::http {
 class http_jwt_fun : public http_function {
  protected:
-  std::shared_ptr<person> person_;
+  struct http_jwt_t {
+    person person_;
+    // 检查人员是否有修改项目属性的权限
+    void is_project_manager(const uuid& in_project_id) const;
+    // 检查是否是 admin
+    void is_admin() const;
+    // 检查是否是项目经理
+    void is_manager() const;
+  };
 
-  void get_person(const session_data_ptr& in_data);
-  // 检查人员是否有修改项目属性的权限
-  void is_project_manager(const uuid& in_project_id) const;
-  // 检查是否是 admin
-  bool is_admin() const;
+  std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);
 
  public:
   using http_function::http_function;
-
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 };
 }  // namespace doodle::http

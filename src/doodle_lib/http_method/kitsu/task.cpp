@@ -20,24 +20,24 @@ namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_get::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
-  auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_person_tasks(*person_);
+  auto l_ptr = get_person(in_handle);
+  auto& sql  = g_ctx().get<sqlite_database>();
+  auto l_p1  = sql.get_person_tasks(l_ptr->person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks_get::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
-  auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_person_tasks(*person_, true);
+  auto l_ptr = get_person(in_handle);
+  auto& sql  = g_ctx().get<sqlite_database>();
+  auto l_p1  = sql.get_person_tasks(l_ptr->person_, true);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
+  auto l_ptr = get_person(in_handle);
 
-  switch (person_->role_) {
+  switch (l_ptr->person_.role_) {
     case person_role_type::admin:
     case person_role_type::supervisor:
     case person_role_type::manager:
@@ -51,15 +51,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get
   }
 
   auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_preson_tasks_to_check(*person_);
+  auto l_p1 = sql.get_preson_tasks_to_check(l_ptr->person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get::callback(session_data_ptr in_handle) {
   get_person(in_handle);
   auto l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
 
-  auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_comments(l_task_id);
+  auto& sql      = g_ctx().get<sqlite_database>();
+  auto l_p1      = sql.get_comments(l_task_id);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 

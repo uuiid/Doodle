@@ -110,7 +110,7 @@ class sqlite_database {
   std::vector<todo_t> get_person_tasks(const person& in_user, bool is_done = false);
   std::vector<todo_t> get_preson_tasks_to_check(const person& in_user);
   /// 获取项目和对应的项目状态
-  std::vector<project_and_status_t> get_project_and_status(const std::shared_ptr<person>& in_user);
+  std::vector<project_and_status_t> get_project_and_status(const person& in_user);
 
   std::vector<get_comments_t> get_comments(const uuid& in_task_id);
   std::optional<project_task_type_link> get_project_task_type_link(

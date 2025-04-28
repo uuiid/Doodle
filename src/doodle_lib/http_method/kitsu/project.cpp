@@ -19,16 +19,16 @@
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
+  auto l_ptr  = get_person(in_handle);
   auto& l_sql = g_ctx().get<sqlite_database>();
 
-  auto l_list = person_->role_ == person_role_type::admin ? l_sql.get_project_and_status(nullptr)
-                                                          : l_sql.get_project_and_status(person_);
+  auto l_list = l_ptr->person_.role_ == person_role_type::admin ? l_sql.get_project_and_status({})
+                                                                : l_sql.get_project_and_status(l_ptr->person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_get::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
+  auto l_ptr        = get_person(in_handle);
   const auto l_uuid = from_uuid_str(in_handle->capture_->get("project_id"));
   auto l_list       = g_ctx().get<sqlite_database>().get_by_uuid<project>(l_uuid);
   nlohmann::json l_j{l_list};
@@ -38,9 +38,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_get::callb
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::callback(session_data_ptr in_handle) {
-  get_person(in_handle);
-  if (person_->role_ != person_role_type::admin && person_->role_ != person_role_type::manager)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_manager();
 
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
@@ -52,10 +51,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::ca
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_post::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
+  auto l_ptr        = get_person(in_handle);
   auto l_json       = in_handle->get_json();
   auto l_project_id = from_uuid_str(in_handle->capture_->get("project_id"));
-  is_project_manager(l_project_id);
+  l_ptr->is_project_manager(l_project_id);
   auto l_prj_task_type_link = std::make_shared<project_task_type_link>();
   l_json.get_to(*l_prj_task_type_link);
   l_prj_task_type_link->project_id_ = l_project_id;
@@ -72,10 +71,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_status_post::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
+  auto l_ptr        = get_person(in_handle);
   auto l_json       = in_handle->get_json();
   auto l_project_id = from_uuid_str(in_handle->capture_->get("project_id"));
-  is_project_manager(l_project_id);
+  l_ptr->is_project_manager(l_project_id);
   auto l_status_id                        = l_json["task_status_id"].get<uuid>();
   auto l_prj_task_status_link             = std::make_shared<project_task_status_link>();
   l_prj_task_status_link->project_id_     = l_project_id;
@@ -89,10 +88,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_asset_types_post::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
+  auto l_ptr        = get_person(in_handle);
   auto l_json       = in_handle->get_json();
   auto l_project_id = from_uuid_str(in_handle->capture_->get("project_id"));
-  is_project_manager(l_project_id);
+  l_ptr->is_project_manager(l_project_id);
   auto l_prj_asset_type_link            = std::make_shared<project_asset_type_link>();
   l_prj_asset_type_link->asset_type_id_ = l_json["asset_type_id"].get<uuid>();
   l_prj_asset_type_link->project_id_    = l_project_id;
@@ -105,7 +104,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_a
 boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks_post::callback(
     session_data_ptr in_handle
 ) {
-  get_person(in_handle);
+  auto l_ptr          = get_person(in_handle);
   auto l_project_id   = from_uuid_str(in_handle->capture_->get("project_id"));
   auto l_task_type_id = from_uuid_str(in_handle->capture_->get("task_type_id"));
   auto& l_sql         = g_ctx().get<sqlite_database>();
