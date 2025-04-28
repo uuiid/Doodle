@@ -21,4 +21,5 @@ target_sources(
         config.cpp
         time.cpp
         base_data.cpp
+        sequences.cpp
 )
