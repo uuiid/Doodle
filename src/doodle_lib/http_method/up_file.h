@@ -6,9 +6,11 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+
+#include "up_file.h"
 namespace doodle::http {
 
-class up_file_asset : public http_jwt_fun {
+class up_file_asset_base : public http_jwt_fun {
  protected:
   struct task_info_t {
     nlohmann::json task_data_{};
@@ -20,14 +22,25 @@ class up_file_asset : public http_jwt_fun {
     std::string bian_hao_{};
     std::string pin_yin_ming_cheng_{};
     std::string version_{};
+
+    FSys::path root_path_{};
+    FSys::path file_path_{};
   };
 
-  virtual std::shared_ptr<task_info_t> check_data(const nlohmann::json& in_data);
-  virtual FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) = 0;
+  std::shared_ptr<task_info_t> check_data(const nlohmann::json& in_data);
+  virtual FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data)                   = 0;
+  virtual void move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) = 0;
 
  public:
   using http_jwt_fun::http_jwt_fun;
   boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+};
+class up_file_asset : public up_file_asset_base {
+ protected:
+  void move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) override;
+
+ public:
+  using up_file_asset_base::up_file_asset_base;
 };
 
 DOODLE_HTTP_FUN(up_file_asset_maya, post, "api/doodle/data/asset/{task_id}/file/maya", up_file_asset)
@@ -36,6 +49,7 @@ DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(up_file_asset_ue, post, "api/doodle/data/asset/{task_id}/file/ue", up_file_asset)
 FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
+void move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(up_file_asset_image, post, "api/doodle/data/asset/{task_id}/file/image", up_file_asset)

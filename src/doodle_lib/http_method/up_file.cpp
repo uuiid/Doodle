@@ -16,9 +16,7 @@
 #include <cpp-base64/base64.h>
 namespace doodle::http {
 
-boost::asio::awaitable<boost::beast::http::message_generator> http::up_file_asset::callback(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base::callback(session_data_ptr in_handle) {
   uuid l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
@@ -55,17 +53,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> http::up_file_asse
     g_ctx().get<cache_manger>().set(l_task_id, l_json);
   }
   auto l_ptr = check_data(l_json);
-  auto l_prj =
-      g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
-  l_d             = l_prj.path_ / gen_file_path(l_ptr) / l_d;
-
-  auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
-  if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
-  FSys::rename(l_tmp_path, l_d);
+  l_ptr->root_path_ =
+      g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>()).path_;
+  l_ptr->file_path_ = l_d;
+  move_file(in_handle, l_ptr);
   co_return in_handle->make_msg("{}");
 }
 
-std::shared_ptr<up_file_asset::task_info_t> up_file_asset::check_data(const nlohmann::json& in_data) {
+std::shared_ptr<up_file_asset::task_info_t> up_file_asset_base::check_data(const nlohmann::json& in_data) {
   if (auto l_type = in_data["task_type"]["name"].get_ref<const std::string&>();
       !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
     throw_exception(doodle_error{"未知的 task_type 类型"});
@@ -92,6 +87,13 @@ std::shared_ptr<up_file_asset::task_info_t> up_file_asset::check_data(const nloh
   if (l_data.contains("ban_ben")) l_task_info->version_ = l_data["ban_ben"].get_ref<const std::string&>();
   if (!l_task_info->version_.empty()) l_task_info->version_.insert(l_task_info->version_.begin(), '_');
   return l_task_info;
+}
+void up_file_asset::move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) {
+  auto l_d        = in_data->root_path_ / gen_file_path(in_data) / in_data->file_path_;
+  auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
+  if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
+  if (exists(l_d)) FSys::backup_file(l_d);
+  FSys::rename(l_tmp_path, l_d);
 }
 
 FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
@@ -128,6 +130,18 @@ FSys::path up_file_asset_ue_post::gen_file_path(const std::shared_ptr<task_info_
         in_data->pin_yin_ming_cheng_
     );
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
+}
+void up_file_asset_ue_post::move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) {
+  auto l_UE_folder = in_data->root_path_ / gen_file_path(in_data);
+  auto l_d         = l_UE_folder / in_data->file_path_;
+  auto l_tmp_path  = std::get<FSys::path>(in_handle->body_);
+  if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
+  if (exists(l_d)) {
+    auto l_backup_path = l_UE_folder / "backup" / FSys::add_time_stamp(in_data->file_path_.filename());
+    if (!exists(l_backup_path.parent_path())) create_directories(l_backup_path.parent_path());
+    FSys::rename(l_d, l_backup_path);
+  }
+  FSys::rename(l_tmp_path, l_d);
 }
 
 FSys::path up_file_asset_image_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
