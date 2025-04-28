@@ -8,21 +8,22 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
 
-
 class up_file_asset : public http_jwt_fun {
  protected:
-  nlohmann::json task_data_{};
+  struct task_info_t {
+    nlohmann::json task_data_{};
 
-  std::string entity_type_{};
+    std::string entity_type_{};
 
-  std::int32_t gui_dang_{};
-  std::int32_t kai_shi_ji_shu_{};
-  std::string bian_hao_{};
-  std::string pin_yin_ming_cheng_{};
-  std::string version_{};
+    std::int32_t gui_dang_{};
+    std::int32_t kai_shi_ji_shu_{};
+    std::string bian_hao_{};
+    std::string pin_yin_ming_cheng_{};
+    std::string version_{};
+  };
 
-  virtual void check_data(const nlohmann::json& in_data);
-  virtual FSys::path gen_file_path() = 0;
+  virtual std::shared_ptr<task_info_t> check_data(const nlohmann::json& in_data);
+  virtual FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) = 0;
 
  public:
   using http_jwt_fun::http_jwt_fun;
@@ -30,14 +31,14 @@ class up_file_asset : public http_jwt_fun {
 };
 
 DOODLE_HTTP_FUN(up_file_asset_maya, post, "api/doodle/data/asset/{task_id}/file/maya", up_file_asset)
-FSys::path gen_file_path() override;
+FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(up_file_asset_ue, post, "api/doodle/data/asset/{task_id}/file/ue", up_file_asset)
-FSys::path gen_file_path() override;
+FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(up_file_asset_image, post, "api/doodle/data/asset/{task_id}/file/image", up_file_asset)
-FSys::path gen_file_path() override;
+FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

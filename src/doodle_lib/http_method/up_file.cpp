@@ -54,12 +54,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> http::up_file_asse
     l_json = nlohmann::json::parse(l_res.body());
     g_ctx().get<cache_manger>().set(l_task_id, l_json);
   }
-  check_data(l_json);
-  task_data_ = l_json;
-
+  auto l_ptr = check_data(l_json);
   auto l_prj =
       g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>());
-  l_d             = l_prj.path_ / gen_file_path() / l_d;
+  l_d             = l_prj.path_ / gen_file_path(l_ptr) / l_d;
 
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
   if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
@@ -67,67 +65,84 @@ boost::asio::awaitable<boost::beast::http::message_generator> http::up_file_asse
   co_return in_handle->make_msg("{}");
 }
 
-void up_file_asset::check_data(const nlohmann::json& in_data) {
+std::shared_ptr<up_file_asset::task_info_t> up_file_asset::check_data(const nlohmann::json& in_data) {
   if (auto l_type = in_data["task_type"]["name"].get_ref<const std::string&>();
       !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
     throw_exception(doodle_error{"未知的 task_type 类型"});
+  auto l_task_info          = std::make_shared<task_info_t>();
 
-  entity_type_       = in_data["entity_type"]["name"].get_ref<const std::string&>();
+  l_task_info->entity_type_ = in_data["entity_type"]["name"].get_ref<const std::string&>();
 
-  const auto& l_data = in_data["entity"]["data"];
+  const auto& l_data        = in_data["entity"]["data"];
   std::int32_t l_gui_dang{};
   if (l_data["gui_dang"].is_number())
-    gui_dang_ = l_data["gui_dang"].get<std::int32_t>();
+    l_task_info->gui_dang_ = l_data["gui_dang"].get<std::int32_t>();
   else if (l_data["gui_dang"].is_string() && !l_data["gui_dang"].get<std::string>().empty())
-    gui_dang_ = std::stoi(l_data["gui_dang"].get<std::string>());
+    l_task_info->gui_dang_ = std::stoi(l_data["gui_dang"].get<std::string>());
   std::int32_t l_kai_shi_ji_shu{};
   if (l_data["kai_shi_ji_shu"].is_number())
-    kai_shi_ji_shu_ = l_data["kai_shi_ji_shu"].get<std::int32_t>();
+    l_task_info->kai_shi_ji_shu_ = l_data["kai_shi_ji_shu"].get<std::int32_t>();
   else if (l_data["kai_shi_ji_shu"].is_string() && !l_data["kai_shi_ji_shu"].get<std::string>().empty())
-    kai_shi_ji_shu_ = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
+    l_task_info->kai_shi_ji_shu_ = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
 
-  if (l_data.contains("bian_hao")) bian_hao_ = l_data["bian_hao"].get_ref<const std::string&>();
+  if (l_data.contains("bian_hao")) l_task_info->bian_hao_ = l_data["bian_hao"].get_ref<const std::string&>();
   if (l_data.contains("pin_yin_ming_cheng"))
-    pin_yin_ming_cheng_ = l_data["pin_yin_ming_cheng"].get_ref<const std::string&>();
+    l_task_info->pin_yin_ming_cheng_ = l_data["pin_yin_ming_cheng"].get_ref<const std::string&>();
 
-  if (l_data.contains("ban_ben")) version_ = l_data["ban_ben"].get_ref<const std::string&>();
-  if (!version_.empty()) version_.insert(version_.begin(), '_');
+  if (l_data.contains("ban_ben")) l_task_info->version_ = l_data["ban_ben"].get_ref<const std::string&>();
+  if (!l_task_info->version_.empty()) l_task_info->version_.insert(l_task_info->version_.begin(), '_');
+  return l_task_info;
 }
 
-FSys::path up_file_asset_maya_post::gen_file_path() {
-  if (entity_type_ == "角色")
-    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
-  if (entity_type_ == "道具")
-    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
-  if (entity_type_ == "地编")
-    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/BG{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
+  if (in_data->entity_type_ == "角色")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
+    );
+  if (in_data->entity_type_ == "道具")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->pin_yin_ming_cheng_
+    );
+  if (in_data->entity_type_ == "地编")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/Mod", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
+    );
 
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
-FSys::path up_file_asset_ue_post::gen_file_path() {
-  if (entity_type_ == "角色")
+FSys::path up_file_asset_ue_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
+  if (in_data->entity_type_ == "角色")
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_
+        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_,
+        in_data->pin_yin_ming_cheng_
     );
-  if (entity_type_ == "道具")
+  if (in_data->entity_type_ == "道具")
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", gui_dang_, kai_shi_ji_shu_, gui_dang_, kai_shi_ji_shu_
+        "6-moxing/Ch/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", in_data->gui_dang_, in_data->kai_shi_ji_shu_,
+        in_data->gui_dang_, in_data->kai_shi_ji_shu_
     );
-  if (entity_type_ == "地编")
+  if (in_data->entity_type_ == "地编")
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/{}", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_
+        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_,
+        in_data->pin_yin_ming_cheng_
     );
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
-FSys::path up_file_asset_image_post::gen_file_path() {
-  if (entity_type_ == "角色")
-    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
-  if (entity_type_ == "道具")
-    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
-  if (entity_type_ == "地编")
-    return fmt::format("6-moxing/Ch/JD{:02d}_{:02d}/BG{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+FSys::path up_file_asset_image_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
+  if (in_data->entity_type_ == "角色")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
+    );
+  if (in_data->entity_type_ == "道具")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->pin_yin_ming_cheng_
+    );
+  if (in_data->entity_type_ == "地编")
+    return fmt::format(
+        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
+    );
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
