@@ -12,10 +12,10 @@
 #include <boost/lockfree/spsc_queue.hpp>
 
 #include <tl/expected.hpp>
+
 namespace doodle {
 enum server_task_info_type : int;
-}
-namespace doodle {
+struct asset_type;
 class server_task_info;
 struct todo_t;
 struct project_and_status_t;
@@ -127,6 +127,7 @@ class sqlite_database {
   bool is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id);
 
   task_status get_task_status_by_name(const std::string& in_name);
+  asset_type get_entity_type_by_name(const std::string& in_name);
 
   // 获取用户的订阅
   std::set<uuid> get_person_subscriptions(

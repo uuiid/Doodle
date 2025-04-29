@@ -716,12 +716,12 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
       join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(
-          ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || true) &&
-          ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) || true)
+          ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || in_project_id.is_nil()) &&
+          ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) || in_entity_type_id.is_nil())
       )
   );
   std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
-  std::map<uuid, entities_and_tasks_t::task_t*> l_task_set{};
+  std::map<uuid, std::size_t> l_task_set{};
   for (auto&& [
 
            uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, data_, task_id_,
@@ -750,32 +750,43 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
     }
     if (!task_id_.is_nil()) {
       if (!l_task_set.contains(task_id_)) {
-        auto l_task = entities_and_tasks_t::task_t{
-            .uuid_id_              = task_id_,
-            .estimation_           = estimation_,
-            .entity_id_            = episode_id_,
-            .end_date_             = end_date_,
-            .due_date_             = due_date_,
-            .done_date_            = done_date_,
-            .duration_             = duration_,
-            .last_comment_date_    = last_comment_date_,
-            .last_preview_file_id_ = last_preview_file_id_,
-            .priority_             = priority_,
-            .real_start_date_      = real_start_date_,
-            .retake_count_         = retake_count_,
-            .start_date_           = start_date_,
-            .difficulty_           = difficulty_,
-            .task_status_id_       = task_status_id_,
-            .task_type_id_         = task_type_id_,
-            .is_subscribed_        = l_subscriptions_for_user.contains(task_id_),
-        };
-        l_task_set.emplace(task_id_, &l_entities_and_tasks_map[episode_id_].tasks_.emplace_back(std::move(l_task)));
+        l_entities_and_tasks_map[episode_id_].tasks_.emplace_back(
+            entities_and_tasks_t::task_t{
+                .uuid_id_              = task_id_,
+                .estimation_           = estimation_,
+                .entity_id_            = episode_id_,
+                .end_date_             = end_date_,
+                .due_date_             = due_date_,
+                .done_date_            = done_date_,
+                .duration_             = duration_,
+                .last_comment_date_    = last_comment_date_,
+                .last_preview_file_id_ = last_preview_file_id_,
+                .priority_             = priority_,
+                .real_start_date_      = real_start_date_,
+                .retake_count_         = retake_count_,
+                .start_date_           = start_date_,
+                .difficulty_           = difficulty_,
+                .task_status_id_       = task_status_id_,
+                .task_type_id_         = task_type_id_,
+                .is_subscribed_        = l_subscriptions_for_user.contains(task_id_),
+            }
+        );
+        l_task_set.emplace(task_id_, l_entities_and_tasks_map[episode_id_].tasks_.size() - 1);
       }
-      if (!person_id_.is_nil()) l_task_set[task_id_]->assigners_.emplace_back(person_id_);
+      // if (l_task_set[task_id_] == nullptr) default_logger_raw()->info("task id {} not in task set", task_id_);
+      if (!person_id_.is_nil())
+        l_entities_and_tasks_map[episode_id_].tasks_[l_task_set.at(task_id_)].assigners_.emplace_back(person_id_);
     }
   }
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
   return l_ret;
+}
+
+asset_type sqlite_database::get_entity_type_by_name(const std::string& in_name) {
+  using namespace sqlite_orm;
+  auto l_e = impl_->storage_any_.get_all<asset_type>(where(c(&asset_type::name_) == in_name));
+  if (l_e.empty()) throw_exception(doodle_error{"未知的实体类型 {}", in_name});
+  return l_e.front();
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
