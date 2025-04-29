@@ -22,7 +22,11 @@ struct capture_t {
 
   explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
 
-  inline std::string get(const std::string& in_str) const { return capture_map_.at(in_str); }
+  inline std::string get(const std::string& in_str) const {
+    if (capture_map_.contains(in_str))
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求参数错误"});
+    return capture_map_.at(in_str);
+  }
 
   template <typename T>
     requires std::is_arithmetic_v<T>
@@ -88,9 +92,9 @@ class http_function : public http_function_base_t {
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
   boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 };
-#define DOODLE_HTTP_FUN(fun_name, verb_, url, base_fun)                                         \
+#define DOODLE_HTTP_FUN(fun_name, verb_, url, base_fun)                                    \
   class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::base_fun { \
-   public:                                                                                      \
+   public:                                                                                 \
     BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_)() : base_fun(boost::beast::http::verb::verb_, url) {}
 
 #define DOODLE_HTTP_FUN_END() \
