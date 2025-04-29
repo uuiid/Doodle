@@ -38,6 +38,7 @@ constexpr std::string_view g_cache_path{"D:/doodle/cache/ue"};
 constexpr std::uint16_t udp_port{50022};
 constexpr std::uint16_t http_port{50021};
 constexpr std::string_view task_status_todo{"Todo"};
+constexpr std::string_view entity_type_sequence{"Sequence"};
 namespace work_websocket_event {
 constexpr std::string_view post_task{R"(post_task)"};
 constexpr std::string_view list_task{R"(get_task)"};
