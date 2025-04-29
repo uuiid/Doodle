@@ -34,6 +34,13 @@ auto get_struct_attribute_vector(const std::vector<T>& in, const Attr_Ptr& in_at
   for (auto&& l_item : in) ret.emplace_back(l_item.*in_attr);
   return ret;
 }
+template <typename T, typename Attr_Ptr>
+auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
+    -> std::map<decltype(std::declval<T>().*in_attr), T*> {
+  std::map<decltype(std::declval<T>().*in_attr), T*> l_ret{};
+  for (auto&& l_item : in) l_ret.emplace(l_item.*in_attr, &l_item);
+  return l_ret;
+}
 
 }  // namespace
 void sqlite_database::load(const FSys::path& in_path) { impl_ = std::make_shared<sqlite_database_impl>(in_path); }
@@ -633,7 +640,7 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
       &task::task_type_id_, &task::task_status_id_, &task::assigner_id_
   );
   std::vector<assets_and_tasks_tmp_t> l_t{};
-  auto l_subscriptions_for_user = get_person_subscriptions(in_person, {}, {});
+  auto l_subscriptions_for_user = get_person_subscriptions(in_person, in_project_id, {});
   auto l_temporal_type_ids      = get_temporal_type_ids();
   l_t                           = impl_->storage_any_.select(
       l_sql_orm, join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
@@ -692,12 +699,84 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
 }
 
 std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
-    const person& in_person, const uuid& in_project_id, const uuid& in_id
+    const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id
 ) {
   std::vector<entities_and_tasks_t> l_ret{};
+  using namespace sqlite_orm;
+  auto l_subscriptions_for_user = get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
+  auto l_rows                   = impl_->storage_any_.select(
+      columns(
+          &entity::uuid_id_, &entity::name_, &entity::status_, &entity::uuid_id_, &entity::description_,
+          &entity::preview_file_id_, &entity::canceled_, &entity::data_, &task::uuid_id_, &task::estimation_,
+          &task::end_date_, &task::due_date_, &task::done_date_, &task::duration_, &task::last_comment_date_,
+          &task::last_preview_file_id_, &task::priority_, &task::real_start_date_, &task::retake_count_,
+          &task::start_date_, &task::difficulty_, &task::task_status_id_, &task::task_type_id_,
+          &assignees_table::person_id_
+      ),
+      join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
+      join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      where(
+          ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || true) &&
+          ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) || true)
+      )
+  );
+  std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
+  std::map<uuid, entities_and_tasks_t::task_t*> l_task_set{};
+  for (auto&& [
+
+           uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, data_, task_id_,
+           estimation_, end_date_, due_date_, done_date_, duration_, last_comment_date_, last_preview_file_id_,
+           priority_, real_start_date_, retake_count_, start_date_, difficulty_, task_status_id_, task_type_id_,
+           person_id_
+
+  ] : l_rows) {
+    if (!l_entities_and_tasks_map.contains(uuid_id_)) {
+      l_entities_and_tasks_map.emplace(
+          uuid_id_,
+          entities_and_tasks_t{
+              .uuid_id_         = uuid_id_,
+              .name_            = name_,
+              .status_          = status_,
+              .episode_id_      = episode_id_,
+              .description_     = description_,
+              .preview_file_id_ = preview_file_id_,
+              .canceled_        = canceled_,
+              .data_            = data_,
+              .frame_in_        = data_.contains("frame_in") ? data_["frame_in"].get<std::int32_t>() : 0,
+              .frame_out_       = data_.contains("frame_out") ? data_["frame_out"].get<std::int32_t>() : 0,
+              .fps_             = data_.contains("fps") ? data_["fps"].get<std::int32_t>() : 0,
+          }
+      );
+    }
+    if (!task_id_.is_nil()) {
+      if (!l_task_set.contains(task_id_)) {
+        auto l_task = entities_and_tasks_t::task_t{
+            .uuid_id_              = task_id_,
+            .estimation_           = estimation_,
+            .entity_id_            = episode_id_,
+            .end_date_             = end_date_,
+            .due_date_             = due_date_,
+            .done_date_            = done_date_,
+            .duration_             = duration_,
+            .last_comment_date_    = last_comment_date_,
+            .last_preview_file_id_ = last_preview_file_id_,
+            .priority_             = priority_,
+            .real_start_date_      = real_start_date_,
+            .retake_count_         = retake_count_,
+            .start_date_           = start_date_,
+            .difficulty_           = difficulty_,
+            .task_status_id_       = task_status_id_,
+            .task_type_id_         = task_type_id_,
+            .is_subscribed_        = l_subscriptions_for_user.contains(task_id_),
+        };
+        l_task_set.emplace(task_id_, &l_entities_and_tasks_map[episode_id_].tasks_.emplace_back(std::move(l_task)));
+      }
+      if (!person_id_.is_nil()) l_task_set[task_id_]->assigners_.emplace_back(person_id_);
+    }
+  }
+  l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
   return l_ret;
 }
-
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
