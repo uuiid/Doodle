@@ -653,8 +653,8 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
       ),
       multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
   );
-  std::map<uuid, assets_and_tasks_t::task_t> l_task_map{};
   std::map<uuid, assets_and_tasks_t> l_ret{};
+  std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& i : l_t) {
     if (!l_ret.contains(i.uuid_id_))
       l_ret[i.uuid_id_] = assets_and_tasks_t{
@@ -672,28 +672,31 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
           .data_               = i.data_,
       };
     if (i.task_uuid_id_.is_nil()) continue;
-    if (!l_task_map.contains(i.task_uuid_id_)) {
-      l_task_map[i.task_uuid_id_] = assets_and_tasks_t::task_t{
-          .uuid_id_              = i.task_uuid_id_,
-          .due_date_             = i.due_date_,
-          .done_date_            = i.done_date_,
-          .duration_             = i.duration_,
-          .entity_id_            = i.entity_id_,
-          .estimation_           = i.estimation_,
-          .end_date_             = i.end_date_,
-          .last_comment_date_    = i.last_comment_date_,
-          .last_preview_file_id_ = i.last_preview_file_id_,
-          .priority_             = i.priority_,
-          .real_start_date_      = i.real_start_date_,
-          .retake_count_         = i.retake_count_,
-          .start_date_           = i.start_date_,
-          .difficulty_           = i.difficulty_,
-          .task_type_id_         = i.task_type_id_,
-          .task_status_id_       = i.task_status_id_,
-      };
-      if (!i.assigner_id_.is_nil()) l_task_map[i.task_uuid_id_].assigner_ids_.emplace_back(i.assigner_id_);
-      l_ret[i.uuid_id_].tasks_.emplace_back(l_task_map[i.task_uuid_id_]);
+    if (!l_task_id_set.contains(i.task_uuid_id_)) {
+      l_ret[i.uuid_id_].tasks_.emplace_back(
+          assets_and_tasks_t::task_t{
+              .uuid_id_              = i.task_uuid_id_,
+              .due_date_             = i.due_date_,
+              .done_date_            = i.done_date_,
+              .duration_             = i.duration_,
+              .entity_id_            = i.entity_id_,
+              .estimation_           = i.estimation_,
+              .end_date_             = i.end_date_,
+              .last_comment_date_    = i.last_comment_date_,
+              .last_preview_file_id_ = i.last_preview_file_id_,
+              .priority_             = i.priority_,
+              .real_start_date_      = i.real_start_date_,
+              .retake_count_         = i.retake_count_,
+              .start_date_           = i.start_date_,
+              .difficulty_           = i.difficulty_,
+              .task_type_id_         = i.task_type_id_,
+              .task_status_id_       = i.task_status_id_,
+          }
+      );
+      l_task_id_set.emplace(i.task_uuid_id_, l_ret[i.uuid_id_].tasks_.size() - 1);
     }
+    if (!i.assigner_id_.is_nil())
+      l_ret[i.uuid_id_].tasks_[l_task_id_set.at(i.task_uuid_id_)].assigner_ids_.emplace_back(i.assigner_id_);
   }
   return l_ret | ranges::views::values | ranges::to_vector;
 }
@@ -717,11 +720,12 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
       join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(
           ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || in_project_id.is_nil()) &&
-          ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) || in_entity_type_id.is_nil())
+          ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) ||
+           in_entity_type_id.is_nil())
       )
   );
   std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
-  std::map<uuid, std::size_t> l_task_set{};
+  std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& [
 
            uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, data_, task_id_,
@@ -749,7 +753,7 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
       );
     }
     if (!task_id_.is_nil()) {
-      if (!l_task_set.contains(task_id_)) {
+      if (!l_task_id_set.contains(task_id_)) {
         l_entities_and_tasks_map[episode_id_].tasks_.emplace_back(
             entities_and_tasks_t::task_t{
                 .uuid_id_              = task_id_,
@@ -771,11 +775,10 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
                 .is_subscribed_        = l_subscriptions_for_user.contains(task_id_),
             }
         );
-        l_task_set.emplace(task_id_, l_entities_and_tasks_map[episode_id_].tasks_.size() - 1);
+        l_task_id_set.emplace(task_id_, l_entities_and_tasks_map[episode_id_].tasks_.size() - 1);
       }
-      // if (l_task_set[task_id_] == nullptr) default_logger_raw()->info("task id {} not in task set", task_id_);
       if (!person_id_.is_nil())
-        l_entities_and_tasks_map[episode_id_].tasks_[l_task_set.at(task_id_)].assigners_.emplace_back(person_id_);
+        l_entities_and_tasks_map[episode_id_].tasks_[l_task_id_set.at(task_id_)].assigners_.emplace_back(person_id_);
     }
   }
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
