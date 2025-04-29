@@ -85,7 +85,8 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<custom_actions_get>())
       .reg(std::make_shared<status_automations_get>())
       .reg(std::make_shared<tasks_comments_get>())
-      .reg(std::make_shared<user_context_get>());
+      .reg(std::make_shared<user_context_get>())
+      .reg(std::make_shared<sequences_with_tasks_get>());
 #endif
   (*l_router)
       .reg(std::make_shared<deepseek_key_get>())
