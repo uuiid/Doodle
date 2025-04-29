@@ -72,6 +72,15 @@ class session_data {
                                                                : boost::beast::http::status::ok
     );
   }
+
+  boost::beast::http::response<boost::beast::http::string_body> make_msg(const nlohmann::json& in_body) {
+    return make_msg(
+        std::move(in_body.dump()), "application/json; charset=utf-8",
+        req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
+                                                               : boost::beast::http::status::ok
+    );
+  }
+
   boost::beast::http::response<boost::beast::http::string_body> make_msg(
       std::string&& in_body, boost::beast::http::status in_status
   ) {
