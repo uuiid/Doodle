@@ -231,9 +231,9 @@ void to_json(nlohmann::json& j, const entities_and_tasks_t& p) {
   j["episode_id"]      = p.episode_id_;
   j["description"]     = p.description_;
 
-  j["frame_in"]        = p.frame_in_ ? nlohmann::json{p.frame_in_} : nlohmann::json{nlohmann::json::value_t::null};
-  j["frame_out"]       = p.frame_out_ ? nlohmann::json{p.frame_out_} : nlohmann::json{nlohmann::json::value_t::null};
-  j["fps"]             = p.fps_ ? nlohmann::json{p.fps_} : nlohmann::json{nlohmann::json::value_t::null};
+  j["frame_in"]        = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json{};
+  j["frame_out"]       = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json{};
+  j["fps"]             = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json{};
   j["preview_file_id"] = p.preview_file_id_;
   j["canceled"]        = p.canceled_;
   j["data"]            = p.data_;
