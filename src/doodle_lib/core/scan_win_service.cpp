@@ -5,12 +5,11 @@
 #include "scan_win_service.h"
 
 #include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/scan_data_t.h>
 #include <doodle_core/platform/win/register_file_type.h>
-
-#include <doodle_core/core/app_base.h>
 
 #include <doodle_lib/core/scan_assets/character_scan_category.h>
 #include <doodle_lib/core/scan_assets/prop_scan_category.h>
@@ -106,9 +105,10 @@ void scan_win_service_t::init_all_map() {
     nlohmann::json l_json =
         nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
     for (auto&& l_v : l_json) {
-      l_data_vec
-          .emplace_back(std::make_shared<details::scan_category_data_t>(l_v.get<details::scan_category_data_t>()))
-          ->project_database_ptr = l_pro_map.at(l_v["project_database_ptr"].get<uuid>());
+      if (auto l_uuid = l_v["project_database_ptr"].get<uuid>(); l_pro_map.contains(l_uuid))
+        l_data_vec
+            .emplace_back(std::make_shared<details::scan_category_data_t>(l_v.get<details::scan_category_data_t>()))
+            ->project_database_ptr = l_pro_map.at(l_uuid);
     }
   } catch (...) {
     default_logger_raw()->error("加载扫描数据失败 {}", boost::current_exception_diagnostic_information());
@@ -214,4 +214,4 @@ void scan_win_service_t::add_handle(
     }] = l_data;
   }
 }
-} // namespace doodle
+}  // namespace doodle
