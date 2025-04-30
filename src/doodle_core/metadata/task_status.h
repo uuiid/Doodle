@@ -7,7 +7,7 @@
 #include <doodle_core/metadata/base.h>
 
 namespace doodle {
-
+struct task;
 struct DOODLE_CORE_API task_status {
   DOODLE_BASE_FIELDS();
 
@@ -25,6 +25,9 @@ struct DOODLE_CORE_API task_status {
   bool is_default_;
   std::optional<std::int32_t> shotgun_id_;
   bool for_concept_;
+
+  void check_retake_capping(const task& in_task);
+
 
   // form json
   friend void from_json(const nlohmann::json& in_json, task_status& out_obj) {
