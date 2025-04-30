@@ -23,6 +23,7 @@ struct get_comments_t;
 struct task_status;
 struct assets_and_tasks_t;
 struct entities_and_tasks_t;
+struct department;
 }  // namespace doodle
 namespace doodle {
 namespace attendance_helper {
@@ -121,6 +122,7 @@ class sqlite_database {
   std::optional<project_asset_type_link> get_project_asset_type_link(
       const uuid& in_project_id, const uuid& in_asset_type_uuid
   );
+  std::vector<person> get_project_persons(const uuid& in_project_uuid);
   // 查询人员是否在项目团队中
   bool is_person_in_project(const person& in_person, const uuid& in_project_id);
   // 查询对应的task是否存在
