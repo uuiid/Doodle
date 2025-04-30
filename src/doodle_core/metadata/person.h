@@ -93,6 +93,11 @@ struct DOODLE_CORE_API person {
 
   bool is_generated_from_ldap_;
   std::string ldap_uid_;
+
+  std::string get_full_name() const {
+    return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;
+  };
+
   /// 控制 departments_ 是否写入json 中
   // bool write_departments_{true};
 
