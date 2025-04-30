@@ -813,6 +813,10 @@ std::set<uuid> sqlite_database::get_notification_recipients(const task& in_task)
                                        c(&subscription::entity_id_) == l_entt.project_id_
                                    )
       ));
+  l_uuid_task |= ranges::actions::push_back(
+      impl_->storage_any_.select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == in_task.uuid_id_))
+  );
+
   return l_uuid_task | ranges::to<std::set<uuid>>();
 }
 
