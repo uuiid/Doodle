@@ -795,8 +795,8 @@ asset_type sqlite_database::get_entity_type_by_name(const std::string& in_name) 
 std::vector<person> sqlite_database::get_project_persons(const uuid& in_project_uuid) {
   using namespace sqlite_orm;
   return impl_->storage_any_.get_all<person>(
-      join<project_person_link>(on(c(project_person_link::person_id_) == c(person::uuid_id_))),
-      where(c(project_person_link::project_id_) == in_project_uuid)
+      join<project_person_link>(on(c(&project_person_link::person_id_) == c(&person::uuid_id_))),
+      where(c(&project_person_link::project_id_) == in_project_uuid)
   );
 }
 

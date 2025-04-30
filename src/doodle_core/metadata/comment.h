@@ -40,16 +40,25 @@ struct DOODLE_CORE_API comment {
   chrono::system_zoned_time created_at_;
   chrono::system_zoned_time updated_at_;
 
+  void set_comment_mentions(const uuid& in_project_id);
+  void set_comment_department_mentions();
+
   // 外键
   uuid task_status_id_;
   uuid person_id_;
-  uuid editor_id_;// 编辑人
+  uuid editor_id_;  // 编辑人
   uuid preview_file_id_;
   std::vector<uuid> previews_;
-  std::vector<uuid> mentions_;
-  std::vector<uuid> department_mentions_;
+  std::vector<uuid> mentions_;             // 评论提到的人
+  std::vector<uuid> department_mentions_;  // 评论提到的部门
   std::vector<uuid> acknowledgements_;
   std::vector<uuid> attachment_files_;
+  // form json
+  friend void from_json(const nlohmann::json& j, comment& p) {
+    if (j.contains("checklist")) p.checklist_ = j["checklist"];
+    if (j.contains("comment")) j["comment"].get_to(p.text_);
+    if (j.contains("task_status_id")) j["task_status_id"].get_to(p.task_status_id_);
+  }
 };
 
 }  // namespace doodle
