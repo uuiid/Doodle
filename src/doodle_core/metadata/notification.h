@@ -19,7 +19,7 @@ enum class notification_type {
 struct DOODLE_CORE_API notification {
   DOODLE_BASE_FIELDS();
   bool read_{};
-  bool change_{};
+  bool change_{};  // 指向的task 状态是否发生了改变, 比如从完成到返修
   notification_type type_;
   uuid person_id_;
   uuid author_id_;
