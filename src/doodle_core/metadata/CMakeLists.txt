@@ -64,6 +64,7 @@ target_sources(
         work_xlsx_task_info.cpp
         scan_data_t.cpp
         task_status.cpp
+        status_automation.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(kitsu)
