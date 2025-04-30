@@ -22,4 +22,5 @@ target_sources(
         time.cpp
         base_data.cpp
         sequences.cpp
+        comment.cpp
 )

@@ -63,6 +63,7 @@ target_sources(
         attendance.cpp
         work_xlsx_task_info.cpp
         scan_data_t.cpp
+        task_status.cpp
 )
 add_subdirectory(bvh)
 add_subdirectory(kitsu)
