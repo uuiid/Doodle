@@ -24,6 +24,7 @@ struct task_status;
 struct assets_and_tasks_t;
 struct entities_and_tasks_t;
 struct department;
+struct task;
 }  // namespace doodle
 namespace doodle {
 namespace attendance_helper {
@@ -148,5 +149,6 @@ class sqlite_database {
   std::vector<entities_and_tasks_t> get_entities_and_tasks(
       const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id
   );
+  std::set<uuid> get_notification_recipients(const task& in_task);
 };
 }  // namespace doodle

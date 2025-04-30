@@ -800,6 +800,22 @@ std::vector<person> sqlite_database::get_project_persons(const uuid& in_project_
   );
 }
 
+std::set<uuid> sqlite_database::get_notification_recipients(const task& in_task) {
+  using namespace sqlite_orm;
+
+  auto l_uuid_task =
+      impl_->storage_any_.select(&subscription::uuid_id_, where(c(&subscription::task_id_) == in_task.uuid_id_));
+  if (impl_->uuid_to_id<entity>(in_task.uuid_id_))
+    if (auto l_entt = impl_->get_by_uuid<entity>(in_task.entity_id_); !l_entt.project_id_.is_nil())
+      l_uuid_task |= ranges::actions::push_back(impl_->storage_any_.select(
+          &subscription::uuid_id_, where(
+                                       c(&subscription::task_type_id_) == in_task.task_type_id_ &&
+                                       c(&subscription::entity_id_) == l_entt.project_id_
+                                   )
+      ));
+  return l_uuid_task | ranges::to<std::set<uuid>>();
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
