@@ -154,5 +154,7 @@ class sqlite_database {
   std::set<uuid> get_notification_recipients(const task& in_task);
   std::set<uuid> get_mentioned_people(const uuid& project_id, const comment& in_comment_id);
   std::vector<status_automation> get_project_status_automations(const uuid& in_project_uuid);
+  /// 返回一个允许将任务类型id与优先级匹配的字典。
+  std::map<uuid, std::int32_t> get_task_type_priority_map(const uuid& in_project, const std::string& in_for_entity)
 };
 }  // namespace doodle

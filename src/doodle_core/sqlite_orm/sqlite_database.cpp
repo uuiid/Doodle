@@ -844,6 +844,24 @@ std::vector<status_automation> sqlite_database::get_project_status_automations(c
   );
 }
 
+std::map<uuid, std::int32_t> sqlite_database::get_task_type_priority_map(
+    const uuid& in_project, const std::string& in_for_entity
+) {
+  using namespace sqlite_orm;
+
+  auto l_t = impl_->storage_any_.select(
+      columns(&project_task_type_link::uuid_id_, &project_task_type_link::priority_),
+      join<task_type>(on(c(&project_task_type_link::task_type_id_) == c(&task_type::uuid_id_))),
+      where(c(&project_task_type_link::project_id_) == in_project && c(&task_type::for_entity_) == in_for_entity)
+  );
+
+  std::map<uuid, std::int32_t> l_ret{};
+  for (auto&& [key, value] : l_t) {
+    l_ret[key] = value.value_or(0);
+  }
+  return l_ret;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
