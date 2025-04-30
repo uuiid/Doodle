@@ -14,6 +14,7 @@
 #include <tl/expected.hpp>
 
 namespace doodle {
+struct status_automation;
 enum server_task_info_type : int;
 struct asset_type;
 class server_task_info;
@@ -152,5 +153,6 @@ class sqlite_database {
   );
   std::set<uuid> get_notification_recipients(const task& in_task);
   std::set<uuid> get_mentioned_people(const uuid& project_id, const comment& in_comment_id);
+  std::vector<status_automation> get_project_status_automations(const uuid& in_project_uuid);
 };
 }  // namespace doodle

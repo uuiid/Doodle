@@ -834,6 +834,16 @@ std::set<uuid> sqlite_database::get_mentioned_people(const uuid& in_project_id, 
   return l_mentions | ranges::to<std::set<uuid>>();
 }
 
+std::vector<status_automation> sqlite_database::get_project_status_automations(const uuid& in_project_uuid) {
+  using namespace sqlite_orm;
+  return impl_->storage_any_.get_all<status_automation>(
+      join<project_status_automation_link>(
+          on(c(&project_status_automation_link::status_automation_id_) == c(&status_automation::uuid_id_))
+      ),
+      where(c(&project_status_automation_link::project_id_) == in_project_uuid)
+  );
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
