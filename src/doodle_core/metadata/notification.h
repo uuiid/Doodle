@@ -9,8 +9,8 @@
 namespace doodle {
 
 enum class notification_type {
-  comment,
-  mention,
+  comment,  // 评论
+  mention,  // 提到我
   assignation,
   reply,
   reply_mention,
@@ -21,8 +21,8 @@ struct DOODLE_CORE_API notification {
   bool read_{};
   bool change_{};  // 指向的task 状态是否发生了改变, 比如从完成到返修
   notification_type type_;
-  uuid person_id_;
-  uuid author_id_;
+  uuid person_id_; // 接收通知的人
+  uuid author_id_; // 评论的作者
   uuid comment_id_;
   uuid task_id_;
   uuid reply_id_;
