@@ -819,6 +819,20 @@ std::set<uuid> sqlite_database::get_notification_recipients(const task& in_task)
 
   return l_uuid_task | ranges::to<std::set<uuid>>();
 }
+std::set<uuid> sqlite_database::get_mentioned_people(const uuid& in_project_id, const comment& in_comment_id) {
+  using namespace sqlite_orm;
+
+  auto l_mentions = in_comment_id.mentions_;
+  for (auto&& i : in_comment_id.department_mentions_)
+    l_mentions |= ranges::actions::push_back(impl_->storage_any_.select(
+        &person::uuid_id_,
+        join<person_department_link>(on(c(&person_department_link::person_id_) == c(&person::uuid_id_))),
+        join<project_person_link>(on(c(&project_person_link::person_id_) == c(&person::uuid_id_))),
+        where(c(&project_person_link::project_id_) == in_project_id && c(&person_department_link::department_id_) == i)
+
+    ));
+  return l_mentions | ranges::to<std::set<uuid>>();
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
