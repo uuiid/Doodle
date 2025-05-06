@@ -30,7 +30,7 @@ struct DOODLE_CORE_API comment {
   DOODLE_BASE_FIELDS();
   std::int32_t shotgun_id_;
   uuid object_id_;
-  std::string object_type_;
+  std::string object_type_{"Task"};
   std::string text_;
   nlohmann::json data_;
   nlohmann::json replies_;

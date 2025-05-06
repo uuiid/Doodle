@@ -27,7 +27,7 @@ struct DOODLE_CORE_API task {
   std::int32_t sort_order_;
   std::optional<chrono::system_zoned_time> start_date_;
   std::optional<chrono::system_zoned_time> due_date_;
-  std::optional<chrono::system_zoned_time> real_start_date_;
+  std::optional<chrono::system_zoned_time> real_start_date_; // 实际开始时间
   std::optional<chrono::system_zoned_time> end_date_;
   std::optional<chrono::system_zoned_time> done_date_;
   std::optional<chrono::system_zoned_time> last_comment_date_;
@@ -37,8 +37,8 @@ struct DOODLE_CORE_API task {
   uuid last_preview_file_id_;
   std::int32_t nb_drawings_;
 
-  chrono::system_zoned_time created_at_;
-  chrono::system_zoned_time updated_at_;
+  chrono::system_zoned_time created_at_{chrono::system_clock::now()};
+  chrono::system_zoned_time updated_at_{chrono::system_clock::now()};
 
   // 外键
   uuid project_id_;
