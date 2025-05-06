@@ -99,8 +99,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
     for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
       co_await i.run(l_task, l_person->person_.uuid_id_);
   }
+  nlohmann::json l_r{};
+  l_r = *l_task;
+  l_r["task_status"] = l_task_status;
+  l_r["person"] = l_person->person_;
 
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return in_handle->make_msg(l_r);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::callback(session_data_ptr in_handle) {
