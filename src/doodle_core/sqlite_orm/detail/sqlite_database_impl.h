@@ -901,6 +901,7 @@ struct sqlite_database_impl {
 
     DOODLE_TO_SQLITE_THREAD();
 
+#if DOODLE_SQLORM_USE_RETURNING
     auto l_g = storage_any_.transaction_guard();
     for (std::size_t i = 0; i < l_split;) {
       auto l_end = std::min(i + g_step_size, l_split);
@@ -920,6 +921,18 @@ struct sqlite_database_impl {
       auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(c(&T::uuid_id_) == (*in_data)[i].uuid_id_));
       if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
     }
+#else
+    auto l_g = storage_any_.transaction_guard();
+    for (std::size_t i = 0; i < l_split; ++i) {
+      *in_data[i].id_ = storage_any_.insert<T>(*in_data[i]);
+    }
+
+    for (std::size_t i = l_split; i < in_data->size(); ++i) {
+      storage_any_.replace<T>(*in_data[i]);
+    }
+    l_g.commit();
+#endif
+
     DOODLE_TO_SELF();
   }
 
