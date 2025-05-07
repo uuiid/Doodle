@@ -31,7 +31,7 @@ class cache_manger {
 
   std::optional<nlohmann::json> get(const uuid& id) {
     if (auto l_value = cache_.TryGet(id);
-        l_value.second && l_value.first->time_point_ + 3s > std::chrono::system_clock::now()) {
+        l_value.second && l_value.first->time_point_ + 300s > std::chrono::system_clock::now()) {
       return l_value.first->json_;
     }
     return std::nullopt;
