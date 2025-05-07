@@ -23,7 +23,7 @@ struct capture_t {
   explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
 
   inline std::string get(const std::string& in_str) const {
-    if (capture_map_.contains(in_str))
+    if (!capture_map_.contains(in_str))
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求参数错误"});
     return capture_map_.at(in_str);
   }
