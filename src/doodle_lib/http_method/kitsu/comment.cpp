@@ -12,9 +12,9 @@
 namespace doodle::http {
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post::callback(session_data_ptr in_handle) {
-  auto l_person = get_person(in_handle);
-  std::shared_ptr<comment> l_comment{};
-  auto l_json = in_handle->get_json();
+  auto l_person                      = get_person(in_handle);
+  std::shared_ptr<comment> l_comment = std::make_shared<comment>();
+  auto l_json                        = in_handle->get_json();
   l_json.get_to(*l_comment);
   auto l_task_id         = from_uuid_str(in_handle->capture_->get("task_id"));
   l_comment->uuid_id_    = core_set::get_set().get_uuid();
@@ -37,14 +37,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
         }) |
         ranges::to_vector
     );
-    co_await l_sql.install(l_comment_mentions);
+    co_await l_sql.install_range(l_comment_mentions);
     auto l_comment_department_mentions = std::make_shared<std::vector<comment_department_mentions>>(
         l_comment->department_mentions_ | ranges::views::transform([l_comment](const uuid& in) {
           return comment_department_mentions{.comment_id_ = l_comment->uuid_id_, .department_id_ = in};
         }) |
         ranges::to_vector
     );
-    co_await l_sql.install(l_comment_department_mentions);
+    co_await l_sql.install_range(l_comment_department_mentions);
   }
   bool l_status_changed;
   if (!l_task->last_comment_date_ ||
@@ -92,7 +92,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
           }
       );
     }
-    co_await l_sql.install(l_notifications);
+    co_await l_sql.install_range(l_notifications);
   }
 
   {  // 运行自动化任务

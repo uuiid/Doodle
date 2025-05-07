@@ -924,11 +924,11 @@ struct sqlite_database_impl {
 #else
     auto l_g = storage_any_.transaction_guard();
     for (std::size_t i = 0; i < l_split; ++i) {
-      *in_data[i].id_ = storage_any_.insert<T>(*in_data[i]);
+      (*in_data)[i].id_ = storage_any_.insert<T>((*in_data)[i]);
     }
 
     for (std::size_t i = l_split; i < in_data->size(); ++i) {
-      storage_any_.replace<T>(*in_data[i]);
+      storage_any_.replace<T>((*in_data)[i]);
     }
     l_g.commit();
 #endif

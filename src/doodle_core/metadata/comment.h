@@ -55,9 +55,9 @@ struct DOODLE_CORE_API comment {
   std::vector<uuid> attachment_files_;
   // form json
   friend void from_json(const nlohmann::json& j, comment& p) {
-    if (j.contains("checklist")) p.checklist_ = j["checklist"];
-    if (j.contains("comment")) j["comment"].get_to(p.text_);
-    if (j.contains("task_status_id")) j["task_status_id"].get_to(p.task_status_id_);
+    if (j.contains("checklist")) j.at("checklist").get_to(p.checklist_);
+    if (j.contains("comment")) j.at("comment").get_to(p.text_);
+    if (j.contains("task_status_id")) j.at("task_status_id").get_to(p.task_status_id_);
   }
 };
 
