@@ -100,20 +100,20 @@ void scan_win_service_t::init_all_map() {
   for (auto&& i : project_roots_) {
     l_pro_map.emplace(i->uuid_id_, i);
   }
-  std::vector<doodle::details::scan_category_data_ptr> l_data_vec{};
-  try {
-    nlohmann::json l_json =
-        nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
-    for (auto&& l_v : l_json) {
-      if (auto l_uuid = l_v["project_database_ptr"].get<uuid>(); l_pro_map.contains(l_uuid))
-        l_data_vec
-            .emplace_back(std::make_shared<details::scan_category_data_t>(l_v.get<details::scan_category_data_t>()))
-            ->project_database_ptr = l_pro_map.at(l_uuid);
-    }
-  } catch (...) {
-    default_logger_raw()->error("加载扫描数据失败 {}", boost::current_exception_diagnostic_information());
-  }
-  add_handle(l_data_vec, index_);
+  // std::vector<doodle::details::scan_category_data_ptr> l_data_vec{};
+  // try {
+  //   nlohmann::json l_json =
+  //       nlohmann::json::parse(FSys::ifstream{core_set::get_set().get_cache_root() / jaon_file_name_});
+  //   for (auto&& l_v : l_json) {
+  //     if (auto l_uuid = l_v["project_database_ptr"].get<uuid>(); l_pro_map.contains(l_uuid))
+  //       l_data_vec
+  //           .emplace_back(std::make_shared<details::scan_category_data_t>(l_v.get<details::scan_category_data_t>()))
+  //           ->project_database_ptr = l_pro_map.at(l_uuid);
+  //   }
+  // } catch (...) {
+  //   default_logger_raw()->error("加载扫描数据失败 {}", boost::current_exception_diagnostic_information());
+  // }
+  // add_handle(l_data_vec, index_);
 }
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
