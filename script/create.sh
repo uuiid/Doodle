@@ -81,7 +81,9 @@ sudo nano /etc/zou/gunicorn.conf
 "
 accesslog = "/opt/zou/logs/gunicorn_access.log"
 errorlog = "/opt/zou/logs/gunicorn_error.log"
-workers = 3
+workers = 13
+threads = 8
+worker_connections = 10000
 worker_class = "gevent"
 "
 
