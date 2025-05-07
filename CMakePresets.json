@@ -53,7 +53,6 @@
       "inherits": "Ninja_build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "Photoshop_Version": "120.0",
         "ADD_VERSION_LABEL": true,
         "Maya_Version": "2020"
       }
@@ -63,7 +62,15 @@
       "inherits": "Ninja_build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "Photoshop_Version": "120.0",
+        "BUILD_USD": "ON",
+        "PXR_USD_ROOT": "E:/Doodle/external/USD/debug"
+      }
+    },
+    {
+      "name": "Ninja_debug_kitsu",
+      "inherits": "Ninja_build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "BUILD_USD": "ON",
         "DOODLE_KITSU": "ON",
         "PXR_USD_ROOT": "E:/Doodle/external/USD/debug"
