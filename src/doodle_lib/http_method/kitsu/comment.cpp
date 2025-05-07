@@ -100,14 +100,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
       co_await i.run(l_task, l_person->person_.uuid_id_);
   }
   nlohmann::json l_r{};
-  l_r = *l_task;
+  l_r                = *l_task;
   l_r["task_status"] = l_task_status;
-  l_r["person"] = l_person->person_;
+  l_r["person"]      = l_person->person_;
 
   co_return in_handle->make_msg(l_r);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::callback(session_data_ptr in_handle) {
+  auto l_json       = in_handle->get_json();
+  auto l_comment_id = from_uuid_str(in_handle->capture_->get("comment_id"));
+  auto l_sql        = g_ctx().get<sqlite_database>();
+  auto l_comment    = std::make_shared<comment>(l_sql.get_by_uuid<comment>(l_comment_id));
+  l_json.get_to(*l_comment);
+  l_comment->updated_at_ = chrono::system_clock::now();
+  co_await l_sql.install(l_comment);
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
