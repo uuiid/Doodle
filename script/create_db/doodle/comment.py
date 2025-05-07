@@ -150,11 +150,11 @@ class Comment(BaseMixin):
         self.object_id = comment.object_id
         self.object_type = comment.object_type
         self.text = comment.text
-        self.data = json.dumps(comment.data)
-        self.replies = json.dumps(comment.replies)
-        self.checklist = json.dumps(comment.checklist)
+        self.data = json.dumps(comment.data, ensure_ascii=False)
+        self.replies = json.dumps(comment.replies, ensure_ascii=False)
+        self.checklist = json.dumps(comment.checklist, ensure_ascii=False)
         self.pinned = comment.pinned
-        self.links = None if comment.links is None or len(comment.links) == 0 or comment.links[0] is None else json.dumps(comment.links)
+        self.links = None if comment.links is None or len(comment.links) == 0 or comment.links[0] is None else json.dumps(comment.links, ensure_ascii=False)
         self.task_status_id = comment.task_status_id
         self.person_id = comment.person_id
         # self.editor_id = comment.editor_id

@@ -63,7 +63,7 @@ class EntityLink(BaseMixin):
     def from_zou(self, entity_link: ZouEntityLink):
         self.entity_in_id = entity_link.entity_in_id
         self.entity_out_id = entity_link.entity_out_id
-        self.data = json.dumps(entity_link.data)
+        self.data = json.dumps(entity_link.data, ensure_ascii=False)
         self.nb_occurences = entity_link.nb_occurences
         self.label = entity_link.label
 
@@ -202,7 +202,7 @@ class Entity(BaseMixin):
         self.parent_id = entity.parent_id
         self.source_id = entity.source_id
         self.preview_file_id = entity.preview_file_id
-        self.data = json.dumps(entity.data)
+        self.data = json.dumps(entity.data, ensure_ascii=False)
         self.ready_for = entity.ready_for
         self.created_by = entity.created_by
         return self
@@ -221,7 +221,7 @@ class EntityVersion(BaseMixin):
 
     def from_zou(self, entity_version: ZouEntityVersion):
         self.name = entity_version.name
-        self.data = json.dumps(entity_version.data)
+        self.data = json.dumps(entity_version.data, ensure_ascii=False)
         self.entity_id = entity_version.entity_id
         self.person_id = entity_version.person_id
 

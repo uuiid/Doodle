@@ -108,7 +108,7 @@ class Task(BaseMixin):
         self.done_date = task.done_date
         self.last_comment_date = task.last_comment_date
         self.nb_assets_ready = task.nb_assets_ready
-        self.data = json.dumps(task.data)
+        self.data = json.dumps(task.data, ensure_ascii=False)
         self.nb_drawings = task.nb_drawings if hasattr(task, "nb_drawings") else 0
         self.shotgun_id = task.shotgun_id
         self.last_preview_file_id = task.last_preview_file_id
