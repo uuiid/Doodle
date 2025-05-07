@@ -53,8 +53,7 @@ void http_client_data_base::init(std::string in_server_url, boost::asio::ssl::co
 
 void http_client_data_base::re_init() {
   if (is_open()) return;
-  if (std::visit([](auto&& in_socket_ptr) -> bool { return !!in_socket_ptr; }, socket_) && socket().socket().is_open())
-    return;
+  error_ = {};
 
   switch (scheme_id_) {
     case boost::urls::scheme::http:  // http
@@ -83,7 +82,7 @@ void http_client_data_base::re_init() {
 
 bool http_client_data_base::is_open() {
   return std::visit([](auto&& in_socket_ptr) -> bool { return !!in_socket_ptr; }, socket_) &&
-         socket().socket().is_open() && is_open_and_cond_;
+         socket().socket().is_open() && !error_ && is_open_and_cond_;
 }
 
 void http_client_data_base::do_close() {
@@ -119,7 +118,7 @@ void http_client_data_base::do_close() {
 }
 
 void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
-  timer_ptr_->expires_after(in_seconds);
+  // timer_ptr_->expires_after(in_seconds);
   std::visit(
       overloaded{
           [&](socket_ptr& in_socket) {
@@ -132,17 +131,17 @@ void http_client_data_base::expires_after(std::chrono::seconds in_seconds) {
       socket_
   );
 
-  timer_ptr_->async_wait(
-      boost::asio::bind_cancellation_slot(
-          app_base::Get().on_cancel.slot(),
-          [this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
-            if (in_ec) {
-              return;
-            }
-            do_close();
-          }
-      )
-  );
+  // timer_ptr_->async_wait(
+  //     boost::asio::bind_cancellation_slot(
+  //         app_base::Get().on_cancel.slot(),
+  //         [this, _ = shared_from_this()](const boost::system::error_code& in_ec) {
+  //           if (in_ec) {
+  //             return;
+  //           }
+  //           do_close();
+  //         }
+  //     )
+  // );
 }
 
 http_client_data_base::socket_t& http_client_data_base::socket() {

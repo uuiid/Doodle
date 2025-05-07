@@ -10,6 +10,7 @@
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/logger/logger.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/ts/netfwd.hpp>
 #include <boost/beast.hpp>
@@ -18,7 +19,6 @@
 
 #include <atomic>
 #include <magic_enum.hpp>
-
 namespace doodle::http::detail {
 
 namespace http_client_core_ns {
@@ -83,6 +83,7 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
 
   // 定时关闭
   timer_ptr_t timer_ptr_;
+  boost::system::error_code error_{};
 
   // 异步队列
   awaitable_queue_limitation queue_;
@@ -99,6 +100,39 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
   // 重新初始化
   void re_init();
   bool is_open();
+
+  // 获取 set-cookie 中的 key
+  template <typename Resp>
+  static auto get_header_resp(Resp& in_resp, const std::string& in_key) {
+    auto l_set_cookie = in_resp[boost::beast::http::field::set_cookie];
+    if (!l_set_cookie.empty()) {
+      std::vector<std::string> l_cookie;
+      boost::split(l_cookie, l_set_cookie, boost::is_any_of(";"));
+      for (auto& l_item : l_cookie) {
+        if (l_item.starts_with(in_key)) {
+          return l_item.substr(in_key.size() + 1);  // +1 是等号
+        }
+      }
+    }
+    return std::string{};
+  }
+
+  // 替换或者添加 cookie
+  template <typename Resp>
+  static void set_header_resp(Resp& in_resp, const std::string& in_key, const std::string& in_value) {
+    auto l_cookie = in_resp[boost::beast::http::field::cookie];
+    if (!l_cookie.empty()) {
+      std::vector<std::string> l_cookies;
+      boost::split(l_cookies, l_cookie, boost::is_any_of(";"));
+      for (auto& l_item : l_cookies) {
+        if (l_item.starts_with(in_key)) {
+          l_item = in_key + "=" + in_value;
+        }
+      }
+      in_resp.set(boost::beast::http::field::cookie, boost::algorithm::join(l_cookies, ";\n"));
+    } else
+      in_resp.set(boost::beast::http::field::cookie, in_key + "=" + in_value);
+  }
 };
 using http_client_data_base_ptr = std::shared_ptr<http_client_data_base>;
 template <typename ResponseBody, typename RequestType>
@@ -113,26 +147,28 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
   boost::beast::http::response<ResponseBody> l_ret{};
   if (!in_client_data->is_open()) {
     in_client_data->re_init();
-    auto [l_e1, l_re] =
+    std::tie(in_client_data->error_, in_client_data->resolver_results_) =
         co_await in_client_data->resolver_->async_resolve(in_client_data->server_ip_, in_client_data->server_port_);
-    if (l_e1) {
-      in_client_data->logger_->log(log_loc(), level::err, "async_resolve error: {}", l_e1.message());
-      co_return std::make_tuple(l_e1, l_ret);
+    if (in_client_data->error_) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_resolve error: {}", in_client_data->error_.message());
+      co_return std::make_tuple(in_client_data->error_, l_ret);
     }
     in_client_data->expires_after(std::chrono::seconds{10});
 
-    in_client_data->resolver_results_ = l_re;
-    auto [l_e2] = co_await in_client_data->socket().async_connect(*in_client_data->resolver_results_);
-    if (l_e2) {
-      in_client_data->logger_->log(log_loc(), level::err, "async_connect error: {}", l_e2.message());
-      co_return std::make_tuple(l_e2, l_ret);
+    std::tie(in_client_data->error_) =
+        co_await in_client_data->socket().async_connect(*in_client_data->resolver_results_);
+    if (in_client_data->error_) {
+      in_client_data->logger_->log(log_loc(), level::err, "async_connect error: {}", in_client_data->error_.message());
+      co_return std::make_tuple(in_client_data->error_, l_ret);
     }
 
     if (auto l_ssl = in_client_data->ssl_socket(); l_ssl) {
-      auto [l_e3] = co_await l_ssl->async_handshake(boost::asio::ssl::stream_base::client);
-      if (l_e3) {
-        in_client_data->logger_->log(log_loc(), level::err, "async_handshake error: {}", l_e3.message());
-        co_return std::make_tuple(l_e3, l_ret);
+      std::tie(in_client_data->error_) = co_await l_ssl->async_handshake(boost::asio::ssl::stream_base::client);
+      if (in_client_data->error_) {
+        in_client_data->logger_->log(
+            log_loc(), level::err, "async_handshake error: {}", in_client_data->error_.message()
+        );
+        co_return std::make_tuple(in_client_data->error_, l_ret);
       }
     }
     in_client_data->is_open_and_cond_ = true;
@@ -141,7 +177,8 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
       http_client_data_base::co_executor_type, void(boost::system::error_code, std::size_t)>::return_type;
 
   in_client_data->expires_after(30s);
-  auto [l_ew, l_bw] = co_await std::visit(
+  std::size_t l_size{};
+  std::tie(in_client_data->error_, l_size) = co_await std::visit(
       [in_req_ptr = &in_req](auto&& in_socket_ptr) -> visit_return_type {
         // 此处调整异步堆栈
         auto l_req = in_req_ptr;
@@ -150,13 +187,13 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
       in_client_data->socket_
   );
 
-  if (l_ew) {
-    in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", l_ew.message());
-    co_return std::make_tuple(l_ew, l_ret);
+  if (in_client_data->error_) {
+    in_client_data->logger_->log(log_loc(), level::err, "async_write error: {}", in_client_data->error_.message());
+    co_return std::make_tuple(in_client_data->error_, l_ret);
   }
   in_client_data->expires_after(30s);
 
-  auto [l_er, l_br] = co_await std::visit(
+  std::tie(in_client_data->error_, l_size) = co_await std::visit(
       [in_ret_ptr = &l_ret](auto&& in_socket_ptr) -> visit_return_type {
         // 此处调整异步堆栈
         auto l_ret_ptr = in_ret_ptr;
@@ -165,14 +202,13 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
       },
       in_client_data->socket_
   );
-  if (l_er) {
-    in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", l_er.message());
-    co_return std::make_tuple(l_er, l_ret);
+  if (in_client_data->error_) {
+    in_client_data->logger_->log(log_loc(), level::err, "async_read error: {}", in_client_data->error_.message());
+    co_return std::make_tuple(in_client_data->error_, l_ret);
   }
 
   co_return std::make_tuple(boost::system::error_code{}, l_ret);
 }
 }  // namespace doodle::http::detail
 
-namespace doodle::http {
-} // namespace doodle::http
+namespace doodle::http {}  // namespace doodle::http
