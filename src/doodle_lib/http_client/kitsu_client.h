@@ -92,7 +92,7 @@ class kitsu_client {
     if (l_e) {
       co_return tl::make_unexpected(fmt::format("错误 {}", l_e));
     }
-    if (l_res.result() != boost::beast::http::status::ok || l_res.result() != boost::beast::http::status::created)
+    if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
       co_return tl::make_unexpected(fmt::format("错误 {}", l_res.result_int()));
 
     header_operator_resp(l_res);
