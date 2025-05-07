@@ -33,8 +33,8 @@ struct DOODLE_CORE_API comment {
   std::string object_type_{"Task"};
   std::string text_;
   nlohmann::json data_;
-  nlohmann::json replies_;
-  nlohmann::json checklist_;
+  nlohmann::json replies_{nlohmann::json::array()};
+  nlohmann::json checklist_{nlohmann::json::array()};
   bool pinned_;
   std::vector<std::string> links;
   chrono::system_zoned_time created_at_;

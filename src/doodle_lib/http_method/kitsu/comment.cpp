@@ -115,7 +115,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::
   l_json.get_to(*l_comment);
   l_comment->updated_at_ = chrono::system_clock::now();
   co_await l_sql.install(l_comment);
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return in_handle->make_msg(nlohmann::json{} = *l_comment);
 }
 
 }  // namespace doodle::http
