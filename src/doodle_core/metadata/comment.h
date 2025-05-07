@@ -53,6 +53,26 @@ struct DOODLE_CORE_API comment {
   std::vector<uuid> department_mentions_;  // 评论提到的部门
   std::vector<uuid> acknowledgements_;
   std::vector<uuid> attachment_files_;
+  // to json
+  friend void to_json(nlohmann::json& j, const comment& p) {
+    j["id"]              = p.uuid_id_;
+    j["shotgun_id"]      = p.shotgun_id_;
+    j["object_id"]       = p.object_id_;
+    j["object_type"]     = p.object_type_;
+    j["text"]            = p.text_;
+    j["data"]            = p.data_;
+    j["replies"]         = p.replies_;
+    j["checklist"]       = p.checklist_;
+    j["pinned"]          = p.pinned_;
+    j["links"]           = p.links;
+    j["created_at"]      = p.created_at_;
+    j["updated_at"]      = p.updated_at_;
+    j["task_status_id"]  = p.task_status_id_;
+    j["person_id"]       = p.person_id_;
+    j["editor_id"]       = p.editor_id_;
+    j["preview_file_id"] = p.preview_file_id_;
+  }
+
   // form json
   friend void from_json(const nlohmann::json& j, comment& p) {
     if (j.contains("checklist")) j.at("checklist").get_to(p.checklist_);

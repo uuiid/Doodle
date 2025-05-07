@@ -100,7 +100,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
       co_await i.run(l_task, l_person->person_.uuid_id_);
   }
   nlohmann::json l_r{};
-  l_r                = *l_task;
+  l_r                = *l_comment;
   l_r["task_status"] = l_task_status;
   l_r["person"]      = l_person->person_;
 
