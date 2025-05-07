@@ -30,7 +30,8 @@ struct type_printer<std::vector<std::string>> : public text_printer {};
 template <>
 struct statement_binder<std::vector<std::string>> : public statement_binder<std::string> {
   int bind(sqlite3_stmt* stmt, int index, const std::vector<std::string>& value) const {
-    auto nlohmann_json = nlohmann::json{value};
+    nlohmann::json nlohmann_json{};
+    nlohmann_json = value;
     return statement_binder<std::string>::bind(stmt, index, nlohmann_json.dump());
   }
 };
