@@ -2,7 +2,6 @@
 // Created by TD on 24-10-15.
 //
 
-#include "assets.h"
 
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>

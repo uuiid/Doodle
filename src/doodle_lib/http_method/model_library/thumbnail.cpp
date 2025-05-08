@@ -140,25 +140,4 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::cal
   }
 }
 
-void thumbnail_reg(http_route& route) {
-  auto l_thumbnails_root = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "thumbnails");
-  auto l_previews_root   = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "previews");
-  if (!FSys::exists(*l_thumbnails_root)) FSys::create_directories(*l_thumbnails_root);
-  if (!FSys::exists(*l_previews_root)) FSys::create_directories(*l_previews_root);
-  if (auto l_p = g_ctx().get<kitsu_ctx_t>().root_ / "tmp"; !FSys::exists(l_p)) FSys::create_directories(l_p);
-  route.reg(std::make_shared<http_function>(boost::beast::http::verb::post, "api/doodle/pictures/{id}", thumbnail_post))
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/pictures/thumbnails/{id}",
-              std::bind_front(thumbnail_get, l_thumbnails_root)
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/pictures/{id}", std::bind_front(thumbnail_get, l_previews_root)
-          )
-      )
-
-      ;
-}
 }  // namespace doodle::http::model_library
