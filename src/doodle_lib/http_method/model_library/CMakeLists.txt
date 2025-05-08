@@ -4,6 +4,7 @@ target_sources(
         assets.h
         assets_tree.h
         thumbnail.h
+        model_library.h
 
         PRIVATE
         assets.cpp
