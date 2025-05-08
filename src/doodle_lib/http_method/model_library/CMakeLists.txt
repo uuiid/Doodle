@@ -8,4 +8,5 @@ target_sources(
         assets_tree.cpp
         thumbnail.cpp
         label.cpp
+        context.cpp
 )
