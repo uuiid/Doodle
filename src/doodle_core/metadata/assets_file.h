@@ -23,6 +23,8 @@ struct database_t {
   bool has_thumbnail_{};
   std::string extension_{};
 
+  std::vector<uuid> labels_{};  // 多对多关系
+
   friend void DOODLE_CORE_API to_json(nlohmann::json& j, const database_t& p) {
     j["id"]            = p.uuid_id_;
     j["label"]         = p.label_;
@@ -32,6 +34,7 @@ struct database_t {
     j["parent_id"]     = p.uuid_parent_;
     j["has_thumbnail"] = p.has_thumbnail_;
     j["extension"]     = p.extension_;
+    j["labels"]        = p.labels_;
   }
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, database_t& p) {
     j.at("label").get_to(p.label_);
