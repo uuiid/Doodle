@@ -29,9 +29,6 @@
 #include <doodle_lib/http_method/local/event.h>
 #include <doodle_lib/http_method/local/local_setting.h>
 #include <doodle_lib/http_method/local/task_info.h>
-#include <doodle_lib/http_method/model_library/assets.h>
-#include <doodle_lib/http_method/model_library/assets_tree.h>
-#include <doodle_lib/http_method/model_library/thumbnail.h>
 #include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>

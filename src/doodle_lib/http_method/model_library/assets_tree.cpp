@@ -1,7 +1,6 @@
 //
 // Created by TD on 24-10-15.
 //
-#include "assets_tree.h"
 
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -11,18 +10,10 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
 
+#include "model_library.h"
 #include <tl/expected.hpp>
 #include <treehh/tree.hh>
-namespace doodle::http::kitsu {
-namespace {
-
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get(session_data_ptr in_handle) {
-  auto l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
-
-  nlohmann::json l_json{};
-  l_json = l_list;
-  co_return in_handle->make_msg(l_json.dump());
-}
+namespace doodle::http::model_library {
 
 tl::expected<void, std::string> check_data(const assets_helper::database_t& in_data) {
   /// 检查是否存在引用自身
@@ -45,10 +36,20 @@ tl::expected<void, std::string> check_data(const assets_helper::database_t& in_d
   return {};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(session_data_ptr in_handle) {
-  if (in_handle->content_type_ != detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
+boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get::callback(
+    http::session_data_ptr in_handle
+) {
+  auto l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
+
+  nlohmann::json l_json{};
+  l_json = l_list;
+  co_return in_handle->make_msg(l_json);
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post::callback(
+    http::session_data_ptr in_handle
+) {
+  auto l_json = in_handle->get_json();
   if (l_json.is_object()) {
     std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>(
         std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>()
@@ -61,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
     }
     l_ptr->uuid_id_ = core_set::get_set().get_uuid();
     co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr);
-    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+    co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
   }
   if (l_json.is_array()) {
     std::shared_ptr<std::vector<assets_helper::database_t>> l_ptr =
@@ -76,12 +77,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post(s
       l_item.uuid_id_ = core_set::get_set().get_uuid();
     }
     co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr);
-    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+    co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch::callback(
+    http::session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   auto& l_json = std::get<nlohmann::json>(in_handle->body_);
@@ -103,12 +106,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_patch(
         co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, l_c.error());
     }
     co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_ptr);
-    co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+    co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
   }
   co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的数据");
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_modify(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_modify_post::callback(
+    http::session_data_ptr in_handle
+) {
   uuid l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
   if (in_handle->content_type_ != detail::content_type::application_json)
@@ -131,11 +136,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post_m
 
   co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_value);
 
-  co_return in_handle->make_msg((nlohmann::json{} = *l_value).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete(session_data_ptr in_handle) {
-  auto l_uuid  = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
+boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete_::callback(
+    http::session_data_ptr in_handle
+) {
+  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
   if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(*l_uuid);
       !l_r.empty() &&
       std::ranges::any_of(l_r, [](const assets_file_helper::database_t& l_item) -> bool { return l_item.active_; }))
@@ -150,38 +156,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
   // }
   co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid);
 
-  co_return in_handle->make_msg("{}");
+  co_return in_handle->make_msg(nlohmann::json{});
 }
-}  // namespace
-void assets_tree_reg(http_route& in_http_route) {
-  in_http_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/model_library/assets_tree", assets_tree_get
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/model_library/assets_tree", assets_tree_post
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/model_library/assets_tree/{id}", assets_tree_post_modify
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::delete_, "api/doodle/model_library/assets_tree/{id}", assets_tree_delete
-          )
 
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::patch, "api/doodle/model_library/assets_tree", assets_tree_patch
-          )
-      )
-
-      ;
-}
-}  // namespace doodle::http::kitsu
+}  // namespace doodle::http::model_library

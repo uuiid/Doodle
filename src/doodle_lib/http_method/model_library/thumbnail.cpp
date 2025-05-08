@@ -2,26 +2,22 @@
 // Created by TD on 24-10-18.
 //
 
-#include "thumbnail.h"
-
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
+#include "model_library.h"
 #include <opencv2/opencv.hpp>
-#include <tl/expected.hpp>
-namespace doodle::http::kitsu {
+namespace doodle::http::model_library {
 
-namespace {
-
-tl::expected<void, std::string> create_thumbnail_image(
+void pictures_base::create_thumbnail_image(
     const std::string& in_data, const FSys::path& in_path, const std::string& in_name
 ) {
   cv::Mat l_image = cv::imdecode(
       cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
       cv::IMREAD_COLOR
   );
-  if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+  if (l_image.empty()) return throw_exception(doodle_error{"图片解码失败"});
 
   cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
   if (l_image.cols > 192 || l_image.rows > 108) {
@@ -29,22 +25,20 @@ tl::expected<void, std::string> create_thumbnail_image(
     cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
   cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
-
-  return {};
 }
-tl::expected<void, std::string> create_thumbnail_gif(
+void pictures_base::create_thumbnail_gif(
     const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
 ) {
   {
     cv::VideoCapture l_video{};
     l_video.open(in_data_path.generic_string());
-    if (!l_video.isOpened()) return tl::make_unexpected("gif 打开失败");
+    if (!l_video.isOpened()) return throw_exception(doodle_error{"gif 打开失败"});
 
     auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
     cv::Mat l_image{};
     l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
     l_video >> l_image;
-    if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+    if (l_image.empty()) return throw_exception(doodle_error{"图片解码失败"});
 
     if (l_image.cols > 192 || l_image.rows > 108) {
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
@@ -53,31 +47,30 @@ tl::expected<void, std::string> create_thumbnail_gif(
     cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
   }
   FSys::rename(in_data_path, in_path / "previews" / (in_name + ".gif"));
-
-  return {};
 }
-tl::expected<void, std::string> create_thumbnail_mp4(
+void pictures_base::create_thumbnail_mp4(
     const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
 ) {
   cv::VideoCapture l_video{};
   l_video.open(in_data_path.generic_string());
-  if (!l_video.isOpened()) return tl::make_unexpected("mp4 打开失败");
+  if (!l_video.isOpened()) throw_exception(doodle_error{"mp4 打开失败"});
 
   auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
   cv::Mat l_image{};
   l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
   l_video >> l_image;
-  if (l_image.empty()) return tl::make_unexpected("图片解码失败");
+  if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
 
   if (l_image.cols > 192 || l_image.rows > 108) {
     auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
     cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
   cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
-  return {};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_post(
+    session_data_ptr in_handle
+) {
   std::string l_name{in_handle->capture_->get("id")};
   FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
 
@@ -95,13 +88,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(ses
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
       break;
   }
-
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", in_handle->capture_->get("id")));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
-    std::shared_ptr<FSys::path> in_root, session_data_ptr in_handle
-) {
-  FSys::path l_path = *in_root;
+
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(session_data_ptr in_handle) {
+  FSys::path l_path = *root_;
 
   l_path /= in_handle->capture_->get("id");
   if (!FSys::exists(l_path)) {
@@ -137,7 +128,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
     co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
   co_return std::move(l_res);
 }
-}  // namespace
+
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::callback(
+    http::session_data_ptr in_handle
+) {
+  if (verb_ == boost::beast::http::verb::get) {
+    return thumbnail_get(in_handle);
+  }
+  if (verb_ == boost::beast::http::verb::post) {
+    return thumbnail_post(in_handle);
+  }
+}
 
 void thumbnail_reg(http_route& route) {
   auto l_thumbnails_root = std::make_shared<FSys::path>(g_ctx().get<kitsu_ctx_t>().root_ / "thumbnails");
@@ -160,4 +161,4 @@ void thumbnail_reg(http_route& route) {
 
       ;
 }
-}  // namespace doodle::http::kitsu
+}  // namespace doodle::http::model_library
