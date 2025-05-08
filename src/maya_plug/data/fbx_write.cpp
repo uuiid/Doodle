@@ -475,7 +475,6 @@ void fbx_node_mesh::build_data() {
 
 void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
-    //      log_info(fmt::format("{} is not mesh", get_node_name(in_mesh)));
     return;
   }
   log_info(fmt::format("build mesh {}", dag_path));
