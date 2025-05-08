@@ -32,21 +32,39 @@
 #include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
+
+#include "http_method/model_library/model_library.h"
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
   auto l_router = std::make_shared<kitsu::http_route_proxy>();
+  auto l_ctx    = g_ctx().get<kitsu_ctx_t>();
 #ifndef DOODLE_KITSU
   l_router->reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("api"))
       .reg_proxy(std::make_shared<doodle::kitsu::kitsu_proxy_url>("socket.io"));
   kitsu::user_reg(*l_router);
   kitsu::task_reg(*l_router);
-  kitsu::assets_reg(*l_router);
-  kitsu::assets_tree_reg(*l_router);
-  kitsu::thumbnail_reg(*l_router);
   kitsu::project_reg(*l_router);
   kitsu::assets_reg2(*l_router);
+  (*l_router)
+      .reg(std::make_shared<model_library::assets_get>())
+      .reg(std::make_shared<model_library::assets_post>())
+      .reg(std::make_shared<model_library::assets_modify_post>())
+      .reg(std::make_shared<model_library::assets_delete_>())
+      .reg(std::make_shared<model_library::assets_patch>())
+
+      .reg(std::make_shared<model_library::assets_tree_get>())
+      .reg(std::make_shared<model_library::assets_tree_post>())
+      .reg(std::make_shared<model_library::assets_tree_patch>())
+      .reg(std::make_shared<model_library::assets_tree_modify_post>())
+      .reg(std::make_shared<model_library::assets_tree_delete_>())
+
+      .reg(std::make_shared<model_library::pictures_post>(l_ctx.root_))
+      .reg(std::make_shared<model_library::pictures_get>(l_ctx.root_))
+      .reg(std::make_shared<model_library::pictures_thumbnails_get>(l_ctx.root_))
+
+      ;
 #else
   (*l_router)
       // post
