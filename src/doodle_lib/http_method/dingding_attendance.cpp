@@ -16,7 +16,12 @@
 
 namespace doodle::http {
 namespace {
-auto create_clock(const chrono::year_month_day& in_date) {
+/**
+ * @brief 加班时钟, 需要排除12:00 - 13:00, 18:30 - 19:00绝对不可用时间, 其余时间均可加班
+ * @param in_date 日期
+ * @return 加班时钟
+ */
+auto create_clock_overtime(const chrono::year_month_day& in_date) {
   business::work_clock2 l_work_clock{};
   auto l_r = business::rules::get_default();
   holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"};
@@ -28,6 +33,20 @@ auto create_clock(const chrono::year_month_day& in_date) {
     l_work_clock -= std::make_tuple(
         chrono::local_days{in_date} + l_deduction.first, chrono::local_days{in_date} + l_deduction.second
     );
+  }
+  return l_work_clock;
+}
+/**
+ * @brief 休息时钟, 只需要工作日标准工作时间
+ * @param in_date 日期
+ * @return 调休时钟
+ */
+auto create_clock_leave(const chrono::year_month_day& in_date) {
+  business::work_clock2 l_work_clock{};
+  auto l_r = business::rules::get_default();
+  // holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"};
+  for (auto&& [ben, end] : l_r.work_pair_p) {
+    l_work_clock += std::make_tuple(chrono::local_days{in_date} + ben, chrono::local_days{in_date} + end);
   }
   return l_work_clock;
 }
@@ -82,17 +101,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (l_e4) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e4.message());
   auto l_attendance_list = std::make_shared<std::vector<attendance_helper::database_t>>();
 
-  auto l_clock           = create_clock(l_date);
+  auto l_clock_overtime  = create_clock_overtime(l_date);  // 加班计算时间时钟
+  auto l_clock_leave     = create_clock_leave(l_date);     // 请假计算时间时钟
   for (auto&& l_obj : l_attend) {
     // 重新使用开始时间和时间时间段计算时间
     chrono::hours l_duration{0};
-    default_logger_raw()->info("考勤数据 {} {}", l_obj.begin_time_, l_obj.end_time_);
-    l_duration = chrono::floor<chrono::hours>(l_clock(l_obj.begin_time_, l_obj.end_time_ + 1s));
-    l_obj.end_time_ =
-        l_clock.next_time(l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration));
-
     auto l_type = (l_obj.biz_type_ == 1 || l_obj.biz_type_ == 2) ? attendance_helper::att_enum::overtime
                                                                  : attendance_helper::att_enum::leave;
+    default_logger_raw()->info("考勤数据 {} {}", l_obj.begin_time_, l_obj.end_time_);
+    switch (l_type) {
+      case attendance_helper::att_enum::overtime:
+        l_duration      = chrono::floor<chrono::hours>(l_clock_overtime(l_obj.begin_time_, l_obj.end_time_ + 1s));
+        l_obj.end_time_ = l_clock_overtime.next_time(
+            l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
+        );
+        break;
+      case attendance_helper::att_enum::leave:
+        l_duration      = chrono::floor<chrono::hours>(l_clock_leave(l_obj.begin_time_, l_obj.end_time_ + 1s));
+        l_obj.end_time_ = l_clock_leave.next_time(
+            l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
+        );
+        break;
+      case attendance_helper::att_enum::max:
+        break;
+    }
+    default_logger_raw()->info("修正后考勤数据 {} {}", l_obj.begin_time_, l_obj.end_time_);
 
     if (auto l_it = std::ranges::find_if(
             l_attends,
