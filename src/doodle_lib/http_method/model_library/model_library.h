@@ -49,6 +49,7 @@ class pictures_base : public http_jwt_fun {
   void create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, const std::string& in_name);
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(session_data_ptr in_handle);
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle);
+  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_404(session_data_ptr in_handle);
   std::shared_ptr<FSys::path> root_;
 
  public:

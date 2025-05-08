@@ -128,16 +128,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
     co_return in_handle->make_error_code_msg(boost::beast::http::status::service_unavailable, l_code.message());
   co_return std::move(l_res);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_404(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::callback(
     http::session_data_ptr in_handle
 ) {
-  if (verb_ == boost::beast::http::verb::get) {
-    return thumbnail_get(in_handle);
-  }
   if (verb_ == boost::beast::http::verb::post) {
     return thumbnail_post(in_handle);
   }
+  return thumbnail_get(in_handle);
 }
 
 }  // namespace doodle::http::model_library
