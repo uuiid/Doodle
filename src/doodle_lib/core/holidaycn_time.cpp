@@ -26,19 +26,9 @@ void from_json(const nlohmann::json &in_j, holidaycn_time2::info &in_p) {
 
 void holidaycn_time2::load_year(const FSys::path &in_path) {
   if (!FSys::exists(in_path)) return;
-
   FSys::ifstream l_file{in_path};
   auto l_json = nlohmann::json::parse(l_file);
-  for (const auto &i : l_json.at("days").get<std::vector<info>>()) {
-    if (i.is_odd_day)
-      holidaycn_list_rest.emplace_back(i.date, i.date + chrono::days{1}, i.name);
-    else
-      for (auto &&[beg, end] : work_time) {
-        holidaycn_list_work.emplace_back(
-            chrono::local_time_pos{i.date} + beg, chrono::local_time_pos{i.date} + end, i.name + "调休"
-        );
-      }
-  };
+  for (const auto &i : l_json.at("days").get<std::vector<info>>()) work_day_map.emplace(i.date, i);
 }
 
 holidaycn_time2::holidaycn_time2(time_duration_vector in_work_time, const FSys::path &in_path)
@@ -54,8 +44,17 @@ holidaycn_time2::holidaycn_time2(time_duration_vector in_work_time, const FSys::
 
 holidaycn_time2::~holidaycn_time2() = default;
 void holidaycn_time2::set_clock(business::work_clock2 &in_work_clock) const {
-  for (const auto &item : holidaycn_list_work) in_work_clock += item;
-  for (const auto &item : holidaycn_list_rest) in_work_clock -= item;
+  for (auto &&[key, value] : work_day_map)
+    if (value.is_odd_day)
+      in_work_clock -= std::make_tuple(value.date, value.date + chrono::days{1}, value.name);
+    else
+      for (auto &&[l_b, l_e] : work_time)
+        in_work_clock += std::make_tuple(value.date + l_b, value.date + l_e, value.name + "调休");
+}
+bool holidaycn_time2::is_working_day(const chrono::local_days &in_day) const {
+  chrono::weekday l_weekday{in_day};
+  return work_day_map.contains(in_day) ? !work_day_map.at(in_day).is_odd_day
+                                       : !(l_weekday == chrono::Sunday || l_weekday == chrono::Saturday);
 }
 
 }  // namespace doodle

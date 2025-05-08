@@ -28,23 +28,21 @@ class DOODLE_CORE_API rules {
   friend void from_json(const nlohmann::json& j, rules& p);
 
  public:
-  /// \brief 周六 ->周日(index 6->0)
-  constexpr static work_day_type work_Monday_to_Friday{0b0111110};
-  /// @brief 周六到周日每日必然会排除的时间
-  work_day_type work_weekdays_p{};
+  /// @brief 工作时间 9:00 - 12:00, 13:00 - 18:00
   time_duration_vector work_pair_p{};
-  std::array<time_duration_vector, 7> absolute_deduction{};
+  /// @brief  非工作日休息时间 12:00 - 13:00, 18:30 - 19:00
+  time_duration_vector work_pair_0_{};
+  /// @brief  工作日休息时间 12:00 - 13:00, 18:00 - 18:30
+  time_duration_vector work_pair_1_{};
 
   rules();
   virtual ~rules();
 
   /**
-   * @brief 获取每周 1-5工作, 每天9-12 13-18 工作时间的默认时间段
+   * @brief 工作时间的默认时间段
    * @return 默认段规则
    */
   [[nodiscard("")]] static const rules& get_default();
-  bool is_work_day(const chrono::weekday& in_week_day) const;
 };
 
 }  // namespace doodle::business
-

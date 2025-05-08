@@ -12,18 +12,19 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
+#include <doodle_lib/http_method/kitsu/kitsu.h>
 
 namespace doodle::http {
 namespace {
 auto create_clock(const chrono::year_month_day& in_date) {
   business::work_clock2 l_work_clock{};
   auto l_r = business::rules::get_default();
-  for (auto&& l_work_time : l_r.work_pair_p) {
-    l_work_clock += std::make_tuple(chrono::local_days{in_date}, chrono::local_days{in_date} + chrono::days{1});
-  }
-
+  holidaycn_time2 l_holidaycn_time{l_r.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"};
+  // for (auto&& l_work_time : l_r.work_pair_p) {
+  l_work_clock += std::make_tuple(chrono::local_days{in_date}, chrono::local_days{in_date} + chrono::days{1});
+  // }
   // 排除绝对时间
-  for (auto&& l_deduction : l_r.absolute_deduction[chrono::weekday{in_date}.c_encoding()]) {
+  for (auto&& l_deduction : l_holidaycn_time.is_working_day(in_date) ? l_r.work_pair_1_ : l_r.work_pair_0_) {
     l_work_clock -= std::make_tuple(
         chrono::local_days{in_date} + l_deduction.first, chrono::local_days{in_date} + l_deduction.second
     );
@@ -85,7 +86,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   for (auto&& l_obj : l_attend) {
     // 重新使用开始时间和时间时间段计算时间
     chrono::hours l_duration{0};
-    l_duration = chrono::floor<chrono::hours>(l_clock(l_obj.begin_time_, l_obj.end_time_));
+    default_logger_raw()->info("考勤数据 {} {}", l_obj.begin_time_, l_obj.end_time_);
+    l_duration = chrono::floor<chrono::hours>(l_clock(l_obj.begin_time_, l_obj.end_time_ + 1s));
     l_obj.end_time_ =
         l_clock.next_time(l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration));
 

@@ -89,18 +89,19 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
   auto l_rules_ = business::rules::get_default();
   chrono::local_days l_begin_time{chrono::local_days{in_year_month / chrono::day{1}}},
       l_end_time{chrono::local_days{in_year_month / chrono::last} + chrono::days{3}};
-
+  holidaycn_time2 l_holidaycn_time{l_rules_.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"};
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
     // 加入工作日规定时间
-    if (l_rules_.is_work_day(chrono::weekday{l_begin})) {
+    if (l_holidaycn_time.is_working_day(l_begin)) {
       for (auto&& l_work_time : l_rules_.work_pair_p) {
         l_time_clock_ += std::make_tuple(l_begin + l_work_time.first, l_begin + l_work_time.second);
       }
     }
   }
   // 调整节假日
-  holidaycn_time2{l_rules_.work_pair_p, g_ctx().get<kitsu_ctx_t>().front_end_root_ / "time"}.set_clock(l_time_clock_);
+  l_holidaycn_time.set_clock(l_time_clock_);
 
+  // 调整请假等调整
   auto& l_sql = g_ctx().get<sqlite_database>();
   std::vector<chrono::local_days> l_days{};
   for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) l_days.emplace_back(l_it);
@@ -125,9 +126,8 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 
   // 排除绝对时间
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
-    for (auto&& l_deduction : l_rules_.absolute_deduction[chrono::weekday{l_begin}.c_encoding()]) {
+    for (auto&& l_deduction : (l_holidaycn_time.is_working_day(l_begin) ? l_rules_.work_pair_1_ : l_rules_.work_pair_0_))
       l_time_clock_ -= std::make_tuple(l_begin + l_deduction.first, l_begin + l_deduction.second);
-    }
   }
   l_time_clock_.cut_interval(l_begin_time, l_end_time);
   return l_time_clock_;
