@@ -16,6 +16,7 @@
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
+#include <doodle_core/metadata/label.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/organisation.h>
@@ -131,6 +132,18 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("uuid_id", &metadata::kitsu::assets_type_t::uuid_id_, unique(), not_null()),
           make_column("name", &metadata::kitsu::assets_type_t::name_),
           make_column("asset_type", &metadata::kitsu::assets_type_t::type_)
+      ),
+      make_table("label_assets_link",
+          make_column("id", &label_assets_link::id_, primary_key()),
+          make_column("label_uuid_id", &label_assets_link::label_uuid_id_, not_null()),
+          make_column("assets_uuid_id", &label_assets_link::assets_uuid_id_, not_null()),
+          foreign_key(&label_assets_link::label_uuid_id_).references(&label::uuid_id_).on_delete.cascade(),
+          foreign_key(&label_assets_link::assets_uuid_id_).references(&assets_helper::database_t::uuid_id_).on_delete.cascade()
+      ),
+      make_table<label>("labels",
+          make_column("id", &label::id_, primary_key()),
+          make_column("uuid_id", &label::uuid_id_, unique(), not_null()),
+          make_column("label", &label::label_, unique(), not_null())
       ),
       make_index("assets_file_tab_uuid_id_index", &assets_file_helper::database_t::uuid_id_),
       make_table(
