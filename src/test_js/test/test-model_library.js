@@ -41,10 +41,10 @@ describe('library测试', function () {
     it('创建标签', async function () {
 
         const req3 = await request.post(`${URL}/api/doodle/model_library/label`).send({
-            label: '测试标签',
+            name: '测试标签',
         });
         expect(req3.status).to.equal(201);
-        expect(req3.body).to.have.keys('id', 'label');
+        expect(req3.body).to.have.keys('id', 'name');
         label_uuid1 = req3.body.id;
 
         const req4 = await request.post(`${URL}/api/doodle/model_library/label`).send({
@@ -109,7 +109,7 @@ describe('library测试', function () {
         expect(req9.status).to.equal(200);
         expect(req9.body).to.have.keys('id', 'name');
         expect(req9.body.id).to.equal(label_uuid1);
-        expect(req9.body.label).to.equal('测试标签修改');
+        expect(req9.body.name).to.equal('测试标签修改');
     })
 
 
