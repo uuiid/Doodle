@@ -48,10 +48,10 @@ describe('library测试', function () {
         label_uuid1 = req3.body.id;
 
         const req4 = await request.post(`${URL}/api/doodle/model_library/label`).send({
-            label: '测试标签2',
+            name: '测试标签2',
         });
         expect(req4.status).to.equal(201);
-        expect(req4.body).to.have.keys('id', 'label');
+        expect(req4.body).to.have.keys('id', 'name');
         label_uuid2 = req4.body.id;
         mlog.log(label_uuid1, label_uuid2);
     })
@@ -78,7 +78,7 @@ describe('library测试', function () {
         const req6 = await request.get(`${URL}/api/doodle/model_library/label`);
         expect(req6.status).to.equal(200);
         expect(req6.body).to.be.an('array');
-        expect(req6.body[0]).to.have.keys('id', 'label');
+        expect(req6.body[0]).to.have.keys('id', 'name');
         // 检查id是label_uuid1或者label_uuid2
         expect(req6.body[0].id).to.be.oneOf([label_uuid1, label_uuid2]);
         // 检查长度 2
@@ -104,10 +104,10 @@ describe('library测试', function () {
 
     it('修改标签', async function () {
         const req9 = await request.put(`${URL}/api/doodle/model_library/label/${label_uuid1}`).send({
-            label: '测试标签修改',
+            name: '测试标签修改',
         });
         expect(req9.status).to.equal(200);
-        expect(req9.body).to.have.keys('id', 'label');
+        expect(req9.body).to.have.keys('id', 'name');
         expect(req9.body.id).to.equal(label_uuid1);
         expect(req9.body.label).to.equal('测试标签修改');
     })

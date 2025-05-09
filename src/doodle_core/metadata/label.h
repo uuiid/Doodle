@@ -18,8 +18,8 @@ struct label {
   // to json
   friend void to_json(nlohmann::json& j, const label& p) {
     j["id"]    = p.uuid_id_;
-    j["label"] = p.label_;
+    j["name"] = p.label_;
   }
-  friend void from_json(const nlohmann::json& j, label& p) { j.at("label").get_to(p.label_); }
+  friend void from_json(const nlohmann::json& j, label& p) { j.at("name").get_to(p.label_); }
 };
 }  // namespace doodle
