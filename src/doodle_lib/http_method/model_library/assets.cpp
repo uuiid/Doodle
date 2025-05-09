@@ -2,7 +2,7 @@
 // Created by TD on 24-10-15.
 //
 
-
+#include "doodle_core/metadata/label.h"
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/user.h>
@@ -27,7 +27,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post::callb
   auto l_json = in_handle->get_json();
   if (l_json.is_object()) {
     std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
-    *l_ptr                                                = l_json.get<assets_file_helper::database_t>();
+    l_json.get_to(*l_ptr);
+    // 额外添加标签
+    l_json["labels"].get_to(l_ptr->labels_);
 
     if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
         l_list == 0)
@@ -37,6 +39,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post::callb
 
     l_ptr->uuid_id_ = core_set::get_set().get_uuid();
     co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
+    auto l_labels_link = std::make_shared<std::vector<label_assets_link>>();
+    for (auto&& i : l_ptr->labels_)
+      l_labels_link->emplace_back(label_assets_link{.label_uuid_id_ = i, .assets_uuid_id_ = l_ptr->uuid_id_});
+    co_await g_ctx().get<sqlite_database>().install_range<label_assets_link>(l_labels_link);
+
     co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
   }
   if (l_json.is_array()) {

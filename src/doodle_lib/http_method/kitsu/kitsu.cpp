@@ -48,6 +48,8 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   kitsu::project_reg(*l_router);
   kitsu::assets_reg2(*l_router);
   (*l_router)
+      .reg(std::make_shared<model_library::context_get>())
+
       .reg(std::make_shared<model_library::assets_get>())
       .reg(std::make_shared<model_library::assets_post>())
       .reg(std::make_shared<model_library::assets_modify_post>())
