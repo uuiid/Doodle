@@ -165,6 +165,15 @@ describe('library测试', function () {
         expect(req8.body).to.have.lengthOf(0);
     })
 
+    it('删除标签', async function () {
+        const req12 = await request.delete(`${URL}/api/doodle/model_library/label/${label_uuid1}`).set('Cookie', `access_token_cookie=${JWT}`,);
+        expect(req12.status).to.equal(200);
+        const req8 = await request.get(`${URL}/api/doodle/model_library/label`);
+        expect(req8.status).to.equal(200);
+        expect(req8.body).to.be.an('array');
+        expect(req8.body).to.have.lengthOf(1);
+    })
+
     it('上下文', async function () {
         const req = await request.get(`${URL}/api/doodle/model_library/context`);
         expect(req.status).to.equal(200);

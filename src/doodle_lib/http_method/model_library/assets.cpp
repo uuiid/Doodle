@@ -124,8 +124,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete_::ca
     http::session_data_ptr in_handle
 ) {
   auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
-  auto l_p = get_person(in_handle);
-  l_p->is_manager();
+  // auto l_p = get_person(in_handle);
+  // l_p->is_manager();
 
   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid);
   co_return in_handle->make_msg(nlohmann::json{});

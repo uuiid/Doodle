@@ -93,7 +93,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(label, put, "api/doodle/model_library/label/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(label, delete_, "api/doodle/model_library/label", http_jwt_fun)
+DOODLE_HTTP_FUN(label, delete_, "api/doodle/model_library/label/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(label_link, post, "api/doodle/model_library/label/{id}/assets/{assets_id}", http_jwt_fun)
