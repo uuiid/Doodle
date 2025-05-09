@@ -37,16 +37,19 @@ struct database_t {
     j["labels"]        = p.labels_;
   }
   friend void DOODLE_CORE_API from_json(const nlohmann::json& j, database_t& p) {
-    j.at("label").get_to(p.label_);
-    j.at("path").get_to(p.path_);
-    j.at("notes").get_to(p.notes_);
-    j.at("active").get_to(p.active_);
-    j.at("parent_id").get_to(p.uuid_parent_);
+    if (j.contains("label")) j.at("label").get_to(p.label_);
+    if (j.contains("path")) j.at("path").get_to(p.path_);
+    if (j.contains("notes")) j.at("notes").get_to(p.notes_);
+    if (j.contains("active")) j.at("active").get_to(p.active_);
+    if (j.contains("parent_id")) j.at("parent_id").get_to(p.uuid_parent_);
     if (j.contains("has_thumbnail")) j.at("has_thumbnail").get_to(p.has_thumbnail_);
     if (j.contains("extension"))
       j.at("extension").get_to(p.extension_);
     else
       p.extension_ = ".png";
+
+    if (p.uuid_parent_.is_nil() || p.label_.empty())
+      throw_exception(doodle_error{"必须的键值没有找到 uuid_parent_ {} label_ {}", p.uuid_parent_, p.label_});
   }
 };
 }  // namespace assets_file_helper

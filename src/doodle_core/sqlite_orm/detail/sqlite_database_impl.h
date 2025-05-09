@@ -138,7 +138,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("label_uuid_id", &label_assets_link::label_uuid_id_, not_null()),
           make_column("assets_uuid_id", &label_assets_link::assets_uuid_id_, not_null()),
           foreign_key(&label_assets_link::label_uuid_id_).references(&label::uuid_id_).on_delete.cascade(),
-          foreign_key(&label_assets_link::assets_uuid_id_).references(&assets_helper::database_t::uuid_id_).on_delete.cascade()
+          foreign_key(&label_assets_link::assets_uuid_id_).references(&assets_file_helper::database_t::uuid_id_).on_delete.cascade()
       ),
       make_table<label>("labels",
           make_column("id", &label::id_, primary_key()),

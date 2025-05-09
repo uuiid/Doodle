@@ -70,11 +70,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_modify_post
 ) {
   uuid l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
-  if (in_handle->content_type_ != detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   std::shared_ptr<assets_file_helper::database_t> const l_ptr = std::make_shared<assets_file_helper::database_t>(
-      std::get<nlohmann::json>(in_handle->body_).get<assets_file_helper::database_t>()
+      g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(l_uuid)
   );
+  in_handle->get_json().get_to(*l_ptr);
 
   if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
       l_list == 0)
@@ -125,33 +124,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_delete_::ca
     http::session_data_ptr in_handle
 ) {
   auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
-
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(l_uuid); l_list.active_)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "节点正在使用中, 无法删除");
-  uuid l_user_uuid{};
-  if (in_handle->req_header_.count(boost::beast::http::field::authorization) > 0) {
-    auto l_token_str = in_handle->req_header_.at(boost::beast::http::field::authorization);
-    if (l_token_str.starts_with("Bearer ")) l_token_str = l_token_str.substr(7);
-    l_user_uuid = boost::lexical_cast<uuid>(jwt::decode(l_token_str).get_payload_json()["sub"].to_str());
-  } else if (in_handle->req_header_.count(boost::beast::http::field::cookie) > 0) {
-    auto l_cookie = in_handle->req_header_.at(boost::beast::http::field::cookie);
-    auto l_begin  = l_cookie.find("access_token_cookie=");
-    if (l_begin != std::string::npos) {
-      l_cookie    = l_cookie.substr(l_begin, l_cookie.find(';', l_begin) - l_begin);
-      l_user_uuid = boost::lexical_cast<uuid>(jwt::decode(l_cookie).get_payload_json()["sub"].to_str());
-    }
-  }
-  if (l_user_uuid.is_nil())
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, "请先登录");
-
-  switch (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_uuid);
-          l_list.power_) {
-    case power_enum::admin:
-    case power_enum::manager:
-      break;
-    default:
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "权限不足");
-  }
+  auto l_p = get_person(in_handle);
+  l_p->is_manager();
 
   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid);
   co_return in_handle->make_msg(nlohmann::json{});
