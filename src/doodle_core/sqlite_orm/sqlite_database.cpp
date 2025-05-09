@@ -884,6 +884,14 @@ bool sqlite_database::has_label_assets_link(const uuid& in_label_uuid, const uui
   ));
   return l_t > 0;
 }
+label_assets_link sqlite_database::get_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<label_assets_link>(where(
+      c(&label_assets_link::label_uuid_id_) == in_label_uuid && c(&label_assets_link::assets_uuid_id_) == in_asset_uuid
+  ));
+  if (l_t.empty()) throw_exception(doodle_error{"未知的标签资产链接 {} {}", in_label_uuid, in_asset_uuid});
+  return l_t.front();
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
@@ -945,6 +953,7 @@ DOODLE_GET_BY_UUID_SQL(asset_type)
 DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(comment)
 DOODLE_GET_BY_UUID_SQL(task)
+DOODLE_GET_BY_UUID_SQL(label)
 template <>
 entity sqlite_database::get_by_uuid<entity>(const uuid& in_uuid) {
   using namespace sqlite_orm;
@@ -1072,6 +1081,8 @@ DOODLE_INSTALL_SQL(comment)
 DOODLE_INSTALL_SQL(project_asset_type_link)
 DOODLE_INSTALL_SQL(entity)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
+DOODLE_INSTALL_SQL(label)
+DOODLE_INSTALL_SQL(label_assets_link)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
@@ -1095,6 +1106,8 @@ DOODLE_REMOVE_BY_ID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_ID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_ID(assets_helper::database_t)
 DOODLE_REMOVE_BY_ID(computer)
+DOODLE_REMOVE_BY_ID(label)
+DOODLE_REMOVE_BY_ID(label_assets_link)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
@@ -1103,5 +1116,6 @@ DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(server_task_info)
+DOODLE_REMOVE_BY_UUID(label)
 
 }  // namespace doodle
