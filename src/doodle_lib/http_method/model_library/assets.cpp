@@ -117,9 +117,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_patch::call
 boost::asio::awaitable<boost::beast::http::message_generator> assets_delete_::callback(
     http::session_data_ptr in_handle
 ) {
-  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
+  auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
 
-  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(*l_uuid); l_list.active_)
+  if (auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(l_uuid); l_list.active_)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "节点正在使用中, 无法删除");
   uuid l_user_uuid{};
   if (in_handle->req_header_.count(boost::beast::http::field::authorization) > 0) {

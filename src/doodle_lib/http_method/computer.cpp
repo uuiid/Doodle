@@ -72,10 +72,9 @@ void reg_computer(const websocket_route_ptr& in_web_socket, const session_data_p
   });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> delete_computers(session_data_ptr in_handle) {
-  auto l_id = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id")));
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "无效的用户id");
+  auto l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
   co_await g_ctx().get<sqlite_database>().remove<computer>(l_id);
-  co_return in_handle->make_msg("{}");
+  co_return in_handle->make_msg(nlohmann::json{});
 }
 }  // namespace
 

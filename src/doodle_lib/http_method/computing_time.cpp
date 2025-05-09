@@ -126,7 +126,8 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 
   // 排除绝对时间
   for (auto l_begin = l_begin_time; l_begin <= l_end_time; l_begin += chrono::days{1}) {
-    for (auto&& l_deduction : (l_holidaycn_time.is_working_day(l_begin) ? l_rules_.work_pair_1_ : l_rules_.work_pair_0_))
+    for (auto&& l_deduction :
+         (l_holidaycn_time.is_working_day(l_begin) ? l_rules_.work_pair_1_ : l_rules_.work_pair_0_))
       l_time_clock_ -= std::make_tuple(l_begin + l_deduction.first, l_begin + l_deduction.second);
   }
   l_time_clock_.cut_interval(l_begin_time, l_end_time);
@@ -714,9 +715,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   work_xlsx_task_info_helper::database_t l_task =
       g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
   nlohmann::json l_json_res{};
-  co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(
-      std::make_shared<std::vector<std::int64_t>>(std::vector<std::int64_t>{l_task.id_})
-  );
+  co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
   chrono::year_month_day l_year_month_day{l_task.year_month_};
   chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
 

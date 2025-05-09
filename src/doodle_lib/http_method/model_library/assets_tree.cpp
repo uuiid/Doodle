@@ -141,8 +141,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_modify
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete_::callback(
     http::session_data_ptr in_handle
 ) {
-  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<uuid>(in_handle->capture_->get("id")));
-  if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(*l_uuid);
+  auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
+  if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(l_uuid);
       !l_r.empty() &&
       std::ranges::any_of(l_r, [](const assets_file_helper::database_t& l_item) -> bool { return l_item.active_; }))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");

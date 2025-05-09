@@ -26,6 +26,7 @@ struct assets_and_tasks_t;
 struct entities_and_tasks_t;
 struct department;
 struct comment;
+struct label_assets_link;
 struct task;
 }  // namespace doodle
 namespace doodle {
@@ -81,9 +82,13 @@ class sqlite_database {
   boost::asio::awaitable<void> install_range(const std::shared_ptr<std::vector<T>>& in_data);
 
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::shared_ptr<std::vector<std::int64_t>>& in_data);
+  boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data);
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::shared_ptr<uuid>& in_data);
+  boost::asio::awaitable<void> remove(const std::int64_t& in_data);
+  template <typename T>
+  boost::asio::awaitable<void> remove(const std::vector<uuid>& in_data);
+  template <typename T>
+  boost::asio::awaitable<void> remove(const uuid& in_data);
 
   template <typename T>
   std::vector<T> get_by_parent_id(const uuid& in_id);
@@ -158,5 +163,11 @@ class sqlite_database {
   std::map<uuid, std::int32_t> get_task_type_priority_map(const uuid& in_project, const std::string& in_for_entity);
   /// 返回所属实体,类别 的任务
   std::optional<task> get_tasks_for_entity_and_task_type(const uuid& in_entity_id, const uuid& in_task_type_id);
+  /// 在模型库中, 是否有和标签关联的模型
+  bool has_label_assets_link(const uuid& in_label_uuid);
+  /// 是否存在 label_assets_link
+  bool has_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
+  /// 获取标签和模型的连接
+  label_assets_link get_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
 };
 }  // namespace doodle

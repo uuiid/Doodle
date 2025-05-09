@@ -950,20 +950,38 @@ struct sqlite_database_impl {
   }
 
   template <typename T>
-  boost::asio::awaitable<void> remove(std::shared_ptr<std::vector<std::int64_t>> in_data) {
+  boost::asio::awaitable<void> remove(std::vector<std::int64_t> in_data) {
     DOODLE_TO_SQLITE_THREAD();
 
     auto l_g = storage_any_.transaction_guard();
-    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, *in_data)));
+    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, in_data)));
     l_g.commit();
     DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> remove(std::shared_ptr<uuid> in_data) {
+  boost::asio::awaitable<void> remove(std::int64_t in_data) {
     DOODLE_TO_SQLITE_THREAD();
 
     auto l_g = storage_any_.transaction_guard();
-    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) = *in_data));
+    storage_any_.remove<T>(in_data);
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
+  template <typename T>
+  boost::asio::awaitable<void> remove(std::vector<uuid> in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+
+    auto l_g = storage_any_.transaction_guard();
+    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::uuid_id_, in_data)));
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
+  template <typename T>
+  boost::asio::awaitable<void> remove(uuid in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+
+    auto l_g = storage_any_.transaction_guard();
+    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) = in_data));
     l_g.commit();
     DOODLE_TO_SELF();
   }

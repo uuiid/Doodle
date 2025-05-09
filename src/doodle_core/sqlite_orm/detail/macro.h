@@ -124,16 +124,22 @@ std::vector<T> string_to_enum_array(const std::string& t) {
     return impl_->install_range<class_name>(in_data);          \
   }
 
-#define DOODLE_REMOVE_RANGE(class_name)                             \
-  template <>                                                       \
-  boost::asio::awaitable<void> sqlite_database::remove<class_name>( \
-      const std::shared_ptr<std::vector<std::int64_t>>& in_data     \
-  ) {                                                               \
-    return impl_->remove<class_name>(in_data);                      \
+#define DOODLE_REMOVE_BY_ID(class_name)                                                                        \
+  template <>                                                                                                  \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const std::vector<std::int64_t>& in_data) { \
+    return impl_->remove<class_name>(in_data);                                                                 \
+  }                                                                                                            \
+  template <>                                                                                                  \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const std::int64_t& in_data) {              \
+    return impl_->remove<class_name>(in_data);                                                                 \
   }
 
 #define DOODLE_REMOVE_BY_UUID(class_name)                                                                  \
   template <>                                                                                              \
-  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const std::shared_ptr<uuid>& in_data) { \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const std::vector<uuid>& in_data) { \
+    return impl_->remove<class_name>(in_data);                                                             \
+  }                                                                                                        \
+  template <>                                                                                              \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const uuid& in_data) { \
     return impl_->remove<class_name>(in_data);                                                             \
   }

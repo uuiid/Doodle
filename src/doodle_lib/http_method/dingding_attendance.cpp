@@ -176,9 +176,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   if (l_modify_user) co_await l_sqlite.install(std::make_shared<user_helper::database_t>(l_user));
 
   if (!l_attends.empty()) {
-    auto l_rem = std::make_shared<std::vector<std::int64_t>>();
+    std::vector<std::int64_t> l_rem{};
     for (auto&& id : l_attends) {
-      l_rem->emplace_back(id.id_);
+      l_rem.emplace_back(id.id_);
     }
     co_await l_sqlite.remove<attendance_helper::database_t>(l_rem);
   }
@@ -292,7 +292,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 ) {
   auto l_id   = from_uuid_str(in_handle->capture_->get("id"));
   auto& l_sql = g_ctx().get<sqlite_database>();
-  co_await l_sql.remove<attendance_helper::database_t>(std::make_shared<uuid>(l_id));
+  co_await l_sql.remove<attendance_helper::database_t>(l_id);
   co_return in_handle->make_msg((nlohmann::json{} = l_id).dump());
 }
 void reg_dingding_attendance(http_route& in_route) {

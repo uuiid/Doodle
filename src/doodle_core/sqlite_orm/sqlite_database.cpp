@@ -872,6 +872,19 @@ std::optional<task> sqlite_database::get_tasks_for_entity_and_task_type(
   return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
 }
 
+bool sqlite_database::has_label_assets_link(const uuid& in_uuid) {
+  using namespace sqlite_orm;
+
+  return impl_->storage_any_.count<label_assets_link>(where(c(&label_assets_link::label_uuid_id_) == in_uuid)) > 0;
+}
+bool sqlite_database::has_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.count<label_assets_link>(where(
+      c(&label_assets_link::label_uuid_id_) == in_label_uuid && c(&label_assets_link::assets_uuid_id_) == in_asset_uuid
+  ));
+  return l_t > 0;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
@@ -1030,7 +1043,6 @@ std::vector<person> sqlite_database::get_all() {
                      ranges::views::transform([](const std::tuple<uuid>& in) { return std::get<uuid>(in); }) |
                      ranges::to_vector;
   }
-
   return l_list;
 }
 
@@ -1077,17 +1089,19 @@ DOODLE_INSTALL_RANGE(task_type)
 DOODLE_INSTALL_RANGE(asset_type)
 DOODLE_INSTALL_RANGE(task)
 
-DOODLE_REMOVE_RANGE(attendance_helper::database_t)
-DOODLE_REMOVE_RANGE(work_xlsx_task_info_helper::database_t)
-DOODLE_REMOVE_RANGE(metadata::kitsu::task_type_t)
-DOODLE_REMOVE_RANGE(assets_file_helper::database_t)
-DOODLE_REMOVE_RANGE(assets_helper::database_t)
-DOODLE_REMOVE_RANGE(computer)
+DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
+DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)
+DOODLE_REMOVE_BY_ID(metadata::kitsu::task_type_t)
+DOODLE_REMOVE_BY_ID(assets_file_helper::database_t)
+DOODLE_REMOVE_BY_ID(assets_helper::database_t)
+DOODLE_REMOVE_BY_ID(computer)
 
-DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
+DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
+DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
+DOODLE_REMOVE_BY_UUID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
+DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(server_task_info)
-DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 
 }  // namespace doodle

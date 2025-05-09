@@ -103,15 +103,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
   co_return std::move(*l_ex);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
-  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
-  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid);
+  auto l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
+  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid);
   if (l_list.status_ == server_task_info_status::running) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
   co_await g_ctx().get<sqlite_database>().remove<server_task_info>(l_uuid);
-  co_return in_handle->make_msg("{}");
+  co_return in_handle->make_msg(nlohmann::json{});
 }
 
 template <class Mutex>
