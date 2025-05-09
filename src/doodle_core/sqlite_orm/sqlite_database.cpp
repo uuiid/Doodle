@@ -912,7 +912,15 @@ person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
 
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
-DOODLE_GET_BY_UUID_SQL(assets_file_helper::database_t)
+template <>
+assets_file_helper::database_t sqlite_database::get_by_uuid<assets_file_helper::database_t>(const uuid& in_uuid) {
+  using namespace sqlite_orm;
+  auto l_data    = impl_->get_by_uuid<assets_file_helper::database_t>(in_uuid);
+  l_data.labels_ = impl_->storage_any_.select(
+      &label_assets_link::label_uuid_id_, where(c(&label_assets_link::assets_uuid_id_) == in_uuid)
+  );
+  return l_data;
+}
 DOODLE_GET_BY_UUID_SQL(assets_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(project_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
@@ -969,7 +977,22 @@ DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 DOODLE_GET_ALL_SQL(project_helper::database_t)
 DOODLE_GET_ALL_SQL(user_helper::database_t)
 DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
-DOODLE_GET_ALL_SQL(assets_file_helper::database_t)
+template <>
+std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
+  auto l_list = impl_->get_all<assets_file_helper::database_t>();
+  auto l_map  = l_list |
+               ranges::views::transform(
+                   [](assets_file_helper::database_t& i) -> std::pair<uuid, assets_file_helper::database_t*> {
+                     return {i.uuid_id_, &i};
+                   }
+               ) |
+               ranges::to<std::map<uuid, assets_file_helper::database_t*>>();
+  auto l_link = impl_->get_all<label_assets_link>();
+  for (auto&& i : l_link) {
+    if (l_map.contains(i.assets_uuid_id_)) l_map.at(i.assets_uuid_id_)->labels_.emplace_back(i.label_uuid_id_);
+  }
+  return l_list;
+}
 DOODLE_GET_ALL_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_ALL_SQL(assets_helper::database_t)
 DOODLE_GET_ALL_SQL(computer)
