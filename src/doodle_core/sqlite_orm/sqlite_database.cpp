@@ -1098,6 +1098,7 @@ DOODLE_INSTALL_RANGE(notification)
 DOODLE_INSTALL_RANGE(task_status)
 DOODLE_INSTALL_RANGE(task_type)
 DOODLE_INSTALL_RANGE(asset_type)
+DOODLE_INSTALL_RANGE(label_assets_link)
 DOODLE_INSTALL_RANGE(task)
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
