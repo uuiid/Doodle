@@ -23,4 +23,5 @@ target_sources(
         base_data.cpp
         sequences.cpp
         comment.cpp
+        pictures.cpp
 )
