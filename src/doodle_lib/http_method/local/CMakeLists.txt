@@ -4,5 +4,6 @@ target_sources(doodle_lib
         PRIVATE
         local_setting.cpp
         task_info.cpp
+        movie.cpp
 
 )
