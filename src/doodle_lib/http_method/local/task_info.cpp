@@ -98,9 +98,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_task_logger(se
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
   auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
   l_mime += "; charset=utf-8";
-  auto l_ex = in_handle->make_msg(l_path, l_mime);
-  if (!l_ex) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_ex.error());
-  co_return std::move(*l_ex);
+  co_return in_handle->make_msg(l_path, l_mime);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> delete_task(session_data_ptr in_handle) {
   auto l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
