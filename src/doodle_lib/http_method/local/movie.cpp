@@ -32,10 +32,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
   l_video >> l_image;
   if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
 
-  if (l_image.cols > 1920 || l_image.rows > 1080) {
-    auto l_resize = std::min(1920.0 / l_image.cols, 1080.0 / l_image.rows);
-    cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
-  }
+  // if (l_image.cols > 1920 || l_image.rows > 1080) {
+  //   auto l_resize = std::min(1920.0 / l_image.cols, 1080.0 / l_image.rows);
+  //   cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+  // }
   std::string l_ret{};
   {
     std::vector<uchar> l_buffer{};
