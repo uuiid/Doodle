@@ -17,7 +17,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
     session_data_ptr in_handle
 ) {
   auto l_arg = in_handle->get_json().get<video_thumbnail_arg_t>();
-
+  if (!exists(l_arg.video_path_))
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
   cv::VideoCapture l_video{};
   l_video.open(l_arg.video_path_.generic_string());
   if (!l_video.isOpened()) throw_exception(doodle_error{"mp4 打开失败"});
