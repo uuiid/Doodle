@@ -103,7 +103,7 @@ function Initialize-Doodle
         # 检查文件是否存在
         if (-not (Test-Path "$DoodleBuildRoot\holiday-cn-$tag.zip"))
         {
-            Invoke-WebRequest -Uri https: //github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
+            Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
         }
         Expand-Archive -Path "$DoodleBuildRoot\holiday-cn-$tag.zip" -DestinationPath $DoodleTimePath -Force
     }
