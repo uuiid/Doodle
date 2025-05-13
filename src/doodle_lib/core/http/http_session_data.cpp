@@ -590,7 +590,7 @@ std::string session_data::zlib_compress(const std::string& in_str) {
 boost::beast::http::message_generator session_data::make_msg(
     const FSys::path& in_path, const std::string_view& mine_type
 ) {
-  if (is_deflate()) return make_file_deflate(in_path, mine_type);
+  // if (is_deflate()) return make_file_deflate(in_path, mine_type);
   return make_file(in_path, mine_type);
 }
 
