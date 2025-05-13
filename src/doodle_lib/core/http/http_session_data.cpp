@@ -597,6 +597,7 @@ boost::beast::http::message_generator session_data::make_msg(
 boost::beast::http::response<boost::beast::http::file_body> session_data::make_file(
     const FSys::path& in_path, const std::string_view& mine_type
 ) {
+  if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found, "文件不存在"});
   boost::system::error_code l_code{};
   boost::beast::http::response<boost::beast::http::file_body> l_res{boost::beast::http::status::ok, version_};
   l_res.body().open(in_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
@@ -617,6 +618,7 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
 boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_deflate(
     const FSys::path& in_path, const std::string_view& mine_type
 ) {
+  if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found, "文件不存在"});
   boost::system::error_code l_code{};
   boost::beast::http::response<zlib_deflate_file_body> l_res{boost::beast::http::status::ok, version_};
   l_res.body().open(in_path, std::ios::in | std::ios::binary, l_code);
@@ -639,7 +641,6 @@ boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_def
 boost::beast::http::response<boost::beast::http::string_body> session_data::make_msg(
     std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
 ) {
-  ;
   boost::beast::http::response<boost::beast::http::string_body> l_res{in_status, version_};
   l_res.set(boost::beast::http::field::content_type, mine_type);
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);

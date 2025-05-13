@@ -11,7 +11,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 ) {
   auto l_filename = in_handle->capture_->get("id");
   auto l_path     = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / FSys::split_uuid_path(l_filename);
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  auto l_ext      = l_path.extension();
+  co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
 
 }  // namespace doodle::http
