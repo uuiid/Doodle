@@ -140,6 +140,7 @@ http_route_ptr create_kitsu_local_route() {
   (*l_rout_ptr)                                           //
       .reg(std::make_shared<local::local_setting_get>())  //
       .reg(std::make_shared<local::local_setting_post>())
+      .reg(std::make_shared<local::video_thumbnail_post>())
 
       ;
 
