@@ -18,6 +18,8 @@
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/core/socket_io.h>
+#include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/file_association.h>
@@ -26,9 +28,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu_front_end_reg.h>
-#include <doodle_lib/http_method/local/event.h>
-#include <doodle_lib/http_method/local/local_setting.h>
-#include <doodle_lib/http_method/local/task_info.h>
+#include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
@@ -134,9 +134,25 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
 
 http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
-  http::local_setting_reg(*l_rout_ptr);
-  local::local_event_reg(*l_rout_ptr);
-  if (g_ctx().get<authorization>().is_expire()) http::task_info_reg_local(*l_rout_ptr);
+  auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
+  l_sid_ctx->on("/socket.io/");
+  socket_io::create_socket_io(*l_rout_ptr, l_sid_ctx);
+  (*l_rout_ptr)                                           //
+      .reg(std::make_shared<local::local_setting_get>())  //
+      .reg(std::make_shared<local::local_setting_post>())
+
+      ;
+
+  if (g_ctx().get<authorization>().is_expire())
+    (*l_rout_ptr)
+        .reg(std::make_shared<local::task_get>())
+        .reg(std::make_shared<local::task_post>())
+        .reg(std::make_shared<local::task_patch>())
+        .reg(std::make_shared<local::task_delete_>())
+        .reg(std::make_shared<local::task_instance_get>())
+        .reg(std::make_shared<local::task_instance_log_get>())
+
+        ;
   return l_rout_ptr;
 }
 
