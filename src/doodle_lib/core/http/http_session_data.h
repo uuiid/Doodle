@@ -21,6 +21,7 @@ class http_websocket_client;
 namespace doodle::http {
 struct capture_t;
 class http_route;
+struct zlib_deflate_file_body;
 using http_route_ptr = std::shared_ptr<http_route>;
 class http_session_data;
 using http_session_data_ptr = std::shared_ptr<http_session_data>;
@@ -54,6 +55,8 @@ class session_data {
   std::any user_data_;
 
   nlohmann::json get_json();
+  // 检查请求头中是否包含 deflate 压缩字段
+  bool is_deflate() const { return req_header_[boost::beast::http::field::accept_encoding].contains("deflate"); }
 
   boost::beast::http::message_generator make_error_code_msg(
       boost::beast::http::status in_status, const boost::system::error_code& ec, const std::string& in_str = ""
@@ -90,7 +93,12 @@ class session_data {
   boost::beast::http::response<boost::beast::http::string_body> make_msg(
       std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
   );
-  tl::expected<boost::beast::http::message_generator, std::string> make_msg(
+  boost::beast::http::message_generator make_msg(const FSys::path& in_path, const std::string_view& mine_type);
+
+  boost::beast::http::response<boost::beast::http::file_body> make_file(
+      const FSys::path& in_path, const std::string_view& mine_type
+  );
+  boost::beast::http::response<zlib_deflate_file_body> make_file_deflate(
       const FSys::path& in_path, const std::string_view& mine_type
   );
 };
