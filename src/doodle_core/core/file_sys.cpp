@@ -121,10 +121,12 @@ FSys::path write_tmp_file(
     const std::string &in_falg, const std::string &in_string, const std::string &in_extension,
     const std::optional<std::string> &in_file_name, std::int32_t in_model
 ) {
-  auto tmp_path   = core_set::get_set().get_cache_root(fmt::format(
-      "{}/v{}{}{}", in_falg, version::build_info::get().version_major, version::build_info::get().version_minor,
-      version::build_info::get().version_patch
-  ));
+  auto tmp_path = core_set::get_set().get_cache_root(
+      fmt::format(
+          "{}/v{}{}{}", in_falg, version::build_info::get().version_major, version::build_info::get().version_minor,
+          version::build_info::get().version_patch
+      )
+  );
   auto k_tmp_path = tmp_path / FSys::path{
                                    in_file_name ? (*in_file_name + in_extension)
                                                 : boost::uuids::to_string(core_set::get_set().get_uuid()) + in_extension
@@ -167,16 +169,20 @@ bool folder_is_save(const FSys::path &in_file_path) {
     THROW_WIN32(::GetLastError());
   }
   wil::unique_hlocal_security_descriptor const l_sd{::LocalAlloc(LMEM_FIXED, l_len)};
-  THROW_IF_WIN32_BOOL_FALSE(::GetFileSecurityW(
-      in_file_path.c_str(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-      l_sd.get(), l_len, &l_len
-  ));
+  THROW_IF_WIN32_BOOL_FALSE(
+      ::GetFileSecurityW(
+          in_file_path.c_str(), OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+          l_sd.get(), l_len, &l_len
+      )
+  );
 
   wil::unique_handle l_token{};
-  THROW_IF_WIN32_BOOL_FALSE(::OpenProcessToken(
-      ::GetCurrentProcess(), TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ,
-      l_token.addressof()
-  ));
+  THROW_IF_WIN32_BOOL_FALSE(
+      ::OpenProcessToken(
+          ::GetCurrentProcess(), TOKEN_IMPERSONATE | TOKEN_QUERY | TOKEN_DUPLICATE | STANDARD_RIGHTS_READ,
+          l_token.addressof()
+      )
+  );
 
   BOOL l_result{FALSE};
   {
@@ -184,19 +190,23 @@ bool folder_is_save(const FSys::path &in_file_path) {
     auto l_scope_exit = wil::scope_exit([&]() { ::RevertToSelf(); });
 
     wil::unique_handle l_duplicate_token{};
-    THROW_IF_WIN32_BOOL_FALSE(::DuplicateToken(
-        l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
-    ));
+    THROW_IF_WIN32_BOOL_FALSE(
+        ::DuplicateToken(
+            l_token.get(), ::SECURITY_IMPERSONATION_LEVEL::SecurityImpersonation, l_duplicate_token.addressof()
+        )
+    );
     ::GENERIC_MAPPING l_mapping{FILE_GENERIC_READ, FILE_GENERIC_WRITE, FILE_GENERIC_EXECUTE, FILE_ALL_ACCESS};
     ::DWORD l_access{DELETE};
     ::MapGenericMask(&l_access, &l_mapping);
 
     PRIVILEGE_SET l_privileges{0};
     DWORD l_grantedAccess = 0, l_privilegesLength = sizeof(l_privileges);
-    THROW_IF_WIN32_BOOL_FALSE(::AccessCheck(
-        l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength, &l_grantedAccess,
-        &l_result
-    ));
+    THROW_IF_WIN32_BOOL_FALSE(
+        ::AccessCheck(
+            l_sd.get(), l_duplicate_token.get(), l_access, &l_mapping, &l_privileges, &l_privilegesLength,
+            &l_grantedAccess, &l_result
+        )
+    );
   }
 
   return l_result == TRUE && (!FSys::is_regular_file(in_file_path) || folder_is_save(in_file_path.parent_path()));
@@ -262,6 +272,12 @@ boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
 
 bool is_windows_remote_path(const FSys::path &in_file_path) {
   return in_file_path.has_root_path() && in_file_path.root_path().generic_string().starts_with("//");
+}
+FSys::path split_uuid_path(const FSys::path &in_file_path) {
+  auto l_filename        = in_file_path.stem().generic_string();
+  FSys::path l_uuid_str1 = l_filename.substr(0, 3);
+  auto l_uuid_str2       = l_filename.substr(3, 3);
+  return l_uuid_str1 / l_uuid_str2 / in_file_path;
 }
 
 }  // namespace doodle::FSys

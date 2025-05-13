@@ -62,6 +62,12 @@ void DOODLE_CORE_API software_flag_file(const FSys::path& in_file_path, const bo
 boost::uuids::uuid DOODLE_CORE_API software_flag_file(const FSys::path& in_file_path);
 
 bool DOODLE_CORE_API is_hidden(const FSys::path& in_file_path);
+/**
+ * 将uuid文件名称 c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d.png 添加前缀 c9f/2b8/c9f2b8c0-4a1d-4e3b-9f5c-7d6e0a2f3b8d.png
+ * @param in_file_path 文件名称
+ * @return 分裂后重新组合的文件名称
+ */
+FSys::path split_uuid_path(const FSys::path& in_file_path);
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS
