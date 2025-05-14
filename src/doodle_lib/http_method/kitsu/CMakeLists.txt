@@ -24,4 +24,5 @@ target_sources(
         sequences.cpp
         comment.cpp
         pictures.cpp
+        playlists.cpp
 )
