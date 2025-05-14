@@ -152,5 +152,26 @@ describe('doodle 本地服务器测试', function () {
         },
       });
     });
+    it('获取视频截图', async function () {
+      const req = await request.post(`${URL}/api/doodle/video/thumbnail`).send({
+        video_path: "D:/test_files/ai/xuyang_data_set/xy_00.mov",
+        time: Math.random()
+      })
+      expect(req.status).to.equal(200);
+      // expect(req.body)
+    })
+
+    it('获取视频截图 end', function (demo) {
+      request.post(`${URL}/api/doodle/video/thumbnail`).send({
+        video_path: "D:/test_files/ai/xuyang_data_set/xy_00.mov",
+        time: Math.random()
+      }).end(function (err, res) {
+        expect(res.status).to.equal(200);
+        // expect(req.body)
+        demo()
+      })
+      // expect(req.status).to.equal(200);
+      // expect(req.body)
+    })
   });
 });
