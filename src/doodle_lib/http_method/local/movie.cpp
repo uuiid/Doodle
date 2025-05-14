@@ -36,13 +36,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
   //   auto l_resize = std::min(1920.0 / l_image.cols, 1080.0 / l_image.rows);
   //   cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   // }
-  std::string l_ret{};
-  {
-    std::vector<uchar> l_buffer{};
-    cv::imencode(".png", l_image, l_buffer);
-    l_ret.assign(l_buffer.begin(), l_buffer.end());
-  }
-  co_return in_handle->make_msg(std::move(l_ret), "image/png", boost::beast::http::status::ok);
+  std::vector<uchar> l_buffer{};
+  cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
+  co_return in_handle->make_msg(std::move(l_buffer), "image/png", boost::beast::http::status::ok);
 }
 
 }  // namespace doodle::http::local
