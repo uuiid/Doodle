@@ -94,7 +94,9 @@ class scan_category_t {
  public:
   logger_ptr logger_;
   std::shared_ptr<boost::asio::cancellation_state> cancellation_state_;
+  FSys::path base_path_;
   scan_category_t() {}
+  explicit scan_category_t(const FSys::path& base_path) : base_path_(base_path) {}
   virtual ~scan_category_t() = default;
   virtual std::vector<scan_category_data_ptr> scan(
       const std::shared_ptr<project_helper::database_t>& in_root

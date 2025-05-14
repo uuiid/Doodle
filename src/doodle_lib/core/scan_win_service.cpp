@@ -118,8 +118,12 @@ void scan_win_service_t::init_all_map() {
 
 boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
   scan_categories_ = {
-      std::make_shared<details::character_scan_category_t>(), std::make_shared<details::scene_scan_category_t>(),
-      std::make_shared<details::prop_scan_category_t>()
+      std::make_shared<details::character_scan_category_t>("6-moxing/BG"),
+      std::make_shared<details::scene_scan_category_t>("6-moxing/BG"),
+      std::make_shared<details::prop_scan_category_t>("6-moxing/Prop"),
+      std::make_shared<details::character_scan_category_t>("6_moxing/BG"),
+      std::make_shared<details::scene_scan_category_t>("6_moxing/BG"),
+      std::make_shared<details::prop_scan_category_t>("6_moxing/Prop")
   };
   for (auto&& i : scan_categories_) i->logger_ = logger_;
   init_all_map();

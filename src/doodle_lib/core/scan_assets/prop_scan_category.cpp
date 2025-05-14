@@ -11,7 +11,7 @@ namespace doodle::details {
 std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
     const std::shared_ptr<project_helper::database_t> &in_root
 ) const {
-  const FSys::path l_prop_path_root = FSys::path{in_root->path_} / "6-moxing/Prop";
+  const FSys::path l_prop_path_root = FSys::path{in_root->path_} / base_path_;
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 
   if (std::error_code l_core_code{}; !FSys::exists(l_prop_path_root, l_core_code) || l_core_code) {

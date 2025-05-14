@@ -8,7 +8,7 @@ namespace doodle::details {
 std::vector<scan_category_data_ptr> character_scan_category_t::scan(
     const std::shared_ptr<project_helper::database_t> &in_root
 ) const {
-  const FSys::path l_character_path_root = FSys::path{in_root->path_} / "6-moxing/Ch";
+  const FSys::path l_character_path_root = FSys::path{in_root->path_} / base_path_;
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
   const std::regex l_Ch_regex{R"(Ch(\d+[A-Z]))"};
   std::regex l_Ue_regex{R"((\w+)_UE\d)"};

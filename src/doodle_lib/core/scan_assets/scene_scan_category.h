@@ -21,10 +21,10 @@ class scene_scan_category_t : public scan_category_t {
     FSys::path BG_path_;
   };
 
-  scene_scan_category_t()           = default;
+  using scan_category_t::scan_category_t;
   ~scene_scan_category_t() override = default;
 
-  std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_helper::database_t>&in_root) const override;
+  std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_helper::database_t>& in_root) const override;
 };
 
-}  // namespace doodle::gui::details
+}  // namespace doodle::details
