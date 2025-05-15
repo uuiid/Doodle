@@ -142,7 +142,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       ),
       make_index("assets_file_tab_uuid_id_index", &assets_file_helper::database_t::uuid_id_),
       make_table(
-          "assets_file_tab",  //
+          "assets_file_tab_2",  //
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("label", &assets_file_helper::database_t::label_),
@@ -152,7 +152,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("has_thumbnail", &assets_file_helper::database_t::has_thumbnail_, default_value(false)),
           make_column("extension", &assets_file_helper::database_t::extension_, default_value(".png"s))
       ),
-
       make_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_),
       make_table(
           "assets_tab",  //
@@ -774,7 +773,7 @@ struct sqlite_database_impl {
     storage_any_.open_forever();
     try {
       auto l_g   = storage_any_.transaction_guard();
-      auto l_map = storage_any_.sync_schema(true);
+      auto l_map = storage_any_.sync_schema();
       l_map      = l_map | ranges::views::filter([](const std::pair<std::string, sqlite_orm::sync_schema_result>& in) {
                 return in.second != sqlite_orm::sync_schema_result::already_in_sync;
               }) |
