@@ -133,17 +133,12 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("name", &metadata::kitsu::assets_type_t::name_),
           make_column("asset_type", &metadata::kitsu::assets_type_t::type_)
       ),
-      make_table("label_assets_link",
-          make_column("id", &label_assets_link::id_, primary_key()),
-          make_column("label_uuid_id", &label_assets_link::label_uuid_id_, not_null()),
-          make_column("assets_uuid_id", &label_assets_link::assets_uuid_id_, not_null()),
-          foreign_key(&label_assets_link::label_uuid_id_).references(&label::uuid_id_).on_delete.cascade(),
-          foreign_key(&label_assets_link::assets_uuid_id_).references(&assets_file_helper::database_t::uuid_id_).on_delete.cascade()
-      ),
-      make_table<label>("labels",
-          make_column("id", &label::id_, primary_key()),
-          make_column("uuid_id", &label::uuid_id_, unique(), not_null()),
-          make_column("label", &label::label_, unique(), not_null())
+      make_table("assets_link_parent_t",
+          make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
+          make_column("assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_, not_null()),
+          make_column("assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, not_null()),
+          foreign_key(&assets_file_helper::link_parent_t::assets_type_uuid_).references(&assets_helper::database_t::uuid_id_).on_delete.cascade(),
+          foreign_key(&assets_file_helper::link_parent_t::assets_uuid_).references(&assets_file_helper::database_t::uuid_id_).on_delete.cascade()
       ),
       make_index("assets_file_tab_uuid_id_index", &assets_file_helper::database_t::uuid_id_),
       make_table(
@@ -151,14 +146,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null()),
           make_column("label", &assets_file_helper::database_t::label_),
-          make_column("parent_uuid", &assets_file_helper::database_t::uuid_parent_),
           make_column("path", &assets_file_helper::database_t::path_),
           make_column("notes", &assets_file_helper::database_t::notes_),
           make_column("active", &assets_file_helper::database_t::active_),
-          make_column("parent_id", &assets_file_helper::database_t::parent_id_),
           make_column("has_thumbnail", &assets_file_helper::database_t::has_thumbnail_, default_value(false)),
-          make_column("extension", &assets_file_helper::database_t::extension_, default_value(".png"s)),
-          foreign_key(&assets_file_helper::database_t::parent_id_).references(&assets_helper::database_t::id_)
+          make_column("extension", &assets_file_helper::database_t::extension_, default_value(".png"s))
       ),
 
       make_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_),
