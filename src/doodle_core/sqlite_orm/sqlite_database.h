@@ -11,8 +11,6 @@
 
 #include <boost/lockfree/spsc_queue.hpp>
 
-#include <tl/expected.hpp>
-
 namespace doodle {
 struct status_automation;
 enum server_task_info_type : int;
@@ -28,8 +26,7 @@ struct department;
 struct comment;
 struct label_assets_link;
 struct task;
-}  // namespace doodle
-namespace doodle {
+
 namespace attendance_helper {
 struct database_t;
 }
@@ -39,6 +36,8 @@ struct database_t;
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
+}  // namespace doodle
+namespace doodle {
 
 struct sqlite_database_impl;
 class sqlite_database {
