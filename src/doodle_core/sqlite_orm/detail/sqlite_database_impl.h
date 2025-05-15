@@ -140,7 +140,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&assets_file_helper::link_parent_t::assets_type_uuid_).references(&assets_helper::database_t::uuid_id_).on_delete.cascade(),
           foreign_key(&assets_file_helper::link_parent_t::assets_uuid_).references(&assets_file_helper::database_t::uuid_id_).on_delete.cascade()
       ),
-      make_index("assets_file_tab_uuid_id_index", &assets_file_helper::database_t::uuid_id_),
+      make_index("assets_file_tab_uuid_id_index_2", &assets_file_helper::database_t::uuid_id_),
       make_table(
           "assets_file_tab_2",  //
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
