@@ -134,6 +134,10 @@ DOODLE_HTTP_FUN(deepseek_key, get, "api/doodle/deepseek/key", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
+DOODLE_HTTP_FUN(playlists_entities_preview_files, get, "api/data/playlists/entities/{id}/preview-files", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+
 DOODLE_HTTP_FUN(pictures_thumbnails_organisations, get, "/api/pictures/thumbnails/organisations/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
