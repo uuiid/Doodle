@@ -65,13 +65,14 @@ struct upgrade_1_t : sqlite_upgrade {
         );
     }
   }
-  boost::asio::awaitable<void> upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
-    auto l_sql = g_ctx().get<sqlite_database>();
-    co_await in_data->install_range(assets_file_list_);
-    co_await in_data->install_range(link_parent_list_);
+  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    in_data->install_range_unsafe(assets_file_list_);
+    in_data->install_range_unsafe(link_parent_list_);
   }
   ~upgrade_1_t() override = default;
 };
-std::shared_ptr<sqlite_upgrade> upgrade_1(const FSys::path& in_db_path) { return std::make_shared<upgrade_1_t>(in_db_path); }
+std::shared_ptr<sqlite_upgrade> upgrade_1(const FSys::path& in_db_path) {
+  return std::make_shared<upgrade_1_t>(in_db_path);
+}
 
 }  // namespace doodle::details

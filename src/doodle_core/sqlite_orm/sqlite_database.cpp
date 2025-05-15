@@ -20,6 +20,7 @@
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
+#include <doodle_core/sqlite_orm/sqlite_upgrade.h>
 
 #include <sqlite_orm/sqlite_orm.h>
 
@@ -42,11 +43,14 @@ auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
   return l_ret;
 }
 
-
-
-
 }  // namespace
-void sqlite_database::load(const FSys::path& in_path) { impl_ = std::make_shared<sqlite_database_impl>(in_path); }
+void sqlite_database::load(const FSys::path& in_path) {
+  auto l_list = {details::upgrade_1(in_path)};
+  impl_       = std::make_shared<sqlite_database_impl>(in_path);
+  for (auto&& i : l_list) {
+    i->upgrade(impl_);
+  }
+}
 
 std::vector<project_helper::database_t> sqlite_database::find_project_by_name(const std::string& in_name) {
   return impl_->find_project_by_name(in_name);
