@@ -153,6 +153,7 @@ http_route_ptr create_kitsu_local_route() {
         .reg(std::make_shared<local::task_delete_>())
         .reg(std::make_shared<local::task_instance_get>())
         .reg(std::make_shared<local::task_instance_log_get>())
+        .reg(std::make_shared<local::task_instance_restart_post>())
 
         ;
   return l_rout_ptr;
