@@ -142,9 +142,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
     http::session_data_ptr in_handle
 ) {
   auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
-  if (auto l_r = g_ctx().get<sqlite_database>().get_by_parent_id<assets_file_helper::database_t>(l_uuid);
-      !l_r.empty() &&
-      std::ranges::any_of(l_r, [](const assets_file_helper::database_t& l_item) -> bool { return l_item.active_; }))
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
   // else if (!l_r.empty()) {
   //   auto l_rem = std::make_shared<std::vector<std::int64_t>>();
@@ -154,7 +153,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete
   //   }
   //   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_rem);
   // }
-  co_await g_ctx().get<sqlite_database>().remove<assets_helper::database_t>(l_uuid);
+  co_await l_sql.remove<assets_helper::database_t>(l_uuid);
 
   co_return in_handle->make_msg(nlohmann::json{});
 }

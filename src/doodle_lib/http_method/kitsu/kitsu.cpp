@@ -66,12 +66,8 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<model_library::pictures_get>(l_ctx.root_))
       .reg(std::make_shared<model_library::pictures_thumbnails_get>(l_ctx.root_))
 
-      .reg(std::make_shared<model_library::label_get>())
-      .reg(std::make_shared<model_library::label_post>())
-      .reg(std::make_shared<model_library::label_put>())
-      .reg(std::make_shared<model_library::label_delete_>())
-      .reg(std::make_shared<model_library::label_link_post>())
-      .reg(std::make_shared<model_library::label_link_delete_>())
+      .reg(std::make_shared<model_library::assets_tree_link_post>())
+      .reg(std::make_shared<model_library::assets_tree_link_delete_>())
 
       ;
 #else

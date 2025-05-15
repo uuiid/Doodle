@@ -24,7 +24,6 @@ struct assets_and_tasks_t;
 struct entities_and_tasks_t;
 struct department;
 struct comment;
-struct label_assets_link;
 struct task;
 
 namespace attendance_helper {
@@ -32,6 +31,7 @@ struct database_t;
 }
 namespace assets_file_helper {
 struct database_t;
+struct link_parent_t;
 }
 namespace work_xlsx_task_info_helper {
 struct database_t;
@@ -162,11 +162,13 @@ class sqlite_database {
   std::map<uuid, std::int32_t> get_task_type_priority_map(const uuid& in_project, const std::string& in_for_entity);
   /// 返回所属实体,类别 的任务
   std::optional<task> get_tasks_for_entity_and_task_type(const uuid& in_entity_id, const uuid& in_task_type_id);
-  /// 在模型库中, 是否有和标签关联的模型
-  bool has_label_assets_link(const uuid& in_label_uuid);
+  /// 在模型库中, 是否有和资产类别关联的模型
+  bool has_assets_tree_assets_link(const uuid& in_label_uuid);
   /// 是否存在 label_assets_link
-  bool has_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
-  /// 获取标签和模型的连接
-  label_assets_link get_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
+  bool has_assets_tree_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
+  /// 模型库中,是否有资产类别的子类别
+  bool has_assets_tree_child(const uuid& in_label_uuid);
+  /// 获取资产类别和模型的连接
+  assets_file_helper::link_parent_t get_assets_tree_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
 };
 }  // namespace doodle

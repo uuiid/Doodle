@@ -879,28 +879,40 @@ std::optional<task> sqlite_database::get_tasks_for_entity_and_task_type(
   return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
 }
 
-bool sqlite_database::has_label_assets_link(const uuid& in_uuid) {
+bool sqlite_database::has_assets_tree_assets_link(const uuid& in_uuid) {
   using namespace sqlite_orm;
 
-  return impl_->storage_any_.count<label_assets_link>(where(c(&label_assets_link::label_uuid_id_) == in_uuid)) > 0;
+  return impl_->storage_any_.count<assets_file_helper::link_parent_t>(
+             where(c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_uuid)
+         ) > 0;
 }
-bool sqlite_database::has_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid) {
+bool sqlite_database::has_assets_tree_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.count<label_assets_link>(where(
-      c(&label_assets_link::label_uuid_id_) == in_label_uuid && c(&label_assets_link::assets_uuid_id_) == in_asset_uuid
+  auto l_t = impl_->storage_any_.count<assets_file_helper::link_parent_t>(where(
+      c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_label_uuid &&
+      c(&assets_file_helper::link_parent_t::assets_uuid_) == in_asset_uuid
   ));
   return l_t > 0;
 }
-label_assets_link sqlite_database::get_label_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid) {
+assets_file_helper::link_parent_t sqlite_database::get_assets_tree_assets_link(
+    const uuid& in_label_uuid, const uuid& in_asset_uuid
+) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<label_assets_link>(where(
-      c(&label_assets_link::label_uuid_id_) == in_label_uuid && c(&label_assets_link::assets_uuid_id_) == in_asset_uuid
+  auto l_t = impl_->storage_any_.get_all<assets_file_helper::link_parent_t>(where(
+      c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_label_uuid &&
+      c(&assets_file_helper::link_parent_t::assets_uuid_) == in_asset_uuid
   ));
   if (l_t.empty()) throw_exception(doodle_error{"未知的标签资产链接 {} {}", in_label_uuid, in_asset_uuid});
   return l_t.front();
 }
+bool sqlite_database::has_assets_tree_child(const uuid& in_label_uuid) {
+  using namespace sqlite_orm;
+  auto l_r = impl_->storage_any_.count<assets_helper::database_t>(
+      where(c(&assets_helper::database_t::uuid_parent_) == in_label_uuid)
+  );
+  return l_r > 0;
+}
 
-DOODLE_GET_BY_PARENT_ID_SQL(assets_file_helper::database_t);
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(project_helper::database_t)
@@ -943,9 +955,10 @@ DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 template <>
 assets_file_helper::database_t sqlite_database::get_by_uuid<assets_file_helper::database_t>(const uuid& in_uuid) {
   using namespace sqlite_orm;
-  auto l_data    = impl_->get_by_uuid<assets_file_helper::database_t>(in_uuid);
-  l_data.labels_ = impl_->storage_any_.select(
-      &label_assets_link::label_uuid_id_, where(c(&label_assets_link::assets_uuid_id_) == in_uuid)
+  auto l_data          = impl_->get_by_uuid<assets_file_helper::database_t>(in_uuid);
+  l_data.uuid_parents_ = impl_->storage_any_.select(
+      &assets_file_helper::link_parent_t::assets_type_uuid_,
+      where(c(&assets_file_helper::link_parent_t::assets_uuid_) == in_uuid)
   );
   return l_data;
 }
@@ -960,7 +973,6 @@ DOODLE_GET_BY_UUID_SQL(asset_type)
 DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(comment)
 DOODLE_GET_BY_UUID_SQL(task)
-DOODLE_GET_BY_UUID_SQL(label)
 template <>
 entity sqlite_database::get_by_uuid<entity>(const uuid& in_uuid) {
   using namespace sqlite_orm;
@@ -1016,9 +1028,9 @@ std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
                    }
                ) |
                ranges::to<std::map<uuid, assets_file_helper::database_t*>>();
-  auto l_link = impl_->get_all<label_assets_link>();
+  auto l_link = impl_->get_all<assets_file_helper::link_parent_t>();
   for (auto&& i : l_link) {
-    if (l_map.contains(i.assets_uuid_id_)) l_map.at(i.assets_uuid_id_)->labels_.emplace_back(i.label_uuid_id_);
+    if (l_map.contains(i.assets_uuid_)) l_map.at(i.assets_uuid_)->uuid_parents_.emplace_back(i.assets_type_uuid_);
   }
   return l_list;
 }
@@ -1029,7 +1041,6 @@ DOODLE_GET_ALL_SQL(server_task_info)
 DOODLE_GET_ALL_SQL(project_status)
 DOODLE_GET_ALL_SQL(task_status)
 DOODLE_GET_ALL_SQL(task_type)
-DOODLE_GET_ALL_SQL(label)
 DOODLE_GET_ALL_SQL(department)
 DOODLE_GET_ALL_SQL(studio)
 DOODLE_GET_ALL_SQL(status_automation)
@@ -1088,8 +1099,7 @@ DOODLE_INSTALL_SQL(comment)
 DOODLE_INSTALL_SQL(project_asset_type_link)
 DOODLE_INSTALL_SQL(entity)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
-DOODLE_INSTALL_SQL(label)
-DOODLE_INSTALL_SQL(label_assets_link)
+DOODLE_INSTALL_SQL(assets_file_helper::link_parent_t)
 
 DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
@@ -1105,7 +1115,7 @@ DOODLE_INSTALL_RANGE(notification)
 DOODLE_INSTALL_RANGE(task_status)
 DOODLE_INSTALL_RANGE(task_type)
 DOODLE_INSTALL_RANGE(asset_type)
-DOODLE_INSTALL_RANGE(label_assets_link)
+DOODLE_INSTALL_RANGE(assets_file_helper::link_parent_t)
 DOODLE_INSTALL_RANGE(task)
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
@@ -1114,8 +1124,7 @@ DOODLE_REMOVE_BY_ID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_ID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_ID(assets_helper::database_t)
 DOODLE_REMOVE_BY_ID(computer)
-DOODLE_REMOVE_BY_ID(label)
-DOODLE_REMOVE_BY_ID(label_assets_link)
+DOODLE_REMOVE_BY_ID(assets_file_helper::link_parent_t)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
@@ -1124,6 +1133,5 @@ DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(server_task_info)
-DOODLE_REMOVE_BY_UUID(label)
 
 }  // namespace doodle
