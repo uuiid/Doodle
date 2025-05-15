@@ -3,3 +3,6 @@
 //
 
 #include "sqlite_database_impl.h"
+namespace doodle::details {
+
+}

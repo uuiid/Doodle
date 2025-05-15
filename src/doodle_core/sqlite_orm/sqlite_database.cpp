@@ -42,6 +42,9 @@ auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
   return l_ret;
 }
 
+
+
+
 }  // namespace
 void sqlite_database::load(const FSys::path& in_path) { impl_ = std::make_shared<sqlite_database_impl>(in_path); }
 
