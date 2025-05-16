@@ -531,7 +531,9 @@ import_data_t args::gen_import_config() {
     );
   }
 
-  l_import_data.files = import_files_ | ranges::views::transform([](const import_file& in_arg) {
+  l_import_data.files = import_files_ |
+                        ranges::view::filter([](const import_file& in_arg) { return !in_arg.file_.empty(); }) |
+                        ranges::views::transform([](const import_file& in_arg) {
                           auto l_file_name_str = in_arg.file_.filename().generic_string();
                           auto l_ext           = in_arg.file_.extension().generic_string();
                           std::string l_type{};
