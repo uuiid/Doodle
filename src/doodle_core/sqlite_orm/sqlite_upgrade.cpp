@@ -11,8 +11,6 @@
 namespace doodle::details {
 
 struct upgrade_1_t : sqlite_upgrade {
-  FSys::path path_;
-
   struct impl_data {
     std::int32_t id_{};
     uuid uuid_id_{};
@@ -57,6 +55,8 @@ struct upgrade_1_t : sqlite_upgrade {
     );
     l_p.open_forever();
     if (!l_p.table_exists("assets_file_tab")) return;
+    assets_file_list_ = std::make_shared<std::vector<assets_file_helper::database_t>>();
+    link_parent_list_ = std::make_shared<std::vector<assets_file_helper::link_parent_t>>();
     for (auto&& i : l_p.get_all<impl_data>()) {
       assets_file_list_->emplace_back(i);
       if (!i.uuid_parent_.is_nil())
@@ -66,8 +66,10 @@ struct upgrade_1_t : sqlite_upgrade {
     }
   }
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
-    in_data->install_range_unsafe(assets_file_list_);
-    in_data->install_range_unsafe(link_parent_list_);
+    if (assets_file_list_ && link_parent_list_) {
+      in_data->install_range_unsafe(assets_file_list_);
+      in_data->install_range_unsafe(link_parent_list_);
+    }
   }
   ~upgrade_1_t() override = default;
 };
