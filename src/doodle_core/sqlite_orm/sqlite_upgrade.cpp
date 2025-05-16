@@ -64,6 +64,7 @@ struct upgrade_1_t : sqlite_upgrade {
             assets_file_helper::link_parent_t{.assets_type_uuid_ = i.uuid_parent_, .assets_uuid_ = i.uuid_id_}
         );
     }
+    l_p.drop_table_if_exists("assets_file_tab");
   }
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     if (assets_file_list_ && link_parent_list_) {
