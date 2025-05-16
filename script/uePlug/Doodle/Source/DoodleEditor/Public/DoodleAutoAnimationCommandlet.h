@@ -149,7 +149,7 @@ private:
 	TObjectPtr<ADirectionalLight> DirectionalLight1;
 	// 主光源
 	UPROPERTY()
-	TObjectPtr<ADirectionalLight> DirectionalLight2;
+	TObjectPtr<ADirectionalLight> MainDirectionalLight;
 
 	// 检查文件类型
 	ECheckFileType CheckFileType;
