@@ -69,7 +69,11 @@
 #include "MoviePipelineCameraSetting.h"
 #include "MoviePipelineEXROutput.h"
 #include "SequencerTools.h"
+#include "Components/SpotLightComponent.h"
 #include "Materials/MaterialParameterCollection.h"
+#include "Engine/SpotLight.h"
+#include "Tracks/MovieScene3DAttachTrack.h"
+#include "Sections/MovieScene3DAttachSection.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -532,42 +536,32 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequenceWorld()
 void UDoodleAutoAnimationCommandlet::OnCreateDirectionalLight()
 {
 	//-----------------------
-	DirectionalLight1 = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
-	DirectionalLight1->SetBrightness(2.0f);
-	DirectionalLight1->GetLightComponent()->SetLightingChannels(false, true, false);
-
 	MainDirectionalLight = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
 	MainDirectionalLight->SetBrightness(7.0f);
 	MainDirectionalLight->GetLightComponent()->SetLightingChannels(false, true, false);
 
 	// 设置可移动性
-	DirectionalLight1->SetMobility(EComponentMobility::Movable);
 	MainDirectionalLight->SetMobility(EComponentMobility::Movable);
 
 	// 设置源角度
-	DirectionalLight1->GetComponent()->SetLightSourceAngle(15);
 	MainDirectionalLight->GetComponent()->SetLightSourceAngle(15);
 
 	// 设置间接光强度
-	DirectionalLight1->GetComponent()->SetIndirectLightingIntensity(0.0f);
 	MainDirectionalLight->GetComponent()->SetIndirectLightingIntensity(0.0f);
 
 	// 设置体积散射光强度
-	DirectionalLight1->GetComponent()->SetVolumetricScatteringIntensity(0.0f);
 	MainDirectionalLight->GetComponent()->SetVolumetricScatteringIntensity(0.0f);
 
 	// 设置大气太阳光
-	DirectionalLight1->GetComponent()->SetAtmosphereSunLight(false);
 	MainDirectionalLight->GetComponent()->SetAtmosphereSunLight(false);
 
 	// 设置影响半透明
-	DirectionalLight1->GetComponent()->SetAffectTranslucentLighting(false);
 	MainDirectionalLight->GetComponent()->SetAffectTranslucentLighting(false);
 
 	// 取消投射阴影
-	DirectionalLight1->GetComponent()->SetCastShadows(false);
+	// DirectionalLight1->GetComponent()->SetCastShadows(false);
 	// 高光度范围
-	DirectionalLight1->GetComponent()->SetSpecularScale(0.2f);
+	// DirectionalLight1->GetComponent()->SetSpecularScale(0.2f);
 }
 
 void UDoodleAutoAnimationCommandlet::OnCreateCheckLight()
@@ -724,7 +718,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 
 	// USequencerToolsFunctionLibrary::ImportLevelSequenceFBX(GWorld, TheLevelSequence, {}, L_ImportFBXSettings, InFbxPath);
 
-	//----------------------------
+	// 获取摄像机角度变化
 	Bindings = TheLevelSequence->GetMovieScene()->GetBindings();
 	TArray<FRotator> MainLightRot{};
 	MainLightRot.Reserve(FMath::Abs((L_End - L_Start).Value) + 1);
@@ -748,7 +742,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 					{
 						FRotator CameraRot;
 						ChannelX->Evaluate(Index_L, CameraRot.Roll);
-						ChannelY->Evaluate(Index_L, CameraRot.Pitch);
+						CameraRot.Pitch = -20;
 						ChannelZ->Evaluate(Index_L, CameraRot.Yaw);
 						CameraRot.Yaw -= 40;
 						MainLightRot.Add(CameraRot);
@@ -757,47 +751,80 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 			}
 		}
 	}
+	// 设置主光和辅助光源
 	if (!MainLightRot.IsEmpty())
 	{
-		/// 辅助光源
-		DirectionalLight1->SetActorRotation(MainLightRot.HeapTop());
+		/// 主光源
 		FRotator Rot_Light = MainLightRot.HeapTop();
 		Rot_Light.Yaw += 80;
 		MainDirectionalLight->SetActorRotation(Rot_Light);
 		/// 添加辅助灯光旋转bind
-		const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(DirectionalLight1->GetActorLabel(), DirectionalLight1->GetClass());
-		TheLevelSequence->BindPossessableObject(L_GUID, *DirectionalLight1, TheSequenceWorld);
-		//-----------------------
-		UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack_Light = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
-		UMovieSceneSpawnSection* L_MovieSceneSpawnSection_Light = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack_Light->CreateNewSection());
-		L_MovieSceneSpawnTrack_Light->AddSection(*L_MovieSceneSpawnSection_Light);
-		L_MovieSceneSpawnSection_Light->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-		UMovieScene3DTransformTrack* L_MovieSceneTranformTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieScene3DTransformTrack>(L_GUID);
+		ASpotLight* L_SpotLight = TheSequenceWorld->SpawnActor<ASpotLight>(FVector::ZeroVector, FRotator::ZeroRotator);
+		L_SpotLight = CastChecked<ASpotLight>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*L_SpotLight, L_SpotLight->GetFName()));
+		/// 调整辅助光源属性
+		L_SpotLight->SpotLightComponent->bUseInverseSquaredFalloff = false;
+		L_SpotLight->SpotLightComponent->SetInnerConeAngle(80);
+		L_SpotLight->SpotLightComponent->SetUseInverseSquaredFalloff(false);
+		L_SpotLight->SpotLightComponent->SetAttenuationRadius(16384);
+		L_SpotLight->SpotLightComponent->SetOuterConeAngle(80);
+		L_SpotLight->GetLightComponent()->SetIndirectLightingIntensity(0.0f);
+		L_SpotLight->GetLightComponent()->SetVolumetricScatteringIntensity(0.0f);
+		L_SpotLight->GetLightComponent()->SetLightingChannels(false, true, false);
+		L_SpotLight->SetMobility(EComponentMobility::Movable);
+		L_SpotLight->SetBrightness(1.0f);
+		L_SpotLight->Destroy(true);
+		FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddSpawnable(L_SpotLight->GetActorLabel(), *L_SpotLight);
+		// FMovieSceneSpawnable* L_Spawnable = TheLevelSequence->GetMovieScene()->FindSpawnable(L_GUID);
 
-		if (UMovieScene3DTransformSection* L_MovieScene3DTransformSection = Cast<UMovieScene3DTransformSection>(L_MovieSceneTranformTrack->CreateNewSection()); L_MovieScene3DTransformSection)
-		{
-			L_MovieSceneTranformTrack->AddSection(*L_MovieScene3DTransformSection);
-			L_MovieScene3DTransformSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-			FMovieSceneChannelProxy& SectionChannelProxy = L_MovieScene3DTransformSection->GetChannelProxy();
-			TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")};
-			FMovieSceneDoubleChannel* ChannelX = DoubleChannels[0].Get();
-			FMovieSceneDoubleChannel* ChannelY = DoubleChannels[1].Get();
-			FMovieSceneDoubleChannel* ChannelZ = DoubleChannels[2].Get();
-			TArray<FFrameNumber> Times{};
-			TArray<FMovieSceneDoubleValue> ValuesX{};
-			TArray<FMovieSceneDoubleValue> ValuesY{};
-			TArray<FMovieSceneDoubleValue> ValuesZ{};
-			for (auto LT = L_Start; LT <= L_End; ++LT)
-			{
-				Times.Add(LT);
-				ValuesX.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Roll});
-				ValuesY.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Pitch});
-				ValuesZ.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Yaw});
-			}
-			ChannelX->AddKeys(Times, ValuesX);
-			ChannelY->AddKeys(Times, ValuesY);
-			ChannelZ->AddKeys(Times, ValuesZ);
-		}
+
+		// const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(DirectionalLight1->GetActorLabel(), DirectionalLight1->GetClass());
+		// TheLevelSequence->BindPossessableObject(L_GUID, *DirectionalLight1, TheSequenceWorld);
+		// 添加生成轨道
+		UMovieSceneSection* L_Section;
+		UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack_Light = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
+		L_Section = L_MovieSceneSpawnTrack_Light->CreateNewSection();
+		L_MovieSceneSpawnTrack_Light->AddSection(*L_Section);
+		CastChecked<UMovieSceneSpawnSection>(L_Section)->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+
+
+		UMovieScene3DAttachTrack* L_MovieSceneAttachTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieScene3DAttachTrack>(L_GUID);
+		L_Section = L_MovieSceneAttachTrack->CreateNewSection();
+		L_MovieSceneAttachTrack->AddSection(*L_Section);
+		CastChecked<UMovieScene3DAttachSection>(L_Section)->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+		L_Section->TryModify(true);
+		CastChecked<UMovieScene3DConstraintSection>(L_Section)->SetConstraintBindingID(BindingID);
+
+		// 添加变换轨道 
+		UMovieScene3DTransformTrack* L_MovieSceneTranformTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieScene3DTransformTrack>(L_GUID);
+		L_Section = L_MovieSceneTranformTrack->CreateNewSection();
+		L_MovieSceneTranformTrack->AddSection(*L_Section);
+		CastChecked<UMovieScene3DTransformSection>(L_Section)->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+
+
+		// if (UMovieScene3DTransformSection* L_MovieScene3DTransformSection = Cast<UMovieScene3DTransformSection>(L_MovieSceneTranformTrack->CreateNewSection()); L_MovieScene3DTransformSection)
+		// {
+		// 	L_MovieSceneTranformTrack->AddSection(*L_MovieScene3DTransformSection);
+		// 	L_MovieScene3DTransformSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+		// 	FMovieSceneChannelProxy& SectionChannelProxy = L_MovieScene3DTransformSection->GetChannelProxy();
+		// 	TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")};
+		// 	FMovieSceneDoubleChannel* ChannelX = DoubleChannels[0].Get();
+		// 	FMovieSceneDoubleChannel* ChannelY = DoubleChannels[1].Get();
+		// 	FMovieSceneDoubleChannel* ChannelZ = DoubleChannels[2].Get();
+		// 	TArray<FFrameNumber> Times{};
+		// 	TArray<FMovieSceneDoubleValue> ValuesX{};
+		// 	TArray<FMovieSceneDoubleValue> ValuesY{};
+		// 	TArray<FMovieSceneDoubleValue> ValuesZ{};
+		// 	for (auto LT = L_Start; LT <= L_End; ++LT)
+		// 	{
+		// 		Times.Add(LT);
+		// 		ValuesX.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Roll});
+		// 		ValuesY.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Pitch});
+		// 		ValuesZ.Add(FMovieSceneDoubleValue{MainLightRot[(LT - L_Start).Value].Yaw});
+		// 	}
+		// 	ChannelX->AddKeys(Times, ValuesX);
+		// 	ChannelY->AddKeys(Times, ValuesY);
+		// 	ChannelZ->AddKeys(Times, ValuesZ);
+		// }
 	}
 	// L_LevelSequencePlayer->
 	// EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);

@@ -144,9 +144,6 @@ private:
 	FString EffectSequencePath;
 	TArray<FImportFiles2> ImportFiles;
 
-	// 辅助光源
-	UPROPERTY()
-	TObjectPtr<ADirectionalLight> DirectionalLight1;
 	// 主光源
 	UPROPERTY()
 	TObjectPtr<ADirectionalLight> MainDirectionalLight;
