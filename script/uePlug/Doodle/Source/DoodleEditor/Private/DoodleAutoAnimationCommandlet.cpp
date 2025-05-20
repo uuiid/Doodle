@@ -537,7 +537,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateDirectionalLight()
 {
 	//-----------------------
 	MainDirectionalLight = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
-	MainDirectionalLight->SetBrightness(7.0f);
+	MainDirectionalLight->SetBrightness(3.0f);
 	MainDirectionalLight->GetLightComponent()->SetLightingChannels(false, true, false);
 
 	// 设置可移动性
@@ -759,8 +759,8 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		Rot_Light.Yaw += 80;
 		MainDirectionalLight->SetActorRotation(Rot_Light);
 		/// 添加辅助灯光旋转bind
-		ASpotLight* L_SpotLight = TheSequenceWorld->SpawnActor<ASpotLight>(FVector::ZeroVector, FRotator::ZeroRotator);
-		L_SpotLight = CastChecked<ASpotLight>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*L_SpotLight, L_SpotLight->GetFName()));
+		ASpotLight* L_SpotLight1 = TheSequenceWorld->SpawnActor<ASpotLight>(FVector::ZeroVector, FRotator::ZeroRotator);
+		ASpotLight* L_SpotLight = CastChecked<ASpotLight>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*L_SpotLight1, L_SpotLight1->GetFName()));
 		/// 调整辅助光源属性
 		L_SpotLight->SpotLightComponent->bUseInverseSquaredFalloff = false;
 		L_SpotLight->SpotLightComponent->SetInnerConeAngle(80);
@@ -799,7 +799,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		L_Section = L_MovieSceneTranformTrack->CreateNewSection();
 		L_MovieSceneTranformTrack->AddSection(*L_Section);
 		CastChecked<UMovieScene3DTransformSection>(L_Section)->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-
+		L_SpotLight1->Destroy(true);
 
 		// if (UMovieScene3DTransformSection* L_MovieScene3DTransformSection = Cast<UMovieScene3DTransformSection>(L_MovieSceneTranformTrack->CreateNewSection()); L_MovieScene3DTransformSection)
 		// {
