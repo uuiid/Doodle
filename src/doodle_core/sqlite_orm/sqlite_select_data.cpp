@@ -239,5 +239,19 @@ void to_json(nlohmann::json& j, const entities_and_tasks_t& p) {
   j["data"]            = p.data_;
   j["tasks"]           = p.tasks_;
 }
-
+void to_json(nlohmann::json& j, const preview_files_for_entity_t& p) {
+  j["uuid"]          = p.uuid_id_;
+  j["revision"]      = p.revision_;
+  // j["position"]      = p.position_;
+  j["original_name"] = p.original_name_;
+  j["extension"]     = p.extension_;
+  j["width"]         = p.width_;
+  j["height"]        = p.height_;
+  j["duration"]      = p.duration_;
+  j["status"]        = p.status_;
+  j["annotations"]   = p.annotations_;
+  j["previews"]      = p.previews_;
+  j["created_at"]    = p.created_at_;
+  j["task_id"]       = p.task_id_;
+}
 }  // namespace doodle

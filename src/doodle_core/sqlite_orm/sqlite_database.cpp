@@ -921,6 +921,71 @@ bool sqlite_database::has_assets_tree_child(const uuid& in_label_uuid) {
   );
   return l_r > 0;
 }
+auto mix_preview_file_revisions(const std::vector<preview_files_for_entity_t>& in_t) {
+  std::map<std::int32_t, preview_files_for_entity_t> l_map{};
+  std::vector<preview_files_for_entity_t> l_ret{};
+  for (auto&& i : in_t) {
+    if (!l_map.contains(i.revision_)) {
+      l_map[i.revision_] = i;
+      l_ret.emplace_back(i);
+    } else {
+      auto& l_task = l_map[i.revision_];
+      l_task.previews_.emplace_back(i);
+    }
+  }
+  return l_ret;
+}
+std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_preview_files_for_entity(const uuid& in_entity_id) {
+  using namespace sqlite_orm;
+  std::map<uuid, std::vector<preview_files_for_entity_t>> l_ret{};
+
+  auto l_t = impl_->storage_any_.select(
+      columns(
+          &task::uuid_id_, &task_type::uuid_id_, &preview_file::uuid_id_, &preview_file::revision_,
+          &preview_file::position_, &preview_file::original_name_, &preview_file::extension_, &preview_file::width_,
+          &preview_file::height_, &preview_file::duration_, &preview_file::status_, &preview_file::annotations_,
+          &preview_file::created_at_
+      ),
+
+      join<preview_file>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+      where(c(&task::entity_id_) == in_entity_id),
+      multi_order_by(
+          order_by(&task_type::priority_).desc(), order_by(&task_type::name_),
+          order_by(&preview_file::revision_).desc(), order_by(&preview_file::created_at_)
+      )
+  );
+  std::map<uuid, std::vector<preview_files_for_entity_t>> l_select{};
+  for (auto&& [task_id, task_type_id, preview_id, revision, position, original_name, extension, width, height, duration, status, annotations, created_at] :
+       l_t) {
+    l_select[task_id].emplace_back(
+        preview_files_for_entity_t{
+            .uuid_id_       = preview_id,
+            .revision_      = revision,
+            .position_      = position,
+            .original_name_ = original_name,
+            .extension_     = extension,
+            .width_         = width,
+            .height_        = height,
+            .duration_      = duration,
+            .status_        = status,
+            .annotations_   = annotations,
+            .created_at_    = created_at,
+            .task_id_       = task_id,
+            .task_type_id_  = task_type_id
+        }
+    );
+  }
+
+  for (auto&& keys : l_select | ranges::views::keys) {
+    auto l_preview_files = l_select[keys];
+    if (l_preview_files.empty()) continue;
+    auto l_task_type_id   = l_preview_files.front().task_type_id_;
+    auto l_pres           = mix_preview_file_revisions(l_preview_files);
+    l_ret[l_task_type_id] = l_pres;
+  }
+  return l_ret;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 

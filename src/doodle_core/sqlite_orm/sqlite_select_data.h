@@ -277,4 +277,25 @@ struct entities_and_tasks_t {
   friend void to_json(nlohmann::json& j, const entities_and_tasks_t& p);
 };
 
+struct preview_files_for_entity_t {
+  decltype(preview_file::uuid_id_) uuid_id_;
+  decltype(preview_file::revision_) revision_;
+  decltype(preview_file::position_) position_;
+  decltype(preview_file::original_name_) original_name_;
+  decltype(preview_file::extension_) extension_;
+  decltype(preview_file::width_) width_;
+  decltype(preview_file::height_) height_;
+  decltype(preview_file::duration_) duration_;
+  decltype(preview_file::status_) status_;
+  decltype(preview_file::annotations_) annotations_;
+  decltype(preview_file::created_at_) created_at_;
+  decltype(preview_file::task_id_) task_id_;
+  decltype(task_type::uuid_id_) task_type_id_;
+
+  std::vector<preview_files_for_entity_t> previews_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const preview_files_for_entity_t& p);
+};
+
 }  // namespace doodle

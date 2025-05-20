@@ -12,6 +12,7 @@
 #include <boost/lockfree/spsc_queue.hpp>
 
 namespace doodle {
+struct preview_files_for_entity_t;
 struct status_automation;
 enum server_task_info_type : int;
 struct asset_type;
@@ -32,7 +33,7 @@ struct database_t;
 namespace assets_file_helper {
 struct database_t;
 struct link_parent_t;
-}
+}  // namespace assets_file_helper
 namespace work_xlsx_task_info_helper {
 struct database_t;
 }
@@ -170,5 +171,7 @@ class sqlite_database {
   bool has_assets_tree_child(const uuid& in_label_uuid);
   /// 获取资产类别和模型的连接
   assets_file_helper::link_parent_t get_assets_tree_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
+  ///
+  std::map<uuid, std::vector<preview_files_for_entity_t>> get_preview_files_for_entity(const uuid& in_entity_id);
 };
 }  // namespace doodle

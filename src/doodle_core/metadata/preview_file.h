@@ -36,6 +36,9 @@ struct preview_file {
   std::string uploaded_movie_url_;
   std::string uploaded_movie_name_;
 
+  chrono::system_zoned_time created_at_;
+  chrono::system_zoned_time updated_at_;
+
   // 外键
   uuid task_id_;
   uuid person_id_;
