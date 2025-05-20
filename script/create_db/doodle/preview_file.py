@@ -4,7 +4,7 @@ from sqlalchemy import orm
 import sqlalchemy
 from doodle.base import BaseMixin
 from zou.app.models.preview_file import PreviewFile as ZouPreviewFile
-
+import json
 STATUSES = [
     ("processing", "Processing"),
     ("ready", "Ready"),
@@ -60,7 +60,7 @@ class PreviewFile(BaseMixin):
         sqlalchemy.UniqueConstraint("name", "task_id", "revision", name="preview_uc"),
     )
 
-    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False, unique=True)
+    shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
 
     is_movie = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)  # deprecated
     url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
@@ -80,7 +80,7 @@ class PreviewFile(BaseMixin):
         self.file_size = preview_file.file_size
         self.status = preview_file.status
         self.validation_status = preview_file.validation_status
-        self.annotations = preview_file.annotations
+        self.annotations = json.dumps(preview_file.annotations)
         self.width = preview_file.width
         self.height = preview_file.height
         self.duration = preview_file.duration

@@ -21,6 +21,7 @@ import zou.app.models.notification
 import zou.app.models.subscription
 import zou.app.models.task
 import zou.app.models.comment
+import zou.app.models.preview_file
 
 import doodle.project_status
 import doodle.organisation
@@ -50,6 +51,7 @@ import doodle.attachment_file
 import doodle.chat_message
 import doodle.chat
 import doodle.subscription
+import doodle.preview_file
 
 PASS = getenv("KITSU_PASS")
 DB_NAME = "my_zou.database"
@@ -93,6 +95,8 @@ def main():
         l_comment_mentions  = zou.app.db.session.query(zou.app.models.comment.mentions_table).all()
         l_comment_department_mentions = zou.app.db.session.query(zou.app.models.comment.department_mentions_table).all()
         l_comment_acknowledgements = zou.app.db.session.query(zou.app.models.comment.acknowledgements_table).all()
+
+        l_preview_file : list[zou.app.models.preview_file.PreviewFile] = zou.app.models.preview_file.PreviewFile.query.all()
 
         with Session(engine) as session:
             doodle.base.BaseMixin.metadata.create_all(engine)
@@ -139,6 +143,8 @@ def main():
             session.add_all([doodle.comment.CommentMentions().from_zou(i) for i in l_comment_mentions])
             session.add_all([doodle.comment.CommentDepartmentMentions().from_zou(i) for i in l_comment_department_mentions])
             session.add_all([doodle.comment.CommentAcknoledgments().from_zou(i) for i in l_comment_acknowledgements])
+
+            session.add_all([doodle.preview_file.PreviewFile().from_zou(i) for i in l_preview_file])
 
             session.commit()
 
