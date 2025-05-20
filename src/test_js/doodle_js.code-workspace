@@ -10,5 +10,7 @@
 			"path": "E:/Doodle/script/create_db"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"powershell.cwd": "create_db"
+	}
 }
