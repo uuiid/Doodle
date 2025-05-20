@@ -892,6 +892,18 @@ struct sqlite_database_impl {
     l_g.commit();
     DOODLE_TO_SELF();
   }
+
+  template <typename T>
+  void install_unsafe(std::shared_ptr<T> in_data) {
+    auto l_g = storage_any_.transaction_guard();
+    if (in_data->id_ == 0)
+      in_data->id_ = storage_any_.insert<T>(*in_data);
+    else {
+      storage_any_.replace<T>(*in_data);
+    }
+    l_g.commit();
+  }
+
   template <typename T>
   boost::asio::awaitable<void> install_range(std::shared_ptr<std::vector<T>> in_data) {
     if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
@@ -949,7 +961,6 @@ struct sqlite_database_impl {
       });
     std::size_t l_split =
         std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const auto& in_) { return in_.id_ != 0; }));
-
 
 #if DOODLE_SQLORM_USE_RETURNING
     auto l_g = storage_any_.transaction_guard();
