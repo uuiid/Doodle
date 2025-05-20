@@ -526,8 +526,8 @@ import_data_t args::gen_import_config() {
     );
 
     l_import_data.render_map = fmt::format(
-        "/Game/Shot/ep{0:04}/sc{1:03}{2}", l_import_data.episode.p_episodes, l_import_data.shot.p_shot,
-        l_import_data.shot.p_shot_enum
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/sc{2:03}{3}", l_import_data.project_.code_,
+        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
     );
   }
 
