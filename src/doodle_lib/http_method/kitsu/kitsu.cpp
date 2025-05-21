@@ -114,6 +114,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<pictures_thumbnails_preview_files_get>())
       .reg(std::make_shared<pictures_thumbnails_persons_get>())
       .reg(std::make_shared<playlists_entities_preview_files_get>())
+      .reg(std::make_shared<pictures_originals_preview_files_download_get>())
 
       ;
 #endif
