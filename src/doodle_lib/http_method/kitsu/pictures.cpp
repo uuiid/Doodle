@@ -65,5 +65,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
   }
   throw_exception(http_request_error{boost::beast::http::status::not_found, "file not found"});
 }
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_preview_files_get::callback(
+    session_data_ptr in_handle
+) {
+  FSys::path l_filename = in_handle->capture_->get("id");
+  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
+  auto l_ext  = l_filename.extension();
+  co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
+}
 
 }  // namespace doodle::http
