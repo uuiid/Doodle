@@ -59,8 +59,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get
   auto l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
 
   auto& sql      = g_ctx().get<sqlite_database>();
-  auto l_p1      = sql.get_comments(l_task_id);
-  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+  nlohmann::json l_r{};
+  l_r = sql.get_comments(l_task_id);
+  co_return in_handle->make_msg(l_r);
 }
 
 }  // namespace doodle::http

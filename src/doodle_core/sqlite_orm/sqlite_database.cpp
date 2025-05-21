@@ -409,7 +409,7 @@ std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id
   );
   auto l_previews = impl_->storage_any_.select(
       sql_orm_previews_and_comment_id_t,
-      join<comment_preview_link>(on(c(&comment_preview_link::comment_id_) == c(&comment::uuid_id_))),
+      join<comment_preview_link>(on(c(&comment_preview_link::preview_file_id_) == c(&preview_file::uuid_id_))),
       where(in(&comment_preview_link::comment_id_, l_comment_ids))
   );
   auto l_mention =
@@ -935,7 +935,9 @@ auto mix_preview_file_revisions(const std::vector<preview_files_for_entity_t>& i
   }
   return l_ret;
 }
-std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_preview_files_for_entity(const uuid& in_entity_id) {
+std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_preview_files_for_entity(
+    const uuid& in_entity_id
+) {
   using namespace sqlite_orm;
   std::map<uuid, std::vector<preview_files_for_entity_t>> l_ret{};
 
