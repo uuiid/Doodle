@@ -948,7 +948,7 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
           &preview_file::height_, &preview_file::duration_, &preview_file::status_, &preview_file::annotations_,
           &preview_file::created_at_
       ),
-
+      // from<task>(),
       join<preview_file>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
       join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
       where(c(&task::entity_id_) == in_entity_id),
@@ -1028,6 +1028,7 @@ person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
 
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
+DOODLE_GET_BY_UUID_SQL(preview_file)
 template <>
 assets_file_helper::database_t sqlite_database::get_by_uuid<assets_file_helper::database_t>(const uuid& in_uuid) {
   using namespace sqlite_orm;

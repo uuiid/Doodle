@@ -27,7 +27,7 @@ struct capture_t {
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求参数错误"});
     return capture_map_.at(in_str);
   }
-  inline uuid get_uuid(const std::string& in_str) const {
+  inline uuid get_uuid(const std::string& in_str = "id") const {
     if (!capture_map_.contains(in_str))
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求参数错误"});
     return from_uuid_str(capture_map_.at(in_str));

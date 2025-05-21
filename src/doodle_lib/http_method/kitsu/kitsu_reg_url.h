@@ -150,6 +150,10 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(pictures_thumbnails_persons, get, "/api/pictures/thumbnails/persons/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(pictures_originals_preview_files_download, get, "/api/pictures/originals/preview-files/{id}/download", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+
 // clang-format on
 
 }  // namespace doodle::http
