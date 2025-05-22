@@ -15,7 +15,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities
   auto l_entt_id = l_sql.get_by_uuid<entity>(in_handle->capture_->get_uuid("id"));
   l_person->is_project_manager(l_entt_id.parent_id_);
   nlohmann::json l_json{};
-  l_json = l_sql.get_preview_files_for_entity(l_entt_id.uuid_id_);
+  for (auto&& [key, value] : l_sql.get_preview_files_for_entity(l_entt_id.uuid_id_))
+    l_json[fmt::to_string(key)] = value;
   co_return in_handle->make_msg(l_json);
 }
 

@@ -240,7 +240,7 @@ void to_json(nlohmann::json& j, const entities_and_tasks_t& p) {
   j["tasks"]           = p.tasks_;
 }
 void to_json(nlohmann::json& j, const preview_files_for_entity_t& p) {
-  j["uuid"]          = p.uuid_id_;
+  j["id"]          = p.uuid_id_;
   j["revision"]      = p.revision_;
   // j["position"]      = p.position_;
   j["original_name"] = p.original_name_;
