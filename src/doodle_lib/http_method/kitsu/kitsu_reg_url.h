@@ -156,6 +156,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(pictures_previews_preview_files, get, "/api/pictures/previews/preview-files/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_attachment_files_file, get, "/api/data/attachment-files/{id}/file/{file_name}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 // clang-format on
 

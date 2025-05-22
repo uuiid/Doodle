@@ -25,4 +25,5 @@ target_sources(
         comment.cpp
         pictures.cpp
         playlists.cpp
+        attachment_files.cpp
 )
