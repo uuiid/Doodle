@@ -12,20 +12,13 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(assets, get, "api/doodle/model_library/assets", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 DOODLE_HTTP_FUN(assets, post, "api/doodle/model_library/assets", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN(assets_modify, post, "api/doodle/model_library/assets/{id}", http_jwt_fun)
+DOODLE_HTTP_FUN(assets, put, "api/doodle/model_library/assets/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 DOODLE_HTTP_FUN(assets, delete_, "api/doodle/model_library/assets/{id}", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN(assets, patch, "api/doodle/model_library/assets", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
@@ -35,10 +28,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(assets_tree, post, "api/doodle/model_library/assets_tree", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(assets_tree, patch, "api/doodle/model_library/assets_tree", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(assets_tree_modify, post, "api/doodle/model_library/assets_tree/{id}", http_jwt_fun)
+DOODLE_HTTP_FUN(assets_tree, put, "api/doodle/model_library/assets_tree/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(assets_tree, delete_, "api/doodle/model_library/assets_tree/{id}", http_jwt_fun)

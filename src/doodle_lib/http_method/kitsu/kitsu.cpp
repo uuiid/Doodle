@@ -52,14 +52,12 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
 
       .reg(std::make_shared<model_library::assets_get>())
       .reg(std::make_shared<model_library::assets_post>())
-      .reg(std::make_shared<model_library::assets_modify_post>())
+      .reg(std::make_shared<model_library::assets_put>())
       .reg(std::make_shared<model_library::assets_delete_>())
-      .reg(std::make_shared<model_library::assets_patch>())
 
       .reg(std::make_shared<model_library::assets_tree_get>())
       .reg(std::make_shared<model_library::assets_tree_post>())
-      .reg(std::make_shared<model_library::assets_tree_patch>())
-      .reg(std::make_shared<model_library::assets_tree_modify_post>())
+      .reg(std::make_shared<model_library::assets_tree_put>())
       .reg(std::make_shared<model_library::assets_tree_delete_>())
 
       .reg(std::make_shared<model_library::pictures_post>(l_ctx.root_))
