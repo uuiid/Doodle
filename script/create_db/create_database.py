@@ -22,6 +22,7 @@ import zou.app.models.subscription
 import zou.app.models.task
 import zou.app.models.comment
 import zou.app.models.preview_file
+import zou.app.models.attachment_file
 
 import doodle.project_status
 import doodle.organisation
@@ -97,6 +98,7 @@ def main():
         l_comment_acknowledgements = zou.app.db.session.query(zou.app.models.comment.acknowledgements_table).all()
 
         l_preview_file : list[zou.app.models.preview_file.PreviewFile] = zou.app.models.preview_file.PreviewFile.query.all()
+        l_attachment_file : list[zou.app.models.attachment_file.AttachmentFile] = zou.app.models.attachment_file.AttachmentFile.query.all()
 
         with Session(engine) as session:
             doodle.base.BaseMixin.metadata.create_all(engine)
@@ -145,6 +147,7 @@ def main():
             session.add_all([doodle.comment.CommentAcknoledgments().from_zou(i) for i in l_comment_acknowledgements])
 
             session.add_all([doodle.preview_file.PreviewFile().from_zou(i) for i in l_preview_file])
+            session.add_all([doodle.attachment_file.AttachmentFile().from_zou(i) for i in l_attachment_file])
 
             session.commit()
 

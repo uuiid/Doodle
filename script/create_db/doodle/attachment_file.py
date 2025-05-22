@@ -17,7 +17,7 @@ class AttachmentFile(BaseMixin):
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     name = orm.mapped_column(sqlalchemy.String(250))
-    size = orm.mapped_column(sqlalchemy.Integer(), default=1)
+    size = orm.mapped_column(sqlalchemy.Integer(), nullable=False, default=1)
     extension = orm.mapped_column(sqlalchemy.String(6))
     mimetype = orm.mapped_column(sqlalchemy.String(255))
     comment_id = orm.mapped_column(
