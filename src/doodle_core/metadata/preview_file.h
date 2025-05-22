@@ -9,6 +9,14 @@
 namespace doodle {
 // 状态
 enum class preview_file_statuses { processing, ready, broken };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    preview_file_statuses,
+    {
+        {preview_file_statuses::processing, "processing"},
+        {preview_file_statuses::ready, "ready"},
+        {preview_file_statuses::broken, "broken"},
+    }
+)
 // 验证 状态
 enum class preview_file_validation_statuses { validated, rejected, neutral };
 struct preview_file {
