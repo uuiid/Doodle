@@ -1029,6 +1029,7 @@ person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
 DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_BY_UUID_SQL(preview_file)
+DOODLE_GET_BY_UUID_SQL(attachment_file)
 template <>
 assets_file_helper::database_t sqlite_database::get_by_uuid<assets_file_helper::database_t>(const uuid& in_uuid) {
   using namespace sqlite_orm;
