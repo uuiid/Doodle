@@ -237,6 +237,7 @@ doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_na
 
 std::string_view mime_type(const FSys::path& in_ext) {
   auto l_ext = in_ext.generic_string();
+  if (l_ext.empty()) return "application/octet-stream";
   if (l_ext.front() == '.') l_ext.erase(0, 1);
   if (l_ext == "htm") return "text/html";
   if (l_ext == "html") return "text/html";
