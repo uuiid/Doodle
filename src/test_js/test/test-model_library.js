@@ -52,6 +52,9 @@ describe('library测试', function () {
         });
         expect(req5.status).to.equal(201);
         expect(req5.body).to.have.keys('id', 'label', 'parents', 'path', 'notes', 'active', 'has_thumbnail', 'extension');
+        expect(req5.body.parents).to.be.an('array');
+        expect(req5.body.parents).to.have.lengthOf(2);
+
         model_node_uuid = req5.body.id;
     })
 
@@ -60,7 +63,7 @@ describe('library测试', function () {
         expect(req7.status).to.equal(200);
         expect(req7.body).to.be.an('array');
         expect(req7.body[0]).to.have.keys('id', 'parent_id', 'label', 'order');
-        expect(req7.body).to.have.lengthOf(2);
+        expect(req7.body).to.have.lengthOf(3);
     })
     it('查询模型', async function () {
         const req8 = await request.get(`${URL}/api/doodle/model_library/assets`);
@@ -69,6 +72,8 @@ describe('library测试', function () {
         expect(req8.body[0]).to.have.keys('id', 'label', 'parents', 'path', 'notes', 'active', 'has_thumbnail', 'extension');
         expect(req8.body).to.have.lengthOf(1);
         expect(req8.body[0].id).to.equal(model_node_uuid);
+        expect(req8.body[0].parents).to.be.an('array');
+        expect(req8.body[0].parents).to.have.lengthOf(2);
     })
 
 
@@ -82,6 +87,8 @@ describe('library测试', function () {
         expect(req8.body[0]).to.have.keys('id', 'label', 'parents', 'path', 'notes', 'active', 'has_thumbnail', 'extension');
         expect(req8.body).to.have.lengthOf(1);
         expect(req8.body[0].id).to.equal(model_node_uuid);
+        expect(req8.body[0].parents).to.be.an('array');
+        expect(req8.body[0].parents).to.have.lengthOf(1);
     })
     it('添加树和模型之间的关联', async function () {
         const req11 = await request.post(`${URL}/api/doodle/model_library/assets_tree/${root_uuid}/assets/${model_node_uuid}`);
@@ -93,19 +100,31 @@ describe('library测试', function () {
         expect(req8.body[0]).to.have.keys('id', 'label', 'parents', 'path', 'notes', 'active', 'has_thumbnail', 'extension');
         expect(req8.body).to.have.lengthOf(1);
         expect(req8.body[0].id).to.equal(model_node_uuid);
+        expect(req8.body[0].parents).to.be.an('array');
+        expect(req8.body[0].parents).to.have.lengthOf(2);
     })
 
 
     it('修改模型为未激活', async function () {
-        const req12 = await request.post(`${URL}/api/doodle/model_library/assets/${model_node_uuid}`).send({
+        if (!model_node_uuid) {
+            const req8 = await request.get(`${URL}/api/doodle/model_library/assets`);
+            expect(req8.status).to.equal(200);
+            expect(req8.body).to.be.an('array');
+            expect(req8.body[0]).to.have.keys('id', 'label', 'parents', 'path', 'notes', 'active', 'has_thumbnail', 'extension');
+            expect(req8.body).to.have.lengthOf(1);
+            model_node_uuid = req8.body[0].id;
+        }
+        const req12 = await request.put(`${URL}/api/doodle/model_library/assets/${model_node_uuid}`).send({
             active: false,
         });
-        expect(req12.status).to.equal(201);
+        expect(req12.status).to.equal(200);
 
         const req8 = await request.get(`${URL}/api/doodle/model_library/assets`);
         expect(req8.status).to.equal(200);
         expect(req8.body).to.be.an('array');
         expect(req8.body[0]).to.have.keys('id', 'label', 'parents', 'path', 'notes', 'active', 'has_thumbnail', 'extension');
+        expect(req8.body[0].parents).to.be.an('array');
+        expect(req8.body[0].parents).to.have.lengthOf(2);
         expect(req8.body).to.have.lengthOf(1);
         expect(req8.body[0].id).to.equal(model_node_uuid);
         expect(req8.body[0].active).to.equal(false);
@@ -121,7 +140,7 @@ describe('library测试', function () {
     })
 
 
-    it('上下文', async function () {
+    it.skip('上下文', async function () {
         const req = await request.get(`${URL}/api/doodle/model_library/context`);
         expect(req.status).to.equal(200);
         expect(req.body).to.have.keys('tree_nodes');

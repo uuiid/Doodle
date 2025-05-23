@@ -11,7 +11,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_fi
 ) {
   auto l_sql             = g_ctx().get<sqlite_database>();
   auto l_attachment_file = l_sql.get_by_uuid<attachment_file>(in_handle->capture_->get_uuid());
-
+  co_return in_handle->make_msg(nlohmann::json{});
 }
 
 }  // namespace doodle::http

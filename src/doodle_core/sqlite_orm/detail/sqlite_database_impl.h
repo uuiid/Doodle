@@ -889,7 +889,7 @@ struct sqlite_database_impl {
     if (in_data->id_ == 0)
       in_data->id_ = storage_any_.insert<T>(*in_data);
     else {
-      storage_any_.replace<T>(*in_data);
+      storage_any_.update<T>(*in_data);
     }
     l_g.commit();
     DOODLE_TO_SELF();
@@ -901,7 +901,7 @@ struct sqlite_database_impl {
     if (in_data->id_ == 0)
       in_data->id_ = storage_any_.insert<T>(*in_data);
     else {
-      storage_any_.replace<T>(*in_data);
+      storage_any_.update<T>(*in_data);
     }
     l_g.commit();
   }
@@ -929,7 +929,7 @@ struct sqlite_database_impl {
 
     for (std::size_t i = l_split; i < in_data->size();) {
       auto l_end = std::min(i + g_step_size, in_data->size());
-      storage_any_.replace_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+      storage_any_.update_range<T>(in_data->begin() + i, in_data->begin() + l_end);
       i = l_end;
     }
     l_g.commit();
@@ -946,7 +946,7 @@ struct sqlite_database_impl {
     }
 
     for (std::size_t i = l_split; i < in_data->size(); ++i) {
-      storage_any_.replace<T>((*in_data)[i]);
+      storage_any_.update<T>((*in_data)[i]);
     }
     l_g.commit();
 #endif
@@ -974,7 +974,7 @@ struct sqlite_database_impl {
 
     for (std::size_t i = l_split; i < in_data->size();) {
       auto l_end = std::min(i + g_step_size, in_data->size());
-      storage_any_.replace_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+      storage_any_.update_range<T>(in_data->begin() + i, in_data->begin() + l_end);
       i = l_end;
     }
     l_g.commit();
@@ -991,7 +991,7 @@ struct sqlite_database_impl {
     }
 
     for (std::size_t i = l_split; i < in_data->size(); ++i) {
-      storage_any_.replace<T>((*in_data)[i]);
+      storage_any_.update<T>((*in_data)[i]);
     }
     l_g.commit();
 #endif
