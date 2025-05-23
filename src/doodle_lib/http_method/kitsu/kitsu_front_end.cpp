@@ -28,7 +28,7 @@ bool kitsu_proxy_url::is_proxy() const { return true; }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_proxy_url::callback(
     http::session_data_ptr in_handle
 ) {
-  co_return in_handle->make_msg({});
+  co_return in_handle->make_msg(nlohmann::json{});
 }
 
 }  // namespace doodle::kitsu
