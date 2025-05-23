@@ -22,11 +22,46 @@ struct multipart_body {
   };
   enum class parser_line_state { boundary, header, data, eof_end };
 
+  struct value_type_impl {
+    std::vector<part_value_type> parts_{};
+
+    nlohmann::json to_json() {
+      nlohmann::json l_json{};
+      for (auto&& i : parts_) {
+        std::visit(
+            overloaded{
+                [&](const FSys::path&) {},
+                [&](const std::string& in_body) {
+                  if (i.content_type == detail::content_type::application_json) {
+                    l_json[i.name] = nlohmann::json::parse(in_body);
+                  } else
+                    l_json[i.name] = in_body;
+                },
+            },
+            i.body_
+        );
+      }
+      return l_json;
+    }
+    std::vector<FSys::path> get_files() {
+      std::vector<FSys::path> l_result{};
+      for (auto&& i : parts_) {
+        std::visit(
+            overloaded{
+                [&](const FSys::path& in_path) { l_result.emplace_back(in_path); },
+                [&](const std::string&) {},
+            },
+            i.body_
+        );
+      }
+    }
+  };
+
   // struct value_type {
   //   std::vector<part_value_type> parts_{};
   //   std::string boundary_{};
   // };
-  using value_type = std::vector<part_value_type>;
+  using value_type = value_type_impl;
 
   class reader {
     value_type& body_;
@@ -89,9 +124,6 @@ struct multipart_body {
     void add_data(InIt const& in_begin, InIt const& in_end) {
       switch (part_.content_type) {
         case detail::content_type::application_json:
-        case detail::content_type::image_jpeg:
-        case detail::content_type::image_jpg:
-        case detail::content_type::image_png:
         case detail::content_type::unknown:
           if (!std::holds_alternative<std::string>(part_.body_)) {
             part_.body_ = std::string{in_begin, in_end};
@@ -100,8 +132,8 @@ struct multipart_body {
           break;
         default:
           if (!std::holds_alternative<FSys::path>(part_.body_)) {
-            part_.body_ = core_set::get_set().get_cache_root("http") /
-                          fmt::format("{}.{}", core_set::get_set().get_uuid_str(), "tmp");
+            part_.body_ =
+                core_set::get_set().get_cache_root("http") / core_set::get_set().get_uuid_str() / part_.file_name;
             out_file_ =
                 std::make_optional<std::ofstream>(std::get<FSys::path>(part_.body_), std::ios::out | std::ios::binary);
           } else {
@@ -111,7 +143,7 @@ struct multipart_body {
       }
     }
     void parser_part_end() {
-      body_.emplace_back(std::move(part_));
+      body_.parts_.emplace_back(std::move(part_));
       part_ = {};
     }
     template <class ConstBufferSequence>
