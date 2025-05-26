@@ -61,7 +61,7 @@ function Initialize-Doodle
     if ($BuildKitsu)
     {
         Write-Host "开始构建文件"
-        $NpmResult = Start-Process -FilePath "npm" -ArgumentList "run build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1","run", "build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0)
         {
             # 抛出异常
