@@ -54,6 +54,7 @@ struct multipart_body {
             i.body_
         );
       }
+      return l_result;
     }
   };
 
