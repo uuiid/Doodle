@@ -1310,7 +1310,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	{
 		// 景深设置
 		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_EXR::StaticClass());
-		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(nullptr, TEXT("/Doodle/tongdao/景深_Inst.景深_Inst"));
+		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(nullptr, TEXT("/Doodle/tongdao/depth_of_field_Inst.depth_of_field_Inst"));
 		L_DeferredPass->AdditionalPostProcessMaterials.Empty();
 		L_DeferredPass->AdditionalPostProcessMaterials.Emplace(true, L_CraneBaseMaterial);
 		// 添加object ID layer(这个只能从反射中寻找, 无法直接引入头文件)
