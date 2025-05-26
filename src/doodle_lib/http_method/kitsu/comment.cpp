@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-4-29.
 //
+#include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/status_automation.h>
@@ -9,12 +10,15 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-namespace doodle::http {
 
+#include "kitsu.h"
+namespace doodle::http {
+namespace {}
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post::callback(session_data_ptr in_handle) {
   auto l_person                      = get_person(in_handle);
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
   auto l_json                        = in_handle->get_json();
+  auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
   auto l_task_id         = from_uuid_str(in_handle->capture_->get("task_id"));
   l_comment->uuid_id_    = core_set::get_set().get_uuid();
@@ -27,7 +31,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
   auto l_task            = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
   auto l_task_status     = l_sql.get_by_uuid<task_status>(l_comment->task_status_id_);
   l_task_status.check_retake_capping(*l_task);
-  {
+  {  // 创建基本的评论(包括辅助结构)
     l_comment->set_comment_department_mentions();
     l_comment->set_comment_mentions(l_task->project_id_);
     co_await l_sql.install(l_comment);
@@ -45,7 +49,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
         ranges::to_vector
     );
     co_await l_sql.install_range(l_comment_department_mentions);
+
+    // 创建附属文件
+    for (auto&& i : l_files) {
+      auto l_attachment_file         = std::make_shared<attachment_file>();
+      l_attachment_file->uuid_id_    = core_set::get_set().get_uuid();
+      l_attachment_file->comment_id_ = l_comment->uuid_id_;
+      auto l_ext                     = i.extension();
+      l_attachment_file->extension_  = l_ext.empty() ? std::string{} : l_ext.generic_string().substr(1);
+      l_attachment_file->name_       = i.filename().generic_string();
+      l_attachment_file->mimetype_   = kitsu::mime_type(i.extension());
+      l_attachment_file->size_       = FSys::file_size(i);
+      auto l_attachment_file_path    = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
+                                    FSys::split_uuid_path(fmt::to_string(l_attachment_file->uuid_id_));
+      if (auto l_p = l_attachment_file_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
+      FSys::rename(
+          i, g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
+                 FSys::split_uuid_path(fmt::to_string(l_attachment_file->uuid_id_))
+      );
+      co_await l_sql.install(l_attachment_file);
+    }
   }
+  // 更改任务状态
   bool l_status_changed;
   if (!l_task->last_comment_date_ ||
       l_task->last_comment_date_->get_sys_time() < l_comment->created_at_.get_sys_time()) {
