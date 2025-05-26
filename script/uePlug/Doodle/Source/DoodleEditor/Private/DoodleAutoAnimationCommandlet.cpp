@@ -1308,6 +1308,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	UMoviePipelineDeferredPassBase* L_DeferredPass = Cast<UMoviePipelineDeferredPassBase>(Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass()));
 	if (Layering)
 	{
+		// 景深设置
 		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_EXR::StaticClass());
 		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(nullptr, TEXT("/Doodle/tongdao/景深_Inst.景深_Inst"));
 		L_DeferredPass->AdditionalPostProcessMaterials.Empty();
@@ -1324,6 +1325,9 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 				}
 			}
 		}
+		// 去除png输出
+		if (UMoviePipelineImageSequenceOutput_PNG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_PNG>())
+			Config->RemoveSetting(FormatSetting);
 	}
 	else { Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()); }
 
