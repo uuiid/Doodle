@@ -25,14 +25,14 @@ struct multipart_body {
   struct value_type_impl {
     std::vector<part_value_type> parts_{};
 
-    nlohmann::json to_json() {
+    nlohmann::json to_json() const {
       nlohmann::json l_json{};
       for (auto&& i : parts_) {
         std::visit(
             overloaded{
                 [&](const FSys::path&) {},
                 [&](const std::string& in_body) {
-                  if (i.content_type == detail::content_type::application_json) {
+                  if (nlohmann::json::accept(in_body)) {
                     l_json[i.name] = nlohmann::json::parse(in_body);
                   } else
                     l_json[i.name] = in_body;
@@ -43,7 +43,7 @@ struct multipart_body {
       }
       return l_json;
     }
-    std::vector<FSys::path> get_files() {
+    std::vector<FSys::path> get_files() const {
       std::vector<FSys::path> l_result{};
       for (auto&& i : parts_) {
         std::visit(

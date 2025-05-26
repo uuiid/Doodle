@@ -53,8 +53,10 @@ class session_data {
 
   // 每次连接自定义数据
   std::any user_data_;
-
-  nlohmann::json get_json();
+  // 会产生判断内容为 application_json 或者 multipart_form_data 时, 转换为json格式
+  nlohmann::json get_json() const;
+  // 当使用 multipart_form_data 时, 获取上传的文件路径
+  std::vector<FSys::path> get_files() const;
   // 检查请求头中是否包含 deflate 压缩字段
   bool is_deflate() const { return req_header_[boost::beast::http::field::accept_encoding].contains("deflate"); }
 

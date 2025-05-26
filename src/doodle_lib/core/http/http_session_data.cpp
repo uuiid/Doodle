@@ -655,10 +655,19 @@ boost::beast::http::response<boost::beast::http::string_body> session_data::make
   l_res.prepare_payload();
   return l_res;
 }
-nlohmann::json session_data::get_json() {
+nlohmann::json session_data::get_json() const {
   if (content_type_ == content_type::application_json && std::holds_alternative<nlohmann::json>(body_))
     return std::get<nlohmann::json>(body_);
+  if (content_type_ == content_type::multipart_form_data && std::holds_alternative<multipart_body::value_type>(body_)) {
+    return std::get<multipart_body::value_type>(body_).to_json();
+  }
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "body 不是 json"});
 }
+std::vector<FSys::path> session_data::get_files() const {
+  if (content_type_ == content_type::multipart_form_data && std::holds_alternative<multipart_body::value_type>(body_))
+    return std::get<multipart_body::value_type>(body_).get_files();
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "body 不是 multipart"});
+}
+
 }  // namespace detail
 }  // namespace doodle::http
