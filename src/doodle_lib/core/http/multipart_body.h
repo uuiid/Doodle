@@ -70,26 +70,32 @@ struct multipart_body {
     parser_line_state line_state_;
     std::optional<std::size_t> length_{0};
     std::string boundary_{};
-    std::function<std::string()> get_boundary_function_{};
     std::optional<std::ofstream> out_file_;
+    boost::beast::http::fields& fields_;
 
-    template <bool isRequest, class Fields>
-    static std::string get_boundary(boost::beast::http::header<isRequest, Fields>& in_header) {
-      if (in_header.count(boost::beast::http::field::content_type) > 0) {
-        const auto& l_content_type = in_header.at(boost::beast::http::field::content_type);
+    std::string buffer_;
+
+    enum boundary_state {
+      boundary_error,  // 边界错误
+      boundary,        // 正常的边界
+      boundary_end,    // 最后的边界
+    };
+
+    void get_boundary() {
+      if (fields_.count(boost::beast::http::field::content_type) > 0) {
+        const auto& l_content_type = fields_.at(boost::beast::http::field::content_type);
         if (auto l_pos = l_content_type.find("boundary="); l_pos != std::string::npos) {
-          return l_content_type.substr(l_pos + 9, l_content_type.find(l_pos, ';'));
+          boundary_ = l_content_type.substr(l_pos + 9, l_content_type.find(l_pos, ';'));
         }
       }
-      return {};
     }
 
    public:
     template <bool isRequest, class Fields>
     explicit reader(boost::beast::http::header<isRequest, Fields>& in_header, value_type& b)
-        : body_(b), get_boundary_function_{[&in_header]() { return get_boundary(in_header); }} {}
+        : body_(b), line_state_(parser_line_state::boundary), fields_{in_header} {}
     void init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec) {
-      boundary_   = get_boundary_function_();
+      get_boundary();
       line_state_ = parser_line_state::boundary;
       ec          = {};
       if (length) length_ = *length;
@@ -120,7 +126,12 @@ struct multipart_body {
         }
       }
     }
-
+    /**
+     * @brief 为了数据的完整性, 会传入数据和 \r\n, 需要在解析时去掉 \r\n(在二进制数据中可能会有 \r\n, 需要特殊处理)
+     * @tparam InIt 传入的迭代器
+     * @param in_begin 开始位置
+     * @param in_end 结束位置
+     */
     template <class InIt>
     void add_data(InIt const& in_begin, InIt const& in_end) {
       switch (part_.content_type) {
@@ -129,74 +140,99 @@ struct multipart_body {
           if (!std::holds_alternative<std::string>(part_.body_)) {
             part_.body_ = std::string{in_begin, in_end};
           } else
-            std::get<std::string>(part_.body_) += std::string{in_begin, in_end};
+            std::get<std::string>(part_.body_) += std::string{in_begin, in_end - 2};  // 去掉 \r\n
           break;
         default:
           if (!std::holds_alternative<FSys::path>(part_.body_)) {
-            part_.body_ =
+            auto l_path =
                 core_set::get_set().get_cache_root("http") / core_set::get_set().get_uuid_str() / part_.file_name;
-            out_file_ =
-                std::make_optional<std::ofstream>(std::get<FSys::path>(part_.body_), std::ios::out | std::ios::binary);
-          } else {
-            (*out_file_) << std::string{in_begin, in_end};
+            part_.body_ = l_path;
+            if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+            out_file_ = std::make_optional<std::ofstream>(l_path, std::ios::out | std::ios::binary);
           }
+          (*out_file_) << std::string{in_begin, in_end};
           break;
       }
     }
     void parser_part_end() {
       body_.parts_.emplace_back(std::move(part_));
-      part_ = {};
+      part_     = {};
+      out_file_ = {};
     }
     template <class ConstBufferSequence>
     std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
-      // auto const extra       = boost::beast::buffer_bytes(buffers);
+      // auto const l_extra = boost::beast::buffer_bytes(buffers);
       std::size_t l_size = 0;
       ec                 = {};
-      // const auto& l_buff = boost::beast::buffers_cat(buffers);
-      for (auto l_begin = boost::asio::buffers_begin(buffers), l_end = boost::asio::buffers_end(buffers);
-           l_begin != l_end;) {
-        decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
-        while (l_end_eof != l_end && *(++l_end_eof) != '\n') l_end_eof = std::find(l_begin, l_end, '\r');
-        if (line_state_ != parser_line_state::data && l_end_eof == l_end)
-          return l_size;  // 不是完整的一行, 直接返回, 下次解析
-        l_size += std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1);
-        {
-          auto l_end_eof_t = l_end_eof;
-          --l_end_eof_t;
-          switch (line_state_) {
-            case parser_line_state::boundary: {
-              if (*l_begin != '-') return ec = make_error_code(boost::system::errc::invalid_argument), 0;
-              ++ ++l_begin;  // 跳过 --
-              std::string l_boundary{l_begin, l_end_eof_t};
-              if (l_boundary.size() == boundary_.size() + 2 && l_boundary.substr(0, 2) == "--") {
-                line_state_ = parser_line_state::eof_end;
+      // buffer_.
+      // boost::beast::buffer
+      const auto& l_buff = boost::beast::buffers_cat(boost::asio::buffer(buffer_), buffers);
+      auto l_begin = boost::asio::buffers_begin(l_buff), l_end = boost::asio::buffers_end(l_buff);
+      decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
+      while (l_end_eof != l_end && *++l_end_eof != '\n') l_end_eof = std::find(l_end_eof, l_end, '\r');
+      if (line_state_ != parser_line_state::data && l_end_eof == l_end)
+        return buffer_ = {l_begin, l_end}, boost::beast::buffer_bytes(buffers);  // 不是完整的一行, 直接返回, 下次解析
+      l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1) - buffer_.size();  // +1 是为了包含 \n
+      {
+        auto l_end_eof_t = l_end_eof;
+        --l_end_eof_t;
+        switch (line_state_) {
+          case parser_line_state::boundary:
+            switch (is_boundary(l_begin, l_end_eof_t)) {
+              case boundary_error:;  // 边界错误
+                return ec = boost::asio::error::invalid_argument, 0;
+              case boundary:
+                line_state_ = parser_line_state::header;  // 解析到边界, 进入头部解析状态
                 break;
-              }
-              if (l_boundary != boundary_) return ec = make_error_code(boost::system::errc::invalid_argument), 0;
-              line_state_ = parser_line_state::header;
-              break;
+              case boundary_end:
+                line_state_ = parser_line_state::eof_end;  // 最后一个边界, 进入结束状态
+                break;
             }
-            case parser_line_state::header:
-              if (l_begin == l_end_eof_t)
-                line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
-              else
-                parser_headers(l_begin, l_end_eof_t);
-              break;
-            case parser_line_state::data:
-              add_data(l_begin, l_end_eof == l_end ? l_end_eof : l_end_eof_t);
-              if (*(l_end_eof_t) == '\r' && *(l_end_eof) == '\n') {
-                line_state_ = parser_line_state::boundary;  // 数据块已经结束
-                parser_part_end();
-              }
-              break;
-            case parser_line_state::eof_end:
-              break;
-          }
+            break;
+          case parser_line_state::header:
+            if (l_begin == l_end_eof_t)
+              line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
+            else
+              parser_headers(l_begin, l_end_eof_t);
+            break;
+          case parser_line_state::data:
+            if (is_boundary(l_begin, l_end_eof_t))
+              return line_state_ = parser_line_state::boundary, parser_part_end(),
+                     0;  // 是边界分隔符, 说明数据已经结束, 需要解析到下一个边界, 在下一次循环中解析
+            add_data(l_begin, l_end_eof == l_end ? l_end : ++l_end_eof);
+            // l_size = boost::beast::buffer_bytes(buffers);
+            break;
+          case parser_line_state::eof_end:
+            break;
         }
-        l_begin = l_end_eof == l_end ? l_end : ++l_end_eof;
       }
+      buffer_.clear();
       return l_size;
     }
+
+    // 比较边界分隔符
+    template <typename Iter>
+    boundary_state is_boundary(const Iter& in_begin, const Iter& in_end) const {
+      std::int64_t l_index{-2};
+      auto l_max_size = static_cast<std::int64_t>(boundary_.size());
+      for (auto l_it = in_begin; l_it != in_end; ++l_it, ++l_index) {
+        switch (l_index) {
+          case -2:
+          case -1:
+            if (*l_it != '-') return boundary_error;  // 前两个个字符必须是 -
+            break;
+          default:
+            if (l_index >= l_max_size) {
+              if (*l_it != '-') return boundary_error;             // 最后两个个字符必须是 -
+              if (l_index == l_max_size + 1) return boundary_end;  // 最后一个字符是 - , 说明是最后的边界
+            } else {
+              if (*l_it != boundary_[l_index]) return boundary_error;  // 后续字符必须与边界分隔符一致
+            }
+        }
+      }
+      return boundary;
+    }
+
     void finish(boost::system::error_code& ec) { ec = {}; }
   };
 };
