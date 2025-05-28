@@ -85,7 +85,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   {
     "asset_types": [],
     "auto_upload_path": "",
-    "code": null,
+    "code": "WD",
     "created_at": "2024-12-19T02:09:47",
     "data": null,
     "default_preview_background_file_id": null,
