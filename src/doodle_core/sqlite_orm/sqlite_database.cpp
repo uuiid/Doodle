@@ -989,6 +989,14 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
   return l_ret;
 }
 
+bool sqlite_database::is_task_assigned_to_person(const uuid& in_task, const uuid& in_person) {
+  using namespace sqlite_orm;
+  auto l_r = impl_->storage_any_.count<assignees_table>(
+      where(c(&assignees_table::task_id_) == in_task && c(&assignees_table::person_id_) == in_person)
+  );
+  return l_r > 0;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(project_helper::database_t)
