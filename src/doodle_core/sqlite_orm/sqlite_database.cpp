@@ -996,6 +996,28 @@ bool sqlite_database::is_task_assigned_to_person(const uuid& in_task, const uuid
   );
   return l_r > 0;
 }
+std::int64_t sqlite_database::get_next_preview_revision(const uuid& in_task_id) {
+  using namespace sqlite_orm;
+  auto l_values = impl_->storage_any_.select(
+      &preview_file::revision_, where(c(&preview_file::task_id_) == in_task_id),
+      order_by(&preview_file::revision_).desc()
+  );
+  return l_values.empty() ? 1 : l_values.front() + 1;
+}
+bool sqlite_database::has_preview_file(const uuid& in_comment) {
+  using namespace sqlite_orm;
+  auto l_r =
+      impl_->storage_any_.count<comment_preview_link>(where(c(&comment_preview_link::comment_id_) == in_comment));
+  return l_r > 0;
+}
+std::int64_t sqlite_database::get_next_position(const uuid& in_task_id, const std::int64_t& in_revision) {
+  using namespace sqlite_orm;
+
+  auto l_r = impl_->storage_any_.count<preview_file>(
+      where(c(&preview_file::task_id_) == in_task_id && c(&preview_file::revision_) == in_revision)
+  );
+  return l_r + 1;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 

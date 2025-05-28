@@ -27,6 +27,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(task_comment, post, "api/actions/tasks/{task_id}/comment", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(task_comment_add_preview, post, "api/actions/tasks/{task_id}/comments/{comment_id}/add-preview", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_comment, put, "api/data/comments/{comment_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()

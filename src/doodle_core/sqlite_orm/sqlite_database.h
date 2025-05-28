@@ -176,5 +176,12 @@ class sqlite_database {
 
   /// 是否将任务分配给了用户
   bool is_task_assigned_to_person(const uuid& in_task, const uuid& in_person);
+
+  /// 获取任务的下一个预览版本号
+  std::int64_t get_next_preview_revision(const uuid& in_task_id);
+  /// 当前评论是否有预览图
+  bool has_preview_file(const uuid& in_comment);
+  /// 获取评论的预览图位置(一条评论中可能有多个预览图, 图片序列)
+  std::int64_t get_next_position(const uuid& in_task_id, const std::int64_t& in_revision);
 };
 }  // namespace doodle
