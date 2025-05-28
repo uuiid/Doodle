@@ -16,5 +16,12 @@ struct attachment_file {
   std::string mimetype_;
   uuid comment_id_;
   uuid chat_message_id_;
+  // to_json
+  friend void to_json(nlohmann::json& j, const attachment_file& p) {
+    j["id"]        = p.uuid_id_;
+    j["name"]      = p.name_;
+    j["size"]      = p.size_;
+    j["extension"] = p.extension_;
+  }
 };
 }  // namespace doodle

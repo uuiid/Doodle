@@ -31,6 +31,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
   auto l_task            = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
   auto l_task_status     = l_sql.get_by_uuid<task_status>(l_comment->task_status_id_);
   l_task_status.check_retake_capping(*l_task);
+  std::vector<attachment_file> l_attachment_files{};
   {  // 创建基本的评论(包括辅助结构)
     l_comment->set_comment_department_mentions();
     l_comment->set_comment_mentions(l_task->project_id_);
@@ -68,6 +69,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
                  FSys::split_uuid_path(fmt::to_string(l_attachment_file->uuid_id_))
       );
       co_await l_sql.install(l_attachment_file);
+      l_attachment_files.emplace_back(*l_attachment_file);
     }
   }
   // 更改任务状态
@@ -125,9 +127,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
       co_await i.run(l_task, l_person->person_.uuid_id_);
   }
   nlohmann::json l_r{};
-  l_r                = *l_comment;
-  l_r["task_status"] = l_task_status;
-  l_r["person"]      = l_person->person_;
+  l_r                     = *l_comment;
+  l_r["task_status"]      = l_task_status;
+  l_r["person"]           = l_person->person_;
+  l_r["attachment_files"] = l_attachment_files;
 
   co_return in_handle->make_msg(l_r);
 }
