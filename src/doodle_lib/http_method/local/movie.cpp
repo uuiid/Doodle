@@ -27,7 +27,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
   cv::Mat l_image{};
   l_video.set(
       cv::CAP_PROP_POS_FRAMES,
-      std::clamp(std::clamp(l_video_count, std::double_t{0}, std::double_t{1}) * l_arg.time_, 0.0, l_video_count - 1)
+      std::clamp(std::clamp(l_arg.time_, std::double_t{0}, std::double_t{1}) * l_video_count, 0.0, l_video_count - 1)
   );
   l_video >> l_image;
   if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
