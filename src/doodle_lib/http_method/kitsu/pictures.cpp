@@ -21,10 +21,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
     session_data_ptr in_handle
 ) {
   FSys::path l_filename = in_handle->capture_->get("id");
-  auto l_path           = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / "squ" / "are" /
-                (std::string{"square-"} + l_filename.stem().generic_string());
+  /// 先选择新的路径, 不存在时, 在旧的路径中查找
+  auto l_path_new =
+      g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails_square" / FSys::split_uuid_path(l_filename);
+  if (!exists(l_path_new))
+    l_path_new = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / "squ" / "are" /
+                 (std::string{"square-"} + l_filename.stem().generic_string());
   auto l_ext = l_filename.extension();
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path_new, kitsu::mime_type(l_ext));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_preview_files_get::callback(
