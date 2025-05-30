@@ -119,6 +119,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     l_file = l_fs[0];
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     save_variants(l_file, l_preview_file->uuid_id_);
+    /// 将原始文件添加到相应的位置中
+    auto l_new_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" /
+                      FSys::split_uuid_path(fmt::format("{}.png", l_preview_file->uuid_id_));
+    if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
+    FSys::rename(l_file, l_new_path);
   }
   l_preview_file->extension_     = "png";
   l_preview_file->original_name_ = l_file.filename().generic_string();
