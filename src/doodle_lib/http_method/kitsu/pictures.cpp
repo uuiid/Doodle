@@ -57,24 +57,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
   auto l_sql            = g_ctx().get<sqlite_database>();
   FSys::path l_filename = in_handle->capture_->get("id");
   auto l_pre_file       = l_sql.get_by_uuid<preview_file>(in_handle->capture_->get_uuid());
+  FSys::path l_path{};
   if (l_pre_file.extension_ == ".png" || l_pre_file.extension_ == "png") {
-    auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
+    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
     l_path.replace_extension(".png");
-    if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
-    co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_pre_file.extension_));
   } else if (l_pre_file.extension_ == ".pdf" || l_pre_file.extension_ == "pdf") {
-    auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
-    co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
+    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
   } else if (l_pre_file.extension_ == ".mp4" || l_pre_file.extension_ == "mp4") {
-    auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
-    co_return in_handle->make_msg(l_path, ".png");
-  } else {
-    auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
+    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
     l_path.replace_extension(".png");
-    if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
-    co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_pre_file.extension_));
+  } else {
+    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
+    l_path.replace_extension(".png");
   }
-  throw_exception(http_request_error{boost::beast::http::status::not_found, "file not found"});
+  if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
+  co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_pre_file.extension_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_preview_files_get::callback(
     session_data_ptr in_handle
