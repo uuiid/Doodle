@@ -39,7 +39,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_comment, put, "api/data/comments/{comment_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(actions_persons_assign, put, "api/actions/persons/{}/assign", http_jwt_fun)
+DOODLE_HTTP_FUN(actions_persons_assign, put, "api/actions/persons/{id}/assign", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
