@@ -56,14 +56,16 @@ void http_jwt_fun::http_jwt_t::is_manager() const {
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) const {
+  check_task_action_access(g_ctx().get<sqlite_database>().get_by_uuid<task>(in_task_id));
+}
+void http_jwt_fun::http_jwt_t::check_task_action_access(const task& in_task_id) const {
   if (person_.role_ == person_role_type::admin) return;
-  auto l_sql  = g_ctx().get<sqlite_database>();
-  auto l_task = l_sql.get_by_uuid<task>(in_task_id);
-  if (!l_sql.is_person_in_project(person_, l_task.project_id_))
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (!l_sql.is_person_in_project(person_, in_task_id.project_id_))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   if (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::supervisor) return;
 
-  if (l_sql.is_task_assigned_to_person(l_task.uuid_id_, person_.uuid_id_)) return;
+  if (l_sql.is_task_assigned_to_person(in_task_id.uuid_id_, person_.uuid_id_)) return;
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 
