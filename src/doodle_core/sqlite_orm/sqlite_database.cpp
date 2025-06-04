@@ -1170,13 +1170,10 @@ template <>
 std::vector<person> sqlite_database::get_all() {
   auto l_list = impl_->get_all<person>();
   for (auto&& i : l_list) {
-    auto l_list_dep = impl_->storage_any_.select(
-        sqlite_orm::columns(&person_department_link::department_id_),
+    i.departments_ = impl_->storage_any_.select(
+        &person_department_link::department_id_,
         sqlite_orm::where(sqlite_orm::c(&person_department_link::person_id_) == i.uuid_id_)
     );
-    i.departments_ = l_list_dep |
-                     ranges::views::transform([](const std::tuple<uuid>& in) { return std::get<uuid>(in); }) |
-                     ranges::to_vector;
   }
   return l_list;
 }
@@ -1203,6 +1200,7 @@ DOODLE_INSTALL_SQL(project_task_type_link)
 DOODLE_INSTALL_SQL(project_task_status_link)
 DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(person)
+DOODLE_INSTALL_SQL(assignees_table)
 DOODLE_INSTALL_SQL(preview_file)
 DOODLE_INSTALL_SQL(comment_preview_link)
 DOODLE_INSTALL_SQL(task)

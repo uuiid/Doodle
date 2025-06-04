@@ -8,7 +8,8 @@
 #include <doodle_lib/core/http/http_function.h>
 namespace doodle {
 struct person;
-}
+struct task;
+}  // namespace doodle
 
 namespace doodle::http {
 class http_jwt_fun : public http_function {
@@ -23,6 +24,8 @@ class http_jwt_fun : public http_function {
     void is_manager() const;
     // 检查是否可以进行任务操作
     void check_task_action_access(const uuid& in_task_id) const;
+    // 检查
+    void check_task_department_access(const task& in_task_id, const person& in_person_id) const;
   };
 
   std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);

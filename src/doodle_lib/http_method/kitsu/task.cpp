@@ -2,6 +2,7 @@
 // Created by TD on 24-8-20.
 //
 
+#include "doodle_core/metadata/notification.h"
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -17,6 +18,37 @@
 #include "kitsu.h"
 
 namespace doodle::http {
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign_put::callback(
+    session_data_ptr in_handle
+) {
+  auto l_person      = get_person(in_handle);
+  auto l_sql         = g_ctx().get<sqlite_database>();
+  auto l_person_data = l_sql.get_by_uuid<person>(in_handle->capture_->get_uuid());
+  auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
+  nlohmann::json l_ret{};
+  for (auto&& l_task_id : l_task_ids) {
+    auto l_task          = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
+    auto l_task_assign   = std::make_shared<assignees_table>();
+    l_task->assigner_id_ = l_person->person_.uuid_id_;
+    co_await l_sql.install(l_task);
+    l_task_assign->person_id_ = l_person_data.uuid_id_;
+    l_task_assign->task_id_   = l_task->uuid_id_;
+    co_await l_sql.install(l_task_assign);
+    // 这里需要检查一下, 任务的分配人是否是当前用户
+    if (l_person->person_.uuid_id_ != l_person_data.uuid_id_) {
+      auto l_notification        = std::make_shared<notification>();
+      l_notification->type_      = notification_type::assignation;
+      l_notification->task_id_   = l_task->uuid_id_;
+      l_notification->author_id_ = l_person->person_.uuid_id_;
+      l_notification->person_id_ = l_person_data.uuid_id_;
+      co_await l_sql.install(l_notification);
+    }
+    l_ret.emplace_back(*l_task);
+  }
+  co_return in_handle->make_msg(l_ret);
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_get::callback(
     session_data_ptr in_handle
 ) {

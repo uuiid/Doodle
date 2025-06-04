@@ -6,6 +6,7 @@
 
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <jwt-cpp/jwt.h>
@@ -63,6 +64,25 @@ void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) 
   if (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::supervisor) return;
 
   if (l_sql.is_task_assigned_to_person(l_task.uuid_id_, person_.uuid_id_)) return;
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+
+void http_jwt_fun::http_jwt_t::check_task_department_access(const task& in_task_id, const person& in_person_id) const {
+  if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::manager) return;
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (l_sql.is_person_in_project(person_, in_task_id.project_id_)) return;
+
+  auto l_task_type = l_sql.get_by_uuid<task_type>(in_task_id.task_type_id_);
+  if (person_.role_ == person_role_type::supervisor) {
+    if (person_.departments_.empty()) return;
+    if (std::ranges::find(person_.departments_, l_task_type.uuid_id_) != person_.departments_.end() &&
+        !in_person_id.departments_.empty())
+      return;
+  }
+  if (std::ranges::find(in_person_id.departments_, l_task_type.uuid_id_) != in_person_id.departments_.end() &&
+      person_.uuid_id_ == in_person_id.uuid_id_)
+    return;
+
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 
