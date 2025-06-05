@@ -572,6 +572,9 @@ boost::beast::http::message_generator session_data::make_error_code_msg(
   boost::beast::http::response<boost::beast::http::string_body> l_response{in_code, version_};
   l_response.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
   l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_response.set(boost::beast::http::field::access_control_allow_credentials, "true");
+  l_response.set(boost::beast::http::field::access_control_allow_methods, "*");
+  l_response.set(boost::beast::http::field::access_control_allow_headers, "*");
   l_response.keep_alive(keep_alive_);
   l_response.body() = nlohmann::json{{"error", in_str}, {"code", in_msg_code}}.dump();
   l_response.prepare_payload();
@@ -611,6 +614,9 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_res.set(boost::beast::http::field::content_type, mine_type);
   l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
+  l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
+  l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
   return l_res;
@@ -633,6 +639,9 @@ boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_def
   l_res.set(boost::beast::http::field::content_type, mine_type);
   l_res.set(boost::beast::http::field::content_encoding, "deflate");
   l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
+  l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
+  l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
   return l_res;
@@ -645,6 +654,9 @@ boost::beast::http::response<boost::beast::http::string_body> session_data::make
   l_res.set(boost::beast::http::field::content_type, mine_type);
   l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
+  l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
+  l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
   l_res.keep_alive(keep_alive_);
   // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
   //   l_res.body() = zlib_compress(std::move(in_body));
