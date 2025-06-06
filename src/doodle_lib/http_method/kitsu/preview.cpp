@@ -149,5 +149,43 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   }
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview_put::callback(
+    session_data_ptr in_handle
+) {
+  auto l_person       = get_person(in_handle);
+  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_preview_file = l_sql.get_by_uuid<preview_file>(in_handle->capture_->get_uuid());
+  auto l_frame_number = in_handle->get_json().value("frame_number", 0);
+  auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
+  auto l_ent          = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task.entity_id_));
+  if (l_preview_file.extension_ == "mp4") {
+  } else {
+    l_ent->preview_file_id_ = l_preview_file.uuid_id_;
+    co_await l_sql.install(l_ent);
+    // 发送事件 "preview-file:set-main"
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = *l_ent);
+}
 
 }  // namespace doodle::http
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

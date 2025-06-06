@@ -85,6 +85,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<data_comment_put>())
       .reg(std::make_shared<data_tasks_put>())
       .reg(std::make_shared<actions_persons_assign_put>())
+      .reg(std::make_shared<actions_preview_files_set_main_preview_put>())
       // get
       .reg(std::make_shared<with_tasks_get>())
       .reg(std::make_shared<asset_details_get>())
