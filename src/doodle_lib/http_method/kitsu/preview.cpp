@@ -159,6 +159,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_ent          = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task.entity_id_));
   if (l_preview_file.extension_ == "mp4") {
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
   } else {
     l_ent->preview_file_id_ = l_preview_file.uuid_id_;
     co_await l_sql.install(l_ent);
@@ -168,24 +169,3 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 }
 
 }  // namespace doodle::http
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
