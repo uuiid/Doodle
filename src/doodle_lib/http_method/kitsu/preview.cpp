@@ -155,9 +155,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_person       = get_person(in_handle);
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(in_handle->capture_->get_uuid());
-  auto l_frame_number = in_handle->get_json().value("frame_number", 0);
-  auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
-  auto l_ent          = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task.entity_id_));
+
+  std::int32_t l_frame_number;
+  if (auto l_json = in_handle->get_json(); l_json.contains("frame_number") && l_json["frame_number"].is_number()) {
+    l_frame_number = l_json["frame_number"].get<std::int32_t>();
+  }
+  auto l_task = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
+  auto l_ent  = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task.entity_id_));
   if (l_preview_file.extension_ == "mp4") {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
   } else {
