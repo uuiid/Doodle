@@ -36,4 +36,8 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(video_thumbnail, post, "api/doodle/video/thumbnail", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN_CONST(video_thumbnail, get, "api/doodle/video/thumbnail", http_function) { init_ctx(); }
+void init_ctx();
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::local

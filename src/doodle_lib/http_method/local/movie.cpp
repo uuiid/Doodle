@@ -2,8 +2,18 @@
 // Created by TD on 25-5-13.
 //
 #include "local.h"
+#include <cache.hpp>
+#include <cache_policy.hpp>
+#include <lru_cache_policy.hpp>
 #include <opencv2/opencv.hpp>
 namespace doodle::http::local {
+
+struct video_thumbnail_cache : caches::fixed_sized_cache<uuid, std::vector<uchar>, caches::LRUCachePolicy> {
+  video_thumbnail_cache() : caches::fixed_sized_cache<uuid, std::vector<uchar>, caches::LRUCachePolicy>(1) {}
+};
+
+static constexpr uuid video_thumbnail_cache_id{};
+
 struct video_thumbnail_arg_t {
   FSys::path video_path_;
   std::double_t time_;
@@ -38,7 +48,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
   // }
   std::vector<uchar> l_buffer{};
   cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
+  g_ctx().get<video_thumbnail_cache>().Put(video_thumbnail_cache_id, l_buffer);
   co_return in_handle->make_msg(std::move(l_buffer), "image/png", boost::beast::http::status::ok);
+}
+void video_thumbnail_get::init_ctx() { g_ctx().emplace<video_thumbnail_cache>(); }
+
+boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_get::callback(
+    session_data_ptr in_handle
+) {
+  auto& l_cache = g_ctx().get<video_thumbnail_cache>();
+  if (l_cache.Cached(video_thumbnail_cache_id)) {
+    auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);
+    co_return in_handle->make_msg(std::move(l_buffer), "image/png", boost::beast::http::status::ok);
+  }
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
 }
 
 }  // namespace doodle::http::local
