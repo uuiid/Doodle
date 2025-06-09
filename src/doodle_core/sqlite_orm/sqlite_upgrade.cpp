@@ -42,6 +42,7 @@ struct upgrade_1_t : sqlite_upgrade {
     using namespace sqlite_orm;
     auto l_p = make_storage(
         in_path.generic_string(),
+        connection_control{},
         make_table(
             "assets_file_tab",  //
             make_column("id", &impl_data::id_, primary_key()),
