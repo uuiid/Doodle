@@ -714,6 +714,10 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
     if (!i.assigner_id_.is_nil())
       l_ret[i.uuid_id_].tasks_[l_task_id_set.at(i.task_uuid_id_)].assigner_ids_.emplace_back(i.assigner_id_);
   }
+
+  for (auto&& [_, value] : l_ret)
+    for (auto&& task : value.tasks_) task.assigner_ids_ |= ranges::actions::unique;
+
   return l_ret | ranges::views::values | ranges::to_vector;
 }
 
