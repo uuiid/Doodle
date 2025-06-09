@@ -4,12 +4,6 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.4/Plugins/Doodle/
         PATTERN "*.pdb" EXCLUDE
         PATTERN "Source" EXCLUDE
 )
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/5.4/Plugins/UnrealEngine5VLC/
-        DESTINATION UnrealEngine5VLC
-        PATTERN "Intermediate" EXCLUDE
-        PATTERN "*.pdb" EXCLUDE
-        PATTERN "Source" EXCLUDE
-)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/script/uePlug/SideFX_Labs/
         DESTINATION SideFX_Labs
         PATTERN "Intermediate" EXCLUDE

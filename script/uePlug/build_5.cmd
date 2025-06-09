@@ -11,9 +11,9 @@ robocopy %work_dir%Doodle\ThirdParty %work_dir%%UE_VERSION%\Plugins\Doodle\Third
 rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\Doodle\Intermediate
 rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\Doodle\Source
 
-call %UE_5% BuildPlugin -Plugin=%work_dir%UnrealEngine5VLC\VlcMedia.uplugin -TargetPlatforms=Win64 -Package=%work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC -Rocket
-robocopy %work_dir%\UnrealEngine5VLC\ThirdParty %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\ThirdParty /mir /ndl /np /njh /njs /ns /nc /nfl
-robocopy %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC_%l_time% /mir /ndl /np /njh /njs /ns /nc /nfl
+@REM call %UE_5% BuildPlugin -Plugin=%work_dir%UnrealEngine5VLC\VlcMedia.uplugin -TargetPlatforms=Win64 -Package=%work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC -Rocket
+@REM robocopy %work_dir%\UnrealEngine5VLC\ThirdParty %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\ThirdParty /mir /ndl /np /njh /njs /ns /nc /nfl
+@REM robocopy %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC_%l_time% /mir /ndl /np /njh /njs /ns /nc /nfl
 
-rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\Intermediate
-rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\Source
+@REM rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\Intermediate
+@REM rmdir /Q /S %work_dir%%UE_VERSION%\Plugins\UnrealEngine5VLC\Source
