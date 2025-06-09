@@ -96,7 +96,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::ca
 }
 boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback(session_data_ptr in_handle) {
   get_person(in_handle);
-  co_return in_handle->make_msg("[]");
+  co_return in_handle->make_msg(nlohmann::json::array());
 }
 }  // namespace doodle::http
 
