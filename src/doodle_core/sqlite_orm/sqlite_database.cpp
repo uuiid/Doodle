@@ -188,10 +188,10 @@ std::vector<uuid> sqlite_database::get_temporal_type_ids() {
 std::vector<project> sqlite_database::get_person_projects(const person& in_user) {
   std::vector<project> l_result;
   auto l_ids = impl_->storage_any_.get_all<project>(
-      sqlite_orm::left_join<project_status>(
+      sqlite_orm::join<project_status>(
           sqlite_orm::on(sqlite_orm::c(&project_status::uuid_id_) == sqlite_orm::c(&project::project_status_id_))
       ),
-      sqlite_orm::left_join<project_person_link>(
+      sqlite_orm::join<project_person_link>(
           sqlite_orm::on(sqlite_orm::c(&project_person_link::project_id_) == sqlite_orm::c(&project::uuid_id_))
       ),
       sqlite_orm::where(
@@ -660,8 +660,8 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
   auto l_temporal_type_ids      = get_temporal_type_ids();
   l_t                           = impl_->storage_any_.select(
       l_sql_orm, join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-      left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(
           ((!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
            (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id)) &&
