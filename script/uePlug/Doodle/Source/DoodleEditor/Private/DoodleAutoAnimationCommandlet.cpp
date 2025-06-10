@@ -321,7 +321,8 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 
 		TArray<FString> Mats;
 		if (Obj->HasField(TEXT("hide_materials")))
-			for (TArray<TSharedPtr<FJsonValue>> JsonMats = Obj->GetArrayField(TEXT("hide_materials")); const TSharedPtr<FJsonValue>& JsonMat : JsonMats)
+			for (TArray<TSharedPtr<FJsonValue>> JsonMats = Obj->GetArrayField(TEXT("hide_materials")); const TSharedPtr<FJsonValue>& JsonMat :
+			     JsonMats)
 			{
 				Mats.Add(JsonMat->AsString());
 			}
@@ -656,8 +657,10 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		}
 	}
 	//--------------------
-	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
-	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
+	AActor* TempActor = EditorActorSubsystem->
+		SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
+	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(
+		TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.bOverride_MotionBlurAmount = true;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.MotionBlurAmount = 0.0f;
@@ -690,7 +693,8 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	L_Map.Add(BindingID.GetGuid(), CameraLabel);
 	//---------------
 	ALevelSequenceActor* L_LevelSequenceActor{};
-	ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
+	ULevelSequencePlayer* L_LevelSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+		GWorld->PersistentLevel, TheLevelSequence, FMovieSceneSequencePlaybackSettings{}, L_LevelSequenceActor);
 	L_LevelSequenceActor->InitializePlayer();
 	L_LevelSequencePlayer->Play();
 	//-----------------------
@@ -706,9 +710,11 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	//---------------------
 	UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
 	FbxImporter->ImportFromFile(*InFbxPath, FPaths::GetExtension(InFbxPath));
-	MovieSceneToolHelpers::ImportFBXCameraToExisting(FbxImporter, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, false, false);
+	MovieSceneToolHelpers::ImportFBXCameraToExisting(FbxImporter, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map,
+	                                                 false, false);
 	//---------------------
-	bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(GWorld, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map, L_ImportFBXSettings, InOutParams);
+	bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(GWorld, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map,
+	                                                      L_ImportFBXSettings, InOutParams);
 	//----------------
 	L_LevelSequencePlayer->Stop();
 	TempActor->Destroy();
@@ -726,14 +732,19 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	{
 		if (Bind.GetObjectGuid() == BindingID.GetGuid())
 		{
-			UMovieScene3DTransformTrack* TransformTrack = TheLevelSequence->GetMovieScene()->FindTrack<UMovieScene3DTransformTrack>(Bind.GetObjectGuid());
+			UMovieScene3DTransformTrack* TransformTrack = TheLevelSequence->GetMovieScene()->FindTrack<UMovieScene3DTransformTrack>(
+				Bind.GetObjectGuid());
 			for (UMovieSceneSection* TheSections : TransformTrack->GetAllSections())
 			{
 				UMovieScene3DTransformSection* TransformSection = Cast<UMovieScene3DTransformSection>(TheSections);
 				if (TransformSection)
 				{
 					FMovieSceneChannelProxy& SectionChannelProxy = TransformSection->GetChannelProxy();
-					TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"), SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")};
+					TMovieSceneChannelHandle<FMovieSceneDoubleChannel> DoubleChannels[] = {
+						SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.X"),
+						SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Y"),
+						SectionChannelProxy.GetChannelByName<FMovieSceneDoubleChannel>("Rotation.Z")
+					};
 					FMovieSceneDoubleChannel* ChannelX = DoubleChannels[0].Get();
 					FMovieSceneDoubleChannel* ChannelY = DoubleChannels[1].Get();
 					FMovieSceneDoubleChannel* ChannelZ = DoubleChannels[2].Get();
@@ -760,7 +771,8 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		MainDirectionalLight->SetActorRotation(Rot_Light);
 		/// 添加辅助灯光旋转bind
 		ASpotLight* L_SpotLight1 = TheSequenceWorld->SpawnActor<ASpotLight>(FVector::ZeroVector, FRotator::ZeroRotator);
-		ASpotLight* L_SpotLight = CastChecked<ASpotLight>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*L_SpotLight1, L_SpotLight1->GetFName()));
+		ASpotLight* L_SpotLight = CastChecked<ASpotLight>(
+			TheLevelSequence->MakeSpawnableTemplateFromInstance(*L_SpotLight1, L_SpotLight1->GetFName()));
 		/// 调整辅助光源属性
 		L_SpotLight->SpotLightComponent->bUseInverseSquaredFalloff = false;
 		L_SpotLight->SpotLightComponent->SetInnerConeAngle(80);
@@ -872,7 +884,8 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const
 	return Task;
 }
 
-UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton, bool bImportAnimations) const
+UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
+                                                                            bool bImportAnimations) const
 {
 	UFbxFactory* K_FBX_F = NewObject<UFbxFactory>(UFbxFactory::StaticClass());
 	K_FBX_F->ImportUI = NewObject<UFbxImportUI>(K_FBX_F);
@@ -962,7 +975,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			//------------
 			if (AnimSeq && TmpSkeletalMesh)
 			{
-				AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+				AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+					AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
 				if (AnimSeq->IsDataModelValid())
 				{
 					AnimSeq->CompressCommandletVersion = 0;
@@ -986,7 +1000,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
 				L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
 				L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-				UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
+				UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<
+					UMovieSceneSkeletalAnimationTrack>(L_GUID);
 				UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
 				AnimSection->SetPreRollFrames(50);
 				AnimSection->Modify();
@@ -1003,10 +1018,12 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
 				TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
 				UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
-				UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
+				UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<
+					UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
 				L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
 				L_MovieSceneSpawnSection2->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-				UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID2);
+				UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim2 = TheLevelSequence->GetMovieScene()->AddTrack<
+					UMovieSceneSkeletalAnimationTrack>(L_GUID2);
 				UMovieSceneSection* AnimSection2 = L_MovieSceneSkeletalAnim2->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
 				AnimSection2->SetPreRollFrames(50);
 				AnimSection2->Modify();
@@ -1042,10 +1059,12 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 					TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
 					//-----------------------------------
 					UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
-					UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+					UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(
+						L_MovieSceneSpawnTrack->CreateNewSection());
 					L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
 					//------------------------------
-					UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
+					UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack = TheLevelSequence->GetMovieScene()->AddTrack<
+						UMovieSceneGeometryCacheTrack>(L_GUID);
 					UMovieSceneSection* AnimSection = L_MovieSceneGeoTrack->AddNewAnimation(L_Start, L_Actor->GetGeometryCacheComponent());
 					AnimSection->SetPreRollFrames(50);
 					L_Actor->Modify();
@@ -1059,9 +1078,11 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 					const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
 					TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
 					UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
-					UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack2->CreateNewSection());
+					UMovieSceneSpawnSection* L_MovieSceneSpawnSection2 = CastChecked<UMovieSceneSpawnSection>(
+						L_MovieSceneSpawnTrack2->CreateNewSection());
 					L_MovieSceneSpawnTrack2->AddSection(*L_MovieSceneSpawnSection2);
-					UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID2);
+					UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<
+						UMovieSceneGeometryCacheTrack>(L_GUID2);
 					UMovieSceneSection* AnimSection2 = L_MovieSceneGeoTrack2->AddNewAnimation(L_Start, L_Actor2->GetGeometryCacheComponent());
 					AnimSection2->SetPreRollFrames(50);
 					L_Actor2->Modify();
@@ -1146,7 +1167,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 				//------------
 				if (AnimSeq)
 				{
-					AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+					AnimSeq->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+						AnimSeq, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
 					if (AnimSeq->IsDataModelValid())
 					{
 						AnimSeq->CompressCommandletVersion = 0;
@@ -1162,10 +1184,12 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 					TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
 					//-----------------------
 					UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
-					UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
+					UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(
+						L_MovieSceneSpawnTrack->CreateNewSection());
 					L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
 					L_MovieSceneSpawnSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-					UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
+					UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim = TheLevelSequence->GetMovieScene()->AddTrack<
+						UMovieSceneSkeletalAnimationTrack>(L_GUID);
 					UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(L_Start, AnimSeq, -1);
 					AnimSection->SetPreRollFrames(50);
 					AnimSection->Modify();
@@ -1181,8 +1205,10 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 
 	UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
 
-	AActor* TempActor = EditorActorSubsystem->SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
-	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
+	AActor* TempActor = EditorActorSubsystem->
+		SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
+	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(
+		TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
 	//---------------
@@ -1226,7 +1252,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()
 			Radius *= AspectRatio;
 		}
 
-		const float HalfFOVRadians = FMath::DegreesToRadians(Cast<UCineCameraComponent>(CameraActor->GetCameraComponent())->GetHorizontalFieldOfView() / 2.0f);
+		const float HalfFOVRadians = FMath::DegreesToRadians(
+			Cast<UCineCameraComponent>(CameraActor->GetCameraComponent())->GetHorizontalFieldOfView() / 2.0f);
 		const float DistanceFromSphere = Radius / FMath::Tan(HalfFOVRadians);
 		FVector CameraOffsetVector = LViewportCameraTransform.GetRotation().Vector() * -DistanceFromSphere;
 
@@ -1294,7 +1321,8 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	}
 
 	// 基本设置 ----------------------
-	UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
+	UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(
+		Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
 	OutputSetting->OutputDirectory.Path = DestinationPath;
 	OutputSetting->OutputResolution.X = ImageSize.Width;
 	OutputSetting->OutputResolution.Y = ImageSize.Height;
@@ -1305,14 +1333,16 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	{
 		Config->RemoveSetting(FormatSetting);
 	}
-	UMoviePipelineDeferredPassBase* L_DeferredPass = Cast<UMoviePipelineDeferredPassBase>(Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass()));
+	UMoviePipelineDeferredPassBase* L_DeferredPass = Cast<UMoviePipelineDeferredPassBase>(
+		Config->FindOrAddSettingByClass(UMoviePipelineDeferredPassBase::StaticClass()));
 	if (Layering)
 	{
 		// 景深设置
 		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_EXR::StaticClass());
-		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(nullptr, TEXT("/Doodle/tongdao/depth_of_field_Inst.depth_of_field_Inst"));
+		UMaterialInstanceConstant* L_CraneBaseMaterial = LoadObject<UMaterialInstanceConstant>(
+			nullptr, TEXT("/Doodle/tongdao/depth_of_field_Inst.depth_of_field_Inst"));
 		L_DeferredPass->AdditionalPostProcessMaterials.Empty();
-		L_DeferredPass->AdditionalPostProcessMaterials.Emplace(true, L_CraneBaseMaterial);
+		L_DeferredPass->AdditionalPostProcessMaterials.Emplace(FMoviePipelinePostProcessPass{.bEnabled = true, .Material = L_CraneBaseMaterial});
 		// 添加object ID layer(这个只能从反射中寻找, 无法直接引入头文件)
 		for (TObjectIterator<UClass> It{}; It; ++It)
 		{
@@ -1332,7 +1362,8 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	else { Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()); }
 
 	// 设置控制台变量
-	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())))
+	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
+		Config->FindOrAddSettingByClass(UMoviePipelineConsoleVariableSetting::StaticClass())))
 	{
 		ConsoleVar->AddOrUpdateConsoleVariable("r.ScreenPercentage", 100.000000);
 		ConsoleVar->AddOrUpdateConsoleVariable("r.AmbientOcclusion.Denoiser", 0.0);
@@ -1369,7 +1400,8 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	}
 
 	// 设置抗拒齿方法
-	if (UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())); AntiAliasing)
+	if (UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(
+		Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())); AntiAliasing)
 	{
 		AntiAliasing->SpatialSampleCount = 7;
 		AntiAliasing->TemporalSampleCount = 1;
@@ -1379,13 +1411,15 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		AntiAliasing->EngineWarmUpCount = 64;
 		AntiAliasing->RenderWarmUpCount = 64;
 	}
-	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())); GameOver)
+	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(
+		Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())); GameOver)
 	{
 		GameOver->bCinematicQualitySettings = true;
 		GameOver->TextureStreaming = EMoviePipelineTextureStreamingMethod::None;
 	}
 	// 摄像机
-	if (UMoviePipelineCameraSetting* Camera = Cast<UMoviePipelineCameraSetting>(Config->FindOrAddSettingByClass(UMoviePipelineCameraSetting::StaticClass())); Camera)
+	if (UMoviePipelineCameraSetting* Camera = Cast<UMoviePipelineCameraSetting>(
+		Config->FindOrAddSettingByClass(UMoviePipelineCameraSetting::StaticClass())); Camera)
 	{
 		Camera->ShutterTiming = EMoviePipelineShutterTiming::FrameClose;
 		Camera->OverscanPercentage = 0.0;
@@ -1411,7 +1445,8 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 
 	IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
 	{
-		if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Prop/")))
+		if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(
+			InAss.PackagePath.ToString(), TEXT("/Game/Prop/")))
 		{
 			if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset()))
 			{
