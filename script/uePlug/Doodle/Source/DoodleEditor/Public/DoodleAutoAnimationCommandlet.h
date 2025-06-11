@@ -64,6 +64,7 @@ public:
 	void RunCheckFiles(const FString& InCondigPath);
 	void ImportRig(const FString& InCondigPath);
 
+
 private:
 	/// 删除资产
 	static void DeleteAsseet(const FString& InPath);
@@ -102,7 +103,8 @@ private:
 	/// 创建几何缓存导入任务
 	UAssetImportTask* CreateGeometryImportTask(const FString& InFbxPath) const;
 	/// 创建角色导入任务
-	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton, bool bImportAnimations = true) const;
+	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
+	                                            bool bImportAnimations = true) const;
 
 	/// 隐藏材质
 	void HideMaterials(const ASkeletalMeshActor* InActor) const;
