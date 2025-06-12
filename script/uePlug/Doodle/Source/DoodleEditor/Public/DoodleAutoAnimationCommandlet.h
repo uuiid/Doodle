@@ -64,7 +64,6 @@ public:
 	void RunCheckFiles(const FString& InCondigPath);
 	void ImportRig(const FString& InCondigPath);
 
-
 private:
 	/// 删除资产
 	static void DeleteAsseet(const FString& InPath);
@@ -156,4 +155,18 @@ private:
 	// 输出大小
 	FImageSize ImageSize;
 	bool Layering;
+};
+
+class UMoviePipelineExecutorBase;
+UCLASS()
+class UDoodleAutoRender : public UObject
+{
+	GENERATED_BODY()
+	void OnEnd(UMoviePipelineExecutorBase*, bool);
+public:
+	void Main(float InTime);
+	// 命令行中有我们指示渲染的参数
+	static bool HasRenderParam();
+
+	FDelegateHandle OnPreTickDelegateHandle;
 };

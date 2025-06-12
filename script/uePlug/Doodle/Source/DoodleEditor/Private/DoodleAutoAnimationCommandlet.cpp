@@ -79,71 +79,6 @@
 #include "MoviePipelineInProcessExecutor.h"
 #include "MoviePipelinePIEExecutor.h"
 
-static int32 MoviePipelineRender(const FString& InWorldAssetPath, const FString& InSequenceAssetPath, const FString& InConfigAssetPath)
-{
-	// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	// AssetRegistryModule.Get().GetAssetRegistryState()->;
-
-	// 加载关卡
-	UWorld* L_World{};
-	UPackage* Package = LoadPackage(nullptr, *InWorldAssetPath, ELoadFlags::LOAD_None);
-	L_World = UWorld::FindWorldInPackage(Package);
-
-
-	// Clean up any previous world.  The world should have already been saved
-	UWorld* ExistingWorld = GEditor->GetEditorWorldContext().World();
-
-	GEngine->DestroyWorldContext(ExistingWorld);
-	ExistingWorld->DestroyWorld(true, L_World);
-
-	GWorld = L_World;
-
-	L_World->WorldType = EWorldType::Editor;
-
-	FWorldContext& WorldContext = GEngine->CreateNewWorldContext(L_World->WorldType);
-	WorldContext.SetCurrentWorld(L_World);
-
-	// add the world to the root set so that the garbage collection to delete replaced actors doesn't garbage collect the whole world
-	L_World->AddToRoot();
-
-	// initialize the levels in the world
-	L_World->InitWorld(UWorld::InitializationValues().AllowAudioPlayback(false));
-	L_World->GetWorldSettings()->PostEditChange();
-	L_World->UpdateWorldComponents(true, false);
-
-	// UGameplayStatics::OpenLevel(L_World, FName{RenderMapPath});
-	UGameplayStatics::FlushLevelStreaming(L_World);
-	CommandletHelpers::TickEngine();
-	CommandletHelpers::TickEngine();
-	CommandletHelpers::TickEngine();
-
-
-	UMoviePipelinePIEExecutor* L_ProcessExecutor = NewObject<UMoviePipelinePIEExecutor>(GetTransientPackage());
-
-	FSoftObjectPath L_SequenceAssetPath(InSequenceAssetPath);
-	FSoftObjectPath L_ConfigAssetPath(InConfigAssetPath);
-	if (ULevelSequence* L_Sequence = Cast<ULevelSequence>(L_SequenceAssetPath.TryLoad()); !L_Sequence)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Sequence not found: %s"), *InSequenceAssetPath);
-		return 1;
-	}
-	UMoviePipelinePrimaryConfig* L_Config = Cast<UMoviePipelinePrimaryConfig>(L_ConfigAssetPath.TryLoad());
-	UMoviePipelineQueue* L_OutQueue = NewObject<UMoviePipelineQueue>();
-	UMoviePipelineExecutorJob* NewJob = L_OutQueue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
-	// Only the default job type is supported right now.
-	NewJob->Sequence = FSoftObjectPath(InSequenceAssetPath);
-	NewJob->SetConfiguration(L_Config);
-	if (GWorld)
-		NewJob->Map = FSoftObjectPath(GWorld);
-
-	L_ProcessExecutor->AddToRoot();
-	L_ProcessExecutor->SetMoviePipelineClass(UMoviePipeline::StaticClass());
-	L_OutQueue->Rename(nullptr, L_ProcessExecutor);
-	L_ProcessExecutor->Execute(L_OutQueue);
-	// GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>()->RenderQueueWithExecutorInstance(L_ProcessExecutor);
-	return 0;
-}
-
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -174,17 +109,7 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 		ImportRig(ParamsMap[Key3]);
 		return 0;
 	}
-	if (const FString &Key4 = TEXT("DoodleMoviePipelineConfig"), Key5 = TEXT("DoodleLevelSequence"), Key6 = TEXT("DoodleWorldAssetPath");
-		ParamsMap.Contains(Key4) && ParamsMap.Contains(Key5) && ParamsMap.Contains(Key6) &&
-		ParamsMap[Key4].Len() > 0 && ParamsMap[Key5].Len() > 0 && ParamsMap[Key6].Len() > 0)
-	{
-		// FCoreUObjectDelegates::PostLoadMapWithWorld.AddLambda([ParamsMap, Key4, Key5](UWorld* World)
-		// {
-		// 	MoviePipelineRender(ParamsMap[Key5], ParamsMap[Key4]);
-		// });
-		return MoviePipelineRender(ParamsMap[Key6], ParamsMap[Key5], ParamsMap[Key4]);
-		// return 0;
-	}
+
 
 	UE_LOG(LogTemp, Error, TEXT("No params field in cmd arguments"));
 	return -1;
@@ -1557,6 +1482,68 @@ void UDoodleAutoAnimationCommandlet::FixMaterialParameterCollection()
 		UObject* LObj = InAss.GetAsset();
 		return true;
 	});
+}
+
+
+void UDoodleAutoRender::Main(float)
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	if (!AssetRegistryModule.Get().IsLoadingAssets())
+	{
+		// 去除回调
+		FSlateApplication::Get().OnPreTick().Remove(OnPreTickDelegateHandle);
+		// 解析参数
+		FString L_MoviePipelineConfig{};
+		FString L_LevelSequence{};
+		// FString L_WorldAssetPath{};
+		FParse::Value(FCommandLine::Get(), TEXT("-DoodleMoviePipelineConfig="), L_MoviePipelineConfig);
+		FParse::Value(FCommandLine::Get(), TEXT("-DoodleLevelSequence="), L_LevelSequence);
+		const FSoftObjectPath L_MoviePipelineConfigPath{L_MoviePipelineConfig};
+		const FSoftObjectPath L_LevelSequencePath{L_LevelSequence};
+
+		// 创建执行器
+		UMoviePipelinePIEExecutor* L_ProcessExecutor = NewObject<UMoviePipelinePIEExecutor>(GetTransientPackage());
+		L_ProcessExecutor->OnExecutorFinished().AddUObject(this, &UDoodleAutoRender::OnEnd);
+
+		// if (ULevelSequence* L_Sequence = Cast<ULevelSequence>(L_LevelSequencePath.TryLoad()); !L_Sequence)
+		// {
+		// 	UE_LOG(LogTemp, Warning, TEXT("Sequence not found: %s"), *L_LevelSequence);
+		// 	return OnEnd(nullptr, false);
+		// }
+		
+		UMoviePipelineQueueSubsystem* L_MoviePipelineQueueSubsystem = GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>();
+		
+		UMoviePipelinePrimaryConfig* L_Config = CastChecked<UMoviePipelinePrimaryConfig>(L_MoviePipelineConfigPath.TryLoad());
+		UMoviePipelineQueue* L_OutQueue = L_MoviePipelineQueueSubsystem->GetQueue();
+		UMoviePipelineExecutorJob* NewJob = L_OutQueue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
+		// Only the default job type is supported right now.
+		NewJob->Sequence = L_LevelSequencePath;
+		NewJob->SetConfiguration(L_Config);
+		if (GWorld)
+			NewJob->Map = FSoftObjectPath(GWorld);
+
+		L_ProcessExecutor->AddToRoot();
+		// L_ProcessExecutor->SetMoviePipelineClass(UMoviePipeline::StaticClass());
+		// L_OutQueue->Rename(nullptr, L_ProcessExecutor);
+		// 开始执行
+		L_MoviePipelineQueueSubsystem->RenderQueueWithExecutorInstance(L_ProcessExecutor);
+	}
+}
+
+bool UDoodleAutoRender::HasRenderParam()
+{
+	FString L_MoviePipelineConfig{};
+	FString L_LevelSequence{};
+	// FString L_WorldAssetPath{};
+	FParse::Value(FCommandLine::Get(), TEXT("-DoodleMoviePipelineConfig="), L_MoviePipelineConfig);
+	FParse::Value(FCommandLine::Get(), TEXT("-DoodleLevelSequence="), L_LevelSequence);
+	// FParse::Value(FCommandLine::Get(), TEXT("DoodleWorldAssetPath"), L_WorldAssetPath);
+	return L_MoviePipelineConfig.Len() > 0 && L_LevelSequence.Len() > 0;
+}
+
+void UDoodleAutoRender::OnEnd(UMoviePipelineExecutorBase*, bool)
+{
+	FPlatformMisc::RequestExitWithStatus(false, 0);
 }
 
 
