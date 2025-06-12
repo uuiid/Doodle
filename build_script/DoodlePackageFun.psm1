@@ -86,8 +86,9 @@ function Initialize-Doodle
         $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
         #         寻找版本号 3.6.678 并放在最后
         $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
-        $DoodleVersionList = $DoodleVersionList + "3.6.678"
-        Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList -join "`n") -NoNewline
+        $DoodleVersionList = $DoodleVersionList -join "`n"
+        $DoodleVersionList += "`n3.6.678"
+        Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList) -NoNewline
     }
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist"
