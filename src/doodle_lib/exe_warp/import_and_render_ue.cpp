@@ -283,10 +283,10 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
   for (int i = 0; i < 3; ++i) {
     try {
       co_await async_run_ue(
-          {render_project_.generic_string(), l_import_data.render_map.generic_string(), "-game",
-           fmt::format(R"(-LevelSequence="{}")", l_import_data.level_sequence_import),
-           fmt::format(R"(-MoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-windowed", "-log",
-           "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
+          {render_project_.generic_string(), l_import_data.render_map.generic_string(),
+           fmt::format(R"(-DoodleLevelSequence="{}")", l_import_data.level_sequence_import),
+           fmt::format(R"(-DoodleMoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-log", "-stdout",
+           "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
           logger_ptr_
       );
       break;
