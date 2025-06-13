@@ -26,4 +26,5 @@ target_sources(
         pictures.cpp
         playlists.cpp
         attachment_files.cpp
+        metadata_descriptors.cpp
 )
