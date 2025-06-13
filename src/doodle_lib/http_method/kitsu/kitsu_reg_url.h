@@ -10,11 +10,9 @@ namespace doodle::http {
 DOODLE_HTTP_FUN(auth_login, post, "api/auth/login", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 DOODLE_HTTP_FUN(project_c, post, "api/data/projects", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 DOODLE_HTTP_FUN(project_settings_task_types, post, "api/data/projects/{project_id}/settings/task-types", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
@@ -33,7 +31,12 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(pictures_preview_files, post, "api/pictures/preview-files/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
+DOODLE_HTTP_FUN(actions_create_tasks, post, "api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(projects_assets_new, post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 
 DOODLE_HTTP_FUN(data_comment, put, "api/data/comments/{comment_id}", http_jwt_fun)
@@ -49,14 +52,6 @@ DOODLE_HTTP_FUN(actions_preview_files_set_main_preview, put, "api/actions/previe
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
-
-
-DOODLE_HTTP_FUN(actions_create_tasks, post, "api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(projects_assets_new, post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(project, get, "api/data/projects/{project_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
