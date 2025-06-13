@@ -16,14 +16,24 @@ enum class metadata_descriptor_data_type {
   boolean,
   checklist,
 };
-
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    metadata_descriptor_data_type,
+    {
+        {metadata_descriptor_data_type::string, "string"},
+        {metadata_descriptor_data_type::number, "number"},
+        {metadata_descriptor_data_type::list, "list"},
+        {metadata_descriptor_data_type::taglist, "taglist"},
+        {metadata_descriptor_data_type::boolean, "boolean"},
+        {metadata_descriptor_data_type::checklist, "checklist"},
+    }
+)
 struct metadata_descriptor_department_link {
   std::int64_t id_;
   uuid metadata_descriptor_uuid_;
   uuid department_uuid_;
 };
 
-struct metadata_descriptor   {
+struct metadata_descriptor {
   DOODLE_BASE_FIELDS();
   std::string name_;
   std::string entity_type_;

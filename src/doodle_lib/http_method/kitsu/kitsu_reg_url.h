@@ -37,9 +37,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(projects_assets_new, post, "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(projects_metadata_descriptors, post, "api/data/projects/{id}/metadata-descriptors", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
+// DOODLE_HTTP_FUN(projects_metadata_descriptors, post, "api/data/projects/{id}/metadata-descriptors", http_jwt_fun)
+// boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+// DOODLE_HTTP_FUN_END()
 
 
 DOODLE_HTTP_FUN(data_comment, put, "api/data/comments/{comment_id}", http_jwt_fun)
