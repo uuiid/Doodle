@@ -79,7 +79,7 @@ struct DOODLE_CORE_API task {
     j["entity_id"]            = p.entity_id_;
     j["assigner_id"]          = p.assigner_id_;
 
-    j["assignees"]            = p.assigner_id_;
+    j["assignees"]            = p.assignees_;
   }
   // from json(此处针对put方法, 不针对post方法)
   friend void from_json(const nlohmann::json& j, task& p) {
