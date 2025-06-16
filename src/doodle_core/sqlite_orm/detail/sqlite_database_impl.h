@@ -847,6 +847,10 @@ struct sqlite_database_impl {
 #define DOODLE_TO_SQLITE_THREAD()                                 \
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
+#define DOODLE_TO_SQLITE_THREAD_2()                               \
+  auto this_executor = co_await boost::asio::this_coro::executor; \
+  co_await boost::asio::post(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));
+
 
   template <typename T>
   std::vector<T> get_all() {

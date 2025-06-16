@@ -1246,6 +1246,7 @@ DOODLE_REMOVE_BY_ID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_ID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_ID(assets_helper::database_t)
 DOODLE_REMOVE_BY_ID(computer)
+DOODLE_REMOVE_BY_ID(comment)
 DOODLE_REMOVE_BY_ID(assets_file_helper::link_parent_t)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
@@ -1254,6 +1255,33 @@ DOODLE_REMOVE_BY_UUID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
+
+template <>
+boost::asio::awaitable<void> sqlite_database::remove<comment>(const uuid& in_data) {
+  using namespace sqlite_orm;
+  auto l_previews = impl_->storage_any_.select(
+      &comment_preview_link::preview_file_id_, where(c(&comment_preview_link::comment_id_) == in_data)
+  );
+  auto l_attachments =
+      impl_->storage_any_.select(&attachment_file::uuid_id_, where(c(&attachment_file::comment_id_) == in_data));
+
+  DOODLE_TO_SQLITE_THREAD_2();
+  auto l_g = impl_->storage_any_.transaction_guard();
+  impl_->storage_any_.remove_all<comment_preview_link>(where(c(&comment_preview_link::comment_id_) == in_data));
+  impl_->storage_any_.remove_all<comment_mentions>(where(c(&comment_mentions::comment_id_) == in_data));
+  impl_->storage_any_.remove_all<comment_department_mentions>(
+      where(c(&comment_department_mentions::comment_id_) == in_data)
+  );
+  impl_->storage_any_.remove_all<comment_acknoledgments>(where(c(&comment_acknoledgments::comment_id_) == in_data));
+
+  impl_->storage_any_.remove_all<notification>(where(c(&notification::comment_id_) == in_data));
+  impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_previews)));
+  impl_->storage_any_.remove_all<attachment_file>(where(in(&attachment_file::uuid_id_, l_attachments)));
+
+  impl_->storage_any_.remove_all<comment>(where(c(&comment::uuid_id_) == in_data));
+  l_g.commit();
+  DOODLE_TO_SELF();
+}
 DOODLE_REMOVE_BY_UUID(server_task_info)
 
 }  // namespace doodle
