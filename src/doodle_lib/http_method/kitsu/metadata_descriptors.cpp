@@ -37,16 +37,16 @@ struct projects_metadata_descriptors_post_arg {
     j.at("for_client").get_to(p.for_client_);
     j.at("choices").get_to(p.choices_);
     j.at("department").get_to(p.department_);
-    static constexpr std::set<std::string_view> g_entity_type = {
-        "Asset", "Shot", "Edit", "Episode", "Sequence",
-    };
-    static constexpr std::set<std::string_view> g_data_type = {
-        "string", "number", "list", "taglist", "boolean", "checklist",
-    };
-
-    if (!g_entity_type.contains(p.entity_type_))
-      throw_exception(http_request_error{boost::beast::http::status::bad_request, "entity_type error"});
-    if (p.name_.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "name error"});
+    // static constexpr std::set<std::string_view> g_entity_type = {
+    //     "Asset", "Shot", "Edit", "Episode", "Sequence",
+    // };
+    // static constexpr std::set<std::string_view> g_data_type = {
+    //     "string", "number", "list", "taglist", "boolean", "checklist",
+    // };
+    //
+    // if (!g_entity_type.contains(p.entity_type_))
+    //   throw_exception(http_request_error{boost::beast::http::status::bad_request, "entity_type error"});
+    // if (p.name_.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "name error"});
   }
 };
 }  // namespace
