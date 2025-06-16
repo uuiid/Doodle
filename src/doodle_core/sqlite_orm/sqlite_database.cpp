@@ -1023,6 +1023,15 @@ std::int64_t sqlite_database::get_next_position(const uuid& in_task_id, const st
   return l_r + 1;
 }
 
+std::optional<comment> sqlite_database::get_last_comment(const uuid& in_task_id) {
+  using namespace sqlite_orm;
+  auto l_r = impl_->storage_any_.get_all<comment>(
+      where(c(&comment::object_id_) == in_task_id), order_by(&comment::created_at_).desc(), limit(1)
+  );
+  if (l_r.empty()) return std::nullopt;
+  return l_r.front();
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(project_helper::database_t)

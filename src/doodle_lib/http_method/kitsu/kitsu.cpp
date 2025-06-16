@@ -122,6 +122,9 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<pictures_previews_preview_files_get>())
       .reg(std::make_shared<data_attachment_files_file_get>())
 
+      // delete
+      .reg(std::make_shared<task_comment_delete_>())
+
       ;
 #endif
   (*l_router)

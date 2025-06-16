@@ -183,5 +183,7 @@ class sqlite_database {
   bool has_preview_file(const uuid& in_comment);
   /// 获取评论的预览图位置(一条评论中可能有多个预览图, 图片序列)
   std::int64_t get_next_position(const uuid& in_task_id, const std::int64_t& in_revision);
+  /// 获取task中的最后一条评论
+  std::optional<comment> get_last_comment(const uuid& in_task_id);
 };
 }  // namespace doodle

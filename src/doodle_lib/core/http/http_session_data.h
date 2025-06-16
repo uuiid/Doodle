@@ -85,6 +85,9 @@ class session_data {
                                                                : boost::beast::http::status::ok
     );
   }
+  boost::beast::http::response<boost::beast::http::string_body> make_msg_204() {
+    return make_msg(std::string{}, "application/json; charset=utf-8", boost::beast::http::status::no_content);
+  }
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(
       std::string&& in_body, boost::beast::http::status in_status

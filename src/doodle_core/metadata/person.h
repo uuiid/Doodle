@@ -7,10 +7,10 @@
 
 namespace doodle {
 enum class person_role_type {
-  user,
-  admin,
-  supervisor,
-  manager,
+  user,        // 艺术家
+  admin,       // 超级管理员
+  supervisor,  // 组长
+  manager,     // 项目经理
   client,
   vendor,
 };
