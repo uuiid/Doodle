@@ -27,4 +27,5 @@ target_sources(
         playlists.cpp
         attachment_files.cpp
         metadata_descriptors.cpp
+        entities.cpp
 )
