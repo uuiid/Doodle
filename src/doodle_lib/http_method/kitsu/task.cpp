@@ -25,7 +25,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::ca
   auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_handle->capture_->get_uuid()));
   l_person->check_task_action_access(*l_task);
   in_handle->get_json().get_to(*l_task);
-  l_task->assigner_id_ = l_person->person_.uuid_id_;
+  // l_task->assigner_id_ = l_person->person_.uuid_id_;
   co_return in_handle->make_msg(nlohmann::json{} = *l_task);
 }
 
