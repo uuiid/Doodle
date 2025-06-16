@@ -83,22 +83,22 @@ struct DOODLE_CORE_API task {
   }
   // from json(此处针对put方法, 不针对post方法)
   friend void from_json(const nlohmann::json& j, task& p) {
-    j.at("name").get_to(p.name_);
-    j.at("description").get_to(p.description_);
-    j.at("priority").get_to(p.priority_);
-    j.at("difficulty").get_to(p.difficulty_);
-    j.at("duration").get_to(p.duration_);
-    j.at("estimation").get_to(p.estimation_);
-    j.at("completion_rate").get_to(p.completion_rate_);
-    j.at("sort_order").get_to(p.sort_order_);
-    j.at("start_date").get_to(p.start_date_);
-    j.at("due_date").get_to(p.due_date_);
-    j.at("real_start_date").get_to(p.real_start_date_);
-    j.at("end_date").get_to(p.end_date_);
-    j.at("done_date").get_to(p.done_date_);
-    j.at("last_comment_date").get_to(p.last_comment_date_);
-    j.at("nb_assets_ready").get_to(p.nb_assets_ready_);
-    j.at("data").get_to(p.data_);
+    if (j.contains("name")) j.at("name").get_to(p.name_);
+    if (j.contains("description")) j.at("description").get_to(p.description_);
+    if (j.contains("priority")) j.at("priority").get_to(p.priority_);
+    if (j.contains("difficulty")) j.at("difficulty").get_to(p.difficulty_);
+    if (j.contains("duration")) j.at("duration").get_to(p.duration_);
+    if (j.contains("estimation")) j.at("estimation").get_to(p.estimation_);
+    if (j.contains("completion_rate")) j.at("completion_rate").get_to(p.completion_rate_);
+    if (j.contains("sort_order")) j.at("sort_order").get_to(p.sort_order_);
+    if (j.contains("start_date")) j.at("start_date").get_to(p.start_date_);
+    if (j.contains("due_date")) j.at("due_date").get_to(p.due_date_);
+    if (j.contains("real_start_date")) j.at("real_start_date").get_to(p.real_start_date_);
+    if (j.contains("end_date")) j.at("end_date").get_to(p.end_date_);
+    if (j.contains("done_date")) j.at("done_date").get_to(p.done_date_);
+    if (j.contains("last_comment_date")) j.at("last_comment_date").get_to(p.last_comment_date_);
+    if (j.contains("nb_assets_ready")) j.at("nb_assets_ready").get_to(p.nb_assets_ready_);
+    if (j.contains("data")) j.at("data").get_to(p.data_);
     p.updated_at_ = chrono::system_clock::now();
   }
 };
