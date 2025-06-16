@@ -111,9 +111,10 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
     else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%FT%T%Ez", l_time))
       in_time = time_point{std::chrono::current_zone(), l_time};
     else if (std::chrono::time_point<std::chrono::local_t, Duration> l_loc_time{};
-             in.clear(), in.exceptions(std::ios::failbit), in.str(l_str), in >> std::chrono::parse("%F %T", l_loc_time))
+             in.clear(), in.str(l_str), in >> std::chrono::parse("%F %T", l_loc_time))
       in_time = time_point{std::chrono::current_zone(), l_loc_time};
-    ;
+    else if (in.clear(), in.exceptions(std::ios::failbit), in.str(l_str), in >> std::chrono::parse("%F", l_loc_time))
+      in_time = time_point{std::chrono::current_zone(), l_loc_time};
     // std::chrono::local_time<Duration> l_local_time = j.get<std::chrono::local_time<Duration>>();
     // in_time = std::chrono::zoned_time<Duration>{std::chrono::current_zone(), l_local_time};
   }
