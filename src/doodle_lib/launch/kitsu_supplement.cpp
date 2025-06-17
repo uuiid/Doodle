@@ -125,6 +125,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       .kitsu_front_end_path_  = "D:/kitsu/dist",
       .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data"
   };
+  bool l_my_backend = in_arh["my_backend"];
 
   if (auto l_file_path = in_arh({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
