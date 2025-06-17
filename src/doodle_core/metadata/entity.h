@@ -94,5 +94,13 @@ struct DOODLE_CORE_API entity {
     j["entity_concept_links"] = p.entity_concept_links_;
     j["instance_casting"]     = p.instance_casting_;
   }
+  // from json
+  friend void from_json(const nlohmann::json& j, entity& p) {
+    if (j.contains("description")) j.at("description").get_to(p.description_);
+    if (j.contains("entity_type_id")) j.at("entity_type_id").get_to(p.entity_type_id_);
+    if (j.contains("is_shared")) j.at("is_shared").get_to(p.is_shared_);
+    if (j.contains("name")) j.at("name").get_to(p.name_);
+    if (j.contains("ready_for")) j.at("ready_for").get_to(p.ready_for_);
+  }
 };
 }  // namespace doodle
