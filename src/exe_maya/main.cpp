@@ -8,4 +8,4 @@
 #include <iostream>
 // extern "C" int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 
-DOODLE_MAIN_IMPL(doodle::launch::maya_exe_launcher_t)
+DOODLE_MAIN_IMPL(doodle::maya_exe_main)

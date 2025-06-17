@@ -12,12 +12,10 @@ target_link_libraries(doodle_kitsu_supplement
         PUBLIC
         doodle_lib
 )
-target_link_options(doodle_kitsu_supplement PUBLIC /ENTRY:mainCRTStartup)
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
-
 
 install(TARGETS doodle_kitsu_supplement
         RUNTIME_DEPENDENCIES
@@ -32,32 +30,6 @@ set(DOODLE_INSTALL_IGNORE_ITEM
         doodle_maya_exe_2019.exe
         doodle_maya_exe_2020.exe
 )
-
-macro(add_doodle_exe _name _src)
-    add_executable(
-            ${_name}
-            ${_src}
-            ../DoodleExe.manifest
-            ../icon.ico
-            ../win_exe.rc
-    )
-
-    set_target_properties(${_name}
-            PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-    target_link_libraries(${_name}
-            PUBLIC
-            doodle_lib
-    )
-    install(TARGETS ${_name}
-            RUNTIME_DEPENDENCIES
-            PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
-            POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-    )
-    list(APPEND DOODLE_INSTALL_IGNORE_ITEM ${_name}.exe)
-endmacro()
-add_doodle_exe(doodle_auto_light_client auto_light_client.cpp)
-add_doodle_exe(doodle_auto_light_process auto_light_process.cpp)
-
 
 list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复

@@ -16,7 +16,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include <winreg/WinReg.hpp>
-namespace doodle::launch {
+namespace doodle {
 
 struct kitsu_supplement_args_t {
   std::string kitsu_url_;
@@ -111,7 +111,7 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
   }
 }
 
-bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector) {
+bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
   kitsu_supplement_args_t l_args{
       .kitsu_url_ = "http://192.168.40.182",
@@ -125,9 +125,9 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
       .kitsu_front_end_path_  = "D:/kitsu/dist",
       .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data"
   };
-  bool l_my_backend = in_arh["my_backend"];
+  bool l_my_backend = arg_["my_backend"];
 
-  if (auto l_file_path = in_arh({"config"}); l_file_path) {
+  if (auto l_file_path = arg_({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
     try {
       l_args = l_json.get<kitsu_supplement_args_t>();
@@ -137,8 +137,8 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     }
   }
 
-  if (in_arh["local"]) {
-    if (auto l_str = in_arh({"port"}); l_str)
+  if (arg_["local"]) {
+    if (auto l_str = arg_({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
@@ -152,8 +152,8 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
     return false;
   }
-  if (in_arh["epiboly"]) {
-    if (auto l_str = in_arh({"port"}); l_str)
+  if (arg_["epiboly"]) {
+    if (auto l_str = arg_({"port"}); l_str)
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
@@ -183,7 +183,7 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
 
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
-  in_vector.emplace_back(l_ssl_ctx);
+  facets_.emplace_back(l_ssl_ctx);
 
   {
     // 初始化 kitsu 客户端
@@ -223,6 +223,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
 
-  return false;
+  return true;
 }
-}  // namespace doodle::launch
+}  // namespace doodle

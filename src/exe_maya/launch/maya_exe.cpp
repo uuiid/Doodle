@@ -11,12 +11,11 @@
 #include <exe_maya/core/maya_lib_guard.h>
 #include <exe_maya/facet/cloth_sim.h>
 #include <exe_maya/facet/export_fbx.h>
-#include <exe_maya/facet/inspect_file.h>
 #include <exe_maya/facet/export_rig_facet.h>
+#include <exe_maya/facet/inspect_file.h>
 #include <exe_maya/facet/replace_file.h>
-namespace doodle::launch {
-
-bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std::shared_ptr<void>> &in_vector) {
+namespace doodle {
+bool maya_exe_main::init() {
   static constexpr auto cloth_sim_config{"cloth_sim"};
   static constexpr auto export_fbx_config{"export_fbx"};
   static constexpr auto replace_file_config{"replace_file"};
@@ -60,10 +59,10 @@ bool maya_exe_launcher_t::operator()(const argh::parser &in_arh, std::vector<std
 
   else {
     default_logger_raw()->error("没有寻找到正确的指示标帜");
-    return true;
+    return false;
   }
 
-  return false;
+  return true;
 }
 
-}  // namespace doodle::launch
+}  // namespace doodle

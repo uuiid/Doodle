@@ -19,33 +19,26 @@
 namespace doodle {
 
 void app_base::cancellation_signals::emit(boost::asio::cancellation_type ct) {
-  std::lock_guard<std::mutex> _(mtx);
+  std::lock_guard _(mtx);
 
   for (auto& sig : sigs) sig.emit(ct);
 }
 
 boost::asio::cancellation_slot app_base::cancellation_signals::slot() {
-  std::lock_guard<std::mutex> _(mtx);
+  std::lock_guard _(mtx);
 
   auto itr = std::find_if(sigs.begin(), sigs.end(), [](boost::asio::cancellation_signal& sig) {
     return !sig.slot().has_handler();
   });
 
-  if (itr != sigs.end())
-    return itr->slot();
-  else
-    return sigs.emplace_back().slot();
+  if (itr != sigs.end()) return itr->slot();
+  return sigs.emplace_back().slot();
 }
 
 app_base* app_base::self = nullptr;
-
+bool app_base::init() { return false; }
 app_base::app_base(int argc, const char* const argv[])
-    : p_title(
-          boost::locale::conv::utf_to_utf<wchar_t>(fmt::format("doodle {}", version::build_info::get().version_str))
-      ),
-      stop_(false),
-      lib_ptr(std::make_shared<doodle_lib>()),
-      arg_{argc, argv} {
+    : stop_(false), lib_ptr(std::make_shared<doodle_lib>()), arg_{argc, argv} {
   self = this;
   default_logger_raw()->log(log_loc(), level::warn, "开始初始化基本配置");
   default_logger_raw()->flush();
@@ -78,6 +71,7 @@ app_base::~app_base() = default;
 app_base& app_base::Get() { return *self; }
 app_base* app_base::GetPtr() { return self; }
 std::int32_t app_base::run() {
+  stop_ = !init();
   if (stop_) return 0;
 
   if (!use_multithread_) {
@@ -123,10 +117,10 @@ std::int32_t app_base::poll_one() {
   return 0;
 }
 void app_base::stop_app(std::int32_t in_exit_code) {
+  stop_     = true;
   exit_code = in_exit_code;
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   on_cancel.emit();
-  stop_ = true;
   on_stop();
   facets_.clear();
   if (sig_ptr) sig_ptr->cancel();

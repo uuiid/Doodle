@@ -6,16 +6,13 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <argh.h>
-namespace doodle::launch {
+namespace doodle {
 
-class maya_exe_launcher_t {
+class maya_exe_main : public app_base {
  public:
-  maya_exe_launcher_t()  = default;
-  ~maya_exe_launcher_t() = default;
+  using app_base::app_base;
 
-  bool operator()(const argh::parser& in_arh, std::vector<std::shared_ptr<void>>& in_vector);
-
- private:
+  bool init() override;
 };
 
-}  // namespace doodle::launch
+}  // namespace doodle

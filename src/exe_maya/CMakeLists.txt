@@ -35,7 +35,6 @@ target_compile_definitions(doodle_maya_exe
 # target_link_options(doodle_maya_exe PUBLIC /MAP:test.txt)
 target_link_options(doodle_maya_exe
         PUBLIC
-        /ENTRY:mainCRTStartup
         $<$<CXX_COMPILER_ID:MSVC>:/STACK:16777216>
 
 )

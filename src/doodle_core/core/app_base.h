@@ -37,7 +37,6 @@ class DOODLE_CORE_API app_base {
   static app_base* self;
   doodle_lib_ptr lib_ptr;
 
-  std::wstring p_title;
   argh::parser arg_;
   std::vector<std::shared_ptr<void>> facets_;
 
@@ -50,6 +49,8 @@ class DOODLE_CORE_API app_base {
 
   std::shared_ptr<signal_t> sig_ptr;
   bool use_multithread_{false};
+  /// 初始化函数, 返回true继续运行, 返回false退出
+  virtual bool init();
 
  public:
   explicit app_base(int argc, const char* const argv[]);
@@ -82,8 +83,6 @@ class DOODLE_CORE_API app_base {
   static app_base* GetPtr();
 
   static void write_current_error_tmp_dir();
-
-  inline bool is_stop() const { return stop_; }
 };
 
 /**
