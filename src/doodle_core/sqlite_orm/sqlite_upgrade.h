@@ -16,6 +16,7 @@ class sqlite_upgrade {
   virtual void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) = 0;
 };
 
+std::shared_ptr<sqlite_upgrade> upgrade_init(const FSys::path& in_db_path);
 std::shared_ptr<sqlite_upgrade> upgrade_1(const FSys::path& in_db_path);
 
 }  // namespace doodle::details

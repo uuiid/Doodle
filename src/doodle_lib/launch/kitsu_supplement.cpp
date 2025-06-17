@@ -214,10 +214,6 @@ bool kitsu_supplement_t::operator()(const argh::parser& in_arh, std::vector<std:
     }
   }
 
-  if (in_arh["init"]) {
-    return http::kitsu::init_context(), false;
-  }
-
   l_scan->start();
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);

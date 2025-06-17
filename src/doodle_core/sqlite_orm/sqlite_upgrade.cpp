@@ -10,6 +10,39 @@
 #include <sqlite_orm/sqlite_orm.h>
 namespace doodle::details {
 
+struct upgrade_init_t : sqlite_upgrade {
+  // 0196eb9d5dc0727d8a751b05dea8494d
+  static constexpr uuid g_open_id{0x75, 0x5c, 0x9e, 0xdd, 0x94, 0x81, 0x41, 0x45,
+                                  0xab, 0x43, 0x21, 0x49, 0x1b, 0xdf, 0x27, 0x39};
+  // 755c9edd-9481-4145-ab43-21491bdf2739
+  static constexpr uuid g_lable_id{0x01, 0x96, 0xeb, 0x9d, 0x5d, 0xc0, 0x72, 0x7d,
+                                   0x8a, 0x75, 0x1b, 0x05, 0xde, 0xa8, 0x49, 0x4d};
+  // 5159f210-7ec8-40e3-b8c9-2a06d0b4b116
+  static constexpr uuid g_closed_id{0x51, 0x59, 0xf2, 0x10, 0x7e, 0xc8, 0x40, 0xe3,
+                                    0xb8, 0xc9, 0x2a, 0x06, 0xd0, 0xb4, 0xb1, 0x16};
+  explicit upgrade_init_t(const FSys::path& in_path) {}
+  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    if (in_data->uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
+      auto l_label      = std::make_shared<assets_helper::database_t>();
+      l_label->uuid_id_ = g_lable_id;
+      l_label->label_   = "标签";
+      in_data->install_unsafe<assets_helper::database_t>(l_label);
+    }
+    if (in_data->uuid_to_id<project_status>(g_open_id) == 0) {
+      auto l_s    = std::make_shared<project_status>();
+      l_s->name_  = "Open";
+      l_s->color_ = "#000000";
+      in_data->install_unsafe<project_status>(l_s);
+    }
+    if (in_data->uuid_to_id<project_status>(g_closed_id) == 0) {
+      auto l_s    = std::make_shared<project_status>();
+      l_s->name_  = "Closed";
+      l_s->color_ = "#000000";
+      in_data->install_unsafe<project_status>(l_s);
+    }
+  }
+};
+
 struct upgrade_1_t : sqlite_upgrade {
   struct impl_data {
     std::int32_t id_{};
@@ -41,8 +74,7 @@ struct upgrade_1_t : sqlite_upgrade {
   explicit upgrade_1_t(const FSys::path& in_path) {
     using namespace sqlite_orm;
     auto l_p = make_storage(
-        in_path.generic_string(),
-        connection_control{},
+        in_path.generic_string(), connection_control{},
         make_table(
             "assets_file_tab",  //
             make_column("id", &impl_data::id_, primary_key()),
@@ -75,6 +107,9 @@ struct upgrade_1_t : sqlite_upgrade {
   }
   ~upgrade_1_t() override = default;
 };
+std::shared_ptr<sqlite_upgrade> upgrade_init(const FSys::path& in_db_path) {
+  return std::make_shared<upgrade_init_t>(in_db_path);
+}
 std::shared_ptr<sqlite_upgrade> upgrade_1(const FSys::path& in_db_path) {
   return std::make_shared<upgrade_1_t>(in_db_path);
 }

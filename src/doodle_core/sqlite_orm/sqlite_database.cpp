@@ -45,19 +45,10 @@ auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
 
 }  // namespace
 void sqlite_database::load(const FSys::path& in_path) {
-  auto l_list = {details::upgrade_1(in_path)};
+  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
   impl_       = std::make_shared<sqlite_database_impl>(in_path);
   for (auto&& i : l_list) {
     i->upgrade(impl_);
-  }
-  // 0196eb9d5dc0727d8a751b05dea8494d
-  constexpr uuid g_lable_id{0x01, 0x96, 0xeb, 0x9d, 0x5d, 0xc0, 0x72, 0x7d,
-                            0x8a, 0x75, 0x1b, 0x05, 0xde, 0xa8, 0x49, 0x4d};
-  if (impl_->uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
-    auto l_label      = std::make_shared<assets_helper::database_t>();
-    l_label->uuid_id_ = g_lable_id;
-    l_label->label_   = "标签";
-    impl_->install_unsafe<assets_helper::database_t>(l_label);
   }
 }
 

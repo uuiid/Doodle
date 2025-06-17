@@ -128,6 +128,10 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg(std::make_shared<data_asset_delete_>())
 
       ;
+
+  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
+  l_sid_ctx->on("/socket.io/");
+  socket_io::create_socket_io(*l_router, l_sid_ctx);
 #endif
   (*l_router)
       .reg(std::make_shared<deepseek_key_get>())
@@ -178,26 +182,7 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
 }
 
 namespace kitsu {
-namespace {
 
-boost::asio::awaitable<void> init_context_impl() {
-  auto& l_data = g_ctx().get<sqlite_database>();
-  if (l_data.get_all<project_status>().size() == 0) {
-    auto l_s      = std::make_shared<project_status>();
-    l_s->uuid_id_ = from_uuid_str("755c9edd-9481-4145-ab43-21491bdf2739");
-    l_s->name_    = "Open";
-    l_s->color_   = "#000000";
-    co_await l_data.install(l_s);
-    l_s           = std::make_shared<project_status>();
-    l_s->uuid_id_ = from_uuid_str("5159f210-7ec8-40e3-b8c9-2a06d0b4b116");
-    l_s->name_    = "Closed";
-    l_s->color_   = "#000000";
-    co_await l_data.install(l_s);
-  }
-  app_base::Get().stop_app();
-}
-}  // namespace
-void init_context() { boost::asio::co_spawn(g_strand(), init_context_impl(), boost::asio::detached); }
 
 http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_handle) {
   detail::http_client_data_base_ptr l_client_data{};

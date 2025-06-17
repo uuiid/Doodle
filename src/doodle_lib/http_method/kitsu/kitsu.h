@@ -39,11 +39,6 @@ doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_na
 
 uuid get_url_project_id(const boost::urls::url& in_url);
 
-/**
- * @brief 初始化上下文, 项目, 任务类别
- */
-void init_context();
-
 std::string_view mime_type(const FSys::path& in_ext);
 void assets_reg2(http_route& in_http_route);
 void project_reg(http_route& in_http_route);
