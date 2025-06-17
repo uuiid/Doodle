@@ -98,6 +98,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::c
   get_person(in_handle);
   co_return in_handle->make_msg(nlohmann::json::array());
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_::callback(session_data_ptr in_handle) {
+  auto l_ptr = get_person(in_handle);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_handle->capture_->get_uuid()));
+  l_ptr->check_delete_access(l_ass->project_id_);
+  bool l_force{};
+  for (auto&& l_i : in_handle->url_.params()) {
+    if (l_i.key == "force") l_force = true;
+  }
+  if (!l_force) {
+    l_ass->canceled_ = true;
+    co_await l_sql.install(l_ass);
+    co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
+  }
+  auto l_task     = l_sql.get_tasks_for_entity(l_ass->uuid_id_);
+  auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
+  co_await l_sql.remove<task>(l_task_ids);
+  co_await l_sql.remove<entity>(l_ass->uuid_id_);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
+}
+
 }  // namespace doodle::http
 
 namespace doodle::http::kitsu {

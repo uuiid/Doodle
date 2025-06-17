@@ -87,10 +87,10 @@ void http_jwt_fun::http_jwt_t::check_task_department_access(const task& in_task_
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
-void http_jwt_fun::http_jwt_t::check_delete_access(const task& in_task_id) const {
+void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) const {
   if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::manager) return;
   auto l_sql = g_ctx().get<sqlite_database>();
-  if (!l_sql.is_person_in_project(person_, in_task_id.project_id_))
+  if (!l_sql.is_person_in_project(person_, in_project_id))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 

@@ -1031,6 +1031,11 @@ std::optional<comment> sqlite_database::get_last_comment(const uuid& in_task_id)
   if (l_r.empty()) return std::nullopt;
   return l_r.front();
 }
+std::vector<task> sqlite_database::get_tasks_for_entity(const uuid& in_asset_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<task>(where(c(&task::entity_id_) == in_asset_id));
+  return l_t;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
@@ -1256,6 +1261,86 @@ DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 
+template <>
+boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uuid>& in_data) {
+  using namespace sqlite_orm;
+
+  auto l_comments = impl_->storage_any_.select(&comment::uuid_id_, where(in(&comment::object_id_, in_data)));
+  auto l_subscription =
+      impl_->storage_any_.select(&subscription::uuid_id_, where(in(&subscription::task_id_, in_data)));
+  auto l_preview_file =
+      impl_->storage_any_.select(&preview_file::uuid_id_, where(in(&preview_file::task_id_, in_data)));
+  auto l_notification =
+      impl_->storage_any_.select(&notification::uuid_id_, where(in(&notification::task_id_, in_data)));
+  auto l_previews_link = impl_->storage_any_.select(
+      &comment_preview_link::preview_file_id_, where(in(&comment_preview_link::comment_id_, l_comments))
+  );
+  auto l_attachments =
+      impl_->storage_any_.select(&attachment_file::uuid_id_, where(in(&attachment_file::comment_id_, l_comments)));
+  DOODLE_TO_SQLITE_THREAD_2();
+  auto l_g = impl_->storage_any_.transaction_guard();
+
+  impl_->storage_any_.remove_all<comment_preview_link>(where(in(&comment_preview_link::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<comment_mentions>(where(in(&comment_mentions::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<comment_department_mentions>(
+      where(in(&comment_department_mentions::comment_id_, l_comments))
+  );
+  impl_->storage_any_.remove_all<comment_acknoledgments>(where(in(&comment_acknoledgments::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<notification>(where(in(&notification::uuid_id_, l_notification)));
+  impl_->storage_any_.remove_all<notification>(where(in(&notification::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_preview_file)));
+  impl_->storage_any_.remove_all<attachment_file>(where(in(&attachment_file::uuid_id_, l_attachments)));
+  impl_->storage_any_.remove_all<comment>(where(in(&comment::uuid_id_, l_comments)));
+
+  impl_->storage_any_.remove_all<subscription>(where(in(&subscription::uuid_id_, l_subscription)));
+  impl_->storage_any_.remove_all<task>(where(in(&task::uuid_id_, in_data)));
+  l_g.commit();
+
+  DOODLE_TO_SELF();
+}
+
+template <>
+boost::asio::awaitable<void> sqlite_database::remove<task>(const uuid& in_data) {
+  using namespace sqlite_orm;
+
+  auto l_comments = impl_->storage_any_.select(&comment::uuid_id_, where(c(&comment::object_id_) = in_data));
+  auto l_subscription =
+      impl_->storage_any_.select(&subscription::uuid_id_, where(c(&subscription::task_id_) = in_data));
+  auto l_preview_file =
+      impl_->storage_any_.select(&preview_file::uuid_id_, where(c(&preview_file::task_id_) = in_data));
+  auto l_notification =
+      impl_->storage_any_.select(&notification::uuid_id_, where(c(&notification::task_id_) = in_data));
+  auto l_previews_link = impl_->storage_any_.select(
+      &comment_preview_link::preview_file_id_, where(in(&comment_preview_link::comment_id_, l_comments))
+  );
+  auto l_attachments =
+      impl_->storage_any_.select(&attachment_file::uuid_id_, where(in(&attachment_file::comment_id_, l_comments)));
+  DOODLE_TO_SQLITE_THREAD_2();
+  auto l_g = impl_->storage_any_.transaction_guard();
+
+  impl_->storage_any_.remove_all<comment_preview_link>(where(in(&comment_preview_link::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<comment_mentions>(where(in(&comment_mentions::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<comment_department_mentions>(
+      where(in(&comment_department_mentions::comment_id_, l_comments))
+  );
+  impl_->storage_any_.remove_all<comment_acknoledgments>(where(in(&comment_acknoledgments::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<notification>(where(in(&notification::uuid_id_, l_notification)));
+  impl_->storage_any_.remove_all<notification>(where(in(&notification::comment_id_, l_comments)));
+  impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_preview_file)));
+  impl_->storage_any_.remove_all<attachment_file>(where(in(&attachment_file::uuid_id_, l_attachments)));
+  impl_->storage_any_.remove_all<comment>(where(in(&comment::uuid_id_, l_comments)));
+
+  impl_->storage_any_.remove_all<subscription>(where(in(&subscription::uuid_id_, l_subscription)));
+  impl_->storage_any_.remove_all<task>(where(c(&task::uuid_id_) = in_data));
+  l_g.commit();
+
+  DOODLE_TO_SELF();
+}
+template <>
+boost::asio::awaitable<void> sqlite_database::remove<entity>(const uuid& in_data) {
+  // using namespace sqlite_orm;
+  return impl_->remove<entity>(in_data);
+}
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<comment>(const uuid& in_data) {
   using namespace sqlite_orm;

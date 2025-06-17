@@ -182,6 +182,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(task_comment, delete_, "/api/data/tasks/{task_id}/comments/{comment_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_asset, delete_, "/api/data/assets/{id}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 // clang-format on
 

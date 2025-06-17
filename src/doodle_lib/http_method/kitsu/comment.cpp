@@ -141,7 +141,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delet
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_handle->capture_->get_uuid("task_id")));
   auto l_person = get_person(in_handle);
-  l_person->check_delete_access(*l_task);
+  l_person->check_delete_access(l_task->project_id_);
   co_await l_sql.remove<comment>(in_handle->capture_->get_uuid("comment_id"));
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {

@@ -185,5 +185,7 @@ class sqlite_database {
   std::int64_t get_next_position(const uuid& in_task_id, const std::int64_t& in_revision);
   /// 获取task中的最后一条评论
   std::optional<comment> get_last_comment(const uuid& in_task_id);
+  /// 获取资产对应的 task
+  std::vector<task> get_tasks_for_entity(const uuid& in_asset_id);
 };
 }  // namespace doodle
