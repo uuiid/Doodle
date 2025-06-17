@@ -3,9 +3,8 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/core/app_base.h>
 
-#include <argh.h>
 namespace doodle {
 
 class maya_exe_main : public app_base {

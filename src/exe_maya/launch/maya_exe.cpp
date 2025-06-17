@@ -24,7 +24,7 @@ bool maya_exe_main::init() {
 
   default_logger_raw()->log(log_loc(), level::warn, "寻找到自身exe {}", register_file_type::program_location());
   nlohmann::json l_json;
-  if (auto l_str = in_arh({"config"}); l_str) {
+  if (auto l_str = arg_({"config"}); l_str) {
     try {
       l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_str.str())});
     } catch (...) {
@@ -33,28 +33,28 @@ bool maya_exe_main::init() {
     }
   }
 
-  in_vector.emplace_back(std::make_shared<maya_plug::maya_lib_guard>());
+  facets_.emplace_back(std::make_shared<maya_plug::maya_lib_guard>());
 
-  if (in_arh[cloth_sim_config]) {
+  if (arg_[cloth_sim_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::cloth_sim>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
-    in_vector.emplace_back(l_ptr);
-  } else if (in_arh[export_fbx_config]) {
+    facets_.emplace_back(l_ptr);
+  } else if (arg_[export_fbx_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::export_fbx_facet>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
-    in_vector.emplace_back(l_ptr);
-  } else if (in_arh[replace_file_config]) {
+    facets_.emplace_back(l_ptr);
+  } else if (arg_[replace_file_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::replace_file_facet>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
-    in_vector.emplace_back(l_ptr);
-  } else if (in_arh[inspect_file_config]) {
+    facets_.emplace_back(l_ptr);
+  } else if (arg_[inspect_file_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::inspect_file>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
-    in_vector.emplace_back(l_ptr);
-  } else if (in_arh[export_rig_config]) {
+    facets_.emplace_back(l_ptr);
+  } else if (arg_[export_rig_config]) {
     auto l_ptr = std::make_shared<doodle::maya_plug::export_rig_facet>();
     boost::asio::post(g_io_context(), [l_json, l_ptr]() { l_ptr->post(l_json); });
-    in_vector.emplace_back(l_ptr);
+    facets_.emplace_back(l_ptr);
   }
 
   else {
