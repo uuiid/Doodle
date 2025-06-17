@@ -67,16 +67,6 @@
       }
     },
     {
-      "name": "Ninja_debug_kitsu",
-      "inherits": "Ninja_build",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "BUILD_USD": "ON",
-        "DOODLE_KITSU": "ON",
-        "PXR_USD_ROOT": "E:/Doodle/external/USD/debug"
-      }
-    },
-    {
       "name": "vs2022",
       "inherits": "Ninja_debug",
       "generator": "Visual Studio 17 2022",
@@ -100,7 +90,6 @@
       "targets": [
         "generate_token",
         "test_main",
-        "doodle_auto_light_process",
         "doodle_kitsu_supplement"
       ]
     },
@@ -132,8 +121,6 @@
       "jobs": 10,
       "targets": [
         "generate_token",
-        "doodle_auto_light_client",
-        "doodle_auto_light_process",
         "doodle_kitsu_supplement"
       ]
     },
