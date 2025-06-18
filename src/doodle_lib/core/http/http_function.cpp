@@ -18,9 +18,6 @@ boost::asio::awaitable<void> http_function_base_t::websocket_callback(
 }
 bool http_function_base_t::has_websocket() const { return false; }
 bool http_function_base_t::is_proxy() const { return false; }
-boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
-  return callback_(in_handle);
-}
 
 std::vector<http_function::capture_data_t> http_function::set_cap_bit(std::string& in_str) {
   std::vector<std::string> l_vector{};

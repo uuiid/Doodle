@@ -80,7 +80,6 @@ class http_function : public http_function_base_t {
   static std::vector<capture_data_t> set_cap_bit(std::string& in_str);
 
   const std::vector<capture_data_t> capture_vector_;
-  std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> callback_;
 
   explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
       : http_function_base_t(in_verb), capture_vector_(set_cap_bit(in_url)) {}
@@ -88,14 +87,7 @@ class http_function : public http_function_base_t {
  public:
   using capture_t = capture_t;
 
-  explicit http_function(
-      boost::beast::http::verb in_verb, std::string in_url,
-      std::function<boost::asio::awaitable<boost::beast::http::message_generator>(session_data_ptr)> in_callback
-  )
-      : http_function_base_t(in_verb), capture_vector_(set_cap_bit(in_url)), callback_(std::move(in_callback)) {}
-
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 };
 
 #define DOODLE_HTTP_FUN_CONST(fun_name, verb_, url, base_fun, ...)                         \

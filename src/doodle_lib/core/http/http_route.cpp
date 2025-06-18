@@ -9,7 +9,9 @@
 namespace doodle::http {
 
 namespace {
-boost::asio::awaitable<boost::beast::http::message_generator> options_function_impl(session_data_ptr in_handle) {
+
+DOODLE_HTTP_FUN(options_function, options, "", http_function)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
       boost::beast::http::status::ok, in_handle->version_
   };
@@ -27,19 +29,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> options_function_i
   l_response.prepare_payload();
   co_return l_response;
 }
+DOODLE_HTTP_FUN_END()
 
-boost::asio::awaitable<boost::beast::http::message_generator> not_function_impl(session_data_ptr in_handle) {
+DOODLE_HTTP_FUN(not_function, get, "", http_function)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   static boost::system::error_code l_error_code{ERROR_SERVICE_NOT_FOUND, boost::system::system_category()};
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_error_code);
 }
+DOODLE_HTTP_FUN_END()
 
 }  // namespace
 
 http_route::http_route()
-    : not_function(std::make_shared<http_function>(
-          boost::beast::http::verb::get, "", not_function_impl
-      )),
-      options_function(std::make_shared<http_function>(boost::beast::http::verb::options, "", options_function_impl))
+    : not_function(std::make_shared<not_function_get>()),
+      options_function(std::make_shared<options_function_options>())
 
 {}
 
