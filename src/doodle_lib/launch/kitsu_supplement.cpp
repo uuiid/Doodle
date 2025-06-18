@@ -217,7 +217,8 @@ bool kitsu_supplement_main::init() {
 
   l_scan->start();
   // 初始化路由
-  auto l_rout_ptr = http::create_kitsu_route(l_args.kitsu_front_end_path_);
+  auto l_rout_ptr = l_my_backend ? http::create_kitsu_route_2(l_args.kitsu_front_end_path_)
+                                 : http::create_kitsu_route(l_args.kitsu_front_end_path_);
   // 开始运行服务器
   http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
 
