@@ -24,8 +24,9 @@ struct key_t : boost::less_than_comparable<key_t> {
   }
 };
 }  // namespace
-
-boost::asio::awaitable<boost::beast::http::message_generator> file_association_get(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_association_get::callback(
+    session_data_ptr in_handle
+) {
   auto l_logger           = in_handle->logger_;
   boost::uuids::uuid l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("uuid"));
   auto& l_map             = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
@@ -43,7 +44,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_association_g
   l_logger->log(log_loc(), level::info, "file not found");
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_get::callback(session_data_ptr in_handle) {
   auto l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
   nlohmann::json l_json;
 
@@ -94,13 +96,4 @@ boost::asio::awaitable<boost::beast::http::message_generator> file_list_get(sess
   co_return in_handle->make_msg(l_json.dump());
 }
 
-void reg_file_association_http(http_route& in_route) {
-  in_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/file_association/{uuid}", file_association_get
-          )
-      )
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/doodle/file", file_list_get));
-}
 }  // namespace doodle::http

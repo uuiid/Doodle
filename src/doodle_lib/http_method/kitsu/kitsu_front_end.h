@@ -5,8 +5,8 @@
 #pragma once
 #include <doodle_lib/core/http/http_function.h>
 
-namespace doodle::kitsu {
-class kitsu_front_end : public doodle::http::http_function_base_t {
+namespace doodle::http {
+class kitsu_front_end : public http_function_base_t {
  protected:
   std::shared_ptr<FSys::path> root_path_{};
 
@@ -34,4 +34,21 @@ class kitsu_proxy_url : public doodle::http::http_function_base_t {
   boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 };
 
-}  // namespace doodle::kitsu
+class get_files_kitsu_front_end : public kitsu_front_end {
+ public:
+  explicit get_files_kitsu_front_end(const std::shared_ptr<FSys::path>& in_root)
+      : kitsu_front_end(boost::beast::http::verb::get) {
+    root_path_ = in_root;
+  }
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
+};
+class get_files_head_kitsu_front_end : public kitsu_front_end {
+ public:
+  explicit get_files_head_kitsu_front_end(const std::shared_ptr<FSys::path>& in_root)
+      : kitsu_front_end(boost::beast::http::verb::head) {
+    root_path_ = in_root;
+  }
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+};
+
+}  // namespace doodle::http

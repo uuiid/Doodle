@@ -5,7 +5,6 @@ target_sources(
         computing_time.h
         dingding_attendance.h
         file_association.h
-        kitsu_front_end_reg.h
         tool_version.h
         up_file.h
         http_jwt_fun.h
@@ -16,7 +15,6 @@ target_sources(
         dingding_attendance.cpp
         file_association.cpp
         computer_reg_data.cpp
-        kitsu_front_end_reg.cpp
         tool_version.cpp
         up_file.cpp
         http_jwt_fun.cpp
