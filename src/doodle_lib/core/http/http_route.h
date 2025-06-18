@@ -32,6 +32,10 @@ class http_route {
 
   // 注册路由
   http_route& reg(const http_function_ptr in_function);
+  template <typename T, typename... Args>
+  http_route& reg_t(Args&&... args) {
+    return reg(std::make_shared<T>(std::forward<Args>(args)...));
+  }
   // 路由分发
   virtual http_function_ptr operator()(
       boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle

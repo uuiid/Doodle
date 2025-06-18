@@ -12,9 +12,8 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-namespace doodle::http::kitsu {
-namespace {
-boost::asio::awaitable<boost::beast::http::message_generator> config(session_data_ptr in_handle) {
+namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_config_get::callback(session_data_ptr in_handle) {
   co_return in_handle->make_msg(R"(
 {
     "is_self_hosted": true,
@@ -28,13 +27,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> config(session_dat
 }
 )"s);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> authenticated(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_authenticated_get::callback(
+    session_data_ptr in_handle
+) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, R"({
     "msg": "Missing JWT in cookies or headers Missing cookie \"access_token_cookie\"; Missing Authorization Header"
 })"s);
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_user_context_get::callback(
+    session_data_ptr in_handle
+) {
   nlohmann::json l_json{};
   l_json["projects"] = nlohmann::json::parse(R"([
   {
@@ -445,10 +447,5 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
 ])");
   co_return in_handle->make_msg(l_json.dump());
 }
-}  // namespace
-void epiboly_reg(http_route& in_http_route) {
-  in_http_route.reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/config", config))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", authenticated))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context));
-}
-}  // namespace doodle::http::kitsu
+
+}  // namespace doodle::http

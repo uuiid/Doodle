@@ -52,7 +52,9 @@ auto create_clock_leave(const chrono::year_month_day& in_date) {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_post(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_post::callback(
+    session_data_ptr in_handle
+) {
   auto l_logger = in_handle->logger_;
 
   if (in_handle->content_type_ != detail::content_type::application_json) {
@@ -196,8 +198,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   l_json = *l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::callback(
+    session_data_ptr in_handle
+) {
   std::vector<chrono::local_days> l_date_list{};
   boost::uuids::uuid l_user_uuid = from_uuid_str(in_handle->capture_->get("user_id"));
   {
@@ -230,16 +233,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   l_json = l_list;
   co_return in_handle->make_msg(l_json.dump());
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_company_get(session_data_ptr in_handle) {
-  auto l_cs = g_ctx().get<dingding::dingding_company>();
-  nlohmann::json l_json{};
-  for (auto&& [l_key, l_value] : l_cs.company_info_map_) {
-    l_json.emplace_back(l_value);
-  }
-  co_return in_handle->make_msg(l_json.dump());
-}
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_add(
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_post::callback(
     session_data_ptr in_handle
 ) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
@@ -264,7 +258,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_modify(
+
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_put::callback(
     session_data_ptr in_handle
 ) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
@@ -287,7 +282,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete(
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete_::callback(
     session_data_ptr in_handle
 ) {
   auto l_id   = from_uuid_str(in_handle->capture_->get("id"));
@@ -295,32 +290,5 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_await l_sql.remove<attendance_helper::database_t>(l_id);
   co_return in_handle->make_msg((nlohmann::json{} = l_id).dump());
 }
-void reg_dingding_attendance(http_route& in_route) {
-  in_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/attendance/{user_id}", dingding_attendance_post
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/attendance/{user_id}/custom", dingding_attendance_custom_add
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::put, "api/doodle/attendance/custom/{id}", dingding_attendance_custom_modify
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::delete_, "api/doodle/attendance/custom/{id}", dingding_attendance_custom_delete
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/attendance/{user_id}/{date}", dingding_attendance_get
-          )
-      );
-}
+
 }  // namespace doodle::http

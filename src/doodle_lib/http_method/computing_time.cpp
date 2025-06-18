@@ -373,7 +373,10 @@ boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_tas
   }
   co_return tl::expected<nlohmann::json, std::string>{std::move(l_json_res)};
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post::callback(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -415,7 +418,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   } else
     co_return in_handle->make_msg(l_r->dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_add(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add_post::callback(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -481,7 +487,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   } else
     co_return in_handle->make_msg(l_r->dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_custom(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom_post::callback(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -536,7 +545,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   } else
     co_return in_handle->make_msg(l_r->dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_sort(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort_post::callback(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -587,7 +599,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   l_json_res["data"] = *l_block_sort;
   co_return in_handle->make_msg(l_json_res.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post_average(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average_post::callback(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -607,7 +622,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   l_json_res["data"] = *l_block;
   co_return in_handle->make_msg(l_json_res.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get::callback(session_data_ptr in_handle) {
   auto l_logger                   = in_handle->logger_;
 
   boost::uuids::uuid l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
@@ -624,8 +639,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
   } else
     co_return in_handle->make_msg(l_r->dump());
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::callback(
+    session_data_ptr in_handle
+) {
   auto l_logger = in_handle->logger_;
 
   if (in_handle->content_type_ != http::detail::content_type::application_json)
@@ -706,7 +722,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   co_return in_handle->make_msg(l_json_res.dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch_delete(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete_::callback(
+    session_data_ptr in_handle
+) {
   auto l_logger = in_handle->logger_;
 
   boost::uuids::uuid l_computing_time_id =
@@ -742,53 +760,4 @@ boost::asio::awaitable<void> recomputing_time(
   co_return co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 }
 
-void reg_computing_time(http_route& in_route) {
-  in_route
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_post
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/add",
-              computing_time_post_add
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/custom",
-              computing_time_post_custom
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/sort",
-              computing_time_post_sort
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::post, "api/doodle/computing_time/{user_id}/{year_month}/average",
-              computing_time_post_average
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::get, "api/doodle/computing_time/{user_id}/{year_month}", computing_time_get
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::patch, "api/doodle/computing_time/{user_id}/{year_month}/{task_id}",
-              computing_time_patch
-          )
-      )
-      .reg(
-          std::make_shared<http_function>(
-              boost::beast::http::verb::delete_, "api/doodle/computing_time/{computing_time_id}",
-              computing_time_patch_delete
-          )
-      );
-}
 }  // namespace doodle::http

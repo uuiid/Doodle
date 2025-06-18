@@ -4,9 +4,10 @@
 
 #pragma once
 #include <doodle_lib/core/http/http_route.h>
-
+#include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
 
-
-void tool_version_reg(http_route& in_route);
-} // namespace doodle::http
+DOODLE_HTTP_FUN(doodle_tool_version, get, "/api/doodle/tool/version", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+}  // namespace doodle::http
