@@ -28,6 +28,7 @@ struct kitsu_ctx_t {
 };
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root);
+http_route_ptr create_kitsu_route_2(const FSys::path& in_root);
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root);
 http_route_ptr create_kitsu_local_route();
 
@@ -40,10 +41,6 @@ doodle::details::assets_type_enum conv_assets_type_enum(const std::string& in_na
 uuid get_url_project_id(const boost::urls::url& in_url);
 
 std::string_view mime_type(const FSys::path& in_ext);
-void assets_reg2(http_route& in_http_route);
-void project_reg(http_route& in_http_route);
-void task_reg(http_route& in_http_route);
-void user_reg(http_route& in_http_route);
 
 }  // namespace kitsu
 void preview_reg(http_route& in_http_route);

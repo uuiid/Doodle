@@ -58,14 +58,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::ca
   co_return in_handle->make_msg((nlohmann::json{} = l_p).dump());
 }
 
-}  // namespace doodle::http
-
-namespace doodle::http::kitsu {
-
-namespace {
-
-boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated(session_data_ptr in_handle) {
-  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> forwarding_authenticated_get::callback(
+    session_data_ptr in_handle
+) {
+  detail::http_client_data_base_ptr l_client_data = kitsu::create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
 
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
@@ -101,7 +97,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_authenticated
 
   co_return std::move(l_res);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(session_data_ptr in_handle) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> forwarding_data_person_put::callback(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   uuid l_uuid  = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
@@ -123,7 +122,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
 
     co_await g_ctx().get<sqlite_database>().install(l_user);
   }
-  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+  detail::http_client_data_base_ptr l_client_data = kitsu::create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
   l_request.body() = l_json.dump();
   l_request.prepare_payload();
@@ -134,8 +133,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_persons_post(
   co_return std::move(l_res);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> user_context(session_data_ptr in_handle) {
-  detail::http_client_data_base_ptr l_client_data = create_kitsu_proxy(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> forwarding_data_user_context_get::callback(
+    session_data_ptr in_handle
+) {
+  detail::http_client_data_base_ptr l_client_data = kitsu::create_kitsu_proxy(in_handle);
   boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
 
   auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
@@ -178,11 +179,4 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context(sessi
   co_return std::move(l_res);
 }
 
-}  // namespace
-void user_reg(http_route& in_http_route) {
-  in_http_route
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/auth/authenticated", user_authenticated))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::put, "api/data/persons/{id}", user_persons_post))
-      .reg(std::make_shared<http_function>(boost::beast::http::verb::get, "api/data/user/context", user_context));
-}
-}  // namespace doodle::http::kitsu
+}  // namespace doodle::http
