@@ -40,10 +40,14 @@ namespace doodle::http {
 http_route_ptr create_kitsu_route(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
-  auto l_router = std::make_shared<kitsu::http_route_proxy>();
-  auto l_ctx    = g_ctx().get<kitsu_ctx_t>();
+  auto l_router   = std::make_shared<kitsu::http_route_proxy>();
+  auto l_ctx      = g_ctx().get<kitsu_ctx_t>();
   l_router->reg_proxy(std::make_shared<kitsu_proxy_url>("api"))
       .reg_proxy(std::make_shared<kitsu_proxy_url>("socket.io"));
+  l_router->reg_front_end(  // 前端
+          std::make_shared<get_files_kitsu_front_end>(l_root_ptr),
+          std::make_shared<get_files_head_kitsu_front_end>(l_root_ptr)
+  );
   (*l_router)
       /// 转发劫持后端
       .reg_t<forwarding_authenticated_get>()
@@ -92,11 +96,6 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg_t<computing_time_sort_post>()
       .reg_t<computing_time_average_post>()
 
-      // 前端
-      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
-      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr);
-
-  (*l_router)
       .reg(std::make_shared<deepseek_key_get>())
       .reg(std::make_shared<other::ke_ling_au_get>())
       .reg(std::make_shared<up_file_asset_image_post>())
@@ -109,8 +108,12 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
 
-  auto l_router = std::make_shared<kitsu::http_route_proxy>();
-  auto l_ctx    = g_ctx().get<kitsu_ctx_t>();
+  auto l_router   = std::make_shared<kitsu::http_route_proxy>();
+  auto l_ctx      = g_ctx().get<kitsu_ctx_t>();
+  l_router->reg_front_end(  // 前端
+          std::make_shared<get_files_kitsu_front_end>(l_root_ptr),
+          std::make_shared<get_files_head_kitsu_front_end>(l_root_ptr)
+  );
   (*l_router)
       // 我们自己的后端
       .reg(std::make_shared<model_library::context_get>())
@@ -157,10 +160,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg(std::make_shared<up_file_asset_image_post>())
       .reg(std::make_shared<up_file_asset_maya_post>())
       .reg(std::make_shared<up_file_asset_ue_post>())
-
-      // 前端
-      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
-      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr)
 
       /// 模拟 kitsu后端
       // post
@@ -256,15 +255,14 @@ http_route_ptr create_kitsu_local_route() {
 }
 
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
-  auto l_router = std::make_shared<kitsu::http_route_proxy>();
+  auto l_router   = std::make_shared<kitsu::http_route_proxy>();
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
-
+  l_router->reg_front_end(  // 前端
+          std::make_shared<get_files_kitsu_front_end>(l_root_ptr),
+          std::make_shared<get_files_head_kitsu_front_end>(l_root_ptr)
+  );
   (*l_router)
       .reg_t<doodle_tool_version_get>()
-
-      // 前端
-      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
-      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr)
 
       // 外包
       .reg_t<epiboly_config_get>()
