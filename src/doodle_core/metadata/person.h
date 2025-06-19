@@ -4,6 +4,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
+
 #include <magic_enum.hpp>
 namespace doodle {
 enum class person_role_type {
@@ -22,7 +23,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                        {person_role_type::client, "client"},
                        {person_role_type::vendor, "vendor"}}
 )
-auto format_as(const person_role_type& in_role) { return magic_enum::enum_name(in_role); }
+inline auto format_as(const person_role_type& in_role) { return magic_enum::enum_name(in_role); }
 enum class contract_types {
   open_ended,
   fixed_term,
