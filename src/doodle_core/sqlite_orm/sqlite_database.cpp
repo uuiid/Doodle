@@ -1359,5 +1359,6 @@ boost::asio::awaitable<void> sqlite_database::remove<comment>(const uuid& in_dat
   DOODLE_TO_SELF();
 }
 DOODLE_REMOVE_BY_UUID(server_task_info)
+DOODLE_REMOVE_BY_UUID(project_task_status_link)
 
 }  // namespace doodle
