@@ -71,7 +71,10 @@ struct project_task_status_link {
   uuid project_id_;
   uuid task_status_id_;
   std::optional<std::int32_t> priority_;
-  std::vector<person_role_type> roles_for_board_;
+  std::vector<person_role_type> roles_for_board_{
+      person_role_type::user,    person_role_type::admin,  person_role_type::supervisor,
+      person_role_type::manager, person_role_type::client, person_role_type::vendor,
+  };
 
   // form json
   friend void from_json(const nlohmann::json& j, project_task_status_link& p) {
@@ -82,9 +85,9 @@ struct project_task_status_link {
   }
   // to json
   friend void to_json(nlohmann::json& j, const project_task_status_link& p) {
-    j["project_id"] = p.project_id_;
-    j["task_status_id"] = p.task_status_id_;
-    j["priority"] = p.priority_;
+    j["project_id"]      = p.project_id_;
+    j["task_status_id"]  = p.task_status_id_;
+    j["priority"]        = p.priority_;
     j["roles_for_board"] = p.roles_for_board_;
   }
 };
