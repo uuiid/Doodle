@@ -185,6 +185,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_asset, delete_, "/api/data/assets/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(project_settings_task_types, delete_, "api/data/projects/{project_id}/settings/task-types/{task_type_id}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 // clang-format on
 

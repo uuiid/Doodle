@@ -69,6 +69,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
       nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(l_project_id)}.dump()
   );
 }
+boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_delete_::callback(
+    session_data_ptr in_handle
+) {
+  auto l_ptr        = get_person(in_handle);
+  auto l_project_id = in_handle->capture_->get_uuid("project_id");
+  l_ptr->is_project_manager(l_project_id);
+  auto l_json = in_handle->get_json();
+  project_task_type_link l_prj_task_type_link;
+  l_json.get_to(l_prj_task_type_link);
+  if (auto l_t =
+          g_ctx().get<sqlite_database>().get_project_task_type_link(l_project_id, l_prj_task_type_link.task_type_id_);
+      l_t)
+    co_await g_ctx().get<sqlite_database>().remove<project_task_status_link>(l_t->uuid_id_);
+  co_return in_handle->make_msg_204();
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_status_post::callback(
     session_data_ptr in_handle
 ) {

@@ -219,6 +219,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       // delete
       .reg(std::make_shared<task_comment_delete_>())
       .reg(std::make_shared<data_asset_delete_>())
+      .reg(std::make_shared<project_settings_task_types_delete_>())
 
       ;
 
