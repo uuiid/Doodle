@@ -18,6 +18,21 @@
 #include "kitsu.h"
 
 namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links_post::callback(
+    session_data_ptr in_handle
+) {
+  auto l_person           = get_person(in_handle);
+  auto l_sql              = g_ctx().get<sqlite_database>();
+  auto l_json             = in_handle->get_json();
+  auto l_task_status_link = std::make_shared<project_task_status_link>(
+      l_sql.get_project_task_status_link(l_json["project_id"].get<uuid>(), l_json["task_status_id"].get<uuid>())
+          .value_or(project_task_status_link{})
+  );
+  if (l_task_status_link->uuid_id_.is_nil()) l_task_status_link->uuid_id_ = core_set::get_set().get_uuid();
+  l_json.get_to(*l_task_status_link);
+  co_await l_sql.install(l_task_status_link);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_task_status_link);
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::callback(session_data_ptr in_handle) {
   auto l_person = get_person(in_handle);

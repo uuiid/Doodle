@@ -26,6 +26,7 @@ struct entities_and_tasks_t;
 struct department;
 struct comment;
 struct task;
+struct project_task_status_link;
 
 namespace attendance_helper {
 struct database_t;

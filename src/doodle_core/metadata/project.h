@@ -60,7 +60,6 @@ struct project_task_type_link {
 
   // form json
   friend void from_json(const nlohmann::json& j, project_task_type_link& p) {
-
     j.at("task_type_id").get_to(p.task_type_id_);
     if (j.contains("priority")) j.at("priority").get_to(p.priority_);
   }
@@ -73,6 +72,21 @@ struct project_task_status_link {
   uuid task_status_id_;
   std::optional<std::int32_t> priority_;
   std::vector<person_role_type> roles_for_board_;
+
+  // form json
+  friend void from_json(const nlohmann::json& j, project_task_status_link& p) {
+    j.at("project_id").get_to(p.project_id_);
+    j.at("task_status_id").get_to(p.task_status_id_);
+    if (j.contains("priority")) j.at("priority").get_to(p.priority_);
+    if (j.contains("roles_for_board")) j.at("roles_for_board").get_to(p.roles_for_board_);
+  }
+  // to json
+  friend void to_json(nlohmann::json& j, const project_task_status_link& p) {
+    j["project_id"] = p.project_id_;
+    j["task_status_id"] = p.task_status_id_;
+    j["priority"] = p.priority_;
+    j["roles_for_board"] = p.roles_for_board_;
+  }
 };
 struct project_asset_type_link {
   std::int64_t id_;
