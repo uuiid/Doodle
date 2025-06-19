@@ -225,11 +225,11 @@ struct project_with_extra_data : project {
     }
 
     for (const auto& d : p.task_types_priority_) {
-      j["task_types_priority"][fmt::to_string(d.uuid_id_)] = d.priority_;
+      j["task_types_priority"][fmt::to_string(d.task_type_id_)] = d.priority_;
     }
 
     for (const auto& d : p.task_statuses_link_) {
-      j["task_statuses_link"][fmt::to_string(d.uuid_id_)] =
+      j["task_statuses_link"][fmt::to_string(d.task_status_id_)] =
           nlohmann::json{{"priority", d.priority_}, {"roles_for_board", d.roles_for_board_}};
     }
   }
