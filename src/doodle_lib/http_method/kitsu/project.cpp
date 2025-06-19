@@ -53,11 +53,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
 ) {
   auto l_ptr        = get_person(in_handle);
   auto l_json       = in_handle->get_json();
-  auto l_project_id = from_uuid_str(in_handle->capture_->get("project_id"));
+  auto l_project_id = in_handle->capture_->get_uuid("project_id");
   l_ptr->is_project_manager(l_project_id);
   auto l_prj_task_type_link = std::make_shared<project_task_type_link>();
   l_json.get_to(*l_prj_task_type_link);
   l_prj_task_type_link->project_id_ = l_project_id;
+  if (l_prj_task_type_link->uuid_id_.is_nil()) l_prj_task_type_link->uuid_id_ = core_set::get_set().get_uuid();
 
   if (auto l_t =
           g_ctx().get<sqlite_database>().get_project_task_type_link(l_project_id, l_prj_task_type_link->task_type_id_);
