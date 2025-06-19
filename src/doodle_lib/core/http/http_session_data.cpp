@@ -594,6 +594,7 @@ boost::beast::http::message_generator session_data::make_msg(
     const FSys::path& in_path, const std::string_view& mine_type
 ) {
   // if (is_deflate()) return make_file_deflate(in_path, mine_type);
+  if (!FSys::exists(in_path)) make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
   return make_file(in_path, mine_type);
 }
 
