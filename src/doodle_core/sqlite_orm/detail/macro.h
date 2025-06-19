@@ -31,11 +31,7 @@
 
 template <typename T>
 std::string enum_array_to_string(const T& t) {
-  std::string l_ret{'['};
-  for (const auto& v : t) {
-    l_ret += fmt::format(", {}", magic_enum::enum_name(v));
-  }
-  l_ret += ']';
+  std::string l_ret = fmt::format("[{}]", fmt::join(t, ", "));
   return l_ret;
 }
 
@@ -134,12 +130,12 @@ std::vector<T> string_to_enum_array(const std::string& t) {
     return impl_->remove<class_name>(in_data);                                                                 \
   }
 
-#define DOODLE_REMOVE_BY_UUID(class_name)                                                                  \
-  template <>                                                                                              \
+#define DOODLE_REMOVE_BY_UUID(class_name)                                                              \
+  template <>                                                                                          \
   boost::asio::awaitable<void> sqlite_database::remove<class_name>(const std::vector<uuid>& in_data) { \
-    return impl_->remove<class_name>(in_data);                                                             \
-  }                                                                                                        \
-  template <>                                                                                              \
-  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const uuid& in_data) { \
-    return impl_->remove<class_name>(in_data);                                                             \
+    return impl_->remove<class_name>(in_data);                                                         \
+  }                                                                                                    \
+  template <>                                                                                          \
+  boost::asio::awaitable<void> sqlite_database::remove<class_name>(const uuid& in_data) {              \
+    return impl_->remove<class_name>(in_data);                                                         \
   }
