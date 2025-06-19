@@ -57,7 +57,10 @@ struct row_extractor<std::chrono::zoned_time<Duration>> : row_extractor<std::str
     const auto l_str = row_extractor<std::string>::extract(stmt, columnIndex);
     std::istringstream l_istr{l_str};
     std::chrono::time_point<std::chrono::system_clock, Duration> l_value{};
-    l_istr >> parse("%F %T", l_value);
+    if (l_istr >> parse("%F %T", l_value))
+      ;
+    else if (l_istr.clear(), l_istr.str(l_str), l_istr >> parse("%F", l_value))
+      ;
     return std::chrono::zoned_time{std::chrono::current_zone(), l_value};
   }
 };
