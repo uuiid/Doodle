@@ -1030,7 +1030,7 @@ std::vector<task> sqlite_database::get_tasks_for_entity(const uuid& in_asset_id)
 
 std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<asset_type>(where(!c(&asset_type::uuid_id_, get_temporal_type_ids())));
+  auto l_t = impl_->storage_any_.get_all<asset_type>(where(not_in(&asset_type::uuid_id_, get_temporal_type_ids())));
   return l_t;
 }
 
