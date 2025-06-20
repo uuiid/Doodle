@@ -188,5 +188,6 @@ class sqlite_database {
   std::optional<comment> get_last_comment(const uuid& in_task_id);
   /// 获取资产对应的 task
   std::vector<task> get_tasks_for_entity(const uuid& in_asset_id);
+  std::vector<asset_type> get_asset_types_not_temporal_type();
 };
 }  // namespace doodle

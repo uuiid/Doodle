@@ -26,7 +26,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::
   auto l_ptr = get_person(in_handle);
   nlohmann::json l_ret{};
   auto& l_sql             = g_ctx().get<sqlite_database>();
-  l_ret["asset_types"]    = l_sql.get_all<asset_type>();
+  l_ret["asset_types"]    = l_sql.get_asset_types_not_temporal_type();
   l_ret["custom_actions"] = nlohmann::json::value_t::array;
   l_ret["departments"]    = l_sql.get_all<department>();
   for (auto& l_v : g_ctx().get<dingding::dingding_company>().company_info_map_ | std::views::values) {
