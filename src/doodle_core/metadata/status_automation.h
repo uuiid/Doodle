@@ -9,6 +9,14 @@
 namespace doodle {
 struct task;
 enum class status_automation_change_type { status, ready_for };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    status_automation_change_type,
+    {
+        {status_automation_change_type::status, "status"},
+        {status_automation_change_type::ready_for, "ready_for"},
+    }
+)
+
 struct status_automation {
   DOODLE_BASE_FIELDS();
   std::string entity_type_;
