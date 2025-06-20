@@ -30,7 +30,6 @@ struct projects_assets_new_post_data {
 
   // form json
   friend void from_json(const nlohmann::json& j, projects_assets_new_post_data& p) {
-    j.at("data").get_to(p.data);
     j.at("description").get_to(p.description);
     j.at("is_shared").get_to(p.is_shared);
     j.at("name").get_to(p.name);
@@ -55,7 +54,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .project_id_     = l_data.project_id,
       .entity_type_id_ = l_data.asset_type_id,
       .source_id_      = l_data.source_id,
-      .data_           = l_data.data,
       .created_by_     = l_ptr->person_.uuid_id_,
   });
 

@@ -46,7 +46,6 @@ void to_json(nlohmann::json& j, const todo_t& p) {
   j["entity_id"]              = p.entity_uuid_id_;
   j["entity_name"]            = p.entity_name_;
   j["entity_description"]     = p.entity_description_;
-  j["entity_data"]            = p.entity_data_;
   j["entity_preview_file_id"] = p.entity_preview_file_id_;
   j["entity_source_id"]       = p.entity_source_id_;
   j["entity_type_name"]       = p.asset_type_name_;
@@ -71,6 +70,14 @@ void to_json(nlohmann::json& j, const todo_t& p) {
     j["last_comment"] = p.last_comment_;
   else
     j["last_comment"] = nlohmann::json::value_t::object;
+
+  j["ji_shu_lie"]          = p.ji_shu_lie_;
+  j["deng_ji"]             = p.deng_ji_;
+  j["gui_dang"]            = p.gui_dang_;
+  j["bian_hao"]            = p.bian_hao_;
+  j["pin_yin_ming_cheng"]  = p.pin_yin_ming_cheng_;
+  j["ban_ben"]             = p.ban_ben_;
+  j["ji_du"]               = p.ji_du_;
 }
 
 void to_json(nlohmann::json& j, const project_and_status_t& p) {
@@ -243,8 +250,15 @@ void to_json(nlohmann::json& j, const entities_and_tasks_t& p) {
   j["fps"]             = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json{};
   j["preview_file_id"] = p.preview_file_id_;
   j["canceled"]        = p.canceled_;
-  j["data"]            = p.data_;
   j["tasks"]           = p.tasks_;
+
+  j["ji_shu_lie"]          = p.ji_shu_lie_;
+  j["deng_ji"]             = p.deng_ji_;
+  j["gui_dang"]            = p.gui_dang_;
+  j["bian_hao"]            = p.bian_hao_;
+  j["pin_yin_ming_cheng"]  = p.pin_yin_ming_cheng_;
+  j["ban_ben"]             = p.ban_ben_;
+  j["ji_du"]               = p.ji_du_;
 }
 void to_json(nlohmann::json& j, const preview_files_for_entity_t& p) {
   j["id"]            = p.uuid_id_;

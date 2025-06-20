@@ -226,7 +226,6 @@ static constexpr auto sql_orm_todo_t = sqlite_orm::struct_<todo_t>(
     &entity::uuid_id_,             //
     &entity::name_,                //
     &entity::description_,         //
-    &entity::data_,                //
     &entity::preview_file_id_,     //
     &asset_type::name_,            //
     &entity::canceled_,            //
@@ -237,7 +236,11 @@ static constexpr auto sql_orm_todo_t = sqlite_orm::struct_<todo_t>(
     &task_type::color_,            //
     &task_status::name_,           //
     &task_status::color_,          //
-    &task_status::short_name_      //
+    &task_status::short_name_,     //
+
+    &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
+    &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_, &entity_asset_extend::ban_ben_,
+    &entity_asset_extend::ji_du_
 );
 
 void sqlite_database::todo_post_processing(std::vector<todo_t>& in_tasks) {
@@ -292,6 +295,7 @@ std::vector<todo_t> sqlite_database::get_person_tasks(const person& in_user, boo
       join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       join<assignees_table>(on(c(&task::uuid_id_) == c(&assignees_table::task_id_))),
       join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
           in(&task::project_id_, l_pej_ids) && c(&assignees_table::person_id_) == in_user.uuid_id_ &&
           c(&task_status::is_done_) == is_done
@@ -306,28 +310,31 @@ std::vector<todo_t> sqlite_database::get_preson_tasks_to_check(const person& in_
   auto l_prjs    = in_user.role_ == person_role_type::admin ? impl_->get_all<project>() : get_person_projects(in_user);
   auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
 
-  auto l_task    = in_user.role_ == person_role_type::supervisor
-                       ? impl_->storage_any_.select(
-                          sql_orm_todo_t,  //
-                          join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
-                          join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-                          join<task_status>(on(c(&task::task_status_id_) == c(&task_status::uuid_id_))),
-                          join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-                          join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-                          where(
-                              c(&task_status::is_feedback_request_) && in(&task::project_id_, l_pej_ids) &&
-                              in(&task_type::department_id_, in_user.departments_)
-                          )
-                      )
-                       : impl_->storage_any_.select(
-                          sql_orm_todo_t,  //
-                          join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
-                          join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-                          join<task_status>(on(c(&task::task_status_id_) == c(&task_status::uuid_id_))),
-                          join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-                          join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-                          where(c(&task_status::is_feedback_request_) && in(&task::project_id_, l_pej_ids))
-                      );
+  auto l_task =
+      in_user.role_ == person_role_type::supervisor
+          ? impl_->storage_any_.select(
+                sql_orm_todo_t,  //
+                join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
+                join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+                join<task_status>(on(c(&task::task_status_id_) == c(&task_status::uuid_id_))),
+                join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+                join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+                left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+                where(
+                    c(&task_status::is_feedback_request_) && in(&task::project_id_, l_pej_ids) &&
+                    in(&task_type::department_id_, in_user.departments_)
+                )
+            )
+          : impl_->storage_any_.select(
+                sql_orm_todo_t,  //
+                join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
+                join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+                join<task_status>(on(c(&task::task_status_id_) == c(&task_status::uuid_id_))),
+                join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+                join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+                left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+                where(c(&task_status::is_feedback_request_) && in(&task::project_id_, l_pej_ids))
+            );
   todo_post_processing(l_task);
   return l_task;
 }
@@ -607,11 +614,10 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
       columns(
           &entity::uuid_id_, &entity::name_, &entity::preview_file_id_, &entity::description_, &asset_type::name_,
           &asset_type::uuid_id_, &entity::canceled_, &entity::ready_for_, &entity::source_id_,
-          &entity::is_casting_standby_, &entity::is_shared_, &entity::data_, &task::uuid_id_, &task::due_date_,
-          &task::done_date_, &task::duration_, &task::entity_id_, &task::estimation_, &task::end_date_,
-          &task::last_comment_date_, &task::last_preview_file_id_, &task::priority_, &task::real_start_date_,
-          &task::retake_count_, &task::start_date_, &task::difficulty_, &task::task_type_id_, &task::task_status_id_,
-          &task::assigner_id_,
+          &entity::is_casting_standby_, &entity::is_shared_, &task::uuid_id_, &task::due_date_, &task::done_date_,
+          &task::duration_, &task::entity_id_, &task::estimation_, &task::end_date_, &task::last_comment_date_,
+          &task::last_preview_file_id_, &task::priority_, &task::real_start_date_, &task::retake_count_,
+          &task::start_date_, &task::difficulty_, &task::task_type_id_, &task::task_status_id_, &task::assigner_id_,
 
           &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
           &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_, &entity_asset_extend::ban_ben_,
@@ -632,7 +638,7 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
   std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& [
            uuid_id_, name_, preview_file_id_, description_, asset_type_name_, asset_type_uuid_id_, canceled_,
-           ready_for_, source_id_, is_casting_standby_, is_shared_, data_, task_uuid_id_, due_date_, done_date_,
+           ready_for_, source_id_, is_casting_standby_, is_shared_, task_uuid_id_, due_date_, done_date_,
            duration_, entity_id_, estimation_, end_date_, last_comment_date_, last_preview_file_id_, priority_,
            real_start_date_, retake_count_, start_date_, difficulty_, task_type_id_, task_status_id_, assigner_id_,
            //
@@ -704,14 +710,19 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
   auto l_rows                   = impl_->storage_any_.select(
       columns(
           &entity::uuid_id_, &entity::name_, &entity::status_, &entity::uuid_id_, &entity::description_,
-          &entity::preview_file_id_, &entity::canceled_, &entity::data_, &task::uuid_id_, &task::estimation_,
-          &task::end_date_, &task::due_date_, &task::done_date_, &task::duration_, &task::last_comment_date_,
+          &entity::preview_file_id_, &entity::canceled_, &task::uuid_id_, &task::estimation_, &task::end_date_,
+          &task::due_date_, &task::done_date_, &task::duration_, &task::last_comment_date_,
           &task::last_preview_file_id_, &task::priority_, &task::real_start_date_, &task::retake_count_,
           &task::start_date_, &task::difficulty_, &task::task_status_id_, &task::task_type_id_,
-          &assignees_table::person_id_
+          &assignees_table::person_id_,
+
+          &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
+          &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_, &entity_asset_extend::ban_ben_,
+          &entity_asset_extend::ji_du_
       ),
       join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
           ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || in_project_id.is_nil()) &&
           ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) ||
@@ -722,27 +733,32 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
   std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& [
 
-           uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, data_, task_id_,
-           estimation_, end_date_, due_date_, done_date_, duration_, last_comment_date_, last_preview_file_id_,
-           priority_, real_start_date_, retake_count_, start_date_, difficulty_, task_status_id_, task_type_id_,
-           person_id_
+           uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, task_id_, estimation_,
+           end_date_, due_date_, done_date_, duration_, last_comment_date_, last_preview_file_id_, priority_,
+           real_start_date_, retake_count_, start_date_, difficulty_, task_status_id_, task_type_id_, person_id_,
+
+           ji_shu_lie_, deng_ji_, gui_dang_, bian_hao_, pin_yin_ming_cheng_, ban_ben_, ji_du_
 
   ] : l_rows) {
     if (!l_entities_and_tasks_map.contains(uuid_id_)) {
       l_entities_and_tasks_map.emplace(
           uuid_id_,
           entities_and_tasks_t{
-              .uuid_id_         = uuid_id_,
-              .name_            = name_,
-              .status_          = status_,
-              .episode_id_      = episode_id_,
-              .description_     = description_,
-              .preview_file_id_ = preview_file_id_,
-              .canceled_        = canceled_,
-              .data_            = data_,
-              .frame_in_        = data_.contains("frame_in") ? data_["frame_in"].get<std::int32_t>() : 0,
-              .frame_out_       = data_.contains("frame_out") ? data_["frame_out"].get<std::int32_t>() : 0,
-              .fps_             = data_.contains("fps") ? data_["fps"].get<std::int32_t>() : 0,
+              .uuid_id_            = uuid_id_,
+              .name_               = name_,
+              .status_             = status_,
+              .episode_id_         = episode_id_,
+              .description_        = description_,
+              .preview_file_id_    = preview_file_id_,
+              .canceled_           = canceled_,
+
+              .ji_shu_lie_         = ji_shu_lie_,
+              .deng_ji_            = deng_ji_,
+              .gui_dang_           = gui_dang_,
+              .bian_hao_           = bian_hao_,
+              .pin_yin_ming_cheng_ = pin_yin_ming_cheng_,
+              .ban_ben_            = ban_ben_,
+              .ji_du_              = ji_du_,
           }
       );
     }

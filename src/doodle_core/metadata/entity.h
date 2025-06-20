@@ -75,7 +75,6 @@ struct DOODLE_CORE_API entity {
   /// 源外键(指向集数uuid)
   uuid source_id_;
   uuid preview_file_id_;
-  nlohmann::json data_;
 
   uuid ready_for_;
   /// 创建人
@@ -102,7 +101,6 @@ struct DOODLE_CORE_API entity {
     j["parent_id"]            = p.parent_id_;
     j["source_id"]            = p.source_id_;
     j["preview_file_id"]      = p.preview_file_id_;
-    j["data"]                 = p.data_;
     j["ready_for"]            = p.ready_for_;
     j["created_by"]           = p.created_by_;
     j["entities_out"]         = p.entities_out;

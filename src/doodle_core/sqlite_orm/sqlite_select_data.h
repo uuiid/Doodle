@@ -54,7 +54,6 @@ struct todo_t {
   decltype(entity::uuid_id_) entity_uuid_id_;
   decltype(entity::name_) entity_name_;
   decltype(entity::description_) entity_description_;
-  decltype(entity::data_) entity_data_;
   decltype(entity::preview_file_id_) entity_preview_file_id_;
 
   decltype(asset_type::name_) asset_type_name_;
@@ -69,8 +68,17 @@ struct todo_t {
   decltype(task_status::color_) task_status_color_;
   decltype(task_status::short_name_) task_status_short_name_;
 
-  std::vector<uuid> assignees_;
+  // 额外的资产数据
+  decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
+  decltype(entity_asset_extend::deng_ji_) deng_ji_;
+  decltype(entity_asset_extend::gui_dang_) gui_dang_;
+  decltype(entity_asset_extend::bian_hao_) bian_hao_;
+  decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
+  decltype(entity_asset_extend::ban_ben_) ban_ben_;
+  decltype(entity_asset_extend::ji_du_) ji_du_;
 
+  std::vector<uuid> assignees_;
+  
   struct comment_t {
     std::string text_;
     chrono::system_zoned_time date_;
@@ -207,13 +215,13 @@ struct assets_and_tasks_t {
   decltype(entity::is_shared_) is_shared_;
   std::vector<uuid> casting_episode_ids_;
   // 额外的资产数据
-  std::optional<std::int32_t> ji_shu_lie_;
-  std::string deng_ji_;
-  std::optional<std::int32_t> gui_dang_;
-  std::string bian_hao_;
-  std::string pin_yin_ming_cheng_;
-  std::string ban_ben_;
-  std::optional<std::int32_t> ji_du_;
+  decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
+  decltype(entity_asset_extend::deng_ji_) deng_ji_;
+  decltype(entity_asset_extend::gui_dang_) gui_dang_;
+  decltype(entity_asset_extend::bian_hao_) bian_hao_;
+  decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
+  decltype(entity_asset_extend::ban_ben_) ban_ben_;
+  decltype(entity_asset_extend::ji_du_) ji_du_;
   struct task_t {
     decltype(task::uuid_id_) uuid_id_;
     decltype(task::due_date_) due_date_;
@@ -251,7 +259,15 @@ struct entities_and_tasks_t {
   decltype(entity::description_) description_;
   decltype(entity::preview_file_id_) preview_file_id_;
   decltype(entity::canceled_) canceled_;
-  decltype(entity::data_) data_;
+
+  // 额外的资产数据
+  decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
+  decltype(entity_asset_extend::deng_ji_) deng_ji_;
+  decltype(entity_asset_extend::gui_dang_) gui_dang_;
+  decltype(entity_asset_extend::bian_hao_) bian_hao_;
+  decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
+  decltype(entity_asset_extend::ban_ben_) ban_ben_;
+  decltype(entity_asset_extend::ji_du_) ji_du_;
 
   std::int32_t frame_in_;
   std::int32_t frame_out_;
