@@ -601,109 +601,92 @@ std::vector<assets_and_tasks_t> sqlite_database::get_assets_and_tasks(
     const person& in_person, const uuid& in_project_id, const uuid& in_id
 ) {
   using namespace sqlite_orm;
-  struct assets_and_tasks_tmp_t {
-    decltype(entity::uuid_id_) uuid_id_;
-    decltype(entity::name_) name_;
-    decltype(entity::preview_file_id_) preview_file_id_;
-    decltype(entity::description_) description_;
-    decltype(asset_type::name_) asset_type_name_;
-
-    decltype(asset_type::uuid_id_) asset_type_uuid_id_;
-    decltype(entity::canceled_) canceled_;
-    decltype(entity::ready_for_) ready_for_;
-    decltype(entity::source_id_) source_id_;
-
-    decltype(entity::is_casting_standby_) is_casting_standby_;
-    decltype(entity::is_shared_) is_shared_;
-    decltype(entity::data_) data_;
-    decltype(task::uuid_id_) task_uuid_id_;
-    decltype(task::due_date_) due_date_;
-
-    decltype(task::done_date_) done_date_;
-    decltype(task::duration_) duration_;
-    decltype(task::entity_id_) entity_id_;
-    decltype(task::estimation_) estimation_;
-    decltype(task::end_date_) end_date_;
-
-    decltype(task::last_comment_date_) last_comment_date_;
-    decltype(task::last_preview_file_id_) last_preview_file_id_;
-    decltype(task::priority_) priority_;
-    decltype(task::real_start_date_) real_start_date_;
-
-    decltype(task::retake_count_) retake_count_;
-    decltype(task::start_date_) start_date_;
-    decltype(task::difficulty_) difficulty_;
-    decltype(task::task_type_id_) task_type_id_;
-    decltype(task::task_status_id_) task_status_id_;
-
-    decltype(task::assigner_id_) assigner_id_;
-  };
-  constexpr auto l_sql_orm = struct_<assets_and_tasks_tmp_t>(
-      &entity::uuid_id_, &entity::name_, &entity::preview_file_id_, &entity::description_, &asset_type::name_,
-      &asset_type::uuid_id_, &entity::canceled_, &entity::ready_for_, &entity::source_id_, &entity::is_casting_standby_,
-      &entity::is_shared_, &entity::data_, &task::uuid_id_, &task::due_date_, &task::done_date_, &task::duration_,
-      &task::entity_id_, &task::estimation_, &task::end_date_, &task::last_comment_date_, &task::last_preview_file_id_,
-      &task::priority_, &task::real_start_date_, &task::retake_count_, &task::start_date_, &task::difficulty_,
-      &task::task_type_id_, &task::task_status_id_, &task::assigner_id_
-  );
-  std::vector<assets_and_tasks_tmp_t> l_t{};
   auto l_subscriptions_for_user = get_person_subscriptions(in_person, in_project_id, {});
   auto l_temporal_type_ids      = get_temporal_type_ids();
-  l_t                           = impl_->storage_any_.select(
-      l_sql_orm, join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+  auto l_t                      = impl_->storage_any_.select(
+      columns(
+          &entity::uuid_id_, &entity::name_, &entity::preview_file_id_, &entity::description_, &asset_type::name_,
+          &asset_type::uuid_id_, &entity::canceled_, &entity::ready_for_, &entity::source_id_,
+          &entity::is_casting_standby_, &entity::is_shared_, &entity::data_, &task::uuid_id_, &task::due_date_,
+          &task::done_date_, &task::duration_, &task::entity_id_, &task::estimation_, &task::end_date_,
+          &task::last_comment_date_, &task::last_preview_file_id_, &task::priority_, &task::real_start_date_,
+          &task::retake_count_, &task::start_date_, &task::difficulty_, &task::task_type_id_, &task::task_status_id_,
+          &task::assigner_id_,
+
+          &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
+          &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_, &entity_asset_extend::ban_ben_,
+          &entity_asset_extend::ji_du_
+      ),
+      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
       left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
           ((!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
            (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id)) &&
-          sqlite_orm::not_in(&entity::entity_type_id_, l_temporal_type_ids)
+          not_in(&entity::entity_type_id_, l_temporal_type_ids)
       ),
       multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
   );
   std::map<uuid, assets_and_tasks_t> l_ret{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& i : l_t) {
-    if (!l_ret.contains(i.uuid_id_))
-      l_ret[i.uuid_id_] = assets_and_tasks_t{
-          .uuid_id_            = i.uuid_id_,
-          .name_               = i.name_,
-          .preview_file_id_    = i.preview_file_id_,
-          .description_        = i.description_,
-          .asset_type_name_    = i.asset_type_name_,
-          .asset_type_id_      = i.asset_type_uuid_id_,
-          .canceled_           = i.canceled_,
-          .ready_for_          = i.ready_for_,
-          .source_id_          = i.source_id_,
-          .is_casting_standby_ = i.is_casting_standby_,
-          .is_shared_          = i.is_shared_,
-          .data_               = i.data_,
+  for (auto&& [
+           uuid_id_, name_, preview_file_id_, description_, asset_type_name_, asset_type_uuid_id_, canceled_,
+           ready_for_, source_id_, is_casting_standby_, is_shared_, data_, task_uuid_id_, due_date_, done_date_,
+           duration_, entity_id_, estimation_, end_date_, last_comment_date_, last_preview_file_id_, priority_,
+           real_start_date_, retake_count_, start_date_, difficulty_, task_type_id_, task_status_id_, assigner_id_,
+           //
+           ji_shu_lie_,deng_ji_, gui_dang_, bian_hao_, pin_yin_ming_cheng_, ban_ben_, ji_du_
+
+  ] : l_t) {
+    if (!l_ret.contains(uuid_id_))
+      l_ret[uuid_id_] = assets_and_tasks_t{
+          .uuid_id_            = uuid_id_,
+          .name_               = name_,
+          .preview_file_id_    = preview_file_id_,
+          .description_        = description_,
+          .asset_type_name_    = asset_type_name_,
+          .asset_type_id_      = asset_type_uuid_id_,
+          .canceled_           = canceled_,
+          .ready_for_          = ready_for_,
+          .source_id_          = source_id_,
+          .is_casting_standby_ = is_casting_standby_,
+          .is_shared_          = is_shared_,
+
+          .ji_shu_lie_         = ji_shu_lie_,
+          .deng_ji_            = deng_ji_,
+          .gui_dang_           = gui_dang_,
+          .bian_hao_           = bian_hao_,
+          .pin_yin_ming_cheng_ = pin_yin_ming_cheng_,
+          .ban_ben_            = ban_ben_,
+          .ji_du_              = ji_du_,
       };
-    if (i.task_uuid_id_.is_nil()) continue;
-    if (!l_task_id_set.contains(i.task_uuid_id_)) {
-      l_ret[i.uuid_id_].tasks_.emplace_back(
+    if (task_uuid_id_.is_nil()) continue;
+    if (!l_task_id_set.contains(task_uuid_id_)) {
+      l_ret[uuid_id_].tasks_.emplace_back(
           assets_and_tasks_t::task_t{
-              .uuid_id_              = i.task_uuid_id_,
-              .due_date_             = i.due_date_,
-              .done_date_            = i.done_date_,
-              .duration_             = i.duration_,
-              .entity_id_            = i.entity_id_,
-              .estimation_           = i.estimation_,
-              .end_date_             = i.end_date_,
-              .last_comment_date_    = i.last_comment_date_,
-              .last_preview_file_id_ = i.last_preview_file_id_,
-              .priority_             = i.priority_,
-              .real_start_date_      = i.real_start_date_,
-              .retake_count_         = i.retake_count_,
-              .start_date_           = i.start_date_,
-              .difficulty_           = i.difficulty_,
-              .task_type_id_         = i.task_type_id_,
-              .task_status_id_       = i.task_status_id_,
+              .uuid_id_              = task_uuid_id_,
+              .due_date_             = due_date_,
+              .done_date_            = done_date_,
+              .duration_             = duration_,
+              .entity_id_            = entity_id_,
+              .estimation_           = estimation_,
+              .end_date_             = end_date_,
+              .last_comment_date_    = last_comment_date_,
+              .last_preview_file_id_ = last_preview_file_id_,
+              .priority_             = priority_,
+              .real_start_date_      = real_start_date_,
+              .retake_count_         = retake_count_,
+              .start_date_           = start_date_,
+              .difficulty_           = difficulty_,
+              .task_type_id_         = task_type_id_,
+              .task_status_id_       = task_status_id_,
           }
       );
-      l_task_id_set.emplace(i.task_uuid_id_, l_ret[i.uuid_id_].tasks_.size() - 1);
+      l_task_id_set.emplace(task_uuid_id_, l_ret[uuid_id_].tasks_.size() - 1);
     }
-    if (!i.assigner_id_.is_nil())
-      l_ret[i.uuid_id_].tasks_[l_task_id_set.at(i.task_uuid_id_)].assigner_ids_.emplace_back(i.assigner_id_);
+    if (!assigner_id_.is_nil())
+      l_ret[uuid_id_].tasks_[l_task_id_set.at(task_uuid_id_)].assigner_ids_.emplace_back(assigner_id_);
   }
 
   for (auto&& [_, value] : l_ret)

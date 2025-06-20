@@ -430,6 +430,19 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&entity_concept_link::entity_id_).references(&entity::uuid_id_),     //
           foreign_key(&entity_concept_link::entity_out_id_).references(&entity::uuid_id_)  //
       ),
+      make_table<entity_asset_extend>(
+          "entity_asset_extend",                                                           //
+          make_column("id", &entity_asset_extend::id_, primary_key().autoincrement()),     //
+          make_column("entity_id", &entity_asset_extend::entity_id_),                      //
+          make_column("ji_shu_lie_", &entity_asset_extend::ji_shu_lie_),                        //
+          make_column("deng_ji_", &entity_asset_extend::deng_ji_),                        //
+          make_column("gui_dang_", &entity_asset_extend::gui_dang_),                        //
+          make_column("bian_hao_", &entity_asset_extend::bian_hao_),                        //
+          make_column("pin_yin_ming_cheng_", &entity_asset_extend::pin_yin_ming_cheng_),                        //
+          make_column("ban_ben_", &entity_asset_extend::ban_ben_),                        //
+          make_column("ji_du_", &entity_asset_extend::ji_du_),                        //
+          foreign_key(&entity_asset_extend::entity_id_).references(&entity::uuid_id_)
+      ),
       make_table<entity>(
           "entity",                                                                    //
           make_column("id", &entity::id_, primary_key().autoincrement()),              //
@@ -449,7 +462,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("parent_id", &entity::parent_id_),                               //
           make_column("source_id", &entity::source_id_),                               //
           make_column("preview_file_id", &entity::preview_file_id_),                   //
-          make_column("data", &entity::data_),                                         //
           make_column("ready_for", &entity::ready_for_),                               //
           make_column("created_by", &entity::created_by_),                             //
           foreign_key(&entity::project_id_).references(&project::uuid_id_),            //
@@ -850,7 +862,6 @@ struct sqlite_database_impl {
 #define DOODLE_TO_SQLITE_THREAD_2()                               \
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));
-
 
   template <typename T>
   std::vector<T> get_all() {

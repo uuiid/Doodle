@@ -35,6 +35,21 @@ struct DOODLE_CORE_API entity_concept_link {
   uuid entity_id_;
   uuid entity_out_id_;
 };
+
+struct DOODLE_CORE_API entity_asset_extend {
+  DOODLE_BASE_FIELDS();
+
+  uuid entity_id_;
+
+  std::optional<std::int32_t> ji_shu_lie_;
+  std::string deng_ji_;
+  std::optional<std::int32_t> gui_dang_;
+  std::string bian_hao_;
+  std::string pin_yin_ming_cheng_;
+  std::string ban_ben_;
+  std::optional<std::int32_t> ji_du_;
+};
+
 struct DOODLE_CORE_API entity {
   DOODLE_BASE_FIELDS();
   std::string name_;

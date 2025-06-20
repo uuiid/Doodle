@@ -205,9 +205,15 @@ struct assets_and_tasks_t {
   decltype(entity::source_id_) source_id_;
   decltype(entity::is_casting_standby_) is_casting_standby_;
   decltype(entity::is_shared_) is_shared_;
-  decltype(entity::data_) data_;
   std::vector<uuid> casting_episode_ids_;
-
+  // 额外的资产数据
+  std::optional<std::int32_t> ji_shu_lie_;
+  std::string deng_ji_;
+  std::optional<std::int32_t> gui_dang_;
+  std::string bian_hao_;
+  std::string pin_yin_ming_cheng_;
+  std::string ban_ben_;
+  std::optional<std::int32_t> ji_du_;
   struct task_t {
     decltype(task::uuid_id_) uuid_id_;
     decltype(task::due_date_) due_date_;
