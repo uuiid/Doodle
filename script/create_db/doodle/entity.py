@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy_utils import UUIDType, ChoiceType
 
 from sqlalchemy import orm
@@ -88,6 +89,50 @@ class EntityConceptLink(BaseMixin):
         return self
 
 
+class EntityAssetExtend(BaseMixin):
+    __tablename__ = "entity_asset_extend"
+    entity_id = orm.mapped_column(
+        UUIDType(binary=True), sqlalchemy.ForeignKey("entity.uuid")
+    )
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
+    ji_shu_lie = orm.mapped_column(sqlalchemy.Integer)
+    deng_ji = orm.mapped_column(sqlalchemy.Text)
+    gui_dang = orm.mapped_column(sqlalchemy.Integer)
+    bian_hao = orm.mapped_column(sqlalchemy.Text)
+    pin_yin_ming_cheng = orm.mapped_column(sqlalchemy.Text)
+    ban_ben = orm.mapped_column(sqlalchemy.Text)
+    ji_du = orm.mapped_column(sqlalchemy.Integer)
+
+    def from_zou(self, entity: ZouEntity):
+        self.entity_id = entity.id
+        self.uuid = uuid.uuid4()
+        l_json: dict = entity.data
+        self.ji_shu_lie = l_json["ji_shu_lie"] if "ji_shu_lie" in l_json else None
+        self.deng_ji = l_json["deng_ji"] if "deng_ji" in l_json else None
+        self.gui_dang = l_json["gui_dang"] if "gui_dang" in l_json else None
+        self.bian_hao = l_json["bian_hao"] if "bian_hao" in l_json else None
+        self.pin_yin_ming_cheng = l_json["pin_yin_ming_cheng"] if "pin_yin_ming_cheng" in l_json else None
+        self.ban_ben = l_json["ban_ben"] if "ban_ben" in l_json else None
+        self.ji_du = l_json["ji_du"] if "ji_du" in l_json else None
+
+        return self
+
+    @classmethod
+    def has_extend(cls, entity: ZouEntity) -> bool:
+        l_json: dict = entity.data
+        return (
+                "ji_shu_lie" in l_json
+                or "deng_ji" in l_json
+                or "gui_dang" in l_json
+                or "bian_hao" in l_json
+                or "pin_yin_ming_cheng" in l_json
+                or "ban_ben" in l_json
+                or "ji_du" in l_json
+        )
+
+
 class Entity(BaseMixin):
     """
     Base model to represent assets, shots, sequences, episodes and scenes.
@@ -142,7 +187,6 @@ class Entity(BaseMixin):
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("preview_file.uuid", name="fk_main_preview"),
     )
-    data = orm.mapped_column(sqlalchemy.TEXT())
 
     ready_for = orm.mapped_column(
         UUIDType(binary=True),
@@ -202,7 +246,6 @@ class Entity(BaseMixin):
         self.parent_id = entity.parent_id
         self.source_id = entity.source_id
         self.preview_file_id = entity.preview_file_id
-        self.data = json.dumps(entity.data, ensure_ascii=False)
         self.ready_for = entity.ready_for
         self.created_by = entity.created_by
         return self

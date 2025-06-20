@@ -148,6 +148,7 @@ def main():
 
             session.add_all([doodle.preview_file.PreviewFile().from_zou(i) for i in l_preview_file])
             session.add_all([doodle.attachment_file.AttachmentFile().from_zou(i) for i in l_attachment_file])
+            session.add_all([doodle.entity.EntityAssetExtend().from_zou(i) for i in l_Entity if doodle.entity.EntityAssetExtend.has_extend(i)])
 
             session.commit()
 
