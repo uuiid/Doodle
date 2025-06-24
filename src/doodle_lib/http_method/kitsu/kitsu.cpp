@@ -97,7 +97,7 @@ http_route_ptr create_kitsu_route(const FSys::path& in_root) {
       .reg_t<computing_time_average_post>()
 
       .reg(std::make_shared<deepseek_key_get>())
-      .reg(std::make_shared<other::ke_ling_au_get>())
+      .reg(std::make_shared<other::key_ji_meng_get>())
       .reg(std::make_shared<up_file_asset_image_post>())
       .reg(std::make_shared<up_file_asset_maya_post>())
       .reg(std::make_shared<up_file_asset_ue_post>());
@@ -156,7 +156,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<computing_time_average_post>()
 
       .reg(std::make_shared<deepseek_key_get>())
-      .reg(std::make_shared<other::ke_ling_au_get>())
+      .reg(std::make_shared<other::key_ji_meng_get>())
       .reg(std::make_shared<up_file_asset_image_post>())
       .reg(std::make_shared<up_file_asset_maya_post>())
       .reg(std::make_shared<up_file_asset_ue_post>())
