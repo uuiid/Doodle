@@ -112,6 +112,9 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
           l_value_w |
           ranges::views::transform([](const std::wstring& in) -> std::string { return conv::utf_to_utf<char>(in); }) |
           ranges::to_vector;
+
+      in_args.ji_meng_access_key_id_     = conv::utf_to_utf<char>(l_key.GetStringValue(L"ji_meng_access_key_id"));
+      in_args.ji_meng_secret_access_key_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"ji_meng_secret_access_key"));
     }
 
   } catch (...) {
