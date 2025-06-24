@@ -73,13 +73,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login_post::c
   auto l_org             = g_ctx().get<sqlite_database>().get_all<organisation>();
   l_json["organisation"] = l_org.empty() ? organisation::get_default() : l_org.front();
   l_json["login"]        = true;
+  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
   auto l_access_token    = jwt::create()
                             .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
-                            .sign(jwt::algorithm::hs256{"tset"});
+                            .set_issued_at(chrono::system_clock::now())
+                            .set_id(fmt::to_string(core_set::get_set().get_uuid()))
+                            .set_subject(fmt::to_string(l_p->uuid_id_))
+                            .set_not_before(chrono::system_clock::now())
+                            .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+                            .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_json["access_token"] = l_access_token;
   auto l_refresh_token   = jwt::create()
-                             .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
-                             .sign(jwt::algorithm::hs256{"tset"});
+                            .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
+                            .set_issued_at(chrono::system_clock::now())
+                            .set_id(fmt::to_string(core_set::get_set().get_uuid()))
+                            .set_subject(fmt::to_string(l_p->uuid_id_))
+                            .set_not_before(chrono::system_clock::now())
+                            .set_expires_at(chrono::system_clock::now() + chrono::days{15})
+                            .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_json["refresh_token"] = l_refresh_token;
   boost::beast::http::response<boost::beast::http::string_body> l_res{
       boost::beast::http::status::ok, in_handle->version_

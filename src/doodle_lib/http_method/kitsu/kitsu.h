@@ -29,6 +29,9 @@ struct kitsu_ctx_t {
   /// 即梦授权
   std::string ji_meng_access_key_id_;
   std::string ji_meng_secret_access_key_;
+
+  /// 会话 jwt token
+  std::string secret_;
 };
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root);

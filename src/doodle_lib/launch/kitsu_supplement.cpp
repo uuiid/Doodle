@@ -32,7 +32,8 @@ struct kitsu_supplement_args_t {
   /// 即梦授权
   std::string ji_meng_access_key_id_;
   std::string ji_meng_secret_access_key_;
-
+  /// 会话 jwt token
+  std::string secret_;
   // 公司
   struct dingding_company_t {
     boost::uuids::uuid id_;
@@ -134,7 +135,8 @@ bool kitsu_supplement_main::init() {
           "ZSI6ImFjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjox"
           "NzY0NjMzNjAwLCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684",
       .kitsu_front_end_path_  = "D:/kitsu/dist",
-      .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data"
+      .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data",
+      .secret_                = "22T0iwSHK7qkhdI6"
   };
   bool l_my_backend = arg_["my_backend"];
 
@@ -204,7 +206,7 @@ bool kitsu_supplement_main::init() {
     l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_,
-        l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_
+        l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_
     );
 
     // 初始化钉钉客户端
