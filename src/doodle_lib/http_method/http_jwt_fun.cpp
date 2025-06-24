@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <jwt-cpp/jwt.h>
 namespace doodle::http {
 
@@ -22,7 +23,13 @@ std::shared_ptr<http_jwt_fun::http_jwt_t> http_jwt_fun::get_person(const session
     l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   // std::string l_l_jwt_str{l_jwt};
-  auto l_uuid = from_uuid_str(jwt::decode(l_jwt).get_payload_claim("sub").as_string());
+  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+
+  auto verifier = jwt::verify()
+                      .allow_algorithm(jwt::algorithm::hs256{l_ctx.secret_});
+  auto l_jwt_decode = jwt::decode(l_jwt);
+  verifier.verify(l_jwt_decode);
+  auto l_uuid = from_uuid_str(l_jwt_decode.get_subject());
   auto& l_sql = g_ctx().get<sqlite_database>();
   // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
