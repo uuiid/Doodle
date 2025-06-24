@@ -25,6 +25,10 @@ struct kitsu_ctx_t {
   std::filesystem::path front_end_root_;
   /// deepseek ai 的key
   std::vector<std::string> deepseek_keys_;
+
+  /// 即梦授权
+  std::string ji_meng_access_key_id_;
+  std::string ji_meng_secret_access_key_;
 };
 
 http_route_ptr create_kitsu_route(const FSys::path& in_root);
