@@ -10,6 +10,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+
 #include <jwt-cpp/jwt.h>
 namespace doodle::http {
 
@@ -23,17 +24,22 @@ std::shared_ptr<http_jwt_fun::http_jwt_t> http_jwt_fun::get_person(const session
     l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   // std::string l_l_jwt_str{l_jwt};
-  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+  auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
 
-  auto verifier = jwt::verify()
-                      .allow_algorithm(jwt::algorithm::hs256{l_ctx.secret_});
+  auto verifier     = jwt::verify().allow_algorithm(jwt::algorithm::hs256{l_ctx.secret_});
   auto l_jwt_decode = jwt::decode(l_jwt);
-  verifier.verify(l_jwt_decode);
+  try {
+    verifier.verify(l_jwt_decode);
+  } catch (const std::system_error& e) {
+    throw_exception(
+        http_request_error{boost::beast::http::status::unauthorized, fmt::format("cookie 验证错误 {}", e.what())}
+    );
+  }
   auto l_uuid = from_uuid_str(l_jwt_decode.get_subject());
   auto& l_sql = g_ctx().get<sqlite_database>();
   // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
 
   return std::make_shared<http_jwt_t>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
 }
