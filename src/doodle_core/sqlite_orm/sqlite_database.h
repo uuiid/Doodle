@@ -27,6 +27,7 @@ struct department;
 struct comment;
 struct task;
 struct project_task_status_link;
+struct entity_asset_extend;
 
 namespace attendance_helper {
 struct database_t;
@@ -43,6 +44,7 @@ namespace doodle {
 
 struct sqlite_database_impl;
 class sqlite_database {
+ public:
   std::shared_ptr<sqlite_database_impl> impl_;
 
   std::vector<uuid> get_temporal_type_ids();
@@ -189,5 +191,8 @@ class sqlite_database {
   /// 获取资产对应的 task
   std::vector<task> get_tasks_for_entity(const uuid& in_asset_id);
   std::vector<asset_type> get_asset_types_not_temporal_type();
+
+  /// 获取任务额外数据
+  std::optional<entity_asset_extend> get_entity_asset_extend(const uuid& in_entity_id);
 };
 }  // namespace doodle

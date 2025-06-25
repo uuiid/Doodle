@@ -48,6 +48,37 @@ struct DOODLE_CORE_API entity_asset_extend {
   std::string pin_yin_ming_cheng_;
   std::string ban_ben_;
   std::optional<std::int32_t> ji_du_;
+
+  bool is_empty() const {
+    return !ji_shu_lie_ && deng_ji_.empty() && !gui_dang_ && bian_hao_.empty() && pin_yin_ming_cheng_.empty() &&
+           ban_ben_.empty() && !ji_du_;
+  }
+  static bool has_extend_data(const nlohmann::json& j) {
+    return j.contains("ji_shu_lie") || j.contains("deng_ji") || j.contains("gui_dang") || j.contains("bian_hao") ||
+           j.contains("pin_yin_ming_cheng") || j.contains("ban_ben") || j.contains("ji_du");
+  }
+
+  // to json
+  friend void to_json(nlohmann::json& j, const entity_asset_extend& p) {
+    j["id"]                 = p.uuid_id_;
+    j["ji_shu_lie"]         = p.ji_shu_lie_;
+    j["deng_ji"]            = p.deng_ji_;
+    j["gui_dang"]           = p.gui_dang_;
+    j["bian_hao"]           = p.bian_hao_;
+    j["pin_yin_ming_cheng"] = p.pin_yin_ming_cheng_;
+    j["ban_ben"]            = p.ban_ben_;
+    j["ji_du"]              = p.ji_du_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, entity_asset_extend& p) {
+    if (j.contains("ji_shu_lie")) j.at("ji_shu_lie").get_to(p.ji_shu_lie_);
+    if (j.contains("deng_ji")) j.at("deng_ji").get_to(p.deng_ji_);
+    if (j.contains("gui_dang")) j.at("gui_dang").get_to(p.gui_dang_);
+    if (j.contains("bian_hao")) j.at("bian_hao").get_to(p.bian_hao_);
+    if (j.contains("pin_yin_ming_cheng")) j.at("pin_yin_ming_cheng").get_to(p.pin_yin_ming_cheng_);
+    if (j.contains("ban_ben")) j.at("ban_ben").get_to(p.ban_ben_);
+    if (j.contains("ji_du")) j.at("ji_du").get_to(p.ji_du_);
+  }
 };
 
 struct DOODLE_CORE_API entity {
