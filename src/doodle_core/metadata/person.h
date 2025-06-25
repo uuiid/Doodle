@@ -111,8 +111,7 @@ struct DOODLE_CORE_API person {
   // bool write_departments_{true};
 
   // from json
-  template <typename BasicJsonType>
-  friend void from_json(const BasicJsonType& j, person& p) {
+  friend void from_json(const nlohmann::json& j, person& p) {
     if (j.contains("password")) j.at("password").get_to(p.password_);
     j.at("first_name").get_to(p.first_name_);
     j.at("last_name").get_to(p.last_name_);
@@ -151,10 +150,11 @@ struct DOODLE_CORE_API person {
     j.at("studio_id").get_to(p.studio_id_);
     j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
     j.at("ldap_uid").get_to(p.ldap_uid_);
+
+    if (j.contains("dingding_company_id")) j.at("dingding_company_id").get_to(p.dingding_company_id_);
   }
   // from json
-  template <typename BasicJsonType>
-  friend void to_json(BasicJsonType& j, const person& p) {
+  friend void to_json(nlohmann::json& j, const person& p) {
     j["first_name"]                          = p.first_name_;
     j["last_name"]                           = p.last_name_;
     j["email"]                               = p.email_;
@@ -189,7 +189,7 @@ struct DOODLE_CORE_API person {
     j["is_generated_from_ldap"]              = p.is_generated_from_ldap_;
     j["ldap_uid"]                            = p.ldap_uid_;
     j["departments"]                         = p.departments_;
-    j["dingding_company_id"]                 = "";
+    j["dingding_company_id"]                 = p.dingding_company_id_;
     j["fido_devices"]                        = nlohmann::json::array();
     j["full_name"]                           = p.first_name_ + " " + p.last_name_;
     j["id"]                                  = p.uuid_id_;

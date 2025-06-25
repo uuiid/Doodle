@@ -182,6 +182,9 @@ struct project {
     if (j.contains("project_status_id")) j.at("project_status_id").get_to(p.project_status_id_);
     if (j.contains("default_preview_background_file_id"))
       j.at("default_preview_background_file_id").get_to(p.default_preview_background_file_id_);
+    if (j.contains("path")) j.at("path").get_to(p.path_);
+    if (j.contains("en_str")) j.at("en_str").get_to(p.en_str_);
+    if (j.contains("auto_upload_path")) j.at("auto_upload_path").get_to(p.auto_upload_path_);
   }
   friend void to_json(nlohmann::json& j, const project& p) {
     j["id"]                                 = p.uuid_id_;
@@ -219,6 +222,10 @@ struct project {
     j["task_types"]                         = p.task_types_;
     j["status_automations"]                 = p.status_automations_;
     j["preview_background_files"]           = p.preview_background_files_;
+
+    j["path"]                               = p.path_;
+    j["en_str"]                             = p.en_str_;
+    j["auto_upload_path"]                   = p.auto_upload_path_;
   }
 };
 
