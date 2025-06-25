@@ -57,9 +57,17 @@ class AssetsTab(BaseMixin):
     uuid_id: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
-    label = orm.mapped_column(sqlalchemy.String(80), nullable=True, index=True)
+    label = orm.mapped_column(sqlalchemy.String(80), nullable=False, index=True)
     parent_uuid = orm.mapped_column(UUIDType(binary=True))
-    order = orm.mapped_column(sqlalchemy.Integer)
+    order = orm.mapped_column(sqlalchemy.Integer, server_default=sqlalchemy.text("0"), nullable=False)
+    
+    def form_old(self, assets):
+        self.uuid_id = assets.uuid_id
+        self.label = assets.label
+        self.parent_uuid = assets.parent_uuid
+        self.order = assets.order
+        return self
+
 
 class AssetsFileTab(BaseMixin):
     __tablename__ = "assets_file_tab_2"
@@ -69,12 +77,27 @@ class AssetsFileTab(BaseMixin):
     label = orm.mapped_column(sqlalchemy.String(80), nullable=True, index=True)
     path = orm.mapped_column(sqlalchemy.String(80))
     notes = orm.mapped_column(sqlalchemy.String)
-    active = orm.mapped_column(sqlalchemy.Boolean)
-    has_thumbnail = orm.mapped_column(sqlalchemy.Boolean)
-    extension = orm.mapped_column(sqlalchemy.String())
+    active = orm.mapped_column(sqlalchemy.Boolean, nullable=False)
+    has_thumbnail = orm.mapped_column(sqlalchemy.Boolean, server_default=sqlalchemy.text("0"), nullable=False)
+    extension = orm.mapped_column(sqlalchemy.String(), server_default=".png")
+
+    def form_old(self, assets):
+        self.uuid_id = assets.uuid_id
+        self.label = assets.label
+        self.path = assets.path
+        self.notes = assets.notes
+        self.active = assets.active
+        self.has_thumbnail = assets.has_thumbnail
+        self.extension = assets.extension
+        return self
 
 
 class AssetsLinkParent(BaseMixin):
     __tablename__ = "assets_link_parent_t"
-    assets_type_uuid = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("assets_tab.uuid_id"))
-    assets_uuid = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("assets_file_tab_2.uuid_id"))
+    assets_type_uuid = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("assets_tab.uuid_id"), nullable=False)
+    assets_uuid = orm.mapped_column(UUIDType(binary=True), sqlalchemy.ForeignKey("assets_file_tab_2.uuid_id"), nullable=False)
+
+    def form_old(self, assets):
+        self.assets_type_uuid = assets.assets_type_uuid
+        self.assets_uuid = assets.assets_uuid
+        return self

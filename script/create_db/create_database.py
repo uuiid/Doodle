@@ -65,16 +65,15 @@ def main():
 
     old_prj :dict[str, doodle.doodle_orm.ProjectOld] = {}
     old_person :dict[str, doodle.doodle_orm.PersonOld] = {}
-    old_assets :dict[str, doodle.doodle_orm.AssetsTab] = {}
-    old_assets_file :dict[str, doodle.doodle_orm.AssetsFileTab] = {}
-    old_assets_link :dict[str, doodle.doodle_orm.AssetsLinkParent] = {}
+    old_assets :list[doodle.doodle_orm.AssetsTab] = []
+    old_assets_file :list[doodle.doodle_orm.AssetsFileTab] = []
+    old_assets_link :list[doodle.doodle_orm.AssetsLinkParent] = []
     with Session(old_engine) as session:
         old_prj = {p.uuid_id: p for p in session.query(doodle.doodle_orm.ProjectOld).all()}
         old_person = {p.uuid_id: p for p in session.query(doodle.doodle_orm.PersonOld).all()}
-        old_assets = {p.uuid_id: p for p in session.query(doodle.doodle_orm.AssetsTab).all()}
-        old_assets_file = {p.uuid_id: p for p in session.query(doodle.doodle_orm.AssetsFileTab).all()}
+        old_assets = session.query(doodle.doodle_orm.AssetsTab).all()
+        old_assets_file = session.query(doodle.doodle_orm.AssetsFileTab).all()
         old_assets_link = session.query(doodle.doodle_orm.AssetsLinkParent).all()
-
 
     if (os.path.exists(f"D:\\{DB_NAME}")):
         os.remove(f"D:\\{DB_NAME}")
@@ -194,9 +193,9 @@ def main():
             session.add_all([doodle.attachment_file.AttachmentFile().from_zou(i) for i in l_attachment_file])
             session.add_all([doodle.entity.EntityAssetExtend().from_zou(i) for i in l_Entity if
                              doodle.entity.EntityAssetExtend.has_extend(i)])
-            session.add_all(old_assets.values())
-            session.add_all(old_assets_file.values())
-            session.add_all(old_assets_link)
+            session.add_all([doodle.doodle_orm.AssetsTab().form_old(i) for i in old_assets])
+            session.add_all([doodle.doodle_orm.AssetsFileTab().form_old(i) for i in old_assets_file])
+            session.add_all([doodle.doodle_orm.AssetsLinkParent().form_old(i) for i in old_assets_link])
 
             session.commit()
 

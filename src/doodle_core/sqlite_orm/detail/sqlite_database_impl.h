@@ -433,14 +433,15 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_table<entity_asset_extend>(
           "entity_asset_extend",                                                           //
           make_column("id", &entity_asset_extend::id_, primary_key().autoincrement()),     //
+          make_column("uuid", &entity_asset_extend::uuid_id_, unique(), not_null()),     //
           make_column("entity_id", &entity_asset_extend::entity_id_),                      //
-          make_column("ji_shu_lie_", &entity_asset_extend::ji_shu_lie_),                        //
-          make_column("deng_ji_", &entity_asset_extend::deng_ji_),                        //
-          make_column("gui_dang_", &entity_asset_extend::gui_dang_),                        //
-          make_column("bian_hao_", &entity_asset_extend::bian_hao_),                        //
-          make_column("pin_yin_ming_cheng_", &entity_asset_extend::pin_yin_ming_cheng_),                        //
-          make_column("ban_ben_", &entity_asset_extend::ban_ben_),                        //
-          make_column("ji_du_", &entity_asset_extend::ji_du_),                        //
+          make_column("ji_shu_lie", &entity_asset_extend::ji_shu_lie_),                        //
+          make_column("deng_ji", &entity_asset_extend::deng_ji_),                        //
+          make_column("gui_dang", &entity_asset_extend::gui_dang_),                        //
+          make_column("bian_hao", &entity_asset_extend::bian_hao_),                        //
+          make_column("pin_yin_ming_cheng", &entity_asset_extend::pin_yin_ming_cheng_),                        //
+          make_column("ban_ben", &entity_asset_extend::ban_ben_),                        //
+          make_column("ji_du", &entity_asset_extend::ji_du_),                        //
           foreign_key(&entity_asset_extend::entity_id_).references(&entity::uuid_id_)
       ),
       make_table<entity>(
