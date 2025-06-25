@@ -96,6 +96,13 @@ struct DOODLE_CORE_API person {
   bool is_generated_from_ldap_;
   std::string ldap_uid_;
 
+  // 自定义属性
+  // 钉钉id
+  std::string dingding_id_;
+  // 钉钉对应公司的 uuid
+  uuid dingding_company_id_;
+
+
   std::string get_full_name() const {
     return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;
   };

@@ -18,6 +18,8 @@ from doodle.base import BaseMixin
 from zou.app.models.person import Person as ZouPerson
 from zou.app.models.person import DepartmentLink as ZouDepartmentLink
 
+from doodle.doodle_orm import PersonOld
+
 TWO_FACTOR_AUTHENTICATION_TYPES = [
     ("totp", "TOTP"),
     ("email_otp", "Email OTP"),
@@ -137,6 +139,11 @@ class Person(BaseMixin):
     is_generated_from_ldap = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     ldap_uid = orm.mapped_column(sqlalchemy.String(60), unique=True, default=None)
 
+    dingding_id: orm.Mapped[str] = orm.mapped_column(sqlalchemy.String(80), nullable=True)
+    dingding_company_id: orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), nullable=True
+    )
+
     __table_args__ = (
         Index(
             "only_one_email_by_person",
@@ -190,4 +197,11 @@ class Person(BaseMixin):
         self.is_generated_from_ldap = person.is_generated_from_ldap
         self.ldap_uid = person.ldap_uid
 
+        return self
+
+    def form_old(self, person_map: dict[str, PersonOld]):
+        if self.uuid in person_map.keys():
+            person: PersonOld = person_map[self.uuid]
+            self.dingding_id = person.dingding_id
+            self.dingding_company_id = person.dingding_company_id
         return self

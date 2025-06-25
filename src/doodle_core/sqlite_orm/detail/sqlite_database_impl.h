@@ -665,7 +665,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("expiration_date", &person::expiration_date_),                                          //
           make_column("studio_id", &person::studio_id_),                                                      //
           make_column("is_generated_from_ldap", &person::is_generated_from_ldap_),                            //
-          make_column("ldap_uid", &person::ldap_uid_)
+          make_column("ldap_uid", &person::ldap_uid_),
+          make_column("dingding_id", &person::dingding_id_),
+          make_column("dingding_company_id", &person::dingding_company_id_)
       ),
       make_table<preview_background_file>(
           "preview_background_file",                                                        //

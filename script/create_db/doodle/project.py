@@ -16,18 +16,7 @@ from zou.app.models.project import ProjectAssetTypeLink as ZouProjectAssetTypeLi
 from zou.app.models.project import ProjectStatusAutomationLink as ZouProjectStatusAutomationLink
 from zou.app.models.project import ProjectPreviewBackgroundFileLink as ZouProjectPreviewBackgroundFileLink
 
-
-class ProjectOld(BaseMixin):
-    __tablename__ = "project"
-    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
-        UUIDType(binary=True), unique=True, nullable=False, index=True
-    )
-    name = orm.mapped_column(sqlalchemy.String(80), nullable=True, unique=True, index=True)
-    path = orm.mapped_column(sqlalchemy.String(80))
-    en_str = orm.mapped_column(sqlalchemy.String(80))
-    auto_upload_path = orm.mapped_column(sqlalchemy.String(80))
-    code = orm.mapped_column(sqlalchemy.String(80))
-
+from doodle.doodle_orm import ProjectOld
 
 PROJECT_STYLES = [
     ("e2d", "2D Animation"),
@@ -240,9 +229,9 @@ class Project(BaseMixin):
         UUIDType(binary=True), sqlalchemy.ForeignKey("project_status.id"), index=True
     )
 
-    path = orm.mapped_column(sqlalchemy.String(80))
-    en_str = orm.mapped_column(sqlalchemy.String(80))
-    auto_upload_path = orm.mapped_column(sqlalchemy.String(80))
+    path = orm.mapped_column(sqlalchemy.String(80), nullable=True)
+    en_str = orm.mapped_column(sqlalchemy.String(80), nullable=True)
+    auto_upload_path = orm.mapped_column(sqlalchemy.String(80), nullable=True)
 
     default_preview_background_file_id = orm.mapped_column(
         UUIDType(binary=True),
@@ -305,7 +294,7 @@ class Project(BaseMixin):
         self.default_preview_background_file_id = project.default_preview_background_file_id
         return self
 
-    def form_old(self, project_map: map[str, ProjectOld]):
+    def form_old(self, project_map: dict[str, ProjectOld]):
         if self.uuid in project_map.keys():
             project: ProjectOld = project_map[self.uuid]
             self.path = project.path

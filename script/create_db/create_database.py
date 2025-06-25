@@ -53,6 +53,7 @@ import doodle.chat_message
 import doodle.chat
 import doodle.subscription
 import doodle.preview_file
+import doodle.doodle_orm
 
 PASS = getenv("KITSU_PASS")
 DB_NAME = "my_zou.database"
@@ -60,7 +61,23 @@ DB_NAME = "my_zou.database"
 
 def main():
     engine = create_engine(f"sqlite:///D:\\{DB_NAME}")
+    old_engine = create_engine(f"sqlite:///E:\\kitsu.database")
 
+    old_prj :dict[str, doodle.doodle_orm.ProjectOld] = {}
+    old_person :dict[str, doodle.doodle_orm.PersonOld] = {}
+    old_assets :dict[str, doodle.doodle_orm.AssetsTab] = {}
+    old_assets_file :dict[str, doodle.doodle_orm.AssetsFileTab] = {}
+    old_assets_link :dict[str, doodle.doodle_orm.AssetsLinkParent] = {}
+    with Session(old_engine) as session:
+        old_prj = {p.uuid_id: p for p in session.query(doodle.doodle_orm.ProjectOld).all()}
+        old_person = {p.uuid_id: p for p in session.query(doodle.doodle_orm.PersonOld).all()}
+        old_assets = {p.uuid_id: p for p in session.query(doodle.doodle_orm.AssetsTab).all()}
+        old_assets_file = {p.uuid_id: p for p in session.query(doodle.doodle_orm.AssetsFileTab).all()}
+        old_assets_link = session.query(doodle.doodle_orm.AssetsLinkParent).all()
+
+
+    if (os.path.exists(f"D:\\{DB_NAME}")):
+        os.remove(f"D:\\{DB_NAME}")
     with zou.app.app.app_context():
         l_prj_list: list[
             zou.app.models.project_status.ProjectStatus] = zou.app.models.project_status.ProjectStatus.query.all()
@@ -136,13 +153,13 @@ def main():
             session.add_all([doodle.task_type.TaskType().from_zou(i) for i in l_task_type])
             session.add_all([doodle.entity_type.EntityType().from_zou(i) for i in l_entity_type])
             session.add_all([doodle.entity_type.TaskTypeAssetTypeLink().from_zou(i) for i in l_TaskTypeAssetTypeLink])
-            session.add_all([doodle.person.Person().from_zou(i) for i in l_person])
+            session.add_all([doodle.person.Person().from_zou(i).form_old(old_person) for i in l_person])
             session.add_all([doodle.person.DepartmentLink().from_zou(i) for i in l_DepartmentLink])
             session.add_all(
                 [doodle.metadata_descriptor.MetadataDescriptor().from_zou(i) for i in l_metadata_descriptor])
             session.add_all([doodle.metadata_descriptor.DepartmentMetadataDescriptorLink().from_zou(i) for i in
                              l_DepartmentMetadataDescriptorLink])
-            session.add_all([doodle.project.Project().from_zou(i) for i in l_project])
+            session.add_all([doodle.project.Project().from_zou(i).form_old(old_prj) for i in l_project])
             session.add_all([doodle.project.ProjectPreviewBackgroundFileLink().from_zou(i) for i in
                              l_ProjectPreviewBackgroundFileLink])
             session.add_all(
@@ -177,11 +194,12 @@ def main():
             session.add_all([doodle.attachment_file.AttachmentFile().from_zou(i) for i in l_attachment_file])
             session.add_all([doodle.entity.EntityAssetExtend().from_zou(i) for i in l_Entity if
                              doodle.entity.EntityAssetExtend.has_extend(i)])
+            session.add_all(old_assets.values())
+            session.add_all(old_assets_file.values())
+            session.add_all(old_assets_link)
 
             session.commit()
 
 
 if __name__ == "__main__":
-    if (os.path.exists(f"D:\\{DB_NAME}")):
-        os.remove(f"D:\\{DB_NAME}")
     main()
