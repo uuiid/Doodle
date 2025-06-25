@@ -41,9 +41,9 @@ def apply_criterions_to_db_query(model, db_query, criterions):
                 field_key.property, orm.properties.RelationshipProperty
             )
             value_is_list = (
-                hasattr(value, "__len__")
-                and len(value) > 0
-                and value[0] == "["
+                    hasattr(value, "__len__")
+                    and len(value) > 0
+                    and value[0] == "["
             )
 
             if key == "name" and field_key is not None:
@@ -116,11 +116,11 @@ def get_paginated_results(query, page, limit=None, relations=False):
 
 
 def get_cursor_results(
-    model,
-    query,
-    cursor_created_at,
-    limit=None,
-    relations=False,
+        model,
+        query,
+        cursor_created_at,
+        limit=None,
+        relations=False,
 ):
     """ """
     limit = limit or app.config["NB_RECORDS_PER_PAGE"]

@@ -96,10 +96,10 @@ def get_month_interval(year, month):
     year = int(year)
     month = int(month)
     if (
-        year > get_utc_now_datetime().year
-        or year < 2010
-        or month < 1
-        or month > 12
+            year > get_utc_now_datetime().year
+            or year < 2010
+            or month < 1
+            or month > 12
     ):
         raise RuntimeError
 
@@ -115,10 +115,10 @@ def get_week_interval(year, week):
     year = int(year)
     week = int(week)
     if (
-        year > get_utc_now_datetime().year
-        or year < 2010
-        or week < 1
-        or week > 52
+            year > get_utc_now_datetime().year
+            or year < 2010
+            or week < 1
+            or week > 52
     ):
         raise RuntimeError
     start = isoweek.Week(year, week).monday()
@@ -134,12 +134,12 @@ def get_day_interval(year, month, day):
     month = int(month)
     day = int(day)
     if (
-        year > get_utc_now_datetime().year
-        or year < 2010
-        or month < 1
-        or month > 12
-        or day < 1
-        or day > 31
+            year > get_utc_now_datetime().year
+            or year < 2010
+            or month < 1
+            or month > 12
+            or day < 1
+            or day > 31
     ):
         raise RuntimeError
     start = datetime.datetime(year, month, day)

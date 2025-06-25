@@ -6,6 +6,7 @@ from doodle.base import BaseMixin
 from zou.app.models.preview_file import PreviewFile as ZouPreviewFile
 import json
 import datetime
+
 STATUSES = [
     ("processing", "Processing"),
     ("ready", "Ready"),
@@ -67,8 +68,10 @@ class PreviewFile(BaseMixin):
     url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
     uploaded_movie_url = orm.mapped_column(sqlalchemy.String(600))  # deprecated
     uploaded_movie_name = orm.mapped_column(sqlalchemy.String(150))  # deprecated
-    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
-    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False,
+                                   default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False,
+                                   default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
 
     def from_zou(self, preview_file: ZouPreviewFile):
         self.uuid = preview_file.id

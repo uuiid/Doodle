@@ -17,7 +17,6 @@ from zou.app.models.base import BaseMixin
 from zou.app.models.department import Department
 from zou.app import config, db
 
-
 TWO_FACTOR_AUTHENTICATION_TYPES = [
     ("totp", "TOTP"),
     ("email_otp", "Email OTP"),
@@ -168,7 +167,7 @@ class Person(db.Model, BaseMixin, SerializerMixin):
             ]
 
     def serialize(
-        self, obj_type="Person", relations=False, milliseconds=False
+            self, obj_type="Person", relations=False, milliseconds=False
     ):
         data = SerializerMixin.serialize(
             self, obj_type, relations=relations, milliseconds=milliseconds

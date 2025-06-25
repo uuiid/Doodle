@@ -91,8 +91,8 @@ def send_to_discord(token, userid, message):
             user_found = False
             for user in client.get_all_members():
                 if not user.bot and (
-                    (user.discriminator == "0" and user.name == userid)
-                    or (f"{user.name}#{user.discriminator}" == userid)
+                        (user.discriminator == "0" and user.name == userid)
+                        or (f"{user.name}#{user.discriminator}" == userid)
                 ):
                     embed = DiscordEmbed()
                     embed.description = message

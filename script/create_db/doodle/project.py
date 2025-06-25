@@ -16,6 +16,19 @@ from zou.app.models.project import ProjectAssetTypeLink as ZouProjectAssetTypeLi
 from zou.app.models.project import ProjectStatusAutomationLink as ZouProjectStatusAutomationLink
 from zou.app.models.project import ProjectPreviewBackgroundFileLink as ZouProjectPreviewBackgroundFileLink
 
+
+class ProjectOld(BaseMixin):
+    __tablename__ = "project"
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
+        UUIDType(binary=True), unique=True, nullable=False, index=True
+    )
+    name = orm.mapped_column(sqlalchemy.String(80), nullable=True, unique=True, index=True)
+    path = orm.mapped_column(sqlalchemy.String(80))
+    en_str = orm.mapped_column(sqlalchemy.String(80))
+    auto_upload_path = orm.mapped_column(sqlalchemy.String(80))
+    code = orm.mapped_column(sqlalchemy.String(80))
+
+
 PROJECT_STYLES = [
     ("e2d", "2D Animation"),
     ("e2dpaper", "2D Animation (Paper)"),
@@ -60,7 +73,7 @@ class ProjectPersonLink(BaseMixin):
 
 class ProjectTaskTypeLink(BaseMixin):
     __tablename__ = "project_task_type_link"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     project_id = orm.mapped_column(
@@ -93,7 +106,7 @@ class ProjectTaskTypeLink(BaseMixin):
 
 class ProjectTaskStatusLink(BaseMixin):
     __tablename__ = "project_task_status_link"
-    uuid : orm.Mapped[UUIDType] = orm.mapped_column(
+    uuid: orm.Mapped[UUIDType] = orm.mapped_column(
         UUIDType(binary=True), unique=True, nullable=False, index=True
     )
     project_id = orm.mapped_column(
@@ -227,6 +240,10 @@ class Project(BaseMixin):
         UUIDType(binary=True), sqlalchemy.ForeignKey("project_status.id"), index=True
     )
 
+    path = orm.mapped_column(sqlalchemy.String(80))
+    en_str = orm.mapped_column(sqlalchemy.String(80))
+    auto_upload_path = orm.mapped_column(sqlalchemy.String(80))
+
     default_preview_background_file_id = orm.mapped_column(
         UUIDType(binary=True),
         sqlalchemy.ForeignKey("preview_background_file.id"),
@@ -267,8 +284,8 @@ class Project(BaseMixin):
         self.production_type = project.production_type
         self.production_style = project.production_style
 
-        data_map = {"2d":"e2d","2dpaper":"e2dpaper","3d":"e3d","2d3d":"e2d3d",}
-        if(self.production_style.code in data_map.keys()):
+        data_map = {"2d": "e2d", "2dpaper": "e2dpaper", "3d": "e3d", "2d3d": "e2d3d", }
+        if (self.production_style.code in data_map.keys()):
             self.production_style.code = data_map[self.production_style.code]
 
         self.start_date = project.start_date
@@ -286,4 +303,12 @@ class Project(BaseMixin):
         self.ld_bitrate_compression = project.ld_bitrate_compression
         self.project_status_id = project.project_status_id
         self.default_preview_background_file_id = project.default_preview_background_file_id
+        return self
+
+    def form_old(self, project_map: map[str, ProjectOld]):
+        if self.uuid in project_map.keys():
+            project: ProjectOld = project_map[self.uuid]
+            self.path = project.path
+            self.en_str = project.en_str
+            self.auto_upload_path = project.auto_upload_path
         return self

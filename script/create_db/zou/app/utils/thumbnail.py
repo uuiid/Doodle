@@ -10,7 +10,6 @@ from PIL import Image, ImageFile
 
 from zou.app.utils import fs
 
-
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 Image.MAX_IMAGE_PIXELS = 20000 * 20000

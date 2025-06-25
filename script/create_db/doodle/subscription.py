@@ -5,6 +5,7 @@ import sqlalchemy
 from doodle.base import BaseMixin
 from zou.app.models.subscription import Subscription as ZouSubscription
 
+
 class Subscription(BaseMixin):
     """
     Allow to subscribe to an entity

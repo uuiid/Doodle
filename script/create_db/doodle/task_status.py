@@ -33,7 +33,7 @@ class TaskStatus(BaseMixin):
     shotgun_id = orm.mapped_column(sqlalchemy.Integer)
 
     for_concept = orm.mapped_column(
-        sqlalchemy.Boolean(),  default=False, nullable=False
+        sqlalchemy.Boolean(), default=False, nullable=False
     )
 
     def from_zou(self, task_status: ZouTaskStatus.TaskStatus):

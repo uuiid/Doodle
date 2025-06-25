@@ -37,7 +37,6 @@ mentions_table = db.Table(
     ),
 )
 
-
 department_mentions_table = db.Table(
     "comment_department_mentions",
     db.Column(
@@ -53,7 +52,6 @@ department_mentions_table = db.Table(
         primary_key=True,
     ),
 )
-
 
 acknowledgements_table = db.Table(
     "comment_acknoledgments",

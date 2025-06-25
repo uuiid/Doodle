@@ -3,7 +3,6 @@ import datetime
 import tempfile
 from sqlalchemy.engine.url import URL
 
-
 PROPAGATE_EXCEPTIONS = True
 DEBUG_HOST = os.getenv("DEBUG_HOST", "127.0.0.1")
 DEBUG_PORT = int(os.getenv("DEBUG_PORT", 5000))
@@ -132,7 +131,6 @@ SENTRY_DEBUG_URL = os.getenv("SENTRY_DEBUG_URL", False)
 SENTRY_KITSU_DSN = os.getenv("SENTRY_KITSU_DSN", "")
 SENTRY_KITSU_SR = float(os.getenv("SENTRY_KITSU_SR", 0.1))
 
-
 CRISP_TOKEN = os.getenv("CRISP_TOKEN", "")
 
 DEFAULT_TIMEZONE = os.getenv("DEFAULT_TIMEZONE", "Europe/Paris")
@@ -140,7 +138,6 @@ DEFAULT_LOCALE = os.getenv("DEFAULT_LOCALE", "en_US")
 
 USER_LIMIT = int(os.getenv("USER_LIMIT", "100"))
 MIN_PASSWORD_LENGTH = int(os.getenv("MIN_PASSWORD_LENGTH", 8))
-
 
 # Deprecated
 TO_REVIEW_TASK_STATUS = "To review"

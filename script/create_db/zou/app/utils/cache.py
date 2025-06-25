@@ -10,10 +10,9 @@ from flask_caching import Cache
 from zou.app import config
 
 
-
-
 def invalidate(*args):
     return
+
 
 def clear():
     return

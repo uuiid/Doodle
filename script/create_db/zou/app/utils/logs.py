@@ -10,7 +10,6 @@ if config.LOGS_MODE == "ovh":
 
 def configure_logs_ovh(app):
     if config.LOGS_MODE == "ovh":
-
         class GelfOVHHandler(GelfTcpHandler):
             """
             Class to adapt OVH Log management platform

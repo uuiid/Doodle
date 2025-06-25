@@ -105,8 +105,8 @@ class BaseMixin(object):
 
                 if hasattr(field_key, "property"):
                     if isinstance(
-                        field_key.property,
-                        orm.properties.RelationshipProperty,
+                            field_key.property,
+                            orm.properties.RelationshipProperty,
                     ):
                         class_ = field_key.property.entity.class_
                         values = []
@@ -251,8 +251,8 @@ class BaseMixin(object):
 
                 if hasattr(field_key, "property"):
                     if isinstance(
-                        field_key.property,
-                        orm.properties.RelationshipProperty,
+                            field_key.property,
+                            orm.properties.RelationshipProperty,
                     ):
                         class_ = field_key.property.entity.class_
                         values = []

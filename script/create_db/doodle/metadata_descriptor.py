@@ -92,7 +92,8 @@ class MetadataDescriptor(BaseMixin):
         self.name = metadata_descriptor.name
         self.data_type = metadata_descriptor.data_type
         self.field_name = metadata_descriptor.field_name
-        self.choices = json.dumps(metadata_descriptor.choices, ensure_ascii=False) if metadata_descriptor.choices else None
+        self.choices = json.dumps(metadata_descriptor.choices,
+                                  ensure_ascii=False) if metadata_descriptor.choices else None
         self.for_client = bool(metadata_descriptor.for_client)
 
         self.uuid = metadata_descriptor.id

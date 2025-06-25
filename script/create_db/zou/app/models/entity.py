@@ -226,9 +226,9 @@ class Entity(db.Model, BaseMixin, SerializerMixin):
             del data["sequence_id"]
 
         if (
-            "preview_file_id" in data
-            and data["preview_file_id"] is not None
-            and len(data["preview_file_id"]) > 0
+                "preview_file_id" in data
+                and data["preview_file_id"] is not None
+                and len(data["preview_file_id"]) > 0
         ):
             preview_file = PreviewFile.get(data["preview_file_id"])
             if preview_file is None:

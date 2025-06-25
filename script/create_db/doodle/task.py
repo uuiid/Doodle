@@ -7,6 +7,8 @@ import sqlalchemy
 import json
 from zou.app.models.task import Task as ZouTask
 import datetime
+
+
 class Assignations(BaseMixin):
     __tablename__ = "assignations"
     task_id = orm.mapped_column(
@@ -24,7 +26,6 @@ class Assignations(BaseMixin):
         self.task_id = assignation[0]
         self.person_id = assignation[1]
         return self
-    
 
 
 class Task(BaseMixin):
@@ -58,8 +59,10 @@ class Task(BaseMixin):
     data = orm.mapped_column(sqlalchemy.TEXT())
     nb_drawings = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
 
-    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
-    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False,
+                                   default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False,
+                                   default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
 
     shotgun_id = orm.mapped_column(sqlalchemy.Integer, nullable=False, default=0)
     last_preview_file_id = orm.mapped_column(UUIDType(binary=True))
@@ -122,4 +125,3 @@ class Task(BaseMixin):
         self.updated_at = task.updated_at
 
         return self
-

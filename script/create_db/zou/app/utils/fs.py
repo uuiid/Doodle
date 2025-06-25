@@ -35,13 +35,13 @@ def copyfile(src, dest):
 
 
 def get_file_path_and_file(
-    config,
-    get_local_path,
-    open_file,
-    prefix,
-    instance_id,
-    extension,
-    file_size=None,
+        config,
+        get_local_path,
+        open_file,
+        prefix,
+        instance_id,
+        extension,
+        file_size=None,
 ):
     if config.FS_BACKEND == "local":
         file_path = get_local_path(prefix, instance_id)
@@ -63,7 +63,7 @@ def get_file_path_and_file(
                 download_failed = True
 
             if is_unvalid_file(
-                file_path, file_size, download_failed
+                    file_path, file_size, download_failed
             ):  # download failed
                 time.sleep(3)
                 download_failed = False
@@ -76,7 +76,7 @@ def get_file_path_and_file(
                     exception = e
 
                 if is_unvalid_file(
-                    file_path, file_size, download_failed
+                        file_path, file_size, download_failed
                 ):  # download failed again
                     rm_file(file_path)
                     if exception is not None:

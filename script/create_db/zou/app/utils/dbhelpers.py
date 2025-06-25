@@ -30,7 +30,6 @@ def drop_all():
     """
     Drop all database tables.
     """
-    
 
     db.session.flush()
     close_all_sessions()
@@ -41,10 +40,10 @@ def is_init():
     """
     Check if database is initialized.
     """
-    
+
     from zou.app.models.project_status import ProjectStatus
 
     return (
-        inspect(db.engine).has_table("person")
-        and db.session.query(ProjectStatus).count() == 2
+            inspect(db.engine).has_table("person")
+            and db.session.query(ProjectStatus).count() == 2
     )

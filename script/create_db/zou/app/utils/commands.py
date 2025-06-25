@@ -6,7 +6,6 @@ import tempfile
 import sys
 import shutil
 
-
 from ldap3 import Server, Connection, ALL, NTLM, SIMPLE
 from zou.app.utils import thumbnail as thumbnail_utils, auth
 from zou.app.stores import auth_tokens_store, file_store, queue_store
@@ -280,7 +279,7 @@ def sync_with_ldap_server():
             desktop_login = clean_value(desktop_login)
 
             if desktop_login not in excluded_accounts and (
-                group_members is None or entry.entry_dn in group_members
+                    group_members is None or entry.entry_dn in group_members
             ):
                 if is_ad:
                     ldap_uid = clean_value(entry.objectGUID)
@@ -315,7 +314,7 @@ def sync_with_ldap_server():
                     active = bool(entry.userAccountControl.value & 2) is False
                 elif entry.organizationalStatus:
                     active = (
-                        entry.organizationalStatus.value.lower() == "active"
+                            entry.organizationalStatus.value.lower() == "active"
                     )
                 else:
                     active = False
@@ -388,11 +387,11 @@ def sync_with_ldap_server():
                 persons_to_update.append((person, user))
 
         for person in (
-            Person.query.filter_by(is_generated_from_ldap=True, active=True)
-            .filter(
-                not_(Person.id.in_([p[0]["id"] for p in persons_to_update]))
-            )
-            .all()
+                Person.query.filter_by(is_generated_from_ldap=True, active=True)
+                        .filter(
+                    not_(Person.id.in_([p[0]["id"] for p in persons_to_update]))
+                )
+                        .all()
         ):
             persons_service.update_person(
                 person.id, {"active": False}, bypass_protected_accounts=True
@@ -404,19 +403,19 @@ def sync_with_ldap_server():
         for person, user in persons_to_update:
             try:
                 if (
-                    not person["active"]
-                    and user["active"]
-                    and persons_service.is_user_limit_reached()
+                        not person["active"]
+                        and user["active"]
+                        and persons_service.is_user_limit_reached()
                 ):
                     raise IsUserLimitReachedException
 
                 if any(
-                    user[key] != person[key]
-                    for key in [
-                        key
-                        for key in user.keys()
-                        if key not in ["thumbnail", "emails"]
-                    ]
+                        user[key] != person[key]
+                        for key in [
+                            key
+                            for key in user.keys()
+                            if key not in ["thumbnail", "emails"]
+                        ]
                 ):
                     persons_service.update_person(
                         person["id"],
@@ -491,13 +490,13 @@ def sync_with_ldap_server():
 
 
 def import_data_from_another_instance(
-    source,
-    login,
-    password,
-    project=None,
-    with_events=False,
-    no_projects=False,
-    only_projects=False,
+        source,
+        login,
+        password,
+        project=None,
+        with_events=False,
+        no_projects=False,
+        only_projects=False,
 ):
     """
     Retrieve and save all the data from another API instance. It doesn't
@@ -531,7 +530,7 @@ def run_sync_change_daemon(event_source, source, login, password, logs_dir):
 
 
 def run_sync_file_change_daemon(
-    event_source, source, login, password, logs_dir
+        event_source, source, login, password, logs_dir
 ):
     """
     Listen to event websocket. Each time a change occurs, it retrieves the
@@ -547,7 +546,7 @@ def run_sync_file_change_daemon(
 
 
 def import_last_changes_from_another_instance(
-    source, login, password, minutes=0, limit=300
+        source, login, password, minutes=0, limit=300
 ):
     """
     Retrieve and save all the data related to most recent events from another
@@ -561,7 +560,7 @@ def import_last_changes_from_another_instance(
 
 
 def import_last_file_changes_from_another_instance(
-    source, login, password, minutes=20, limit=50, force=False
+        source, login, password, minutes=20, limit=50, force=False
 ):
     """
     Retrieve and save all the data related most to recent file events
@@ -576,14 +575,14 @@ def import_last_file_changes_from_another_instance(
 
 
 def import_files_from_another_instance(
-    source,
-    login,
-    password,
-    project=None,
-    multithreaded=False,
-    number_workers=30,
-    number_attemps=3,
-    force_resync=False,
+        source,
+        login,
+        password,
+        project=None,
+        multithreaded=False,
+        number_workers=30,
+        number_attemps=3,
+        force_resync=False,
 ):
     """
     Retrieve and save all the data related most recent events from another API
@@ -674,15 +673,15 @@ def search_asset(query):
 
 
 def generate_preview_extra(
-    project=None,
-    entity_id=None,
-    episodes=[],
-    only_shots=False,
-    only_assets=False,
-    force_regenerate_tiles=False,
-    with_tiles=False,
-    with_metadata=False,
-    with_thumbnails=False,
+        project=None,
+        entity_id=None,
+        episodes=[],
+        only_shots=False,
+        only_assets=False,
+        force_regenerate_tiles=False,
+        with_tiles=False,
+        with_metadata=False,
+        with_thumbnails=False,
 ):
     with app.app_context():
         preview_files_service.generate_preview_extra(
@@ -716,10 +715,10 @@ def reset_breakdown_data():
 
 
 def create_bot(
-    email,
-    name,
-    expiration_date,
-    role,
+        email,
+        name,
+        expiration_date,
+        role,
 ):
     with app.app_context():
         # Allow "admin@example.com" to be invalid.
@@ -738,7 +737,7 @@ def create_bot(
 
 
 def renormalize_movie_preview_files(
-    preview_file_id=None, project_id=None, all_broken=None, all_processing=None
+        preview_file_id=None, project_id=None, all_broken=None, all_processing=None
 ):
     with app.app_context():
         if preview_file_id is None and not all_broken and not all_processing:
@@ -776,7 +775,7 @@ def renormalize_movie_preview_files(
                     try:
                         preview_file_id = str(preview_file.id)
                         print(
-                            f"Renormalizing preview file {preview_file_id} ({i+1}/{len_preview_files})."
+                            f"Renormalizing preview file {preview_file_id} ({i + 1}/{len_preview_files})."
                         )
                         extension = preview_file.extension
                         uploaded_movie_path = os.path.join(

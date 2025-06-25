@@ -10,6 +10,8 @@ from zou.app.models.comment import Comment as ZouComment
 from zou.app.models.comment import CommentPreviewLink as ZouCommentPreviewLink
 import zou.app.models.comment as ZouCommentModels
 import json
+
+
 class CommentPreviewLink(BaseMixin):
     __tablename__ = "comment_preview_link"
     comment_id = orm.mapped_column(
@@ -22,6 +24,7 @@ class CommentPreviewLink(BaseMixin):
         sqlalchemy.ForeignKey("preview_file.uuid"),
         index=True,
     )
+
     def from_zou(self, ZouCommentPreviewLink: ZouCommentPreviewLink):
         self.comment_id = ZouCommentPreviewLink.comment
         self.preview_file_id = ZouCommentPreviewLink.preview_file
@@ -40,6 +43,7 @@ class CommentMentions(BaseMixin):
         sqlalchemy.ForeignKey("person.uuid"),
         index=True,
     )
+
     def from_zou(self, ZouCommentMention):
         self.comment_id = ZouCommentMention[0]
         self.person_id = ZouCommentMention[1]
@@ -58,11 +62,11 @@ class CommentDepartmentMentions(BaseMixin):
         sqlalchemy.ForeignKey("department.uuid"),
         index=True,
     )
+
     def from_zou(self, ZouCommentDepartmentMention):
         self.comment_id = ZouCommentDepartmentMention[0]
         self.department_id = ZouCommentDepartmentMention[1]
         return self
-
 
 
 class CommentAcknoledgments(BaseMixin):
@@ -77,6 +81,7 @@ class CommentAcknoledgments(BaseMixin):
         sqlalchemy.ForeignKey("person.uuid"),
         index=True,
     )
+
     def from_zou(self, ZouCommentAcknoledgment):
         self.comment_id = ZouCommentAcknoledgment[0]
         self.person_id = ZouCommentAcknoledgment[1]
@@ -108,9 +113,10 @@ class Comment(BaseMixin):
     pinned = orm.mapped_column(sqlalchemy.Boolean, nullable=False, default=False)
     links = orm.mapped_column(sqlalchemy.TEXT())
 
-    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
-    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False, default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
-
+    created_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False,
+                                   default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
+    updated_at = orm.mapped_column(sqlalchemy.DateTime, nullable=False,
+                                   default=datetime.datetime.now(tz=datetime.timezone.utc).replace(tzinfo=None))
 
     task_status_id = orm.mapped_column(
         UUIDType(binary=True), sqlalchemy.ForeignKey("task_status.uuid"), index=True
@@ -154,12 +160,13 @@ class Comment(BaseMixin):
         self.replies = json.dumps(comment.replies, ensure_ascii=False)
         self.checklist = json.dumps(comment.checklist, ensure_ascii=False)
         self.pinned = comment.pinned
-        self.links = None if comment.links is None or len(comment.links) == 0 or comment.links[0] is None else json.dumps(comment.links, ensure_ascii=False)
+        self.links = None if comment.links is None or len(comment.links) == 0 or comment.links[
+            0] is None else json.dumps(comment.links, ensure_ascii=False)
         self.task_status_id = comment.task_status_id
         self.person_id = comment.person_id
         # self.editor_id = comment.editor_id
         self.preview_file_id = comment.preview_file_id
-        
+
         self.created_at = comment.created_at
         self.updated_at = comment.updated_at
         return self
