@@ -145,6 +145,12 @@ struct project {
   std::vector<uuid> task_types_;
   std::vector<uuid> status_automations_;
   std::vector<uuid> preview_background_files_;
+
+  /// 我们自己的数据
+  FSys::path path_{};// 项目路径
+  std::string en_str_{}; // 项目拼音名称
+  std::string auto_upload_path_{}; // 项目自动上传路径
+
   friend void from_json(const nlohmann::json& j, project& p) {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("code")) j.at("code").get_to(p.code_);

@@ -574,6 +574,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("ld_bitrate_compression", &project::ld_bitrate_compression_),                          //
           make_column("project_status_id", &project::project_status_id_),                                    //
           make_column("default_preview_background_file_id", &project::default_preview_background_file_id_),  //
+          make_column("path", &project::path_),                                                              //
+          make_column("en_str", &project::en_str_),                                                              //
+          make_column("auto_upload_path", &project::auto_upload_path_),                                                              //
+
+
           foreign_key(&project::project_status_id_).references(&project_status::uuid_id_).on_delete.cascade(),
           foreign_key(&project::default_preview_background_file_id_)
               .references(&preview_background_file::uuid_id_)
