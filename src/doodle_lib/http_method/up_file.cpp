@@ -105,7 +105,7 @@ FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_inf
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->pin_yin_ming_cheng_
     );
-  if (in_data->entity_type_ == "地编")
+  if (in_data->entity_type_ == "场景")
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/Mod", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
     );
@@ -124,7 +124,7 @@ FSys::path up_file_asset_ue_post::gen_file_path(const std::shared_ptr<task_info_
         "6-moxing/Ch/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", in_data->gui_dang_, in_data->kai_shi_ji_shu_,
         in_data->gui_dang_, in_data->kai_shi_ji_shu_
     );
-  if (in_data->entity_type_ == "地编")
+  if (in_data->entity_type_ == "场景")
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_,
         in_data->pin_yin_ming_cheng_
@@ -153,7 +153,7 @@ FSys::path up_file_asset_image_post::gen_file_path(const std::shared_ptr<task_in
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->pin_yin_ming_cheng_
     );
-  if (in_data->entity_type_ == "地编")
+  if (in_data->entity_type_ == "场景")
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/BG{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
     );
