@@ -143,7 +143,7 @@ bool kitsu_supplement_main::init() {
   if (auto l_file_path = arg_({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
     try {
-      l_args = l_json.get<kitsu_supplement_args_t>();
+      l_json.get_to<kitsu_supplement_args_t>(l_args);
     } catch (...) {
       default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
       return true;
