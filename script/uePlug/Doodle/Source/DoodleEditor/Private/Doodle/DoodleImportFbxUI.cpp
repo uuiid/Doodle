@@ -667,14 +667,12 @@ void UDoodleFbxCameraImport_1::ImportFile()
 		FMovieSceneSequenceID L_CamSequenceID{};
 		if (!L_Task)
 		{
-			UEditorActorSubsystem* EditorActorSubsystem = GEditor->GetEditorSubsystem<UEditorActorSubsystem>();
-			if (auto L_Actor = EditorActorSubsystem->SpawnActorFromClass(
-				ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false
-			))
+			UWorld* L_World = GCurrentLevelEditingViewportClient ? GCurrentLevelEditingViewportClient->GetWorld() : nullptr;
+			FActorSpawnParameters L_ActorSpawnParameters{};
+			L_ActorSpawnParameters.ObjectFlags &= ~RF_Transactional;
+			if (auto L_Actor = CastChecked<ACineCameraActor>(L_World->SpawnActor<ACineCameraActor>(L_ActorSpawnParameters)))
 			{
-				L_CameraActor = CastChecked<ACineCameraActor>(
-					L_ShotSequence->MakeSpawnableTemplateFromInstance(*L_Actor, L_Actor->GetFName())
-				);
+				L_CameraActor = L_Actor;
 
 				UMovieScene* L_MoveScene = L_ShotSequence->GetMovieScene();
 				// TValueOrError<FNewSpawnable, FText> L_Result = dynamic_cast<IMovieScenePlayer*>(L_LevelSequencePlayer)
@@ -688,17 +686,15 @@ void UDoodleFbxCameraImport_1::ImportFile()
 				// }
 				// FNewSpawnable& L_NewSpawnable = L_Result.GetValue();
 				UMovieSceneSpawnableBindingBase;
-				UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateNewCustomBinding(
-					L_CameraActor, *L_MoveScene);
-				
 
-				L_CamGuid = L_MoveScene->AddPossessable(L_Bind->GetName(), L_Bind->GetClass());
-				// L_ShotSequence->BindPossessableObject(L_CameraActor, );
-				L_MoveScene->GetBindings();
-				if (FMovieScenePossessable* L_NewPossessable = L_MoveScene->FindPossessable(L_CamGuid); L_NewPossessable)
-				{
-					L_NewPossessable;
-				}
+
+				L_CamGuid = L_MoveScene->AddPossessable(L_CameraActor->GetName(), L_CameraActor->GetClass());
+				L_ShotSequence->BindPossessableObject(L_CamGuid, *L_CameraActor, L_World);
+
+				const FMovieSceneBindingReference* L_MovieSceneBindingReference = L_ShotSequence->GetBindingReferences()->GetReference(L_CamGuid, 0);
+				UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateCustomBindingFromBinding(
+					*L_MovieSceneBindingReference, L_CameraActor, *L_MoveScene);
+				L_Bind->SetupDefaults(nullptr, L_MovieSceneBindingReference->ID, *L_MoveScene);
 
 
 				// L_Task                   = CastChecked<UMovieSceneCameraCutTrack>(
@@ -800,25 +796,23 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
 	if (!L_ShotLevel)
 	{
-		UWorldFactory* Factory = NewObject<UWorldFactory>();
-		UPackage* Pkg = CreatePackage(*PackageName);
-		Pkg->FullyLoad();
-		Pkg->MarkPackageDirty();
-		// L_ShotLevel = CastChecked<UWorld>(Factory->FactoryCreateNew(UWorld::StaticClass(), Pkg, TEXT("Untitled"),
-		// RF_Public | RF_Standalone, NULL, GWarn));
+		// UPackage* Pkg = CreatePackage(*PackageName);
+		// Pkg->FullyLoad();
+		// Pkg->MarkPackageDirty();
 		const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
-		FString BaseFileName = FPaths::GetBaseFilename(PackageName);
-		//---------------
+		const FString BaseFileName = FPaths::GetBaseFilename(PackageName);
+		
 		FAssetToolsModule& AssetToolsModule =
 			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-		UObject* object = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
-		L_ShotLevel = Cast<UWorld>(object);
-		FAssetRegistryModule& AssetRegistryModule =
-			FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
+		L_ShotLevel = CastChecked<UWorld>(AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
+		// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		// AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
+
 		//------------------------
-		L_ShotLevel->Modify();
-		EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel);
+		// L_ShotLevel->Modify();
+		EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
+		// TryCollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+		L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
 	}
 	//---------------
 

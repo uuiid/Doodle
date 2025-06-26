@@ -78,6 +78,7 @@
 // 渲染图片
 #include "MoviePipelineInProcessExecutor.h"
 #include "MoviePipelinePIEExecutor.h"
+#include "Bindings/MovieSceneSpawnableActorBinding.h"
 
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
@@ -664,14 +665,19 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		}
 	}
 	//--------------------
-	AActor* TempActor = EditorActorSubsystem->
-		SpawnActorFromClass(ACineCameraActor::StaticClass(), FVector::ZAxisVector, FRotator::ZeroRotator, false);
-	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(
-		TheLevelSequence->MakeSpawnableTemplateFromInstance(*TempActor, TempActor->GetFName()));
+	FActorSpawnParameters L_ActorSpawnParameters{};
+	L_ActorSpawnParameters.ObjectFlags &= ~RF_Transactional;
+	AActor* TempActor = TheRenderWorld->SpawnActor<ACineCameraActor>(L_ActorSpawnParameters);
+	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TempActor);
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.bOverride_MotionBlurAmount = true;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.MotionBlurAmount = 0.0f;
-	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
+	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddPossessable(CameraActor->GetName(), CameraActor->GetClass());
+	TheLevelSequence->BindPossessableObject(CameraGuid, *CameraActor, TheRenderWorld);
+	const FMovieSceneBindingReference* L_MovieSceneBindingReference = TheLevelSequence->GetBindingReferences()->GetReference(CameraGuid, 0);
+	UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateCustomBindingFromBinding(
+		*L_MovieSceneBindingReference, CameraActor, *TheLevelSequence->GetMovieScene());
+	L_Bind->SetupDefaults(nullptr, L_MovieSceneBindingReference->ID, *TheLevelSequence->GetMovieScene());
 	//---------------
 	UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(CameraGuid);
 	UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
@@ -1510,9 +1516,9 @@ void UDoodleAutoRender::Main(float)
 		// 	UE_LOG(LogTemp, Warning, TEXT("Sequence not found: %s"), *L_LevelSequence);
 		// 	return OnEnd(nullptr, false);
 		// }
-		
+
 		UMoviePipelineQueueSubsystem* L_MoviePipelineQueueSubsystem = GEditor->GetEditorSubsystem<UMoviePipelineQueueSubsystem>();
-		
+
 		UMoviePipelinePrimaryConfig* L_Config = CastChecked<UMoviePipelinePrimaryConfig>(L_MoviePipelineConfigPath.TryLoad());
 		UMoviePipelineQueue* L_OutQueue = L_MoviePipelineQueueSubsystem->GetQueue();
 		UMoviePipelineExecutorJob* NewJob = L_OutQueue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
