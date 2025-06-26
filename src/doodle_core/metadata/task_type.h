@@ -34,6 +34,7 @@ struct task_type {
     j.at("allow_timelog").get_to(p.allow_timelog_);
     j.at("archived").get_to(p.archived_);
     j.at("shotgun_id").get_to(p.shotgun_id_);
+    j.at("department_id").get_to(p.department_id_);
   }
   // to json
   template <typename BasicJsonType>
@@ -48,6 +49,7 @@ struct task_type {
     j["allow_timelog"] = p.allow_timelog_;
     j["archived"]      = p.archived_;
     j["shotgun_id"]    = p.shotgun_id_;
+    j["department_id"] = p.department_id_;
   }
 };
 }  // namespace doodle
