@@ -197,25 +197,4 @@ DOODLE_HTTP_FUN_END()
 
 // clang-format on
 
-// 转发型后端url
-DOODLE_HTTP_FUN(forwarding_authenticated, get, "/api/auth/authenticated", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(forwarding_data_user_context, get, "/api/data/user/context", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(forwarding_doodle_task_full, get, "/api/doodle/task/{task_id}/full", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(forwarding_data_assets_with_tasks, get, "/api/data/assets/with-tasks", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN(forwarding_data_person, put, "/api/data/persons/{id}", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(forwarding_data_project, put, "/api/data/projects/{id}", http_jwt_fun)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
-
 }  // namespace doodle::http

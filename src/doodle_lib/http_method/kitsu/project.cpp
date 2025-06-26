@@ -187,41 +187,4 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
   co_return in_handle->make_msg(l_json_r.dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> forwarding_data_project_put::callback(
-    session_data_ptr in_handle
-) {
-  if (in_handle->content_type_ != detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
-  uuid l_uuid        = from_uuid_str(in_handle->capture_->get("id"));
-
-  const auto& l_json = std::get<nlohmann::json>(in_handle->body_);
-  auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_prj         = std::make_shared<project_helper::database_t>(
-      l_sql.uuid_to_id<project_helper::database_t>(l_uuid) ? l_sql.get_by_uuid<project_helper::database_t>(l_uuid)
-                                                           : project_helper::database_t{}
-  );
-  if (l_prj->uuid_id_.is_nil()) l_prj->uuid_id_ = l_uuid;
-  auto l_org_prj = *l_prj;
-  l_json.get_to(*l_prj);
-  if (l_org_prj != *l_prj) co_await l_sql.install(l_prj);
-
-  detail::http_client_data_base_ptr l_client_data = kitsu::create_kitsu_proxy(in_handle);
-  boost::beast::http::request<boost::beast::http::string_body> l_request{in_handle->req_header_};
-  l_request.body() = l_json.dump();
-  l_request.prepare_payload();
-  auto [l_ec, l_res] = co_await detail::read_and_write<boost::beast::http::string_body>(l_client_data, l_request);
-  if (l_ec) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
-  }
-
-  auto l_json_r = nlohmann::json::parse(l_res.body());
-  nlohmann::json l_j{};
-  l_j = l_sql.get_by_uuid<project_helper::database_t>(l_uuid);
-  l_j.update(l_json_r);
-  l_res.body() = l_j.dump();
-  l_res.prepare_payload();
-
-  co_return std::move(l_res);
-}
-
 }  // namespace doodle::http
