@@ -108,6 +108,8 @@
 #include "Tracks/MovieSceneLevelVisibilityTrack.h"
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"  // 骨骼动画轨道
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
+#include "Bindings/MovieSceneSpawnableBinding.h"
+#include "Bindings/MovieSceneSpawnableActorBinding.h"
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
@@ -685,8 +687,19 @@ void UDoodleFbxCameraImport_1::ImportFile()
 				//   FSlateNotificationManager::Get().AddNotification(Info);
 				// }
 				// FNewSpawnable& L_NewSpawnable = L_Result.GetValue();
+				UMovieSceneSpawnableBindingBase;
+				UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateNewCustomBinding(
+					L_CameraActor, *L_MoveScene);
+				
 
-				L_CamGuid = L_MoveScene->AddSpawnable(L_CameraActor->GetName(), *L_CameraActor);
+				L_CamGuid = L_MoveScene->AddPossessable(L_Bind->GetName(), L_Bind->GetClass());
+				// L_ShotSequence->BindPossessableObject(L_CameraActor, );
+				L_MoveScene->GetBindings();
+				if (FMovieScenePossessable* L_NewPossessable = L_MoveScene->FindPossessable(L_CamGuid); L_NewPossessable)
+				{
+					L_NewPossessable;
+				}
+
 
 				// L_Task                   = CastChecked<UMovieSceneCameraCutTrack>(
 				//          L_MoveScene->AddCameraCutTrack(UMovieSceneCameraCutTrack::StaticClass())

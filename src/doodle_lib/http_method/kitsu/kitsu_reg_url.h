@@ -106,6 +106,12 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(shared_used, get, "api/data/projects/{project_id}/assets/shared-used", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_project_schedule_items, get, "api/data/projects/{project_id}/schedule-items/task-types", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_project_milestones, get, "api/data/projects/{project_id}/milestones", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(data_user_tasks, get, "api/data/user/tasks", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;

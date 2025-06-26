@@ -28,4 +28,5 @@ target_sources(
         attachment_files.cpp
         metadata_descriptors.cpp
         entities.cpp
+        schedule_items.cpp
 )
