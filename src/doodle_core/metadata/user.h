@@ -38,44 +38,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     }
 )
 
-class DOODLE_CORE_API user : boost::equality_comparable<user> {
- private:
-  std::string p_string_;
-  std::string p_ENUS;
-
-  template <typename T1, typename Char, typename Enable>
-  friend struct fmt::formatter;
-
- public:
-  // 对应 kitsu 中的 user
-  boost::uuids::uuid id_;
-  // 手机号
-  std::string mobile_;
-  // 钉钉id
-  std::string dingding_id_;
-
-  user();
-
-  power_enum power{power_enum::none};
-
-  explicit user(const std::string& in_string);
-
-  [[nodiscard]] const std::string& get_name() const;
-  inline std::string& get_name() { return p_string_; };
-  void set_name(const std::string& in_string);
-
-  [[nodiscard]] const std::string& get_enus() const;
-
-  bool operator==(const user& in_rhs) const;
-  bool operator<(const user& in_rhs) const;
-
-
-
- private:
-  friend void DOODLE_CORE_API to_json(nlohmann::json& j, const user& p);
-  friend void DOODLE_CORE_API from_json(const nlohmann::json& j, user& p);
-};
-
 namespace user_helper {
 struct database_t {
   std::int32_t id_{};
@@ -100,16 +62,3 @@ struct database_t {
 }  // namespace user_helper
 
 }  // namespace doodle
-namespace fmt {
-/**
- * @brief 集数格式化程序
- *
- */
-template <>
-struct formatter<::doodle::user> : formatter<std::string> {
-  template <typename FormatContext>
-  auto format(const ::doodle::user& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::string>::format(in_.get_name(), ctx);
-  }
-};
-}  // namespace fmt
