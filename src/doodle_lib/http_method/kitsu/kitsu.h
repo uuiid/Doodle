@@ -34,7 +34,6 @@ struct kitsu_ctx_t {
   std::string secret_;
 };
 
-http_route_ptr create_kitsu_route(const FSys::path& in_root);
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root);
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root);
 http_route_ptr create_kitsu_local_route();
