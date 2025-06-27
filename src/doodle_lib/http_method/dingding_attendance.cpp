@@ -67,13 +67,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       parse_time<chrono::year_month_day>(l_json_1["work_date"].get<std::string>(), "%Y-%m-%d");
 
   auto& l_sqlite = g_ctx().get<sqlite_database>();
-  auto l_user    = g_ctx().get<sqlite_database>().get_by_uuid<user_helper::database_t>(l_user_id);
+  auto l_user    = l_sqlite.get_by_uuid<person>(l_user_id);
   auto& l_d      = g_ctx().get<const dingding::dingding_company>();
   if (l_user.dingding_company_id_.is_nil() && !l_d.company_info_map_.contains(l_user.dingding_company_id_))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "用户没有对应的公司");
 
   // 查询缓存
-  auto l_attends = l_sqlite.get_attendance(l_user.id_, chrono::local_days{l_date});
+  auto l_attends = l_sqlite.get_attendance(l_user.uuid_id_, chrono::local_days{l_date});
   if (!l_attends.empty()) {
     auto& l_att = l_attends.front();
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
@@ -84,14 +84,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   }
 
   bool l_modify_user{};
-  if (l_user.mobile_.empty())
+  if (l_user.phone_.empty())
     co_return in_handle->logger_->error("/api/dingding/attendance {} {}", l_user.id_, "没有手机号"),
         in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有手机号");
 
   auto l_dingding_client =
       g_ctx().get<const dingding::dingding_company>().company_info_map_.at(l_user.dingding_company_id_).client_ptr;
   if (l_user.dingding_id_.empty()) {
-    auto [l_e3, l_dingding_id] = co_await l_dingding_client->get_user_by_mobile(l_user.mobile_);
+    auto [l_e3, l_dingding_id] = co_await l_dingding_client->get_user_by_mobile(l_user.phone_);
     if (l_e3) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e3.message());
     l_user.dingding_id_ = l_dingding_id;
     l_modify_user       = true;
@@ -154,7 +154,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
                   chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
               },
           .dingding_id_ = l_obj.prcoInst_id_,
-          .user_ref     = l_user.id_
+          .person_id_   = l_user.uuid_id_
       };
       l_attendance_list->emplace_back(std::move(l_attendance));
     }
@@ -171,11 +171,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
             chrono::zoned_time<chrono::microseconds>{
                 chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
             },
-        .user_ref = l_user.id_
+        .person_id_ = l_user.uuid_id_
     };
     l_attendance_list->emplace_back(std::move(l_attendance));
   }
-  if (l_modify_user) co_await l_sqlite.install(std::make_shared<user_helper::database_t>(l_user));
+  if (l_modify_user) co_await l_sqlite.install(std::make_shared<person>(l_user));
 
   if (!l_attends.empty()) {
     std::vector<std::int64_t> l_rem{};
@@ -188,9 +188,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_list);
   }
 
-  co_await recomputing_time(
-      std::make_shared<user_helper::database_t>(l_user), chrono::year_month{l_date.year(), l_date.month()}
-  );
+  co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
   std::erase_if(*l_attendance_list, [](const auto& l_attendance) {
     return l_attendance.type_ == attendance_helper::att_enum::max;
   });
@@ -223,8 +221,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   }
 
   auto& l_sql = g_ctx().get<sqlite_database>();
-  auto l_user = l_sql.get_by_uuid<user_helper::database_t>(l_user_uuid);
-  auto l_list = l_sql.get_attendance(l_user.id_, l_date_list);
+  auto l_user = l_sql.get_by_uuid<person>(l_user_uuid);
+  auto l_list = l_sql.get_attendance(l_user.uuid_id_, l_date_list);
   l_list |= ranges::actions::remove_if([](const attendance_helper::database_t& in_) {
     return in_.type_ == attendance_helper::att_enum::max;
   });
@@ -245,17 +243,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   );
   if (l_data->type_ == attendance_helper::att_enum::max)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "类型错误"});
-  auto& l_sql      = g_ctx().get<sqlite_database>();
-  auto l_user      = std::make_shared<user_helper::database_t>(l_sql.get_by_uuid<user_helper::database_t>(l_user_id));
-  l_data->uuid_id_ = l_user->uuid_id_;
-  l_data->user_ref = l_user->id_;
-  l_data->uuid_id_ = core_set::get_set().get_uuid();
+  auto& l_sql          = g_ctx().get<sqlite_database>();
+  auto l_user          = l_sql.get_by_uuid<person>(l_user_id);
+  l_data->person_id_   = l_user.uuid_id_;
+  l_data->uuid_id_     = core_set::get_set().get_uuid();
   l_data->update_time_ = {
       chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
   };
   const chrono::year_month_day l_date{l_data->create_date_};
   co_await l_sql.install(l_data);
-  co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
+  co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
 
@@ -276,10 +273,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   const chrono::year_month_day l_date{l_data->create_date_};
   auto& l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.install(l_data);
-  auto l_user = std::make_shared<user_helper::database_t>(
-      l_sql.get_by_uuid<user_helper::database_t>(l_sql.id_to_uuid<user_helper::database_t>(l_data->user_ref))
-  );
-  co_await recomputing_time(l_user, chrono::year_month{l_date.year(), l_date.month()});
+  co_await recomputing_time(l_data->person_id_, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete_::callback(

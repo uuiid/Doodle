@@ -29,7 +29,7 @@ struct database_t {
   chrono::zoned_time<chrono::microseconds> update_time_{};  // 更新时间
 
   std::string dingding_id_{};  // 钉钉id
-  std::int64_t user_ref{};
+  uuid person_id_{};
   friend void to_json(nlohmann::json& j, const database_t& p) {
     j["id"]         = p.uuid_id_;
     j["start_time"] = p.start_time_;

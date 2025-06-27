@@ -60,19 +60,31 @@ std::vector<server_task_info> sqlite_database::get_server_task_info(const uuid& 
 }
 
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
-    const std::int64_t& in_ref_id, const chrono::local_days& in_data
+    const uuid& in_person_id, const chrono::local_days& in_data
 ) {
-  return impl_->get_attendance(in_ref_id, in_data);
+  using namespace sqlite_orm;
+  return impl_->storage_any_.get_all<attendance_helper::database_t>(where(
+      c(&attendance_helper::database_t::person_id_) == in_person_id &&
+      c(&attendance_helper::database_t::create_date_) == in_data
+  ));
 }
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
-    const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
+    const uuid& in_person_id, const std::vector<chrono::local_days>& in_data
 ) {
-  return impl_->get_attendance(in_ref_id, in_data);
+  using namespace sqlite_orm;
+  return impl_->storage_any_.get_all<attendance_helper::database_t>(where(
+      c(&attendance_helper::database_t::person_id_) == in_person_id &&
+      in(&attendance_helper::database_t::create_date_, in_data)
+  ));
 }
 std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xlsx_task_info(
-    const std::int64_t& in_ref_id, const chrono::local_days& in_data
+    const uuid& in_person_id, const chrono::local_days& in_data
 ) {
-  return impl_->get_work_xlsx_task_info(in_ref_id, in_data);
+  using namespace sqlite_orm;
+  return impl_->storage_any_.get_all<work_xlsx_task_info_helper::database_t>(where(
+      c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
+      c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
+  ));
 }
 std::vector<server_task_info> sqlite_database::get_server_task_info_by_user(const uuid& in_user_id) {
   return impl_->get_server_task_info_by_user(in_user_id);
@@ -1036,7 +1048,6 @@ std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(project_helper::database_t)
-DOODLE_UUID_TO_ID(user_helper::database_t)
 DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
@@ -1045,21 +1056,12 @@ DOODLE_UUID_TO_ID(person)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
 
 DOODLE_ID_TO_UUID(project_helper::database_t)
-DOODLE_ID_TO_UUID(user_helper::database_t)
 DOODLE_ID_TO_UUID(metadata::kitsu::task_type_t)
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
 DOODLE_ID_TO_UUID(computer)
 DOODLE_ID_TO_UUID(attendance_helper::database_t)
 
-template <>
-work_xlsx_task_info_helper::database_t sqlite_database::get_by_uuid<work_xlsx_task_info_helper::database_t>(
-    const uuid& in_uuid
-) {
-  auto l_list     = impl_->get_by_uuid<work_xlsx_task_info_helper::database_t>(in_uuid);
-  l_list.user_id_ = impl_->id_to_uuid<user_helper::database_t>(l_list.user_ref_);
-  return l_list;
-}
 template <>
 person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
   auto l_p         = impl_->get_by_uuid<person>(in_uuid);
@@ -1070,7 +1072,6 @@ person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
   return l_p;
 }
 
-DOODLE_GET_BY_UUID_SQL(user_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_BY_UUID_SQL(preview_file)
 DOODLE_GET_BY_UUID_SQL(attachment_file)
@@ -1095,6 +1096,7 @@ DOODLE_GET_BY_UUID_SQL(asset_type)
 DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(comment)
 DOODLE_GET_BY_UUID_SQL(task)
+DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t)
 template <>
 entity sqlite_database::get_by_uuid<entity>(const uuid& in_uuid) {
   using namespace sqlite_orm;
@@ -1138,7 +1140,6 @@ project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 
 DOODLE_GET_ALL_SQL(project_helper::database_t)
-DOODLE_GET_ALL_SQL(user_helper::database_t)
 DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
 template <>
 std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
@@ -1193,7 +1194,6 @@ std::vector<person> sqlite_database::get_all() {
 }
 
 DOODLE_INSTALL_SQL(project_helper::database_t)
-DOODLE_INSTALL_SQL(user_helper::database_t)
 DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_SQL(assets_file_helper::database_t)
 DOODLE_INSTALL_SQL(assets_helper::database_t)

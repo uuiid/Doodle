@@ -97,13 +97,13 @@ class sqlite_database {
   std::vector<T> get_by_parent_id(const uuid& in_id);
 
   std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const chrono::local_days& in_data
+      const uuid& in_person_id, const chrono::local_days& in_data
   );
   std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
+      const uuid& in_person_id, const std::vector<chrono::local_days>& in_data
   );
   std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
-      const std::int64_t& in_ref_id, const chrono::local_days& in_data
+      const uuid& in_person_id, const chrono::local_days& in_data
   );
 
   std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id);

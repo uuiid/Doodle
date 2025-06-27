@@ -46,7 +46,6 @@
 
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
-DOODLE_SQLITE_ENUM_TYPE_(::doodle::power_enum)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_type)
@@ -182,12 +181,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("create_date", &attendance_helper::database_t::create_date_),
           make_column("update_time", &attendance_helper::database_t::update_time_),
           make_column("dingding_id", &attendance_helper::database_t::dingding_id_),
-          make_column("user_id", &attendance_helper::database_t::user_ref),
-          foreign_key(&attendance_helper::database_t::user_ref).references(&user_helper::database_t::id_)
+          make_column("person_id", &attendance_helper::database_t::person_id_),
+          foreign_key(&attendance_helper::database_t::person_id_).references(&person::uuid_id_).on_delete.cascade()
       ),
 
       make_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_),
-      make_index("work_xlsx_task_info_tab_user_index", &work_xlsx_task_info_helper::database_t::user_ref_),
       make_table(
           "work_xlsx_task_info_tab",                                                       //
           make_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key()),  //
@@ -198,7 +196,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("remark", &work_xlsx_task_info_helper::database_t::remark_),
           make_column("user_remark", &work_xlsx_task_info_helper::database_t::user_remark_),
           make_column("year_month", &work_xlsx_task_info_helper::database_t::year_month_),
-          make_column("user_id", &work_xlsx_task_info_helper::database_t::user_ref_),
+          make_column("person_id", &work_xlsx_task_info_helper::database_t::person_id_),
           make_column("kitsu_task_ref_id", &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_),
           make_column("season", &work_xlsx_task_info_helper::database_t::season_),
           make_column("episode", &work_xlsx_task_info_helper::database_t::episode_),
@@ -206,17 +204,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("grade", &work_xlsx_task_info_helper::database_t::grade_),
           make_column("project_id", &work_xlsx_task_info_helper::database_t::project_id_),
           make_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_),
-          foreign_key(&work_xlsx_task_info_helper::database_t::user_ref_).references(&user_helper::database_t::id_)
-      ),
-      make_index("user_tab_dingding_index", &user_helper::database_t::dingding_id_),
-      make_table(
-          "user_tab",                                                       //
-          make_column("id", &user_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &user_helper::database_t::uuid_id_, unique(), not_null()),
-          make_column("mobile", &user_helper::database_t::mobile_),  //
-          make_column("dingding_id", &user_helper::database_t::dingding_id_),
-          make_column("dingding_company_id", &user_helper::database_t::dingding_company_id_),
-          make_column("power", &user_helper::database_t::power_)
+          foreign_key(&work_xlsx_task_info_helper::database_t::person_id_).references(&person::uuid_id_).on_delete.cascade()
       ),
 
       make_index("project_tab_uuid", &project_helper::database_t::uuid_id_),
@@ -819,35 +807,6 @@ struct sqlite_database_impl {
     return storage_any_.get_all<project_helper::database_t>(
         sqlite_orm::where(sqlite_orm::c(&project_helper::database_t::name_) == in_name)
     );
-  }
-  std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const chrono::local_days& in_data
-  ) {
-    using namespace sqlite_orm;
-
-    return storage_any_.get_all<attendance_helper::database_t>(where(
-        c(&attendance_helper::database_t::user_ref) == in_ref_id &&
-        c(&attendance_helper::database_t::create_date_) == in_data
-    ));
-  }
-
-  std::vector<attendance_helper::database_t> get_attendance(
-      const std::int64_t& in_ref_id, const std::vector<chrono::local_days>& in_data
-  ) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<attendance_helper::database_t>(where(
-        c(&attendance_helper::database_t::user_ref) == in_ref_id &&
-        in(&attendance_helper::database_t::create_date_, in_data)
-    ));
-  }
-  std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
-      const std::int64_t& in_ref_id, const chrono::local_days& in_data
-  ) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<work_xlsx_task_info_helper::database_t>(where(
-        c(&work_xlsx_task_info_helper::database_t::user_ref_) == in_ref_id &&
-        c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
-    ));
   }
 
   std::vector<server_task_info> get_server_task_info_by_user(const uuid& in_user_id) {

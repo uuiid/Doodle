@@ -15,8 +15,7 @@ struct database_t : boost::totally_ordered<database_t> {
   std::string user_remark_;  // 用户备注
 
   chrono::local_days year_month_;
-  std::int32_t user_ref_;
-  uuid user_id_;
+  uuid person_id_;
 
   boost::uuids::uuid kitsu_task_ref_id_;
 
@@ -40,7 +39,7 @@ struct database_t : boost::totally_ordered<database_t> {
     j["duration"]    = p.duration_.count();
     j["remark"]      = p.remark_;
     j["user_remark"] = p.user_remark_;
-    j["user_id"]     = p.user_id_;
+    j["user_id"]     = p.person_id_;
     if (!p.kitsu_task_ref_id_.is_nil()) j["kitsu_task_ref_id"] = p.kitsu_task_ref_id_;
     if (p.season_) j["season"] = *p.season_;
     if (p.episode_) j["episode"] = *p.episode_;

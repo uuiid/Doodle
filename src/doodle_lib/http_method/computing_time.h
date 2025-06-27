@@ -7,7 +7,7 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
 boost::asio::awaitable<void> recomputing_time(
-    const std::shared_ptr<user_helper::database_t>& in_user, const chrono::year_month& in_year_month
+    const uuid& in_person_id, const chrono::year_month& in_year_month
 );
 DOODLE_HTTP_FUN(computing_time, post, "/api/doodle/computing_time/{user_id}/{year_month}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
