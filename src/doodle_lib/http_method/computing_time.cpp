@@ -3,6 +3,7 @@
 #include "doodle_core/metadata/time_point_wrap.h"
 #include "doodle_core/platform/win/register_file_type.h"
 #include <doodle_core/metadata/attendance.h>
+#include <doodle_core/metadata/entity_type.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
 
@@ -11,14 +12,25 @@
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/time_tool/work_clock.h>
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
-
 namespace doodle::http {
+namespace {
+struct task_full_t : task{
+  entity entity_{};
+  asset_type entity_type_{};
+  person persons_{};
+  project project_{};
+};
+
+}
+
+
 struct computing_time_post_req_data {
   struct task_data {
     boost::uuids::uuid task_id;
