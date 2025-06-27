@@ -163,7 +163,7 @@ bool kitsu_supplement_main::init() {
     auto l_rout_ptr = http::create_kitsu_local_route();
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
-    return false;
+    return true;
   }
   if (arg_["epiboly"]) {
     if (auto l_str = arg_({"port"}); l_str)
@@ -184,7 +184,7 @@ bool kitsu_supplement_main::init() {
     auto l_rout_ptr = http::create_kitsu_epiboly_route(l_args.kitsu_front_end_path_);
     // 开始运行服务器
     http::run_http_listener(g_io_context(), l_rout_ptr, l_args.port_);
-    return false;
+    return true;
   }
   get_register_info(l_args);
   core_set::get_set().set_root(l_args.kitsu_thumbnails_path_);
