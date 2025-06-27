@@ -37,7 +37,6 @@
 #include "http_method/model_library/model_library.h"
 namespace doodle::http {
 
-
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
@@ -212,24 +211,8 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
 
 namespace kitsu {
 
-http::detail::http_client_data_base_ptr create_kitsu_proxy(session_data_ptr in_handle) {
-  detail::http_client_data_base_ptr l_client_data{};
-  if (!in_handle->user_data_.has_value()) {
-    kitsu_data_t l_data{std::make_shared<detail::http_client_data_base>(g_io_context().get_executor())};
-    l_client_data = l_data.http_kitsu_;
-    l_client_data->init(g_ctx().get<kitsu_ctx_t>().url_);
-    in_handle->user_data_ = l_data;
-  } else {
-    l_client_data = std::any_cast<kitsu_data_t&>(in_handle->user_data_).http_kitsu_;
-  }
-  return l_client_data;
-}
 
-project_helper::database_t find_project(const std::string& in_name) {
-  auto l_prj = g_ctx().get<sqlite_database>().find_project_by_name(in_name);
-  if (l_prj.empty()) return {};
-  return l_prj.front();
-}
+
 uuid get_url_project_id(const boost::urls::url& in_url) {
   auto l_q = in_url.query();
   if (auto l_it = l_q.find("project_id"); l_it != l_q.npos) {

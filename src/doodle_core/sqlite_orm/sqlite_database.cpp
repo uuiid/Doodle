@@ -52,9 +52,6 @@ void sqlite_database::load(const FSys::path& in_path) {
   }
 }
 
-std::vector<project_helper::database_t> sqlite_database::find_project_by_name(const std::string& in_name) {
-  return impl_->find_project_by_name(in_name);
-}
 std::vector<server_task_info> sqlite_database::get_server_task_info(const uuid& in_computer_id) {
   return impl_->get_server_task_info(in_computer_id);
 }
@@ -1047,7 +1044,6 @@ std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
-DOODLE_UUID_TO_ID(project_helper::database_t)
 DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
@@ -1055,7 +1051,6 @@ DOODLE_UUID_TO_ID(computer)
 DOODLE_UUID_TO_ID(person)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
 
-DOODLE_ID_TO_UUID(project_helper::database_t)
 DOODLE_ID_TO_UUID(metadata::kitsu::task_type_t)
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
@@ -1086,7 +1081,6 @@ assets_file_helper::database_t sqlite_database::get_by_uuid<assets_file_helper::
   return l_data;
 }
 DOODLE_GET_BY_UUID_SQL(assets_helper::database_t)
-DOODLE_GET_BY_UUID_SQL(project_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(server_task_info)
@@ -1139,7 +1133,6 @@ project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
 }
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 
-DOODLE_GET_ALL_SQL(project_helper::database_t)
 DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
 template <>
 std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
@@ -1193,7 +1186,6 @@ std::vector<person> sqlite_database::get_all() {
   return l_list;
 }
 
-DOODLE_INSTALL_SQL(project_helper::database_t)
 DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_SQL(assets_file_helper::database_t)
 DOODLE_INSTALL_SQL(assets_helper::database_t)
@@ -1224,7 +1216,6 @@ DOODLE_INSTALL_SQL(entity)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
 DOODLE_INSTALL_SQL(assets_file_helper::link_parent_t)
 
-DOODLE_INSTALL_RANGE(project_helper::database_t)
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)

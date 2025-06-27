@@ -22,47 +22,6 @@ using namespace doodle;
 
 BOOST_AUTO_TEST_SUITE(sql_)
 
-BOOST_AUTO_TEST_CASE(test_sqlite3_orm) {
-  using namespace sqlite_orm;
-  auto l_s = make_storage(
-      "D:/test.db",  //
-      make_table(
-          "project_tab",                                                       //
-          make_column("id", &project_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &project_helper::database_t::uuid_id_, unique()),
-          make_column("name", &project_helper::database_t::name_),      //
-          make_column("en_str", &project_helper::database_t::en_str_),  //
-          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_)
-      )
-  );
-  l_s.sync_schema(true);
-
-  project_helper::database_t l_d1{
-      .id_               = 6,
-      .uuid_id_          = core_set::get_set().get_uuid(),
-      .name_             = "test",
-      .en_str_           = "test",
-      .auto_upload_path_ = "test"
-  };
-  project_helper::database_t l_d2{
-      .uuid_id_          = core_set::get_set().get_uuid(),
-      .name_             = "test2",
-      .en_str_           = "test2",
-      .auto_upload_path_ = "test2"
-  };
-
-  project_helper::database_t l_d3{
-      .id_               = 6,
-      .uuid_id_          = core_set::get_set().get_uuid(),
-      .name_             = "test3",
-      .en_str_           = "test3",
-      .auto_upload_path_ = "test3"
-  };
-  l_s.replace(l_d3);
-  l_d3.name_ = "test4";
-  l_s.replace(l_d3);
-}
-
 // 多线程测试
 BOOST_AUTO_TEST_CASE(multi_threaded) {
   struct Employee {

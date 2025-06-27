@@ -8,9 +8,7 @@
 #include <doodle_core/metadata/season.h>
 namespace doodle::details {
 
-std::vector<scan_category_data_ptr> prop_scan_category_t::scan(
-    const std::shared_ptr<project_helper::database_t> &in_root
-) const {
+std::vector<scan_category_data_ptr> prop_scan_category_t::scan(const std::shared_ptr<project_minimal> &in_root) const {
   const FSys::path l_prop_path_root = FSys::path{in_root->path_} / base_path_;
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
 

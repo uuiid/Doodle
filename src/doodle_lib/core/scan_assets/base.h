@@ -49,7 +49,7 @@ class scan_category_data_t {
   FSys::path base_path_;
 
   // 项目根目录
-  std::shared_ptr<project_helper::database_t> project_database_ptr;
+  std::shared_ptr<project_minimal> project_database_ptr;
 
   // 季数
   season season_;
@@ -97,10 +97,8 @@ class scan_category_t {
   FSys::path base_path_;
   scan_category_t() {}
   explicit scan_category_t(const FSys::path& base_path) : base_path_(base_path) {}
-  virtual ~scan_category_t() = default;
-  virtual std::vector<scan_category_data_ptr> scan(
-      const std::shared_ptr<project_helper::database_t>& in_root
-  ) const = 0;
+  virtual ~scan_category_t()                                                                              = default;
+  virtual std::vector<scan_category_data_ptr> scan(const std::shared_ptr<project_minimal>& in_root) const = 0;
 
   virtual void scan_file_hash(const scan_category_data_ptr& in_data);
 

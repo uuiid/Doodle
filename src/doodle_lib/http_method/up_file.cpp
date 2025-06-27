@@ -54,7 +54,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   }
   auto l_ptr = check_data(l_json);
   l_ptr->root_path_ =
-      g_ctx().get<sqlite_database>().get_by_uuid<project_helper::database_t>(l_json["project"]["id"].get<uuid>()).path_;
+      g_ctx().get<sqlite_database>().get_by_uuid<project>(l_json["project"]["id"].get<uuid>()).path_;
   l_ptr->file_path_ = l_d;
   move_file(in_handle, l_ptr);
   co_return in_handle->make_msg(nlohmann::json{});

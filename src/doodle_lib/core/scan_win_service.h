@@ -85,7 +85,7 @@ class scan_win_service_t {
   logger_ptr logger_;
 
   std::array<std::shared_ptr<doodle::details::scan_category_t>, 6> scan_categories_;
-  std::vector<std::shared_ptr<project_helper::database_t>> project_roots_;
+  std::vector<std::shared_ptr<project_minimal>> project_roots_;
 
   using scan_category_data_id_map = std::map<boost::uuids::uuid, doodle::details::scan_category_data_ptr>;
   std::array<scan_category_data_id_map, 2> scan_data_maps_;

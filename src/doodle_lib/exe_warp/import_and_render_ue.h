@@ -30,7 +30,7 @@ struct import_files_t {
 };
 
 struct import_data_t {
-  project_helper::database_t project_;
+  project_minimal project_;
   std::int32_t begin_time;
   std::int32_t end_time;
   episodes episode;
@@ -105,7 +105,7 @@ struct args {
   /// 需要填写
   episodes episodes_{};
   shot shot_{};
-  project_helper::database_t project_{};
+  project_minimal project_{};
   std::shared_ptr<maya_exe_ns::arg> maya_arg_{};
   image_size size_{};
   bool layering_{};

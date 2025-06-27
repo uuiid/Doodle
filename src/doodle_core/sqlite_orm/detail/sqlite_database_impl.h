@@ -206,20 +206,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_),
           foreign_key(&work_xlsx_task_info_helper::database_t::person_id_).references(&person::uuid_id_).on_delete.cascade()
       ),
-
-      make_index("project_tab_uuid", &project_helper::database_t::uuid_id_),
-      make_table(
-          "project_tab",                                                       //
-          make_column("id", &project_helper::database_t::id_, primary_key()),  //
-          make_column("uuid_id", &project_helper::database_t::uuid_id_, unique(), not_null()),
-          make_column("name", &project_helper::database_t::name_),  //
-          make_column("path", &project_helper::database_t::path_),
-          make_column("en_str", &project_helper::database_t::en_str_),                      //
-          make_column("auto_upload_path", &project_helper::database_t::auto_upload_path_),  //
-          make_column("code", &project_helper::database_t::code_)
-      )
       /// 这个下方是模拟kitsu的表
-      ,
       make_table<attachment_file>(
         "attachment_file",  //
         make_column("id", &attachment_file::id_, primary_key().autoincrement()),
@@ -799,13 +786,6 @@ struct sqlite_database_impl {
   std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id) {
     return storage_any_.get_all<server_task_info>(
         sqlite_orm::where(sqlite_orm::c(&server_task_info::run_computer_id_) == in_computer_id)
-    );
-  }
-
-  std::vector<project_helper::database_t> find_project_by_name(const std::string& in_name) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<project_helper::database_t>(
-        sqlite_orm::where(sqlite_orm::c(&project_helper::database_t::name_) == in_name)
     );
   }
 

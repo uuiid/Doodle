@@ -6,7 +6,7 @@
 namespace doodle::details {
 
 std::vector<scan_category_data_ptr> character_scan_category_t::scan(
-    const std::shared_ptr<project_helper::database_t> &in_root
+    const std::shared_ptr<project_minimal> &in_root
 ) const {
   const FSys::path l_character_path_root = FSys::path{in_root->path_} / base_path_;
   const std::regex l_JD_regex{R"(JD(\d+)_(\d+))"};
@@ -53,7 +53,7 @@ std::vector<scan_category_data_ptr> character_scan_category_t::scan(
         l_ptr->base_path_           = l_ch_name_ue_path;
         l_ptr->begin_episode_       = l_begin_episode;
         l_ptr->number_str_          = l_number_str;
-        l_ptr->assets_type_ = scan_category_data_t::assets_type_enum::character;
+        l_ptr->assets_type_         = scan_category_data_t::assets_type_enum::character;
         l_out.emplace_back(l_ptr);
 
         if (!FSys::exists(l_ch_ue_asset_path)) continue;

@@ -104,7 +104,7 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
 
   episodes l_episodes{};
   shot l_shot{};
-  project_helper::database_t l_project{};
+  project_minimal l_project{};
   l_episodes.analysis(l_file);
   l_shot.analysis(l_file);
 

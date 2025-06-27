@@ -25,7 +25,7 @@ namespace {
 template <typename CompletionHandler>
 
 auto to_scan_data(
-    boost::asio::thread_pool& in_pool, const std::shared_ptr<project_helper::database_t>& in_project_root,
+    boost::asio::thread_pool& in_pool, const std::shared_ptr<project_minimal>& in_project_root,
     const std::shared_ptr<details::scan_category_t>& in_scan_category_ptr, CompletionHandler&& in_completion
 ) {
   using expected_t = tl::expected<std::vector<details::scan_category_data_ptr>, std::string>;
@@ -96,7 +96,7 @@ void scan_win_service_t::init_all_map() {
   if (!FSys::exists(l_path) || FSys::file_size(l_path) == 0) return;
 
   create_project();
-  std::map<uuid, std::shared_ptr<project_helper::database_t>> l_pro_map{};
+  std::map<uuid, std::shared_ptr<project_minimal>> l_pro_map{};
   for (auto&& i : project_roots_) {
     l_pro_map.emplace(i->uuid_id_, i);
   }
@@ -175,10 +175,10 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
 void scan_win_service_t::create_project() {
   project_roots_.clear();
-  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_helper::database_t>();
+  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_minimal>();
   project_roots_.reserve(l_prjs.size());
   for (auto&& l_prj : l_prjs) {
-    project_roots_.emplace_back(std::make_shared<project_helper::database_t>(std::move(l_prj)));
+    project_roots_.emplace_back(std::make_shared<project_minimal>(std::move(l_prj)));
   }
 }
 
