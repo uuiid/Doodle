@@ -150,6 +150,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<computing_time_get>()
       .reg_t<computing_time_post>()
       .reg_t<computing_time_patch>()
+      .reg_t<computing_time_delete_>()
 
       .reg_t<computing_time_add_post>()
       .reg_t<computing_time_custom_post>()

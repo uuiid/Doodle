@@ -29,7 +29,7 @@ DOODLE_HTTP_FUN(computing_time, get, "/api/doodle/computing_time/{user_id}/{year
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
-DOODLE_HTTP_FUN(computing_time, patch, "/api/doodle/computing_time/{user_id}/{year_month/{task_id}", http_jwt_fun)
+DOODLE_HTTP_FUN(computing_time, patch, "/api/doodle/computing_time/{user_id}/{year_month}/{task_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
