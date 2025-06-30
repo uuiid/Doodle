@@ -21,15 +21,47 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http {
 namespace {
-struct task_full_t : task{
+struct task_full_t : task {
   entity entity_{};
   asset_type entity_type_{};
-  person persons_{};
   project project_{};
 };
 
-}
+std::vector<task_full_t> get_task_fulls(const std::vector<work_xlsx_task_info_helper::database_t>& in_data) {
+  std::vector<task_full_t> l_ret{};
+  std::vector<uuid> task_ids{};
+  task_ids.reserve(in_data.size());
+  for (auto&& l_item : in_data)
+    if (!l_item.kitsu_task_ref_id_.is_nil()) task_ids.emplace_back(l_item.kitsu_task_ref_id_);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  for (auto&& [i] : l_sql.impl_->storage_any_.select(
 
+           columns(
+               &task::uuid_id_, &task::name_, &task::description_, &task::priority_, &task::duration_,
+               &task::estimation_, &task::completion_rate_, &task::retake_count_, &task::sort_order_,
+               &task::start_date_, &task::due_date_, &task::real_start_date_, &task::end_date_, &task::done_date_,
+               &task::last_comment_date_, &task::nb_assets_ready_, &task::data_, &task::shotgun_id_,
+               &task::last_preview_file_id_, &task::nb_drawings_, &task::created_at_, &task::updated_at_,
+               &task::project_id_, &task::task_type_id_, &task::task_status_id_, &task::entity_id_, &task::assigner_id_,
+
+               &entity::uuid_id_, &entity::name_, &entity::code_, &entity::description_, &entity::shotgun_id_,
+               &entity::canceled_, &entity::nb_frames_, &entity::nb_entities_out_, &entity::is_casting_standby_,
+               &entity::is_shared_, &entity::status_, &entity::project_id_, &entity::entity_type_id_,
+               &entity::parent_id_, &entity::source_id_, &entity::preview_file_id_, &entity::ready_for_,
+               &entity::created_by_,
+
+               &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
+               &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_,
+               &entity_asset_extend::ban_ben_, &entity_asset_extend::ji_du_,
+
+
+           )
+
+       )) {
+  }
+}
+}  // namespace
 
 struct computing_time_post_req_data {
   struct task_data {

@@ -11,7 +11,6 @@
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
 
-#include "core/app_base.h"
 #include <memory>
 #include <thread>
 #include <wil/result.h>

@@ -199,11 +199,6 @@ bool kitsu_supplement_main::init() {
   facets_.emplace_back(l_ssl_ctx);
 
   {
-    // 初始化 kitsu 客户端
-    auto l_client = g_ctx().emplace<std::shared_ptr<kitsu::kitsu_client>>(
-        std::make_shared<kitsu::kitsu_client>(g_io_context(), l_args.kitsu_url_)
-    );
-    l_client->set_access_token(std::string{l_args.kitsu_token_});
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_,
         l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_
