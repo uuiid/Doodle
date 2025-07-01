@@ -69,7 +69,6 @@ struct work_xlsx_task_info_helper_t {
     j["work_remark"]               = p.work_remark_;
     j["work_user_remark"]          = p.work_user_remark_;
     j["work_year_month"]           = p.work_year_month_;
-    j["work_grade"]                = p.work_grade_;
   }
 };
 
@@ -97,6 +96,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
         work_xlsx_task_info_helper_t{
             .task_name_         = l_item.name_,
             .entity_ji_shu_lie_ = l_item.episode_,
+            .entity_deng_ji_    = l_item.grade_,
             .entity_ji_du_      = l_item.season_,
             .project_name_ =
                 !l_item.project_id_.is_nil() ? l_project_name_map.at(l_item.project_id_) : l_item.project_name_,
@@ -107,7 +107,6 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
             .work_remark_      = l_item.remark_,
             .work_user_remark_ = l_item.user_remark_,
             .work_year_month_  = l_item.year_month_,
-            .work_grade_       = l_item.grade_
         }
     );
   }
