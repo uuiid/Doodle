@@ -29,4 +29,5 @@ target_sources(
         metadata_descriptors.cpp
         entities.cpp
         schedule_items.cpp
+        auth.cpp
 )
