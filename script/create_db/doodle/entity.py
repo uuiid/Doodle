@@ -104,6 +104,7 @@ class EntityAssetExtend(BaseMixin):
     pin_yin_ming_cheng = orm.mapped_column(sqlalchemy.Text)
     ban_ben = orm.mapped_column(sqlalchemy.Text)
     ji_du = orm.mapped_column(sqlalchemy.Integer)
+    kai_shi_ji_shu = orm.mapped_column(sqlalchemy.Integer) 
 
     def from_zou(self, entity: ZouEntity):
         self.entity_id = entity.id
@@ -116,6 +117,7 @@ class EntityAssetExtend(BaseMixin):
         self.pin_yin_ming_cheng = l_json["pin_yin_ming_cheng"] if "pin_yin_ming_cheng" in l_json else None
         self.ban_ben = l_json["ban_ben"] if "ban_ben" in l_json else None
         self.ji_du = l_json["ji_du"] if "ji_du" in l_json else None
+        self.kai_shi_ji_shu = l_json["kai_shi_ji_shu"] if "kai_shi_ji_shu" in l_json else None
 
         return self
 
@@ -130,6 +132,7 @@ class EntityAssetExtend(BaseMixin):
                 or "pin_yin_ming_cheng" in l_json
                 or "ban_ben" in l_json
                 or "ji_du" in l_json
+                or "kai_shi_ji_shu" in l_json
         )
 
 
