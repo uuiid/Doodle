@@ -1169,6 +1169,7 @@ DOODLE_GET_ALL_SQL(department)
 DOODLE_GET_ALL_SQL(studio)
 DOODLE_GET_ALL_SQL(status_automation)
 DOODLE_GET_ALL_SQL(organisation)
+DOODLE_GET_ALL_SQL(project)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
   auto l_list = impl_->get_all<asset_type>();
