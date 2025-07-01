@@ -8,6 +8,7 @@ target_sources(
         tool_version.h
         up_file.h
         http_jwt_fun.h
+        seed_email.h
 
         PRIVATE
         computer.cpp
@@ -18,6 +19,7 @@ target_sources(
         tool_version.cpp
         up_file.cpp
         http_jwt_fun.cpp
+        seed_email.cpp
 )
 
 add_subdirectory(kitsu)
