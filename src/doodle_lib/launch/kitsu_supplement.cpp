@@ -14,6 +14,7 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/seed_email.h>
 
 #include <winreg/WinReg.hpp>
 namespace doodle {
@@ -51,7 +52,24 @@ struct kitsu_supplement_args_t {
     }
   };
 
+  struct mail_config_t {
+    std::string address_;
+    std::uint32_t port_;
+
+    std::string username_;
+    std::string password_;
+
+    friend void from_json(const nlohmann::json& in_json, mail_config_t& out_obj) {
+      in_json.at("address").get_to(out_obj.address_);
+      in_json.at("port").get_to(out_obj.port_);
+      in_json.at("username").get_to(out_obj.username_);
+      in_json.at("password").get_to(out_obj.password_);
+    }
+  };
+
   std::vector<dingding_company_t> dingding_company_list_{};
+
+  mail_config_t mail_config_;
 
   // form json
   friend void from_json(const nlohmann::json& in_json, kitsu_supplement_args_t& out_obj) {
@@ -72,17 +90,16 @@ struct kitsu_supplement_args_t {
       in_json.at("ji_meng_access_key_id").get_to(out_obj.ji_meng_access_key_id_);
     if (in_json.contains("ji_meng_secret_access_key"))
       in_json.at("ji_meng_secret_access_key").get_to(out_obj.ji_meng_secret_access_key_);
+    if (in_json.contains("mail_config")) in_json.at("mail_config").get_to(out_obj.mail_config_);
   }
 };
 
 void get_register_info(kitsu_supplement_args_t& in_args) {
   try {
-    {
-      winreg::RegKey l_key{};
-      l_key.Open(
-          HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)",
-          KEY_QUERY_VALUE | KEY_WOW64_64KEY | KEY_ENUMERATE_SUB_KEYS
-      );
+    if (winreg::RegKey l_key{}; l_key.TryOpen(
+            HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)",
+            KEY_QUERY_VALUE | KEY_WOW64_64KEY | KEY_ENUMERATE_SUB_KEYS
+        ))
       for (auto&& l_sub : l_key.EnumSubKeys()) {
         winreg::RegKey l_sub_key{};
         l_sub_key.Open(
@@ -100,14 +117,13 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
             }
         );
       }
-    }
+    else
+      default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/MainConfig");
 
-    {
-      winreg::RegKey l_key{};
-      if (auto l_r =
-              l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY);
-          l_r.Failed())
-        return default_logger_raw()->error(conv::utf_to_utf<char>(l_r.ErrorMessage()));
+    if (winreg::RegKey l_key{};
+        l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY).Failed())
+      return default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/MainConfig");
+    else {
       auto l_value_w = l_key.GetMultiStringValue(L"Deepseek");
       in_args.deepseek_keys_ =
           l_value_w |
@@ -117,7 +133,15 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
       in_args.ji_meng_access_key_id_     = conv::utf_to_utf<char>(l_key.GetStringValue(L"ji_meng_access_key_id"));
       in_args.ji_meng_secret_access_key_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"ji_meng_secret_access_key"));
     }
-
+    if (winreg::RegKey l_key{};
+        l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\Email)", KEY_QUERY_VALUE | KEY_WOW64_64KEY).Failed())
+      default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/Email");
+    else {
+      in_args.mail_config_.address_  = conv::utf_to_utf<char>(l_key.GetStringValue(L"address"));
+      in_args.mail_config_.port_     = boost::numeric_cast<std::uint32_t>(l_key.GetDwordValue(L"port"));
+      in_args.mail_config_.username_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"username"));
+      in_args.mail_config_.password_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"password"));
+    }
   } catch (...) {
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
   }
@@ -138,7 +162,6 @@ bool kitsu_supplement_main::init() {
       .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data",
       .secret_                = "22T0iwSHK7qkhdI6"
   };
-  bool l_my_backend = arg_["my_backend"];
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_file_path.str())});
@@ -202,6 +225,10 @@ bool kitsu_supplement_main::init() {
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_,
         l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_
+    );
+    g_ctx().emplace<email::seed_email>(
+        l_args.mail_config_.address_, l_args.mail_config_.port_, l_args.mail_config_.username_,
+        l_args.mail_config_.password_
     );
 
     // 初始化钉钉客户端
