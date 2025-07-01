@@ -175,10 +175,10 @@ boost::asio::awaitable<void> scan_win_service_t::begin_scan() {
 
 void scan_win_service_t::create_project() {
   project_roots_.clear();
-  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project_minimal>();
+  auto l_prjs = g_ctx().get<sqlite_database>().get_all<project>();
   project_roots_.reserve(l_prjs.size());
   for (auto&& l_prj : l_prjs) {
-    project_roots_.emplace_back(std::make_shared<project_minimal>(std::move(l_prj)));
+    project_roots_.emplace_back(std::make_shared<project_minimal>(l_prj));
   }
 }
 
