@@ -8,6 +8,11 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include "up_file.h"
+namespace doodle {
+struct entity_asset_extend;
+struct asset_type;
+struct task_type;
+}  // namespace doodle
 namespace doodle::http {
 
 class up_file_asset_base : public http_jwt_fun {
@@ -27,7 +32,7 @@ class up_file_asset_base : public http_jwt_fun {
     FSys::path file_path_{};
   };
 
-  std::shared_ptr<task_info_t> check_data(const nlohmann::json& in_data);
+  std::shared_ptr<task_info_t> check_data(const entity_asset_extend& in_entity_asset_extend);
   virtual FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data)                   = 0;
   virtual void move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) = 0;
 

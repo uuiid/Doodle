@@ -4,6 +4,10 @@
 
 #include "up_file.h"
 
+#include "doodle_core/metadata/entity.h"
+#include "doodle_core/metadata/entity_type.h"
+#include "doodle_core/metadata/task.h"
+#include "doodle_core/metadata/task_type.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 
 #include <doodle_lib/core/cache_manger.h>
@@ -32,62 +36,38 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   } catch (...) {
     default_logger_raw()->error("base64 decode error {}", boost::current_exception_diagnostic_information());
   }
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_task   = l_sql.get_by_uuid<task>(l_task_id);
+  auto l_extend = l_sql.get_entity_asset_extend(l_task.entity_id_);
+  if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
 
-  nlohmann::json l_json;
-  if (auto l_task = g_ctx().get<cache_manger>().get(l_task_id); l_task) {
-    l_json = std::move(*l_task);
-  } else {
-    boost::beast::http::request<boost::beast::http::empty_body> l_req{in_handle->req_header_};
-    l_req.target(fmt::format("/api/data/tasks/{}/full", l_task_id));
-    l_req.method(boost::beast::http::verb::get);
-    l_req.erase(boost::beast::http::field::content_disposition);
-    l_req.erase(boost::beast::http::field::content_type);
-    l_req.erase(boost::beast::http::field::content_length);
-    l_req.prepare_payload();
+  auto l_ptr         = check_data(*l_extend);
 
-    auto [l_ec, l_res] =
-        co_await detail::read_and_write<boost::beast::http::string_body>(kitsu::create_kitsu_proxy(in_handle), l_req);
-    if (l_ec) co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, "服务器错误");
-
-    l_json = nlohmann::json::parse(l_res.body());
-    g_ctx().get<cache_manger>().set(l_task_id, l_json);
-  }
-  auto l_ptr = check_data(l_json);
-  l_ptr->root_path_ =
-      g_ctx().get<sqlite_database>().get_by_uuid<project>(l_json["project"]["id"].get<uuid>()).path_;
-  l_ptr->file_path_ = l_d;
+  auto l_entity      = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_entity_type = l_sql.get_by_uuid<asset_type>(l_entity.entity_type_id_);
+  auto l_task_type   = l_sql.get_by_uuid<task_type>(l_task.task_type_id_);
+  auto l_prj          = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  if (auto l_type = l_task_type.name_; !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
+    throw_exception(doodle_error{"未知的 task_type 类型"});
+  l_ptr->entity_type_ = l_entity_type.name_;
+  l_ptr->root_path_   = l_prj.path_;
+  l_ptr->file_path_   = l_d;
   move_file(in_handle, l_ptr);
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
-std::shared_ptr<up_file_asset::task_info_t> up_file_asset_base::check_data(const nlohmann::json& in_data) {
-  if (auto l_type = in_data["task_type"]["name"].get_ref<const std::string&>();
-      !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
-    throw_exception(doodle_error{"未知的 task_type 类型"});
-  auto l_task_info          = std::make_shared<task_info_t>();
-
-  l_task_info->entity_type_ = in_data["entity_type"]["name"].get_ref<const std::string&>();
-
-  const auto& l_data        = in_data["entity"]["data"];
-  std::int32_t l_gui_dang{};
-  if (l_data["gui_dang"].is_number())
-    l_task_info->gui_dang_ = l_data["gui_dang"].get<std::int32_t>();
-  else if (l_data["gui_dang"].is_string() && !l_data["gui_dang"].get<std::string>().empty())
-    l_task_info->gui_dang_ = std::stoi(l_data["gui_dang"].get<std::string>());
-  std::int32_t l_kai_shi_ji_shu{};
-  if (l_data["kai_shi_ji_shu"].is_number())
-    l_task_info->kai_shi_ji_shu_ = l_data["kai_shi_ji_shu"].get<std::int32_t>();
-  else if (l_data["kai_shi_ji_shu"].is_string() && !l_data["kai_shi_ji_shu"].get<std::string>().empty())
-    l_task_info->kai_shi_ji_shu_ = std::stoi(l_data["kai_shi_ji_shu"].get<std::string>());
-
-  if (l_data.contains("bian_hao")) l_task_info->bian_hao_ = l_data["bian_hao"].get_ref<const std::string&>();
-  if (l_data.contains("pin_yin_ming_cheng"))
-    l_task_info->pin_yin_ming_cheng_ = l_data["pin_yin_ming_cheng"].get_ref<const std::string&>();
-
-  if (l_data.contains("ban_ben")) l_task_info->version_ = l_data["ban_ben"].get_ref<const std::string&>();
-  if (!l_task_info->version_.empty()) l_task_info->version_.insert(l_task_info->version_.begin(), '_');
+std::shared_ptr<up_file_asset_base::task_info_t> up_file_asset_base::check_data(
+    const entity_asset_extend& in_entity_asset_extend
+) {
+  auto l_task_info                 = std::make_shared<task_info_t>();
+  l_task_info->gui_dang_           = in_entity_asset_extend.gui_dang_.value_or(0);
+  l_task_info->kai_shi_ji_shu_     = in_entity_asset_extend.kai_shi_ji_shu_.value_or(0);
+  l_task_info->bian_hao_           = in_entity_asset_extend.bian_hao_;
+  l_task_info->pin_yin_ming_cheng_ = in_entity_asset_extend.pin_yin_ming_cheng_;
+  l_task_info->version_            = in_entity_asset_extend.ban_ben_;
   return l_task_info;
 }
+
 void up_file_asset::move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) {
   auto l_d        = in_data->root_path_ / gen_file_path(in_data) / in_data->file_path_;
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
