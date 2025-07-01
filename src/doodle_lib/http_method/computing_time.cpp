@@ -166,32 +166,16 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 }  // namespace
 
 struct computing_time_post_req_data {
-  struct task_data {
-    boost::uuids::uuid task_id;
-    chrono::local_time_pos start_time;
-    chrono::local_time_pos end_time;
-    // form json
-    friend void from_json(const nlohmann::json& j, task_data& p) {
-      p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
-      auto l_start_time = parse_8601<chrono::local_time_pos>(j.at("start_time").get<std::string>());
-      auto l_end_time   = parse_8601<chrono::local_time_pos>(j.at("end_time").get<std::string>());
-      p.start_time      = std::max(l_start_time, l_end_time);
-      p.end_time        = std::min(l_start_time, l_end_time);
-    }
-  };
-
-  chrono::year_month year_month_;
-  boost::uuids::uuid user_id;
-  std::vector<task_data> data;
+  boost::uuids::uuid task_id;
+  chrono::local_time_pos start_time;
+  chrono::local_time_pos end_time;
   // form json
   friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
-    // std::istringstream l_year_month_stream(j.at("year_month").get<std::string>());
-    // l_year_month_stream >> chrono::parse("%Y-%m", p.year_month_);
-    // if (!l_year_month_stream) {
-    //   throw nlohmann::json::parse_error::create(101, 0, "year_month 格式错误不是时间格式", &j);
-    // }
-    // p.user_id = boost::lexical_cast<boost::uuids::uuid>(j.at("user_id").get<std::string>());
-    p.data = j.at("data").get<std::vector<task_data>>();
+    p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
+    auto l_start_time = parse_8601<chrono::local_time_pos>(j.at("start_time").get<std::string>());
+    auto l_end_time   = parse_8601<chrono::local_time_pos>(j.at("end_time").get<std::string>());
+    p.start_time      = std::max(l_start_time, l_end_time);
+    p.end_time        = std::min(l_start_time, l_end_time);
   }
 };
 
@@ -283,20 +267,20 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 // 计算时间
 void computing_time_run(
     const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const uuid& in_person_id,
-    computing_time_post_req_data& in_data, std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
+    std::vector<computing_time_post_req_data>& in_data, std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
   auto l_end_time = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
   chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
   auto l_all_works = in_time_clock(l_begin_time, l_end_time);
 
   // 进行排序
-  std::ranges::sort(in_data.data, [](auto&& l_left, auto&& l_right) { return l_left.start_time < l_right.start_time; });
+  std::ranges::sort(in_data, [](auto&& l_left, auto&& l_right) { return l_left.start_time < l_right.start_time; });
   // });
 
   {
     // 计算时间比例
     std::vector<std::int64_t> l_woeks1{};
-    for (auto&& l_task : in_data.data) {
+    for (auto&& l_task : in_data) {
       l_woeks1.push_back(chrono::floor<chrono::days>(l_task.start_time - l_task.end_time).count() + 1);
     }
     auto l_works_accumulate = ranges::accumulate(l_woeks1, std::int64_t{});
@@ -310,9 +294,9 @@ void computing_time_run(
       );
     }
 
-    for (auto i = 0; i < in_data.data.size(); ++i) {
+    for (auto i = 0; i < in_data.size(); ++i) {
       auto l_end = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
-      if (i + 1 == in_data.data.size()) l_end = l_end_time;
+      if (i + 1 == in_data.size()) l_end = l_end_time;
 
       auto l_info          = in_time_clock.get_time_info(l_begin_time, l_end);
       std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
@@ -324,7 +308,7 @@ void computing_time_run(
         in_out_data[i].remark_            = l_remark;
         in_out_data[i].year_month_        = chrono::local_days{in_year_month / 1};
         in_out_data[i].person_id_         = in_person_id;
-        in_out_data[i].kitsu_task_ref_id_ = in_data.data[i].task_id;
+        in_out_data[i].kitsu_task_ref_id_ = in_data[i].task_id;
       } else {
         in_out_data.emplace_back(
             work_xlsx_task_info_helper::database_t{
@@ -493,12 +477,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
         "不是json请求"
     );
 
-  auto l_json                         = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json = std::get<nlohmann::json>(in_handle->body_);
 
-  computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
+  auto l_data = l_json.get<std::vector<computing_time_post_req_data>>();
   {  // 检查除空以外的id是否重复
     std::map<uuid, std::size_t> l_map;
-    for (auto&& l_task : l_data.data) {
+    for (auto&& l_task : l_data) {
       if (l_task.task_id.is_nil())
         co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
       l_map[l_task.task_id]++;
@@ -508,18 +492,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
   }
 
-  l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  auto l_user_id = in_handle->capture_->get_uuid("user_id");
   std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
-  l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
+  chrono::year_month l_year_month;
+  l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
 
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_data.user_id);
+  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
-      l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1}
-  );
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
 
-  auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);
-  computing_time_run(l_data.year_month_, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
+  auto l_time_clock = create_time_clock(l_year_month, l_user.uuid_id_);
+  computing_time_run(l_year_month, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
 
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
@@ -534,45 +518,40 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
         "不是json请求"
     );
-  auto l_json = std::get<nlohmann::json>(in_handle->body_);
-  computing_time_post_req_data l_data{};
-  l_data.data.emplace_back(l_json.get<computing_time_post_req_data::task_data>());
-  if (l_data.data.front().task_id.is_nil())
+  auto l_json                         = std::get<nlohmann::json>(in_handle->body_);
+  computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
+  if (l_data.task_id.is_nil())
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
-  l_data.user_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
+  auto l_user_id = in_handle->capture_->get_uuid("user_id");
   std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
-  l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
+  chrono::year_month l_year_month;
+  l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
 
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_data.user_id);
+  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
-      l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1}
-  );
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
   {
     work_xlsx_task_info_helper::database_t l_data_work{
         .uuid_id_ = core_set::get_set().get_uuid(),
         .start_time_ =
             work_xlsx_task_info_helper::database_t::zoned_time{
                 chrono::current_zone(),
-                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                    l_data.data.front().start_time
-                )
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.start_time)
             },
         .end_time_ =
             work_xlsx_task_info_helper::database_t::zoned_time{
                 chrono::current_zone(),
-                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(
-                    l_data.data.front().end_time
-                )
+                chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.end_time)
             },
-        .year_month_        = chrono::local_days{l_data.year_month_ / 1},
+        .year_month_        = chrono::local_days{l_year_month / 1},
         .person_id_         = l_user.uuid_id_,
-        .kitsu_task_ref_id_ = l_data.data.front().task_id,
+        .kitsu_task_ref_id_ = l_data.task_id,
     };
     chrono::local_time_pos l_end_time =
-        chrono::local_days{(l_data.year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+        chrono::local_days{(l_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
 
-    chrono::local_time_pos l_begin_time{chrono::local_days{l_data.year_month_ / chrono::day{1}} + chrono::seconds{1}};
+    chrono::local_time_pos l_begin_time{chrono::local_days{l_year_month / chrono::day{1}} + chrono::seconds{1}};
 
     l_data_work.start_time_ = std::clamp(
         chrono::time_point_cast<chrono::local_time_pos::duration>(l_data_work.start_time_.get_local_time()),
@@ -585,8 +564,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
     l_block_ptr->emplace_back(std::move(l_data_work));
   }
 
-  auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);
-  recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
+  auto l_time_clock = create_time_clock(l_year_month, l_user.uuid_id_);
+  recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
