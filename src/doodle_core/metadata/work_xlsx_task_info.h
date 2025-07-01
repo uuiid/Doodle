@@ -19,10 +19,10 @@ struct database_t : boost::totally_ordered<database_t> {
 
   boost::uuids::uuid kitsu_task_ref_id_;
 
-  std::optional<std::int32_t> season_{};
-  std::optional<std::int32_t> episode_{};
-  std::string name_{};
-  std::string grade_{};
+  std::optional<std::int32_t> season_{};   // 季度
+  std::optional<std::int32_t> episode_{};  // 集数
+  std::string name_{};                     // 任务名称
+  std::string grade_{};                    // 任务等级
   uuid project_id_;
   std::string project_name_{};
 
