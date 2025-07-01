@@ -21,45 +21,148 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http {
 namespace {
-struct task_full_t : task {
-  entity entity_{};
-  asset_type entity_type_{};
-  project project_{};
+struct work_xlsx_task_info_helper_t {
+  decltype(task::uuid_id_) task_id_;
+  decltype(task::name_) task_name_;
+  decltype(task::last_preview_file_id_) task_last_preview_file_id_;
+
+  decltype(entity_asset_extend::ji_shu_lie_) entity_ji_shu_lie_;
+  decltype(entity_asset_extend::deng_ji_) entity_deng_ji_;
+  decltype(entity_asset_extend::gui_dang_) entity_gui_dang_;
+  decltype(entity_asset_extend::bian_hao_) entity_bian_hao_;
+  decltype(entity_asset_extend::pin_yin_ming_cheng_) entity_pin_yin_ming_cheng_;
+  decltype(entity_asset_extend::ban_ben_) entity_ban_ben_;
+  decltype(entity_asset_extend::ji_du_) entity_ji_du_;
+  decltype(entity_asset_extend::kai_shi_ji_shu_) entity_kai_shi_ji_shu_;
+
+  decltype(project::uuid_id_) project_uuid_;
+  decltype(project::name_) project_name_;
+
+  decltype(work_xlsx_task_info_helper::database_t::uuid_id_) id_;
+  decltype(work_xlsx_task_info_helper::database_t::start_time_) work_start_time_;
+  decltype(work_xlsx_task_info_helper::database_t::end_time_) work_end_time_;
+  decltype(work_xlsx_task_info_helper::database_t::duration_) work_duration_;
+  decltype(work_xlsx_task_info_helper::database_t::remark_) work_remark_;
+  decltype(work_xlsx_task_info_helper::database_t::user_remark_) work_user_remark_;
+  decltype(work_xlsx_task_info_helper::database_t::year_month_) work_year_month_;
+  decltype(work_xlsx_task_info_helper::database_t::grade_) work_grade_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const work_xlsx_task_info_helper_t& p) {
+    j["task_id"]                   = p.task_id_;
+    j["task_name"]                 = p.task_name_;
+    j["task_last_preview_file_id"] = p.task_last_preview_file_id_;
+    j["entity_ji_shu_lie"]         = p.entity_ji_shu_lie_;
+    j["entity_deng_ji"]            = p.entity_deng_ji_;
+    j["entity_gui_dang"]           = p.entity_gui_dang_;
+    j["entity_bian_hao"]           = p.entity_bian_hao_;
+    j["entity_pin_yin_ming_cheng"] = p.entity_pin_yin_ming_cheng_;
+    j["entity_ban_ben"]            = p.entity_ban_ben_;
+    j["entity_ji_du"]              = p.entity_ji_du_;
+    j["entity_kai_shi_ji_shu"]     = p.entity_kai_shi_ji_shu_;
+    j["project_uuid"]              = p.project_uuid_;
+    j["project_name"]              = p.project_name_;
+    j["id"]                        = p.id_;
+    j["work_start_time"]           = p.work_start_time_;
+    j["work_end_time"]             = p.work_end_time_;
+    j["work_duration"]             = p.work_duration_;
+    j["work_remark"]               = p.work_remark_;
+    j["work_user_remark"]          = p.work_user_remark_;
+    j["work_year_month"]           = p.work_year_month_;
+    j["work_grade"]                = p.work_grade_;
+  }
 };
 
-std::vector<task_full_t> get_task_fulls(const std::vector<work_xlsx_task_info_helper::database_t>& in_data) {
-  std::vector<task_full_t> l_ret{};
-  std::vector<uuid> task_ids{};
-  task_ids.reserve(in_data.size());
+std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
+    const std::vector<work_xlsx_task_info_helper::database_t>& in_data
+) {
+  std::vector<work_xlsx_task_info_helper_t> l_ret{};
+  std::vector<uuid> l_task_ids{};
+  std::map<uuid, const work_xlsx_task_info_helper::database_t*> l_task_id_map{};
+  for (auto&& l_item : in_data) l_task_id_map.emplace(l_item.uuid_id_, &l_item);
+  std::map<uuid, std::string> l_project_name_map{};
+
+  l_task_ids.reserve(in_data.size());
   for (auto&& l_item : in_data)
-    if (!l_item.kitsu_task_ref_id_.is_nil()) task_ids.emplace_back(l_item.kitsu_task_ref_id_);
+    if (!l_item.kitsu_task_ref_id_.is_nil()) l_task_ids.emplace_back(l_item.kitsu_task_ref_id_);
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
-  for (auto&& [i] : l_sql.impl_->storage_any_.select(
+  for (auto&& [uuid, name] : l_sql.impl_->storage_any_.select(columns(&project::uuid_id_, &project::name_)))
+    l_project_name_map.emplace(uuid, name);
 
+  // 先加载自定义task
+  for (auto&& l_item : in_data) {
+    if (!l_item.kitsu_task_ref_id_.is_nil()) continue;
+    l_ret.emplace_back(
+        work_xlsx_task_info_helper_t{
+            .task_name_         = l_item.name_,
+            .entity_ji_shu_lie_ = l_item.episode_,
+            .entity_ji_du_      = l_item.season_,
+            .project_name_ =
+                !l_item.project_id_.is_nil() ? l_project_name_map.at(l_item.project_id_) : l_item.project_name_,
+            .id_               = l_item.uuid_id_,
+            .work_start_time_  = l_item.start_time_,
+            .work_end_time_    = l_item.end_time_,
+            .work_duration_    = l_item.duration_,
+            .work_remark_      = l_item.remark_,
+            .work_user_remark_ = l_item.user_remark_,
+            .work_year_month_  = l_item.year_month_,
+            .work_grade_       = l_item.grade_
+        }
+    );
+  }
+
+  for (auto&& [
+
+           task_id_, task_name_, task_last_preview_file_id_,
+
+           entity_ji_shu_lie_, entity_deng_ji_, entity_gui_dang_, entity_bian_hao_, entity_pin_yin_ming_cheng_,
+           entity_ban_ben_, entity_ji_du_, entity_kai_shi_ji_shu_,
+
+           project_uuid_, project_name_
+
+  ] :
+       l_sql.impl_->storage_any_.select(
            columns(
-               &task::uuid_id_, &task::name_, &task::description_, &task::priority_, &task::duration_,
-               &task::estimation_, &task::completion_rate_, &task::retake_count_, &task::sort_order_,
-               &task::start_date_, &task::due_date_, &task::real_start_date_, &task::end_date_, &task::done_date_,
-               &task::last_comment_date_, &task::nb_assets_ready_, &task::data_, &task::shotgun_id_,
-               &task::last_preview_file_id_, &task::nb_drawings_, &task::created_at_, &task::updated_at_,
-               &task::project_id_, &task::task_type_id_, &task::task_status_id_, &task::entity_id_, &task::assigner_id_,
-
-               &entity::uuid_id_, &entity::name_, &entity::code_, &entity::description_, &entity::shotgun_id_,
-               &entity::canceled_, &entity::nb_frames_, &entity::nb_entities_out_, &entity::is_casting_standby_,
-               &entity::is_shared_, &entity::status_, &entity::project_id_, &entity::entity_type_id_,
-               &entity::parent_id_, &entity::source_id_, &entity::preview_file_id_, &entity::ready_for_,
-               &entity::created_by_,
+               &task::uuid_id_, &task::name_, &task::last_preview_file_id_,
 
                &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
                &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_,
-               &entity_asset_extend::ban_ben_, &entity_asset_extend::ji_du_,
+               &entity_asset_extend::ban_ben_, &entity_asset_extend::ji_du_, &entity_asset_extend::kai_shi_ji_shu_,
 
+               &project::uuid_id_, &project::name_
 
-           )
-
+           ),
+           join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+           left_outer_join<entity_asset_extend>(on(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_)),
+           join<project>(on(c(&project::uuid_id_) == c(&entity::project_id_))), where(in(&task::uuid_id_, l_task_ids))
        )) {
+    l_ret.emplace_back(
+        work_xlsx_task_info_helper_t{
+            .task_id_                   = task_id_,
+            .task_name_                 = task_name_,
+            .task_last_preview_file_id_ = task_last_preview_file_id_,
+
+            .entity_ji_shu_lie_         = entity_ji_shu_lie_,
+            .entity_deng_ji_            = entity_deng_ji_,
+            .entity_gui_dang_           = entity_gui_dang_,
+            .entity_bian_hao_           = entity_bian_hao_,
+            .entity_pin_yin_ming_cheng_ = entity_pin_yin_ming_cheng_,
+            .entity_ban_ben_            = entity_ban_ben_,
+            .entity_ji_du_              = entity_ji_du_,
+            .entity_kai_shi_ji_shu_     = entity_kai_shi_ji_shu_,
+
+            .project_uuid_              = project_uuid_,
+            .project_name_              = project_name_,
+        }
+    );
   }
+
+  l_ret |=
+      ranges::actions::sort([](const work_xlsx_task_info_helper_t& l_lhs, const work_xlsx_task_info_helper_t& l_rhs) {
+        return l_lhs.work_start_time_.get_sys_time() < l_rhs.work_start_time_.get_sys_time();
+      });
+  return l_ret;
 }
 }  // namespace
 
@@ -382,41 +485,6 @@ std::string patch_time(
   return {};
 }
 
-boost::asio::awaitable<tl::expected<nlohmann::json, std::string>> merge_full_task(
-    session_data_ptr in_handle, std::shared_ptr<std::vector<work_xlsx_task_info_helper::database_t>> in_block_ptr
-) {
-  auto l_c = kitsu::create_kitsu_proxy(in_handle);
-  nlohmann::json l_json_res{};
-
-  for (auto&& l_d : *in_block_ptr) {
-    if (!l_d.kitsu_task_ref_id_.is_nil()) {
-      auto l_cache_json = g_ctx().get<cache_manger>().get(l_d.kitsu_task_ref_id_);
-      if (l_cache_json) {
-        auto& l_json_v             = l_json_res["data"].emplace_back(*l_cache_json);
-        l_json_v["computing_time"] = l_d;
-      } else {
-        boost::beast::http::request<boost::beast::http::empty_body> l_q{in_handle->req_header_};
-        l_q.method(boost::beast::http::verb::get);
-        l_q.target(fmt::format("/api/data/tasks/{}/full", l_d.kitsu_task_ref_id_));
-        l_q.erase(boost::beast::http::field::content_length);
-        l_q.erase(boost::beast::http::field::content_type);
-        l_q.keep_alive(in_handle->keep_alive_ == false ? in_block_ptr->size() != 1 : true);
-        // std::ostringstream l_os;
-        // l_os << l_q;
-        // default_logger_raw()->warn("请求数据 {}", l_os.str());
-        auto [l_e, l_r] = co_await detail::read_and_write<boost::beast::http::string_body>(l_c, std::move(l_q));
-        if (l_e) co_return tl::make_unexpected(l_e.message());
-        auto l_json    = nlohmann::json::parse(l_r.body());
-        auto& l_json_v = l_json_res["data"].emplace_back(l_json);
-        g_ctx().get<cache_manger>().set(l_d.kitsu_task_ref_id_, l_json);
-        l_json_v["computing_time"] = l_d;
-      }
-    } else
-      l_json_res["data"].emplace_back()["computing_time"] = l_d;
-  }
-  co_return tl::expected<nlohmann::json, std::string>{std::move(l_json_res)};
-}
-
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post::callback(
     session_data_ptr in_handle
 ) {
@@ -455,12 +523,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
   computing_time_run(l_data.year_month_, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
 
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
-  *l_block_ptr |= ranges::actions::sort;
 
-  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  } else
-    co_return in_handle->make_msg(l_r->dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add_post::callback(
@@ -526,11 +590,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
-  *l_block_ptr |= ranges::actions::sort;
-  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  } else
-    co_return in_handle->make_msg(l_r->dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom_post::callback(
@@ -585,11 +645,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
-  *l_block_ptr |= ranges::actions::sort;
-  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  } else
-    co_return in_handle->make_msg(l_r->dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort_post::callback(
@@ -640,10 +696,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
   auto l_time_clock = create_time_clock(l_year_month, l_user.uuid_id_);
   recomputing_time_run(l_year_month, l_time_clock, *l_block_sort);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_sort);
-  nlohmann::json l_json_res{};
-  *l_block_sort |= ranges::actions::sort;
-  l_json_res["data"] = *l_block_sort;
-  co_return in_handle->make_msg(l_json_res.dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_sort));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average_post::callback(
@@ -662,10 +715,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
   auto l_time_clock = create_time_clock(l_year_month, l_user_uuid);
   average_time_run(l_year_month, l_time_clock, *l_block);
   co_await g_ctx().get<sqlite_database>().install_range(l_block);
-  *l_block |= ranges::actions::sort;
-  nlohmann::json l_json_res{};
-  l_json_res["data"] = *l_block;
-  co_return in_handle->make_msg(l_json_res.dump());
+
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get::callback(session_data_ptr in_handle) {
   auto l_logger                   = in_handle->logger_;
@@ -679,10 +730,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
   *l_block_ptr =
       g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
   *l_block_ptr |= ranges::actions::sort;
-  if (auto l_r = co_await merge_full_task(in_handle, l_block_ptr); !l_r) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::internal_server_error, l_r.error());
-  } else
-    co_return in_handle->make_msg(l_r->dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::callback(
     session_data_ptr in_handle
@@ -760,11 +808,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     }
     co_await g_ctx().get<sqlite_database>().install(l_block_ptr_value);
   }
-  nlohmann::json l_json_res{};
-  *l_block_ptr |= ranges::actions::sort;
-  l_json_res["data"] = *l_block_ptr;
-
-  co_return in_handle->make_msg(l_json_res.dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete_::callback(
@@ -789,9 +833,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_del
   recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
 
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
-  *l_block_ptr |= ranges::actions::sort;
-  l_json_res["data"] = *l_block_ptr;
-  co_return in_handle->make_msg(l_json_res.dump());
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
 boost::asio::awaitable<void> recomputing_time(const uuid& in_person_id, const chrono::year_month& in_year_month) {
