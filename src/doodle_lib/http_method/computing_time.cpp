@@ -78,7 +78,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
   std::vector<work_xlsx_task_info_helper_t> l_ret{};
   std::vector<uuid> l_task_ids{};
   std::map<uuid, const work_xlsx_task_info_helper::database_t*> l_task_id_map{};
-  for (auto&& l_item : in_data) l_task_id_map.emplace(l_item.uuid_id_, &l_item);
+  for (auto&& l_item : in_data) l_task_id_map.emplace(l_item.kitsu_task_ref_id_, &l_item);
   std::map<uuid, std::string> l_project_name_map{};
 
   l_task_ids.reserve(in_data.size());
@@ -98,6 +98,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
             .entity_ji_shu_lie_ = l_item.episode_,
             .entity_deng_ji_    = l_item.grade_,
             .entity_ji_du_      = l_item.season_,
+            .project_uuid_      = l_item.project_id_,
             .project_name_ =
                 !l_item.project_id_.is_nil() ? l_project_name_map.at(l_item.project_id_) : l_item.project_name_,
             .id_               = l_item.uuid_id_,
@@ -153,6 +154,13 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 
             .project_uuid_              = project_uuid_,
             .project_name_              = project_name_,
+            .id_                        = l_task_id_map.at(task_id_)->uuid_id_,
+            .work_start_time_           = l_task_id_map.at(task_id_)->start_time_,
+            .work_end_time_             = l_task_id_map.at(task_id_)->end_time_,
+            .work_duration_             = l_task_id_map.at(task_id_)->duration_,
+            .work_remark_               = l_task_id_map.at(task_id_)->remark_,
+            .work_user_remark_          = l_task_id_map.at(task_id_)->user_remark_,
+            .work_year_month_           = l_task_id_map.at(task_id_)->year_month_
         }
     );
   }
@@ -320,7 +328,7 @@ void computing_time_run(
                 .remark_            = l_remark,
                 .year_month_        = chrono::local_days{in_year_month / 1},
                 .person_id_         = in_person_id,
-                .kitsu_task_ref_id_ = in_data.data[i].task_id
+                .kitsu_task_ref_id_ = in_data[i].task_id
             }
         );
       }
