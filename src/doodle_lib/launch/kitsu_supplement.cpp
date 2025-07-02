@@ -35,6 +35,9 @@ struct kitsu_supplement_args_t {
   std::string ji_meng_secret_access_key_;
   /// 会话 jwt token
   std::string secret_;
+
+  std::string domain_protocol_;
+  std::string domain_name_;
   // 公司
   struct dingding_company_t {
     boost::uuids::uuid id_;
@@ -91,6 +94,10 @@ struct kitsu_supplement_args_t {
     if (in_json.contains("ji_meng_secret_access_key"))
       in_json.at("ji_meng_secret_access_key").get_to(out_obj.ji_meng_secret_access_key_);
     if (in_json.contains("mail_config")) in_json.at("mail_config").get_to(out_obj.mail_config_);
+
+    in_json.at("domain_protocol").get_to(out_obj.domain_protocol_);
+    in_json.at("domain_name").get_to(out_obj.domain_name_);
+    in_json.at("secret").get_to(out_obj.secret_);
   }
 };
 
@@ -130,17 +137,29 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
           ranges::views::transform([](const std::wstring& in) -> std::string { return conv::utf_to_utf<char>(in); }) |
           ranges::to_vector;
 
-      in_args.ji_meng_access_key_id_     = conv::utf_to_utf<char>(l_key.GetStringValue(L"ji_meng_access_key_id"));
-      in_args.ji_meng_secret_access_key_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"ji_meng_secret_access_key"));
+      if (auto l_value = l_key.TryGetStringValue(L"ji_meng_access_key_id"); l_value.IsValid())
+        in_args.ji_meng_access_key_id_ = conv::utf_to_utf<char>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetStringValue(L"ji_meng_secret_access_key"); l_value.IsValid())
+        in_args.ji_meng_secret_access_key_ = conv::utf_to_utf<char>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetStringValue(L"domain_name"); l_value.IsValid())
+        in_args.domain_name_ = conv::utf_to_utf<char>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetStringValue(L"domain_protocol"); l_value.IsValid())
+        in_args.domain_protocol_ = conv::utf_to_utf<char>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetStringValue(L"secret"); l_value.IsValid())
+        in_args.secret_ = conv::utf_to_utf<char>(l_value.GetValue());
     }
     if (winreg::RegKey l_key{};
         l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\Email)", KEY_QUERY_VALUE | KEY_WOW64_64KEY).Failed())
       default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/Email");
     else {
-      in_args.mail_config_.address_  = conv::utf_to_utf<char>(l_key.GetStringValue(L"address"));
-      in_args.mail_config_.port_     = boost::numeric_cast<std::uint32_t>(l_key.GetDwordValue(L"port"));
-      in_args.mail_config_.username_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"username"));
-      in_args.mail_config_.password_ = conv::utf_to_utf<char>(l_key.GetStringValue(L"password"));
+      if (auto l_value = l_key.TryGetStringValue(L"address"); l_value.IsValid())
+        in_args.mail_config_.address_ = conv::utf_to_utf<char>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetDwordValue(L"port"); l_value.IsValid())
+        in_args.mail_config_.port_ = boost::numeric_cast<std::uint32_t>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetStringValue(L"username"); l_value.IsValid())
+        in_args.mail_config_.username_ = conv::utf_to_utf<char>(l_value.GetValue());
+      if (auto l_value = l_key.TryGetStringValue(L"password"); l_value.IsValid())
+        in_args.mail_config_.password_ = conv::utf_to_utf<char>(l_value.GetValue());
     }
   } catch (...) {
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
@@ -160,7 +179,9 @@ bool kitsu_supplement_main::init() {
           "NzY0NjMzNjAwLCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684",
       .kitsu_front_end_path_  = "D:/kitsu/dist",
       .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data",
-      .secret_                = "22T0iwSHK7qkhdI6"
+      .secret_                = "22T0iwSHK7qkhdI6",
+      .domain_protocol_       = "http",
+      .domain_name_           = "192.168.10.181",
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
@@ -224,7 +245,8 @@ bool kitsu_supplement_main::init() {
   {
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_,
-        l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_
+        l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_,
+        l_args.domain_protocol_, l_args.domain_name_
     );
     g_ctx().emplace<email::seed_email>(
         l_args.mail_config_.address_, l_args.mail_config_.port_, l_args.mail_config_.username_,

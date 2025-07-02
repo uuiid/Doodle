@@ -32,6 +32,9 @@ struct kitsu_ctx_t {
 
   /// 会话 jwt token
   std::string secret_;
+  /// 服务器 协议和域名(基本在发送电子邮件时使用)
+  std::string domain_protocol_;
+  std::string domain_name_;
 };
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root);

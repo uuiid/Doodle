@@ -17,6 +17,8 @@
 BOOST_AUTO_TEST_SUITE(email)
 
 BOOST_AUTO_TEST_CASE(seed) {
+  doodle::email::seed_email l_seed_email{"smtp.163.com", 25, "19975298467@163.com", "WIGOMKIGPOKFJKEB"};
+  l_seed_email("19975298467@163.com", "957714080@qq.com", "test");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

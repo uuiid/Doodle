@@ -22,7 +22,7 @@ void seed_email::operator()(
     const std::string& in_subject, const std::string& in_recipient, const std::string& in_body
 ) {
   mailio::message l_msg{};
-  l_msg.from(mailio::mail_address{"", in_subject});
+  l_msg.from(mailio::mail_address{"", username_});
   l_msg.add_recipient(mailio::mail_address{"", in_recipient});
   l_msg.subject(in_subject);
   l_msg.content(in_body);
