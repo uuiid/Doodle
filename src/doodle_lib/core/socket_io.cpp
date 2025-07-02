@@ -104,7 +104,7 @@ class socket_io_http_post : public socket_io_http_base_fun {
         l_sid_data->update_sid_time();
         co_return in_handle->make_msg(std::string{});
         break;
-      case engine_io_packet_type::message:
+      case engine_io_packet_type::message:// 消息在切换结束后解析
         break;
       case engine_io_packet_type::close:
         l_sid_data->close();

@@ -78,14 +78,7 @@ std::string sid_data::parse_socket_io(socket_io_packet& in_body) {
 
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      auto l_ptr = std::make_shared<socket_io_core>(ctx_, in_body.namespace_, in_body.json_data_);
-      socket_io_contexts_[in_body.namespace_] = l_ptr;
-      ctx_->emit_connect(l_ptr);
-      if (auto l_web = websocket_.lock()) l_ptr->set_websocket(l_web);
-      in_body.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      auto l_str         = in_body.dump();
-      socket_io_signal_(l_str);
-      return l_str;
+      return connect_namespace(in_body.namespace_);
       break;
     }
     case socket_io_packet_type::disconnect:
