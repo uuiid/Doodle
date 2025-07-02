@@ -97,7 +97,7 @@ struct kitsu_supplement_args_t {
 
     in_json.at("domain_protocol").get_to(out_obj.domain_protocol_);
     in_json.at("domain_name").get_to(out_obj.domain_name_);
-    in_json.at("secret").get_to(out_obj.secret_);
+    if (in_json.contains("secret")) in_json.at("secret").get_to(out_obj.secret_);
   }
 };
 

@@ -103,13 +103,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login_post::c
   //   l_res.body() = zlib_compress(std::move(in_body));
   //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
   // } else
+
   l_res.set(
       boost::beast::http::field::set_cookie,
-      fmt::format("{}; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax", l_access_token)
+      fmt::format("access_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax", l_access_token)
   );
-  l_res.set(
+  l_res.insert(
       boost::beast::http::field::set_cookie,
-      fmt::format("{}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token)
+      fmt::format("refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token)
   );
   l_res.body() = l_json.dump();
 
