@@ -26,6 +26,9 @@ struct work_xlsx_task_info_helper_t {
   decltype(task::name_) task_name_;
   decltype(task::last_preview_file_id_) task_last_preview_file_id_;
 
+  decltype(entity::uuid_id_) entity_id_;
+  decltype(entity::name_) entity_name_;
+
   decltype(entity_asset_extend::ji_shu_lie_) entity_ji_shu_lie_;
   decltype(entity_asset_extend::deng_ji_) entity_deng_ji_;
   decltype(entity_asset_extend::gui_dang_) entity_gui_dang_;
@@ -52,6 +55,9 @@ struct work_xlsx_task_info_helper_t {
     j["task_id"]                   = p.task_id_;
     j["task_name"]                 = p.task_name_;
     j["task_last_preview_file_id"] = p.task_last_preview_file_id_;
+    j["entity_id"]                 = p.entity_id_;
+    j["entity_name"]               = p.entity_name_;
+
     j["entity_ji_shu_lie"]         = p.entity_ji_shu_lie_;
     j["entity_deng_ji"]            = p.entity_deng_ji_;
     j["entity_gui_dang"]           = p.entity_gui_dang_;
@@ -116,6 +122,8 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 
            task_id_, task_name_, task_last_preview_file_id_,
 
+           entity_id_, entity_name_,
+
            entity_ji_shu_lie_, entity_deng_ji_, entity_gui_dang_, entity_bian_hao_, entity_pin_yin_ming_cheng_,
            entity_ban_ben_, entity_ji_du_, entity_kai_shi_ji_shu_,
 
@@ -125,6 +133,8 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
        l_sql.impl_->storage_any_.select(
            columns(
                &task::uuid_id_, &task::name_, &task::last_preview_file_id_,
+
+               &entity::uuid_id_, &entity::name_,
 
                &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
                &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_,
@@ -142,6 +152,9 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
             .task_id_                   = task_id_,
             .task_name_                 = task_name_,
             .task_last_preview_file_id_ = task_last_preview_file_id_,
+
+            .entity_id_                 = entity_id_,
+            .entity_name_               = entity_name_,
 
             .entity_ji_shu_lie_         = entity_ji_shu_lie_,
             .entity_deng_ji_            = entity_deng_ji_,
