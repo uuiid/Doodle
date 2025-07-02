@@ -74,6 +74,9 @@ struct auth_reset_password_put_arg {
   }
 };
 }  // namespace
+void auth_reset_password_post::init() {
+  g_ctx().emplace<auth_reset_password_cache>();
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_post::callback(
     session_data_ptr in_handle

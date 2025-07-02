@@ -40,7 +40,10 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_task_status_links, post, "/api/data/task-status-links", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(auth_reset_password, post, "/api/auth/reset-password", http_jwt_fun)
+DOODLE_HTTP_FUN_CONST(auth_reset_password, post, "/api/auth/reset-password", http_jwt_fun) {
+  init();
+}
+void init();
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 
