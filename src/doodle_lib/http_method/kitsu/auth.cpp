@@ -43,6 +43,7 @@ std::string generate_reset_token() {
 }
 /// 生成邮件内容
 std::string generate_email_content(const std::string& in_user_name, const std::string& in_token) {
+  auto l_time = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}.get_sys_time();
   return fmt::format(
       R"(<p> 您好, {0}</p>
 <p> 您的密码重置请求已经收到,请点击下面的链接进行密码重置:</p>
@@ -50,13 +51,12 @@ std::string generate_email_content(const std::string& in_user_name, const std::s
 
 <p> 如果您没有请求密码重置,请忽略本邮件。</p>
 <p> 此链接将在2小时后过期。之后，您必须重新请求重置密码。</p>
-<p> 此电子邮件于以下日期发送： {3} </p>
+<p> 此电子邮件于以下日期发送： {2} </p>
 
 <p> 感谢您的使用!</p>
 <p> Doodle Team</p>
 )",
-      in_user_name, in_token,
-      chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}.get_sys_time()
+      in_user_name, in_token, l_time
   );
 }
 
