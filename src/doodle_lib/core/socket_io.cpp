@@ -30,6 +30,7 @@ class socket_io_http_base_fun : public ::doodle::http::http_function {
   std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override {
     std::string l_path{std::string_view{in_segments_ref.buffer()}};
     if (l_path == "/" || l_path.empty()) return {false, {}};
+    if (l_path == "/socket.io/") return {true, {}};
     if (sid_ctx_->has_register(l_path)) return {true, {}};
     return {false, {}};
   }
