@@ -46,7 +46,9 @@ overloaded(Ts...) -> overloaded<Ts...>;
  */
 
 DOODLE_CORE_API boost::uuids::uuid from_uuid_str(const std::string &uuid_str);
-
+DOODLE_CORE_API std::chrono::time_zone<std::chrono::system_clock::duration> from_chrono_time_zone_str(
+    const std::string &time_zone_str
+);
 template <typename T>
 T parse_time(const std::string &time_str, const std::string &format) {
   std::istringstream l_year_month_stream{time_str};
