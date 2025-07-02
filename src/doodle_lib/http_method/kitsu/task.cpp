@@ -121,6 +121,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get
   l_r = sql.get_comments(l_task_id);
   co_return in_handle->make_msg(l_r);
 }
+struct data_tasks_open_tasks_get_args {
+  uuid person_id_{};
+  chrono::system_zoned_time start_time_{};
+  chrono::system_zoned_time end_time_{};
 
+  void parse_args(const boost::urls::params_ref& in_params) {
+    for (auto&& [key, value, has] : in_params) {
+      if (key == "person_id" && has) person_id_ = from_uuid_str(value);
+      if (key == "start_time" && has) start_time_ = from_chrono_time_zone_str(value);
+      if (key == "end_time" && has) end_time_ = from_chrono_time_zone_str(value);
+    }
+  }
+};
+boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_tasks_get::callback(
+    session_data_ptr in_handle
+) {
+  auto l_ptr = get_person(in_handle);
+  auto& sql  = g_ctx().get<sqlite_database>();
+  data_tasks_open_tasks_get_args l_args{};
+  l_args.parse_args(in_handle->url_.params());
+
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_implemented, "not implemented");
+}
 
 }  // namespace doodle::http
