@@ -163,6 +163,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
   auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/events");
+  l_sid_ctx->on("/socket.io/");
   socket_io::create_socket_io(*l_router, l_sid_ctx);
   return l_router;
 }
