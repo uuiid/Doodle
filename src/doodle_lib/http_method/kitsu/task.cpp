@@ -217,7 +217,7 @@ struct data_tasks_open_tasks_get_args {
       task_status_name, task_status_color, task_status_short_name
     ] : l_sql.impl_->storage_any_.select(columns(
 
-             object<task>(), &project::name_, &project::has_avatar_,
+             object<task>(true), &project::name_, &project::has_avatar_,
 
              &entity::uuid_id_, &entity::name_, &entity::description_, &entity::preview_file_id_, &entity::canceled_,
              &entity::project_id_, &entity::source_id_,
