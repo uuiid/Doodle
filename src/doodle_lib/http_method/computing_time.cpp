@@ -192,11 +192,11 @@ struct computing_time_post_req_data {
   chrono::local_time_pos end_time;
   // form json
   friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
-    p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
-    auto l_start_time = parse_8601<chrono::local_time_pos>(j.at("work_start_time").get<std::string>());
-    auto l_end_time   = parse_8601<chrono::local_time_pos>(j.at("work_end_time").get<std::string>());
-    p.start_time      = std::max(l_start_time, l_end_time);
-    p.end_time        = std::min(l_start_time, l_end_time);
+    p.task_id = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
+    j.at("work_start_time").get_to(p.start_time);
+    j.at("work_end_time").get_to(p.end_time);
+
+    if (p.start_time > p.end_time) std::swap(p.start_time, p.end_time);
   }
 };
 

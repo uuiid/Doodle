@@ -80,9 +80,18 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
   }
 
   static void from_json(const json& j, time_point& in_time) {
+    auto& l_str = j.get_ref<const std::string&>();
     std::istringstream l_stream{j.get_ref<const std::string&>()};
-    if constexpr (std::ratio_less_v<typename Duration::period, std::chrono::days::period>)
-      l_stream >> std::chrono::parse("%F %T", in_time);
+    if constexpr (std::ratio_less_v<typename Duration::period, std::chrono::days::period>) {
+      if (l_stream >> std::chrono::parse("%FT%TZ", in_time))
+        ;
+      else if (l_stream.clear(), l_stream.str(l_str), l_stream >> std::chrono::parse("%FT%T%Ez", in_time))
+        ;
+      else if (l_stream.clear(), l_stream.str(l_str), l_stream >> std::chrono::parse("%F %T", in_time))
+        ;
+      else if (l_stream.clear(), l_stream.str(l_str), l_stream >> std::chrono::parse("%F", in_time))
+        ;
+    }
     else
       l_stream >> std::chrono::parse("%F", in_time);
   }
