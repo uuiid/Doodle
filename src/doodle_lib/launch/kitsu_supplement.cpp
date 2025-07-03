@@ -247,10 +247,11 @@ bool kitsu_supplement_main::init() {
         l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_,
         l_args.domain_protocol_, l_args.domain_name_
     );
-    g_ctx().emplace<email::seed_email>(
-        l_args.mail_config_.address_, l_args.mail_config_.port_, l_args.mail_config_.username_,
-        l_args.mail_config_.password_
-    );
+    if (!l_args.mail_config_.username_.empty() && !l_args.mail_config_.password_.empty())
+      g_ctx().emplace<email::seed_email>(
+          l_args.mail_config_.address_, l_args.mail_config_.port_, l_args.mail_config_.username_,
+          l_args.mail_config_.password_
+      );
 
     // 初始化钉钉客户端
     auto& l_d = g_ctx().emplace<dingding::dingding_company>();
