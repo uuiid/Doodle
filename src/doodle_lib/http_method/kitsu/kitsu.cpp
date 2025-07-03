@@ -153,6 +153,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg(std::make_shared<data_attachment_files_file_get>())
       .reg(std::make_shared<data_project_schedule_items_get>())
       .reg(std::make_shared<data_project_milestones_get>())
+      .reg(std::make_shared<data_tasks_open_tasks_get>())
 
       // delete
       .reg(std::make_shared<task_comment_delete_>())

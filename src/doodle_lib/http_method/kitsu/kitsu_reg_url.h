@@ -192,6 +192,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_attachment_files_file, get, "/api/data/attachment-files/{id}/file/{file_name}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_tasks_open_tasks, get, "/api/data/tasks/open-tasks", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(task_comment, delete_, "/api/data/tasks/{task_id}/comments/{comment_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;

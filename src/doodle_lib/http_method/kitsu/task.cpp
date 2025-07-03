@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/metadata/notification.h"
+#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -121,6 +122,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get
   l_r = sql.get_comments(l_task_id);
   co_return in_handle->make_msg(l_r);
 }
+namespace {
+
+struct open_tasks_get_t {};
 struct data_tasks_open_tasks_get_args {
   uuid person_id_{};
   chrono::system_zoned_time start_time_{};
@@ -133,7 +137,15 @@ struct data_tasks_open_tasks_get_args {
       if (key == "end_time" && has) end_time_ = from_chrono_time_zone_str(value);
     }
   }
+
+  void get() {
+    auto l_sql = g_ctx().get<sqlite_database>();
+    using namespace sqlite_orm;
+    l_sql.impl_->storage_any_.select(columns(object<task>()));
+  }
 };
+
+}  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_tasks_get::callback(
     session_data_ptr in_handle
 ) {
@@ -141,6 +153,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_ta
   auto& sql  = g_ctx().get<sqlite_database>();
   data_tasks_open_tasks_get_args l_args{};
   l_args.parse_args(in_handle->url_.params());
+  l_args.get();
 
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_implemented, "not implemented");
 }
