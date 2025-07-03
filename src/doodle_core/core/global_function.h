@@ -46,9 +46,31 @@ overloaded(Ts...) -> overloaded<Ts...>;
  */
 
 DOODLE_CORE_API boost::uuids::uuid from_uuid_str(const std::string &uuid_str);
-DOODLE_CORE_API std::chrono::time_zone<std::chrono::system_clock::duration> from_chrono_time_zone_str(
-    const std::string &time_zone_str
-);
+
+template <typename Duration = std::chrono::system_clock::duration>
+DOODLE_CORE_API std::chrono::zoned_time<std::chrono::system_clock::duration> from_chrono_time_zone_str(
+    const std::string &in_time_zone_str
+) {
+  using time_point     = std::chrono::zoned_time<Duration>;
+  using time_loc_point = std::chrono::time_point<std::chrono::local_t, Duration>;
+  std::chrono::zoned_time<Duration> l_time_zone;
+  std::istringstream l_stream(in_time_zone_str);
+  const auto l_current_zone = std::chrono::current_zone();
+
+  if (std::chrono::time_point<std::chrono::system_clock> l_time{}; l_stream >> std::chrono::parse("%FT%TZ", l_time))
+    l_time_zone = time_point{l_current_zone, l_time};
+  else if (l_stream.clear(), l_stream.str(in_time_zone_str), l_stream >> std::chrono::parse("%FT%T%Ez", l_time))
+    l_time_zone = time_point{l_current_zone, l_time};
+  else if (time_loc_point l_loc_time{};
+           l_stream.clear(), l_stream.str(in_time_zone_str), l_stream >> std::chrono::parse("%F %T", l_loc_time))
+    l_time_zone = time_point{l_current_zone, l_loc_time};
+  else if (l_stream.clear(), l_stream.exceptions(std::ios::failbit), l_stream.str(in_time_zone_str),
+           l_stream >> std::chrono::parse("%F", l_loc_time))
+    l_time_zone = time_point{l_current_zone, l_loc_time};
+  else
+    throw std::runtime_error{fmt::format("Invalid time zone: {}", in_time_zone_str)};
+  return l_time_zone;
+};
 template <typename T>
 T parse_time(const std::string &time_str, const std::string &format) {
   std::istringstream l_year_month_stream{time_str};
