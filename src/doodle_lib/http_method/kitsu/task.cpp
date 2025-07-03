@@ -238,12 +238,11 @@ struct data_tasks_open_tasks_get_args {
         join<entity>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
         join<asset_type>(on(c(&asset_type::uuid_id_) == c(&entity::entity_type_id_))),
         join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))),
-        join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
         join<project_status>(on(c(&project_status::uuid_id_) == c(&project::project_status_id_))),
         left_outer_join<sequence>(on(c(sequence->*&entity::uuid_id_) == c(&entity::parent_id_))),
         left_outer_join<episode>(on(c(episode->*&entity::uuid_id_) == c(sequence->*&entity::parent_id_))),
         where(
-           c(&assignees_table::person_id_) == person_id_ &&
+           in(&task::uuid_id_, select(&assignees_table::task_id_,  where(c(&assignees_table::person_id_) == person_id_))) &&
            c(&task::start_date_) >= start_time_ ||
            (c(&task::start_date_) >= start_time_ && c(&task::end_date_) <= end_time_)
         ),
