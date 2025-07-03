@@ -369,14 +369,14 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("data", &task::data_),                                       //
           make_column("shotgun_id", &task::shotgun_id_),                           //
           make_column("last_preview_file_id", &task::last_preview_file_id_),       //
+          make_column("nb_drawings", &task::nb_drawings_),                         //
+          make_column("created_at", &task::created_at_),                           //
+          make_column("updated_at", &task::updated_at_),                           //
           make_column("project_id", &task::project_id_),                           //
           make_column("task_type_id", &task::task_type_id_),                       //
           make_column("task_status_id", &task::task_status_id_),                   //
-          make_column("nb_drawings", &task::nb_drawings_),                   //
           make_column("entity_id", &task::entity_id_),                             //
           make_column("assigner_id", &task::assigner_id_),                         //
-          make_column("created_at", &task::created_at_),                         //
-          make_column("updated_at", &task::updated_at_),                         //
           foreign_key(&task::project_id_).references(&project::uuid_id_),          //
           foreign_key(&task::task_type_id_).references(&task_type::uuid_id_),      //
           foreign_key(&task::task_status_id_).references(&task_status::uuid_id_),  //
