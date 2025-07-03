@@ -193,6 +193,9 @@ struct data_tasks_open_tasks_get_args {
     }
     if (person_id_.is_nil() || start_time_ == chrono::system_zoned_time{} || end_time_ == chrono::system_zoned_time{})
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失查询参数"});
+    default_logger_raw()->debug(
+        "person_id:{}, start_date:{}, end_date:{}", person_id_, start_time_.get_sys_time(), end_time_.get_sys_time()
+    );
   }
 
   std::vector<open_tasks_get_t> get() {
@@ -233,6 +236,7 @@ struct data_tasks_open_tasks_get_args {
              &task_status::name_, &task_status::color_, &task_status::short_name_
 
          ),
+         from<task>(),
         join<task_type>(on(c(&task_type::uuid_id_) == c(&task::task_type_id_))),
         join<task_status>(on(c(&task_status::uuid_id_) == c(&task::task_status_id_))),
         join<entity>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
@@ -242,9 +246,12 @@ struct data_tasks_open_tasks_get_args {
         left_outer_join<sequence>(on(c(sequence->*&entity::uuid_id_) == c(&entity::parent_id_))),
         left_outer_join<episode>(on(c(episode->*&entity::uuid_id_) == c(sequence->*&entity::parent_id_))),
         where(
-           in(&task::uuid_id_, select(&assignees_table::task_id_,  where(c(&assignees_table::person_id_) == person_id_))) &&
-           c(&task::start_date_) >= start_time_ ||
-           (c(&task::start_date_) >= start_time_ && c(&task::end_date_) <= end_time_)
+        (
+        (c(&task::start_date_) >= start_time_ && c(&task::start_date_) <= end_time_) ||
+        (c(&task::end_date_) >= start_time_ && c(&task::end_date_) <= end_time_)
+        ) &&
+          in(&task::uuid_id_,
+            select(&assignees_table::task_id_, from<assignees_table>(), where(c(&assignees_table::person_id_) == person_id_)))
         ),
         multi_order_by(order_by(&project::name_), order_by(episode->*&entity::name_), order_by(sequence->*&entity::name_),
           order_by(&asset_type::name_),      order_by(&task_type::name_))
@@ -254,7 +261,6 @@ struct data_tasks_open_tasks_get_args {
           open_tasks_get_t{
               .task_                   = task,
               .project_name_           = project_name,
-              .project_id_             = person_id_,
               .project_has_avatar_     = project_has_avatar,
               .entity_id_              = entity_uuid_id,
               .entity_name_            = entity_name,
@@ -278,6 +284,12 @@ struct data_tasks_open_tasks_get_args {
               .status_color_           = task_status_color,
               .status_short_name_      = task_status_short_name
           }
+      );
+    }
+    for (auto l_item : l_ret) {
+      l_item.task_.assignees_ = l_sql.impl_->storage_any_.select(
+          &assignees_table::person_id_, from<assignees_table>(),
+          where(c(&assignees_table::task_id_) == l_item.task_.uuid_id_)
       );
     }
     return l_ret;
