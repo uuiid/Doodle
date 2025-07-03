@@ -14,13 +14,15 @@ seed_email::seed_email(std::string in_address, std::uint32_t in_port, std::strin
       username_(in_username),
       password_(in_password),
 
-      smtp_(std::make_shared<mailio::smtp>(in_address, in_port)) {
-  smtp_->authenticate(in_username, in_password, mailio::smtp::auth_method_t::LOGIN);
-}
+      smtp_() {}
 
 void seed_email::operator()(
     const std::string& in_subject, const std::string& in_recipient, const std::string& in_body
 ) {
+  if (!smtp_) {
+    smtp_ = std::make_shared<mailio::smtp>(address_, port_);
+    smtp_->authenticate(username_, password_, mailio::smtp::auth_method_t::LOGIN);
+  }
   mailio::message l_msg{};
   l_msg.from(mailio::mail_address{"", username_});
   l_msg.add_recipient(mailio::mail_address{"", in_recipient});
