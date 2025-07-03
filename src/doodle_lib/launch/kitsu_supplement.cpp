@@ -94,9 +94,8 @@ struct kitsu_supplement_args_t {
     if (in_json.contains("ji_meng_secret_access_key"))
       in_json.at("ji_meng_secret_access_key").get_to(out_obj.ji_meng_secret_access_key_);
     if (in_json.contains("mail_config")) in_json.at("mail_config").get_to(out_obj.mail_config_);
-
-    in_json.at("domain_protocol").get_to(out_obj.domain_protocol_);
-    in_json.at("domain_name").get_to(out_obj.domain_name_);
+    if (in_json.contains("domain_protocol")) in_json.at("domain_protocol").get_to(out_obj.domain_protocol_);
+    if (in_json.contains("domain_name")) in_json.at("domain_name").get_to(out_obj.domain_name_);
     if (in_json.contains("secret")) in_json.at("secret").get_to(out_obj.secret_);
   }
 };
