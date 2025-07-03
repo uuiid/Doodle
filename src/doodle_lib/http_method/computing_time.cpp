@@ -193,8 +193,8 @@ struct computing_time_post_req_data {
   // form json
   friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
     p.task_id         = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
-    auto l_start_time = parse_8601<chrono::local_time_pos>(j.at("start_time").get<std::string>());
-    auto l_end_time   = parse_8601<chrono::local_time_pos>(j.at("end_time").get<std::string>());
+    auto l_start_time = parse_8601<chrono::local_time_pos>(j.at("work_start_time").get<std::string>());
+    auto l_end_time   = parse_8601<chrono::local_time_pos>(j.at("work_end_time").get<std::string>());
     p.start_time      = std::max(l_start_time, l_end_time);
     p.end_time        = std::min(l_start_time, l_end_time);
   }
@@ -214,18 +214,18 @@ struct computing_time_post_req_custom_data {
   boost::uuids::uuid user_id_;
 
   friend void from_json(const nlohmann::json& j, computing_time_post_req_custom_data& p) {
-    if (j.contains("project_id"))
-      j.at("project_id").get_to(p.project_id);
+    if (j.contains("project_uuid"))
+      j.at("project_uuid").get_to(p.project_id);
     else
       j.at("project_name").get_to(p.project_name_);
 
-    j.at("season").get_to(p.season);
-    j.at("episode").get_to(p.episode);
-    j.at("name").get_to(p.name);
-    if (j.contains("grade")) j.at("grade").get_to(p.grade);
-    j.at("user_remark").get_to(p.remark);
-    j.at("start_time").get_to(p.start_time);
-    j.at("end_time").get_to(p.end_time);
+    j.at("entity_ji_du").get_to(p.season);
+    j.at("entity_ji_shu_lie").get_to(p.episode);
+    j.at("task_name").get_to(p.name);
+    if (j.contains("entity_deng_ji")) j.at("entity_deng_ji").get_to(p.grade);
+    j.at("work_user_remark").get_to(p.remark);
+    j.at("work_start_time").get_to(p.start_time);
+    j.at("work_end_time").get_to(p.end_time);
 
     // 检查数据
     if (p.start_time > p.end_time)
