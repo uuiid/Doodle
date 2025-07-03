@@ -143,9 +143,10 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
                &project::uuid_id_, &project::name_
 
            ),
+           from<task>(),
            join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
            left_outer_join<entity_asset_extend>(on(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_)),
-           join<project>(on(c(&project::uuid_id_) == c(&entity::project_id_))), where(in(&task::uuid_id_, l_task_ids))
+           join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))), where(in(&task::uuid_id_, l_task_ids))
        )) {
     l_ret.emplace_back(
         work_xlsx_task_info_helper_t{

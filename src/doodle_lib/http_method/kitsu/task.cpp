@@ -153,8 +153,8 @@ struct open_tasks_get_t {
   decltype(task_status::short_name_) status_short_name_;
   // to json
   friend void to_json(nlohmann::json& in_j, const open_tasks_get_t& in_p) {
-    to_json(in_j, in_p.task_);
-    to_json(in_j, in_p.entity_asset_extend_);
+    to_json(in_j, in_p.entity_asset_extend_);  // 先调用额外数据写入, 将写入id属性
+    to_json(in_j, in_p.task_);                 // 后调用 task 数据写入, 将id属性覆盖为 task.id
 
     in_j["project_name"]           = in_p.project_name_;
     in_j["project_id"]             = in_p.project_id_;
