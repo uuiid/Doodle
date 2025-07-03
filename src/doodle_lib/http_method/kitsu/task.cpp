@@ -126,6 +126,7 @@ namespace {
 
 struct open_tasks_get_t {
   task task_;
+  entity_asset_extend entity_asset_extend_;
   decltype(project::name_) project_name_;
   decltype(project::uuid_id_) project_id_;
   decltype(project::has_avatar_) project_has_avatar_;
@@ -153,6 +154,7 @@ struct open_tasks_get_t {
   // to json
   friend void to_json(nlohmann::json& in_j, const open_tasks_get_t& in_p) {
     to_json(in_j, in_p.task_);
+    to_json(in_j, in_p.entity_asset_extend_);
 
     in_j["project_name"]           = in_p.project_name_;
     in_j["project_id"]             = in_p.project_id_;
@@ -204,7 +206,7 @@ struct data_tasks_open_tasks_get_args {
     using namespace sqlite_orm;
     constexpr auto sequence = "sequence"_alias.for_<entity>();
     constexpr auto episode  = "episode"_alias.for_<entity>();
-    for (auto &&[task, project_name, project_has_avatar,
+    for (auto &&[task, l_entity_asset_extend,project_name, project_has_avatar,
 
       entity_uuid_id, entity_name, entity_description, entity_preview_file_id, entity_canceled,
       entity_project_id, entity_source_id,
@@ -220,7 +222,7 @@ struct data_tasks_open_tasks_get_args {
       task_status_name, task_status_color, task_status_short_name
     ] : l_sql.impl_->storage_any_.select(columns(
 
-             object<task>(true), &project::name_, &project::has_avatar_,
+             object<task>(true), object<entity_asset_extend>(true), &project::name_, &project::has_avatar_,
 
              &entity::uuid_id_, &entity::name_, &entity::description_, &entity::preview_file_id_, &entity::canceled_,
              &entity::project_id_, &entity::source_id_,
@@ -245,6 +247,7 @@ struct data_tasks_open_tasks_get_args {
         join<project_status>(on(c(&project_status::uuid_id_) == c(&project::project_status_id_))),
         left_outer_join<sequence>(on(c(sequence->*&entity::uuid_id_) == c(&entity::parent_id_))),
         left_outer_join<episode>(on(c(episode->*&entity::uuid_id_) == c(sequence->*&entity::parent_id_))),
+        left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
         where(
         (
         (c(&task::start_date_) >= start_time_ && c(&task::start_date_) <= end_time_) ||
@@ -260,6 +263,7 @@ struct data_tasks_open_tasks_get_args {
       l_ret.emplace_back(
           open_tasks_get_t{
               .task_                   = task,
+              .entity_asset_extend_    = l_entity_asset_extend,
               .project_name_           = project_name,
               .project_id_             = task.project_id_,
               .project_has_avatar_     = project_has_avatar,
