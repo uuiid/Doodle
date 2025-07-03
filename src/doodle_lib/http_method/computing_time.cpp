@@ -302,7 +302,7 @@ void computing_time_run(
     // 计算时间比例
     std::vector<std::int64_t> l_woeks1{};
     for (auto&& l_task : in_data) {
-      l_woeks1.push_back(chrono::floor<chrono::days>(l_task.start_time - l_task.end_time).count() + 1);
+      l_woeks1.push_back(std::abs(chrono::floor<chrono::days>(l_task.end_time - l_task.start_time).count()) + 1);
     }
     auto l_works_accumulate = ranges::accumulate(l_woeks1, std::int64_t{});
     std::vector<chrono::seconds> l_woeks2{};
