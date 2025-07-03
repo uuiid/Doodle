@@ -261,6 +261,7 @@ struct data_tasks_open_tasks_get_args {
           open_tasks_get_t{
               .task_                   = task,
               .project_name_           = project_name,
+              .project_id_             = task.project_id_,
               .project_has_avatar_     = project_has_avatar,
               .entity_id_              = entity_uuid_id,
               .entity_name_            = entity_name,
