@@ -188,8 +188,8 @@ struct data_tasks_open_tasks_get_args {
   void parse_args(const boost::urls::params_ref& in_params) {
     for (auto&& [key, value, has] : in_params) {
       if (key == "person_id" && has) person_id_ = from_uuid_str(value);
-      if (key == "start_time" && has) start_time_ = from_chrono_time_zone_str(value);
-      if (key == "end_time" && has) end_time_ = from_chrono_time_zone_str(value);
+      if (key == "start_date" && has) start_time_ = from_chrono_time_zone_str(value);
+      if (key == "end_date" && has) end_time_ = from_chrono_time_zone_str(value);
     }
     if (person_id_.is_nil() || start_time_ == chrono::system_zoned_time{} || end_time_ == chrono::system_zoned_time{})
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失查询参数"});
