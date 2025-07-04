@@ -152,7 +152,6 @@ struct DOODLE_CORE_API person {
       j.at("notifications_discord_userid").get_to(p.notifications_discord_userid_);
     if (j.contains("is_bot")) j.at("is_bot").get_to(p.is_bot_);
     if (j.contains("expiration_date")) j.at("expiration_date").get_to(p.expiration_date_);
-    if (j.contains("studio_id")) j.at("studio_id").get_to(p.studio_id_);
     if (j.contains("is_generated_from_ldap")) j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
     if (j.contains("ldap_uid")) j.at("ldap_uid").get_to(p.ldap_uid_);
 
