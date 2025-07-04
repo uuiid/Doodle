@@ -10,24 +10,22 @@
 #include <opencv2/opencv.hpp>
 namespace doodle::http::model_library {
 
-void pictures_base::create_thumbnail_image(
-    const std::string& in_data, const FSys::path& in_path, const std::string& in_name
-) {
+void pictures_base::create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, FSys::path in_name) {
   cv::Mat l_image = cv::imdecode(
       cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
       cv::IMREAD_COLOR
   );
   if (l_image.empty()) return throw_exception(doodle_error{"图片解码失败"});
 
-  cv::imwrite((in_path / "previews" / (in_name + ".png")).generic_string(), l_image);
+  cv::imwrite((in_path / "previews" / in_name.replace_extension(".png")).generic_string(), l_image);
   if (l_image.cols > 192 || l_image.rows > 108) {
     auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
     cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
-  cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+  cv::imwrite((in_path / "thumbnails" / in_name.replace_extension(".png")).generic_string(), l_image);
 }
 void pictures_base::create_thumbnail_gif(
-    const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
+    const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
 ) {
   {
     cv::VideoCapture l_video{};
@@ -44,12 +42,12 @@ void pictures_base::create_thumbnail_gif(
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
       cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
     }
-    cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+    cv::imwrite((in_path / "thumbnails" / in_name.replace_extension(".png")).generic_string(), l_image);
   }
-  FSys::rename(in_data_path, in_path / "previews" / (in_name + ".gif"));
+  FSys::rename(in_data_path, in_path / "previews" / in_name.replace_extension(".gif"));
 }
 void pictures_base::create_thumbnail_mp4(
-    const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name
+    const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
 ) {
   cv::VideoCapture l_video{};
   l_video.open(in_data_path.generic_string());
@@ -65,24 +63,24 @@ void pictures_base::create_thumbnail_mp4(
     auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
     cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
-  cv::imwrite((in_path / "thumbnails" / (in_name + ".png")).generic_string(), l_image);
+  cv::imwrite((in_path / "thumbnails" / in_name.replace_extension(".png")).generic_string(), l_image);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_post(
     session_data_ptr in_handle
 ) {
   std::string l_name{in_handle->capture_->get("id")};
-  FSys::path l_path = g_ctx().get<kitsu_ctx_t>().root_;
+  FSys::path l_path = *root_;
 
   switch (in_handle->content_type_) {
     // case detail::content_type::image_gif:
     case detail::content_type::image_jpeg:
     case detail::content_type::image_jpg:
     case detail::content_type::image_png:
-      create_thumbnail_image(std::get<std::string>(in_handle->body_), l_path, l_name);
+      create_thumbnail_image(std::get<std::string>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
       break;
     case detail::content_type::image_gif:
-      create_thumbnail_gif(std::get<FSys::path>(in_handle->body_), l_path, l_name);
+      create_thumbnail_gif(std::get<FSys::path>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
       break;
     default:
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
@@ -95,6 +93,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
   FSys::path l_path = *root_;
 
   l_path /= in_handle->capture_->get("id");
+  if (auto l_new_path = FSys::split_uuid_path(l_path.filename()); FSys::exists(l_new_path)) l_path = l_new_path;
+
   if (!FSys::exists(l_path)) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
   }

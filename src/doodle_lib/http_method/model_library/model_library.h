@@ -37,9 +37,9 @@ DOODLE_HTTP_FUN_END()
 
 class pictures_base : public http_jwt_fun {
  protected:
-  void create_thumbnail_mp4(const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name);
-  void create_thumbnail_gif(const FSys::path& in_data_path, const FSys::path& in_path, const std::string& in_name);
-  void create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, const std::string& in_name);
+  void create_thumbnail_mp4(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
+  void create_thumbnail_gif(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
+  void create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, FSys::path in_name);
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(session_data_ptr in_handle);
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle);
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_404(session_data_ptr in_handle);
