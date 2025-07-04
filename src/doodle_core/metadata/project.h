@@ -143,10 +143,11 @@ struct project {
   std::vector<uuid> preview_background_files_;
 
   /// 我们自己的数据
-  FSys::path path_{};               // 项目路径
-  std::string en_str_{};            // 项目拼音名称
-  std::string auto_upload_path_{};  // 项目自动上传路径
-
+  FSys::path path_{};                  // 项目路径
+  std::string en_str_{};               // 项目拼音名称
+  std::string auto_upload_path_{};     // 项目自动上传路径
+  std::string production_category_{};  // 电影所属类别
+  std::string short_name_{};           // 显示的简称
   friend void from_json(const nlohmann::json& j, project& p) {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("code")) j.at("code").get_to(p.code_);
@@ -181,6 +182,8 @@ struct project {
     if (j.contains("path")) j.at("path").get_to(p.path_);
     if (j.contains("en_str")) j.at("en_str").get_to(p.en_str_);
     if (j.contains("auto_upload_path")) j.at("auto_upload_path").get_to(p.auto_upload_path_);
+    if (j.contains("production_category")) j.at("production_category").get_to(p.production_category_);
+    if (j.contains("short_name")) j.at("short_name").get_to(p.short_name_);
   }
   friend void to_json(nlohmann::json& j, const project& p) {
     j["id"]                                 = p.uuid_id_;
@@ -222,6 +225,8 @@ struct project {
     j["path"]                               = p.path_;
     j["en_str"]                             = p.en_str_;
     j["auto_upload_path"]                   = p.auto_upload_path_;
+    j["production_category"]                = p.production_category_;
+    j["short_name"]                         = p.short_name_;
   }
 };
 
@@ -244,12 +249,12 @@ struct project_minimal {
   std::string code_{};
 
   friend void to_json(nlohmann::json& j, const project_minimal& p) {
-    j["id"]    = p.uuid_id_;
-    j["name"]  = p.name_;
-    j["path"]  = p.path_;
-    j["en_str"] = p.en_str_;
+    j["id"]               = p.uuid_id_;
+    j["name"]             = p.name_;
+    j["path"]             = p.path_;
+    j["en_str"]           = p.en_str_;
     j["auto_upload_path"] = p.auto_upload_path_;
-    j["code"] = p.code_;
+    j["code"]             = p.code_;
   }
 
   friend void from_json(const nlohmann::json& j, project_minimal& p) {
