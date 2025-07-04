@@ -69,6 +69,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(auth_reset_password, put, "/api/auth/reset-password", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(data_person, put, "/api/data/persons/{id}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(project, get, "api/data/projects/{project_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;

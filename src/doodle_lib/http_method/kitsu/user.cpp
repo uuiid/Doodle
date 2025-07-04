@@ -61,11 +61,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::ca
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::callback(session_data_ptr in_handle) {
   auto l_ptr = get_person(in_handle);
   l_ptr->is_admin();
-  auto l_person = std::make_shared<person>(in_handle->get_json().get<person>());
+  auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
   co_await g_ctx().get<sqlite_database>().install(l_person);
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> data_person_put::callback(session_data_ptr in_handle) {
+  auto l_ptr    = get_person(in_handle);
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(in_handle->capture_->get_uuid()));
+  in_handle->get_json().get_to(*l_person);
+  co_await l_sql.install(l_person);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+}
 
 }  // namespace doodle::http
