@@ -733,9 +733,8 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
-          ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || in_project_id.is_nil()) &&
-          ((!in_entity_type_id.is_nil() && c(&entity::entity_type_id_) == in_entity_type_id) ||
-           in_entity_type_id.is_nil())
+          (!in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
+          (!in_entity_type_id.is_nil() || c(&entity::entity_type_id_) == in_entity_type_id)
       )
   );
   std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
@@ -1044,11 +1043,11 @@ std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
 
 std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<entity_asset_extend>(where(c(&entity_asset_extend::entity_id_) == in_entity_id));
+  auto l_t =
+      impl_->storage_any_.get_all<entity_asset_extend>(where(c(&entity_asset_extend::entity_id_) == in_entity_id));
   if (l_t.empty()) return std::nullopt;
   return l_t.front();
 }
-
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
