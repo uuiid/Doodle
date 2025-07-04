@@ -13,12 +13,12 @@ seed_email::seed_email(std::string in_address, std::uint32_t in_port, std::strin
       port_(in_port),
       username_(in_username),
       password_(in_password),
+      executor_(g_io_context().get_executor()) {}
 
-      smtp_() {}
-
-void seed_email::operator()(
+boost::asio::awaitable<void> seed_email::operator()(
     const std::string& in_subject, const std::string& in_recipient, const std::string& in_body
 ) {
+  DOODLE_TO_EXECUTOR(executor_);
   if (!smtp_) {
     smtp_ = std::make_shared<mailio::smtp>(address_, port_);
     smtp_->authenticate(username_, password_, mailio::smtp::auth_method_t::LOGIN);
@@ -30,6 +30,7 @@ void seed_email::operator()(
   l_msg.content(in_body);
 
   smtp_->submit(l_msg);
+  DOODLE_TO_SELF();
 }
 
 }  // namespace doodle::email

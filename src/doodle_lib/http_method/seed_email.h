@@ -15,11 +15,13 @@ class seed_email {
 
   std::string username_;
   std::string password_;
+  boost::asio::io_context::executor_type executor_;
   std::shared_ptr<mailio::smtp> smtp_;
 
  public:
   explicit seed_email(std::string in_address, std::uint32_t in_port, std::string in_username, std::string in_password);
 
-  void operator()(const std::string& in_subject, const std::string& in_recipient, const std::string& in_body);
+  boost::asio::awaitable<void> operator()(const std::string& in_subject, const std::string& in_recipient, const std::string& in_body);
+
 };
 }  // namespace doodle::email
