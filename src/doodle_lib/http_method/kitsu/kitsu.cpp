@@ -109,6 +109,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg(std::make_shared<pictures_preview_files_post>())
       .reg(std::make_shared<data_task_status_links_post>())
       .reg(std::make_shared<auth_reset_password_post>())
+      .reg(std::make_shared<data_person_post>())
       // put
       .reg(std::make_shared<data_comment_put>())
       .reg(std::make_shared<data_tasks_put>())

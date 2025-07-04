@@ -58,4 +58,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::ca
   co_return in_handle->make_msg((nlohmann::json{} = l_p).dump());
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::callback(session_data_ptr in_handle) {
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
+  auto l_person = std::make_shared<person>(in_handle->get_json().get<person>());
+  co_await g_ctx().get<sqlite_database>().install(l_person);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+}
+
+
 }  // namespace doodle::http

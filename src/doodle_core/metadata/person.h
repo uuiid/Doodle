@@ -102,7 +102,6 @@ struct DOODLE_CORE_API person {
   // 钉钉对应公司的 uuid
   uuid dingding_company_id_;
 
-
   std::string get_full_name() const {
     return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;
   };
@@ -113,43 +112,50 @@ struct DOODLE_CORE_API person {
   // from json
   friend void from_json(const nlohmann::json& j, person& p) {
     if (j.contains("password")) j.at("password").get_to(p.password_);
-    j.at("first_name").get_to(p.first_name_);
-    j.at("last_name").get_to(p.last_name_);
-    j.at("email").get_to(p.email_);
-    j.at("phone").get_to(p.phone_);
-    j.at("contract_type").get_to(p.contract_type_);
-    j.at("active").get_to(p.active_);
-    j.at("archived").get_to(p.archived_);
-    j.at("last_presence").get_to(p.last_presence_);
-    j.at("desktop_login").get_to(p.desktop_login_);
-    j.at("login_failed_attemps").get_to(p.login_failed_attemps_);
-    j.at("last_login_failed").get_to(p.last_login_failed_);
-    j.at("totp_enabled").get_to(p.totp_enabled_);
-    j.at("totp_secret").get_to(p.totp_secret_);
-    j.at("email_otp_enabled").get_to(p.email_otp_enabled_);
+    if (j.contains("first_name")) j.at("first_name").get_to(p.first_name_);
+    if (j.contains("last_name")) j.at("last_name").get_to(p.last_name_);
+    if (j.contains("email")) j.at("email").get_to(p.email_);
+    if (j.contains("phone")) j.at("phone").get_to(p.phone_);
+    if (j.contains("contract_type")) j.at("contract_type").get_to(p.contract_type_);
+    if (j.contains("active")) j.at("active").get_to(p.active_);
+    if (j.contains("archived")) j.at("archived").get_to(p.archived_);
+    if (j.contains("last_presence")) j.at("last_presence").get_to(p.last_presence_);
+    if (j.contains("desktop_login")) j.at("desktop_login").get_to(p.desktop_login_);
+    if (j.contains("login_failed_attemps")) j.at("login_failed_attemps").get_to(p.login_failed_attemps_);
+    if (j.contains("last_login_failed")) j.at("last_login_failed").get_to(p.last_login_failed_);
+    if (j.contains("totp_enabled")) j.at("totp_enabled").get_to(p.totp_enabled_);
+    if (j.contains("totp_secret")) j.at("totp_secret").get_to(p.totp_secret_);
+    if (j.contains("email_otp_enabled")) j.at("email_otp_enabled").get_to(p.email_otp_enabled_);
     if (j.contains("email_otp_secret")) j.at("email_otp_secret").get_to(p.email_otp_secret_);
-    j.at("fido_enabled").get_to(p.fido_enabled_);
+    if (j.contains("fido_enabled")) j.at("fido_enabled").get_to(p.fido_enabled_);
     if (j.contains("fido_credentials")) j.at("fido_credentials").get_to(p.fido_credentials_);
     if (j.contains("otp_recovery_codes")) j.at("otp_recovery_codes").get_to(p.otp_recovery_codes_);
-    j.at("preferred_two_factor_authentication").get_to(p.preferred_two_factor_authentication_);
-    j.at("shotgun_id").get_to(p.shotgun_id_);
-    j.at("timezone").get_to(p.timezone_);
-    j.at("locale").get_to(p.locale_);
-    j.at("data").get_to(p.data_);
-    j.at("role").get_to(p.role_);
-    j.at("has_avatar").get_to(p.has_avatar_);
-    j.at("notifications_enabled").get_to(p.notifications_enabled_);
-    j.at("notifications_slack_enabled").get_to(p.notifications_slack_enabled_);
-    j.at("notifications_slack_userid").get_to(p.notifications_slack_userid_);
-    j.at("notifications_mattermost_enabled").get_to(p.notifications_mattermost_enabled_);
-    j.at("notifications_mattermost_userid").get_to(p.notifications_mattermost_userid_);
-    j.at("notifications_discord_enabled").get_to(p.notifications_discord_enabled_);
-    j.at("notifications_discord_userid").get_to(p.notifications_discord_userid_);
-    j.at("is_bot").get_to(p.is_bot_);
-    j.at("expiration_date").get_to(p.expiration_date_);
-    j.at("studio_id").get_to(p.studio_id_);
-    j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
-    j.at("ldap_uid").get_to(p.ldap_uid_);
+    if (j.contains("preferred_two_factor_authentication"))
+      j.at("preferred_two_factor_authentication").get_to(p.preferred_two_factor_authentication_);
+    if (j.contains("shotgun_id")) j.at("shotgun_id").get_to(p.shotgun_id_);
+    if (j.contains("timezone")) j.at("timezone").get_to(p.timezone_);
+    if (j.contains("locale")) j.at("locale").get_to(p.locale_);
+    if (j.contains("data")) j.at("data").get_to(p.data_);
+    if (j.contains("role")) j.at("role").get_to(p.role_);
+    if (j.contains("has_avatar")) j.at("has_avatar").get_to(p.has_avatar_);
+    if (j.contains("notifications_enabled")) j.at("notifications_enabled").get_to(p.notifications_enabled_);
+    if (j.contains("notifications_slack_enabled"))
+      j.at("notifications_slack_enabled").get_to(p.notifications_slack_enabled_);
+    if (j.contains("notifications_slack_userid"))
+      j.at("notifications_slack_userid").get_to(p.notifications_slack_userid_);
+    if (j.contains("notifications_mattermost_enabled"))
+      j.at("notifications_mattermost_enabled").get_to(p.notifications_mattermost_enabled_);
+    if (j.contains("notifications_mattermost_userid"))
+      j.at("notifications_mattermost_userid").get_to(p.notifications_mattermost_userid_);
+    if (j.contains("notifications_discord_enabled"))
+      j.at("notifications_discord_enabled").get_to(p.notifications_discord_enabled_);
+    if (j.contains("notifications_discord_userid"))
+      j.at("notifications_discord_userid").get_to(p.notifications_discord_userid_);
+    if (j.contains("is_bot")) j.at("is_bot").get_to(p.is_bot_);
+    if (j.contains("expiration_date")) j.at("expiration_date").get_to(p.expiration_date_);
+    if (j.contains("studio_id")) j.at("studio_id").get_to(p.studio_id_);
+    if (j.contains("is_generated_from_ldap")) j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
+    if (j.contains("ldap_uid")) j.at("ldap_uid").get_to(p.ldap_uid_);
 
     if (j.contains("dingding_company_id")) j.at("dingding_company_id").get_to(p.dingding_company_id_);
   }
