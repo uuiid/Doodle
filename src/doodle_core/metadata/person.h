@@ -111,7 +111,6 @@ struct DOODLE_CORE_API person {
 
   // from json
   friend void from_json(const nlohmann::json& j, person& p) {
-    if (j.contains("password")) j.at("password").get_to(p.password_);
     if (j.contains("first_name")) j.at("first_name").get_to(p.first_name_);
     if (j.contains("last_name")) j.at("last_name").get_to(p.last_name_);
     if (j.contains("email")) j.at("email").get_to(p.email_);
