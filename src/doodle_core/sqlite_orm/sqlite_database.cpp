@@ -730,7 +730,7 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
           &entity_asset_extend::ji_du_
       ),
       join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
-      join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
           ((!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) || in_project_id.is_nil()) &&
