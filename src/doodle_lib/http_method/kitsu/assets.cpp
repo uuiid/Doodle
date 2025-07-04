@@ -4,6 +4,7 @@
 
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
@@ -84,13 +85,181 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get:
   co_return in_handle->make_msg(l_json.dump());
 }
 
+namespace {
+
+struct with_tasks_get_result_t {
+  decltype(entity::uuid_id_) uuid_id_;
+  decltype(entity::name_) name_;
+  decltype(entity::status_) status_;
+  decltype(entity::uuid_id_) episode_id_;
+  decltype(entity::description_) description_;
+  decltype(entity::preview_file_id_) preview_file_id_;
+  decltype(entity::canceled_) canceled_;
+
+  // 额外的资产数据
+  decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
+  decltype(entity_asset_extend::deng_ji_) deng_ji_;
+  decltype(entity_asset_extend::gui_dang_) gui_dang_;
+  decltype(entity_asset_extend::bian_hao_) bian_hao_;
+  decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
+  decltype(entity_asset_extend::ban_ben_) ban_ben_;
+  decltype(entity_asset_extend::ji_du_) ji_du_;
+
+  std::int32_t frame_in_;
+  std::int32_t frame_out_;
+  std::int32_t fps_;
+
+  struct task_t {
+    decltype(task::uuid_id_) uuid_id_;
+    decltype(task::estimation_) estimation_;
+    decltype(entity::uuid_id_) entity_id_;
+    decltype(task::end_date_) end_date_;
+    decltype(task::due_date_) due_date_;
+    decltype(task::done_date_) done_date_;
+    decltype(task::duration_) duration_;
+    decltype(task::last_comment_date_) last_comment_date_;
+    decltype(task::last_preview_file_id_) last_preview_file_id_;
+    decltype(task::priority_) priority_;
+    decltype(task::real_start_date_) real_start_date_;
+    decltype(task::retake_count_) retake_count_;
+    decltype(task::start_date_) start_date_;
+    decltype(task::difficulty_) difficulty_;
+    decltype(task::task_status_id_) task_status_id_;
+    decltype(task::task_type_id_) task_type_id_;
+    std::vector<uuid> assigners_;
+    bool is_subscribed_;
+    friend void to_json(nlohmann::json& j, const task_t& p) {
+      j["id"]                = p.uuid_id_;
+      j["estimation"]        = p.estimation_;
+      j["entity_id"]         = p.entity_id_;
+      j["end_date"]          = p.end_date_;
+      j["due_date"]          = p.due_date_;
+      j["done_date"]         = p.done_date_;
+      j["duration"]          = p.duration_;
+      j["is_subscribed"]     = p.is_subscribed_;
+      j["last_comment_date"] = p.last_comment_date_;
+      j["last_preview_file"] = p.last_preview_file_id_;
+      j["priority"]          = p.priority_;
+      j["real_start_date"]   = p.real_start_date_;
+      j["retake_count"]      = p.retake_count_;
+      j["start_date"]        = p.start_date_;
+      j["difficulty"]        = p.difficulty_;
+      j["task_type_id"]      = p.task_type_id_;
+      j["task_status_id"]    = p.task_status_id_;
+      j["assignees"]         = p.assigners_;
+    }
+  };
+  std::vector<task_t> tasks_;
+  // to json
+  friend void to_json(nlohmann::json& j, const with_tasks_get_result_t& p) {
+    j["id"]                 = p.uuid_id_;
+    j["name"]               = p.name_;
+    j["status"]             = p.status_;
+    j["episode_id"]         = p.episode_id_;
+    j["description"]        = p.description_;
+
+    j["frame_in"]           = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json{};
+    j["frame_out"]          = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json{};
+    j["fps"]                = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json{};
+    j["preview_file_id"]    = p.preview_file_id_;
+    j["canceled"]           = p.canceled_;
+    j["tasks"]              = p.tasks_;
+
+    j["ji_shu_lie"]         = p.ji_shu_lie_;
+    j["deng_ji"]            = p.deng_ji_;
+    j["gui_dang"]           = p.gui_dang_;
+    j["bian_hao"]           = p.bian_hao_;
+    j["pin_yin_ming_cheng"] = p.pin_yin_ming_cheng_;
+    j["ban_ben"]            = p.ban_ben_;
+    j["ji_du"]              = p.ji_du_;
+  }
+};
+
+auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  std::vector<entities_and_tasks_t> l_ret{};
+  using namespace sqlite_orm;
+  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
+  auto l_rows                   = l_sql.impl_->storage_any_.select(
+      columns(
+          object<entity>(true), object<task>(true), object<entity_asset_extend>(true), &assignees_table::person_id_
+      ),
+      join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
+      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(
+          (!in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
+          (!in_entity_type_id.is_nil() || c(&entity::entity_type_id_) == in_entity_type_id)
+      )
+  );
+  std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
+  std::map<uuid, std::size_t> l_task_id_set{};
+  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_person_id] : l_rows) {
+    if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
+      l_entities_and_tasks_map.emplace(
+          l_entity.uuid_id_,
+          entities_and_tasks_t{
+              .uuid_id_            = l_entity.uuid_id_,
+              .name_               = l_entity.name_,
+              .status_             = l_entity.status_,
+              .episode_id_         = l_entity.parent_id_,
+              .description_        = l_entity.description_,
+              .preview_file_id_    = l_entity.preview_file_id_,
+              .canceled_           = l_entity.canceled_,
+
+              .ji_shu_lie_         = l_entity_asset_extend.ji_shu_lie_,
+              .deng_ji_            = l_entity_asset_extend.deng_ji_,
+              .gui_dang_           = l_entity_asset_extend.gui_dang_,
+              .bian_hao_           = l_entity_asset_extend.bian_hao_,
+              .pin_yin_ming_cheng_ = l_entity_asset_extend.pin_yin_ming_cheng_,
+              .ban_ben_            = l_entity_asset_extend.ban_ben_,
+              .ji_du_              = l_entity_asset_extend.ji_du_,
+          }
+      );
+    }
+    if (!l_task.uuid_id_.is_nil()) {
+      if (!l_task_id_set.contains(l_task.uuid_id_)) {
+        l_entities_and_tasks_map[l_entity.uuid_id_].tasks_.emplace_back(
+            entities_and_tasks_t::task_t{
+                .uuid_id_              = l_task.uuid_id_,
+                .estimation_           = l_task.estimation_,
+                .entity_id_            = l_entity.uuid_id_,
+                .end_date_             = l_task.end_date_,
+                .due_date_             = l_task.due_date_,
+                .done_date_            = l_task.done_date_,
+                .duration_             = l_task.duration_,
+                .last_comment_date_    = l_task.last_comment_date_,
+                .last_preview_file_id_ = l_task.last_preview_file_id_,
+                .priority_             = l_task.priority_,
+                .real_start_date_      = l_task.real_start_date_,
+                .retake_count_         = l_task.retake_count_,
+                .start_date_           = l_task.start_date_,
+                .difficulty_           = l_task.difficulty_,
+                .task_status_id_       = l_task.task_status_id_,
+                .task_type_id_         = l_task.task_type_id_,
+                .is_subscribed_        = l_subscriptions_for_user.contains(l_task.uuid_id_),
+            }
+        );
+        l_task_id_set.emplace(l_task.uuid_id_, l_entities_and_tasks_map[l_entity.uuid_id_].tasks_.size() - 1);
+      }
+      if (!l_person_id.is_nil())
+        l_entities_and_tasks_map[l_entity.uuid_id_].tasks_[l_task_id_set.at(l_task.uuid_id_)].assigners_.emplace_back(
+            l_person_id
+        );
+    }
+  }
+  l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
+  return l_ret;
+}
+
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::callback(session_data_ptr in_handle) {
   auto l_ptr = get_person(in_handle);
   uuid l_prj_id{};
   for (auto&& l_i : in_handle->url_.params())
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
-  auto l_list = g_ctx().get<sqlite_database>().get_assets_and_tasks(l_ptr->person_, l_prj_id);
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(l_ptr->person_, l_prj_id, {})).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback(session_data_ptr in_handle) {
   get_person(in_handle);
