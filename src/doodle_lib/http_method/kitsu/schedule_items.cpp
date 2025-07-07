@@ -13,11 +13,17 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_schedule_items_task_types_get::callback(
+    session_data_ptr in_handle
+) {
+  co_return in_handle->make_msg(nlohmann::json::array());
+}
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_schedule_items_get::callback(
     session_data_ptr in_handle
 ) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
+
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_milestones_get::callback(
     session_data_ptr in_handle
