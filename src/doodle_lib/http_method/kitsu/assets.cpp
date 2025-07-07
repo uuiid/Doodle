@@ -89,32 +89,41 @@ namespace {
 
 struct with_tasks_get_result_t {
   with_tasks_get_result_t() = default;
-  explicit with_tasks_get_result_t(const entity& in_entity, const entity_asset_extend& in_asset_extend)
+  explicit with_tasks_get_result_t(
+      const entity& in_entity, const entity_asset_extend& in_asset_extend, const asset_type& in_asset_type
+  )
       : uuid_id_(in_entity.uuid_id_),
         name_(in_entity.name_),
-        status_(in_entity.status_),
-        episode_id_(in_entity.parent_id_),
-        description_(in_entity.description_),
         preview_file_id_(in_entity.preview_file_id_),
+        description_(in_entity.description_),
+        asset_type_name_(in_asset_type.name_),
+        asset_type_id_(in_asset_type.uuid_id_),
         canceled_(in_entity.canceled_),
+        ready_for_(in_entity.ready_for_),
+        source_id_(in_entity.source_id_),
+        is_casting_standby_(in_entity.is_casting_standby_),
+        is_shared_(in_entity.is_shared_),
+
         ji_shu_lie_(in_asset_extend.ji_shu_lie_),
         deng_ji_(in_asset_extend.deng_ji_),
         gui_dang_(in_asset_extend.gui_dang_),
         bian_hao_(in_asset_extend.bian_hao_),
         pin_yin_ming_cheng_(in_asset_extend.pin_yin_ming_cheng_),
         ban_ben_(in_asset_extend.ban_ben_),
-        ji_du_(in_asset_extend.ji_du_),
-        frame_in_(0),
-        frame_out_(0),
-        fps_(0) {}
+        ji_du_(in_asset_extend.ji_du_) {}
 
   decltype(entity::uuid_id_) uuid_id_;
   decltype(entity::name_) name_;
-  decltype(entity::status_) status_;
-  decltype(entity::parent_id_) episode_id_;
-  decltype(entity::description_) description_;
   decltype(entity::preview_file_id_) preview_file_id_;
+  decltype(entity::description_) description_;
+  decltype(asset_type::name_) asset_type_name_;
+  decltype(asset_type::uuid_id_) asset_type_id_;
   decltype(entity::canceled_) canceled_;
+  decltype(entity::ready_for_) ready_for_;
+  decltype(entity::source_id_) source_id_;
+  decltype(entity::is_casting_standby_) is_casting_standby_;
+  decltype(entity::is_shared_) is_shared_;
+  std::vector<uuid> casting_episode_ids_;
 
   // 额外的资产数据
   decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
@@ -124,10 +133,6 @@ struct with_tasks_get_result_t {
   decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
   decltype(entity_asset_extend::ban_ben_) ban_ben_;
   decltype(entity_asset_extend::ji_du_) ji_du_;
-
-  std::int32_t frame_in_;
-  std::int32_t frame_out_;
-  std::int32_t fps_;
 
   struct task_t {
     task_t() = default;
@@ -173,13 +178,12 @@ struct with_tasks_get_result_t {
     bool is_subscribed_;
     friend void to_json(nlohmann::json& j, const task_t& p) {
       j["id"]                = p.uuid_id_;
-      j["estimation"]        = p.estimation_;
-      j["entity_id"]         = p.entity_id_;
-      j["end_date"]          = p.end_date_;
       j["due_date"]          = p.due_date_;
       j["done_date"]         = p.done_date_;
       j["duration"]          = p.duration_;
-      j["is_subscribed"]     = p.is_subscribed_;
+      j["entity_id"]         = p.entity_id_;
+      j["estimation"]        = p.estimation_;
+      j["end_date"]          = p.end_date_;
       j["last_comment_date"] = p.last_comment_date_;
       j["last_preview_file"] = p.last_preview_file_id_;
       j["priority"]          = p.priority_;
@@ -190,56 +194,65 @@ struct with_tasks_get_result_t {
       j["task_type_id"]      = p.task_type_id_;
       j["task_status_id"]    = p.task_status_id_;
       j["assignees"]         = p.assigners_;
+      j["is_subscribed"]     = p.is_subscribed_;
+      j["path"]              = "";
     }
   };
   std::vector<task_t> tasks_;
   // to json
   friend void to_json(nlohmann::json& j, const with_tasks_get_result_t& p) {
-    j["id"]                 = p.uuid_id_;
-    j["name"]               = p.name_;
-    j["status"]             = p.status_;
-    j["episode_id"]         = p.episode_id_;
-    j["description"]        = p.description_;
+    j["id"]                  = p.uuid_id_;
+    j["name"]                = p.name_;
+    j["preview_file_id"]     = p.preview_file_id_;
+    j["description"]         = p.description_;
+    j["asset_type_name"]     = p.asset_type_name_;
+    j["asset_type_id"]       = p.asset_type_id_;
+    j["canceled"]            = p.canceled_;
+    j["ready_for"]           = p.ready_for_;
+    j["source_id"]           = p.source_id_;
+    j["is_casting_standby"]  = p.is_casting_standby_;
+    j["is_shared"]           = p.is_shared_;
+    j["casting_episode_ids"] = p.casting_episode_ids_;
+    j["tasks"]               = p.tasks_;
 
-    j["frame_in"]           = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json{};
-    j["frame_out"]          = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json{};
-    j["fps"]                = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json{};
-    j["preview_file_id"]    = p.preview_file_id_;
-    j["canceled"]           = p.canceled_;
-    j["tasks"]              = p.tasks_;
-
-    j["ji_shu_lie"]         = p.ji_shu_lie_;
-    j["deng_ji"]            = p.deng_ji_;
-    j["gui_dang"]           = p.gui_dang_;
-    j["bian_hao"]           = p.bian_hao_;
-    j["pin_yin_ming_cheng"] = p.pin_yin_ming_cheng_;
-    j["ban_ben"]            = p.ban_ben_;
-    j["ji_du"]              = p.ji_du_;
+    j["ji_shu_lie"]          = p.ji_shu_lie_;
+    j["deng_ji"]             = p.deng_ji_;
+    j["gui_dang"]            = p.gui_dang_;
+    j["bian_hao"]            = p.bian_hao_;
+    j["pin_yin_ming_cheng"]  = p.pin_yin_ming_cheng_;
+    j["ban_ben"]             = p.ban_ben_;
+    j["ji_du"]               = p.ji_du_;
   }
 };
 
-auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
+auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_id) {
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<with_tasks_get_result_t> l_ret{};
   using namespace sqlite_orm;
-  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
+  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, {});
   auto l_rows                   = l_sql.impl_->storage_any_.select(
       columns(
-          object<entity>(true), object<task>(true), object<entity_asset_extend>(true), &assignees_table::person_id_
+          object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
+          &assignees_table::person_id_
       ),
-      join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
+      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+      left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
-          (!in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-          (!in_entity_type_id.is_nil() || c(&entity::entity_type_id_) == in_entity_type_id)
-      )
+          ((in_id.is_nil() || c(&entity::uuid_id_) == in_id) ||
+           (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id)) &&
+          not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
+      ),
+      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
   );
   std::map<uuid, with_tasks_get_result_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_person_id] : l_rows) {
+  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, std::move(with_tasks_get_result_t{l_entity, l_entity_asset_extend}));
+      l_entities_and_tasks_map.emplace(
+          l_entity.uuid_id_, with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type}
+      );
     }
     if (!l_task.uuid_id_.is_nil()) {
       if (!l_task_id_set.contains(l_task.uuid_id_)) {
