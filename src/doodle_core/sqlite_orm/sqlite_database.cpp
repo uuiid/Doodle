@@ -723,11 +723,7 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
           &task::due_date_, &task::done_date_, &task::duration_, &task::last_comment_date_,
           &task::last_preview_file_id_, &task::priority_, &task::real_start_date_, &task::retake_count_,
           &task::start_date_, &task::difficulty_, &task::task_status_id_, &task::task_type_id_,
-          &assignees_table::person_id_,
-
-          &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
-          &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_, &entity_asset_extend::ban_ben_,
-          &entity_asset_extend::ji_du_
+          &assignees_table::person_id_
       ),
       join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
@@ -743,30 +739,21 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
 
            uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, task_id_, estimation_,
            end_date_, due_date_, done_date_, duration_, last_comment_date_, last_preview_file_id_, priority_,
-           real_start_date_, retake_count_, start_date_, difficulty_, task_status_id_, task_type_id_, person_id_,
-
-           ji_shu_lie_, deng_ji_, gui_dang_, bian_hao_, pin_yin_ming_cheng_, ban_ben_, ji_du_
+           real_start_date_, retake_count_, start_date_, difficulty_, task_status_id_, task_type_id_, person_id_
 
   ] : l_rows) {
     if (!l_entities_and_tasks_map.contains(uuid_id_)) {
       l_entities_and_tasks_map.emplace(
           uuid_id_,
           entities_and_tasks_t{
-              .uuid_id_            = uuid_id_,
-              .name_               = name_,
-              .status_             = status_,
-              .episode_id_         = episode_id_,
-              .description_        = description_,
-              .preview_file_id_    = preview_file_id_,
-              .canceled_           = canceled_,
+              .uuid_id_         = uuid_id_,
+              .name_            = name_,
+              .status_          = status_,
+              .episode_id_      = episode_id_,
+              .description_     = description_,
+              .preview_file_id_ = preview_file_id_,
+              .canceled_        = canceled_,
 
-              .ji_shu_lie_         = ji_shu_lie_,
-              .deng_ji_            = deng_ji_,
-              .gui_dang_           = gui_dang_,
-              .bian_hao_           = bian_hao_,
-              .pin_yin_ming_cheng_ = pin_yin_ming_cheng_,
-              .ban_ben_            = ban_ben_,
-              .ji_du_              = ji_du_,
           }
       );
     }

@@ -78,7 +78,7 @@ struct todo_t {
   decltype(entity_asset_extend::ji_du_) ji_du_;
 
   std::vector<uuid> assignees_;
-  
+
   struct comment_t {
     std::string text_;
     chrono::system_zoned_time date_;
@@ -259,15 +259,6 @@ struct entities_and_tasks_t {
   decltype(entity::description_) description_;
   decltype(entity::preview_file_id_) preview_file_id_;
   decltype(entity::canceled_) canceled_;
-
-  // 额外的资产数据
-  decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
-  decltype(entity_asset_extend::deng_ji_) deng_ji_;
-  decltype(entity_asset_extend::gui_dang_) gui_dang_;
-  decltype(entity_asset_extend::bian_hao_) bian_hao_;
-  decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
-  decltype(entity_asset_extend::ban_ben_) ban_ben_;
-  decltype(entity_asset_extend::ji_du_) ji_du_;
 
   std::int32_t frame_in_;
   std::int32_t frame_out_;
