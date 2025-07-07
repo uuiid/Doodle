@@ -72,18 +72,19 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_person, put, "/api/data/persons/{id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+DOODLE_HTTP_FUN(project, put, "api/data/projects/{id}", http_jwt_fun)
+boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(project, get, "api/data/projects/{project_id}", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 DOODLE_HTTP_FUN(user_context, get, "api/data/user/context", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(authenticated, get, "api/auth/authenticated", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 DOODLE_HTTP_FUN(organisations, get, "api/data/organisations", http_jwt_fun)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()

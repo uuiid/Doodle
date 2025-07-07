@@ -36,6 +36,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_get::callb
       g_ctx().get<sqlite_database>().get_by_uuid<project_status>(l_list.project_status_id_).name_;
   co_return in_handle->make_msg(nlohmann::json{l_list}.dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> project_put::callback(session_data_ptr in_handle) {
+  auto l_ptr    = get_person(in_handle);
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(in_handle->capture_->get_uuid()));
+  in_handle->get_json().get_to(*l_project);
+  co_await l_sql.install(l_project);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_project);
+}
+
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::callback(session_data_ptr in_handle) {
   auto l_ptr = get_person(in_handle);
