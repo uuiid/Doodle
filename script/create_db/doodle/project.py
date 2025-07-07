@@ -226,7 +226,7 @@ class Project(BaseMixin):
     ld_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=6)
 
     project_status_id = orm.mapped_column(
-        UUIDType(binary=True), sqlalchemy.ForeignKey("project_status.id"), index=True
+        UUIDType(binary=True), sqlalchemy.ForeignKey("project_status.uuid"), index=True
     )
 
     path = orm.mapped_column(sqlalchemy.String(80), nullable=True)
@@ -235,7 +235,7 @@ class Project(BaseMixin):
 
     default_preview_background_file_id = orm.mapped_column(
         UUIDType(binary=True),
-        sqlalchemy.ForeignKey("preview_background_file.id"),
+        sqlalchemy.ForeignKey("preview_background_file.uuid"),
         default=None,
         index=True,
     )

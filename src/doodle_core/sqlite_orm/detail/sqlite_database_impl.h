@@ -558,10 +558,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("short_name", &project::short_name_),                                                              //
 
 
-          foreign_key(&project::project_status_id_).references(&project_status::uuid_id_).on_delete.cascade(),
+          foreign_key(&project::project_status_id_).references(&project_status::uuid_id_),
           foreign_key(&project::default_preview_background_file_id_)
               .references(&preview_background_file::uuid_id_)
-              .on_delete.cascade()
       ),
       make_table<metadata_descriptor_department_link>(
           "metadata_descriptor_department_link",  //
