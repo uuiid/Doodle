@@ -115,7 +115,7 @@ struct project {
   nlohmann::json file_tree_;
   nlohmann::json data_;
   bool has_avatar_;
-  std::string fps_;
+  std::int32_t fps_;
   std::string ratio_;
   std::string resolution_;
   std::string production_type_;

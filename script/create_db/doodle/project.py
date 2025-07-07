@@ -204,7 +204,7 @@ class Project(BaseMixin):
     file_tree = orm.mapped_column(sqlalchemy.TEXT())
     data = orm.mapped_column(sqlalchemy.TEXT())
     has_avatar = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
-    fps = orm.mapped_column(sqlalchemy.String(10), default=25)
+    fps = orm.mapped_column(sqlalchemy.Integer, default=25, nullable=False)
     ratio = orm.mapped_column(sqlalchemy.String(10), default="16:9")
     resolution = orm.mapped_column(sqlalchemy.String(12), default="1920x1080")
     production_type = orm.mapped_column(sqlalchemy.String(20), default="short")
@@ -267,7 +267,7 @@ class Project(BaseMixin):
         self.file_tree = project.file_tree
         self.data = project.data
         self.has_avatar = project.has_avatar
-        self.fps = project.fps
+        self.fps = int(project.fps)
         self.ratio = project.ratio
         self.resolution = project.resolution
         self.production_type = project.production_type
