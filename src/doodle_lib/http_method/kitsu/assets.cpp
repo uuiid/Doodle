@@ -63,28 +63,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   co_return in_handle->make_msg((nlohmann::json{} = *l_entity).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback(session_data_ptr in_handle) {
-  auto l_ptr      = get_person(in_handle);
-  auto l_asset_id = from_uuid_str(in_handle->capture_->get("asset_id"));
-  auto&& l_sql    = g_ctx().get<sqlite_database>();
-  auto l_t        = l_sql.get_assets_and_tasks(l_ptr->person_, {}, l_asset_id);
-  if (l_t.empty())
-    throw_exception(
-        http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", l_asset_id)}
-    );
-  auto l_ass                = l_sql.get_by_uuid<entity>(l_asset_id);
-  auto l_project            = l_sql.get_by_uuid<project>(l_ass.project_id_);
-  auto l_ass_type           = l_sql.get_by_uuid<asset_type>(l_ass.entity_type_id_);
-
-  auto l_json               = nlohmann::json{};
-  l_json                    = l_ass;
-  l_json["project_name"]    = l_project.name_;
-  l_json["asset_type_id"]   = l_ass_type.uuid_id_;
-  l_json["asset_type_name"] = l_ass_type.name_;
-  l_json.update(l_t[0]);
-  co_return in_handle->make_msg(l_json.dump());
-}
-
 namespace {
 
 struct with_tasks_get_result_t {
@@ -240,8 +218,8 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
-          ((in_id.is_nil() || c(&entity::uuid_id_) == in_id) ||
-           (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id)) &&
+          ((!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
+           (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id)) &&
           not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
       ),
       multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
@@ -284,6 +262,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::ca
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
   co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(l_ptr->person_, l_prj_id, {})).dump());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback(session_data_ptr in_handle) {
+  auto l_ptr      = get_person(in_handle);
+  auto l_asset_id = in_handle->capture_->get_uuid("asset_id");
+  auto&& l_sql    = g_ctx().get<sqlite_database>();
+  auto l_t        = with_tasks_sql_query(l_ptr->person_, {}, l_asset_id);
+  if (l_t.empty())
+    throw_exception(
+        http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", l_asset_id)}
+    );
+  auto l_ass                = l_sql.get_by_uuid<entity>(l_asset_id);
+  auto l_project            = l_sql.get_by_uuid<project>(l_ass.project_id_);
+  auto l_ass_type           = l_sql.get_by_uuid<asset_type>(l_ass.entity_type_id_);
+
+  auto l_json               = nlohmann::json{};
+  l_json                    = l_ass;
+  l_json["project_name"]    = l_project.name_;
+  l_json["asset_type_id"]   = l_ass_type.uuid_id_;
+  l_json["asset_type_name"] = l_ass_type.name_;
+  l_json.update(l_t[0]);
+  co_return in_handle->make_msg(l_json);
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback(session_data_ptr in_handle) {
   get_person(in_handle);
   co_return in_handle->make_msg(nlohmann::json::array());
