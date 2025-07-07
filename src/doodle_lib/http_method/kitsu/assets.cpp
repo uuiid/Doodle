@@ -88,10 +88,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get:
 namespace {
 
 struct with_tasks_get_result_t {
+  with_tasks_get_result_t() = default;
+  explicit with_tasks_get_result_t(const entity& in_entity, const entity_asset_extend& in_asset_extend)
+      : uuid_id_(in_entity.uuid_id_),
+        name_(in_entity.name_),
+        status_(in_entity.status_),
+        episode_id_(in_entity.parent_id_),
+        description_(in_entity.description_),
+        preview_file_id_(in_entity.preview_file_id_),
+        canceled_(in_entity.canceled_),
+        ji_shu_lie_(in_asset_extend.ji_shu_lie_),
+        deng_ji_(in_asset_extend.deng_ji_),
+        gui_dang_(in_asset_extend.gui_dang_),
+        bian_hao_(in_asset_extend.bian_hao_),
+        pin_yin_ming_cheng_(in_asset_extend.pin_yin_ming_cheng_),
+        ban_ben_(in_asset_extend.ban_ben_),
+        ji_du_(in_asset_extend.ji_du_),
+        frame_in_(0),
+        frame_out_(0),
+        fps_(0) {}
+
   decltype(entity::uuid_id_) uuid_id_;
   decltype(entity::name_) name_;
   decltype(entity::status_) status_;
-  decltype(entity::uuid_id_) episode_id_;
+  decltype(entity::parent_id_) episode_id_;
   decltype(entity::description_) description_;
   decltype(entity::preview_file_id_) preview_file_id_;
   decltype(entity::canceled_) canceled_;
@@ -110,6 +130,29 @@ struct with_tasks_get_result_t {
   std::int32_t fps_;
 
   struct task_t {
+    task_t() = default;
+    explicit task_t(const entity& in_entity, const task& in_task, bool in_is_subscribed)
+        : uuid_id_(in_task.uuid_id_),
+          estimation_(in_task.estimation_),
+          entity_id_(in_entity.uuid_id_),
+          end_date_(in_task.end_date_),
+          due_date_(in_task.due_date_),
+          done_date_(in_task.done_date_),
+          duration_(in_task.duration_),
+          last_comment_date_(in_task.last_comment_date_),
+          last_preview_file_id_(in_task.last_preview_file_id_),
+          priority_(in_task.priority_),
+          real_start_date_(in_task.real_start_date_),
+          retake_count_(in_task.retake_count_),
+          start_date_(in_task.start_date_),
+          difficulty_(in_task.difficulty_),
+          task_status_id_(in_task.task_status_id_),
+          task_type_id_(in_task.task_type_id_),
+          assigners_(),
+          is_subscribed_(in_is_subscribed)
+
+    {}
+
     decltype(task::uuid_id_) uuid_id_;
     decltype(task::estimation_) estimation_;
     decltype(entity::uuid_id_) entity_id_;
@@ -177,7 +220,7 @@ struct with_tasks_get_result_t {
 
 auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
   auto l_sql = g_ctx().get<sqlite_database>();
-  std::vector<entities_and_tasks_t> l_ret{};
+  std::vector<with_tasks_get_result_t> l_ret{};
   using namespace sqlite_orm;
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
   auto l_rows                   = l_sql.impl_->storage_any_.select(
@@ -192,52 +235,19 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
           (!in_entity_type_id.is_nil() || c(&entity::entity_type_id_) == in_entity_type_id)
       )
   );
-  std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
+  std::map<uuid, with_tasks_get_result_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& [l_entity, l_task, l_entity_asset_extend, l_person_id] : l_rows) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_entities_and_tasks_map.emplace(
-          l_entity.uuid_id_,
-          entities_and_tasks_t{
-              .uuid_id_            = l_entity.uuid_id_,
-              .name_               = l_entity.name_,
-              .status_             = l_entity.status_,
-              .episode_id_         = l_entity.parent_id_,
-              .description_        = l_entity.description_,
-              .preview_file_id_    = l_entity.preview_file_id_,
-              .canceled_           = l_entity.canceled_,
-
-              .ji_shu_lie_         = l_entity_asset_extend.ji_shu_lie_,
-              .deng_ji_            = l_entity_asset_extend.deng_ji_,
-              .gui_dang_           = l_entity_asset_extend.gui_dang_,
-              .bian_hao_           = l_entity_asset_extend.bian_hao_,
-              .pin_yin_ming_cheng_ = l_entity_asset_extend.pin_yin_ming_cheng_,
-              .ban_ben_            = l_entity_asset_extend.ban_ben_,
-              .ji_du_              = l_entity_asset_extend.ji_du_,
-          }
-      );
+      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, std::move(with_tasks_get_result_t{l_entity, l_entity_asset_extend}));
     }
     if (!l_task.uuid_id_.is_nil()) {
       if (!l_task_id_set.contains(l_task.uuid_id_)) {
         l_entities_and_tasks_map[l_entity.uuid_id_].tasks_.emplace_back(
-            entities_and_tasks_t::task_t{
-                .uuid_id_              = l_task.uuid_id_,
-                .estimation_           = l_task.estimation_,
-                .entity_id_            = l_entity.uuid_id_,
-                .end_date_             = l_task.end_date_,
-                .due_date_             = l_task.due_date_,
-                .done_date_            = l_task.done_date_,
-                .duration_             = l_task.duration_,
-                .last_comment_date_    = l_task.last_comment_date_,
-                .last_preview_file_id_ = l_task.last_preview_file_id_,
-                .priority_             = l_task.priority_,
-                .real_start_date_      = l_task.real_start_date_,
-                .retake_count_         = l_task.retake_count_,
-                .start_date_           = l_task.start_date_,
-                .difficulty_           = l_task.difficulty_,
-                .task_status_id_       = l_task.task_status_id_,
-                .task_type_id_         = l_task.task_type_id_,
-                .is_subscribed_        = l_subscriptions_for_user.contains(l_task.uuid_id_),
+            with_tasks_get_result_t::task_t{
+                l_entity,
+                l_task,
+                l_subscriptions_for_user.contains(l_task.uuid_id_),
             }
         );
         l_task_id_set.emplace(l_task.uuid_id_, l_entities_and_tasks_map[l_entity.uuid_id_].tasks_.size() - 1);
