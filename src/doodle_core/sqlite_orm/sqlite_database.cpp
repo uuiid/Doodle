@@ -97,7 +97,12 @@ std::int32_t sqlite_database::get_notification_count(const uuid& in_user_id) {
 std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const person& in_user) {
   std::vector<project_with_extra_data> l_projects{};
   if (in_user.role_ == person_role_type::admin) {
-    auto l_t   = impl_->get_all<project>();
+    auto l_t = impl_->storage_any_.get_all<project>(
+        sqlite_orm::join<project_status>(
+            sqlite_orm::on(sqlite_orm::c(&project_status::uuid_id_) == sqlite_orm::c(&project::project_status_id_))
+        ),
+        sqlite_orm::where(sqlite_orm::in(&project_status::name_, {"Active", "open", "Open"}))
+    );
     l_projects = l_t | ranges::views::transform([](const project& in) { return project_with_extra_data{in}; }) |
                  ranges::to_vector;
   } else {
