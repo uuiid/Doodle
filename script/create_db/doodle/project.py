@@ -220,7 +220,7 @@ class Project(BaseMixin):
     is_clients_isolated = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     is_preview_download_allowed = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
     is_set_preview_automated = orm.mapped_column(sqlalchemy.Boolean(), default=False, nullable=False)
-    homepage = orm.mapped_column(sqlalchemy.String(80), default="assets", nullable=False)
+    homepage = orm.mapped_column(sqlalchemy.String(80), default="assets")
     is_publish_default_for_artists = orm.mapped_column(sqlalchemy.Boolean(), default=False)
     hd_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=28)
     ld_bitrate_compression = orm.mapped_column(sqlalchemy.Integer, default=6)

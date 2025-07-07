@@ -129,7 +129,7 @@ struct project {
   bool is_clients_isolated_;
   bool is_preview_download_allowed_;
   bool is_set_preview_automated_;
-  bool homepage_;
+  std::string homepage_{"assets"};
   std::optional<bool> is_publish_default_for_artists_;
   std::optional<std::int32_t> hd_bitrate_compression_;
   std::optional<std::int32_t> ld_bitrate_compression_;
