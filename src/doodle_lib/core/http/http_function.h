@@ -48,28 +48,87 @@ struct capture_t {
   }
 };
 
-struct url_route_t {
-  struct component_t {
-    std::string name_;
-    explicit component_t(std::string&& in_str) : name_(std::move(in_str)) {}
-    virtual ~component_t() = default;
+class url_route_t {
+  // SFINAE friendly trait to get a member object pointer's field type
+  template <typename T>
+  struct object_field_type {};
+
+  template <typename T>
+  using object_field_type_t = typename object_field_type<T>::type;
+
+  template <typename F, typename O>
+  struct object_field_type<F O::*> : std::enable_if<!std::is_function<F>::value, F> {};
+  template <class T>
+  struct member_object_type {};
+
+  template <class F, class O>
+  struct member_object_type<F O::*> : std::type_identity<O> {};
+
+  template <class T>
+  using member_object_type_t = typename member_object_type<T>::type;
+
+ public:
+  // uuid regex
+  constexpr static auto g_uuid_regex =
+      std::string_view{"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"};
+  // year month regex
+  constexpr static auto g_year_month_regex     = std::string_view{"([0-9]{4}-[0-9]{2})"};
+  // year month day regex
+  constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
+
+  struct component_base_t {
+    std::regex regex_;
+    explicit component_base_t(std::string&& in_str) : regex_(std::move(in_str)) {}
+    virtual ~component_base_t() = default;
     virtual bool match(const std::string& in_str) const;
+    virtual void set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const;
+
+    uuid convert_uuid(const std::string& in_str) const;
+    chrono::year_month convert_year_month(const std::string& in_str) const;
+    chrono::year_month_day convert_year_month_day(const std::string& in_str) const;
   };
+  // 组件转换
+  template <typename T>
+  struct component_t : component_base_t {
+    // 指向需要转换的类属性指针
+    T member_pointer_;
+    using object_type = member_object_type_t<T>;
+    using field_type  = object_field_type_t<T>;
 
-  struct component_uuid_t : component_t {
-    using component_t::component_t;
-    bool match(const std::string& in_str) const override;
+    template <typename Member_Pointer>
+      requires std::is_member_pointer_v<Member_Pointer>
+    explicit component_t(std::string&& in_str, Member_Pointer in_target)
+        : component_base_t(std::move(in_str)), member_pointer_(in_target) {}
+    // 设置属性
+    void set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const override {
+      *std::static_pointer_cast<object_type>(in_obj).*member_pointer_ = this->convert<field_type>(in_str);
+    }
+
+    template <typename T1>
+    T1 convert(const std::string& in_str) const;
+    template <>
+    uuid convert(const std::string& in_str) const {
+      return this->convert_uuid(in_str);
+    }
+    template <>
+    chrono::year_month convert(const std::string& in_str) const {
+      return this->convert_year_month(in_str);
+    }
+    template <>
+    chrono::year_month_day convert(const std::string& in_str) const {
+      return this->convert_year_month_day(in_str);
+    }
   };
-
-  std::vector<std::unique_ptr<component_t>> components_{};
-
+  std::vector<std::shared_ptr<component_base_t>> component_vector_{};
   url_route_t() = default;
-  url_route_t& operator/=(std::string&& in_str) {
-    components_.emplace_back(std::make_unique<component_t>(std::move(in_str)));
+
+  url_route_t& operator()(std::string&& in_str) {
+    component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
     return *this;
   }
-  url_route_t& operator/=(component_uuid_t&& in_component) {
-    components_.emplace_back(std::make_unique<component_uuid_t>(std::move(in_component)));
+  template <typename Member_Pointer>
+  url_route_t& operator()(std::string&& in_str, Member_Pointer in_target) {
+    component_vector_.push_back(std::make_shared<component_t<Member_Pointer>>(in_str, in_target));
     return *this;
   }
 };
