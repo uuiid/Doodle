@@ -143,8 +143,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
                &project::uuid_id_, &project::name_
 
            ),
-           from<task>(),
-           join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+           from<task>(), join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
            left_outer_join<entity_asset_extend>(on(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_)),
            join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))), where(in(&task::uuid_id_, l_task_ids))
        )) {
@@ -193,11 +192,13 @@ struct computing_time_post_req_data {
   chrono::local_time_pos end_time;
   // form json
   friend void from_json(const nlohmann::json& j, computing_time_post_req_data& p) {
-    p.task_id = boost::lexical_cast<boost::uuids::uuid>(j.at("task_id").get<std::string>());
+    j.at("task_id").get_to(p.task_id);
     j.at("work_start_time").get_to(p.start_time);
     j.at("work_end_time").get_to(p.end_time);
 
     if (p.start_time > p.end_time) std::swap(p.start_time, p.end_time);
+    if (p.task_id.is_nil())
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "task_id is nil"});
   }
 };
 
@@ -490,16 +491,10 @@ std::string patch_time(
   return {};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
 ) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-
-  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json = in_handle->get_json();
 
   auto l_data = l_json.get<std::vector<computing_time_post_req_data>>();
   {  // 检查除空以外的id是否重复
@@ -514,45 +509,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
   }
 
-  auto l_user_id = in_handle->capture_->get_uuid("user_id");
-  std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
-  chrono::year_month l_year_month;
-  l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
-
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
+  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(in_arg->user_id_);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
+  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+      l_user.uuid_id_, chrono::local_days{in_arg->year_month_ / 1}
+  );
 
-  auto l_time_clock = create_time_clock(l_year_month, l_user.uuid_id_);
-  computing_time_run(l_year_month, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
+  auto l_time_clock = create_time_clock(in_arg->year_month_, l_user.uuid_id_);
+  computing_time_run(in_arg->year_month_, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
 
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
 ) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-  auto l_json                         = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json                         = in_handle->get_json();
   computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
-  if (l_data.task_id.is_nil())
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "task_id 不可为空");
-  auto l_user_id = in_handle->capture_->get_uuid("user_id");
-  std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
-  chrono::year_month l_year_month;
-  l_year_month_stream >> chrono::parse("%Y-%m", l_year_month);
 
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
+  auto l_user                         = g_ctx().get<sqlite_database>().get_by_uuid<person>(in_arg->user_id_);
+  auto l_block_ptr                    = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr                        = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+      l_user.uuid_id_, chrono::local_days{in_arg->year_month_ / 1}
+  );
   {
     work_xlsx_task_info_helper::database_t l_data_work{
         .uuid_id_ = core_set::get_set().get_uuid(),
@@ -566,14 +547,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
                 chrono::current_zone(),
                 chrono::time_point_cast<work_xlsx_task_info_helper::database_t::zoned_time::duration>(l_data.end_time)
             },
-        .year_month_        = chrono::local_days{l_year_month / 1},
+        .year_month_        = chrono::local_days{in_arg->year_month_ / 1},
         .person_id_         = l_user.uuid_id_,
         .kitsu_task_ref_id_ = l_data.task_id,
     };
     chrono::local_time_pos l_end_time =
-        chrono::local_days{(l_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
+        chrono::local_days{(in_arg->year_month_ + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
 
-    chrono::local_time_pos l_begin_time{chrono::local_days{l_year_month / chrono::day{1}} + chrono::seconds{1}};
+    chrono::local_time_pos l_begin_time{chrono::local_days{in_arg->year_month_ / chrono::day{1}} + chrono::seconds{1}};
 
     l_data_work.start_time_ = std::clamp(
         chrono::time_point_cast<chrono::local_time_pos::duration>(l_data_work.start_time_.get_local_time()),
@@ -586,31 +567,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
     l_block_ptr->emplace_back(std::move(l_data_work));
   }
 
-  auto l_time_clock = create_time_clock(l_year_month, l_user.uuid_id_);
-  recomputing_time_run(l_year_month, l_time_clock, *l_block_ptr);
+  auto l_time_clock = create_time_clock(in_arg->year_month_, l_user.uuid_id_);
+  recomputing_time_run(in_arg->year_month_, l_time_clock, *l_block_ptr);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
 ) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-  auto l_json                                = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json                                = in_handle->get_json();
   computing_time_post_req_custom_data l_data = l_json.get<computing_time_post_req_custom_data>();
 
-  l_data.user_id_ = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
-  std::istringstream l_year_month_stream{in_handle->capture_->get("year_month")};
-  l_year_month_stream >> chrono::parse("%Y-%m", l_data.year_month_);
+  l_data.user_id_                            = in_arg->user_id_;
+  l_data.year_month_                         = in_arg->year_month_;
 
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_data.user_id_);
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+  auto l_user                                = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_data.user_id_);
+  auto l_block_ptr                           = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr                               = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
       l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1}
   );
 
@@ -648,23 +623,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
 ) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-  auto l_json       = std::get<nlohmann::json>(in_handle->body_);
-  auto l_data       = l_json.get<std::vector<uuid>>();
-  auto l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
-  auto l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
+  auto l_json        = in_handle->get_json();
+  auto l_data        = l_json.get<std::vector<uuid>>();
+  auto l_user        = g_ctx().get<sqlite_database>().get_by_uuid<person>(in_arg->user_id_);
 
-  auto l_user       = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
-
-  const auto l_block =
-      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
+  const auto l_block = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+      l_user.uuid_id_, chrono::local_days{in_arg->year_month_ / 1}
+  );
 
   {
     // 检查排序
@@ -693,61 +661,44 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
     l_d.end_time_   = l_block.at(i).end_time_;
   }
 
-  auto l_time_clock = create_time_clock(l_year_month, l_user.uuid_id_);
-  recomputing_time_run(l_year_month, l_time_clock, *l_block_sort);
+  auto l_time_clock = create_time_clock(in_arg->year_month_, l_user.uuid_id_);
+  recomputing_time_run(in_arg->year_month_, l_time_clock, *l_block_sort);
   co_await g_ctx().get<sqlite_database>().install_range(l_block_sort);
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_sort));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
 ) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-  auto l_user_uuid  = from_uuid_str(in_handle->capture_->get("user_id"));
-  auto l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
-  auto l_block      = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user_uuid, chrono::local_days{l_year_month / 1});
+  auto l_block = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+      in_arg->user_id_, chrono::local_days{in_arg->year_month_ / 1}
+  );
 
-  auto l_time_clock = create_time_clock(l_year_month, l_user_uuid);
-  average_time_run(l_year_month, l_time_clock, *l_block);
+  auto l_time_clock = create_time_clock(in_arg->year_month_, in_arg->user_id_);
+  average_time_run(in_arg->year_month_, l_time_clock, *l_block);
   co_await g_ctx().get<sqlite_database>().install_range(l_block);
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get::callback(session_data_ptr in_handle) {
-  auto l_logger                   = in_handle->logger_;
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+) {
+  auto l_logger    = in_handle->logger_;
 
-  boost::uuids::uuid l_user_id    = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"));
-  chrono::year_month l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
+  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(in_arg->user_id_);
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
 
-  auto l_user                     = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
-  auto l_block_ptr                = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-
-  *l_block_ptr =
-      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
+  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+      l_user.uuid_id_, chrono::local_days{in_arg->year_month_ / 1}
+  );
   *l_block_ptr |= ranges::actions::sort;
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<computing_time_args2>& in_arg
 ) {
-  auto l_logger = in_handle->logger_;
-
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-  auto& l_json = std::get<nlohmann::json>(in_handle->body_);
-
-  boost::uuids::uuid l_user_id{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("user_id"))},
-      l_task_id{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("task_id"))};
-
-  chrono::year_month l_year_month = parse_time<chrono::year_month>(in_handle->capture_->get("year_month"), "%Y-%m");
+  auto l_json = in_handle->get_json();
 
   std::optional<chrono::microseconds> l_duration =
       l_json.contains("work_duration")
@@ -766,15 +717,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     );
   }
 
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_user_id);
+  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(in_arg->user_id_);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_year_month / 1});
+  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+      l_user.uuid_id_, chrono::local_days{in_arg->year_month_ / 1}
+  );
 
   if (l_block_ptr->empty()) {
     auto l_year_month_str_1 =
-        fmt::format("{}-{}", std::int32_t{l_year_month.year()}, std::uint32_t{l_year_month.month()});
-    l_logger->log(log_loc(), level::err, "找不到用户 {} 月份 {}", l_user.phone_, l_year_month_str_1);
+        fmt::format("{}-{}", std::int32_t{in_arg->year_month_.year()}, std::uint32_t{in_arg->year_month_.month()});
+
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::not_found,
         boost::system::error_code{boost::system::errc::bad_message, boost::system::generic_category()},
@@ -782,8 +734,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
     );
   }
   if (l_duration) {
-    auto l_timer_clock = create_time_clock(l_year_month, l_user.uuid_id_);
-    if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, l_task_id, *l_duration, in_handle->logger_);
+    auto l_timer_clock = create_time_clock(in_arg->year_month_, l_user.uuid_id_);
+    if (auto l_err = patch_time(l_timer_clock, *l_block_ptr, in_arg->task_id_, *l_duration, in_handle->logger_);
         l_err.empty()) {
       co_await g_ctx().get<sqlite_database>().install_range(l_block_ptr);
     } else {
@@ -792,7 +744,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   } else if (l_comment) {
     auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
     for (auto&& l_b : *l_block_ptr) {
-      if (l_b.uuid_id_ == l_task_id) {
+      if (l_b.uuid_id_ == in_arg->task_id_) {
         l_b.user_remark_   = *l_comment;
         *l_block_ptr_value = l_b;
         break;
@@ -802,7 +754,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   } else if (l_eps) {
     auto l_block_ptr_value = std::make_shared<work_xlsx_task_info_helper::database_t>();
     for (auto&& l_b : *l_block_ptr) {
-      if (l_b.uuid_id_ == l_task_id) {
+      if (l_b.uuid_id_ == in_arg->task_id_) {
         l_b.episode_       = *l_eps;
         *l_block_ptr_value = l_b;
         break;
@@ -813,16 +765,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete_::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete_::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  auto l_logger = in_handle->logger_;
-
-  boost::uuids::uuid l_computing_time_id =
-      boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("computing_time_id"));
-
   work_xlsx_task_info_helper::database_t l_task =
-      g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(l_computing_time_id);
+      g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(in_arg->id_);
   nlohmann::json l_json_res{};
   co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
   chrono::year_month_day l_year_month_day{l_task.year_month_};
