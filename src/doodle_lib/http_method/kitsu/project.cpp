@@ -6,6 +6,7 @@
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
@@ -18,13 +19,40 @@
 #include "kitsu_reg_url.h"
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::callback(session_data_ptr in_handle) {
-  auto l_ptr  = get_person(in_handle);
-  auto& l_sql = g_ctx().get<sqlite_database>();
 
-  auto l_list = l_ptr->person_.role_ == person_role_type::admin ? l_sql.get_project_and_status({})
-                                                                : l_sql.get_project_and_status(l_ptr->person_);
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+namespace {
+struct project_all_get_result_t : project {
+  explicit project_all_get_result_t(const project& p, const std::string& in_status_name) : project(p) {
+    project_status_name = in_status_name;
+  }
+  std::string project_status_name;
+  // to json
+  friend void to_json(nlohmann::json& j, const project_all_get_result_t& p) {
+    to_json(j, static_cast<const project&>(p));
+    j["project_status_name"] = p.project_status_name;
+  }
+};
+
+auto select_project_all_get_result(const std::string& in_name) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  std::vector<project_all_get_result_t> l_list{};
+  using namespace sqlite_orm;
+  for (auto&& [l_prj, l_status_name] : l_sql.impl_->storage_any_.select(
+           columns(object<project>(true), &project_status::name_),
+           from<project>(),
+           join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_))),
+           where(in_name.empty() || c(&project::name_) == in_name), order_by(&project_status::name_)
+       ))
+    l_list.emplace_back(project_all_get_result_t(l_prj, l_status_name));
+  return l_list;
+}
+
+}  // namespace
+
+boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::callback(session_data_ptr in_handle) {
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_admin();
+  co_return in_handle->make_msg(nlohmann::json{} = select_project_all_get_result({}));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_get::callback(session_data_ptr in_handle) {
@@ -34,17 +62,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_get::callb
   nlohmann::json l_j{l_list};
   l_j["project_status_name"] =
       g_ctx().get<sqlite_database>().get_by_uuid<project_status>(l_list.project_status_id_).name_;
-  co_return in_handle->make_msg(nlohmann::json{l_list}.dump());
+  co_return in_handle->make_msg(nlohmann::json{l_list});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_put::callback(session_data_ptr in_handle) {
-  auto l_ptr    = get_person(in_handle);
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_ptr     = get_person(in_handle);
+  auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(in_handle->capture_->get_uuid()));
   in_handle->get_json().get_to(*l_project);
   co_await l_sql.install(l_project);
   co_return in_handle->make_msg(nlohmann::json{} = *l_project);
 }
-
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::callback(session_data_ptr in_handle) {
   auto l_ptr = get_person(in_handle);

@@ -368,7 +368,7 @@ std::vector<project_and_status_t> sqlite_database::get_project_and_status(const 
       sql_orm_project_and_status_t,
       join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_))),
       join<project_person_link>(on(c(&project_person_link::project_id_) == c(&project::uuid_id_))),
-      where(!in_user.uuid_id_.is_nil() && c(&project_person_link::person_id_) == in_user.uuid_id_)
+      where(in_user.uuid_id_.is_nil() || c(&project_person_link::person_id_) == in_user.uuid_id_)
   );
   return l_r;
 }

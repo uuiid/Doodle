@@ -10,6 +10,10 @@
 #include <doodle_lib/core/http/http_session_data.h>
 namespace doodle::http {
 
+bool url_route_t::component_uuid_t::match(const std::string& in_str) const {
+  static auto l_uuid_regex = std::regex{"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"};
+  return std::regex_match(in_str, l_uuid_regex);
+}
 void http_function_base_t::websocket_init(session_data_ptr in_handle) {}
 boost::asio::awaitable<void> http_function_base_t::websocket_callback(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle

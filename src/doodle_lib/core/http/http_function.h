@@ -48,6 +48,32 @@ struct capture_t {
   }
 };
 
+struct url_route_t {
+  struct component_t {
+    std::string name_;
+    explicit component_t(std::string&& in_str) : name_(std::move(in_str)) {}
+    virtual ~component_t() = default;
+    virtual bool match(const std::string& in_str) const;
+  };
+
+  struct component_uuid_t : component_t {
+    using component_t::component_t;
+    bool match(const std::string& in_str) const override;
+  };
+
+  std::vector<std::unique_ptr<component_t>> components_{};
+
+  url_route_t() = default;
+  url_route_t& operator/=(std::string&& in_str) {
+    components_.emplace_back(std::make_unique<component_t>(std::move(in_str)));
+    return *this;
+  }
+  url_route_t& operator/=(component_uuid_t&& in_component) {
+    components_.emplace_back(std::make_unique<component_uuid_t>(std::move(in_component)));
+    return *this;
+  }
+};
+
 class http_function_base_t {
  protected:
   boost::beast::http::verb verb_;

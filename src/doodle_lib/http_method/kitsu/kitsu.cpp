@@ -122,6 +122,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       // get
       .reg(std::make_shared<with_tasks_get>())
       .reg(std::make_shared<asset_details_get>())
+      .reg(std::make_shared<project_all_get>())
       .reg(std::make_shared<project_get>())
       .reg(std::make_shared<shared_used_get>())
       .reg(std::make_shared<authenticated_get>())
@@ -133,7 +134,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg(std::make_shared<data_user_time_spents_get>())
       .reg(std::make_shared<tasks_to_check_get>())
       .reg(std::make_shared<person_day_off_get>())
-      .reg(std::make_shared<project_all_get>())
       .reg(std::make_shared<person_all_get>())
       .reg(std::make_shared<person_day_off_all_get>())
       .reg(std::make_shared<person_time_spents_day_table_get>())
