@@ -213,31 +213,37 @@ class http_function : public http_function_base_t {
 
   std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
-template <typename Capture_T>
-class http_function_template : http_function {
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
-    return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));
-  }
+#define DOODLE_HTTP_FUN_TEMPLATE(base_fun)                                                                        \
+  template <typename Capture_T>                                                                                   \
+  class BOOST_PP_CAT(base_fun, _template) : public base_fun {                                                            \
+    boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
+      return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));                   \
+    }                                                                                                             \
+                                                                                                                  \
+   public:                                                                                                        \
+    using base_fun::base_fun;                                                                                     \
+                                                                                                                  \
+    virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(                           \
+        session_data_ptr in_handle, const std::shared_ptr<Capture_T>& in_arg                                      \
+    ) = 0;                                                                                                        \
+  };                                                                                                              \
+                                                                                                                  \
+  template <>                                                                                                     \
+  class BOOST_PP_CAT(base_fun, _template)<void> : public base_fun {                                               \
+    boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
+      return callback_arg(in_handle);                                                                             \
+    }                                                                                                             \
+                                                                                                                  \
+   public:                                                                                                        \
+    using base_fun::base_fun;                                                                                     \
+                                                                                                                  \
+    virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(                           \
+        session_data_ptr in_handle                                                                                \
+    ) = 0;                                                                                                        \
+  };
 
- public:
-  using http_function::http_function;
+DOODLE_HTTP_FUN_TEMPLATE(http_function)
 
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-      session_data_ptr in_handle, const std::shared_ptr<Capture_T>& in_arg
-  ) = 0;
-};
-
-template <>
-class http_function_template<void> : public http_function {
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
-    return callback_arg(in_handle);
-  }
-
- public:
-  using http_function::http_function;
-
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) = 0;
-};
 #define DOODLE_HTTP_FUN_CONST(fun_name, verb_, url, base_fun, ...)                         \
   class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::base_fun { \
    public:                                                                                 \
