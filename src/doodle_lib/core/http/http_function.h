@@ -48,7 +48,11 @@ struct capture_t {
   }
 };
 
-class url_route_t {
+struct capture_id_t {
+  uuid id_;
+};
+
+class url_route_component_t {
   // SFINAE friendly trait to get a member object pointer's field type
   template <typename T>
   struct object_field_type {};
@@ -81,11 +85,11 @@ class url_route_t {
     explicit component_base_t(std::string&& in_str) : regex_(std::move(in_str)) {}
     virtual ~component_base_t() = default;
     virtual bool match(const std::string& in_str) const;
-    virtual void set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const;
+    virtual bool set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const;
 
-    uuid convert_uuid(const std::string& in_str) const;
-    chrono::year_month convert_year_month(const std::string& in_str) const;
-    chrono::year_month_day convert_year_month_day(const std::string& in_str) const;
+    std::tuple<bool, uuid> convert_uuid(const std::string& in_str) const;
+    std::tuple<bool, chrono::year_month> convert_year_month(const std::string& in_str) const;
+    std::tuple<bool, chrono::year_month_day> convert_year_month_day(const std::string& in_str) const;
   };
   // 组件转换
   template <typename T>
@@ -100,33 +104,50 @@ class url_route_t {
     explicit component_t(std::string&& in_str, Member_Pointer in_target)
         : component_base_t(std::move(in_str)), member_pointer_(in_target) {}
     // 设置属性
-    void set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const override {
-      *std::static_pointer_cast<object_type>(in_obj).*member_pointer_ = this->convert<field_type>(in_str);
+    bool set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const override {
+      auto [l_result, l_value] = this->convert_uuid(in_str);
+      if (l_result) *std::static_pointer_cast<object_type>(in_obj).*member_pointer_ = l_value;
+      return l_result;
     }
 
     template <typename T1>
     T1 convert(const std::string& in_str) const;
     template <>
-    uuid convert(const std::string& in_str) const {
+    std::tuple<bool, uuid> convert(const std::string& in_str) const {
       return this->convert_uuid(in_str);
     }
     template <>
-    chrono::year_month convert(const std::string& in_str) const {
+    std::tuple<bool, chrono::year_month> convert(const std::string& in_str) const {
       return this->convert_year_month(in_str);
     }
     template <>
-    chrono::year_month_day convert(const std::string& in_str) const {
+    std::tuple<bool, chrono::year_month_day> convert(const std::string& in_str) const {
       return this->convert_year_month_day(in_str);
     }
   };
-  std::vector<std::shared_ptr<component_base_t>> component_vector_{};
-  url_route_t() = default;
 
-  url_route_t& operator/(std::string&& in_str) {
+ private:
+  std::vector<std::shared_ptr<component_base_t>> component_vector_{};
+  std::function<std::shared_ptr<void>()> create_object_{};
+
+ public:
+  std::shared_ptr<void> create_object() const;
+  std::vector<std::shared_ptr<component_base_t>>& component_vector() { return component_vector_; }
+  const std::vector<std::shared_ptr<component_base_t>>& component_vector() const { return component_vector_; }
+
+  url_route_component_t() = default;
+
+  template <typename Object>
+  url_route_component_t& ro() {
+    create_object_ = []() { return std::make_shared<Object>(); };
+    return *this;
+  }
+
+  url_route_component_t& operator/(std::string&& in_str) {
     component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
     return *this;
   }
-  url_route_t& operator/(const std::shared_ptr<component_base_t>& in_ptr) {
+  url_route_component_t& operator/(const std::shared_ptr<component_base_t>& in_ptr) {
     component_vector_.push_back(in_ptr);
     return *this;
   }
@@ -145,6 +166,24 @@ class http_function_base_t {
   boost::beast::http::verb verb_;
 
  public:
+  using ucom_t = url_route_component_t;
+  // uuid regex
+  constexpr static auto g_uuid_regex =
+      std::string_view{"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"};
+  // year month regex
+  constexpr static auto g_year_month_regex     = std::string_view{"([0-9]{4}-[0-9]{2})"};
+  // year month day regex
+  constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
+
+  template <typename Member_Pointer>
+  static auto make_cap(std::string&& in_str, Member_Pointer in_target) {
+    return std::make_shared<url_route_component_t::component_t<Member_Pointer>>(std::move(in_str), in_target);
+  }
+  template <typename Member_Pointer>
+  static auto make_cap(const std::string_view& in_str, Member_Pointer in_target) {
+    return make_cap<Member_Pointer>(std::string{in_str}, in_target);
+  }
+
   http_function_base_t() = default;
   explicit http_function_base_t(boost::beast::http::verb in_verb) : verb_{in_verb} {}
   virtual ~http_function_base_t() = default;
@@ -153,9 +192,9 @@ class http_function_base_t {
   [[nodiscard]] virtual bool has_websocket() const;
   [[nodiscard]] virtual bool is_proxy() const;
 
-  virtual std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const         = 0;
+  virtual std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const = 0;
 
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) = 0;
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle)     = 0;
   virtual void websocket_init(session_data_ptr in_handle);
   virtual boost::asio::awaitable<void> websocket_callback(
       boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
@@ -164,22 +203,27 @@ class http_function_base_t {
 
 class http_function : public http_function_base_t {
  protected:
-  struct capture_data_t {
-    std::string name;
-    bool is_capture;
-  };
+  url_route_component_t url_route_;
 
-  static std::vector<capture_data_t> set_cap_bit(std::string& in_str);
-
-  const std::vector<capture_data_t> capture_vector_;
-
-  explicit http_function(boost::beast::http::verb in_verb, std::string in_url)
-      : http_function_base_t(in_verb), capture_vector_(set_cap_bit(in_url)) {}
+  explicit http_function(boost::beast::http::verb in_verb, const url_route_component_t& in_url)
+      : http_function_base_t(in_verb), url_route_(in_url) {}
 
  public:
   using capture_t = capture_t;
 
-  std::tuple<bool, capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+  std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+};
+template <typename Capture_T>
+class http_function_template : http_function {
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+    return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));
+  }
+ public:
+  using http_function::http_function;
+
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+      session_data_ptr in_handle, const std::shared_ptr<Capture_T>& in_arg
+  ) = 0;
 };
 
 #define DOODLE_HTTP_FUN_CONST(fun_name, verb_, url, base_fun, ...)                         \

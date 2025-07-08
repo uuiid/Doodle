@@ -13,7 +13,7 @@ class kitsu_front_end : public http_function_base_t {
  public:
   using http::http_function_base_t::http_function_base_t;
   ~kitsu_front_end() override = default;
-  std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+  std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
 
 class kitsu_proxy_url : public doodle::http::http_function_base_t {
@@ -29,7 +29,7 @@ class kitsu_proxy_url : public doodle::http::http_function_base_t {
   explicit kitsu_proxy_url(const std::string& in_url)
       : http::http_function_base_t(), url_segments_(split_url(in_url)) {}
   ~kitsu_proxy_url() override = default;
-  std::tuple<bool, http::capture_t> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+  std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
   [[nodiscard]] bool is_proxy() const override;
   boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
 };

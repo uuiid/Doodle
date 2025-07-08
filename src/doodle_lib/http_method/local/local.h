@@ -4,39 +4,57 @@
 #pragma once
 #include <doodle_lib/core/http/http_function.h>
 namespace doodle::http::local {
-DOODLE_HTTP_FUN(local_setting, get, "api/doodle/local_setting", http_function)
+// api/doodle/local_setting
+DOODLE_HTTP_FUN(local_setting, get, ucom_t{} / "api" / "doodle" / "local_setting", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(local_setting, post, "api/doodle/local_setting", http_function)
+DOODLE_HTTP_FUN(local_setting, post, ucom_t{} / "api" / "doodle" / "local_setting", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN_CONST(task, get, "api/doodle/task", http_function) { init_ctx(); }
+// "api/doodle/task"
+DOODLE_HTTP_FUN_CONST(task, get, ucom_t{} / "api" / "doodle" / "task", http_function) { init_ctx(); }
 void init_ctx();
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task, post, "api/doodle/task", http_function)
+DOODLE_HTTP_FUN(task, post, ucom_t{} / "api" / "doodle" / "task", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task, patch, "api/doodle/task", http_function)
+DOODLE_HTTP_FUN(task, patch, ucom_t{} / "api" / "doodle" / "task", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task, delete_, "api/doodle/task", http_function)
+DOODLE_HTTP_FUN(task, delete_, ucom_t{} / "api" / "doodle" / "task", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task_instance, get, "api/doodle/task/{id}", http_function)
+// "api/doodle/task/{id}"
+DOODLE_HTTP_FUN(
+    task_instance, get,
+    ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function
+)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task_instance_restart, post, "api/doodle/task/{id}/restart", http_function)
+//"api/doodle/task/{id}/restart"
+DOODLE_HTTP_FUN(
+    task_instance_restart, post,
+    ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_) / "restart",
+    http_function
+)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task_instance_log, get, "api/doodle/task/{id}/log", http_function)
+// "api/doodle/task/{id}/log"
+DOODLE_HTTP_FUN(
+    task_instance_log, get,
+    ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_) / "log",
+    http_function
+)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(video_thumbnail, post, "api/doodle/video/thumbnail", http_function)
+// "api/doodle/video/thumbnail"
+DOODLE_HTTP_FUN(video_thumbnail, post, ucom_t{} / "api" / "doodle" / "video" / "thumbnail", http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN_CONST(video_thumbnail, get, "api/doodle/video/thumbnail", http_function) { init_ctx(); }
+DOODLE_HTTP_FUN_CONST(video_thumbnail, get, ucom_t{} / "api" / "doodle" / "video" / "thumbnail", http_function) {
+  init_ctx();
+}
 void init_ctx();
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()

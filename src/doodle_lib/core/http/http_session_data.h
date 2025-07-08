@@ -39,7 +39,7 @@ class session_data {
   session_data()  = default;
   ~session_data() = default;
   logger_ptr logger_;
-  std::shared_ptr<capture_t> capture_;
+  std::shared_ptr<void> capture_;
   http_route_ptr route_ptr_;
   boost::url url_;
   std::uint32_t version_{};

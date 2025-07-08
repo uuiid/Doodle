@@ -10,7 +10,7 @@ namespace doodle::http {
 
 namespace {
 
-DOODLE_HTTP_FUN(options_function, options, "", http_function)
+DOODLE_HTTP_FUN(options_function, options, {}, http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   boost::beast::http::response<boost::beast::http::empty_body> l_response{
       boost::beast::http::status::ok, in_handle->version_
@@ -31,7 +31,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback(session_d
 }
 DOODLE_HTTP_FUN_END()
 
-DOODLE_HTTP_FUN(not_function, get, "", http_function)
+DOODLE_HTTP_FUN(not_function, get, {}, http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
   static boost::system::error_code l_error_code{ERROR_SERVICE_NOT_FOUND, boost::system::system_category()};
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_error_code);
@@ -63,7 +63,7 @@ http_function_ptr http_route::operator()(
   if (l_iter == actions.end()) return l_ret;
   for (const auto& i : l_iter->second) {
     if (auto&& [l_m, l_cat] = i->set_match_url(in_segment); l_m) {
-      in_handle->capture_ = std::make_shared<capture_t>(std::move(l_cat));
+      in_handle->capture_ = l_cat;
       return i;
     }
   }

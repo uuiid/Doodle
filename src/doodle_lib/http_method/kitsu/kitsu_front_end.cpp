@@ -8,13 +8,17 @@
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http {
-std::tuple<bool, http::capture_t> kitsu_front_end::set_match_url(boost::urls::segments_ref in_segments_ref) const {
-  return {true, http::capture_t{}};
+std::tuple<bool, std::shared_ptr<void>> kitsu_front_end::set_match_url(
+    boost::urls::segments_ref in_segments_ref
+) const {
+  return {true, {}};
 }
 
-std::tuple<bool, http::capture_t> kitsu_proxy_url::set_match_url(boost::urls::segments_ref in_segments_ref) const {
+std::tuple<bool, std::shared_ptr<void>> kitsu_proxy_url::set_match_url(
+    boost::urls::segments_ref in_segments_ref
+) const {
   auto l_size = std::distance(in_segments_ref.begin(), in_segments_ref.end());
-  if (l_size == 0) return {false, http::capture_t{}};
+  if (l_size == 0) return {false, {}};
 
   bool l_result = true;
 
@@ -24,7 +28,7 @@ std::tuple<bool, http::capture_t> kitsu_proxy_url::set_match_url(boost::urls::se
     l_result &= url_segments_[l_index] == i;
     ++l_index;
   }
-  return {l_result, http::capture_t{}};
+  return {l_result, {}};
 }
 bool kitsu_proxy_url::is_proxy() const { return true; }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_proxy_url::callback(

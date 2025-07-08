@@ -37,4 +37,18 @@ class http_jwt_fun : public http_function {
  public:
   using http_function::http_function;
 };
+
+template <typename Capture_T>
+class http_jwt_fun_template : public http_jwt_fun {
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+    return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));
+  }
+
+ public:
+  using http_jwt_fun::http_jwt_fun;
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+      session_data_ptr in_handle, const std::shared_ptr<Capture_T>& in_arg
+  ) = 0;
+};
+
 }  // namespace doodle::http
