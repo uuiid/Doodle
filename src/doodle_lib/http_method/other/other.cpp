@@ -9,7 +9,7 @@
 
 namespace doodle::http::other {
 
-boost::asio::awaitable<boost::beast::http::message_generator> key_ji_meng_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> key_ji_meng_get::callback_arg(session_data_ptr in_handle) {
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   co_return in_handle->make_msg(
       nlohmann::json{
