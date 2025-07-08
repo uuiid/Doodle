@@ -50,5 +50,15 @@ class http_jwt_fun_template : public http_jwt_fun {
       session_data_ptr in_handle, const std::shared_ptr<Capture_T>& in_arg
   ) = 0;
 };
+template <>
+class http_jwt_fun_template<void> : public http_jwt_fun {
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
+    return callback_arg(in_handle);
+  }
+
+ public:
+  using http_jwt_fun::http_jwt_fun;
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) = 0;
+};
 
 }  // namespace doodle::http
