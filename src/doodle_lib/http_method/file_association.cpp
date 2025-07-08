@@ -24,14 +24,14 @@ struct key_t : boost::less_than_comparable<key_t> {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_association_get::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_association_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  auto l_logger           = in_handle->logger_;
-  boost::uuids::uuid l_id = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("uuid"));
-  auto& l_map             = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
-  if (l_map.contains(l_id)) {
-    auto l_data = l_map.at(l_id);
+  auto l_logger = in_handle->logger_;
+
+  auto& l_map   = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
+  if (l_map.contains(in_arg->id_)) {
+    auto l_data = l_map.at(in_arg->id_);
     nlohmann::json l_json{
         {"maya_file", l_data->rig_file_.path_},
         {"ue_file", l_data->ue_file_.path_},
@@ -45,7 +45,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_associ
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found");
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_get::callback_arg(
+    session_data_ptr in_handle
+) {
   auto l_map = g_ctx().get<std::shared_ptr<scan_win_service_t>>()->get_scan_data();
   nlohmann::json l_json;
 
