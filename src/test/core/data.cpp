@@ -20,7 +20,14 @@ BOOST_AUTO_TEST_CASE(test_url_capture) {
       http::url_route_t::make_component(http::url_route_t::g_uuid_regex, &data_t::id2) /
       http::url_route_t::make_component(http::url_route_t::g_year_month_regex, &data_t::ym) /
       http::url_route_t::make_component(http::url_route_t::g_year_month_day_regex, &data_t::ymd);
-
+  std::vector<std::string> l_path = {
+      "api", "12345678-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012", "2020-01", "2020-01-01"
+  };
+  auto l_ptr = std::make_shared<data_t>();
+  for (const auto& [l_str, l_item] : ranges::zip_view(l_path, l_route.component_vector_)) {
+    BOOST_TEST(l_item->match(l_str));
+    l_item->set(l_str, l_ptr);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
