@@ -64,6 +64,26 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
   }
 };
 
+struct [[maybe_unused]] adl_serializer<std::chrono::year_month> {
+  using year_month = std::chrono::year_month;
+  static void to_json(json& j, const year_month& in_duration) { j = fmt::format("{:%Y-%m}", in_duration); }
+  static void from_json(const json& j, year_month& in_duration) {
+    std::istringstream l_stream{j.get_ref<const std::string&>()};
+    l_stream.exceptions(std::ios::failbit);
+    l_stream >> std::chrono::parse("%Y-%m", in_duration);
+  }
+};
+
+struct [[maybe_unused]] adl_serializer<std::chrono::year_month_day> {
+  using year_month_day = std::chrono::year_month_day;
+  static void to_json(json& j, const year_month_day& in_duration) { j = fmt::format("{:%Y-%m-%d}", in_duration); }
+  static void from_json(const json& j, year_month_day& in_duration) {
+    std::istringstream l_stream{j.get_ref<const std::string&>()};
+    l_stream.exceptions(std::ios::failbit);
+    l_stream >> std::chrono::parse("%Y-%m-%d", in_duration);
+  }
+};
+
 template <class Clock, class Duration>
 struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>> {
   using time_point = std::chrono::time_point<Clock, Duration>;
@@ -91,8 +111,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
         ;
       else if (l_stream.clear(), l_stream.str(l_str), l_stream >> std::chrono::parse("%F", in_time))
         ;
-    }
-    else
+    } else
       l_stream >> std::chrono::parse("%F", in_time);
   }
 };
