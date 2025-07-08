@@ -67,9 +67,9 @@ void pictures_base::create_thumbnail_mp4(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_post(
-    session_data_ptr in_handle
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  std::string l_name{in_handle->capture_->get("id")};
+  std::string l_name{fmt::format("{}", in_arg->id_)};
   FSys::path l_path = *root_;
 
   switch (in_handle->content_type_) {
@@ -86,13 +86,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
       break;
   }
-  co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", in_handle->capture_->get("id")));
+  co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", in_arg->id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   FSys::path l_path = *root_;
 
-  l_path /= in_handle->capture_->get("id");
+  l_path /= fmt::to_string(in_arg->id_);
   if (auto l_new_path = FSys::split_uuid_path(l_path.filename()); FSys::exists(l_new_path)) l_path = l_new_path;
 
   if (!FSys::exists(l_path)) {
@@ -132,13 +134,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::callback(
-    http::session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::callback_arg(
+    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
   if (verb_ == boost::beast::http::verb::post) {
-    return thumbnail_post(in_handle);
+    return thumbnail_post(in_handle, in_arg);
   }
-  return thumbnail_get(in_handle);
+  return thumbnail_get(in_handle, in_arg);
 }
 
 }  // namespace doodle::http::model_library

@@ -6,21 +6,15 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http::model_library {
 // "api/doodle/model_library/context"
-DOODLE_HTTP_FUN(context, get, ucom_t{} / "api" / "doodle" / "model_library" / "context", http_jwt_fun_template<capture_id_t>)
-boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
-) override;
+DOODLE_HTTP_FUN(context, get, ucom_t{} / "api" / "doodle" / "model_library" / "context", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets"
-DOODLE_HTTP_FUN(assets, get, ucom_t{} / "api" / "doodle" / "model_library" / "assets", http_jwt_fun_template<capture_id_t>)
-boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
-) override;
+DOODLE_HTTP_FUN(assets, get, ucom_t{} / "api" / "doodle" / "model_library" / "assets", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(assets, post, ucom_t{} / "api" / "doodle" / "model_library" / "assets", http_jwt_fun_template<capture_id_t>)
-boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
-) override;
+DOODLE_HTTP_FUN(assets, post, ucom_t{} / "api" / "doodle" / "model_library" / "assets", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets/{id}"
 DOODLE_HTTP_FUN(assets, put, ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "model_library" / "assets" / make_cap(g_uuid_regex, &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
@@ -35,15 +29,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
 DOODLE_HTTP_FUN_END()
 
 // "api/doodle/model_library/assets_tree"
-DOODLE_HTTP_FUN(assets_tree, get, ucom_t{} / "api" / "doodle" / "model_library" / "assets_tree", http_jwt_fun_template<capture_id_t>)
-boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
-) override;
+DOODLE_HTTP_FUN(assets_tree, get, ucom_t{} / "api" / "doodle" / "model_library" / "assets_tree", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(assets_tree, post, ucom_t{} / "api" / "doodle" / "model_library" / "assets_tree", http_jwt_fun_template<capture_id_t>)
-boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
-) override;
+DOODLE_HTTP_FUN(assets_tree, post, ucom_t{} / "api" / "doodle" / "model_library" / "assets_tree", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(http::session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets_tree/{id}"
 DOODLE_HTTP_FUN(assets_tree, put, ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "model_library" / "assets_tree" / make_cap(g_uuid_regex, &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
@@ -62,8 +52,12 @@ class pictures_base : public http_jwt_fun_template<capture_id_t> {
   void create_thumbnail_mp4(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
   void create_thumbnail_gif(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
   void create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, FSys::path in_name);
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(session_data_ptr in_handle);
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle);
+  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
+      session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+  );
+  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(
+      session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+  );
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_404(session_data_ptr in_handle);
   std::shared_ptr<FSys::path> root_;
 
@@ -107,8 +101,8 @@ DOODLE_HTTP_FUN_CONST(
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets_tree/{id}/assets/{assets_id}"
 struct capture_assets_id_t {
-  std::string id_;
-  std::string assets_id_;
+  uuid id_;
+  uuid assets_id_;
 };
 DOODLE_HTTP_FUN(
     assets_tree_link, post,

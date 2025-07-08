@@ -23,7 +23,7 @@ struct video_thumbnail_arg_t {
     j["time"].get_to(p.time_);
   }
 };
-boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_post::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_post::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_arg = in_handle->get_json().get<video_thumbnail_arg_t>();
@@ -53,7 +53,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
 }
 void video_thumbnail_get::init_ctx() { g_ctx().emplace<video_thumbnail_cache>(); }
 
-boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_get::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_get::callback_arg(
     session_data_ptr in_handle
 ) {
   auto& l_cache = g_ctx().get<video_thumbnail_cache>();

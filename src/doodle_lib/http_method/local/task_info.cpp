@@ -317,37 +317,13 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 };
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> post_task(session_data_ptr in_handle) {
-  auto l_logger = in_handle->logger_;
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
-  auto l_ptr  = std::make_shared<server_task_info>();
-
-  auto l_json = std::get<nlohmann::json>(in_handle->body_);
-  l_json.get_to(*l_ptr);
-  l_ptr->uuid_id_     = core_set::get_set().get_uuid();
-  l_ptr->submit_time_ = chrono::sys_time_pos::clock::now();
-
-  if (l_ptr->exe_.empty())
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "运行程序任务为空");
-
-  if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<computer>(l_ptr->run_computer_id_); l_list == 0)
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到计算机");
-
-  co_await g_ctx().get<sqlite_database>().install(l_ptr);
-
-  boost::asio::co_spawn(g_io_context(), task_emit(l_ptr), boost::asio::consign(boost::asio::detached, l_ptr));
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
-}
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance_get::callback(session_data_ptr in_handle) {
-  uuid l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
-  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid);
+boost::asio::awaitable<boost::beast::http::message_generator> task_instance_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
+  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> task_get::callback_arg(session_data_ptr in_handle) {
   std::optional<server_task_info_type> l_type{};
   for (auto&& i : in_handle->url_.params()) {
     if (i.has_value && i.key == "type") {
@@ -371,35 +347,34 @@ void task_get::init_ctx() {
   app_base::Get().on_stop.connect([]() { g_ctx().get<run_post_task_local_cancel_manager>().cancel_all(); });
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log_get::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  boost::uuids::uuid l_uuid{boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"))};
-
   auto l_path =
-      core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", l_uuid);
+      core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", in_arg->id_);
   if (!FSys::exists(l_path))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "日志不存在");
   auto l_mime = std::string{kitsu::mime_type(l_path.extension())};
   l_mime += "; charset=utf-8";
   co_return in_handle->make_msg(l_path, l_mime);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_delete_::callback(session_data_ptr in_handle) {
-  auto l_uuid = boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id"));
-  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_uuid);
+boost::asio::awaitable<boost::beast::http::message_generator> task_delete_::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
+  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_);
   if (l_list.status_ == server_task_info_status::running) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
-  co_await g_ctx().get<sqlite_database>().remove<server_task_info>(l_uuid);
+  co_await g_ctx().get<sqlite_database>().remove<server_task_info>(in_arg->id_);
   co_return in_handle->make_msg(nlohmann::json{});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance_restart_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> task_instance_restart_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  auto l_id  = from_uuid_str(in_handle->capture_->get("id"));
-  auto l_ptr = std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(l_id));
+  auto l_ptr =
+      std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_));
   switch (l_ptr->status_) {
     case server_task_info_status::submitted:
     case server_task_info_status::assigned:
@@ -424,7 +399,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_rest
   l_run_long_task_local->run();
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_post::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> task_post::callback_arg(session_data_ptr in_handle) {
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
@@ -447,10 +422,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_post::callbac
   l_run_long_task_local->run();
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_patch::callback(session_data_ptr in_handle) {
-  auto l_uuid = std::make_shared<uuid>(boost::lexical_cast<boost::uuids::uuid>(in_handle->capture_->get("id")));
+boost::asio::awaitable<boost::beast::http::message_generator> task_patch::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   auto l_server_task_info =
-      std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(*l_uuid));
+      std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_));
 
   server_task_info l_server_task_info_org{*l_server_task_info};
   auto l_sr   = l_server_task_info->status_;
@@ -463,6 +439,5 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_patch::callba
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
 }
-
 
 }  // namespace doodle::http::local

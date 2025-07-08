@@ -17,13 +17,17 @@
 #include <jwt-cpp/jwt.h>
 namespace doodle::http::model_library {
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_get::callback(http::session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> assets_get::callback_arg(
+    http::session_data_ptr in_handle
+) {
   auto l_list = g_ctx().get<sqlite_database>().get_all<assets_file_helper::database_t>();
   nlohmann::json l_json{};
   l_json = l_list;
   co_return in_handle->make_msg(l_json);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> assets_post::callback(http::session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> assets_post::callback_arg(
+    http::session_data_ptr in_handle
+) {
   auto l_json                                           = in_handle->get_json();
   std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
   l_json.get_to(*l_ptr);
@@ -44,19 +48,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post::callb
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> assets_put::callback(http::session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> assets_put::callback_arg(
+    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   std::shared_ptr<assets_file_helper::database_t> const l_ptr = std::make_shared<assets_file_helper::database_t>(
-      g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(in_handle->capture_->get_uuid())
+      g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(in_arg->id_)
   );
   in_handle->get_json().get_to(*l_ptr);
   co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_delete_::callback(
-    http::session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> assets_delete_::callback_arg(
+    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  auto l_uuid = boost::lexical_cast<uuid>(in_handle->capture_->get("id"));
+  auto l_uuid = boost::lexical_cast<uuid>(in_arg->id_);
   // auto l_p = get_person(in_handle);
   // l_p->is_manager();
 

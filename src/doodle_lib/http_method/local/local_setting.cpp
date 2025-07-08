@@ -18,7 +18,9 @@
 
 namespace doodle::http::local {
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> local_setting_get::callback_arg(
+    session_data_ptr in_handle
+) {
   FSys::path l_maya_path{};
   try {
     l_maya_path = maya_exe_ns::find_maya_path();
@@ -37,7 +39,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting_get:
   );
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting_post::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> local_setting_post::callback_arg(
+    session_data_ptr in_handle
+) {
   if (in_handle->content_type_ != http::detail::content_type::application_json) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不是json请求");
   }
