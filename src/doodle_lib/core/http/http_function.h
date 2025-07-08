@@ -122,14 +122,21 @@ class url_route_t {
   std::vector<std::shared_ptr<component_base_t>> component_vector_{};
   url_route_t() = default;
 
-  url_route_t& operator()(std::string&& in_str) {
+  url_route_t& operator/(std::string&& in_str) {
     component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
     return *this;
   }
-  template <typename Member_Pointer>
-  url_route_t& operator()(std::string&& in_str, Member_Pointer in_target) {
-    component_vector_.push_back(std::make_shared<component_t<Member_Pointer>>(in_str, in_target));
+  url_route_t& operator/(const std::shared_ptr<component_base_t>& in_ptr) {
+    component_vector_.push_back(in_ptr);
     return *this;
+  }
+  template <typename Member_Pointer>
+  static auto make_component(std::string&& in_str, Member_Pointer in_target) {
+    return std::make_shared<component_t<Member_Pointer>>(std::move(in_str), in_target);
+  }
+  template <typename Member_Pointer>
+  static auto make_component(const std::string_view& in_str, Member_Pointer in_target) {
+    return make_component<Member_Pointer>(std::string{in_str}, in_target);
   }
 };
 

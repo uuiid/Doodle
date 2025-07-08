@@ -11,6 +11,39 @@
 namespace doodle::http {
 bool url_route_t::component_base_t::match(const std::string& in_str) const { return std::regex_match(in_str, regex_); }
 void url_route_t::component_base_t::set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const {}
+uuid url_route_t::component_base_t::convert_uuid(const std::string& in_str) const {
+  std::smatch l_result{};
+  if (std::regex_match(in_str, l_result, regex_)) {
+    for (auto& l_item : l_result) {
+      return from_uuid_str(l_item.str());
+    }
+  }
+  return {};
+}
+chrono::year_month url_route_t::component_base_t::convert_year_month(const std::string& in_str) const {
+  std::smatch l_result{};
+  chrono::year_month l_date{};
+  if (std::regex_match(in_str, l_result, regex_)) {
+    for (auto& l_item : l_result) {
+      std::istringstream l_stream{l_item.str()};
+      l_stream >> chrono::parse("%Y-%m", l_date);
+      return l_date;
+    }
+  }
+  return l_date;
+}
+chrono::year_month_day url_route_t::component_base_t::convert_year_month_day(const std::string& in_str) const {
+  std::smatch l_result{};
+  chrono::year_month_day l_date{};
+  if (std::regex_match(in_str, l_result, regex_)) {
+    for (auto& l_item : l_result) {
+      std::istringstream l_stream{l_item.str()};
+      l_stream >> chrono::parse("%Y-%m-%d", l_date);
+      return l_date;
+    }
+  }
+  return l_date;
+}
 
 void http_function_base_t::websocket_init(session_data_ptr in_handle) {}
 boost::asio::awaitable<void> http_function_base_t::websocket_callback(
