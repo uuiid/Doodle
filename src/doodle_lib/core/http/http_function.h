@@ -79,6 +79,7 @@ class url_route_component_t {
   constexpr static auto g_year_month_regex     = std::string_view{"([0-9]{4}-[0-9]{2})"};
   // year month day regex
   constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
+  constexpr static auto g_number               = std::string_view{"([0-9]+)"};
 
   struct component_base_t {
     std::regex regex_;
@@ -90,6 +91,7 @@ class url_route_component_t {
     std::tuple<bool, uuid> convert_uuid(const std::string& in_str) const;
     std::tuple<bool, chrono::year_month> convert_year_month(const std::string& in_str) const;
     std::tuple<bool, chrono::year_month_day> convert_year_month_day(const std::string& in_str) const;
+    std::tuple<bool, std::int32_t> convert_number(const std::string& in_str) const;
     virtual const std::type_info& get_type() const { return typeid(void); }
     virtual std::function<std::shared_ptr<void>()> create_object() const { return {}; }
   };
@@ -130,6 +132,10 @@ class url_route_component_t {
     std::tuple<bool, chrono::year_month_day> convert(const std::string& in_str) const {
       return this->convert_year_month_day(in_str);
     }
+    template <>
+    std::tuple<bool, std::int32_t> convert(const std::string& in_str) const {
+      return this->convert_number(in_str);
+    }
   };
 
  private:
@@ -154,7 +160,16 @@ class url_route_component_t {
   template <typename Member_Pointer>
     requires std::is_member_pointer_v<Member_Pointer>
   url_route_component_t& operator/(Member_Pointer in_target) {
-    return operator/(make_cap(g_uuid_regex, in_target));
+    if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, uuid>)
+      return operator/(make_cap(g_uuid_regex, in_target));
+    else if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, chrono::year_month>)
+      return operator/(make_cap(g_year_month_regex, in_target));
+    else if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, chrono::year_month_day>)
+      return operator/(make_cap(g_year_month_day_regex, in_target));
+    else if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, std::int32_t>)
+      return operator/(make_cap(g_number, in_target));
+    else
+      static_assert(false, "not support type");
   }
 
   template <typename Member_Pointer>
@@ -182,6 +197,7 @@ class http_function_base_t {
   constexpr static auto g_year_month_regex     = std::string_view{"([0-9]{4}-[0-9]{2})"};
   // year month day regex
   constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
+  constexpr static auto g_number               = std::string_view{"([0-9]+)"};
 
   template <typename Member_Pointer>
   static auto make_cap(std::string&& in_str, Member_Pointer in_target) {

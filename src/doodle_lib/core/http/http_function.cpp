@@ -54,6 +54,18 @@ std::tuple<bool, chrono::year_month_day> url_route_component_t::component_base_t
   }
   return {false, l_date};
 }
+std::tuple<bool, std::int32_t> url_route_component_t::component_base_t::convert_number(
+    const std::string& in_str
+) const {
+  std::smatch l_result{};
+  if (std::regex_match(in_str, l_result, regex_)) {
+    for (auto& l_item : l_result) {
+      return {true, std::stoi(l_item.str())};
+    }
+  }
+  return {false, 0};
+}
+
 
 std::shared_ptr<void> url_route_component_t::create_object() const {
   if (create_object_) {
