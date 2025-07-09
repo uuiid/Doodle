@@ -67,7 +67,7 @@ void pictures_base::create_thumbnail_mp4(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_post(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   std::string l_name{fmt::format("{}", in_arg->id_)};
   FSys::path l_path = *root_;
@@ -90,7 +90,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   FSys::path l_path = *root_;
 
@@ -135,7 +135,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    http::session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   if (verb_ == boost::beast::http::verb::post) {
     return thumbnail_post(in_handle, in_arg);

@@ -49,7 +49,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_post::callb
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> assets_put::callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    http::session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   std::shared_ptr<assets_file_helper::database_t> const l_ptr = std::make_shared<assets_file_helper::database_t>(
       g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(in_arg->id_)
@@ -60,7 +60,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_put::callba
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_delete_::callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    http::session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_uuid = boost::lexical_cast<uuid>(in_arg->id_);
   // auto l_p = get_person(in_handle);

@@ -11,7 +11,7 @@
 namespace doodle::http::model_library {
 
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_link_post::callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_assets_id_t>& in_arg
+    http::session_data_ptr in_handle, std::shared_ptr<capture_assets_id_t> in_arg
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   if (l_sql.has_assets_tree_assets_link(in_arg->id_, in_arg->assets_id_))
@@ -23,7 +23,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_link_p
   co_return in_handle->make_msg(nlohmann::json{});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_link_delete_::callback_arg(
-    http::session_data_ptr in_handle, const std::shared_ptr<capture_assets_id_t>& in_arg
+    http::session_data_ptr in_handle, std::shared_ptr<capture_assets_id_t> in_arg
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   if (!l_sql.has_assets_tree_assets_link(in_arg->id_, in_arg->assets_id_))
