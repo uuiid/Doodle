@@ -195,6 +195,7 @@ class http_function_base_t {
   [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
   [[nodiscard]] virtual bool has_websocket() const;
   [[nodiscard]] virtual bool is_proxy() const;
+  virtual void check_type() const {}
 
   virtual std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const = 0;
 
@@ -209,14 +210,12 @@ class http_function : public http_function_base_t {
  protected:
   url_route_component_t url_route_;
   virtual const std::type_info& get_type() const;
-  void check_type() const;
   explicit http_function(boost::beast::http::verb in_verb, const url_route_component_t& in_url)
-      : http_function_base_t(in_verb), url_route_(in_url) {
-    check_type();
-  }
+      : http_function_base_t(in_verb), url_route_(in_url) {}
 
  public:
   using capture_t = capture_t;
+  void check_type() const override;
 
   std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };

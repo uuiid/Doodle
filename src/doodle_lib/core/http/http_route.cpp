@@ -47,6 +47,7 @@ http_route::http_route()
 {}
 
 http_route& http_route::reg(const doodle::http::http_function_ptr in_function) {
+  in_function->check_type();
   actions[in_function->get_verb()].emplace_back(in_function);
   return *this;
 }

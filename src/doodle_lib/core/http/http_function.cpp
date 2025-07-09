@@ -64,9 +64,8 @@ std::tuple<bool, std::int32_t> url_route_component_t::component_base_t::convert_
     }
   }
   return {false, 0};
-  std::tuple l_t = {1,""};
+  std::tuple l_t = {1, ""};
 }
-
 
 std::shared_ptr<void> url_route_component_t::create_object() const {
   if (create_object_) {
@@ -76,7 +75,7 @@ std::shared_ptr<void> url_route_component_t::create_object() const {
 }
 
 url_route_component_t& url_route_component_t::operator/(const std::shared_ptr<component_base_t>& in_ptr) {
-  if (!create_object_) {
+  if (!create_object_ && in_ptr->get_type() != typeid(void)) {
     create_object_ = in_ptr->create_object();
     object_type_   = in_ptr->get_type();
   }
@@ -113,6 +112,10 @@ std::tuple<bool, std::shared_ptr<void>> http_function::set_match_url(boost::urls
 }
 const std::type_info& http_function::get_type() const { return typeid(void); }
 void http_function::check_type() const {
+  default_logger_raw()->info(
+      "url route component type {}, function type {}", url_route_.object_type().name(), get_type().name()
+  );
+  default_logger_raw()->flush();
   if (url_route_.object_type() != get_type()) throw std::runtime_error("url route component type mismatch");
 }
 
