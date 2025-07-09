@@ -64,6 +64,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
   }
 };
 
+template <>
 struct [[maybe_unused]] adl_serializer<std::chrono::year_month> {
   using year_month = std::chrono::year_month;
   static void to_json(json& j, const year_month& in_duration) { j = fmt::format("{:%Y-%m}", in_duration); }
@@ -74,6 +75,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::year_month> {
   }
 };
 
+template <>
 struct [[maybe_unused]] adl_serializer<std::chrono::year_month_day> {
   using year_month_day = std::chrono::year_month_day;
   static void to_json(json& j, const year_month_day& in_duration) { j = fmt::format("{:%Y-%m-%d}", in_duration); }
