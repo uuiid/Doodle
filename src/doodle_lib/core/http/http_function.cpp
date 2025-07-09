@@ -20,8 +20,8 @@ bool url_route_component_t::component_base_t::set(
 std::tuple<bool, uuid> url_route_component_t::component_base_t::convert_uuid(const std::string& in_str) const {
   std::smatch l_result{};
   if (std::regex_match(in_str, l_result, regex_)) {
-    for (auto& l_item : l_result) {
-      return {true, from_uuid_str(l_item.str())};
+    for (auto l_begin = ++l_result.begin(), l_end = l_result.end(); l_begin != l_end; ++l_begin) {
+      return {true, from_uuid_str(l_begin->str())};
     }
   }
   return {false, uuid{}};
@@ -32,8 +32,8 @@ std::tuple<bool, chrono::year_month> url_route_component_t::component_base_t::co
   std::smatch l_result{};
   chrono::year_month l_date{};
   if (std::regex_match(in_str, l_result, regex_)) {
-    for (auto& l_item : l_result) {
-      std::istringstream l_stream{l_item.str()};
+    for (auto l_begin = ++l_result.begin(), l_end = l_result.end(); l_begin != l_end; ++l_begin) {
+      std::istringstream l_stream{l_begin->str()};
       l_stream >> chrono::parse("%Y-%m", l_date);
       return {true, l_date};
     }
@@ -46,8 +46,8 @@ std::tuple<bool, chrono::year_month_day> url_route_component_t::component_base_t
   std::smatch l_result{};
   chrono::year_month_day l_date{};
   if (std::regex_match(in_str, l_result, regex_)) {
-    for (auto& l_item : l_result) {
-      std::istringstream l_stream{l_item.str()};
+    for (auto l_begin = ++l_result.begin(), l_end = l_result.end(); l_begin != l_end; ++l_begin) {
+      std::istringstream l_stream{l_begin->str()};
       l_stream >> chrono::parse("%Y-%m-%d", l_date);
       return {true, l_date};
     }
@@ -59,8 +59,8 @@ std::tuple<bool, std::int32_t> url_route_component_t::component_base_t::convert_
 ) const {
   std::smatch l_result{};
   if (std::regex_match(in_str, l_result, regex_)) {
-    for (auto& l_item : l_result) {
-      return {true, std::stoi(l_item.str())};
+    for (auto l_begin = ++l_result.begin(), l_end = l_result.end(); l_begin != l_end; ++l_begin) {
+      return {true, std::stoi(l_begin->str())};
     }
   }
   return {false, 0};
