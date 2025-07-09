@@ -171,6 +171,11 @@ class url_route_component_t {
     else
       static_assert(false, "not support type");
   }
+  template <typename String_T, typename Member_Pointer>
+    requires std::is_member_pointer_v<Member_Pointer> && std::is_convertible_v<String_T, std::string>
+  url_route_component_t& operator/(const std::tuple<String_T, Member_Pointer>& in_tuple) {
+    return operator/(make_cap(std::get<0>(in_tuple), std::get<1>(in_tuple)));
+  }
 
   template <typename Member_Pointer>
     requires std::is_member_pointer_v<Member_Pointer>
