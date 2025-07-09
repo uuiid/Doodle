@@ -15,7 +15,7 @@ struct task_type;
 }  // namespace doodle
 namespace doodle::http {
 
-class up_file_asset_base : public http_jwt_fun {
+class up_file_asset_base : public http_jwt_fun_template<capture_id_t> {
  protected:
   struct task_info_t {
     nlohmann::json task_data_{};
@@ -38,7 +38,9 @@ class up_file_asset_base : public http_jwt_fun {
 
  public:
   using http_jwt_fun::http_jwt_fun;
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+  boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+      session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+  ) override;
 };
 class up_file_asset : public up_file_asset_base {
  protected:
@@ -48,16 +50,29 @@ class up_file_asset : public up_file_asset_base {
   using up_file_asset_base::up_file_asset_base;
 };
 
-DOODLE_HTTP_FUN(up_file_asset_maya, post, "api/doodle/data/asset/{task_id}/file/maya", up_file_asset)
+// "api/doodle/data/asset/{task_id}/file/maya"
+DOODLE_HTTP_FUN(
+    up_file_asset_maya, post,
+    ucom_t{} / "api" / "doodle" / "data" / "asset" / make_cap(g_uuid_regex, &capture_id_t::id_) / "file" / "maya",
+    up_file_asset
+)
 FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN(up_file_asset_ue, post, "api/doodle/data/asset/{task_id}/file/ue", up_file_asset)
+// "api/doodle/data/asset/{task_id}/file/ue"
+DOODLE_HTTP_FUN(
+    up_file_asset_ue, post,
+    ucom_t{} / "api" / "doodle" / "data" / "asset" / make_cap(g_uuid_regex, &capture_id_t::id_) / "file" / "ue",
+    up_file_asset
+)
 FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
 void move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN(up_file_asset_image, post, "api/doodle/data/asset/{task_id}/file/image", up_file_asset)
+// "api/doodle/data/asset/{task_id}/file/image"
+DOODLE_HTTP_FUN(
+    up_file_asset_image, post,
+    ucom_t{} / "api" / "doodle" / "data" / "asset" / make_cap(g_uuid_regex, &capture_id_t::id_) / "file" / "image",
+    up_file_asset
+)
 FSys::path gen_file_path(const std::shared_ptr<task_info_t>& in_data) override;
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

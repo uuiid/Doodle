@@ -20,8 +20,9 @@
 #include <cpp-base64/base64.h>
 namespace doodle::http {
 
-boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base::callback(session_data_ptr in_handle) {
-  uuid l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
+boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
   if (in_handle->req_header_.count(boost::beast::http::field::content_disposition) == 0)
@@ -37,7 +38,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
     default_logger_raw()->error("base64 decode error {}", boost::current_exception_diagnostic_information());
   }
   auto l_sql    = g_ctx().get<sqlite_database>();
-  auto l_task   = l_sql.get_by_uuid<task>(l_task_id);
+  auto l_task   = l_sql.get_by_uuid<task>(in_arg->id_);
   auto l_extend = l_sql.get_entity_asset_extend(l_task.entity_id_);
   if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
 
@@ -46,7 +47,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   auto l_entity      = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_entity_type = l_sql.get_by_uuid<asset_type>(l_entity.entity_type_id_);
   auto l_task_type   = l_sql.get_by_uuid<task_type>(l_task.task_type_id_);
-  auto l_prj          = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  auto l_prj         = l_sql.get_by_uuid<project>(l_entity.project_id_);
   if (auto l_type = l_task_type.name_; !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
     throw_exception(doodle_error{"未知的 task_type 类型"});
   l_ptr->entity_type_ = l_entity_type.name_;
