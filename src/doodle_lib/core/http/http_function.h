@@ -231,7 +231,7 @@ class http_function : public http_function_base_t {
     using base_fun::base_fun;                                                                                     \
                                                                                                                   \
     virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(                           \
-        session_data_ptr in_handle, const std::shared_ptr<Capture_T>& in_arg                                      \
+        session_data_ptr in_handle, std::shared_ptr<Capture_T> in_arg                                             \
     ) = 0;                                                                                                        \
   };                                                                                                              \
                                                                                                                   \
