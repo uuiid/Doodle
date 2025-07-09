@@ -12,11 +12,6 @@ http_function_ptr http_route_proxy::operator()(
 ) const {
   auto l_ptr = http_route::operator()(in_verb, in_segment, in_handle);
   if (l_ptr == nullptr) {
-    for (const auto& i : proxy_urls) {
-      if (auto&& [l_m, l_cat] = i->set_match_url(in_segment); l_m) {
-        return i;
-      }
-    }
     return in_verb == boost::beast::http::verb::head ? head_file_ : get_file_;
   }
   return l_ptr;
