@@ -37,7 +37,7 @@ class up_file_asset_base : public http_jwt_fun_template<capture_id_t> {
   virtual void move_file(session_data_ptr in_handle, const std::shared_ptr<task_info_t>& in_data) = 0;
 
  public:
-  using http_jwt_fun::http_jwt_fun;
+  using http_jwt_fun_template<capture_id_t>::http_jwt_fun_template;
   boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
       session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
   ) override;

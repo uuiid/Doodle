@@ -62,7 +62,7 @@ class pictures_base : public http_jwt_fun_template<capture_id_t> {
   std::shared_ptr<FSys::path> root_;
 
  public:
-  using http_jwt_fun::http_jwt_fun;
+  using http_jwt_fun_template<capture_id_t>::http_jwt_fun_template;
   boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
       http::session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
   ) override;

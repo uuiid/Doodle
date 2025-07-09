@@ -78,7 +78,7 @@ class url_route_component_t {
         : component_base_t(std::move(in_str)), member_pointer_(in_target) {}
     // 设置属性
     bool set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const override {
-      auto [l_result, l_value] = this->convert_uuid(in_str);
+      auto [l_result, l_value] = this->convert<field_type>(in_str);
       if (l_result) *std::static_pointer_cast<object_type>(in_obj).*member_pointer_ = l_value;
       return l_result;
     }
@@ -88,7 +88,7 @@ class url_route_component_t {
     const std::type_info& get_type() const override { return typeid(object_type); }
 
     template <typename T1>
-    T1 convert(const std::string& in_str) const;
+    std::tuple<bool, T1> convert(const std::string& in_str) const;
     template <>
     std::tuple<bool, uuid> convert(const std::string& in_str) const {
       return this->convert_uuid(in_str);
@@ -129,16 +129,21 @@ class url_route_component_t {
   template <typename Member_Pointer>
     requires std::is_member_pointer_v<Member_Pointer>
   url_route_component_t& operator/(Member_Pointer in_target) {
-    if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, uuid>)
+    using field_type = std::remove_cv_t<object_field_type_t<Member_Pointer>>;
+    static_assert(
+        std::is_same_v<field_type, uuid> || std::is_same_v<field_type, chrono::year_month> ||
+            std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t>,
+        "not support type"
+    );
+
+    if constexpr (std::is_same_v<field_type, uuid>)
       return operator/(make_cap(g_uuid_regex, in_target));
-    else if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, chrono::year_month>)
+    else if constexpr (std::is_same_v<field_type, chrono::year_month>)
       return operator/(make_cap(g_year_month_regex, in_target));
-    else if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, chrono::year_month_day>)
+    else if constexpr (std::is_same_v<field_type, chrono::year_month_day>)
       return operator/(make_cap(g_year_month_day_regex, in_target));
-    else if constexpr (std::is_same_v<std::remove_cv_t<member_object_type_t<Member_Pointer>>, std::int32_t>)
+    else if constexpr (std::is_same_v<field_type, std::int32_t>)
       return operator/(make_cap(g_number, in_target));
-    else
-      static_assert(false, "not support type");
     return *this;
   }
   template <typename String_T, typename Member_Pointer>
@@ -155,7 +160,7 @@ class url_route_component_t {
   template <typename Member_Pointer>
     requires std::is_member_pointer_v<Member_Pointer>
   static auto make_cap(const std::string_view& in_str, Member_Pointer in_target) {
-    return make_component<Member_Pointer>(std::string{in_str}, in_target);
+    return make_cap<Member_Pointer>(std::string{in_str}, in_target);
   }
 };
 
