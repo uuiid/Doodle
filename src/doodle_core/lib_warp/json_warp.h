@@ -67,7 +67,9 @@ struct [[maybe_unused]] adl_serializer<std::chrono::duration<Rep, Period>> {
 template <>
 struct [[maybe_unused]] adl_serializer<std::chrono::year_month> {
   using year_month = std::chrono::year_month;
-  static void to_json(json& j, const year_month& in_duration) { j = fmt::format("{:%Y-%m}", in_duration); }
+  static void to_json(json& j, const year_month& in_duration) {
+    j = fmt::format("{}-{:02}", std::int32_t{in_duration.year()}, std::uint32_t{in_duration.month()});
+  }
   static void from_json(const json& j, year_month& in_duration) {
     std::istringstream l_stream{j.get_ref<const std::string&>()};
     l_stream.exceptions(std::ios::failbit);
@@ -78,7 +80,12 @@ struct [[maybe_unused]] adl_serializer<std::chrono::year_month> {
 template <>
 struct [[maybe_unused]] adl_serializer<std::chrono::year_month_day> {
   using year_month_day = std::chrono::year_month_day;
-  static void to_json(json& j, const year_month_day& in_duration) { j = fmt::format("{:%Y-%m-%d}", in_duration); }
+  static void to_json(json& j, const year_month_day& in_duration) {
+    j = fmt::format(
+        "{}-{:02}-{:02}", std::int32_t{in_duration.year()}, std::uint32_t{in_duration.month()},
+        std::uint32_t{in_duration.day()}
+    );
+  }
   static void from_json(const json& j, year_month_day& in_duration) {
     std::istringstream l_stream{j.get_ref<const std::string&>()};
     l_stream.exceptions(std::ios::failbit);
