@@ -98,5 +98,9 @@ std::tuple<bool, std::shared_ptr<void>> http_function::set_match_url(boost::urls
   }
   return {true, l_data};
 }
+const std::type_info& http_function::get_type() const { return typeid(void); }
+void http_function::check_type() const {
+  if (url_route_.object_type() != get_type()) throw std::runtime_error("url route component type mismatch");
+}
 
 }  // namespace doodle::http

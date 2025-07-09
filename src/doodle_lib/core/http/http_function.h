@@ -212,9 +212,12 @@ class http_function_base_t {
 class http_function : public http_function_base_t {
  protected:
   url_route_component_t url_route_;
-
+  virtual const std::type_info& get_type() const;
+  void check_type() const;
   explicit http_function(boost::beast::http::verb in_verb, const url_route_component_t& in_url)
-      : http_function_base_t(in_verb), url_route_(in_url) {}
+      : http_function_base_t(in_verb), url_route_(in_url) {
+    check_type();
+  }
 
  public:
   using capture_t = capture_t;
@@ -227,6 +230,7 @@ class http_function : public http_function_base_t {
     boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
       return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));                   \
     }                                                                                                             \
+    virtual const std::type_info& get_type() const override { return typeid(Capture_T); }                         \
                                                                                                                   \
    public:                                                                                                        \
     using base_fun::base_fun;                                                                                     \
@@ -241,6 +245,7 @@ class http_function : public http_function_base_t {
     boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
       return callback_arg(in_handle);                                                                             \
     }                                                                                                             \
+    virtual const std::type_info& get_type() const override { return typeid(void); }                              \
                                                                                                                   \
    public:                                                                                                        \
     using base_fun::base_fun;                                                                                     \
