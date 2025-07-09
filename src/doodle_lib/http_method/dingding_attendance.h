@@ -10,13 +10,13 @@ struct dingding_attendance_args {
 // "/api/doodle/attendance/{user_id}/{date}"
 DOODLE_HTTP_FUN(dingding_attendance, get, ucom_t{} / "api" / "doodle" / "attendance" / make_cap(g_uuid_regex, &dingding_attendance_args::user_id_) / make_cap(g_year_month_regex, &dingding_attendance_args::year_month_), http_jwt_fun_template<dingding_attendance_args>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<dingding_attendance_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<dingding_attendance_args> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 //"/api/doodle/attendance/{user_id}"
 DOODLE_HTTP_FUN(dingding_attendance, post, ucom_t{} / "api" / "doodle" / "attendance" / make_cap(g_uuid_regex, &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "/api/doodle/attendance/{user_id}/custom"
@@ -27,19 +27,19 @@ DOODLE_HTTP_FUN(
     http_jwt_fun_template<capture_id_t>
 )
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "/api/doodle/attendance/custom/{id}"
 DOODLE_HTTP_FUN(dingding_attendance_custom, put, ucom_t{} / "api" / "doodle" / "attendance" / "custom" / make_cap(g_uuid_regex, &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "/api/doodle/attendance/custom/{id}"
 DOODLE_HTTP_FUN(dingding_attendance_custom, delete_, ucom_t{} / "api" / "doodle" / "attendance" / "custom" / make_cap(g_uuid_regex, &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 

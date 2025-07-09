@@ -25,7 +25,7 @@ struct key_t : boost::less_than_comparable<key_t> {
 };
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_association_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_logger = in_handle->logger_;
 

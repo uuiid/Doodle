@@ -492,7 +492,7 @@ std::string patch_time(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args> in_arg
 ) {
   auto l_json = in_handle->get_json();
 
@@ -524,7 +524,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pos
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args> in_arg
 ) {
   auto l_json                         = in_handle->get_json();
   computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
@@ -575,7 +575,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args> in_arg
 ) {
   auto l_json                                = in_handle->get_json();
   computing_time_post_req_custom_data l_data = l_json.get<computing_time_post_req_custom_data>();
@@ -624,7 +624,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args> in_arg
 ) {
   auto l_json        = in_handle->get_json();
   auto l_data        = l_json.get<std::vector<uuid>>();
@@ -668,7 +668,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args> in_arg
 ) {
   auto l_block = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
@@ -682,7 +682,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args> in_arg
 ) {
   auto l_logger    = in_handle->logger_;
 
@@ -696,7 +696,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_get
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<computing_time_args2>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<computing_time_args2> in_arg
 ) {
   auto l_json = in_handle->get_json();
 
@@ -766,7 +766,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_delete_::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   work_xlsx_task_info_helper::database_t l_task =
       g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(in_arg->id_);

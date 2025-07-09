@@ -53,7 +53,7 @@ auto create_clock_leave(const chrono::year_month_day& in_date) {
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_logger                 = in_handle->logger_;
 
@@ -191,7 +191,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_return in_handle->make_msg(l_json.dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<dingding_attendance_args>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<dingding_attendance_args> in_arg
 ) {
   std::vector<chrono::local_days> l_date_list{};
   auto l_end = chrono::local_days{chrono::year_month_day{in_arg->year_month_ / chrono::last}};
@@ -211,7 +211,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_return in_handle->make_msg(l_json.dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_data = std::make_shared<attendance_helper::database_t>(
       std::move(in_handle->get_json().get<attendance_helper::database_t>())
@@ -232,7 +232,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_data = std::make_shared<attendance_helper::database_t>(
       g_ctx().get<sqlite_database>().get_by_uuid<attendance_helper::database_t>(in_arg->id_)
@@ -248,7 +248,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom_delete_::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto& l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.remove<attendance_helper::database_t>(in_arg->id_);
