@@ -139,6 +139,7 @@ class url_route_component_t {
       return operator/(make_cap(g_number, in_target));
     else
       static_assert(false, "not support type");
+    return *this;
   }
   template <typename String_T, typename Member_Pointer>
     requires std::is_member_pointer_v<Member_Pointer> && std::is_convertible_v<String_T, std::string>
