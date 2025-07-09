@@ -2,6 +2,7 @@
 // Created by TD on 24-9-24.
 //
 #include "doodle_lib/core/http/http_function.h"
+#include "doodle_lib/http_method/model_library/model_library.h"
 #include <doodle_lib/core/scan_win_service.h>
 
 #include <boost/test/unit_test.hpp>
@@ -16,11 +17,10 @@ BOOST_AUTO_TEST_CASE(test_url_capture) {
     chrono::year_month ym;
     chrono::year_month_day ymd;
   };
-  l_route / "api" /
-      http::url_route_component_t::make_component(http::url_route_component_t::g_uuid_regex, &data_t::id) /
-      http::url_route_component_t::make_component(http::url_route_component_t::g_uuid_regex, &data_t::id2) /
-      http::url_route_component_t::make_component(http::url_route_component_t::g_year_month_regex, &data_t::ym) /
-      http::url_route_component_t::make_component(http::url_route_component_t::g_year_month_day_regex, &data_t::ymd);
+  l_route / "api" / http::url_route_component_t::make_cap(http::url_route_component_t::g_uuid_regex, &data_t::id) /
+      http::url_route_component_t::make_cap(http::url_route_component_t::g_uuid_regex, &data_t::id2) /
+      http::url_route_component_t::make_cap(http::url_route_component_t::g_year_month_regex, &data_t::ym) /
+      http::url_route_component_t::make_cap(http::url_route_component_t::g_year_month_day_regex, &data_t::ymd);
   std::vector<std::string> l_path = {
       "api", "12345678-1234-1234-1234-123456789012", "12345678-1234-1234-1234-123456789012", "2020-01", "2020-01-01"
   };
@@ -30,5 +30,7 @@ BOOST_AUTO_TEST_CASE(test_url_capture) {
     BOOST_TEST(l_item->set(l_str, l_ptr));
   }
 }
+
+BOOST_AUTO_TEST_CASE(test_check) { auto l_func = std::make_shared<http::model_library::assets_put>(); }
 
 BOOST_AUTO_TEST_SUITE_END()
