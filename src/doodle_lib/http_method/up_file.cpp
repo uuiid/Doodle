@@ -21,7 +21,7 @@
 namespace doodle::http {
 
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");

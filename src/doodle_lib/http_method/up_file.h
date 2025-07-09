@@ -39,7 +39,7 @@ class up_file_asset_base : public http_jwt_fun_template<capture_id_t> {
  public:
   using http_jwt_fun_template<capture_id_t>::http_jwt_fun_template;
   boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-      session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+      session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
   ) override;
 };
 class up_file_asset : public up_file_asset_base {
