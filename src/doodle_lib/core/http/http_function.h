@@ -141,6 +141,7 @@ class url_route_component_t {
   std::shared_ptr<void> create_object() const;
   std::vector<std::shared_ptr<component_base_t>>& component_vector() { return component_vector_; }
   const std::vector<std::shared_ptr<component_base_t>>& component_vector() const { return component_vector_; }
+  const std::type_index& object_type() const { return object_type_; }
 
   url_route_component_t() = default;
 
