@@ -16,37 +16,6 @@
 #include "http_route.h"
 
 namespace doodle::http {
-struct capture_t {
-  std::map<std::string, std::string> capture_map_;
-  capture_t() = default;
-
-  explicit capture_t(std::map<std::string, std::string> in_map) : capture_map_(std::move(in_map)) {}
-
-  inline std::string get(const std::string& in_str) const {
-    if (!capture_map_.contains(in_str))
-      throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求参数错误"});
-    return capture_map_.at(in_str);
-  }
-  inline uuid get_uuid(const std::string& in_str = "id") const {
-    if (!capture_map_.contains(in_str))
-      throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求参数错误"});
-    return from_uuid_str(capture_map_.at(in_str));
-  }
-
-  template <typename T>
-    requires std::is_arithmetic_v<T>
-  std::optional<T> get(const std::string& in_str) const {
-    if (capture_map_.find(in_str) != capture_map_.end()) {
-      try {
-        return boost::lexical_cast<T>(capture_map_.at(in_str));
-      } catch (const boost::bad_lexical_cast& in_err) {
-        default_logger_raw()->log(log_loc(), level::err, "get arithmetic error: {}", in_err.what());
-        return {};
-      }
-    }
-    return {};
-  }
-};
 
 struct capture_id_t {
   uuid id_;
