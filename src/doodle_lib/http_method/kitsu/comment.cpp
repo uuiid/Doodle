@@ -14,21 +14,22 @@
 #include "kitsu.h"
 namespace doodle::http {
 namespace {}
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   auto l_person                      = get_person(in_handle);
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
-  auto l_task_id         = from_uuid_str(in_handle->capture_->get("task_id"));
   l_comment->uuid_id_    = core_set::get_set().get_uuid();
   l_comment->created_at_ = chrono::system_clock::now();
   l_comment->updated_at_ = chrono::system_clock::now();
   l_comment->person_id_  = l_person->person_.uuid_id_;
-  l_comment->object_id_  = l_task_id;
+  l_comment->object_id_  = in_arg->id_;
 
   auto l_sql             = g_ctx().get<sqlite_database>();
-  auto l_task            = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
+  auto l_task            = std::make_shared<task>(l_sql.get_by_uuid<task>(in_arg->id_));
   auto l_task_status     = l_sql.get_by_uuid<task_status>(l_comment->task_status_id_);
   l_task_status.check_retake_capping(*l_task);
   std::vector<attachment_file> l_attachment_files{};
@@ -135,14 +136,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
   co_return in_handle->make_msg(l_r);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delete_::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delete_::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<task_comment_arg>& in_arg
 ) {
   auto l_sql    = g_ctx().get<sqlite_database>();
-  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_handle->capture_->get_uuid("task_id")));
+  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_arg->task_id_));
   auto l_person = get_person(in_handle);
   l_person->check_delete_access(l_task->project_id_);
-  co_await l_sql.remove<comment>(in_handle->capture_->get_uuid("comment_id"));
+  co_await l_sql.remove<comment>(in_arg->comment_id_);
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {
     auto l_task_status         = l_sql.get_by_uuid<task_status>(l_task->task_status_id_);
@@ -155,11 +156,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delet
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::callback(session_data_ptr in_handle) {
-  auto l_json       = in_handle->get_json();
-  auto l_comment_id = from_uuid_str(in_handle->capture_->get("comment_id"));
-  auto l_sql        = g_ctx().get<sqlite_database>();
-  auto l_comment    = std::make_shared<comment>(l_sql.get_by_uuid<comment>(l_comment_id));
+boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
+  auto l_json    = in_handle->get_json();
+  auto l_sql     = g_ctx().get<sqlite_database>();
+  auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(in_arg->id_));
   l_json.get_to(*l_comment);
   l_comment->updated_at_ = chrono::system_clock::now();
   co_await l_sql.install(l_comment);

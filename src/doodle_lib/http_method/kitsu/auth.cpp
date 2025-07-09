@@ -76,7 +76,7 @@ struct auth_reset_password_put_arg {
 }  // namespace
 void auth_reset_password_post::init() { g_ctx().emplace<auth_reset_password_cache>(); }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_post::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_post::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_email = in_handle->get_json()["email"].get<std::string>();
@@ -108,7 +108,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
 
   co_return in_handle->make_msg(nlohmann::json{{"success", "Reset token sent"}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_put::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_put::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_arg   = in_handle->get_json().get<auth_reset_password_put_arg>();

@@ -313,27 +313,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
 ) override;
 DOODLE_HTTP_FUN_END()
 // /api/pictures/thumbnails/organisations/{id}
-DOODLE_HTTP_FUN(pictures_thumbnails_organisations, get, ucom_t{} / "api" / "pictures" / "thumbnails" / "organisations" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(pictures_thumbnails_organisations, get, ucom_t{} / "api" / "pictures" / "thumbnails" / "organisations" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // /api/pictures/thumbnails-square/preview-files/{id}
 DOODLE_HTTP_FUN(
-    pictures_thumbnails_square_preview_files, get, ucom_t{} / "api" / "pictures" / "thumbnails-square" / "preview-files" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>
+    pictures_thumbnails_square_preview_files, get, ucom_t{} / "api" / "pictures" / "thumbnails-square" / "preview-files" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_), http_jwt_fun_template<capture_id_t>
 )
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // /api/pictures/thumbnails/preview-files/{id}
-DOODLE_HTTP_FUN(pictures_thumbnails_preview_files, get, ucom_t{} / "api" / "pictures" / "thumbnails" / "preview-files" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(pictures_thumbnails_preview_files, get, ucom_t{} / "api" / "pictures" / "thumbnails" / "preview-files" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // /api/pictures/thumbnails/persons/{id}
-DOODLE_HTTP_FUN(pictures_thumbnails_persons, get, ucom_t{} / "api" / "pictures" / "thumbnails" / "persons" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(pictures_thumbnails_persons, get, ucom_t{} / "api" / "pictures" / "thumbnails" / "persons" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
@@ -358,7 +358,7 @@ struct data_attachment_files_file_arg {
   uuid id_;
   uuid file_name_;
 };
-DOODLE_HTTP_FUN(data_attachment_files_file, get, (ucom_t{} / "api" / "data" / "attachment-files" / &data_attachment_files_file_arg::id_ / "file" / {fmt::format("{}.png", g_uuid_regex), &data_attachment_files_file_arg::file_name_}), http_jwt_fun_template<data_attachment_files_file_arg>)
+DOODLE_HTTP_FUN(data_attachment_files_file, get, (ucom_t{} / "api" / "data" / "attachment-files" / &data_attachment_files_file_arg::id_ / "file" / make_cap(fmt::format("{}.png", g_uuid_regex), &data_attachment_files_file_arg::file_name_)), http_jwt_fun_template<data_attachment_files_file_arg>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<data_attachment_files_file_arg>& in_arg
 ) override;

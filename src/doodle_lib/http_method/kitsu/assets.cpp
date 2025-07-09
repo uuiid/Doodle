@@ -37,14 +37,14 @@ struct projects_assets_new_post_data {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<projects_assets_new_arg>& in_arg
 ) {
   auto l_ptr = get_person(in_handle);
   projects_assets_new_post_data l_data{};
-  l_data.project_id = from_uuid_str(in_handle->capture_->get("project_id"));
+  l_data.project_id = in_arg->project_id;
   l_ptr->is_project_manager(l_data.project_id);
-  l_data.asset_type_id = from_uuid_str(in_handle->capture_->get("asset_type_id"));
+  l_data.asset_type_id = in_arg->asset_type_id;
   in_handle->get_json().get_to(l_data);
 
   auto l_entity = std::make_shared<entity>(entity{
@@ -255,23 +255,24 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::callback_arg(session_data_ptr in_handle) {
   auto l_ptr = get_person(in_handle);
   uuid l_prj_id{};
   for (auto&& l_i : in_handle->url_.params())
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
   co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(l_ptr->person_, l_prj_id, {})).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback(session_data_ptr in_handle) {
-  auto l_ptr      = get_person(in_handle);
-  auto l_asset_id = in_handle->capture_->get_uuid("asset_id");
-  auto&& l_sql    = g_ctx().get<sqlite_database>();
-  auto l_t        = with_tasks_sql_query(l_ptr->person_, {}, l_asset_id);
+boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
+  auto l_ptr   = get_person(in_handle);
+  auto&& l_sql = g_ctx().get<sqlite_database>();
+  auto l_t     = with_tasks_sql_query(l_ptr->person_, {}, in_arg->id_);
   if (l_t.empty())
     throw_exception(
-        http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", l_asset_id)}
+        http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", in_arg->id_)}
     );
-  auto l_ass                = l_sql.get_by_uuid<entity>(l_asset_id);
+  auto l_ass                = l_sql.get_by_uuid<entity>(in_arg->id_);
   auto l_project            = l_sql.get_by_uuid<project>(l_ass.project_id_);
   auto l_ass_type           = l_sql.get_by_uuid<asset_type>(l_ass.entity_type_id_);
 
@@ -284,15 +285,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get:
   co_return in_handle->make_msg(l_json);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   get_person(in_handle);
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   auto l_ptr = get_person(in_handle);
   auto l_sql = g_ctx().get<sqlite_database>();
-  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_handle->capture_->get_uuid()));
+  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_arg->id_));
   l_ptr->check_delete_access(l_ass->project_id_);
   bool l_force{};
   for (auto&& l_i : in_handle->url_.params()) {

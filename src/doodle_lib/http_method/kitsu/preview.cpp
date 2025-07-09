@@ -12,26 +12,24 @@
 #include "kitsu_reg_url.h"
 #include <opencv2/opencv.hpp>
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment_add_preview_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> task_comment_add_preview_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<task_comment_add_preview_arg>& in_arg
 ) {
-  auto l_person     = get_person(in_handle);
-  auto l_task_id    = in_handle->capture_->get_uuid("task_id");
-  auto l_comment_id = in_handle->capture_->get_uuid("comment_id");
-  l_person->check_task_action_access(l_task_id);
-  auto l_sql                       = g_ctx().get<sqlite_database>();
+  auto l_person = get_person(in_handle);
+  l_person->check_task_action_access(in_arg->task_id);
+  auto l_sql      = g_ctx().get<sqlite_database>();
 
-  auto l_comment                   = l_sql.get_by_uuid<comment>(l_comment_id);
-  auto l_task                      = l_sql.get_by_uuid<task>(l_task_id);
-  auto l_revision                  = in_handle->get_json().value("revision", 0);
-  auto l_position                  = l_revision == 0
-                                         ? (l_sql.has_preview_file(l_task_id) ? l_sql.get_next_position(l_task_id, l_revision)
-                                                                              : l_sql.get_next_preview_revision(l_task_id))
-                                         : l_sql.get_next_position(l_task_id, l_revision);
+  auto l_comment  = l_sql.get_by_uuid<comment>(in_arg->comment_id);
+  auto l_task     = l_sql.get_by_uuid<task>(in_arg->task_id);
+  auto l_revision = in_handle->get_json().value("revision", 0);
+  auto l_position =
+      l_revision == 0 ? (l_sql.has_preview_file(in_arg->task_id) ? l_sql.get_next_position(in_arg->task_id, l_revision)
+                                                                 : l_sql.get_next_preview_revision(in_arg->task_id))
+                      : l_sql.get_next_position(in_arg->task_id, l_revision);
   auto l_preview_file              = std::make_shared<preview_file>();
   l_preview_file->uuid_id_         = core_set::get_set().get_uuid();
   l_preview_file->revision_        = l_revision;
-  l_preview_file->task_id_         = l_task_id;
+  l_preview_file->task_id_         = in_arg->task_id;
   l_preview_file->person_id_       = l_person->person_.uuid_id_;
   l_preview_file->position_        = l_position;
   l_preview_file->name_            = fmt::to_string(l_preview_file->uuid_id_).substr(0, 13);
@@ -41,7 +39,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_add_p
   l_preview_file->created_at_      = chrono::system_clock::now();
   l_preview_file->updated_at_      = chrono::system_clock::now();
   auto l_preview_link              = std::make_shared<comment_preview_link>();
-  l_preview_link->comment_id_      = l_comment_id;
+  l_preview_link->comment_id_      = in_arg->comment_id;
   l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;
 
   co_await l_sql.install(l_preview_file);
@@ -98,12 +96,11 @@ void save_variants(const FSys::path& in_path, const uuid& in_id) {
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files_post::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files_post::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
-  auto l_preview_file =
-      std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(in_handle->capture_->get_uuid()));
+  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(in_arg->id_));
   if (!l_preview_file->original_name_.empty())
     throw_exception(
         http_request_error{
@@ -149,12 +146,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   }
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview_put::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview_put::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
   auto l_person       = get_person(in_handle);
   auto l_sql          = g_ctx().get<sqlite_database>();
-  auto l_preview_file = l_sql.get_by_uuid<preview_file>(in_handle->capture_->get_uuid());
+  auto l_preview_file = l_sql.get_by_uuid<preview_file>(in_arg->id_);
 
   std::int32_t l_frame_number;
   if (auto l_json = in_handle->get_json(); l_json.contains("frame_number") && l_json["frame_number"].is_number()) {

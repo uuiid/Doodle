@@ -19,7 +19,7 @@
 #include "kitsu.h"
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links_post::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links_post::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_person           = get_person(in_handle);
@@ -35,10 +35,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
   co_return in_handle->make_msg(nlohmann::json{} = *l_task_status_link);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   auto l_person = get_person(in_handle);
   auto l_sql    = g_ctx().get<sqlite_database>();
-  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_handle->capture_->get_uuid()));
+  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_arg->id_));
   l_person->check_task_action_access(*l_task);
   in_handle->get_json().get_to(*l_task);
   co_await l_sql.install(l_task);
@@ -46,12 +48,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::ca
   co_return in_handle->make_msg(nlohmann::json{} = *l_task);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign_put::callback(
-    session_data_ptr in_handle
+boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign_put::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) {
   auto l_person      = get_person(in_handle);
   auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_person_data = l_sql.get_by_uuid<person>(in_handle->capture_->get_uuid());
+  auto l_person_data = l_sql.get_by_uuid<person>(in_arg->id_);
   auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
   nlohmann::json l_ret{};
   for (auto&& l_task_id : l_task_ids) {
@@ -76,7 +78,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   co_return in_handle->make_msg(l_ret);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_get::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_get::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_ptr = get_person(in_handle);
@@ -85,7 +87,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks_ge
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks_get::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks_get::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_ptr = get_person(in_handle);
@@ -93,7 +95,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tas
   auto l_p1  = sql.get_person_tasks(l_ptr->person_, true);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get::callback_arg(
+    session_data_ptr in_handle
+) {
   auto l_ptr = get_person(in_handle);
 
   switch (l_ptr->person_.role_) {
@@ -113,13 +117,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get
   auto l_p1 = sql.get_preson_tasks_to_check(l_ptr->person_);
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   get_person(in_handle);
-  auto l_task_id = from_uuid_str(in_handle->capture_->get("task_id"));
-
-  auto& sql      = g_ctx().get<sqlite_database>();
+  auto& sql = g_ctx().get<sqlite_database>();
   nlohmann::json l_r{};
-  l_r = sql.get_comments(l_task_id);
+  l_r = sql.get_comments(in_arg->id_);
   co_return in_handle->make_msg(l_r);
 }
 namespace {
@@ -302,7 +306,7 @@ struct data_tasks_open_tasks_get_args {
 };
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_tasks_get::callback(
+boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_tasks_get::callback_arg(
     session_data_ptr in_handle
 ) {
   auto l_ptr = get_person(in_handle);

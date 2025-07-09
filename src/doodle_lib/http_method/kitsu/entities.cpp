@@ -10,10 +10,12 @@
 
 namespace doodle::http {
 namespace {}
-boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put::callback(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put::callback_arg(
+    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+) {
   auto l_p    = get_person(in_handle);
   auto l_sql  = g_ctx().get<sqlite_database>();
-  auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_handle->capture_->get_uuid()));
+  auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_arg->id_));
   auto l_json = in_handle->get_json();
 
   l_json.get_to(*l_entt);
