@@ -149,12 +149,21 @@ class url_route_component_t {
     return *this;
   }
   url_route_component_t& operator/(const std::shared_ptr<component_base_t>& in_ptr);
+
   template <typename Member_Pointer>
-  static auto make_component(std::string&& in_str, Member_Pointer in_target) {
+    requires std::is_member_pointer_v<Member_Pointer>
+  url_route_component_t& operator/(Member_Pointer in_target) {
+    return operator/(make_cap(g_uuid_regex, in_target));
+  }
+
+  template <typename Member_Pointer>
+    requires std::is_member_pointer_v<Member_Pointer>
+  static auto make_cap(std::string&& in_str, Member_Pointer in_target) {
     return std::make_shared<component_t<Member_Pointer>>(std::move(in_str), in_target);
   }
   template <typename Member_Pointer>
-  static auto make_component(const std::string_view& in_str, Member_Pointer in_target) {
+    requires std::is_member_pointer_v<Member_Pointer>
+  static auto make_cap(const std::string_view& in_str, Member_Pointer in_target) {
     return make_component<Member_Pointer>(std::string{in_str}, in_target);
   }
 };
@@ -212,7 +221,7 @@ class http_function : public http_function_base_t {
   std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
 #define DOODLE_HTTP_FUN_TEMPLATE(base_fun)                                                                        \
-  template <typename Capture_T>                                                                                   \
+  template <typename Capture_T = capture_id_t>                                                                    \
   class BOOST_PP_CAT(base_fun, _template) : public base_fun {                                                     \
     boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
       return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));                   \
