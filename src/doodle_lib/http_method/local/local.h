@@ -19,18 +19,18 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(task, post, ucom_t{} / "api" / "doodle" / "task", http_function_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task, patch, ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
+DOODLE_HTTP_FUN(task, patch, ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
-DOODLE_HTTP_FUN(task, delete_, ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
+DOODLE_HTTP_FUN(task, delete_, ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/task/{id}"
-DOODLE_HTTP_FUN(task_instance, get, ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
+DOODLE_HTTP_FUN(task_instance, get, ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
 ) override;
@@ -38,7 +38,7 @@ DOODLE_HTTP_FUN_END()
 //"api/doodle/task/{id}/restart"
 DOODLE_HTTP_FUN(
     task_instance_restart, post,
-    ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_) / "restart",
+    ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_) / "restart",
     http_function_template<capture_id_t>
 )
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
@@ -48,7 +48,7 @@ DOODLE_HTTP_FUN_END()
 // "api/doodle/task/{id}/log"
 DOODLE_HTTP_FUN(
     task_instance_log, get,
-    ucom_t{}.ro<capture_id_t>() / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_) / "log",
+    ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_) / "log",
     http_function_template<capture_id_t>
 )
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
