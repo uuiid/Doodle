@@ -90,6 +90,8 @@ class url_route_component_t {
     std::tuple<bool, uuid> convert_uuid(const std::string& in_str) const;
     std::tuple<bool, chrono::year_month> convert_year_month(const std::string& in_str) const;
     std::tuple<bool, chrono::year_month_day> convert_year_month_day(const std::string& in_str) const;
+    virtual const std::type_info& get_type() const { return typeid(void); }
+    virtual std::function<std::shared_ptr<void>()> create_object() const { return {}; }
   };
   // 组件转换
   template <typename T>
@@ -109,6 +111,10 @@ class url_route_component_t {
       if (l_result) *std::static_pointer_cast<object_type>(in_obj).*member_pointer_ = l_value;
       return l_result;
     }
+    std::function<std::shared_ptr<void>()> create_object() const override {
+      return [] { return std::make_shared<object_type>(); };
+    }
+    const std::type_info& get_type() const override { return typeid(object_type); }
 
     template <typename T1>
     T1 convert(const std::string& in_str) const;
@@ -129,6 +135,7 @@ class url_route_component_t {
  private:
   std::vector<std::shared_ptr<component_base_t>> component_vector_{};
   std::function<std::shared_ptr<void>()> create_object_{};
+  std::type_index object_type_{typeid(void)};
 
  public:
   std::shared_ptr<void> create_object() const;
@@ -137,20 +144,11 @@ class url_route_component_t {
 
   url_route_component_t() = default;
 
-  template <typename Object>
-  url_route_component_t& ro() {
-    create_object_ = []() { return std::make_shared<Object>(); };
-    return *this;
-  }
-
   url_route_component_t& operator/(std::string&& in_str) {
     component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
     return *this;
   }
-  url_route_component_t& operator/(const std::shared_ptr<component_base_t>& in_ptr) {
-    component_vector_.push_back(in_ptr);
-    return *this;
-  }
+  url_route_component_t& operator/(const std::shared_ptr<component_base_t>& in_ptr);
   template <typename Member_Pointer>
   static auto make_component(std::string&& in_str, Member_Pointer in_target) {
     return std::make_shared<component_t<Member_Pointer>>(std::move(in_str), in_target);
@@ -215,7 +213,7 @@ class http_function : public http_function_base_t {
 };
 #define DOODLE_HTTP_FUN_TEMPLATE(base_fun)                                                                        \
   template <typename Capture_T>                                                                                   \
-  class BOOST_PP_CAT(base_fun, _template) : public base_fun {                                                            \
+  class BOOST_PP_CAT(base_fun, _template) : public base_fun {                                                     \
     boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
       return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));                   \
     }                                                                                                             \

@@ -9,8 +9,12 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 namespace doodle::http {
-bool url_route_component_t::component_base_t::match(const std::string& in_str) const { return std::regex_match(in_str, regex_); }
-bool url_route_component_t::component_base_t::set(const std::string& in_str, const std::shared_ptr<void>& in_obj) const {
+bool url_route_component_t::component_base_t::match(const std::string& in_str) const {
+  return std::regex_match(in_str, regex_);
+}
+bool url_route_component_t::component_base_t::set(
+    const std::string& in_str, const std::shared_ptr<void>& in_obj
+) const {
   return std::regex_match(in_str, regex_);
 }
 std::tuple<bool, uuid> url_route_component_t::component_base_t::convert_uuid(const std::string& in_str) const {
@@ -56,6 +60,17 @@ std::shared_ptr<void> url_route_component_t::create_object() const {
     return create_object_();
   }
   return {};
+}
+
+url_route_component_t& url_route_component_t::operator/(const std::shared_ptr<component_base_t>& in_ptr) {
+  if (!create_object_) {
+    create_object_ = in_ptr->create_object();
+    object_type_   = in_ptr->get_type();
+  }
+  if (object_type_ != in_ptr->get_type()) throw std::runtime_error("url route component type mismatch");
+
+  component_vector_.push_back(in_ptr);
+  return *this;
 }
 
 void http_function_base_t::websocket_init(session_data_ptr in_handle) {}
