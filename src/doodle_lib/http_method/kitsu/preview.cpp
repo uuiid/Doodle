@@ -13,7 +13,7 @@
 #include <opencv2/opencv.hpp>
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment_add_preview_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<task_comment_add_preview_arg>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<task_comment_add_preview_arg> in_arg
 ) {
   auto l_person = get_person(in_handle);
   l_person->check_task_action_access(in_arg->task_id);
@@ -97,7 +97,7 @@ void save_variants(const FSys::path& in_path, const uuid& in_id) {
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(in_arg->id_));
@@ -147,7 +147,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_person       = get_person(in_handle);
   auto l_sql          = g_ctx().get<sqlite_database>();

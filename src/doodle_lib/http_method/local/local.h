@@ -21,18 +21,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(sessi
 DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(task, patch, ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(task, delete_, ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/task/{id}"
 DOODLE_HTTP_FUN(task_instance, get, ucom_t{} / "api" / "doodle" / "task" / make_cap(g_uuid_regex, &capture_id_t::id_), http_function_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 //"api/doodle/task/{id}/restart"
@@ -42,7 +42,7 @@ DOODLE_HTTP_FUN(
     http_function_template<capture_id_t>
 )
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/task/{id}/log"
@@ -52,7 +52,7 @@ DOODLE_HTTP_FUN(
     http_function_template<capture_id_t>
 )
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/video/thumbnail"

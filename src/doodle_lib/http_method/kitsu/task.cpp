@@ -36,7 +36,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_person = get_person(in_handle);
   auto l_sql    = g_ctx().get<sqlite_database>();
@@ -49,7 +49,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_put::ca
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_person      = get_person(in_handle);
   auto l_sql         = g_ctx().get<sqlite_database>();
@@ -118,7 +118,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check_get
   co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   get_person(in_handle);
   auto& sql = g_ctx().get<sqlite_database>();

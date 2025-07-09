@@ -38,7 +38,7 @@ struct projects_assets_new_post_data {
 };
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<projects_assets_new_arg>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<projects_assets_new_arg> in_arg
 ) {
   auto l_ptr = get_person(in_handle);
   projects_assets_new_post_data l_data{};
@@ -263,7 +263,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::ca
   co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(l_ptr->person_, l_prj_id, {})).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr   = get_person(in_handle);
   auto&& l_sql = g_ctx().get<sqlite_database>();
@@ -286,14 +286,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get:
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   get_person(in_handle);
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr = get_person(in_handle);
   auto l_sql = g_ctx().get<sqlite_database>();

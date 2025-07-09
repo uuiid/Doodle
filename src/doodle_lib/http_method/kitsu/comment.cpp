@@ -15,7 +15,7 @@
 namespace doodle::http {
 namespace {}
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_person                      = get_person(in_handle);
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
@@ -137,7 +137,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post:
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delete_::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<task_comment_arg>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<task_comment_arg> in_arg
 ) {
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_arg->task_id_));
@@ -157,7 +157,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delet
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_json    = in_handle->get_json();
   auto l_sql     = g_ctx().get<sqlite_database>();

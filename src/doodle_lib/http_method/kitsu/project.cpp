@@ -57,7 +57,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::c
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
   auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_);
@@ -67,7 +67,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_get::callb
   co_return in_handle->make_msg(nlohmann::json{l_list});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr     = get_person(in_handle);
   auto l_sql     = g_ctx().get<sqlite_database>();
@@ -89,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::ca
   co_return in_handle->make_msg(nlohmann::json{*l_prj}.dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
   auto l_json = in_handle->get_json();
@@ -107,7 +107,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
   co_return in_handle->make_msg(nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_)});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_delete_::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<project_settings_task_types_arg>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<project_settings_task_types_arg> in_arg
 ) {
   auto l_ptr = get_person(in_handle);
   l_ptr->is_project_manager(in_arg->project_id_);
@@ -118,7 +118,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_status_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
   auto l_json = in_handle->get_json();
@@ -132,7 +132,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
   co_return in_handle->make_msg(nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_)});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_asset_types_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
   auto l_json = in_handle->get_json();
@@ -145,7 +145,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_a
   co_return in_handle->make_msg(nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_)});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<actions_create_tasks_arg>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<actions_create_tasks_arg> in_arg
 ) {
   auto l_ptr       = get_person(in_handle);
   auto& l_sql      = g_ctx().get<sqlite_database>();

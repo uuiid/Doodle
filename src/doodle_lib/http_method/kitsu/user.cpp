@@ -72,7 +72,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_put::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr    = get_person(in_handle);
   auto l_sql    = g_ctx().get<sqlite_database>();

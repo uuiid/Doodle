@@ -318,7 +318,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_);
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
@@ -348,7 +348,7 @@ void task_get::init_ctx() {
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_path =
       core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", in_arg->id_);
@@ -359,7 +359,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log_
   co_return in_handle->make_msg(l_path, l_mime);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_delete_::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_);
   if (l_list.status_ == server_task_info_status::running) {
@@ -371,7 +371,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_delete_::call
   co_return in_handle->make_msg(nlohmann::json{});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance_restart_post::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr =
       std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_));
@@ -423,7 +423,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_post::callbac
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_patch::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<capture_id_t>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_server_task_info =
       std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(in_arg->id_));

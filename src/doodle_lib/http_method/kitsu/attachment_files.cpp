@@ -10,7 +10,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_files_file_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<data_attachment_files_file_arg>& in_arg
+    session_data_ptr in_handle, std::shared_ptr<data_attachment_files_file_arg> in_arg
 ) {
   auto l_sql             = g_ctx().get<sqlite_database>();
   auto l_attachment_file = l_sql.get_by_uuid<attachment_file>(in_arg->id_);
