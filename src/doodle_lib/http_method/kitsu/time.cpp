@@ -16,9 +16,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_time_spe
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> person_day_off_get::callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<data_user_time_spents_arg>& in_arg
+    session_data_ptr in_handle, const std::shared_ptr<person_day_off_arg>& in_arg
 ) {
-  co_return in_handle->make_msg("{}");
+  co_return in_handle->make_msg(nlohmann::json::object());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> person_day_off_all_get::callback_arg(

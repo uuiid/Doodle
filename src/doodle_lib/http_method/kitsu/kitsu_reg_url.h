@@ -272,9 +272,9 @@ struct person_day_off_arg {
   chrono::year_month date_;
 };
 // api/data/persons/{person_id}/day-offs/{date}
-DOODLE_HTTP_FUN(person_day_off, get, ucom_t{} / "api" / "data" / "persons" / &person_day_off_arg::id_ / "day-offs" / &person_day_off_arg::date_, http_jwt_fun_template<data_user_time_spents_arg>)
+DOODLE_HTTP_FUN(person_day_off, get, ucom_t{} / "api" / "data" / "persons" / &person_day_off_arg::id_ / "day-offs" / &person_day_off_arg::date_, http_jwt_fun_template<person_day_off_arg>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
-    session_data_ptr in_handle, const std::shared_ptr<data_user_time_spents_arg>& in_arg
+    session_data_ptr in_handle, const std::shared_ptr<person_day_off_arg>& in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // api/data/persons/{person_id}/day-offs
