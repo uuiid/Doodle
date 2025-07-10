@@ -65,7 +65,7 @@ class socket_io_http_get : public socket_io_http_base_fun {
 
     auto l_event = co_await l_sid_data->async_event();
     // default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
-    co_return in_handle->make_msg(std::move(l_event));
+    co_return in_handle->make_msg(std::move(l_event), "text/plain; charset=UTF-8");
   }
 
   [[nodiscard]] bool has_websocket() const override { return true; }
@@ -105,7 +105,7 @@ class socket_io_http_post : public socket_io_http_base_fun {
         l_sid_data->update_sid_time();
         co_return in_handle->make_msg(std::string{});
         break;
-      case engine_io_packet_type::message:// 消息在切换结束后解析
+      case engine_io_packet_type::message:  // 消息在切换结束后解析
         break;
       case engine_io_packet_type::close:
         l_sid_data->close();
