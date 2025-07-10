@@ -79,7 +79,8 @@ DOODLE_HTTP_FUN_CONST(
 DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN_CONST(
-    pictures, get, ucom_t{} / "api" / "doodle" / "pictures" / make_cap(g_uuid_regex, &capture_id_t::id_),
+    pictures, get,
+    ucom_t{} / "api" / "doodle" / "pictures" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_),
     model_library::pictures_base, const FSys::path in_root
 ) {
   root_ = std::make_shared<FSys::path>(in_root / "previews");
@@ -89,7 +90,8 @@ DOODLE_HTTP_FUN_END()
 // "api/doodle/pictures/thumbnails/{id}"
 DOODLE_HTTP_FUN_CONST(
     pictures_thumbnails, get,
-    ucom_t{} / "api" / "doodle" / "pictures" / "thumbnails" / make_cap(g_uuid_regex, &capture_id_t::id_),
+    ucom_t{} / "api" / "doodle" / "pictures" / "thumbnails" /
+        make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_),
     model_library::pictures_base, const FSys::path in_root
 ) {
   root_ = std::make_shared<FSys::path>(in_root / "thumbnails");

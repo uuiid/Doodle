@@ -94,7 +94,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 ) {
   FSys::path l_path = *root_;
 
-  l_path /= fmt::to_string(in_arg->id_);
+  l_path /= fmt::format("{}.png",in_arg->id_);
   if (auto l_new_path = FSys::split_uuid_path(l_path.filename()); FSys::exists(l_new_path)) l_path = l_new_path;
 
   if (!FSys::exists(l_path)) {
