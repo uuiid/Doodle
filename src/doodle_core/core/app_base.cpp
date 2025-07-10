@@ -123,6 +123,7 @@ void app_base::stop_app(std::int32_t in_exit_code) {
   on_stop();
   facets_.clear();
   if (sig_ptr) sig_ptr->cancel();
+  g_io_context().stop();
 }
 
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }

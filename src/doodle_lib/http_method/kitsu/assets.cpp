@@ -62,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   auto l_sql    = g_ctx().get<sqlite_database>();
   co_await l_sql.install(l_entity);
   socket_io::broadcast(
-      "asset:new", nlohmann::json{{"id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}}
+      "asset:new", nlohmann::json{{"id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}}, "events"
   );
   co_return in_handle->make_msg((nlohmann::json{} = *l_entity).dump());
 }
