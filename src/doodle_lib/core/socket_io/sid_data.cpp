@@ -39,7 +39,14 @@ boost::asio::awaitable<void> sid_data::impl_run() {
 }
 
 boost::asio::awaitable<std::string> sid_data::async_event() {
-  auto l_str = co_await channel_.async_receive(boost::asio::use_awaitable);
+  boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
+  l_timer.expires_at(last_time_.load() + ctx_->handshake_data_.ping_timeout_);
+  auto [l_arr, l_ec1, l_str, l_ec2] =
+      co_await boost::asio::experimental::parallel_group(
+          channel_.async_receive(boost::asio::deferred), l_timer.async_wait(boost::asio::deferred)
+      )
+          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
+
   co_return l_str;
 }
 void sid_data::set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket) {

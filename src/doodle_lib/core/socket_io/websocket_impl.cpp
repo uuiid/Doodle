@@ -29,6 +29,7 @@ socket_io_websocket_core::socket_io_websocket_core(
 std::string socket_io_websocket_core::generate_register_reply() {
   auto l_hd = sid_ctx_->handshake_data_;
   sid_data_ = sid_ctx_->generate();
+  sid_data_->run();
   l_hd.sid_ = sid_data_->get_sid();
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
