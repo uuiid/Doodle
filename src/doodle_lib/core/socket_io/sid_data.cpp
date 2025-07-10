@@ -43,6 +43,7 @@ boost::asio::awaitable<std::string> sid_data::async_event() {
   } catch (const boost::system::system_error& e) {
     if (e.code() != boost::asio::error::operation_aborted) default_logger_raw()->log(log_loc(), level::err, e.what());
   }
+  if (auto l_str = last_event_[event_index_]; l_data->empty() && !l_str.empty()) *l_data = l_str;
   co_return l_data->empty() ? dump_message({}, close_ ? engine_io_packet_type::noop : engine_io_packet_type::ping)
                             : *l_data;
 }
@@ -68,17 +69,21 @@ std::string sid_data::connect_namespace(const std::string& in_namespace) {
 }
 
 std::string sid_data::parse_socket_io(socket_io_packet& in_body) {
+  std::int8_t l_current_index = !event_index_;
   if (!ctx_->has_register(in_body.namespace_)) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
     auto l_str         = in_body.dump();
     socket_io_signal_(l_str);
+    set_last_event(l_str);
     return l_str;
   }
 
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      return connect_namespace(in_body.namespace_);
+      auto l_str = connect_namespace(in_body.namespace_);
+      set_last_event(l_str);
+      return l_str;
       break;
     }
     case socket_io_packet_type::disconnect:
@@ -103,6 +108,13 @@ std::string sid_data::parse_socket_io(socket_io_packet& in_body) {
     case socket_io_packet_type::binary_ack:
       break;
   }
+  set_last_event({});
   return {};
 }
+void sid_data::set_last_event(const std::string& in_event) {
+  std::int8_t l_current_index  = !event_index_;
+  last_event_[l_current_index] = in_event;
+  event_index_                 = l_current_index;
+}
+
 }  // namespace doodle::socket_io

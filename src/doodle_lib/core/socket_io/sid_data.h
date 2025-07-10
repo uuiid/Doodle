@@ -47,6 +47,7 @@ class sid_data {
   std::string connect_namespace(const std::string& in_namespace);
 
  private:
+  void set_last_event(const std::string& in_event);
   struct lock_type {
     sid_data* data_;
     explicit lock_type(sid_data* in_data) : data_{in_data} { ++data_->lock_count_; }
@@ -60,6 +61,8 @@ class sid_data {
   std::atomic_int lock_count_;
   std::atomic_bool close_;
   socket_io_websocket_core_wptr websocket_;
+  std::array<std::string, 2> last_event_;
+  std::atomic_int8_t event_index_;
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   boost::signals2::signal<void(const std::string&)> socket_io_signal_{};
