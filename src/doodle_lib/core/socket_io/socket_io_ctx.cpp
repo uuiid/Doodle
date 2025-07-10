@@ -27,7 +27,7 @@ sid_ctx::sid_ctx()
 void sid_ctx::clear_timeout_sid() {
   std::unique_lock l_lock{mutex_};
   for (auto it = sid_map_.begin(); it != sid_map_.end();) {
-    if (it->second->is_timeout()) {
+    if (it->second.expired()) {
       it = sid_map_.erase(it);
     } else {
       ++it;
