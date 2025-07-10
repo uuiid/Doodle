@@ -10,6 +10,7 @@
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
@@ -60,6 +61,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
 
   auto l_sql    = g_ctx().get<sqlite_database>();
   co_await l_sql.install(l_entity);
+  socket_io::broadcast(
+      "asset:new", nlohmann::json{{"id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}}
+  );
   co_return in_handle->make_msg((nlohmann::json{} = *l_entity).dump());
 }
 
