@@ -177,7 +177,7 @@ bool kitsu_supplement_main::init() {
           "ZSI6ImFjY2VzcyIsInN1YiI6ImU5OWMyNjZhLTk1ZjUtNDJmNS1hYmUxLWI0MTlkMjk4MmFiMCIsIm5iZiI6MTcxNzU1MDUxMywiZXhwIjox"
           "NzY0NjMzNjAwLCJpZGVudGl0eV90eXBlIjoiYm90In0.xLV17bMK8VH0qavV4Ttbi43RhaBqpc1LtTUbRwu1684",
       .kitsu_front_end_path_  = "D:/kitsu/dist",
-      .kitsu_thumbnails_path_ = "//192.168.10.242/TD_Data",
+      .kitsu_thumbnails_path_ = "D:/kitsu_data",
       .secret_                = "22T0iwSHK7qkhdI6",
       .domain_protocol_       = "http",
       .domain_name_           = "192.168.10.181",
