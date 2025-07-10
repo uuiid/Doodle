@@ -47,7 +47,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   sid_lock_ = sid_data_->get_lock();
 
   boost::asio::co_spawn(
-      co_await boost::asio::this_coro::executor, async_ping_pong(),
+      co_await boost::asio::this_coro::executor, async_write(),
       boost::asio::consign(boost::asio::detached, shared_from_this())
   );
 
@@ -60,7 +60,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     if (l_ec_r == boost::beast::websocket::error::closed) co_return;
     if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
 
-    if (co_await parse_engine_io(l_body)) continue;
+    if (sid_data_->handle_engine_io(l_body)) continue;
     auto l_socket_io = socket_io_packet::parse(l_body);
     /// 解析二进制数据
     for (int i = 0; i < l_socket_io.binary_count_; ++i) {
@@ -72,47 +72,16 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
       l_socket_io.binary_data_.emplace_back(l_body);
     }
-    if (auto l_str = sid_data_->parse_socket_io(l_socket_io); !l_str.empty()) co_await async_write_websocket(l_str);
+    sid_data_->handle_socket_io(l_socket_io);
   }
   socket_io_contexts_.clear();
 }
 
-boost::asio::awaitable<bool> socket_io_websocket_core::parse_engine_io(std::string& in_body) {
-  switch (auto l_engine_packet = parse_engine_packet(in_body); l_engine_packet) {
-    case engine_io_packet_type::ping:
-      sid_data_->update_sid_time();
-      in_body.erase(0, 1);
-      co_await async_write_websocket(dump_message(in_body, engine_io_packet_type::pong));
-      break;
-    case engine_io_packet_type::pong:
-      sid_data_->update_sid_time();
-
-      break;
-    case engine_io_packet_type::message:
-      sid_data_->update_sid_time();
-      in_body.erase(0, 1);
-      co_return false;
-      break;
-    case engine_io_packet_type::close:
-      co_await async_close_websocket();
-      break;
-    case engine_io_packet_type::upgrade:
-      // 发出连接事件
-      co_await async_write_websocket(dump_message({}, engine_io_packet_type::noop));
-    case engine_io_packet_type::open:
-    case engine_io_packet_type::noop:
-      break;
-  }
-  co_return true;
-}
-
-boost::asio::awaitable<void> socket_io_websocket_core::async_ping_pong() {
+boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    l_timer.expires_from_now(sid_ctx_->handshake_data_.ping_interval_);
-    if (sid_data_->is_timeout()) co_return co_await async_close_websocket();
-    co_await l_timer.async_wait(boost::asio::use_awaitable);
-    co_await async_write_websocket(dump_message({}, engine_io_packet_type::ping));
+    if (sid_data_->is_timeout()) co_return;
+    co_await async_write_websocket(co_await sid_data_->async_event());
   }
   co_return;
 }
@@ -135,21 +104,23 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(soc
     if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
   }
 
-  struct binary_data_guard {
-    boost::beast::websocket::stream<http::tcp_stream_type>* web_stream_;
-    explicit binary_data_guard(boost::beast::websocket::stream<http::tcp_stream_type>* in_web_stream)
-        : web_stream_(std::move(in_web_stream)) {
-      web_stream_->binary(true);
+  if (!in_data->binary_data_.empty()) {
+    struct binary_data_guard {
+      boost::beast::websocket::stream<http::tcp_stream_type>* web_stream_;
+      explicit binary_data_guard(boost::beast::websocket::stream<http::tcp_stream_type>* in_web_stream)
+          : web_stream_(std::move(in_web_stream)) {
+        web_stream_->binary(true);
+      }
+      ~binary_data_guard() {
+        if (web_stream_) web_stream_->binary(false);
+      }
+    };
+    binary_data_guard l_binary_data_guard{web_stream_.get()};
+    for (auto& l_str : in_data->binary_data_) {
+      auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
+      if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
+      if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
     }
-    ~binary_data_guard() {
-      if (web_stream_) web_stream_->binary(false);
-    }
-  };
-  binary_data_guard l_binary_data_guard{web_stream_.get()};
-  for (auto& l_str : in_data->binary_data_) {
-    auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
-    if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
-    if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
   }
 }
 boost::asio::awaitable<void> socket_io_websocket_core::async_close_websocket() {

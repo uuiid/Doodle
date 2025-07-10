@@ -20,6 +20,7 @@ struct socket_io_packet {
 
   // 从字符串中解析
   static socket_io_packet parse(const std::string& in_str);
+  /// 自动包含 engine.io 的消息头
   std::string dump();
 };
 }  // namespace doodle::socket_io

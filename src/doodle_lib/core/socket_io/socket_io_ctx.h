@@ -75,7 +75,7 @@ class sid_ctx {
   mutable std::shared_mutex mutex_;
 
   /// 线程安全
-  std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
+  std::map<uuid, std::weak_ptr<sid_data>> sid_map_{};
 
   /// 线程安全
   std::map<std::string, socket_io_packet_ptr> socket_map_{};
@@ -95,21 +95,6 @@ class sid_ctx {
 
   /// 线程不安全
   signal_type_ptr on(const std::string& in_namespace);
-
-  template <typename Solt>
-  auto on_connect(Solt&& in_solt) {
-    return signal_map_.at({})->on_connect_.connect(in_solt);
-  }
-  /// 在服务器发出信号时调用的槽
-  template <typename Solt>
-  auto on_emit(Solt&& in_solt) {
-    return signal_map_.at({})->on_emit_.connect(in_solt);
-  }
-  /// 在服务器接受到消息时调用的槽
-  template <typename Solt>
-  auto on_message(Solt&& in_solt) {
-    return signal_map_.at({})->on_message_.connect(in_solt);
-  }
 
   void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
   /// 发出信号

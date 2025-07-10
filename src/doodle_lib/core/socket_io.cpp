@@ -88,34 +88,20 @@ class socket_io_http_post : public socket_io_http_base_fun {
     if (l_p.sid_.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid为空"});
 
     if (in_handle->content_type_ != http::detail::content_type::text_plain)  // TODO: 二进制数据, 未实现
-      co_return in_handle->make_msg(std::string{"null"});
+      co_return in_handle->make_msg("OK", "text/plain; charset=UTF-8", boost::beast::http::status::ok);
+
     auto l_body     = std::get<std::string>(in_handle->body_);
     auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
-    if (!l_sid_data) co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "sid不存在");
-    switch (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet) {
-      case engine_io_packet_type::open:
-        break;
-      case engine_io_packet_type::ping:
-        l_sid_data->update_sid_time();
-        break;
-      case engine_io_packet_type::pong:
-        l_sid_data->update_sid_time();
-        co_return in_handle->make_msg(std::string{});
-        break;
-      case engine_io_packet_type::message:  // 消息在切换结束后解析
-        break;
-      case engine_io_packet_type::close:
-        l_sid_data->close();
-        co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
-      case engine_io_packet_type::upgrade:
-      case engine_io_packet_type::noop:
-        co_return in_handle->make_msg(dump_message({}, engine_io_packet_type::noop));
-        break;
-    }
-    l_body.erase(0, 1);
-    auto l_pack = socket_io_packet::parse(l_body);
-    l_sid_data->parse_socket_io(l_pack);
-    co_return in_handle->make_msg("{}", boost::beast::http::status::ok);
+    if (!l_sid_data)
+      throw_exception(
+          http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
+      );
+    if (l_sid_data->handle_engine_io(l_body)) {
+      // 继续处理 socket io 包
+      auto l_packet = socket_io_packet::parse(l_body);
+      l_sid_data->handle_socket_io(l_packet);
+    };
+    co_return in_handle->make_msg("OK", "text/plain; charset=UTF-8", boost::beast::http::status::ok);
   }
 };
 

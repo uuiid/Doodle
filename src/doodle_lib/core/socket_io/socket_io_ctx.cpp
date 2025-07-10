@@ -47,7 +47,7 @@ std::shared_ptr<sid_data> sid_ctx::generate() {
 std::shared_ptr<sid_data> sid_ctx::get_sid(const uuid& in_sid) const {
   // 加锁
   std::shared_lock l_lock{mutex_};
-  return sid_map_.contains(in_sid) ? sid_map_.at(in_sid) : nullptr;
+  return sid_map_.contains(in_sid) ? sid_map_.at(in_sid).lock() : nullptr;
 }
 sid_ctx::signal_type_ptr sid_ctx::on(const std::string& in_namespace) {
   if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());

@@ -33,9 +33,8 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
 
   std::string generate_register_reply();
-  boost::asio::awaitable<void> async_ping_pong();
+  boost::asio::awaitable<void> async_write();
 
-  boost::asio::awaitable<bool> parse_engine_io(std::string& in_body);
 
  public:
   explicit socket_io_websocket_core(
