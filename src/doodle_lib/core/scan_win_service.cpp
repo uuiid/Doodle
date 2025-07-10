@@ -85,7 +85,9 @@ void scan_win_service_t::start() {
       "scan_category", g_logger_ctrl().make_file_sink_mt("scan_win_service"), spdlog::thread_pool()
   );
   logger_->set_level(level::debug);
-
+  app_base::Get().on_stop.connect([this]() {
+    thread_pool_.stop();
+  });
   boost::asio::co_spawn(
       executor_, begin_scan(),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
