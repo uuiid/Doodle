@@ -81,7 +81,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    if (sid_data_->is_timeout()) co_return;
+    if (sid_data_->is_timeout()) co_return co_await async_close_websocket();
     co_await async_write_websocket(co_await sid_data_->async_event());
   }
   co_return;
@@ -119,7 +119,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(soc
     binary_data_guard l_binary_data_guard{web_stream_.get()};
     for (auto& l_str : in_data->binary_data_) {
       auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
-      if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
+      if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted)
+        co_return;
       if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
     }
   }
