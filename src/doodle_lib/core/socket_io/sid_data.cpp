@@ -24,6 +24,11 @@ std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(
 bool sid_data::is_locked() const { return lock_count_ > 0; }
 
 boost::asio::awaitable<std::string> sid_data::async_event() {
+  if (is_upgrade_to_websocket()) {
+    auto l_str = last_event_[event_index_];
+    if (l_str.empty()) co_return dump_message({}, engine_io_packet_type::noop);
+    co_return l_str;
+  }
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   l_timer.expires_at(last_time_.load() + ctx_->handshake_data_.ping_timeout_);
   auto l_sig                              = std::make_shared<boost::asio::cancellation_signal>();
