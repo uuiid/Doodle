@@ -46,7 +46,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   l_data.project_id = in_arg->project_id;
   l_ptr->is_project_manager(l_data.project_id);
   l_data.asset_type_id = in_arg->asset_type_id;
-  in_handle->get_json().get_to(l_data);
+  auto l_json          = in_handle->get_json();
+  l_json.get_to(l_data);
 
   auto l_entity = std::make_shared<entity>(entity{
       .uuid_id_        = core_set::get_set().get_uuid(),
@@ -58,13 +59,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .source_id_      = l_data.source_id,
       .created_by_     = l_ptr->person_.uuid_id_,
   });
-
   auto l_sql    = g_ctx().get<sqlite_database>();
   co_await l_sql.install(l_entity);
+  nlohmann::json l_json_ret{};
+  l_json_ret = *l_entity;
+  if (entity_asset_extend::has_extend_data(l_json)) {
+    auto l_entity_extend = std::make_shared<entity_asset_extend>(entity_asset_extend{
+        .uuid_id_   = core_set::get_set().get_uuid(),
+        .entity_id_ = l_entity->uuid_id_,
+    });
+    l_json.get_to(*l_entity_extend);
+    co_await l_sql.install(l_entity_extend);
+    l_json_ret = *l_entity_extend;
+  }
+
   socket_io::broadcast(
       "asset:new", nlohmann::json{{"id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}}, "events"
   );
-  co_return in_handle->make_msg((nlohmann::json{} = *l_entity).dump());
+  co_return in_handle->make_msg(l_json_ret);
 }
 
 namespace {
