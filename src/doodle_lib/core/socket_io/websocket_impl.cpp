@@ -61,7 +61,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
     sid_data_->upgrade_to_websocket();
     sid_data_->cancel_async_event();
     boost::asio::co_spawn(
-        g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
+        co_await boost::asio::this_coro::executor, async_write(),
+        boost::asio::consign(boost::asio::detached, shared_from_this())
     );
   }
 }

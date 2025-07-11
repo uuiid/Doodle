@@ -75,7 +75,6 @@ std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::s
       in_data.erase(0, 1);
       l_ptr = std::make_shared<engine_io_packet>(engine_io_packet_type::pong, in_data);
       l_ptr->start_dump();
-      cancel_async_event();
       break;
     case engine_io_packet_type::pong:  // 收到pong后, 直接返回, 不在消息队列中处理
       update_sid_time();
@@ -151,6 +150,8 @@ void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
       if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
     });
 }
-void sid_data::cancel_async_event() { channel_signal_.emit(boost::asio::cancellation_type::all); }
+void sid_data::cancel_async_event() {
+  if (channel_signal_.slot().is_connected()) channel_signal_.emit(boost::asio::cancellation_type::all);
+}
 
 }  // namespace doodle::socket_io
