@@ -65,10 +65,17 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   std::atomic_bool is_upgrade_to_websocket_;
   std::atomic_int lock_count_;
   std::atomic_bool close_;
-
   channel_type channel_;
+  // 阻止消息接收
+  bool block_message_;
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
+
+  struct block_message_guard {
+    sid_data* data_;
+    explicit block_message_guard(sid_data* in_data) : data_{in_data} { data_->block_message_ = true; }
+    ~block_message_guard() { data_->block_message_ = false; }
+  };
 };
 
 }  // namespace doodle::socket_io

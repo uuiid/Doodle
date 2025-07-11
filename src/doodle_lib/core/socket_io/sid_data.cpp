@@ -105,6 +105,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
     }
     case socket_io_packet_type::disconnect:
       if (socket_io_contexts_.contains(in_body.namespace_)) {
+        block_message_guard l_guard{this};
         in_body.type_ = socket_io_packet_type::event;
         auto l_ptr    = socket_io_contexts_[in_body.namespace_];
         if (!in_body.namespace_.empty()) {
@@ -112,7 +113,6 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
           l_ptr->set_namespace({}, in_body.json_data_);
           socket_io_contexts_[""] = l_ptr;
           ctx_->emit_connect(l_ptr);
-          channel_.reset();
         } else
           socket_io_contexts_.erase(in_body.namespace_);
       }
@@ -129,7 +129,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
 }
 
 void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
-  in_message->start_dump();
+  if (block_message_) return;
   if (!channel_.try_send(boost::system::error_code{}, in_message))
     channel_.async_send(boost::system::error_code{}, in_message, [](boost::system::error_code ec) {
       if (ec) default_logger_raw()->error("seed_message error {}", ec.message());

@@ -52,6 +52,10 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
     l_packet.json_data_ = nlohmann::json::parse(in_str.begin() + l_pos, in_str.end());
   } else
     l_packet.json_data_ = nlohmann::json::object();
+  if (l_packet.type_ != socket_io_packet_type::connect &&
+      (l_packet.json_data_.empty() || l_packet.json_data_.is_null()))
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
+
   return l_packet;
 }
 
