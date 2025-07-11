@@ -39,9 +39,9 @@ class socket_io_http_base_fun : public ::doodle::http::http_function {
 class socket_io_http_get : public socket_io_http_base_fun {
   // 生成注册回复
   std::string generate_register_reply() {
-    auto l_hd             = sid_ctx_->handshake_data_;
-    auto l_sid_data       = sid_ctx_->generate();
-    l_hd.sid_             = l_sid_data->get_sid();
+    auto l_hd       = sid_ctx_->handshake_data_;
+    auto l_sid_data = sid_ctx_->generate();
+    l_hd.sid_       = l_sid_data->get_sid();
     l_sid_data->run();
     nlohmann::json l_json = l_hd;
     return dump_message(l_json.dump(), engine_io_packet_type::open);
@@ -58,7 +58,7 @@ class socket_io_http_get : public socket_io_http_base_fun {
     auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
 
     // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
-    if (!l_sid_data || l_sid_data->is_timeout())
+    if (!l_sid_data || l_sid_data->is_timeout() || l_sid_data->is_upgrade_to_websocket())
       throw_exception(
           http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
       );

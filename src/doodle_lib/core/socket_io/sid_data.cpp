@@ -50,7 +50,7 @@ boost::asio::awaitable<std::string> sid_data::async_event() {
   co_return l_str;
 }
 void sid_data::set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket) {
-  is_upgrade_to_websocket_ = true;
+  // is_upgrade_to_websocket_ = true;
   websocket_               = in_websocket;
   for (auto& l_value : socket_io_contexts_ | std::views::values) {
     l_value->set_websocket(in_websocket);
@@ -77,6 +77,7 @@ bool sid_data::handle_engine_io(std::string& in_data) {
     case engine_io_packet_type::close:
       close();
     case engine_io_packet_type::upgrade:
+      is_upgrade_to_websocket_ = true;
     case engine_io_packet_type::noop:
       seed_message(dump_message({}, engine_io_packet_type::noop));
       break;
