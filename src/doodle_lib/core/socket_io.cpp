@@ -103,7 +103,7 @@ class socket_io_http_post : public socket_io_http_base_fun {
       throw_exception(
           http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
       );
-    if (auto [l_r, l_ptr] = l_sid_data->handle_engine_io(l_body); l_r) {
+    if (auto [l_r, l_ptr] = l_sid_data->handle_engine_io(l_body); !l_r) {
       // 继续处理 socket io 包
       auto l_packet = socket_io_packet::parse(l_body);
       l_sid_data->handle_socket_io(l_packet);
