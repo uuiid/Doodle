@@ -47,7 +47,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   /// 处理 engine io 包, 结束处理返回 true, 继续处理返回 false
   bool handle_engine_io(std::string& in_data);
 
-  boost::asio::awaitable<std::string> async_event();
+  boost::asio::awaitable<std::shared_ptr<packet_base>> async_event();
 
   void seed_message(const std::shared_ptr<packet_base>& in_message);
 

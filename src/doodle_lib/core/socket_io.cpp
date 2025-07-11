@@ -39,9 +39,9 @@ class socket_io_http_base_fun : public ::doodle::http::http_function {
 class socket_io_http_get : public socket_io_http_base_fun {
   // 生成注册回复
   std::string generate_register_reply() {
-    auto l_hd       = sid_ctx_->handshake_data_;
-    auto l_sid_data = sid_ctx_->generate();
-    l_hd.sid_       = l_sid_data->get_sid();
+    auto l_hd             = sid_ctx_->handshake_data_;
+    auto l_sid_data       = sid_ctx_->generate();
+    l_hd.sid_             = l_sid_data->get_sid();
     nlohmann::json l_json = l_hd;
     return dump_message(l_json.dump(), engine_io_packet_type::open);
   }
@@ -63,7 +63,8 @@ class socket_io_http_get : public socket_io_http_base_fun {
       );
     auto l_event = co_await l_sid_data->async_event();
     // default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
-    co_return in_handle->make_msg(std::move(l_event), "text/plain; charset=UTF-8", boost::beast::http::status::ok);
+    auto l_str   = l_event->get_dump_data();
+    co_return in_handle->make_msg(std::move(l_str), "text/plain; charset=UTF-8", boost::beast::http::status::ok);
   }
 
   [[nodiscard]] bool has_websocket() const override { return true; }

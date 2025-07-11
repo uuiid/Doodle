@@ -11,9 +11,20 @@ class sid_ctx;
 class sid_data;
 
 struct packet_base {
-  virtual ~packet_base()           = default;
+ protected:
+  // 缓存的序列化数据
+  std::string dump_data_{};
+
   virtual std::string dump() const = 0;
+
+ public:
+  virtual ~packet_base() = default;
+
+  const std::string& get_dump_data() const;
+  /// 开始序列化, 再发送消息时调用
+  void start_dump();
   virtual bool is_binary() const { return false; }
+  virtual const std::vector<std::string>& get_binary_data() const;
 };
 
 struct engine_io_packet : public packet_base {
@@ -37,6 +48,8 @@ struct socket_io_packet : public packet_base {
   static socket_io_packet parse(const std::string& in_str);
   /// 自动包含 engine.io 的消息头
   std::string dump() const override;
+  bool is_binary() const override;
+  const std::vector<std::string>& get_binary_data() const override;
 };
 
 }  // namespace doodle::socket_io

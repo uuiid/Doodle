@@ -40,17 +40,17 @@ boost::asio::awaitable<void> sid_data::impl_run() {
   co_return;
 }
 
-boost::asio::awaitable<std::string> sid_data::async_event() {
+boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_);
 
-  std::string l_message{};
+  std::shared_ptr<packet_base> l_message{};
   if (auto l_str_var = co_await (
           channel_.async_receive(boost::asio::use_awaitable) || l_timer.async_wait(boost::asio::use_awaitable)
       );
       l_str_var.index() == 0)
-    l_message = std::get<0>(l_str_var)->dump();
-  if (is_timeout()) l_message = dump_message({}, engine_io_packet_type::noop);
+    l_message = std::get<0>(l_str_var);
+  if (is_timeout()) l_message = std::make_shared<engine_io_packet>(engine_io_packet_type::noop);
   co_return l_message;
 }
 

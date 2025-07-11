@@ -69,7 +69,7 @@ void socket_io_core::ask(const nlohmann::json& in_data) const {
   l_data->id_        = current_packet_->id_;
   l_data->namespace_ = namespace_;
   l_data->json_data_ = in_data;
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(*l_data);
+  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(l_data);
 }
 void socket_io_core::ask(const std::vector<std::string>& in_data) const {
   if (!current_packet_) return;
@@ -84,7 +84,7 @@ void socket_io_core::ask(const std::vector<std::string>& in_data) const {
   }
   l_data->binary_data_  = in_data;
   l_data->binary_count_ = in_data.size();
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(*l_data);
+  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(l_data);
 }
 void socket_io_core::connect() {
   /// 挂载接收消息槽

@@ -15,9 +15,9 @@ namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
 struct socket_io_packet;
-struct socket_io_packet;
+struct packet_base;
 using socket_io_packet_ptr = std::shared_ptr<socket_io_packet>;
-
+using packet_base_ptr      = std::shared_ptr<packet_base>;
 class socket_io_core;
 using socket_io_core_ptr = std::shared_ptr<socket_io_core>;
 
@@ -46,7 +46,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   boost::asio::awaitable<void> run();
   boost::asio::awaitable<void> async_write_websocket(std::string in_data);
-  boost::asio::awaitable<void> async_write_websocket(socket_io_packet_ptr in_data);
+  boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
   boost::asio::awaitable<void> async_close_websocket();
 };
 }  // namespace doodle::socket_io

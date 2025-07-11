@@ -6,6 +6,14 @@
 
 #include <doodle_lib/core/socket_io/engine_io.h>
 namespace doodle::socket_io {
+
+const std::vector<std::string>& packet_base::get_binary_data() const {
+  static std::vector<std::string> binary_data_;
+  return binary_data_;
+}
+const std::string& packet_base::get_dump_data() const { return dump_data_; }
+void packet_base::start_dump() { dump_data_ = dump(); }
+
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   socket_io_packet l_packet{};
   std::size_t l_pos{};
@@ -59,6 +67,9 @@ std::string socket_io_packet::dump() const {
   l_result += json_data_.dump();
   return dump_message(l_result);
 }
+const std::vector<std::string>& socket_io_packet::get_binary_data() const { return binary_data_; }
+bool socket_io_packet::is_binary() const { return is_binary(); }
+
 std::string engine_io_packet::dump() const { return dump_message(message_, type_); }
 
 }  // namespace doodle::socket_io
