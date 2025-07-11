@@ -62,7 +62,6 @@ bool sid_data::handle_engine_io(std::string& in_data) {
     case engine_io_packet_type::ping:  // 服务器会在第一次连接websocket时, 收到 ping, 需要回复pong
       update_sid_time();
       in_data.erase(0, 1);
-      is_upgrade_to_websocket_ = true;
       seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::pong, in_data));
       break;
     case engine_io_packet_type::pong:  // 收到pong后, 直接返回, 不在消息队列中处理
@@ -75,6 +74,7 @@ bool sid_data::handle_engine_io(std::string& in_data) {
     case engine_io_packet_type::close:
       close();
     case engine_io_packet_type::upgrade:
+      is_upgrade_to_websocket_ = true;
     case engine_io_packet_type::noop:
       seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
       break;
