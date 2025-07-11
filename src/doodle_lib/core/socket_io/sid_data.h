@@ -9,6 +9,7 @@
 #include <boost/asio/experimental/concurrent_channel.hpp>
 #include <boost/signals2.hpp>
 namespace doodle::socket_io {
+struct packet_base;
 class sid_ctx;
 class socket_io_core;
 struct socket_io_packet;
@@ -19,7 +20,8 @@ using socket_io_websocket_core_wptr = std::weak_ptr<socket_io_websocket_core>;
 using socket_io_websocket_core_ptr  = std::shared_ptr<socket_io_websocket_core>;
 
 class sid_data : public std::enable_shared_from_this<sid_data> {
-  using channel_type = boost::asio::experimental::concurrent_channel<void(boost::system::error_code, std::string)>;
+  using channel_type =
+      boost::asio::experimental::concurrent_channel<void(boost::system::error_code, std::shared_ptr<packet_base>)>;
 
  public:
   explicit sid_data(sid_ctx* in_ctx, uuid in_sid = core_set::get_set().get_uuid())
@@ -47,11 +49,10 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
 
   boost::asio::awaitable<std::string> async_event();
 
-  void seed_message(const socket_io_packet& in_message);
+  void seed_message(const std::shared_ptr<packet_base>& in_message);
 
  private:
   boost::asio::awaitable<void> impl_run();
-  void seed_message(const std::string& in_message);
   struct lock_type {
     sid_data* data_;
     explicit lock_type(sid_data* in_data) : data_{in_data} { ++data_->lock_count_; }

@@ -35,7 +35,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     if (is_timeout()) co_return;
     l_timer.expires_from_now(ctx_->handshake_data_.ping_interval_);
     co_await l_timer.async_wait(boost::asio::use_awaitable);
-    seed_message(dump_message({}, engine_io_packet_type::ping));
+    seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::ping));
   }
   co_return;
 }
@@ -49,7 +49,7 @@ boost::asio::awaitable<std::string> sid_data::async_event() {
           channel_.async_receive(boost::asio::use_awaitable) || l_timer.async_wait(boost::asio::use_awaitable)
       );
       l_str_var.index() == 0)
-    l_message = std::get<0>(l_str_var);
+    l_message = std::get<0>(l_str_var)->dump();
   if (is_timeout()) l_message = dump_message({}, engine_io_packet_type::noop);
   co_return l_message;
 }
@@ -62,7 +62,7 @@ bool sid_data::handle_engine_io(std::string& in_data) {
     case engine_io_packet_type::ping:  // 服务器会在第一次连接websocket时, 收到 ping, 需要回复pong
       update_sid_time();
       in_data.erase(0, 1);
-      seed_message(dump_message(in_data, engine_io_packet_type::pong));
+      seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::pong, in_data));
       break;
     case engine_io_packet_type::pong:  // 收到pong后, 直接返回, 不在消息队列中处理
       update_sid_time();
@@ -76,7 +76,7 @@ bool sid_data::handle_engine_io(std::string& in_data) {
     case engine_io_packet_type::upgrade:
       is_upgrade_to_websocket_ = true;
     case engine_io_packet_type::noop:
-      seed_message(dump_message({}, engine_io_packet_type::noop));
+      seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
       break;
   }
   return l_ret;
@@ -86,7 +86,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
   if (!ctx_->has_register(in_body.namespace_)) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
-    seed_message(in_body.dump());
+    seed_message(std::make_shared<socket_io_packet>(in_body));
     return;
   }
 
@@ -99,7 +99,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
       l_p.type_      = socket_io_packet_type::connect;
       l_p.namespace_ = in_body.namespace_;
       l_p.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      seed_message(l_p.dump());
+      seed_message(std::make_shared<socket_io_packet>(in_body));
       ctx_->emit_connect(l_ptr);
       break;
     }
@@ -128,13 +128,11 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
   }
 }
 
-void sid_data::seed_message(const std::string& in_message) {
-  default_logger_raw()->trace("seed_message: {}", in_message);
+void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
   if (!channel_.try_send(boost::system::error_code{}, in_message))
     channel_.async_send(boost::system::error_code{}, in_message, [](boost::system::error_code ec) {
       if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
     });
 }
-void sid_data::seed_message(const socket_io_packet& in_message) { seed_message(in_message.dump()); }
 
 }  // namespace doodle::socket_io

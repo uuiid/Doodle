@@ -19,6 +19,10 @@ struct packet_base {
 struct engine_io_packet : public packet_base {
   engine_io_packet_type type_;
   std::string message_;
+  explicit engine_io_packet(engine_io_packet_type type, std::string message)
+      : type_(type), message_(std::move(message)) {}
+  explicit engine_io_packet(engine_io_packet_type type) : type_(type) {}
+  engine_io_packet() = default;
   std::string dump() const override;
 };
 struct socket_io_packet : public packet_base {
