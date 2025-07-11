@@ -100,5 +100,11 @@ void socket_io_core::connect() {
       ctx_->on(namespace_)
           ->on_message(sid_ctx::signal_type::message_solt_type{std::bind_front(&socket_io_core::on_impl, this)});
 }
+void socket_io_core::set_namespace(const std::string& in_namespace) {
+  namespace_ = in_namespace;
+  signal_map_.clear();
+  connect();
+  ctx_->emit_connect(shared_from_this());
+}
 
 }  // namespace doodle::socket_io

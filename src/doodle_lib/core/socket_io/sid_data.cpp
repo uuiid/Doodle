@@ -93,7 +93,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
     case socket_io_packet_type::connect: {
       auto l_ptr = std::make_shared<socket_io_core>(ctx_, in_body.namespace_, in_body.json_data_, shared_from_this());
       socket_io_contexts_[in_body.namespace_] = l_ptr;
-      ctx_->emit_connect(l_ptr);
+      l_ptr->set_namespace(in_body.namespace_);
       socket_io_packet l_p{};
       l_p.type_      = socket_io_packet_type::connect;
       l_p.namespace_ = in_body.namespace_;

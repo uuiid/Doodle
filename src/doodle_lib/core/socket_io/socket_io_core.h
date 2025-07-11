@@ -49,6 +49,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   void on_impl(const socket_io_packet_ptr&);
   /// 连接消息来源
   void connect();
+
  public:
   /**
    *
@@ -56,7 +57,10 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    * @param in_namespace 连接使用的名称空间
    * @param in_json 初次连接时的负载
    */
-  explicit socket_io_core(sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json, const socket_io_sid_data_ptr& in_sid_data);
+  explicit socket_io_core(
+      sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json,
+      const socket_io_sid_data_ptr& in_sid_data
+  );
   // destructor
   ~socket_io_core()                                      = default;
   // copy constructor
@@ -68,11 +72,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   const uuid& get_sid() const { return sid_; }
   const std::string& get_namespace() const { return namespace_; }
-  void set_namespace(const std::string& in_namespace) {
-    namespace_ = in_namespace;
-    signal_map_.clear();
-    connect();
-  }
+  void set_namespace(const std::string& in_namespace);
 
   nlohmann::json auth_{};
 
@@ -103,6 +103,5 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
         }}.track_foreign(shared_from_this())
     );
   }
-
 };
 }  // namespace doodle::socket_io
