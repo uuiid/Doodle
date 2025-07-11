@@ -10,7 +10,18 @@ namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
 
-struct socket_io_packet {
+struct packet_base {
+  virtual ~packet_base()           = default;
+  virtual std::string dump() const = 0;
+  virtual bool is_binary() const { return false; }
+};
+
+struct engine_io_packet : public packet_base {
+  engine_io_packet_type type_;
+  std::string message_;
+  std::string dump() const override;
+};
+struct socket_io_packet : public packet_base {
   socket_io_packet_type type_;
   std::string namespace_;
   std::int64_t id_;
@@ -21,6 +32,7 @@ struct socket_io_packet {
   // 从字符串中解析
   static socket_io_packet parse(const std::string& in_str);
   /// 自动包含 engine.io 的消息头
-  std::string dump() const;
+  std::string dump() const override;
 };
+
 }  // namespace doodle::socket_io

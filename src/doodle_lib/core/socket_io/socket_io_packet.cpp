@@ -59,5 +59,6 @@ std::string socket_io_packet::dump() const {
   l_result += json_data_.dump();
   return dump_message(l_result);
 }
+std::string engine_io_packet::dump() const { return dump_message(message_, type_); }
 
 }  // namespace doodle::socket_io
