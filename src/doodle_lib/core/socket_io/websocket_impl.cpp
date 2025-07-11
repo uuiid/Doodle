@@ -58,11 +58,11 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   auto [l_r, l_ptr] = sid_data_->handle_engine_io(l_body);
   if (l_ptr) {
     co_await async_write_websocket(l_ptr);
+    sid_data_->upgrade_to_websocket();
+    sid_data_->cancel_async_event();
     boost::asio::co_spawn(
         g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
     );
-    sid_data_->upgrade_to_websocket();
-    sid_data_->cancel_async_event();
   }
 }
 
