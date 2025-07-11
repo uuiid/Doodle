@@ -39,7 +39,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   }
   ++l_pos;
   if (in_str.begin() + l_pos != in_str.end()) {
-    if (in_str[l_pos] != '[')
+    if (!nlohmann::json::accept(in_str.begin() + l_pos, in_str.end()))
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
     l_packet.json_data_ = nlohmann::json::parse(in_str.begin() + l_pos, in_str.end());
   } else
@@ -47,7 +47,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   return l_packet;
 }
 
-std::string socket_io_packet::dump() {
+std::string socket_io_packet::dump() const {
   std::string l_result{std::to_string(enum_to_num(type_))};
   if (!namespace_.empty()) l_result += namespace_ + ',';
 

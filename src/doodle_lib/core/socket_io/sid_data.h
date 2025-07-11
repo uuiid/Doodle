@@ -47,7 +47,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
 
   boost::asio::awaitable<std::string> async_event();
 
-  void set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket);
+  void seed_message(const socket_io_packet& in_message);
 
  private:
   boost::asio::awaitable<void> impl_run();
@@ -64,7 +64,6 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   std::atomic_bool is_upgrade_to_websocket_;
   std::atomic_int lock_count_;
   std::atomic_bool close_;
-  socket_io_websocket_core_wptr websocket_;
 
   channel_type channel_;
 

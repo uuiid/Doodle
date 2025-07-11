@@ -63,8 +63,15 @@ void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const
 }
 
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
-  if (signal_map_.contains(in_data->namespace_))
-    boost::asio::post(g_io_context(), [in_data, this]() { signal_map_.at(in_data->namespace_)->on_emit_(in_data); });
+  if (!signal_map_.contains(in_data->namespace_)) return;
+  std::vector<std::shared_ptr<sid_data>> l_sid_data{};
+  // 加锁
+  {
+    std::shared_lock l_lock{mutex_};
+    for (auto l_it : sid_map_)
+      if (auto l_ptr = l_it.second.lock(); l_ptr) l_sid_data.emplace_back(l_ptr);
+  }
+  for (auto& l_ptr : l_sid_data) l_ptr->seed_message(*in_data);
 }
 }  // namespace socket_io
 }  // namespace doodle

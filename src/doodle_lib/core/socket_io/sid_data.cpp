@@ -53,13 +53,6 @@ boost::asio::awaitable<std::string> sid_data::async_event() {
   if (is_timeout()) l_message = dump_message({}, engine_io_packet_type::noop);
   co_return l_message;
 }
-void sid_data::set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket) {
-  // is_upgrade_to_websocket_ = true;
-  websocket_ = in_websocket;
-  for (auto& l_value : socket_io_contexts_ | std::views::values) {
-    l_value->set_websocket(in_websocket);
-  }
-}
 
 bool sid_data::handle_engine_io(std::string& in_data) {
   bool l_ret{true};
@@ -98,10 +91,9 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
 
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      auto l_ptr = std::make_shared<socket_io_core>(ctx_, in_body.namespace_, nlohmann::json{});
+      auto l_ptr = std::make_shared<socket_io_core>(ctx_, in_body.namespace_, in_body.json_data_, shared_from_this());
       socket_io_contexts_[in_body.namespace_] = l_ptr;
       ctx_->emit_connect(l_ptr);
-      if (auto l_web = websocket_.lock()) l_ptr->set_websocket(l_web);
       socket_io_packet l_p{};
       l_p.type_      = socket_io_packet_type::connect;
       l_p.namespace_ = in_body.namespace_;
@@ -137,5 +129,6 @@ void sid_data::seed_message(const std::string& in_message) {
       if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
     });
 }
+void sid_data::seed_message(const socket_io_packet& in_message) { seed_message(in_message.dump()); }
 
 }  // namespace doodle::socket_io

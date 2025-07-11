@@ -9,11 +9,14 @@
 
 namespace doodle::socket_io {
 class sid_ctx;
+class sid_data;
 struct socket_io_packet;
 using socket_io_packet_ptr = std::shared_ptr<socket_io_packet>;
 class socket_io_websocket_core;
 using socket_io_websocket_core_ptr  = std::shared_ptr<socket_io_websocket_core>;
 using socket_io_websocket_core_wptr = std::weak_ptr<socket_io_websocket_core>;
+using socket_io_sid_data_ptr        = std::shared_ptr<sid_data>;
+using socket_io_sid_data_wptr       = std::weak_ptr<sid_data>;
 /// socket 连接
 class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
  public:
@@ -22,9 +25,11 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   using slot_type   = signal_type::slot_type;
 
  private:
+  /// 这回 sid 和 sid_data 不同, 时socket.io 多路复用的sid, 而不是连接的sid
   uuid sid_;
   sid_ctx* ctx_;
-  socket_io_websocket_core_wptr websocket_;
+  /// 当前负责发送消息的 sid_data
+  socket_io_sid_data_wptr sid_data_;
   std::string namespace_;
   /// 当前接收的事件
   socket_io_packet_ptr current_packet_;
@@ -42,7 +47,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   };
 
   void on_impl(const socket_io_packet_ptr&);
-  void connect_websocket();
+  /// 连接消息来源
+  void connect();
  public:
   /**
    *
@@ -50,7 +56,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    * @param in_namespace 连接使用的名称空间
    * @param in_json 初次连接时的负载
    */
-  explicit socket_io_core(sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json);
+  explicit socket_io_core(sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json, const socket_io_sid_data_ptr& in_sid_data);
   // destructor
   ~socket_io_core()                                      = default;
   // copy constructor
@@ -67,7 +73,6 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
     signal_map_.clear();
     connect();
   }
-  void set_websocket(const socket_io_websocket_core_ptr& in_websocket);
 
   nlohmann::json auth_{};
 
@@ -98,7 +103,6 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
         }}.track_foreign(shared_from_this())
     );
   }
-  /// 连接消息来源
-  void connect();
+
 };
 }  // namespace doodle::socket_io

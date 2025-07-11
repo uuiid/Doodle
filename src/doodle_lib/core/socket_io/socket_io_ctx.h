@@ -39,8 +39,6 @@ class sid_ctx {
 
    private:
     boost::signals2::signal<void(const std::shared_ptr<socket_io_core>&)> on_connect_;
-    /// 服务器发出信号
-    boost::signals2::signal<void(const socket_io_packet_ptr&)> on_emit_;
     /// 服务器接收到消息时调用
     boost::signals2::signal<void(const socket_io_packet_ptr&)> on_message_;
 
@@ -53,11 +51,6 @@ class sid_ctx {
     template <typename Solt>
     auto on_connect(Solt&& in_solt) {
       return on_connect_.connect(in_solt);
-    }
-    /// 在服务器发出信号时调用的槽
-    template <typename Solt>
-    auto on_emit(Solt&& in_solt) {
-      return on_emit_.connect(in_solt);
     }
 
     /// 在服务器接受到消息时调用的槽
