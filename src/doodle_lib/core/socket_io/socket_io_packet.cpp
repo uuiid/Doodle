@@ -8,7 +8,7 @@
 namespace doodle::socket_io {
 
 const std::vector<std::string>& packet_base::get_binary_data() const {
-  static std::vector<std::string> binary_data_;
+  static std::vector<std::string> binary_data_{};
   return binary_data_;
 }
 const std::string& packet_base::get_dump_data() const { return dump_data_; }
@@ -68,7 +68,6 @@ std::string socket_io_packet::dump() const {
   return dump_message(l_result);
 }
 const std::vector<std::string>& socket_io_packet::get_binary_data() const { return binary_data_; }
-bool socket_io_packet::is_binary() const { return !binary_data_.empty(); }
 
 std::string engine_io_packet::dump() const { return dump_message(message_, type_); }
 

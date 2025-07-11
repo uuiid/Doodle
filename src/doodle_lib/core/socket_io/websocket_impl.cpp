@@ -90,14 +90,13 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(pac
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   if (!web_stream_) co_return;
   {
-    // web_stream_->binary(false);
     auto l_str            = in_data->get_dump_data();
     auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(l_str));
     if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
     if (l_ec_w) co_return logger_->error(l_ec_w.what()), co_await async_close_websocket();
   }
 
-  if (!in_data->is_binary()) {
+  if (!in_data->get_binary_data().empty()) {
     struct binary_data_guard {
       boost::beast::websocket::stream<http::tcp_stream_type>* web_stream_;
       explicit binary_data_guard(boost::beast::websocket::stream<http::tcp_stream_type>* in_web_stream)
