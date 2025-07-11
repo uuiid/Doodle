@@ -61,7 +61,11 @@ bool sid_data::handle_engine_io(std::string& in_data) {
   bool l_ret{true};
   switch (auto l_engine_packet = parse_engine_packet(in_data); l_engine_packet) {
     case engine_io_packet_type::open:  // 服务器再get中, 已经处理了open, 不会收到这个消息, 静默
-    case engine_io_packet_type::ping:  // 服务器不会收到ping
+      break;
+    case engine_io_packet_type::ping:  // 服务器会在第一次连接websocket时, 收到 ping, 需要回复pong
+      update_sid_time();
+      in_data.erase(0, 1);
+      seed_message(dump_message(in_data, engine_io_packet_type::pong));
       break;
     case engine_io_packet_type::pong:  // 收到pong后, 直接返回, 不在消息队列中处理
       update_sid_time();
