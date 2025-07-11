@@ -46,10 +46,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   if (sid_data_->is_locked()) co_return co_await async_close_websocket();
   sid_lock_ = sid_data_->get_lock();
   sid_data_->cancel_async_event();
-  boost::asio::co_spawn(
-      co_await boost::asio::this_coro::executor, async_write(),
-      boost::asio::consign(boost::asio::detached, shared_from_this())
-  );
+
   auto l_self = shared_from_this();
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
@@ -64,6 +61,11 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       if (l_ptr) co_await async_write_websocket(l_ptr);
       continue;
     }
+    std::call_once(flag_, [this] {
+      boost::asio::co_spawn(
+          g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
+      );
+    });
     auto l_socket_io = socket_io_packet::parse(l_body);
     /// 解析二进制数据
     for (int i = 0; i < l_socket_io.binary_count_; ++i) {

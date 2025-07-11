@@ -31,9 +31,11 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::shared_ptr<void> sid_lock_{};
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
+  std::once_flag flag_;
 
   packet_base_ptr generate_register_reply();
   boost::asio::awaitable<void> async_write();
+
 
 
  public:
