@@ -36,6 +36,10 @@ struct engine_io_packet : public packet_base {
   std::string dump() const override;
 };
 struct socket_io_packet : public packet_base {
+ private:
+  std::string dump() const override;
+
+ public:
   socket_io_packet_type type_;
   std::string namespace_;
   std::int64_t id_;
@@ -46,7 +50,6 @@ struct socket_io_packet : public packet_base {
   // 从字符串中解析
   static socket_io_packet parse(const std::string& in_str);
   /// 自动包含 engine.io 的消息头
-  std::string dump() const override;
   const std::vector<std::string>& get_binary_data() const override;
 };
 
