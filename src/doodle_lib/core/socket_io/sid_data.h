@@ -51,7 +51,8 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   boost::asio::awaitable<std::shared_ptr<packet_base>> async_event();
 
   void seed_message(const std::shared_ptr<packet_base>& in_message);
-
+  // 取消消息队列等待
+  void cancel_async_event();
  private:
   boost::asio::awaitable<void> impl_run();
   struct lock_type {
@@ -71,6 +72,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   bool block_message_;
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
+  boost::asio::cancellation_signal channel_signal_;
 
   struct block_message_guard {
     sid_data* data_;

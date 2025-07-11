@@ -44,12 +44,17 @@ boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_);
 
-  std::shared_ptr<packet_base> l_message{};
-  if (auto l_str_var = co_await (
-          channel_.async_receive(boost::asio::use_awaitable) || l_timer.async_wait(boost::asio::use_awaitable)
-      );
-      l_str_var.index() == 0)
-    l_message = std::get<0>(l_str_var);
+  std::shared_ptr<packet_base> l_message{std::make_shared<engine_io_packet>(engine_io_packet_type::noop)};
+  if (auto [l_arr, l_e1, l_str_var, l_e2] =
+          co_await boost::asio::experimental::parallel_group(
+              channel_.async_receive(boost::asio::bind_cancellation_slot(channel_signal_.slot(),boost::asio::deferred)), l_timer.async_wait(boost::asio::deferred)
+          )
+              .async_wait(
+                  boost::asio::experimental::wait_for_one(),
+                  boost::asio::use_awaitable
+              );
+      l_arr[0] == 0)
+    l_message = l_str_var;
   if (is_timeout()) l_message = std::make_shared<engine_io_packet>(engine_io_packet_type::noop);
   co_return l_message;
 }
@@ -75,6 +80,7 @@ bool sid_data::handle_engine_io(std::string& in_data) {
       close();
     case engine_io_packet_type::upgrade:
       upgrade_to_websocket();
+      cancel_async_event();
     case engine_io_packet_type::noop:
       seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
       break;
@@ -137,5 +143,6 @@ void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
       if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
     });
 }
+void sid_data::cancel_async_event() { channel_signal_.emit(boost::asio::cancellation_type::all); }
 
 }  // namespace doodle::socket_io
