@@ -19,8 +19,8 @@ sid_ctx::sid_ctx()
       /// 默认的命名空间
       handshake_data_{
           .upgrades_      = {transport_type::websocket},
-          .ping_interval_ = chrono::milliseconds{250},
-          .ping_timeout_  = chrono::milliseconds{200},
+          .ping_interval_ = chrono::milliseconds{25000},
+          .ping_timeout_  = chrono::milliseconds{20000},
           .max_payload_   = 1000000
       } {}
 
