@@ -47,6 +47,7 @@ boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
   l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_);
 
   std::shared_ptr<packet_base> l_message{std::make_shared<engine_io_packet>(engine_io_packet_type::noop)};
+  l_message->start_dump();
   if (auto [l_arr, l_e1, l_str_var, l_e2] =
           co_await boost::asio::experimental::parallel_group(
               channel_.async_receive(
@@ -57,7 +58,11 @@ boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
               .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
       l_arr[0] == 0)
     l_message = l_str_var;
-  if (is_timeout()) l_message = std::make_shared<engine_io_packet>(engine_io_packet_type::noop);
+  if (is_timeout()) {
+    l_message = std::make_shared<engine_io_packet>(engine_io_packet_type::noop);
+    l_message->start_dump();
+  }
+
   co_return l_message;
 }
 
