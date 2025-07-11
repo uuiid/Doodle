@@ -19,6 +19,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put:
   auto l_json = in_handle->get_json();
 
   l_json.get_to(*l_entt);
+  nlohmann::json l_res{};
+  co_await l_sql.install(l_entt);
+  l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
     auto l_ext_ptr = std::make_shared<entity_asset_extend>();
@@ -34,9 +37,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put:
       l_ext_ptr->uuid_id_   = core_set::get_set().get_uuid();
     }
     co_await l_sql.impl_->install(l_ext_ptr);
+    l_res = *l_ext_ptr;
   }
 
-  co_await l_sql.install(l_entt);
   co_return in_handle->make_msg(nlohmann::json{} = *l_entt);
 }
 

@@ -62,7 +62,6 @@ struct DOODLE_CORE_API entity_asset_extend {
 
   // to json
   friend void to_json(nlohmann::json& j, const entity_asset_extend& p) {
-    j["id"]                 = p.uuid_id_;
     j["ji_shu_lie"]         = p.ji_shu_lie_;
     j["deng_ji"]            = p.deng_ji_;
     j["gui_dang"]           = p.gui_dang_;
