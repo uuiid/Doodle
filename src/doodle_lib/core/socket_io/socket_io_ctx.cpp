@@ -69,6 +69,7 @@ void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
     for (auto l_it : sid_map_)
       if (auto l_ptr = l_it.second.lock(); l_ptr) l_sid_data.emplace_back(l_ptr);
   }
+  in_data->start_dump();
   for (auto& l_ptr : l_sid_data) l_ptr->seed_message(in_data);
 }
 
