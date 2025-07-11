@@ -63,7 +63,7 @@ class socket_io_http_get : public socket_io_http_base_fun {
       );
     auto l_event = co_await l_sid_data->async_event();
     // default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
-    auto l_str   = l_event->get_dump_data();
+    auto l_str   = l_event ? l_event->get_dump_data() : std::string{};
     co_return in_handle->make_msg(std::move(l_str), "text/plain; charset=UTF-8", boost::beast::http::status::ok);
   }
 

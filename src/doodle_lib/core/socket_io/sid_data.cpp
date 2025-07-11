@@ -42,7 +42,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
 
 boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
-  l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_);
+  l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_);
 
   std::shared_ptr<packet_base> l_message{};
   if (auto l_str_var = co_await (
