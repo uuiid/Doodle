@@ -74,7 +74,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   }
 
   socket_io::broadcast(
-      "asset:new", nlohmann::json{{"id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}}, "/events"
+      "asset:new",
+      nlohmann::json{
+          {"id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}, {"project_id", l_entity->project_id_}
+      },
+      "/events"
   );
   co_return in_handle->make_msg(l_json_ret);
 }
