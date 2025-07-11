@@ -50,7 +50,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // boost::beast::flat_buffer l_buffer{};
   std::string l_body{};
   auto l_buffer = boost::asio::dynamic_buffer(l_body);
-  if (!web_stream_) co_return;
+  if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
+
   auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
   if (l_ec_r == boost::beast::websocket::error::closed) co_return;
   if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
