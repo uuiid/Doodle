@@ -42,7 +42,6 @@ class socket_io_http_get : public socket_io_http_base_fun {
     auto l_hd       = sid_ctx_->handshake_data_;
     auto l_sid_data = sid_ctx_->generate();
     l_hd.sid_       = l_sid_data->get_sid();
-    l_sid_data->run();
     nlohmann::json l_json = l_hd;
     return dump_message(l_json.dump(), engine_io_packet_type::open);
   }

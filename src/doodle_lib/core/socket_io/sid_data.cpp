@@ -11,8 +11,10 @@
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 
+#include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 namespace doodle::socket_io {
+using namespace boost::asio::experimental::awaitable_operators;
 bool sid_data::is_upgrade_to_websocket() const { return is_upgrade_to_websocket_; }
 bool sid_data::is_timeout() const {
   auto l_now = std::chrono::system_clock::now();
@@ -40,18 +42,20 @@ boost::asio::awaitable<void> sid_data::impl_run() {
 
 boost::asio::awaitable<std::string> sid_data::async_event() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
-  l_timer.expires_at(last_time_.load() + ctx_->handshake_data_.ping_timeout_);
-  auto [l_arr, l_ec1, l_str, l_ec2] =
-      co_await boost::asio::experimental::parallel_group(
-          channel_.async_receive(boost::asio::deferred), l_timer.async_wait(boost::asio::deferred)
-      )
-          .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
+  l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_ + ctx_->handshake_data_.ping_interval_);
 
-  co_return l_str;
+  std::string l_message{};
+  if (auto l_str_var = co_await (
+          channel_.async_receive(boost::asio::use_awaitable) || l_timer.async_wait(boost::asio::use_awaitable)
+      );
+      l_str_var.index() == 0)
+    l_message = std::get<0>(l_str_var);
+  if (is_timeout()) l_message = dump_message({}, engine_io_packet_type::noop);
+  co_return l_message;
 }
 void sid_data::set_websocket_connect(const socket_io_websocket_core_ptr& in_websocket) {
   // is_upgrade_to_websocket_ = true;
-  websocket_               = in_websocket;
+  websocket_ = in_websocket;
   for (auto& l_value : socket_io_contexts_ | std::views::values) {
     l_value->set_websocket(in_websocket);
   }
@@ -128,7 +132,10 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
 }
 
 void sid_data::seed_message(const std::string& in_message) {
-  channel_.try_send(boost::system::error_code{}, in_message);
+  if (!channel_.try_send(boost::system::error_code{}, in_message))
+    channel_.async_send(boost::system::error_code{}, in_message, [](boost::system::error_code ec) {
+      if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
+    });
 }
 
 }  // namespace doodle::socket_io

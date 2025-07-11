@@ -39,6 +39,7 @@ std::shared_ptr<sid_data> sid_ctx::generate() {
   clear_timeout_sid();
   // 加锁
   auto l_ptr = std::make_shared<sid_data>(this);
+  l_ptr->run();
   std::unique_lock l_lock{mutex_};
   sid_map_.emplace(l_ptr->sid_, l_ptr);
   return l_ptr;

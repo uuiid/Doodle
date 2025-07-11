@@ -28,7 +28,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
         last_time_{std::chrono::system_clock::now()},
         is_upgrade_to_websocket_{false},
         close_{false},
-        channel_(g_io_context()) {}
+        channel_(g_io_context(), 9999) {}
 
   bool is_upgrade_to_websocket() const;
   bool is_timeout() const;
