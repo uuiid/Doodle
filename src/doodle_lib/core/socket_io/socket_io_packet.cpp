@@ -68,7 +68,7 @@ std::string socket_io_packet::dump() const {
   return dump_message(l_result);
 }
 const std::vector<std::string>& socket_io_packet::get_binary_data() const { return binary_data_; }
-bool socket_io_packet::is_binary() const { return is_binary(); }
+bool socket_io_packet::is_binary() const { return !binary_data_.empty(); }
 
 std::string engine_io_packet::dump() const { return dump_message(message_, type_); }
 
