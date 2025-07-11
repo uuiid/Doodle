@@ -64,6 +64,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       boost::asio::co_spawn(
           g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
       );
+      sid_data_->upgrade_to_websocket();
       sid_data_->cancel_async_event();
     });
     auto l_socket_io = socket_io_packet::parse(l_body);

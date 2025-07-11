@@ -50,10 +50,8 @@ boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
   l_message->start_dump();
   if (auto [l_arr, l_e1, l_str_var, l_e2] =
           co_await boost::asio::experimental::parallel_group(
-              channel_.async_receive(
-                  boost::asio::bind_cancellation_slot(channel_signal_.slot(), boost::asio::deferred)
-              ),
-              l_timer.async_wait(boost::asio::deferred)
+              channel_.async_receive(boost::asio::deferred),
+              l_timer.async_wait(boost::asio::bind_cancellation_slot(channel_signal_.slot(), boost::asio::deferred))
           )
               .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
       l_arr[0] == 0)
