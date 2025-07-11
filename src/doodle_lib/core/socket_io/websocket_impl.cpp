@@ -87,6 +87,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(packet_base_ptr in_data) {
+  if (!in_data) co_return;
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   if (!web_stream_) co_return;
   {

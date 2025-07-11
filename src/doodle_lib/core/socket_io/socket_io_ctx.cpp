@@ -62,6 +62,7 @@ void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const
 
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
   if (!signal_map_.contains(in_data->namespace_)) return;
+  if (!in_data) return;
   std::vector<std::shared_ptr<sid_data>> l_sid_data{};
   // 加锁
   {
