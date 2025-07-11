@@ -36,7 +36,8 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply() {
   auto l_ptr            = std::make_shared<engine_io_packet>(engine_io_packet_type::open, l_json.dump());
   return l_ptr;
 }
-boost::asio::awaitable<void> socket_io_websocket_core::run() {
+
+boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // 注册
   if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil())
     co_await async_write_websocket(generate_register_reply());
@@ -45,9 +46,27 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 
   /// 查看是否有锁, 有锁直接返回
   if (sid_data_->is_locked()) co_return co_await async_close_websocket();
-  sid_lock_   = sid_data_->get_lock();
+  sid_lock_ = sid_data_->get_lock();
+  // boost::beast::flat_buffer l_buffer{};
+  std::string l_body{};
+  auto l_buffer = boost::asio::dynamic_buffer(l_body);
+  if (!web_stream_) co_return;
+  auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
+  if (l_ec_r == boost::beast::websocket::error::closed) co_return;
+  if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
+  auto [l_r, l_ptr] = sid_data_->handle_engine_io(l_body);
+  if (l_ptr) {
+    co_await async_write_websocket(l_ptr);
+    boost::asio::co_spawn(
+        g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
+    );
+    sid_data_->upgrade_to_websocket();
+    sid_data_->cancel_async_event();
+  }
+}
 
-  auto l_self = shared_from_this();
+boost::asio::awaitable<void> socket_io_websocket_core::run() {
+  co_await init();
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
     std::string l_body{};
@@ -56,19 +75,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
     auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
     if (l_ec_r == boost::beast::websocket::error::closed) co_return;
     if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
-
-    if (auto [l_r, l_ptr] = sid_data_->handle_engine_io(l_body); l_r) {
-      if (l_ptr) {
-        co_await async_write_websocket(l_ptr);
-        boost::asio::co_spawn(
-            g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
-        );
-        sid_data_->upgrade_to_websocket();
-        sid_data_->cancel_async_event();
-      }
-      continue;
-    }
-
+    if (auto [l_r, l_ptr] = sid_data_->handle_engine_io(l_body); l_r) continue;
     auto l_socket_io = socket_io_packet::parse(l_body);
     /// 解析二进制数据
     for (int i = 0; i < l_socket_io.binary_count_; ++i) {
