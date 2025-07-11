@@ -32,7 +32,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
 
-  std::string generate_register_reply();
+  packet_base_ptr generate_register_reply();
   boost::asio::awaitable<void> async_write();
 
 
@@ -45,7 +45,6 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   ~socket_io_websocket_core() = default;
 
   boost::asio::awaitable<void> run();
-  boost::asio::awaitable<void> async_write_websocket(std::string in_data);
   boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
   boost::asio::awaitable<void> async_close_websocket();
 };

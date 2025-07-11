@@ -26,13 +26,14 @@ socket_io_websocket_core::socket_io_websocket_core(
       write_queue_limitation_(std::make_shared<awaitable_queue_limitation>()),
       handle_(std::move(in_handle)) {}
 
-std::string socket_io_websocket_core::generate_register_reply() {
+packet_base_ptr socket_io_websocket_core::generate_register_reply() {
   auto l_hd = sid_ctx_->handshake_data_;
   sid_data_ = sid_ctx_->generate();
   l_hd.sid_ = sid_data_->get_sid();
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
-  return dump_message(l_json.dump(), engine_io_packet_type::open);
+  auto l_ptr            = std::make_shared<engine_io_packet>(engine_io_packet_type::open, l_json.dump());
+  return l_ptr;
 }
 boost::asio::awaitable<void> socket_io_websocket_core::run() {
   // 注册
@@ -84,14 +85,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
   }
   co_return;
 }
-boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(std::string in_data) {
-  auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
-  if (!web_stream_) co_return;
-  // web_stream_->binary(false);
-  auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(in_data));
-  if (l_ec_w == boost::beast::websocket::error::closed || l_ec_w == boost::asio::error::operation_aborted) co_return;
-  if (l_ec_w) logger_->error(l_ec_w.what()), co_await async_close_websocket();
-}
+
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(packet_base_ptr in_data) {
   auto l_g = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   if (!web_stream_) co_return;
