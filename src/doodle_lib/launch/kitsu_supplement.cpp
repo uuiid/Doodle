@@ -170,7 +170,7 @@ bool kitsu_supplement_main::init() {
   kitsu_supplement_args_t l_args{
       .kitsu_url_ = "http://192.168.40.182",
       .port_      = 80,
-      .db_path_   = "D:/kitsu.database",
+      .db_path_   = "D:/kitsu_new.database",
       .kitsu_token_ =
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
           "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlw"
