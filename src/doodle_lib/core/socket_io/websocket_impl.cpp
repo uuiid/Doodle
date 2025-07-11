@@ -45,7 +45,6 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   /// 查看是否有锁, 有锁直接返回
   if (sid_data_->is_locked()) co_return co_await async_close_websocket();
   sid_lock_ = sid_data_->get_lock();
-  sid_data_->cancel_async_event();
 
   auto l_self = shared_from_this();
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
@@ -65,6 +64,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       boost::asio::co_spawn(
           g_io_context(), async_write(), boost::asio::consign(boost::asio::detached, shared_from_this())
       );
+      sid_data_->cancel_async_event();
     });
     auto l_socket_io = socket_io_packet::parse(l_body);
     /// 解析二进制数据
