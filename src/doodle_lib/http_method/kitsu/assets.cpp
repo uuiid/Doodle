@@ -108,7 +108,8 @@ struct with_tasks_get_result_t {
         bian_hao_(in_asset_extend.bian_hao_),
         pin_yin_ming_cheng_(in_asset_extend.pin_yin_ming_cheng_),
         ban_ben_(in_asset_extend.ban_ben_),
-        ji_du_(in_asset_extend.ji_du_) {}
+        ji_du_(in_asset_extend.ji_du_),
+        kai_shi_ji_shu_(in_asset_extend.kai_shi_ji_shu_) {}
 
   decltype(entity::uuid_id_) uuid_id_;
   decltype(entity::name_) name_;
@@ -131,6 +132,7 @@ struct with_tasks_get_result_t {
   decltype(entity_asset_extend::pin_yin_ming_cheng_) pin_yin_ming_cheng_;
   decltype(entity_asset_extend::ban_ben_) ban_ben_;
   decltype(entity_asset_extend::ji_du_) ji_du_;
+  decltype(entity_asset_extend::kai_shi_ji_shu_) kai_shi_ji_shu_;
 
   struct task_t {
     task_t() = default;
@@ -220,6 +222,7 @@ struct with_tasks_get_result_t {
     j["pin_yin_ming_cheng"]  = p.pin_yin_ming_cheng_;
     j["ban_ben"]             = p.ban_ben_;
     j["ji_du"]               = p.ji_du_;
+    j["kai_shi_ji_shu"]      = p.kai_shi_ji_shu_;
   }
 };
 
