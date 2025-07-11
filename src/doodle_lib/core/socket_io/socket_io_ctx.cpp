@@ -56,10 +56,8 @@ sid_ctx::signal_type_ptr sid_ctx::on(const std::string& in_namespace) {
 }
 
 void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const {
-  if (signal_map_.contains(in_data->get_namespace()))
-    boost::asio::post(g_io_context(), [in_data, this]() {
-      signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
-    });
+  if (signal_map_.contains(in_data->get_namespace())) signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
+  // boost::asio::post(g_io_context(), [in_data, this]() {});
 }
 
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
@@ -73,5 +71,6 @@ void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
   }
   for (auto& l_ptr : l_sid_data) l_ptr->seed_message(*in_data);
 }
+
 }  // namespace socket_io
 }  // namespace doodle

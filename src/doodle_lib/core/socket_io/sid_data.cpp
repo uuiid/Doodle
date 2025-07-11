@@ -87,18 +87,20 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
     seed_message(in_body.dump());
+    return;
   }
 
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
-      auto l_ptr = std::make_shared<socket_io_core>(ctx_, in_body.namespace_, in_body.json_data_, shared_from_this());
+      auto l_ptr                              = std::make_shared<socket_io_core>(ctx_, shared_from_this());
       socket_io_contexts_[in_body.namespace_] = l_ptr;
-      l_ptr->set_namespace(in_body.namespace_);
+      l_ptr->set_namespace(in_body.namespace_, in_body.json_data_);
       socket_io_packet l_p{};
       l_p.type_      = socket_io_packet_type::connect;
       l_p.namespace_ = in_body.namespace_;
       l_p.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
       seed_message(l_p.dump());
+      ctx_->emit_connect(l_ptr);
       break;
     }
     case socket_io_packet_type::disconnect:
@@ -107,8 +109,10 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
         auto l_ptr    = socket_io_contexts_[in_body.namespace_];
         if (!in_body.namespace_.empty()) {
           // 转移到主名称空间
-          l_ptr->set_namespace({});
-          l_ptr->auth_ = in_body.json_data_;
+          l_ptr->set_namespace({}, in_body.json_data_);
+          socket_io_contexts_[""] = l_ptr;
+          ctx_->emit_connect(l_ptr);
+          channel_.reset();
         } else
           socket_io_contexts_.erase(in_body.namespace_);
       }
@@ -125,6 +129,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
 }
 
 void sid_data::seed_message(const std::string& in_message) {
+  default_logger_raw()->trace("seed_message: {}", in_message);
   if (!channel_.try_send(boost::system::error_code{}, in_message))
     channel_.async_send(boost::system::error_code{}, in_message, [](boost::system::error_code ec) {
       if (ec) default_logger_raw()->error("seed_message error {}", ec.message());

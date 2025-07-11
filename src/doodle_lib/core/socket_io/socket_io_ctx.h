@@ -93,6 +93,7 @@ class sid_ctx {
   /// 发出信号
   void emit(const socket_io_packet_ptr& in_data) const;
 
+
   bool has_register(const std::string& in_namespace) const { return signal_map_.contains(in_namespace); }
 };
 }  // namespace doodle::socket_io

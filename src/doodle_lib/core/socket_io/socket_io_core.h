@@ -57,10 +57,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    * @param in_namespace 连接使用的名称空间
    * @param in_json 初次连接时的负载
    */
-  explicit socket_io_core(
-      sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json,
-      const socket_io_sid_data_ptr& in_sid_data
-  );
+  explicit socket_io_core(sid_ctx* in_ctx, const socket_io_sid_data_ptr& in_sid_data);
   // destructor
   ~socket_io_core()                                      = default;
   // copy constructor
@@ -72,7 +69,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   const uuid& get_sid() const { return sid_; }
   const std::string& get_namespace() const { return namespace_; }
-  void set_namespace(const std::string& in_namespace);
+  void set_namespace(const std::string& in_namespace, const nlohmann::json& in_json);
 
   nlohmann::json auth_{};
 
@@ -87,19 +84,19 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
    */
   void ask(const nlohmann::json& in_data) const;
   void ask(const std::vector<std::string>& in_data) const;
-  template <typename Solt>
-  auto on_message(const std::string& in_event_name, Solt&& in_solt) {
+
+  template <typename Json_Call, typename String_Call = decltype([](const std::vector<std::string>&) {})>
+    requires std::is_invocable_v<Json_Call, nlohmann::json>
+  auto on_message(
+      const std::string& in_event_name, Json_Call&& in_json_solt,
+      String_Call&& in_string_solt = [](const std::vector<std::string>&) {}
+  ) {
     if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
-    return signal_map_[in_event_name]->connect(in_solt);
-  }
-  template <typename T>
-    requires std::is_invocable_v<T, const nlohmann::json&>
-  auto on_message_json(const std::string& in_event_name, T&& in_solt) {
-    if (!signal_map_[in_event_name]) signal_map_[in_event_name] = std::make_shared<signal_type>();
-    auto l_fun_ptr = std::make_shared<T>(std::move(in_solt));
+    auto l_overloaded =
+        std::make_shared<overloaded<Json_Call, String_Call>>(std::move(in_json_solt), std::move(in_string_solt));
     return signal_map_[in_event_name]->connect(
-        slot_type{[l_fun_ptr](const std::variant<nlohmann::json, std::vector<std::string>>& in_data) {
-          if (std::holds_alternative<nlohmann::json>(in_data)) l_fun_ptr->operator()(std::get<nlohmann::json>(in_data));
+        slot_type{[l_overloaded](const std::variant<nlohmann::json, std::vector<std::string>>& in_data) {
+          std::visit(*l_overloaded, in_data);
         }}.track_foreign(shared_from_this())
     );
   }

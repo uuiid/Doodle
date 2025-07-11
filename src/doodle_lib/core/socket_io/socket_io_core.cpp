@@ -14,16 +14,8 @@
 #include "core/socket_io.h"
 #include "sid_data.h"
 namespace doodle::socket_io {
-socket_io_core::socket_io_core(
-    sid_ctx* in_ctx, const std::string& in_namespace, const nlohmann::json& in_json,
-    const socket_io_sid_data_ptr& in_sid_data
-)
-    : sid_(core_set::get_set().get_uuid()),
-      ctx_(in_ctx),
-      sid_data_(in_sid_data),
-      namespace_(in_namespace),
-      auth_(in_json) {
-  connect();
+socket_io_core::socket_io_core(sid_ctx* in_ctx, const socket_io_sid_data_ptr& in_sid_data)
+    : sid_(core_set::get_set().get_uuid()), ctx_(in_ctx), sid_data_(in_sid_data) {
 }
 void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_data) const {
   auto l_ptr        = std::make_shared<socket_io_packet>();
@@ -37,7 +29,7 @@ void socket_io_core::emit(const std::string& in_event, const nlohmann::json& in_
     l_ptr->json_data_.emplace_back(in_event);
     l_ptr->json_data_.emplace_back(in_data);
   }
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(*l_ptr);
+  ctx_->emit(l_ptr);
 }
 void socket_io_core::emit(const std::string& in_event, const std::vector<std::string>& in_data) const {
   auto l_ptr        = std::make_shared<socket_io_packet>();
@@ -50,7 +42,7 @@ void socket_io_core::emit(const std::string& in_event, const std::vector<std::st
   }
   l_ptr->binary_data_  = in_data;
   l_ptr->binary_count_ = in_data.size();
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(*l_ptr);
+  ctx_->emit(l_ptr);
 }
 
 void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
@@ -100,11 +92,11 @@ void socket_io_core::connect() {
       ctx_->on(namespace_)
           ->on_message(sid_ctx::signal_type::message_solt_type{std::bind_front(&socket_io_core::on_impl, this)});
 }
-void socket_io_core::set_namespace(const std::string& in_namespace) {
+void socket_io_core::set_namespace(const std::string& in_namespace, const nlohmann::json& in_json) {
   namespace_ = in_namespace;
-  signal_map_.clear();
+  auth_      = in_json;
+  // signal_map_.clear();
   connect();
-  ctx_->emit_connect(shared_from_this());
 }
 
 }  // namespace doodle::socket_io
