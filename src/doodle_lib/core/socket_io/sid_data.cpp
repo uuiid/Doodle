@@ -74,7 +74,7 @@ bool sid_data::handle_engine_io(std::string& in_data) {
     case engine_io_packet_type::close:
       close();
     case engine_io_packet_type::upgrade:
-      is_upgrade_to_websocket_ = true;
+      upgrade_to_websocket();
     case engine_io_packet_type::noop:
       seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
       break;
