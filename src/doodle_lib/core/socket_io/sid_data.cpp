@@ -108,6 +108,7 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
         if (!in_body.namespace_.empty()) {
           // 转移到主名称空间
           l_ptr->set_namespace({});
+          l_ptr->auth_ = in_body.json_data_;
         } else
           socket_io_contexts_.erase(in_body.namespace_);
       }
