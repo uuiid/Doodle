@@ -31,4 +31,5 @@ target_sources(
         schedule_items.cpp
         auth.cpp
         actions.cpp
+        notifications.cpp
 )
