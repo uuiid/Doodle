@@ -52,7 +52,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .uuid_id_        = core_set::get_set().get_uuid(),
       .name_           = l_data.name,
       .description_    = l_data.description,
-      .canceled_       = true,
       .is_shared_      = l_data.is_shared,
       .project_id_     = l_data.project_id,
       .entity_type_id_ = l_data.asset_type_id,
