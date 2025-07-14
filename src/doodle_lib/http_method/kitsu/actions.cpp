@@ -32,6 +32,13 @@ std::optional<assignees_table> get_task_assignees(uuid in_task_id, uuid in_perso
   );
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<assignees_table>{std::nullopt};
 }
+std::vector<std::int64_t> get_task_assignees_ids(uuid in_task_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  auto l_ret =
+      l_sql.impl_->storage_any_.select(&assignees_table::id_, where(c(&assignees_table::task_id_) == in_task_id));
+  return l_ret;
+}
 
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clear_assignation_put::callback_arg(
@@ -45,8 +52,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
   l_ptr->check_task_assign_access(l_task.project_id_);
   for (auto&& l_i : l_args.task_id_)
-    if (auto l_assign = get_task_assignees(l_i, l_args.person_id_); l_assign)
-      co_await g_ctx().get<sqlite_database>().remove<assignees_table>(l_assign.value().id_);
+    if (!l_args.person_id_.is_nil()) {
+      if (auto l_assign = get_task_assignees(l_i, l_args.person_id_); l_assign)
+        co_await g_ctx().get<sqlite_database>().remove<assignees_table>(l_assign.value().id_);
+    } else {
+      co_await g_ctx().get<sqlite_database>().remove<assignees_table>(get_task_assignees_ids(l_i));
+    }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_args.task_id_);
 }
