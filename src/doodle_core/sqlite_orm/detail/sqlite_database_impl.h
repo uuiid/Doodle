@@ -124,14 +124,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("server_status", &computer::server_status_),            //
           make_column("client_status", &computer::client_status_)
       ),
-      make_index("kitsu_assets_type_tab_uuid_id_index", &metadata::kitsu::assets_type_t::uuid_id_),
-      make_table(
-          "kitsu_assets_type_tab",                                                 //
-          make_column("id", &metadata::kitsu::assets_type_t::id_, primary_key()),  //
-          make_column("uuid_id", &metadata::kitsu::assets_type_t::uuid_id_, unique(), not_null()),
-          make_column("name", &metadata::kitsu::assets_type_t::name_),
-          make_column("asset_type", &metadata::kitsu::assets_type_t::type_)
-      ),
       make_table("assets_link_parent_t",
           make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
           make_column("assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_, not_null()),

@@ -982,7 +982,6 @@ assets_file_helper::database_t sqlite_database::get_by_uuid<assets_file_helper::
   return l_data;
 }
 DOODLE_GET_BY_UUID_SQL(assets_helper::database_t)
-DOODLE_GET_BY_UUID_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(server_task_info)
 DOODLE_GET_BY_UUID_SQL(project_status)
@@ -1058,7 +1057,6 @@ std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
   }
   return l_list;
 }
-DOODLE_GET_ALL_SQL(metadata::kitsu::assets_type_t)
 DOODLE_GET_ALL_SQL(assets_helper::database_t)
 DOODLE_GET_ALL_SQL(computer)
 DOODLE_GET_ALL_SQL(server_task_info)
@@ -1131,7 +1129,6 @@ DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
 DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_RANGE(assets_helper::database_t)
 DOODLE_INSTALL_RANGE(assets_file_helper::database_t)
-DOODLE_INSTALL_RANGE(metadata::kitsu::assets_type_t)
 DOODLE_INSTALL_RANGE(computer)
 DOODLE_INSTALL_RANGE(comment_mentions)
 DOODLE_INSTALL_RANGE(comment_department_mentions)

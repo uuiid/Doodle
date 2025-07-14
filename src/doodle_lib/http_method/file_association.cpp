@@ -1,5 +1,6 @@
 #include "file_association.h"
 
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/kitsu/assets_type.h>
 #include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -8,6 +9,7 @@
 #include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/kitsu/kitsu.h>
 
 namespace doodle::http {
 namespace {
@@ -62,10 +64,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_get::c
   }
 
   std::map<details::assets_type_enum, uuid> l_type_map{};
-  if (auto l_list = g_ctx().get<sqlite_database>().get_all<doodle::metadata::kitsu::assets_type_t>(); !l_list.empty()) {
+  if (auto l_list = g_ctx().get<sqlite_database>().get_all<asset_type>(); !l_list.empty()) {
     for (auto& l_data : l_list) {
-      l_type_map[l_data.type_] = l_data.uuid_id_;
-      if (l_assets_id.contains(l_data.uuid_id_)) l_type.emplace(l_data.type_);
+      auto l_type_enum = kitsu::conv_assets_type_enum(l_data.name_);
+      l_type_map[l_type_enum] = l_data.uuid_id_;
+      if (l_assets_id.contains(l_data.uuid_id_)) l_type.emplace(l_type_enum);
     }
   }
 
