@@ -317,10 +317,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_ta
 
   co_return in_handle->make_msg(nlohmann::json{} = l_args.get());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> data_task_delete_::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
-
+  co_return in_handle->make_msg(nlohmann::json::array());
 }
 
 }  // namespace doodle::http
