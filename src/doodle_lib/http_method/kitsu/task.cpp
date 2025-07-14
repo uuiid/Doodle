@@ -57,7 +57,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
   nlohmann::json l_ret{};
   for (auto&& l_task_id : l_task_ids) {
-    auto l_task          = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
+    auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
+    l_ret.emplace_back(*l_task);
+    // 这里需要检查一下, 是否已经将任务分配给了这个人
+    if (l_sql.is_task_assigned_to_person(l_task->uuid_id_, l_person_data.uuid_id_)) continue;
     auto l_task_assign   = std::make_shared<assignees_table>();
     l_task->assigner_id_ = l_person->person_.uuid_id_;
     co_await l_sql.install(l_task);
@@ -73,7 +76,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
       l_notification->person_id_ = l_person_data.uuid_id_;
       co_await l_sql.install(l_notification);
     }
-    l_ret.emplace_back(*l_task);
   }
   co_return in_handle->make_msg(l_ret);
 }
