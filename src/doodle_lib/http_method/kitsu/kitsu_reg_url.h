@@ -260,9 +260,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(sessi
 DOODLE_HTTP_FUN_END()
 // api/data/user/time-spents/{date}
 struct data_user_time_spents_arg {
-  chrono::year_month date_;
+  chrono::year_month_day date_;
 };
-DOODLE_HTTP_FUN(data_user_time_spents, get, ucom_t{} / "api" / "data" / "user" / "time-spents" / make_cap(g_year_month_regex, &data_user_time_spents_arg::date_), http_jwt_fun_template<data_user_time_spents_arg>)
+DOODLE_HTTP_FUN(data_user_time_spents, get, ucom_t{} / "api" / "data" / "user" / "time-spents" / make_cap(g_year_month_day_regex, &data_user_time_spents_arg::date_), http_jwt_fun_template<data_user_time_spents_arg>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<data_user_time_spents_arg> in_arg
 ) override;
@@ -383,7 +383,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
-
 
 // /api/data/tasks/{task_id}/comments/{comment_id}
 struct task_comment_arg {
