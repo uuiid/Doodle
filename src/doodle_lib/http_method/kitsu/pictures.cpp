@@ -84,5 +84,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files_get::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) {
+  FSys::path l_filename = fmt::format("{}.png", in_arg->id_);
+  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
+  auto l_ext  = l_filename.extension();
+  if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
+}
+
 
 }  // namespace doodle::http

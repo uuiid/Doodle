@@ -355,6 +355,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
+// /api/pictures/originals/preview-files/{id}
+DOODLE_HTTP_FUN(pictures_originals_preview_files, get, ucom_t{} / "api" / "pictures" / "originals" / "preview-files" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
+
 // /api/pictures/previews/preview-files/{id}
 DOODLE_HTTP_FUN(pictures_previews_preview_files, get, ucom_t{} / "api" / "pictures" / "previews" / "preview-files" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
@@ -391,7 +398,6 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_user_notifications, get, ucom_t{} / "api" / "data" / "user" / "notifications", http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-
 
 // /api/data/tasks/{task_id}/comments/{comment_id}
 struct task_comment_arg {
