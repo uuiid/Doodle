@@ -945,14 +945,12 @@ std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(cons
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
-DOODLE_UUID_TO_ID(metadata::kitsu::task_type_t)
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
 DOODLE_UUID_TO_ID(person)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
 
-DOODLE_ID_TO_UUID(metadata::kitsu::task_type_t)
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
 DOODLE_ID_TO_UUID(computer)
@@ -968,7 +966,6 @@ person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
   return l_p;
 }
 
-DOODLE_GET_BY_UUID_SQL(metadata::kitsu::task_type_t)
 DOODLE_GET_BY_UUID_SQL(preview_file)
 DOODLE_GET_BY_UUID_SQL(attachment_file)
 template <>
@@ -1040,7 +1037,6 @@ project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
 }
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 
-DOODLE_GET_ALL_SQL(metadata::kitsu::task_type_t)
 template <>
 std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
   auto l_list = impl_->get_all<assets_file_helper::database_t>();
@@ -1093,7 +1089,6 @@ std::vector<person> sqlite_database::get_all() {
   return l_list;
 }
 
-DOODLE_INSTALL_SQL(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_SQL(assets_file_helper::database_t)
 DOODLE_INSTALL_SQL(assets_helper::database_t)
 DOODLE_INSTALL_SQL(computer)
@@ -1126,7 +1121,6 @@ DOODLE_INSTALL_SQL(assets_file_helper::link_parent_t)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
-DOODLE_INSTALL_RANGE(metadata::kitsu::task_type_t)
 DOODLE_INSTALL_RANGE(assets_helper::database_t)
 DOODLE_INSTALL_RANGE(assets_file_helper::database_t)
 DOODLE_INSTALL_RANGE(computer)
@@ -1141,7 +1135,6 @@ DOODLE_INSTALL_RANGE(task)
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)
-DOODLE_REMOVE_BY_ID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_ID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_ID(assets_helper::database_t)
 DOODLE_REMOVE_BY_ID(assignees_table)
@@ -1151,7 +1144,6 @@ DOODLE_REMOVE_BY_ID(assets_file_helper::link_parent_t)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
-DOODLE_REMOVE_BY_UUID(metadata::kitsu::task_type_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)

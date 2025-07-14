@@ -152,14 +152,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("parent_uuid", &assets_helper::database_t::uuid_parent_),
           make_column("order", &assets_helper::database_t::order_, default_value(0), not_null())
       ),
-      make_index("kitsu_task_type_tab_uuid_id_index", &metadata::kitsu::task_type_t::uuid_id_),
-      make_table(
-          "kitsu_task_type_tab",                                                 //
-          make_column("id", &metadata::kitsu::task_type_t::id_, primary_key()),  //
-          make_column("uuid_id", &metadata::kitsu::task_type_t::uuid_id_, unique(), not_null()),
-          make_column("name", &metadata::kitsu::task_type_t::name_),
-          make_column("use_chick_files", &metadata::kitsu::task_type_t::use_chick_files)
-      ),
       make_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_),
       make_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_),
       make_table(
