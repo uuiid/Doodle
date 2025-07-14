@@ -32,6 +32,8 @@ class http_jwt_fun : public http_function {
     void check_task_department_access(const task& in_task_id, const person& in_person_id) const;
     // 检查是否可以删除任务
     void check_delete_access(const uuid& in_project_id) const;
+    // 检查任务的分配权限
+    void check_task_assign_access(const uuid& in_project_id) const;
   };
 
   std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);

@@ -30,4 +30,5 @@ target_sources(
         entities.cpp
         schedule_items.cpp
         auth.cpp
+        actions.cpp
 )
