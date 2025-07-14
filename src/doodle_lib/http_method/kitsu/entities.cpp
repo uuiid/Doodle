@@ -42,5 +42,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put:
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entt);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_entities_news_get::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) {
+  co_return in_handle->make_msg(
+      nlohmann::json{
+          {"data", nlohmann::json::array()}, {"limit", 2000}, {"nb_pages", 0}, {"offset", 0}, {"page", 1}, {"total", 0}
+      }
+  );
+}
 
 }  // namespace doodle::http

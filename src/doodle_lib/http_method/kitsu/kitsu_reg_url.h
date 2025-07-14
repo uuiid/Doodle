@@ -371,6 +371,20 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_tasks_open_tasks, get, ucom_t{} / "api" / "data" / "tasks" / "open-tasks", http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+// /api/data/assets/<asset_id>/cast-in
+DOODLE_HTTP_FUN(data_assets_cast_in, get, ucom_t{} / "api" / "data" / "assets" / &capture_id_t::id_ / "cast-in", http_jwt_fun_template<capture_id_t>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
+// /api/data/entities/<entity_id>/news
+DOODLE_HTTP_FUN(data_entities_news, get, ucom_t{} / "api" / "data" / "entities" / &capture_id_t::id_ / "news", http_jwt_fun_template<capture_id_t>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
+
+
 // /api/data/tasks/{task_id}/comments/{comment_id}
 struct task_comment_arg {
   uuid task_id_;

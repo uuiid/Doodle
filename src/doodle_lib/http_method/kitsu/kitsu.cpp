@@ -158,6 +158,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg(std::make_shared<data_project_schedule_items_get>())
       .reg(std::make_shared<data_project_milestones_get>())
       .reg(std::make_shared<data_tasks_open_tasks_get>())
+      .reg_t<data_assets_cast_in_get>()
+      .reg_t<data_entities_news_get>()
 
       // delete
       .reg(std::make_shared<task_comment_delete_>())
@@ -218,8 +220,6 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
 }
 
 namespace kitsu {
-
-
 
 uuid get_url_project_id(const boost::urls::url& in_url) {
   auto l_q = in_url.query();
