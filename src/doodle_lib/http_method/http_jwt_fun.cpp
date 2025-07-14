@@ -55,6 +55,18 @@ void http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) con
   )
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+void http_jwt_fun::http_jwt_t::is_project_access(const uuid& in_project_id) const {
+  if (person_.uuid_id_.is_nil())
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  if (!(                                                                               //
+          person_.role_ == person_role_type::admin ||                                  // 是管理员
+          person_.role_ == person_role_type::manager ||                                // 是项目经理
+          g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id)  // 在项目中
+      )                                                                                //
+  )
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+
 void http_jwt_fun::http_jwt_t::is_admin() const {
   if (!person_.uuid_id_.is_nil() && person_.role_ == person_role_type::admin) return;
 

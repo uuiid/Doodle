@@ -19,6 +19,8 @@ class http_jwt_fun : public http_function {
     person person_;
     // 检查人员是否有修改项目属性的权限
     void is_project_manager(const uuid& in_project_id) const;
+    // 检查人员是否有访问项目的权限
+    void is_project_access(const uuid& in_project_id) const;
     // 检查是否是 admin
     void is_admin() const;
     // 检查是否是项目经理

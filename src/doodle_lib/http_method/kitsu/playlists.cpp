@@ -13,7 +13,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_person  = get_person(in_handle);
   auto l_entt_id = l_sql.get_by_uuid<entity>(in_arg->id_);
-  l_person->is_project_manager(l_entt_id.parent_id_);
+  l_person->is_project_access(l_entt_id.parent_id_);
   nlohmann::json l_json{};
   for (auto&& [key, value] : l_sql.get_preview_files_for_entity(l_entt_id.uuid_id_))
     l_json[fmt::to_string(key)] = value;
