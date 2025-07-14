@@ -70,6 +70,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
     // 这里需要检查一下, 任务的分配人是否是当前用户
     if (l_person->person_.uuid_id_ != l_person_data.uuid_id_) {
       auto l_notification        = std::make_shared<notification>();
+      l_notification->uuid_id_   = core_set::get_set().get_uuid();
       l_notification->type_      = notification_type::assignation;
       l_notification->task_id_   = l_task->uuid_id_;
       l_notification->author_id_ = l_person->person_.uuid_id_;
