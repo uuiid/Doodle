@@ -430,5 +430,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<project_settings_task_types_arg> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
+// /api/data/tasks/{id}
+DOODLE_HTTP_FUN(data_task, delete_, ucom_t{} / "api" / "data" / "tasks" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http
