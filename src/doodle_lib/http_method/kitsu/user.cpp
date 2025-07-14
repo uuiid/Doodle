@@ -8,7 +8,6 @@
 #include "doodle_core/metadata/task_status.h"
 #include "doodle_core/metadata/task_type.h"
 #include <doodle_core/metadata/entity_type.h>
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>

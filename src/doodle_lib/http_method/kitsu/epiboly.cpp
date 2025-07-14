@@ -4,7 +4,6 @@
 
 #include "epiboly.h"
 
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 

@@ -4,7 +4,6 @@
 
 #include "doodle_core/metadata/notification.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>

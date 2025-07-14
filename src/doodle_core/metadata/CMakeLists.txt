@@ -67,4 +67,3 @@ target_sources(
         status_automation.cpp
 )
 add_subdirectory(bvh)
-add_subdirectory(kitsu)

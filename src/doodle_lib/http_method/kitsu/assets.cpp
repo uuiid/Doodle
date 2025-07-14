@@ -2,7 +2,6 @@
 // Created by TD on 24-12-30.
 //
 
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>

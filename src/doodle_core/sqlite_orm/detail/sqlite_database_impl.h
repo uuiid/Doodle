@@ -14,8 +14,6 @@
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
-#include <doodle_core/metadata/kitsu/assets_type.h>
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/label.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/notification.h>

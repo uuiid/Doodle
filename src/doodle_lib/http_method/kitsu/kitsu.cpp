@@ -8,8 +8,6 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
-#include <doodle_core/metadata/kitsu/assets_type.h>
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>

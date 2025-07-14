@@ -1,9 +1,0 @@
-target_sources(
-        doodle_core
-        PUBLIC
-        task_type.h
-        assets_type.h
-        PRIVATE
-        task_type.cpp
-        assets_type.cpp
-)

@@ -3,7 +3,6 @@
 //
 
 #include <doodle_core/core/bcrypt/bcrypt.h>
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>

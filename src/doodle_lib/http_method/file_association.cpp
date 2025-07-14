@@ -1,8 +1,6 @@
 #include "file_association.h"
 
 #include <doodle_core/metadata/entity_type.h>
-#include <doodle_core/metadata/kitsu/assets_type.h>
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_session_data.h>

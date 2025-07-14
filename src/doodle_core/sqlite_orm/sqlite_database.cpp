@@ -9,8 +9,6 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/computer.h>
-#include <doodle_core/metadata/kitsu/assets_type.h>
-#include <doodle_core/metadata/kitsu/task_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
