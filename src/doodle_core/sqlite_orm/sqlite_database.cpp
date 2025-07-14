@@ -990,7 +990,14 @@ DOODLE_GET_BY_UUID_SQL(task_type)
 DOODLE_GET_BY_UUID_SQL(asset_type)
 DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(comment)
-DOODLE_GET_BY_UUID_SQL(task)
+template <>
+task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {
+  using namespace sqlite_orm;
+  auto l_ret = impl_->get_by_uuid<task>(in_uuid);
+  l_ret.assignees_ =
+      impl_->storage_any_.select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == in_uuid));
+  return l_ret;
+}
 DOODLE_GET_BY_UUID_SQL(work_xlsx_task_info_helper::database_t)
 template <>
 entity sqlite_database::get_by_uuid<entity>(const uuid& in_uuid) {
