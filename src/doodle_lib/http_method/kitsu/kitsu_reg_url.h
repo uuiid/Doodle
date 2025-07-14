@@ -269,7 +269,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
 DOODLE_HTTP_FUN_END()
 struct person_day_off_arg {
   uuid id_;
-  chrono::year_month date_;
+  chrono::year_month_day date_;
 };
 // api/data/persons/{person_id}/day-offs/{date}
 DOODLE_HTTP_FUN(person_day_off, get, ucom_t{} / "api" / "data" / "persons" / &person_day_off_arg::id_ / "day-offs" / &person_day_off_arg::date_, http_jwt_fun_template<person_day_off_arg>)
