@@ -50,7 +50,6 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // boost::beast::flat_buffer l_buffer{};
   if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
 
-  sid_data_->upgrade_to_websocket();
 
   {  // 第一次验证ping pong
     std::string l_body{};
@@ -62,6 +61,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
     l_ptr->start_dump();
     co_await async_write_websocket(l_ptr);
   }
+
+  sid_data_->upgrade_to_websocket();
   sid_data_->cancel_async_event();
   boost::asio::co_spawn(
       co_await boost::asio::this_coro::executor, async_write(),
