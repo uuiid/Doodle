@@ -53,6 +53,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .uuid_id_        = core_set::get_set().get_uuid(),
       .name_           = l_data.name,
       .description_    = l_data.description,
+      .canceled_       = true,
       .is_shared_      = l_data.is_shared,
       .project_id_     = l_data.project_id,
       .entity_type_id_ = l_data.asset_type_id,
@@ -338,12 +339,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_
   co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
 }
 
-
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_in_get::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
-
 
 }  // namespace doodle::http
