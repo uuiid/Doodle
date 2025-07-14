@@ -48,22 +48,32 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   if (sid_data_->is_locked()) co_return co_await async_close_websocket();
   sid_lock_ = sid_data_->get_lock();
   // boost::beast::flat_buffer l_buffer{};
-  std::string l_body{};
-  auto l_buffer = boost::asio::dynamic_buffer(l_body);
   if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
 
-  auto [l_ec_r, l_tr_s] = co_await web_stream_->async_read(l_buffer);
-  if (l_ec_r == boost::beast::websocket::error::closed) co_return;
-  if (l_ec_r) co_return logger_->error(l_ec_r.what()), co_await async_close_websocket();
-  auto [l_r, l_ptr] = sid_data_->handle_engine_io(l_body);
-  if (l_ptr) {
+  sid_data_->upgrade_to_websocket();
+
+  {  // 第一次验证ping pong
+    std::string l_body{};
+    auto l_buffer = boost::asio::dynamic_buffer(l_body);
+    co_await web_stream_->async_read(l_buffer, boost::asio::use_awaitable);
+    if (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet != engine_io_packet_type::ping)
+      co_await async_close_websocket();
+    auto l_ptr = std::make_shared<engine_io_packet>(engine_io_packet_type::pong, l_body.erase(0, 1));
+    l_ptr->start_dump();
     co_await async_write_websocket(l_ptr);
-    sid_data_->upgrade_to_websocket();
-    sid_data_->cancel_async_event();
-    boost::asio::co_spawn(
-        co_await boost::asio::this_coro::executor, async_write(),
-        boost::asio::consign(boost::asio::detached, shared_from_this())
-    );
+  }
+  sid_data_->cancel_async_event();
+  boost::asio::co_spawn(
+      co_await boost::asio::this_coro::executor, async_write(),
+      boost::asio::consign(boost::asio::detached, shared_from_this())
+  );
+
+  {  // 第二次验证 升级协议
+    std::string l_body{};
+    auto l_buffer = boost::asio::dynamic_buffer(l_body);
+    co_await web_stream_->async_read(l_buffer, boost::asio::use_awaitable);
+    if (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet != engine_io_packet_type::upgrade)
+      co_await async_close_websocket();
   }
 }
 

@@ -29,6 +29,7 @@ std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(
 bool sid_data::is_locked() const { return lock_count_ > 0; }
 
 void sid_data::run() {
+  timer_ = std::make_shared<boost::asio::system_timer>(g_io_context());
   boost::asio::co_spawn(g_io_context(), impl_run(), boost::asio::consign(boost::asio::detached, shared_from_this()));
 }
 boost::asio::awaitable<void> sid_data::impl_run() {
@@ -43,15 +44,13 @@ boost::asio::awaitable<void> sid_data::impl_run() {
 }
 
 boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
-  boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
-  l_timer.expires_from_now(ctx_->handshake_data_.ping_timeout_);
-
+  timer_->expires_from_now(ctx_->handshake_data_.ping_timeout_);
   std::shared_ptr<packet_base> l_message{std::make_shared<engine_io_packet>(engine_io_packet_type::noop)};
   l_message->start_dump();
   if (auto [l_arr, l_e1, l_str_var, l_e2] =
           co_await boost::asio::experimental::parallel_group(
               channel_.async_receive(boost::asio::deferred),
-              l_timer.async_wait(boost::asio::bind_cancellation_slot(channel_signal_.slot(), boost::asio::deferred))
+              timer_->async_wait(boost::asio::bind_cancellation_slot(channel_signal_.slot(), boost::asio::deferred))
           )
               .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
       l_arr[0] == 0)
@@ -151,7 +150,7 @@ void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
     });
 }
 void sid_data::cancel_async_event() {
-  if (channel_signal_.slot().is_connected()) channel_signal_.emit(boost::asio::cancellation_type::all);
+  if (channel_signal_.slot().has_handler()) channel_signal_.emit(boost::asio::cancellation_type::all);
 }
 
 }  // namespace doodle::socket_io

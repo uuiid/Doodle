@@ -74,6 +74,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   boost::asio::cancellation_signal channel_signal_;
+  std::shared_ptr<boost::asio::system_timer> timer_;
 
   struct block_message_guard {
     sid_data* data_;
