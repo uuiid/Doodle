@@ -1238,8 +1238,15 @@ boost::asio::awaitable<void> sqlite_database::remove<task>(const uuid& in_data) 
 }
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<entity>(const uuid& in_data) {
-  // using namespace sqlite_orm;
-  return impl_->remove<entity>(in_data);
+  using namespace sqlite_orm;
+  DOODLE_TO_SQLITE_THREAD_2();
+  auto l_g = impl_->storage_any_.transaction_guard();
+  impl_->storage_any_.remove_all<entity_asset_extend>(where(c(&entity_asset_extend::entity_id_) == in_data));
+  impl_->storage_any_.remove_all<entity>(where(c(&entity::uuid_id_) == in_data));
+  l_g.commit();
+  DOODLE_TO_SELF();
+
+  co_return;
 }
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<comment>(const uuid& in_data) {
