@@ -22,10 +22,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_add_p
   auto l_comment  = l_sql.get_by_uuid<comment>(in_arg->comment_id);
   auto l_task     = l_sql.get_by_uuid<task>(in_arg->task_id);
   auto l_revision = in_handle->get_json().value("revision", 0);
-  auto l_position =
-      l_revision == 0 ? (l_sql.has_preview_file(in_arg->task_id) ? l_sql.get_next_position(in_arg->task_id, l_revision)
-                                                                 : l_sql.get_next_preview_revision(in_arg->task_id))
-                      : l_sql.get_next_position(in_arg->task_id, l_revision);
+  if (l_revision == 0 && !l_sql.has_preview_file(in_arg->task_id))
+    l_revision = 1;
+  else if (l_revision == 0)
+    l_revision = l_sql.get_next_preview_revision(in_arg->task_id);
+  auto l_position                  = l_sql.get_next_position(in_arg->task_id, l_revision);
+
   auto l_preview_file              = std::make_shared<preview_file>();
   l_preview_file->uuid_id_         = core_set::get_set().get_uuid();
   l_preview_file->revision_        = l_revision;
