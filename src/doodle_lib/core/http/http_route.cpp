@@ -33,8 +33,7 @@ DOODLE_HTTP_FUN_END()
 
 DOODLE_HTTP_FUN(not_function, get, {}, http_function)
 boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
-  static boost::system::error_code l_error_code{ERROR_SERVICE_NOT_FOUND, boost::system::system_category()};
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_error_code);
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
 DOODLE_HTTP_FUN_END()
 

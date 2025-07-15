@@ -8,12 +8,14 @@
 namespace doodle::http::kitsu {
 class http_route_proxy : public http_route {
   std::vector<http_function_ptr> proxy_urls{};
-  http_function_ptr get_file_, head_file_;
+  http_function_ptr get_file_, head_file_, my_not_function, my_options_function;
 
  public:
   http_route_proxy() {
-    not_function     = nullptr;
-    options_function = nullptr;
+    my_not_function     = not_function;
+    my_options_function = options_function;
+    not_function        = nullptr;
+    options_function    = nullptr;
   }
   http_function_ptr operator()(
       boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
