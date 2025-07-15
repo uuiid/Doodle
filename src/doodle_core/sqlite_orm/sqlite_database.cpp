@@ -912,6 +912,15 @@ std::int64_t sqlite_database::get_next_position(const uuid& in_task_id, const st
   );
   return l_r + 1;
 }
+std::int64_t sqlite_database::get_preview_revision(const uuid& in_comment) {
+  using namespace sqlite_orm;
+
+  auto l_r = impl_->storage_any_.get_all<comment_preview_link>(
+      where(c(&comment_preview_link::comment_id_) == in_comment), limit(1)
+  );
+  if (l_r.empty()) return 0;
+  return impl_->get_by_uuid<preview_file>(l_r.front().preview_file_id_).revision_;
+}
 
 std::optional<comment> sqlite_database::get_last_comment(const uuid& in_task_id) {
   using namespace sqlite_orm;
