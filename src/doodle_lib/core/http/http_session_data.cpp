@@ -452,13 +452,11 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           case content_type::text_plain:
           case content_type::image_png:
             session_->body_       = string_request_parser_->get().body();
-            session_->req_header_ = std::move(string_request_parser_->release().base());
 
             break;
           case content_type::application_json:
             try {
               session_->body_       = nlohmann::json::parse(string_request_parser_->get().body());
-              session_->req_header_ = std::move(string_request_parser_->release().base());
             } catch (const nlohmann::json::exception& e) {
               session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
               ec_ = error_enum::bad_json_string;
