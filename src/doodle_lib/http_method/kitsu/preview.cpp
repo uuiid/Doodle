@@ -88,10 +88,15 @@ void save_variants(const FSys::path& in_path, const uuid& in_id) {
         g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / key / FSys::split_uuid_path(fmt::format("{}.png", in_id));
     if (auto l_p = l_new_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     auto l_new_cv = l_cv.clone();
-    cv::resize(
-        l_new_cv, l_new_cv, cv::Size{size.first, size.second == 0 ? (l_cv.rows / l_cv.cols) * size.first : size.second},
-        0, 0
-    );
+    auto l_size   = cv::Size{
+        size.first, size.second == 0
+                          ? boost::numeric_cast<std::int32_t>(
+                              boost::numeric_cast<double>(l_cv.rows) / boost::numeric_cast<double>(l_cv.cols) *
+                              boost::numeric_cast<double>(size.first)
+                          )
+                          : std::int32_t{size.second}
+    };
+    cv::resize(l_new_cv, l_new_cv, l_size, 0, 0);
     cv::imwrite(l_new_path.generic_string(), l_new_cv);
   }
 }
