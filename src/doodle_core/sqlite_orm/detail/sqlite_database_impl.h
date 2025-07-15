@@ -400,7 +400,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("ban_ben", &entity_asset_extend::ban_ben_),                        //
           make_column("ji_du", &entity_asset_extend::ji_du_),                        //
           make_column("kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_),                        //
-          foreign_key(&entity_asset_extend::entity_id_).references(&entity::uuid_id_)
+          foreign_key(&entity_asset_extend::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
       make_table<entity>(
           "entity",                                                                    //
