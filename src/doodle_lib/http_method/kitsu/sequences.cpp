@@ -20,7 +20,10 @@ struct sequences_with_tasks_result {
         episode_id_(in_entity.parent_id_),
         description_(in_entity.description_),
         preview_file_id_(in_entity.preview_file_id_),
-        canceled_(in_entity.canceled_) {}
+        canceled_(in_entity.canceled_),
+        frame_in_(0),
+        frame_out_(0),
+        fps_(0) {}
 
   decltype(entity::uuid_id_) uuid_id_;
   decltype(entity::name_) name_;
@@ -102,9 +105,9 @@ struct sequences_with_tasks_result {
     j["episode_id"]      = p.episode_id_;
     j["description"]     = p.description_;
 
-    j["frame_in"]        = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json{};
-    j["frame_out"]       = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json{};
-    j["fps"]             = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json{};
+    j["frame_in"]        = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json::object();
+    j["frame_out"]       = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json::object();
+    j["fps"]             = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json::object();
     j["preview_file_id"] = p.preview_file_id_;
     j["canceled"]        = p.canceled_;
     j["tasks"]           = p.tasks_;
