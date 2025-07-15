@@ -1242,6 +1242,10 @@ boost::asio::awaitable<void> sqlite_database::remove<entity>(const uuid& in_data
   DOODLE_TO_SQLITE_THREAD_2();
   auto l_g = impl_->storage_any_.transaction_guard();
   impl_->storage_any_.remove_all<entity_asset_extend>(where(c(&entity_asset_extend::entity_id_) == in_data));
+  impl_->storage_any_.remove_all<entity_link>(where(c(&entity_link::entity_in_id_) == in_data));
+  impl_->storage_any_.remove_all<entity_link>(where(c(&entity_link::entity_out_id_) == in_data));
+  impl_->storage_any_.remove_all<entity_concept_link>(where(c(&entity_concept_link::entity_out_id_) == in_data));
+  impl_->storage_any_.remove_all<entity_concept_link>(where(c(&entity_concept_link::entity_out_id_) == in_data));
   impl_->storage_any_.remove_all<entity>(where(c(&entity::uuid_id_) == in_data));
   l_g.commit();
   DOODLE_TO_SELF();
