@@ -411,6 +411,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       case boost::beast::http::verb::delete_:
       case boost::beast::http::verb::patch:
         session_->content_type_ = get_content_type(request_parser_->get()[boost::beast::http::field::content_type]);
+        session_->req_header_ = request_parser_->get().base();
         switch (session_->content_type_) {
           case content_type::image_jpeg:
           case content_type::image_jpg:
