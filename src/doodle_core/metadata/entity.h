@@ -15,7 +15,12 @@ enum class entity_status {
   complete,
   canceled,
 };
-
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    entity_status, {{entity_status::standby, "standby"},
+                    {entity_status::running, "running"},
+                    {entity_status::complete, "complete"},
+                    {entity_status::canceled, "canceled"}}
+)
 struct DOODLE_CORE_API asset_instance_link {
   std::int32_t id_;
   uuid entity_id_;
