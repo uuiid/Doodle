@@ -122,7 +122,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
     l_preview_file->extension_     = "png";
-    l_preview_file->original_name_ = l_file.filename().generic_string();
+    l_preview_file->original_name_ = l_file.stem().generic_string();
     l_file                         = l_new_path;
   }
   auto l_size                 = get_image_size(l_file);
