@@ -49,6 +49,7 @@ class url_route_component_t {
   // year month day regex
   constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
   constexpr static auto g_number               = std::string_view{"([0-9]+)"};
+  constexpr static auto g_file_name            = std::string_view{R"((^.+\.[A-Za-z]{3}$))"};
 
   struct component_base_t {
     std::regex regex_;
@@ -61,6 +62,8 @@ class url_route_component_t {
     std::tuple<bool, chrono::year_month> convert_year_month(const std::string& in_str) const;
     std::tuple<bool, chrono::year_month_day> convert_year_month_day(const std::string& in_str) const;
     std::tuple<bool, std::int32_t> convert_number(const std::string& in_str) const;
+    std::tuple<bool, FSys::path> convert_file_name(const std::string& in_str) const;
+
     virtual const std::type_info& get_type() const { return typeid(void); }
     virtual std::function<std::shared_ptr<void>()> create_object() const { return {}; }
   };
@@ -105,6 +108,10 @@ class url_route_component_t {
     std::tuple<bool, std::int32_t> convert(const std::string& in_str) const {
       return this->convert_number(in_str);
     }
+    template <>
+    std::tuple<bool, FSys::path> convert(const std::string& in_str) const {
+      return this->convert_file_name(in_str);
+    }
   };
 
  private:
@@ -132,7 +139,8 @@ class url_route_component_t {
     using field_type = std::remove_cv_t<object_field_type_t<Member_Pointer>>;
     static_assert(
         std::is_same_v<field_type, uuid> || std::is_same_v<field_type, chrono::year_month> ||
-            std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t>,
+            std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t> ||
+            std::is_same_v<field_type, FSys::path>,
         "not support type"
     );
 
@@ -144,6 +152,8 @@ class url_route_component_t {
       return operator/(make_cap(g_year_month_day_regex, in_target));
     else if constexpr (std::is_same_v<field_type, std::int32_t>)
       return operator/(make_cap(g_number, in_target));
+    else if constexpr (std::is_same_v<field_type, FSys::path>)
+      return operator/(make_cap(g_file_name, in_target));
     return *this;
   }
   template <typename String_T, typename Member_Pointer>

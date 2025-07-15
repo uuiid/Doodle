@@ -64,7 +64,17 @@ std::tuple<bool, std::int32_t> url_route_component_t::component_base_t::convert_
     }
   }
   return {false, 0};
-  std::tuple l_t = {1, ""};
+}
+std::tuple<bool, FSys::path> url_route_component_t::component_base_t::convert_file_name(
+    const std::string& in_str
+) const {
+  std::smatch l_result{};
+  if (std::regex_match(in_str, l_result, regex_)) {
+    for (auto l_begin = ++l_result.begin(), l_end = l_result.end(); l_begin != l_end; ++l_begin) {
+      return {true, FSys::path{l_begin->str()}};
+    }
+  }
+  return {false, {}};
 }
 
 std::shared_ptr<void> url_route_component_t::create_object() const {
