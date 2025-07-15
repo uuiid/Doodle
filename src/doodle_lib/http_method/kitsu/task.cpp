@@ -320,7 +320,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_ta
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_delete_::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
-  co_return in_handle->make_msg(nlohmann::json::array());
+  auto l_ptr = get_person(in_handle);
+  auto l_task = g_ctx().get<sqlite_database>().get_by_uuid<task>(in_arg->id_);
+  l_ptr->check_delete_access(l_task.project_id_);
+  co_await g_ctx().get<sqlite_database>().remove<task>(in_arg->id_);
+  co_return in_handle->make_msg({}, boost::beast::http::status::no_content);
 }
 
 }  // namespace doodle::http
