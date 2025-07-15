@@ -89,7 +89,7 @@ void save_variants(const FSys::path& in_path, const uuid& in_id) {
     if (auto l_p = l_new_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     auto l_new_cv = l_cv.clone();
     cv::resize(
-        l_new_cv, l_new_cv, cv::Size{size.first, size.second == 0 ? (l_cv.cols / l_cv.rows) * size.first : size.second},
+        l_new_cv, l_new_cv, cv::Size{size.first, size.second == 0 ? (l_cv.rows / l_cv.cols) * size.first : size.second},
         0, 0
     );
     cv::imwrite(l_new_path.generic_string(), l_new_cv);
