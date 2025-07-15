@@ -32,6 +32,14 @@ enum class contract_types {
   apprentice,
   internship,
 };
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    contract_types, {{contract_types::open_ended, "open_ended"},
+                     {contract_types::fixed_term, "fixed_term"},
+                     {contract_types::short_term, "short_term"},
+                     {contract_types::freelance, "freelance"},
+                     {contract_types::apprentice, "apprentice"},
+                     {contract_types::internship, "internship"}}
+)
 
 enum class two_factor_authentication_types {
   totp,
@@ -87,14 +95,14 @@ struct DOODLE_CORE_API person {
   std::string notifications_discord_userid_;
 
   bool is_bot_;
-  std::string jti_;
+  std::optional<std::string> jti_;
   std::optional<chrono::system_zoned_time> expiration_date_;
 
   std::vector<uuid> departments_;
   uuid studio_id_;
 
   bool is_generated_from_ldap_;
-  std::string ldap_uid_;
+  std::optional<std::string> ldap_uid_;
 
   // 自定义属性
   // 钉钉id

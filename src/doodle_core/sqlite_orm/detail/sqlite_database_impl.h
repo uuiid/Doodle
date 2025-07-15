@@ -607,7 +607,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("fido_credentials", &person::fido_credentials_),                                        //
           make_column("otp_recovery_codes", &person::otp_recovery_codes_),                                    //
           make_column("preferred_two_factor_authentication", &person::preferred_two_factor_authentication_),  //
-          make_column("shotgun_id", &person::shotgun_id_),                                                    //
+          make_column("shotgun_id", &person::shotgun_id_, unique()),                                                    //
           make_column("timezone", &person::timezone_),                                                        //
           make_column("locale", &person::locale_),                                                            //
           make_column("data", &person::data_),                                                                //
@@ -621,11 +621,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("notifications_discord_enabled", &person::notifications_discord_enabled_),              //
           make_column("notifications_discord_userid", &person::notifications_discord_userid_),                //
           make_column("is_bot", &person::is_bot_),                                                            //
-          make_column("jti", &person::jti_),                                                                  //
+          make_column("jti", &person::jti_, unique(), null()),                                                                  //
           make_column("expiration_date", &person::expiration_date_),                                          //
           make_column("studio_id", &person::studio_id_),                                                      //
           make_column("is_generated_from_ldap", &person::is_generated_from_ldap_),                            //
-          make_column("ldap_uid", &person::ldap_uid_),
+          make_column("ldap_uid", &person::ldap_uid_, unique(), null()),
           make_column("dingding_id", &person::dingding_id_),
           make_column("dingding_company_id", &person::dingding_company_id_)
       ),
