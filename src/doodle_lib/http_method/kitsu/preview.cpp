@@ -121,16 +121,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
                       FSys::split_uuid_path(fmt::format("{}.png", l_preview_file->uuid_id_));
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
-    l_file = l_new_path;
+    l_preview_file->extension_     = "png";
+    l_preview_file->original_name_ = l_file.filename().generic_string();
+    l_file                         = l_new_path;
   }
-  l_preview_file->extension_     = "png";
-  l_preview_file->original_name_ = l_file.filename().generic_string();
-  auto l_size                    = get_image_size(l_file);
-  l_preview_file->width_         = static_cast<std::int32_t>(std::get<0>(l_size));
-  l_preview_file->height_        = static_cast<std::int32_t>(std::get<1>(l_size));
-  l_preview_file->status_        = preview_file_statuses::ready;
-  l_preview_file->file_size_     = FSys::file_size(l_file);
-  l_preview_file->updated_at_    = chrono::system_clock::now();
+  auto l_size                 = get_image_size(l_file);
+  l_preview_file->width_      = static_cast<std::int32_t>(std::get<0>(l_size));
+  l_preview_file->height_     = static_cast<std::int32_t>(std::get<1>(l_size));
+  l_preview_file->status_     = preview_file_statuses::ready;
+  l_preview_file->file_size_  = FSys::file_size(l_file);
+  l_preview_file->updated_at_ = chrono::system_clock::now();
   co_await l_sql.install(l_preview_file);
 
   // 更新task
