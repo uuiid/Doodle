@@ -11,7 +11,7 @@ http_function_ptr http_route_proxy::operator()(
     boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
 ) const {
   auto l_ptr = http_route::operator()(in_verb, in_segment, in_handle);
-  if (!l_ptr && in_segment.front() == "api") return my_not_function;
+  if (!l_ptr && !in_segment.empty() && in_segment.front() == "api") return my_not_function;
   if (l_ptr == nullptr) {
     return in_verb == boost::beast::http::verb::head ? head_file_ : get_file_;
   }
