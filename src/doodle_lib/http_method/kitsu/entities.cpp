@@ -40,7 +40,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put:
     l_res.update(*l_ext_ptr);
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_entt);
+  co_return in_handle->make_msg(l_res);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_entities_news_get::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
