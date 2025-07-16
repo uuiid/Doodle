@@ -13,6 +13,7 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_win_service.h>
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include "kitsu.h"
@@ -181,6 +182,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     l_task_json["task_type_color"]        = l_task_type.color_;
     l_task_json["task_type_priority"]     = l_task_type.priority_;
 
+    socket_io::broadcast(
+        "task:new", nlohmann::json{{"task_id", l_task->uuid_id_}, {"project_id", l_task->project_id_}}, "/events"
+    );
+
     co_return in_handle->make_msg(l_json_r.dump());
   }
   auto l_tasks = std::make_shared<std::vector<task>>();
@@ -212,6 +217,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     i["task_type_color"]        = l_task_type.color_;
     i["task_type_priority"]     = l_task_type.priority_;
   }
+  for (const auto& i : *l_tasks)
+    socket_io::broadcast(
+        "task:new", nlohmann::json{{"task_id", i.uuid_id_}, {"project_id", i.project_id_}}, "/events"
+    );
   co_return in_handle->make_msg(l_json_r.dump());
 }
 
