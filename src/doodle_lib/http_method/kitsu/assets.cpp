@@ -53,6 +53,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .name_           = l_data.name,
       .description_    = l_data.description,
       .is_shared_      = l_data.is_shared,
+      .status_         = entity_status::running,
       .project_id_     = l_data.project_id,
       .entity_type_id_ = l_data.asset_type_id,
       .source_id_      = l_data.source_id,
@@ -76,7 +77,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   socket_io::broadcast(
       "asset:new",
       nlohmann::json{
-          {"asset_id", l_entity->uuid_id_}, {"asset_type", l_entity->entity_type_id_}, {"project_id", l_entity->project_id_}
+          {"asset_id", l_entity->uuid_id_},
+          {"asset_type", l_entity->entity_type_id_},
+          {"project_id", l_entity->project_id_}
       },
       "/events"
   );
