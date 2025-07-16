@@ -50,7 +50,6 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // boost::beast::flat_buffer l_buffer{};
   if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
 
-
   {  // 第一次验证ping pong
     std::string l_body{};
     auto l_buffer = boost::asio::dynamic_buffer(l_body);
@@ -108,7 +107,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    co_await async_write_websocket(co_await sid_data_->async_event());
+    co_await async_write_websocket(co_await sid_data_->channel_.async_receive(boost::asio::use_awaitable));
     if (sid_data_->is_timeout()) co_return co_await async_close_websocket();
   }
   co_return;

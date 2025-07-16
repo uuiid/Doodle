@@ -62,6 +62,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
     ~lock_type() { --data_->lock_count_; }
   };
   friend class sid_ctx;
+  friend class socket_io_websocket_core;
   sid_ctx* ctx_;
   const uuid sid_;
   std::atomic<chrono::sys_time_pos> last_time_;
