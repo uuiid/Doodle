@@ -275,6 +275,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("comment_id", &notification::comment_id_),                   //
           make_column("task_id", &notification::task_id_, not_null()),                         //
           make_column("reply_id", &notification::reply_id_),//
+          make_column("created_at", &notification::created_at_),                   //
           foreign_key(&notification::person_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::author_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::comment_id_).references(&comment::uuid_id_),  //

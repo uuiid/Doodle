@@ -26,5 +26,6 @@ struct DOODLE_CORE_API notification {
   uuid comment_id_;
   uuid task_id_;
   uuid reply_id_;
+  chrono::system_zoned_time created_at_{chrono::system_clock::now()};
 };
 }  // namespace doodle
