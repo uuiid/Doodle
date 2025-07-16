@@ -69,7 +69,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
     });
     l_json.get_to(*l_entity_extend);
     co_await l_sql.install(l_entity_extend);
-    l_json_ret = *l_entity_extend;
+    // l_json_ret = *l_entity_extend;
+    l_json_ret.update(*l_entity_extend);
   }
 
   socket_io::broadcast(
