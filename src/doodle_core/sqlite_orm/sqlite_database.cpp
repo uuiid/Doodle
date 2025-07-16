@@ -1164,17 +1164,21 @@ boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uui
       impl_->storage_any_.select(&subscription::uuid_id_, where(in(&subscription::task_id_, in_data)));
   auto l_preview_file =
       impl_->storage_any_.select(&preview_file::uuid_id_, where(in(&preview_file::task_id_, in_data)));
+  l_preview_file |= ranges::actions::push_back(impl_->storage_any_.select(
+      &comment_preview_link::preview_file_id_, where(in(&comment_preview_link::comment_id_, l_comments))
+  ));
   auto l_notification =
       impl_->storage_any_.select(&notification::uuid_id_, where(in(&notification::task_id_, in_data)));
-  auto l_previews_link = impl_->storage_any_.select(
-      &comment_preview_link::preview_file_id_, where(in(&comment_preview_link::comment_id_, l_comments))
-  );
+
   auto l_attachments =
       impl_->storage_any_.select(&attachment_file::uuid_id_, where(in(&attachment_file::comment_id_, l_comments)));
   auto l_assignees = impl_->storage_any_.select(&assignees_table::id_, where(in(&assignees_table::task_id_, in_data)));
   DOODLE_TO_SQLITE_THREAD_2();
   auto l_g = impl_->storage_any_.transaction_guard();
 
+  impl_->storage_any_.update_all(
+      set(c(&entity::preview_file_id_) = null()), where(in(&entity::preview_file_id_, l_preview_file))
+  );
   impl_->storage_any_.remove_all<comment_preview_link>(where(in(&comment_preview_link::comment_id_, l_comments)));
   impl_->storage_any_.remove_all<comment_mentions>(where(in(&comment_mentions::comment_id_, l_comments)));
   impl_->storage_any_.remove_all<comment_department_mentions>(
@@ -1184,7 +1188,6 @@ boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uui
   impl_->storage_any_.remove_all<notification>(where(in(&notification::uuid_id_, l_notification)));
   impl_->storage_any_.remove_all<notification>(where(in(&notification::comment_id_, l_comments)));
   impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_preview_file)));
-  impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_previews_link)));
   impl_->storage_any_.remove_all<attachment_file>(where(in(&attachment_file::uuid_id_, l_attachments)));
   impl_->storage_any_.remove_all<comment>(where(in(&comment::uuid_id_, l_comments)));
 
@@ -1207,14 +1210,17 @@ boost::asio::awaitable<void> sqlite_database::remove<task>(const uuid& in_data) 
       impl_->storage_any_.select(&preview_file::uuid_id_, where(c(&preview_file::task_id_) == in_data));
   auto l_notification =
       impl_->storage_any_.select(&notification::uuid_id_, where(c(&notification::task_id_) == in_data));
-  auto l_previews_link = impl_->storage_any_.select(
+  l_preview_file |= ranges::actions::push_back(impl_->storage_any_.select(
       &comment_preview_link::preview_file_id_, where(in(&comment_preview_link::comment_id_, l_comments))
-  );
+  ));
   auto l_attachments =
       impl_->storage_any_.select(&attachment_file::uuid_id_, where(in(&attachment_file::comment_id_, l_comments)));
   auto l_assignees = impl_->storage_any_.select(&assignees_table::id_, where(c(&assignees_table::task_id_) == in_data));
   DOODLE_TO_SQLITE_THREAD_2();
   auto l_g = impl_->storage_any_.transaction_guard();
+  impl_->storage_any_.update_all(
+      set(c(&entity::preview_file_id_) = null()), where(in(&entity::preview_file_id_, l_preview_file))
+  );
 
   impl_->storage_any_.remove_all<comment_preview_link>(where(in(&comment_preview_link::comment_id_, l_comments)));
   impl_->storage_any_.remove_all<comment_mentions>(where(in(&comment_mentions::comment_id_, l_comments)));
@@ -1225,7 +1231,6 @@ boost::asio::awaitable<void> sqlite_database::remove<task>(const uuid& in_data) 
   impl_->storage_any_.remove_all<notification>(where(in(&notification::uuid_id_, l_notification)));
   impl_->storage_any_.remove_all<notification>(where(in(&notification::comment_id_, l_comments)));
   impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_preview_file)));
-  impl_->storage_any_.remove_all<preview_file>(where(in(&preview_file::uuid_id_, l_previews_link)));
   impl_->storage_any_.remove_all<attachment_file>(where(in(&attachment_file::uuid_id_, l_attachments)));
   impl_->storage_any_.remove_all<comment>(where(in(&comment::uuid_id_, l_comments)));
 
