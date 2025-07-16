@@ -37,7 +37,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put:
       l_ext_ptr->uuid_id_   = core_set::get_set().get_uuid();
     }
     co_await l_sql.impl_->install(l_ext_ptr);
-    l_res = *l_ext_ptr;
+    l_res.update(*l_ext_ptr);
   }
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entt);
