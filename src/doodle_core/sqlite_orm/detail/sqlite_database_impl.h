@@ -264,7 +264,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           // foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
       ),
       make_table<notification>(
-          "notification",                                                          //
+          "notification_2",                                                          //
           make_column("id", &notification::id_, primary_key().autoincrement()),    //
           make_column("uuid", &notification::uuid_id_, unique(), not_null()),      //
           make_column("read", &notification::read_),                               //
