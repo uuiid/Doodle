@@ -65,5 +65,6 @@ target_sources(
         scan_data_t.cpp
         task_status.cpp
         status_automation.cpp
+        entity.cpp
 )
 add_subdirectory(bvh)
