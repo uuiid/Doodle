@@ -66,5 +66,6 @@ target_sources(
         task_status.cpp
         status_automation.cpp
         entity.cpp
+        entity_type.cpp
 )
 add_subdirectory(bvh)
