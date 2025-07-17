@@ -122,6 +122,8 @@ struct DOODLE_CORE_API entity {
   std::vector<uuid> entity_concept_links_;
   std::vector<uuid> instance_casting_;
 
+  std::tuple<std::string, uuid> get_full_name();
+
   // to json
   friend void to_json(nlohmann::json& j, const entity& p) {
     j["id"]                   = p.uuid_id_;
