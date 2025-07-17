@@ -31,7 +31,31 @@ struct data_user_notifications_get_args {
     }
   }
 };
-struct data_user_notifications_get_result {};
+struct data_user_notifications_get_result {
+  decltype(notification::uuid_id_) id_;
+  decltype(notification::type_) notification_type_;
+  decltype(notification::author_id_) author_id_;
+  decltype(notification::comment_id_) comment_id_;
+  decltype(task::uuid_id_) task_id_;
+  decltype(task_type::uuid_id_) task_type_id_;
+  decltype(task_status::uuid_id_) task_status_id_;
+  decltype(comment::mentions_) mentions_;
+  decltype(comment::department_mentions_) department_mentions_;
+  std::vector<uuid> reply_mentions_;
+  std::vector<uuid> reply_department_mentions_;
+  decltype(comment::preview_file_id_) preview_file_id_;
+  decltype(project::uuid_id_) project_id_;
+  decltype(project::name_) project_name_;
+  decltype(comment::text_) comment_text_;
+  decltype(comment::replies_) reply_text_;
+  decltype(notification::created_at_) created_at_;
+  decltype(notification::read_) read_;
+  decltype(notification::change_) change_;
+  decltype(entity::name_) full_entity_name_;
+  decltype(entity::uuid_id_) episode_id_;
+  decltype(entity::preview_file_id_) entity_preview_file_id_;
+  decltype(subscription::uuid_id_) subscription_id_;
+};
 auto get_last_notifications_query(const uuid& in_person_id, const data_user_notifications_get_args& in_args) {
   using namespace sqlite_orm;
   if (in_person_id.is_nil())
@@ -39,7 +63,13 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<data_user_notifications_get_result> l_ret{};
   constexpr auto author = "author"_alias.for_<person>();
-  for (auto&& l_row : l_sql.impl_->storage_any_.select(
+  for (auto&& [
+
+           l_notification, project_id, project_name, task_id, task_entity_id, comment_id, comment_task_status_id,
+           comment_text, comment_replies, subscription_id, author_id
+
+  ] :
+       l_sql.impl_->storage_any_.select(
            columns(
                object<notification>(true), &project::uuid_id_, &project::name_, &task::uuid_id_, &task::entity_id_,
                &comment::uuid_id_, &comment::task_status_id_, &comment::text_, &comment::replies_,
@@ -72,7 +102,11 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifications_get::callback_arg(
     session_data_ptr in_handle
 ) {
-  in_handle->url_.params() co_return in_handle->make_msg(nlohmann::json::array());
+  auto l_ptr = get_person(in_handle);
+  data_user_notifications_get_args l_args{};
+  l_args.get_query_params(in_handle->url_.params());
+  auto l_ret = get_last_notifications_query(l_ptr->person_.uuid_id_, l_args);
+  co_return in_handle->make_msg(nlohmann::json::array());
 }
 
 }  // namespace doodle::http
