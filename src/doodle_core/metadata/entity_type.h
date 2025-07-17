@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/base.h>
 
 namespace doodle {
+
 struct DOODLE_CORE_API task_type_asset_type_link {
   std::int64_t id_;
   uuid asset_type_id_;
@@ -20,6 +21,13 @@ struct DOODLE_CORE_API asset_type {
   std::string description_;
   std::vector<uuid> task_types_;
   bool archived_;
+
+  static uuid get_shot_id();
+  static uuid get_episode_id();
+  static uuid get_sequence_id();
+  static uuid get_concept_id();
+  static uuid get_edit_id();
+  static uuid get_scene_id();
 
   // from json
   template <typename BasicJsonType>
