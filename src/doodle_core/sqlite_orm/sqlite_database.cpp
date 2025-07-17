@@ -89,7 +89,8 @@ std::vector<server_task_info> sqlite_database::get_server_task_info_by_type(cons
 }
 
 std::int32_t sqlite_database::get_notification_count(const uuid& in_user_id) {
-  return impl_->get_notification_count(in_user_id);
+  using namespace sqlite_orm;
+  return impl_->storage_any_.count<notification>(where(c(&notification::person_id_) == in_user_id));
 }
 
 std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const person& in_user) {
@@ -878,7 +879,6 @@ std::optional<preview_file> sqlite_database::get_preview_file_for_comment(const 
   if (l_t.empty()) return std::nullopt;
   return impl_->get_by_uuid<preview_file>(l_t.front().preview_file_id_);
 }
-
 
 bool sqlite_database::is_task_assigned_to_person(const uuid& in_task, const uuid& in_person) {
   using namespace sqlite_orm;
