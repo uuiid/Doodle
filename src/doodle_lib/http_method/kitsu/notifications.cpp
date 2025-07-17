@@ -104,29 +104,29 @@ struct data_user_notifications_get_result {
 
   // to json
   friend void to_json(nlohmann::json& j, const data_user_notifications_get_result& p) {
-    j["id"] = p.id_;
-    j["notification_type"] = p.notification_type_;
-    j["author_id"] = p.author_id_;
-    j["comment_id"] = p.comment_id_;
-    j["task_id"] = p.task_id_;
-    j["task_type_id"] = p.task_type_id_;
-    j["task_status_id"] = p.task_status_id_;
-    j["mentions"] = p.mentions_;
-    j["department_mentions"] = p.department_mentions_;
-    j["reply_mentions"] = p.reply_mentions_;
+    j["id"]                        = p.id_;
+    j["notification_type"]         = p.notification_type_;
+    j["author_id"]                 = p.author_id_;
+    j["comment_id"]                = p.comment_id_;
+    j["task_id"]                   = p.task_id_;
+    j["task_type_id"]              = p.task_type_id_;
+    j["task_status_id"]            = p.task_status_id_;
+    j["mentions"]                  = p.mentions_;
+    j["department_mentions"]       = p.department_mentions_;
+    j["reply_mentions"]            = p.reply_mentions_;
     j["reply_department_mentions"] = p.reply_department_mentions_;
-    j["preview_file_id"] = p.preview_file_id_;
-    j["project_id"] = p.project_id_;
-    j["project_name"] = p.project_name_;
-    j["comment_text"] = p.comment_text_;
-    j["reply_text"] = p.reply_text_;
-    j["created_at"] = p.created_at_;
-    j["read"] = p.read_;
-    j["change"] = p.change_;
-    j["full_entity_name"] = p.full_entity_name_;
-    j["episode_id"] = p.episode_id_;
-    j["entity_preview_file_id"] = p.entity_preview_file_id_;
-    j["subscription_id"] = p.subscription_id_;
+    j["preview_file_id"]           = p.preview_file_id_;
+    j["project_id"]                = p.project_id_;
+    j["project_name"]              = p.project_name_;
+    j["comment_text"]              = p.comment_text_;
+    j["reply_text"]                = p.reply_text_;
+    j["created_at"]                = p.created_at_;
+    j["read"]                      = p.read_;
+    j["change"]                    = p.change_;
+    j["full_entity_name"]          = p.full_entity_name_;
+    j["episode_id"]                = p.episode_id_;
+    j["entity_preview_file_id"]    = p.entity_preview_file_id_;
+    j["subscription_id"]           = p.subscription_id_;
   }
 };
 auto get_last_notifications_query(const uuid& in_person_id, const data_user_notifications_get_args& in_args) {
@@ -157,12 +157,15 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
 
            where(
                c(&notification::person_id_) == in_person_id &&
-               (!in_args.after_.has_value() || c(&notification::created_at_) > *in_args.after_) &&
-               (!in_args.before_.has_value() || c(&notification::created_at_) < *in_args.before_) &&
+               (!in_args.after_.has_value() ||
+                c(&notification::created_at_) > in_args.after_.value_or(chrono::system_zoned_time{})) &&
+               (!in_args.before_.has_value() ||
+                c(&notification::created_at_) < in_args.before_.value_or(chrono::system_zoned_time{})) &&
                (in_args.task_type_id_.is_nil() || c(&task::task_type_id_) == in_args.task_type_id_) &&
                (in_args.task_status_id_.is_nil() || c(&comment::task_status_id_) == in_args.task_status_id_) &&
-               (!in_args.notification_type_.has_value() || c(&notification::type_) == *in_args.notification_type_) &&
-               (!in_args.read_.has_value() || c(&notification::read_) == *in_args.read_)
+               (!in_args.notification_type_.has_value() ||
+                c(&notification::type_) == in_args.notification_type_.value_or(notification_type::comment)) &&
+               (!in_args.read_.has_value() || c(&notification::read_) == in_args.read_.value_or(true))
            )
        )) {
     auto l_preview_file_id = l_sql.get_preview_file_for_comment(l_comment.uuid_id_).value_or(preview_file{}).uuid_id_;
