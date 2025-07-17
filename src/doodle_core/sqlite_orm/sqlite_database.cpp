@@ -870,6 +870,15 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
   }
   return l_ret;
 }
+std::optional<preview_file> sqlite_database::get_preview_file_for_comment(const uuid& in_comment_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<comment_preview_link>(
+      where(c(&comment_preview_link::comment_id_) == in_comment_id), limit(1)
+  );
+  if (l_t.empty()) return std::nullopt;
+  return impl_->get_by_uuid<preview_file>(l_t.front().preview_file_id_);
+}
+
 
 bool sqlite_database::is_task_assigned_to_person(const uuid& in_task, const uuid& in_person) {
   using namespace sqlite_orm;

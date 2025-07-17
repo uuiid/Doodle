@@ -12,6 +12,7 @@
 #include <boost/lockfree/spsc_queue.hpp>
 
 namespace doodle {
+struct preview_file;
 struct preview_files_for_entity_t;
 struct status_automation;
 enum server_task_info_type : int;
@@ -166,7 +167,8 @@ class sqlite_database {
   assets_file_helper::link_parent_t get_assets_tree_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid);
   ///
   std::map<uuid, std::vector<preview_files_for_entity_t>> get_preview_files_for_entity(const uuid& in_entity_id);
-
+  /// 获取评论对应的预览图
+  std::optional<preview_file> get_preview_file_for_comment(const uuid& in_comment_id);
   /// 是否将任务分配给了用户
   bool is_task_assigned_to_person(const uuid& in_task, const uuid& in_person);
 

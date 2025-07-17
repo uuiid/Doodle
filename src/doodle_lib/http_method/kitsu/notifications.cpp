@@ -32,6 +32,52 @@ struct data_user_notifications_get_args {
   }
 };
 struct data_user_notifications_get_result {
+  data_user_notifications_get_result() = default;
+  data_user_notifications_get_result(
+      const notification& in_notification, const entity& in_entity, const comment& in_comment, const uuid& project_id,
+      const std::string& project_name, const uuid& task_type_id, const uuid& subscription_id,
+      const uuid& in_preview_file_id
+  )
+      : id_(in_notification.uuid_id_),
+        notification_type_(in_notification.type_),
+        author_id_(in_notification.author_id_),
+        comment_id_(in_comment.uuid_id_),
+        task_id_(in_notification.task_id_),
+        task_type_id_(task_type_id),
+        task_status_id_(in_comment.task_status_id_),
+        mentions_(in_comment.mentions_),
+        department_mentions_(),
+        reply_mentions_(),
+        reply_department_mentions_(),
+        preview_file_id_(in_preview_file_id),
+        project_id_(project_id),
+        project_name_(project_name),
+        comment_text_(in_comment.text_),
+        reply_text_(),
+        created_at_(in_notification.created_at_),
+        read_(in_notification.read_),
+        change_(in_notification.change_),
+        full_entity_name_(),
+        episode_id_(),
+        entity_preview_file_id_(in_entity.preview_file_id_),
+        subscription_id_(subscription_id) {
+    auto&& [l_full_name, l_epsode_id] = in_entity.get_full_name();
+    full_entity_name_                 = l_full_name;
+    episode_id_                       = l_epsode_id;
+    if (in_notification.type_ == notification_type::reply ||
+        in_notification.type_ == notification_type::reply_mention) {
+      if (auto l_it = ranges::find_if(
+              in_comment.replies_,
+              [&](const nlohmann::json& in_reply) { return in_reply["id"].get<uuid>() == in_notification.reply_id_; }
+          );
+          l_it != in_comment.replies_.end()) {
+        auto&& l_reply             = *l_it;
+        reply_text_                = l_reply["text"].get<std::string>();
+        reply_department_mentions_ = l_reply["department_mentions"].get<std::vector<uuid>>();
+        reply_mentions_            = l_reply["mentions"].get<std::vector<uuid>>();
+      }
+    }
+  }
   decltype(notification::uuid_id_) id_;
   decltype(notification::type_) notification_type_;
   decltype(notification::author_id_) author_id_;
@@ -55,6 +101,33 @@ struct data_user_notifications_get_result {
   decltype(entity::uuid_id_) episode_id_;
   decltype(entity::preview_file_id_) entity_preview_file_id_;
   decltype(subscription::uuid_id_) subscription_id_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const data_user_notifications_get_result& p) {
+    j["id"] = p.id_;
+    j["notification_type"] = p.notification_type_;
+    j["author_id"] = p.author_id_;
+    j["comment_id"] = p.comment_id_;
+    j["task_id"] = p.task_id_;
+    j["task_type_id"] = p.task_type_id_;
+    j["task_status_id"] = p.task_status_id_;
+    j["mentions"] = p.mentions_;
+    j["department_mentions"] = p.department_mentions_;
+    j["reply_mentions"] = p.reply_mentions_;
+    j["reply_department_mentions"] = p.reply_department_mentions_;
+    j["preview_file_id"] = p.preview_file_id_;
+    j["project_id"] = p.project_id_;
+    j["project_name"] = p.project_name_;
+    j["comment_text"] = p.comment_text_;
+    j["reply_text"] = p.reply_text_;
+    j["created_at"] = p.created_at_;
+    j["read"] = p.read_;
+    j["change"] = p.change_;
+    j["full_entity_name"] = p.full_entity_name_;
+    j["episode_id"] = p.episode_id_;
+    j["entity_preview_file_id"] = p.entity_preview_file_id_;
+    j["subscription_id"] = p.subscription_id_;
+  }
 };
 auto get_last_notifications_query(const uuid& in_person_id, const data_user_notifications_get_args& in_args) {
   using namespace sqlite_orm;
@@ -62,23 +135,21 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失查询参数"});
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<data_user_notifications_get_result> l_ret{};
-  constexpr auto author = "author"_alias.for_<person>();
+  // constexpr auto author = "author"_alias.for_<person>();
   for (auto&& [
 
-           l_notification, project_id, project_name, task_id, task_entity_id, comment_id, comment_task_status_id,
-           comment_text, comment_replies, subscription_id, author_id
+           l_notification, l_entity, l_comment, project_id, project_name, task_type_id, subscription_id
 
   ] :
        l_sql.impl_->storage_any_.select(
            columns(
-               object<notification>(true), &project::uuid_id_, &project::name_, &task::uuid_id_, &task::entity_id_,
-               &comment::uuid_id_, &comment::task_status_id_, &comment::text_, &comment::replies_,
-               &subscription::uuid_id_, author->*&person::uuid_id_
+               object<notification>(true), object<entity>(true), object<comment>(true), &project::uuid_id_,
+               &project::name_, &task::task_type_id_, &subscription::uuid_id_
            ),
            from<notification>(),  //
-           join<author>(on(c(author->*&person::uuid_id_) == c(&notification::author_id_))),
            join<task>(on(c(&notification::task_id_) == c(&task::uuid_id_))),
            join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
+           left_outer_join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
            left_outer_join<comment>(on(c(&notification::comment_id_) == c(&comment::uuid_id_))),
            left_outer_join<subscription>(
                on(c(&subscription::task_id_) == c(&task::uuid_id_) && c(&subscription::person_id_) == in_person_id)
@@ -94,6 +165,18 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
                (!in_args.read_.has_value() || c(&notification::read_) == *in_args.read_)
            )
        )) {
+    auto l_preview_file_id = l_sql.get_preview_file_for_comment(l_comment.uuid_id_).value_or(preview_file{}).uuid_id_;
+    l_comment.mentions_    = l_sql.impl_->storage_any_.select(
+        &comment_mentions::person_id_, where(c(&comment_mentions::comment_id_) == l_comment.uuid_id_)
+    );
+    l_comment.department_mentions_ = l_sql.impl_->storage_any_.select(
+        &comment_department_mentions::department_id_,
+        where(c(&comment_department_mentions::comment_id_) == l_comment.uuid_id_)
+    );
+    l_ret.emplace_back(
+        l_notification, l_entity, l_comment, project_id, project_name, task_type_id, subscription_id, l_preview_file_id
+
+    );
   }
   return l_ret;
 }
@@ -106,7 +189,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   data_user_notifications_get_args l_args{};
   l_args.get_query_params(in_handle->url_.params());
   auto l_ret = get_last_notifications_query(l_ptr->person_.uuid_id_, l_args);
-  co_return in_handle->make_msg(nlohmann::json::array());
+  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 
 }  // namespace doodle::http
