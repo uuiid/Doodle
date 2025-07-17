@@ -8,7 +8,7 @@
 #include "sqlite_orm/sqlite_database.h"
 namespace doodle {
 
-std::tuple<std::string, uuid> entity::get_full_name() {
+std::tuple<std::string, uuid> entity::get_full_name() const {
   std::string l_name_{};
   uuid l_ep_id{};
   if (entity_type_id_ == asset_type::get_shot_id()) {
