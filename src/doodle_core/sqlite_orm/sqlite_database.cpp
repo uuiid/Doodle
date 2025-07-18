@@ -1003,6 +1003,7 @@ DOODLE_GET_BY_UUID_SQL(project_status)
 DOODLE_GET_BY_UUID_SQL(task_type)
 DOODLE_GET_BY_UUID_SQL(asset_type)
 DOODLE_GET_BY_UUID_SQL(task_status)
+DOODLE_GET_BY_UUID_SQL(notification)
 DOODLE_GET_BY_UUID_SQL(comment)
 template <>
 task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {
