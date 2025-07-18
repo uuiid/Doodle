@@ -154,7 +154,7 @@ struct DOODLE_CORE_API entity {
     if (j.contains("entity_type_id")) j.at("entity_type_id").get_to(p.entity_type_id_);
     if (j.contains("is_shared")) j.at("is_shared").get_to(p.is_shared_);
     if (j.contains("name")) j.at("name").get_to(p.name_);
-    if (j.contains("ready_for")) j.at("ready_for").get_to(p.ready_for_);
+    if (j.contains("ready_for") && !j.at("ready_for").is_null()) j.at("ready_for").get_to(p.ready_for_);
   }
 };
 }  // namespace doodle
