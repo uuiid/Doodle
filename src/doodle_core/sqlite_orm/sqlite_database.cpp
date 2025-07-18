@@ -972,6 +972,7 @@ DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
 DOODLE_ID_TO_UUID(computer)
 DOODLE_ID_TO_UUID(attendance_helper::database_t)
+DOODLE_ID_TO_UUID(notification)
 
 template <>
 person sqlite_database::get_by_uuid<person>(const uuid& in_uuid) {
