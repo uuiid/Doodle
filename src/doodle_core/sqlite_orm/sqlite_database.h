@@ -96,6 +96,7 @@ class sqlite_database {
 
   template <typename T>
   std::vector<T> get_by_parent_id(const uuid& in_id);
+  boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
 
   std::vector<attendance_helper::database_t> get_attendance(
       const uuid& in_person_id, const chrono::local_days& in_data

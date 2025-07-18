@@ -938,6 +938,19 @@ std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
   auto l_t = impl_->storage_any_.get_all<asset_type>(where(not_in(&asset_type::uuid_id_, get_temporal_type_ids())));
   return l_t;
 }
+boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
+  DOODLE_TO_SQLITE_THREAD_2();
+  using namespace sqlite_orm;
+
+  auto l_g = impl_->storage_any_.transaction_guard();
+  impl_->storage_any_.update_all(
+      set(c(&notification::read_) = true),
+      where(c(&notification::person_id_) == in_user_id && c(&notification::read_) == false)
+  );
+  l_g.commit();
+  DOODLE_TO_SELF();
+  co_return;
+}
 
 std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
   using namespace sqlite_orm;

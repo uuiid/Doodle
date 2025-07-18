@@ -86,6 +86,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<computing_time_custom_post>()
       .reg_t<computing_time_sort_post>()
       .reg_t<computing_time_average_post>()
+      .reg_t<actions_user_notifications_mark_all_as_read_post>()
 
       .reg(std::make_shared<deepseek_key_get>())
       .reg(std::make_shared<other::key_ji_meng_get>())

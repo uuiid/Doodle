@@ -98,6 +98,10 @@ DOODLE_HTTP_FUN_CONST(auth_reset_password, post, ucom_t{} / "api" / "auth" / "re
 void init();
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+// /api/actions/user/notifications/mark-all-as-read
+DOODLE_HTTP_FUN(actions_user_notifications_mark_all_as_read, post, ucom_t{} / "api" / "actions" / "user" / "notifications" / "mark-all-as-read", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 
 // "api/data/comments/{comment_id}"
 DOODLE_HTTP_FUN(data_comment, put, ucom_t{} / "api" / "data" / "comments" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)

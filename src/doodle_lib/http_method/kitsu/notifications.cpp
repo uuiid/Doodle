@@ -200,9 +200,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   auto l_ptr   = get_person(in_handle);
   auto l_sql   = g_ctx().get<sqlite_database>();
   auto l_not   = std::make_shared<notification>(l_sql.get_by_uuid<notification>(in_arg->id_));
-  l_not->read_ = in_handle->get_json().value<bool>("read",false);
+  l_not->read_ = in_handle->get_json().value<bool>("read", false);
   co_await l_sql.install(l_not);
   co_return in_handle->make_msg(nlohmann::json{} = *l_not);
+}
+boost::asio::awaitable<boost::beast::http::message_generator>
+actions_user_notifications_mark_all_as_read_post::callback_arg(session_data_ptr in_handle) {
+  auto l_ptr = get_person(in_handle);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  co_await l_sql.mark_all_notifications_as_read(l_ptr->person_.uuid_id_);
+  co_return in_handle->make_msg(nlohmann::json{{"success", true}});
 }
 
 }  // namespace doodle::http
