@@ -87,6 +87,7 @@ struct upgrade_2_t : sqlite_upgrade {
           .reply_id_   = reply_id_,
           .created_at_ = created_at_
       };
+      return l_ret;
     }
   };
   std::shared_ptr<std::vector<notification>> notifications_{};
@@ -114,8 +115,9 @@ struct upgrade_2_t : sqlite_upgrade {
 
     auto l_time = chrono::system_clock::now() - chrono::days{90};
     if (!l_p.table_exists("notification")) return;
+    notifications_ = std::make_shared<std::vector<notification>>();
 
-    auto l_list = l_p.get_all<notification_old>();
+    auto l_list    = l_p.get_all<notification_old>();
     l_p.drop_table_if_exists("notification");
     for (auto i = 0; i < l_list.size(); ++i) {
       l_list[i].created_at_ = l_time + chrono::seconds{i};
@@ -123,7 +125,7 @@ struct upgrade_2_t : sqlite_upgrade {
     }
   }
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
-    if (!notifications_->empty()) in_data->install_range_unsafe(notifications_);
+    if (notifications_ && !notifications_->empty()) in_data->install_range_unsafe(notifications_);
   }
   ~upgrade_2_t() override = default;
 };
