@@ -68,12 +68,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
     co_await l_sql.install(l_task_assign);
     // 这里需要检查一下, 任务的分配人是否是当前用户
     if (l_person->person_.uuid_id_ != l_person_data.uuid_id_) {
-      auto l_notification        = std::make_shared<notification>();
-      l_notification->uuid_id_   = core_set::get_set().get_uuid();
-      l_notification->type_      = notification_type::assignation;
-      l_notification->task_id_   = l_task->uuid_id_;
-      l_notification->author_id_ = l_person->person_.uuid_id_;
-      l_notification->person_id_ = l_person_data.uuid_id_;
+      auto l_notification         = std::make_shared<notification>();
+      l_notification->uuid_id_    = core_set::get_set().get_uuid();
+      l_notification->type_       = notification_type::assignation;
+      l_notification->task_id_    = l_task->uuid_id_;
+      l_notification->author_id_  = l_person->person_.uuid_id_;
+      l_notification->person_id_  = l_person_data.uuid_id_;
+      l_notification->created_at_ = chrono::system_clock::now();
       co_await l_sql.install(l_notification);
     }
   }
@@ -320,7 +321,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_ta
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_delete_::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
-  auto l_ptr = get_person(in_handle);
+  auto l_ptr  = get_person(in_handle);
   auto l_task = g_ctx().get<sqlite_database>().get_by_uuid<task>(in_arg->id_);
   l_ptr->check_delete_access(l_task.project_id_);
   co_await g_ctx().get<sqlite_database>().remove<task>(in_arg->id_);
