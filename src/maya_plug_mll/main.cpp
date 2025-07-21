@@ -19,50 +19,21 @@
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
 #include <maya_plug/maya_comm/reference_comm.h>
+#include <maya_plug/node/bind_node.h>
 #include <maya_plug/node/files_info.h>
 
 #include <maya/MFnPlugin.h>
 #include <maya/MQtUtil.h>
-#include <maya/MSceneMessage.h>
-#include <maya/MTimerMessage.h>
 #include <stack>
 #include <wil/result.h>
 
 namespace {
-const constexpr std::string_view doodle_windows{"doodle_windows"};
-const constexpr std::string_view doodle_win_path{"MayaWindow|mainWindowMenu"};
 
 using namespace doodle;
 std::shared_ptr<app_base> p_doodle_app = nullptr;
 std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 }  // namespace
-namespace doodle::maya_plug {
-
-struct find_windows_call {
-  HWND maya_wnd{nullptr};
-};
-
-HWND find_windows() {
-  find_windows_call l_data{};
-  // THROW_IF_WIN32_BOOL_FALSE();
-  return MQtUtil::nativeWindow(MQtUtil::mainWindow());
-  //  ::EnumWindows(
-  //      [](HWND hwnd, LPARAM lParam) -> BOOL {
-  //        if (::GetCurrentThreadId() == ::GetWindowThreadProcessId(hwnd, nullptr)) {
-  //          auto* l_data     = reinterpret_cast<find_windows_call*>(lParam);
-  //          l_data->maya_wnd = hwnd;
-  //          return FALSE;
-  //        } else {
-  //          return TRUE;
-  //        }
-  //      },
-  //      reinterpret_cast<LPARAM>(&l_data)
-  //  );
-  //  return l_data.maya_wnd;
-}
-
-}  // namespace doodle::maya_plug
 
 MStatus initializePlugin(MObject obj) {
   /**
@@ -79,6 +50,8 @@ MStatus initializePlugin(MObject obj) {
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
 
   status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_node<doodle::maya_plug::doodle_bind_node>(k_plugin);
   CHECK_MSTATUS(status);
   /// 添加文件编辑命令
   status = maya_reg->register_command<::doodle::maya_plug::file_info_edit>(k_plugin);
