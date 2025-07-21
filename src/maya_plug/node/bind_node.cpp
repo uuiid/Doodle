@@ -317,6 +317,8 @@ MStatus doodle_bind_node::initialize() {
 
   return MS::kSuccess;
 }
-void* doodle_bind_node::creator() {}
+void* doodle_bind_node::creator() {
+  return new doodle_bind_node{};
+}
 
 }  // namespace doodle::maya_plug
