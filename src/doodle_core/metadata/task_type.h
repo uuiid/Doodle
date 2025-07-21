@@ -22,6 +22,20 @@ struct task_type {
   std::optional<std::int32_t> shotgun_id_;
   uuid department_id_;
 
+  /// 原画
+  static uuid get_original_painting_id();
+  /// 角色
+  static uuid get_character_id();
+  /// 地编模型
+  static uuid get_ground_model_id();
+  /// 绑定
+  static uuid get_binding_id();
+  /// 解算资产
+  static uuid get_simulation_id();
+  /// 特效资产
+  static uuid get_effect_id();
+
+
   // from json
   template <typename BasicJsonType>
   friend void from_json(const BasicJsonType& j, task_type& p) {
