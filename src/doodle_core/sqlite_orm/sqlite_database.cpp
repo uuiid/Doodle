@@ -53,7 +53,17 @@ void sqlite_database::load(const FSys::path& in_path) {
   }
   static std::once_flag l_flag{};
   std::call_once(l_flag, [this]() {
-    this->logger_ = g_logger_ctrl().make_log("sqlite", true);
+    this->logger_ = std::make_shared<spdlog::async_logger>(
+        "sqlite",
+        spdlog::sinks_init_list{
+            g_logger_ctrl().rotating_file_sink_
+#ifndef NDEBUG
+            ,
+            g_logger_ctrl().debug_sink_
+#endif
+        },
+        spdlog::thread_pool()
+    );
     sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, this->logger_.get());
   });
 }
