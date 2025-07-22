@@ -47,7 +47,7 @@ struct upgrade_init_t : sqlite_upgrade {
     auto l_s       = std::make_shared<asset_type>();                         \
     l_s->uuid_id_  = asset_type::get_##name##_id();                          \
     l_s->name_     = #sql_name;                                              \
-    l_s->archived_ = false;                                                  \
+    l_s->archived_ = true;                                                   \
     in_data->install_unsafe<asset_type>(l_s);                                \
   }
     DOODLE_ASSET_TYPE(scene, Scene)
@@ -57,8 +57,24 @@ struct upgrade_init_t : sqlite_upgrade {
     DOODLE_ASSET_TYPE(concept, Concept)
     DOODLE_ASSET_TYPE(episode, Episode)
 #undef DOODLE_ASSET_TYPE
+#define DOODLE_TASK_TYPE(name, sql_name)                                   \
+  if (in_data->uuid_to_id<task_type>(task_type::get_##name##_id()) == 0) { \
+    auto l_s       = std::make_shared<task_type>();                        \
+    l_s->uuid_id_  = task_type::get_##name##_id();                         \
+    l_s->name_     = #sql_name;                                            \
+    l_s->archived_ = true;                                                 \
+    l_s->color_    = "#999999";                                            \
+    in_data->install_unsafe<task_type>(l_s);                               \
   }
-};
+    DOODLE_TASK_TYPE(original_painting, 原画)
+    DOODLE_TASK_TYPE(character, 角色)
+    DOODLE_TASK_TYPE(ground_model, 地编模型)
+    DOODLE_TASK_TYPE(binding, 绑定)
+    DOODLE_TASK_TYPE(simulation, 解算资产)
+    DOODLE_TASK_TYPE(effect, 特效资产)
+#undef DOODLE_TASK_TYPE
+  }
+};  // namespace doodle::details
 
 struct upgrade_2_t : sqlite_upgrade {
   struct notification_old {
