@@ -99,113 +99,6 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
     callback_.reset();
   }
 
-  template <bool isRequest, typename SyncWriteStream, typename SyncReadStream>
-  boost::asio::awaitable<boost::system::error_code> async_relay(
-      SyncWriteStream& in_sync_write_stream, SyncReadStream& in_sync_read_stream,
-      boost::beast::http::parser<isRequest, boost::beast::http::buffer_body>& in_parser,
-      boost::beast::http::serializer<isRequest, boost::beast::http::buffer_body>& in_serializer
-  ) {
-    char l_buffer[1024 * 4];
-    boost::system::error_code l_ec{};
-    // 异步读取, 并且写入
-    do {
-      if (!in_parser.is_done()) {
-        // Set up the body for writing into our small buffer
-        in_parser.get().body().data = l_buffer;
-        in_parser.get().body().size = sizeof(l_buffer);
-        std::tie(l_ec, std::ignore) = co_await boost::beast::http::async_read(in_sync_read_stream, buffer_, in_parser);
-
-        // This error is returned when buffer_body uses up the buffer
-        if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
-        if (l_ec) {
-          session_->logger_->error("无法读取请求体 {}", l_ec.message());
-          co_return l_ec;
-        }
-        // Set up the body for reading.
-        // This is how much was parsed:
-        in_parser.get().body().size = sizeof(l_buffer) - in_parser.get().body().size;
-        in_parser.get().body().data = l_buffer;
-        in_parser.get().body().more = !in_parser.is_done();
-      } else {
-        in_parser.get().body().data = nullptr;
-        in_parser.get().body().size = 0;
-      }
-      // Write everything in the buffer (which might be empty)
-      std::tie(l_ec, std::ignore) = co_await boost::beast::http::async_write(in_sync_write_stream, in_serializer);
-      // This error is returned when buffer_body uses up the buffer
-      if (l_ec == boost::beast::http::error::need_buffer) l_ec = {};
-      if (l_ec) {
-        session_->logger_->error("无法发送请求体 {}", l_ec.message());
-        co_return l_ec;
-      }
-    } while (!in_parser.is_done() && !in_serializer.is_done());
-
-    co_return l_ec;
-  }
-
-  template <typename SyncWriteStream, typename SyncReadStream, typename Handle>
-  auto async_relay_websocket(
-      SyncWriteStream& in_sync_write_stream, SyncReadStream& in_sync_read_stream, Handle&& in_handle
-  ) {
-    auto l_flat_buffer = std::make_shared<boost::beast::flat_buffer>();
-    return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        [&in_sync_write_stream, &in_sync_read_stream, l_flat_buffer,
-         coro = boost::asio::coroutine{}](auto& self, boost::system::error_code in_ec = {}, std::size_t = 0) mutable {
-          BOOST_ASIO_CORO_REENTER(coro) {
-            while (!in_ec) {
-              BOOST_ASIO_CORO_YIELD in_sync_read_stream.async_read(*l_flat_buffer, std::move(self));
-              if (in_ec) break;
-              BOOST_ASIO_CORO_YIELD in_sync_write_stream.async_write(l_flat_buffer->data(), std::move(self));
-              if (in_ec) break;
-              l_flat_buffer->clear();
-            }
-            self.complete(in_ec);
-          }
-        },
-        in_handle, in_sync_write_stream, in_sync_read_stream
-    );
-  }
-
-  struct websocket_relay_decorator_t {
-    async_session_t& session_;
-    std::shared_ptr<boost::beast::websocket::response_type> res_;
-    explicit websocket_relay_decorator_t(
-        async_session_t& in_session, std::shared_ptr<boost::beast::websocket::response_type> in_response
-    )
-        : session_(in_session), res_(in_response) {}
-
-    void operator()(boost::beast::websocket::request_type& in_request) const {
-      for (auto&& i : session_.request_parser_->get()) {
-        switch (i.name()) {
-          case boost::beast::http::field::host:
-          case boost::beast::http::field::origin:
-          case boost::beast::http::field::sec_websocket_key:
-            continue;
-          default:
-            in_request.set(i.name(), i.value());
-        }
-      }
-    }
-    void operator()(boost::beast::websocket::response_type& in_response) { *res_ = in_response; }
-  };
-  struct websocket_relay_decorator_t2 {
-    std::shared_ptr<boost::beast::websocket::response_type> res_;
-    explicit websocket_relay_decorator_t2(std::shared_ptr<boost::beast::websocket::response_type> in_response)
-        : res_(in_response) {}
-
-    void operator()(boost::beast::websocket::response_type& in_response) {
-      for (auto&& i : *res_) {
-        switch (i.name()) {
-          case boost::beast::http::field::host:
-          case boost::beast::http::field::origin:
-          case boost::beast::http::field::sec_websocket_accept:
-            continue;
-          default:
-            in_response.set(i.name(), i.value());
-        }
-      }
-    }
-  };
   boost::asio::awaitable<void> close_websocket(
       boost::beast::websocket::stream<tcp_stream_type>& in_stream, const std::string& in_str
   ) {
@@ -213,137 +106,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
     std::tie(ec_) = co_await in_stream.async_close(boost::beast::websocket::close_code::normal);
     if (ec_) session_->logger_->error("错误的关闭 {}", ec_);
   }
-  boost::asio::awaitable<void> proxy_websocket_relay() {
-    boost::beast::get_lowest_layer(*stream_).expires_never();
-    boost::beast::get_lowest_layer(*proxy_relay_stream_).expires_never();
-    auto l_address = proxy_relay_stream_->socket().remote_endpoint().address().to_string();
-    auto l_res_ptr = std::make_shared<boost::beast::websocket::response_type>();
 
-    boost::beast::websocket::stream<tcp_stream_type> l_proxy_stream{std::move(*proxy_relay_stream_)};
-    {
-      l_proxy_stream.set_option(
-          boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client)
-      );
-      l_proxy_stream.set_option(
-          boost::beast::websocket::stream_base::decorator(websocket_relay_decorator_t{*this, l_res_ptr})
-      );
-
-      std::tie(ec_) = co_await l_proxy_stream.async_handshake(l_address, session_->url_);
-      if (ec_) co_return co_await close_websocket(l_proxy_stream, "代理握手失败");
-    }
-
-    boost::beast::websocket::stream<tcp_stream_type> l_stream{std::move(*stream_)};
-    {
-      stream_.reset();
-      l_stream.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::server));
-      l_stream.set_option(boost::beast::websocket::stream_base::decorator(websocket_relay_decorator_t2{l_res_ptr}));
-      std::tie(ec_) = co_await l_stream.async_accept(request_parser_->get());
-      if (ec_) co_return co_await close_websocket(l_stream, "无法接受请求");
-    }
-
-    auto&& [l_arr, l_e1, l_e2] =
-        co_await boost::asio::experimental::make_parallel_group(
-            async_relay_websocket(l_proxy_stream, l_stream, boost::asio::deferred),
-            async_relay_websocket(l_stream, l_proxy_stream, boost::asio::deferred)
-        )
-            .async_wait(
-                boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable_t<>{})
-            );
-    /// 测试取消
-
-    if (l_e1 == boost::beast::websocket::error::closed) {
-      co_await close_websocket(l_proxy_stream, "开始关闭代理");
-    } else if (l_e1)
-      ec_ = l_e1;
-    if (l_e2 == boost::beast::websocket::error::closed) {
-      co_await close_websocket(l_stream, "开始关闭流");
-    } else if (l_e2)
-      ec_ = l_e2;
-    co_return;
-  }
-
-  boost::asio::awaitable<void> proxy_http_relay() {
-    using buffer_request_type                = boost::beast::http::request_parser<boost::beast::http::buffer_body>;
-    using buffer_response_type               = boost::beast::http::response_parser<boost::beast::http::buffer_body>;
-    using buffer_request_type_ptr            = std::shared_ptr<buffer_request_type>;
-    using buffer_response_type_ptr           = std::shared_ptr<buffer_response_type>;
-
-    using buffer_request_serializer_type     = boost::beast::http::request_serializer<boost::beast::http::buffer_body>;
-    using buffer_request_serializer_type_ptr = std::shared_ptr<buffer_request_serializer_type>;
-
-    using buffer_response_serializer_type    = boost::beast::http::response_serializer<boost::beast::http::buffer_body>;
-    using buffer_response_serializer_type_ptr = std::shared_ptr<buffer_response_serializer_type>;
-    // 开始转发请求
-    {
-      // 开始转发请求
-      buffer_request_type_ptr l_request_parser{std::make_shared<buffer_request_type>(std::move(*request_parser_))};
-      buffer_request_serializer_type_ptr l_request_serializer{
-          std::make_shared<buffer_request_serializer_type>(l_request_parser->get())
-      };
-      std::tie(ec_, std::ignore) =
-          co_await boost::beast::http::async_write_header(*proxy_relay_stream_, *l_request_serializer);
-      proxy_relay_stream_->expires_after(30s);
-      stream_->expires_after(30s);
-      if (ec_) co_return session_->logger_->error("无法发送请求头 {}", ec_);
-
-      // 异步读取, 并且写入
-      ec_ = co_await async_relay<true>(*proxy_relay_stream_, *stream_, *l_request_parser, *l_request_serializer);
-      if (ec_) co_return;
-      proxy_relay_stream_->expires_after(30s);
-      stream_->expires_after(30s);
-    }
-
-    {  // 开始转发回复
-      buffer_response_type_ptr l_response_parser{std::make_shared<buffer_response_type>()};
-      l_response_parser->body_limit(g_body_limit);
-      buffer_response_serializer_type_ptr l_response_serializer{
-          std::make_shared<buffer_response_serializer_type>(l_response_parser->get())
-      };
-
-      std::tie(ec_, std::ignore) =
-          co_await boost::beast::http::async_read_header(*proxy_relay_stream_, buffer_, *l_response_parser);
-      if (ec_) co_return session_->logger_->error("无法发送请求头 {}", ec_);
-      proxy_relay_stream_->expires_after(30s);
-      stream_->expires_after(30s);
-
-      std::tie(ec_, std::ignore) = co_await boost::beast::http::async_write_header(*stream_, *l_response_serializer);
-      if (ec_) co_return session_->logger_->error("无法发送回复头 {}", ec_);
-
-      ec_ = co_await async_relay<false>(*stream_, *proxy_relay_stream_, *l_response_parser, *l_response_serializer);
-      if (ec_) co_return;
-      proxy_relay_stream_->expires_after(30s);
-      stream_->expires_after(30s);
-    }
-    co_return;
-  }
-
-  boost::asio::awaitable<bool> proxy_run() {
-    auto l_is_websocket = boost::beast::websocket::is_upgrade(request_parser_->get());
-    session_->logger_->info(
-        "转发请求 {} {}{}", request_parser_->get().method(), l_is_websocket ? "ws:/"s : "http:/"s, session_->url_
-    );
-    if (!proxy_relay_stream_) proxy_relay_stream_ = co_await route_ptr_->create_proxy();
-    if (!proxy_relay_stream_) co_return do_close("代理打开失败"), true;
-
-    if (l_is_websocket)
-      co_return boost::asio::co_spawn(
-          stream_->get_executor(), proxy_websocket_relay(),
-          boost::asio::consign(boost::asio::detached, shared_from_this())
-      ),
-          true;
-    else
-      co_await proxy_http_relay();
-
-    if (ec_) co_return do_close("代理失败"), true;
-    // 读取下一次头
-    request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
-    request_parser_->body_limit(g_body_limit);
-    stream_->expires_after(30s);
-    std::tie(ec_, std::ignore) = co_await boost::beast::http::async_read_header(*stream_, buffer_, *request_parser_);
-    if (ec_) co_return do_close("请求头读取失败"), true;
-    stream_->expires_after(30s);
-    co_return false;
-  }
   boost::asio::awaitable<void> async_websocket_session() {
     boost::beast::get_lowest_layer(*stream_).expires_never();
     callback_->websocket_init(session_);
@@ -411,7 +174,7 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
       case boost::beast::http::verb::delete_:
       case boost::beast::http::verb::patch:
         session_->content_type_ = get_content_type(request_parser_->get()[boost::beast::http::field::content_type]);
-        session_->req_header_ = request_parser_->get().base();
+        session_->req_header_   = request_parser_->get().base();
         switch (session_->content_type_) {
           case content_type::image_jpeg:
           case content_type::image_jpg:
@@ -451,12 +214,12 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
           case content_type::image_jpg:
           case content_type::text_plain:
           case content_type::image_png:
-            session_->body_       = string_request_parser_->get().body();
+            session_->body_ = string_request_parser_->get().body();
 
             break;
           case content_type::application_json:
             try {
-              session_->body_       = nlohmann::json::parse(string_request_parser_->get().body());
+              session_->body_ = nlohmann::json::parse(string_request_parser_->get().body());
             } catch (const nlohmann::json::exception& e) {
               session_->logger_->log(log_loc(), level::err, "json 解析错误 {}", e.what());
               ec_ = error_enum::bad_json_string;
@@ -487,11 +250,6 @@ class async_session_t : public std::enable_shared_from_this<async_session_t> {
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       set_session();
       callback_ = (*route_ptr_)(method_verb_, session_->url_.segments(), session_);
-      // 检查代理
-      if (callback_->is_proxy()) {
-        if (co_await proxy_run()) co_return;
-        continue;
-      }
       session_->logger_->info("开始解析 url {} {}", request_parser_->get().method(), session_->url_);
       // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
       if (co_await parse_body()) co_return;
