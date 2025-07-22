@@ -45,6 +45,8 @@ namespace doodle {
 
 struct sqlite_database_impl;
 class sqlite_database {
+  logger_ptr logger_;
+
  public:
   std::shared_ptr<sqlite_database_impl> impl_;
 

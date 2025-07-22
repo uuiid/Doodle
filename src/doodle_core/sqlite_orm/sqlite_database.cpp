@@ -40,7 +40,10 @@ auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
   for (auto&& l_item : in) l_ret.emplace(l_item.*in_attr, &l_item);
   return l_ret;
 }
-
+void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {
+  if (auto l_logger = static_cast<spdlog::logger*>(pArg); l_logger)
+    l_logger->error(fmt::format("{} {}", iErrCode, zMsg));
+}
 }  // namespace
 void sqlite_database::load(const FSys::path& in_path) {
   auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
@@ -48,6 +51,11 @@ void sqlite_database::load(const FSys::path& in_path) {
   for (auto&& i : l_list) {
     i->upgrade(impl_);
   }
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, [this]() {
+    this->logger_ = g_logger_ctrl().make_log("sqlite", true);
+    sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, this->logger_.get());
+  });
 }
 
 std::vector<server_task_info> sqlite_database::get_server_task_info(const uuid& in_computer_id) {
