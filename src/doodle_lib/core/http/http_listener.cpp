@@ -35,13 +35,10 @@ boost::asio::awaitable<void> detail::run_http_listener(
         }
         default_logger_raw()->log(log_loc(), level::err, "on_accept error: {}", l_ec.message());
       } else {
-        boost::asio::co_spawn(
-            l_executor, detail::async_session(std::move(l_socket), in_route_ptr),
-            boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-        );
+        std::make_shared<session_data>(std::move(l_socket), in_route_ptr)->async_run_detached();
       }
     }
-  }catch (...) {
+  } catch (...) {
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
     app_base::Get().stop_app();
   }

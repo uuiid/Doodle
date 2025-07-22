@@ -23,6 +23,5 @@ class http_route_proxy : public http_route {
   http_route_proxy& reg_proxy(const http_function_ptr in_function);
   void reg_front_end(const http_function_ptr in_get_index, const http_function_ptr in_head_file);
 
-  boost::asio::awaitable<tcp_stream_type_ptr> create_proxy() const override;
 };
 }  // namespace doodle::http::kitsu

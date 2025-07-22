@@ -72,10 +72,8 @@ class socket_io_http_get : public socket_io_http_base_fun {
       boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
   ) override {
     auto l_websocket = std::make_shared<socket_io_websocket_core>(in_handle, sid_ctx_, std::move(in_stream));
-    boost::asio::co_spawn(
-        co_await boost::asio::this_coro::executor, l_websocket->run(),
-        boost::asio::consign(boost::asio::detached, l_websocket)
-    );
+    l_websocket->async_run();
+    co_return;
   }
 };
 
