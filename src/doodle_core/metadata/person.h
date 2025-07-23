@@ -162,6 +162,7 @@ struct DOODLE_CORE_API person {
     if (j.contains("expiration_date")) j.at("expiration_date").get_to(p.expiration_date_);
     if (j.contains("is_generated_from_ldap")) j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
     if (j.contains("ldap_uid")) j.at("ldap_uid").get_to(p.ldap_uid_);
+    if (j.contains("departments")) j.at("departments").get_to(p.departments_);
 
     if (j.contains("dingding_company_id")) j.at("dingding_company_id").get_to(p.dingding_company_id_);
   }
