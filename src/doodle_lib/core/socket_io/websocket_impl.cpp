@@ -156,8 +156,7 @@ void socket_io_websocket_core::async_close_websocket() {
   web_stream_->async_close(
       boost::beast::websocket::close_code::normal,
       [self = shared_from_this(), this](const boost::system::error_code& in_ec) {
-        web_stream_.reset();
-        socket_io_contexts_.clear();
+        if (in_ec) logger_->error(in_ec.what());
       }
   );
 }
