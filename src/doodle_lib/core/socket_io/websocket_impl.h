@@ -46,6 +46,6 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   boost::asio::awaitable<void> run();
   void async_run();
   boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
-  boost::asio::awaitable<void> async_close_websocket();
+  void async_close_websocket();
 };
 }  // namespace doodle::socket_io
