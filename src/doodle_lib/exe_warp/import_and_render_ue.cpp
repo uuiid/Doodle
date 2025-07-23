@@ -214,8 +214,11 @@ boost::asio::awaitable<void> args::run() {
   }
 
   auto l_ret = co_await async_import_and_render_ue();
-  // 合成视屏, 并上传文件
-  up_files(l_ret, create_move(l_ret));
+  // 合成视屏, 并上传文件(串行)
+  {
+    auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+    up_files(l_ret, create_move(l_ret));
+  }
 
   co_return;
 }
