@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include "kitsu.h"
@@ -146,6 +147,17 @@ boost::asio::awaitable<create_comment_result> create_comment(
     for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
       co_await i.run(l_task, in_person->person_.uuid_id_);
   }
+
+  socket_io::broadcast(
+      "comment:new",
+      nlohmann::json{
+          {"comment_id", in_comment->uuid_id_},
+          {"task_id", in_comment->object_id_},
+          {"task_status_id", in_comment->task_status_id_},
+          {"project_id", l_task->project_id_}
+      },
+      "/events"
+  );
 
   co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
 }
