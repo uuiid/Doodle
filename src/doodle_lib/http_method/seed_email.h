@@ -21,7 +21,7 @@ class seed_email {
  public:
   explicit seed_email(std::string in_address, std::uint32_t in_port, std::string in_username, std::string in_password);
 
-  boost::asio::awaitable<void> operator()(const std::string& in_subject, const std::string& in_recipient, const std::string& in_body);
+  void operator()(const std::string& in_subject, const std::string& in_recipient, const std::string& in_body);
 
 };
 }  // namespace doodle::email

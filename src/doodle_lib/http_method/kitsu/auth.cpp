@@ -101,7 +101,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
       l_token
   );
   if (g_ctx().contains<email::seed_email>())
-    co_await g_ctx().get<email::seed_email>()(
+    g_ctx().get<email::seed_email>()(
         "doodle 重置密码", l_person.email_, generate_email_content(l_person.get_full_name(), l_rest_url)
     );
 
