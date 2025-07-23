@@ -35,14 +35,15 @@ std::string generate_reset_token() {
   static constexpr std::string_view g_random_token = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   std::random_device rd;
   std::mt19937 gen(rd());
-  std::uniform_int_distribution<> dis(0, g_random_token.size());
-  std::string l_ret{64, '\0'};
-  for (auto i = 0; i < l_ret.size(); ++i) l_ret[i] = g_random_token[dis(gen)];
+  std::uniform_int_distribution<> dis(0, g_random_token.size() - 1);
+  std::string l_ret{};
+  l_ret.resize(64);
+  for (auto i = 0; i < 64; ++i) l_ret[i] = g_random_token[dis(gen)];
   return l_ret;
 }
 /// 生成邮件内容
 std::string generate_email_content(const std::string& in_user_name, const std::string& in_token) {
-  auto l_time = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}.get_sys_time();
+  auto l_time = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()}.get_local_time();
   return fmt::format(
       R"(<p> 您好, {0}</p>
 <p> 您的密码重置请求已经收到,请点击下面的链接进行密码重置:</p>
