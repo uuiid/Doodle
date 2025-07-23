@@ -24,7 +24,7 @@ void seed_email::operator()(
   l_msg.from(mailio::mail_address{"", username_});
   l_msg.add_recipient(mailio::mail_address{"", in_recipient});
   l_msg.content_transfer_encoding(mailio::mime::content_transfer_encoding_t::QUOTED_PRINTABLE);
-  l_msg.content_type(mailio::message::media_type_t::TEXT, "plain", "utf-8");
+  l_msg.content_type(mailio::message::media_type_t::TEXT, "html", "utf-8");
 
   l_msg.subject(in_subject);
   l_msg.content(in_body);
