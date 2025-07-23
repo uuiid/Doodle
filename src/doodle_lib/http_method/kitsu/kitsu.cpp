@@ -165,6 +165,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<pictures_originals_preview_files_get>()
       .reg_t<data_user_notifications_get>()
       .reg_t<data_tasks_full_get>()
+      .reg_t<data_comment_get>()
 
       // delete
       .reg(std::make_shared<task_comment_delete_>())

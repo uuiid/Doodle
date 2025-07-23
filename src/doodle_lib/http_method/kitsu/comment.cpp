@@ -187,6 +187,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> data_comment_get::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) {
+  auto l_person  = get_person(in_handle);
+  auto l_sql     = g_ctx().get<sqlite_database>();
+  auto l_comment = l_sql.get_by_uuid<comment>(in_arg->id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_comment);
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delete_::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<task_comment_arg> in_arg
 ) {
