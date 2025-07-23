@@ -36,7 +36,7 @@ std::string generate_reset_token() {
   std::random_device rd;
   std::mt19937 gen(rd());
   std::uniform_int_distribution<> dis(0, g_random_token.size());
-  std::string l_ret{std::size_t{64}};
+  std::string l_ret{64, '\0'};
   for (auto i = 0; i < l_ret.size(); ++i) l_ret[i] = g_random_token[dis(gen)];
   return l_ret;
 }
