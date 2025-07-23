@@ -14,7 +14,12 @@ struct task;
 
 namespace doodle::http {
 class http_jwt_fun : public http_function {
+  struct http_jwt_t;
+
  protected:
+  std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);
+
+ public:
   struct http_jwt_t {
     person person_;
     // 检查人员是否有修改项目属性的权限
@@ -35,10 +40,6 @@ class http_jwt_fun : public http_function {
     // 检查任务的分配权限
     void check_task_assign_access(const uuid& in_project_id) const;
   };
-
-  std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);
-
- public:
   using http_function::http_function;
 };
 
