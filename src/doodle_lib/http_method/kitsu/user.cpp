@@ -66,6 +66,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::
   l_ptr->is_admin();
   auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
+  l_person->uuid_id_  = core_set::get_set().get_uuid();
   co_await g_ctx().get<sqlite_database>().install(l_person);
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
