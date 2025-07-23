@@ -98,7 +98,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   );
   auto& l_kitsu_ctx = g_ctx().get<http::kitsu_ctx_t>();
   auto l_rest_url   = fmt::format(
-      "{}://{}/reset-change-password?email={}token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_, l_email,
+      "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_, l_email,
       l_token
   );
   if (g_ctx().contains<email::seed_email>())
