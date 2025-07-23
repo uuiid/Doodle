@@ -72,7 +72,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::
   for (auto&& l_dep : l_person->departments_) {
     l_person_deps->emplace_back(person_department_link{.person_id_ = l_person->uuid_id_, .department_id_ = l_dep});
   }
-  co_await g_ctx().get<sqlite_database>().install(l_person_deps);
+  co_await g_ctx().get<sqlite_database>().install_range(l_person_deps);
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 
