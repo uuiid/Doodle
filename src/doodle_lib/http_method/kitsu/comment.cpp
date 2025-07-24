@@ -103,8 +103,26 @@ boost::asio::awaitable<create_comment_result> create_comment(
     if (l_task_status.is_retake_) ++l_task->retake_count_;
     if (l_task_status.is_feedback_request_) l_task->end_date_ = chrono::system_clock::now();
     co_await l_sql.install(l_task);
-    if (l_status_changed)  // todo: 需要通知状态改变
-      ;
+
+    socket_io::broadcast(
+        "task:update", nlohmann::json{{"task_id", in_comment->object_id_}, {"project_id", l_task->project_id_}},
+        "/events"
+    );
+
+    if (l_status_changed) {
+      // 需要通知状态改变
+      socket_io::broadcast(
+          "task:status-changed",
+          nlohmann::json{
+              {"task_id", in_comment->object_id_},
+              {"new_task_status_id", l_task_status.uuid_id_},
+              {"previous_task_status_id", l_task_status.uuid_id_},
+              {"person_id", in_comment->person_id_},
+              {"project_id", l_task->project_id_}
+          },
+          "/events"
+      );
+    };
   }
   // 创建通知
   {
