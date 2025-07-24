@@ -87,7 +87,6 @@ void up_file_asset::move_file(session_data_ptr in_handle, const std::shared_ptr<
 // 地编资产 |
 // 特效    |
 // 其他    |
-// 特效    |
 
 FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
   if (in_data->entity_type_id_ == asset_type::get_character_id())
