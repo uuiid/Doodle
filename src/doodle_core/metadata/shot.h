@@ -3,7 +3,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/metadata.h>
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum_all.hpp>
 
 namespace doodle {
 class DOODLE_CORE_API shot {

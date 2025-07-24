@@ -20,7 +20,7 @@
 #include <maya_plug/data/sim_cover_attr.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum_all.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MArgParser.h>

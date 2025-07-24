@@ -140,7 +140,7 @@ void app_base::add_signal() {
 void app_base::write_current_error_tmp_dir() {
   auto l_tmp = FSys::temp_directory_path() / "doodle" / "log";
   if (!FSys::exists(l_tmp)) FSys::create_directories(l_tmp);
-  auto l_path = l_tmp / fmt::format("doodle_error_{}.txt", boost::this_process::get_id());
+  auto l_path = l_tmp / fmt::format("doodle_error_{}.txt", boost::process::v2::current_pid());
   FSys::ofstream l_ofstream{l_path};
   l_ofstream << boost::current_exception_diagnostic_information() << std::endl;
   default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());

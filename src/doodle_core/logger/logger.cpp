@@ -79,7 +79,7 @@ class rotating_file_sink final : public spdlog::sinks::base_sink<Mutex> {
   std::ofstream file_helper_;
   std::size_t index_;
 
-  std::int32_t pid{boost::this_process::get_id()};
+  boost::process::v2::pid_type pid{boost::process::v2::current_pid()};
 };
 
 template <typename Mutex>

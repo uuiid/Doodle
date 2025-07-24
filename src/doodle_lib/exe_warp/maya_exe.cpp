@@ -22,7 +22,7 @@
 #include <boost/asio/high_resolution_timer.hpp>
 #include <boost/asio/readable_pipe.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/process/v2.hpp>
+#include <boost/process/process.hpp>
 
 #include <filesystem>
 #include <fmt/core.h>

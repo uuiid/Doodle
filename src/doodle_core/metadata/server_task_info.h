@@ -7,7 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/json_warp.h>
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum_all.hpp>
 #include <nlohmann/json.hpp>
 #include <strstream>
 namespace doodle {

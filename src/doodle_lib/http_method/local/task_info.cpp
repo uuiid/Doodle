@@ -108,7 +108,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   // 强制等待一秒
   boost::asio::awaitable<void> wait() const {
     auto l_timer = boost::asio::system_timer{co_await boost::asio::this_coro::executor};
-    l_timer.expires_from_now(std::chrono::seconds(1));
+    l_timer.expires_after(std::chrono::seconds(1));
     try {
       co_await l_timer.async_wait(boost::asio::use_awaitable);
     } catch (...) {

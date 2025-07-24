@@ -24,7 +24,7 @@
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
 #include <fmt/core.h>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum_all.hpp>
 #include <maya/MAnimControl.h>
 #include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>

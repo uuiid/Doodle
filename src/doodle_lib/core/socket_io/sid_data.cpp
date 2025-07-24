@@ -36,7 +36,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     if (is_timeout()) co_return;
-    l_timer.expires_from_now(ctx_->handshake_data_.ping_interval_);
+    l_timer.expires_after(ctx_->handshake_data_.ping_interval_);
     co_await l_timer.async_wait(boost::asio::use_awaitable);
     seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::ping));
   }
@@ -44,7 +44,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
 }
 
 boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
-  timer_->expires_from_now(ctx_->handshake_data_.ping_timeout_);
+  timer_->expires_after(ctx_->handshake_data_.ping_timeout_);
   std::shared_ptr<packet_base> l_message{std::make_shared<engine_io_packet>(engine_io_packet_type::noop)};
   l_message->start_dump();
   if (auto [l_arr, l_e1, l_str_var, l_e2] =

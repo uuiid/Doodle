@@ -18,7 +18,7 @@
 #include <boost/url.hpp>
 
 #include <atomic>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum_all.hpp>
 namespace doodle::http::detail {
 
 namespace http_client_core_ns {
@@ -30,7 +30,6 @@ enum state {
   read,
 };
 
-inline auto format_as(state f) { return magic_enum::enum_name(f); }
 }  // namespace http_client_core_ns
 
 class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
@@ -155,8 +154,8 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
     }
     in_client_data->expires_after(std::chrono::seconds{10});
 
-    std::tie(in_client_data->error_) =
-        co_await in_client_data->socket().async_connect(*in_client_data->resolver_results_);
+    std::tie(in_client_data->error_, std::ignore) =
+        co_await in_client_data->socket().async_connect(in_client_data->resolver_results_);
     if (in_client_data->error_) {
       in_client_data->logger_->log(log_loc(), level::err, "async_connect error: {}", in_client_data->error_.message());
       co_return std::make_tuple(in_client_data->error_, l_ret);

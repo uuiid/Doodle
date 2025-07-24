@@ -72,7 +72,7 @@ target_link_libraries(doodle_lib
         Alembic::Alembic # abc文件读写
         sqlite_orm::sqlite_orm
         OpenSSL::SSL
-        mailio
+        mailio::mailio
         #        OpenSSL::applink
 )
 

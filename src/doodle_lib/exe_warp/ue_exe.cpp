@@ -17,7 +17,7 @@
 #include "boost/locale/encoding.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
-#include <boost/process/v2.hpp>
+#include <boost/process/process.hpp>
 #include <boost/system.hpp>
 
 #include "fmt/core.h"

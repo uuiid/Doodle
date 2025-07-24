@@ -4,7 +4,7 @@
 
 #include "engine_io.h"
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum_all.hpp>
 
 
 
