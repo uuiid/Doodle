@@ -42,10 +42,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   auto l_extend = l_sql.get_entity_asset_extend(l_task.entity_id_);
   if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
 
-  auto l_ptr         = check_data(*l_extend);
+  auto l_ptr    = check_data(*l_extend);
 
-  auto l_entity      = l_sql.get_by_uuid<entity>(l_task.entity_id_);
-  auto l_prj         = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_prj    = l_sql.get_by_uuid<project>(l_entity.project_id_);
   if (!(l_task.task_type_id_ == task_type::get_character_id() ||
         l_task.task_type_id_ == task_type::get_ground_model_id() ||
         l_task.task_type_id_ == task_type::get_binding_id()))
@@ -79,6 +79,15 @@ void up_file_asset::move_file(session_data_ptr in_handle, const std::shared_ptr<
   if (exists(l_d)) FSys::backup_file(l_d);
   FSys::rename(l_tmp_path, l_d);
 }
+
+//         | 角色 | 地编模型 | 绑定
+// 角色    |
+// 场景    |
+// 道具    |
+// 地编资产 |
+// 特效    |
+// 其他    |
+// 特效    |
 
 FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
   if (in_data->entity_type_id_ == asset_type::get_character_id())
