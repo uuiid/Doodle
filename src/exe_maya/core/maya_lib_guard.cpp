@@ -42,13 +42,13 @@ maya_lib_guard::maya_lib_guard() {
   MGlobal::executeCommand(R"(loadPlugin "mtoa";)");
   MGlobal::executeCommand(R"(loadPlugin "Substance";)");
   default_logger_raw()->log(
-      log_loc(), level::info, "env MAYA_MODULE_PATH {}", boost::process::environment::get("MAYA_MODULE_PATH")
+      log_loc(), level::info, "env MAYA_MODULE_PATH {}", boost::process::environment::get("MAYA_MODULE_PATH").string()
   );
   maya_chick(MGlobal::executeCommand(conv::to_ms(fmt::format(R"(loadPlugin "doodle_maya_{}";)", MAYA_APP_VERSION))));
 
   if (MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer()) {
     if (auto* l_f = renderer->getFragmentManager()) {
-      FSys::path l_path = boost::process::environment::get("MAYA_LOCATION");
+      FSys::path l_path = boost::process::environment::get("MAYA_LOCATION").string();
       l_f->addFragmentPath(maya_plug::conv::to_ms((l_path / "bin" / "ScriptFragment").generic_string()));
       l_f->addFragmentPath(maya_plug::conv::to_ms((l_path / "bin" / "ShadeFragment").generic_string()));
     }
