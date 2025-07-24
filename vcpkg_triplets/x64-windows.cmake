@@ -10,5 +10,5 @@ endif ()
 
 if (PORT MATCHES "sqlite3")
     set(VCPKG_CXX_FLAGS "-DSQLITE_DEFAULT_MMAP_SIZE=0x3fff0000")
-    set(VCPKG_C_FLAGS "")
+    set(VCPKG_C_FLAGS "-DSQLITE_DEFAULT_MMAP_SIZE=0x3fff0000")
 endif ()
