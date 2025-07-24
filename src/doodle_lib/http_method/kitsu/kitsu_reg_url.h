@@ -426,6 +426,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
+// /api/auth/logout
+DOODLE_HTTP_FUN(auth_logout, get, ucom_t{} / "api" / "auth" / "logout", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
+
 
 // /api/data/tasks/{task_id}/comments/{comment_id}
 struct task_comment_arg {

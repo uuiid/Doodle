@@ -98,8 +98,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   );
   auto& l_kitsu_ctx = g_ctx().get<http::kitsu_ctx_t>();
   auto l_rest_url   = fmt::format(
-      "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_, l_email,
-      l_token
+      "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_,
+      l_email, l_token
   );
   if (g_ctx().contains<email::seed_email>())
     g_ctx().get<email::seed_email>()(
@@ -124,6 +124,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   co_await l_sql.install(l_person);
   g_ctx().get<auth_reset_password_cache>().Remove(l_arg.email);
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
+}
+boost::asio::awaitable<boost::beast::http::message_generator> auth_logout_get::callback_arg(
+    session_data_ptr in_handle
+) {
+  boost::beast::http::response<boost::beast::http::string_body> l_res{
+      boost::beast::http::status::ok, in_handle->version_
+  };
+  l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
+  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_res.keep_alive(in_handle->keep_alive_);
+
+  l_res.set(
+      boost::beast::http::field::set_cookie, "access_token_cookie=; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax"
+  );
+  l_res.insert(
+      boost::beast::http::field::set_cookie,
+      "refresh_token_cookie=; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax"
+  );
+  l_res.body() = nlohmann::json{{"logout", true}}.dump();
+  l_res.prepare_payload();
+
+  co_return boost::beast::http::message_generator{std::move(l_res)};
 }
 
 }  // namespace doodle::http
