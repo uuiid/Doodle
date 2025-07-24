@@ -19,8 +19,9 @@ class up_file_asset_base : public http_jwt_fun_template<capture_id_t> {
  protected:
   struct task_info_t {
     nlohmann::json task_data_{};
+    uuid task_type_id_{};
+    uuid entity_type_id_{};
 
-    std::string entity_type_{};
 
     std::int32_t gui_dang_{};
     std::int32_t kai_shi_ji_shu_{};

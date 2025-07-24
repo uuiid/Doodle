@@ -29,6 +29,16 @@ struct DOODLE_CORE_API asset_type {
   static uuid get_edit_id();
   static uuid get_scene_id();
 
+  // 角色
+  static uuid get_character_id();
+  // 地编
+  static uuid get_ground_id();
+  // 道具
+  static uuid get_prop_id();
+  // 特效
+  static uuid get_effect_id();
+
+
   // from json
   template <typename BasicJsonType>
   friend void from_json(const BasicJsonType& j, asset_type& p) {

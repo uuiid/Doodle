@@ -45,14 +45,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   auto l_ptr         = check_data(*l_extend);
 
   auto l_entity      = l_sql.get_by_uuid<entity>(l_task.entity_id_);
-  auto l_entity_type = l_sql.get_by_uuid<asset_type>(l_entity.entity_type_id_);
-  auto l_task_type   = l_sql.get_by_uuid<task_type>(l_task.task_type_id_);
   auto l_prj         = l_sql.get_by_uuid<project>(l_entity.project_id_);
-  if (auto l_type = l_task_type.name_; !(l_type == "角色" || l_type == "地编模型" || l_type == "绑定"))
+  if (!(l_task.task_type_id_ == task_type::get_character_id() ||
+        l_task.task_type_id_ == task_type::get_ground_model_id() ||
+        l_task.task_type_id_ == task_type::get_binding_id()))
     throw_exception(doodle_error{"未知的 task_type 类型"});
-  l_ptr->entity_type_ = l_entity_type.name_;
-  l_ptr->root_path_   = l_prj.path_;
-  l_ptr->file_path_   = l_d;
+
+  l_ptr->task_type_id_   = l_task.task_type_id_;
+  l_ptr->entity_type_id_ = l_entity.entity_type_id_;
+
+  l_ptr->root_path_      = l_prj.path_;
+  l_ptr->file_path_      = l_d;
   move_file(in_handle, l_ptr);
   co_return in_handle->make_msg(nlohmann::json{});
 }
@@ -78,15 +81,15 @@ void up_file_asset::move_file(session_data_ptr in_handle, const std::shared_ptr<
 }
 
 FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
-  if (in_data->entity_type_ == "角色")
+  if (in_data->entity_type_id_ == asset_type::get_character_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
     );
-  if (in_data->entity_type_ == "道具")
+  if (in_data->entity_type_id_ == asset_type::get_prop_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->pin_yin_ming_cheng_
     );
-  if (in_data->entity_type_ == "场景")
+  if (in_data->entity_type_id_ == asset_type::get_ground_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/Mod", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
     );
@@ -95,17 +98,17 @@ FSys::path up_file_asset_maya_post::gen_file_path(const std::shared_ptr<task_inf
 }
 
 FSys::path up_file_asset_ue_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
-  if (in_data->entity_type_ == "角色")
+  if (in_data->entity_type_id_ == asset_type::get_character_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_,
         in_data->pin_yin_ming_cheng_
     );
-  if (in_data->entity_type_ == "道具")
+  if (in_data->entity_type_id_ == asset_type::get_prop_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", in_data->gui_dang_, in_data->kai_shi_ji_shu_,
         in_data->gui_dang_, in_data->kai_shi_ji_shu_
     );
-  if (in_data->entity_type_ == "场景")
+  if (in_data->entity_type_id_ == asset_type::get_ground_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_,
         in_data->pin_yin_ming_cheng_
@@ -126,15 +129,15 @@ void up_file_asset_ue_post::move_file(session_data_ptr in_handle, const std::sha
 }
 
 FSys::path up_file_asset_image_post::gen_file_path(const std::shared_ptr<task_info_t>& in_data) {
-  if (in_data->entity_type_ == "角色")
+  if (in_data->entity_type_id_ == asset_type::get_character_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
     );
-  if (in_data->entity_type_ == "道具")
+  if (in_data->entity_type_id_ == asset_type::get_prop_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->pin_yin_ming_cheng_
     );
-  if (in_data->entity_type_ == "场景")
+  if (in_data->entity_type_id_ == asset_type::get_ground_id())
     return fmt::format(
         "6-moxing/Ch/JD{:02d}_{:02d}/BG{}", in_data->gui_dang_, in_data->kai_shi_ji_shu_, in_data->bian_hao_
     );
