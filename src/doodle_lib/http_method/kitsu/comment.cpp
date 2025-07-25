@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-4-29.
 //
+#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/notification.h>
@@ -203,6 +204,58 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     l_result.emplace_back(co_await create_comment(l_comm, l_person.get(), {}, {}));
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comments_ack_post::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<data_tasks_comments_ack_arg> in_arg
+) {
+  auto l_person = get_person(in_handle);
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  std::string l_event_name{};
+  using namespace sqlite_orm;
+  auto l_task_id =
+      l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == in_arg->comment_id_));
+
+  if (l_task_id.empty())
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request, fmt::format("未知的评论 id: {}", in_arg->comment_id_)
+        }
+    );
+  auto l_prj_id = l_sql.impl_->storage_any_.select(&task::project_id_, where(c(&task::uuid_id_) == l_task_id[0]));
+  if (l_prj_id.empty())
+    throw_exception(
+        http_request_error{boost::beast::http::status::bad_request, fmt::format("未知的task id: {}", l_task_id[0])}
+    );
+  if (auto l_id = l_sql.impl_->storage_any_.select(
+          &comment_acknoledgments::id_, where(
+                                            c(&comment_acknoledgments::comment_id_) == in_arg->comment_id_ &&
+                                            c(&comment_acknoledgments::person_id_) == l_person->person_.uuid_id_
+                                        )
+      );
+      l_id.empty()) {
+    auto l_ack         = std::make_shared<comment_acknoledgments>();
+    l_ack->comment_id_ = in_arg->comment_id_;
+    l_ack->person_id_  = l_person->person_.uuid_id_;
+    co_await l_sql.install(l_ack);
+    l_event_name = "comment:acknowledge";
+  } else {
+    l_event_name = "comment:unacknowledge";
+    co_await l_sql.remove<comment_acknoledgments>(l_id[0]);
+  }
+
+  socket_io::broadcast(
+      l_event_name,
+      nlohmann::json{
+          {"comment_id", in_arg->comment_id_},
+          {"person_id", l_person->person_.uuid_id_},
+          {"project_id", l_prj_id.front()}
+      },
+      "/events"
+  );
+  auto l_comment = l_sql.get_by_uuid<comment>(in_arg->comment_id_);
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_comment);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment_get::callback_arg(
