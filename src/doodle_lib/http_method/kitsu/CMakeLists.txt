@@ -3,7 +3,6 @@ target_sources(
         PUBLIC
         kitsu.h
         kitsu_front_end.h
-        http_route_proxy.h
         epiboly.h
         kitsu_reg_url.h
 
@@ -12,7 +11,6 @@ target_sources(
         kitsu.cpp
         user.cpp
         kitsu_front_end.cpp
-        http_route_proxy.cpp
         project.cpp
         epiboly.cpp
         assets.cpp
