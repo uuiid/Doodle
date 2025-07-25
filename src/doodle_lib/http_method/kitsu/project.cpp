@@ -88,7 +88,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::ca
   l_json.get_to(*l_prj);
   l_prj->uuid_id_ = core_set::get_set().get_uuid();
   co_await g_ctx().get<sqlite_database>().install(l_prj);
-  co_return in_handle->make_msg(nlohmann::json{*l_prj}.dump());
+  co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
@@ -106,7 +106,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
       !l_t) {
     co_await g_ctx().get<sqlite_database>().install(l_prj_task_type_link);
   }
-  co_return in_handle->make_msg(nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_)});
+  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_delete_::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<project_settings_task_types_arg> in_arg
@@ -131,7 +131,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
   l_prj_task_status_link->task_status_id_ = l_status_id;
   if (!g_ctx().get<sqlite_database>().get_project_task_status_link(in_arg->id_, l_status_id))
     co_await g_ctx().get<sqlite_database>().install(l_prj_task_status_link);
-  co_return in_handle->make_msg(nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_)});
+  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_asset_types_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
@@ -144,7 +144,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_a
   l_prj_asset_type_link->project_id_    = in_arg->id_;
   if (!g_ctx().get<sqlite_database>().get_project_asset_type_link(in_arg->id_, l_prj_asset_type_link->asset_type_id_))
     co_await g_ctx().get<sqlite_database>().install(l_prj_asset_type_link);
-  co_return in_handle->make_msg(nlohmann::json{g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_)});
+  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<actions_create_tasks_arg> in_arg
@@ -220,7 +220,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
   }
   for (const auto& i : *l_tasks)
     socket_io::broadcast("task:new", nlohmann::json{{"task_id", i.uuid_id_}, {"project_id", i.project_id_}}, "/events");
-  co_return in_handle->make_msg(l_json_r.dump());
+  co_return in_handle->make_msg(l_json_r);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team_post::callback_arg(
