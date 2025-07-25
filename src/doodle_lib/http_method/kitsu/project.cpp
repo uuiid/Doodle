@@ -66,7 +66,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_get::
   l_j = l_list;
   l_j["project_status_name"] =
       g_ctx().get<sqlite_database>().get_by_uuid<project_status>(l_list.project_status_id_).name_;
-  co_return in_handle->make_msg(nlohmann::json{l_list});
+  co_return in_handle->make_msg(l_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_put::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
