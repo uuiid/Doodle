@@ -218,10 +218,45 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     i["task_type_priority"]     = l_task_type.priority_;
   }
   for (const auto& i : *l_tasks)
-    socket_io::broadcast(
-        "task:new", nlohmann::json{{"task_id", i.uuid_id_}, {"project_id", i.project_id_}}, "/events"
-    );
+    socket_io::broadcast("task:new", nlohmann::json{{"task_id", i.uuid_id_}, {"project_id", i.project_id_}}, "/events");
   co_return in_handle->make_msg(l_json_r.dump());
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team_post::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) {
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_project_manager(in_arg->id_);
+  auto l_add_team = in_handle->get_json()["person_id"].get<uuid>();
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  if (!l_sql.is_person_in_project(l_add_team, in_arg->id_)) {
+    auto l_team         = std::make_shared<project_person_link>();
+    l_team->project_id_ = in_arg->id_;
+    l_team->person_id_  = l_add_team;
+    co_await l_sql.install(l_team);
+  }
+  auto l_prj = l_sql.get_by_uuid<project>(in_arg->id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_person_delete_::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<data_project_team_person_arg> in_arg
+) {
+  auto l_ptr = get_person(in_handle);
+  l_ptr->is_project_manager(in_arg->project_id_);
+  auto l_sql = g_ctx().get<sqlite_database>();
+
+  using namespace sqlite_orm;
+  if (auto l_id = l_sql.impl_->storage_any_.select(
+          &project_person_link::id_, where(
+                                         c(&project_person_link::project_id_) == in_arg->project_id_ &&
+                                         c(&project_person_link::person_id_) == in_arg->person_id_
+                                     )
+      );
+      !l_id.empty()) {
+    co_await l_sql.remove<project_person_link>(l_id[0]);
+  }
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http

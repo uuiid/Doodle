@@ -583,10 +583,13 @@ std::optional<project_asset_type_link> sqlite_database::get_project_asset_type_l
   return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
 }
 bool sqlite_database::is_person_in_project(const person& in_person, const uuid& in_project_id) {
+  return is_person_in_project(in_person.uuid_id_, in_project_id);
+}
+bool sqlite_database::is_person_in_project(const uuid& in_person, const uuid& in_project_id) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.count<project_person_link>(where(
-      c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person.uuid_id_
-  ));
+  auto l_t = impl_->storage_any_.count<project_person_link>(
+      where(c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person)
+  );
   return l_t > 0;
 }
 

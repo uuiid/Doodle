@@ -118,9 +118,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<data_tasks_comments_ack_arg> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
-
-
-
+// /api/data/projects/{project_id}/team
+DOODLE_HTTP_FUN(data_projects_team, post, ucom_t{} / "api" / "data" / "projects" / &capture_id_t::id_ / "team", http_jwt_fun_template<capture_id_t>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
+//
 
 // "api/data/comments/{comment_id}"
 DOODLE_HTTP_FUN(data_comment, put, ucom_t{} / "api" / "data" / "comments" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
@@ -479,6 +483,20 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_task, delete_, ucom_t{} / "api" / "data" / "tasks" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
+// /api/data/projects/{project_id}/team/{person_id}
+struct data_project_team_person_arg {
+  uuid project_id_;
+  uuid person_id_;
+};
+DOODLE_HTTP_FUN(
+    data_project_team_person, delete_,
+    ucom_t{} / "api" / "data" / "projects" / &data_project_team_person_arg::project_id_ / "team" / &data_project_team_person_arg::person_id_,
+    http_jwt_fun_template<data_project_team_person_arg>
+)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<data_project_team_person_arg> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 

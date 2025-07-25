@@ -139,6 +139,7 @@ class sqlite_database {
   std::vector<person> get_project_persons(const uuid& in_project_uuid);
   // 查询人员是否在项目团队中
   bool is_person_in_project(const person& in_person, const uuid& in_project_id);
+  bool is_person_in_project(const uuid& in_person, const uuid& in_project_id);
   // 查询对应的task是否存在
   bool is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id);
 

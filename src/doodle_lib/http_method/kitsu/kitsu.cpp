@@ -89,6 +89,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_user_notifications_mark_all_as_read_post>()
       .reg_t<actions_projects_tasks_comment_many_post>()
       .reg_t<data_tasks_comments_ack_post>()
+      .reg_t<data_projects_team_post>()
 
       .reg(std::make_shared<deepseek_key_get>())
       .reg(std::make_shared<other::key_ji_meng_get>())
@@ -174,6 +175,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg(std::make_shared<data_asset_delete_>())
       .reg(std::make_shared<project_settings_task_types_delete_>())
       .reg(std::make_shared<data_task_delete_>())
+      .reg_t<data_project_team_person_delete_>()
 
       ;
 
