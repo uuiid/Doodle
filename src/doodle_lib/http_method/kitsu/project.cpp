@@ -235,6 +235,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team
     l_team->project_id_ = in_arg->id_;
     l_team->person_id_  = l_add_team;
     co_await l_sql.install(l_team);
+    socket_io::broadcast("project:update", nlohmann::json{{"project_id", in_arg->id_}}, "/events");
   }
   auto l_prj = l_sql.get_by_uuid<project>(in_arg->id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);
@@ -255,6 +256,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
       );
       !l_id.empty()) {
     co_await l_sql.remove<project_person_link>(l_id[0]);
+    socket_io::broadcast("project:update", nlohmann::json{{"project_id", in_arg->project_id_}}, "/events");
   }
   co_return in_handle->make_msg_204();
 }
