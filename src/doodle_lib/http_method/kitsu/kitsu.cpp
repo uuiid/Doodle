@@ -39,12 +39,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
 
-  auto l_router   = std::make_shared<kitsu::http_route_proxy>();
+  auto l_router   = std::make_shared<http_route>();
   auto l_ctx      = g_ctx().get<kitsu_ctx_t>();
-  l_router->reg_front_end(  // 前端
-          std::make_shared<get_files_kitsu_front_end>(l_root_ptr),
-          std::make_shared<get_files_head_kitsu_front_end>(l_root_ptr)
-  );
   (*l_router)
       // 我们自己的后端
       .reg_t<model_library::context_get>()
@@ -177,7 +173,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_task_delete_>()
       .reg_t<data_project_team_person_delete_>()
 
-      ;
+      // 最后注册nodejs前端
+      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
+      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr);
 
   auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/events");
@@ -213,19 +211,22 @@ http_route_ptr create_kitsu_local_route() {
 }
 
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
-  auto l_router   = std::make_shared<kitsu::http_route_proxy>();
+  auto l_router   = std::make_shared<http_route>();
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
-  l_router->reg_front_end(  // 前端
-          std::make_shared<get_files_kitsu_front_end>(l_root_ptr),
-          std::make_shared<get_files_head_kitsu_front_end>(l_root_ptr)
-  );
+
   (*l_router)
       .reg_t<doodle_tool_version_get>()
 
       // 外包
       .reg_t<epiboly_config_get>()
       .reg_t<epiboly_authenticated_get>()
-      .reg_t<epiboly_user_context_get>();
+      .reg_t<epiboly_user_context_get>()
+
+      // 最后注册nodejs前端
+      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
+      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr)
+
+      ;
 
   return l_router;
 }

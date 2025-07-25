@@ -11,30 +11,8 @@ namespace doodle::http {
 std::tuple<bool, std::shared_ptr<void>> kitsu_front_end::set_match_url(
     boost::urls::segments_ref in_segments_ref
 ) const {
+  if (!in_segments_ref.empty() && in_segments_ref.front() == "api") return {false, {}};
   return {true, {}};
-}
-
-std::tuple<bool, std::shared_ptr<void>> kitsu_proxy_url::set_match_url(
-    boost::urls::segments_ref in_segments_ref
-) const {
-  auto l_size = std::distance(in_segments_ref.begin(), in_segments_ref.end());
-  if (l_size == 0) return {false, {}};
-
-  bool l_result = true;
-
-  std::int32_t l_index{0};
-  for (auto&& i : in_segments_ref) {
-    if (l_index == url_segments_.size()) break;
-    l_result &= url_segments_[l_index] == i;
-    ++l_index;
-  }
-  return {l_result, {}};
-}
-bool kitsu_proxy_url::is_proxy() const { return true; }
-boost::asio::awaitable<boost::beast::http::message_generator> kitsu_proxy_url::callback(
-    http::session_data_ptr in_handle
-) {
-  co_return in_handle->make_msg(nlohmann::json{});
 }
 
 namespace {
