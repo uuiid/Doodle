@@ -169,6 +169,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_tasks_full_get>()
       .reg_t<data_comment_get>()
       .reg_t<auth_logout_get>()
+      .reg_t<data_project_get>()
 
       // delete
       .reg(std::make_shared<task_comment_delete_>())

@@ -46,11 +46,6 @@ void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zM
 }
 }  // namespace
 void sqlite_database::load(const FSys::path& in_path) {
-  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
-  impl_       = std::make_shared<sqlite_database_impl>(in_path);
-  for (auto&& i : l_list) {
-    i->upgrade(impl_);
-  }
   static std::once_flag l_flag{};
   std::call_once(l_flag, [this]() {
     this->logger_ = std::make_shared<spdlog::async_logger>(
@@ -67,6 +62,12 @@ void sqlite_database::load(const FSys::path& in_path) {
     sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, this->logger_.get());
     sqlite3_config(SQLITE_CONFIG_MMAP_SIZE, 100 * 1024 * 1024, 1024 * 1024 * 1024);  // 1 GB
   });
+
+  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
+  impl_       = std::make_shared<sqlite_database_impl>(in_path);
+  for (auto&& i : l_list) {
+    i->upgrade(impl_);
+  }
 }
 
 std::vector<server_task_info> sqlite_database::get_server_task_info(const uuid& in_computer_id) {
