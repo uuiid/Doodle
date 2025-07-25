@@ -8,7 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
-  "builtin-baseline": "ef7dbf94b9198bc58f45951adcf1f041fcbc5ea0",
+  "builtin-baseline": "09b46f6e6678ef86ddb74f1b4333f503485ef551",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
@@ -38,6 +38,14 @@
     "wil",
     "cpp-base64",
     "tl-expected",
+    {
+      "name": "sqlite3",
+      "default-features": false,
+      "features": [
+        "json1",
+        "rtree"
+      ]
+    },
     "sqlite-orm",
     "jwt-cpp",
     "vpetrigo-caches",
@@ -88,11 +96,5 @@
     "overlay-triplets": [
       "./vcpkg_triplets"
     ]
-  },
-  "overrides": [
-    {
-      "name": "tbb",
-      "version-string": "2020_U3"
-    }
-  ]
+  }
 }
