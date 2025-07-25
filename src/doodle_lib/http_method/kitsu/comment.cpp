@@ -181,7 +181,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
   co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
 }
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment_post::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_person                      = get_person(in_handle);

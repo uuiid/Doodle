@@ -12,7 +12,7 @@
 #include "kitsu_reg_url.h"
 #include <opencv2/opencv.hpp>
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment_add_preview_post::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<task_comment_add_preview_arg> in_arg
 ) {
   auto l_person = get_person(in_handle);

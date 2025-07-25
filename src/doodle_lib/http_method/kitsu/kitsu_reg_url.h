@@ -11,29 +11,29 @@ DOODLE_HTTP_FUN(auth_login, post, ucom_t{} / "api" / "auth" / "login", http_jwt_
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/data/projects"
-DOODLE_HTTP_FUN(project_c, post, ucom_t{} / "api" / "data" / "projects", http_jwt_fun_template<void>)
+DOODLE_HTTP_FUN(data_projects, post, ucom_t{} / "api" / "data" / "projects", http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/data/projects/{project_id}/settings/task-types"
-DOODLE_HTTP_FUN(project_settings_task_types, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "task-types", http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(data_project_settings_task_types, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "task-types", http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/data/projects/{project_id}/settings/task-status"
-DOODLE_HTTP_FUN(project_settings_task_status, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "task-status", http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(data_project_settings_task_status, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "task-status", http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/data/projects/{project_id}/settings/asset-types"
-DOODLE_HTTP_FUN(project_settings_asset_types, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "asset-types", http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(data_project_settings_asset_types, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "asset-types", http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
 // "api/actions/tasks/{task_id}/comment"
-DOODLE_HTTP_FUN(task_comment, post, ucom_t{} / "api" / "actions" / "tasks" / make_cap(g_uuid_regex, &capture_id_t::id_) / "comment", http_jwt_fun_template<capture_id_t>)
+DOODLE_HTTP_FUN(actions_tasks_comment, post, ucom_t{} / "api" / "actions" / "tasks" / make_cap(g_uuid_regex, &capture_id_t::id_) / "comment", http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
@@ -43,7 +43,7 @@ struct task_comment_add_preview_arg {
   uuid comment_id{};
 };
 // "api/actions/tasks/{task_id}/comments/{comment_id}/add-preview"
-DOODLE_HTTP_FUN(task_comment_add_preview, post, ucom_t{} / "api" / "actions" / "tasks" / make_cap(g_uuid_regex, &task_comment_add_preview_arg::task_id) / "comments" / make_cap(g_uuid_regex, &task_comment_add_preview_arg::comment_id) / "add-preview" , http_jwt_fun_template<task_comment_add_preview_arg>)
+DOODLE_HTTP_FUN(actions_tasks_comments_add_preview, post, ucom_t{} / "api" / "actions" / "tasks" / make_cap(g_uuid_regex, &task_comment_add_preview_arg::task_id) / "comments" / make_cap(g_uuid_regex, &task_comment_add_preview_arg::comment_id) / "add-preview" , http_jwt_fun_template<task_comment_add_preview_arg>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<task_comment_add_preview_arg> in_arg
 ) override;

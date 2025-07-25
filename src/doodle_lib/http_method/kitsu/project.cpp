@@ -79,7 +79,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_put::callb
   co_return in_handle->make_msg(nlohmann::json{} = *l_project);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::callback_arg(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_projects_post::callback_arg(
+    session_data_ptr in_handle
+) {
   auto l_ptr = get_person(in_handle);
   l_ptr->is_manager();
 
@@ -90,7 +92,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_c_post::ca
   co_await g_ctx().get<sqlite_database>().install(l_prj);
   co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_post::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_task_types_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
@@ -119,7 +121,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
   co_return in_handle->make_msg_204();
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_status_post::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_task_status_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
@@ -133,7 +135,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
     co_await g_ctx().get<sqlite_database>().install(l_prj_task_status_link);
   co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> project_settings_asset_types_post::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_asset_types_post::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
   auto l_ptr  = get_person(in_handle);
