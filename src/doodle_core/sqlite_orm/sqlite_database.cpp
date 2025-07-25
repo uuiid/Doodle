@@ -60,7 +60,7 @@ void sqlite_database::load(const FSys::path& in_path) {
         spdlog::thread_pool()
     );
     sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, this->logger_.get());
-    sqlite3_config(SQLITE_CONFIG_MMAP_SIZE, 100 * 1024 * 1024, 1024 * 1024 * 1024);  // 1 GB
+    sqlite3_config(SQLITE_CONFIG_MMAP_SIZE, 1024 * 1024 * 1024, 10 * 1024 * 1024 * 1024);  // 1 GB, 10 GB
   });
 
   auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
