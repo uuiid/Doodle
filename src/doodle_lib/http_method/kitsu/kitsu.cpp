@@ -47,24 +47,24 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   );
   (*l_router)
       // 我们自己的后端
-      .reg(std::make_shared<model_library::context_get>())
+      .reg_t<model_library::context_get>()
 
-      .reg(std::make_shared<model_library::assets_get>())
-      .reg(std::make_shared<model_library::assets_post>())
-      .reg(std::make_shared<model_library::assets_put>())
-      .reg(std::make_shared<model_library::assets_delete_>())
+      .reg_t<model_library::assets_get>()
+      .reg_t<model_library::assets_post>()
+      .reg_t<model_library::assets_put>()
+      .reg_t<model_library::assets_delete_>()
 
-      .reg(std::make_shared<model_library::assets_tree_get>())
-      .reg(std::make_shared<model_library::assets_tree_post>())
-      .reg(std::make_shared<model_library::assets_tree_put>())
-      .reg(std::make_shared<model_library::assets_tree_delete_>())
+      .reg_t<model_library::assets_tree_get>()
+      .reg_t<model_library::assets_tree_post>()
+      .reg_t<model_library::assets_tree_put>()
+      .reg_t<model_library::assets_tree_delete_>()
 
-      .reg(std::make_shared<model_library::pictures_post>(l_ctx.root_))
-      .reg(std::make_shared<model_library::pictures_get>(l_ctx.root_))
-      .reg(std::make_shared<model_library::pictures_thumbnails_get>(l_ctx.root_))
+      .reg_t<model_library::pictures_post>(l_ctx.root_)
+      .reg_t<model_library::pictures_get>(l_ctx.root_)
+      .reg_t<model_library::pictures_thumbnails_get>(l_ctx.root_)
 
-      .reg(std::make_shared<model_library::assets_tree_link_post>())
-      .reg(std::make_shared<model_library::assets_tree_link_delete_>())
+      .reg_t<model_library::assets_tree_link_post>()
+      .reg_t<model_library::assets_tree_link_delete_>()
 
       //
       .reg_t<doodle_file_association_get>()
