@@ -188,7 +188,7 @@ struct with_tasks_get_result_t {
       j["estimation"]        = p.estimation_;
       j["end_date"]          = p.end_date_;
       j["last_comment_date"] = p.last_comment_date_;
-      j["last_preview_file"] = p.last_preview_file_id_;
+      j["last_preview_file_id"] = p.last_preview_file_id_;
       j["priority"]          = p.priority_;
       j["real_start_date"]   = p.real_start_date_;
       j["retake_count"]      = p.retake_count_;
