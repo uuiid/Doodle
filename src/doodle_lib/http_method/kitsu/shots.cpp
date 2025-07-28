@@ -152,6 +152,8 @@ struct shots_with_tasks_result {
 };
 auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
   std::vector<shots_with_tasks_result> l_ret{};
+  std::map<uuid, std::size_t> l_shots_ids{};
+  std::set<uuid> l_tasks_ids;
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
@@ -183,6 +185,20 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
            l_assignee_id, l_project_id, l_project_name
 
   ] : l_list) {
+    if (!l_shots_ids.contains(l_entity.uuid_id_)) {
+      l_ret.emplace_back(
+          shots_with_tasks_result{
+              l_entity, l_episode_id, l_episode_name, l_project_id, l_project_name, l_sequence_id, l_sequence_name
+          }
+      );
+      l_shots_ids.emplace(l_entity.uuid_id_, l_ret.size() - 1);
+    }
+    if (!l_task.uuid_id_.is_nil()) {
+      auto&& l_r = l_ret[l_shots_ids[l_entity.uuid_id_]].tasks_.emplace_back(
+          shots_with_tasks_result::task_t{l_task, l_subscriptions_for_user.contains(l_task.uuid_id_)}
+      );
+      if (!l_assignee_id.is_nil()) l_r.assigners_.emplace_back(l_assignee_id);
+    }
   }
 
   return l_ret;
