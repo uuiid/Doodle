@@ -30,4 +30,5 @@ target_sources(
         auth.cpp
         actions.cpp
         notifications.cpp
+        shots.cpp
 )

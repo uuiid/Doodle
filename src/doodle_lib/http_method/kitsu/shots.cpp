@@ -1,0 +1,138 @@
+//
+// Created by TD on 25-7-28.
+//
+
+#include <doodle_core/metadata/person.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_core/sqlite_orm/sqlite_database.h>
+
+#include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/http_method/http_jwt_fun.h>
+#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+namespace doodle::http {
+namespace {
+struct shots_with_tasks_result {
+  shots_with_tasks_result() = default;
+
+  explicit shots_with_tasks_result(const entity& in_entity)
+      : uuid_id_(in_entity.uuid_id_),
+        name_(in_entity.name_),
+        status_(in_entity.status_),
+        episode_id_(in_entity.parent_id_),
+        description_(in_entity.description_),
+        preview_file_id_(in_entity.preview_file_id_),
+        canceled_(in_entity.canceled_),
+        frame_in_(0),
+        frame_out_(0),
+        fps_(0) {}
+
+  decltype(entity::uuid_id_) uuid_id_;
+  decltype(entity::name_) name_;
+  decltype(entity::status_) status_;
+  decltype(entity::parent_id_) episode_id_;
+  decltype(entity::description_) description_;
+  decltype(entity::preview_file_id_) preview_file_id_;
+  decltype(entity::canceled_) canceled_;
+
+  std::int32_t frame_in_;
+  std::int32_t frame_out_;
+  std::int32_t fps_;
+
+  struct task_t {
+    task_t() = default;
+    explicit task_t(const task& in_task, bool in_is_subscribed)
+        : uuid_id_(in_task.uuid_id_),
+          estimation_(in_task.estimation_),
+          entity_id_(in_task.entity_id_),
+          end_date_(in_task.end_date_),
+          due_date_(in_task.due_date_),
+          done_date_(in_task.done_date_),
+          duration_(in_task.duration_),
+          last_comment_date_(in_task.last_comment_date_),
+          last_preview_file_id_(in_task.last_preview_file_id_),
+          priority_(in_task.priority_),
+          real_start_date_(in_task.real_start_date_),
+          retake_count_(in_task.retake_count_),
+          start_date_(in_task.start_date_),
+          difficulty_(in_task.difficulty_),
+          task_status_id_(in_task.task_status_id_),
+          task_type_id_(in_task.task_type_id_),
+          is_subscribed_(in_is_subscribed) {}
+    decltype(task::uuid_id_) uuid_id_;
+    decltype(task::estimation_) estimation_;
+    decltype(entity::uuid_id_) entity_id_;
+    decltype(task::end_date_) end_date_;
+    decltype(task::due_date_) due_date_;
+    decltype(task::done_date_) done_date_;
+    decltype(task::duration_) duration_;
+    decltype(task::last_comment_date_) last_comment_date_;
+    decltype(task::last_preview_file_id_) last_preview_file_id_;
+    decltype(task::priority_) priority_;
+    decltype(task::real_start_date_) real_start_date_;
+    decltype(task::retake_count_) retake_count_;
+    decltype(task::start_date_) start_date_;
+    decltype(task::difficulty_) difficulty_;
+    decltype(task::task_status_id_) task_status_id_;
+    decltype(task::task_type_id_) task_type_id_;
+    std::vector<uuid> assigners_;
+    bool is_subscribed_;
+    friend void to_json(nlohmann::json& j, const task_t& p) {
+      j["id"]                = p.uuid_id_;
+      j["estimation"]        = p.estimation_;
+      j["entity_id"]         = p.entity_id_;
+      j["end_date"]          = p.end_date_;
+      j["due_date"]          = p.due_date_;
+      j["done_date"]         = p.done_date_;
+      j["duration"]          = p.duration_;
+      j["is_subscribed"]     = p.is_subscribed_;
+      j["last_comment_date"] = p.last_comment_date_;
+      j["last_preview_file"] = p.last_preview_file_id_;
+      j["priority"]          = p.priority_;
+      j["real_start_date"]   = p.real_start_date_;
+      j["retake_count"]      = p.retake_count_;
+      j["start_date"]        = p.start_date_;
+      j["difficulty"]        = p.difficulty_;
+      j["task_type_id"]      = p.task_type_id_;
+      j["task_status_id"]    = p.task_status_id_;
+      j["assignees"]         = p.assigners_;
+    }
+  };
+  std::vector<task_t> tasks_;
+  // to json
+  friend void to_json(nlohmann::json& j, const shots_with_tasks_result& p) {
+    j["id"]              = p.uuid_id_;
+    j["name"]            = p.name_;
+    j["status"]          = p.status_;
+    j["episode_id"]      = p.episode_id_;
+    j["description"]     = p.description_;
+
+    j["frame_in"]        = p.frame_in_ ? nlohmann::json{} = p.frame_in_ : nlohmann::json::object();
+    j["frame_out"]       = p.frame_out_ ? nlohmann::json{} = p.frame_out_ : nlohmann::json::object();
+    j["fps"]             = p.fps_ ? nlohmann::json{} = p.fps_ : nlohmann::json::object();
+    j["preview_file_id"] = p.preview_file_id_;
+    j["canceled"]        = p.canceled_;
+    j["tasks"]           = p.tasks_;
+  }
+};
+auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
+  std::vector<shots_with_tasks_result> l_ret{};
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
+  return l_ret;
+}
+}  // namespace
+boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks_get::callback_arg(
+    session_data_ptr in_handle
+) {
+  auto l_po      = get_person(in_handle);
+  auto& l_sql    = g_ctx().get<sqlite_database>();
+  auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
+
+  uuid l_project_uuid{};
+  for (auto&& [key, value, has] : in_handle->url_.params())
+    if (key == "project_id" && has) l_project_uuid = from_uuid_str(value);
+  co_return in_handle->make_msg(nlohmann::json{} = get_shots_with_tasks(l_po->person_, l_project_uuid, l_type_id.uuid_id_));
+}
+
+}  // namespace doodle::http

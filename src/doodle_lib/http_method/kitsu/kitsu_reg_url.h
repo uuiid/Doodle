@@ -238,6 +238,10 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(sequences_with_tasks, get, ucom_t{} / "api" / "data" / "sequences" / "with-tasks", http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+// /api/data/shots/with-tasks
+DOODLE_HTTP_FUN(data_shots_with_tasks, get, ucom_t{} / "api" / "data" / "shots" / "with-tasks", http_jwt_fun_template<void>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
+DOODLE_HTTP_FUN_END()
 // api/data/assets/{asset_id}
 DOODLE_HTTP_FUN(asset_details, get, ucom_t{} / "api" / "data" / "assets" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
@@ -447,6 +451,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(auth_logout, get, ucom_t{} / "api" / "auth" / "logout", http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
+
 
 // /api/data/tasks/{task_id}/comments/{comment_id}
 struct task_comment_arg {
