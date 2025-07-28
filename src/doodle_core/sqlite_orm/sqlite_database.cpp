@@ -958,7 +958,17 @@ std::vector<task> sqlite_database::get_tasks_for_entity(const uuid& in_asset_id)
 
 std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<asset_type>(where(not_in(&asset_type::uuid_id_, get_temporal_type_ids())));
+  auto l_te            = get_temporal_type_ids();
+  auto l_t             = impl_->storage_any_.get_all<asset_type>(where(not_in(&asset_type::uuid_id_, l_te)));
+
+  auto l_ass_type_link = impl_->storage_any_.get_all<task_type_asset_type_link>(
+      where(not_in(&task_type_asset_type_link::asset_type_id_, l_te))
+  );
+  std::map<uuid, std::vector<uuid>> l_ass_type_link_map{};
+  for (auto& i : l_ass_type_link) l_ass_type_link_map[i.asset_type_id_].push_back(i.task_type_id_);
+  for (auto& i : l_t) {
+    i.task_types_ = l_ass_type_link_map[i.uuid_id_];
+  }
   return l_t;
 }
 boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
