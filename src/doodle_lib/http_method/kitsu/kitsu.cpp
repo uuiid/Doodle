@@ -40,6 +40,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
   auto l_router   = std::make_shared<http_route>();
   auto l_ctx      = g_ctx().get<kitsu_ctx_t>();
+  auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
+  l_sid_ctx->on("/events");
   (*l_router)
       // 我们自己的后端
       .reg_t<model_library::context_get>()
@@ -107,6 +109,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_task_status_links_post>()
       .reg_t<auth_reset_password_post>()
       .reg_t<data_person_post>()
+      .reg_t<socket_io::socket_io_http_post>(l_sid_ctx)
       // put
       .reg_t<data_comment_put>()
       .reg_t<project_put>()
@@ -118,6 +121,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_person_put>()
       .reg_t<actions_tasks_clear_assignation_put>()
       .reg_t<data_user_notification_put>()
+      .reg_t<socket_io::socket_io_http_put>(l_sid_ctx)
+
       // get
       .reg_t<with_tasks_get>()
       .reg_t<asset_details_get>()
@@ -164,6 +169,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_tasks_full_get>()
       .reg_t<data_comment_get>()
       .reg_t<auth_logout_get>()
+      .reg_t<socket_io::socket_io_http_get>(l_sid_ctx)
 
       // delete
       .reg_t<task_comment_delete_>()
@@ -176,9 +182,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<get_files_kitsu_front_end>(l_root_ptr)
       .reg_t<get_files_head_kitsu_front_end>(l_root_ptr);
 
-  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
-  l_sid_ctx->on("/events");
-  socket_io::create_socket_io(*l_router, l_sid_ctx);
   return l_router;
 }
 
@@ -186,7 +189,6 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/socket.io/");
-  socket_io::create_socket_io(*l_rout_ptr, l_sid_ctx);
   (*l_rout_ptr)                                           //
       .reg(std::make_shared<local::local_setting_get>())  //
       .reg(std::make_shared<local::local_setting_post>())
@@ -204,6 +206,10 @@ http_route_ptr create_kitsu_local_route() {
         .reg(std::make_shared<local::task_instance_get>())
         .reg(std::make_shared<local::task_instance_log_get>())
         .reg(std::make_shared<local::task_instance_restart_post>())
+
+        .reg_t<socket_io::socket_io_http_get>(l_sid_ctx)
+        .reg_t<socket_io::socket_io_http_post>(l_sid_ctx)
+        .reg_t<socket_io::socket_io_http_put>(l_sid_ctx)
 
         ;
   return l_rout_ptr;
