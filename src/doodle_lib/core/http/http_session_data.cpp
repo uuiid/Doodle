@@ -26,10 +26,51 @@
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
 
+#include "cryptopp/files.h"
+#include "cryptopp/hex.h"
+#include <cryptopp/adler32.h>
+#include <cryptopp/aes.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/gcm.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <tl/expected.hpp>
-namespace doodle::http {
+namespace doodle::http::detail {
+namespace {
 
+std::string generate_etag(const FSys::path& in_path) {
+  auto l_time = FSys::file_time_type::clock::to_utc(FSys::last_write_time(in_path));
+  std::string l_path_adler{};
+  CryptoPP::Adler32 l_adler;
+  CryptoPP::StringSource l_string_source{
+      in_path.generic_string(), true, new CryptoPP::HashFilter(l_adler, new CryptoPP::StringSink(l_path_adler))
+  };
+  return fmt::format("\"{}-{}-{}\"", l_time.time_since_epoch(), FSys::file_size(in_path), l_path_adler);
+}
+
+template <typename T>
+auto set_response_header(T& in_res, std::string_view in_mine_type) {
+  auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
+  ;
+  in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+  in_res.set(boost::beast::http::field::content_type, in_mine_type);
+  in_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  in_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
+  in_res.set(boost::beast::http::field::access_control_allow_methods, "*");
+  in_res.set(boost::beast::http::field::access_control_allow_headers, "*");
+  in_res.set(boost::beast::http::field::date, fmt::format("{:%a, %d %b %Y %T} GMT", l_time));
+}
+template <typename T>
+auto set_response_file_header(T& in_res, std::string_view in_mine_type, const FSys::path& in_path) {
+  set_response_header(in_res, in_mine_type);
+  auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
+  in_res.set(boost::beast::http::field::cache_control, "public,max-age=604800");
+  in_res.set(boost::beast::http::field::expires, fmt::format("{:%a, %d %b %Y %T} GMT", l_time + chrono::days{7}));
+  auto l_last_time =
+      chrono::floor<chrono::seconds>(FSys::file_time_type::clock::to_utc(FSys::last_write_time(in_path)));
+  in_res.set(boost::beast::http::field::last_modified, fmt::format("{:%a, %d %b %Y %T} GMT", l_last_time));
+  in_res.set(boost::beast::http::field::etag, generate_etag(in_path));
+}
+}  // namespace
 session_data::session_data(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr)
     : stream_(std::make_unique<tcp_stream_type>(std::move(in_socket))),
       route_ptr_(std::move(in_route_ptr)),
@@ -231,11 +272,7 @@ boost::beast::http::message_generator session_data::make_error_code_msg(
   if (in_msg_code == -1) in_msg_code = enum_to_num(in_code);
 
   boost::beast::http::response<boost::beast::http::string_body> l_response{in_code, version_};
-  l_response.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
-  l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_response.set(boost::beast::http::field::access_control_allow_credentials, "true");
-  l_response.set(boost::beast::http::field::access_control_allow_methods, "*");
-  l_response.set(boost::beast::http::field::access_control_allow_headers, "*");
+  set_response_header(l_response, "application/json; charset=utf-8");
   l_response.keep_alive(keep_alive_);
   l_response.body() = nlohmann::json{{"error", in_str}, {"code", in_msg_code}}.dump();
   l_response.prepare_payload();
@@ -273,33 +310,31 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
             fmt::format("无法打开文件 {} {}", in_path.generic_string(), l_code.message())
         }
     );
-  if (auto l_range = req_header_.at(boost::beast::http::field::range);
-      !l_range.empty() && l_range.starts_with("bytes=")) {
-    auto l_begin = std::stoll(l_range.substr(6, l_range.find("-") - 6));
-    auto l_end   = std::stoll(l_range.substr(l_range.find("-") + 1));
-    l_res.body().seek(l_begin, l_code);
-    if (l_code)
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::internal_server_error,
-              fmt::format("无法定位文件 {} {}", in_path.generic_string(), l_code.message())
-          }
-      );
-    // l_res.body().next(l_end - l_begin + 1, l_code);
+  if (req_header_.find(boost::beast::http::field::range) != req_header_.end())
+    if (auto l_range = req_header_.at(boost::beast::http::field::range);
+        !l_range.empty() && l_range.starts_with("bytes=")) {
+      auto l_begin = std::stoll(l_range.substr(6, l_range.find("-") - 6));
+      auto l_end   = std::stoll(l_range.substr(l_range.find("-") + 1));
+      l_res.body().seek(l_begin, l_code);
+      if (l_code)
+        throw_exception(
+            http_request_error{
+                boost::beast::http::status::internal_server_error,
+                fmt::format("无法定位文件 {} {}", in_path.generic_string(), l_code.message())
+            }
+        );
+      // l_res.body().next(l_end - l_begin + 1, l_code);
 
-    l_res.set(boost::beast::http::field::content_range, fmt::format("bytes {}/{}", l_begin, l_res.body().size()));
-  }
+      l_res.set(boost::beast::http::field::content_range, fmt::format("bytes {}/{}", l_begin, l_res.body().size()));
+    }
 
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::content_type, mine_type);
-  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
-  l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
-  l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
+  set_response_file_header(l_res, mine_type, in_path);
+
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
   return l_res;
 }
+
 boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_deflate(
     const FSys::path& in_path, const std::string_view& mine_type
 ) {
@@ -314,13 +349,7 @@ boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_def
             fmt::format("无法打开文件 {} {}", in_path.generic_string(), l_code.message())
         }
     );
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::content_type, mine_type);
-  l_res.set(boost::beast::http::field::content_encoding, "deflate");
-  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
-  l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
-  l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
+  set_response_file_header(l_res, mine_type, in_path);
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
   return l_res;
@@ -330,17 +359,8 @@ boost::beast::http::response<boost::beast::http::string_body> session_data::make
     std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
 ) {
   boost::beast::http::response<boost::beast::http::string_body> l_res{in_status, version_};
-  l_res.set(boost::beast::http::field::content_type, mine_type);
-  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
-  l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
-  l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
+  set_response_header(l_res, mine_type);
   l_res.keep_alive(keep_alive_);
-  // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
-  //   l_res.body() = zlib_compress(std::move(in_body));
-  //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
-  // } else
   l_res.body() = std::move(in_body);
 
   l_res.prepare_payload();
@@ -360,4 +380,4 @@ std::vector<FSys::path> session_data::get_files() const {
   return {};
 }
 
-}  // namespace doodle::http
+}  // namespace doodle::http::detail
