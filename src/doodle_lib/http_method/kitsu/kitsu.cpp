@@ -170,6 +170,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_comment_get>()
       .reg_t<auth_logout_get>()
       .reg_t<data_shots_with_tasks_get>()
+      .reg_t<movies_originals_preview_files_get>()
+      .reg_t<movies_low_preview_files_get>()
       .reg_t<socket_io::socket_io_http_get>(l_sid_ctx)
 
       // delete
