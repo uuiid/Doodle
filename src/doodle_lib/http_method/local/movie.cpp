@@ -30,8 +30,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
   if (!exists(l_arg.video_path_))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
   cv::VideoCapture l_video{};
-  l_video.open(l_arg.video_path_.generic_string());
-  if (!l_video.isOpened()) throw_exception(doodle_error{"mp4 打开失败"});
+  if (!l_video.open(l_arg.video_path_.generic_string())) throw_exception(doodle_error{"mp4 打开失败"});
 
   auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
   cv::Mat l_image{};

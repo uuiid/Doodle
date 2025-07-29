@@ -4,6 +4,7 @@
 #include <doodle_core/metadata/base.h>
 #include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/person.h>
+
 namespace doodle {
 
 enum class project_styles {
@@ -148,6 +149,8 @@ struct project {
   std::string auto_upload_path_{};     // 项目自动上传路径
   std::string production_category_{};  // 电影所属类别
   std::string short_name_{};           // 显示的简称
+  // std::pair<width,height>
+  std::pair<std::int32_t, std::int32_t> get_resolution() const;
   friend void from_json(const nlohmann::json& j, project& p) {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("code")) j.at("code").get_to(p.code_);
