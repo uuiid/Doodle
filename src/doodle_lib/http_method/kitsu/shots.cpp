@@ -34,7 +34,10 @@ struct shots_with_tasks_result {
         source_id_(in_shot.source_id_),
         nb_entities_out_(in_shot.nb_entities_out_),
         is_casting_standby_(in_shot.is_casting_standby_),
-        entity_type_id_(in_shot.entity_type_id_) {}
+        entity_type_id_(in_shot.entity_type_id_),
+        frame_in_(0),
+        frame_out_(0),
+        fps_(0) {}
 
   decltype(entity::uuid_id_) uuid_id_;
   decltype(entity::description_) description_;
