@@ -40,11 +40,14 @@ namespace {
 std::string generate_etag(const FSys::path& in_path) {
   auto l_time = FSys::file_time_type::clock::to_utc(FSys::last_write_time(in_path));
   std::string l_path_adler{};
-  CryptoPP::Adler32 l_adler;
-  CryptoPP::StringSource l_string_source{
-      in_path.generic_string(), true, new CryptoPP::HashFilter(l_adler, new CryptoPP::StringSink(l_path_adler))
-  };
-  return fmt::format("\"{}-{}-{}\"", l_time.time_since_epoch(), FSys::file_size(in_path), l_path_adler);
+  {
+    CryptoPP::Adler32 l_adler;
+    CryptoPP::StringSource l_string_source{
+        in_path.generic_string(), true,
+        new CryptoPP::HashFilter(l_adler, new CryptoPP::HexEncoder{new CryptoPP::StringSink{l_path_adler}})
+    };
+  }
+  return fmt::format("\"{}-{}-{}\"", l_time.time_since_epoch().count(), FSys::file_size(in_path), l_path_adler);
 }
 
 template <typename T>
@@ -324,6 +327,7 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
             }
         );
       // l_res.body().next(l_end - l_begin + 1, l_code);
+      l_res.result(boost::beast::http::status::partial_content);
 
       l_res.set(boost::beast::http::field::content_range, fmt::format("bytes {}/{}", l_begin, l_res.body().size()));
     }
