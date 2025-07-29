@@ -77,9 +77,9 @@ struct shots_with_tasks_result {
           difficulty_(in_task.difficulty_),
           task_status_id_(in_task.task_status_id_),
           task_type_id_(in_task.task_type_id_),
-          is_subscribed_(in_is_subscribed),
           nb_assets_ready_(in_task.nb_assets_ready_),
-          nb_drawings_(in_task.nb_drawings_) {}
+          nb_drawings_(in_task.nb_drawings_),
+          is_subscribed_(in_is_subscribed) {}
 
     decltype(task::uuid_id_) uuid_id_;
     decltype(task::estimation_) estimation_;
