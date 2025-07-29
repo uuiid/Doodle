@@ -31,4 +31,5 @@ target_sources(
         actions.cpp
         notifications.cpp
         shots.cpp
+        movies.cpp
 )
