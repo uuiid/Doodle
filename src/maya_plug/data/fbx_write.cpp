@@ -516,6 +516,8 @@ void fbx_node_mesh::build_mesh() {
       l_mat_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eIndexToDirect);
       l_mat_layer->GetIndexArray().Add(0);
       FbxSurfaceLambert* l_mat_surface{};
+      if (auto l_mat = details::shading_engine_to_mat(l_mats.front()); l_mat.isNull())
+        throw_exception(doodle_error{"未找到材质 {}", dag_path});
       const auto l_name = get_node_name(details::shading_engine_to_mat(l_mats.front()));
       if (extra_data_.material_map_->count(l_name) == 1) {
         l_mat_surface = extra_data_.material_map_->at(l_name);
@@ -531,6 +533,9 @@ void fbx_node_mesh::build_mesh() {
       l_mat_ids.resize(l_fn_mesh.numPolygons());
       MStatus l_status{};
       for (auto l_mat : l_mats) {
+        if (auto l_mat_t = details::shading_engine_to_mat(l_mats.front()); l_mat_t.isNull())
+          throw_exception(doodle_error{"未找到材质 {}", dag_path});
+
         FbxSurfaceLambert* l_mat_surface{};
         const auto l_name = get_node_name(details::shading_engine_to_mat(l_mat));
         if (extra_data_.material_map_->count(l_name) == 1) {
@@ -664,8 +669,7 @@ void fbx_node_mesh::build_skin() {
     return;
   }
   auto l_skin_obj = get_skin_custer();
-  if (l_skin_obj.isNull())
-    throw_exception(doodle_error{"未找到皮肤簇 {}", get_node_name(dag_path)});
+  if (l_skin_obj.isNull()) throw_exception(doodle_error{"未找到皮肤簇 {}", get_node_name(dag_path)});
 
   default_logger_raw()->info("使用皮肤簇 {}", get_node_name(l_skin_obj));
   auto* l_sk = FbxSkin::Create(node->GetScene(), get_node_name(l_skin_obj).c_str());
@@ -1216,7 +1220,9 @@ void fbx_write::write(
   logger_->flush();
 }
 
-void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture) {
+void fbx_write::write(
+    MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture
+) {
   if (!logger_)
     if (!g_ctx().contains<fbx_logger>())
       logger_ =
@@ -1246,7 +1252,7 @@ void fbx_write::write(MDagPath in_cam_path, const MTime& in_begin, const MTime& 
 
   scene_->GetRootNode()->AddChild(l_fbx_cam->node);
   l_fbx_cam->extra_data_.logger_ = logger_;
-  l_fbx_cam->film_aperture_ = in_film_aperture;
+  l_fbx_cam->film_aperture_      = in_film_aperture;
   l_fbx_cam->build_data();
   logger_->info("开始导出camera动画 {}", in_cam_path);
 
@@ -1515,9 +1521,9 @@ void fbx_write::write_end() {
           ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
                      : manager_->GetIOPluginRegistry()->GetNativeWriterFormat(),
           scene_->GetFbxManager()->GetIOSettings()
-  )) {
+      )) {
     MGlobal::displayError(
-      conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
+        conv::to_ms(fmt::format("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString()))
     );
     return;
   }
@@ -1525,4 +1531,4 @@ void fbx_write::write_end() {
 }
 
 fbx_write::~fbx_write() { write_end(); }
-} // namespace doodle::maya_plug
+}  // namespace doodle::maya_plug
