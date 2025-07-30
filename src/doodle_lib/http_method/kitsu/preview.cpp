@@ -162,7 +162,7 @@ auto handle_video_file(
     l_high_vc.write(l_frame);
 
     cv::resize(l_frame, l_frame, l_low_size);
-    l_low_vc.write(l_frame);
+    l_low_vc << l_frame;
   }
   // 读取第一帧生成预览文件
   l_video.set(cv::CAP_PROP_POS_FRAMES, 0);
