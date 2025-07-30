@@ -111,6 +111,7 @@ function Initialize-Doodle
     # 添加UE插件安装
     Compress-UEPlugins -UEVersion "5.4" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+    Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip
     # 复制安装包
     if ($OnlyOne)
     {
