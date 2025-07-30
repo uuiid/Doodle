@@ -214,6 +214,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&subscription::entity_id_).references(&entity::uuid_id_),
           foreign_key(&subscription::task_type_id_).references(&task_type::uuid_id_)
       ),
+      make_index("assignations_task_id_index", &assignees_table::task_id_),
       make_table<assignees_table>(
           "assignations",  //
           make_column("id", &assignees_table::id_, primary_key().autoincrement()),
@@ -388,6 +389,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&entity_concept_link::entity_id_).references(&entity::uuid_id_),     //
           foreign_key(&entity_concept_link::entity_out_id_).references(&entity::uuid_id_)  //
       ),
+      make_index("entity_asset_extend_entity_id_idx", &entity_asset_extend::entity_id_),
       make_table<entity_asset_extend>(
           "entity_asset_extend",                                                           //
           make_column("id", &entity_asset_extend::id_, primary_key().autoincrement()),     //
