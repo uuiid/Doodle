@@ -117,11 +117,7 @@ boost::system::error_code chick_ue_plug() {
     if (l_json.contains("VersionName")) l_version = l_json["VersionName"].get<std::string>();
   }
   if (l_version != version::build_info::get().version_str) {
-    try {
-      installUePath(core_set::get_set().ue4_path / "Engine");
-    } catch (const FSys::filesystem_error& error) {
-      return error.code();
-    }
+    throw_exception(doodle_error{"UE4 插件版本不匹配 {} != {}", l_version, version::build_info::get().version_str});
   }
   return {};
 }
