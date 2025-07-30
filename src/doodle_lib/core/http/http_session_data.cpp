@@ -313,7 +313,7 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
     if (auto l_range = req_header_.at(boost::beast::http::field::range);
         !l_range.empty() && l_range.starts_with("bytes=")) {
       auto l_begin = std::stoll(l_range.substr(6, l_range.find("-") - 6));
-      auto l_end   = std::stoll(l_range.substr(l_range.find("-") + 1));
+      // auto l_end   = std::stoll(l_range.substr(l_range.find("-") + 1));
       l_res.body().seek(l_begin, l_code);
       if (l_code)
         throw_exception(
