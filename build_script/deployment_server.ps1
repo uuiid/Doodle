@@ -24,6 +24,6 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
         &robocopy "$Tmp\bin" "$Target\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts /w:1
         Start-Service -Name doodle_kitsu_supplement
     }
-    &robocopy "$Tmp\dist" "$Target\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+    &robocopy "$Tmp\dist" "$Target\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts /w:1
 }
 
