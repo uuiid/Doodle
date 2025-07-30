@@ -38,7 +38,38 @@ function Add-Compensatory()
     }
     $Json | ConvertTo-Json  | Set-Content -Path $Path -Encoding UTF8
 }
+function Compress-UEPlugins()
+{
+    param(
+        [string]$UEVersion,
+        [string]$DoodleVersion,
+        [string]$DoodleGitRoot,
+        [string]$OutPath
+    )
 
+    if (-Not (Test-Path "$OutPath\dist\Plugins"))
+    {
+        New-Item "$OutPath\dist\Plugins" -ItemType Directory
+    }
+
+    $UEPluginsJsonPath = Convert-Path "$DoodleGitRoot/script/uePlug/$UEVersion/Plugins/Doodle/Doodle.uplugin"
+    $UEPluginsJson = Get-Content -Path $UEPluginsJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    $UEPluginsJson.VersionName = $DoodleVersion
+    $UEPluginsJson.Version = [int]($DoodleVersion -replace "\.", "")
+    # 判断属性 EnabledByDefault 是否存在
+    if (-not $UEPluginsJson.PSObject.Properties["EnabledByDefault"])
+    {
+        $UEPluginsJson | Add-Member -MemberType NoteProperty -Name "EnabledByDefault" -Value $true
+    }
+    else
+    {
+        $UEPluginsJson.EnabledByDefault = $true
+    }
+
+    $UEPluginsJson | ConvertTo-Json | Set-Content -Path $UEPluginsJsonPath -Encoding UTF8
+
+    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
+}
 
 function Initialize-Doodle
 {
@@ -51,17 +82,20 @@ function Initialize-Doodle
     {
         New-Item $OutPath -ItemType Directory
     }
-    $DoodleBuildRoot = Convert-Path "$PSScriptRoot/../build"
-    $DoodleSource = Convert-Path (Get-ChildItem "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP" -Directory)[0]
+    $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
+    $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build"
     $DoodleBuildRelease = Convert-Path "$DoodleBuildRoot/Ninja_release"
+    $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
+    $DoodleLogPath = $DoodleBuildRoot + "\build_$timestamp.log"
+    $DoodleVersion = ((Get-ChildItem "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP" -Directory)[0] -split "-")[1]
+    $DoodleSource = Convert-Path "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP/Doodle-$DoodleVersion-win64"
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
-
     if ($BuildKitsu)
     {
         Write-Host "开始构建文件"
-        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1","run", "build" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1","run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0)
         {
             # 抛出异常
@@ -69,10 +103,14 @@ function Initialize-Doodle
         }
     }
 
+
     Write-Host "开始复制文件"
-    &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
-    &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
-    &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+    &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath
+    &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath
+    &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath
+    # 添加UE插件安装
+    Compress-UEPlugins -UEVersion "5.4" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+    Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     # 复制安装包
     if ($OnlyOne)
     {
@@ -82,7 +120,7 @@ function Initialize-Doodle
     }
     else
     {
-        &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /np /njh /njs /ns /nc /ndl /fp /ts
+        &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath
         $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
         #         寻找版本号 3.6.678 并放在最后
         $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
@@ -150,8 +188,8 @@ function Initialize-Doodle
         }
     )
 
-    &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
-    &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /np /njh /njs /ns /nc /ndl /fp /ts
+    &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath
+    &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath
 }
 
 

@@ -116,7 +116,6 @@ include(CPack)
 #set(CPACK_PACKAGE_VENDOR "uuiid")
 #set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doodle")
 #set(CPACK_EXTERNAL_ENABLE_STAGING TRUE)
-add_subdirectory(script)
 add_subdirectory(src)
 
 
