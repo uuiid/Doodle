@@ -110,6 +110,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<auth_reset_password_post>()
       .reg_t<data_person_post>()
       .reg_t<socket_io::socket_io_http_post>(l_sid_ctx)
+      .reg_t<actions_tasks_comments_preview_files_post>(l_sid_ctx)
       // put
       .reg_t<data_comment_put>()
       .reg_t<project_put>()

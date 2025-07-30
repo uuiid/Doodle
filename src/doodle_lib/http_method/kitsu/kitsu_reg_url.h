@@ -124,7 +124,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
-//
+// /api/actions/tasks/{task_id}/comments/{comment_id}/preview-files/{preview_file_id}
+struct actions_tasks_comments_preview_files_arg {
+  uuid task_id_{};
+  uuid comment_id_{};
+  uuid preview_file_id_{};
+};
+DOODLE_HTTP_FUN(
+  actions_tasks_comments_preview_files, post,
+  ucom_t{} / "api" / "actions"/"tasks"/ &actions_tasks_comments_preview_files_arg::task_id_ /
+  "comments" / &actions_tasks_comments_preview_files_arg::comment_id_
+  / "preview-files" / &actions_tasks_comments_preview_files_arg::preview_file_id_,
+  http_jwt_fun_template<actions_tasks_comments_preview_files_arg>
+  )
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<actions_tasks_comments_preview_files_arg> in_arg
+) override;
+
+DOODLE_HTTP_FUN_END()
 
 // "api/data/comments/{comment_id}"
 DOODLE_HTTP_FUN(data_comment, put, ucom_t{} / "api" / "data" / "comments" / &capture_id_t::id_, http_jwt_fun_template<capture_id_t>)

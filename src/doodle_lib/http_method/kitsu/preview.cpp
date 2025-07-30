@@ -8,6 +8,8 @@
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 
+#include <doodle_lib/core/socket_io/broadcast.h>
+
 #include "kitsu.h"
 #include "kitsu_reg_url.h"
 #include <opencv2/opencv.hpp>
@@ -47,6 +49,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   co_await l_sql.install(l_preview_file);
   co_await l_sql.install(l_preview_link);
   // 产生事件( "preview-file:new", "comment:update")
+  socket_io::broadcast(
+      "preview-file:new",
+      nlohmann::json{
+          {"preview_file_id", l_preview_file->uuid_id_},
+          {"comment_id", in_arg->comment_id},
+          {"project_id", l_task.project_id_}
+      },
+      "/events"
+  );
+  socket_io::broadcast(
+      "comment:update", nlohmann::json{{"comment_id", in_arg->comment_id}, {"project_id", l_task.project_id_}},
+      "/events"
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
@@ -194,12 +209,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
                       FSys::split_uuid_path(fmt::format("{}.mp4", l_preview_file->uuid_id_));
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
-    auto l_task = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
-    auto l_prj  = l_sql.get_by_uuid<project>(l_task.project_id_);
-    auto l_prj_size = l_prj.get_resolution();
+    auto l_task                              = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
+    auto l_prj                               = l_sql.get_by_uuid<project>(l_task.project_id_);
+    auto l_prj_size                          = l_prj.get_resolution();
 
-    auto&& [l_size, l_duration, l_high_file] =
-        handle_video_file(l_new_path, l_preview_file->uuid_id_, l_prj.fps_, cv::Size{l_prj_size.first, l_prj_size.second});
+    auto&& [l_size, l_duration, l_high_file] = handle_video_file(
+        l_new_path, l_preview_file->uuid_id_, l_prj.fps_, cv::Size{l_prj_size.first, l_prj_size.second}
+    );
 
     l_file                         = l_high_file;
 
@@ -230,6 +246,58 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   }
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_preview_files_post::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<actions_tasks_comments_preview_files_arg> in_arg
+) {
+  auto l_person = get_person(in_handle);
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_arg->task_id_));
+  l_person->check_task_action_access(*l_task);
+  auto l_comment          = std::make_shared<comment>(l_sql.get_by_uuid<comment>(in_arg->comment_id_));
+  auto l_preview_file_    = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(in_arg->preview_file_id_));
+
+  std::int32_t l_revision = l_preview_file_->revision_;
+  if (l_revision == 0 && !l_sql.has_preview_file(in_arg->comment_id_))
+    l_revision = l_sql.get_next_preview_revision(in_arg->task_id_);
+  else if (l_revision == 0)
+    l_revision = l_sql.get_preview_revision(in_arg->comment_id_);
+  auto l_position                  = l_sql.get_next_position(in_arg->task_id_, l_revision);
+
+  auto l_preview_file              = std::make_shared<preview_file>();
+  l_preview_file->uuid_id_         = core_set::get_set().get_uuid();
+  l_preview_file->revision_        = l_revision;
+  l_preview_file->task_id_         = in_arg->task_id_;
+  l_preview_file->person_id_       = l_person->person_.uuid_id_;
+  l_preview_file->position_        = l_position;
+  l_preview_file->name_            = fmt::to_string(l_preview_file->uuid_id_).substr(0, 13);
+  l_preview_file->status_          = preview_file_statuses::processing;
+  l_preview_file->source_          = "webgui";
+  l_preview_file->extension_       = "mp4";
+  l_preview_file->created_at_      = chrono::system_clock::now();
+  l_preview_file->updated_at_      = chrono::system_clock::now();
+  auto l_preview_link              = std::make_shared<comment_preview_link>();
+  l_preview_link->comment_id_      = in_arg->comment_id_;
+  l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;
+
+  co_await l_sql.install(l_preview_file);
+  co_await l_sql.install(l_preview_link);
+  socket_io::broadcast(
+      "preview-file:new",
+      nlohmann::json{
+          {"preview_file_id", l_preview_file->uuid_id_},
+          {"comment_id", in_arg->comment_id_},
+          {"project_id", l_task->project_id_}
+      },
+      "/events"
+  );
+  socket_io::broadcast(
+      "comment:update", nlohmann::json{{"comment_id", in_arg->comment_id_}, {"project_id", l_task->project_id_}},
+      "/events"
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview_put::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {

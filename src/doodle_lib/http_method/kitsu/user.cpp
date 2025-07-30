@@ -46,7 +46,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::
   l_ret["search_filter_groups"]     = nlohmann::json::value_t::object;
   l_ret["search_filters"]           = nlohmann::json::value_t::object;
 
-  co_return in_handle->make_msg(l_ret.dump());
+  co_return in_handle->make_msg(l_ret);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::callback_arg(session_data_ptr in_handle) {
@@ -56,7 +56,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::ca
   //   if (l_k == "relations")
   //     for (auto&& i : l_p) i.write_departments_ = true;
   // }
-  co_return in_handle->make_msg((nlohmann::json{} = l_p).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = l_p);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::callback_arg(
