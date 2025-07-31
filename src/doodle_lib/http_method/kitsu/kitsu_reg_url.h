@@ -480,6 +480,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;
 DOODLE_HTTP_FUN_END()
+// /api/movies/tiles/preview-files/{id}.png
+DOODLE_HTTP_FUN(movies_tiles_preview_files, get, ucom_t{} / "api" / "movies" / "tiles" / "preview-files" / make_cap(fmt::format("{}.png", g_uuid_regex), &capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
+boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) override;
+DOODLE_HTTP_FUN_END()
 
 // /api/data/tasks/{task_id}/comments/{comment_id}
 struct task_comment_arg {

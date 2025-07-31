@@ -21,7 +21,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_low_preview
   auto l_path =
       g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "lowdef" / FSys::split_uuid_path(fmt::format("{}.mp4", l_uuid));
 
-  co_return in_handle->make_msg(l_path, kitsu::mime_type("video/mp4"));
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> movies_originals_preview_files_get::callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
@@ -34,7 +34,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_originals_p
   auto l_path =
       g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "previews" / FSys::split_uuid_path(fmt::format("{}.mp4", l_uuid));
 
-  co_return in_handle->make_msg(l_path, kitsu::mime_type("video/mp4"));
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+}
+boost::asio::awaitable<boost::beast::http::message_generator> movies_tiles_preview_files_get::callback_arg(
+    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+) {
+  auto l_ptr  = get_person(in_handle);
+  auto l_uuid = in_arg->id_;
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_entt = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<preview_file>(l_uuid).task_id_);
+  l_ptr->is_project_access(l_entt.project_id_);
+  auto l_path =
+      g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}.png", l_uuid));
+
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
 }
 
 }  // namespace doodle::http
