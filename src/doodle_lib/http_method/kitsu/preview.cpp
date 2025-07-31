@@ -199,11 +199,10 @@ auto handle_video_file(
   if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
   save_variants(l_frame, in_id);
   auto l_tiles = create_video_tile_image(l_video, l_high_size);
-  cv::imwrite(
-      (g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}.png", in_id)))
-          .generic_string(),
-      l_tiles
-  );
+  auto l_path =
+      g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}.png", in_id));
+  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  cv::imwrite(l_path.generic_string(), l_tiles);
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
