@@ -16,14 +16,16 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
+    $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
+    $LogPath = "D:\build_$timestamp.log"
     if ($Using:CopyServer -and ((Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash))
     {
         Write-Host "更新服务"
         Stop-Service -Force -Name doodle_kitsu_supplement
         Start-Sleep -Milliseconds 50
-        &robocopy "$Tmp\bin" "$Target\bin" /MIR /np /njh /njs /ns /nc /ndl /fp /ts /w:1
+        &robocopy "$Tmp\bin" "$Target\bin" /MIR /unilog+:$LogPath /w:1
         Start-Service -Name doodle_kitsu_supplement
     }
-    &robocopy "$Tmp\dist" "$Target\dist" /MIR /np /njh /njs /ns /nc /ndl /fp /ts /w:1
+    &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1
 }
 
