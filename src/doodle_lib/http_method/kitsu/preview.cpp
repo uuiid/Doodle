@@ -125,6 +125,28 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   }
   return l_size;
 }
+/// 创建视频平铺图像
+auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_size) {
+  std::double_t l_frame_count = in_capture.get(cv::CAP_PROP_FRAME_COUNT);
+  auto l_rows                 = std::min(480, boost::numeric_cast<std::int32_t>(std::ceil(l_frame_count / 8)));
+  std::int32_t l_cols{8};
+  cv::Mat l_tiles{l_rows, l_cols, CV_8UC3};
+  // 确认步进大小
+  std::double_t l_step = l_frame_count > l_rows * l_cols ? l_frame_count / l_rows / l_cols : 1.0;
+  std::int32_t l_height{100}, l_width{boost::numeric_cast<std::int32_t>(in_size.aspectRatio() * 100)};
+  cv::Mat l_frame{};
+  for (std::double_t l_i = 0; l_i < l_frame_count; l_i += l_step) {
+    in_capture.set(cv::CAP_PROP_POS_FRAMES, std::floor(l_i));
+    std::int32_t l_row{boost::numeric_cast<std::int32_t>(std::floor(l_i / l_cols))},
+        l_col{boost::numeric_cast<std::int32_t>(std::floor(l_i)) % l_cols};
+
+    if (in_capture.read(l_frame)) {
+      cv::resize(l_frame, l_frame, cv::Size{l_width, l_height}, 0, 0);
+      l_frame.copyTo(l_tiles(cv::Rect{l_col * l_width, l_row * l_height, l_width, l_height}));
+    }
+  }
+  return l_tiles;
+}
 
 /// 处理上传的视频文件 格式化大小, 生成预览文件
 auto handle_video_file(
@@ -176,6 +198,8 @@ auto handle_video_file(
   l_video >> l_frame;
   if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
   save_variants(l_frame, in_id);
+  auto l_tiles = create_video_tile_image(l_video, l_high_size);
+
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
 
