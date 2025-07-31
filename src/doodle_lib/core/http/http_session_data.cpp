@@ -325,7 +325,10 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
       // l_res.body().next(l_end - l_begin + 1, l_code);
       l_res.result(boost::beast::http::status::partial_content);
 
-      l_res.set(boost::beast::http::field::content_range, fmt::format("bytes {}/{}", l_begin, l_res.body().size()));
+      l_res.set(
+          boost::beast::http::field::content_range,
+          fmt::format("bytes {}-{}/{}", l_begin, l_res.body().size(), FSys::file_size(in_path))
+      );
     }
 
   set_response_file_header(l_res, mine_type, in_path);
