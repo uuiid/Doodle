@@ -190,6 +190,7 @@ class url_route_component_t {
       return *this;
     }
     std::vector<std::shared_ptr<component_base_t>> get_component_vector() const;
+    operator url_route_component_t() const;
   };
 
   std::shared_ptr<void> create_object() const;
@@ -199,7 +200,8 @@ class url_route_component_t {
 
   url_route_component_t() = default;
 
-  explicit url_route_component_t(const initializer_t& in_initializer) : component_vector_{in_initializer.get_component_vector()} {}
+  explicit url_route_component_t(const initializer_t& in_initializer)
+      : component_vector_{in_initializer.get_component_vector()} {}
 
   url_route_component_t& operator/(std::string&& in_str) {
     component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
