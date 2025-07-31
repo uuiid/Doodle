@@ -9,6 +9,44 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 namespace doodle::http {
+void url_route_component_t::initializer_t::parse_url_path() {
+  std::vector<std::string> l_result{};
+  boost::split(l_result, url_path_, boost::is_any_of("/"));
+  // l_result |= ranges::actions::remove_if([](const auto& in_str) { return in_str.empty(); });
+  for (auto& l_item : l_result) {
+    if (l_item.empty()) continue;
+    auto l_is = l_item.find("{}") != std::string::npos;
+    component_vector_.emplace_back(
+        com{.str_        = l_is ? std::move(l_item) : std::string{},
+            .is_capture_ = l_is,
+            .obj_        = l_is ? nullptr : std::make_shared<component_base_t>(std::move(l_item))}
+    );
+    capture_count_ += l_is;
+  }
+  next_capture();
+}
+void url_route_component_t::initializer_t::next_capture() {
+  if (pos_ == component_vector_.size()) throw_exception(doodle_error{"invalid url route"});
+  pos_ = std::distance(
+      component_vector_.begin(),
+      std::ranges::find_if(
+          component_vector_.begin() + pos_, component_vector_.end(), [](com& in_com) { return in_com.is_capture_; }
+      )
+  );
+}
+std::vector<std::shared_ptr<url_route_component_t::component_base_t>>
+url_route_component_t::initializer_t::get_component_vector() const {
+  std::vector<std::shared_ptr<url_route_component_t::component_base_t>> l_result{};
+  for (auto& l_item : component_vector_) {
+    l_result.push_back(l_item.obj_);
+  }
+  return l_result;
+}
+
+url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t in_len) {
+  return url_route_component_t::initializer_t{in_str, in_len};
+}
+
 bool url_route_component_t::component_base_t::match(const std::string& in_str) const {
   return std::regex_match(in_str, regex_);
 }

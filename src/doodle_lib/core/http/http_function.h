@@ -21,6 +21,8 @@ struct capture_id_t {
   uuid id_;
 };
 
+// 初始化
+
 class url_route_component_t {
   // SFINAE friendly trait to get a member object pointer's field type
   template <typename T>
@@ -120,12 +122,84 @@ class url_route_component_t {
   std::type_index object_type_{typeid(void)};
 
  public:
+  // 初始化列表
+  class initializer_t {
+   public:
+    struct com {
+      std::string str_;
+      bool is_capture_;
+      std::shared_ptr<component_base_t> obj_;
+
+      bool operator==(const bool& in_) const { return is_capture_; }
+      bool operator!=(const bool& in_) const { return !is_capture_; }
+    };
+
+   private:
+    std::string url_path_;
+    std::vector<com> component_vector_;
+    std::size_t pos_{};
+    std::size_t capture_count_{};
+
+    void next_capture();
+
+    void parse_url_path();
+    template <typename Member_Pointer>
+      requires std::is_member_pointer_v<Member_Pointer>
+    initializer_t& add_cap(const std::string_view& in_str, Member_Pointer in_target) {
+      BOOST_ASSERT(component_vector_.at(pos_).is_capture_);
+      component_vector_.at(pos_).obj_ = std::make_shared<component_t<Member_Pointer>>(
+          fmt::vformat(component_vector_.at(pos_).str_, fmt::make_format_args(in_str)), in_target
+      );
+      return *this;
+    }
+    template <typename Member_Pointer>
+      requires std::is_member_pointer_v<Member_Pointer>
+    initializer_t& add_cap_(Member_Pointer in_target) {
+      using field_type = std::remove_cv_t<object_field_type_t<Member_Pointer>>;
+      static_assert(
+          std::is_same_v<field_type, uuid> || std::is_same_v<field_type, chrono::year_month> ||
+              std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t> ||
+              std::is_same_v<field_type, FSys::path>,
+          "not support type"
+      );
+
+      if constexpr (std::is_same_v<field_type, uuid>)
+        return add_cap(g_uuid_regex, in_target);
+      else if constexpr (std::is_same_v<field_type, chrono::year_month>)
+        return add_cap(g_year_month_regex, in_target);
+      else if constexpr (std::is_same_v<field_type, chrono::year_month_day>)
+        return add_cap(g_year_month_day_regex, in_target);
+      else if constexpr (std::is_same_v<field_type, std::int32_t>)
+        return add_cap(g_number, in_target);
+      else if constexpr (std::is_same_v<field_type, FSys::path>)
+        return add_cap(g_file_name, in_target);
+      return *this;
+    }
+    template <typename... Args>
+    initializer_t& add_cap_args(Args... args) {
+      BOOST_ASSERT(capture_count_ == sizeof...(args));
+      (add_cap_(args), ...);
+      return *this;
+    }
+
+   public:
+    constexpr explicit initializer_t(const char* in_str, std::size_t in_len) : url_path_{in_str, in_len} {}
+    template <typename... Args>
+    initializer_t& operator()(Args... args) {
+      (add_cap_(args), ...);
+      return *this;
+    }
+    std::vector<std::shared_ptr<component_base_t>> get_component_vector() const;
+  };
+
   std::shared_ptr<void> create_object() const;
   std::vector<std::shared_ptr<component_base_t>>& component_vector() { return component_vector_; }
   const std::vector<std::shared_ptr<component_base_t>>& component_vector() const { return component_vector_; }
   const std::type_index& object_type() const { return object_type_; }
 
   url_route_component_t() = default;
+
+  explicit url_route_component_t(const initializer_t& in_initializer) : component_vector_{in_initializer.get_component_vector()} {}
 
   url_route_component_t& operator/(std::string&& in_str) {
     component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
@@ -173,6 +247,7 @@ class url_route_component_t {
     return make_cap<Member_Pointer>(std::string{in_str}, in_target);
   }
 };
+url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
 class http_function_base_t {
  protected:
