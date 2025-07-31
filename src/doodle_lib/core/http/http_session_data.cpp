@@ -327,7 +327,7 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
 
       l_res.set(
           boost::beast::http::field::content_range,
-          fmt::format("bytes {}-{}/{}", l_begin, l_res.body().size(), FSys::file_size(in_path))
+          fmt::format("bytes {}-{}/{}", l_begin, l_res.body().size() - 1, FSys::file_size(in_path))
       );
     }
 
