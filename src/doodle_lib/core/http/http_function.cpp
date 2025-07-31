@@ -38,6 +38,7 @@ std::vector<std::shared_ptr<url_route_component_t::component_base_t>>
 url_route_component_t::initializer_t::get_component_vector() const {
   std::vector<std::shared_ptr<url_route_component_t::component_base_t>> l_result{};
   for (auto& l_item : component_vector_) {
+    BOOST_ASSERT(l_item.obj_);
     l_result.push_back(l_item.obj_);
   }
   return l_result;
