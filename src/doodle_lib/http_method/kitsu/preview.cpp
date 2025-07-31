@@ -137,7 +137,7 @@ auto handle_video_file(
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
-  auto l_video         = cv::VideoCapture(in_path.generic_string());
+  auto l_video         = cv::VideoCapture{in_path.generic_string()};
   cv::Size l_high_size = in_size;
   cv::Size l_low_size{
       1280,
@@ -145,25 +145,32 @@ auto handle_video_file(
           boost::numeric_cast<std::double_t>(in_size.height) / boost::numeric_cast<std::double_t>(in_size.width) * 1280
       ))
   };
-  auto l_low_vc = cv::VideoWriter(
-      l_low_file_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), in_fps, l_high_size
-  );
-  auto l_high_vc = cv::VideoWriter(
-      l_high_file_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), in_fps, l_low_size
-  );
   // 获取持续时间(秒)
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
   cv::Mat l_frame{};
-  while (l_video.read(l_frame)) {
-    if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
-    if (l_frame.cols != l_high_size.width || l_frame.rows != l_high_size.height) {
-      cv::resize(l_frame, l_frame, l_high_size);
-    }
-    l_high_vc << l_frame;
+  {
+    auto l_low_vc = cv::VideoWriter{
+        l_low_file_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+        boost::numeric_cast<std::double_t>(in_fps), l_low_size
+    };
+    auto l_high_vc = cv::VideoWriter{
+        l_high_file_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+        boost::numeric_cast<std::double_t>(in_fps), l_high_size
+    };
+    if (!l_high_vc.isOpened() || !l_low_vc.isOpened())
+      throw_exception(doodle_error{"无法创建视频文件: {} ", in_path.generic_string()});
+    while (l_video.read(l_frame)) {
+      if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
+      if (l_frame.cols != l_high_size.width || l_frame.rows != l_high_size.height) {
+        cv::resize(l_frame, l_frame, l_high_size);
+      }
+      l_high_vc << l_frame;
 
-    cv::resize(l_frame, l_frame, l_low_size);
-    l_low_vc << l_frame;
+      cv::resize(l_frame, l_frame, l_low_size);
+      l_low_vc << l_frame;
+    }
   }
+
   // 读取第一帧生成预览文件
   l_video.set(cv::CAP_PROP_POS_FRAMES, 0);
   l_video >> l_frame;
