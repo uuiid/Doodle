@@ -155,11 +155,11 @@ auto handle_video_file(
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
   cv::Mat l_frame{};
   while (l_video.read(l_frame)) {
-    if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: " + in_path.generic_string()});
+    if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
     if (l_frame.cols != l_high_size.width || l_frame.rows != l_high_size.height) {
       cv::resize(l_frame, l_frame, l_high_size);
     }
-    l_high_vc.write(l_frame);
+    l_high_vc << l_frame;
 
     cv::resize(l_frame, l_frame, l_low_size);
     l_low_vc << l_frame;
@@ -167,7 +167,7 @@ auto handle_video_file(
   // 读取第一帧生成预览文件
   l_video.set(cv::CAP_PROP_POS_FRAMES, 0);
   l_video >> l_frame;
-  if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: " + in_path.generic_string()});
+  if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
   save_variants(l_frame, in_id);
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
