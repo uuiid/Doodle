@@ -62,8 +62,8 @@ template <typename T>
 auto set_response_file_header(T& in_res, std::string_view in_mine_type, const FSys::path& in_path) {
   set_response_header(in_res, in_mine_type);
   auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
-  in_res.set(boost::beast::http::field::cache_control, "public,max-age=604800");
-  in_res.set(boost::beast::http::field::expires, fmt::format("{:%a, %d %b %Y %T} GMT", l_time + chrono::days{7}));
+  in_res.set(boost::beast::http::field::cache_control, "public,max-age=300");
+  in_res.set(boost::beast::http::field::expires, fmt::format("{:%a, %d %b %Y %T} GMT", l_time + chrono::seconds{300}));
   auto l_last_time =
       chrono::floor<chrono::seconds>(FSys::file_time_type::clock::to_utc(FSys::last_write_time(in_path)));
   in_res.set(boost::beast::http::field::last_modified, fmt::format("{:%a, %d %b %Y %T} GMT", l_last_time));
