@@ -106,7 +106,7 @@ function Initialize-Doodle
 
     Write-Host "开始复制文件"
     &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath
-    &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath
+    &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip"
     &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath
     # 添加UE插件安装
     Compress-UEPlugins -UEVersion "5.4" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
