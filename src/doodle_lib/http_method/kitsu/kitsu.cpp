@@ -53,12 +53,31 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<doodle_file_association>("/api/doodle/file_association/{}"_url(&doodle_file_association::id_))
       .reg_t<doodle_file>("/api/doodle/file"_url)
 
-      .reg_t<dingding_attendance_get>("/api/doodle/attendance/{}/{}"_url(
-          &dingding_attendance_get::user_id_, &dingding_attendance_get::year_month_
-      ))
+      .reg_t<dingding_attendance_get>(
+          "/api/doodle/attendance/{}/{}"_url(&dingding_attendance_get::user_id_, &dingding_attendance_get::year_month_)
+      )
       .reg_t<dingding_attendance_create_post>("/api/doodle/attendance/{}"_url(&dingding_attendance_create_post::id_))
       .reg_t<dingding_attendance_id_custom>("/api/doodle/attendance/{}/custom"_url(&dingding_attendance_id_custom::id_))
       .reg_t<dingding_attendance_custom>("/api/doodle/attendance/custom/{}"_url(&dingding_attendance_custom::id_))
+      .reg_t<computing_time>(
+          "/api/doodle/computing_time/{}/{}"_url(&computing_time::user_id_, &computing_time::year_month_)
+      )
+      .reg_t<computing_time_add>(
+          "/api/doodle/computing_time/{}/{}/add"_url(&computing_time_add::user_id_, &computing_time_add::year_month_)
+      )
+      .reg_t<computing_time_custom>("/api/doodle/computing_time/{}/{}/custom"_url(
+          &computing_time_custom::user_id_, &computing_time_custom::year_month_
+      ))
+      .reg_t<computing_time_sort>(
+          "/api/doodle/computing_time/{}/{}/sort"_url(&computing_time_sort::user_id_, &computing_time_sort::year_month_)
+      )
+      .reg_t<computing_time_average>("/api/doodle/computing_time/{}/{}/average"_url(
+          &computing_time_average::user_id_, &computing_time_average::year_month_
+      ))
+      .reg_t<computing_time_patch>("/api/doodle/computing_time/{}/{}/{}"_url(
+          &computing_time_patch::user_id_, &computing_time_patch::year_month_, &computing_time_patch::task_id_
+      ))
+      .reg_t<computing_time_delete>("/api/doodle/computing_time/{}"_url(&computing_time_delete::id_))
 
       // 我们自己的后端
       .reg_t<model_library::context_get>()
@@ -82,21 +101,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
       //
 
-      .reg_t<dingding_attendance_get>()
-      .reg_t<dingding_attendance_post>()
-      .reg_t<dingding_attendance_custom_post>()
-      .reg_t<dingding_attendance_custom_put>()
-      .reg_t<dingding_attendance_custom_delete_>()
-
-      .reg_t<computing_time_get>()
-      .reg_t<computing_time_post>()
-      .reg_t<computing_time_patch>()
-      .reg_t<computing_time_delete_>()
-
-      .reg_t<computing_time_add_post>()
-      .reg_t<computing_time_custom_post>()
-      .reg_t<computing_time_sort_post>()
-      .reg_t<computing_time_average_post>()
       .reg_t<actions_user_notifications_mark_all_as_read_post>()
       .reg_t<actions_projects_tasks_comment_many_post>()
       .reg_t<data_tasks_comments_ack_post>()
