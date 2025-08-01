@@ -44,7 +44,12 @@ url_route_component_t::initializer_t::get_component_vector() const {
   return l_result;
 }
 url_route_component_t::initializer_t::operator url_route_component_t() const {
-  url_route_component_t l_result{*this};
+  auto l_it     = std::ranges::find_if(component_vector_, [](const com& in_com) { return in_com.is_capture_; });
+  auto l_is_end = l_it == component_vector_.end();
+  url_route_component_t l_result{
+      get_component_vector(), l_is_end ? std::function<std::shared_ptr<void>()>{} : l_it->obj_->create_object(),
+      l_is_end ? typeid(void) : l_it->obj_->get_type()
+  };
   return l_result;
 }
 

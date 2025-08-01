@@ -7,15 +7,15 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
 // "api/auth/login"
-DOODLE_HTTP_FUN(auth_login, post, ucom_t{} / "api" / "auth" / "login", http_jwt_fun_template<void>)
+DOODLE_HTTP_FUN(auth_login, post, "api/auth/login"_url, http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/data/projects"
-DOODLE_HTTP_FUN(data_projects, post, ucom_t{} / "api" / "data" / "projects", http_jwt_fun_template<void>)
+DOODLE_HTTP_FUN(data_projects, post, "api/data/projects"_url, http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-// "api/data/projects/{project_id}/settings/task-types"
-DOODLE_HTTP_FUN(data_project_settings_task_types, post, ucom_t{} / "api" / "data" / "projects" / make_cap(g_uuid_regex, &capture_id_t::id_) / "settings" / "task-types", http_jwt_fun_template<capture_id_t>)
+// "api/data/projects/{}/settings/task-types"
+DOODLE_HTTP_FUN(data_project_settings_task_types, post, "api/data/projects/{}/settings/task-types"_url(&capture_id_t::id_), http_jwt_fun_template<capture_id_t>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) override;

@@ -121,6 +121,12 @@ class url_route_component_t {
   std::function<std::shared_ptr<void>()> create_object_{};
   std::type_index object_type_{typeid(void)};
 
+  explicit url_route_component_t(
+      const std::vector<std::shared_ptr<component_base_t>>& in_component_vector,
+      const std::function<std::shared_ptr<void>()>& in_create_object, const std::type_index& in_object_type
+  )
+      : component_vector_(in_component_vector), create_object_(in_create_object), object_type_(in_object_type) {}
+
  public:
   // 初始化列表
   class initializer_t {
@@ -150,6 +156,7 @@ class url_route_component_t {
       component_vector_.at(pos_).obj_ = std::make_shared<component_t<Member_Pointer>>(
           fmt::vformat(component_vector_.at(pos_).str_, fmt::make_format_args(in_str)), in_target
       );
+      next_capture();
       return *this;
     }
     template <typename Member_Pointer>
@@ -186,6 +193,7 @@ class url_route_component_t {
     constexpr explicit initializer_t(const char* in_str, std::size_t in_len) : url_path_{in_str, in_len} {}
     template <typename... Args>
     initializer_t& operator()(Args... args) {
+      parse_url_path();
       (add_cap_(args), ...);
       return *this;
     }
@@ -199,9 +207,6 @@ class url_route_component_t {
   const std::type_index& object_type() const { return object_type_; }
 
   url_route_component_t() = default;
-
-  explicit url_route_component_t(const initializer_t& in_initializer)
-      : component_vector_{in_initializer.get_component_vector()} {}
 
   url_route_component_t& operator/(std::string&& in_str) {
     component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
