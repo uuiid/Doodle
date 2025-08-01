@@ -126,9 +126,8 @@ class url_route_component_t {
       const std::function<std::shared_ptr<void>()>& in_create_object, const std::type_index& in_object_type
   )
       : component_vector_(in_component_vector), create_object_(in_create_object), object_type_(in_object_type) {}
-
- public:
-  // 初始化列表
+  class initializer_t;
+  friend url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
   class initializer_t {
    public:
     struct com {
@@ -201,6 +200,8 @@ class url_route_component_t {
     operator url_route_component_t() const;
   };
 
+ public:
+  // 初始化列表
   std::shared_ptr<void> create_object() const;
   std::vector<std::shared_ptr<component_base_t>>& component_vector() { return component_vector_; }
   const std::vector<std::shared_ptr<component_base_t>>& component_vector() const { return component_vector_; }
