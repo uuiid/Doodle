@@ -68,7 +68,7 @@ std::tuple<bool, std::shared_ptr<http_function>> url_route_component_t::set_matc
   auto l_ptr           = in_data->clone();
   std::int32_t l_index = 0;
   for (auto l_begin = ++l_result.begin(), l_end = l_result.end(); l_begin != l_end; ++l_begin, ++l_index) {
-    component_vector()[l_index]->set(l_begin->str(), l_ptr);
+    component_vector().at(l_index)->set(l_begin->str(), l_ptr);
   }
 
   return {true, l_ptr};
