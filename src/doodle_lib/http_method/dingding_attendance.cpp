@@ -52,7 +52,7 @@ auto create_clock_leave(const chrono::year_month_day& in_date) {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_id::post(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_create_post::post(session_data_ptr in_handle) {
   auto l_logger                 = in_handle->logger_;
 
   auto l_json_1                 = in_handle->get_json();
@@ -188,7 +188,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   l_json = *l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_id_date::get(
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(
     session_data_ptr in_handle
 ) {
   std::vector<chrono::local_days> l_date_list{};

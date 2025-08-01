@@ -53,10 +53,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<doodle_file_association>("/api/doodle/file_association/{}"_url(&doodle_file_association::id_))
       .reg_t<doodle_file>("/api/doodle/file"_url)
 
-      .reg_t<dingding_attendance_id_date>("/api/doodle/attendance/{}/{}"_url(
-          &dingding_attendance_id_date::user_id_, &dingding_attendance_id_date::year_month_
+      .reg_t<dingding_attendance_get>("/api/doodle/attendance/{}/{}"_url(
+          &dingding_attendance_get::user_id_, &dingding_attendance_get::year_month_
       ))
-      .reg_t<dingding_attendance_id>("/api/doodle/attendance/{}"_url(&dingding_attendance_id::id_))
+      .reg_t<dingding_attendance_create_post>("/api/doodle/attendance/{}"_url(&dingding_attendance_create_post::id_))
       .reg_t<dingding_attendance_id_custom>("/api/doodle/attendance/{}/custom"_url(&dingding_attendance_id_custom::id_))
       .reg_t<dingding_attendance_custom>("/api/doodle/attendance/custom/{}"_url(&dingding_attendance_custom::id_))
 
