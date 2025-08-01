@@ -305,6 +305,7 @@ class http_function : public http_function_base_t {
   virtual const std::type_info& get_type() const;
   explicit http_function(boost::beast::http::verb in_verb, const url_route_component_t& in_url)
       : http_function_base_t(in_verb), url_route_(in_url) {}
+  explicit http_function(boost::beast::http::verb in_verb) : http_function_base_t(in_verb) {}
 
  public:
   using capture_t = capture_t;

@@ -6,12 +6,12 @@
 #include <doodle_lib/core/http/http_function.h>
 
 namespace doodle::http {
-class kitsu_front_end : public http_function_base_t {
+class kitsu_front_end : public http_function {
  protected:
   std::shared_ptr<FSys::path> root_path_{};
 
  public:
-  using http::http_function_base_t::http_function_base_t;
+  using http::http_function::http_function;
   ~kitsu_front_end() override = default;
   std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
 };
