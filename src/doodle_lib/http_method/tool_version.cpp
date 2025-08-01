@@ -15,9 +15,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http {
 
-boost::asio::awaitable<boost::beast::http::message_generator> doodle_tool_version_get::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_tool_version::get(session_data_ptr in_handle) {
   auto l_kitsu_version = g_ctx().get<kitsu_ctx_t>().front_end_root_ / "version.txt";
 
   if (FSys::exists(l_kitsu_version)) {

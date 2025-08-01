@@ -34,9 +34,10 @@ class up_file_asset_base : public http_jwt_fun {
 
   virtual FSys::path gen_file_path() = 0;
   virtual void move_file(session_data_ptr in_handle);
-  uuid id_{};
   task_info_t task_info_{};
   DOODLE_HTTP_FUN_OVERRIDE(post)
+ public:
+  uuid id_{};
 };
 
 // "api/doodle/data/asset/{task_id}/file/maya"

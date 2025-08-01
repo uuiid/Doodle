@@ -45,6 +45,20 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   (*l_router)
 
       .reg_t<socket_io::socket_io_http>(R"("/socket\.io/")"_url, l_sid_ctx)
+      .reg_t<doodle_data_asset_file_maya>("/api/doodle/data/asset/{}/file/maya"_url(&doodle_data_asset_file_image::id_))
+      .reg_t<doodle_data_asset_file_ue>("/api/doodle/data/asset/{}/file/ue"_url(&doodle_data_asset_file_image::id_))
+      .reg_t<doodle_data_asset_file_image>("/api/doodle/data/asset/{}/file/image"_url(&doodle_data_asset_file_image::id_
+      ))
+      .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
+      .reg_t<doodle_file_association>("/api/doodle/file_association/{}"_url(&doodle_file_association::id_))
+      .reg_t<doodle_file>("/api/doodle/file"_url)
+
+      .reg_t<dingding_attendance_id_date>("/api/doodle/attendance/{}/{}"_url(
+          &dingding_attendance_id_date::user_id_, &dingding_attendance_id_date::year_month_
+      ))
+      .reg_t<dingding_attendance_id>("/api/doodle/attendance/{}"_url(&dingding_attendance_id::id_))
+      .reg_t<dingding_attendance_id_custom>("/api/doodle/attendance/{}/custom"_url(&dingding_attendance_id_custom::id_))
+      .reg_t<dingding_attendance_custom>("/api/doodle/attendance/custom/{}"_url(&dingding_attendance_custom::id_))
 
       // 我们自己的后端
       .reg_t<model_library::context_get>()
@@ -67,9 +81,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<model_library::assets_tree_link_delete_>()
 
       //
-      .reg_t<doodle_file_association_get>()
-      .reg_t<doodle_file_get>()
-      .reg_t<doodle_tool_version_get>()
 
       .reg_t<dingding_attendance_get>()
       .reg_t<dingding_attendance_post>()
