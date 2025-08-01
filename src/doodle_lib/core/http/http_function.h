@@ -202,149 +202,41 @@ class url_route_component_t {
 
  public:
   // 初始化列表
-  std::shared_ptr<void> create_object() const;
   std::vector<std::shared_ptr<component_base_t>>& component_vector() { return component_vector_; }
   const std::vector<std::shared_ptr<component_base_t>>& component_vector() const { return component_vector_; }
-  const std::type_index& object_type() const { return object_type_; }
+
+  std::tuple<bool, std::shared_ptr<http_function>> set_match_url(
+      boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
+  ) const;
 
   url_route_component_t() = default;
-
-  url_route_component_t& operator/(std::string&& in_str) {
-    component_vector_.push_back(std::make_shared<component_base_t>(std::move(in_str)));
-    return *this;
-  }
-  url_route_component_t& operator/(const std::shared_ptr<component_base_t>& in_ptr);
-
-  template <typename Member_Pointer>
-    requires std::is_member_pointer_v<Member_Pointer>
-  url_route_component_t& operator/(Member_Pointer in_target) {
-    using field_type = std::remove_cv_t<object_field_type_t<Member_Pointer>>;
-    static_assert(
-        std::is_same_v<field_type, uuid> || std::is_same_v<field_type, chrono::year_month> ||
-            std::is_same_v<field_type, chrono::year_month_day> || std::is_same_v<field_type, std::int32_t> ||
-            std::is_same_v<field_type, FSys::path>,
-        "not support type"
-    );
-
-    if constexpr (std::is_same_v<field_type, uuid>)
-      return operator/(make_cap(g_uuid_regex, in_target));
-    else if constexpr (std::is_same_v<field_type, chrono::year_month>)
-      return operator/(make_cap(g_year_month_regex, in_target));
-    else if constexpr (std::is_same_v<field_type, chrono::year_month_day>)
-      return operator/(make_cap(g_year_month_day_regex, in_target));
-    else if constexpr (std::is_same_v<field_type, std::int32_t>)
-      return operator/(make_cap(g_number, in_target));
-    else if constexpr (std::is_same_v<field_type, FSys::path>)
-      return operator/(make_cap(g_file_name, in_target));
-    return *this;
-  }
-  template <typename String_T, typename Member_Pointer>
-    requires std::is_member_pointer_v<Member_Pointer> && std::is_convertible_v<String_T, std::string>
-  url_route_component_t& operator/(const std::tuple<String_T, Member_Pointer>& in_tuple) {
-    return operator/(make_cap(std::get<0>(in_tuple), std::get<1>(in_tuple)));
-  }
-
-  template <typename Member_Pointer>
-    requires std::is_member_pointer_v<Member_Pointer>
-  static auto make_cap(std::string&& in_str, Member_Pointer in_target) {
-    return std::make_shared<component_t<Member_Pointer>>(std::move(in_str), in_target);
-  }
-  template <typename Member_Pointer>
-    requires std::is_member_pointer_v<Member_Pointer>
-  static auto make_cap(const std::string_view& in_str, Member_Pointer in_target) {
-    return make_cap<Member_Pointer>(std::string{in_str}, in_target);
-  }
 };
 url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
-class http_function_base_t {
- protected:
-  boost::beast::http::verb verb_;
-
+class http_function {
  public:
-  using ucom_t = url_route_component_t;
-  // uuid regex
-  constexpr static auto g_uuid_regex =
-      std::string_view{"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"};
-  // year month regex
-  constexpr static auto g_year_month_regex     = std::string_view{"([0-9]{4}-[0-9]{2})"};
-  // year month day regex
-  constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
-  constexpr static auto g_number               = std::string_view{"([0-9]+)"};
-
-  template <typename Member_Pointer>
-  static auto make_cap(std::string&& in_str, Member_Pointer in_target) {
-    return std::make_shared<url_route_component_t::component_t<Member_Pointer>>(std::move(in_str), in_target);
-  }
-  template <typename Member_Pointer>
-  static auto make_cap(const std::string_view& in_str, Member_Pointer in_target) {
-    return make_cap<Member_Pointer>(std::string{in_str}, in_target);
-  }
-
-  http_function_base_t() = default;
-  explicit http_function_base_t(boost::beast::http::verb in_verb) : verb_{in_verb} {}
-  virtual ~http_function_base_t() = default;
-
-  [[nodiscard]] inline boost::beast::http::verb get_verb() const { return verb_; }
+  virtual ~http_function() = default;
   [[nodiscard]] virtual bool has_websocket() const;
-  [[nodiscard]] virtual bool is_proxy() const;
-  virtual void check_type() const {}
+  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle);
 
-  virtual std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const = 0;
-
-  virtual boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle)     = 0;
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> other_callback(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> get(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> put(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> post(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> options(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> delete_(session_data_ptr in_handle);
   virtual void websocket_init(session_data_ptr in_handle);
-  virtual boost::asio::awaitable<void> websocket_callback(
+  virtual void websocket_callback(
       boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
   );
+
+  [[nodiscard]] virtual std::shared_ptr<http_function> clone() const = 0;
 };
-
-class http_function : public http_function_base_t {
- protected:
-  url_route_component_t url_route_;
-  virtual const std::type_info& get_type() const;
-  explicit http_function(boost::beast::http::verb in_verb, const url_route_component_t& in_url)
-      : http_function_base_t(in_verb), url_route_(in_url) {}
-  explicit http_function(boost::beast::http::verb in_verb) : http_function_base_t(in_verb) {}
-
+template <typename Self>
+class http_function_template : public http_function {
  public:
-  using capture_t = capture_t;
-  void check_type() const override;
-
-  std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+  std::shared_ptr<http_function> clone() const override { return std::make_shared<Self>(*this); }
 };
-#define DOODLE_HTTP_FUN_TEMPLATE(base_fun)                                                                        \
-  template <typename Capture_T = capture_id_t>                                                                    \
-  class BOOST_PP_CAT(base_fun, _template) : public base_fun {                                                     \
-    boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
-      return callback_arg(in_handle, std::static_pointer_cast<Capture_T>(in_handle->capture_));                   \
-    }                                                                                                             \
-    virtual const std::type_info& get_type() const override { return typeid(Capture_T); }                         \
-                                                                                                                  \
-   public:                                                                                                        \
-    using base_fun::base_fun;                                                                                     \
-                                                                                                                  \
-    virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(                           \
-        session_data_ptr in_handle, std::shared_ptr<Capture_T> in_arg                                             \
-    ) = 0;                                                                                                        \
-  };                                                                                                              \
-                                                                                                                  \
-  template <>                                                                                                     \
-  class BOOST_PP_CAT(base_fun, _template)<void> : public base_fun {                                               \
-    boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override { \
-      return callback_arg(in_handle);                                                                             \
-    }                                                                                                             \
-    virtual const std::type_info& get_type() const override { return typeid(void); }                              \
-                                                                                                                  \
-   public:                                                                                                        \
-    using base_fun::base_fun;                                                                                     \
-                                                                                                                  \
-    virtual boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(                           \
-        session_data_ptr in_handle                                                                                \
-    ) = 0;                                                                                                        \
-  };
-
-DOODLE_HTTP_FUN_TEMPLATE(http_function)
 
 #define DOODLE_HTTP_FUN_CONST(fun_name, verb_, url, base_fun, ...)                         \
   class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::base_fun { \
@@ -359,5 +251,5 @@ DOODLE_HTTP_FUN_TEMPLATE(http_function)
 #define DOODLE_HTTP_FUN_END() \
   }                           \
   ;
-using http_function_ptr = std::shared_ptr<http_function_base_t>;
+using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http

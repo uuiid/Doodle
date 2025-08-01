@@ -20,8 +20,7 @@ class http_websocket_client;
 struct capture_t;
 class http_route;
 class http_function;
-class http_function_base_t;
-using http_function_ptr = std::shared_ptr<http_function_base_t>;
+using http_function_ptr = std::shared_ptr<http_function>;
 struct zlib_deflate_file_body;
 using http_route_ptr = std::shared_ptr<http_route>;
 class http_session_data;
@@ -87,6 +86,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   // 检查请求头中是否包含 deflate 压缩字段
   bool is_deflate() const { return req_header_[boost::beast::http::field::accept_encoding].contains("deflate"); }
   boost::asio::awaitable<void> run();
+  const boost::beast::http::verb& method() const { return method_verb_; }
 
   void async_run_detached();
   boost::beast::http::message_generator make_error_code_msg(

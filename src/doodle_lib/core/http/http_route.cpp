@@ -8,66 +8,41 @@
 #include <doodle_lib/core/http/http_session_data.h>
 namespace doodle::http {
 
-namespace {
+class http_not_function : public http_function_template<http_not_function> {
+ public:
+  boost::asio::awaitable<boost::beast::http::message_generator> get(session_data_ptr in_handle) override {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+  }
+  boost::asio::awaitable<boost::beast::http::message_generator> put(session_data_ptr in_handle) override {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+  }
+  boost::asio::awaitable<boost::beast::http::message_generator> post(session_data_ptr in_handle) override {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+  }
+  boost::asio::awaitable<boost::beast::http::message_generator> options(session_data_ptr in_handle) override {
+    co_return in_handle->make_msg(std::string{});
+  }
+  boost::asio::awaitable<boost::beast::http::message_generator> delete_(session_data_ptr in_handle) override {
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+  }
+};
 
-DOODLE_HTTP_FUN(options_function, options, {}, http_function)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
-  boost::beast::http::response<boost::beast::http::empty_body> l_response{
-      boost::beast::http::status::ok, in_handle->version_
-  };
-  l_response.set(boost::beast::http::field::content_type, "application/json");
+http_route::http_route() : default_function_(std::make_shared<http_not_function>()) {}
 
-  l_response.set(boost::beast::http::field::allow, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  l_response.set(boost::beast::http::field::access_control_allow_origin, "*");
-  l_response.set(boost::beast::http::field::access_control_allow_methods, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  l_response.set(
-      boost::beast::http::field::access_control_allow_headers,
-      "Authorization, Origin, X-Requested-With, Content-Type, Accept"
-  );
-
-  l_response.keep_alive(in_handle->keep_alive_);
-  l_response.prepare_payload();
-  co_return l_response;
-}
-DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_FUN(not_function, get, {}, http_function)
-boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
-}
-DOODLE_HTTP_FUN_END()
-
-}  // namespace
-
-http_route::http_route()
-    : not_function(std::make_shared<not_function_get>()),
-      options_function(std::make_shared<options_function_options>())
-
-{}
-
-http_route& http_route::reg(const doodle::http::http_function_ptr in_function) {
-  in_function->check_type();
-  actions[in_function->get_verb()].emplace_back(in_function);
+http_route& http_route::reg(url_route_component_t&& in_component, const http_function_ptr& in_function) {
+  url_route_map_.emplace_back(std::make_shared<url_route_component_t>(std::move(in_component)), in_function);
   return *this;
 }
 
 http_function_ptr http_route::operator()(
     boost::beast::http::verb in_verb, boost::urls::segments_ref in_segment, const session_data_ptr& in_handle
 ) const {
-  auto l_iter = actions.find(in_verb);
-
-  auto l_ret  = not_function;
-  if (in_verb == boost::beast::http::verb::options) {
-    l_ret = options_function;
-  }
-  if (l_iter == actions.end()) return l_ret;
-  for (const auto& i : l_iter->second) {
-    if (auto&& [l_m, l_cat] = i->set_match_url(in_segment); l_m) {
-      in_handle->capture_ = l_cat;
-      return i;
+  for (const auto& [i, l_data] : url_route_map_) {
+    if (auto&& [l_m, l_cat] = i->set_match_url(in_segment, l_data); l_m) {
+      return l_cat;
     }
   }
-  return l_ret;
+  return default_function_;
 }
 
 }  // namespace doodle::http

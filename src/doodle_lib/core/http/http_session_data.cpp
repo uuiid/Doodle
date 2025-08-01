@@ -52,10 +52,13 @@ auto set_response_header(T& in_res, std::string_view in_mine_type) {
   ;
   in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   in_res.set(boost::beast::http::field::content_type, in_mine_type);
-  in_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  in_res.set(boost::beast::http::field::access_control_allow_origin, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   in_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
-  in_res.set(boost::beast::http::field::access_control_allow_methods, "*");
-  in_res.set(boost::beast::http::field::access_control_allow_headers, "*");
+  in_res.set(boost::beast::http::field::access_control_allow_methods, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  in_res.set(
+      boost::beast::http::field::access_control_allow_headers,
+      "Authorization, Origin, X-Requested-With, Content-Type, Accept"
+  );
   in_res.set(boost::beast::http::field::date, fmt::format("{:%a, %d %b %Y %T} GMT", l_time));
 }
 template <typename T>
@@ -181,7 +184,7 @@ boost::asio::awaitable<void> session_data::async_websocket_session() {
   }));
   co_await l_stream.async_accept(std::get<empty_request_parser_ptr>(request_parser_)->get());
 
-  co_await callback_->websocket_callback(std::move(l_stream), shared_from_this());
+  callback_->websocket_callback(std::move(l_stream), shared_from_this());
   co_return;
 }
 

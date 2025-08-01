@@ -125,52 +125,65 @@ std::tuple<bool, FSys::path> url_route_component_t::component_base_t::convert_fi
   return {false, {}};
 }
 
-std::shared_ptr<void> url_route_component_t::create_object() const {
-  if (create_object_) {
-    return create_object_();
-  }
-  return {};
-}
-
-url_route_component_t& url_route_component_t::operator/(const std::shared_ptr<component_base_t>& in_ptr) {
-  if (!create_object_ && in_ptr->get_type() != typeid(void)) {
-    create_object_ = in_ptr->create_object();
-    object_type_   = in_ptr->get_type();
-  }
-  if (object_type_ != in_ptr->get_type()) throw std::runtime_error("url route component type mismatch");
-
-  component_vector_.push_back(in_ptr);
-  return *this;
-}
-
-void http_function_base_t::websocket_init(session_data_ptr in_handle) {}
-boost::asio::awaitable<void> http_function_base_t::websocket_callback(
+void http_function::websocket_init(session_data_ptr in_handle) {}
+void http_function::websocket_callback(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
 ) {
-  co_return;
+  return;
 }
-bool http_function_base_t::has_websocket() const { return false; }
-bool http_function_base_t::is_proxy() const { return false; }
+bool http_function::has_websocket() const { return false; }
 
-std::tuple<bool, std::shared_ptr<void>> http_function::set_match_url(boost::urls::segments_ref in_segments_ref) const {
+std::tuple<bool, std::shared_ptr<http_function>> url_route_component_t::set_match_url(
+    boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
+) const {
   std::map<std::string, std::string> l_str{};
 
   std::vector<std::string> l_segments_ref_not_null = in_segments_ref |
                                                      ranges::views::filter([](auto&& i) { return !i.empty(); }) |
                                                      ranges::to<std::vector<std::string>>;
 
-  if (l_segments_ref_not_null.size() != url_route_.component_vector().size()) {
+  if (l_segments_ref_not_null.size() != component_vector().size()) {
     return {false, {}};
   }
-  auto l_data = url_route_.create_object();
-  for (const auto& [l_cap, l_seg] : ranges::zip_view(url_route_.component_vector(), l_segments_ref_not_null)) {
-    if (!l_cap->set(l_seg, l_data)) return {false, l_data};
+  for (const auto& [l_cap, l_seg] : ranges::zip_view(component_vector(), l_segments_ref_not_null)) {
+    if (!l_cap->set(l_seg, in_data)) return {false, {}};
   }
-  return {true, l_data};
+  return {true, in_data->clone()};
 }
-const std::type_info& http_function::get_type() const { return typeid(void); }
-void http_function::check_type() const {
-  if (url_route_.object_type() != get_type()) throw std::runtime_error("url route component type mismatch");
+
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
+  switch (in_handle->method()) {
+    case boost::beast::http::verb::get:
+      return get(in_handle);
+    case boost::beast::http::verb::put:
+      return put(in_handle);
+    case boost::beast::http::verb::post:
+      return post(in_handle);
+    case boost::beast::http::verb::options:
+      return options(in_handle);
+    case boost::beast::http::verb::delete_:
+      return delete_(in_handle);
+    default:
+      return other_callback(in_handle);
+  }
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::other_callback(
+    session_data_ptr in_handle
+) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::put(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::post(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::options(session_data_ptr in_handle) {
+  co_return in_handle->make_msg(std::string{});
+}
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::delete_(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
 
 }  // namespace doodle::http
