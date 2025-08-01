@@ -81,6 +81,7 @@ void http_function::websocket_callback(
 bool http_function::has_websocket() const { return false; }
 
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
+  parse_header(in_handle);
   switch (in_handle->method()) {
     case boost::beast::http::verb::delete_:
       return delete_(in_handle);

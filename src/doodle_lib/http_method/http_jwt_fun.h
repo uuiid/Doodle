@@ -18,8 +18,9 @@ class http_jwt_fun : public http_function {
 
  protected:
   std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);
-
+  void parse_header(const session_data_ptr& in_handle) override;
  public:
+
   struct http_jwt_t {
     person person_;
     // 检查人员是否有修改项目属性的权限
@@ -41,8 +42,9 @@ class http_jwt_fun : public http_function {
     void check_task_assign_access(const uuid& in_project_id) const;
   };
   using http_function::http_function;
-};
 
-DOODLE_HTTP_FUN_TEMPLATE(http_jwt_fun)
+ protected:
+  http_jwt_t person_{};
+};
 
 }  // namespace doodle::http

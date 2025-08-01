@@ -199,6 +199,9 @@ class url_route_component_t : public url_route_component_base_t {
 url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
 
 class http_function {
+ protected:
+  virtual void parse_header(const session_data_ptr& in_handle) = 0;
+
  public:
   virtual ~http_function() = default;
   [[nodiscard]] virtual bool has_websocket() const;
@@ -224,7 +227,6 @@ class http_function_template : public Base {
  public:
   std::shared_ptr<http_function> clone() const override { return std::make_shared<Self>(*this); }
 };
-
 
 #define DOODLE_HTTP_FUN_OVERRIDE(method) \
   virtual boost::asio::awaitable<boost::beast::http::message_generator> method(session_data_ptr in_handle) override;
