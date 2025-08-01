@@ -17,18 +17,16 @@
 #include <boost/asio/experimental/parallel_group.hpp>
 namespace doodle::socket_io {
 
-void socket_io_http_get::init() { g_ctx().emplace<sid_ctx&>(*sid_ctx_); }
+void socket_io_http::init() { g_ctx().emplace<sid_ctx&>(*sid_ctx_); }
 
-std::string socket_io_http_get::generate_register_reply() {
+std::string socket_io_http::generate_register_reply() const {
   auto l_hd             = sid_ctx_->handshake_data_;
   auto l_sid_data       = sid_ctx_->generate();
   l_hd.sid_             = l_sid_data->get_sid();
   nlohmann::json l_json = l_hd;
   return dump_message(l_json.dump(), engine_io_packet_type::open);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http_get::callback(
-    http::session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::get(session_data_ptr in_handle) {
   auto l_p = parse_query_data(in_handle->url_);
   // 注册
   if (l_p.sid_.is_nil()) co_return in_handle->make_msg(generate_register_reply());
@@ -44,18 +42,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http_get
   auto l_str   = l_event ? l_event->get_dump_data() : std::string{};
   co_return in_handle->make_msg(std::move(l_str), "text/plain; charset=UTF-8", boost::beast::http::status::ok);
 }
-bool socket_io_http_get::has_websocket() const { return true; }
-
-boost::asio::awaitable<void> socket_io_http_get::websocket_callback(
-    boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
-) {
-  auto l_websocket = std::make_shared<socket_io_websocket_core>(in_handle, sid_ctx_, std::move(in_stream));
-  l_websocket->async_run();
-  co_return;
-}
-boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http_post::callback(
-    http::session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::post(session_data_ptr in_handle) {
   auto l_p = parse_query_data(in_handle->url_);
   // 注册
   if (l_p.sid_.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid为空"});
@@ -76,11 +63,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http_pos
   };
   co_return in_handle->make_msg("OK", "text/plain; charset=UTF-8", boost::beast::http::status::ok);
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http_put::callback(
-    http::session_data_ptr in_handle
+void socket_io_http::websocket_callback(
+    boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
 ) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不支持put请求");
+  auto l_websocket = std::make_shared<socket_io_websocket_core>(in_handle, sid_ctx_, std::move(in_stream));
+  l_websocket->async_run();
 }
+bool socket_io_http::has_websocket() const { return true; }
 
 }  // namespace doodle::socket_io

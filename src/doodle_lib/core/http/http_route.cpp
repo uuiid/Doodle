@@ -10,12 +10,10 @@
 #include "../../../../build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include/boost/preprocessor/tuple/to_seq.hpp"
 namespace doodle::http {
 
-DOODLE_HTTP_FUN_2(http_not_function, (get))
+DOODLE_HTTP_FUN(http_not_function)
 
 };
-boost::asio::awaitable<boost::beast::http::message_generator> http_not_function::get(session_data_ptr in_handle) {
-  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
-}
+
 http_route::http_route() : default_function_(std::make_shared<http_not_function>()) {}
 
 http_route& http_route::reg(url_route_component_ptr&& in_component, const http_function_ptr& in_function) {
