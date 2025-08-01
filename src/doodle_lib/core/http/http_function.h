@@ -11,6 +11,7 @@
 #include "boost/dynamic_bitset.hpp"
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
+#include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/url.hpp>
 
 #include "http_route.h"
@@ -222,18 +223,21 @@ class http_function_template : public Base {
   std::shared_ptr<http_function> clone() const override { return std::make_shared<Self>(*this); }
 };
 
-#define DOODLE_HTTP_FUN_CONST(fun_name, verb_, url, base_fun, ...)                         \
+#define DOODLE_HTTP_FUN_METHOD_IMPL(r, data, elem) \
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> elem(session_data_ptr in_handle) override;
+#define DOODLE_HTTP_FUN(fun_name, base_fun, methods)                                   \
+  class fun_name : public ::doodle::http::http_function_template<fun_name, base_fun> { \
+    using base_type = ::doodle::http::http_function_template<fun_name, base_fun>;      \
+                                                                                       \
+   public:                                                                             \
+    fun_name() = default;                                                              \
+    BOOST_PP_SEQ_FOR_EACH(DOODLE_HTTP_FUN_METHOD_IMPL, _, BOOST_PP_TUPLE_TO_SEQ(methods))
+
+#define DOODLE_HTTP_FUN_2(fun_name, methods) DOODLE_HTTP_FUN(fun_name, http_function, methods)
+
+#define DOODLE_HTTP_FUN_CONST(fun_name, base_fun, methods, ...)                            \
   class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::base_fun { \
    public:                                                                                 \
     BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_)(__VA_ARGS__) : base_fun(boost::beast::http::verb::verb_, url)
-
-#define DOODLE_HTTP_FUN(fun_name, verb_, url, base_fun)                                    \
-  class BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_) : public ::doodle::http::base_fun { \
-   public:                                                                                 \
-    BOOST_PP_CAT(BOOST_PP_CAT(fun_name, _), verb_)() : base_fun(boost::beast::http::verb::verb_, url) {}
-
-#define DOODLE_HTTP_FUN_END() \
-  }                           \
-  ;
 using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http

@@ -102,6 +102,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> http_function::oth
 ) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::get(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::put(session_data_ptr in_handle) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
 }

@@ -6,27 +6,16 @@
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
+
+#include "../../../../build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include/boost/preprocessor/tuple/to_seq.hpp"
 namespace doodle::http {
 
-class http_not_function : public http_function_template<http_not_function> {
- public:
-  boost::asio::awaitable<boost::beast::http::message_generator> get(session_data_ptr in_handle) override {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
-  }
-  boost::asio::awaitable<boost::beast::http::message_generator> put(session_data_ptr in_handle) override {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
-  }
-  boost::asio::awaitable<boost::beast::http::message_generator> post(session_data_ptr in_handle) override {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
-  }
-  boost::asio::awaitable<boost::beast::http::message_generator> options(session_data_ptr in_handle) override {
-    co_return in_handle->make_msg(std::string{});
-  }
-  boost::asio::awaitable<boost::beast::http::message_generator> delete_(session_data_ptr in_handle) override {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
-  }
-};
+DOODLE_HTTP_FUN_2(http_not_function, (get))
 
+};
+boost::asio::awaitable<boost::beast::http::message_generator> http_not_function::get(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
 http_route::http_route() : default_function_(std::make_shared<http_not_function>()) {}
 
 http_route& http_route::reg(url_route_component_ptr&& in_component, const http_function_ptr& in_function) {
