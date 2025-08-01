@@ -129,6 +129,8 @@ class url_route_component_t {
   class initializer_t;
   friend url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
   class initializer_t {
+    friend url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
+
    public:
     struct com {
       std::string str_;
@@ -192,7 +194,6 @@ class url_route_component_t {
     constexpr explicit initializer_t(const char* in_str, std::size_t in_len) : url_path_{in_str, in_len} {}
     template <typename... Args>
     initializer_t& operator()(Args... args) {
-      parse_url_path();
       (add_cap_(args), ...);
       return *this;
     }

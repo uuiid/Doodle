@@ -54,7 +54,9 @@ url_route_component_t::initializer_t::operator url_route_component_t() const {
 }
 
 url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t in_len) {
-  return url_route_component_t::initializer_t{in_str, in_len};
+  url_route_component_t::initializer_t l_url{in_str, in_len};
+  l_url.parse_url_path();
+  return l_url;
 }
 
 bool url_route_component_t::component_base_t::match(const std::string& in_str) const {
