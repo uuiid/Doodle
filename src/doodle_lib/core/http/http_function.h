@@ -238,6 +238,6 @@ class http_function_template : public Base {
     fun_name() = default;
 
 #define DOODLE_HTTP_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function)
-
+#define DOODLE_HTTP_FUN_END() };
 using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http
