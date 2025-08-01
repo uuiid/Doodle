@@ -29,8 +29,8 @@ class http_not_function : public http_function_template<http_not_function> {
 
 http_route::http_route() : default_function_(std::make_shared<http_not_function>()) {}
 
-http_route& http_route::reg(url_route_component_t&& in_component, const http_function_ptr& in_function) {
-  url_route_map_.emplace_back(std::make_shared<url_route_component_t>(std::move(in_component)), in_function);
+http_route& http_route::reg(url_route_component_ptr&& in_component, const http_function_ptr& in_function) {
+  url_route_map_.emplace_back(std::move(in_component), in_function);
   return *this;
 }
 
