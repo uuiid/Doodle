@@ -8,11 +8,12 @@
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http {
-std::tuple<bool, std::shared_ptr<void>> kitsu_front_end::set_match_url(
-    boost::urls::segments_ref in_segments_ref
+
+std::tuple<bool, std::shared_ptr<http_function>> kitsu_front_end_url_route_component::set_match_url(
+    boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
 ) const {
   if (!in_segments_ref.empty() && in_segments_ref.front() == "api") return {false, {}};
-  return {true, {}};
+  return {true, in_data};
 }
 
 namespace {
@@ -30,15 +31,12 @@ FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost
   return l_path;
 }
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> get_files_kitsu_front_end::callback(
-    http::session_data_ptr in_handle
-) {
+
+boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> get_files_head_kitsu_front_end::callback(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
@@ -50,4 +48,5 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files_head_kit
   l_res.prepare_payload();
   co_return std::move(l_res);
 }
+
 }  // namespace doodle::http

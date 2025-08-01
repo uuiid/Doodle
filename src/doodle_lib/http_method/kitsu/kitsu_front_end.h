@@ -6,31 +6,18 @@
 #include <doodle_lib/core/http/http_function.h>
 
 namespace doodle::http {
-class kitsu_front_end : public http_function {
- protected:
-  std::shared_ptr<FSys::path> root_path_{};
-
- public:
-  using http::http_function::http_function;
-  ~kitsu_front_end() override = default;
-  std::tuple<bool, std::shared_ptr<void>> set_match_url(boost::urls::segments_ref in_segments_ref) const override;
+DOODLE_HTTP_FUN(kitsu_front_end)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(head)
+std::shared_ptr<FSys::path> root_path_{};
+explicit kitsu_front_end(const std::shared_ptr<FSys::path>& in_root) : root_path_(in_root) {}
 };
 
-class get_files_kitsu_front_end : public kitsu_front_end {
- public:
-  explicit get_files_kitsu_front_end(const std::shared_ptr<FSys::path>& in_root)
-      : kitsu_front_end(boost::beast::http::verb::get) {
-    root_path_ = in_root;
-  }
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(http::session_data_ptr in_handle) override;
-};
-class get_files_head_kitsu_front_end : public kitsu_front_end {
- public:
-  explicit get_files_head_kitsu_front_end(const std::shared_ptr<FSys::path>& in_root)
-      : kitsu_front_end(boost::beast::http::verb::head) {
-    root_path_ = in_root;
-  }
-  boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle) override;
+class kitsu_front_end_url_route_component : public url_route_component_base_t {
+public:
+  std::tuple<bool, std::shared_ptr<http_function>> set_match_url(
+      boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
+  ) const override;
 };
 
 }  // namespace doodle::http

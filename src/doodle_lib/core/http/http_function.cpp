@@ -82,16 +82,20 @@ bool http_function::has_websocket() const { return false; }
 
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
   switch (in_handle->method()) {
-    case boost::beast::http::verb::get:
-      return get(in_handle);
-    case boost::beast::http::verb::put:
-      return put(in_handle);
-    case boost::beast::http::verb::post:
-      return post(in_handle);
-    case boost::beast::http::verb::options:
-      return options(in_handle);
     case boost::beast::http::verb::delete_:
       return delete_(in_handle);
+    case boost::beast::http::verb::get:
+      return get(in_handle);
+    case boost::beast::http::verb::head:
+      return head(in_handle);
+    case boost::beast::http::verb::post:
+      return post(in_handle);
+    case boost::beast::http::verb::put:
+      return put(in_handle);
+    case boost::beast::http::verb::options:
+      return options(in_handle);
+    case boost::beast::http::verb::patch:
+      return patch(in_handle);
     default:
       return other_callback(in_handle);
   }
@@ -117,5 +121,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> http_function::opt
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::delete_(session_data_ptr in_handle) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::head(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
+boost::asio::awaitable<boost::beast::http::message_generator> http_function::patch(session_data_ptr in_handle) {
+  co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
 }  // namespace doodle::http

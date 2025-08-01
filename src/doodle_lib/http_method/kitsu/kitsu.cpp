@@ -43,6 +43,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/events");
   (*l_router)
+
+      .reg_t<socket_io::socket_io_http>(R"("/socket\.io/")"_url, l_sid_ctx)
+
       // 我们自己的后端
       .reg_t<model_library::context_get>()
 

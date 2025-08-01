@@ -209,6 +209,8 @@ class http_function {
   virtual boost::asio::awaitable<boost::beast::http::message_generator> put(session_data_ptr in_handle);
   virtual boost::asio::awaitable<boost::beast::http::message_generator> post(session_data_ptr in_handle);
   virtual boost::asio::awaitable<boost::beast::http::message_generator> options(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> head(session_data_ptr in_handle);
+  virtual boost::asio::awaitable<boost::beast::http::message_generator> patch(session_data_ptr in_handle);
   virtual boost::asio::awaitable<boost::beast::http::message_generator> delete_(session_data_ptr in_handle);
   virtual void websocket_init(session_data_ptr in_handle);
   virtual void websocket_callback(
