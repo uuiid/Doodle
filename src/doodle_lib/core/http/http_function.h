@@ -230,14 +230,14 @@ class http_function_template : public Base {
 
 #define DOODLE_HTTP_FUN_OVERRIDE(method) \
   virtual boost::asio::awaitable<boost::beast::http::message_generator> method(session_data_ptr in_handle) override;
-#define DOODLE_HTTP_FUN_C(fun_name, base_fun, methods)                                 \
+#define DOODLE_HTTP_FUN_C(fun_name, base_fun)                                 \
   class fun_name : public ::doodle::http::http_function_template<fun_name, base_fun> { \
     using base_type = ::doodle::http::http_function_template<fun_name, base_fun>;      \
                                                                                        \
    public:                                                                             \
     fun_name() = default;
 
-#define DOODLE_HTTP_FUN(fun_name, methods) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function, methods)
+#define DOODLE_HTTP_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function)
 
 using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http

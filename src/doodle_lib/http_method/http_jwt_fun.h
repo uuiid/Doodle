@@ -46,5 +46,6 @@ class http_jwt_fun : public http_function {
  protected:
   http_jwt_t person_{};
 };
+#define DOODLE_HTTP_JWT_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_jwt_fun)
 
 }  // namespace doodle::http
