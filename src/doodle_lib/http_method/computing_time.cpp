@@ -775,7 +775,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_del
 ) {
   work_xlsx_task_info_helper::database_t l_task =
       g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(in_arg->id_);
-  nlohmann::json l_json_res{};
   co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
   chrono::year_month_day l_year_month_day{l_task.year_month_};
   chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
