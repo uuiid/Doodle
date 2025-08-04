@@ -226,11 +226,13 @@ template <typename Self, typename Base = http_function>
 class http_function_template : public Base {
  public:
   std::shared_ptr<http_function> clone() const override { return std::make_shared<Self>(*this); }
+  template <typename... Args>
+  explicit http_function_template(Args&&... args) : Base(std::forward<Args>(args)...) {}
 };
 
 #define DOODLE_HTTP_FUN_OVERRIDE(method) \
   virtual boost::asio::awaitable<boost::beast::http::message_generator> method(session_data_ptr in_handle) override;
-#define DOODLE_HTTP_FUN_C(fun_name, base_fun)                                 \
+#define DOODLE_HTTP_FUN_C(fun_name, base_fun)                                          \
   class fun_name : public ::doodle::http::http_function_template<fun_name, base_fun> { \
     using base_type = ::doodle::http::http_function_template<fun_name, base_fun>;      \
                                                                                        \
@@ -238,6 +240,8 @@ class http_function_template : public Base {
     fun_name() = default;
 
 #define DOODLE_HTTP_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function)
-#define DOODLE_HTTP_FUN_END() };
+#define DOODLE_HTTP_FUN_END() \
+  }                           \
+  ;
 using http_function_ptr = std::shared_ptr<http_function>;
 }  // namespace doodle::http

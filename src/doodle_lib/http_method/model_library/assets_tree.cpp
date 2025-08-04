@@ -36,7 +36,7 @@ tl::expected<void, std::string> check_data(const assets_helper::database_t& in_d
   return {};
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::get(
     http::session_data_ptr in_handle
 ) {
   auto l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
@@ -46,7 +46,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_get::c
   co_return in_handle->make_msg(l_json);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::post(
     http::session_data_ptr in_handle
 ) {
   auto l_json                                      = in_handle->get_json();
@@ -64,11 +64,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_post::
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_put::callback_arg(
-    http::session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::put(
+    http::session_data_ptr in_handle
 ) {
   auto l_value = std::make_shared<assets_helper::database_t>(
-      g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(in_arg->id_)
+      g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(id_)
   );
   in_handle->get_json().get_to(*l_value);
   check_data(*l_value);
@@ -76,10 +76,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_put::c
   co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> assets_tree_delete_::callback_arg(
-    http::session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::delete_(
+    http::session_data_ptr in_handle
 ) {
-  auto l_uuid = boost::lexical_cast<uuid>(in_arg->id_);
+  auto l_uuid = boost::lexical_cast<uuid>(id_);
   auto l_sql  = g_ctx().get<sqlite_database>();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
