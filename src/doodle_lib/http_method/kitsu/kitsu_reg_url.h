@@ -6,67 +6,67 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
-// "api/auth/login"
+// /api/auth/login
 DOODLE_HTTP_FUN(auth_login)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// "api/data/projects"
+// /api/data/projects
 DOODLE_HTTP_FUN(data_projects)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// "api/data/projects/{}/settings/task-types"
+// /api/data/projects/{}/settings/task-types
 DOODLE_HTTP_FUN(data_project_settings_task_types)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/projects/{project_id}/settings/task-status"
+// /api/data/projects/{project_id}/settings/task-status
 DOODLE_HTTP_FUN(data_project_settings_task_status)
 DOODLE_HTTP_FUN_OVERRIDE(post);
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/projects/{project_id}/settings/asset-types"
+// /api/data/projects/{project_id}/settings/asset-types
 DOODLE_HTTP_FUN(data_project_settings_asset_types)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/actions/tasks/{task_id}/comment"
+// /api/actions/tasks/{task_id}/comment
 DOODLE_HTTP_FUN(actions_tasks_comment)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// "api/actions/tasks/{task_id}/comments/{comment_id}/add-preview"
+// /api/actions/tasks/{task_id}/comments/{comment_id}/add-preview
 DOODLE_HTTP_FUN(actions_tasks_comments_add_preview)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid task_id{};
-uuid comment_id{};
+uuid task_id_{};
+uuid comment_id_{};
 DOODLE_HTTP_FUN_END()
-// "api/pictures/preview-files/{id}"
+// /api/pictures/preview-files/{id}
 DOODLE_HTTP_FUN(pictures_preview_files)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks"
+// /api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks
 DOODLE_HTTP_FUN(actions_create_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid project_id{};
-uuid task_type_id{};
+uuid project_id_{};
+uuid task_type_id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new"
+// /api/data/projects/{project_id}/asset-types/{asset_type_id}/assets/new
 DOODLE_HTTP_FUN(projects_assets_new)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid project_id{};
-uuid asset_type_id{};
+uuid project_id_{};
+uuid asset_type_id_{};
 DOODLE_HTTP_FUN_END()
-// "/api/data/task-status-links"
+// /api/data/task-status-links
 DOODLE_HTTP_FUN(data_task_status_links)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// "/api/data/persons"
+// /api/data/persons
 DOODLE_HTTP_FUN(data_person)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// "/api/auth/reset-password"
+// /api/auth/reset-password
 DOODLE_HTTP_FUN(auth_reset_password)
 void init();
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -100,99 +100,99 @@ uuid comment_id_{};
 uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
 
-// "api/data/comments/{comment_id}"
+// /api/data/comments/{comment_id}
 DOODLE_HTTP_FUN(data_comment)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/actions/persons/{id}/assign"
+// /api/actions/persons/{id}/assign
 DOODLE_HTTP_FUN(actions_persons_assign)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/tasks/{id}"
+// /api/data/tasks/{id}
 DOODLE_HTTP_FUN(data_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/entities/{id}"
+// /api/data/entities/{id}
 DOODLE_HTTP_FUN(data_entities)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/actions/preview-files/{id}/set-main-preview"
+// /api/actions/preview-files/{id}/set-main-preview
 DOODLE_HTTP_FUN(actions_preview_files_set_main_preview)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/persons/{id}"
+// /api/data/persons/{id}
 DOODLE_HTTP_FUN(data_person_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/projects/{id}"
+// /api/data/projects/{id}
 DOODLE_HTTP_FUN(project)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/actions/tasks/clear-assignation
+// /api/actions/tasks/clear-assignation
 DOODLE_HTTP_FUN(actions_tasks_clear_assignation)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_END()
-// api/data/user/notifications/{id}
+// /api/data/user/notifications/{id}
 DOODLE_HTTP_FUN(data_user_notification)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// "api/data/projects/{project_id}"
+// /api/data/projects/{project_id}
 DOODLE_HTTP_FUN(data_project)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// "api/data/user/context"
+// /api/data/user/context
 DOODLE_HTTP_FUN(user_context)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/auth/authenticated"
+// /api/auth/authenticated
 DOODLE_HTTP_FUN(authenticated)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/organisations"
+// /api/data/organisations
 DOODLE_HTTP_FUN(organisations)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/departments"
+// /api/data/departments
 DOODLE_HTTP_FUN(departments)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/studios"
+// /api/data/studios
 DOODLE_HTTP_FUN(studios)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/task-types"
+// /api/data/task-types
 DOODLE_HTTP_FUN(task_types)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/custom-actions"
+// /api/data/custom-actions
 DOODLE_HTTP_FUN(custom_actions)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/status-automations"
+// /api/data/status-automations
 DOODLE_HTTP_FUN(status_automations)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// "api/data/tasks/{task_id}/comments"
+// /api/data/tasks/{task_id}/comments
 DOODLE_HTTP_FUN(tasks_comments)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/assets/with-tasks
+// /api/data/assets/with-tasks
 DOODLE_HTTP_FUN(with_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/sequences/with-tasks
+// /api/data/sequences/with-tasks
 DOODLE_HTTP_FUN(sequences_with_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
@@ -200,91 +200,90 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_shots_with_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/assets/{asset_id}
+// /api/data/assets/{asset_id}
 DOODLE_HTTP_FUN(asset_details)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/projects/{project_id}/assets/shared-used
+// /api/data/projects/{project_id}/assets/shared-used
 DOODLE_HTTP_FUN(shared_used)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/projects/{project_id}/schedule-items/task-types
+// /api/data/projects/{project_id}/schedule-items/task-types
 DOODLE_HTTP_FUN(data_project_schedule_items_task_types)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/projects/{project_id}/schedule-items
+// /api/data/projects/{project_id}/schedule-items
 DOODLE_HTTP_FUN(data_project_schedule_items)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/projects/{project_id}/milestones
+// /api/data/projects/{project_id}/milestones
 DOODLE_HTTP_FUN(data_project_milestones)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/user/tasks
+// /api/data/user/tasks
 DOODLE_HTTP_FUN(data_user_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/user/done-tasks
+// /api/data/user/done-tasks
 DOODLE_HTTP_FUN(data_user_done_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/user/tasks-to-check
+// /api/data/user/tasks-to-check
 DOODLE_HTTP_FUN(tasks_to_check)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/projects/all
+// /api/data/projects/all
 DOODLE_HTTP_FUN(project_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/persons
+// /api/data/persons
 DOODLE_HTTP_FUN(person_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/user/time-spents
+// /api/data/user/time-spents
 DOODLE_HTTP_FUN(data_user_time_spents_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/user/time-spents/{date}
-
+// /api/data/user/time-spents/{date}
 DOODLE_HTTP_FUN(data_user_time_spents)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 chrono::year_month_day date_;
 DOODLE_HTTP_FUN_END()
 
-// api/data/persons/{person_id}/day-offs/{date}
+// /api/data/persons/{person_id}/day-offs/{date}
 DOODLE_HTTP_FUN(person_day_off)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_;
 chrono::year_month_day date_;
 DOODLE_HTTP_FUN_END()
-// api/data/persons/{person_id}/day-offs
+// /api/data/persons/{person_id}/day-offs
 DOODLE_HTTP_FUN(person_day_off_all)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/persons/time-spents/day-table/{year}/{month}
+// /api/data/persons/time-spents/day-table/{year}/{month}
 DOODLE_HTTP_FUN(person_time_spents_day_table)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 std::int32_t year_;
 std::int32_t month_;
 DOODLE_HTTP_FUN_END()
-// api/data/persons/day-offs/{year}/{month}
+// /api/data/persons/day-offs/{year}/{month}
 DOODLE_HTTP_FUN(person_day_off_1)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 std::int32_t year_;
 std::int32_t month_;
 DOODLE_HTTP_FUN_END()
-// api/config
+// /api/config
 DOODLE_HTTP_FUN(config)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 
-// api/data/playlists/entities/{id}/preview-files
+// /api/data/playlists/entities/{id}/preview-files
 DOODLE_HTTP_FUN(playlists_entities_preview_files)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
@@ -326,7 +325,6 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/attachment-files/{id}/file/{file_name}
-
 DOODLE_HTTP_FUN(data_attachment_files_file)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_;
@@ -350,7 +348,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(data_user_notifications)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-// api/data/tasks/{id}/full
+// /api/data/tasks/{id}/full
 DOODLE_HTTP_FUN(data_tasks_full)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
@@ -384,8 +382,9 @@ DOODLE_HTTP_FUN_END()
 // /api/data/assets/{id}
 DOODLE_HTTP_FUN(data_asset)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid id_{};
 DOODLE_HTTP_FUN_END()
-// api/data/projects/{project_id}/settings/task-types/{task_type_id}
+// /api/data/projects/{project_id}/settings/task-types/{task_type_id}
 DOODLE_HTTP_FUN(project_settings_task_types)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid project_id_;

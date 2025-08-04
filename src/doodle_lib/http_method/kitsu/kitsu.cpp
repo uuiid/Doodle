@@ -43,160 +43,136 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/events");
   (*l_router)
+      // clang-format off
       // 我们自己的后端
       .reg_t<socket_io::socket_io_http>(R"("/socket\.io/")"_url, l_sid_ctx)
       .reg_t<doodle_data_asset_file_maya>("/api/doodle/data/asset/{}/file/maya"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_ue>("/api/doodle/data/asset/{}/file/ue"_url(&doodle_data_asset_file_image::id_))
-      .reg_t<doodle_data_asset_file_image>("/api/doodle/data/asset/{}/file/image"_url(&doodle_data_asset_file_image::id_
-      ))
+      .reg_t<doodle_data_asset_file_image>("/api/doodle/data/asset/{}/file/image"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
       .reg_t<doodle_file_association>("/api/doodle/file_association/{}"_url(&doodle_file_association::id_))
       .reg_t<doodle_file>("/api/doodle/file"_url)
 
-      .reg_t<dingding_attendance_get>(
-          "/api/doodle/attendance/{}/{}"_url(&dingding_attendance_get::user_id_, &dingding_attendance_get::year_month_)
-      )
+      .reg_t<dingding_attendance_get>("/api/doodle/attendance/{}/{}"_url(&dingding_attendance_get::user_id_, &dingding_attendance_get::year_month_))
       .reg_t<dingding_attendance_create_post>("/api/doodle/attendance/{}"_url(&dingding_attendance_create_post::id_))
       .reg_t<dingding_attendance_id_custom>("/api/doodle/attendance/{}/custom"_url(&dingding_attendance_id_custom::id_))
       .reg_t<dingding_attendance_custom>("/api/doodle/attendance/custom/{}"_url(&dingding_attendance_custom::id_))
-      .reg_t<computing_time>(
-          "/api/doodle/computing_time/{}/{}"_url(&computing_time::user_id_, &computing_time::year_month_)
-      )
-      .reg_t<computing_time_add>(
-          "/api/doodle/computing_time/{}/{}/add"_url(&computing_time_add::user_id_, &computing_time_add::year_month_)
-      )
-      .reg_t<computing_time_custom>("/api/doodle/computing_time/{}/{}/custom"_url(
-          &computing_time_custom::user_id_, &computing_time_custom::year_month_
-      ))
-      .reg_t<computing_time_sort>(
-          "/api/doodle/computing_time/{}/{}/sort"_url(&computing_time_sort::user_id_, &computing_time_sort::year_month_)
-      )
-      .reg_t<computing_time_average>("/api/doodle/computing_time/{}/{}/average"_url(
-          &computing_time_average::user_id_, &computing_time_average::year_month_
-      ))
-      .reg_t<computing_time_patch>("/api/doodle/computing_time/{}/{}/{}"_url(
-          &computing_time_patch::user_id_, &computing_time_patch::year_month_, &computing_time_patch::task_id_
-      ))
+      .reg_t<computing_time>("/api/doodle/computing_time/{}/{}"_url(&computing_time::user_id_, &computing_time::year_month_))
+      .reg_t<computing_time_add>("/api/doodle/computing_time/{}/{}/add"_url(&computing_time_add::user_id_, &computing_time_add::year_month_))
+      .reg_t<computing_time_custom>("/api/doodle/computing_time/{}/{}/custom"_url(&computing_time_custom::user_id_, &computing_time_custom::year_month_))
+      .reg_t<computing_time_sort>("/api/doodle/computing_time/{}/{}/sort"_url(&computing_time_sort::user_id_, &computing_time_sort::year_month_))
+      .reg_t<computing_time_average>("/api/doodle/computing_time/{}/{}/average"_url(&computing_time_average::user_id_, &computing_time_average::year_month_))
+      .reg_t<computing_time_patch>("/api/doodle/computing_time/{}/{}/{}"_url(&computing_time_patch::user_id_, &computing_time_patch::year_month_, &computing_time_patch::task_id_))
       .reg_t<computing_time_delete>("/api/doodle/computing_time/{}"_url(&computing_time_delete::id_))
 
       .reg_t<model_library::context>("/api/doodle/model_library/context"_url)
       .reg_t<model_library::model_library_assets>("/api/doodle/model_library/assets"_url)
-      .reg_t<model_library::model_library_assets_instance>(
-          "/api/doodle/model_library/assets/{}"_url(&model_library::model_library_assets_instance::id_)
-      )
+      .reg_t<model_library::model_library_assets_instance>("/api/doodle/model_library/assets/{}"_url(&model_library::model_library_assets_instance::id_))
       .reg_t<model_library::model_library_assets_tree>("/api/doodle/model_library/assets_tree"_url)
-      .reg_t<model_library::model_library_assets_tree_instance>(
-          "/api/doodle/model_library/assets_tree/{}"_url(&model_library::model_library_assets_tree_instance::id_)
-      )
-      .reg_t<model_library::assets_tree_link>("/api/doodle/model_library/assets_tree/{}/assets/{}"_url(
-          &model_library::assets_tree_link::id_, &model_library::assets_tree_link::assets_id_
-      ))
-      .reg_t<model_library::pictures_instance>(
-          "/api/doodle/pictures/{}"_url(&model_library::pictures_instance::id_), l_ctx.root_
-      )
-      .reg_t<model_library::pictures_thumbnails>(
-          "/api/doodle/pictures/thumbnails/{}"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_
-      )
+      .reg_t<model_library::model_library_assets_tree_instance>("/api/doodle/model_library/assets_tree/{}"_url(&model_library::model_library_assets_tree_instance::id_))
+      .reg_t<model_library::assets_tree_link>("/api/doodle/model_library/assets_tree/{}/assets/{}"_url(&model_library::assets_tree_link::id_, &model_library::assets_tree_link::assets_id_))
+      .reg_t<model_library::pictures_instance>("/api/doodle/pictures/{}"_url(&model_library::pictures_instance::id_), l_ctx.root_)
+      .reg_t<model_library::pictures_thumbnails>("/api/doodle/pictures/thumbnails/{}"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_)
 
       /// 杂项
       .reg_t<other::deepseek_key>("/api/doodle/deepseek/key"_url)
       .reg_t<other::key_ji_meng>("/api/doodle/key/ji_meng"_url)
 
       /// 模拟 kitsu后端
-      .reg_t<actions_user_notifications_mark_all_as_read_post>()
-      .reg_t<actions_projects_tasks_comment_many_post>()
-      .reg_t<data_tasks_comments_ack_post>()
-      .reg_t<data_projects_team_post>()
+      .reg_t<actions_user_notifications_mark_all_as_read>("/api/actions/user/notifications/mark-all-as-read"_url)
+      .reg_t<actions_projects_tasks_comment_many>("/api/actions/projects/{}/tasks/comment-many"_url(&actions_projects_tasks_comment_many::id_))
+      .reg_t<data_tasks_comments_ack>("/api/data/tasks/{}/comments/{}/ack"_url(&data_tasks_comments_ack::task_id_, &data_tasks_comments_ack::comment_id_))
+      .reg_t<data_projects_team>("/api/data/projects/{}/team"_url(&data_projects_team::id_))
 
       // post
-      .reg_t<auth_login_post>()
-      .reg_t<data_projects_post>()
-      .reg_t<data_project_settings_task_types_post>()
-      .reg_t<data_project_settings_task_status_post>()
-      .reg_t<data_project_settings_asset_types_post>()
-      .reg_t<actions_create_tasks_post>()
-      .reg_t<projects_assets_new_post>()
-      .reg_t<actions_tasks_comment_post>()
-      .reg_t<actions_tasks_comments_add_preview_post>()
-      .reg_t<pictures_preview_files_post>()
-      .reg_t<data_task_status_links_post>()
-      .reg_t<auth_reset_password_post>()
-      .reg_t<data_person_post>()
-      .reg_t<actions_tasks_comments_preview_files_post>()
+      .reg_t<auth_login>("/api/auth/login"_url)
+      .reg_t<data_projects>("/api/data/projects"_url)
+      .reg_t<data_project_settings_task_types>("/api/data/projects/{}/settings/task-types"_url(&data_project_settings_task_types::id_))
+      .reg_t<data_project_settings_task_status>("/api/data/projects/{}/settings/task-status"_url(&data_project_settings_task_status::id_))
+      .reg_t<data_project_settings_asset_types>("/api/data/projects/{}/settings/asset-types"_url(&data_project_settings_asset_types::id_))
+      .reg_t<actions_create_tasks>("/api/actions/projects/{}/task-types/{}/assets/create-tasks"_url(&actions_create_tasks::project_id_, &actions_create_tasks::task_type_id_))
+      .reg_t<projects_assets_new>("/api/data/projects/{}/asset-types/{}/assets/new"_url(&projects_assets_new::project_id_, &projects_assets_new::asset_type_id_))
+      .reg_t<actions_tasks_comment>("/api/actions/tasks/{}/comment"_url(&actions_tasks_comment::id_))
+      .reg_t<actions_tasks_comments_add_preview>("/api/actions/tasks/{}/comments/{}/add-preview"_url(&actions_tasks_comments_add_preview::task_id_, &actions_tasks_comments_add_preview::comment_id_))
+      .reg_t<pictures_preview_files>("/api/pictures/preview-files/{}"_url(&pictures_preview_files::id_))
+      .reg_t<data_task_status_links>("/api/data/task-status-links"_url)
+      .reg_t<auth_reset_password>("/api/auth/reset-password"_url)
+      .reg_t<data_person>("/api/data/persons"_url)
+      .reg_t<actions_tasks_comments_preview_files>("/api/actions/tasks/{}/comments/{}/preview-files/{}"_url(&actions_tasks_comments_preview_files::task_id_, &actions_tasks_comments_preview_files::comment_id_, &actions_tasks_comments_preview_files::preview_file_id_))
       // put
-      .reg_t<data_comment_put>()
-      .reg_t<project_put>()
-      .reg_t<data_tasks_put>()
-      .reg_t<actions_persons_assign_put>()
-      .reg_t<actions_preview_files_set_main_preview_put>()
-      .reg_t<data_entities_put>()
-      .reg_t<auth_reset_password_put>()
-      .reg_t<data_person_put>()
-      .reg_t<actions_tasks_clear_assignation_put>()
-      .reg_t<data_user_notification_put>()
+      .reg_t<data_comment>("/api/data/comments/{}"_url(&data_comment::id_))
+      .reg_t<project>("/api/data/projects/{}"_url(&project::id_))
+      .reg_t<data_tasks>("/api/data/tasks/{}"_url(&data_tasks::id_))
+      .reg_t<actions_persons_assign>("/api/actions/persons/{}/assign"_url(&actions_persons_assign::id_))
+      .reg_t<actions_preview_files_set_main_preview>("/api/actions/preview-files/{}/set-main-preview"_url(&actions_preview_files_set_main_preview::id_))
+      .reg_t<data_entities>("/api/data/entities/{}"_url(&data_entities::id_))
+      .reg_t<auth_reset_password>("/api/auth/reset-password"_url)
+      .reg_t<data_person>("/api/data/persons"_url)
+      .reg_t<actions_tasks_clear_assignation>("/api/actions/tasks/clear-assignation"_url)
+      .reg_t<data_user_notification>("/api/data/user/notifications/{}"_url(&data_user_notification::id_))
 
       // get
-      .reg_t<with_tasks_get>()
-      .reg_t<asset_details_get>()
-      .reg_t<project_all_get>()
-      .reg_t<data_project_get>()
-      .reg_t<shared_used_get>()
-      .reg_t<authenticated_get>()
-      .reg_t<organisations_get>()
-      .reg_t<config_get>()
-      .reg_t<data_user_tasks_get>()
-      .reg_t<data_user_done_tasks_get>()
-      .reg_t<data_user_time_spents_all_get>()
-      .reg_t<data_user_time_spents_get>()
-      .reg_t<tasks_to_check_get>()
-      .reg_t<person_day_off_get>()
-      .reg_t<person_all_get>()
-      .reg_t<person_day_off_all_get>()
-      .reg_t<person_time_spents_day_table_get>()
-      .reg_t<person_day_off_1_get>()
-      .reg_t<departments_get>()
-      .reg_t<studios_get>()
-      .reg_t<task_types_get>()
-      .reg_t<custom_actions_get>()
-      .reg_t<status_automations_get>()
-      .reg_t<tasks_comments_get>()
-      .reg_t<user_context_get>()
-      .reg_t<sequences_with_tasks_get>()
-      .reg_t<pictures_thumbnails_organisations_get>()
-      .reg_t<pictures_thumbnails_square_preview_files_get>()
-      .reg_t<pictures_thumbnails_preview_files_get>()
-      .reg_t<pictures_thumbnails_persons_get>()
-      .reg_t<playlists_entities_preview_files_get>()
-      .reg_t<pictures_originals_preview_files_download_get>()
-      .reg_t<pictures_previews_preview_files_get>()
-      .reg_t<data_attachment_files_file_get>()
-      .reg_t<data_project_schedule_items_task_types_get>()
-      .reg_t<data_project_schedule_items_get>()
-      .reg_t<data_project_milestones_get>()
-      .reg_t<data_tasks_open_tasks_get>()
-      .reg_t<data_assets_cast_in_get>()
-      .reg_t<data_entities_news_get>()
-      .reg_t<pictures_originals_preview_files_get>()
-      .reg_t<data_user_notifications_get>()
-      .reg_t<data_tasks_full_get>()
-      .reg_t<data_comment_get>()
-      .reg_t<auth_logout_get>()
-      .reg_t<data_shots_with_tasks_get>()
-      .reg_t<movies_originals_preview_files_get>()
-      .reg_t<movies_low_preview_files_get>()
-      .reg_t<movies_tiles_preview_files_get>()
+      .reg_t<with_tasks>("/api/data/assets/with-tasks"_url)
+      .reg_t<asset_details>("/api/data/assets/{}"_url(&asset_details::id_))
+      .reg_t<project_all>("/api/data/projects/all"_url)
+      .reg_t<data_project>("/api/data/projects/{}"_url(&data_project::id_))
+      .reg_t<shared_used>("/api/data/projects/{}/assets/shared-used"_url(&shared_used::id_))
+      .reg_t<authenticated>("/api/auth/authenticated"_url)
+      .reg_t<organisations>("/api/data/organisations"_url)
+      .reg_t<config>("/api/config"_url)
+      .reg_t<data_user_tasks>("/api/data/user/tasks"_url)
+      .reg_t<data_user_done_tasks>("/api/data/user/done-tasks"_url)
+      .reg_t<data_user_time_spents_all>("/api/data/user/time-spents"_url)
+      .reg_t<data_user_time_spents>("/api/data/user/time-spents/{}"_url(&data_user_time_spents::date_))
+      .reg_t<tasks_to_check>("/api/data/user/tasks-to-check"_url)
+      .reg_t<person_day_off>("/api/data/persons/{}/day-offs/{}"_url(&person_day_off::id_, &person_day_off::date_))
+      .reg_t<person_all>("/api/data/persons"_url)
+      .reg_t<person_day_off_all>("/api/data/persons/{}/day-offs"_url(&person_day_off_all::id_))
+      .reg_t<person_time_spents_day_table>("/api/data/persons/time-spents/day-table/{}/{}"_url(&person_time_spents_day_table::year_, &person_time_spents_day_table::month_))
+      .reg_t<person_day_off_1>("/api/data/persons/day-offs/{}/{}"_url(&person_day_off_1::year_, &person_day_off_1::month_))
+      .reg_t<departments>("/api/data/departments"_url)
+      .reg_t<studios>("/api/data/studios"_url)
+      .reg_t<task_types>("/api/data/task-types"_url)
+      .reg_t<custom_actions>("/api/data/custom-actions"_url)
+      .reg_t<status_automations>("/api/data/status-automations"_url)
+      .reg_t<tasks_comments>("/api/data/tasks/{}/comments"_url(&tasks_comments::id_))
+      .reg_t<user_context>("/api/data/user/context"_url)
+      .reg_t<sequences_with_tasks>("/api/data/sequences/with-tasks"_url)
+      .reg_t<pictures_thumbnails_organisations>("/api/pictures/thumbnails/organisations/{}"_url(&pictures_thumbnails_organisations::id_))
+      .reg_t<pictures_thumbnails_square_preview_files>("/api/pictures/thumbnails-square/preview-files/{}"_url(&pictures_thumbnails_square_preview_files::id_))
+      .reg_t<pictures_thumbnails_preview_files>("/api/pictures/thumbnails/preview-files/{}"_url(&pictures_thumbnails_preview_files::id_))
+      .reg_t<pictures_thumbnails_persons>("/api/pictures/thumbnails/persons/{}"_url(&pictures_thumbnails_persons::id_))
+      .reg_t<playlists_entities_preview_files>("/api/data/playlists/entities/{}/preview-files"_url(&playlists_entities_preview_files::id_))
+      .reg_t<pictures_originals_preview_files_download>("/api/pictures/originals/preview-files/{}/download"_url(&pictures_originals_preview_files_download::id_))
+      .reg_t<pictures_previews_preview_files>("/api/pictures/previews/preview-files/{}"_url(&pictures_previews_preview_files::id_))
+      .reg_t<data_attachment_files_file>("/api/data/attachment-files/{}/file/{}"_url(&data_attachment_files_file::id_, &data_attachment_files_file::file_name_))
+      .reg_t<data_project_schedule_items_task_types>("/api/data/projects/{}/schedule-items/task-types"_url(&data_project_schedule_items_task_types::id_))
+      .reg_t<data_project_schedule_items>("/api/data/projects/{}/schedule-items"_url(&data_project_schedule_items::id_))
+      .reg_t<data_project_milestones>("/api/data/projects/{}/milestones"_url(&data_project_milestones::id_))
+      .reg_t<data_tasks_open_tasks>("/api/data/tasks/open-tasks"_url)
+      .reg_t<data_assets_cast_in>("/api/data/assets/{}/cast-in"_url(&data_assets_cast_in::id_))
+      .reg_t<data_entities_news>("/api/data/entities/{}/news"_url(&data_entities_news::id_))
+      .reg_t<pictures_originals_preview_files>("/api/pictures/originals/preview-files/{}"_url(&pictures_originals_preview_files::id_))
+      .reg_t<data_user_notifications>("/api/data/user/notifications"_url)
+      .reg_t<data_tasks_full>("/api/data/tasks/{}/full"_url(&data_tasks_full::id_))
+      .reg_t<data_comment>("/api/data/comments/{}"_url(&data_comment::id_))
+      .reg_t<auth_logout>("/api/auth/logout"_url)
+      .reg_t<data_shots_with_tasks>("/api/data/shots/with-tasks"_url)
+      .reg_t<movies_originals_preview_files>("/api/movies/originals/preview-files/{}.mp4"_url(&movies_originals_preview_files::id_))
+      .reg_t<movies_low_preview_files>("/api/movies/low/preview-files/{}.mp4"_url(&movies_low_preview_files::id_))
+      .reg_t<movies_tiles_preview_files>("/api/movies/tiles/preview-files/{}.png"_url(&movies_tiles_preview_files::id_))
 
       // delete
-      .reg_t<task_comment_delete_>()
-      .reg_t<data_asset_delete_>()
-      .reg_t<project_settings_task_types_delete_>()
-      .reg_t<data_task_delete_>()
-      .reg_t<data_project_team_person_delete_>()
+      .reg_t<task_comment>("/api/data/tasks/{}/comments/{}"_url(&task_comment::task_id_, &task_comment::comment_id_))
+      .reg_t<data_asset>("/api/data/assets/{}"_url(&data_asset::id_))
+      .reg_t<project_settings_task_types>("/api/data/projects/{}/settings/task-types/{}"_url(&project_settings_task_types::project_id_, &project_settings_task_types::task_type_id_))
+      .reg_t<data_task>("/api/data/tasks/{}"_url(&data_task::id_))
+      .reg_t<data_project_team_person>("/api/data/projects/{}/team/{}"_url(&data_project_team_person::project_id_, &data_project_team_person::person_id_))
 
       // 最后注册nodejs前端
-      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
-      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr);
-
+      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>())
+      // clang-format on
+      ;
   return l_router;
 }
 
@@ -204,27 +180,20 @@ http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/socket.io/");
-  (*l_rout_ptr)                                           //
-      .reg(std::make_shared<local::local_setting_get>())  //
-      .reg(std::make_shared<local::local_setting_post>())
-      .reg(std::make_shared<local::video_thumbnail_post>())
-      .reg(std::make_shared<local::video_thumbnail_get>())
+  (*l_rout_ptr)                                                      //
+      .reg_t<local::local_setting>("/api/doodle/local_setting"_url)  //
+      .reg_t<local::video_thumbnail>("/api/doodle/video/thumbnail"_url)
 
       ;
 
   if (g_ctx().get<authorization>().is_expire())
     (*l_rout_ptr)
-        .reg(std::make_shared<local::task_get>())
-        .reg(std::make_shared<local::task_post>())
-        .reg(std::make_shared<local::task_patch>())
-        .reg(std::make_shared<local::task_delete_>())
-        .reg(std::make_shared<local::task_instance_get>())
-        .reg(std::make_shared<local::task_instance_log_get>())
-        .reg(std::make_shared<local::task_instance_restart_post>())
+        .reg_t<local::task>("/api/doodle/task"_url)
+        .reg_t<local::task_instance>("/api/doodle/task/{}"_url(&local::task_instance::id_))
+        .reg_t<local::task_instance_restart>("/api/doodle/task/{}/restart"_url(&local::task_instance_restart::id_))
+        .reg_t<local::task_instance_log>("/api/doodle/task/{}/restart"_url(&local::task_instance_log::id_))
 
-        .reg_t<socket_io::socket_io_http_get>(l_sid_ctx)
-        .reg_t<socket_io::socket_io_http_post>(l_sid_ctx)
-        .reg_t<socket_io::socket_io_http_put>(l_sid_ctx)
+        .reg_t<socket_io::socket_io_http>(R"("/socket\.io/")"_url, l_sid_ctx)
 
         ;
   return l_rout_ptr;
@@ -235,16 +204,15 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   auto l_root_ptr = std::make_shared<FSys::path>(in_root);
 
   (*l_router)
-      .reg_t<doodle_tool_version_get>()
+      .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
 
       // 外包
-      .reg_t<epiboly_config_get>()
-      .reg_t<epiboly_authenticated_get>()
-      .reg_t<epiboly_user_context_get>()
+      .reg_t<epiboly_config>("/api/config"_url)
+      .reg_t<epiboly_authenticated>("/api/auth/authenticated"_url)
+      .reg_t<epiboly_user_context>("/api/data/user/context"_url)
 
       // 最后注册nodejs前端
-      .reg_t<get_files_kitsu_front_end>(l_root_ptr)
-      .reg_t<get_files_head_kitsu_front_end>(l_root_ptr)
+      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>())
 
       ;
 
