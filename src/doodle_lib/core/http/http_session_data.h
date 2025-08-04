@@ -144,13 +144,13 @@ class session_data : public std::enable_shared_from_this<session_data> {
     return l_res;
   }
 
-  boost::beast::http::message_generator make_msg(const FSys::path& in_path, const std::string_view& mine_type);
+  boost::beast::http::message_generator make_msg(const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control = true);
 
   boost::beast::http::response<boost::beast::http::file_body> make_file(
-      const FSys::path& in_path, const std::string_view& mine_type
+      const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
   );
   boost::beast::http::response<zlib_deflate_file_body> make_file_deflate(
-      const FSys::path& in_path, const std::string_view& mine_type
+      const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
   );
 };
 

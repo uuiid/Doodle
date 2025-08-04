@@ -34,7 +34,7 @@ FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost
 
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()), false);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());

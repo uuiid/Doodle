@@ -38,6 +38,8 @@ struct work_xlsx_task_info_helper_t {
   decltype(entity_asset_extend::ji_du_) entity_ji_du_;
   decltype(entity_asset_extend::kai_shi_ji_shu_) entity_kai_shi_ji_shu_;
 
+  decltype(task_type::uuid_id_) task_type_id_;
+
   decltype(project::uuid_id_) project_uuid_;
   decltype(project::name_) project_name_;
 
@@ -66,6 +68,7 @@ struct work_xlsx_task_info_helper_t {
     j["entity_ban_ben"]            = p.entity_ban_ben_;
     j["entity_ji_du"]              = p.entity_ji_du_;
     j["entity_kai_shi_ji_shu"]     = p.entity_kai_shi_ji_shu_;
+    j["task_type_id"]              = p.task_type_id_;
     j["project_uuid"]              = p.project_uuid_;
     j["project_name"]              = p.project_name_;
     j["id"]                        = p.id_;
@@ -122,7 +125,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 
            task_id_, task_name_, task_last_preview_file_id_,
 
-           entity_id_, entity_name_,
+           entity_id_, entity_name_, task_type_id_,
 
            entity_ji_shu_lie_, entity_deng_ji_, entity_gui_dang_, entity_bian_hao_, entity_pin_yin_ming_cheng_,
            entity_ban_ben_, entity_ji_du_, entity_kai_shi_ji_shu_,
@@ -134,7 +137,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
            columns(
                &task::uuid_id_, &task::name_, &task::last_preview_file_id_,
 
-               &entity::uuid_id_, &entity::name_,
+               &entity::uuid_id_, &entity::name_, &task_type::uuid_id_,
 
                &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
                &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_,
@@ -144,6 +147,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 
            ),
            from<task>(), join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+           join<task_type>(on(c(&task_type::uuid_id_) == c(&task::task_type_id_))),
            left_outer_join<entity_asset_extend>(on(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_)),
            join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))), where(in(&task::uuid_id_, l_task_ids))
        )) {
@@ -164,6 +168,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
             .entity_ban_ben_            = entity_ban_ben_,
             .entity_ji_du_              = entity_ji_du_,
             .entity_kai_shi_ji_shu_     = entity_kai_shi_ji_shu_,
+            .task_type_id_              = task_type_id_,
 
             .project_uuid_              = project_uuid_,
             .project_name_              = project_name_,
@@ -749,7 +754,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_del
 ) {
   work_xlsx_task_info_helper::database_t l_task =
       g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(id_);
-  nlohmann::json l_json_res{};
   co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
   chrono::year_month_day l_year_month_day{l_task.year_month_};
   chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
