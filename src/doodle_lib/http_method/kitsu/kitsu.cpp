@@ -43,7 +43,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/events");
   (*l_router)
-
+      // 我们自己的后端
       .reg_t<socket_io::socket_io_http>(R"("/socket\.io/")"_url, l_sid_ctx)
       .reg_t<doodle_data_asset_file_maya>("/api/doodle/data/asset/{}/file/maya"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_ue>("/api/doodle/data/asset/{}/file/ue"_url(&doodle_data_asset_file_image::id_))
@@ -97,40 +97,17 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<model_library::pictures_thumbnails>(
           "/api/doodle/pictures/thumbnails/{}"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_
       )
-      // 我们自己的后端
-      .reg_t<model_library::context_get>()
 
-      .reg_t<model_library::assets_get>()
-      .reg_t<model_library::assets_post>()
-      .reg_t<model_library::assets_put>()
-      .reg_t<model_library::assets_delete_>()
+      /// 杂项
+      .reg_t<other::deepseek_key>("/api/doodle/deepseek/key"_url)
+      .reg_t<other::key_ji_meng>("/api/doodle/key/ji_meng"_url)
 
-      .reg_t<model_library::assets_tree_get>()
-      .reg_t<model_library::assets_tree_post>()
-      .reg_t<model_library::assets_tree_put>()
-      .reg_t<model_library::assets_tree_delete_>()
-
-      .reg_t<model_library::pictures_post>(l_ctx.root_)
-      .reg_t<model_library::pictures_get>(l_ctx.root_)
-      .reg_t<model_library::pictures_thumbnails_get>(l_ctx.root_)
-
-      .reg_t<model_library::assets_tree_link_post>()
-      .reg_t<model_library::assets_tree_link_delete_>()
-
-      //
-
+      /// 模拟 kitsu后端
       .reg_t<actions_user_notifications_mark_all_as_read_post>()
       .reg_t<actions_projects_tasks_comment_many_post>()
       .reg_t<data_tasks_comments_ack_post>()
       .reg_t<data_projects_team_post>()
 
-      .reg_t<deepseek_key_get>()
-      .reg_t<other::key_ji_meng_get>()
-      .reg_t<up_file_asset_image_post>()
-      .reg_t<up_file_asset_maya_post>()
-      .reg_t<up_file_asset_ue_post>()
-
-      /// 模拟 kitsu后端
       // post
       .reg_t<auth_login_post>()
       .reg_t<data_projects_post>()

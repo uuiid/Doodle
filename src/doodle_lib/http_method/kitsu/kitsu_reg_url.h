@@ -361,10 +361,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(config, get, ucom_t{} / "api" / "config", http_jwt_fun_template<void>)
 boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
-// api/doodle/deepseek/key
-DOODLE_HTTP_FUN(deepseek_key, get, ucom_t{} / "api" / "doodle" / "deepseek" / "key", http_jwt_fun_template<void>)
-boost::asio::awaitable<boost::beast::http::message_generator> callback_arg(session_data_ptr in_handle) override;
-DOODLE_HTTP_FUN_END()
+
 // api/data/playlists/entities/{id}/preview-files
 DOODLE_HTTP_FUN(
     playlists_entities_preview_files, get,
