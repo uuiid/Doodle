@@ -23,9 +23,8 @@ struct video_thumbnail_arg_t {
     j["time"].get_to(p.time_);
   }
 };
-boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_post::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::post(session_data_ptr in_handle) {
+  init_ctx();
   auto l_arg = in_handle->get_json().get<video_thumbnail_arg_t>();
   if (!exists(l_arg.video_path_))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
@@ -50,11 +49,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_po
   g_ctx().get<video_thumbnail_cache>().Put(video_thumbnail_cache_id, l_buffer);
   co_return in_handle->make_msg(std::move(l_buffer), "image/png", boost::beast::http::status::ok);
 }
-void video_thumbnail_get::init_ctx() { g_ctx().emplace<video_thumbnail_cache>(); }
+void video_thumbnail::init_ctx() {
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, []() { g_ctx().emplace<video_thumbnail_cache>(); });
+}
 
-boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail_get::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::get(session_data_ptr in_handle) {
+  init_ctx();
   auto& l_cache = g_ctx().get<video_thumbnail_cache>();
   if (l_cache.Cached(video_thumbnail_cache_id)) {
     auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);

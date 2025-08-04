@@ -18,9 +18,7 @@
 
 namespace doodle::http::local {
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting_get::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get(session_data_ptr in_handle) {
   FSys::path l_maya_path{};
   try {
     l_maya_path = maya_exe_ns::find_maya_path();
@@ -39,15 +37,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting_get:
   );
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> local_setting_post::callback_arg(
-    session_data_ptr in_handle
-) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json) {
-    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "不是json请求");
-  }
-
+boost::asio::awaitable<boost::beast::http::message_generator> local_setting::post(session_data_ptr in_handle) {
   auto& l_set        = core_set::get_set();
-  auto& l_json       = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json        = in_handle->get_json();
   l_set.p_max_thread = l_json["maya_parallel_quantity"];
   g_ctx().get<maya_ctx>().queue_->set_limit(l_set.p_max_thread);
   auto& l_au = g_ctx().get<authorization>();
