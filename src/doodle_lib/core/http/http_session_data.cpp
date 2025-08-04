@@ -59,11 +59,17 @@ auto set_response_header(T& in_res, std::string_view in_mine_type) {
   in_res.set(boost::beast::http::field::date, fmt::format("{:%a, %d %b %Y %T} GMT", l_time));
 }
 template <typename T>
-auto set_response_file_header(T& in_res, std::string_view in_mine_type, const FSys::path& in_path) {
+auto set_response_file_header(
+    T& in_res, std::string_view in_mine_type, const FSys::path& in_path, bool has_cache_control
+) {
   set_response_header(in_res, in_mine_type);
   auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
-  in_res.set(boost::beast::http::field::cache_control, "public,max-age=300");
-  in_res.set(boost::beast::http::field::expires, fmt::format("{:%a, %d %b %Y %T} GMT", l_time + chrono::seconds{300}));
+  if (has_cache_control) {
+    in_res.set(boost::beast::http::field::cache_control, "public,max-age=300");
+    in_res.set(
+        boost::beast::http::field::expires, fmt::format("{:%a, %d %b %Y %T} GMT", l_time + chrono::seconds{300})
+    );
+  }
   auto l_last_time =
       chrono::floor<chrono::seconds>(FSys::file_time_type::clock::to_utc(FSys::last_write_time(in_path)));
   in_res.set(boost::beast::http::field::last_modified, fmt::format("{:%a, %d %b %Y %T} GMT", l_last_time));
@@ -288,15 +294,15 @@ std::string session_data::zlib_compress(const std::string& in_str) {
   return compressed.str();
 }
 boost::beast::http::message_generator session_data::make_msg(
-    const FSys::path& in_path, const std::string_view& mine_type
+    const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
 ) {
   // if (is_deflate()) return make_file_deflate(in_path, mine_type);
   if (!FSys::exists(in_path)) return make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
-  return make_file(in_path, mine_type);
+  return make_file(in_path, mine_type, has_cache_control);
 }
 
 boost::beast::http::response<boost::beast::http::file_body> session_data::make_file(
-    const FSys::path& in_path, const std::string_view& mine_type
+    const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
 ) {
   if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found, "文件不存在"});
   boost::system::error_code l_code{};
@@ -331,7 +337,7 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
       );
     }
 
-  set_response_file_header(l_res, mine_type, in_path);
+  set_response_file_header(l_res, mine_type, in_path, has_cache_control);
 
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
@@ -339,7 +345,7 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
 }
 
 boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_deflate(
-    const FSys::path& in_path, const std::string_view& mine_type
+    const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
 ) {
   if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found, "文件不存在"});
   boost::system::error_code l_code{};
@@ -352,7 +358,7 @@ boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_def
             fmt::format("无法打开文件 {} {}", in_path.generic_string(), l_code.message())
         }
     );
-  set_response_file_header(l_res, mine_type, in_path);
+  set_response_file_header(l_res, mine_type, in_path, has_cache_control);
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
   return l_res;

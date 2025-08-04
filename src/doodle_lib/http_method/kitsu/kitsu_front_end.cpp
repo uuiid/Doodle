@@ -34,7 +34,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> get_files_kitsu_fr
     http::session_data_ptr in_handle
 ) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()), false);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> get_files_head_kitsu_front_end::callback(
     session_data_ptr in_handle
