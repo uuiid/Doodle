@@ -122,7 +122,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_task_status_links_post>()
       .reg_t<auth_reset_password_post>()
       .reg_t<data_person_post>()
-      .reg_t<socket_io::socket_io_http_post>(l_sid_ctx)
       .reg_t<actions_tasks_comments_preview_files_post>()
       // put
       .reg_t<data_comment_put>()
@@ -135,7 +134,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_person_put>()
       .reg_t<actions_tasks_clear_assignation_put>()
       .reg_t<data_user_notification_put>()
-      .reg_t<socket_io::socket_io_http_put>(l_sid_ctx)
 
       // get
       .reg_t<with_tasks_get>()
@@ -187,7 +185,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<movies_originals_preview_files_get>()
       .reg_t<movies_low_preview_files_get>()
       .reg_t<movies_tiles_preview_files_get>()
-      .reg_t<socket_io::socket_io_http_get>(l_sid_ctx)
 
       // delete
       .reg_t<task_comment_delete_>()
