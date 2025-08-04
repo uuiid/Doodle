@@ -11,8 +11,10 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 
+#include <doodle_lib/http_method/http_jwt_fun.h>
+
 namespace doodle::socket_io {
-DOODLE_HTTP_FUN(socket_io_http)
+DOODLE_HTTP_JWT_FUN(socket_io_http)
 using session_data_ptr = std::shared_ptr<http::session_data>;
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
