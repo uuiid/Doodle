@@ -71,6 +71,11 @@ struct preview_file {
         p.data_ = j;
         if (!p.data_.is_object()) p.data_.erase("id");
       }
+      // to json
+      friend void to_json(nlohmann::json& j, const object_t& p) {
+        j       = p.data_;
+        j["id"] = p.id_;
+      }
     };
     std::double_t time_;
     std::vector<object_t> objects_;
@@ -85,9 +90,16 @@ struct preview_file {
         }
       }
     }
+    // to json
+    friend void to_json(nlohmann::json& j, const annotations_t& p) {
+      j.update(p.other_data_);
+      j["time"]               = p.time_;
+      j["drawing"]["objects"] = p.objects_;
+    }
   };
 
   std::vector<annotations_t> get_annotations() const { return annotations_.get<std::vector<annotations_t>>(); }
+  void set_annotations(const std::vector<annotations_t>& annotations) { annotations_ = annotations; }
 
   // to json
   friend void to_json(nlohmann::json& j, const preview_file& p) {
