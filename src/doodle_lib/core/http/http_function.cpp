@@ -73,7 +73,7 @@ std::tuple<bool, std::shared_ptr<http_function>> url_route_component_t::set_matc
     boost::urls::segments_ref in_segments_ref, const std::shared_ptr<http_function>& in_data
 ) const {
   std::smatch l_result{};
-  auto l_url_path = FSys::path{in_segments_ref.url().path()}.generic_string();
+  auto l_url_path = in_segments_ref.url().path();
   if (!std::regex_match(l_url_path, l_result, url_regex_)) {
     return {false, {}};
   }

@@ -148,10 +148,11 @@ boost::asio::awaitable<void> session_data::run() {
 void session_data::set_session() {
   std::visit(
       [this](auto&& in_ptr) {
-        auto& l_req  = in_ptr->get();
-        version_     = l_req.version();
-        keep_alive_  = in_ptr->keep_alive();
-        url_         = boost::url{l_req.target()};
+        auto& l_req = in_ptr->get();
+        version_    = l_req.version();
+        keep_alive_ = in_ptr->keep_alive();
+        url_        = boost::urls::parse_origin_form(l_req.target()).value();
+        url_.normalize();
         method_verb_ = l_req.method();
         req_header_  = l_req.base();
       },
