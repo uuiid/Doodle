@@ -82,8 +82,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_projects_tasks_comment_many>("/api/actions/projects/{}/tasks/comment-many"_url(&actions_projects_tasks_comment_many::id_))
       .reg_t<data_tasks_comments_ack>("/api/data/tasks/{}/comments/{}/ack"_url(&data_tasks_comments_ack::task_id_, &data_tasks_comments_ack::comment_id_))
       .reg_t<data_projects_team>("/api/data/projects/{}/team"_url(&data_projects_team::id_))
-
-      // post
       .reg_t<auth_login>("/api/auth/login"_url)
       .reg_t<data_projects>("/api/data/projects"_url)
       .reg_t<data_project_settings_task_types>("/api/data/projects/{}/settings/task-types"_url(&data_project_settings_task_types::id_))
@@ -98,7 +96,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<auth_reset_password>("/api/auth/reset-password"_url)
       .reg_t<data_person>("/api/data/persons"_url)
       .reg_t<actions_tasks_comments_preview_files>("/api/actions/tasks/{}/comments/{}/preview-files/{}"_url(&actions_tasks_comments_preview_files::task_id_, &actions_tasks_comments_preview_files::comment_id_, &actions_tasks_comments_preview_files::preview_file_id_))
-      // put
       .reg_t<data_comment>("/api/data/comments/{}"_url(&data_comment::id_))
       .reg_t<data_project_instance>("/api/data/projects/{}"_url(&data_project_instance::id_))
       .reg_t<data_tasks>("/api/data/tasks/{}"_url(&data_tasks::id_))
@@ -108,8 +105,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_person_instance>("/api/data/persons/{}"_url(&data_person_instance::id_))
       .reg_t<actions_tasks_clear_assignation>("/api/actions/tasks/clear-assignation"_url)
       .reg_t<data_user_notification>("/api/data/user/notifications/{}"_url(&data_user_notification::id_))
-
-      // get
       .reg_t<with_tasks>("/api/data/assets/with-tasks"_url)
       .reg_t<asset_details>("/api/data/assets/{}"_url(&asset_details::id_))
       .reg_t<project_all>("/api/data/projects/all"_url)
@@ -156,12 +151,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<movies_originals_preview_files>("/api/movies/originals/preview-files/{}.mp4"_url(&movies_originals_preview_files::id_))
       .reg_t<movies_low_preview_files>("/api/movies/low/preview-files/{}.mp4"_url(&movies_low_preview_files::id_))
       .reg_t<movies_tiles_preview_files>("/api/movies/tiles/preview-files/{}.png"_url(&movies_tiles_preview_files::id_))
-
-      // delete
       .reg_t<task_comment>("/api/data/tasks/{}/comments/{}"_url(&task_comment::task_id_, &task_comment::comment_id_))
       .reg_t<project_settings_task_types>("/api/data/projects/{}/settings/task-types/{}"_url(&project_settings_task_types::project_id_, &project_settings_task_types::task_type_id_))
       .reg_t<data_project_team_person>("/api/data/projects/{}/team/{}"_url(&data_project_team_person::project_id_, &data_project_team_person::person_id_))
-
+      .reg_t<data_project_sequences>("/api/data/projects/{}/sequences"_url(&data_project_sequences::id_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

@@ -6,6 +6,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 namespace doodle::http {
@@ -155,9 +156,7 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks::get(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks::get(session_data_ptr in_handle) {
   auto& l_sql    = g_ctx().get<sqlite_database>();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence});
 
@@ -167,6 +166,50 @@ boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tas
 
   auto l_r = get_get_entities_and_tasks(person_.person_, l_project_uuid, l_type_id.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_r);
+}
+
+namespace {
+struct data_project_sequences_args {
+  uuid episode_id_{};
+  std::string name_{};
+  std::string description_{};
+  // form json
+  friend void from_json(const nlohmann::json& j, data_project_sequences_args& p) {
+    if (j.contains("episode_id")) j.at("episode_id").get_to(p.episode_id_);
+    j.at("name").get_to(p.name_);
+    j.at("description").get_to(p.description_);
+  }
+};
+}  // namespace
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::post(session_data_ptr in_handle) {
+  person_.is_project_access(id_);
+  auto& l_sql = g_ctx().get<sqlite_database>();
+  auto l_args = in_handle->get_json().get<data_project_sequences_args>();
+  using namespace sqlite_orm;
+  auto l_sq_list = l_sql.impl_->storage_any_.get_all<entity>(where(
+      c(&entity::entity_type_id_) ==
+          l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_ &&
+      c(&entity::parent_id_) == l_args.episode_id_ && c(&entity::project_id_) == id_ &&
+      c(&entity::name_) == l_args.name_
+  ));
+  auto l_entity_ptr = std::make_shared<entity>();
+  if (l_sq_list.empty()) {
+    l_entity_ptr->uuid_id_     = core_set::get_set().get_uuid();
+    l_entity_ptr->name_        = l_args.name_;
+    l_entity_ptr->description_ = l_args.description_;
+    l_entity_ptr->parent_id_   = l_args.episode_id_;
+    l_entity_ptr->project_id_  = id_;
+    l_entity_ptr->entity_type_id_ =
+        l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_;
+    l_entity_ptr->created_by_ = person_.person_.uuid_id_;
+    co_await l_sql.install(l_entity_ptr);
+    socket_io::broadcast(
+        "episode:new", nlohmann::json{{"sequence_id", l_entity_ptr->uuid_id_}, {"project_id", id_}}, "/events"
+    );
+  } else
+    *l_entity_ptr = l_sq_list.front();
+
+  co_return in_handle->make_msg(nlohmann::json{} = *l_entity_ptr);
 }
 
 }  // namespace doodle::http

@@ -393,5 +393,9 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid project_id_;
 uuid person_id_;
 DOODLE_HTTP_FUN_END()
-
+// /api/data/projects/{}/sequences
+DOODLE_HTTP_JWT_FUN(data_project_sequences)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
