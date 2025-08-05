@@ -36,7 +36,6 @@ namespace doodle::http {
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
-  auto l_root_ptr = std::make_shared<FSys::path>(in_root);
 
   auto l_router   = std::make_shared<http_route>();
   auto l_ctx      = g_ctx().get<kitsu_ctx_t>();
@@ -166,7 +165,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_project_team_person>("/api/data/projects/{}/team/{}"_url(&data_project_team_person::project_id_, &data_project_team_person::person_id_))
 
       // 最后注册nodejs前端
-      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>())
+      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
       ;
   return l_router;
@@ -197,8 +196,6 @@ http_route_ptr create_kitsu_local_route() {
 
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
   auto l_router   = std::make_shared<http_route>();
-  auto l_root_ptr = std::make_shared<FSys::path>(in_root);
-
   (*l_router)
       .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
 
@@ -208,7 +205,7 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
       .reg_t<epiboly_user_context>("/api/data/user/context"_url)
 
       // 最后注册nodejs前端
-      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>())
+      .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
 
       ;
 

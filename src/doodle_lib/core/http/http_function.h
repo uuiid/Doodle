@@ -119,9 +119,6 @@ class url_route_component_t : public url_route_component_base_t {
   component_vector_t component_vector_{};
   std::regex url_regex_{};
 
-  explicit url_route_component_t(const std::string& in_url_regex, const component_vector_t& in_component_vector)
-      : component_vector_(in_component_vector), url_regex_(in_url_regex) {}
-
   class initializer_t;
   friend url_route_component_t::initializer_t operator""_url(char const* in_str, std::size_t);
   class initializer_t {
@@ -188,6 +185,8 @@ class url_route_component_t : public url_route_component_base_t {
   };
 
  public:
+  explicit url_route_component_t(const std::string& in_url_regex, const component_vector_t& in_component_vector)
+      : component_vector_(in_component_vector), url_regex_(in_url_regex) {}
   // 初始化列表
   component_vector_t& component_vector() { return component_vector_; }
   const component_vector_t& component_vector() const { return component_vector_; }
