@@ -22,6 +22,8 @@ class http_route {
   std::vector<std::pair<url_route_component_ptr, http_function_ptr>> url_route_map_;
   http_function_ptr default_function_;
 
+  http_route& reg(url_route_component_ptr&& in_component, const http_function_ptr& in_function);
+
  public:
   virtual ~http_route() = default;
   /**
@@ -30,7 +32,6 @@ class http_route {
   http_route();
 
   // 注册路由
-  http_route& reg(url_route_component_ptr&& in_component, const http_function_ptr& in_function);
   template <typename T, typename... Args>
   http_route& reg_t(url_route_component_ptr&& in_component, Args&&... args) {
     return reg(std::forward<url_route_component_ptr>(in_component), std::make_shared<T>(std::forward<Args>(args)...));
