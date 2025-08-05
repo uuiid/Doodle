@@ -41,7 +41,7 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
   // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
-  person_ = {l_sql.uuid_to_id<person>(l_uuid)};
+  person_ = {l_sql.get_by_uuid<person>(l_uuid)};
 }
 
 
