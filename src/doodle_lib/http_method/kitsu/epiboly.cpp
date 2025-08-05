@@ -12,7 +12,7 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> epiboly_config_get::callback_arg(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_config::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg(R"(
 {
     "is_self_hosted": true,
@@ -26,14 +26,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_config_get
 }
 )"s);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> epiboly_authenticated_get::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_authenticated::get(
     session_data_ptr in_handle
 ) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::unauthorized, R"({
     "msg": "Missing JWT in cookies or headers Missing cookie \"access_token_cookie\"; Missing Authorization Header"
 })"s);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> epiboly_user_context_get::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_user_context::get(
     session_data_ptr in_handle
 ) {
   nlohmann::json l_json{};

@@ -236,8 +236,8 @@ class http_function_template : public Base {
   class fun_name : public ::doodle::http::http_function_template<fun_name, base_fun> { \
     using base_type = ::doodle::http::http_function_template<fun_name, base_fun>;      \
                                                                                        \
-   public:                                                                             \
-    fun_name() = default;
+   public:
+// fun_name() = default;
 
 #define DOODLE_HTTP_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function)
 #define DOODLE_HTTP_FUN_END() \

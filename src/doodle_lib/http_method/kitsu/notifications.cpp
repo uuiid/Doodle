@@ -185,28 +185,22 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifications_get::callback_arg(
-    session_data_ptr in_handle
-) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifications::get(session_data_ptr in_handle) {
   data_user_notifications_get_args l_args{};
   l_args.get_query_params(in_handle->url_.params());
-  auto l_ret = get_last_notifications_query(l_ptr->person_.uuid_id_, l_args);
+  auto l_ret = get_last_notifications_query(person_.person_.uuid_id_, l_args);
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification_put::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_ptr   = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
   auto l_sql   = g_ctx().get<sqlite_database>();
-  auto l_not   = std::make_shared<notification>(l_sql.get_by_uuid<notification>(in_arg->id_));
+  auto l_not   = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   l_not->read_ = in_handle->get_json().value<bool>("read", false);
   co_await l_sql.install(l_not);
   co_return in_handle->make_msg(nlohmann::json{} = *l_not);
 }
-boost::asio::awaitable<boost::beast::http::message_generator>
-actions_user_notifications_mark_all_as_read_post::callback_arg(session_data_ptr in_handle) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> actions_user_notifications_mark_all_as_read::post(
+    session_data_ptr in_handle
+) {
   auto l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.mark_all_notifications_as_read(l_ptr->person_.uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{{"success", true}});

@@ -322,7 +322,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::get
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_data_ptr in_handle) {
-  init_ctx();
   std::optional<server_task_info_type> l_type{};
   for (auto&& i : in_handle->url_.params()) {
     if (i.has_value && i.key == "type") {
@@ -349,7 +348,6 @@ void task::init_ctx() {
   });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::post(session_data_ptr in_handle) {
-  init_ctx();
   if (in_handle->content_type_ != http::detail::content_type::application_json)
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),

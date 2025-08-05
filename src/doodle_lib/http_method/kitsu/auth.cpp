@@ -74,11 +74,12 @@ struct auth_reset_password_put_arg {
   }
 };
 }  // namespace
-void auth_reset_password_post::init() { g_ctx().emplace<auth_reset_password_cache>(); }
+void auth_reset_password::init() {
+  static std::once_flag l_flag;
+  std::call_once(l_flag, []() { g_ctx().emplace<auth_reset_password_cache>(); });
+}
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_post::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::post(session_data_ptr in_handle) {
   auto l_email = in_handle->get_json()["email"].get<std::string>();
   auto l_sql   = g_ctx().get<sqlite_database>();
   person l_person;
@@ -108,9 +109,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
 
   co_return in_handle->make_msg(nlohmann::json{{"success", "Reset token sent"}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password_put::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::put(session_data_ptr in_handle) {
   auto l_arg   = in_handle->get_json().get<auth_reset_password_put_arg>();
   auto l_token = g_ctx().get<auth_reset_password_cache>().Get(l_arg.email);
   if (!(l_token && l_token->create_time_ + chrono::hours{2} > chrono::system_clock::now() &&
@@ -125,9 +124,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   g_ctx().get<auth_reset_password_cache>().Remove(l_arg.email);
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> auth_logout_get::callback_arg(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> auth_logout::get(session_data_ptr in_handle) {
   boost::beast::http::response<boost::beast::http::string_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };

@@ -12,6 +12,7 @@ DOODLE_HTTP_FUN_END()
 // /api/doodle/task
 DOODLE_HTTP_FUN(task)
 void init_ctx();
+task::task() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
@@ -36,6 +37,7 @@ DOODLE_HTTP_FUN_END()
 // /api/doodle/video/thumbnail
 DOODLE_HTTP_FUN(video_thumbnail)
 void init_ctx();
+video_thumbnail::video_thumbnail() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()

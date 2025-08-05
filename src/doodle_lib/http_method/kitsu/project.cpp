@@ -49,42 +49,29 @@ auto select_project_all_get_result(const std::string& in_name) {
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> project_all_get::callback_arg(
-    session_data_ptr in_handle
-) {
-  auto l_ptr = get_person(in_handle);
-  l_ptr->is_admin();
+boost::asio::awaitable<boost::beast::http::message_generator> project_all::get(session_data_ptr in_handle) {
+  person_.is_admin();
   co_return in_handle->make_msg(nlohmann::json{} = select_project_all_get_result({}));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_get::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_ptr  = get_person(in_handle);
-  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_);
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::get(session_data_ptr in_handle) {
+  auto l_list = g_ctx().get<sqlite_database>().get_by_uuid<project>(id_);
   nlohmann::json l_j{};
   l_j = l_list;
   l_j["project_status_name"] =
       g_ctx().get<sqlite_database>().get_by_uuid<project_status>(l_list.project_status_id_).name_;
   co_return in_handle->make_msg(l_list);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> project_put::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_ptr     = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::put(session_data_ptr in_handle) {
   auto l_sql     = g_ctx().get<sqlite_database>();
-  auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(in_arg->id_));
+  auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
   in_handle->get_json().get_to(*l_project);
   co_await l_sql.install(l_project);
   co_return in_handle->make_msg(nlohmann::json{} = *l_project);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_projects_post::callback_arg(
-    session_data_ptr in_handle
-) {
-  auto l_ptr = get_person(in_handle);
-  l_ptr->is_manager();
-
+boost::asio::awaitable<boost::beast::http::message_generator> data_projects::post(session_data_ptr in_handle) {
+  person_.is_manager();
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
@@ -92,68 +79,59 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_projects_post
   co_await g_ctx().get<sqlite_database>().install(l_prj);
   co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_task_types_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_task_types::post(
+    session_data_ptr in_handle
 ) {
-  auto l_ptr  = get_person(in_handle);
   auto l_json = in_handle->get_json();
-  l_ptr->is_project_manager(in_arg->id_);
+  person_.is_project_manager(id_);
   auto l_prj_task_type_link = std::make_shared<project_task_type_link>();
   l_json.get_to(*l_prj_task_type_link);
-  l_prj_task_type_link->project_id_ = in_arg->id_;
+  l_prj_task_type_link->project_id_ = id_;
   if (l_prj_task_type_link->uuid_id_.is_nil()) l_prj_task_type_link->uuid_id_ = core_set::get_set().get_uuid();
 
-  if (auto l_t =
-          g_ctx().get<sqlite_database>().get_project_task_type_link(in_arg->id_, l_prj_task_type_link->task_type_id_);
+  if (auto l_t = g_ctx().get<sqlite_database>().get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_);
       !l_t) {
     co_await g_ctx().get<sqlite_database>().install(l_prj_task_type_link);
   }
-  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
+  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(id_));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types_delete_::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<project_settings_task_types_arg> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types::delete_(
+    session_data_ptr in_handle
 ) {
-  auto l_ptr = get_person(in_handle);
-  l_ptr->is_project_manager(in_arg->project_id_);
-  if (auto l_t = g_ctx().get<sqlite_database>().get_project_task_type_link(in_arg->project_id_, in_arg->task_type_id_);
-      l_t)
+  person_.is_project_manager(project_id_);
+  if (auto l_t = g_ctx().get<sqlite_database>().get_project_task_type_link(project_id_, task_type_id_); l_t)
     co_await g_ctx().get<sqlite_database>().remove<project_task_status_link>(l_t->uuid_id_);
   co_return in_handle->make_msg_204();
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_task_status_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_task_status::post(
+    session_data_ptr in_handle
 ) {
-  auto l_ptr  = get_person(in_handle);
   auto l_json = in_handle->get_json();
-  l_ptr->is_project_manager(in_arg->id_);
+  person_.is_project_manager(id_);
   auto l_status_id                        = l_json["task_status_id"].get<uuid>();
   auto l_prj_task_status_link             = std::make_shared<project_task_status_link>();
-  l_prj_task_status_link->project_id_     = in_arg->id_;
+  l_prj_task_status_link->project_id_     = id_;
   l_prj_task_status_link->task_status_id_ = l_status_id;
-  if (!g_ctx().get<sqlite_database>().get_project_task_status_link(in_arg->id_, l_status_id))
+  if (!g_ctx().get<sqlite_database>().get_project_task_status_link(id_, l_status_id))
     co_await g_ctx().get<sqlite_database>().install(l_prj_task_status_link);
-  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
+  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(id_));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_asset_types_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_asset_types::post(
+    session_data_ptr in_handle
 ) {
-  auto l_ptr  = get_person(in_handle);
   auto l_json = in_handle->get_json();
-  l_ptr->is_project_manager(in_arg->id_);
+  person_.is_project_manager(id_);
   auto l_prj_asset_type_link            = std::make_shared<project_asset_type_link>();
   l_prj_asset_type_link->asset_type_id_ = l_json["asset_type_id"].get<uuid>();
-  l_prj_asset_type_link->project_id_    = in_arg->id_;
-  if (!g_ctx().get<sqlite_database>().get_project_asset_type_link(in_arg->id_, l_prj_asset_type_link->asset_type_id_))
+  l_prj_asset_type_link->project_id_    = id_;
+  if (!g_ctx().get<sqlite_database>().get_project_asset_type_link(id_, l_prj_asset_type_link->asset_type_id_))
     co_await g_ctx().get<sqlite_database>().install(l_prj_asset_type_link);
-  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_arg->id_));
+  co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(id_));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<actions_create_tasks_arg> in_arg
-) {
-  auto l_ptr       = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks::post(session_data_ptr in_handle) {
   auto& l_sql      = g_ctx().get<sqlite_database>();
-  auto l_task_type = l_sql.get_by_uuid<task_type>(in_arg->task_type_id);
+  auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_entities{};
   auto l_json = in_handle->get_json();
   if (l_json.is_array())
@@ -167,7 +145,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     auto l_task             = std::make_shared<task>();
     l_task->uuid_id_        = core_set::get_set().get_uuid();
     l_task->name_           = "main";
-    l_task->project_id_     = in_arg->project_id;
+    l_task->project_id_     = project_id_;
     l_task->task_type_id_   = l_task_type.uuid_id_;
     l_task->entity_id_      = l_entities[0].uuid_id_;
     l_task->task_status_id_ = l_task_status.uuid_id_;
@@ -225,41 +203,37 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
   co_return in_handle->make_msg(l_json_r);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_ptr = get_person(in_handle);
-  l_ptr->is_project_manager(in_arg->id_);
+boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team::post(session_data_ptr in_handle) {
+  person_.is_project_manager(id_);
   auto l_add_team = in_handle->get_json()["person_id"].get<uuid>();
   auto l_sql      = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
-  if (!l_sql.is_person_in_project(l_add_team, in_arg->id_)) {
+  if (!l_sql.is_person_in_project(l_add_team, id_)) {
     auto l_team         = std::make_shared<project_person_link>();
-    l_team->project_id_ = in_arg->id_;
+    l_team->project_id_ = id_;
     l_team->person_id_  = l_add_team;
     co_await l_sql.install(l_team);
-    socket_io::broadcast("project:update", nlohmann::json{{"project_id", in_arg->id_}}, "/events");
+    socket_io::broadcast("project:update", nlohmann::json{{"project_id", id_}}, "/events");
   }
-  auto l_prj = l_sql.get_by_uuid<project>(in_arg->id_);
+  auto l_prj = l_sql.get_by_uuid<project>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_person_delete_::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<data_project_team_person_arg> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_person::delete_(
+    session_data_ptr in_handle
 ) {
-  auto l_ptr = get_person(in_handle);
-  l_ptr->is_project_manager(in_arg->project_id_);
+  person_.is_project_manager(project_id_);
   auto l_sql = g_ctx().get<sqlite_database>();
 
   using namespace sqlite_orm;
   if (auto l_id = l_sql.impl_->storage_any_.select(
-          &project_person_link::id_, where(
-                                         c(&project_person_link::project_id_) == in_arg->project_id_ &&
-                                         c(&project_person_link::person_id_) == in_arg->person_id_
-                                     )
+          &project_person_link::id_,
+          where(
+              c(&project_person_link::project_id_) == project_id_ && c(&project_person_link::person_id_) == person_id_
+          )
       );
       !l_id.empty()) {
     co_await l_sql.remove<project_person_link>(l_id[0]);
-    socket_io::broadcast("project:update", nlohmann::json{{"project_id", in_arg->project_id_}}, "/events");
+    socket_io::broadcast("project:update", nlohmann::json{{"project_id", project_id_}}, "/events");
   }
   co_return in_handle->make_msg_204();
 }

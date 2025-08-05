@@ -155,10 +155,9 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks_get::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks::get(
     session_data_ptr in_handle
 ) {
-  auto l_po      = get_person(in_handle);
   auto& l_sql    = g_ctx().get<sqlite_database>();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence});
 

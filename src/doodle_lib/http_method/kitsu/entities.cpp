@@ -10,12 +10,9 @@
 
 namespace doodle::http {
 namespace {}
-boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_p    = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put(session_data_ptr in_handle) {
   auto l_sql  = g_ctx().get<sqlite_database>();
-  auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_arg->id_));
+  auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
 
   l_json.get_to(*l_entt);
@@ -42,9 +39,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities_put:
 
   co_return in_handle->make_msg(l_res);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_entities_news_get::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_entities_news::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg(
       nlohmann::json{
           {"data", nlohmann::json::array()}, {"limit", 2000}, {"nb_pages", 0}, {"offset", 0}, {"page", 1}, {"total", 0}

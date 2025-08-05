@@ -181,46 +181,38 @@ boost::asio::awaitable<create_comment_result> create_comment(
   co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
 }
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_person                      = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment::post(session_data_ptr in_handle) {
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
-  auto l_result = co_await create_comment(l_comment, l_person.get(), in_arg->id_, l_files);
+  auto l_result = co_await create_comment(l_comment, &person_, id_, l_files);
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many::post(
+    session_data_ptr in_handle
 ) {
-  auto l_person = get_person(in_handle);
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<create_comment_result> l_result{};
   for (auto&& i : in_handle->get_json()) {
     auto l_comm = std::make_shared<comment>(i.get<comment>());
-    l_result.emplace_back(co_await create_comment(l_comm, l_person.get(), {}, {}));
+    l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comments_ack_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<data_tasks_comments_ack_arg> in_arg
+boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comments_ack::post(
+    session_data_ptr in_handle
 ) {
-  auto l_person = get_person(in_handle);
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql = g_ctx().get<sqlite_database>();
   std::string l_event_name{};
   using namespace sqlite_orm;
-  auto l_task_id =
-      l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == in_arg->comment_id_));
+  auto l_task_id = l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == comment_id_));
 
   if (l_task_id.empty())
     throw_exception(
-        http_request_error{
-            boost::beast::http::status::bad_request, fmt::format("未知的评论 id: {}", in_arg->comment_id_)
-        }
+        http_request_error{boost::beast::http::status::bad_request, fmt::format("未知的评论 id: {}", comment_id_)}
     );
   auto l_prj_id = l_sql.impl_->storage_any_.select(&task::project_id_, where(c(&task::uuid_id_) == l_task_id[0]));
   if (l_prj_id.empty())
@@ -229,14 +221,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
     );
   if (auto l_id = l_sql.impl_->storage_any_.select(
           &comment_acknoledgments::id_, where(
-                                            c(&comment_acknoledgments::comment_id_) == in_arg->comment_id_ &&
-                                            c(&comment_acknoledgments::person_id_) == l_person->person_.uuid_id_
+                                            c(&comment_acknoledgments::comment_id_) == comment_id_ &&
+                                            c(&comment_acknoledgments::person_id_) == person_.person_.uuid_id_
                                         )
       );
       l_id.empty()) {
     auto l_ack         = std::make_shared<comment_acknoledgments>();
-    l_ack->comment_id_ = in_arg->comment_id_;
-    l_ack->person_id_  = l_person->person_.uuid_id_;
+    l_ack->comment_id_ = comment_id_;
+    l_ack->person_id_  = person_.person_.uuid_id_;
     co_await l_sql.install(l_ack);
     l_event_name = "comment:acknowledge";
   } else {
@@ -247,34 +239,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
   socket_io::broadcast(
       l_event_name,
       nlohmann::json{
-          {"comment_id", in_arg->comment_id_},
-          {"person_id", l_person->person_.uuid_id_},
-          {"project_id", l_prj_id.front()}
+          {"comment_id", comment_id_}, {"person_id", person_.person_.uuid_id_}, {"project_id", l_prj_id.front()}
       },
       "/events"
   );
-  auto l_comment = l_sql.get_by_uuid<comment>(in_arg->comment_id_);
+  auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
 
   co_return in_handle->make_msg(nlohmann::json{} = l_comment);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_comment_get::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_person  = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(session_data_ptr in_handle) {
   auto l_sql     = g_ctx().get<sqlite_database>();
-  auto l_comment = l_sql.get_by_uuid<comment>(in_arg->id_);
+  auto l_comment = l_sql.get_by_uuid<comment>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_comment);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delete_::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<task_comment_arg> in_arg
-) {
-  auto l_sql    = g_ctx().get<sqlite_database>();
-  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(in_arg->task_id_));
-  auto l_person = get_person(in_handle);
-  l_person->check_delete_access(l_task->project_id_);
-  co_await l_sql.remove<comment>(in_arg->comment_id_);
+boost::asio::awaitable<boost::beast::http::message_generator> task_comment::delete_(session_data_ptr in_handle) {
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
+  person_.check_delete_access(l_task->project_id_);
+  co_await l_sql.remove<comment>(comment_id_);
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {
     auto l_task_status         = l_sql.get_by_uuid<task_status>(l_task->task_status_id_);
@@ -287,12 +271,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment_delet
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_comment_put::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(session_data_ptr in_handle) {
   auto l_json    = in_handle->get_json();
   auto l_sql     = g_ctx().get<sqlite_database>();
-  auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(in_arg->id_));
+  auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
   l_json.get_to(*l_comment);
   l_comment->updated_at_ = chrono::system_clock::now();
   co_await l_sql.install(l_comment);

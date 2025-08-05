@@ -7,7 +7,7 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
 // /api/auth/login
-DOODLE_HTTP_JWT_FUN(auth_login)
+DOODLE_HTTP_FUN(auth_login)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 // /api/data/projects
@@ -67,8 +67,9 @@ DOODLE_HTTP_JWT_FUN(data_person)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 // /api/auth/reset-password
-DOODLE_HTTP_JWT_FUN(auth_reset_password)
+DOODLE_HTTP_FUN(auth_reset_password)
 void init();
+auth_reset_password() { init(); }
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_END()
@@ -114,6 +115,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/tasks/{id}
 DOODLE_HTTP_JWT_FUN(data_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/entities/{id}
@@ -131,9 +133,10 @@ DOODLE_HTTP_JWT_FUN(data_person_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/data/projects/{id}
-DOODLE_HTTP_JWT_FUN(project)
+// /api/data/projects/{}
+DOODLE_HTTP_JWT_FUN(data_project_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/tasks/clear-assignation
@@ -146,11 +149,6 @@ DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/data/projects/{project_id}
-DOODLE_HTTP_JWT_FUN(data_project)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
 // /api/data/user/context
 DOODLE_HTTP_JWT_FUN(user_context)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -203,6 +201,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/assets/{asset_id}
 DOODLE_HTTP_JWT_FUN(asset_details)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/assets/shared-used
@@ -379,22 +378,14 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid task_id_;
 uuid comment_id_;
 DOODLE_HTTP_FUN_END()
-// /api/data/assets/{id}
-DOODLE_HTTP_JWT_FUN(data_asset)
-DOODLE_HTTP_FUN_OVERRIDE(delete_)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
+
 // /api/data/projects/{project_id}/settings/task-types/{task_type_id}
 DOODLE_HTTP_JWT_FUN(project_settings_task_types)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid project_id_;
 uuid task_type_id_;
 DOODLE_HTTP_FUN_END()
-// /api/data/tasks/{id}
-DOODLE_HTTP_JWT_FUN(data_task)
-DOODLE_HTTP_FUN_OVERRIDE(delete_)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
+
 // /api/data/projects/{project_id}/team/{person_id}
 DOODLE_HTTP_JWT_FUN(data_project_team_person)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)

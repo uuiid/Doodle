@@ -30,23 +30,22 @@ struct login_data {
 };
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> authenticated_get::callback_arg(session_data_ptr in_handle) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get(session_data_ptr in_handle) {
   nlohmann::json l_r{};
   l_r["authenticated"] = true;
-  l_r["user"]          = l_ptr->person_;
+  l_r["user"]          = person_.person_;
   auto l_org           = g_ctx().get<sqlite_database>().get_all<organisation>();
   l_r["organisation"]  = l_org.empty() ? organisation::get_default() : l_org.front();
   co_return in_handle->make_msg(l_r.dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> organisations_get::callback_arg(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> organisations::get(session_data_ptr in_handle) {
   get_person(in_handle);
   auto l_org = g_ctx().get<sqlite_database>().get_all<organisation>();
   co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> auth_login_post::callback_arg(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(session_data_ptr in_handle) {
   auto l_data = in_handle->get_json().get<login_data>();
   auto& l_sql = g_ctx().get<sqlite_database>();
   if (l_data.email_.empty() || l_data.password_.empty())

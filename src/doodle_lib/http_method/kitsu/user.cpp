@@ -21,10 +21,7 @@
 #include "kitsu.h"
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::callback_arg(
-    session_data_ptr in_handle
-) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
   auto& l_sql             = g_ctx().get<sqlite_database>();
   l_ret["asset_types"]    = l_sql.get_asset_types_not_temporal_type();
@@ -33,11 +30,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::
   for (auto& l_v : g_ctx().get<dingding::dingding_company>().company_info_map_ | std::views::values) {
     l_ret["dingding_companys"].emplace_back(l_v);
   }
-  l_ret["notification_count"]       = l_sql.get_notification_count(l_ptr->person_.uuid_id_);
+  l_ret["notification_count"]       = l_sql.get_notification_count(person_.person_.uuid_id_);
   l_ret["persons"]                  = l_sql.get_all<person>();
   l_ret["project_status"]           = l_sql.get_all<project_status>();
   l_ret["preview_background_files"] = nlohmann::json::value_t::array;
-  l_ret["projects"]                 = l_sql.get_project_for_user(l_ptr->person_);
+  l_ret["projects"]                 = l_sql.get_project_for_user(person_.person_);
   l_ret["status_automations"]       = l_sql.get_all<status_automation>();
   l_ret["studios"]                  = l_sql.get_all<studio>();
   l_ret["task_status"]              = l_sql.get_all<task_status>();
@@ -49,9 +46,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context_get::
   co_return in_handle->make_msg(l_ret);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::callback_arg(session_data_ptr in_handle) {
-  auto l_ptr = get_person(in_handle);
-  auto l_p   = g_ctx().get<sqlite_database>().get_all<person>();
+boost::asio::awaitable<boost::beast::http::message_generator> person_all::get(session_data_ptr in_handle) {
+  auto l_p = g_ctx().get<sqlite_database>().get_all<person>();
   // for (auto&& [l_k, l_v, l_has] : in_handle->url_.params()) {
   //   if (l_k == "relations")
   //     for (auto&& i : l_p) i.write_departments_ = true;
@@ -59,11 +55,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> person_all_get::ca
   co_return in_handle->make_msg(nlohmann::json{} = l_p);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::callback_arg(
-    session_data_ptr in_handle
-) {
-  auto l_ptr = get_person(in_handle);
-  l_ptr->is_admin();
+boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(session_data_ptr in_handle) {
+  person_.is_admin();
   auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
   l_person->uuid_id_  = core_set::get_set().get_uuid();
@@ -76,10 +69,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_post::
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_person_put::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> data_person::put(
     session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
 ) {
-  auto l_ptr    = get_person(in_handle);
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(in_arg->id_));
   in_handle->get_json().get_to(*l_person);

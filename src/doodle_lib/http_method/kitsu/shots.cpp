@@ -207,7 +207,7 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
   return l_ret;
 }
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks_get::callback_arg(
+boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(
     session_data_ptr in_handle
 ) {
   auto l_po      = get_person(in_handle);

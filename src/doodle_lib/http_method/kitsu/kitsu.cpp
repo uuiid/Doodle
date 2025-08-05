@@ -101,7 +101,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_tasks_comments_preview_files>("/api/actions/tasks/{}/comments/{}/preview-files/{}"_url(&actions_tasks_comments_preview_files::task_id_, &actions_tasks_comments_preview_files::comment_id_, &actions_tasks_comments_preview_files::preview_file_id_))
       // put
       .reg_t<data_comment>("/api/data/comments/{}"_url(&data_comment::id_))
-      .reg_t<project>("/api/data/projects/{}"_url(&project::id_))
+      .reg_t<data_project_instance>("/api/data/projects/{}"_url(&data_project_instance::id_))
       .reg_t<data_tasks>("/api/data/tasks/{}"_url(&data_tasks::id_))
       .reg_t<actions_persons_assign>("/api/actions/persons/{}/assign"_url(&actions_persons_assign::id_))
       .reg_t<actions_preview_files_set_main_preview>("/api/actions/preview-files/{}/set-main-preview"_url(&actions_preview_files_set_main_preview::id_))
@@ -115,7 +115,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<with_tasks>("/api/data/assets/with-tasks"_url)
       .reg_t<asset_details>("/api/data/assets/{}"_url(&asset_details::id_))
       .reg_t<project_all>("/api/data/projects/all"_url)
-      .reg_t<data_project>("/api/data/projects/{}"_url(&data_project::id_))
       .reg_t<shared_used>("/api/data/projects/{}/assets/shared-used"_url(&shared_used::id_))
       .reg_t<authenticated>("/api/auth/authenticated"_url)
       .reg_t<organisations>("/api/data/organisations"_url)
@@ -155,7 +154,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<pictures_originals_preview_files>("/api/pictures/originals/preview-files/{}"_url(&pictures_originals_preview_files::id_))
       .reg_t<data_user_notifications>("/api/data/user/notifications"_url)
       .reg_t<data_tasks_full>("/api/data/tasks/{}/full"_url(&data_tasks_full::id_))
-      .reg_t<data_comment>("/api/data/comments/{}"_url(&data_comment::id_))
       .reg_t<auth_logout>("/api/auth/logout"_url)
       .reg_t<data_shots_with_tasks>("/api/data/shots/with-tasks"_url)
       .reg_t<movies_originals_preview_files>("/api/movies/originals/preview-files/{}.mp4"_url(&movies_originals_preview_files::id_))
@@ -164,9 +162,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
       // delete
       .reg_t<task_comment>("/api/data/tasks/{}/comments/{}"_url(&task_comment::task_id_, &task_comment::comment_id_))
-      .reg_t<data_asset>("/api/data/assets/{}"_url(&data_asset::id_))
       .reg_t<project_settings_task_types>("/api/data/projects/{}/settings/task-types/{}"_url(&project_settings_task_types::project_id_, &project_settings_task_types::task_type_id_))
-      .reg_t<data_task>("/api/data/tasks/{}"_url(&data_task::id_))
       .reg_t<data_project_team_person>("/api/data/projects/{}/team/{}"_url(&data_project_team_person::project_id_, &data_project_team_person::person_id_))
 
       // 最后注册nodejs前端

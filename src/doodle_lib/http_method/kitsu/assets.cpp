@@ -37,14 +37,11 @@ struct projects_assets_new_post_data {
   }
 };
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new_post::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<projects_assets_new_arg> in_arg
-) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new::post(session_data_ptr in_handle) {
   projects_assets_new_post_data l_data{};
-  l_data.project_id = in_arg->project_id;
-  l_ptr->is_project_manager(l_data.project_id);
-  l_data.asset_type_id = in_arg->asset_type_id;
+  l_data.project_id = project_id_;
+  person_.is_project_manager(l_data.project_id);
+  l_data.asset_type_id = asset_type_id_;
   auto l_json          = in_handle->get_json();
   l_json.get_to(l_data);
 
@@ -57,7 +54,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .project_id_     = l_data.project_id,
       .entity_type_id_ = l_data.asset_type_id,
       .source_id_      = l_data.source_id,
-      .created_by_     = l_ptr->person_.uuid_id_,
+      .created_by_     = person_.person_.uuid_id_,
   });
   auto l_sql    = g_ctx().get<sqlite_database>();
   co_await l_sql.install(l_entity);
@@ -180,25 +177,25 @@ struct with_tasks_get_result_t {
     std::vector<uuid> assigners_;
     bool is_subscribed_;
     friend void to_json(nlohmann::json& j, const task_t& p) {
-      j["id"]                = p.uuid_id_;
-      j["due_date"]          = p.due_date_;
-      j["done_date"]         = p.done_date_;
-      j["duration"]          = p.duration_;
-      j["entity_id"]         = p.entity_id_;
-      j["estimation"]        = p.estimation_;
-      j["end_date"]          = p.end_date_;
-      j["last_comment_date"] = p.last_comment_date_;
+      j["id"]                   = p.uuid_id_;
+      j["due_date"]             = p.due_date_;
+      j["done_date"]            = p.done_date_;
+      j["duration"]             = p.duration_;
+      j["entity_id"]            = p.entity_id_;
+      j["estimation"]           = p.estimation_;
+      j["end_date"]             = p.end_date_;
+      j["last_comment_date"]    = p.last_comment_date_;
       j["last_preview_file_id"] = p.last_preview_file_id_;
-      j["priority"]          = p.priority_;
-      j["real_start_date"]   = p.real_start_date_;
-      j["retake_count"]      = p.retake_count_;
-      j["start_date"]        = p.start_date_;
-      j["difficulty"]        = p.difficulty_;
-      j["task_type_id"]      = p.task_type_id_;
-      j["task_status_id"]    = p.task_status_id_;
-      j["assignees"]         = p.assigners_;
-      j["is_subscribed"]     = p.is_subscribed_;
-      j["path"]              = "";
+      j["priority"]             = p.priority_;
+      j["real_start_date"]      = p.real_start_date_;
+      j["retake_count"]         = p.retake_count_;
+      j["start_date"]           = p.start_date_;
+      j["difficulty"]           = p.difficulty_;
+      j["task_type_id"]         = p.task_type_id_;
+      j["task_status_id"]       = p.task_status_id_;
+      j["assignees"]            = p.assigners_;
+      j["is_subscribed"]        = p.is_subscribed_;
+      j["path"]                 = "";
     }
   };
   std::vector<task_t> tasks_;
@@ -281,24 +278,18 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> with_tasks_get::callback_arg(session_data_ptr in_handle) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> with_tasks::get(session_data_ptr in_handle) {
   uuid l_prj_id{};
   for (auto&& l_i : in_handle->url_.params())
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
-  co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(l_ptr->person_, l_prj_id, {})).dump());
+  co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(person_.person_, l_prj_id, {})).dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_ptr   = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
   auto&& l_sql = g_ctx().get<sqlite_database>();
-  auto l_t     = with_tasks_sql_query(l_ptr->person_, {}, in_arg->id_);
+  auto l_t     = with_tasks_sql_query(person_.person_, {}, id_);
   if (l_t.empty())
-    throw_exception(
-        http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", in_arg->id_)}
-    );
-  auto l_ass                = l_sql.get_by_uuid<entity>(in_arg->id_);
+    throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", id_)});
+  auto l_ass                = l_sql.get_by_uuid<entity>(id_);
   auto l_project            = l_sql.get_by_uuid<project>(l_ass.project_id_);
   auto l_ass_type           = l_sql.get_by_uuid<asset_type>(l_ass.entity_type_id_);
 
@@ -310,21 +301,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details_get:
   l_json.update(l_t[0]);
   co_return in_handle->make_msg(l_json);
 }
-
-boost::asio::awaitable<boost::beast::http::message_generator> shared_used_get::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  get_person(in_handle);
-  co_return in_handle->make_msg(nlohmann::json::array());
-}
-
-boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
-  auto l_ptr = get_person(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
   auto l_sql = g_ctx().get<sqlite_database>();
-  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_arg->id_));
-  l_ptr->check_delete_access(l_ass->project_id_);
+  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
+  person_.check_delete_access(l_ass->project_id_);
   bool l_force{};
   for (auto&& l_i : in_handle->url_.params()) {
     if (l_i.key == "force") l_force = true;
@@ -340,10 +320,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_asset_delete_
   co_await l_sql.remove<entity>(l_ass->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> shared_used::get(session_data_ptr in_handle) {
+  co_return in_handle->make_msg(nlohmann::json::array());
+}
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_in_get::callback_arg(
-    session_data_ptr in_handle, std::shared_ptr<capture_id_t> in_arg
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_in::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 

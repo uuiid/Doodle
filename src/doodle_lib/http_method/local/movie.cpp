@@ -24,7 +24,6 @@ struct video_thumbnail_arg_t {
   }
 };
 boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::post(session_data_ptr in_handle) {
-  init_ctx();
   auto l_arg = in_handle->get_json().get<video_thumbnail_arg_t>();
   if (!exists(l_arg.video_path_))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
@@ -55,7 +54,6 @@ void video_thumbnail::init_ctx() {
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::get(session_data_ptr in_handle) {
-  init_ctx();
   auto& l_cache = g_ctx().get<video_thumbnail_cache>();
   if (l_cache.Cached(video_thumbnail_cache_id)) {
     auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);
