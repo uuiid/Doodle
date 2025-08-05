@@ -11,8 +11,8 @@
 namespace doodle::http {
 
 DOODLE_HTTP_FUN(http_not_function)
-
-};
+http_not_function() = default;
+DOODLE_HTTP_FUN_END()
 
 http_route::http_route() : default_function_(std::make_shared<http_not_function>()) {}
 

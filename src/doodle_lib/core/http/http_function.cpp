@@ -18,7 +18,7 @@ void url_route_component_t::initializer_t::parse_url_path() {
 
   if (url_path_.front() != '/') url_path_ = "/" + url_path_;
   boost::replace_all(url_path_, "//", R"(\/)");
-  capture_count_ = boost::count(url_path_, "{}");
+  capture_count_ = std::ranges::count_if(url_path_, boost::is_any_of("{}"));
 }
 url_route_component_t::component_vector_t url_route_component_t::initializer_t::get_component_vector() const {
   return component_;
@@ -86,6 +86,7 @@ void http_function::websocket_callback(
     boost::beast::websocket::stream<tcp_stream_type> in_stream, session_data_ptr in_handle
 ) {}
 bool http_function::has_websocket() const { return false; }
+void http_function::parse_header(const session_data_ptr& in_handle) {}
 
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::callback(session_data_ptr in_handle) {
   parse_header(in_handle);

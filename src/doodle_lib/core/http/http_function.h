@@ -200,7 +200,7 @@ url_route_component_t::initializer_t operator""_url(char const* in_str, std::siz
 
 class http_function {
  protected:
-  virtual void parse_header(const session_data_ptr& in_handle) = 0;
+  virtual void parse_header(const session_data_ptr& in_handle);
 
  public:
   virtual ~http_function() = default;
@@ -232,10 +232,12 @@ class http_function_template : public Base {
 
 #define DOODLE_HTTP_FUN_OVERRIDE(method) \
   virtual boost::asio::awaitable<boost::beast::http::message_generator> method(session_data_ptr in_handle) override;
-#define DOODLE_HTTP_FUN_C(fun_name, base_fun)                                          \
-  class fun_name : public ::doodle::http::http_function_template<fun_name, base_fun> { \
-    using base_type = ::doodle::http::http_function_template<fun_name, base_fun>;      \
-                                                                                       \
+
+#define DOODLE_HTTP_FUN_C(fun_name, base_fun)                                                           \
+  class fun_name : public base_fun {                                                                    \
+    using base_type = base_fun;                                                                         \
+    std::shared_ptr<http_function> clone() const override { return std::make_shared<fun_name>(*this); } \
+                                                                                                        \
    public:
 // fun_name() = default;
 
