@@ -105,7 +105,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_persons_assign>("/api/actions/persons/{}/assign"_url(&actions_persons_assign::id_))
       .reg_t<actions_preview_files_set_main_preview>("/api/actions/preview-files/{}/set-main-preview"_url(&actions_preview_files_set_main_preview::id_))
       .reg_t<data_entities>("/api/data/entities/{}"_url(&data_entities::id_))
-      .reg_t<auth_reset_password>("/api/auth/reset-password"_url)
       .reg_t<data_person_instance>("/api/data/persons/{}"_url(&data_person_instance::id_))
       .reg_t<actions_tasks_clear_assignation>("/api/actions/tasks/clear-assignation"_url)
       .reg_t<data_user_notification>("/api/data/user/notifications/{}"_url(&data_user_notification::id_))
