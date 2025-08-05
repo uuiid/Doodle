@@ -50,6 +50,11 @@ std::string get_file_deflate(const FSys::path& in_path) {
 
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
+
+  if (l_path.filename() == "index.html") {
+    co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  }
+
   std::string l_value{};
   if (!cache_->Cached(l_path)) cache_->Put(l_path, get_file_deflate(l_path));
   l_value = *cache_->Get(l_path);
