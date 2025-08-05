@@ -304,7 +304,28 @@ boost::beast::http::message_generator session_data::make_msg(
   if (!FSys::exists(in_path)) return make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
   return make_file(in_path, mine_type, has_cache_control);
 }
-
+template <>
+boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> session_data::make_msg(
+    std::vector<unsigned char>&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
+) {
+  boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> l_res{in_status, version_};
+  set_response_header(l_res, mine_type);
+  l_res.keep_alive(keep_alive_);
+  l_res.body() = std::move(in_body);
+  l_res.prepare_payload();
+  return l_res;
+}
+template <>
+boost::beast::http::response<boost::beast::http::vector_body<char>> session_data::make_msg(
+    std::vector<char>&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
+) {
+  boost::beast::http::response<boost::beast::http::vector_body<char>> l_res{in_status, version_};
+  set_response_header(l_res, mine_type);
+  l_res.keep_alive(keep_alive_);
+  l_res.body() = std::move(in_body);
+  l_res.prepare_payload();
+  return l_res;
+}
 boost::beast::http::response<boost::beast::http::file_body> session_data::make_file(
     const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
 ) {

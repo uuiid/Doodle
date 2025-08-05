@@ -130,21 +130,11 @@ class session_data : public std::enable_shared_from_this<session_data> {
   template <typename Char>
   boost::beast::http::response<boost::beast::http::vector_body<Char>> make_msg(
       std::vector<Char>&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
-  ) {
-    boost::beast::http::response<boost::beast::http::vector_body<Char>> l_res{in_status, version_};
-    l_res.set(boost::beast::http::field::content_type, mine_type);
-    l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-    l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
-    l_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
-    l_res.set(boost::beast::http::field::access_control_allow_methods, "*");
-    l_res.set(boost::beast::http::field::access_control_allow_headers, "*");
-    l_res.keep_alive(keep_alive_);
-    l_res.body() = std::move(in_body);
-    l_res.prepare_payload();
-    return l_res;
-  }
+  );
 
-  boost::beast::http::message_generator make_msg(const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control = true);
+  boost::beast::http::message_generator make_msg(
+      const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control = true
+  );
 
   boost::beast::http::response<boost::beast::http::file_body> make_file(
       const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
