@@ -136,7 +136,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<tasks_comments>("/api/data/tasks/{}/comments"_url(&tasks_comments::id_))
       .reg_t<user_context>("/api/data/user/context"_url)
       .reg_t<sequences_with_tasks>("/api/data/sequences/with-tasks"_url)
-      .reg_t<pictures_thumbnails_organisations>("/api/pictures/thumbnails/organisations/{}"_url(&pictures_thumbnails_organisations::id_))
+      .reg_t<pictures_thumbnails_organisations>("/api/pictures/thumbnails/organisations/{}.png"_url(&pictures_thumbnails_organisations::id_))
       .reg_t<pictures_thumbnails_square_preview_files>("/api/pictures/thumbnails-square/preview-files/{}"_url(&pictures_thumbnails_square_preview_files::id_))
       .reg_t<pictures_thumbnails_preview_files>("/api/pictures/thumbnails/preview-files/{}"_url(&pictures_thumbnails_preview_files::id_))
       .reg_t<pictures_thumbnails_persons>("/api/pictures/thumbnails/persons/{}"_url(&pictures_thumbnails_persons::id_))
