@@ -60,6 +60,35 @@ struct preview_file {
   uuid task_id_;
   uuid person_id_;
   uuid source_file_id_;
+
+  struct annotations_t {
+    struct object_t {
+      uuid id_;
+      nlohmann::json data_;
+      // from json
+      friend void from_json(const nlohmann::json& j, object_t& p) {
+        if (j.contains("id")) j.at("id").get_to(p.id_);
+        p.data_ = j;
+        if (!p.data_.is_object()) p.data_.erase("id");
+      }
+    };
+    std::double_t time_;
+    std::vector<object_t> objects_;
+    nlohmann::json other_data_;
+    // from json
+    friend void from_json(const nlohmann::json& j, annotations_t& p) {
+      j.at("time").get_to(p.time_);
+      j.value("drawing", nlohmann::json{}).value("objects", nlohmann::json{}).get_to(p.objects_);
+      for (const auto& [key, value] : j.items()) {
+        if (key != "time" && key != "drawing") {
+          p.other_data_[key] = value;
+        }
+      }
+    }
+  };
+
+  std::vector<annotations_t> get_annotations() const { return annotations_.get<std::vector<annotations_t>>(); }
+
   // to json
   friend void to_json(nlohmann::json& j, const preview_file& p) {
     j["id"]                  = p.uuid_id_;
