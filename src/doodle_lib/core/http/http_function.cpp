@@ -38,6 +38,7 @@ url_route_component_t::initializer_t operator""_url(char const* in_str, std::siz
   auto& l_list = g_ctx().get<initializer_url_list>();
   std::string l_str{in_str, in_len};
   if (l_list.url_list.count(l_str)) throw_exception(doodle_error{"url 已经注册 {}", l_str});
+  l_list.url_list.insert(l_str);
 
   url_route_component_t::initializer_t l_url{in_str, in_len};
   l_url.parse_url_path();
