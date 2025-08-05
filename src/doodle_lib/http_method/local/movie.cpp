@@ -46,7 +46,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::p
   std::vector<uchar> l_buffer{};
   cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
   g_ctx().get<video_thumbnail_cache>().Put(video_thumbnail_cache_id, l_buffer);
-  co_return in_handle->make_msg(std::move(l_buffer), "image/png", boost::beast::http::status::ok);
+  co_return in_handle->make_msg(std::move(l_buffer), "image/png");
 }
 void video_thumbnail::init_ctx() {
   static std::once_flag l_flag{};
@@ -57,7 +57,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> video_thumbnail::g
   auto& l_cache = g_ctx().get<video_thumbnail_cache>();
   if (l_cache.Cached(video_thumbnail_cache_id)) {
     auto l_buffer = *l_cache.Get(video_thumbnail_cache_id);
-    co_return in_handle->make_msg(std::move(l_buffer), "image/png", boost::beast::http::status::ok);
+    co_return in_handle->make_msg(std::move(l_buffer), "image/png");
   }
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "视频文件不存在"});
 }

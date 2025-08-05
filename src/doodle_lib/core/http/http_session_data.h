@@ -30,6 +30,12 @@ using endpoint_type         = boost::asio::ip::tcp::endpoint;
 using tcp_stream_type       = executor_type::as_default_on_t<boost::beast::tcp_stream>;
 using tcp_stream_type_ptr   = std::shared_ptr<tcp_stream_type>;
 using request_parser_ptr    = std::shared_ptr<boost::beast::http::request_parser<boost::beast::http::empty_body>>;
+struct http_header_ctrl {
+  boost::beast::http::status status_{boost::beast::http::status::ok};
+  std::string_view mine_type_{"application/json; charset=utf-8"};
+  bool has_cache_control_{false};
+  bool is_deflate_{false};
+};
 namespace detail {
 
 class session_data : public std::enable_shared_from_this<session_data> {
@@ -101,47 +107,52 @@ class session_data : public std::enable_shared_from_this<session_data> {
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(std::string&& in_body) {
     return make_msg(
-        std::move(in_body), "application/json; charset=utf-8",
-        req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
-                                                               : boost::beast::http::status::ok
+        std::move(in_body),
+        http_header_ctrl{
+            .status_ = req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
+                                                                              : boost::beast::http::status::ok
+        }
     );
   }
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(const nlohmann::json& in_body) {
     return make_msg(
-        std::move(in_body.dump()), "application/json; charset=utf-8",
-        req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
-                                                               : boost::beast::http::status::ok
+        std::move(in_body.dump()),
+        http_header_ctrl{
+            .status_ = req_header_.method() == boost::beast::http::verb::post ? boost::beast::http::status::created
+                                                                              : boost::beast::http::status::ok
+        }
     );
   }
   boost::beast::http::response<boost::beast::http::string_body> make_msg_204() {
-    return make_msg(std::string{}, "application/json; charset=utf-8", boost::beast::http::status::no_content);
+    return make_msg(std::string{}, http_header_ctrl{.status_ = boost::beast::http::status::no_content});
   }
 
   boost::beast::http::response<boost::beast::http::string_body> make_msg(
-      std::string&& in_body, boost::beast::http::status in_status
-  ) {
-    return make_msg(std::move(in_body), "application/json; charset=utf-8", in_status);
-  }
-
-  boost::beast::http::response<boost::beast::http::string_body> make_msg(
-      std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
+      std::string&& in_body, const http_header_ctrl& in_http_header_ctrl
   );
   template <typename Char>
   boost::beast::http::response<boost::beast::http::vector_body<Char>> make_msg(
-      std::vector<Char>&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
+      std::vector<Char>&& in_body, const http_header_ctrl& in_http_header_ctrl
   );
 
+  template <typename Char>
+  boost::beast::http::response<boost::beast::http::vector_body<Char>> make_msg(
+      std::vector<Char>&& in_body, std::string_view in_http_header_ctrl
+  ) {
+    return make_msg(std::move(in_body), http_header_ctrl{.mine_type_ = in_http_header_ctrl});
+  }
   boost::beast::http::message_generator make_msg(
-      const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control = true
+      const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl
   );
+  boost::beast::http::message_generator make_msg(const FSys::path& in_path, std::string_view in_http_header_ctrl) {
+    return make_msg(in_path, http_header_ctrl{.mine_type_ = in_http_header_ctrl});
+  }
 
-  boost::beast::http::response<boost::beast::http::file_body> make_file(
-      const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
-  );
-  boost::beast::http::response<zlib_deflate_file_body> make_file_deflate(
-      const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
-  );
+ private:
+  // boost::beast::http::response<zlib_deflate_file_body> make_file_deflate(
+  //     const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl
+  // );
 };
 
 class http_websocket_data {

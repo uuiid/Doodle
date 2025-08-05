@@ -299,7 +299,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::delete
   auto l_task = g_ctx().get<sqlite_database>().get_by_uuid<task>(id_);
   person_.check_delete_access(l_task.project_id_);
   co_await g_ctx().get<sqlite_database>().remove<task>(id_);
-  co_return in_handle->make_msg({}, boost::beast::http::status::no_content);
+  co_return in_handle->make_msg_204();
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::get(session_data_ptr in_handle) {
   auto l_sql         = g_ctx().get<sqlite_database>();

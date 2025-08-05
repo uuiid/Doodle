@@ -40,7 +40,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::ge
   auto l_event = co_await l_sid_data->async_event();
   // default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
   auto l_str   = l_event ? l_event->get_dump_data() : std::string{};
-  co_return in_handle->make_msg(std::move(l_str), "text/plain; charset=UTF-8", boost::beast::http::status::ok);
+  co_return in_handle->make_msg(
+      std::move(l_str),
+      http::http_header_ctrl{.status_ = boost::beast::http::status::ok, .mine_type_ = "text/plain; charset=UTF-8"}
+  );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::post(session_data_ptr in_handle) {
   auto l_p = parse_query_data(in_handle->url_);
@@ -48,7 +51,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
   if (l_p.sid_.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid为空"});
 
   if (in_handle->content_type_ != http::detail::content_type::text_plain)  // TODO: 二进制数据, 未实现
-    co_return in_handle->make_msg("OK", "text/plain; charset=UTF-8", boost::beast::http::status::ok);
+    co_return in_handle->make_msg(
+        std::string{"OK"},
+        http::http_header_ctrl{.status_ = boost::beast::http::status::ok, .mine_type_ = "text/plain; charset=UTF-8"}
+    );
 
   auto l_body     = std::get<std::string>(in_handle->body_);
   auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
@@ -61,7 +67,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
     auto l_packet = socket_io_packet::parse(l_body);
     l_sid_data->handle_socket_io(l_packet);
   };
-  co_return in_handle->make_msg("OK", "text/plain; charset=UTF-8", boost::beast::http::status::ok);
+  co_return in_handle->make_msg(
+      std::string{"OK"},
+      http::http_header_ctrl{.status_ = boost::beast::http::status::ok, .mine_type_ = "text/plain; charset=UTF-8"}
+  );
 }
 void socket_io_http::websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle

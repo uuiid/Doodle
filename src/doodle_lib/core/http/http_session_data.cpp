@@ -298,38 +298,10 @@ std::string session_data::zlib_compress(const std::string& in_str) {
   return compressed.str();
 }
 boost::beast::http::message_generator session_data::make_msg(
-    const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
+    const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl
 ) {
   // if (is_deflate()) return make_file_deflate(in_path, mine_type);
   if (!FSys::exists(in_path)) return make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
-  return make_file(in_path, mine_type, has_cache_control);
-}
-template <>
-boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> session_data::make_msg(
-    std::vector<unsigned char>&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
-) {
-  boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> l_res{in_status, version_};
-  set_response_header(l_res, mine_type);
-  l_res.keep_alive(keep_alive_);
-  l_res.body() = std::move(in_body);
-  l_res.prepare_payload();
-  return l_res;
-}
-template <>
-boost::beast::http::response<boost::beast::http::vector_body<char>> session_data::make_msg(
-    std::vector<char>&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
-) {
-  boost::beast::http::response<boost::beast::http::vector_body<char>> l_res{in_status, version_};
-  set_response_header(l_res, mine_type);
-  l_res.keep_alive(keep_alive_);
-  l_res.body() = std::move(in_body);
-  l_res.prepare_payload();
-  return l_res;
-}
-boost::beast::http::response<boost::beast::http::file_body> session_data::make_file(
-    const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
-) {
-  if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found, "文件不存在"});
   boost::system::error_code l_code{};
   boost::beast::http::response<boost::beast::http::file_body> l_res{boost::beast::http::status::ok, version_};
   l_res.body().open(in_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);
@@ -362,41 +334,64 @@ boost::beast::http::response<boost::beast::http::file_body> session_data::make_f
       );
     }
 
-  set_response_file_header(l_res, mine_type, in_path, has_cache_control);
+  set_response_file_header(l_res, in_http_header_ctrl.mine_type_, in_path, in_http_header_ctrl.has_cache_control_);
 
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
   return l_res;
 }
-
-boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_deflate(
-    const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
+template <>
+boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> session_data::make_msg(
+    std::vector<unsigned char>&& in_body, const http_header_ctrl& in_http_header_ctrl
 ) {
-  if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found, "文件不存在"});
-  boost::system::error_code l_code{};
-  boost::beast::http::response<zlib_deflate_file_body> l_res{boost::beast::http::status::ok, version_};
-  l_res.body().open(in_path, std::ios::in | std::ios::binary, l_code);
-  if (l_code)
-    throw_exception(
-        http_request_error{
-            boost::beast::http::status::internal_server_error,
-            fmt::format("无法打开文件 {} {}", in_path.generic_string(), l_code.message())
-        }
-    );
-  set_response_file_header(l_res, mine_type, in_path, has_cache_control);
-  l_res.keep_alive(keep_alive_);
-  l_res.prepare_payload();
-  return l_res;
-}
-
-boost::beast::http::response<boost::beast::http::string_body> session_data::make_msg(
-    std::string&& in_body, const std::string_view& mine_type, boost::beast::http::status in_status
-) {
-  boost::beast::http::response<boost::beast::http::string_body> l_res{in_status, version_};
-  set_response_header(l_res, mine_type);
+  boost::beast::http::response<boost::beast::http::vector_body<unsigned char>> l_res{
+      in_http_header_ctrl.status_, version_
+  };
+  set_response_header(l_res, in_http_header_ctrl.mine_type_);
   l_res.keep_alive(keep_alive_);
   l_res.body() = std::move(in_body);
+  l_res.prepare_payload();
+  return l_res;
+}
+template <>
+boost::beast::http::response<boost::beast::http::vector_body<char>> session_data::make_msg(
+    std::vector<char>&& in_body, const http_header_ctrl& in_http_header_ctrl
+) {
+  boost::beast::http::response<boost::beast::http::vector_body<char>> l_res{in_http_header_ctrl.status_, version_};
+  set_response_header(l_res, in_http_header_ctrl.mine_type_);
+  l_res.keep_alive(keep_alive_);
+  l_res.body() = std::move(in_body);
+  l_res.prepare_payload();
+  return l_res;
+}
 
+// boost::beast::http::response<zlib_deflate_file_body> session_data::make_file_deflate(
+//     const FSys::path& in_path, const std::string_view& mine_type, bool has_cache_control
+// ) {
+//   if (!FSys::exists(in_path)) throw_exception(http_request_error{boost::beast::http::status::not_found,
+//   "文件不存在"}); boost::system::error_code l_code{}; boost::beast::http::response<zlib_deflate_file_body>
+//   l_res{boost::beast::http::status::ok, version_}; l_res.body().open(in_path, std::ios::in | std::ios::binary,
+//   l_code); if (l_code)
+//     throw_exception(
+//         http_request_error{
+//             boost::beast::http::status::internal_server_error,
+//             fmt::format("无法打开文件 {} {}", in_path.generic_string(), l_code.message())
+//         }
+//     );
+//   set_response_file_header(l_res, mine_type, in_path, has_cache_control);
+//   l_res.keep_alive(keep_alive_);
+//   l_res.prepare_payload();
+//   return l_res;
+// }
+
+boost::beast::http::response<boost::beast::http::string_body> session_data::make_msg(
+    std::string&& in_body, const http_header_ctrl& in_http_header_ctrl
+) {
+  boost::beast::http::response<boost::beast::http::string_body> l_res{in_http_header_ctrl.status_, version_};
+  set_response_header(l_res, in_http_header_ctrl.mine_type_);
+  if (in_http_header_ctrl.is_deflate_) l_res.set(boost::beast::http::field::content_encoding, "deflate");
+  l_res.keep_alive(keep_alive_);
+  l_res.body() = std::move(in_body);
   l_res.prepare_payload();
   return l_res;
 }
