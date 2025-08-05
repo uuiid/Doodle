@@ -9,7 +9,8 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 
-#include <boost/range/algorithm/count.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/range/iterator_range.hpp>
 namespace doodle::http {
 void url_route_component_t::initializer_t::parse_url_path() {
   std::vector<std::string> l_result{};
@@ -17,8 +18,11 @@ void url_route_component_t::initializer_t::parse_url_path() {
   while (url_path_.find("//") != std::string::npos) boost::replace_all(url_path_, "//", "/");
 
   if (url_path_.front() != '/') url_path_ = "/" + url_path_;
-  boost::replace_all(url_path_, "//", R"(\/)");
-  capture_count_ = std::ranges::count_if(url_path_, boost::is_any_of("{}"));
+  std::vector<boost::iterator_range<std::string::iterator>> l_ranges{};
+  boost::algorithm::iter_find(l_ranges, url_path_, boost::algorithm::first_finder("{}"));
+  capture_count_ = l_ranges.size();
+
+  boost::replace_all(url_path_, "/", R"(\/)");
 }
 url_route_component_t::component_vector_t url_route_component_t::initializer_t::get_component_vector() const {
   return component_;
