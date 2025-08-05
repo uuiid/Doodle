@@ -65,6 +65,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/persons
 DOODLE_HTTP_JWT_FUN(data_person)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 // /api/auth/reset-password
 DOODLE_HTTP_FUN(auth_reset_password)

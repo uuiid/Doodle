@@ -106,7 +106,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_preview_files_set_main_preview>("/api/actions/preview-files/{}/set-main-preview"_url(&actions_preview_files_set_main_preview::id_))
       .reg_t<data_entities>("/api/data/entities/{}"_url(&data_entities::id_))
       .reg_t<auth_reset_password>("/api/auth/reset-password"_url)
-      .reg_t<data_person>("/api/data/persons"_url)
+      .reg_t<data_person_instance>("/api/data/persons/{}"_url(&data_person_instance::id_))
       .reg_t<actions_tasks_clear_assignation>("/api/actions/tasks/clear-assignation"_url)
       .reg_t<data_user_notification>("/api/data/user/notifications/{}"_url(&data_user_notification::id_))
 
@@ -124,7 +124,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_user_time_spents>("/api/data/user/time-spents/{}"_url(&data_user_time_spents::date_))
       .reg_t<tasks_to_check>("/api/data/user/tasks-to-check"_url)
       .reg_t<person_day_off>("/api/data/persons/{}/day-offs/{}"_url(&person_day_off::id_, &person_day_off::date_))
-      .reg_t<person_all>("/api/data/persons"_url)
       .reg_t<person_day_off_all>("/api/data/persons/{}/day-offs"_url(&person_day_off_all::id_))
       .reg_t<person_time_spents_day_table>("/api/data/persons/time-spents/day-table/{}/{}"_url(&person_time_spents_day_table::year_, &person_time_spents_day_table::month_))
       .reg_t<person_day_off_1>("/api/data/persons/day-offs/{}/{}"_url(&person_day_off_1::year_, &person_day_off_1::month_))
