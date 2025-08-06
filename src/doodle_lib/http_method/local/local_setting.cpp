@@ -32,6 +32,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get
           {"maya_path", l_maya_path},
           {"UE_path", core_set::get_set().ue4_path},
           {"UE_version", core_set::get_set().ue4_version},
+          {"timeout", core_set::get_set().timeout},
       }
           .dump()
   );
@@ -53,6 +54,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
   // D:\Program Files\Epic Games\UE_5.4\Engine\Binaries\Win64\UnrealEditor.exe
   if (!l_set.ue4_path.empty() && !FSys::exists(l_set.ue4_path / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "UE4路径不正确"});
+  if (l_json.contains("timeout")) l_set.timeout = l_json["timeout"].get<std::uint32_t>();
 
   l_set.save();
   FSys::path l_maya_path{};
