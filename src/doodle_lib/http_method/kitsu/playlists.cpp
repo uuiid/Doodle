@@ -66,12 +66,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     if (!l_time_map.contains(i.time_)) continue;
     std::set<uuid> l_ids{};
     for (auto&& j : i.objects_) l_ids.insert(j.id_);
-    l_time_map[i.time_].objects_.erase(
-        std::remove_if(
-            l_time_map[i.time_].objects_.begin(), l_time_map[i.time_].objects_.end(),
-            [&l_ids](const auto& j) { return l_ids.contains(j.id_); }
-        )
-    );
+    auto& l_objs = l_time_map[i.time_].objects_;
+    l_objs |= ranges::actions::remove_if([&l_ids](const auto& j) { return l_ids.contains(j.id_); });
   }
   l_prev->set_annotations(std::move(l_time_map | ranges::views::values | ranges::to_vector));
   co_await l_sql.install(l_prev);

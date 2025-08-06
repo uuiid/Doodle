@@ -68,8 +68,8 @@ struct preview_file {
       // from json
       friend void from_json(const nlohmann::json& j, object_t& p) {
         if (j.contains("id")) j.at("id").get_to(p.id_);
-        p.data_ = j;
-        if (!p.data_.is_object()) p.data_.erase("id");
+        if (j.is_string()) j.get_to(p.id_);
+        if (j.is_object()) p.data_ = j;
       }
       // to json
       friend void to_json(nlohmann::json& j, const object_t& p) {
