@@ -49,7 +49,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 
 enum server_task_info_type {
   // 导出fbx任务
-  export_fbx,
+  export_fbx = 0,
   // 导出解算任务
   export_sim,
   // 自动灯光任务
@@ -104,11 +104,40 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   std::optional<zoned_time> run_time_{};
   // 结束运行任务的时间
   std::optional<zoned_time> end_time_{};
+  nlohmann::json run_time_info_{};
 
   uuid kitsu_task_id_{};
 
   server_task_info_type type_{};
   std::string last_line_log_;
+
+  struct run_time_info_t {
+    zoned_time start_time_{};
+    zoned_time end_time_{};
+    std::string last_line_log_{};
+    // from json
+    friend void from_json(const nlohmann::json& j, run_time_info_t& p) {
+      j.at("start_time").get_to(p.start_time_);
+      j.at("end_time").get_to(p.end_time_);
+      j.at("last_line_log").get_to(p.last_line_log_);
+    }
+    // to json
+    friend void to_json(nlohmann::json& j, const run_time_info_t& p) {
+      j["start_time"] = p.start_time_;
+      j["end_time"]   = p.end_time_;
+      j["last_line_log"] = p.last_line_log_;
+    }
+  };
+  std::vector<run_time_info_t> get_run_time_info() const {
+    if (run_time_info_.is_array()) return run_time_info_.get<std::vector<run_time_info_t>>();
+    return {};
+  }
+  void set_run_time_info(const std::vector<run_time_info_t>& in_run_time_info) {
+    run_time_info_ = in_run_time_info;
+  }
+  void add_run_time_info(const run_time_info_t& in_run_time_info) {
+    run_time_info_.push_back(in_run_time_info);
+  }
 
   static constexpr auto logger_category = "server_task";
 
