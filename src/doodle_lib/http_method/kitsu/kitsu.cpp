@@ -70,8 +70,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<model_library::model_library_assets_tree>("/api/doodle/model_library/assets_tree"_url)
       .reg_t<model_library::model_library_assets_tree_instance>("/api/doodle/model_library/assets_tree/{}"_url(&model_library::model_library_assets_tree_instance::id_))
       .reg_t<model_library::assets_tree_link>("/api/doodle/model_library/assets_tree/{}/assets/{}"_url(&model_library::assets_tree_link::id_, &model_library::assets_tree_link::assets_id_))
-      .reg_t<model_library::pictures_instance>("/api/doodle/pictures/{}"_url(&model_library::pictures_instance::id_), l_ctx.root_)
-      .reg_t<model_library::pictures_thumbnails>("/api/doodle/pictures/thumbnails/{}"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_)
+      .reg_t<model_library::pictures_instance>("/api/doodle/pictures/{}.png"_url(&model_library::pictures_instance::id_), l_ctx.root_)
+      .reg_t<model_library::pictures_thumbnails>("/api/doodle/pictures/thumbnails/{}.png"_url(&model_library::pictures_thumbnails::id_), l_ctx.root_)
 
       /// 杂项
       .reg_t<other::deepseek_key>("/api/doodle/deepseek/key"_url)
