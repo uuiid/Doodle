@@ -6,7 +6,7 @@
 namespace doodle::http {
 
 // /api/doodle/file_association/{uuid}
-DOODLE_HTTP_JWT_FUN(doodle_file_association)
+DOODLE_HTTP_FUN(doodle_file_association)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
