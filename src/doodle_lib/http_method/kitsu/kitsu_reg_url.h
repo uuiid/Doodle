@@ -398,4 +398,9 @@ DOODLE_HTTP_JWT_FUN(data_project_sequences)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/preview-files/<preview_file_id>/update-annotations
+DOODLE_HTTP_JWT_FUN(actions_preview_files_update_annotations)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid preview_file_id_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

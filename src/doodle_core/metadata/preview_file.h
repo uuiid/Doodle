@@ -83,7 +83,10 @@ struct preview_file {
     // from json
     friend void from_json(const nlohmann::json& j, annotations_t& p) {
       j.at("time").get_to(p.time_);
-      j.value("drawing", nlohmann::json{}).value("objects", nlohmann::json{}).get_to(p.objects_);
+      if (j.contains("drawing"))
+        j.value("drawing", nlohmann::json{}).value("objects", nlohmann::json{}).get_to(p.objects_);
+      if (j.contains("objects"))
+        j.value("objects", nlohmann::json{}).get_to(p.objects_);
       for (const auto& [key, value] : j.items()) {
         if (key != "time" && key != "drawing") {
           p.other_data_[key] = value;

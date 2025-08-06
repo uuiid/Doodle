@@ -37,9 +37,9 @@ namespace doodle::http {
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   g_ctx().emplace<cache_manger>();
 
-  auto l_router   = std::make_shared<http_route>();
-  auto l_ctx      = g_ctx().get<kitsu_ctx_t>();
-  auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
+  auto l_router  = std::make_shared<http_route>();
+  auto l_ctx     = g_ctx().get<kitsu_ctx_t>();
+  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
   l_sid_ctx->on("/events");
   (*l_router)
       // clang-format off
@@ -155,6 +155,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<project_settings_task_types>("/api/data/projects/{}/settings/task-types/{}"_url(&project_settings_task_types::project_id_, &project_settings_task_types::task_type_id_))
       .reg_t<data_project_team_person>("/api/data/projects/{}/team/{}"_url(&data_project_team_person::project_id_, &data_project_team_person::person_id_))
       .reg_t<data_project_sequences>("/api/data/projects/{}/sequences"_url(&data_project_sequences::id_))
+      .reg_t<actions_preview_files_update_annotations>("/api/data/actions/preview-files/{}/update-annotations"_url(&actions_preview_files_update_annotations::preview_file_id_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
@@ -186,7 +187,7 @@ http_route_ptr create_kitsu_local_route() {
 }
 
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
-  auto l_router   = std::make_shared<http_route>();
+  auto l_router = std::make_shared<http_route>();
   (*l_router)
       .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
 
