@@ -25,9 +25,9 @@ struct actions_preview_files_update_annotations_args {
   std::vector<preview_file::annotations_t> deletions_;
   // from json
   friend void from_json(const nlohmann::json& j, actions_preview_files_update_annotations_args& p) {
-    j.at("additions").get_to(p.additions_);
-    j.at("updates").get_to(p.updates_);
-    j.at("deletions").get_to(p.deletions_);
+    if (j.at("additions").is_array()) j.at("additions").get_to(p.additions_);
+    if (j.at("updates").is_array()) j.at("updates").get_to(p.updates_);
+    if (j.at("deletions").is_array()) j.at("deletions").get_to(p.deletions_);
   }
 };
 }  // namespace

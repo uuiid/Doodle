@@ -85,8 +85,7 @@ struct preview_file {
       j.at("time").get_to(p.time_);
       if (j.contains("drawing"))
         j.value("drawing", nlohmann::json{}).value("objects", nlohmann::json{}).get_to(p.objects_);
-      if (j.contains("objects"))
-        j.value("objects", nlohmann::json{}).get_to(p.objects_);
+      if (j.contains("objects")) j.value("objects", nlohmann::json{}).get_to(p.objects_);
       for (const auto& [key, value] : j.items()) {
         if (key != "time" && key != "drawing") {
           p.other_data_[key] = value;
@@ -101,7 +100,10 @@ struct preview_file {
     }
   };
 
-  std::vector<annotations_t> get_annotations() const { return annotations_.get<std::vector<annotations_t>>(); }
+  std::vector<annotations_t> get_annotations() const {
+    if (annotations_.is_array()) return annotations_.get<std::vector<annotations_t>>();
+    return {};
+  }
   void set_annotations(const std::vector<annotations_t>& annotations) { annotations_ = annotations; }
 
   // to json
