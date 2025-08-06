@@ -70,10 +70,6 @@ void sqlite_database::load(const FSys::path& in_path) {
   }
 }
 
-std::vector<server_task_info> sqlite_database::get_server_task_info(const uuid& in_computer_id) {
-  return impl_->get_server_task_info(in_computer_id);
-}
-
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const chrono::local_days& in_data
 ) {
@@ -100,12 +96,6 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
       c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
       c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
   ));
-}
-std::vector<server_task_info> sqlite_database::get_server_task_info_by_user(const uuid& in_user_id) {
-  return impl_->get_server_task_info_by_user(in_user_id);
-}
-std::vector<server_task_info> sqlite_database::get_server_task_info_by_type(const server_task_info_type& in_user_id) {
-  return impl_->get_server_task_info_by_type(in_user_id);
 }
 
 std::int32_t sqlite_database::get_notification_count(const uuid& in_user_id) {

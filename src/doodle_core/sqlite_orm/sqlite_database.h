@@ -110,9 +110,7 @@ class sqlite_database {
       const uuid& in_person_id, const chrono::local_days& in_data
   );
 
-  std::vector<server_task_info> get_server_task_info(const uuid& in_computer_id);
-  std::vector<server_task_info> get_server_task_info_by_user(const uuid& in_user_id);
-  std::vector<server_task_info> get_server_task_info_by_type(const server_task_info_type& in_user_id);
+
 
   std::int32_t get_notification_count(const uuid& in_user_id);
   std::vector<project_with_extra_data> get_project_for_user(const person& in_user);

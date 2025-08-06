@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/core/app_base.h"
+#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
@@ -329,7 +330,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_
     }
   }
   if (l_type) {
-    if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info_by_type(*l_type); !l_list.empty()) {
+    using namespace sqlite_orm;
+    if (auto l_list = g_ctx().get<sqlite_database>().impl_->storage_any_.get_all<server_task_info>(
+            where(c(&server_task_info::type_) == *l_type)
+        );
+        !l_list.empty()) {
       for (auto&& i : l_list) i.get_last_line_log();
       co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
     }

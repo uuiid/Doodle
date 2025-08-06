@@ -17,23 +17,6 @@
 namespace doodle::http {
 namespace {
 
-boost::asio::awaitable<void> list_tast_to(
-    std::shared_ptr<computer> in_computer, std::shared_ptr<http_websocket_client> in_client
-) {
-  if (auto l_list = g_ctx().get<sqlite_database>().get_server_task_info(in_computer->uuid_id_);
-      !l_list.empty() && in_client) {
-    std::vector<uuid> l_ids{};
-    for (const auto& l_item : l_list)
-      if (l_item.status_ == server_task_info_status::submitted || l_item.status_ == server_task_info_status::assigned ||
-          l_item.status_ == server_task_info_status::running)
-        l_ids.emplace_back(l_item.uuid_id_);
-    if (!l_ids.empty())
-      co_await in_client->async_write_websocket(
-          nlohmann::json{{"type", doodle_config::work_websocket_event::list_task}, {"ids", l_ids}}.dump()
-      );
-  }
-}
-
 boost::asio::awaitable<std::string> web_logger_fun(http_websocket_data_ptr in_handle) {
   auto l_logger = in_handle->logger_;
   if (!in_handle->user_data_) {
