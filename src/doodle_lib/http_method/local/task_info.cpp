@@ -56,7 +56,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
         g_io_context(),
         [l_t = task_info_]() -> boost::asio::awaitable<void> {
           co_await g_ctx().get<sqlite_database>().install(l_t);
-          socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_t, "/socket.io/");
+          socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_t);
           co_return;
         },
         boost::asio::detached
@@ -312,7 +312,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     default_logger_raw()->warn(
         "写出事件 {} {} {}", "doodle:task_info:update", (nlohmann::json{} = *task_info_).dump(), "/socket.io/"
     );
-    socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_, "/socket.io/");
+    socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_);
   }
 };
 }  // namespace
