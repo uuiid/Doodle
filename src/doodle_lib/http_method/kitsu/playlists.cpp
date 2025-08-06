@@ -69,7 +69,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     auto& l_objs = l_time_map[i.time_].objects_;
     l_objs |= ranges::actions::remove_if([&l_ids](const auto& j) { return l_ids.contains(j.id_); });
   }
-  l_prev->set_annotations(std::move(l_time_map | ranges::views::values | ranges::to_vector));
+  auto l_ru = l_time_map | ranges::views::values | ranges::to_vector;
+  l_ru |= ranges::actions::remove_if([](const auto& j) { return j.objects_.empty(); });
+  l_prev->set_annotations(std::move(l_ru));
   co_await l_sql.install(l_prev);
   co_return in_handle->make_msg(nlohmann::json{} = *l_prev);
 }
