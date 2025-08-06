@@ -5,6 +5,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities_preview_files::get(
@@ -72,7 +73,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_ru = l_time_map | ranges::views::values | ranges::to_vector;
   l_ru |= ranges::actions::remove_if([](const auto& j) { return j.objects_.empty(); });
   l_prev->set_annotations(std::move(l_ru));
+  l_prev->updated_at_ = chrono::system_clock::now();
   co_await l_sql.install(l_prev);
+  socket_io::broadcast(
+      "preview-file:annotation-update",
+      nlohmann::json{
+          {"preview_file_id", l_prev->uuid_id_},
+          {"person_id", person_.person_.uuid_id_},
+          {"updated_at", l_prev->updated_at_},
+          {"project_id", l_task.project_id_}
+      },
+      "/events"
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_prev);
 }
 
