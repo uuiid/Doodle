@@ -123,9 +123,9 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     }
     // to json
     friend void to_json(nlohmann::json& j, const run_time_info_t& p) {
-      j["start_time"]    = p.start_time_;
-      j["end_time"]      = p.end_time_;
-      j["info"] = p.info_;
+      j["start_time"] = p.start_time_;
+      j["end_time"]   = p.end_time_;
+      j["info"]       = p.info_;
     }
   };
   std::vector<run_time_info_t> get_run_time_info() const {
@@ -170,6 +170,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["run_computer_id"] = p.run_computer_id_;
     j["type"]            = p.type_;
     j["last_line_log"]   = p.last_line_log_;
+    j["run_time_info"]       = p.run_time_info_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
