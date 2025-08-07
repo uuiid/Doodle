@@ -497,9 +497,13 @@ std::string patch_time(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time::post(session_data_ptr in_handle) {
-  auto l_json = in_handle->get_json();
+  auto l_json      = in_handle->get_json();
 
-  auto l_data = l_json.get<std::vector<computing_time_post_req_data>>();
+  auto l_data      = l_json.get<std::vector<computing_time_post_req_data>>();
+  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr =
+      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   {  // 检查除空以外的id是否重复
     std::map<uuid, std::size_t> l_map;
     for (auto&& l_task : l_data) {
@@ -510,12 +514,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
     if (l_map.contains(uuid{})) l_map.erase(uuid{});
     if (std::ranges::any_of(l_map, [](const auto& p) { return p.second > 1; }))
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "提交的task id 有重复");
+    std::set<uuid> l_block_ids{};
+    for (auto&& l_task : *l_block_ptr) l_block_ids.emplace(l_task.uuid_id_);
+    for (auto&& l_task : l_data) {
+      if (l_block_ids.contains(l_task.task_id))
+        co_return in_handle->make_error_code_msg(
+            boost::beast::http::status::bad_request, fmt::format("每个任务每个月只能有一个 {}", l_task.task_id)
+        );
+    }
   }
-
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
-  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      g_ctx().get<sqlite_database>().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
 
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   computing_time_run(year_month_, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
