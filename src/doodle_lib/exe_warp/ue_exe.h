@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/co_queue.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/server_task_info.h>
 
 #include <boost/asio.hpp>
 #include <boost/system.hpp>
@@ -26,6 +27,8 @@ class ue_ctx {
 };
 
 boost::asio::awaitable<void> async_run_ue(
-    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock = true
+    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock = true,
+    std::shared_ptr<server_task_info::run_time_info_t> in_time = {}
 );
+
 }  // namespace doodle

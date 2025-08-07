@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/co_queue.h>
 #include <doodle_core/metadata/image_size.h>
+#include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
@@ -288,6 +289,7 @@ class maya_ctx {
 };
 
 boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
-    std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger
+    std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger,
+    std::shared_ptr<server_task_info::run_time_info_t> in_time_info = {}
 );
 }  // namespace doodle

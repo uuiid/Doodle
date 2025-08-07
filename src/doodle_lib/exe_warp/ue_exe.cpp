@@ -138,12 +138,14 @@ FSys::path find_ue_project_file(const FSys::path& in_path) {
 }  // namespace ue_exe_ns
 
 boost::asio::awaitable<void> async_run_ue(
-    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock
+    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock,
+    std::shared_ptr<server_task_info::run_time_info_t> in_time
 ) {
   auto l_g = create_lock ? co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable)
                          : awaitable_queue_limitation::queue_guard_ptr{};
 
-  in_logger->info(" 开始检查 UE 版本");
+  in_logger->info("开始检查 UE 版本");
+  if (in_time) in_time->start_time_ = std::chrono::system_clock::now();
   auto l_e1 = chick_ue_plug();
   if (l_e1) throw_exception(doodle_error{"检查并安装 UE 版本失败: {}", l_e1.message()});
 
@@ -184,6 +186,7 @@ boost::asio::awaitable<void> async_run_ue(
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
 
+  if (in_time) in_time->end_time_ = std::chrono::system_clock::now();
   switch (l_array_completion_order[0]) {
     case 0:
       if (l_exit_code != 0 || l_ec) throw_exception(doodle_error{"UE进程返回值错误 {}", l_exit_code});

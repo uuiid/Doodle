@@ -176,15 +176,21 @@ void args::check_materials() {
 boost::asio::awaitable<void> args::run() {
   // 添加三次重试
   maya_exe_ns::maya_out_arg l_out{};
+  auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   for (int i = 0; i < 3; ++i) {
     try {
-      l_out = co_await async_run_maya(maya_arg_, logger_ptr_);
+      l_out              = co_await async_run_maya(maya_arg_, logger_ptr_, l_time_info);
+      l_time_info->info_ = "运行maya";
+
       break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", err.what(), i + 1);
+      l_time_info->info_ = fmt::format("运行maya错误:{}", err.what());
+      on_run_time_info_(*l_time_info);
       if (i == 2) throw;
     }
   }
+  on_run_time_info_(*l_time_info);
   /// 将导出数据转移到数据块中
   begin_time_ = l_out.begin_time;
   end_time_   = l_out.end_time;
@@ -206,8 +212,12 @@ boost::asio::awaitable<void> args::run() {
   {
     // 开始复制文件
     // 先获取UE线程(只能在单线程复制, 要不然会出现边渲染边复制的情况, 会出错)
-    auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+    auto l_g           = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+    l_time_info        = std::make_shared<server_task_info::run_time_info_t>();
+    l_time_info->info_ = "复制文件";
     down_files();
+    l_time_info->end_time_ = std::chrono::system_clock::now();
+    on_run_time_info_(*l_time_info);
     fix_config(render_project_);
     fix_project(render_project_);
     if (bind_skin_) co_await crate_skin();
@@ -216,8 +226,12 @@ boost::asio::awaitable<void> args::run() {
   auto l_ret = co_await async_import_and_render_ue();
   // 合成视屏, 并上传文件(串行)
   {
-    auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+    auto l_g           = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
+    l_time_info        = std::make_shared<server_task_info::run_time_info_t>();
+    l_time_info->info_ = "上传文件";
     up_files(l_ret, create_move(l_ret));
+    l_time_info->end_time_ = std::chrono::system_clock::now();
+    on_run_time_info_(*l_time_info);
   }
 
   co_return;
@@ -260,19 +274,24 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   logger_ptr_->warn("排队导入文件 {} ", render_project_);
   // 添加三次重试
+  auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   for (int i = 0; i < 3; ++i) {
     try {
       co_await async_run_ue(
           {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
            "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
-          logger_ptr_
+          logger_ptr_, true, l_time_info
       );
+      l_time_info->info_ = "导入文件";
       break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
+      l_time_info->info_ = fmt::format("导入文件失败:{}", err.what());
+      on_run_time_info_(*l_time_info);
       if (i == 2) throw;
     }
   }
+  on_run_time_info_(*l_time_info);
 
   logger_ptr_->warn("导入文件完成");
   logger_ptr_->warn("排队渲染, 输出目录 {}", l_import_data.out_file_dir);
@@ -283,6 +302,7 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
       logger_ptr_->error("渲染删除上次输出错误:{}", err.what());
     }
   }
+  l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   for (int i = 0; i < 3; ++i) {
     try {
       co_await async_run_ue(
@@ -292,12 +312,16 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
            "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
           logger_ptr_
       );
+      l_time_info->info_ = "渲染UE";
       break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
+      l_time_info->info_ = fmt::format("渲染失败:{}", err.what());
+      on_run_time_info_(*l_time_info);
       if (i == 2) throw;
     }
   }
+  on_run_time_info_(*l_time_info);
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
   co_return l_import_data.out_file_dir;
@@ -467,16 +491,21 @@ boost::asio::awaitable<void> args::crate_skin() {
     auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
     logger_ptr_->warn("排队导入skin文件 {} ", render_project_);
     // 添加三次重试
+    auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
     for (int i = 0; i < 3; ++i) {
       try {
         co_await async_run_ue(
             {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
              "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
-            logger_ptr_, false
+            logger_ptr_, false, l_time_info
         );
+        l_time_info->info_ = fmt::format("导入skin文件 {}", l_fbx);
+        on_run_time_info_(*l_time_info);
         break;
       } catch (const doodle_error& error) {
         logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
+        l_time_info->info_ = fmt::format("导入skin文件 {} 重试", l_fbx);
+        on_run_time_info_(*l_time_info);
         if (i == 2) throw;
       }
     }
