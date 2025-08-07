@@ -117,10 +117,10 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
 ) {
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
   in_logger->warn("开始运行maya");
-  in_time_info->start_time_ = std::chrono::system_clock::now();
-  auto l_maya_path          = find_maya_path_impl();
+  if (in_time_info) in_time_info->start_time_ = std::chrono::system_clock::now();
+  auto l_maya_path = find_maya_path_impl();
 
-  auto l_this_exe           = co_await boost::asio::this_coro::executor;
+  auto l_this_exe  = co_await boost::asio::this_coro::executor;
   co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
   auto l_run_path = install_maya_exe(l_maya_path);
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
@@ -170,7 +170,7 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
           l_timer->async_wait(boost::asio::deferred)
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
-  in_time_info->end_time_ = std::chrono::system_clock::now();
+  if (in_time_info) in_time_info->end_time_ = std::chrono::system_clock::now();
   switch (l_array_completion_order[0]) {
     case 0:
       if (l_exit_code != 0 || l_ec) {
