@@ -539,6 +539,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("auto_upload_path", &project::auto_upload_path_),                                                              //
           make_column("production_category", &project::production_category_),                                                              //
           make_column("short_name", &project::short_name_),                                                              //
+          make_column("asset_root_path", &project::asset_root_path_, default_value("")),
 
 
           foreign_key(&project::project_status_id_).references(&project_status::uuid_id_),

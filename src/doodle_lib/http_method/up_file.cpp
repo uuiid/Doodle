@@ -52,21 +52,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
         l_task.task_type_id_ == task_type::get_binding_id()))
     throw_exception(doodle_error{"未知的 task_type 类型"});
 
-  task_info_.task_type_id_   = l_task.task_type_id_;
-  task_info_.entity_type_id_ = l_entity.entity_type_id_;
+  task_info_.task_type_id_    = l_task.task_type_id_;
+  task_info_.entity_type_id_  = l_entity.entity_type_id_;
+  task_info_.asset_root_path_ = l_prj.asset_root_path_;
 
-  task_info_.root_path_      = l_prj.path_;
-  task_info_.file_path_      = l_d;
+  task_info_.root_path_       = l_prj.path_;
+  task_info_.file_path_       = l_d;
   move_file(in_handle);
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
 void up_file_asset_base::move_file(session_data_ptr in_handle) {
-  auto l_d        = task_info_.root_path_ / gen_file_path() / task_info_.file_path_;
-  auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
-  if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
-  if (exists(l_d)) FSys::backup_file(l_d);
-  FSys::rename(l_tmp_path, l_d);
+  auto l_dir         = task_info_.root_path_ / task_info_.asset_root_path_ / gen_file_path();
+  auto l_path        = l_dir / task_info_.file_path_;
+  auto l_backup_path = l_dir / "backup" / FSys::add_time_stamp(task_info_.file_path_.filename());
+  auto l_tmp_path    = std::get<FSys::path>(in_handle->body_);
+
+  if (auto l_p = l_path.parent_path(); !exists(l_p)) create_directories(l_p);
+  if (auto l_p = l_backup_path.parent_path(); !exists(l_p)) create_directories(l_p);
+
+  if (exists(l_path)) FSys::rename(l_path, l_backup_path);
+  FSys::rename(l_tmp_path, l_path);
 }
 
 //         | 角色 | 地编模型 | 绑定
@@ -80,16 +86,15 @@ void up_file_asset_base::move_file(session_data_ptr in_handle) {
 FSys::path doodle_data_asset_file_maya::gen_file_path() {
   if (task_info_.entity_type_id_ == asset_type::get_character_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+        "Ch/JD{:02d}_{:02d}/Ch{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
     );
   if (task_info_.entity_type_id_ == asset_type::get_prop_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
-        task_info_.pin_yin_ming_cheng_
+        "Prop/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.pin_yin_ming_cheng_
     );
   if (task_info_.entity_type_id_ == asset_type::get_ground_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+        "BG/JD{:02d}_{:02d}/BG{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
     );
 
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
@@ -98,47 +103,34 @@ FSys::path doodle_data_asset_file_maya::gen_file_path() {
 FSys::path doodle_data_asset_file_ue::gen_file_path() {
   if (task_info_.entity_type_id_ == asset_type::get_character_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
-        task_info_.bian_hao_, task_info_.pin_yin_ming_cheng_
+        "Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_,
+        task_info_.pin_yin_ming_cheng_
     );
   if (task_info_.entity_type_id_ == asset_type::get_prop_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
+        "Prop/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
         task_info_.gui_dang_, task_info_.kai_shi_ji_shu_
     );
   if (task_info_.entity_type_id_ == asset_type::get_ground_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_,
+        "BG/JD{:02d}_{:02d}/BG{}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_,
         task_info_.pin_yin_ming_cheng_
     );
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
-}
-void doodle_data_asset_file_ue::move_file(session_data_ptr in_handle) {
-  auto l_UE_folder = task_info_.root_path_ / gen_file_path();
-  auto l_d         = l_UE_folder / task_info_.file_path_;
-  auto l_tmp_path  = std::get<FSys::path>(in_handle->body_);
-  if (!exists(l_d.parent_path())) create_directories(l_d.parent_path());
-  if (exists(l_d)) {
-    auto l_backup_path = l_UE_folder / "backup" / FSys::add_time_stamp(task_info_.file_path_.filename());
-    if (!exists(l_backup_path.parent_path())) create_directories(l_backup_path.parent_path());
-    FSys::rename(l_d, l_backup_path);
-  }
-  FSys::rename(l_tmp_path, l_d);
 }
 
 FSys::path doodle_data_asset_file_image::gen_file_path() {
   if (task_info_.entity_type_id_ == asset_type::get_character_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/Ch{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+        "Ch/JD{:02d}_{:02d}/Ch{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
     );
   if (task_info_.entity_type_id_ == asset_type::get_prop_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
-        task_info_.pin_yin_ming_cheng_
+        "Prop/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.pin_yin_ming_cheng_
     );
   if (task_info_.entity_type_id_ == asset_type::get_ground_id())
     return fmt::format(
-        "6-moxing/Ch/JD{:02d}_{:02d}/BG{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+        "BG/JD{:02d}_{:02d}/BG{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
     );
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }

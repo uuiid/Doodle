@@ -149,6 +149,7 @@ struct project {
   std::string auto_upload_path_{};     // 项目自动上传路径
   std::string production_category_{};  // 电影所属类别
   std::string short_name_{};           // 显示的简称
+  FSys::path asset_root_path_{};       // 资产的根路径(相对于项目路径)
   // std::pair<width,height>
   std::pair<std::int32_t, std::int32_t> get_resolution() const;
   friend void from_json(const nlohmann::json& j, project& p) {
@@ -187,6 +188,7 @@ struct project {
     if (j.contains("auto_upload_path")) j.at("auto_upload_path").get_to(p.auto_upload_path_);
     if (j.contains("production_category")) j.at("production_category").get_to(p.production_category_);
     if (j.contains("short_name")) j.at("short_name").get_to(p.short_name_);
+    if (j.contains("asset_root_path")) j.at("asset_root_path").get_to(p.asset_root_path_);
   }
   friend void to_json(nlohmann::json& j, const project& p) {
     j["id"]                                 = p.uuid_id_;
@@ -230,6 +232,7 @@ struct project {
     j["auto_upload_path"]                   = p.auto_upload_path_;
     j["production_category"]                = p.production_category_;
     j["short_name"]                         = p.short_name_;
+    j["asset_root_path"]                    = p.asset_root_path_;
   }
 };
 

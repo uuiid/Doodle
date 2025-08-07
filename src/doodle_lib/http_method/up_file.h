@@ -30,6 +30,7 @@ class up_file_asset_base : public http_jwt_fun {
 
     FSys::path root_path_{};
     FSys::path file_path_{};
+    FSys::path asset_root_path_{};
   };
 
   virtual FSys::path gen_file_path() = 0;
@@ -47,7 +48,6 @@ DOODLE_HTTP_FUN_END()
 // "api/doodle/data/asset/{task_id}/file/ue"
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_ue, up_file_asset_base)
 FSys::path gen_file_path() override;
-void move_file(session_data_ptr in_handle) override;
 DOODLE_HTTP_FUN_END()
 // "api/doodle/data/asset/{task_id}/file/image"
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_image, up_file_asset_base)
