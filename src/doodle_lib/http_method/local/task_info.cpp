@@ -132,7 +132,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
       in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
-    } else if (in_json.contains("is_sim")) {  /// 自动渲染
+    } else if (in_json.contains("is_sim")) {  /// 自动灯光
       auto l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
       in_json.get_to(*l_import_and_render_args);
       if (in_json["is_sim"].get<bool>()) {
@@ -153,6 +153,16 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         l_import_and_render_args->maya_arg_ = l_arg_t;
       }
       arg_ = l_import_and_render_args;
+
+      l_import_and_render_args->on_run_time_info_.connect([this](const server_task_info::run_time_info_t& in_info) {
+        task_info_->add_run_time_info(in_info);
+        // auto l_v = std::visit(*this, arg_);
+        boost::asio::co_spawn(
+            g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached
+        );
+        emit_signal();
+      });
+
     } else if (in_json.contains("category")) {  // 检查文件任务
       auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
       l_arg_t->config(in_json["category"].get<maya_exe_ns::inspect_file_type>());
@@ -239,9 +249,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     emit_signal();
   }
   void emit_signal() const {
-    default_logger_raw()->warn(
-        "写出事件 {} {} {}", "doodle:task_info:update", (nlohmann::json{} = *task_info_).dump(), "/socket.io/"
-    );
+    default_logger_raw()->warn("写出事件 {} {}", "doodle:task_info:update", (nlohmann::json{} = *task_info_).dump());
     socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_);
   }
 };
