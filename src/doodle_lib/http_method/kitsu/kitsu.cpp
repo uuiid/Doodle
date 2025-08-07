@@ -166,7 +166,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 http_route_ptr create_kitsu_local_route() {
   auto l_rout_ptr = std::make_shared<http::http_route>();
   auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
-  l_sid_ctx->on("/socket.io/");
+  l_sid_ctx->on("/events");
   (*l_rout_ptr)                                                      //
       .reg_t<local::local_setting>("/api/doodle/local_setting"_url)  //
       .reg_t<local::video_thumbnail>("/api/doodle/video/thumbnail"_url)
