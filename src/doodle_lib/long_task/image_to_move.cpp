@@ -102,7 +102,7 @@ FSys::path create_out_path(
   return l_out;
 }
 
-boost::system::error_code create_move(
+void create_move(
     const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector,
     const image_size& in_image_size
 
@@ -112,17 +112,11 @@ boost::system::error_code create_move(
   if (std::ranges::any_of(l_vector, [](const movie::image_attr& in_item) { return in_item.num_attr == 0; }))
     movie::image_attr::extract_num(l_vector);
   std::sort(l_vector.begin(), l_vector.end());
-  std::atomic_bool l_stop{};
-  boost::system::error_code l_ec{};
   in_logger->info("开始创建视频 {}", in_out_path);
   in_logger->info("获得图片路径 {}", l_vector.front().path_attr.parent_path());
 
   if (FSys::exists(in_out_path)) {
-    FSys::remove(in_out_path, l_ec);
-    if (l_ec) {
-      in_logger->log(log_loc(), level::err, "合成视频主动删除失败 {} ", in_out_path);
-      return l_ec;
-    }
+    FSys::remove(in_out_path);
   }
 
   const cv::Size k_size{in_image_size.width, in_image_size.height};
@@ -131,18 +125,6 @@ boost::system::error_code create_move(
   const auto& k_size_len = l_vector.size();
   auto l_gamma           = create_gamma_LUT_table(l_vector.empty() ? 1.0 : l_vector.front().gamma_t);
   for (auto& l_image : l_vector) {
-    if (l_stop) {
-      in_logger->error("合成视频被主动结束 合成视频文件将被主动删除");
-      try {
-        remove(in_out_path);
-      } catch (const FSys::filesystem_error& err) {
-        in_logger->error("合成视频主动删除失败 {} ", boost::diagnostic_information(err));
-      }
-      l_ec.assign(boost::system::errc::operation_canceled, boost::system::generic_category());
-      BOOST_ASIO_ASSERT(l_ec);
-      return l_ec;
-    }
-
     in_logger->info("开始读取图片 {}", l_image.path_attr);
 
     if (l_image.path_attr.extension() == ".exr") {
@@ -168,7 +150,6 @@ boost::system::error_code create_move(
   }
 
   in_logger->info("成功完成任务");
-  return l_ec;
 }
-} // namespace detail
-} // namespace doodle
+}  // namespace detail
+}  // namespace doodle
