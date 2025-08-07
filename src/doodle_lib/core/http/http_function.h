@@ -59,7 +59,7 @@ class url_route_component_t : public url_route_component_base_t {
   // year month day regex
   constexpr static auto g_year_month_day_regex = std::string_view{"([0-9]{4}-[0-9]{2}-[0-9]{2})"};
   constexpr static auto g_number               = std::string_view{"([0-9]+)"};
-  constexpr static auto g_file_name            = std::string_view{R"((^.+\.[A-Za-z]{3}$))"};
+  constexpr static auto g_file_name            = std::string_view{R"((.+\.[A-Za-z]{3}$))"};
 
   struct component_base_t {
     virtual ~component_base_t()                                                            = default;
