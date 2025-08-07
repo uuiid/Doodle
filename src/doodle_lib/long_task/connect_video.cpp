@@ -53,7 +53,6 @@ void connect_video(
   }
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
-  return l_ec;
 }
 
 }  // namespace doodle::detail

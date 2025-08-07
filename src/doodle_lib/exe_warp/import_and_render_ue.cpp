@@ -355,10 +355,9 @@ FSys::path args::create_move(const FSys::path& in_out_image_path) const {
     boost::system::error_code l_ec{};
     auto l_move_paths = clean_1001_before_frame(in_out_image_path, begin_time_);
     if (!l_move_paths) throw_exception(doodle_error{l_move_paths.error()});
-    l_ec = detail::create_move(
+    detail::create_move(
         l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(&episodes_, &shot_, *l_move_paths), size_
     );
-    if (l_ec) throw_exception(doodle_error{l_ec.what()});
   }
   return l_movie_path;
 }

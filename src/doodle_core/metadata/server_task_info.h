@@ -112,32 +112,28 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   std::string last_line_log_;
 
   struct run_time_info_t {
-    zoned_time start_time_{};
+    zoned_time start_time_{chrono::current_zone(), chrono::system_clock::now()};
     zoned_time end_time_{};
-    std::string last_line_log_{};
+    std::string info_{};
     // from json
     friend void from_json(const nlohmann::json& j, run_time_info_t& p) {
       j.at("start_time").get_to(p.start_time_);
       j.at("end_time").get_to(p.end_time_);
-      j.at("last_line_log").get_to(p.last_line_log_);
+      j.at("info").get_to(p.info_);
     }
     // to json
     friend void to_json(nlohmann::json& j, const run_time_info_t& p) {
-      j["start_time"] = p.start_time_;
-      j["end_time"]   = p.end_time_;
-      j["last_line_log"] = p.last_line_log_;
+      j["start_time"]    = p.start_time_;
+      j["end_time"]      = p.end_time_;
+      j["info"] = p.info_;
     }
   };
   std::vector<run_time_info_t> get_run_time_info() const {
     if (run_time_info_.is_array()) return run_time_info_.get<std::vector<run_time_info_t>>();
     return {};
   }
-  void set_run_time_info(const std::vector<run_time_info_t>& in_run_time_info) {
-    run_time_info_ = in_run_time_info;
-  }
-  void add_run_time_info(const run_time_info_t& in_run_time_info) {
-    run_time_info_.push_back(in_run_time_info);
-  }
+  void set_run_time_info(const std::vector<run_time_info_t>& in_run_time_info) { run_time_info_ = in_run_time_info; }
+  void add_run_time_info(const run_time_info_t& in_run_time_info) { run_time_info_.push_back(in_run_time_info); }
 
   static constexpr auto logger_category = "server_task";
 

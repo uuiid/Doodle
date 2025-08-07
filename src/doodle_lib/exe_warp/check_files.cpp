@@ -241,12 +241,8 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   }
   movie::image_attr::extract_num(l_attr);
   auto l_out_file = l_arg->out_files_dir_.parent_path() / fmt::format("{}.mp4", l_arg->out_files_dir_.stem());
-  l_ec            = detail::create_move(l_out_file, in_logger, l_attr, {1920, 1080});
-  if (l_ec) {
-    in_logger->error("检查文件失败, 无法获取到渲染输出的文件 {}", l_ec.message());
-    co_return std::tuple(l_ec, l_err_msg);
-  }
-  std::error_code l_ec2{};
+  detail::create_move(l_out_file, in_logger, l_attr, {1920, 1080});
+
   // auto l_target = l_face_data.front().project_.path_ / "03_Workflow" /
   //                 magic_enum::enum_name(l_face_data.front().type_) / l_out_file.filename();
   // if (!FSys::exists(l_target.parent_path())) FSys::create_directories(l_target.parent_path());
@@ -256,10 +252,7 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   //         l_out_file.filename(),
   //     FSys::copy_options::update_existing, l_ec2
   // );
-  if (l_ec2) {
-    in_logger->error("复制文件失败 {}", l_ec2.message());
-    co_return std::tuple(l_ec2, l_err_msg);
-  }
+
   co_return std::tuple(boost::system::error_code{}, std::string{});
 }
 

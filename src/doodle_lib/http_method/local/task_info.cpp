@@ -101,10 +101,10 @@ class run_post_task_local_cancel_manager {
 };
 
 class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
-  std::variant<
+  using arg_variant_type = std::variant<
       std::shared_ptr<maya_exe_ns::arg>, std::shared_ptr<import_and_render_ue_ns::args>,
-      std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>>
-      arg_;
+      std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>>;
+  arg_variant_type arg_;
   logger_ptr logger_{};
   // 强制等待一秒
   boost::asio::awaitable<void> wait() const {
@@ -185,8 +185,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
 
   void run() {
+    // auto l_v = std::visit(*this, arg_);
     boost::asio::co_spawn(
-        g_io_context(), std::visit(*this, arg_),
+        g_io_context(), (*this)(),
         boost::asio::bind_cancellation_slot(
             g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_),
             boost::asio::consign(boost::asio::detached, shared_from_this())
@@ -194,17 +195,37 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     );
   }
 
-  boost::asio::awaitable<void> operator()(std::shared_ptr<maya_exe_ns::arg>& in_arg) const {
+  boost::asio::awaitable<void> operator()() const {
     co_await wait();
     try {
       co_await wait();
-      co_await async_run_maya(in_arg, logger_);
-      // 用户取消
-      if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-        task_info_->status_ = server_task_info_status::canceled;
-        logger_->error("用户取消");
-      } else
-        task_info_->status_ = server_task_info_status::completed;
+      if (std::holds_alternative<std::shared_ptr<import_and_render_ue_ns::args>>(arg_)) {
+        co_await std::get<std::shared_ptr<import_and_render_ue_ns::args>>(arg_)->run();
+      } else if (std::holds_alternative<std::shared_ptr<maya_exe_ns::arg>>(arg_)) {
+        co_await async_run_maya(std::get<std::shared_ptr<maya_exe_ns::arg>>(arg_), logger_);
+      } else if (std::holds_alternative<std::shared_ptr<doodle::detail::image_to_move>>(arg_)) {
+        auto l_arg = std::get<std::shared_ptr<doodle::detail::image_to_move>>(arg_);
+        std::vector<FSys::path> l_paths{};
+        for (auto&& l_path_info : FSys::directory_iterator{l_arg->path_}) {
+          auto l_ext = l_path_info.path().extension();
+          if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") l_paths.emplace_back(l_path_info.path());
+        }
+        auto l_images = doodle::movie::image_attr::make_default_attr(&l_arg->eps_, &l_arg->shot_, l_paths);
+        for (auto&& l_image : l_images) {
+          l_image.watermarks_attr.emplace_back(l_arg->user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
+        }
+        doodle::detail::create_move(l_arg->out_path_, logger_, l_images, l_arg->image_size_);
+
+      } else if (std::holds_alternative<std::shared_ptr<doodle::detail::connect_video_t>>(arg_)) {
+        auto l_arg = std::get<std::shared_ptr<doodle::detail::connect_video_t>>(arg_);
+        l_arg->file_list_ |=
+            ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
+        doodle::detail::connect_video(l_arg->out_path_, logger_, l_arg->file_list_, l_arg->image_size_);
+      }
+    } catch (const boost::system::system_error& e) {
+      if (e.code() == boost::system::errc::operation_canceled) task_info_->status_ = server_task_info_status::canceled;
+      logger_->error("用户取消 {}", e.what());
+      task_info_->last_line_log_ = fmt::format("用户取消 {}", e.what());
     } catch (...) {
       task_info_->status_ = server_task_info_status::failed;
       auto l_err_str      = boost::current_exception_diagnostic_information() |
@@ -214,99 +235,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     }
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     logger_->flush();
-
-    boost::asio::co_spawn(
-        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-    );
-    emit_signal();
-    co_return;
-  }
-  boost::asio::awaitable<void> operator()(std::shared_ptr<import_and_render_ue_ns::args>& in_arg) const {
-    in_arg->logger_ptr_ = logger_;
-    try {
-      co_await wait();
-      co_await in_arg->run();
-      // 用户取消
-      if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none) {
-        task_info_->status_ = server_task_info_status::canceled;
-        logger_->error("用户取消");
-      } else
-        task_info_->status_ = server_task_info_status::completed;
-    } catch (...) {
-      task_info_->status_ = server_task_info_status::failed;
-
-      auto l_err_str      = boost::current_exception_diagnostic_information() |
-                       ranges::actions::remove_if([](const char& in_) -> bool { return in_ == '\n' || in_ == '\r'; });
-      logger_->error(l_err_str);
-      task_info_->last_line_log_ = l_err_str;
-    }
-    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-    logger_->flush();
-
-    boost::asio::co_spawn(
-        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
-        boost::asio::bind_cancellation_slot(
-            app_base::Get().on_cancel.slot(), boost::asio::detached
-
-        )
-    );
-    emit_signal();
-
-    co_return;
-  }
-  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::image_to_move>& in_arg) const {
-    co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
-
-    co_await wait();
-    std::vector<FSys::path> l_paths{};
-    for (auto&& l_path_info : FSys::directory_iterator{in_arg->path_}) {
-      auto l_ext = l_path_info.path().extension();
-      if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") l_paths.emplace_back(l_path_info.path());
-    }
-    auto l_images = doodle::movie::image_attr::make_default_attr(&in_arg->eps_, &in_arg->shot_, l_paths);
-    for (auto&& l_image : l_images) {
-      l_image.watermarks_attr.emplace_back(in_arg->user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
-    }
-    auto l_ec             = doodle::detail::create_move(in_arg->out_path_, logger_, l_images, in_arg->image_size_);
-    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-    // 用户取消
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-      task_info_->status_ = server_task_info_status::canceled;
-    else if (l_ec) {
-      task_info_->status_ = server_task_info_status::failed;
-    } else
-      task_info_->status_ = server_task_info_status::completed;
-    boost::asio::co_spawn(
-        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
-        boost::asio::bind_cancellation_slot(
-            app_base::Get().on_cancel.slot(), boost::asio::detached
-
-        )
-    );
-    emit_signal();
-  }
-  boost::asio::awaitable<void> operator()(std::shared_ptr<doodle::detail::connect_video_t>& in_arg) const {
-    co_await boost::asio::post(g_io_context(), boost::asio::use_awaitable);
-    co_await wait();
-    in_arg->file_list_ |=
-        ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
-    auto l_ec = doodle::detail::connect_video(in_arg->out_path_, logger_, in_arg->file_list_, in_arg->image_size_);
-    task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-    // 用户取消
-    if ((co_await boost::asio::this_coro::cancellation_state).cancelled() != boost::asio::cancellation_type::none)
-      task_info_->status_ = server_task_info_status::canceled;
-    else if (l_ec) {
-      task_info_->status_ = server_task_info_status::failed;
-    } else
-      task_info_->status_ = server_task_info_status::completed;
-    boost::asio::co_spawn(
-        g_io_context(), g_ctx().get<sqlite_database>().install(task_info_),
-        boost::asio::bind_cancellation_slot(
-            app_base::Get().on_cancel.slot(), boost::asio::detached
-
-        )
-    );
+    co_await g_ctx().get<sqlite_database>().install(task_info_);
     emit_signal();
   }
   void emit_signal() const {

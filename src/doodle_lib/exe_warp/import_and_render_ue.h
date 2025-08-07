@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "doodle_core/metadata/server_task_info.h"
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/image_size.h>
@@ -11,6 +12,8 @@
 
 #include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+
+#include <boost/signals2/signal.hpp>
 
 namespace doodle {
 namespace import_and_render_ue_ns {
@@ -112,6 +115,8 @@ struct args {
   bool bind_skin_{};
   logger_ptr logger_ptr_{};
   bool is_sim_{};
+
+  boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
 
   boost::asio::awaitable<void> run();
 
