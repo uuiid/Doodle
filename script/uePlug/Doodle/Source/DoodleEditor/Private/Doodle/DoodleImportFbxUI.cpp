@@ -316,7 +316,7 @@ void UDoodleFbxImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuf
 {
 	GenStartAndEndTime();
 	const FString L_String = FString::Format(
-		TEXT("FbxI_{0}_{1}"),
+		TEXT("Import_{0}/FbxI_{0}_{1}"),
 		TArray<FStringFormatArg>{
 			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
 			FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}
@@ -504,16 +504,15 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
 
 void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
 {
-	const FString L_Folder = GetImportPath(In_Path_Prefix);
+	FString L_Folder = GetImportPath(In_Path_Prefix);
 	FString L_Base = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path_Prefix.ToUpper(), Eps, Shot, *ShotAb);
 	switch (In_Path_Suffix)
 	{
 	case EImportSuffix::Lig:
 		break;
-	case EImportSuffix::Lig_Sim:
-		break;
 	case EImportSuffix::Vfx:
-	case EImportSuffix::Vfx_Colony:
+		L_Folder /= "Import_";
+		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
 		L_Base += TEXT("_");
 		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
 		break;
@@ -801,10 +800,11 @@ void UDoodleFbxCameraImport_1::ImportFile()
 		// Pkg->MarkPackageDirty();
 		const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
 		const FString BaseFileName = FPaths::GetBaseFilename(PackageName);
-		
+
 		FAssetToolsModule& AssetToolsModule =
 			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-		L_ShotLevel = CastChecked<UWorld>(AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
+		L_ShotLevel = CastChecked<UWorld>(
+			AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
 		// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 		// AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
 
@@ -820,10 +820,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	{
 	case EImportSuffix::Lig:
 		break;
-	case EImportSuffix::Lig_Sim:
-		break;
 	case EImportSuffix::Vfx:
-	case EImportSuffix::Vfx_Colony:
 		{
 			FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
 			FString FolderPath = FPaths::Combine(LongImportPathDir, TEXT("Vfx"));

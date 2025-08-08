@@ -290,8 +290,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	RenderMapPath = JsonObject->GetStringField(TEXT("render_map"));
 	CreateMapPath = JsonObject->GetStringField(TEXT("create_map"));
 	ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
-	EffectSequencePath = JsonObject->GetStringField(TEXT("level_sequence_vfx"));
-	EffectMapPath = JsonObject->GetStringField(TEXT("vfx_map"));
+
 	SequencePath = JsonObject->GetStringField(TEXT("level_sequence"));
 	L_Start = FFrameNumber(JsonObject->GetIntegerField(TEXT("begin_time")));
 	L_End = FFrameNumber(JsonObject->GetIntegerField(TEXT("end_time")));
@@ -346,8 +345,6 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	//--------------------
 	DeleteAsseet(RenderMapPath);
 	DeleteAsseet(CreateMapPath);
-	DeleteAsseet(EffectSequencePath);
-	DeleteAsseet(EffectMapPath);
 	DeleteAsseet(SequencePath);
 
 
@@ -358,11 +355,6 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
 	TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
 	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
-	CommandletHelpers::TickEngine(TheRenderWorld);
-
-	/// 创建特效关卡和关卡序列
-	OnCreateEffectSequenceWorld();
-	OnCreateEffectSequence();
 	CommandletHelpers::TickEngine(TheRenderWorld);
 
 	OnBuildSequence();
@@ -404,7 +396,6 @@ void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
 	}
 	LevelNames.Add(FName{RenderMapPath});
 	//-------------
-	if (!EffectMapPath.IsEmpty()) LevelNames.Add(FName{EffectMapPath});
 	NewSection->SetLevelNames(LevelNames);
 
 	// Clean up any previous world.  The world should have already been saved
@@ -435,42 +426,6 @@ void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
 }
 
 
-void UDoodleAutoAnimationCommandlet::OnCreateEffectSequence()
-{
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	const FString AssetName = FPaths::GetBaseFilename(EffectSequencePath);
-
-	UPackage* Package = CreatePackage(*EffectSequencePath);
-	ULevelSequence* EffectLevelSequence = NewObject<ULevelSequence>(Package, *AssetName, RF_Public | RF_Standalone | RF_Transactional);
-	EffectLevelSequence->Initialize();
-	IAssetRegistry::GetChecked().AssetCreated(EffectLevelSequence);
-	Package->Modify();
-	//--------------------------
-	EffectLevelSequence->GetMovieScene()->SetDisplayRate(Rate);
-	EffectLevelSequence->GetMovieScene()->SetTickResolutionDirectly(Rate);
-	//--------------------
-	EffectLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
-	EffectLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
-	EffectLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - Offset, L_End + 1}, true);
-	EffectLevelSequence->GetMovieScene()->Modify();
-
-	//----------------------------------------
-	UMovieSceneSubTrack* NewTrack1 = TheLevelSequence->GetMovieScene()->FindTrack<UMovieSceneSubTrack>();
-	if (NewTrack1)
-	{
-		TheLevelSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack1));
-	}
-	NewTrack1 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
-	UMovieSceneSubSection* NewSection1 = CastChecked<UMovieSceneSubSection>(NewTrack1->CreateNewSection());
-	NewSection1->SetSequence(EffectLevelSequence);
-	NewSection1->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
-	NewTrack1->AddSection(*NewSection1);
-	//---------------------
-	TheLevelSequence->Modify();
-	EditorAssetSubsystem->SaveLoadedAsset(EffectLevelSequence);
-}
-
 void UDoodleAutoAnimationCommandlet::DeleteAsseet(const FString& InPath)
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
@@ -480,26 +435,6 @@ void UDoodleAutoAnimationCommandlet::DeleteAsseet(const FString& InPath)
 	}
 }
 
-void UDoodleAutoAnimationCommandlet::OnCreateEffectSequenceWorld()
-{
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-
-	UWorldFactory* Factory = NewObject<UWorldFactory>();
-	UPackage* Pkg = CreatePackage(*EffectMapPath);
-	Pkg->FullyLoad();
-	Pkg->MarkPackageDirty();
-	const FString PackagePath = FPackageName::GetLongPackagePath(EffectMapPath);
-	const FString BaseFileName = FPaths::GetBaseFilename(EffectMapPath);
-	//---------------
-	const FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-	UObject* TempObject = AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory);
-	UWorld* EffectSequenceWorld = Cast<UWorld>(TempObject);
-	const FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-	AssetRegistryModule.Get().AssetCreated(EffectSequenceWorld);
-	//------------------------
-	EffectSequenceWorld->Modify();
-	EditorAssetSubsystem->SaveLoadedAsset(EffectSequenceWorld);
-}
 
 void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 {

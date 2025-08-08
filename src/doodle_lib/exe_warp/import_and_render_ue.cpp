@@ -273,6 +273,14 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
   l_json          = l_import_data;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   logger_ptr_->warn("排队导入文件 {} ", render_project_);
+
+  auto l_project_root = render_project_.parent_path();
+  const static FSys::path g_ue_game_path{doodle_config::ue4_game};
+  FSys::remove_all(
+      l_project_root / doodle_config::ue4_content /
+      FSys::path{l_import_data.import_dir}.lexically_relative(g_ue_game_path)
+  );
+
   // 添加三次重试
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   for (int i = 0; i < 3; ++i) {
@@ -528,7 +536,8 @@ import_data_t args::gen_import_config() {
           "{}_EP{:03}_SC{:03}{}", l_import_data.project_.code_, l_import_data.episode.p_episodes,
           l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
       );
-
+  // 后缀
+  auto l_suffix = is_sim_ ? "_JS" : "_DH";
   // 渲染配置
   {
     l_import_data.movie_pipeline_config = fmt::format(
@@ -538,27 +547,24 @@ import_data_t args::gen_import_config() {
     l_import_data.movie_pipeline_config.replace_extension(l_import_data.movie_pipeline_config.stem());
 
     l_import_data.level_sequence_import = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}", l_import_data.project_.code_,
-        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}", l_import_data.project_.code_,
+        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum, l_suffix
     );
-    l_import_data.level_sequence_vfx = l_import_data.level_sequence_import.generic_string() + "_Vfx";
     l_import_data.level_sequence_import.replace_extension(l_import_data.level_sequence_import.stem());
 
     l_import_data.create_map = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_import_data.project_.code_,
-        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_import_data.project_.code_,
+        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum, l_suffix
     );
-    l_import_data.vfx_map    = l_import_data.create_map + "_Vfx_LV";
 
     l_import_data.import_dir = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import_{4:%m_%d_%H_%M}", l_import_data.project_.code_,
-        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum,
-        chrono::current_zone()->to_local(chrono::system_clock::now())
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/files/", l_import_data.project_.code_,
+        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum, l_suffix
     );
 
     l_import_data.render_map = fmt::format(
-        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/sc{2:03}{3}", l_import_data.project_.code_,
-        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum
+        "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_import_data.project_.code_,
+        l_import_data.episode.p_episodes, l_import_data.shot.p_shot, l_import_data.shot.p_shot_enum, l_suffix
     );
   }
 

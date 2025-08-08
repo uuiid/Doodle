@@ -46,9 +46,7 @@ struct import_data_t {
 
   FSys::path render_map;             // 渲染关卡, 这个放置外面, 包含下面两个子关卡
   std::string create_map;            // 创建的关卡(放置骨骼网格体)
-  FSys::path vfx_map;                // 特效关卡, 放特效
   FSys::path level_sequence_import;  // 渲染关卡序列(包的路径), 包括下面的子关卡
-  FSys::path level_sequence_vfx;     // 额外的特效关卡序列(包的路径)
 
   FSys::path movie_pipeline_config;  // 渲染配置(包的路径)
 
@@ -71,8 +69,6 @@ struct import_data_t {
     j["files"]              = p.files;
     j["import_dir"]         = p.import_dir;
     j["create_map"]         = p.create_map;
-    j["vfx_map"]            = p.vfx_map;
-    j["level_sequence_vfx"] = p.level_sequence_vfx;
 
     auto l_path             = p.level_sequence_import;
     l_path.replace_extension();
