@@ -52,7 +52,7 @@ auto set_response_header(T& in_res, std::string_view in_mine_type) {
   ;
   in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   in_res.set(boost::beast::http::field::content_type, in_mine_type);
-  in_res.set(boost::beast::http::field::access_control_allow_origin, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  in_res.set(boost::beast::http::field::access_control_allow_origin, "*");
   in_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
   in_res.set(boost::beast::http::field::access_control_allow_methods, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   in_res.set(
