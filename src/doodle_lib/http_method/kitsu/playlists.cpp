@@ -88,4 +88,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   co_return in_handle->make_msg(nlohmann::json{} = *l_prev);
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_temp::post(
+    session_data_ptr in_handle
+) {
+  person_.is_project_access(project_id_);
+  auto l_task_ids = in_handle->get_json().get<std::vector<uuid>>();
+  std::vector<task> l_tasks{};
+  l_tasks.reserve(l_task_ids.size());
+  for (auto&& i : l_task_ids) l_tasks.emplace_back(g_ctx().get<sqlite_database>().get_by_uuid<task>(i));
+  std::vector<entity> l_entts{};
+  l_entts.reserve(l_tasks.size());
+  for (auto&& i : l_tasks) l_entts.emplace_back(g_ctx().get<sqlite_database>().get_by_uuid<entity>(i.entity_id_));
+  for (auto&& i : l_entts) {
+    if (i.entity_type_id_ == asset_type::get_shot_id()) {
+    } else if (i.entity_type_id_ == asset_type::get_sequence_id()) {
+    } else if (i.entity_type_id_ == asset_type::get_episode_id()) {
+    } else {
+    }
+  }
+}
+
 }  // namespace doodle::http
