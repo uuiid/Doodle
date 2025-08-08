@@ -113,7 +113,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   struct run_time_info_t {
     zoned_time start_time_{chrono::current_zone(), chrono::system_clock::now()};
-    zoned_time end_time_{};
+    zoned_time end_time_{chrono::current_zone()};
     std::string info_{};
     // from json
     friend void from_json(const nlohmann::json& j, run_time_info_t& p) {
