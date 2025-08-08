@@ -23,7 +23,9 @@ void websocket_callback(
 ) override;
 [[nodiscard]] bool has_websocket() const override;
 std::shared_ptr<sid_ctx> sid_ctx_;
-explicit socket_io_http(std::shared_ptr<sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) {}
+explicit socket_io_http(std::shared_ptr<sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) {
+  init();
+}
 void init();
 std::string generate_register_reply() const;
 };
