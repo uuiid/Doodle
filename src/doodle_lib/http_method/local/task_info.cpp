@@ -123,6 +123,14 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   explicit run_long_task_local(std::shared_ptr<server_task_info> in_task_info) : task_info_(std::move(in_task_info)) {}
 
   void load_form_json(const nlohmann::json& in_json) {
+    auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                         fmt::format("{}.log", task_info_->uuid_id_);
+    logger_ = std::make_shared<spdlog::async_logger>(
+        task_info_->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+        spdlog::thread_pool()
+    );
+    logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
+
     if (in_json.contains("replace_ref_file")) {  /// 解算文件
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
       in_json.get_to(*l_arg_t);
@@ -152,6 +160,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         l_arg_t->create_play_blast_         = true;
         l_import_and_render_args->maya_arg_ = l_arg_t;
       }
+      l_import_and_render_args->logger_ptr_ = logger_;
       arg_ = l_import_and_render_args;
 
       l_import_and_render_args->on_run_time_info_.connect([this](const server_task_info::run_time_info_t& in_info) {
@@ -185,13 +194,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
     }
-    auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
-                         fmt::format("{}.log", task_info_->uuid_id_);
-    logger_ = std::make_shared<spdlog::async_logger>(
-        task_info_->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
-        spdlog::thread_pool()
-    );
-    logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
   }
 
   void run() {
