@@ -209,6 +209,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     co_await wait();
     try {
       co_await wait();
+      emit_signal();
       if (std::holds_alternative<std::shared_ptr<import_and_render_ue_ns::args>>(arg_)) {
         co_await std::get<std::shared_ptr<import_and_render_ue_ns::args>>(arg_)->run();
       } else if (std::holds_alternative<std::shared_ptr<maya_exe_ns::arg>>(arg_)) {
