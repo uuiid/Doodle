@@ -841,7 +841,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	{
 		FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
 		FString AbovePath = FPaths::GetPath(LongImportPathDir);
-		FString FolderPath = FPaths::Combine(AbovePath, SDoodleImportFbxUI::NewFolderName);
+		FString FolderPath = AbovePath / "Vfx" / SDoodleImportFbxUI::NewFolderName;
 		if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
 		{
 			EditorAssetSubsystem->MakeDirectory(FolderPath);

@@ -71,10 +71,7 @@ private:
 
 	void AddSequenceWorldToRenderWorld();
 
-	/// 创建特效关卡
-	void OnCreateEffectSequenceWorld();
-	/// 创建特效定序器
-	void OnCreateEffectSequence();
+
 	/// 创建主关卡
 	void OnCreateSequenceWorld();
 	/// 创建主定序器
@@ -118,7 +115,6 @@ private:
 	FString DestinationPath;
 	FString SequencePath;
 	FString ImportPath;
-	FString EffectMapPath;
 
 	FFrameRate Rate{25, 1};
 	FFrameNumber Offset{50};
@@ -142,7 +138,6 @@ private:
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
 	//-----------
-	FString EffectSequencePath;
 	TArray<FImportFiles2> ImportFiles;
 
 	// 主光源
@@ -158,11 +153,13 @@ private:
 };
 
 class UMoviePipelineExecutorBase;
+
 UCLASS()
 class UDoodleAutoRender : public UObject
 {
 	GENERATED_BODY()
 	void OnEnd(UMoviePipelineExecutorBase*, bool);
+
 public:
 	void Main(float InTime);
 	// 命令行中有我们指示渲染的参数
