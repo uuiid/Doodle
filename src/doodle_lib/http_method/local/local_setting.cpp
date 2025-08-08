@@ -34,7 +34,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get
           {"UE_version", core_set::get_set().ue4_version},
           {"timeout", core_set::get_set().timeout},
       }
-          .dump()
   );
 }
 
@@ -72,7 +71,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
           {"UE_version", l_set.ue4_version},
 
       }
-          .dump()
   );
 }
 
