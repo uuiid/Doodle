@@ -15,6 +15,7 @@
 namespace doodle::http {
 
 void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
+  if (!g_ctx().contains<kitsu_ctx_t>()) return;
   auto l_jwt = in_handle->req_header_[boost::beast::http::field::cookie];
   if (l_jwt.empty()) l_jwt = in_handle->req_header_[boost::beast::http::field::authorization];
 
@@ -24,7 +25,6 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
     l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
   if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
   // std::string l_l_jwt_str{l_jwt};
-  if (!g_ctx().contains<kitsu_ctx_t>()) return;
 
   auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
 
