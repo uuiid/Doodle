@@ -819,6 +819,16 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	switch (Path_Suffix)
 	{
 	case EImportSuffix::Lig:
+		static const FString LigFolder1{TEXT("/Game/Shot/map/level")};
+		static const FString LigFolder2{TEXT("/Game/Shot/map/other")};
+		if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder1))
+		{
+			EditorAssetSubsystem->MakeDirectory(LigFolder1);
+		}
+		if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder2))
+		{
+			EditorAssetSubsystem->MakeDirectory(LigFolder2);
+		}
 		break;
 	case EImportSuffix::Vfx:
 		{
