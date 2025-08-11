@@ -106,6 +106,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
     } else {
     }
   }
+
+
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http

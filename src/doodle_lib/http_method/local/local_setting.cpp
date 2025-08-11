@@ -69,6 +69,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
           {"maya_path", l_maya_path},
           {"UE_path", l_set.ue4_path},
           {"UE_version", l_set.ue4_version},
+          {"timeout", l_set.timeout},
 
       }
   );
