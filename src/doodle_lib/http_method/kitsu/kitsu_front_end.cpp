@@ -54,8 +54,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::g
   if (l_path.filename() == "index.html") {
     co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
   }
-  static std::set<FSys::path> l_binary_exts{".png",  ".jpg", ".jpeg", ".gif", ".ico",
-                                            ".svgz", ".map", ".exe",  ".mp4", ".webm"};
+  static std::set<FSys::path> l_binary_exts{".png", ".jpg", ".jpeg", ".gif",  ".ico", ".svgz",
+                                            ".map", ".exe", ".mp4",  ".webm", ".zip"};
   if (l_binary_exts.contains(l_path.extension()))
     co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
 
