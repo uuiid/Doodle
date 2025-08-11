@@ -172,6 +172,7 @@ public:
 	// 初次导入
 	bool FirstImport{false};
 	EImportSuffix Path_Suffix;
+	FString Path_Prefix;
 
 	UDoodleFbxCameraImport_1()
 	{

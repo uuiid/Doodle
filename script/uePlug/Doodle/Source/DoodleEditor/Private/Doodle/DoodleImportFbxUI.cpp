@@ -504,11 +504,16 @@ bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Sk
 
 void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
 {
+	Path_Prefix = In_Path_Prefix;
 	FString L_Folder = GetImportPath(In_Path_Prefix);
 	FString L_Base = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path_Prefix.ToUpper(), Eps, Shot, *ShotAb);
 	switch (In_Path_Suffix)
 	{
 	case EImportSuffix::Lig:
+		L_Folder /= "Import_";
+		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
+		L_Base += TEXT("_");
+		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
 		break;
 	case EImportSuffix::Vfx:
 		L_Folder /= "Import_";
@@ -816,8 +821,10 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	}
 	//---------------
 
-	static const FString LigFolder1{TEXT("/Game/Shot/map/level")};
-	static const FString LigFolder2{TEXT("/Game/Shot/map/other")};
+	const FString LigFolder1 = FString::Printf(TEXT("/Game/Shot/ep%.4d/map/Light_File/level"), Eps);
+	const FString LigFolder2 = FString::Printf(TEXT("/Game/Shot/ep%.4d/map/Light_File/other"), Eps);
+	FString LigFolder3 = GetImportPath(Path_Prefix) / FString::Printf(
+		TEXT("%s_EP%.3d_SC%.3d%s"), *Path_Prefix.ToUpper(), Eps, Shot, *ShotAb);
 	switch (Path_Suffix)
 	{
 	case EImportSuffix::Lig:
@@ -828,6 +835,23 @@ void UDoodleFbxCameraImport_1::ImportFile()
 		if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder2))
 		{
 			EditorAssetSubsystem->MakeDirectory(LigFolder2);
+		}
+		if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
+		{
+			EditorAssetSubsystem->DuplicateAsset(ImportPathDir, LigFolder3);
+			EditorAssetSubsystem->SaveAsset(LigFolder3, false);
+		}
+		LigFolder3 += TEXT("_Zong");
+		if (UWorld* L_Level = LoadObject<UWorld>(nullptr, *LigFolder3); !L_Level)
+		{
+			const FString PackagePath = FPackageName::GetLongPackagePath(LigFolder3);
+			const FString BaseFileName = FPaths::GetBaseFilename(LigFolder3);
+			FAssetToolsModule& AssetToolsModule =
+				FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+			L_Level = CastChecked<UWorld>(
+				AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
+
+			EditorAssetSubsystem->SaveLoadedAsset(L_Level, false);
 		}
 		break;
 	case EImportSuffix::Vfx:
