@@ -235,9 +235,11 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
             ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
         doodle::detail::connect_video(l_arg->out_path_, logger_, l_arg->file_list_, l_arg->image_size_);
       }
+      task_info_->status_ = server_task_info_status::completed;
     } catch (const boost::system::system_error& e) {
       if (e.code() == boost::system::errc::operation_canceled) task_info_->status_ = server_task_info_status::canceled;
       logger_->error("用户取消 {}", e.what());
+      task_info_->status_        = server_task_info_status::canceled;
       task_info_->last_line_log_ = fmt::format("用户取消 {}", e.what());
     } catch (...) {
       task_info_->status_ = server_task_info_status::failed;
