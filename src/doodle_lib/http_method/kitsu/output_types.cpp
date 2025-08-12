@@ -15,7 +15,7 @@
 #include "kitsu.h"
 
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> data_file_status::get(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_output_types::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 

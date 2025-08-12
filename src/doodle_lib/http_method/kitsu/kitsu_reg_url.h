@@ -38,6 +38,10 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_assets)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+// /api/data/output-types
+DOODLE_HTTP_JWT_FUN(data_output_types)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 // /api/data/file-status
 DOODLE_HTTP_JWT_FUN(data_file_status)
 DOODLE_HTTP_FUN_OVERRIDE(get)

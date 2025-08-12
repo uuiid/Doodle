@@ -33,4 +33,5 @@ target_sources(
         shots.cpp
         movies.cpp
         file_status.cpp
+        output_types.cpp
 )
