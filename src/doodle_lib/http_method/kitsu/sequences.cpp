@@ -186,7 +186,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   auto& l_sql = g_ctx().get<sqlite_database>();
   auto l_args = in_handle->get_json().get<data_project_sequences_args>();
   using namespace sqlite_orm;
-  auto l_sq_list = l_sql.impl_->storage_any_.get_all<entity>(where(
+  auto l_sq_list    = l_sql.impl_->storage_any_.get_all<entity>(where(
       c(&entity::entity_type_id_) ==
           l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_ &&
       c(&entity::parent_id_) == l_args.episode_id_ && c(&entity::project_id_) == id_ &&
@@ -210,6 +210,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
     *l_entity_ptr = l_sq_list.front();
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity_ptr);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::get(session_data_ptr in_handle) {
+  person_.is_project_access(id_);
+  auto& l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  auto l_sq_list = l_sql.impl_->storage_any_.get_all<entity>(where(
+      c(&entity::entity_type_id_) ==
+          l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_ &&
+      c(&entity::project_id_) == id_
+  ));
+  co_return in_handle->make_msg(nlohmann::json{} = l_sq_list);
 }
 
 }  // namespace doodle::http

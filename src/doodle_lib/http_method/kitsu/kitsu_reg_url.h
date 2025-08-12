@@ -396,6 +396,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/projects/{}/sequences
 DOODLE_HTTP_JWT_FUN(data_project_sequences)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/preview-files/<preview_file_id>/update-annotations
