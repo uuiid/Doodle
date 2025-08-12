@@ -331,17 +331,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(s
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
   auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
-  auto l_entt              = l_sql.impl_->storage_any_.get_all<entity>(
-      from<entity>(),
-
-      join<project>(on(c(&entity::project_id_) == c(&project::uuid_id_))),
-      join<project_person_link>(on(&project::uuid_id_) == c(&project_person_link::project_id_)),
-
-      where(
-          not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
-          (person_.is_admin() || c(&project_person_link::person_id_) == person_.person_.uuid_id_)
-      )
+  bool l_is_shared{};
+  for (auto&& [key, value, has] : in_handle->url_.params())
+    if (key == "is_shared") l_is_shared = true;
+  auto l_project_link_ids = l_sql.impl_->storage_any_.select(
+      &project_person_link::project_id_, where(c(&project_person_link::person_id_) == person_.person_.uuid_id_)
   );
+  auto l_entt = l_sql.impl_->storage_any_.get_all<entity>(where(
+      not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
+      (person_.is_admin() || in(&entity::project_id_, l_project_link_ids)) && c(&entity::is_shared_) == l_is_shared
+  ));
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
 
