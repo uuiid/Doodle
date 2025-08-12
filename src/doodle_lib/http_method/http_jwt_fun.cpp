@@ -109,9 +109,12 @@ void http_jwt_fun::http_jwt_t::check_task_assign_access(const uuid& in_project_i
   )
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+bool http_jwt_fun::http_jwt_t::is_admin() const {
+  return !person_.uuid_id_.is_nil() && person_.role_ == person_role_type::admin;
+}
 
 void http_jwt_fun::http_jwt_t::check_admin() const {
-  if (!person_.uuid_id_.is_nil() && person_.role_ == person_role_type::admin) return;
+  if (is_admin()) return;
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
