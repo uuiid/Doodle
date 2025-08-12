@@ -51,7 +51,7 @@ function Compress-UEPlugins()
     {
         New-Item "$OutPath\dist\Plugins" -ItemType Directory
     }
-    $UEPluginsPath = Convert-Path "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
+    $UEPluginsPath = "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
     if (Test-Path $UEPluginsPath)
     {
         Write-Host "UE插件包已存在: $UEPluginsPath"
