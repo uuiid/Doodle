@@ -32,4 +32,5 @@ target_sources(
         notifications.cpp
         shots.cpp
         movies.cpp
+        file_status.cpp
 )

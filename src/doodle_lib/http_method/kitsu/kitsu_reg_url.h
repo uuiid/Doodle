@@ -38,7 +38,10 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_assets)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-
+// /api/data/file-status
+DOODLE_HTTP_JWT_FUN(data_file_status)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 // /api/actions/tasks/{task_id}/comments/{comment_id}/add-preview
 DOODLE_HTTP_JWT_FUN(actions_tasks_comments_add_preview)
 DOODLE_HTTP_FUN_OVERRIDE(post)
