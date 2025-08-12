@@ -41,6 +41,7 @@ target_sources(
         preview_file.h
         studio.h
         subscription.h
+        working_file.h
 
         PRIVATE
         assets.cpp
