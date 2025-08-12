@@ -88,7 +88,8 @@ FSys::path doodle_data_asset_file_maya::gen_file_path() {
     return fmt::format(
         "Ch/JD{:02d}_{:02d}/Ch{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
     );
-  if (task_info_.entity_type_id_ == asset_type::get_prop_id())
+  if (task_info_.entity_type_id_ == asset_type::get_prop_id() ||
+      task_info_.entity_type_id_ == asset_type::get_effect_id())
     return fmt::format(
         "Prop/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.pin_yin_ming_cheng_
     );
@@ -106,7 +107,8 @@ FSys::path doodle_data_asset_file_ue::gen_file_path() {
         "Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_,
         task_info_.pin_yin_ming_cheng_
     );
-  if (task_info_.entity_type_id_ == asset_type::get_prop_id())
+  if (task_info_.entity_type_id_ == asset_type::get_prop_id() ||
+      task_info_.entity_type_id_ == asset_type::get_effect_id())
     return fmt::format(
         "Prop/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
         task_info_.gui_dang_, task_info_.kai_shi_ji_shu_
@@ -124,7 +126,8 @@ FSys::path doodle_data_asset_file_image::gen_file_path() {
     return fmt::format(
         "Ch/JD{:02d}_{:02d}/Ch{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
     );
-  if (task_info_.entity_type_id_ == asset_type::get_prop_id())
+  if (task_info_.entity_type_id_ == asset_type::get_prop_id() ||
+      task_info_.entity_type_id_ == asset_type::get_effect_id())
     return fmt::format(
         "Prop/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.pin_yin_ming_cheng_
     );
