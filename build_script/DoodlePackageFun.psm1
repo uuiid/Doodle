@@ -51,7 +51,12 @@ function Compress-UEPlugins()
     {
         New-Item "$OutPath\dist\Plugins" -ItemType Directory
     }
-
+    $UEPluginsPath = Convert-Path "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
+    if (Test-Path $UEPluginsPath)
+    {
+        Write-Host "UE插件包已存在: $UEPluginsPath"
+        return
+    }
     $UEPluginsJsonPath = Convert-Path "$DoodleGitRoot/script/uePlug/$UEVersion/Plugins/Doodle/Doodle.uplugin"
     $UEPluginsJson = Get-Content -Path $UEPluginsJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
     $UEPluginsJson.VersionName = $DoodleVersion
