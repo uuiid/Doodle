@@ -34,6 +34,10 @@ DOODLE_HTTP_JWT_FUN(actions_tasks_comment)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/assets
+DOODLE_HTTP_JWT_FUN(data_assets)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 
 // /api/actions/tasks/{task_id}/comments/{comment_id}/add-preview
 DOODLE_HTTP_JWT_FUN(actions_tasks_comments_add_preview)

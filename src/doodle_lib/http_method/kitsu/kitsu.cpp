@@ -157,6 +157,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_project_sequences>("/api/data/projects/{}/sequences"_url(&data_project_sequences::id_))
       .reg_t<actions_preview_files_update_annotations>("/api/actions/preview-files/{}/update-annotations"_url(&actions_preview_files_update_annotations::preview_file_id_))
       .reg_t<data_project_playlists_temp>("/api/data/projects/{}/playlists/temp"_url(&data_project_playlists_temp::project_id_))
+      .reg_t<data_assets>("/api/data/assets"_url)
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

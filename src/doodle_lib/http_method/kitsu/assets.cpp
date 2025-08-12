@@ -327,5 +327,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> shared_used::get(s
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_in::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg(nlohmann::json::array());
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(session_data_ptr in_handle) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
+  auto l_entt              = l_sql.impl_->storage_any_.get_all<entity>(
+      from<entity>(),
+
+      join<project>(on(c(&entity::project_id_) == c(&project::uuid_id_))),
+      join<project_person_link>(on(&project::uuid_id_) == c(&project_person_link::project_id_)),
+
+      where(
+          not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
+          (person_.is_admin() || c(&project_person_link::person_id_) == person_.person_.uuid_id_)
+      )
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_entt);
+}
 
 }  // namespace doodle::http
