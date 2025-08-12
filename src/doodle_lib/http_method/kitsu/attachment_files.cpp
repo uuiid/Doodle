@@ -20,7 +20,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_fi
   auto l_p = get_person(in_handle);
   if (!l_attachment_file.comment_id_.is_nil()) {
     auto l_task = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<comment>(l_attachment_file.comment_id_).object_id_);
-    l_p->is_project_manager(l_task.project_id_);
+    l_p->check_project_manager(l_task.project_id_);
   }
   auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
                 FSys::split_uuid_path(fmt::to_string(l_attachment_file.uuid_id_));

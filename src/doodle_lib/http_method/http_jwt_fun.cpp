@@ -75,7 +75,7 @@ std::shared_ptr<http_jwt_fun::http_jwt_t> http_jwt_fun::get_person(const session
   return std::make_shared<http_jwt_t>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
 }
 
-void http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) const {
+void http_jwt_fun::http_jwt_t::check_project_manager(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   if (!(                                                                                 //
@@ -86,7 +86,7 @@ void http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) con
   )
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
-void http_jwt_fun::http_jwt_t::is_project_access(const uuid& in_project_id) const {
+void http_jwt_fun::http_jwt_t::check_project_access(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   if (!(                                                                               //
@@ -110,13 +110,13 @@ void http_jwt_fun::http_jwt_t::check_task_assign_access(const uuid& in_project_i
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 
-void http_jwt_fun::http_jwt_t::is_admin() const {
+void http_jwt_fun::http_jwt_t::check_admin() const {
   if (!person_.uuid_id_.is_nil() && person_.role_ == person_role_type::admin) return;
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 
-void http_jwt_fun::http_jwt_t::is_manager() const {
+void http_jwt_fun::http_jwt_t::check_manager() const {
   if (!person_.uuid_id_.is_nil() &&
       (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::admin))
     return;

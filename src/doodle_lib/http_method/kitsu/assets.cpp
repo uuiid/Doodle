@@ -40,7 +40,7 @@ struct projects_assets_new_post_data {
 boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_new::post(session_data_ptr in_handle) {
   projects_assets_new_post_data l_data{};
   l_data.project_id = project_id_;
-  person_.is_project_manager(l_data.project_id);
+  person_.check_project_manager(l_data.project_id);
   l_data.asset_type_id = asset_type_id_;
   auto l_json          = in_handle->get_json();
   l_json.get_to(l_data);

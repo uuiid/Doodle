@@ -64,7 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 ) {
   auto l_uuid = boost::lexical_cast<uuid>(id_);
   // auto l_p = get_person(in_handle);
-  // l_p->is_manager();
+  // l_p->check_manager();
 
   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(l_uuid);
   co_return in_handle->make_msg(nlohmann::json{});

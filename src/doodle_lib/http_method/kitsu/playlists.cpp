@@ -13,7 +13,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities
 ) {
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_entt_id = l_sql.get_by_uuid<entity>(id_);
-  person_.is_project_access(l_entt_id.project_id_);
+  person_.check_project_access(l_entt_id.project_id_);
   nlohmann::json l_json{};
   for (auto&& [key, value] : l_sql.get_preview_files_for_entity(l_entt_id.uuid_id_))
     l_json[fmt::to_string(key)] = value;
@@ -38,7 +38,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_prev = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(preview_file_id_));
   auto l_task = l_sql.get_by_uuid<task>(l_prev->task_id_);
-  person_.is_project_access(l_task.project_id_);
+  person_.check_project_access(l_task.project_id_);
   auto l_args = in_handle->get_json().get<actions_preview_files_update_annotations_args>();
   std::map<std::double_t, preview_file::annotations_t> l_time_map{};
   for (auto&& i : l_prev->get_annotations()) l_time_map[i.time_] = std::move(i);
@@ -119,7 +119,7 @@ struct shot_for_playlist_t {};
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_temp::post(
     session_data_ptr in_handle
 ) {
-  person_.is_project_access(project_id_);
+  person_.check_project_access(project_id_);
   auto l_task_ids = in_handle->get_json().get<std::vector<uuid>>();
   std::vector<task> l_tasks{};
   l_tasks.reserve(l_task_ids.size());
