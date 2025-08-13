@@ -6,7 +6,7 @@
 #include <doodle_core/metadata/base.h>
 namespace doodle {
 
-enum class software_enum { maya, UE };
+enum class software_enum { maya, unreal_engine };
 
 struct working_file {
   DOODLE_BASE_FIELDS();
@@ -14,7 +14,7 @@ struct working_file {
   std::string description_;
   std::string comment_;
   std::int32_t revision_{};
-  std::int32_t size_;
+  std::int64_t size_;
   std::int32_t checksum_;
   FSys::path path_;
   nlohmann::json data_;
