@@ -1,5 +1,5 @@
 ﻿# 确定最低版本
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.31)
 
 # 添加模块文件(辅助cmake寻找需要的动态库)
 # CMAKE_SOURCE_DIR 代表当前文件的路径
