@@ -11,6 +11,7 @@ target_sources(doodle_lib
         base64.h
         fbx_file.h
         alembic_file.h
+        scan_assets.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -20,6 +21,7 @@ target_sources(doodle_lib
         base64.cpp
         fbx_file.cpp
         alembic_file.cpp
+        scan_assets.cpp
 )
 add_subdirectory(scan_assets)
 add_subdirectory(http)

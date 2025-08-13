@@ -167,6 +167,8 @@ boost::asio::awaitable<create_comment_result> create_comment(
       co_await i.run(l_task, in_person->person_.uuid_id_);
   }
 
+  {  // 检查文件
+  }
   socket_io::broadcast(
       "comment:new",
       nlohmann::json{
