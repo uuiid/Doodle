@@ -34,6 +34,22 @@ DOODLE_HTTP_JWT_FUN(actions_tasks_comment)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+
+// /api/actions/tasks/{task_id}/working-file
+DOODLE_HTTP_JWT_FUN(actions_tasks_working_file)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/tasks/working-file-many
+DOODLE_HTTP_JWT_FUN(actions_projects_tasks_working_file_many)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+// /api/actions/working-files/scan-all
+DOODLE_HTTP_JWT_FUN(actions_working_files_scan_all)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
 // /api/data/assets
 DOODLE_HTTP_JWT_FUN(data_assets)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -89,7 +105,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(actions_user_notifications_mark_all_as_read)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// /api//actions/projects/{project_id}/tasks/comment-many
+// /api/actions/projects/{project_id}/tasks/comment-many
 DOODLE_HTTP_JWT_FUN(actions_projects_tasks_comment_many)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};

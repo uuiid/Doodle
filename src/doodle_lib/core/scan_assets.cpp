@@ -36,7 +36,7 @@ std::shared_ptr<working_file> scan_character_maya(const project& in_prj, const e
                            fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
                            fmt::format("Ch{}", in_extend.bian_hao_) / "Mod" /
                            fmt::format("Ch{}.ma", in_extend.bian_hao_);
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil())
+  if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(l_maya_path, "Maya文件", software_enum::maya));
   return nullptr;
 }
@@ -49,7 +49,7 @@ std::shared_ptr<working_file> scan_character_unreal_engine(
                          fmt::format("{}_UE5", in_extend.pin_yin_ming_cheng_) / doodle_config::ue4_content /
                          "Character" / in_extend.pin_yin_ming_cheng_ / "Meshs" /
                          fmt::format("SK_Ch{}.uasset", in_extend.bian_hao_);
-  if (exists(l_Ue_path) && FSys::software_flag_file(l_Ue_path).is_nil())
+  if (exists(l_Ue_path))
     return std::make_shared<working_file>(create_working_file(l_Ue_path, "UE4角色模型", software_enum::unreal_engine));
   return nullptr;
 }
@@ -61,7 +61,7 @@ std::shared_ptr<working_file> scan_prop_maya(const project& in_prj, const entity
       fmt::format(
           "{}{}{}.ma", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil())
+  if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(
         l_maya_path, fmt::format("Maya道具模型 {}", in_extend.pin_yin_ming_cheng_), software_enum::maya
     ));
@@ -76,7 +76,7 @@ std::shared_ptr<working_file> scan_prop_unreal_engine(const project& in_prj, con
       fmt::format(
           "SK_{}{}{}.uasset", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
-  if (exists(l_UE_path) && FSys::software_flag_file(l_UE_path).is_nil())
+  if (exists(l_UE_path))
     return std::make_shared<working_file>(create_working_file(
         l_UE_path, fmt::format("UE4道具模型 {}", in_extend.pin_yin_ming_cheng_), software_enum::unreal_engine
     ));
@@ -89,7 +89,7 @@ std::shared_ptr<working_file> scan_scene_maya(const project& in_prj, const entit
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
       fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil())
+  if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(l_maya_path, "Maya场景文件", software_enum::maya));
   return nullptr;
 }
@@ -101,7 +101,7 @@ std::shared_ptr<working_file> scan_scene_unreal_engine(const project& in_prj, co
       fmt::format(
           "{}{}{}.umap", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
-  if (exists(l_UE_path) && FSys::software_flag_file(l_UE_path).is_nil())
+  if (exists(l_UE_path))
     return std::make_shared<working_file>(create_working_file(l_UE_path, "UE4场景文件", software_enum::unreal_engine));
   return nullptr;
 }
@@ -111,7 +111,7 @@ std::shared_ptr<working_file> scan_character_rig_maya(const project& in_prj, con
                            fmt::format("Ch{}", in_extend.bian_hao_) / "Rig";
   std::string l_name = fmt::format("Ch{}_rig", in_extend.bian_hao_);
 
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil()) {
+  if (exists(l_maya_path)) {
     for (auto&& i : FSys::directory_iterator(l_maya_path)) {
       if (i.is_regular_file() && i.path().extension() == ".ma" &&
           i.path().filename().generic_string().starts_with(l_name)) {
@@ -130,7 +130,7 @@ std::shared_ptr<working_file> scan_prop_rig_maya(const project& in_prj, const en
   auto l_name = fmt::format(
       "{}{}{}_rig", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
   );
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil()) {
+  if (exists(l_maya_path)) {
     for (auto&& i : FSys::directory_iterator(l_maya_path)) {
       if (i.is_regular_file() && i.path().extension() == ".ma" &&
           i.path().filename().generic_string().starts_with(l_name)) {
@@ -148,7 +148,7 @@ std::shared_ptr<working_file> scan_scene_rig_maya(const project& in_prj, const e
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
       fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil())
+  if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(
         l_maya_path, fmt::format("Maya地编绑定文件 {}", in_extend.pin_yin_ming_cheng_), software_enum::maya
     ));
@@ -185,7 +185,7 @@ std::shared_ptr<working_file> scan_rig_maya(
 std::shared_ptr<working_file> scan_sim_maya(const project& in_prj, const working_file& in_extend) {
   FSys::path l_maya_path = in_prj.path_ / in_prj.asset_root_path_ / "6-moxing" / "CFX" /
                            fmt::format("{}_cloth.ma", in_extend.path_.stem().generic_string());
-  if (exists(l_maya_path) && FSys::software_flag_file(l_maya_path).is_nil())
+  if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(l_maya_path, "Maya布料模拟文件", software_enum::maya));
   return nullptr;
 }
@@ -197,21 +197,21 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
   auto l_extend       = l_sql.get_entity_asset_extend(l_entt.uuid_id_).value();
 
   if (l_task_type_id == task_type::get_character_id() || l_task_type_id == task_type::get_ground_model_id()) {
-    if (auto l_maya_file = scan_maya(l_prj, l_entt.entity_type_id_, l_extend); l_maya_file) {
-      l_maya_file->task_id_   = in_task.uuid_id_;
-      l_maya_file->entity_id_ = in_task.entity_id_;
-      co_await l_sql.install(l_maya_file);
+    if (auto l_file = scan_maya(l_prj, l_entt.entity_type_id_, l_extend); l_file) {
+      l_file->task_id_   = in_task.uuid_id_;
+      l_file->entity_id_ = in_task.entity_id_;
+      if (!l_sql.uuid_to_id<working_file>(l_file->uuid_id_)) co_await l_sql.install(l_file);
     }
-    if (auto l_ue_file = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend); l_ue_file) {
-      l_ue_file->task_id_   = in_task.uuid_id_;
-      l_ue_file->entity_id_ = in_task.entity_id_;
-      co_await l_sql.install(l_ue_file);
+    if (auto l_file = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend); l_file) {
+      l_file->task_id_   = in_task.uuid_id_;
+      l_file->entity_id_ = in_task.entity_id_;
+      if (!l_sql.uuid_to_id<working_file>(l_file->uuid_id_)) co_await l_sql.install(l_file);
     }
   } else if (l_task_type_id == task_type::get_binding_id()) {
-    if (auto l_maya_rig = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend); l_maya_rig) {
-      l_maya_rig->task_id_   = in_task.uuid_id_;
-      l_maya_rig->entity_id_ = in_task.entity_id_;
-      co_await l_sql.install(l_maya_rig);
+    if (auto l_file = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend); l_file) {
+      l_file->task_id_   = in_task.uuid_id_;
+      l_file->entity_id_ = in_task.entity_id_;
+      if (!l_sql.uuid_to_id<working_file>(l_file->uuid_id_)) co_await l_sql.install(l_file);
     }
   } else if (l_task_type_id == task_type::get_simulation_id()) {
     using namespace sqlite_orm;
@@ -221,10 +221,10 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
     if (l_tasks.empty()) co_return;  // 没有绑定任务, 无法进行模拟
 
     auto l_work_file = l_sql.get_working_file_by_task(l_tasks.front().uuid_id_);
-    if (auto l_maya_sim = scan_sim_maya(l_prj, l_work_file); l_maya_sim) {
-      l_maya_sim->task_id_   = in_task.uuid_id_;
-      l_maya_sim->entity_id_ = in_task.entity_id_;
-      co_await l_sql.install(l_maya_sim);
+    if (auto l_file = scan_sim_maya(l_prj, l_work_file); l_file) {
+      l_file->task_id_   = in_task.uuid_id_;
+      l_file->entity_id_ = in_task.entity_id_;
+      if (!l_sql.uuid_to_id<working_file>(l_file->uuid_id_)) co_await l_sql.install(l_file);
     }
   }
 }
