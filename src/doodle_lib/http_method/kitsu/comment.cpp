@@ -163,10 +163,9 @@ boost::asio::awaitable<create_comment_result> create_comment(
     co_await l_sql.install_range(l_notifications);
   }
 
-  {  // 运行自动化任务
-    for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
-      co_await i.run(l_task, in_person->person_.uuid_id_);
-  }
+  // 运行自动化任务
+  for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
+    co_await i.run(l_task, in_person->person_.uuid_id_);
 
   // 检查文件
   co_await scan_assets::scan_task(*l_task);
