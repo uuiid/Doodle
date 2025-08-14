@@ -3,6 +3,11 @@
 //
 
 #include "scan_assets.h"
+
+#include "doodle_core/metadata/task_type.h"
+#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include <doodle_core/metadata/task.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 namespace doodle::scan_assets {
 namespace {
 working_file create_working_file(
@@ -184,6 +189,36 @@ std::shared_ptr<working_file> scan_sim_maya(const project& in_prj, const working
   if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(l_maya_path, "Maya布料模拟文件", software_enum::maya));
   return nullptr;
+}
+boost::asio::awaitable<void> scan_task(const task& in_task) {
+  auto l_task_type_id = in_task.task_type_id_;
+  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_prj          = l_sql.get_by_uuid<project>(in_task.project_id_);
+  auto l_entt         = l_sql.get_by_uuid<entity>(in_task.entity_id_);
+  auto l_extend       = l_sql.get_entity_asset_extend(l_entt.uuid_id_).value();
+  if (l_task_type_id == task_type::get_character_id() || l_task_type_id == task_type::get_ground_model_id()) {
+    if (auto l_maya_file = scan_maya(l_prj, l_entt.entity_type_id_, l_extend); l_maya_file) {
+      co_await l_sql.install(l_maya_file);
+    }
+    if (auto l_ue_file = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend); l_ue_file) {
+      co_await l_sql.install(l_ue_file);
+    }
+  } else if (l_task_type_id == task_type::get_binding_id()) {
+    if (auto l_maya_rig = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend); l_maya_rig) {
+      co_await l_sql.install(l_maya_rig);
+    }
+  } else if (l_task_type_id == task_type::get_simulation_id()) {
+    using namespace sqlite_orm;
+    auto l_tasks = l_sql.impl_->storage_any_.get_all<task>(
+        where(c(&task::entity_id_) == in_task.entity_id_ && c(&task::task_type_id_) == task_type::get_binding_id())
+    );
+    if (l_tasks.empty()) co_return;  // 没有绑定任务, 无法进行模拟
+
+    auto l_work_file = l_sql.get_working_file_by_task(l_tasks.front().uuid_id_);
+    if (auto l_maya_sim = scan_sim_maya(l_prj, l_work_file); l_maya_sim) {
+      co_await l_sql.install(l_maya_sim);
+    }
+  }
 }
 
 }  // namespace doodle::scan_assets

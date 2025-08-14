@@ -755,6 +755,12 @@ std::vector<status_automation> sqlite_database::get_project_status_automations(c
       where(c(&project_status_automation_link::project_id_) == in_project_uuid)
   );
 }
+working_file sqlite_database::get_working_file_by_task(const uuid& in_task_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<working_file>(where(c(&working_file::task_id_) == in_task_id));
+  if (l_t.empty()) throw_exception(doodle_error{"未知的工作文件 {}", in_task_id});
+  return l_t.front();
+}
 
 std::map<uuid, std::int32_t> sqlite_database::get_task_type_priority_map(
     const uuid& in_project, const std::string& in_for_entity

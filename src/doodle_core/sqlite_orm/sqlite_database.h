@@ -29,7 +29,7 @@ struct comment;
 struct task;
 struct project_task_status_link;
 struct entity_asset_extend;
-
+struct working_file;
 namespace attendance_helper {
 struct database_t;
 }
@@ -109,8 +109,8 @@ class sqlite_database {
   std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
       const uuid& in_person_id, const chrono::local_days& in_data
   );
-
-
+  working_file get_working_file_by_task(const uuid& in_task_id);
+  // working_file get_sim_working_file_by_rig;
 
   std::int32_t get_notification_count(const uuid& in_user_id);
   std::vector<project_with_extra_data> get_project_for_user(const person& in_user);
