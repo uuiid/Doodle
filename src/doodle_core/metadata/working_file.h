@@ -41,7 +41,7 @@ struct working_file {
     j["revision"]      = p.revision_;
     j["size"]          = p.size_;
     j["checksum"]      = p.checksum_;
-    j["path"]          = p.path_.string();
+    j["path"]          = p.path_;
     j["data"]          = p.data_;
     j["software_type"] = p.software_type_;
     j["task_id"]       = p.task_id_;
