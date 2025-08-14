@@ -16,4 +16,8 @@ std::shared_ptr<working_file> scan_maya(
 std::shared_ptr<working_file> scan_unreal_engine(
     const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend
 );
-}
+std::shared_ptr<working_file> scan_rig_maya(
+    const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend
+);
+std::shared_ptr<working_file> scan_sim_maya(const project& in_prj, const working_file& in_extend);
+}  // namespace doodle::scan_assets
