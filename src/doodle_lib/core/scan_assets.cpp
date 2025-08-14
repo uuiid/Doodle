@@ -63,7 +63,7 @@ std::shared_ptr<working_file> scan_prop_maya(const project& in_prj, const entity
       );
   if (exists(l_maya_path))
     return std::make_shared<working_file>(create_working_file(
-        l_maya_path, fmt::format("Maya道具模型 {}", in_extend.pin_yin_ming_cheng_), software_enum::maya
+        l_maya_path, "Maya道具模型", software_enum::maya
     ));
   return nullptr;
 }
@@ -77,9 +77,7 @@ std::shared_ptr<working_file> scan_prop_unreal_engine(const project& in_prj, con
           "SK_{}{}{}.uasset", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
   if (exists(l_UE_path))
-    return std::make_shared<working_file>(create_working_file(
-        l_UE_path, fmt::format("UE4道具模型 {}", in_extend.pin_yin_ming_cheng_), software_enum::unreal_engine
-    ));
+    return std::make_shared<working_file>(create_working_file(l_UE_path, "UE4道具模型", software_enum::unreal_engine));
   return nullptr;
 }
 
@@ -115,9 +113,7 @@ std::shared_ptr<working_file> scan_character_rig_maya(const project& in_prj, con
     for (auto&& i : FSys::directory_iterator(l_maya_path)) {
       if (i.is_regular_file() && i.path().extension() == ".ma" &&
           i.path().filename().generic_string().starts_with(l_name)) {
-        return std::make_shared<working_file>(create_working_file(
-            i.path(), fmt::format("Maya角色绑定文件 {}", in_extend.pin_yin_ming_cheng_), software_enum::maya
-        ));
+        return std::make_shared<working_file>(create_working_file(i.path(), "Maya角色绑定文件", software_enum::maya));
       }
     }
   }
@@ -134,9 +130,7 @@ std::shared_ptr<working_file> scan_prop_rig_maya(const project& in_prj, const en
     for (auto&& i : FSys::directory_iterator(l_maya_path)) {
       if (i.is_regular_file() && i.path().extension() == ".ma" &&
           i.path().filename().generic_string().starts_with(l_name)) {
-        return std::make_shared<working_file>(create_working_file(
-            i.path(), fmt::format("Maya道具绑定文件 {}", in_extend.pin_yin_ming_cheng_), software_enum::maya
-        ));
+        return std::make_shared<working_file>(create_working_file(i.path(), "Maya道具绑定文件", software_enum::maya));
       }
     }
   }
@@ -149,9 +143,7 @@ std::shared_ptr<working_file> scan_scene_rig_maya(const project& in_prj, const e
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
       fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
   if (exists(l_maya_path))
-    return std::make_shared<working_file>(create_working_file(
-        l_maya_path, fmt::format("Maya地编绑定文件 {}", in_extend.pin_yin_ming_cheng_), software_enum::maya
-    ));
+    return std::make_shared<working_file>(create_working_file(l_maya_path, "Maya地编绑定文件", software_enum::maya));
   return nullptr;
 }
 }  // namespace
