@@ -195,15 +195,22 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
   auto l_prj          = l_sql.get_by_uuid<project>(in_task.project_id_);
   auto l_entt         = l_sql.get_by_uuid<entity>(in_task.entity_id_);
   auto l_extend       = l_sql.get_entity_asset_extend(l_entt.uuid_id_).value();
+
   if (l_task_type_id == task_type::get_character_id() || l_task_type_id == task_type::get_ground_model_id()) {
     if (auto l_maya_file = scan_maya(l_prj, l_entt.entity_type_id_, l_extend); l_maya_file) {
+      l_maya_file->task_id_   = in_task.uuid_id_;
+      l_maya_file->entity_id_ = in_task.entity_id_;
       co_await l_sql.install(l_maya_file);
     }
     if (auto l_ue_file = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend); l_ue_file) {
+      l_ue_file->task_id_   = in_task.uuid_id_;
+      l_ue_file->entity_id_ = in_task.entity_id_;
       co_await l_sql.install(l_ue_file);
     }
   } else if (l_task_type_id == task_type::get_binding_id()) {
     if (auto l_maya_rig = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend); l_maya_rig) {
+      l_maya_rig->task_id_   = in_task.uuid_id_;
+      l_maya_rig->entity_id_ = in_task.entity_id_;
       co_await l_sql.install(l_maya_rig);
     }
   } else if (l_task_type_id == task_type::get_simulation_id()) {
@@ -215,6 +222,8 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
 
     auto l_work_file = l_sql.get_working_file_by_task(l_tasks.front().uuid_id_);
     if (auto l_maya_sim = scan_sim_maya(l_prj, l_work_file); l_maya_sim) {
+      l_maya_sim->task_id_   = in_task.uuid_id_;
+      l_maya_sim->entity_id_ = in_task.entity_id_;
       co_await l_sql.install(l_maya_sim);
     }
   }
