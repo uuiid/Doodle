@@ -175,6 +175,7 @@ struct with_tasks_get_result_t {
     decltype(task::task_status_id_) task_status_id_;
     decltype(task::task_type_id_) task_type_id_;
     std::vector<uuid> assigners_;
+    std::vector<working_file> working_files_;
     bool is_subscribed_;
     friend void to_json(nlohmann::json& j, const task_t& p) {
       j["id"]                   = p.uuid_id_;
@@ -195,7 +196,7 @@ struct with_tasks_get_result_t {
       j["task_status_id"]       = p.task_status_id_;
       j["assignees"]            = p.assigners_;
       j["is_subscribed"]        = p.is_subscribed_;
-      j["path"]                 = "";
+      j["working_files"]        = p.working_files_;
     }
   };
   std::vector<task_t> tasks_;
@@ -272,6 +273,20 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
         );
     }
   }
+
+  std::vector<uuid> l_task_ids{};
+  l_task_ids.reserve(l_rows.size());
+  for (auto&& l_i : l_entities_and_tasks_map)
+    for (auto&& l_j : l_i.second.tasks_) l_task_ids.push_back(l_j.uuid_id_);
+  for (auto&& l_work_file :
+       l_sql.impl_->storage_any_.get_all<working_file>(where(in(&working_file::task_id_, l_task_ids)))) {
+    if (l_entities_and_tasks_map.contains(l_work_file.entity_id_)) {
+      auto& l_task = l_entities_and_tasks_map[l_work_file.entity_id_].tasks_;
+      if (l_task.size() > l_task_id_set.at(l_work_file.task_id_))
+        l_task.at(l_task_id_set.at(l_work_file.task_id_)).working_files_.emplace_back(l_work_file);
+    }
+  }
+
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
   return l_ret;
 }
