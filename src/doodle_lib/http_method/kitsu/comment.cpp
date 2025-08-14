@@ -10,6 +10,7 @@
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
@@ -167,8 +168,9 @@ boost::asio::awaitable<create_comment_result> create_comment(
       co_await i.run(l_task, in_person->person_.uuid_id_);
   }
 
-  {  // 检查文件
-  }
+  // 检查文件
+  co_await scan_assets::scan_task(*l_task);
+
   socket_io::broadcast(
       "comment:new",
       nlohmann::json{
