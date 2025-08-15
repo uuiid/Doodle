@@ -34,4 +34,5 @@ target_sources(
         movies.cpp
         file_status.cpp
         output_types.cpp
+        working_file.cpp
 )
