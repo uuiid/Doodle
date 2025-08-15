@@ -20,6 +20,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_working_fi
     *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
   }
   co_await l_sql.install_range(l_working_files);
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http
