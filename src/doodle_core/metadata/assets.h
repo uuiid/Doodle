@@ -21,9 +21,11 @@ enum class assets_type_enum {
   animation,
   vfx,
   cfx,
-  other,// 基本是相机
+  other,  // 基本是相机
 };
 }
+details::assets_type_enum convert_assets_type_enum(const uuid& in_assets_type_id);
+
 namespace assets_helper {
 struct database_t {
   std::int32_t id_{};
@@ -47,4 +49,3 @@ struct database_t {
 };
 }  // namespace assets_helper
 }  // namespace doodle
-

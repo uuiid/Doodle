@@ -2,6 +2,8 @@
 // Created by TD on 25-7-17.
 //
 #include "entity_type.h"
+
+#include <doodle_core/metadata/assets.h>
 namespace doodle {
 
 uuid asset_type::get_concept_id() {
@@ -58,7 +60,31 @@ uuid asset_type::get_prop_id() {
   const uuid l_id{{0x8c, 0x02, 0xb7, 0x6a, 0x6b, 0xe6, 0x49, 0x59, 0xaf, 0x58, 0x5c, 0x31, 0xa8, 0x5f, 0xe0, 0x72}};
   return l_id;
 }
-
-
+details::assets_type_enum convert_assets_type_enum(const uuid& in_assets_type_id) {
+  if (in_assets_type_id == asset_type::get_character_id()) {
+    return details::assets_type_enum::character;
+  }
+  if (in_assets_type_id == asset_type::get_scene_id()) {
+    return details::assets_type_enum::scene;
+  }
+  // if (in_assets_type_id == asset_type::get_ground_id()) {
+  // return details::assets_type_enum::ground;
+  // }
+  if (in_assets_type_id == asset_type::get_prop_id()) {
+    return details::assets_type_enum::prop;
+  }
+  if (in_assets_type_id == asset_type::get_effect_id()) {
+    return details::assets_type_enum::vfx;
+  }
+  // if (in_assets_type_id == asset_type::get_shot_id()) {
+  //   return details::assets_type_enum::shot;
+  // }
+  // if (in_assets_type_id == asset_type::get_sequence_id()) {
+  //   return details::assets_type_enum::sequence;
+  // }
+  // if (in_assets_type_id == asset_type::get_episode_id()) {
+  //   return details::assets_type_enum::episode;
+  // }
+}
 
 }  // namespace doodle
