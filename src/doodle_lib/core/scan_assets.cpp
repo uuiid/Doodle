@@ -162,6 +162,14 @@ FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend) {
   return {};
 }
 boost::asio::awaitable<void> scan_task(const task& in_task) {
+  static std::set<uuid> l_scan_uuids{
+      task_type::get_character_id(),
+      task_type::get_ground_model_id(),
+      task_type::get_binding_id(),
+      task_type::get_simulation_id(),
+  };
+  if (!l_scan_uuids.contains(in_task.task_type_id_)) co_return;  // 只处理特定类型的任务
+
   auto l_task_type_id                                        = in_task.task_type_id_;
   auto l_sql                                                 = g_ctx().get<sqlite_database>();
   auto l_prj                                                 = l_sql.get_by_uuid<project>(in_task.project_id_);
