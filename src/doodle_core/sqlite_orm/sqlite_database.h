@@ -109,7 +109,7 @@ class sqlite_database {
   std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
       const uuid& in_person_id, const chrono::local_days& in_data
   );
-  working_file get_working_file_by_task(const uuid& in_task_id);
+  std::vector<working_file> get_working_file_by_task(const uuid& in_task_id);
   // working_file get_sim_working_file_by_rig;
 
   std::int32_t get_notification_count(const uuid& in_user_id);

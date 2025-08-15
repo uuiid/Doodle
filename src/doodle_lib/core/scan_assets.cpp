@@ -213,7 +213,7 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
     if (l_tasks.empty()) co_return;  // 没有绑定任务, 无法进行模拟
 
     auto l_work_file = l_sql.get_working_file_by_task(l_tasks.front().uuid_id_);
-    if (auto l_file = scan_sim_maya(l_prj, l_work_file); l_file) {
+    if (auto l_file = scan_sim_maya(l_prj, l_work_file.front()); l_file) {
       l_file->task_id_   = in_task.uuid_id_;
       l_file->entity_id_ = in_task.entity_id_;
       if (!l_sql.uuid_to_id<working_file>(l_file->uuid_id_)) co_await l_sql.install(l_file);
