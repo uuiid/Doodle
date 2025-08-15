@@ -160,6 +160,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_assets>("/api/data/assets"_url)
       .reg_t<data_file_status>("/api/data/file-status"_url)
       .reg_t<data_output_types>("/api/data/output-types"_url)
+      .reg_t<actions_working_files_scan_all>("/api/actions/working-file/scan-all"_url)
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
