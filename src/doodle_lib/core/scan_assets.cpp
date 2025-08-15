@@ -12,93 +12,92 @@ namespace doodle::scan_assets {
 namespace {
 
 FSys::path scan_character_maya(const project& in_prj, const entity_asset_extend& in_extend) {
-  auto l_path = in_prj.path_ / in_prj.asset_root_path_ / "Ch" /
+  auto l_path = in_prj.asset_root_path_ / "Ch" /
                 fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
                 fmt::format("Ch{}", in_extend.bian_hao_) / "Mod" / fmt::format("Ch{}.ma", in_extend.bian_hao_);
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 FSys::path scan_character_unreal_engine(const project& in_prj, const entity_asset_extend& in_extend) {
-  auto l_path = in_prj.path_ / in_prj.asset_root_path_ / "Ch" /
+  auto l_path = in_prj.asset_root_path_ / "Ch" /
                 fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
                 fmt::format("Ch{}", in_extend.bian_hao_) / fmt::format("{}_UE5", in_extend.pin_yin_ming_cheng_) /
                 doodle_config::ue4_content / "Character" / in_extend.pin_yin_ming_cheng_ / "Meshs" /
                 fmt::format("SK_Ch{}.uasset", in_extend.bian_hao_);
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 
 FSys::path scan_prop_maya(const project& in_prj, const entity_asset_extend& in_extend) {
   auto l_path =
-      in_prj.path_ / in_prj.asset_root_path_ / "Prop" /
+      in_prj.asset_root_path_ / "Prop" /
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) / in_extend.pin_yin_ming_cheng_ /
       fmt::format(
           "{}{}{}.ma", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 FSys::path scan_prop_unreal_engine(const project& in_prj, const entity_asset_extend& in_extend) {
   auto l_path =
-      in_prj.path_ / in_prj.asset_root_path_ / "Prop" /
+      in_prj.asset_root_path_ / "Prop" /
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
       fmt::format("JD{:02d}_{:02d}_UE", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) / doodle_config::ue4_content /
       "Prop" / in_extend.pin_yin_ming_cheng_ / "Mesh" /
       fmt::format(
           "SK_{}{}{}.uasset", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 
 FSys::path scan_scene_maya(const project& in_prj, const entity_asset_extend& in_extend) {
   auto l_path =
-      in_prj.path_ / in_prj.asset_root_path_ / "BG" /
-      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
+      in_prj.asset_root_path_ / "BG" / fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
       fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 FSys::path scan_scene_unreal_engine(const project& in_prj, const entity_asset_extend& in_extend) {
   auto l_path =
-      in_prj.path_ / in_prj.asset_root_path_ / "BG" /
-      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
+      in_prj.asset_root_path_ / "BG" / fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
       fmt::format("BG{}", in_extend.bian_hao_) / in_extend.pin_yin_ming_cheng_ / doodle_config::ue4_content / "Map" /
       fmt::format(
           "{}{}{}.umap", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 FSys::path scan_character_rig_maya(const project& in_prj, const entity_asset_extend& in_extend) {
-  FSys::path l_maya_path = in_prj.path_ / in_prj.asset_root_path_ / "Ch" /
+  FSys::path l_maya_path = in_prj.asset_root_path_ / "Ch" /
                            fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
                            fmt::format("Ch{}", in_extend.bian_hao_) / "Rig";
   std::string l_name = fmt::format("Ch{}_rig", in_extend.bian_hao_);
-
-  if (exists(l_maya_path)) {
-    for (auto&& i : FSys::directory_iterator(l_maya_path)) {
+  auto l_p           = in_prj.path_ / l_maya_path;
+  if (exists(l_p)) {
+    for (auto&& i : FSys::directory_iterator(l_p)) {
       if (i.is_regular_file() && i.path().extension() == ".ma" &&
           i.path().filename().generic_string().starts_with(l_name)) {
-        return i.path();
+        return l_maya_path / i.path().filename();
       }
     }
   }
   return {};
 }
 FSys::path scan_prop_rig_maya(const project& in_prj, const entity_asset_extend& in_extend) {
-  auto l_maya_path = in_prj.path_ / in_prj.asset_root_path_ / "Prop" /
+  auto l_maya_path = in_prj.asset_root_path_ / "Prop" /
                      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
                      in_extend.pin_yin_ming_cheng_ / "Rig";
   auto l_name = fmt::format(
       "{}{}{}_rig", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
   );
-  if (exists(l_maya_path)) {
-    for (auto&& i : FSys::directory_iterator(l_maya_path)) {
+  auto l_p = in_prj.path_ / l_maya_path;
+  if (exists(l_p)) {
+    for (auto&& i : FSys::directory_iterator(l_p)) {
       if (i.is_regular_file() && i.path().extension() == ".ma" &&
           i.path().filename().generic_string().starts_with(l_name)) {
-        return i.path();
+        return l_maya_path / i.path().filename();
       }
     }
   }
@@ -106,11 +105,10 @@ FSys::path scan_prop_rig_maya(const project& in_prj, const entity_asset_extend& 
 }
 FSys::path scan_scene_rig_maya(const project& in_prj, const entity_asset_extend& in_extend) {
   auto l_path =
-      in_prj.path_ / in_prj.asset_root_path_ / "BG" /
-      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
+      in_prj.asset_root_path_ / "BG" / fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_, in_extend.kai_shi_ji_shu_) /
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
       fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
-  if (exists(l_path)) return l_path;
+  if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
 }  // namespace
