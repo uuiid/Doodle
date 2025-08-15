@@ -13,16 +13,12 @@ struct task;
 }
 namespace doodle::scan_assets {
 
-FSys::path scan_maya(
-    const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend
-);
-FSys::path scan_unreal_engine(
-    const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend
-);
-FSys::path scan_rig_maya(
-    const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend
-);
+FSys::path scan_maya(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend);
+FSys::path scan_unreal_engine(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend);
+FSys::path scan_rig_maya(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend);
 FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend);
 
-boost::asio::awaitable<void> scan_task(const task& in_task);
+boost::asio::awaitable<void> scan_task_async(const task& in_task);
+std::vector<working_file> scan_task(const task& in_task);
+
 }  // namespace doodle::scan_assets
