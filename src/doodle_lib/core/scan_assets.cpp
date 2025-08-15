@@ -10,26 +10,6 @@
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 namespace doodle::scan_assets {
 namespace {
-working_file create_working_file(
-    const FSys::path& in_path, const std::string& in_description, software_enum in_software_type
-) {
-  if (exists(in_path)) {
-    auto l_uuid = FSys::software_flag_file(in_path);
-    if (l_uuid.is_nil()) {
-      l_uuid = core_set::get_set().get_uuid();
-      FSys::software_flag_file(in_path, l_uuid);
-    }
-    return working_file{
-        .uuid_id_       = l_uuid,
-        .name_          = in_path.filename().generic_string(),
-        .description_   = in_description,
-        .size_          = boost::numeric_cast<std::int64_t>(FSys::file_size(in_path)),
-        .path_          = in_path,
-        .software_type_ = in_software_type,
-    };
-  }
-  throw_exception(doodle_error{"{} 不存在", in_path});
-}
 
 FSys::path scan_character_maya(const project& in_prj, const entity_asset_extend& in_extend) {
   auto l_path = in_prj.path_ / in_prj.asset_root_path_ / "Ch" /
@@ -198,14 +178,12 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
     if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
       l_maya_working_file.description_   = "场景maya模型文件";
       l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
-      l_maya_working_file.name_          = l_maya_working_file.path_.filename().generic_string();
       l_maya_working_file.software_type_ = software_enum::maya;
       if (!l_maya_working_file.path_.empty()) l_working_files->push_back(l_maya_working_file);
     }
     if (l_unreal_working_file.path_.empty() || !FSys::exists(l_unreal_working_file.path_)) {
       l_unreal_working_file.description_   = "场景UE模型文件";
       l_unreal_working_file.path_          = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend);
-      l_unreal_working_file.name_          = l_unreal_working_file.path_.filename().generic_string();
       l_unreal_working_file.software_type_ = software_enum::unreal_engine;
       if (!l_unreal_working_file.path_.empty()) l_working_files->push_back(l_unreal_working_file);
     }
@@ -214,7 +192,6 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
     if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
       l_maya_working_file.description_   = "绑定maya模型文件";
       l_maya_working_file.path_          = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend);
-      l_maya_working_file.name_          = l_maya_working_file.path_.filename().generic_string();
       l_maya_working_file.software_type_ = software_enum::maya;
       if (!l_maya_working_file.path_.empty()) l_working_files->push_back(l_maya_working_file);
     }
@@ -231,7 +208,6 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
       if (l_work_file.empty()) co_return;  // 没有绑定任务的工作文件, 无法进行模拟
       // 这里假设模拟的maya文件是绑定任务的maya文件
       l_maya_working_file.path_          = scan_sim_maya(l_prj, l_work_file.front());
-      l_maya_working_file.name_          = l_maya_working_file.path_.filename().generic_string();
       l_maya_working_file.software_type_ = software_enum::maya;
       if (!l_maya_working_file.path_.empty()) l_working_files->push_back(l_maya_working_file);
     }
@@ -240,6 +216,7 @@ boost::asio::awaitable<void> scan_task(const task& in_task) {
     i.task_id_   = in_task.uuid_id_;
     i.entity_id_ = in_task.entity_id_;
     i.uuid_id_   = core_set::get_set().get_uuid();
+    i.name_      = i.path_.filename().generic_string();
     FSys::software_flag_file(i.path_, i.uuid_id_);
   }
   co_await l_sql.install_range(l_working_files);
