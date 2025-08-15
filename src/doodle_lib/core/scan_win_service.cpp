@@ -63,19 +63,7 @@ auto to_scan_data(
       in_completion
   );
 };
-void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& in_path) {
-  if (in_uuid.is_nil() && FSys::exists(in_path)) {
-    in_uuid = core_set::get_set().get_uuid();
-    for (auto i = 0; i < 3; ++i) {
-      try {
-        FSys::software_flag_file(in_path, in_uuid);
-        break;
-      } catch (const wil::ResultException& in) {
-        default_logger_raw()->error("生成uuid失败 {}", in.what());
-      }
-    }
-  }
-}
+void scan_win_service_id_is_nil(boost::uuids::uuid& in_uuid, const FSys::path& in_path) {}
 }  // namespace
 
 void scan_win_service_t::start() {
@@ -85,9 +73,7 @@ void scan_win_service_t::start() {
       "scan_category", g_logger_ctrl().make_file_sink_mt("scan_win_service"), spdlog::thread_pool()
   );
   logger_->set_level(level::debug);
-  app_base::Get().on_stop.connect([this]() {
-    thread_pool_.stop();
-  });
+  app_base::Get().on_stop.connect([this]() { thread_pool_.stop(); });
   boost::asio::co_spawn(
       executor_, begin_scan(),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
