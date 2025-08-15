@@ -16,7 +16,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_working_fi
   person_.check_admin();
   auto l_sql                                                 = g_ctx().get<sqlite_database>();
   std::shared_ptr<std::vector<working_file>> l_working_files = std::make_shared<std::vector<working_file>>();
-  for (auto&& i : l_sql.impl_->storage_any_.iterate<working_file>()) {
+  for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
     *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
   }
   co_await l_sql.install_range(l_working_files);
