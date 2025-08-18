@@ -1110,6 +1110,7 @@ DOODLE_GET_ALL_SQL(task_status)
 DOODLE_GET_ALL_SQL(task_type)
 DOODLE_GET_ALL_SQL(department)
 DOODLE_GET_ALL_SQL(studio)
+DOODLE_GET_ALL_SQL(working_file)
 DOODLE_GET_ALL_SQL(status_automation)
 DOODLE_GET_ALL_SQL(organisation)
 DOODLE_GET_ALL_SQL(project)
@@ -1197,12 +1198,14 @@ DOODLE_REMOVE_BY_ID(comment)
 DOODLE_REMOVE_BY_ID(assets_file_helper::link_parent_t)
 DOODLE_REMOVE_BY_ID(comment_acknoledgments)
 DOODLE_REMOVE_BY_ID(project_person_link)
+DOODLE_REMOVE_BY_ID(working_file)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
+DOODLE_REMOVE_BY_UUID(working_file)
 
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uuid>& in_data) {

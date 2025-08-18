@@ -14,7 +14,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_working_fi
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql                                                 = g_ctx().get<sqlite_database>();
+  auto l_sql = g_ctx().get<sqlite_database>();
+
+  std::vector<std::int64_t> l_delete_ids{};
+  for (auto&& l_f : l_sql.get_all<working_file>()) {
+    if (!exists(l_f.path_)) l_delete_ids.emplace_back(l_f.id_);
+  }
+  co_await l_sql.remove<working_file>(l_delete_ids);
+
   std::shared_ptr<std::vector<working_file>> l_working_files = std::make_shared<std::vector<working_file>>();
   for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
     *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
