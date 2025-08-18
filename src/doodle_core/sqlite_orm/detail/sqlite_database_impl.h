@@ -955,7 +955,12 @@ struct sqlite_database_impl {
     DOODLE_TO_SQLITE_THREAD();
 
     auto l_g = storage_any_.transaction_guard();
-    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, in_data)));
+    for (auto i = 0; i < in_data.size();) {
+      auto l_end = std::min(i + g_step_size, in_data.size());
+      std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
+      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, l_v)));
+      i = l_end;
+    }
     l_g.commit();
     DOODLE_TO_SELF();
   }
@@ -973,7 +978,12 @@ struct sqlite_database_impl {
     DOODLE_TO_SQLITE_THREAD();
 
     auto l_g = storage_any_.transaction_guard();
-    storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::uuid_id_, in_data)));
+    for (auto i = 0; i < in_data.size();) {
+      auto l_end = std::min(i + g_step_size, in_data.size());
+      std::vector<uuid> l_v{in_data.begin() + i, in_data.begin() + l_end};
+      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::uuid_id_, l_v)));
+      i = l_end;
+    }
     l_g.commit();
     DOODLE_TO_SELF();
   }
