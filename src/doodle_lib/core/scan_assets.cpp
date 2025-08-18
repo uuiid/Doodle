@@ -230,7 +230,7 @@ std::vector<working_file> scan_task(const task& in_task) {
   }
   return l_working_files;
 }
-boost::asio::awaitable<void> scan_task_async(const task& in_task) {
+boost::asio::awaitable<std::shared_ptr<std::vector<working_file>>> scan_task_async(const task& in_task) {
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<std::int64_t> l_delete_ids{};
   for (auto&& l_f : l_sql.get_working_file_by_task(in_task.uuid_id_))
@@ -240,6 +240,7 @@ boost::asio::awaitable<void> scan_task_async(const task& in_task) {
   std::shared_ptr<std::vector<working_file>> l_working_files =
       std::make_shared<std::vector<working_file>>(scan_task(in_task));
   if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
+  co_return l_working_files;
 }
 
 }  // namespace doodle::scan_assets
