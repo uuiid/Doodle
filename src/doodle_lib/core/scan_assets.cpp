@@ -152,7 +152,12 @@ std::vector<working_file> scan_task(const task& in_task) {
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_prj          = l_sql.get_by_uuid<project>(in_task.project_id_);
   auto l_entt         = l_sql.get_by_uuid<entity>(in_task.entity_id_);
-  auto l_extend       = l_sql.get_entity_asset_extend(l_entt.uuid_id_).value();
+  entity_asset_extend l_extend;
+  if (auto l_entt_extend = l_sql.get_entity_asset_extend(l_entt.uuid_id_); !l_entt_extend.has_value()) {
+    // 如果没有扩展数据, 则不进行扫描
+    return {};
+  } else
+    l_extend = l_entt_extend.value();
   std::vector<working_file> l_working_files{};
 
   auto l_l_working_files_list = l_sql.get_working_file_by_task(in_task.uuid_id_);
