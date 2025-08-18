@@ -105,7 +105,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("revision", &working_file::revision_, not_null(), default_value(0)),
           make_column("size", &working_file::size_, not_null(), default_value(0)),
           make_column("checksum", &working_file::checksum_, not_null(), default_value(0)),
-          make_column("path", &working_file::path_, not_null()),  //
+          make_column("path", &working_file::path_),  //
           make_column("data", &working_file::data_),  //
           make_column("software_type", &working_file::software_type_, not_null()),
           make_column("task_id", &working_file::task_id_),  //
