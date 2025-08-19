@@ -22,7 +22,7 @@ void basic_json_body::reader::finish(boost::system::error_code& ec) {
     body_ = json_type::parse(json_str_);
     ec    = {};
   } else {
-    BOOST_BEAST_ASSIGN_EC(ec, error_enum::bad_json_string);
+    BOOST_BEAST_ASSIGN_EC(ec, boost::beast::http::error::unexpected_body);
   }
 }
 

@@ -35,8 +35,6 @@ enum class maya_error_t : std::int32_t {
   check_error         = 6
 
 };
-[[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(maya_error_t e);
-
 }  // namespace maya_enum
 
 namespace error_enum {
@@ -65,7 +63,6 @@ enum error_t : std::int32_t {
   file_is_directory,
 
 };
-[[maybe_unused]] bsys::error_code DOODLE_CORE_API make_error_code(error_t e);
 }  // namespace error_enum
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
