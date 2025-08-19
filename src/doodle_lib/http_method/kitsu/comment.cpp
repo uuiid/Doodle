@@ -168,7 +168,11 @@ boost::asio::awaitable<create_comment_result> create_comment(
     co_await i.run(l_task, in_person->person_.uuid_id_);
 
   // 检查文件
-  co_await scan_assets::scan_task_async(*l_task);
+  try {
+    co_await scan_assets::scan_task_async(*l_task);
+  } catch (const FSys::filesystem_error& l_error) {
+    default_logger_raw()->warn("{}", l_error.what());
+  }
 
   socket_io::broadcast(
       "comment:new",
