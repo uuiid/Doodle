@@ -158,6 +158,7 @@ std::vector<working_file> scan_task(const task& in_task) {
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_prj          = l_sql.get_by_uuid<project>(in_task.project_id_);
   auto l_entt         = l_sql.get_by_uuid<entity>(in_task.entity_id_);
+  default_logger_raw()->info("扫描资产 {}", l_entt.name_);
   entity_asset_extend l_extend;
   if (auto l_entt_extend = l_sql.get_entity_asset_extend(l_entt.uuid_id_); !l_entt_extend.has_value()) {
     // 如果没有扩展数据, 则不进行扫描

@@ -10,10 +10,9 @@
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
-boost::asio::awaitable<boost::beast::http::message_generator> actions_working_files_scan_all::post(
-    session_data_ptr in_handle
-) {
-  person_.check_admin();
+
+namespace {
+boost::asio::awaitable<void> scan_working_files() {
   auto l_sql = g_ctx().get<sqlite_database>();
 
   std::vector<std::int64_t> l_delete_ids{};
@@ -24,9 +23,32 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_working_fi
 
   std::shared_ptr<std::vector<working_file>> l_working_files = std::make_shared<std::vector<working_file>>();
   for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
-    *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
+    try {
+      *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
+    } catch (const FSys::filesystem_error& l_error) {
+      default_logger_raw()->warn("{}", l_error.what());
+    }
   }
   if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
+}
+}  // namespace
+boost::asio::awaitable<boost::beast::http::message_generator> actions_working_files_scan_all::post(
+    session_data_ptr in_handle
+) {
+  person_.check_admin();
+  static std::atomic_bool g_begin_scan{false};
+  if (g_begin_scan) co_return in_handle->make_msg_204();
+
+  g_begin_scan = true;
+  boost::asio::co_spawn(g_io_context(), scan_working_files(), [](const std::exception_ptr in_eptr) {
+    try {
+      if (in_eptr) std::rethrow_exception(in_eptr);
+    } catch (const std::exception& e) {
+      default_logger_raw()->error(e.what());
+    };
+    g_begin_scan = false;
+  });
+
   co_return in_handle->make_msg_204();
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::post(
