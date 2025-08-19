@@ -168,7 +168,7 @@ std::vector<working_file> scan_task(const task& in_task) {
 
   auto l_l_working_files_list = l_sql.get_working_file_by_task(in_task.uuid_id_);
 
-  if (std::ranges::all_of(l_l_working_files_list, [&](const auto& l_file) {
+  if (!l_l_working_files_list.empty() && std::ranges::all_of(l_l_working_files_list, [&](const auto& l_file) {
         return !l_file.path_.empty() && FSys::exists(l_file.path_);
       }))
     return {};  // 如果所有的工作文件都存在, 则不需要重新扫描
