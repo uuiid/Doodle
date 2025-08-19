@@ -188,13 +188,15 @@ std::vector<working_file> scan_task(const task& in_task) {
       l_maya_working_file.description_   = "场景maya模型文件";
       l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
       l_maya_working_file.software_type_ = software_enum::maya;
-      if (!l_maya_working_file.path_.empty()) l_working_files.push_back(l_maya_working_file);
+      if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
+        l_working_files.push_back(l_maya_working_file);
     }
     if (l_unreal_working_file.path_.empty() || !FSys::exists(l_unreal_working_file.path_)) {
       l_unreal_working_file.description_   = "场景UE模型文件";
       l_unreal_working_file.path_          = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend);
       l_unreal_working_file.software_type_ = software_enum::unreal_engine;
-      if (!l_unreal_working_file.path_.empty()) l_working_files.push_back(l_unreal_working_file);
+      if (!l_unreal_working_file.path_.empty() || l_unreal_working_file.uuid_id_.is_nil())
+        l_working_files.push_back(l_unreal_working_file);
     }
 
   } else if (l_task_type_id == task_type::get_binding_id()) {
@@ -202,7 +204,8 @@ std::vector<working_file> scan_task(const task& in_task) {
       l_maya_working_file.description_   = "绑定maya模型文件";
       l_maya_working_file.path_          = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend);
       l_maya_working_file.software_type_ = software_enum::maya;
-      if (!l_maya_working_file.path_.empty()) l_working_files.push_back(l_maya_working_file);
+      if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
+        l_working_files.push_back(l_maya_working_file);
     }
 
   } else if (l_task_type_id == task_type::get_simulation_id()) {
@@ -218,15 +221,18 @@ std::vector<working_file> scan_task(const task& in_task) {
       // 这里假设模拟的maya文件是绑定任务的maya文件
       l_maya_working_file.path_          = scan_sim_maya(l_prj, l_work_file.front());
       l_maya_working_file.software_type_ = software_enum::maya;
-      if (!l_maya_working_file.path_.empty()) l_working_files.push_back(l_maya_working_file);
+      if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
+        l_working_files.push_back(l_maya_working_file);
     }
   }
   for (auto&& i : l_working_files) {
     i.task_id_   = in_task.uuid_id_;
     i.entity_id_ = in_task.entity_id_;
-    i.uuid_id_   = core_set::get_set().get_uuid();
-    i.name_      = i.path_.filename().generic_string();
-    FSys::software_flag_file(i.path_, i.uuid_id_);
+    if (i.uuid_id_.is_nil()) {
+      i.uuid_id_ = core_set::get_set().get_uuid();
+      FSys::software_flag_file(i.path_, i.uuid_id_);
+    }
+    i.name_ = i.path_.filename().generic_string();
   }
   return l_working_files;
 }
