@@ -85,7 +85,7 @@ details::assets_type_enum convert_assets_type_enum(const uuid& in_assets_type_id
   // if (in_assets_type_id == asset_type::get_episode_id()) {
   //   return details::assets_type_enum::episode;
   // }
-  throw_error(doodle_error{"未知的资产类型ID: {}", in_assets_type_id});
+  throw_exception(doodle_error{"未知的资产类型ID: {}", in_assets_type_id});
 }
 
 }  // namespace doodle
