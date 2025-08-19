@@ -45,12 +45,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   auto l_sql                                                 = g_ctx().get<sqlite_database>();
   auto l_ids                                                 = in_handle->get_json().get<std::vector<uuid>>();
   std::shared_ptr<std::vector<working_file>> l_working_files = std::make_shared<std::vector<working_file>>();
+  std::map<uuid, std::vector<working_file>> l_work_map{};
   for (auto&& i : l_ids) {
-    auto l_task = l_sql.get_by_uuid<task>(i);
-    *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(l_task));
+    auto l_task                 = l_sql.get_by_uuid<task>(i);
+    l_work_map[l_task.uuid_id_] = scan_assets::scan_task(l_task);
+    *l_working_files |= ranges::actions::push_back(l_work_map[l_task.uuid_id_]);
   }
   if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_working_files);
+  co_return in_handle->make_msg(nlohmann::json{} = l_work_map);
 }
 
 }  // namespace doodle::http
