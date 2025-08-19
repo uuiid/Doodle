@@ -76,6 +76,9 @@ std::int32_t app_base::run() {
   if (!use_multithread_) {
     try {
       g_io_context().run();
+    } catch (const doodle_error& in_err) {
+      exit_code = in_err.error_code_ == 0 ? -1 : in_err.error_code_;
+      default_logger_raw()->error(in_err.what());
     } catch (const std::system_error& in_err) {
       exit_code = in_err.code().value();
       default_logger_raw()->error(in_err.what());
@@ -89,6 +92,9 @@ std::int32_t app_base::run() {
       l_thread = std::thread([this] {
         try {
           g_io_context().run();
+        } catch (const doodle_error& in_err) {
+          exit_code = in_err.error_code_ == 0 ? -1 : in_err.error_code_;
+          default_logger_raw()->error(in_err.what());
         } catch (const std::system_error& in_err) {
           exit_code = in_err.code().value();
           default_logger_raw()->error(in_err.what());

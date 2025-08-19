@@ -283,7 +283,7 @@ void qcloth_shape::set_cache_folder_read_only() const {
   auto k_path         = maya_file_io::work_path(l_cache_folder);
   DOODLE_LOG_WARN("发现缓存路径 {}", k_path);
   if (!FSys::exists(k_path))
-    throw_error(maya_enum::maya_error_t::cache_path_error, fmt::format("缓存路径 {} 不存在", k_path));
+    throw_exception(doodle_error{enum_to_num(maya_enum::maya_error_t::cache_path_error), "缓存路径 {} 不存在", k_path});
   // if (need_clear && FSys::exists(k_path)) {
   // DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
   // FSys::remove_all(k_path);

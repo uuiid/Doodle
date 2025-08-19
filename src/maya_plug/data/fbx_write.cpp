@@ -213,7 +213,12 @@ void fbx_node_cam::build_data() {
   if (boost::math::relative_difference(
           l_fn_cam.horizontalFilmAperture() / l_fn_cam.verticalFilmAperture(), film_aperture_
       ) > 0.005) {
-    throw_error(::doodle::maya_enum::maya_error_t::camera_aspect_error);
+    throw_exception(
+        doodle_error{
+            enum_to_num(::doodle::maya_enum::maya_error_t::camera_aspect_error),
+            "相机的宽高比不匹配, 需要设置为 {} / {}", l_fn_cam.horizontalFilmAperture(), l_fn_cam.verticalFilmAperture()
+        }
+    );
   }
 
   camera_->FocalLength.Set(l_fn_cam.focalLength());
@@ -433,7 +438,9 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
     l_transform.getScale(l_scale);
     if (l_scale[0] < 0.0000000001 || l_scale[1] < 0.0000000001 || l_scale[2] < 0.0000000001) {
       default_logger_raw()->error("{} 缩放为 {} 近 0", dag_path, l_scale);
-      throw_error(doodle::maya_enum::maya_error_t::bone_scale_error, fmt::format(" {} 缩放为 0", dag_path));
+      throw_exception(
+          doodle_error{enum_to_num(doodle::maya_enum::maya_error_t::bone_scale_error), "{} 缩放为 0", dag_path}
+      );
     }
   }
   // size x

@@ -29,7 +29,7 @@ FSys::path win::get_font() {
   /// 获取环境变量 FOLDERID_Documents
   PWSTR pManager;
   SHGetKnownFolderPath(FOLDERID_Fonts, NULL, nullptr, &pManager);
-  if (!pManager) throw_error(error_enum::null_string);
+  if (!pManager) throw_exception(doodle_error{error_enum::null_string, "获取字体路径失败"});
 
   auto k_path = FSys::path{pManager};
   CoTaskMemFree(pManager);

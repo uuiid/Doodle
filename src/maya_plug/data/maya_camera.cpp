@@ -198,7 +198,9 @@ maya_camera maya_camera::conjecture() {
 
   if (!l_cam_dag_path.isValid()) {
     default_logger_raw()->error("没有找到任何相机");
-    throw_error(maya_enum::maya_error_t::camera_name_error);
+    throw_exception(
+        doodle_error{enum_to_num(maya_enum::maya_error_t::camera_name_error), "没有找到相机, 请检查相机名称是否正确"}
+    );
   }
   default_logger_raw()->warn("找到相机 {}", l_cam_dag_path);
   return maya_camera{l_cam_dag_path};

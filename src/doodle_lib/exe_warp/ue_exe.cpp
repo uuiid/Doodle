@@ -127,7 +127,7 @@ namespace ue_exe_ns {
 std::string get_file_version(const FSys::path& in_path) {
   auto [l_ec, l_str] = get_file_version_impl(in_path);
   if (l_ec) {
-    throw_error(l_ec);
+    throw_exception(doodle_error{l_ec.message()});
   }
   return l_str;
 }

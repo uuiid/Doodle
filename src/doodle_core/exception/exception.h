@@ -73,7 +73,9 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
   explicit doodle_error(const std::string& message) : std::runtime_error(message), error_code_(0) {};
   template <typename... Args>
   explicit doodle_error(fmt::format_string<Args...> fmt_str, Args&&... in_args)
-      : std::runtime_error(fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)),
+      : std::runtime_error(
+            fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
+        ),
         error_code_(0){};
   template <typename... Args>
   explicit doodle_error(std::int32_t in_core, const std::string& fmt_str, Args&&... in_args)
@@ -88,46 +90,11 @@ class DOODLE_CORE_API http_request_error : public std::runtime_error {
       : std::runtime_error(message), code_status_{in_status} {};
 };
 
-class DOODLE_CORE_API doodle_category : public bsys::error_category {
- public:
-  const char* name() const noexcept final;
-
-  std::string message(int ev) const final;
-
-  bsys::error_condition default_error_condition(int ev) const noexcept final;
-
-  static const bsys::error_category& get();
-};
-
-class DOODLE_CORE_API maya_code_category : public bsys::error_category {
- public:
-  const char* name() const noexcept final;
-
-  std::string message(int ev) const final;
-
-  static const bsys::error_category& get();
-};
-
 template <typename exception_type>
 [[noreturn]] inline void throw_exception(
     exception_type&& in_exception_type, ::boost::source_location const& in_loc = std::source_location::current()
 ) {
   boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
-}
-
-template <typename Error>
-[[noreturn]] void throw_error(
-    Error in_error_index, ::boost::source_location const& in_loc = std::source_location::current()
-) {
-  boost::throw_exception(std::system_error{bsys::error_code{in_error_index}}, in_loc);
-}
-
-template <typename Error>
-[[noreturn]] void throw_error(
-    Error in_error_index, const std::string& mess,
-    ::boost::source_location const& in_loc = std::source_location::current()
-) {
-  boost::throw_exception(std::system_error{bsys::error_code{in_error_index}, mess}, in_loc);
 }
 
 #define DOODLE_CHICK(condition, ...) \
