@@ -52,7 +52,8 @@ class session_data : public std::enable_shared_from_this<session_data> {
   using file_request_parser_ptr       = std::shared_ptr<file_request_parser_type>;
   using multipart_request_parser_ptr  = std::shared_ptr<multipart_request_parser_type>;
   static constexpr auto g_body_limit{500 * 1024 * 1024};  // 500M
-
+  // 超时
+  static constexpr auto g_timeout{std::chrono::seconds(30)};
   std::unique_ptr<tcp_stream_type> stream_;
   std::variant<
       empty_request_parser_ptr, string_request_parser_ptr, file_request_parser_ptr, multipart_request_parser_ptr>
@@ -60,6 +61,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   http_function_ptr callback_;
   boost::beast::flat_buffer buffer_;
   boost::beast::http::verb method_verb_{};
+  chrono::seconds timeout_{g_timeout};
   void set_session();
   boost::asio::awaitable<bool> parse_body();
   boost::asio::awaitable<void> async_websocket_session();

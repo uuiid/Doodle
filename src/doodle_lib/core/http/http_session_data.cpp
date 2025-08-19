@@ -105,7 +105,7 @@ boost::asio::awaitable<void> session_data::run() {
       [this](auto&& in_ptr) { return boost::beast::http::async_read_header(*stream_, buffer_, *in_ptr); },
       request_parser_
   );
-  stream_->expires_after(30s);
+  stream_->expires_after(timeout_);
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     set_session();
     callback_ = (*route_ptr_)(method_verb_, url_.segments(), shared_from_this());
@@ -141,7 +141,7 @@ boost::asio::awaitable<void> session_data::run() {
         ) &&
         boost::beast::async_write(*stream_, std::move(*l_gen))
     );
-    stream_->expires_after(30s);
+    stream_->expires_after(timeout_);
   }
 }
 
@@ -158,6 +158,14 @@ void session_data::set_session() {
       },
       request_parser_
   );
+  if (auto l_keep_alive = req_header_.find(boost::beast::http::field::keep_alive); l_keep_alive != req_header_.end()) {
+    auto l_value = l_keep_alive->value();
+    if (auto l_it = l_value.find("timeout="); l_it != std::string_view::npos) {
+      timeout_ = std::chrono::seconds{
+          boost::lexical_cast<std::int64_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8))
+      };
+    }
+  }
   callback_.reset();
 }
 boost::asio::awaitable<void> session_data::save_bode_file(const std::string& in_ext) {
@@ -255,7 +263,7 @@ boost::asio::awaitable<bool> session_data::parse_body() {
         default:
           break;
       }
-      stream_->expires_after(30s);
+      stream_->expires_after(timeout_);
 
       break;
     default:
