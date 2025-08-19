@@ -74,6 +74,11 @@ std::tuple<bool, std::shared_ptr<http_function>> url_route_component_t::set_matc
 ) const {
   std::smatch l_result{};
   auto l_url_path = in_segments_ref.url().path();
+  if (l_url_path.back() == '/') {
+    // 去掉末尾的斜杠
+    l_url_path.pop_back();
+  }
+  // 检查路径是否匹配正则表达式
   if (!std::regex_match(l_url_path, l_result, url_regex_)) {
     return {false, {}};
   }
