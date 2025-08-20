@@ -441,4 +441,10 @@ DOODLE_HTTP_JWT_FUN(data_project_playlists_temp)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/sequences/{sequence_id}
+DOODLE_HTTP_JWT_FUN(data_sequence_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http

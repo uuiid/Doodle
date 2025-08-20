@@ -175,9 +175,9 @@ struct data_project_sequences_args {
   std::string description_{};
   // form json
   friend void from_json(const nlohmann::json& j, data_project_sequences_args& p) {
-    if (j.contains("episode_id")) j.at("episode_id").get_to(p.episode_id_);
+    if (j.contains("episode_id") && !j.at("episode_id").is_null()) j.at("episode_id").get_to(p.episode_id_);
+    if (j.contains("description")) j.at("description").get_to(p.description_);
     j.at("name").get_to(p.name_);
-    j.at("description").get_to(p.description_);
   }
 };
 }  // namespace
@@ -203,9 +203,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
         l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_;
     l_entity_ptr->created_by_ = person_.person_.uuid_id_;
     co_await l_sql.install(l_entity_ptr);
-    socket_io::broadcast(
-        "episode:new", nlohmann::json{{"sequence_id", l_entity_ptr->uuid_id_}, {"project_id", id_}}, "/events"
-    );
+    socket_io::broadcast("sequence:new", nlohmann::json{{"sequence_id", l_entity_ptr->uuid_id_}, {"project_id", id_}});
   } else
     *l_entity_ptr = l_sq_list.front();
 
@@ -221,6 +219,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
       c(&entity::project_id_) == id_
   ));
   co_return in_handle->make_msg(nlohmann::json{} = l_sq_list);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_data = l_sql.get_by_uuid<entity>(id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_data);
 }
 
 }  // namespace doodle::http
