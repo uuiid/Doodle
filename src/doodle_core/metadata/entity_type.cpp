@@ -64,7 +64,7 @@ details::assets_type_enum convert_assets_type_enum(const uuid& in_assets_type_id
   if (in_assets_type_id == asset_type::get_character_id()) {
     return details::assets_type_enum::character;
   }
-  if (in_assets_type_id == asset_type::get_scene_id()) {
+  if (in_assets_type_id == asset_type::get_ground_id()) {
     return details::assets_type_enum::scene;
   }
   // if (in_assets_type_id == asset_type::get_ground_id()) {

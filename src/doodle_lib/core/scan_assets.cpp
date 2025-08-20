@@ -123,21 +123,21 @@ FSys::path scan_maya(const project& in_prj, const uuid& in_entity_type, const en
   if (in_entity_type == asset_type::get_character_id()) return scan_character_maya(in_prj, in_extend);
   if (in_entity_type == asset_type::get_prop_id() || in_entity_type == asset_type::get_effect_id())
     return scan_prop_maya(in_prj, in_extend);
-  if (in_entity_type == asset_type::get_scene_id()) return scan_scene_maya(in_prj, in_extend);
+  if (in_entity_type == asset_type::get_ground_id()) return scan_scene_maya(in_prj, in_extend);
   return {};
 }
 FSys::path scan_unreal_engine(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend) {
   if (in_entity_type == asset_type::get_character_id()) return scan_character_unreal_engine(in_prj, in_extend);
   if (in_entity_type == asset_type::get_prop_id() || in_entity_type == asset_type::get_effect_id())
     return scan_prop_unreal_engine(in_prj, in_extend);
-  if (in_entity_type == asset_type::get_scene_id()) return scan_scene_unreal_engine(in_prj, in_extend);
+  if (in_entity_type == asset_type::get_ground_id()) return scan_scene_unreal_engine(in_prj, in_extend);
   return {};
 }
 FSys::path scan_rig_maya(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend) {
   if (in_entity_type == asset_type::get_character_id()) return scan_character_rig_maya(in_prj, in_extend);
   if (in_entity_type == asset_type::get_prop_id() || in_entity_type == asset_type::get_effect_id())
     return scan_prop_rig_maya(in_prj, in_extend);
-  // if (in_entity_type == asset_type::get_scene_id()) return scan_scene_rig_maya(in_prj, in_extend);
+  // if (in_entity_type == asset_type::get_ground_id()) return scan_scene_rig_maya(in_prj, in_extend);
   return {};
 }
 FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend) {
@@ -187,14 +187,14 @@ std::vector<working_file> scan_task(const task& in_task) {
 
   if (l_task_type_id == task_type::get_character_id() || l_task_type_id == task_type::get_ground_model_id()) {
     if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
-      l_maya_working_file.description_   = "场景maya模型文件";
+      l_maya_working_file.description_   = "maya模型文件";
       l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
       l_maya_working_file.software_type_ = software_enum::maya;
       if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
         l_working_files.push_back(l_maya_working_file);
     }
     if (l_unreal_working_file.path_.empty() || !FSys::exists(l_unreal_working_file.path_)) {
-      l_unreal_working_file.description_   = "场景UE模型文件";
+      l_unreal_working_file.description_   = "UE模型文件";
       l_unreal_working_file.path_          = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend);
       l_unreal_working_file.software_type_ = software_enum::unreal_engine;
       if (!l_unreal_working_file.path_.empty() || l_unreal_working_file.uuid_id_.is_nil())
