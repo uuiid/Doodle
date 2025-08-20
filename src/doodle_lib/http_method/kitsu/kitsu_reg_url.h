@@ -454,5 +454,9 @@ uuid project_id_{};
 uuid task_type_id_{};
 url_entity_type_enum entity_type_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/task-type-links
+DOODLE_HTTP_JWT_FUN(data_task_type_links)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

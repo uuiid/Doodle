@@ -237,5 +237,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
   }
   co_return in_handle->make_msg_204();
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_task_type_links::post(session_data_ptr in_handle) {
+  auto l_args = in_handle->get_json().get<project_task_type_link>();
+  person_.check_project_manager(l_args.project_id_);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ptr = std::make_shared<project_task_type_link>(
+      l_sql.get_project_task_type_link(l_args.project_id_, l_args.task_type_id_).value_or(l_args)
+  );
+  l_ptr->priority_ = l_args.priority_.value_or(0);
+  if (l_ptr->uuid_id_.is_nil()) l_ptr->uuid_id_ = core_set::get_set().get_uuid();
+  co_await l_sql.install(l_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+}
 
 }  // namespace doodle::http
