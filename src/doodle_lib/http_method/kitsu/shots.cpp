@@ -7,6 +7,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 namespace doodle::http {
@@ -207,9 +208,7 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
   return l_ret;
 }
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
   auto l_po      = get_person(in_handle);
   auto& l_sql    = g_ctx().get<sqlite_database>();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
@@ -220,6 +219,64 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_ta
   co_return in_handle->make_msg(
       nlohmann::json{} = get_shots_with_tasks(l_po->person_, l_project_uuid, l_type_id.uuid_id_)
   );
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {
+  co_return in_handle->make_msg_204();
+}
+namespace {
+struct data_project_shots_args {
+  std::string name_{};
+  uuid sequence_id_{};
+  nlohmann::json data_{};
+  std::int32_t nb_frames_{};
+  std::string description_{};
+  // from json
+  friend void from_json(const nlohmann::json& j, data_project_shots_args& p) {
+    j.at("name").get_to(p.name_);
+    if (j.contains("sequence_id")) j.at("sequence_id").get_to(p.sequence_id_);
+    if (j.contains("data")) p.data_ = j.at("data");
+    if (j.contains("nb_frames")) j.at("nb_frames").get_to(p.nb_frames_);
+    if (j.contains("description")) j.at("description").get_to(p.description_);
+  }
+};
+}  // namespace
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::post(session_data_ptr in_handle) {
+  auto l_args = in_handle->get_json().get<data_project_shots_args>();
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  if (!l_args.sequence_id_.is_nil() &&
+      l_sql.impl_->storage_any_.count<entity>(where(
+          c(&entity::uuid_id_) == l_args.sequence_id_ &&
+          c(&entity::entity_type_id_) == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
+      )) == 0)
+    throw_exception(
+        http_request_error{boost::beast::http::status::bad_request, "未知的序列 id " + to_string(l_args.sequence_id_)}
+    );
+
+  if (auto l_list = l_sql.impl_->storage_any_.get_all<entity>(where(
+          c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ &&
+          c(&entity::parent_id_) == project_id_ &&
+          c(&entity::entity_type_id_) == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
+      ));
+      !l_list.empty())
+    co_return in_handle->make_msg(nlohmann::json{} = l_list.front());
+
+  auto l_shot = std::make_shared<entity>(entity{
+      .uuid_id_        = core_set::get_set().get_uuid(),
+      .name_           = l_args.name_,
+      .description_    = l_args.description_,
+      .nb_frames_      = l_args.nb_frames_,
+      .project_id_     = project_id_,
+      .entity_type_id_ = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_,
+      .parent_id_      = l_args.sequence_id_,
+      .created_by_     = person_.person_.uuid_id_
+  });
+  co_await l_sql.install(l_shot);
+  socket_io::broadcast(
+      "shot:new",
+      nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"episode_id", l_args.sequence_id_}, {"project_id", project_id_}}
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = *l_shot);
 }
 
 }  // namespace doodle::http

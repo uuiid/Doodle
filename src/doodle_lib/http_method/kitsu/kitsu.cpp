@@ -163,6 +163,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_tasks_working_file>("/api/actions/tasks/{}/working-file"_url(&actions_tasks_working_file::id_))
       .reg_t<actions_projects_tasks_working_file_many>("/api/actions/projects/{}/tasks/working-file-many"_url(&actions_projects_tasks_working_file_many::id_))
       .reg_t<actions_working_files_scan_all>("/api/actions/working-file/scan-all"_url)
+      .reg_t<data_project_shots>("/api/data/projects/{}/shots"_url(&data_project_shots::project_id_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
