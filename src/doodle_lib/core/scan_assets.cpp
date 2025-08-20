@@ -57,7 +57,7 @@ FSys::path scan_scene_maya(const project& in_prj, const entity_asset_extend& in_
       in_prj.asset_root_path_ / "BG" /
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_.value_or(0), in_extend.kai_shi_ji_shu_.value_or(0)) /
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
-      fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
+      fmt::format("{}{}{}_Low.ma", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
   if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
@@ -65,7 +65,8 @@ FSys::path scan_scene_unreal_engine(const project& in_prj, const entity_asset_ex
   auto l_path =
       in_prj.asset_root_path_ / "BG" /
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_.value_or(0), in_extend.kai_shi_ji_shu_.value_or(0)) /
-      fmt::format("BG{}", in_extend.bian_hao_) / in_extend.pin_yin_ming_cheng_ / doodle_config::ue4_content / "Map" /
+      fmt::format("BG{}", in_extend.bian_hao_) / in_extend.pin_yin_ming_cheng_ / doodle_config::ue4_content /
+      in_extend.pin_yin_ming_cheng_ / "Map" /
       fmt::format(
           "{}{}{}.umap", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
