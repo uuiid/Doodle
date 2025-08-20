@@ -44,7 +44,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   (*l_router)
       // clang-format off
       // 我们自己的后端
-      .reg_t<socket_io::socket_io_http>(R"(/socket\.io)"_url, l_sid_ctx)
+      .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
       .reg_t<doodle_data_asset_file_maya>("/api/doodle/data/asset/{}/file/maya"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_ue>("/api/doodle/data/asset/{}/file/ue"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_image>("/api/doodle/data/asset/{}/file/image"_url(&doodle_data_asset_file_image::id_))
@@ -165,6 +165,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_working_files_scan_all>("/api/actions/working-file/scan-all"_url)
       .reg_t<data_project_shots>("/api/data/projects/{}/shots"_url(&data_project_shots::project_id_))
       .reg_t<data_sequence_instance>("/api/data/sequences/{}"_url(&data_sequence_instance::id_))
+      .reg_t<actions_projects_task_types_create_tasks>("/api/actions/projects/{}/task-types/{}/create-tasks/{}"_url(
+                                                   &actions_projects_task_types_create_tasks::project_id_,
+                                                   &actions_projects_task_types_create_tasks::task_type_id_,
+                                                   &actions_projects_task_types_create_tasks::entity_type_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
@@ -189,7 +193,7 @@ http_route_ptr create_kitsu_local_route() {
         .reg_t<local::task_instance_restart>("/api/doodle/task/{}/restart"_url(&local::task_instance_restart::id_))
         .reg_t<local::task_instance_log>("/api/doodle/task/{}/log"_url(&local::task_instance_log::id_))
 
-        .reg_t<socket_io::socket_io_http>(R"(/socket\.io)"_url, l_sid_ctx)
+        .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 
         ;
   return l_rout_ptr;

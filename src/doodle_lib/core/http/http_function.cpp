@@ -21,8 +21,11 @@ void url_route_component_t::initializer_t::parse_url_path() {
   std::vector<boost::iterator_range<std::string::iterator>> l_ranges{};
   boost::algorithm::iter_find(l_ranges, url_path_, boost::algorithm::first_finder("{}"));
   capture_count_ = l_ranges.size();
-
+  // 正则转义
   boost::replace_all(url_path_, "/", R"(\/)");
+  boost::replace_all(url_path_, ".", R"(\.)");
+  boost::replace_all(url_path_, "?", R"(\?)");
+
 }
 url_route_component_t::component_vector_t url_route_component_t::initializer_t::get_component_vector() const {
   return component_;
