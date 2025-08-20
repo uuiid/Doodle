@@ -126,6 +126,7 @@ struct shots_with_tasks_result {
       j["assignees"]            = p.assigners_;
       j["nb_assets_ready"]      = p.nb_assets_ready_;
       j["nb_drawings"]          = p.nb_drawings_;
+      j["working_files"]        = nlohmann::json::array();
     }
   };
   std::vector<task_t> tasks_;

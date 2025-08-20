@@ -95,6 +95,7 @@ struct sequences_with_tasks_result {
       j["task_type_id"]         = p.task_type_id_;
       j["task_status_id"]       = p.task_status_id_;
       j["assignees"]            = p.assigners_;
+      j["working_files"]        = nlohmann::json::array();
     }
   };
   std::vector<task_t> tasks_;
