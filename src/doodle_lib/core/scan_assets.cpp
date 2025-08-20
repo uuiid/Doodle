@@ -57,7 +57,9 @@ FSys::path scan_scene_maya(const project& in_prj, const entity_asset_extend& in_
       in_prj.asset_root_path_ / "BG" /
       fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_.value_or(0), in_extend.kai_shi_ji_shu_.value_or(0)) /
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
-      fmt::format("{}{}{}_Low.ma", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
+      fmt::format(
+          "{}{}{}_Low.ma", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
+      );
   if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
 }
@@ -109,15 +111,7 @@ FSys::path scan_prop_rig_maya(const project& in_prj, const entity_asset_extend& 
   }
   return {};
 }
-FSys::path scan_scene_rig_maya(const project& in_prj, const entity_asset_extend& in_extend) {
-  auto l_path =
-      in_prj.asset_root_path_ / "BG" /
-      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_.value_or(0), in_extend.kai_shi_ji_shu_.value_or(0)) /
-      fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
-      fmt::format("BG{}{}{}_Low.ma", in_extend.bian_hao_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_);
-  if (exists(in_prj.path_ / l_path)) return l_path;
-  return {};
-}
+
 }  // namespace
 FSys::path scan_maya(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend) {
   if (in_entity_type == asset_type::get_character_id()) return scan_character_maya(in_prj, in_extend);
@@ -137,7 +131,7 @@ FSys::path scan_rig_maya(const project& in_prj, const uuid& in_entity_type, cons
   if (in_entity_type == asset_type::get_character_id()) return scan_character_rig_maya(in_prj, in_extend);
   if (in_entity_type == asset_type::get_prop_id() || in_entity_type == asset_type::get_effect_id())
     return scan_prop_rig_maya(in_prj, in_extend);
-  // if (in_entity_type == asset_type::get_ground_id()) return scan_scene_rig_maya(in_prj, in_extend);
+  if (in_entity_type == asset_type::get_ground_id()) return scan_scene_maya(in_prj, in_extend);
   return {};
 }
 FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend) {
