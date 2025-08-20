@@ -446,5 +446,13 @@ DOODLE_HTTP_JWT_FUN(data_sequence_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/<project_id>/task-types/<task_type_id>/create-tasks/<entity_type>
+DOODLE_HTTP_JWT_FUN(actions_projects_task_types_create_tasks)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+enum class url_entity_type_enum { episodes, sequence };
+uuid project_id_{};
+uuid task_type_id_{};
+url_entity_type_enum entity_type_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

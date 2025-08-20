@@ -221,9 +221,99 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   co_return in_handle->make_msg(nlohmann::json{} = l_sq_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_data = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_data);
+}
+namespace {
+
+struct actions_projects_task_types_create_tasks_result : task {
+  explicit actions_projects_task_types_create_tasks_result(
+      const task& in_task, const task_type& in_type, const task_status& in_status
+  )
+      : task(in_task),
+        task_status_id_(in_status.uuid_id_),
+        task_status_name_(in_status.name_),
+        task_status_short_name_(in_status.short_name_),
+        task_status_color_(in_status.color_),
+        task_type_id_(in_type.uuid_id_),
+        task_type_name_(in_type.name_),
+        task_type_color_(in_type.color_),
+        task_type_priority_(in_type.priority_) {}
+
+  uuid task_status_id_;
+  std::string task_status_name_;
+  std::string task_status_short_name_;
+  std::string task_status_color_;
+  uuid task_type_id_;
+  std::string task_type_name_;
+  std::string task_type_color_;
+  std::int32_t task_type_priority_;
+  // to json
+  friend void to_json(nlohmann::json& j, const actions_projects_task_types_create_tasks_result& p) {
+    to_json(j, static_cast<const task&>(p));
+    j["task_status_id"]         = p.task_status_id_;
+    j["task_status_name"]       = p.task_status_name_;
+    j["task_status_short_name"] = p.task_status_short_name_;
+    j["task_status_color"]      = p.task_status_color_;
+    j["task_type_id"]           = p.task_type_id_;
+    j["task_type_name"]         = p.task_type_name_;
+    j["task_type_color"]        = p.task_type_color_;
+    j["task_type_priority"]     = p.task_type_priority_;
+  }
+};
+}  // namespace
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_create_tasks::post(
+    session_data_ptr in_handle
+) {
+  person_.check_project_access(project_id_);
+  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_task_type    = l_sql.get_by_uuid<task_type>(task_type_id_);
+  auto l_type_name    = std::string{magic_enum::enum_name(entity_type_)};
+  l_type_name.front() = std::toupper(l_type_name.front());
+  auto l_entity_type  = l_sql.get_entity_type_by_name(l_type_name);
+  std::vector<entity> l_entities{};
+  if (auto l_json = in_handle->get_json(); l_json.is_array()) {
+    l_entities.reserve(l_json.size());
+    for (auto&& l_id : l_json.get<std::vector<uuid>>())
+      if (auto l_ent = l_sql.get_by_uuid<entity>(l_id); l_ent.project_id_ == project_id_)
+        l_entities.emplace_back(std::move(l_ent));
+  } else {
+    auto l_episode_id = l_json.value("episode_id", uuid{});
+    using namespace sqlite_orm;
+    l_entities = l_sql.impl_->storage_any_.get_all<entity>(where(
+        c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_entity_type.uuid_id_ &&
+        (l_episode_id.is_nil() || c(&entity::parent_id_) == l_episode_id)
+    ));
+  }
+  std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
+  auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
+
+  std::vector<actions_projects_task_types_create_tasks_result> l_result{};
+  for (auto&& l_enit : l_entities) {
+    using namespace sqlite_orm;
+    if (l_sql.impl_->storage_any_.count<task>(
+            where(c(&task::entity_id_) == l_enit.uuid_id_) && c(&task::task_type_id_) == task_type_id_
+        ))
+      continue;  // 已经存在任务
+    auto& l_task = l_tasks->emplace_back(
+        task{
+            .uuid_id_        = core_set::get_set().get_uuid(),
+            .name_           = "main",
+            .created_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+            .updated_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+            .project_id_     = project_id_,
+            .task_type_id_   = task_type_id_,
+            .task_status_id_ = l_task_status.uuid_id_,
+            .entity_id_      = l_enit.uuid_id_,
+            .assigner_id_    = person_.person_.uuid_id_,
+        }
+    );
+    l_result.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
+  }
+  if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
 }  // namespace doodle::http
