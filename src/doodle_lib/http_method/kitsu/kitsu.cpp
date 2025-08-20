@@ -170,6 +170,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
                                                    &actions_projects_task_types_create_tasks::task_type_id_,
                                                    &actions_projects_task_types_create_tasks::entity_type_))
       .reg_t<data_task_type_links>("/api/data/task-type-links"_url)
+      .reg_t<data_shot>("/api/data/shots/{}"_url(&data_shot::id_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

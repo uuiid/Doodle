@@ -248,7 +248,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
   if (!l_args.sequence_id_.is_nil() &&
       l_sql.impl_->storage_any_.count<entity>(where(
           c(&entity::uuid_id_) == l_args.sequence_id_ &&
-          c(&entity::entity_type_id_) == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
+          c(&entity::entity_type_id_) ==
+              l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
       )) == 0)
     throw_exception(
         http_request_error{boost::beast::http::status::bad_request, "未知的序列 id " + to_string(l_args.sequence_id_)}
@@ -257,7 +258,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
   if (auto l_list = l_sql.impl_->storage_any_.get_all<entity>(where(
           c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ &&
           c(&entity::parent_id_) == project_id_ &&
-          c(&entity::entity_type_id_) == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
+          c(&entity::entity_type_id_) ==
+              l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
       ));
       !l_list.empty())
     co_return in_handle->make_msg(nlohmann::json{} = l_list.front());
@@ -278,6 +280,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"episode_id", l_args.sequence_id_}, {"project_id", project_id_}}
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_shot);
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(session_data_ptr in_handle) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ent = l_sql.get_by_uuid<entity>(id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_ent);
 }
 
 }  // namespace doodle::http
