@@ -220,7 +220,7 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/assets/with-tasks
-DOODLE_HTTP_JWT_FUN(with_tasks)
+DOODLE_HTTP_JWT_FUN(data_assets_with_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 // /api/data/sequences/with-tasks

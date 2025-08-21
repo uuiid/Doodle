@@ -105,7 +105,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_person_instance>("/api/data/persons/{}"_url(&data_person_instance::id_))
       .reg_t<actions_tasks_clear_assignation>("/api/actions/tasks/clear-assignation"_url)
       .reg_t<data_user_notification>("/api/data/user/notifications/{}"_url(&data_user_notification::id_))
-      .reg_t<with_tasks>("/api/data/assets/with-tasks"_url)
+      .reg_t<data_assets_with_tasks>("/api/data/assets/with-tasks"_url)
       .reg_t<asset_details>("/api/data/assets/{}"_url(&asset_details::id_))
       .reg_t<project_all>("/api/data/projects/all"_url)
       .reg_t<shared_used>("/api/data/projects/{}/assets/shared-used"_url(&shared_used::id_))

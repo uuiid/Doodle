@@ -293,7 +293,7 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
 
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> with_tasks::get(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_tasks::get(session_data_ptr in_handle) {
   uuid l_prj_id{};
   for (auto&& l_i : in_handle->url_.params())
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);

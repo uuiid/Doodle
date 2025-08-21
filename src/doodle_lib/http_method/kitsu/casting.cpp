@@ -161,7 +161,7 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
            join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
            join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
            where(
-               c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) ||
+               c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
                (in_asset_type_id.is_nil() || c(&entity::entity_type_id_) == in_asset_type_id)
            ),
            multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
