@@ -52,7 +52,7 @@ struct data_project_sequences_casting_result {
     j["project_id"]      = in_data.project_id_;
   }
 };
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_casting::get(
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_all_casting::get(
     session_data_ptr in_handle
 ) {
   person_.check_project_access(project_id_);

@@ -174,7 +174,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_projects_task_types_shots_create_tasks>("/api/actions/projects/{}/task-types/{}/shots/create-tasks"_url(
                                                    &actions_projects_task_types_shots_create_tasks::project_id_,
                                                    &actions_projects_task_types_shots_create_tasks::task_type_id_))
-      .reg_t<data_project_sequences_casting>("/api/data/projects/{}/sequences/all/casting"_url(&data_project_sequences_casting::project_id_))
+      .reg_t<data_project_sequences_all_casting>("/api/data/projects/{}/sequences/all/casting"_url(&data_project_sequences_all_casting::project_id_))
       .reg_t<data_project_entities_casting>("/api/data/projects/{}/entities/{}/casting"_url(
                                           &data_project_entities_casting::project_id_,
                                           &data_project_entities_casting::entity_id_
