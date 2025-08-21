@@ -36,4 +36,5 @@ target_sources(
         file_status.cpp
         output_types.cpp
         working_file.cpp
+        casting.cpp
 )
