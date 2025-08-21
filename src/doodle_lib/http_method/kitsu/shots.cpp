@@ -310,12 +310,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     uuid l_id{};
     for (auto&& [key, value, has] : in_handle->url_.params())
       if (key == "id" && has) l_id = from_uuid_str(value);
-    l_shots = l_sql.impl_->storage_any_.get_all<entity>(
-        where(c(&entity::project_id_) == project_id_) &&
+    l_shots = l_sql.impl_->storage_any_.get_all<entity>(where(
+        c(&entity::project_id_) == project_id_ &&
         c(&entity::entity_type_id_) ==
             l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_ &&
         (l_id.is_nil() || c(&entity::uuid_id_) == l_id)
-    );
+    ));
   }
   std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
   std::vector<actions_projects_task_types_create_tasks_result> l_results{};
