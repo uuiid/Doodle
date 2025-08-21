@@ -1007,6 +1007,7 @@ DOODLE_UUID_TO_ID(person)
 DOODLE_UUID_TO_ID(entity)
 DOODLE_UUID_TO_ID(working_file)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
+DOODLE_UUID_TO_ID(asset_type)
 
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
