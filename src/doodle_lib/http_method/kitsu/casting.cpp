@@ -9,7 +9,6 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
-
 namespace doodle::http {
 struct data_project_sequences_casting_result {
   explicit data_project_sequences_casting_result(
@@ -58,7 +57,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 ) {
   person_.check_project_access(project_id_);
   auto l_sql = g_ctx().get<sqlite_database>();
-  std::vector<data_project_sequences_casting_result> l_result{};
+  std::map<uuid, std::vector<data_project_sequences_casting_result>> l_result{};
   {
     using namespace sqlite_orm;
     constexpr auto shot     = "shot"_alias.for_<entity>();
@@ -76,7 +75,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
              join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
              where(c(&entity::canceled_) != true && c(&entity::project_id_) == project_id_)
          )) {
-      l_result.emplace_back(
+      l_result[ent_link.entity_in_id_].emplace_back(
           data_project_sequences_casting_result{
               ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_
           }
@@ -84,6 +83,85 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
     }
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_entities_casting::put(
+    session_data_ptr in_handle
+) {
+  person_.check_project_access(project_id_);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
+  if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
+    throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
+  std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
+  std::vector<std::function<void()>> l_delay_events{};
+
+  auto l_list = in_handle->get_json().get<std::vector<entity_link>>();
+  for (auto&& i : l_list) {
+    if (i.entity_out_id_.is_nil()) continue;
+    auto l_link = l_sql.get_entity_link(entity_id_, i.entity_out_id_);
+    if (l_link) {
+      l_link->nb_occurences_ = i.nb_occurences_;
+      l_link->label_         = i.label_;
+      l_entity_links->emplace_back(*l_link);
+      l_delay_events.emplace_back([i, this]() {
+        socket_io::broadcast(
+            "entity-link:update",
+            nlohmann::json{
+                {"entity_link_id", i.uuid_id_}, {"nb_occurences", i.nb_occurences_}, {"project_id", project_id_}
+            }
+        );
+      });
+    } else {
+      auto l_seq      = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
+      auto l_seq_link = l_sql.get_entity_link(l_seq.uuid_id_, i.entity_out_id_);
+      if (!l_seq_link) {
+        l_entity_links->emplace_back(
+            entity_link{
+                .uuid_id_       = core_set::get_set().get_uuid(),
+                .entity_in_id_  = l_seq.uuid_id_,
+                .entity_out_id_ = i.entity_out_id_,
+                .nb_occurences_ = 1,
+                .label_         = i.label_
+            }
+        );
+        l_delay_events.emplace_back([id = i.entity_out_id_, this]() {
+          socket_io::broadcast("asset:update", nlohmann::json{{"asset_id", id}, {"project_id", project_id_}});
+        });
+      }
+      l_entity_links->emplace_back(
+          entity_link{
+              .uuid_id_       = core_set::get_set().get_uuid(),
+              .entity_in_id_  = l_ent->uuid_id_,
+              .entity_out_id_ = i.entity_out_id_,
+              .nb_occurences_ = i.nb_occurences_,
+              .label_         = i.label_
+          }
+      );
+      l_delay_events.emplace_back([i, this]() {
+        socket_io::broadcast(
+            "entity-link:new",
+            nlohmann::json{
+                {"entity_link_id", i.uuid_id_},
+                {"entity_in_id", i.entity_in_id_},
+                {"entity_out_id", i.entity_out_id_},
+                {"nb_occurences", i.nb_occurences_},
+                {"project_id", project_id_}
+            }
+        );
+      });
+    }
+  }
+  l_ent->nb_entities_out_ = l_list.size();
+  co_await l_sql.install(l_ent);
+  co_await l_sql.install_range(l_entity_links);
+  for (auto&& i : l_delay_events) i();
+  socket_io::broadcast(
+      "shot:casting-update",
+      nlohmann::json{
+          {"shot_id", l_ent->uuid_id_}, {"project_id", project_id_}, {"nb_entities_out", l_ent->nb_entities_out_}
+      }
+  );
+  co_return in_handle->make_msg(in_handle->get_json());
 }
 
 }  // namespace doodle::http

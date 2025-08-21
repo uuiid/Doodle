@@ -175,6 +175,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
                                                    &actions_projects_task_types_shots_create_tasks::project_id_,
                                                    &actions_projects_task_types_shots_create_tasks::task_type_id_))
       .reg_t<data_project_sequences_casting>("/api/data/projects/{}/sequences/all/casting"_url(&data_project_sequences_casting::project_id_))
+      .reg_t<data_project_entities_casting>("/api/data/projects/{}/entities/{}/casting"_url(
+                                          &data_project_entities_casting::project_id_,
+                                          &data_project_entities_casting::entity_id_
+                                          ))
        // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

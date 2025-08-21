@@ -39,6 +39,7 @@ constexpr std::uint16_t udp_port{50022};
 constexpr std::uint16_t http_port{50021};
 constexpr std::string_view task_status_todo{"Todo"};
 constexpr std::string_view entity_type_sequence{"Sequence"};
+constexpr std::string_view entity_type_episode{"Episode"};
 constexpr std::string_view entity_type_shot{"Shot"};
 namespace work_websocket_event {
 constexpr std::string_view post_task{R"(post_task)"};

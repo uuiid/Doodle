@@ -28,12 +28,22 @@ struct DOODLE_CORE_API asset_instance_link {
 };
 
 struct DOODLE_CORE_API entity_link {
-  std::int32_t id_;
+  DOODLE_BASE_FIELDS();
   uuid entity_in_id_;
   uuid entity_out_id_;
   nlohmann::json data_;
-  std::int32_t nb_occurences_;
+  std::int32_t nb_occurences_{1};
   std::string label_;
+  // form json
+  friend void from_json(const nlohmann::json& j, entity_link& p) {
+    if (j.contains("id")) j.at("id").get_to(p.id_);
+    if (j.contains("entity_in_id")) j.at("entity_in_id").get_to(p.entity_in_id_);
+    if (j.contains("entity_out_id")) j.at("entity_out_id").get_to(p.entity_out_id_);
+    if (j.contains("data")) j.at("data").get_to(p.data_);
+    if (j.contains("nb_occurences")) j.at("nb_occurences").get_to(p.nb_occurences_);
+    if (j.contains("label")) j.at("label").get_to(p.label_);
+    if (j.contains("asset_id")) j.at("asset_id").get_to(p.entity_out_id_);
+  }
 };
 struct DOODLE_CORE_API entity_concept_link {
   std::int32_t id_;

@@ -395,6 +395,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_table<entity_link>(
           "entity_link",                                                           //
           make_column("id", &entity_link::id_, primary_key().autoincrement()),     //
+          make_column("uuid", &entity_link::uuid_id_, unique(), not_null()),       //
           make_column("entity_in_id", &entity_link::entity_in_id_),                //
           make_column("entity_out_id", &entity_link::entity_out_id_),              //
           make_column("data", &entity_link::data_),                                //

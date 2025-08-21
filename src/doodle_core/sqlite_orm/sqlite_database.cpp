@@ -966,6 +966,16 @@ std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
   }
   return l_t;
 }
+
+std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entity_in_id, const uuid& in_asset_id) {
+  using namespace sqlite_orm;
+  auto l_list = impl_->storage_any_.get_all<entity_link>(
+      where(c(&entity_link::entity_in_id_) == in_entity_in_id && c(&entity_link::entity_out_id_) == in_asset_id)
+  );
+  if (l_list.empty()) return {};
+  return l_list.front();
+}
+
 boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
   DOODLE_TO_SQLITE_THREAD_2();
   using namespace sqlite_orm;
@@ -1187,6 +1197,7 @@ DOODLE_INSTALL_RANGE(assets_file_helper::link_parent_t)
 DOODLE_INSTALL_RANGE(task)
 DOODLE_INSTALL_RANGE(person_department_link)
 DOODLE_INSTALL_RANGE(working_file)
+DOODLE_INSTALL_RANGE(entity_link)
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)

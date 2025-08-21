@@ -27,6 +27,7 @@ struct entities_and_tasks_t;
 struct department;
 struct comment;
 struct task;
+struct entity_link;
 struct project_task_status_link;
 struct entity_asset_extend;
 struct working_file;
@@ -187,7 +188,7 @@ class sqlite_database {
   /// 获取资产对应的 task
   std::vector<task> get_tasks_for_entity(const uuid& in_asset_id);
   std::vector<asset_type> get_asset_types_not_temporal_type();
-
+  std::optional<entity_link> get_entity_link(const uuid& in_entity_in_id, const uuid& in_asset_id);
   /// 获取任务额外数据
   std::optional<entity_asset_extend> get_entity_asset_extend(const uuid& in_entity_id);
 };
