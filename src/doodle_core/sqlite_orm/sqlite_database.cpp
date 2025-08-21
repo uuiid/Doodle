@@ -1004,6 +1004,7 @@ DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(computer)
 DOODLE_UUID_TO_ID(person)
+DOODLE_UUID_TO_ID(entity)
 DOODLE_UUID_TO_ID(working_file)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
 
