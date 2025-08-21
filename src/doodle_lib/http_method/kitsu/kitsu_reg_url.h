@@ -463,5 +463,11 @@ DOODLE_HTTP_JWT_FUN(data_shot)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/task-types/{task_type_id}/shots/create-tasks
+DOODLE_HTTP_JWT_FUN(actions_projects_task_types_shots_create_tasks)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid task_type_id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

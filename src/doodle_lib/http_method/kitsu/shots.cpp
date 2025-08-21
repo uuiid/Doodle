@@ -10,6 +10,7 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/http_method/kitsu/kitsu_result.h>
 namespace doodle::http {
 namespace {
 struct shots_with_tasks_result {
@@ -286,6 +287,56 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(ses
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ent = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ent);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
+    session_data_ptr in_handle
+) {
+  person_.check_project_access(project_id_);
+  auto l_sql       = g_ctx().get<sqlite_database>();
+  auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
+  std::vector<entity> l_shots;
+  if (auto l_json = in_handle->get_json(); l_json.is_array()) {
+    for (auto&& i : l_json.get<std::vector<uuid>>())
+      if (auto l_shot = l_sql.get_by_uuid<entity>(i); l_shot.project_id_ == project_id_)
+        l_shots.emplace_back(std::move(l_shot));
+  } else {
+    using namespace sqlite_orm;
+    uuid l_id{};
+    for (auto&& [key, value, has] : in_handle->url_.params())
+      if (key == "id" && has) l_id = from_uuid_str(value);
+    l_shots = l_sql.impl_->storage_any_.get_all<entity>(
+        where(c(&entity::project_id_) == project_id_) &&
+        c(&entity::entity_type_id_) ==
+            l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_ &&
+        (l_id.is_nil() || c(&entity::uuid_id_) == l_id)
+    );
+  }
+  std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
+  std::vector<actions_projects_task_types_create_tasks_result> l_results{};
+  auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
+  for (auto&& l_enit : l_shots) {
+    using namespace sqlite_orm;
+    if (l_sql.impl_->storage_any_.count<task>(
+            where(c(&task::entity_id_) == l_enit.uuid_id_) && c(&task::task_type_id_) == task_type_id_
+        ))
+      continue;  // 已经存在任务
+    auto& l_task = l_tasks->emplace_back(
+        task{
+            .uuid_id_        = core_set::get_set().get_uuid(),
+            .name_           = "main",
+            .created_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+            .updated_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
+            .project_id_     = project_id_,
+            .task_type_id_   = task_type_id_,
+            .task_status_id_ = l_task_status.uuid_id_,
+            .entity_id_      = l_enit.uuid_id_,
+            .assigner_id_    = person_.person_.uuid_id_,
+        }
+    );
+    l_results.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
+  }
+  if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
+  co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
 
 }  // namespace doodle::http
