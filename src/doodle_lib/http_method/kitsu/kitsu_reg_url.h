@@ -469,5 +469,10 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid task_type_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/projects/{project_id}/sequences/all/casting
+DOODLE_HTTP_JWT_FUN(data_project_sequences_casting)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid project_id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http
