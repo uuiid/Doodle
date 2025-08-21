@@ -53,11 +53,22 @@ struct data_project_sequences_casting_result {
     j["project_id"]      = in_data.project_id_;
   }
 };
-std::map<uuid, std::vector<data_project_sequences_casting_result>> get_sequence_casting(
+
+struct data_project_sequences_casting_result_map {
+  std::map<uuid, std::vector<data_project_sequences_casting_result>> maps{};
+  // to json
+  friend void to_json(nlohmann::json& j, const data_project_sequences_casting_result_map& in_data) {
+    for (const auto& [key, value] : in_data.maps) {
+      j[fmt::to_string(key)] = value;
+    }
+  }
+};
+
+data_project_sequences_casting_result_map get_sequence_casting(
     const uuid& in_project_id, const uuid& in_sequence_id = {}
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
-  std::map<uuid, std::vector<data_project_sequences_casting_result>> l_result{};
+  data_project_sequences_casting_result_map l_result{};
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
@@ -81,7 +92,7 @@ std::map<uuid, std::vector<data_project_sequences_casting_result>> get_sequence_
                order_by(&entity::name_)
            )
        )) {
-    l_result[ent_link.entity_in_id_].emplace_back(
+    l_result.maps[ent_link.entity_in_id_].emplace_back(
         data_project_sequences_casting_result{
             ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_
         }
