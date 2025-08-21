@@ -168,6 +168,7 @@ struct DOODLE_CORE_API entity {
     if (j.contains("canceled") && !j.at("canceled").is_null()) j.at("canceled").get_to(p.canceled_);
     if (j.contains("code") && !j.at("code").is_null()) j.at("code").get_to(p.code_);
     if (j.contains("status") && !j.at("status").is_null()) j.at("status").get_to(p.status_);
+    if (j.contains("is_casting_standby")) j.at("is_casting_standby").get_to(p.is_casting_standby_);
   }
 };
 }  // namespace doodle
