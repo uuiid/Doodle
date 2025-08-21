@@ -44,6 +44,10 @@ boost::asio::awaitable<create_comment_result> create_comment(
     std::shared_ptr<comment> in_comment, const http_jwt_fun::http_jwt_t* in_person, uuid in_task_id,
     std::vector<FSys::path> in_files
 ) {
+  if (!in_comment->text_.empty()) {
+    in_comment->text_ = boost::locale::conv::to_utf<char>(in_comment->text_, "UTF-8");
+  }
+
   in_comment->uuid_id_    = core_set::get_set().get_uuid();
   in_comment->created_at_ = chrono::system_clock::now();
   in_comment->updated_at_ = chrono::system_clock::now();

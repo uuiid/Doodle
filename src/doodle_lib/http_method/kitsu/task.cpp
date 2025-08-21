@@ -77,13 +77,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks::get(session_data_ptr in_handle) {
   auto& sql = g_ctx().get<sqlite_database>();
   auto l_p1 = sql.get_person_tasks(person_.person_);
-  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = l_p1);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks::get(session_data_ptr in_handle) {
   auto& sql = g_ctx().get<sqlite_database>();
   auto l_p1 = sql.get_person_tasks(person_.person_, true);
-  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = l_p1);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::get(session_data_ptr in_handle) {
   switch (person_.person_.role_) {
@@ -101,7 +101,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::ge
 
   auto& sql = g_ctx().get<sqlite_database>();
   auto l_p1 = sql.get_preson_tasks_to_check(person_.person_);
-  co_return in_handle->make_msg((nlohmann::json{} = l_p1).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = l_p1);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments::get(session_data_ptr in_handle) {
   auto& sql = g_ctx().get<sqlite_database>();
