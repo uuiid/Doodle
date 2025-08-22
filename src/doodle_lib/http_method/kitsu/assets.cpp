@@ -232,12 +232,12 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   std::vector<with_tasks_get_result_t> l_ret{};
   using namespace sqlite_orm;
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, {});
-  auto l_rows                   = l_sql.impl_->storage_any_.select(
+  auto l_rows                   = l_sql.impl_->storage_any_.iterate(select(
       columns(
           object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
           &assignees_table::person_id_
       ),
-      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+      from<entity>(), join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
       left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
@@ -247,7 +247,7 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
           not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
       ),
       multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
-  );
+  ));
   std::map<uuid, with_tasks_get_result_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
@@ -275,7 +275,7 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   }
 
   std::vector<uuid> l_task_ids{};
-  l_task_ids.reserve(l_rows.size());
+  l_task_ids.reserve(l_entities_and_tasks_map.size() * 10);
   for (auto&& l_i : l_entities_and_tasks_map)
     for (auto&& l_j : l_i.second.tasks_) l_task_ids.push_back(l_j.uuid_id_);
   for (auto&& l_work_file :
