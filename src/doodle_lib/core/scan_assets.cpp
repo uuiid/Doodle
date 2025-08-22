@@ -242,6 +242,7 @@ boost::asio::awaitable<std::shared_ptr<std::vector<working_file>>> scan_task_asy
   std::shared_ptr<std::vector<working_file>> l_working_files =
       std::make_shared<std::vector<working_file>>(scan_task(in_task));
   if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
+  *l_working_files = l_sql.get_working_file_by_task(in_task.uuid_id_);
   co_return l_working_files;
 }
 
