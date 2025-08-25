@@ -314,7 +314,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 ) {
   person_.check_project_access(project_id_);
   auto l_sql      = g_ctx().get<sqlite_database>();
-  auto l_task_ids = in_handle->get_json().get<std::vector<uuid>>();
+  auto l_task_ids = in_handle->get_json().value("task_ids", std::vector<uuid>{});
   std::vector<task> l_tasks{};
   l_tasks.reserve(l_task_ids.size());
   for (auto&& i : l_task_ids) l_tasks.emplace_back(l_sql.get_by_uuid<task>(i));
@@ -364,7 +364,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
       );
     }
   }
-  if (l_is_sort) {
+  if (l_is_sort)
     std::sort(
         l_playlist.playlist_.begin(), l_playlist.playlist_.end(),
         [](const temp_playlist_t::playlist_variant_t& l_l, const temp_playlist_t::playlist_variant_t& r_r) -> bool {
@@ -380,7 +380,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
           );
         }
     );
-  }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
 }
