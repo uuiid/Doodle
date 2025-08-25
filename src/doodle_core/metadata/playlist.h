@@ -17,6 +17,9 @@ struct DOODLE_CORE_API playlist {
   bool for_client_;
   bool for_entity_;
   bool is_for_all_;
+
+  chrono::system_zoned_time created_at_;
+  chrono::system_zoned_time updated_at_;
   // to json
   friend void to_json(nlohmann::json& j, const playlist& p) {
     j["id"]           = p.uuid_id_;
@@ -27,6 +30,8 @@ struct DOODLE_CORE_API playlist {
     j["task_type_id"] = p.task_type_id_;
     j["for_client"]   = p.for_client_;
     j["is_for_all"]   = p.is_for_all_;
+    j["created_at"]   = p.created_at_;
+    j["updated_at"]   = p.updated_at_;
   }
 };
 }  // namespace doodle

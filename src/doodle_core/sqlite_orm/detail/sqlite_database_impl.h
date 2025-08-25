@@ -109,6 +109,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("for_client", &playlist::for_client_),
           make_column("for_entity", &playlist::for_entity_),
           make_column("is_for_all", &playlist::is_for_all_),
+          make_column("created_at", &playlist::created_at_),
+          make_column("updated_at", &playlist::updated_at_),
           foreign_key(&playlist::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&playlist::episodes_id_).references(&entity::uuid_id_).on_delete.cascade(),
           foreign_key(&playlist::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()

@@ -2,10 +2,10 @@
 // Created by TD on 25-5-14.
 //
 #include <doodle_core/metadata/entity.h>
+#include <doodle_core/metadata/playlist.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
-#include <doodle_core/metadata/playlist.h>
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
@@ -388,9 +388,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
   person_.check_project_access(project_id_);
   auto l_sql = g_ctx().get<sqlite_database>();
+  std::int32_t l_page{1};
+  uuid l_task_type_id{};
+  std::string l_order_by{};
+  for (auto&& [key, value, has] : in_handle->url_.params()) {
+    if (key == "page" && has) l_page = std::clamp(std::stoi(value), 1, INT32_MAX);
+    if (key == "task_type_id" && has) l_task_type_id = from_uuid_str(value);
+    if (key == "order_by" && has) l_order_by = value;
+  }
+  std::int32_t l_offset = (l_page - 1) * 20;
+
   using namespace sqlite_orm;
-  auto l_playlists = l_sql.impl_->storage_any_.get_all<playlist>(where(c(&playlist::project_id_) == project_id_));
-  co_return in_handle->make_msg_204();
+  auto l_order = dynamic_order_by(l_sql.impl_->storage_any_);
+  if (l_order_by == "create_at") {
+    l_order.push_back(order_by(&playlist::created_at_).desc());
+  } else {
+    l_order.push_back(order_by(&playlist::updated_at_).desc());
+  }
+  auto l_playlists = l_sql.impl_->storage_any_.get_all<playlist>(
+      where(
+          c(&playlist::project_id_) == project_id_ &&
+          (l_task_type_id.is_nil() || c(&playlist::task_type_id_) == l_task_type_id)
+      ),
+      limit(l_offset, 20), l_order
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_playlists);
 }
 
 }  // namespace doodle::http
