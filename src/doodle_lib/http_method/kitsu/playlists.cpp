@@ -89,21 +89,38 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 }
 namespace {
 struct base_playlist_t {
-  struct previews_t {
-    decltype(preview_file::uuid_id_) id_;
-    decltype(preview_file::revision_) revision_;
-    decltype(preview_file::position_) position_;
-    decltype(preview_file::original_name_) original_name_;
-    decltype(preview_file::extension_) extension_;
-    decltype(preview_file::width_) width_;
-    decltype(preview_file::height_) height_;
-    decltype(preview_file::duration_) duration_;
-    decltype(preview_file::status_) status_;
-    decltype(preview_file::annotations_) annotations_;
-    decltype(preview_file::created_at_) created_at_;
-    decltype(preview_file::task_id_) task_id_;
-    decltype(task_type::uuid_id_) task_type_id_;
+  explicit base_playlist_t(
+      const entity& in_entt, const uuid& in_task_id,
+      const std::map<uuid, std::vector<preview_files_for_entity_t>>& in_v, const uuid& in_task_type_id
+  )
+      : id_(in_entt.uuid_id_), name_(in_entt.name_), preview_file_task_id_(in_task_id), preview_file_previews_(in_v) {
+    if (!in_task_type_id.is_nil() && preview_file_previews_.map_.contains(in_task_type_id) &&
+        !preview_file_previews_.map_.at(in_task_type_id).empty()) {
+      auto&& l_pf               = preview_file_previews_.map_.at(in_task_type_id).front();
+      preview_file_id_          = l_pf.uuid_id_;
+      preview_file_extension_   = l_pf.extension_;
+      preview_file_width_       = l_pf.width_;
+      preview_file_height_      = l_pf.height_;
+      preview_file_duration_    = l_pf.duration_;
+      preview_file_revision_    = l_pf.revision_;
+      preview_file_status_      = l_pf.status_;
+      preview_file_annotations_ = l_pf.annotations_;
+    }
+  }
+
+  struct preview_files_for_entity_map_t {
+    std::map<uuid, std::vector<preview_files_for_entity_t>> map_;
+    // to json
+    friend void to_json(nlohmann::json& j, const preview_files_for_entity_map_t& p) {
+      for (auto&& [key, value] : p.map_) j[fmt::to_string(key)] = value;
+    }
   };
+
+  uuid id_;
+  std::string name_;
+  uuid preview_file_task_id_;
+  std::string parent_name_;
+
   decltype(preview_file::uuid_id_) preview_file_id_;
   decltype(preview_file::extension_) preview_file_extension_;
   decltype(preview_file::width_) preview_file_width_;
@@ -112,9 +129,29 @@ struct base_playlist_t {
   decltype(preview_file::revision_) preview_file_revision_;
   decltype(preview_file::status_) preview_file_status_;
   decltype(preview_file::annotations_) preview_file_annotations_;
-  std::vector<previews_t> preview_file_previews_;
+  preview_files_for_entity_map_t preview_file_previews_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const base_playlist_t& p) {
+    j["id"]                       = p.id_;
+    j["name"]                     = p.name_;
+    j["preview_file_task_id"]     = p.preview_file_task_id_;
+    j["parent_name"]              = p.parent_name_;
+
+    j["preview_file_id"]          = p.preview_file_id_;
+    j["preview_file_extension"]   = p.preview_file_extension_;
+    j["preview_file_width"]       = p.preview_file_width_;
+    j["preview_file_height"]      = p.preview_file_height_;
+    j["preview_file_duration"]    = p.preview_file_duration_;
+    j["preview_file_revision"]    = p.preview_file_revision_;
+    j["preview_file_status"]      = p.preview_file_status_;
+    j["preview_file_annotations"] = p.preview_file_annotations_;
+    j["preview_file_previews"]    = p.preview_file_previews_;
+
+    j["preview_files"]            = p.preview_file_previews_;
+  }
 };
-struct shot_for_playlist_t {};
+struct shot_for_playlist_t : base_playlist_t {};
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_temp::post(
     session_data_ptr in_handle
