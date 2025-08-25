@@ -2,8 +2,10 @@
 // Created by TD on 25-5-14.
 //
 #include <doodle_core/metadata/entity.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
+#include <doodle_core/metadata/playlist.h>
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
@@ -382,6 +384,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
     );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
+  person_.check_project_access(project_id_);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  auto l_playlists = l_sql.impl_->storage_any_.get_all<playlist>(where(c(&playlist::project_id_) == project_id_));
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http

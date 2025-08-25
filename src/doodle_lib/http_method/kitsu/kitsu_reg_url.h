@@ -492,5 +492,10 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid project_id_{};
 uuid asset_type_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/projects/{project_id}/playlists?sort_by=updated_at&page=1
+DOODLE_HTTP_JWT_FUN(data_project_playlists)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid project_id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http
