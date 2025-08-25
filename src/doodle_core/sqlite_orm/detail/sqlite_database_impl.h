@@ -18,6 +18,7 @@
 #include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/organisation.h>
+#include <doodle_core/metadata/playlist.h>
 #include <doodle_core/metadata/preview_background_file.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
@@ -93,6 +94,25 @@ inline auto make_storage_doodle(const std::string& in_path) {
 
   return std::move(make_storage(
       in_path,  //
+      make_unique_index("playlist_uc", &playlist::name_, &playlist::project_id_, &playlist::episodes_id_),
+      make_index("playlist_project_id_index", &playlist::project_id_),
+      make_index("playlist_episode_id_index", &playlist::episodes_id_),
+      make_index("playlist_task_type_id_index", &playlist::task_type_id_),
+      make_table("playlist",
+          make_column("id", &playlist::uuid_id_, primary_key(), unique(), not_null()),
+          make_column("uuid_id", &playlist::uuid_id_, unique(), not_null()),
+          make_column("name", &playlist::name_, not_null()),
+          make_column("shots", &playlist::shots_),
+          make_column("project_id", &playlist::project_id_),
+          make_column("episode_id", &playlist::episodes_id_),
+          make_column("task_type_id", &playlist::task_type_id_),
+          make_column("for_client", &playlist::for_client_),
+          make_column("for_entity", &playlist::for_entity_),
+          make_column("is_for_all", &playlist::is_for_all_),
+          foreign_key(&playlist::project_id_).references(&project::uuid_id_).on_delete.cascade(),
+          foreign_key(&playlist::episodes_id_).references(&entity::uuid_id_).on_delete.cascade(),
+          foreign_key(&playlist::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
+      ),
       make_index("working_file_task_index", &working_file::task_id_),
       make_index("working_file_entity_index", &working_file::entity_id_),
       make_index("working_file_person_index", &working_file::person_id_),

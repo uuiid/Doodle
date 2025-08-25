@@ -43,6 +43,7 @@ target_sources(
         subscription.h
         working_file.h
         software.h
+        playlist.h
 
         PRIVATE
         assets.cpp
