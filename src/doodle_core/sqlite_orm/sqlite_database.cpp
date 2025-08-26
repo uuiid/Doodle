@@ -1335,6 +1335,10 @@ boost::asio::awaitable<void> sqlite_database::remove<comment>(const uuid& in_dat
 
   DOODLE_TO_SQLITE_THREAD_2();
   auto l_g = impl_->storage_any_.transaction_guard();
+  impl_->storage_any_.update_all(
+      set(c(&comment::preview_file_id_) = null()), where(in(&comment::preview_file_id_, l_previews))
+  );
+
   impl_->storage_any_.remove_all<comment_preview_link>(where(c(&comment_preview_link::comment_id_) == in_data));
   impl_->storage_any_.remove_all<comment_mentions>(where(c(&comment_mentions::comment_id_) == in_data));
   impl_->storage_any_.remove_all<comment_department_mentions>(
