@@ -1183,6 +1183,7 @@ DOODLE_INSTALL_SQL(comment_acknoledgments)
 DOODLE_INSTALL_SQL(attendance_helper::database_t)
 DOODLE_INSTALL_SQL(assets_file_helper::link_parent_t)
 DOODLE_INSTALL_SQL(working_file)
+DOODLE_INSTALL_SQL(playlist)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)

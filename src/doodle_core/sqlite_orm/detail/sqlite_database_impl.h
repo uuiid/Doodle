@@ -99,7 +99,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_index("playlist_episode_id_index", &playlist::episodes_id_),
       make_index("playlist_task_type_id_index", &playlist::task_type_id_),
       make_table("playlist",
-          make_column("id", &playlist::uuid_id_, primary_key(), unique(), not_null()),
+          make_column("id", &playlist::id_, primary_key().autoincrement()),
           make_column("uuid_id", &playlist::uuid_id_, unique(), not_null()),
           make_column("name", &playlist::name_, not_null()),
           make_column("shots", &playlist::shots_),
