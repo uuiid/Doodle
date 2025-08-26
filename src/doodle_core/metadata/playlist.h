@@ -15,7 +15,7 @@ struct DOODLE_CORE_API playlist {
   uuid episodes_id_;
   uuid task_type_id_;
   bool for_client_;
-  bool for_entity_;
+  std::string for_entity_;
   bool is_for_all_;
 
   chrono::system_zoned_time created_at_;
