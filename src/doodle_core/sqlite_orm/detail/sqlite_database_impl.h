@@ -307,7 +307,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("updated_at", &preview_file::updated_at_),                 //
           foreign_key(&preview_file::task_id_).references(&task::uuid_id_),      //
           foreign_key(&preview_file::person_id_).references(&person::uuid_id_)   //
-          // foreign_key(&preview_file::source_file_id_).references(&preview_file::uuid_id_)  //
       ),
       make_table<notification>(
           "notification_2",                                                          //
