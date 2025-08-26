@@ -37,7 +37,7 @@ struct DOODLE_CORE_API playlist {
   // from json
   friend void from_json(const nlohmann::json& j, playlist& p) {
     j.at("name").get_to(p.name_);
-    j.at("shots").get_to(p.shots_);
+    if (j.contains("shots")) j.at("shots").get_to(p.shots_);
     j.at("project_id").get_to(p.project_id_);
     j.at("task_type_id").get_to(p.task_type_id_);
     j.at("for_client").get_to(p.for_client_);
