@@ -30,8 +30,20 @@ struct DOODLE_CORE_API playlist {
     j["task_type_id"] = p.task_type_id_;
     j["for_client"]   = p.for_client_;
     j["is_for_all"]   = p.is_for_all_;
+    j["for_entity"]   = p.for_entity_;
     j["created_at"]   = p.created_at_;
     j["updated_at"]   = p.updated_at_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, playlist& p) {
+    j.at("name").get_to(p.name_);
+    j.at("shots").get_to(p.shots_);
+    j.at("project_id").get_to(p.project_id_);
+    j.at("task_type_id").get_to(p.task_type_id_);
+    j.at("for_client").get_to(p.for_client_);
+    j.at("for_entity").get_to(p.for_entity_);
+    if (j.contains("episodes_id")) j.at("episodes_id").get_to(p.episodes_id_);
+    if (j.contains("is_for_all") && j.at("is_for_all").is_boolean()) j.at("is_for_all").get_to(p.is_for_all_);
   }
 };
 }  // namespace doodle

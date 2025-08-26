@@ -497,5 +497,9 @@ DOODLE_HTTP_JWT_FUN(data_project_playlists)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/playlists
+DOODLE_HTTP_JWT_FUN(data_playlists)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

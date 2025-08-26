@@ -410,9 +410,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
           c(&playlist::project_id_) == project_id_ &&
           (l_task_type_id.is_nil() || c(&playlist::task_type_id_) == l_task_type_id)
       ),
-      limit(l_offset, 20), l_order
+      l_order, limit(l_offset, 20)
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_playlists);
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::post(session_data_ptr in_handle) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = std::make_shared<playlist>();
+  in_handle->get_json().get_to(*l_playlist);
+  l_playlist->uuid_id_    = core_set::get_set().get_uuid();
+  l_playlist->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  l_playlist->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  co_await l_sql.install(l_playlist);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_playlist);
 }
 
 }  // namespace doodle::http
