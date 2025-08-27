@@ -526,7 +526,7 @@ struct playlist_shot_t : playlist {
   // to json
   friend void to_json(nlohmann::json& j, const playlist_shot_t& l_playlist_shot) {
     to_json(j, static_cast<const playlist&>(l_playlist_shot));
-    j["shot"] = l_playlist_shot.shot_;
+    j["shots"] = l_playlist_shot.shot_;
   }
 };
 
@@ -586,7 +586,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   std::shared_ptr<std::vector<playlist_shot>> l_playlist_shot = std::make_shared<std::vector<playlist_shot>>();
   if (l_json.contains("shots"))
     for (auto&& i : l_json.at("shots"))
-      if (i.contains("preview_file_id")) {
+      if (i.contains("preview_file_id") && i.at("preview_file_id").is_string()) {
         auto&& t     = l_playlist_shot->emplace_back(i.get<playlist_shot>());
         t.playlist_id_ = id_;
         t.uuid_id_   = core_set::get_set().get_uuid();
