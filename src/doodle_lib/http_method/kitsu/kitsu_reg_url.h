@@ -501,5 +501,11 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_playlists)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+// /api/data/projects/{project_id}/playlists/{playlist_id}
+DOODLE_HTTP_JWT_FUN(data_project_playlists_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid project_id_{};
+uuid playlist_id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

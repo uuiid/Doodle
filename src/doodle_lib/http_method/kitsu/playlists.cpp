@@ -426,4 +426,105 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::po
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist);
 }
 
+struct playlist_shot_t : playlist {
+  struct preview_file_mini_t {
+    explicit preview_file_mini_t(const preview_file& in_preview_file)
+        : id_{in_preview_file.uuid_id_},
+          revision_{in_preview_file.revision_},
+          extension_{in_preview_file.extension_},
+          width_{in_preview_file.width_},
+          height_{in_preview_file.height_},
+          duration_{in_preview_file.duration_},
+          status_{in_preview_file.status_},
+          annotations_{in_preview_file.annotations_},
+          task_id_{in_preview_file.task_id_} {}
+    uuid id_;
+    std::int32_t revision_;
+    std::string extension_;
+    std::int32_t width_;
+    std::int32_t height_;
+    std::int32_t duration_;
+    preview_file_statuses status_;
+    nlohmann::json annotations_;
+    uuid task_id_;
+    // to json
+    friend void to_json(nlohmann::json& j, const preview_file_mini_t& l_preview_file_mini) {
+      j["id"]          = l_preview_file_mini.id_;
+      j["revision"]    = l_preview_file_mini.revision_;
+      j["extension"]   = l_preview_file_mini.extension_;
+      j["width"]       = l_preview_file_mini.width_;
+      j["height"]      = l_preview_file_mini.height_;
+      j["duration"]    = l_preview_file_mini.duration_;
+      j["status"]      = l_preview_file_mini.status_;
+      j["annotations"] = l_preview_file_mini.annotations_;
+      j["task_id"]     = l_preview_file_mini.task_id_;
+    }
+  };
+
+  struct playlist_shot_entity_t {
+    uuid entity_id_;
+    uuid preview_file_id_;
+    uuid id_;
+    std::map<uuid, std::vector<preview_file_mini_t>> preview_files_;
+    std::string preview_file_extension_;
+    std::int32_t preview_file_revision_;
+    std::int32_t preview_file_width_;
+    std::int32_t preview_file_height_;
+    std::double_t preview_file_duration_;
+    std::string preview_file_status_;
+    std::string preview_file_annotations_;
+    uuid preview_file_task_id_;
+    // to json
+    friend void to_json(nlohmann::json& j, const playlist_shot_entity_t& l_playlist_shot_entity) {
+      j["entity_id"]                = l_playlist_shot_entity.entity_id_;
+      j["preview_file_id"]          = l_playlist_shot_entity.preview_file_id_;
+      j["id"]                       = l_playlist_shot_entity.id_;
+      j["preview_file_extension"]   = l_playlist_shot_entity.preview_file_extension_;
+      j["preview_file_revision"]    = l_playlist_shot_entity.preview_file_revision_;
+      j["preview_file_width"]       = l_playlist_shot_entity.preview_file_width_;
+      j["preview_file_height"]      = l_playlist_shot_entity.preview_file_height_;
+      j["preview_file_duration"]    = l_playlist_shot_entity.preview_file_duration_;
+      j["preview_file_status"]      = l_playlist_shot_entity.preview_file_status_;
+      j["preview_file_annotations"] = l_playlist_shot_entity.preview_file_annotations_;
+      j["preview_file_task_id"]     = l_playlist_shot_entity.preview_file_task_id_;
+      for (auto&& [preview_file_id, preview_files] : l_playlist_shot_entity.preview_files_) {
+        j["preview_files"][fmt::to_string(preview_file_id)] = preview_files;
+      }
+    }
+  };
+  std::vector<playlist_shot_entity_t> shot_;
+  // to json
+  friend void to_json(nlohmann::json& j, const playlist_shot_t& l_playlist_shot) {
+    to_json(j, static_cast<const playlist&>(l_playlist_shot));
+    j["shot"] = l_playlist_shot.shot_;
+  }
+};
+
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_instance::get(
+    session_data_ptr in_handle
+) {
+  person_.check_project_access(project_id_);
+  auto l_sql           = g_ctx().get<sqlite_database>();
+  auto l_playlist      = l_sql.get_by_uuid<playlist>(playlist_id_);
+  auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
+  std::vector<uuid> l_enity_ids{};
+  l_enity_ids.reserve(l_playlist_shot.size());
+  for (auto&& i : l_playlist_shot) l_enity_ids.emplace_back(i.entity_id_);
+  using namespace sqlite_orm;
+  for (auto&& [preview_file, task_type_id, entity_id] : l_sql.impl_->storage_any_.select(
+           columns(object<preview_file>(true), &task::task_type_id_, &task::entity_id_),
+           join<task>(on(c(&task::uuid_id_) == c(&preview_file::task_id_))),
+           join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+           where(in(&task::entity_id_, l_enity_ids)),
+           multi_order_by(
+               order_by(&task_type::priority_).desc(), order_by(&task_type::name_),
+               order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_),
+               order_by(&preview_file::created_at_)
+           )
+       )) {
+  }
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
+}
+
 }  // namespace doodle::http

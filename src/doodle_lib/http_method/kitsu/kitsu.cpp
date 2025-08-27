@@ -187,6 +187,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
                                           &data_project_asset_types_casting::asset_type_id_))
       .reg_t<data_project_playlists>("/api/data/projects/{}/playlists"_url(&data_project_playlists::project_id_))
       .reg_t<data_playlists>("/api/data/playlists"_url)
+      .reg_t<data_project_playlists_instance>("/api/data/projects/{}/playlists/{}"_url(
+                                          &data_project_playlists_instance::project_id_,
+                                          &data_project_playlists_instance::playlist_id_))
        // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

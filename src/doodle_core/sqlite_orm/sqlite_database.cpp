@@ -998,6 +998,12 @@ std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(cons
   return l_t.front();
 }
 
+std::vector<playlist_shot> sqlite_database::get_playlist_shot_entity(const uuid& in_playlist_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<playlist_shot>(where(c(&playlist_shot::playlist_id_) == in_playlist_id));
+  return l_t;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
@@ -1047,6 +1053,7 @@ DOODLE_GET_BY_UUID_SQL(asset_type)
 DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(notification)
 DOODLE_GET_BY_UUID_SQL(comment)
+DOODLE_GET_BY_UUID_SQL(playlist)
 template <>
 task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {
   using namespace sqlite_orm;
