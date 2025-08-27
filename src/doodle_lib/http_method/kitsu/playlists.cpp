@@ -595,6 +595,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   co_await l_sql.remove_playlist_shot_for_playlist(id_);
   co_await l_sql.install(l_playlist);
   co_await l_sql.install_range(l_playlist_shot);
+  nlohmann::json l_ret{};
+  l_ret         = *l_playlist;
+  l_ret["shot"] = *l_playlist_shot;
+  co_return in_handle->make_msg(l_ret);
 }
 
 }  // namespace doodle::http

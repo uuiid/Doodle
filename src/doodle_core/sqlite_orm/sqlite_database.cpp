@@ -1215,6 +1215,7 @@ DOODLE_INSTALL_RANGE(task)
 DOODLE_INSTALL_RANGE(person_department_link)
 DOODLE_INSTALL_RANGE(working_file)
 DOODLE_INSTALL_RANGE(entity_link)
+DOODLE_INSTALL_RANGE(playlist_shot)
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)
