@@ -577,5 +577,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_instance::put(session_data_ptr in_handle) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
+  person_.check_project_access(l_playlist->project_id_);
+  auto l_json = in_handle->get_json();
+  l_json.get_to(*l_playlist);
+  std::shared_ptr<std::vector<playlist_shot>> l_playlist_shot = std::make_shared<std::vector<playlist_shot>>();
+  if (l_json.contains("shot"))
+    for (auto&& i : l_json["shot"])
+      if (i.contains("preview_file_id")) {
+        auto&& t     = l_playlist_shot->emplace_back(i.get<playlist_shot>());
+        t.entity_id_ = id_;
+        t.uuid_id_   = core_set::get_set().get_uuid();
+      }
+
+  co_await l_sql.remove_playlist_shot_for_playlist(id_);
+  co_await l_sql.install(l_playlist);
+  co_await l_sql.install_range(l_playlist_shot);
+}
 
 }  // namespace doodle::http

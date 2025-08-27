@@ -51,5 +51,11 @@ struct DOODLE_CORE_API playlist_shot {
   uuid playlist_id_;
   uuid entity_id_;
   uuid preview_id_;
+
+  // from json
+  friend void from_json(const nlohmann::json& j, playlist_shot& p) {
+    j["entity_id"].get_to(p.entity_id_);
+    j["preview_id"].get_to(p.preview_id_);
+  }
 };
 }  // namespace doodle

@@ -194,5 +194,7 @@ class sqlite_database {
   std::optional<entity_asset_extend> get_entity_asset_extend(const uuid& in_entity_id);
   /// 获取播放序列对应的实体
   std::vector<playlist_shot> get_playlist_shot_entity(const uuid& in_playlist_id);
+
+  boost::asio::awaitable<void> remove_playlist_shot_for_playlist(const uuid& in_playlist_id);
 };
 }  // namespace doodle
