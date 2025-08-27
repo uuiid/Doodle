@@ -360,6 +360,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
         "shot:update", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
     );
   } else {
+    auto l_task     = l_sql.get_tasks_for_entity(l_shot->uuid_id_);
+    auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
+    co_await l_sql.remove<task>(l_task_ids);
     co_await l_sql.remove<entity>(l_shot->uuid_id_);
     socket_io::broadcast(
         "shot:delete", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
