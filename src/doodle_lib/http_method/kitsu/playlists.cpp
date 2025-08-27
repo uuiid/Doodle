@@ -584,8 +584,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_playlist);
   std::shared_ptr<std::vector<playlist_shot>> l_playlist_shot = std::make_shared<std::vector<playlist_shot>>();
-  if (l_json.contains("shot"))
-    for (auto&& i : l_json["shot"])
+  if (l_json.contains("shots"))
+    for (auto&& i : l_json.at("shots"))
       if (i.contains("preview_file_id")) {
         auto&& t     = l_playlist_shot->emplace_back(i.get<playlist_shot>());
         t.entity_id_ = id_;
