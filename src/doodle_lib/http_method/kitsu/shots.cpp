@@ -344,5 +344,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_shot = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
+  if (!(l_shot->created_by_ == person_.person_.uuid_id_ &&
+        l_sql.is_person_in_project(person_.person_.uuid_id_, l_shot->project_id_)))
+    person_.check_project_manager(l_shot->project_id_);
+  bool l_force{};
+  for (auto&& [key, value, has] : in_handle->url_.params())
+    if (key == "force" && has) l_force = true;
+  if (!l_force) {
+    l_shot->canceled_ = true;
+    co_await l_sql.install(l_shot);
+    socket_io::broadcast(
+        "shot:update", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
+    );
+  } else {
+    co_await l_sql.remove<entity>(l_shot->uuid_id_);
+    socket_io::broadcast(
+        "shot:delete", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
+    );
+  }
+  co_return in_handle->make_msg_204();
+}
 
 }  // namespace doodle::http

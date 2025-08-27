@@ -461,6 +461,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/shots/{shot_id}
 DOODLE_HTTP_JWT_FUN(data_shot)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/task-types/{task_type_id}/shots/create-tasks
