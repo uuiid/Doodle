@@ -24,7 +24,6 @@ struct DOODLE_CORE_API playlist {
   friend void to_json(nlohmann::json& j, const playlist& p) {
     j["id"]           = p.uuid_id_;
     j["name"]         = p.name_;
-    j["shots"]        = p.shots_;
     j["project_id"]   = p.project_id_;
     j["episodes_id"]  = p.episodes_id_;
     j["task_type_id"] = p.task_type_id_;
@@ -37,7 +36,6 @@ struct DOODLE_CORE_API playlist {
   // from json
   friend void from_json(const nlohmann::json& j, playlist& p) {
     j.at("name").get_to(p.name_);
-    if (j.contains("shots")) j.at("shots").get_to(p.shots_);
     j.at("project_id").get_to(p.project_id_);
     j.at("task_type_id").get_to(p.task_type_id_);
     j.at("for_client").get_to(p.for_client_);
@@ -45,5 +43,13 @@ struct DOODLE_CORE_API playlist {
     if (j.contains("episodes_id")) j.at("episodes_id").get_to(p.episodes_id_);
     if (j.contains("is_for_all") && j.at("is_for_all").is_boolean()) j.at("is_for_all").get_to(p.is_for_all_);
   }
+};
+
+struct DOODLE_CORE_API playlist_shot {
+  DOODLE_BASE_FIELDS();
+
+  uuid playlist_id_;
+  uuid entity_id_;
+  uuid preview_id_;
 };
 }  // namespace doodle
