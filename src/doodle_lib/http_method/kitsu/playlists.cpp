@@ -588,7 +588,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
     for (auto&& i : l_json.at("shots"))
       if (i.contains("preview_file_id")) {
         auto&& t     = l_playlist_shot->emplace_back(i.get<playlist_shot>());
-        t.entity_id_ = id_;
+        t.playlist_id_ = id_;
         t.uuid_id_   = core_set::get_set().get_uuid();
       }
 
