@@ -227,6 +227,36 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
   auto l_data = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_data);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::delete_(
+    session_data_ptr in_handle
+) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_sequence = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
+  if (!(l_sequence->created_by_ == person_.person_.uuid_id_ &&
+        l_sql.is_person_in_project(person_.person_.uuid_id_, l_sequence->project_id_)))
+    person_.check_project_manager(l_sequence->project_id_);
+  bool l_force{};
+  for (auto&& [key, value, has] : in_handle->url_.params())
+    if (key == "force" && has) l_force = true;
+  if (!l_force) {
+    l_sequence->canceled_ = true;
+    co_await l_sql.install(l_sequence);
+    socket_io::broadcast(
+        "sequence:update",
+        nlohmann::json{{"sequence_id", l_sequence->uuid_id_}, {"project_id", l_sequence->project_id_}}
+    );
+  } else {
+    auto l_task     = l_sql.get_tasks_for_entity(l_sequence->uuid_id_);
+    auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
+    co_await l_sql.remove<task>(l_task_ids);
+    co_await l_sql.remove<entity>(l_sequence->uuid_id_);
+    socket_io::broadcast(
+        "sequence:delete",
+        nlohmann::json{{"sequence_id", l_sequence->uuid_id_}, {"project_id", l_sequence->project_id_}}
+    );
+  }
+  co_return in_handle->make_msg_204();
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_create_tasks::post(
     session_data_ptr in_handle

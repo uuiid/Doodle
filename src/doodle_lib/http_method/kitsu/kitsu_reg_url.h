@@ -444,6 +444,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/sequences/{sequence_id}
 DOODLE_HTTP_JWT_FUN(data_sequence_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/<project_id>/task-types/<task_type_id>/create-tasks/<entity_type>
