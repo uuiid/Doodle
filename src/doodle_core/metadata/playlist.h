@@ -55,12 +55,12 @@ struct DOODLE_CORE_API playlist_shot {
   // from json
   friend void from_json(const nlohmann::json& j, playlist_shot& p) {
     j["entity_id"].get_to(p.entity_id_);
-    j["preview_id"].get_to(p.preview_id_);
+    j["preview_file_id"].get_to(p.preview_id_);
   }
   // to json
   friend void to_json(nlohmann::json& j, const playlist_shot& p) {
     j["entity_id"]  = p.entity_id_;
-    j["preview_id"] = p.preview_id_;
+    j["preview_file_id"] = p.preview_id_;
   }
 };
 }  // namespace doodle
