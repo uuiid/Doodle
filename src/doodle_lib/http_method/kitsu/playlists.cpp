@@ -498,7 +498,7 @@ struct playlist_shot_t : playlist {
     std::int32_t preview_file_height_;
     std::double_t preview_file_duration_;
     preview_file_statuses preview_file_status_;
-    std::string preview_file_annotations_;
+    nlohmann::json preview_file_annotations_;
     uuid preview_file_task_id_;
     // to json
     friend void to_json(nlohmann::json& j, const playlist_shot_entity_t& l_playlist_shot_entity) {
