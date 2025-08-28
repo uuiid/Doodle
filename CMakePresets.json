@@ -201,21 +201,13 @@
       ]
     },
     {
-      "name": "build_debug",
-      "displayName": "build_debug",
-      "description": "所有的构建一遍进行测试",
+      "name": "config_debug",
+      "displayName": "配置调试",
+      "description": "配置调试",
       "steps": [
         {
           "type": "configure",
           "name": "Ninja_release"
-        },
-        {
-          "type": "build",
-          "name": "Release_Exe"
-        },
-        {
-          "type": "build",
-          "name": "Release_Maya"
         }
       ]
     }
