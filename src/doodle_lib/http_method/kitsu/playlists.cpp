@@ -402,6 +402,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   auto l_order = dynamic_order_by(l_sql.impl_->storage_any_);
   if (l_order_by == "create_at") {
     l_order.push_back(order_by(&playlist::created_at_).desc());
+  } else if (l_order_by == "name") {
+    l_order.push_back(order_by(&playlist::name_));
   } else {
     l_order.push_back(order_by(&playlist::updated_at_).desc());
   }
@@ -587,9 +589,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   if (l_json.contains("shots"))
     for (auto&& i : l_json.at("shots"))
       if (i.contains("preview_file_id")) {
-        auto&& t     = l_playlist_shot->emplace_back(i.get<playlist_shot>());
+        auto&& t       = l_playlist_shot->emplace_back(i.get<playlist_shot>());
         t.playlist_id_ = id_;
-        t.uuid_id_   = core_set::get_set().get_uuid();
+        t.uuid_id_     = core_set::get_set().get_uuid();
       }
 
   co_await l_sql.remove_playlist_shot_for_playlist(id_);
