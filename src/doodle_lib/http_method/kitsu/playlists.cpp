@@ -528,7 +528,8 @@ struct playlist_shot_t : playlist {
   // to json
   friend void to_json(nlohmann::json& j, const playlist_shot_t& l_playlist_shot) {
     to_json(j, static_cast<const playlist&>(l_playlist_shot));
-    j["shots"] = l_playlist_shot.shot_;
+    j["shots"]      = l_playlist_shot.shot_;
+    j["build_jobs"] = nlohmann::json::array();
   }
 };
 
