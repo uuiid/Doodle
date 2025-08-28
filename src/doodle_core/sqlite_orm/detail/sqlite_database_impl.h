@@ -103,7 +103,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
         make_column("uuid_id", &playlist_shot::uuid_id_, unique(), not_null()),
         make_column("playlist_id", &playlist_shot::playlist_id_, not_null()),
         make_column("entity_id", &playlist_shot::entity_id_, not_null()),
-        make_column("preview_id", &playlist_shot::preview_id_, not_null()),
+        make_column("preview_id", &playlist_shot::preview_id_),
         foreign_key(&playlist_shot::playlist_id_).references(&playlist::uuid_id_).on_delete.cascade(),
         foreign_key(&playlist_shot::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),
         foreign_key(&playlist_shot::preview_id_).references(&preview_file::uuid_id_).on_delete.cascade()
