@@ -42,8 +42,6 @@
 #include <doodle_core/sqlite_orm/detail/std_vector_string.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
-#include "doodle_lib/core/ContainerDevice.h"
-
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
