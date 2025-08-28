@@ -13,6 +13,7 @@ target_sources(doodle_maya_lib
         chick_export_fbx.h
         file_info_edit.h
         export_abc_file.h
+        head_weight.h
 
         PRIVATE
         afterimage_comm.cpp
@@ -28,4 +29,5 @@ target_sources(doodle_maya_lib
         chick_export_fbx.cpp
         file_info_edit.cpp
         export_abc_file.cpp
+        head_weight.cpp
 )

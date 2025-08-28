@@ -16,6 +16,7 @@
 #include <maya_plug/maya_comm/export_abc_file.h>
 #include <maya_plug/maya_comm/file_info_edit.h>
 #include <maya_plug/maya_comm/find_duplicate_poly_comm.h>
+#include <maya_plug/maya_comm/head_weight.h>
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
 #include <maya_plug/maya_comm/reference_comm.h>
@@ -91,6 +92,9 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
   /// 添加abc导出命令
   status = maya_reg->register_command<::doodle::maya_plug::export_abc_file>(k_plugin);
+  CHECK_MSTATUS(status);
+  /// 添加重新分布权重命令
+  status = maya_reg->register_command<::doodle::maya_plug::head_weight>(k_plugin);
   CHECK_MSTATUS(status);
   /// 等所有命令完成后加载工具架
   status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
