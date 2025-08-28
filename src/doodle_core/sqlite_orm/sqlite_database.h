@@ -15,7 +15,7 @@ namespace doodle {
 struct preview_file;
 struct preview_files_for_entity_t;
 struct status_automation;
-enum server_task_info_type : int;
+enum class server_task_info_type;
 struct asset_type;
 class server_task_info;
 struct todo_t;

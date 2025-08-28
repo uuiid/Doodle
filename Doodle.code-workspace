@@ -42,7 +42,7 @@
 		"todo-tree.regex.regexCaseSensitive": false,
 		"git.fetchOnPull": true,
 		"C_Cpp.autocompleteAddParentheses": true,
-		"C_Cpp.intelliSenseEngine": "default",
+		"C_Cpp.intelliSenseEngine": "disabled",
 		"cmake.configureOnEdit": false,
 		"cmake.configureOnOpen": false,
 		"cmake.automaticReconfigure": false,
@@ -178,6 +178,11 @@
 		},
 		"cmake.allowUnsupportedPresetsVersions": true,
 		"codeium.disableSupercomplete": false,
-		"codeium.detectProxy": false
+		"codeium.detectProxy": false,
+		"github.copilot.chat.commitMessageGeneration.instructions": [
+			{
+				"text": "Write a commit message in the conventional commit convention. I'll send you an output of 'git diff --staged' command, and you convert it into a commit message."
+			}
+		]
 	}
 }

@@ -47,7 +47,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     }
 );
 
-enum server_task_info_type {
+enum class server_task_info_type : std::int32_t {
   // 导出fbx任务
   export_fbx = 0,
   // 导出解算任务
