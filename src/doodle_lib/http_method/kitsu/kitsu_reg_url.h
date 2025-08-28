@@ -198,6 +198,11 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(departments)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+// /api/data/departments/{id}
+DOODLE_HTTP_JWT_FUN(departments_instance)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 // /api/data/studios
 DOODLE_HTTP_JWT_FUN(studios)
 DOODLE_HTTP_FUN_OVERRIDE(get)

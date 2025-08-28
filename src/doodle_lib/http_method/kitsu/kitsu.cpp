@@ -122,6 +122,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<person_time_spents_day_table>("/api/data/persons/time-spents/day-table/{}/{}"_url(&person_time_spents_day_table::year_, &person_time_spents_day_table::month_))
       .reg_t<person_day_off_1>("/api/data/persons/day-offs/{}/{}"_url(&person_day_off_1::year_, &person_day_off_1::month_))
       .reg_t<departments>("/api/data/departments"_url)
+      .reg_t<departments_instance>("/api/data/departments/{}"_url(&departments_instance::id_))
       .reg_t<studios>("/api/data/studios"_url)
       .reg_t<task_types>("/api/data/task-types"_url)
       .reg_t<custom_actions>("/api/data/custom-actions"_url)
