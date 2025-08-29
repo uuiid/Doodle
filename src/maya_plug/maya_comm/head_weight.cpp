@@ -4,6 +4,8 @@
 
 #include "head_weight.h"
 namespace doodle::maya_plug {
-MStatus head_weight::doIt(const MArgList& args) {}
+MStatus head_weight::doIt(const MArgList& args) {
+  return MStatus::kSuccess;
+}
 
 }  // namespace doodle::maya_plug
