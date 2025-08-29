@@ -44,6 +44,16 @@ struct DOODLE_CORE_API entity_link {
     if (j.contains("label")) j.at("label").get_to(p.label_);
     if (j.contains("asset_id")) j.at("asset_id").get_to(p.entity_out_id_);
   }
+  // to json
+  friend void to_json(nlohmann::json& j, const entity_link& p) {
+    j["id"]            = p.uuid_id_;
+    j["entity_in_id"]  = p.entity_in_id_;
+    j["entity_out_id"] = p.entity_out_id_;
+    j["data"]          = p.data_;
+    j["nb_occurences"] = p.nb_occurences_;
+    j["label"]         = p.label_;
+    j["asset_id"]      = p.entity_out_id_;
+  }
 };
 struct DOODLE_CORE_API entity_concept_link {
   std::int32_t id_;

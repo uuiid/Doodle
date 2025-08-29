@@ -192,6 +192,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
                                           &data_project_playlists_instance::project_id_,
                                           &data_project_playlists_instance::playlist_id_))
       .reg_t<data_playlists_instance>("/api/data/playlists/{}"_url(&data_playlists_instance::id_))
+      .reg_t<actions_projects_casting_replace>("/api/actions/projects/{}/casting/replace"_url(&actions_projects_casting_replace::project_id_))
        // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

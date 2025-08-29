@@ -279,4 +279,47 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset
   co_return in_handle->make_msg(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
 }
 
+struct actions_projects_casting_replace_arg {
+  uuid entity_id_;
+  uuid asset_from_id_;
+  uuid asset_to_id_;
+  // from_json
+  friend void from_json(const nlohmann::json& in_json, actions_projects_casting_replace_arg& in_arg) {
+    in_json.at("entity_id").get_to(in_arg.entity_id_);
+    in_json.at("asset_from_id").get_to(in_arg.asset_from_id_);
+    in_json.at("asset_to_id").get_to(in_arg.asset_to_id_);
+    if (in_arg.asset_from_id_.is_nil() || in_arg.asset_to_id_.is_nil() || in_arg.entity_id_.is_nil())
+      throw_exception(doodle_error{boost::beast::http::status::bad_request, "ID 不能为空"});
+  }
+};
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_casting_replace::post(
+    session_data_ptr in_handle
+) {
+  person_.check_project_access(project_id_);
+  auto l_list = in_handle->get_json().get<std::vector<actions_projects_casting_replace_arg>>();
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
+  std::vector<std::function<void()>> l_delay_events{};
+  for (auto&& i : l_list) {
+    auto l_link = l_sql.get_entity_link(i.entity_id_, i.asset_from_id_);
+    if (!l_link) continue;
+    l_link->entity_out_id_ = i.asset_to_id_;
+    l_entity_links->emplace_back(*l_link);
+    l_delay_events.emplace_back([&, this]() {
+      socket_io::broadcast(
+          "entity-link:update",
+          nlohmann::json{
+              {"entity_link_id", l_link->uuid_id_},
+              {"nb_occurences", l_link->nb_occurences_},
+              {"project_id", project_id_}
+          }
+      );
+    });
+  }
+  co_await l_sql.install_range(l_entity_links);
+  for (auto&& i : l_delay_events) i();
+  co_return in_handle->make_msg(nlohmann::json{} = *l_entity_links);
+}
+
 }  // namespace doodle::http

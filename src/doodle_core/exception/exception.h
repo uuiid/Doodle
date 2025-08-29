@@ -80,6 +80,12 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
             fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
         ),
         error_code_(in_core){};
+  template <typename... Args>
+  explicit doodle_error(boost::beast::http::status in_core, fmt::format_string<Args...> fmt_str, Args&&... in_args)
+      : std::runtime_error(
+            fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
+        ),
+        error_code_(static_cast<std::int32_t>(in_core)){};
 };
 
 class DOODLE_CORE_API http_request_error : public std::runtime_error {
