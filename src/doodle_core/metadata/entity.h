@@ -47,7 +47,7 @@ struct DOODLE_CORE_API entity_link {
   // to json
   friend void to_json(nlohmann::json& j, const entity_link& p) {
     j["id"]            = p.uuid_id_;
-    j["entity_in_id"]  = p.entity_in_id_;
+    j["entity_id"]  = p.entity_in_id_;
     j["entity_out_id"] = p.entity_out_id_;
     j["data"]          = p.data_;
     j["nb_occurences"] = p.nb_occurences_;
