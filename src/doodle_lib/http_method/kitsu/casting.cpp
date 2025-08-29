@@ -65,7 +65,7 @@ struct data_project_sequences_casting_result_map {
 };
 
 data_project_sequences_casting_result_map get_sequence_casting(
-    const uuid& in_project_id, const uuid& in_sequence_id = {}
+    const uuid& in_project_id, const uuid& in_sequence_id = {}, const std::vector<uuid>& in_shot_ids = {}
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   data_project_sequences_casting_result_map l_result{};
@@ -85,7 +85,8 @@ data_project_sequences_casting_result_map get_sequence_casting(
            join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
            where(
                c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-               (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id)
+               (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id) &&
+               (in_shot_ids.empty() || in(shot->*&entity::uuid_id_, in_shot_ids))
            ),
            multi_order_by(
                order_by(sequence->*&entity::name_), order_by(shot->*&entity::name_), order_by(&asset_type::name_),
@@ -320,13 +321,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   co_await l_sql.install_range(l_entity_links);
   for (auto&& i : l_delay_events) i();
   data_project_sequences_casting_result_map l_result{};
+  std::vector<uuid> l_shot_ids{};
+  for (auto&& i : l_list) l_shot_ids.push_back(i.entity_id_);
 
-  for (auto&& i : l_list) {
-    auto l_v = get_sequence_casting({}, i.entity_id_);
-    for (auto&& [key, value] : l_v.maps) l_result.maps[key] |= ranges::actions::push_back(value);
-  }
-
-  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, {}, l_shot_ids));
 }
 
 }  // namespace doodle::http
