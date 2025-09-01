@@ -141,6 +141,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
       if (l_k == "id" && l_has) l_entities.emplace_back(l_sql.get_by_uuid<entity>(from_uuid_str(l_v)));
   auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
 
+  {  // 添加类型检查
+    auto l_asset_types = l_sql.get_asset_types_not_temporal_type();
+    for (auto&& l_e : l_entities)
+      if (auto l_it = std::ranges::find_if(
+              l_asset_types, [&](const asset_type& in) -> bool { return in.uuid_id_ == l_e.entity_type_id_; }
+          );
+          l_it != l_asset_types.end()) {
+        if (auto l_it2 =
+                std::ranges::find_if(l_it->task_types_, [&](const uuid& in) { return in == l_task_type.uuid_id_; });
+            l_it2 == l_it->task_types_.end())
+          throw_exception(
+              http_request_error{
+                  boost::beast::http::status::bad_request, fmt::format("实体类型不在工作流中 {}", l_task_type.name_)
+              }
+          );
+      } else
+        throw_exception(
+            http_request_error{
+                boost::beast::http::status::bad_request, fmt::format("实体类型未找到 {}", l_e.entity_type_id_)
+            }
+        );
+  }
+
   if (l_entities.size() == 1) {
     auto l_task             = std::make_shared<task>();
     l_task->uuid_id_        = core_set::get_set().get_uuid();
