@@ -50,6 +50,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
   person_.check_task_assign_access(l_task.project_id_);
+  default_logger_raw()->info("actions_tasks_clear_assignation {}  {}", person_.person_.email_, l_args.task_id_);
   for (auto&& l_i : l_args.task_id_)
     if (!l_args.person_id_.is_nil()) {
       if (auto l_assign = get_task_assignees(l_i, l_args.person_id_); l_assign)

@@ -14,10 +14,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
-
+  default_logger_raw()->info("{} data_entities::put {}", person_.person_.email_, l_entt->uuid_id_);
   l_json.get_to(*l_entt);
   nlohmann::json l_res{};
-  co_await l_sql.install(l_entt);
+  if (person_.is_project_manager(l_entt->project_id_)) co_await l_sql.install(l_entt);
   l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
