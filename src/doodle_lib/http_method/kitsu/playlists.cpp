@@ -421,6 +421,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::po
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>();
   in_handle->get_json().get_to(*l_playlist);
+  person_.check_project_access(l_playlist->project_id_);
+  default_logger_raw()->info("{} 创建播放列表 {}", person_.person_.email_, l_playlist->name_);
   l_playlist->uuid_id_    = core_set::get_set().get_uuid();
   l_playlist->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   l_playlist->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};

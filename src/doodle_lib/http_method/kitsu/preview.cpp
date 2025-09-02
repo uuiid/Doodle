@@ -18,10 +18,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     session_data_ptr in_handle
 ) {
   person_.check_task_action_access(task_id_);
-  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_sql     = g_ctx().get<sqlite_database>();
 
-  auto l_comment  = l_sql.get_by_uuid<comment>(comment_id_);
-  auto l_task     = l_sql.get_by_uuid<task>(task_id_);
+  auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
+  auto l_task    = l_sql.get_by_uuid<task>(task_id_);
+  default_logger_raw()->info("person {} actions_tasks_comments_add_preview {} {}", person_.person_.uuid_id_, task_id_, comment_id_);
   auto l_revision = in_handle->get_json().value("revision", 0);
   if (l_revision == 0 && !l_sql.has_preview_file(comment_id_))
     l_revision = l_sql.get_next_preview_revision(task_id_);
