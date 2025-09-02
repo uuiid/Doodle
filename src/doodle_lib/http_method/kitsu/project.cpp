@@ -130,6 +130,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   co_return in_handle->make_msg(nlohmann::json{} = g_ctx().get<sqlite_database>().get_by_uuid<project>(id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks::post(session_data_ptr in_handle) {
+  person_.check_project_manager(project_id_);
   auto& l_sql      = g_ctx().get<sqlite_database>();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_entities{};

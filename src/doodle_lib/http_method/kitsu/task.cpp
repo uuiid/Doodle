@@ -49,6 +49,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   nlohmann::json l_ret{};
   for (auto&& l_task_id : l_task_ids) {
     auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
+    person_.check_task_department_access(*l_task, person_.person_);
     l_ret.emplace_back(*l_task);
     // 这里需要检查一下, 是否已经将任务分配给了这个人
     if (l_sql.is_task_assigned_to_person(l_task->uuid_id_, l_person_data.uuid_id_)) continue;

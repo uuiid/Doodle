@@ -65,6 +65,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
     l_p->login_failed_attemps_ = 0;
     co_await l_sql.install(l_p);
   }
+  default_logger_raw()->info("用户 {} 登录", l_p->email_);
+
   nlohmann::json l_json{};
 
   l_json["user"]         = *l_p;

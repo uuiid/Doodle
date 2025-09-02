@@ -249,8 +249,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
     l_ack->person_id_  = person_.person_.uuid_id_;
     co_await l_sql.install(l_ack);
     l_event_name = "comment:acknowledge";
+    default_logger_raw()->info("{} 点赞 {}", person_.person_.email_, comment_id_);
   } else {
     l_event_name = "comment:unacknowledge";
+    default_logger_raw()->info("{} 取消点赞 {}", person_.person_.email_, comment_id_);
     co_await l_sql.remove<comment_acknoledgments>(l_id[0]);
   }
 
