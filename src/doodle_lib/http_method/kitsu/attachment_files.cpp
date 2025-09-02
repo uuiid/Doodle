@@ -17,15 +17,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_fi
 
   if (l_attachment_file.comment_id_.is_nil() && l_attachment_file.chat_message_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::not_found, "未找到对应的文件"});
-  auto l_p = get_person(in_handle);
   if (!l_attachment_file.comment_id_.is_nil()) {
     auto l_task = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<comment>(l_attachment_file.comment_id_).object_id_);
-    l_p->check_project_manager(l_task.project_id_);
+    person_.check_project_manager(l_task.project_id_);
   }
   auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
                 FSys::split_uuid_path(fmt::to_string(l_attachment_file.uuid_id_));
   auto l_ext = l_attachment_file.extension_;
-  co_return in_handle->make_msg(l_path,  http_header_ctrl{.mine_type_ = kitsu::mime_type(l_ext)});
+  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_ext)});
 }
 
 }  // namespace doodle::http

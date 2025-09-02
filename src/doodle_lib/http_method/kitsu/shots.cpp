@@ -217,7 +217,6 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
 }
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
-  auto l_po      = get_person(in_handle);
   auto& l_sql    = g_ctx().get<sqlite_database>();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
 
@@ -225,7 +224,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_ta
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "project_id" && has) l_project_uuid = from_uuid_str(value);
   co_return in_handle->make_msg(
-      nlohmann::json{} = get_shots_with_tasks(l_po->person_, l_project_uuid, l_type_id.uuid_id_)
+      nlohmann::json{} = get_shots_with_tasks(person_.person_, l_project_uuid, l_type_id.uuid_id_)
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {

@@ -40,7 +40,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> organisations::get(session_data_ptr in_handle) {
-  get_person(in_handle);
   auto l_org = g_ctx().get<sqlite_database>().get_all<organisation>();
   co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
 }

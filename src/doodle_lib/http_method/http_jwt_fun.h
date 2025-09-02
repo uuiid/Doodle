@@ -18,7 +18,6 @@ class http_jwt_fun : public http_function {
   struct http_jwt_t;
 
  protected:
-  std::shared_ptr<http_jwt_t> get_person(const session_data_ptr& in_data);
   void parse_header(const session_data_ptr& in_handle) override;
 
  public:

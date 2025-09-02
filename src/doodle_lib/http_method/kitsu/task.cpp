@@ -32,10 +32,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(session_data_ptr in_handle) {
-  auto l_person = get_person(in_handle);
-  auto l_sql    = g_ctx().get<sqlite_database>();
-  auto l_task   = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
-  l_person->check_task_action_access(*l_task);
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
+  person_.check_task_action_access(*l_task);
   in_handle->get_json().get_to(*l_task);
   co_await l_sql.install(l_task);
   // l_task->assigner_id_ = l_person->person_.uuid_id_;
@@ -43,7 +42,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign::put(session_data_ptr in_handle) {
-  auto l_person      = get_person(in_handle);
   auto l_sql         = g_ctx().get<sqlite_database>();
   auto l_person_data = l_sql.get_by_uuid<person>(id_);
   auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
@@ -54,18 +52,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
     // 这里需要检查一下, 是否已经将任务分配给了这个人
     if (l_sql.is_task_assigned_to_person(l_task->uuid_id_, l_person_data.uuid_id_)) continue;
     auto l_task_assign   = std::make_shared<assignees_table>();
-    l_task->assigner_id_ = l_person->person_.uuid_id_;
+    l_task->assigner_id_ = person_.person_.uuid_id_;
     co_await l_sql.install(l_task);
     l_task_assign->person_id_ = l_person_data.uuid_id_;
     l_task_assign->task_id_   = l_task->uuid_id_;
     co_await l_sql.install(l_task_assign);
     // 这里需要检查一下, 任务的分配人是否是当前用户
-    if (l_person->person_.uuid_id_ != l_person_data.uuid_id_) {
+    if (person_.person_.uuid_id_ != l_person_data.uuid_id_) {
       auto l_notification         = std::make_shared<notification>();
       l_notification->uuid_id_    = core_set::get_set().get_uuid();
       l_notification->type_       = notification_type::assignation;
       l_notification->task_id_    = l_task->uuid_id_;
-      l_notification->author_id_  = l_person->person_.uuid_id_;
+      l_notification->author_id_  = person_.person_.uuid_id_;
       l_notification->person_id_  = l_person_data.uuid_id_;
       l_notification->created_at_ = chrono::system_clock::now();
       co_await l_sql.install(l_notification);

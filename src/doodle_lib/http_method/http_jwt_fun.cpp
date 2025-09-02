@@ -52,36 +52,6 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
     );
 }
 
-std::shared_ptr<http_jwt_fun::http_jwt_t> http_jwt_fun::get_person(const session_data_ptr& in_data) {
-  auto l_jwt = in_data->req_header_[boost::beast::http::field::cookie];
-  if (l_jwt.empty()) l_jwt = in_data->req_header_[boost::beast::http::field::authorization];
-
-  if (auto l_it = l_jwt.find("access_token_cookie="); l_it != std::string::npos)
-    l_jwt = l_jwt.substr(l_it + 20, l_jwt.find(';', l_it) - l_it - 20);
-  else if (auto l_it_b = l_jwt.find("Bearer "); l_it_b != std::string::npos)
-    l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
-  if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
-  // std::string l_l_jwt_str{l_jwt};
-  auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
-
-  auto verifier     = jwt::verify().allow_algorithm(jwt::algorithm::hs256{l_ctx.secret_});
-  auto l_jwt_decode = jwt::decode(l_jwt);
-  try {
-    verifier.verify(l_jwt_decode);
-  } catch (const std::system_error& e) {
-    throw_exception(
-        http_request_error{boost::beast::http::status::unauthorized, fmt::format("cookie 验证错误 {}", e.what())}
-    );
-  }
-  auto l_uuid = from_uuid_str(l_jwt_decode.get_subject());
-  auto& l_sql = g_ctx().get<sqlite_database>();
-  // default_logger_raw()->warn("{}", l_uuid);
-  if (l_sql.uuid_to_id<person>(l_uuid) == 0)
-    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
-
-  return std::make_shared<http_jwt_t>(g_ctx().get<sqlite_database>().get_by_uuid<person>(l_uuid));
-}
-
 void http_jwt_fun::http_jwt_t::check_project_manager(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
