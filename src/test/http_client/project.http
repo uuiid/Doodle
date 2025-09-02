@@ -5,4 +5,12 @@ Content-Type: application/json
 
 {"name":"dasdasdasd","project_status_id":"5fa1b4d5-f6c0-4c34-9b79-b3bbcff1d4b6","fps":25,"ratio":"16:9","resolution":"1920x1080","production_type":"featurefilm","production_style":"3d","start_date":"2024-12-31T16:00:00.000Z","end_date":"2028-02-29T16:00:00.000Z"}
 
-###
+### 删除任务
+< {%
+  request.variables.set("id", ["fa332db4-c6cc-4c24-8d5a-b18711c46c09"])
+%}
+DELETE {{url}}/api/data/tasks/{{$.id}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{}
