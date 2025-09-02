@@ -43,6 +43,13 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
   person_ = {l_sql.get_by_uuid<person>(l_uuid)};
+
+  if (!person_.person_.active_)
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::unauthorized, fmt::format("账户 {} 已被冻结", person_.person_.email_)
+        }
+    );
 }
 
 std::shared_ptr<http_jwt_fun::http_jwt_t> http_jwt_fun::get_person(const session_data_ptr& in_data) {

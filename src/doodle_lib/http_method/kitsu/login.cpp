@@ -74,22 +74,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   l_json["login"]        = true;
   auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
   auto l_access_token    = jwt::create()
-                            .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
+                            .set_payload_claim("identity_type", jwt::claim{"person"s})
                             .set_issued_at(chrono::system_clock::now())
-                            .set_id(fmt::to_string(core_set::get_set().get_uuid()))
+                            .set_id(fmt::to_string(l_p->uuid_id_))
                             .set_subject(fmt::to_string(l_p->uuid_id_))
                             .set_not_before(chrono::system_clock::now())
                             .set_expires_at(chrono::system_clock::now() + chrono::days{7})
                             .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_json["access_token"] = l_access_token;
   auto l_refresh_token   = jwt::create()
-                            .set_payload_claim("id", jwt::claim{fmt::to_string(l_p->uuid_id_)})
-                            .set_issued_at(chrono::system_clock::now())
-                            .set_id(fmt::to_string(core_set::get_set().get_uuid()))
-                            .set_subject(fmt::to_string(l_p->uuid_id_))
-                            .set_not_before(chrono::system_clock::now())
-                            .set_expires_at(chrono::system_clock::now() + chrono::days{15})
-                            .sign(jwt::algorithm::hs256{l_ctx.secret_});
+                             .set_payload_claim("identity_type", jwt::claim{"person"s})
+                             .set_issued_at(chrono::system_clock::now())
+                             .set_id(fmt::to_string(l_p->uuid_id_))
+                             .set_subject(fmt::to_string(l_p->uuid_id_))
+                             .set_not_before(chrono::system_clock::now())
+                             .set_expires_at(chrono::system_clock::now() + chrono::days{15})
+                             .sign(jwt::algorithm::hs256{l_ctx.secret_});
   l_json["refresh_token"] = l_refresh_token;
   boost::beast::http::response<boost::beast::http::string_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
@@ -109,7 +109,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   );
   l_res.insert(
       boost::beast::http::field::set_cookie,
-      fmt::format("refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token)
+      fmt::format(
+          "refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token
+      )
   );
   l_res.body() = l_json.dump();
 
