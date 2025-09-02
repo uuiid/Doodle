@@ -199,7 +199,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
-  person_.check_task_action_access(l_comment->task_status_id_);
+  person_.check_task_status_access(l_comment->task_status_id_);
 
   auto l_result = co_await create_comment(l_comment, &person_, id_, l_files);
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
