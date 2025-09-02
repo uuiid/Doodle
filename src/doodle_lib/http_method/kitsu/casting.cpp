@@ -29,8 +29,8 @@ struct actions_projects_casting_replace_arg {
 template <>
 struct fmt::formatter<doodle::http::actions_projects_casting_replace_arg> : fmt::formatter<fmt::string_view> {
   template <typename FmtContext>
-  auto format(const doodle::http::actions_projects_casting_replace_arg& c, FmtContext& ctx) {
-    return format_to(ctx.out(), "({}, {}, {})", c.entity_id_, c.asset_from_id_, c.asset_to_id_);
+  auto format(const doodle::http::actions_projects_casting_replace_arg& c, FmtContext& ctx) const {
+    return fmt::format_to(ctx.out(), "({}, {}, {})", c.entity_id_, c.asset_from_id_, c.asset_to_id_);
   }
 };
 
