@@ -44,6 +44,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   l_data.asset_type_id = asset_type_id_;
   auto l_json          = in_handle->get_json();
   l_json.get_to(l_data);
+  default_logger_raw()->info("由 {} , {} 项目创建新实体 {}", person_.person_.email_, l_data.project_id, l_data.name);
 
   auto l_entity = std::make_shared<entity>(entity{
       .uuid_id_        = core_set::get_set().get_uuid(),

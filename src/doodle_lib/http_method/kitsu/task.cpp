@@ -19,6 +19,7 @@
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links::post(session_data_ptr in_handle) {
+  person_.check_manager();
   auto l_sql              = g_ctx().get<sqlite_database>();
   auto l_json             = in_handle->get_json();
   auto l_task_status_link = std::make_shared<project_task_status_link>(

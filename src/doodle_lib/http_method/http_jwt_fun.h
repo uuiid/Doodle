@@ -27,6 +27,7 @@ class http_jwt_fun : public http_function {
 
     // 检查人员是否有修改项目属性的权限
     void check_project_manager(const uuid& in_project_id) const;
+    bool is_project_manager(const uuid& in_project_id) const;
     // 检查人员是否有访问项目的权限
     void check_project_access(const uuid& in_project_id) const;
     // 检查是否是 admin
@@ -36,6 +37,8 @@ class http_jwt_fun : public http_function {
     // 检查是否可以进行任务操作
     void check_task_action_access(const uuid& in_task_id) const;
     void check_task_action_access(const task& in_task_id) const;
+    /// 检查是否可以被更改为目标状态
+    void check_task_status_access(const uuid& in_target_status_id) const;
     // 检查任务的部门访问权限
     void check_task_department_access(const task& in_task_id, const person& in_person_id) const;
     // 检查是否可以删除任务

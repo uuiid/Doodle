@@ -6,6 +6,7 @@
 
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -55,14 +56,15 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
 void http_jwt_fun::http_jwt_t::check_project_manager(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
-  if (!(                                                                                 //
-          person_.role_ == person_role_type::admin ||                                    // 是管理员
-          (person_.role_ == person_role_type::manager &&                                 //
-           g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id))  // 是项目经理并且在项目中
-      )                                                                                  //
-  )
+  if (!is_project_manager(in_project_id))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+bool http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) const {
+  return person_.role_ == person_role_type::admin ||                                     // 是管理员
+         (person_.role_ == person_role_type::manager &&                                  //
+          g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id));  // 是项目经理并且在项目中
+}
+
 void http_jwt_fun::http_jwt_t::check_project_access(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
@@ -106,6 +108,14 @@ void http_jwt_fun::http_jwt_t::check_manager() const {
 void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) const {
   check_task_action_access(g_ctx().get<sqlite_database>().get_by_uuid<task>(in_task_id));
 }
+void http_jwt_fun::http_jwt_t::check_task_status_access(const uuid& in_target_status_id) const {
+  if (person_.role_ != person_role_type::user) return;
+  auto l_sql   = g_ctx().get<sqlite_database>();
+  auto l_stats = l_sql.get_by_uuid<task_status>(in_target_status_id);
+  if (l_stats.is_artist_allowed_) return;
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+
 void http_jwt_fun::http_jwt_t::check_task_action_access(const task& in_task_id) const {
   if (person_.role_ == person_role_type::admin) return;
   auto l_sql = g_ctx().get<sqlite_database>();

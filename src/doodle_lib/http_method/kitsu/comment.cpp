@@ -193,21 +193,28 @@ boost::asio::awaitable<create_comment_result> create_comment(
 }
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment::post(session_data_ptr in_handle) {
+  person_.check_task_action_access(id_);
+
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
+  person_.check_task_action_access(l_comment->task_status_id_);
+
   auto l_result = co_await create_comment(l_comment, &person_, id_, l_files);
+  default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many::post(
     session_data_ptr in_handle
 ) {
+  person_.check_project_manager(id_);
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<create_comment_result> l_result{};
   for (auto&& i : in_handle->get_json()) {
     auto l_comm = std::make_shared<comment>(i.get<comment>());
+    person_.check_task_action_access(l_comm->task_status_id_);
     l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
