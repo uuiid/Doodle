@@ -23,7 +23,7 @@ find_path(XGEN_LIB_DIR ${ADSKXGEN_LIB}
         DOC
         "XGen library path"
 )
-
+cmake_path(GET XGEN_LIB_DIR PARENT_PATH XGEN_ROOT)
 
 find_path(XGEN_INCLUDE_DIR
         xgen/src/xgcore/XgConfig.h
@@ -47,6 +47,14 @@ find_package_handle_standard_args(${CMAKE_FIND_PACKAGE_NAME}
         REASON_FAILURE_MESSAGE "maya xgen 库中的组件没有找到"
 )
 
-add_library(xgen INTERFACE IMPORTED)
+add_library(xgen SHARED IMPORTED)
+set_property(TARGET xgen APPEND PROPERTY
+        IMPORTED_CONFIGURATIONS RELEASE)
+set_property(TARGET xgen APPEND PROPERTY
+        IMPORTED_CONFIGURATIONS DEBUG)
 target_include_directories(xgen INTERFACE ${XGEN_INCLUDE_DIR})
+set_target_properties(xgen PROPERTIES
+        IMPORTED_LOCATION "${XGEN_ROOT}/bin/AdskXGen.dll"
+        IMPORTED_IMPLIB "${XGEN_LIB_DIR}/${ADSKXGEN_LIB}"
+)
 add_library(maya::xgen ALIAS xgen)
