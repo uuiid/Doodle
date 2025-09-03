@@ -214,7 +214,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   std::vector<create_comment_result> l_result{};
   for (auto&& i : in_handle->get_json()) {
     auto l_comm = std::make_shared<comment>(i.get<comment>());
-    person_.check_task_action_access(l_comm->task_status_id_);
+    person_.check_task_status_access(l_comm->task_status_id_);
+    default_logger_raw()->info("{} 创建评论", person_.person_.email_);
     l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
