@@ -8,6 +8,7 @@ if (DEFINED Maya_Version)
     # 模块的寻找文件名称 Find + 包名称 + .cmake
     # 开始运行 `FindMaya.cmake`
     find_package(Maya ${Maya_Version} MODULE)
+    find_package(XGen ${Maya_Version} MODULE)
 
     if (TARGET maya::maya_all)
         set(MAYA_LOCATION ${MAYA_BASE_DIR})
