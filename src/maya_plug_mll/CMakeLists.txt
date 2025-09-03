@@ -2,6 +2,7 @@ set(maya_plug_name doodle_maya)
 
 add_library(doodle_maya MODULE main.cpp)
 
+add_subdirectory(comm)
 
 target_include_directories(doodle_maya PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 set_target_properties(doodle_maya PROPERTIES
@@ -15,6 +16,7 @@ target_link_libraries(doodle_maya
         doodle_maya_lib
 
         maya::maya_all
+        maya::xgen
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
