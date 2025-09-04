@@ -109,7 +109,7 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
         g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / key / FSys::split_uuid_path(fmt::format("{}.png", in_id));
     if (auto l_p = l_new_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     auto l_new_cv = in_image.clone();
-    auto l_size   = cv::Size{
+    auto l_size_   = cv::Size{
         size.first, size.second == 0
                           ? boost::numeric_cast<std::int32_t>(
                               boost::numeric_cast<double>(in_image.rows) / boost::numeric_cast<double>(in_image.cols) *
@@ -117,7 +117,7 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
                           )
                           : std::int32_t{size.second}
     };
-    cv::resize(l_new_cv, l_new_cv, l_size, 0, 0);
+    cv::resize(l_new_cv, l_new_cv, l_size_, 0, 0);
     cv::imwrite(l_new_path.generic_string(), l_new_cv);
   }
   return l_size;

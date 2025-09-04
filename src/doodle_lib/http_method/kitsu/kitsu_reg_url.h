@@ -325,9 +325,14 @@ DOODLE_HTTP_JWT_FUN(playlists_entities_preview_files)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/pictures/thumbnails/organisations/{id}.png
+DOODLE_HTTP_JWT_FUN(pictures_thumbnails_organisations_png)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 // /api/pictures/thumbnails/organisations/{id}
 DOODLE_HTTP_JWT_FUN(pictures_thumbnails_organisations)
-DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/pictures/thumbnails-square/preview-files/{id}

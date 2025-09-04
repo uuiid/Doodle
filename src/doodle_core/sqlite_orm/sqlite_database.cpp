@@ -1062,6 +1062,7 @@ DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(notification)
 DOODLE_GET_BY_UUID_SQL(comment)
 DOODLE_GET_BY_UUID_SQL(playlist)
+DOODLE_GET_BY_UUID_SQL(organisation)
 template <>
 task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {
   using namespace sqlite_orm;
