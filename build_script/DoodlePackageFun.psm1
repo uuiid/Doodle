@@ -96,7 +96,7 @@ function Initialize-Doodle
     $DoodleSource = Convert-Path "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP/Doodle-$DoodleVersion-win64"
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
-    $DoodleExePath = "E:\source\doodle\dist\doodle.exe"
+    $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
     if ($BuildKitsu)
     {
         Write-Host "开始构建文件"
