@@ -226,8 +226,8 @@ std::vector<working_file> scan_task(const task& in_task) {
     i.entity_id_ = in_task.entity_id_;
     if (i.uuid_id_.is_nil()) {
       i.uuid_id_ = core_set::get_set().get_uuid();
-      FSys::software_flag_file(i.path_, i.uuid_id_);
     }
+    if (FSys::software_flag_file(i.path_).is_nil()) FSys::software_flag_file(i.path_, i.uuid_id_);
     i.name_ = i.path_.filename().generic_string();
   }
   return l_working_files;
