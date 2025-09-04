@@ -21,6 +21,7 @@
 #include <maya_plug/maya_comm/ref_file_export.h>
 #include <maya_plug/maya_comm/reference_comm.h>
 #include <maya_plug/node/files_info.h>
+#include <maya_plug_mll/comm/export_xgen_abc.h>
 
 #include <maya/MFnPlugin.h>
 #include <maya/MQtUtil.h>
@@ -92,6 +93,9 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
   /// 添加abc导出命令
   status = maya_reg->register_command<::doodle::maya_plug::export_abc_file>(k_plugin);
+  CHECK_MSTATUS(status);
+  /// 添加xgen abc导出命令
+  status = maya_reg->register_command<::doodle::maya_plug::xgen_abc_export>(k_plugin);
   CHECK_MSTATUS(status);
   /// 添加重新分布权重命令
   status = maya_reg->register_command<::doodle::maya_plug::head_weight>(k_plugin);
