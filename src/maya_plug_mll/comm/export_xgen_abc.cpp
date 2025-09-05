@@ -4,8 +4,11 @@
 
 #include "export_xgen_abc.h"
 
+#include "maya_plug/maya_comm/add_entt.h"
+
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
+#include <maya/MDistance.h>
 #include <maya/MFn.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
@@ -76,9 +79,16 @@ const char* XgenRender::getOverride(const char* in_name) const { return nullptr;
 void XgenRender::getTransform(float in_time, XGenRenderAPI::mat44& out_mat) const {}  /// 先不进行变换
 bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::bbox& out_bbox) const { return false; }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct palette_warp {
+  XgPalette* palette_ptr;
+  MDagPath palette_dag;
+};
+
 struct xgen_abc_export::impl {
-  std::vector<XgPalette*> palette_v{};
-  std::string create_render_args(const XgPalette* in_);
+  std::vector<palette_warp> palette_v{};
+  std::string create_render_args(const palette_warp& in_, const XgDescription* in_des, const XgPatch* in_patch);
 };
 xgen_abc_export::xgen_abc_export() : p_i{std::make_unique<impl>()} {}
 xgen_abc_export::~xgen_abc_export() = default;
@@ -95,29 +105,68 @@ MStatus xgen_abc_export::doIt(const MArgList& in_arg) {
   parse_args(in_arg);
   return redoIt();
 }
-std::string xgen_abc_export::impl::create_render_args(const XgPalette* in_) {
+std::string xgen_abc_export::impl::create_render_args(
+    const palette_warp& in_, const XgDescription* in_des, const XgPatch* in_patch
+) {
   auto l_current_frame = MAnimControl::currentTime();
-  auto l_str           = fmt::format(
-      "-debug 1 -warning 1 -stats 1 -frame {} -shutter 0.0 -palette {}", l_current_frame.as(MTime::uiUnit()),
-      in_->name()
+  auto l_namespace     = get_name_space(in_.palette_dag);
+  std::double_t l_unit_conv{};  // default cm;
+  switch (MDistance::uiUnit()) {
+    case MDistance::kInches:
+      l_unit_conv = 2.54;
+      break;
+    case MDistance::kFeet:
+      l_unit_conv = 30.48;
+      break;
+    case MDistance::kYards:
+      l_unit_conv = 91.44;
+      break;
+    case MDistance::kMiles:
+      l_unit_conv = 160934.4;
+      break;
+    case MDistance::kMillimeters:
+      l_unit_conv = 0.1;
+      break;
+    case MDistance::kKilometers:
+      l_unit_conv = 100000.0;
+      break;
+    case MDistance::kMeters:
+      l_unit_conv = 100.0;
+      break;
+    case MDistance::kCentimeters:
+    case MDistance::kLast:
+    case MDistance::kInvalid:
+      break;
+  }
+  auto l_str = fmt::format(
+      "-debug 1 -warning 1 -stats 1 -nameSpace {1} -palette {2} -description {3} -patch {4} -frame {5} -shutter 0.0 "
+      "-world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
+      l_unit_conv, l_namespace, in_.palette_ptr->name(), in_des->name(), in_patch->name(),
+      l_current_frame.as(MTime::uiUnit())
   );
 
+  return l_str;
 }
 
 MStatus xgen_abc_export::redoIt() {
   XgenRender l_callback{this};
-  for (auto l_ptr : p_i->palette_v) {
-    auto l_args = p_i->create_render_args(l_ptr);
-    auto l_render =
-        std::shared_ptr<XGenRenderAPI::PatchRenderer>{XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())};
-    XGenRenderAPI::bbox l_sub_bbox;
-    unsigned int l_face_id = -1;
-    while (l_render->nextFace(l_sub_bbox, l_face_id)) {
-      auto* l_face = XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id);
-      l_face->render();
+  for (auto&& i : p_i->palette_v) {
+    for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
+      auto l_des       = i.palette_ptr->description(j);
+      auto l_primitive = l_des->activePrimitive();
+      auto l_path      = l_primitive->cPatch();
+      auto l_args      = p_i->create_render_args(i, l_des, l_path);
+      auto l_render =
+          std::shared_ptr<XGenRenderAPI::PatchRenderer>{XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())
+          };
+      XGenRenderAPI::bbox l_sub_bbox;
+      unsigned int l_face_id = -1;
+      while (l_render->nextFace(l_sub_bbox, l_face_id)) {
+        auto* l_face = XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id);
+        l_face->render();
+      }
     }
 
-    //   for (auto i = 0; i < l_ptr->numDescriptions(); ++i) {
     //     auto l_des       = l_ptr->description(i);
     //     auto l_previewer = l_des->activePreviewer();
     //     auto l_generator = l_des->activeGenerator();
@@ -139,7 +188,6 @@ MStatus xgen_abc_export::redoIt() {
     //     //           .c_str()
     //     //   );
     //     // }
-    //   }
   }
 
   return MStatus::kSuccess;
@@ -172,7 +220,8 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
     status = it_list.getDagPath(l_dag_path);
     maya_chick(status);
     // displayInfo(l_dag_path.fullPathName());
-    if (auto l_ptr = XgPalette::palette(get_node_name(l_dag_path)); l_ptr) p_i->palette_v.emplace_back(l_ptr);
+    if (auto l_ptr = XgPalette::palette(get_node_name(l_dag_path)); l_ptr)
+      p_i->palette_v.emplace_back(l_ptr, l_dag_path);
   }
 }
 

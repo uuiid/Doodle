@@ -113,7 +113,8 @@ MObject get_shading_engine(const MDagPath& in_node) {
   MObject obj{};
   for (MItDependencyGraph i{
            k_obj, MFn::Type::kShadingEngine, MItDependencyGraph::Direction::kDownstream,
-           MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
+           MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s
+       };
        !i.isDone(); i.next()) {
     DOODLE_MAYA_CHICK(k_s);
     obj = i.currentItem(&k_s);
@@ -139,7 +140,8 @@ std::vector<MObject> get_shading_engines(const MDagPath& in_node) {
   {
     for (MItDependencyGraph i{
              k_obj, MFn::Type::kShadingEngine, MItDependencyGraph::Direction::kDownstream,
-             MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
+             MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s
+         };
          !i.isDone(); i.next()) {
       obj = i.currentItem(&k_s);
       maya_chick(k_s);
@@ -156,7 +158,8 @@ MObject get_first_mesh(const MObject& in_node) {
 
   for (MItDependencyGraph i{
            k_obj, MFn::Type::kMesh, MItDependencyGraph::Direction::kDownstream,
-           MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s};
+           MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &k_s
+       };
        !i.isDone(); i.next()) {
     DOODLE_MAYA_CHICK(k_s);
     l_r = i.currentItem(&k_s);
@@ -295,6 +298,18 @@ std::string get_node_name_strip_name_space(const MDagPath& in_obj) {
   l_name = MNamespace::stripNamespaceFromName(l_name, &l_s);
   DOODLE_MAYA_CHICK(l_s);
   return d_str{l_name};
+}
+std::string get_name_space(const MDagPath& in_obj) {
+  MStatus l_s{};
+
+  auto l_name = in_obj.fullPathName(&l_s);
+  DOODLE_MAYA_CHICK(l_s);
+
+  if (MNamespace::namespaceExists(l_name, &l_s)) {
+    DOODLE_MAYA_CHICK(l_s);
+    return conv::to_s(MNamespace::getNamespaceFromName(l_name));
+  }
+  return {};
 }
 
 namespace details {
