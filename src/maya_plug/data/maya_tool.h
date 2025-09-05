@@ -73,6 +73,7 @@ std::string get_node_name(const MDagPath& in_obj, bool abs = false);
 std::string get_node_name_strip_name_space(const MDagPath& in_obj);
 std::string set_node_name(const MObject& in_obj, const std::string& in_name);
 std::string get_name_space(const MDagPath& in_obj);
+MDagPath get_dag_node_by_name(const std::string& in_name);
 
 namespace details {
 MObject shading_engine_to_mat(const MObject& in_shading_engine);

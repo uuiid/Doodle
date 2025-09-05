@@ -5,6 +5,7 @@
 #include "export_xgen_abc.h"
 
 #include "maya_plug/maya_comm/add_entt.h"
+#include <maya_plug/data/maya_file_io.h>
 
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
@@ -110,7 +111,7 @@ std::string xgen_abc_export::impl::create_render_args(
 ) {
   auto l_current_frame = MAnimControl::currentTime();
   auto l_namespace     = get_name_space(in_.palette_dag);
-  std::double_t l_unit_conv{};  // default cm;
+  std::double_t l_unit_conv{1};  // default cm;
   switch (MDistance::uiUnit()) {
     case MDistance::kInches:
       l_unit_conv = 2.54;
@@ -138,11 +139,15 @@ std::string xgen_abc_export::impl::create_render_args(
     case MDistance::kInvalid:
       break;
   }
+  FSys::path l_file_path = maya_file_io::get_current_path();
+  l_file_path.replace_extension();
+  FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache.abc"};
+
   auto l_str = fmt::format(
-      "-debug 1 -warning 1 -stats 1 -nameSpace {1} -palette {2} -description {3} -patch {4} -frame {5} -shutter 0.0 "
-      "-world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
+      "-debug 1 -warning 1 -stats 1 {8} {1} -palette {2} -description {3} -patch {4} -frame {5} "
+      "-file {6}__{2}.xgen -geom {7} -shutter 0.0  -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
       l_unit_conv, l_namespace, in_.palette_ptr->name(), in_des->name(), in_patch->name(),
-      l_current_frame.as(MTime::uiUnit())
+      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? "-nameSpace" : ""
   );
 
   return l_str;
@@ -152,18 +157,27 @@ MStatus xgen_abc_export::redoIt() {
   XgenRender l_callback{this};
   for (auto&& i : p_i->palette_v) {
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
-      auto l_des       = i.palette_ptr->description(j);
-      auto l_primitive = l_des->activePrimitive();
-      auto l_path      = l_primitive->cPatch();
-      auto l_args      = p_i->create_render_args(i, l_des, l_path);
-      auto l_render =
-          std::shared_ptr<XGenRenderAPI::PatchRenderer>{XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())
-          };
-      XGenRenderAPI::bbox l_sub_bbox;
-      unsigned int l_face_id = -1;
-      while (l_render->nextFace(l_sub_bbox, l_face_id)) {
-        auto* l_face = XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id);
-        l_face->render();
+      auto l_des = i.palette_ptr->description(j);
+      for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
+        if (!l_des || !l_ptr) {
+          auto l_des_name = l_des ? l_des->name() : std::string{};
+          auto l_str = fmt::format("集合 {} 描述 {} 为空(请刷新xgen预览), 无法解析", i.palette_ptr->name(), l_des_name);
+          displayError(conv::to_ms(l_str));
+          default_logger_raw()->info(l_str);
+          continue;
+        }
+
+        auto l_args   = p_i->create_render_args(i, l_des, l_ptr);
+        auto l_render = std::shared_ptr<XGenRenderAPI::PatchRenderer>{
+            XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())
+        };
+        if (!l_render) continue;
+        XGenRenderAPI::bbox l_sub_bbox;
+        unsigned int l_face_id = -1;
+        while (l_render->nextFace(l_sub_bbox, l_face_id)) {
+          auto* l_face = XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id);
+          l_face->render();
+        }
       }
     }
 

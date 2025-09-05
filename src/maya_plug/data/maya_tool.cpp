@@ -311,6 +311,14 @@ std::string get_name_space(const MDagPath& in_obj) {
   }
   return {};
 }
+MDagPath get_dag_node_by_name(const std::string& in_name) {
+  MStatus l_s{};
+  MSelectionList l_ss{};
+  DOODLE_MAYA_CHICK(l_ss.add(conv::to_ms(in_name)));
+  MDagPath l_path{};
+  DOODLE_MAYA_CHICK(l_ss.getDagPath(0, l_path));
+  return l_path;
+}
 
 namespace details {
 MObject shading_engine_to_mat(const MObject& in_shading_engine) {
