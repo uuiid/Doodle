@@ -73,10 +73,10 @@ void XgenRender::log(const char* in_str) {
 }
 bool XgenRender::get(EBoolAttribute in_attr) const { return false; }  /// 已经确认之间硬编码为 false
 float XgenRender::get(EFloatAttribute in_attr) const { return 0.f; }
-const char* XgenRender::get(EStringAttribute) const { return nullptr; }
+const char* XgenRender::get(EStringAttribute) const { return ""; }
 const float* XgenRender::get(EFloatArrayAttribute) const { return nullptr; }
 unsigned XgenRender::getSize(EFloatArrayAttribute) const { return 0; }
-const char* XgenRender::getOverride(const char* in_name) const { return nullptr; }    /// 确切不返回任何的覆盖属性
+const char* XgenRender::getOverride(const char* in_name) const { return ""; }    /// 确切不返回任何的覆盖属性
 void XgenRender::getTransform(float in_time, XGenRenderAPI::mat44& out_mat) const {}  /// 先不进行变换
 bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::bbox& out_bbox) const { return false; }
 
