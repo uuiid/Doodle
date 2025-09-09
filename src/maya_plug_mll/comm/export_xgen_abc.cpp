@@ -147,7 +147,10 @@ void XgenRender::log(const char* in_str) {
   p_owner->displayInfo(in_str);
   default_logger_raw()->info(in_str);
 }
-bool XgenRender::get(EBoolAttribute in_attr) const { return false; }  /// 已经确认之间硬编码为 false
+bool XgenRender::get(EBoolAttribute in_attr) const {
+  if (in_attr == EBoolAttribute::ClearDescriptionCache) return true;
+  return false;
+}  /// 已经确认之间硬编码为 false
 float XgenRender::get(EFloatAttribute in_attr) const { return 0.f; }
 const char* XgenRender::get(EStringAttribute in_attr) const {
   if (in_attr == EStringAttribute::CacheDir) return "xgenCache/";
@@ -364,29 +367,27 @@ MStatus xgen_abc_export::redoIt() {
           if (auto&& l_f = l_face_list.emplace_back(XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id)))
             l_f->render();
       }
+      // auto l_previewer = l_des->activePreviewer();
+      // auto l_primitive = l_des->activePrimitive();
+      //     auto l_generator = l_des->activeGenerator();
+      //     auto l_path      = l_primitive->cPatch();
+      // auto l_geom      = l_primitive->cGeom();
+      // auto l_str       = fmt::format("previewer {} {}", l_previewer->totalEmitCount(), l_geom.size());
+      // displayInfo(l_str.c_str());
+      //     // if (l_primitive->typeName() == "SplinePrimitive") {
+      //     //   const auto l_primitive_spline = dynamic_cast<XgSplinePrimitive*>(l_primitive);
+      //     //   safevector<SgVec3d> l_geom_v{};
+      //     //   SgCurveUtil::mkPolyLine(false, l_primitive_spline->getGeom(), l_geom_v);
+      //     //   auto l_size = l_geom_v.size();
+      //     //   displayInfo(
+      //     //       fmt::format(
+      //     //           "{} geom num {} path {} , spline geom num {}", l_des->name(), l_geom.size(), l_path->name(),
+      //     l_size
+      //     //       )
+      //     //           .c_str()
+      //     //   );
+      //     // }
     }
-
-    //     auto l_des       = l_ptr->description(i);
-    //     auto l_previewer = l_des->activePreviewer();
-    //     auto l_generator = l_des->activeGenerator();
-    //     auto l_primitive = l_des->activePrimitive();
-    //     auto l_path      = l_primitive->cPatch();
-    //     auto l_geom      = l_primitive->cGeom();
-    //     auto l_str       = fmt::format("previewer {}", l_previewer->totalEmitCount());
-    //     displayInfo(l_str.c_str());
-    //     // if (l_primitive->typeName() == "SplinePrimitive") {
-    //     //   const auto l_primitive_spline = dynamic_cast<XgSplinePrimitive*>(l_primitive);
-    //     //   safevector<SgVec3d> l_geom_v{};
-    //     //   SgCurveUtil::mkPolyLine(false, l_primitive_spline->getGeom(), l_geom_v);
-    //     //   auto l_size = l_geom_v.size();
-    //     //   displayInfo(
-    //     //       fmt::format(
-    //     //           "{} geom num {} path {} , spline geom num {}", l_des->name(), l_geom.size(), l_path->name(),
-    //     l_size
-    //     //       )
-    //     //           .c_str()
-    //     //   );
-    //     // }
   }
 
   return MStatus::kSuccess;
