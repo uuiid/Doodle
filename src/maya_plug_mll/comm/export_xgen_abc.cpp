@@ -37,6 +37,27 @@
 #include <xgen/src/xgrenderer/XgRenderAPIUtils.h>
 namespace doodle::maya_plug {
 
+void creare_curve(const XGenRenderAPI::vec3* in_point, std::size_t in_size) {
+  MPointArray l_point_array{};
+  l_point_array.setLength(in_size);
+  MDoubleArray l_double_array{};
+  std::double_t l_konts{boost::numeric_cast<std::double_t>(in_size + 2)};
+  l_double_array.setLength(l_konts);
+  for (auto j = 0; j < in_size; j++) {
+    l_point_array.set(j, in_point[j].x, in_point[j].y, in_point[j].z);
+    l_double_array.set(j / (l_konts - 1), j);
+  }
+  l_double_array.set(0.0, 1);
+  l_double_array.set(0.0, 2);
+  l_double_array.set(l_double_array[in_size - 1], in_size);
+  l_double_array.set(l_double_array[in_size - 1], in_size + 1);
+
+  MFnNurbsCurve l_fn{};
+  MStatus l_status{};
+  l_fn.create(l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status);
+  DOODLE_MAYA_CHICK(l_status);
+}
+
 class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
   std::string ir_render_cam_;
   std::string ir_render_cam_fov_;
@@ -105,28 +126,16 @@ void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_ca
     auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
     auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
     const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+    std::size_t l_index_off{};
+
+    /// 在maya中,
+    /// 玛雅表示：{0,0,0,...,N,N,N}
+    /// 外部表示：{0,0,0,0,...,N,N,N,N}
+    /// 所有需要去除第一个和开头的两个节点
+
     for (auto z = 0; z < l_num_size; ++z) {
-      MPointArray l_point_array{};
-      l_point_array.setLength(l_num[z]);
-      MDoubleArray l_double_array{};
-      std::double_t l_konts{boost::numeric_cast<std::double_t>(l_num[z] + 2)};
-      l_double_array.setLength(l_konts);
-      for (auto j = 0; j < l_num[z]; j++) {
-        l_point_array.set(j, l_pos[j].x, l_pos[j].y, l_pos[j].z);
-        l_double_array.set(j / (l_konts - 1), j);
-      }
-
-      l_double_array.set(0.0, 1);
-      l_double_array.set(0.0, 2);
-      l_double_array.set(l_double_array[l_num[z] - 1], l_num[z]);
-      l_double_array.set(l_double_array[l_num[z] - 1], l_num[z] + 1);
-
-      MFnNurbsCurve l_fn{};
-      MStatus l_status{};
-      l_fn.create(
-          l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status
-      );
-      DOODLE_MAYA_CHICK(l_status);
+      creare_curve(l_pos + l_index_off + 1, l_num[z] - 2);
+      l_index_off += l_num[z];
     }
   }
 
@@ -321,7 +330,7 @@ MStatus xgen_abc_export::redoIt() {
           default_logger_raw()->info(l_str);
           continue;
         }
-
+        XGenRenderAPI::PatchRenderer::deleteTempRenderPalettes();
         XgenRender l_callback{this, i.palette_dag};
         auto l_args   = p_i->create_render_args(i, l_des, l_ptr);
         auto l_render = std::shared_ptr<XGenRenderAPI::PatchRenderer>{
