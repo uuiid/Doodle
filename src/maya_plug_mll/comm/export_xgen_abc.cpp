@@ -4,16 +4,20 @@
 
 #include "export_xgen_abc.h"
 
-#include "maya_plug/maya_comm/add_entt.h"
 #include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
+#include <maya_plug/fmt/fmt_warp.h>
 
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDistance.h>
+#include <maya/MDoubleArray.h>
 #include <maya/MFn.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnNurbsCurve.h>
 #include <maya/MItSelectionList.h>
+#include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
 #include <xgen/src/sggeom/SgVec3T.h>
 #include <xgen/src/sggeom/SgXform3T.h>
@@ -34,9 +38,36 @@
 namespace doodle::maya_plug {
 
 class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
+  std::string ir_render_cam_;
+  std::string ir_render_cam_fov_;
+  std::string ir_render_cam_xform_;
+  std::string ir_render_cam_ratio_;
+  MDagPath des_dag_;
+  class auto_fclose {
+   public:
+    auto_fclose(FILE* fd) { m_fd = fd; }
+
+    ~auto_fclose() {
+      if (m_fd) fclose(m_fd);
+    }
+    FILE* m_fd;
+  };
+
  public:
   xgen_abc_export* p_owner;
-  XgenRender(xgen_abc_export* in_owner) : p_owner{in_owner} {}
+  XgenRender(xgen_abc_export* in_owner, const MDagPath& in_des_dag) : p_owner{in_owner}, des_dag_{in_des_dag} {
+    const static auto l_b_camera_ortho{false};
+    const static auto l_camera_pos{SgVec3d{-48.4233, 29.8617, -21.2033}};
+    const static auto l_camera_fov{54.432224};
+    const static std::array<float, 16> l_camera_xform{-0.397148, 0.446873,  0.80161,  0,        5.55112e-17, 0.873446,
+                                                      -0.48692,  0,         0.917755, 0.193379, 0.346887,    0,
+                                                      0.228188,  -0.343197, 60.712,   1};
+    const static auto l_camera_ratio{1.0};
+    ir_render_cam_ = fmt::format("{},{},{},{}", l_b_camera_ortho, l_camera_pos[0], l_camera_pos[1], l_camera_pos[2]);
+    ir_render_cam_fov_   = fmt::format("{}", l_camera_fov);
+    ir_render_cam_xform_ = fmt::format("{}", fmt::join(l_camera_xform, ","));
+    ir_render_cam_ratio_ = fmt::format("{}", l_camera_ratio);
+  }
 
   ~XgenRender() override;
   void flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_cache) override;
@@ -62,10 +93,42 @@ class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
 };
 XgenRender::~XgenRender() = default;
 void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_cache) {
-  p_owner->displayInfo(in_geom);
   using namespace XGenRenderAPI;
-  auto l_num = in_cache->get(PrimitiveCache::NumMotionSamples);
-  p_owner->displayInfo(fmt::format("{} num sp {}", in_geom, l_num).c_str());
+  bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
+  if (!bIsSpline) return;
+
+  auto l_num_samples  = in_cache->get(PrimitiveCache::NumMotionSamples);
+  auto l_width_size   = in_cache->getSize(PrimitiveCache::Widths);
+
+  const auto l_points = in_cache->getSize2(PrimitiveCache::Points, 0);
+  for (auto i = 0; i < l_num_samples; i++) {
+    auto* l_pos = in_cache->get(PrimitiveCache::Points, i);
+    MPointArray l_point_array{};
+    l_point_array.setLength(l_points);
+    MDoubleArray l_double_array{};
+    std::double_t l_konts{boost::numeric_cast<std::double_t>(l_points + 2)};
+    l_double_array.setLength(l_konts);
+    for (auto j = 0; j < l_points; j++) {
+      l_point_array.set(j, l_pos[j].x, l_pos[j].y, l_pos[j].z);
+      l_double_array.set(j / (l_konts - 1), j);
+    }
+
+    l_double_array.set(0.0, 1);
+    l_double_array.set(0.0, 2);
+    l_double_array.set(l_double_array[l_points - 1], l_points);
+    l_double_array.set(l_double_array[l_points - 1], l_points + 1);
+
+    MFnNurbsCurve l_fn{};
+    MStatus l_status{};
+    l_fn.create(
+        l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status
+    );
+    DOODLE_MAYA_CHICK(l_status);
+  }
+
+  // p_owner->displayInfo(
+  //     conv::to_ms(fmt::format("points {}, num_vector {}, width {}", l_points, l_num_vector, l_width_size))
+  // );
 }
 void XgenRender::log(const char* in_str) {
   p_owner->displayInfo(in_str);
@@ -73,12 +136,101 @@ void XgenRender::log(const char* in_str) {
 }
 bool XgenRender::get(EBoolAttribute in_attr) const { return false; }  /// 已经确认之间硬编码为 false
 float XgenRender::get(EFloatAttribute in_attr) const { return 0.f; }
-const char* XgenRender::get(EStringAttribute) const { return ""; }
+const char* XgenRender::get(EStringAttribute in_attr) const {
+  if (in_attr == EStringAttribute::RenderCam) return ir_render_cam_.c_str();
+  if (in_attr == EStringAttribute::RenderCamFOV) return ir_render_cam_fov_.c_str();
+  if (in_attr == EStringAttribute::RenderCamRatio) return ir_render_cam_ratio_.c_str();
+  if (in_attr == EStringAttribute::RenderCamXform) return ir_render_cam_xform_.c_str();
+
+  return "";
+}
 const float* XgenRender::get(EFloatArrayAttribute) const { return nullptr; }
 unsigned XgenRender::getSize(EFloatArrayAttribute) const { return 0; }
-const char* XgenRender::getOverride(const char* in_name) const { return ""; }    /// 确切不返回任何的覆盖属性
+const char* XgenRender::getOverride(const char* in_name) const { return ""; }         /// 确切不返回任何的覆盖属性
 void XgenRender::getTransform(float in_time, XGenRenderAPI::mat44& out_mat) const {}  /// 先不进行变换
-bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::bbox& out_bbox) const { return false; }
+bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::bbox& out_bbox) const {
+  std::string fname(in_filename);
+
+  // Do not attempt to read non-RIB archives (e.g. .caf)
+  if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "Reading " + fname);
+
+  if (fname.find(".abc") == (fname.length() - 4)) {
+    out_bbox.xmin = -1.0;
+    out_bbox.ymin = -1.0;
+    out_bbox.zmin = -1.0;
+
+    out_bbox.xmax = 1.0;
+    out_bbox.ymax = 1.0;
+    out_bbox.zmax = 1.0;
+
+    return true;
+  }
+
+  if (fname.find(".ass") == (fname.length() - 4)) {
+    FILE* fd = fopen(in_filename, "rb");
+    if (!fd) {
+      if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "Could not open " + fname);
+      return false;
+    }
+
+    // Use an auto_fclose since we are returning from the function all over the place.
+    auto_fclose afd(fd);
+
+    // Scan the first N lines searching for "## BBOX ...."
+    const int limit       = 13;
+    const int inner_limit = 192;
+    int matched;
+    int count       = 0;
+    int inner_count = 0;
+
+    while (count < limit) {
+      count++;
+      inner_count = 0;
+      matched     = fscanf(
+          fd, "## BBOX %lf %lf %lf %lf %lf %lf", &out_bbox.xmin, &out_bbox.xmax, &out_bbox.ymin, &out_bbox.ymax,
+          &out_bbox.zmin, &out_bbox.zmax
+      );
+
+      if (matched == 0) {
+        // Skip this line
+        char c = fgetc(fd);
+        if (/*EOF == c ||*/ feof(fd)) return false;
+
+        while (c != '\n') {
+          c = fgetc(fd);
+          // Guard against really long lines
+          if (inner_limit <= inner_count++) break;
+          if (/*EOF == c ||*/ feof(fd)) {
+            if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "EOF");
+            return false;
+          }
+        }
+        continue;
+      }
+
+      if (matched == 6) {
+        if (XGDebugLevel >= 2)
+          XGDebug(
+              xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/
+              "DRA BBOX" + std::string(" ") + std::to_string((long double)out_bbox.xmin) + std::string(" ") +
+                  std::to_string((long double)out_bbox.xmax) + std::string(" ") +
+                  std::to_string((long double)out_bbox.ymin) + std::string(" ") +
+                  std::to_string((long double)out_bbox.ymax) + std::string(" ") +
+                  std::to_string((long double)out_bbox.zmin) + std::string(" ") +
+                  std::to_string((long double)out_bbox.zmax)
+          );
+
+        return true;
+      }
+      if (EOF == matched || feof(fd)) {
+        if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "EOF");
+        break;
+      }
+    }
+  }
+
+  return false;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -141,7 +293,7 @@ std::string xgen_abc_export::impl::create_render_args(
   }
   FSys::path l_file_path = maya_file_io::get_current_path();
   l_file_path.replace_extension();
-  FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache.abc"};
+  FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache111.abc"};
 
   auto l_str = fmt::format(
       "-debug 1 -warning 1 -stats 1 {8} {1} -palette {2} -description {3} -patch {4} -frame {5} "
@@ -154,7 +306,6 @@ std::string xgen_abc_export::impl::create_render_args(
 }
 
 MStatus xgen_abc_export::redoIt() {
-  XgenRender l_callback{this};
   for (auto&& i : p_i->palette_v) {
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
       auto l_des = i.palette_ptr->description(j);
@@ -167,6 +318,7 @@ MStatus xgen_abc_export::redoIt() {
           continue;
         }
 
+        XgenRender l_callback{this, i.palette_dag};
         auto l_args   = p_i->create_render_args(i, l_des, l_ptr);
         auto l_render = std::shared_ptr<XGenRenderAPI::PatchRenderer>{
             XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())
