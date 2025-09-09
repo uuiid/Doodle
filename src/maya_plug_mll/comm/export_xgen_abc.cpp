@@ -330,10 +330,10 @@ MStatus xgen_abc_export::redoIt() {
         if (!l_render) continue;
         XGenRenderAPI::bbox l_sub_bbox;
         unsigned int l_face_id = -1;
-        while (l_render->nextFace(l_sub_bbox, l_face_id)) {
-          auto* l_face = XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id);
-          l_face->render();
-        }
+        std::vector<std::unique_ptr<XGenRenderAPI::FaceRenderer>> l_face_list{};
+        while (l_render->nextFace(l_sub_bbox, l_face_id))
+          if (auto&& l_f = l_face_list.emplace_back(XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id)))
+            l_f->render();
       }
     }
 
