@@ -102,28 +102,32 @@ void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_ca
 
   const auto l_points = in_cache->getSize2(PrimitiveCache::Points, 0);
   for (auto i = 0; i < l_num_samples; i++) {
-    auto* l_pos = in_cache->get(PrimitiveCache::Points, i);
-    MPointArray l_point_array{};
-    l_point_array.setLength(l_points);
-    MDoubleArray l_double_array{};
-    std::double_t l_konts{boost::numeric_cast<std::double_t>(l_points + 2)};
-    l_double_array.setLength(l_konts);
-    for (auto j = 0; j < l_points; j++) {
-      l_point_array.set(j, l_pos[j].x, l_pos[j].y, l_pos[j].z);
-      l_double_array.set(j / (l_konts - 1), j);
+    auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
+    auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
+    const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+    for (auto z = 0; z < l_num_size; ++z) {
+      MPointArray l_point_array{};
+      l_point_array.setLength(l_num[z]);
+      MDoubleArray l_double_array{};
+      std::double_t l_konts{boost::numeric_cast<std::double_t>(l_num[z] + 2)};
+      l_double_array.setLength(l_konts);
+      for (auto j = 0; j < l_num[z]; j++) {
+        l_point_array.set(j, l_pos[j].x, l_pos[j].y, l_pos[j].z);
+        l_double_array.set(j / (l_konts - 1), j);
+      }
+
+      l_double_array.set(0.0, 1);
+      l_double_array.set(0.0, 2);
+      l_double_array.set(l_double_array[l_num[z] - 1], l_num[z]);
+      l_double_array.set(l_double_array[l_num[z] - 1], l_num[z] + 1);
+
+      MFnNurbsCurve l_fn{};
+      MStatus l_status{};
+      l_fn.create(
+          l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status
+      );
+      DOODLE_MAYA_CHICK(l_status);
     }
-
-    l_double_array.set(0.0, 1);
-    l_double_array.set(0.0, 2);
-    l_double_array.set(l_double_array[l_points - 1], l_points);
-    l_double_array.set(l_double_array[l_points - 1], l_points + 1);
-
-    MFnNurbsCurve l_fn{};
-    MStatus l_status{};
-    l_fn.create(
-        l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status
-    );
-    DOODLE_MAYA_CHICK(l_status);
   }
 
   // p_owner->displayInfo(
