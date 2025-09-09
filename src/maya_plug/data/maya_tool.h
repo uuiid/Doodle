@@ -77,7 +77,8 @@ MDagPath get_dag_node_by_name(const std::string& in_name);
 
 namespace details {
 MObject shading_engine_to_mat(const MObject& in_shading_engine);
-double spf();
+std::double_t spf();
+std::double_t fps();
 }  // namespace details
 
 namespace comm_warp {

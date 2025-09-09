@@ -337,9 +337,116 @@ MObject shading_engine_to_mat(const MObject& in_shading_engine) {
   return k_mat;
 }
 
-double spf() {
-  static const MTime sec(1.0, MTime::kSeconds);
-  return 1.0 / sec.as(MTime::uiUnit());
+std::double_t spf() { return 1.0 / fps(); }
+std::double_t fps() {
+  switch (MTime::uiUnit()) {
+    case MTime::kInvalid:
+      break;
+    case MTime::kHours:
+      break;
+    case MTime::kMinutes:
+      break;
+    case MTime::kSeconds:
+      break;
+    case MTime::kMilliseconds:
+      break;
+    case MTime::k15FPS:
+      return 15;
+    case MTime::k24FPS:
+      return 24;
+    case MTime::k25FPS:
+      return 25;
+    case MTime::k30FPS:
+      return 30;
+    case MTime::k48FPS:
+      return 48;
+    case MTime::k50FPS:
+      break;
+    case MTime::k60FPS:
+      break;
+    case MTime::k2FPS:
+      break;
+    case MTime::k3FPS:
+      break;
+    case MTime::k4FPS:
+      break;
+    case MTime::k5FPS:
+      break;
+    case MTime::k6FPS:
+      break;
+    case MTime::k8FPS:
+      break;
+    case MTime::k10FPS:
+      break;
+    case MTime::k12FPS:
+      break;
+    case MTime::k16FPS:
+      break;
+    case MTime::k20FPS:
+      break;
+    case MTime::k40FPS:
+      break;
+    case MTime::k75FPS:
+      break;
+    case MTime::k80FPS:
+      break;
+    case MTime::k100FPS:
+      break;
+    case MTime::k120FPS:
+      break;
+    case MTime::k125FPS:
+      break;
+    case MTime::k150FPS:
+      break;
+    case MTime::k200FPS:
+      break;
+    case MTime::k240FPS:
+      break;
+    case MTime::k250FPS:
+      break;
+    case MTime::k300FPS:
+      break;
+    case MTime::k375FPS:
+      break;
+    case MTime::k400FPS:
+      break;
+    case MTime::k500FPS:
+      break;
+    case MTime::k600FPS:
+      break;
+    case MTime::k750FPS:
+      break;
+    case MTime::k1200FPS:
+      break;
+    case MTime::k1500FPS:
+      break;
+    case MTime::k2000FPS:
+      break;
+    case MTime::k3000FPS:
+      break;
+    case MTime::k6000FPS:
+      break;
+    case MTime::k23_976FPS:
+      break;
+    case MTime::k29_97FPS:
+      break;
+    case MTime::k29_97DF:
+      break;
+    case MTime::k47_952FPS:
+      break;
+    case MTime::k59_94FPS:
+      break;
+    case MTime::k44100FPS:
+      break;
+    case MTime::k48000FPS:
+      break;
+    case MTime::k90FPS:
+      break;
+    case MTime::kUserDef:
+    case MTime::kLast:
+      break;
+  }
+  return 24.0;
 }
 
 }  // namespace details

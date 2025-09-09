@@ -425,25 +425,24 @@ void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime
   //     l_times
   // );
   DOODLE_LOG_INFO(
-      "检查到帧率 {}({}), 开始时间 {}({})", 1.0 / maya_plug::details::spf(),
-      boost::numeric_cast<std::float_t>(maya_plug::details::spf()), in_time_begin.value(),
-      boost::numeric_cast<std::float_t>(in_time_end.as(MTime::kSeconds))
+      "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), in_time_begin.value(),
+      in_time_end.as(MTime::kSeconds)
   );
   shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
-      boost::numeric_cast<std::float_t>(maya_plug::details::spf()),
-      boost::numeric_cast<std::float_t>(in_time_begin.as(MTime::kSeconds))
+      maya_plug::details::spf(), in_time_begin.as(MTime::kSeconds)
   );
   transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
-      boost::numeric_cast<std::float_t>(maya_plug::details::spf()),
-      boost::numeric_cast<std::float_t>(in_time_begin.as(MTime::kSeconds))
+      maya_plug::details::spf(), in_time_begin.as(MTime::kSeconds)
   );
 }
 
 void archive_out::open(const std::vector<MDagPath>& in_out_path) {
-  o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(Alembic::Abc::v12::CreateArchiveWithInfo(
-      Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
-      maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
-  )));
+  o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(
+      Alembic::Abc::v12::CreateArchiveWithInfo(
+          Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
+          maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
+      )
+  ));
 
   if (!o_archive_->valid()) {
     throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
