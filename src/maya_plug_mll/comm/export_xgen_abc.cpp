@@ -150,10 +150,12 @@ void XgenRender::log(const char* in_str) {
 bool XgenRender::get(EBoolAttribute in_attr) const { return false; }  /// 已经确认之间硬编码为 false
 float XgenRender::get(EFloatAttribute in_attr) const { return 0.f; }
 const char* XgenRender::get(EStringAttribute in_attr) const {
+  if (in_attr == EStringAttribute::CacheDir) return "xgenCache/";
   if (in_attr == EStringAttribute::RenderCam) return ir_render_cam_.c_str();
   if (in_attr == EStringAttribute::RenderCamFOV) return ir_render_cam_fov_.c_str();
   if (in_attr == EStringAttribute::RenderCamRatio) return ir_render_cam_ratio_.c_str();
   if (in_attr == EStringAttribute::RenderCamXform) return ir_render_cam_xform_.c_str();
+  if (in_attr == EStringAttribute::RenderMethod) return "1";
 
   return "";
 }
@@ -304,15 +306,27 @@ std::string xgen_abc_export::impl::create_render_args(
     case MDistance::kInvalid:
       break;
   }
+  std::double_t l_fps{};
+  switch (MTime::uiUnit()) {
+    case MTime::k24FPS:
+      l_fps = 24;
+    case MTime::k25FPS:
+      l_fps = 25;
+    case MTime::k30FPS:
+      l_fps = 30;
+    default:
+      l_fps = 24;
+  }
   FSys::path l_file_path = maya_file_io::get_current_path();
   l_file_path.replace_extension();
-  FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache111.abc"};
+  FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache.abc"};
 
   auto l_str = fmt::format(
       "-debug 1 -warning 1 -stats 1 {8} {1} -palette {2} -description {3} -patch {4} -frame {5} "
-      "-file {6}__{2}.xgen -geom {7} -shutter 0.0  -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
+      "-file {6}__{2}.xgen -geom {7} -fps {9} -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
       l_unit_conv, l_namespace, in_.palette_ptr->name(), in_des->name(), in_patch->name(),
-      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? "-nameSpace" : ""
+      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? "-nameSpace" : "",
+      l_fps
   );
 
   return l_str;
@@ -322,6 +336,11 @@ MStatus xgen_abc_export::redoIt() {
   for (auto&& i : p_i->palette_v) {
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
       auto l_des = i.palette_ptr->description(j);
+      // for (auto&& l_render : {l_des->activePreviewer(), l_des->activeRenderer()}) {
+      //   l_render->setDirty(true);
+      //   l_render->finishDescription();
+      //   l_render->refresh(true, true);
+      // }
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
         if (!l_des || !l_ptr) {
           auto l_des_name = l_des ? l_des->name() : std::string{};
@@ -332,7 +351,8 @@ MStatus xgen_abc_export::redoIt() {
         }
         XGenRenderAPI::PatchRenderer::deleteTempRenderPalettes();
         XgenRender l_callback{this, i.palette_dag};
-        auto l_args   = p_i->create_render_args(i, l_des, l_ptr);
+        auto l_args = p_i->create_render_args(i, l_des, l_ptr);
+        displayInfo(l_args.c_str());
         auto l_render = std::shared_ptr<XGenRenderAPI::PatchRenderer>{
             XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())
         };
