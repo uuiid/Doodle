@@ -136,14 +136,24 @@ class xgen_alembic_out {
     auto& l_xform = o_xform_ptr_->getSchema();
     Alembic::AbcGeom::XformSample l_sample{};
     l_xform.set(l_sample);
-    o_curve_ptr_  = std::make_shared<Alembic::AbcGeom::OCurves>(*o_xform_ptr_, "curve", shape_time_index_);
-
-    auto& l_curve = o_curve_ptr_->getSchema();
-    Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
-    l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
-    l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
-    l_curve_sample.setType(Alembic::AbcGeom::kCubic);
-    l_curve.set(l_curve_sample);
+    o_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(*o_xform_ptr_, "curve", shape_time_index_);
+  }
+  void creare_curve(
+      const XGenRenderAPI::vec3* in_point, std::size_t in_size, std::vector<Alembic::Abc::V3f>& out_points,
+      std::vector<std::float_t>& out_knots
+  ) {
+    out_points.reserve(in_size + out_points.size());
+    auto l_begin = out_knots.size();
+    auto l_end   = in_size + 2 + out_knots.size();
+    out_knots.reserve(l_end);
+    for (auto j = 0; j < in_size; j++) {
+      out_points.emplace_back(in_point[j].x, in_point[j].y, in_point[j].z);
+      out_knots.emplace_back(static_cast<std::float_t>(j) / (in_size + 2 - 1));
+    }
+    out_knots[l_begin + 1] = 0.0;
+    out_knots[l_begin + 2] = 0.0;
+    out_knots[l_end - 2]   = out_knots[l_end - 3];
+    out_knots[l_end - 1]   = out_knots[l_end - 3];
   }
 
  public:
@@ -161,12 +171,51 @@ class xgen_alembic_out {
     std::vector<Alembic::Abc::V3f> l_points{};
     std::vector<std::float_t> l_widths{};
     std::vector<std::float_t> l_knots{};
+    using namespace XGenRenderAPI;
+    bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
+    if (!bIsSpline) return;
 
+    auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
+    auto l_const_width = in_cache->get(PrimitiveCache::ConstWidth);
+    if (l_const_width) l_widths.emplace_back(in_cache->get(PrimitiveCache::ConstantWidth));
+
+    // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
+    for (auto i = 0; i < l_num_samples; i++) {
+      auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
+      auto* l_width         = in_cache->get(PrimitiveCache::Widths);
+      auto l_width_size     = in_cache->getSize(PrimitiveCache::Widths);
+
+      auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
+      const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+      std::size_t l_index_off{};
+
+      /// 在maya中,
+      /// 玛雅表示：{0,0,0,...,N,N,N}
+      /// 外部表示：{0,0,0,0,...,N,N,N,N}
+      /// 所有需要去除第一个和开头的两个节点
+      for (auto z = 0; z < l_num_size; ++z) {
+        creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, l_points, l_knots);
+        l_index_off += l_num[z];
+        l_vertices.emplace_back(l_num[z]);
+      }
+      if (!l_const_width) {
+        l_widths.reserve(l_width_size);
+        for (auto z = 0; z < l_width_size; ++z) l_widths.emplace_back(l_width[z]);
+      }
+      break;
+    }
     auto& l_curve = o_curve_ptr_->getSchema();
     Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
+    l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
+    l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
+    l_curve_sample.setType(Alembic::AbcGeom::kCubic);
     l_curve_sample.setCurvesNumVertices(l_vertices);
     l_curve_sample.setPositions(l_points);
-    l_curve_sample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample{l_widths, Alembic::AbcGeom::kVertexScope});
+    l_curve_sample.setWidths(
+        Alembic::AbcGeom::OFloatGeomParam::Sample{
+            l_widths, l_const_width ? Alembic::AbcGeom::kConstantScope : Alembic::AbcGeom::kVertexScope
+        }
+    );
     l_curve_sample.setKnots(l_knots);
     l_curve.set(l_curve_sample);
   };
@@ -220,34 +269,7 @@ class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
 };
 XgenRender::~XgenRender() = default;
 void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_cache) {
-  using namespace XGenRenderAPI;
-  bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
-  if (!bIsSpline) return;
-
-  auto l_num_samples  = in_cache->get(PrimitiveCache::NumMotionSamples);
-  auto l_width_size   = in_cache->getSize(PrimitiveCache::Widths);
-
-  const auto l_points = in_cache->getSize2(PrimitiveCache::Points, 0);
-  for (auto i = 0; i < l_num_samples; i++) {
-    auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
-    auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
-    const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-    std::size_t l_index_off{};
-
-    /// 在maya中,
-    /// 玛雅表示：{0,0,0,...,N,N,N}
-    /// 外部表示：{0,0,0,0,...,N,N,N,N}
-    /// 所有需要去除第一个和开头的两个节点
-
-    for (auto z = 0; z < l_num_size; ++z) {
-      creare_curve(l_pos + l_index_off + 1, l_num[z] - 2);
-      l_index_off += l_num[z];
-    }
-  }
-
-  // p_owner->displayInfo(
-  //     conv::to_ms(fmt::format("points {}, num_vector {}, width {}", l_points, l_num_vector, l_width_size))
-  // );
+  o_alembic_out_->write(in_cache);
 }
 void XgenRender::log(const char* in_str) {
   p_owner->displayInfo(in_str);
@@ -378,14 +400,16 @@ MStatus xgen_abc_export::redoIt() {
         continue;
       }
       l_abc_file_path_gen->add_external_string = l_des->name();
-      auto l_out_path = (*l_abc_file_path_gen)(l_namespace);
       std::shared_ptr<xgen_alembic_out> l_xgen_alembic_out_ptr{};
       if (l_out_list.contains(l_des))
         l_xgen_alembic_out_ptr = l_out_list.at(l_des);
-      else
+      else {
+        auto l_out_path = (*l_abc_file_path_gen)(l_namespace);
+        displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
         l_xgen_alembic_out_ptr =
             l_out_list.emplace(l_des, std::make_shared<xgen_alembic_out>(l_out_path, l_begin_time, l_end_time))
                 .first->second;
+      }
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
         if (!l_ptr) {
           displayError(
