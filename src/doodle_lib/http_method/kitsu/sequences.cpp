@@ -178,7 +178,7 @@ struct data_project_sequences_args {
   // form json
   friend void from_json(const nlohmann::json& j, data_project_sequences_args& p) {
     if (j.contains("episode_id") && !j.at("episode_id").is_null()) j.at("episode_id").get_to(p.episode_id_);
-    if (j.contains("description")) j.at("description").get_to(p.description_);
+    if (j.contains("description") && !j.at("description").is_null()) j.at("description").get_to(p.description_);
     j.at("name").get_to(p.name_);
   }
 };
