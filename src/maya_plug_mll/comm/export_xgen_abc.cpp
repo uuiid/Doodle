@@ -79,7 +79,6 @@ class xgen_alembic_out {
   using o_archive_ptr        = std::shared_ptr<Alembic::Abc::OArchive>;
   using o_box3d_property_ptr = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
   using o_xform_ptr          = std::shared_ptr<Alembic::AbcGeom::OXform>;
-  using o_mesh_ptr           = std::shared_ptr<Alembic::AbcGeom::OPolyMesh>;
   using o_curve_ptr          = std::shared_ptr<Alembic::AbcGeom::OCurves>;
 
  private:
@@ -136,7 +135,9 @@ class xgen_alembic_out {
     auto& l_xform = o_xform_ptr_->getSchema();
     Alembic::AbcGeom::XformSample l_sample{};
     l_xform.set(l_sample);
-    o_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(*o_xform_ptr_, "curve", shape_time_index_);
+    o_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
+        *o_xform_ptr_, "curve", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
+    );
   }
   void creare_curve(
       const XGenRenderAPI::vec3* in_point, std::size_t in_size, std::vector<Alembic::Abc::V3f>& out_points,
@@ -187,8 +188,11 @@ class xgen_alembic_out {
 
       auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
       const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-      std::size_t l_index_off{};
+      l_points.reserve(in_cache->getSize2(PrimitiveCache::Points, i));
+      l_knots.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2);
+      l_vertices.reserve(l_num_size);
 
+      std::size_t l_index_off{};
       /// 在maya中,
       /// 玛雅表示：{0,0,0,...,N,N,N}
       /// 外部表示：{0,0,0,0,...,N,N,N,N}
@@ -204,7 +208,6 @@ class xgen_alembic_out {
       }
       break;
     }
-    auto& l_curve = o_curve_ptr_->getSchema();
     Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
     l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
     l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
@@ -217,7 +220,11 @@ class xgen_alembic_out {
         }
     );
     l_curve_sample.setKnots(l_knots);
+    auto& l_curve = o_curve_ptr_->getSchema();
     l_curve.set(l_curve_sample);
+    Alembic::Abc::Box3d l_box{};
+    for (auto&& i : l_points) l_box.extendBy(i);
+    o_box3d_property_ptr_->set(l_box);
   };
 };
 
