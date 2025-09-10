@@ -38,6 +38,7 @@ class generate_file_path_base : boost::less_than_comparable<generate_file_path_b
 
   std::pair<MTime, MTime> begin_end_time;
   FSys::path operator()(const reference_file &in_ref) const;
+  FSys::path operator()(const std::string &in_name_space) const;
   [[nodiscard("")]] bool operator==(const generate_file_path_base &in) const noexcept;
   [[nodiscard("")]] bool operator<(const generate_file_path_base &in) const noexcept;
 };

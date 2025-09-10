@@ -51,6 +51,9 @@ namespace reference_file_ns {
 FSys::path generate_file_path_base::operator()(const reference_file &in_ref) const {
   return get_path() / get_name(in_ref.export_group_attr().has_value() ? in_ref.get_namespace() : ""s);
 }
+FSys::path generate_file_path_base::operator()(const std::string &in_name_space) const {
+  return get_path() / get_name(in_name_space);
+}
 
 bool generate_file_path_base::operator==(const generate_file_path_base &in) const noexcept {
   return std::tie(extract_reference_name, extract_scene_name, use_add_range, add_external_string) ==

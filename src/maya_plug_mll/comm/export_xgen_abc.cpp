@@ -5,6 +5,7 @@
 #include "export_xgen_abc.h"
 
 #include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/reference_file.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
@@ -79,6 +80,7 @@ class xgen_alembic_out {
   using o_box3d_property_ptr = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
   using o_xform_ptr          = std::shared_ptr<Alembic::AbcGeom::OXform>;
   using o_mesh_ptr           = std::shared_ptr<Alembic::AbcGeom::OPolyMesh>;
+  using o_curve_ptr          = std::shared_ptr<Alembic::AbcGeom::OCurves>;
 
  private:
   MTime begin_time_{};
@@ -92,6 +94,11 @@ class xgen_alembic_out {
   std::int32_t shape_time_index_{};
   std::int32_t transform_time_index_{};
   o_box3d_property_ptr o_box3d_property_ptr_{};
+
+  o_xform_ptr o_xform_ptr_{};
+  o_curve_ptr o_curve_ptr_{};
+  bool init_{false};
+
   void open() {
     DOODLE_LOG_INFO(
         "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), begin_time_.value(),
@@ -124,7 +131,20 @@ class xgen_alembic_out {
     if (!o_box3d_property_ptr_->valid()) {
       throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
     }
-  };
+    o_xform_ptr_ =
+        std::make_shared<Alembic::AbcGeom::OXform>(o_archive_->getTop(), "root_curve", transform_time_index_);
+    auto& l_xform = o_xform_ptr_->getSchema();
+    Alembic::AbcGeom::XformSample l_sample{};
+    l_xform.set(l_sample);
+    o_curve_ptr_  = std::make_shared<Alembic::AbcGeom::OCurves>(*o_xform_ptr_, "curve", shape_time_index_);
+
+    auto& l_curve = o_curve_ptr_->getSchema();
+    Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
+    l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
+    l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
+    l_curve_sample.setType(Alembic::AbcGeom::kCubic);
+    l_curve.set(l_curve_sample);
+  }
 
  public:
   explicit xgen_alembic_out(FSys::path in_path, const MTime& in_begin_time, const MTime& in_end_time)
@@ -132,7 +152,24 @@ class xgen_alembic_out {
     open();
   };
 
-  void write(XGenRenderAPI::PrimitiveCache* in_cache);
+  void write(XGenRenderAPI::PrimitiveCache* in_cache) {
+    if (!init_) {  // 初始化
+      init_ = true;
+    }
+    // 写入动画
+    std::vector<std::int32_t> l_vertices{};
+    std::vector<Alembic::Abc::V3f> l_points{};
+    std::vector<std::float_t> l_widths{};
+    std::vector<std::float_t> l_knots{};
+
+    auto& l_curve = o_curve_ptr_->getSchema();
+    Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
+    l_curve_sample.setCurvesNumVertices(l_vertices);
+    l_curve_sample.setPositions(l_points);
+    l_curve_sample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample{l_widths, Alembic::AbcGeom::kVertexScope});
+    l_curve_sample.setKnots(l_knots);
+    l_curve.set(l_curve_sample);
+  };
 };
 
 class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
@@ -140,20 +177,12 @@ class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
   std::string ir_render_cam_fov_;
   std::string ir_render_cam_xform_;
   std::string ir_render_cam_ratio_;
-  MDagPath des_dag_;
-  class auto_fclose {
-   public:
-    auto_fclose(FILE* fd) { m_fd = fd; }
-
-    ~auto_fclose() {
-      if (m_fd) fclose(m_fd);
-    }
-    FILE* m_fd;
-  };
+  std::shared_ptr<xgen_alembic_out> o_alembic_out_;
 
  public:
   xgen_abc_export* p_owner;
-  XgenRender(xgen_abc_export* in_owner, const MDagPath& in_des_dag) : p_owner{in_owner}, des_dag_{in_des_dag} {
+  XgenRender(xgen_abc_export* in_owner, const std::shared_ptr<xgen_alembic_out>& in_out)
+      : p_owner{in_owner}, o_alembic_out_(in_out) {
     const static auto l_b_camera_ortho{false};
     const static auto l_camera_pos{SgVec3d{-48.4233, 29.8617, -21.2033}};
     const static auto l_camera_fov{54.432224};
@@ -225,9 +254,9 @@ void XgenRender::log(const char* in_str) {
   default_logger_raw()->info(in_str);
 }
 bool XgenRender::get(EBoolAttribute in_attr) const {
-  if (in_attr == EBoolAttribute::ClearDescriptionCache) return true;
+  if (in_attr == EBoolAttribute::ClearDescriptionCache) return true;  // 这样才会在运行时渲染
   return false;
-}  /// 已经确认之间硬编码为 false
+}
 float XgenRender::get(EFloatAttribute in_attr) const { return 0.f; }
 const char* XgenRender::get(EStringAttribute in_attr) const {
   if (in_attr == EStringAttribute::CacheDir) return "xgenCache/";
@@ -332,19 +361,45 @@ std::string xgen_abc_export::impl::create_render_args(
 }
 
 MStatus xgen_abc_export::redoIt() {
+  auto l_begin_time                   = MAnimControl::minTime();
+  auto l_end_time                     = MAnimControl::maxTime();
+  auto l_abc_file_path_gen            = std::make_shared<reference_file_ns::generate_abc_file_path>();
+  l_abc_file_path_gen->begin_end_time = {l_begin_time, l_end_time};
+  std::map<XgDescription*, std::shared_ptr<xgen_alembic_out>> l_out_list{};
   for (auto&& i : p_i->palette_v) {
+    auto l_namespace = get_name_space(i.palette_dag);
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
       auto l_des = i.palette_ptr->description(j);
+
+      if (!l_des) {
+        displayError(
+            conv::to_ms(fmt::format("集合 {} 描述 index {} 为空(请刷新xgen预览), 无法解析", i.palette_ptr->name(), j))
+        );
+        continue;
+      }
+      l_abc_file_path_gen->add_external_string = l_des->name();
+      auto l_out_path = (*l_abc_file_path_gen)(l_namespace);
+      std::shared_ptr<xgen_alembic_out> l_xgen_alembic_out_ptr{};
+      if (l_out_list.contains(l_des))
+        l_xgen_alembic_out_ptr = l_out_list.at(l_des);
+      else
+        l_xgen_alembic_out_ptr =
+            l_out_list.emplace(l_des, std::make_shared<xgen_alembic_out>(l_out_path, l_begin_time, l_end_time))
+                .first->second;
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
-        if (!l_des || !l_ptr) {
-          auto l_des_name = l_des ? l_des->name() : std::string{};
-          auto l_str = fmt::format("集合 {} 描述 {} 为空(请刷新xgen预览), 无法解析", i.palette_ptr->name(), l_des_name);
-          displayError(conv::to_ms(l_str));
-          default_logger_raw()->info(l_str);
+        if (!l_ptr) {
+          displayError(
+              conv::to_ms(
+                  fmt::format(
+                      "集合 {} 描述 {} patches {} 为空(请刷新xgen预览), 无法解析", i.palette_ptr->name(), l_des->name(),
+                      l_path_name
+                  )
+              )
+          );
           continue;
         }
         XGenRenderAPI::PatchRenderer::deleteTempRenderPalettes();
-        XgenRender l_callback{this, i.palette_dag};
+        XgenRender l_callback{this, l_xgen_alembic_out_ptr};
         auto l_args = p_i->create_render_args(i, l_des, l_ptr);
         displayInfo(l_args.c_str());
         auto l_render = std::shared_ptr<XGenRenderAPI::PatchRenderer>{
