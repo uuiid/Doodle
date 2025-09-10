@@ -220,7 +220,7 @@ FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen, std
   l_cam.back_camera(in_gen->begin_end_time.first, in_gen->begin_end_time.second);
   auto& l_gen = *std::dynamic_pointer_cast<reference_file_ns::generate_fbx_file_path>(in_gen);
   l_gen.is_camera(true);
-  auto l_path = l_gen({});
+  auto l_path = l_gen("");
   {
     fbx_write l_fbx_write{};
     l_fbx_write.set_path(l_path);
