@@ -8,6 +8,20 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
+#include <Alembic/Abc/ArchiveInfo.h>
+#include <Alembic/Abc/Foundation.h>
+#include <Alembic/Abc/TypedArraySample.h>
+#include <Alembic/AbcCoreAbstract/TimeSampling.h>
+#include <Alembic/AbcCoreOgawa/All.h>
+#include <Alembic/AbcGeom/All.h>
+#include <Alembic/AbcGeom/FaceSetExclusivity.h>
+#include <Alembic/AbcGeom/Foundation.h>
+#include <Alembic/AbcGeom/GeometryScope.h>
+#include <Alembic/AbcGeom/OFaceSet.h>
+#include <Alembic/AbcGeom/OGeomParam.h>
+#include <Alembic/AbcGeom/OPolyMesh.h>
+#include <Alembic/AbcGeom/OXform.h>
+#include <Alembic/AbcGeom/XformOp.h>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDistance.h>
@@ -57,6 +71,69 @@ void creare_curve(const XGenRenderAPI::vec3* in_point, std::size_t in_size) {
   l_fn.create(l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status);
   DOODLE_MAYA_CHICK(l_status);
 }
+
+class xgen_alembic_out {
+ public:
+  using time_sampling_ptr    = Alembic::AbcCoreAbstract::TimeSamplingPtr;
+  using o_archive_ptr        = std::shared_ptr<Alembic::Abc::OArchive>;
+  using o_box3d_property_ptr = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
+  using o_xform_ptr          = std::shared_ptr<Alembic::AbcGeom::OXform>;
+  using o_mesh_ptr           = std::shared_ptr<Alembic::AbcGeom::OPolyMesh>;
+
+ private:
+  MTime begin_time_{};
+  MTime end_time_{};
+  FSys::path out_path_{};
+
+  o_archive_ptr o_archive_{};
+  time_sampling_ptr shape_time_sampling_{};
+  time_sampling_ptr transform_time_sampling_{};
+
+  std::int32_t shape_time_index_{};
+  std::int32_t transform_time_index_{};
+  o_box3d_property_ptr o_box3d_property_ptr_{};
+  void open() {
+    DOODLE_LOG_INFO(
+        "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), begin_time_.value(),
+        end_time_.as(MTime::kSeconds)
+    );
+    shape_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+        maya_plug::details::spf(), begin_time_.as(MTime::kSeconds)
+    );
+    transform_time_sampling_ = std::make_shared<Alembic::AbcCoreAbstract::TimeSampling>(
+        maya_plug::details::spf(), begin_time_.as(MTime::kSeconds)
+    );
+    o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(
+        Alembic::Abc::v12::CreateArchiveWithInfo(
+            Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
+            maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
+        )
+    ));
+
+    if (!o_archive_->valid()) {
+      throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
+    }
+
+    shape_time_index_     = o_archive_->addTimeSampling(*shape_time_sampling_);
+    transform_time_index_ = o_archive_->addTimeSampling(*transform_time_sampling_);
+
+    o_box3d_property_ptr_ = std::make_shared<o_box3d_property_ptr::element_type>(
+        std::move(Alembic::AbcGeom::CreateOArchiveBounds(*o_archive_, transform_time_index_))
+    );
+
+    if (!o_box3d_property_ptr_->valid()) {
+      throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
+    }
+  };
+
+ public:
+  explicit xgen_alembic_out(FSys::path in_path, const MTime& in_begin_time, const MTime& in_end_time)
+      : begin_time_(in_begin_time), end_time_(in_end_time), out_path_(std::move(in_path)) {
+    open();
+  };
+
+  void write(XGenRenderAPI::PrimitiveCache* in_cache);
+};
 
 class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
   std::string ir_render_cam_;
@@ -166,89 +243,7 @@ const float* XgenRender::get(EFloatArrayAttribute) const { return nullptr; }
 unsigned XgenRender::getSize(EFloatArrayAttribute) const { return 0; }
 const char* XgenRender::getOverride(const char* in_name) const { return ""; }         /// 确切不返回任何的覆盖属性
 void XgenRender::getTransform(float in_time, XGenRenderAPI::mat44& out_mat) const {}  /// 先不进行变换
-bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::bbox& out_bbox) const {
-  std::string fname(in_filename);
-
-  // Do not attempt to read non-RIB archives (e.g. .caf)
-  if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "Reading " + fname);
-
-  if (fname.find(".abc") == (fname.length() - 4)) {
-    out_bbox.xmin = -1.0;
-    out_bbox.ymin = -1.0;
-    out_bbox.zmin = -1.0;
-
-    out_bbox.xmax = 1.0;
-    out_bbox.ymax = 1.0;
-    out_bbox.zmax = 1.0;
-
-    return true;
-  }
-
-  if (fname.find(".ass") == (fname.length() - 4)) {
-    FILE* fd = fopen(in_filename, "rb");
-    if (!fd) {
-      if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "Could not open " + fname);
-      return false;
-    }
-
-    // Use an auto_fclose since we are returning from the function all over the place.
-    auto_fclose afd(fd);
-
-    // Scan the first N lines searching for "## BBOX ...."
-    const int limit       = 13;
-    const int inner_limit = 192;
-    int matched;
-    int count       = 0;
-    int inner_count = 0;
-
-    while (count < limit) {
-      count++;
-      inner_count = 0;
-      matched     = fscanf(
-          fd, "## BBOX %lf %lf %lf %lf %lf %lf", &out_bbox.xmin, &out_bbox.xmax, &out_bbox.ymin, &out_bbox.ymax,
-          &out_bbox.zmin, &out_bbox.zmax
-      );
-
-      if (matched == 0) {
-        // Skip this line
-        char c = fgetc(fd);
-        if (/*EOF == c ||*/ feof(fd)) return false;
-
-        while (c != '\n') {
-          c = fgetc(fd);
-          // Guard against really long lines
-          if (inner_limit <= inner_count++) break;
-          if (/*EOF == c ||*/ feof(fd)) {
-            if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "EOF");
-            return false;
-          }
-        }
-        continue;
-      }
-
-      if (matched == 6) {
-        if (XGDebugLevel >= 2)
-          XGDebug(
-              xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/
-              "DRA BBOX" + std::string(" ") + std::to_string((long double)out_bbox.xmin) + std::string(" ") +
-                  std::to_string((long double)out_bbox.xmax) + std::string(" ") +
-                  std::to_string((long double)out_bbox.ymin) + std::string(" ") +
-                  std::to_string((long double)out_bbox.ymax) + std::string(" ") +
-                  std::to_string((long double)out_bbox.zmin) + std::string(" ") +
-                  std::to_string((long double)out_bbox.zmax)
-          );
-
-        return true;
-      }
-      if (EOF == matched || feof(fd)) {
-        if (XGDebugLevel >= 2) XGDebug(xgutil::msg::PRIMITIVE, /*msg::C|msg::PRIMITIVE|2,*/ "EOF");
-        break;
-      }
-    }
-  }
-
-  return false;
-}
+bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::bbox& out_bbox) const { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -325,10 +320,11 @@ std::string xgen_abc_export::impl::create_render_args(
   FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache.abc"};
 
   auto l_str = fmt::format(
-      "-debug 1 -warning 1 -stats 1 {8} {1} -palette {2} -description {3} -patch {4} -frame {5} "
-      "-file {6}__{2}.xgen -geom {7} -fps {9} -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
+      "-debug 1 -warning 1 -stats 1 {8}{1} -palette {2} -description {3} -patch {4} -frame {5} "
+      "-file {6}__{2}.xgen -geom {7} -fps {9} -interpolation linear  -motionSamplesLookup 0.0 "
+      "-motionSamplesPlacement 0.0 -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
       l_unit_conv, l_namespace, in_.palette_ptr->name(), in_des->name(), in_patch->name(),
-      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? "-nameSpace" : "",
+      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? "-nameSpace " : "",
       l_fps
   );
 
@@ -339,11 +335,6 @@ MStatus xgen_abc_export::redoIt() {
   for (auto&& i : p_i->palette_v) {
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
       auto l_des = i.palette_ptr->description(j);
-      // for (auto&& l_render : {l_des->activePreviewer(), l_des->activeRenderer()}) {
-      //   l_render->setDirty(true);
-      //   l_render->finishDescription();
-      //   l_render->refresh(true, true);
-      // }
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
         if (!l_des || !l_ptr) {
           auto l_des_name = l_des ? l_des->name() : std::string{};
@@ -367,26 +358,6 @@ MStatus xgen_abc_export::redoIt() {
           if (auto&& l_f = l_face_list.emplace_back(XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id)))
             l_f->render();
       }
-      // auto l_previewer = l_des->activePreviewer();
-      // auto l_primitive = l_des->activePrimitive();
-      //     auto l_generator = l_des->activeGenerator();
-      //     auto l_path      = l_primitive->cPatch();
-      // auto l_geom      = l_primitive->cGeom();
-      // auto l_str       = fmt::format("previewer {} {}", l_previewer->totalEmitCount(), l_geom.size());
-      // displayInfo(l_str.c_str());
-      //     // if (l_primitive->typeName() == "SplinePrimitive") {
-      //     //   const auto l_primitive_spline = dynamic_cast<XgSplinePrimitive*>(l_primitive);
-      //     //   safevector<SgVec3d> l_geom_v{};
-      //     //   SgCurveUtil::mkPolyLine(false, l_primitive_spline->getGeom(), l_geom_v);
-      //     //   auto l_size = l_geom_v.size();
-      //     //   displayInfo(
-      //     //       fmt::format(
-      //     //           "{} geom num {} path {} , spline geom num {}", l_des->name(), l_geom.size(), l_path->name(),
-      //     l_size
-      //     //       )
-      //     //           .c_str()
-      //     //   );
-      //     // }
     }
   }
 

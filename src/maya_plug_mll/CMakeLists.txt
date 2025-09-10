@@ -23,6 +23,9 @@ target_link_libraries(doodle_maya
         Qt5::Core
         Qt5::Widgets
         TBB::tbb
+        Eigen3::Eigen
+        OpenMP::OpenMP_CXX
+        Alembic::Alembic
 )
 target_compile_options(
         doodle_maya
