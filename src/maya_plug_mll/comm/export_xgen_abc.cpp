@@ -60,7 +60,7 @@ void creare_curve(const XGenRenderAPI::vec3* in_point, std::size_t in_size) {
   l_double_array.setLength(l_konts);
   for (auto j = 0; j < in_size; j++) {
     l_point_array.set(j, in_point[j].x, in_point[j].y, in_point[j].z);
-    l_double_array.set(j / (l_konts - 1), j);
+    l_double_array.set(boost::numeric_cast<std::double_t>(j), j);
   }
   l_double_array.set(0.0, 1);
   l_double_array.set(0.0, 2);
@@ -156,16 +156,23 @@ class xgen_alembic_out {
   ) {
     out_points.reserve(in_size + out_points.size());
     auto l_begin = out_knots.size();
-    auto l_end   = in_size + 2 + out_knots.size();
+    constexpr auto g_degree{3};
+    // maya的konts 是 点数 + degree  -1 = 2
+    // 外部abc 是  点数 + degree  + 1 = 4
+    // 一共多 4
+    auto l_konts = in_size + g_degree + 1;
+    auto l_end   = in_size + g_degree + 1 + out_knots.size();
     out_knots.reserve(l_end);
+    /// 确保前后三个 knots 时重复的
+    out_knots.emplace_back(0.f);  // 外部额外添加
+    out_knots.emplace_back(0.f);
     for (auto j = 0; j < in_size; j++) {
       out_points.emplace_back(in_point[j].x, in_point[j].y, in_point[j].z);
-      out_knots.emplace_back(static_cast<std::float_t>(j) / (in_size + 2 - 1));
+      out_knots.emplace_back(boost::numeric_cast<std::float_t>(std::max(0, j - 1)));  // 0, 0, 1, 2
     }
-    out_knots[l_begin + 1] = 0.0;
-    out_knots[l_begin + 2] = 0.0;
-    out_knots[l_end - 2]   = out_knots[l_end - 3];
-    out_knots[l_end - 1]   = out_knots[l_end - 3];
+    out_knots[out_knots.size() - 2] = out_knots.back();
+    out_knots.emplace_back(out_knots.back());
+    out_knots.emplace_back(out_knots.back());  // 外部额外添加
   }
 
  public:
@@ -174,7 +181,10 @@ class xgen_alembic_out {
     open();
   };
 
-  void write_begin() { curve_data_ = {}; }
+  void write_begin() {
+    curve_data_ = {};
+    curve_data_.widths_.emplace_back();
+  }
 
   void write_section(XGenRenderAPI::PrimitiveCache* in_cache) {
     // 写入动画
@@ -182,8 +192,8 @@ class xgen_alembic_out {
     bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
     if (!bIsSpline) return;
 
-    if (!curve_data_.use_const_width_) curve_data_.use_const_width_ |= in_cache->get(PrimitiveCache::ConstWidth);
-    if (curve_data_.use_const_width_) curve_data_.widths_.emplace_back(in_cache->get(PrimitiveCache::ConstantWidth));
+    // curve_data_.use_const_width_ |= in_cache->get(PrimitiveCache::ConstWidth);
+    if (curve_data_.use_const_width_) curve_data_.widths_.front() = in_cache->get(PrimitiveCache::ConstantWidth);
 
     auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
     // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
@@ -201,14 +211,10 @@ class xgen_alembic_out {
       curve_data_.vertices_.reserve(l_num_size + curve_data_.vertices_.size());
 
       std::size_t l_index_off{};
-      /// 在maya中,
-      /// 玛雅表示：{0,0,0,...,N,N,N}
-      /// 外部表示：{0,0,0,0,...,N,N,N,N}
-      /// 所有需要去除第一个和开头的两个节点
       for (auto z = 0; z < l_num_size; ++z) {
         creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, curve_data_.points_, curve_data_.knots_);
         l_index_off += l_num[z];
-        curve_data_.vertices_.emplace_back(l_num[z]);
+        curve_data_.vertices_.emplace_back(l_num[z] - 2);
       }
 
       break;
