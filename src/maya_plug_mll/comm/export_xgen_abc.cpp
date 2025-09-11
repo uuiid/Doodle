@@ -363,15 +363,17 @@ struct palette_warp {
 
 struct xgen_abc_export::impl {
   std::vector<palette_warp> palette_v{};
+  MTime begin_time_;
+  MTime end_time_;
   std::string create_render_args(const palette_warp& in_, const XgDescription* in_des, const XgPatch* in_patch);
 };
 xgen_abc_export::xgen_abc_export() : p_i{std::make_unique<impl>()} {}
 xgen_abc_export::~xgen_abc_export() = default;
 MSyntax xgen_abc_export_syntax() {
   MSyntax syntax;
-  syntax.addFlag("-f", "-file_path", MSyntax::kString);
   syntax.addFlag("-s", "-start", MSyntax::kLong);
   syntax.addFlag("-e", "-end", MSyntax::kLong);
+  syntax.addFlag("-n", "-one", MSyntax::kBoolean);
   syntax.setObjectType(MSyntax::kSelectionList);
   syntax.useSelectionAsDefault(true);
   return syntax;
@@ -450,10 +452,8 @@ struct xgen_render_des {
   std::vector<std::unique_ptr<xgen_render_face>> face_list_{};
 };
 MStatus xgen_abc_export::redoIt() {
-  auto l_begin_time                   = MAnimControl::minTime();
-  auto l_end_time                     = MAnimControl::maxTime();
   auto l_abc_file_path_gen            = std::make_shared<reference_file_ns::generate_abc_file_path>();
-  l_abc_file_path_gen->begin_end_time = {l_begin_time, l_end_time};
+  l_abc_file_path_gen->begin_end_time = {p_i->begin_time_, p_i->end_time_};
   std::vector<std::unique_ptr<xgen_render_des>> l_render_list{};
   // 初始化渲染器
   for (auto&& i : p_i->palette_v) {
@@ -471,7 +471,8 @@ MStatus xgen_abc_export::redoIt() {
 
       auto l_out_path                          = (*l_abc_file_path_gen)(l_namespace);
       displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
-      l_des_render->xgen_alembic_out_ptr_ = std::make_shared<xgen_alembic_out>(l_out_path, l_begin_time, l_end_time);
+      l_des_render->xgen_alembic_out_ptr_ =
+          std::make_shared<xgen_alembic_out>(l_out_path, p_i->begin_time_, p_i->end_time_);
 
       BOOST_ASSERT(l_des_render->xgen_alembic_out_ptr_);
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
@@ -504,7 +505,7 @@ MStatus xgen_abc_export::redoIt() {
     }
   }
 
-  for (auto i = l_begin_time; i <= l_end_time; ++i) {
+  for (auto i = p_i->begin_time_; i <= p_i->end_time_; ++i) {
     MAnimControl::setCurrentTime(i);
     for (auto&& l_list : l_render_list) {
       l_list->xgen_alembic_out_ptr_->write_begin();
@@ -526,18 +527,13 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
   maya_chick(status);
   MSelectionList list{};
   maya_chick(arg_data.getObjects(list));
-  auto begin_time = arg_data.isFlagSet("-s")
-                        ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-s", 0)), MTime::uiUnit()}
-                        : MAnimControl::minTime();
-  auto end_time   = arg_data.isFlagSet("-e")
-                        ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-e", 0)), MTime::uiUnit()}
-                        : MAnimControl::maxTime();
-  auto file_name  = arg_data.isFlagSet("-f") ? FSys::path{conv::to_s(arg_data.flagArgumentString("-f", 0))}
-                                             : FSys::get_cache_path() / "default.abc";
-
-  default_logger_raw()->info(
-      "export_abc_file::doIt: file_name: {}, begin_time: {}, end_time: {}", file_name, begin_time, end_time
-  );
+  p_i->begin_time_ = arg_data.isFlagSet("-s")
+                         ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-s", 0)), MTime::uiUnit()}
+                         : MAnimControl::minTime();
+  p_i->end_time_   = arg_data.isFlagSet("-e")
+                         ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-e", 0)), MTime::uiUnit()}
+                         : MAnimControl::maxTime();
+  if (arg_data.isFlagSet("-n")) p_i->end_time_ = p_i->begin_time_;
 
   MItSelectionList it_list{list, MFn::kDagNode, &status};
   maya_chick(status);
