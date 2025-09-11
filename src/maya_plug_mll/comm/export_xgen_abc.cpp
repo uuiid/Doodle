@@ -150,13 +150,13 @@ class xgen_alembic_out {
         *o_xform_ptr_, "curve", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
     );
   }
+  static constexpr auto g_degree{3};
   void creare_curve(
       const XGenRenderAPI::vec3* in_point, std::size_t in_size, std::vector<Alembic::Abc::V3f>& out_points,
       std::vector<std::float_t>& out_knots
   ) {
     out_points.reserve(in_size + out_points.size());
     auto l_begin = out_knots.size();
-    constexpr auto g_degree{3};
     // maya的konts 是 点数 + degree  -1 = 2
     // 外部abc 是  点数 + degree  + 1 = 4
     // 一共多 4
@@ -173,6 +173,18 @@ class xgen_alembic_out {
     out_knots[out_knots.size() - 2] = out_knots.back();
     out_knots.emplace_back(out_knots.back());
     out_knots.emplace_back(out_knots.back());  // 外部额外添加
+  }
+  void creare_curve(
+      const XGenRenderAPI::vec3* in_point, std::size_t in_size, std::vector<Alembic::Abc::V3f>& out_points
+  ) {
+    out_points.reserve(in_size + out_points.size());
+    // maya的konts 是 点数 + degree  -1 = 2
+    // 外部abc 是  点数 + degree  + 1 = 4
+    // 一共多 4
+    /// 确保前后三个 knots 时重复的
+    for (auto j = 0; j < in_size; j++) {
+      out_points.emplace_back(in_point[j].x, in_point[j].y, in_point[j].z);
+    }
   }
 
  public:
@@ -191,50 +203,74 @@ class xgen_alembic_out {
     using namespace XGenRenderAPI;
     bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
     if (!bIsSpline) return;
+    if (!init_) {
+      // curve_data_.use_const_width_ |= in_cache->get(PrimitiveCache::ConstWidth);
+      if (curve_data_.use_const_width_) curve_data_.widths_.front() = in_cache->get(PrimitiveCache::ConstantWidth);
 
-    // curve_data_.use_const_width_ |= in_cache->get(PrimitiveCache::ConstWidth);
-    if (curve_data_.use_const_width_) curve_data_.widths_.front() = in_cache->get(PrimitiveCache::ConstantWidth);
+      auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
+      // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
+      for (auto i = 0; i < l_num_samples; i++) {
+        auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
+        // auto* l_width         = in_cache->get(PrimitiveCache::Widths);
+        // auto l_width_size     = in_cache->getSize(PrimitiveCache::Widths);
 
-    auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
-    // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
-    for (auto i = 0; i < l_num_samples; i++) {
-      auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
-      auto* l_width         = in_cache->get(PrimitiveCache::Widths);
-      auto l_width_size     = in_cache->getSize(PrimitiveCache::Widths);
+        auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
+        const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+        curve_data_.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + curve_data_.points_.size());
+        curve_data_.knots_.reserve(
+            in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + curve_data_.knots_.size()
+        );
+        curve_data_.vertices_.reserve(l_num_size + curve_data_.vertices_.size());
 
-      auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
-      const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-      curve_data_.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + curve_data_.points_.size());
-      curve_data_.knots_.reserve(
-          in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + curve_data_.knots_.size()
-      );
-      curve_data_.vertices_.reserve(l_num_size + curve_data_.vertices_.size());
+        std::size_t l_index_off{};
+        for (auto z = 0; z < l_num_size; ++z) {
+          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, curve_data_.points_, curve_data_.knots_);
+          l_index_off += l_num[z];
+          curve_data_.vertices_.emplace_back(l_num[z] - 2);
+        }
 
-      std::size_t l_index_off{};
-      for (auto z = 0; z < l_num_size; ++z) {
-        creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, curve_data_.points_, curve_data_.knots_);
-        l_index_off += l_num[z];
-        curve_data_.vertices_.emplace_back(l_num[z] - 2);
+        break;
       }
+    } else {
+      auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
+      // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
+      for (auto i = 0; i < l_num_samples; i++) {
+        auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
+        // auto* l_width         = in_cache->get(PrimitiveCache::Widths);
+        // auto l_width_size     = in_cache->getSize(PrimitiveCache::Widths);
 
-      break;
+        auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
+        const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+        curve_data_.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + curve_data_.points_.size());
+
+        std::size_t l_index_off{};
+        for (auto z = 0; z < l_num_size; ++z) {
+          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, curve_data_.points_);
+        }
+        break;
+      }
     }
   };
 
   void write_end() {
     Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
-    l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
-    l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
-    l_curve_sample.setType(Alembic::AbcGeom::kCubic);
-    l_curve_sample.setCurvesNumVertices(curve_data_.vertices_);
-    l_curve_sample.setPositions(curve_data_.points_);
-    l_curve_sample.setWidths(
-        Alembic::AbcGeom::OFloatGeomParam::Sample{
-            curve_data_.widths_,
-            curve_data_.use_const_width_ ? Alembic::AbcGeom::kConstantScope : Alembic::AbcGeom::kVertexScope
-        }
-    );
-    l_curve_sample.setKnots(curve_data_.knots_);
+    if (!init_) {
+      l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
+      l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
+      l_curve_sample.setType(Alembic::AbcGeom::kCubic);
+      l_curve_sample.setCurvesNumVertices(curve_data_.vertices_);
+      l_curve_sample.setPositions(curve_data_.points_);
+      l_curve_sample.setWidths(
+          Alembic::AbcGeom::OFloatGeomParam::Sample{
+              curve_data_.widths_,
+              curve_data_.use_const_width_ ? Alembic::AbcGeom::kConstantScope : Alembic::AbcGeom::kVertexScope
+          }
+      );
+      l_curve_sample.setKnots(curve_data_.knots_);
+      init_ = true;
+    } else {
+      l_curve_sample.setPositions(curve_data_.points_);
+    }
     auto& l_curve = o_curve_ptr_->getSchema();
     l_curve.set(l_curve_sample);
     Alembic::Abc::Box3d l_box{};
@@ -404,17 +440,27 @@ std::string xgen_abc_export::impl::create_render_args(
   return l_str;
 }
 
+struct xgen_render_face {
+  std::unique_ptr<XgenRender> main_render{};
+  std::unique_ptr<XGenRenderAPI::PatchRenderer> patch_renderer{};
+  std::map<std::uint32_t, std::unique_ptr<XGenRenderAPI::FaceRenderer>> face_render{};
+};
+struct xgen_render_des {
+  std::shared_ptr<xgen_alembic_out> xgen_alembic_out_ptr_{};
+  std::vector<std::unique_ptr<xgen_render_face>> face_list_{};
+};
 MStatus xgen_abc_export::redoIt() {
   auto l_begin_time                   = MAnimControl::minTime();
   auto l_end_time                     = MAnimControl::maxTime();
   auto l_abc_file_path_gen            = std::make_shared<reference_file_ns::generate_abc_file_path>();
   l_abc_file_path_gen->begin_end_time = {l_begin_time, l_end_time};
-  std::map<XgDescription*, std::shared_ptr<xgen_alembic_out>> l_out_list{};
+  std::vector<std::unique_ptr<xgen_render_des>> l_render_list{};
+  // 初始化渲染器
   for (auto&& i : p_i->palette_v) {
     auto l_namespace = get_name_space(i.palette_dag);
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
-      auto l_des = i.palette_ptr->description(j);
-
+      auto l_des         = i.palette_ptr->description(j);
+      auto& l_des_render = l_render_list.emplace_back(std::make_unique<xgen_render_des>());
       if (!l_des) {
         displayError(
             conv::to_ms(fmt::format("集合 {} 描述 index {} 为空(请刷新xgen预览), 无法解析", i.palette_ptr->name(), j))
@@ -422,18 +468,12 @@ MStatus xgen_abc_export::redoIt() {
         continue;
       }
       l_abc_file_path_gen->add_external_string = l_des->name();
-      std::shared_ptr<xgen_alembic_out> l_xgen_alembic_out_ptr{};
-      if (l_out_list.contains(l_des))
-        l_xgen_alembic_out_ptr = l_out_list.at(l_des);
-      else {
-        auto l_out_path = (*l_abc_file_path_gen)(l_namespace);
-        displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
-        l_xgen_alembic_out_ptr =
-            l_out_list.emplace(l_des, std::make_shared<xgen_alembic_out>(l_out_path, l_begin_time, l_end_time))
-                .first->second;
-      }
-      BOOST_ASSERT(l_xgen_alembic_out_ptr);
-      l_xgen_alembic_out_ptr->write_begin();
+
+      auto l_out_path                          = (*l_abc_file_path_gen)(l_namespace);
+      displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
+      l_des_render->xgen_alembic_out_ptr_ = std::make_shared<xgen_alembic_out>(l_out_path, l_begin_time, l_end_time);
+
+      BOOST_ASSERT(l_des_render->xgen_alembic_out_ptr_);
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
         if (!l_ptr) {
           displayError(
@@ -446,22 +486,34 @@ MStatus xgen_abc_export::redoIt() {
           );
           continue;
         }
-        XGenRenderAPI::PatchRenderer::deleteTempRenderPalettes();
-        XgenRender l_callback{this, l_xgen_alembic_out_ptr};
-        auto l_args = p_i->create_render_args(i, l_des, l_ptr);
+        auto& l_render_        = l_des_render->face_list_.emplace_back(std::make_unique<xgen_render_face>());
+        l_render_->main_render = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_);
+        auto l_args            = p_i->create_render_args(i, l_des, l_ptr);
         displayInfo(l_args.c_str());
-        auto l_render = std::shared_ptr<XGenRenderAPI::PatchRenderer>{
-            XGenRenderAPI::PatchRenderer::init(&l_callback, l_args.c_str())
+        l_render_->patch_renderer = std::unique_ptr<XGenRenderAPI::PatchRenderer>{
+            XGenRenderAPI::PatchRenderer::init(l_render_->main_render.get(), l_args.c_str())
         };
-        if (!l_render) continue;
-        XGenRenderAPI::bbox l_sub_bbox;
-        unsigned int l_face_id = -1;
-        std::vector<std::unique_ptr<XGenRenderAPI::FaceRenderer>> l_face_list{};
-        while (l_render->nextFace(l_sub_bbox, l_face_id))
-          if (auto&& l_f = l_face_list.emplace_back(XGenRenderAPI::FaceRenderer::init(l_render.get(), l_face_id)))
-            l_f->render();
+        XGenRenderAPI::bbox l_sub_bbox{};
+        std::uint32_t l_face_id = -1;
+        while (l_render_->patch_renderer->nextFace(l_sub_bbox, l_face_id)) {
+          l_render_->face_render.emplace(
+              l_face_id, XGenRenderAPI::FaceRenderer::init(l_render_->patch_renderer.get(), l_face_id)
+          );
+        }
       }
-      l_xgen_alembic_out_ptr->write_end();
+    }
+  }
+
+  for (auto i = l_begin_time; i <= l_end_time; ++i) {
+    MAnimControl::setCurrentTime(i);
+    for (auto&& l_list : l_render_list) {
+      l_list->xgen_alembic_out_ptr_->write_begin();
+      for (auto&& l_r : l_list->face_list_) {
+        XGenRenderAPI::bbox l_sub_bbox{};
+        std::uint32_t l_face_id = -1;
+        while (l_r->patch_renderer->nextFace(l_sub_bbox, l_face_id)) l_r->face_render.at(l_face_id)->render();
+      }
+      l_list->xgen_alembic_out_ptr_->write_end();
     }
   }
 
