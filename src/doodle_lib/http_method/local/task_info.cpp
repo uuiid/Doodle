@@ -161,7 +161,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         l_import_and_render_args->maya_arg_ = l_arg_t;
       }
       l_import_and_render_args->logger_ptr_ = logger_;
-      arg_ = l_import_and_render_args;
+      arg_                                  = l_import_and_render_args;
 
       l_import_and_render_args->on_run_time_info_.connect([this](const server_task_info::run_time_info_t& in_info) {
         task_info_->add_run_time_info(in_info);
@@ -180,7 +180,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       l_arg_t->history_check_     = in_json["history_check"].get<bool>();
       l_arg_t->kframe_check_      = in_json["kframe_check"].get<bool>();
       l_arg_t->name_length_check_ = in_json["name_length_check"].get<bool>();
-      arg_                        = l_arg_t;
+      if (in_json.contains("multi_uv_inspection"))
+        l_arg_t->multi_uv_inspection_ = in_json["multi_uv_inspection"].get<bool>();
+      arg_ = l_arg_t;
     } else if (in_json.contains("image_to_move")) {
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
       in_json.get_to(*l_image_to_move_args);

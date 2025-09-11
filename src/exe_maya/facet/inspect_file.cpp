@@ -97,6 +97,23 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
     }
   }
 
+  {
+    default_logger_raw()->info("开始检查 UV(必须存在至少一个UV集)");
+    MFnMesh l_mesh{};
+    for (MItDag l_iter{MItDag::kDepthFirst, MFn::kMesh, &l_s}; !l_iter.isDone(); l_iter.next()) {
+      maya_chick(l_mesh.setObject(l_iter.currentItem()));
+      if (l_mesh.numUVSets() == 0) {
+        default_logger_raw()->error("存在UV缺失 {}", get_node_full_name(l_mesh.object()));
+        l_e = maya_enum::maya_error_t::check_error;
+      }
+      if (l_arg.multi_uv_inspection_)
+        if (l_mesh.numUVSets() > 1) {
+          default_logger_raw()->error("存在多UV {}", get_node_full_name(l_mesh.object()));
+          l_e = maya_enum::maya_error_t::check_error;
+        }
+    }
+  }
+
   if (false) {
     default_logger_raw()->info("开始检查UV");
     MFnMesh l_mesh{};
