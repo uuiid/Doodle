@@ -371,9 +371,9 @@ xgen_abc_export::xgen_abc_export() : p_i{std::make_unique<impl>()} {}
 xgen_abc_export::~xgen_abc_export() = default;
 MSyntax xgen_abc_export_syntax() {
   MSyntax syntax;
-  syntax.addFlag("-s", "-start", MSyntax::kLong);
-  syntax.addFlag("-e", "-end", MSyntax::kLong);
-  syntax.addFlag("-n", "-one", MSyntax::kBoolean);
+  syntax.addFlag("-s", "-start_time", MSyntax::kTime);
+  syntax.addFlag("-e", "-end_time", MSyntax::kTime);
+  syntax.addFlag("-n", "-one_time", MSyntax::kNoArg);
   syntax.setObjectType(MSyntax::kSelectionList);
   syntax.useSelectionAsDefault(true);
   return syntax;
@@ -415,28 +415,17 @@ std::string xgen_abc_export::impl::create_render_args(
     case MDistance::kInvalid:
       break;
   }
-  std::double_t l_fps{};
-  switch (MTime::uiUnit()) {
-    case MTime::k24FPS:
-      l_fps = 24;
-    case MTime::k25FPS:
-      l_fps = 25;
-    case MTime::k30FPS:
-      l_fps = 30;
-    default:
-      l_fps = 24;
-  }
   FSys::path l_file_path = maya_file_io::get_current_path();
   l_file_path.replace_extension();
   FSys::path l_geom_file_path{"D:/test_files/test_xgen/cache/alembic/cache.abc"};
 
   auto l_str = fmt::format(
-      "-debug 1 -warning 1 -stats 1 {8}{1} -palette {2} -description {3} -patch {4} -frame {5} "
+      "-debug 1 -warning 1 -stats 1{8}{1} -palette {2} -description {3} -patch {4} -frame {5} "
       "-file {6}__{2}.xgen -geom {7} -fps {9} -interpolation linear  -motionSamplesLookup 0.0 "
       "-motionSamplesPlacement 0.0 -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
       l_unit_conv, l_namespace, in_.palette_ptr->name(), in_des->name(), in_patch->name(),
-      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? "-nameSpace " : "",
-      l_fps
+      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? " -nameSpace " : "",
+      details::fps()
   );
 
   return l_str;
@@ -490,7 +479,7 @@ MStatus xgen_abc_export::redoIt() {
         auto& l_render_        = l_des_render->face_list_.emplace_back(std::make_unique<xgen_render_face>());
         l_render_->main_render = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_);
         auto l_args            = p_i->create_render_args(i, l_des, l_ptr);
-        displayInfo(l_args.c_str());
+        // displayInfo(l_args.c_str());
         l_render_->patch_renderer = std::unique_ptr<XGenRenderAPI::PatchRenderer>{
             XGenRenderAPI::PatchRenderer::init(l_render_->main_render.get(), l_args.c_str())
         };
@@ -527,12 +516,8 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
   maya_chick(status);
   MSelectionList list{};
   maya_chick(arg_data.getObjects(list));
-  p_i->begin_time_ = arg_data.isFlagSet("-s")
-                         ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-s", 0)), MTime::uiUnit()}
-                         : MAnimControl::minTime();
-  p_i->end_time_   = arg_data.isFlagSet("-e")
-                         ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-e", 0)), MTime::uiUnit()}
-                         : MAnimControl::maxTime();
+  p_i->begin_time_ = arg_data.isFlagSet("-s") ? arg_data.flagArgumentMTime("-s", 0) : MAnimControl::minTime();
+  p_i->end_time_   = arg_data.isFlagSet("-e") ? arg_data.flagArgumentMTime("-e", 0) : MAnimControl::maxTime();
   if (arg_data.isFlagSet("-n")) p_i->end_time_ = p_i->begin_time_;
 
   MItSelectionList it_list{list, MFn::kDagNode, &status};
