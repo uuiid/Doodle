@@ -20,6 +20,10 @@ enum class EImportSuffix : uint8 { Lig = 0, Vfx, End };
 
 ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
 
+
+class SDoodleImportFbxUI;
+
+
 USTRUCT()
 struct FDoodleUSkeletonData_1
 {
@@ -46,27 +50,6 @@ public:
 	static TArray<FDoodleUSkeletonData_1> ListAllSkeletons();
 };
 
-class FSearchEpShotModel_1
-{
-public:
-	int64 Eps{};
-	int64 Shot{};
-	FString ShotAb{};
-	int32_t StartTime{};
-	int32_t EndTime{};
-	void GenStartAndEndTime(const FString& In_ImportPath);
-};
-
-class FSearchEpShotModel_2
-{
-public:
-	int64 Eps{};
-	int64 Shot{};
-	FString ShotAb{};
-	int32_t StartTime{};
-	int32_t EndTime{};
-	void GenStartAndEndTime(const FString& In_ImportPath);
-};
 
 UCLASS()
 class UDoodleBaseImportData : public UObject
@@ -77,17 +60,16 @@ public:
 	{
 	};
 
-	UDoodleBaseImportData(const FString& InString)
+	explicit UDoodleBaseImportData(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
 		: ImportPath(InString)
+		, ImportUI(In_ImportUI)
 	{
 	}
 
-	virtual ~UDoodleBaseImportData()
-	{
-	}
 
 	/// @brief 导入的文件路径
 	FString ImportPath;
+	SDoodleImportFbxUI* ImportUI;
 
 	int64 Eps{};
 	int64 Shot{};
@@ -98,8 +80,6 @@ public:
 
 	/// @brief 导入后的路径
 	FString ImportPathDir{};
-	/// 搜索导入的文件路径, 生成各种信息
-	TVariant<FSearchEpShotModel_1, FSearchEpShotModel_2> Search_Model;
 
 protected:
 	// 生成导入的路径
@@ -138,15 +118,12 @@ public:
 	{
 	};
 
-	UDoodleFbxImport_1(const FString& InString)
-		: UDoodleBaseImportData(InString)
+	UDoodleFbxImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
+		: UDoodleBaseImportData(InString, In_ImportUI)
 		, SkinObj()
 	{
 	}
 
-	~UDoodleFbxImport_1() override
-	{
-	}
 
 	/// @brief 寻找到的骨骼
 	USkeleton* SkinObj;
@@ -178,14 +155,11 @@ public:
 	{
 	};
 
-	UDoodleFbxCameraImport_1(const FString& InString)
-		: UDoodleBaseImportData(InString)
+	UDoodleFbxCameraImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
+		: UDoodleBaseImportData(InString, In_ImportUI)
 	{
 	}
 
-	~UDoodleFbxCameraImport_1() override
-	{
-	}
 
 	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
 	void ImportFile() override;
@@ -205,14 +179,11 @@ public:
 	{
 	};
 
-	UDoodleAbcImport_1(const FString& InString)
-		: UDoodleBaseImportData(InString)
+	UDoodleAbcImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
+		: UDoodleBaseImportData(InString, In_ImportUI)
 	{
 	}
 
-	~UDoodleAbcImport_1() override
-	{
-	}
 
 	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
 	void ImportFile() override;
@@ -225,6 +196,13 @@ class UDoodleXgenImport_1 : public UDoodleBaseImportData
 	GENERATED_BODY()
 
 public:
+	UDoodleXgenImport_1() = default;
+
+	explicit UDoodleXgenImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
+		: UDoodleBaseImportData(InString, In_ImportUI)
+	{
+	}
+
 	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
 	void ImportFile() override;
 
@@ -253,9 +231,10 @@ public:
 
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
-	static FString NewFolderName;
+	FString GetUserFolderName();
 
 private:
+	FString UserFolderName;
 	/// @brief 导入的列表
 	TSharedPtr<class SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
 	/// @brief 导入的列表数据

@@ -114,153 +114,10 @@
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::UIName{TEXT("DoodleImportFbxUI")};
 
-FString SDoodleImportFbxUI::NewFolderName{TEXT("")};
 
 namespace
 {
-	FString MakeName(const ANSICHAR* Name)
-	{
-		constexpr TCHAR SpecialChars[] = {TEXT('.'), TEXT(','), TEXT('/'), TEXT('`'), TEXT('%')};
-
-		FString TmpName = FString{ANSI_TO_TCHAR(Name)};
-
-		// Remove namespaces
-		int32 LastNamespaceTokenIndex = INDEX_NONE;
-		if (TmpName.FindLastChar(TEXT(':'), LastNamespaceTokenIndex))
-		{
-			constexpr bool bAllowShrinking = true;
-			//+1 to remove the ':' character we found
-			TmpName.RightChopInline(LastNamespaceTokenIndex + 1, bAllowShrinking);
-		}
-
-		// Remove the special chars
-		for (int32 i = 0; i < UE_ARRAY_COUNT(SpecialChars); i++)
-		{
-			TmpName.ReplaceCharInline(SpecialChars[i], TEXT('_'), ESearchCase::CaseSensitive);
-		}
-
-		return FSkeletalMeshImportData::FixupBoneName(TmpName);
-	}
-
-	FString GetNamespace(const ANSICHAR* Name)
-	{
-		FString TmpName = FString{ANSI_TO_TCHAR(Name)};
-		// Remove namespaces
-		int32 LastNamespaceTokenIndex = INDEX_NONE;
-		constexpr bool bAllowShrinking = true;
-		if (TmpName.FindLastChar(TEXT(':'), LastNamespaceTokenIndex))
-		{
-			//+1 to remove the ':' character we found
-			TmpName.LeftChopInline(TmpName.Len() - LastNamespaceTokenIndex, bAllowShrinking);
-		}
-		else
-		{
-			return {};
-		}
-		LastNamespaceTokenIndex = INDEX_NONE;
-		if (TmpName.FindLastChar(TEXT(':'), LastNamespaceTokenIndex))
-		{
-			//+1 to remove the ':' character we found
-			TmpName.RightChopInline(LastNamespaceTokenIndex + 1, bAllowShrinking);
-		}
-		return FSkeletalMeshImportData::FixupBoneName(TmpName);
-	}
-
-	void FindSkeletonNode(fbxsdk::FbxNode* Parent, TArray<fbxsdk::FbxNode*>& In_Skeketon)
-	{
-		if (Parent &&
-			((Parent->GetMesh() && Parent->GetMesh()->GetDeformerCount(fbxsdk::FbxDeformer::EDeformerType::eSkin) > 0) ||
-				(Parent->GetNodeAttribute() &&
-					(Parent->GetNodeAttribute()->GetAttributeType() == fbxsdk::FbxNodeAttribute::eSkeleton ||
-						Parent->GetNodeAttribute()->GetAttributeType() == fbxsdk::FbxNodeAttribute::eNull))))
-		{
-			In_Skeketon.Add(Parent);
-		}
-
-		const int32 NodeCount = Parent->GetChildCount();
-		for (int32 NodeIndex = 0; NodeIndex < NodeCount; ++NodeIndex)
-		{
-			fbxsdk::FbxNode* Child = Parent->GetChild(NodeIndex);
-			FindSkeletonNode(Child, In_Skeketon);
-		}
-	}
-
-	void Debug_To_File(const FStringView& In_String)
-	{
-		const FString LFile_Path = FPaths::CreateTempFilename(*FPaths::ProjectSavedDir(), TEXT("Doodle"));
-		// Always first check if the file that you want to manipulate exist.
-		if (FFileHelper::SaveStringToFile(In_String, *LFile_Path))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Sucsesfuly Written: to the text file"));
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("FileManipulation: Failed to write FString to file."));
-		}
-	}
 } // namespace
-
-void FSearchEpShotModel_1::GenStartAndEndTime(const FString& In_ImportPath)
-{
-	const FRegexPattern L_Reg_Time_Pattern{LR"(_(\d+)-(\d+))"};
-	FRegexMatcher L_Reg_Time{L_Reg_Time_Pattern, FPaths::GetBaseFilename(In_ImportPath)};
-	StartTime = {1000};
-	EndTime = {1001};
-
-	if (L_Reg_Time.FindNext() && L_Reg_Time.GetEndLimit() > 2)
-	{
-		StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
-		EndTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
-	}
-	const FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
-
-	if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_ImportPath}; L_Reg_Ep.FindNext())
-	{
-		Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
-	}
-
-	const FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-zA-Z])?)"};
-
-	if (FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, In_ImportPath}; L_Reg_Sc.FindNext())
-	{
-		Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(1));
-		if (L_Reg_Sc.GetEndLimit() > 2)
-		{
-			ShotAb = L_Reg_Sc.GetCaptureGroup(2).ToUpper();
-		}
-	}
-}
-
-void FSearchEpShotModel_2::GenStartAndEndTime(const FString& In_ImportPath)
-{
-	const FRegexPattern L_Reg_Time_Pattern{LR"(_(\d+)-(\d+))"};
-	FRegexMatcher L_Reg_Time{L_Reg_Time_Pattern, FPaths::GetBaseFilename(In_ImportPath)};
-	StartTime = {1000};
-	EndTime = {1001};
-
-	if (L_Reg_Time.FindNext() && L_Reg_Time.GetEndLimit() > 2)
-	{
-		StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
-		EndTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
-	}
-	const FRegexPattern L_Reg_Ep_Pattern{LR"([ep|EP|Ep]_?(\d+))"};
-
-	if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, In_ImportPath}; L_Reg_Ep.FindNext())
-	{
-		Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(1));
-	}
-
-	const FRegexPattern L_Reg_ScPattern{LR"([sc|SC|Sc]_?(\d+)([a-zA-Z])?)"};
-
-	if (FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, In_ImportPath}; L_Reg_Sc.FindNext())
-	{
-		Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(1));
-		if (L_Reg_Sc.GetEndLimit() > 2)
-		{
-			ShotAb = L_Reg_Sc.GetCaptureGroup(2).ToUpper();
-		}
-	}
-}
 
 FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) const
 {
@@ -306,7 +163,7 @@ FString UDoodleBaseImportData::GetPathPrefix(const FString& In_Path)
 	FString L_FileName = FPaths::GetBaseFilename(In_Path);
 	if (L_FileName.FindChar('_', L_Index))
 	{
-		L_FileName.LeftChopInline(L_FileName.Len() - L_Index, true);
+		L_FileName.LeftChopInline(L_FileName.Len() - L_Index);
 		L_Prefix = L_FileName;
 	}
 	return L_Prefix;
@@ -871,11 +728,13 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	}
 
 	//--------------
-	if (SDoodleImportFbxUI::NewFolderName != TEXT(""))
+	if (auto L_Name = ImportUI->GetUserFolderName();
+		L_Name != TEXT("")
+	)
 	{
 		FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
 		FString AbovePath = FPaths::GetPath(LongImportPathDir);
-		FString FolderPath = AbovePath / "Vfx" / SDoodleImportFbxUI::NewFolderName;
+		FString FolderPath = AbovePath / "Vfx" / L_Name;
 		if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
 		{
 			EditorAssetSubsystem->MakeDirectory(FolderPath);
@@ -1307,17 +1166,17 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
                 SNew(SEditableTextBox)
                     .Text_Lambda([this]()-> FText 
                     {
-                        GConfig->GetString(TEXT("DoodleImportFbx"), TEXT("NewFolderName"), NewFolderName, GEngineIni);
-                        return FText::FromString(NewFolderName);
+                        GConfig->GetString(TEXT("DoodleImportFbx"), TEXT("UserFolderName"), UserFolderName, GEngineIni);
+                        return FText::FromString(UserFolderName);
                     })
                     .OnTextChanged_Lambda([this](const FText& In_Text) 
                     {
-                        NewFolderName = In_Text.ToString();
+                        UserFolderName = In_Text.ToString();
                     })
                     .OnTextCommitted_Lambda([this](const FText& In_Text, ETextCommit::Type) 
                     {
-                        NewFolderName = In_Text.ToString();
-                        GConfig->SetString(TEXT("DoodleImportFbx"), TEXT("NewFolderName"), *NewFolderName, GEngineIni);
+                        UserFolderName = In_Text.ToString();
+                        GConfig->SetString(TEXT("DoodleImportFbx"), TEXT("UserFolderName"), *UserFolderName, GEngineIni);
                     })
             ]
       ]
@@ -1338,7 +1197,6 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
         .Padding(2.0f)
       [
         SAssignNew(ListImportGui, SListView<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType>)
-        .ItemHeight(80) // 小部件高度
         .ListItemsSource(&ListImportData)
         .ScrollbarVisibility(EVisibility::All)
         .OnGenerateRow_Lambda( // 生成小部件
@@ -1668,5 +1526,11 @@ TArray<FDoodleUSkeletonData_1> FDoodleUSkeletonData_1::ListAllSkeletons()
 }
 
 FString SDoodleImportFbxUI::GetReferencerName() const { return TEXT("SDoodleImportFbxUI"); }
+
+FString SDoodleImportFbxUI::GetUserFolderName()
+{
+	return UserFolderName;
+}
+
 
 #undef LOCTEXT_NAMESPACE
