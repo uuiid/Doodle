@@ -231,7 +231,10 @@ public:
 
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
-	FString GetUserFolderName();
+	const FString& GetUserFolderName() const;
+
+	const FString& GetPathPrefix() const;
+	const FString& GetPathSuffix() const;
 
 private:
 	FString UserFolderName;
