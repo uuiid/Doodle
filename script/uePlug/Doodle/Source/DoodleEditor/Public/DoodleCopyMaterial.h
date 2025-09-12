@@ -4,36 +4,40 @@
 #include "Widgets/DeclarativeSyntaxSupport.h"
 #include "UObject/GCObject.h"
 
-class DoodleCopyMat : public SCompoundWidget, public FGCObject {
- public:
-  SLATE_BEGIN_ARGS(DoodleCopyMat) {}
-  SLATE_END_ARGS()
-  // 这里是内容创建函数
-  void Construct(const FArguments& Arg);
-  // 知道了原因, 感觉用不到(垃圾回收)
-  virtual void AddReferencedObjects(FReferenceCollector& collector) override;
-  FString GetReferencerName() const override;
+class DoodleCopyMat : public SCompoundWidget, public FGCObject
+{
+public:
+	SLATE_BEGIN_ARGS(DoodleCopyMat)
+		{
+		}
 
- private:
-  FReply getSelect();
-  FReply CopyMateral();
+	SLATE_END_ARGS()
 
-  FReply BathImport();
-  FReply BathReameAss();
+	// 这里是内容创建函数
+	void Construct(const FArguments& Arg);
+	// 知道了原因, 感觉用不到(垃圾回收)
+	virtual void AddReferencedObjects(FReferenceCollector& collector) override;
+	FString GetReferencerName() const override;
 
-  void FindErrorMaterials();
-  void UnlockTextrue();
-  void OnBatchRenderExecutorFinished(int32 Num);
-  void CopyLightMap();
-  void RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath);
-  bool bEnableSeparateTranslucency;
-  FReply set_marteral_deep();
+private:
+	FReply getSelect();
+	FReply CopyMateral();
 
-  TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
-  FString OpenDirDialog(const FString& DialogTitle, const FString& DefaultPath);
-  void set_material_attr(UMaterialInterface* in_mat, const FString& in_SlotName);
+	FReply BathImport();
+	FReply BathReameAss();
 
- private:
-  USkeletalMesh* copySoureSkinObj;
-  UObject* copySoureGeoCache;
+	void FindErrorMaterials();
+	void UnlockTextrue();
+	void OnBatchRenderExecutorFinished(int32 Num);
+	void RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath);
+	bool bEnableSeparateTranslucency;
+	FReply set_marteral_deep();
+
+	TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
+	FString OpenDirDialog(const FString& DialogTitle, const FString& DefaultPath);
+	void set_material_attr(UMaterialInterface* in_mat, const FString& in_SlotName);
+
+private:
+	USkeletalMesh* copySoureSkinObj;
+	UObject* copySoureGeoCache;
 };

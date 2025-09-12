@@ -234,18 +234,6 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 							[
 								SNew(SButton).OnClicked_Lambda([this]() -> FReply
 									{
-										CopyLightMap();
-										return FReply::Handled();
-									})
-									[
-										SNew(STextBlock).Text(FText::FromString(TEXT("加载灯光关卡")))
-									]
-									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("加载灯光关卡")); })
-							]
-							+ SUniformWrapPanel::Slot()
-							[
-								SNew(SButton).OnClicked_Lambda([this]() -> FReply
-									{
 										FString SequencePath = TEXT("/Doodle/LightTest/Level/Sequence");
 										FString MapPath = TEXT("/Doodle/LightTest/Level/Environment");
 										FString OutPath = TEXT("E:/d/project/myPlugins/Saved/ChRender/Temp");
@@ -466,19 +454,7 @@ void DoodleCopyMat::UnlockTextrue()
 	}
 }
 
-void DoodleCopyMat::CopyLightMap() {
-	/*FString LightMapPath;
-	FPackageName::TryConvertGameRelativePackagePathToLocalPath(TEXT("/Doodle"), LightMapPath);
-	LightMapPath = LightMapPath / TEXT("eye_fun");
-	FString DestinationDirectory = FPaths::ProjectContentDir() / TEXT("eye_fun");
-	IPlatformFile::GetPlatformPhysical().CopyDirectoryTree(*DestinationDirectory, *LightMapPath, false);
-	UE_LOG(LogTemp, Error, TEXT("DestinationDirectory：%s"),*DestinationDirectory);
-	UE_LOG(LogTemp, Error, TEXT("LightMapPath：%s"), *LightMapPath);*/
 
-	FString LightMap = TEXT("/Doodle/LightTest/Level/Environment");
-	UEditorLevelLibrary::LoadLevel(LightMap);
-	//LightMapPath = FPaths::ConvertRelativePathToFull(LightMapPath.Replace(TEXT("Content/"), TEXT("")));
-}
 void DoodleCopyMat::RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath)
 {
 	TArray<URenderJobInfo> RenderJobInfos;
