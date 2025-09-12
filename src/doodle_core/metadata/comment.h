@@ -81,7 +81,14 @@ struct DOODLE_CORE_API comment {
   // form json
   friend void from_json(const nlohmann::json& j, comment& p) {
     if (j.contains("checklist")) j.at("checklist").get_to(p.checklist_);
-    if (j.contains("comment")) j.at("comment").get_to(p.text_);
+    if (j.contains("comment")) {
+      if (auto&& l_c = j.at("comment"); l_c.is_string())
+        l_c.get_to(p.text_);
+      else if (l_c.is_boolean())
+        p.text_ = l_c.get<bool>() ? "true" : "false";
+      else if (l_c.is_number())
+        p.text_ = fmt::to_string(l_c.get<std::double_t>());
+    }
     if (j.contains("task_status_id")) j.at("task_status_id").get_to(p.task_status_id_);
     if (j.contains("object_id")) j.at("object_id").get_to(p.object_id_);
   }
