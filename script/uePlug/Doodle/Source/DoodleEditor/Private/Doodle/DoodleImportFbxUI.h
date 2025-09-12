@@ -94,7 +94,7 @@ public:
 	 * @param In_Path 传入的路径(提取信息)
 	 * @return FString  返回的导入ue4的路径
 	 */
-	virtual void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
+	virtual void GenPathPrefix()
 	{
 	};
 
@@ -133,7 +133,7 @@ public:
 	UDoodleFbxCameraImport_1* CameraImport;
 
 	bool OnlyAnim{true};
-	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
+	void GenPathPrefix() override;
 	void ImportFile() override;
 
 	void AssembleScene() override;
@@ -161,7 +161,7 @@ public:
 	}
 
 
-	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
+	void GenPathPrefix() override;
 	void ImportFile() override;
 	void AssembleScene() override;
 };
@@ -185,7 +185,7 @@ public:
 	}
 
 
-	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
+	void GenPathPrefix() override;
 	void ImportFile() override;
 	void AssembleScene() override;
 };
@@ -203,7 +203,7 @@ public:
 	{
 	}
 
-	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
+	void GenPathPrefix() override;
 	void ImportFile() override;
 
 	void AssembleScene() override;
@@ -234,7 +234,7 @@ public:
 	const FString& GetUserFolderName() const;
 
 	const FString& GetPathPrefix() const;
-	const FString& GetPathSuffix() const;
+	const EImportSuffix& GetPathSuffix() const;
 
 private:
 	FString UserFolderName;

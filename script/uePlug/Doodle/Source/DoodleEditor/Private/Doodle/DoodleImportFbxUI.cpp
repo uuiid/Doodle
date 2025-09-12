@@ -15,6 +15,7 @@
 #include "Rendering/SkeletalMeshLODImporterData.h"
 #include "fbxsdk.h"
 #include "fbxsdk/scene/geometry/fbxnode.h"
+#include "fbxsdk/core/base/fbxtime.h"
 
 // 读写文件
 #include "Misc/FileHelper.h"
@@ -169,17 +170,17 @@ FString UDoodleBaseImportData::GetPathPrefix(const FString& In_Path)
 	return L_Prefix;
 }
 
-void UDoodleFbxImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
+void UDoodleFbxImport_1::GenPathPrefix()
 {
 	GenStartAndEndTime();
 	const FString L_String = FString::Format(
 		TEXT("Import_{0}/FbxI_{0}_{1}"),
 		TArray<FStringFormatArg>{
-			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
+			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()))},
 			FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}
 		}
 	);
-	ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
+	ImportPathDir = GetImportPath(ImportUI->GetPathPrefix()) / L_String;
 }
 
 void UDoodleFbxImport_1::ImportFile()
@@ -359,24 +360,24 @@ void UDoodleFbxImport_1::AssembleScene()
 
 bool UDoodleFbxImport_1::FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton) { return false; }
 
-void UDoodleFbxCameraImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
+void UDoodleFbxCameraImport_1::GenPathPrefix()
 {
-	Path_Prefix = In_Path_Prefix;
-	FString L_Folder = GetImportPath(In_Path_Prefix);
-	FString L_Base = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path_Prefix.ToUpper(), Eps, Shot, *ShotAb);
-	switch (In_Path_Suffix)
+	Path_Prefix = ImportUI->GetPathPrefix();
+	FString L_Folder = GetImportPath(ImportUI->GetPathPrefix());
+	FString L_Base = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *ImportUI->GetPathPrefix().ToUpper(), Eps, Shot, *ShotAb);
+	switch (ImportUI->GetPathSuffix())
 	{
 	case EImportSuffix::Lig:
 		L_Folder /= "Import_";
-		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
+		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
 		L_Base += TEXT("_");
-		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
+		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
 		break;
 	case EImportSuffix::Vfx:
 		L_Folder /= "Import_";
-		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
+		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
 		L_Base += TEXT("_");
-		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix));
+		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
 		break;
 	case EImportSuffix::End:
 		break;
@@ -747,16 +748,16 @@ void UDoodleFbxCameraImport_1::AssembleScene()
 {
 }
 
-void UDoodleAbcImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
+void UDoodleAbcImport_1::GenPathPrefix()
 {
 	FString L_String = FString::Format(
 		TEXT("AbcI_{0}_{1}"),
 		TArray<FStringFormatArg>{
-			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
+			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()))},
 			FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}
 		}
 	);
-	ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
+	ImportPathDir = GetImportPath(ImportUI->GetPathPrefix()) / L_String;
 }
 
 void UDoodleAbcImport_1::ImportFile()
@@ -845,16 +846,16 @@ void UDoodleAbcImport_1::AssembleScene()
 	}
 }
 
-void UDoodleXgenImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
+void UDoodleXgenImport_1::GenPathPrefix()
 {
 	FString L_String = FString::Format(
 		TEXT("XgenI_{0}_{1}"),
 		TArray<FStringFormatArg>{
-			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
+			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()))},
 			FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}
 		}
 	);
-	ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
+	ImportPathDir = GetImportPath(ImportUI->GetPathPrefix()) / L_String;
 }
 
 void UDoodleXgenImport_1::ImportFile()
@@ -1542,7 +1543,7 @@ const FString& SDoodleImportFbxUI::GetPathPrefix() const
 	return Path_Prefix;
 }
 
-const FString& SDoodleImportFbxUI::GetPathSuffix() const
+const EImportSuffix& SDoodleImportFbxUI::GetPathSuffix() const
 {
 	return Path_Suffix;
 }
