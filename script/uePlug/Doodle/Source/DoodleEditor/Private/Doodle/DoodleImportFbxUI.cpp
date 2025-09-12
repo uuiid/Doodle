@@ -104,6 +104,7 @@
 #include "Sections/MovieSceneLevelVisibilitySection.h"
 #include "Sections/MovieSceneSpawnSection.h"  // 生成段
 #include "SequencerTools.h"                   // 序列工具
+#include "Alembic/Abc/ArchiveInfo.h"
 #include "Subsystems/EditorActorSubsystem.h"  // 创建actor
 #include "Subsystems/EditorAssetSubsystem.h"
 #include "Tracks/MovieSceneLevelVisibilityTrack.h"
@@ -111,13 +112,50 @@
 #include "Tracks/MovieSceneSpawnTrack.h"              // 生成轨道
 #include "Bindings/MovieSceneSpawnableBinding.h"
 #include "Bindings/MovieSceneSpawnableActorBinding.h"
-
+#include "Alembic/AbcCoreFactory/IFactory.h"
+#include "Alembic/Abc/IArchive.h"
+#include "Alembic/Abc/ArchiveInfo.h"
+#include "Alembic/AbcCoreOgawa/All.h"
+#include "Alembic/AbcGeom/All.h"
+#include "Alembic/Abc/IObject.h"
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::UIName{TEXT("DoodleImportFbxUI")};
 
 
 namespace
 {
+	template <typename T>
+	int32_t NumType(const Alembic::Abc::IObject& In_Object)
+	{
+		if (!In_Object) return 0;
+
+		int32_t L_Num{};
+		auto L_Header = In_Object.getHeader();
+		const auto L_MetaData = In_Object.getMetaData();
+		const auto L_EnumChilden = In_Object.getNumChildren();
+		if (T::matches(L_MetaData))
+			++L_Num;
+
+		for (uint32 L_ChildIndex = 0; L_ChildIndex < L_EnumChilden; ++L_ChildIndex)
+		{
+			L_Num += NumType<T>(In_Object.getChild(L_ChildIndex));
+		}
+		return L_Num;
+	}
+
+
+	TTuple<int32_t, int32_t> GetAlembicMeshNumAndCurveNum(const FString& In_File_Path)
+	{
+		if (FPaths::GetExtension(In_File_Path, true) != ".abc") return {0, 0};
+
+		Alembic::AbcCoreFactory::IFactory L_Factory{};
+		Alembic::AbcCoreFactory::IFactory::CoreType L_CoreType{};
+		Alembic::Abc::IArchive L_Archive = L_Factory.getArchive(TCHAR_TO_UTF8(*In_File_Path), L_CoreType);
+		if (!L_Archive.valid()) return {0, 0};
+
+
+		return {NumType<Alembic::AbcGeom::ICurves>(L_Archive.getTop()), NumType<Alembic::AbcGeom::IPolyMesh>(L_Archive.getTop())};
+	}
 } // namespace
 
 FString UDoodleBaseImportData::GetImportPath(const FString& In_Path_Prefix) const
@@ -1406,43 +1444,40 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File)
 {
 	/// @brief 先扫描前缀
 	if (this->Path_Prefix.IsEmpty())
-	{
 		this->Path_Prefix = UDoodleBaseImportData::GetPathPrefix(In_File);
-	}
+
 
 	/// @brief 寻找到相同的就跳过
 	if (ListImportData.FindByPredicate([&](const SDoodleImportFbxUI::UDoodleBaseImportDataPtrType& In_FBx)
 	{
 		return In_FBx->ImportPath == In_File;
 	}))
-	{
 		return;
-	};
+
 	SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_File{};
 	/// 扫描fbx 和abc 文件
 	if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx"))
 	{
 		if (IsCamera(In_File))
-		{
-			SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
-			L_ptr->ImportPath = In_File;
-			L_File = ListImportData.Emplace_GetRef(L_ptr);
-		}
+			L_File = ListImportData.Emplace_GetRef(NewObject<UDoodleFbxCameraImport_1>());
 		else if (this->OnlyCamera != ECheckBoxState::Checked)
-		{
-			TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
-			L_ptr->ImportPath = In_File;
-			L_File = ListImportData.Emplace_GetRef(L_ptr);
-		}
+			L_File = ListImportData.Emplace_GetRef(NewObject<UDoodleFbxImport_1>());
 	}
 	if (this->OnlyCamera != ECheckBoxState::Checked)
 		if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc"))
 		{
-			SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleAbcImport_1>();
-			L_ptr->ImportPath = In_File;
-			L_File = ListImportData.Emplace_GetRef(L_ptr);
+			auto&& [L_Ploy, L_Curve] = GetAlembicMeshNumAndCurveNum(In_File);
+			if (L_Ploy && !L_Curve)
+				L_File = ListImportData.Emplace_GetRef(NewObject<UDoodleAbcImport_1>());
+			else if (!L_Ploy && L_Curve)
+				L_File = ListImportData.Emplace_GetRef(NewObject<UDoodleXgenImport_1>());
 		}
-	if (L_File) L_File->GenStartAndEndTime();
+	if (L_File)
+	{
+		L_File->ImportPath = In_File;
+		L_File->ImportUI = this;
+		L_File->GenStartAndEndTime();
+	}
 }
 
 
