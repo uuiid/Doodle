@@ -127,7 +127,7 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 							[
 								SNew(SButton).OnClicked_Lambda([]() -> FReply
 									{
-										FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name);
+										FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::UIName);
 										return FReply::Handled();
 									}) // 批量导入
 									[

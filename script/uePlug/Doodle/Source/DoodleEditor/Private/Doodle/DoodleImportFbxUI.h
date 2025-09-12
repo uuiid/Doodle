@@ -219,6 +219,18 @@ public:
 	void AssembleScene() override;
 };
 
+UCLASS()
+class UDoodleXgenImport_1 : public UDoodleBaseImportData
+{
+	GENERATED_BODY()
+
+public:
+	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix) override;
+	void ImportFile() override;
+
+	void AssembleScene() override;
+};
+
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject
 {
 public:
@@ -237,7 +249,7 @@ public:
 	virtual void AddReferencedObjects(FReferenceCollector& collector) override;
 	FString GetReferencerName() const override;
 
-	const static FName Name;
+	const static FName UIName;
 
 	static TSharedRef<SDockTab> OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs);
 
@@ -260,10 +272,6 @@ private:
 
 	// 判断fbx是否是相机fbx
 	bool IsCamera(const FString& In_File);
-	void AddCameraFile(const FString& In_File);
-	// 寻找骨骼排匹配
-	void FindSK();
-
 	// @brief 导入文件
 	void ImportFile();
 

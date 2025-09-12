@@ -112,7 +112,7 @@
 #include "Bindings/MovieSceneSpawnableActorBinding.h"
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
-const FName SDoodleImportFbxUI::Name{TEXT("DoodleImportFbxUI")};
+const FName SDoodleImportFbxUI::UIName{TEXT("DoodleImportFbxUI")};
 
 FString SDoodleImportFbxUI::NewFolderName{TEXT("")};
 
@@ -986,6 +986,27 @@ void UDoodleAbcImport_1::AssembleScene()
 	}
 }
 
+void UDoodleXgenImport_1::GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix)
+{
+	FString L_String = FString::Format(
+		TEXT("XgenI_{0}_{1}"),
+		TArray<FStringFormatArg>{
+			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(In_Path_Suffix))},
+			FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}
+		}
+	);
+	ImportPathDir = GetImportPath(In_Path_Prefix) / L_String;
+}
+
+void UDoodleXgenImport_1::ImportFile()
+{
+}
+
+void UDoodleXgenImport_1::AssembleScene()
+{
+}
+
+
 class SDoodleImportUiItem final : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType>
 {
 public:
@@ -1144,7 +1165,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 #if PLATFORM_WINDOWS
 	const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
 #else
-  const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
+	const FString FileFilterText = FString::Printf(TEXT("%s"), *FileFilterType.ToString());
 #endif
 
 	UEnum* L_Enum = StaticEnum<EImportSuffix>();
@@ -1543,52 +1564,23 @@ void SDoodleImportFbxUI::AddFile(const FString& In_File)
 			L_ptr->ImportPath = In_File;
 			L_File = ListImportData.Emplace_GetRef(L_ptr);
 		}
-		else
+		else if (this->OnlyCamera != ECheckBoxState::Checked)
 		{
 			TObjectPtr<UDoodleFbxImport_1> L_ptr = NewObject<UDoodleFbxImport_1>();
 			L_ptr->ImportPath = In_File;
 			L_File = ListImportData.Emplace_GetRef(L_ptr);
 		}
 	}
-	if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc"))
-	{
-		SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleAbcImport_1>();
-		L_ptr->ImportPath = In_File;
-		L_File = ListImportData.Emplace_GetRef(L_ptr);
-	}
-	if (L_File) L_File->GenStartAndEndTime();
-}
-
-void SDoodleImportFbxUI::AddCameraFile(const FString& In_File)
-{
-	/// @brief 先扫描前缀
-	if (this->Path_Prefix.IsEmpty())
-	{
-		this->Path_Prefix = UDoodleBaseImportData::GetPathPrefix(In_File);
-	}
-
-	/// @brief 寻找到相同的就跳过
-	if (ListImportData.FindByPredicate([&](const SDoodleImportFbxUI::UDoodleBaseImportDataPtrType& In_FBx)
-	{
-		return In_FBx->ImportPath == In_File;
-	}))
-	{
-		return;
-	};
-	SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_File{};
-	/// 扫描fbx 和abc 文件
-	if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".fbx"))
-	{
-		if (IsCamera(In_File))
+	if (this->OnlyCamera != ECheckBoxState::Checked)
+		if (FPaths::FileExists(In_File) && FPaths::GetExtension(In_File, true) == TEXT(".abc"))
 		{
-			SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleFbxCameraImport_1>();
+			SDoodleImportFbxUI::UDoodleBaseImportDataPtrType L_ptr = NewObject<UDoodleAbcImport_1>();
 			L_ptr->ImportPath = In_File;
 			L_File = ListImportData.Emplace_GetRef(L_ptr);
 		}
-	}
-
 	if (L_File) L_File->GenStartAndEndTime();
 }
+
 
 // DragBegin
 FReply SDoodleImportFbxUI::OnDragOver(const FGeometry& InGeometry, const FDragDropEvent& InDragDropEvent)
@@ -1606,30 +1598,20 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
 	ListImportData.Empty();
 	AllSkinObjs.Empty();
 	// 优先扫描内部的sk
-	AllSkinObjs = FDoodleUSkeletonData_1::ListAllSkeletons();
+	// AllSkinObjs = FDoodleUSkeletonData_1::ListAllSkeletons();
 
 	for (auto&& Path : L_Opt->GetFiles())
 	{
+		// 目录进行迭代
 		if (FPaths::DirectoryExists(Path))
-		{
-			// 目录进行迭代
 			IFileManager::Get().IterateDirectoryRecursively(*Path, [this](const TCHAR* InPath, bool in_) -> bool
 			{
-				if (this->OnlyCamera == ECheckBoxState::Checked)
-					AddCameraFile(InPath);
-				else
-					AddFile(InPath);
+				AddFile(InPath);
 				return true;
 			});
-		}
+
 		else if (FPaths::FileExists(Path))
-		{
-			// 文件直接添加
-			if (this->OnlyCamera == ECheckBoxState::Checked)
-				AddCameraFile(Path);
-			else
-				AddFile(Path);
-		}
+			AddFile(Path);
 	}
 	GenPathPrefix(Path_Prefix, Path_Suffix);
 	SetFbxOnlyAnim();

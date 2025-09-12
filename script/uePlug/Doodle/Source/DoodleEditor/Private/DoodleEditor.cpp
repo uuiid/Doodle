@@ -51,7 +51,7 @@ void FdoodleEditorModule::StartupModule()
 	);
 	PluginCommands->MapAction(
 		FDoodleCommands::Get().DoodleImportFbxWindow,
-		FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::Name); }),
+		FExecuteAction::CreateLambda([]() { FGlobalTabmanager::Get()->TryInvokeTab(SDoodleImportFbxUI::UIName); }),
 		FCanExecuteAction()
 	);
 
@@ -84,7 +84,7 @@ void FdoodleEditorModule::StartupModule()
 		.SetDisplayName(LOCTEXT("FdoodleTabTitle1", "Doodle"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 	FGlobalTabmanager::Get()
-		->RegisterNomadTabSpawner(SDoodleImportFbxUI::Name, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
+		->RegisterNomadTabSpawner(SDoodleImportFbxUI::UIName, FOnSpawnTab::CreateStatic(&SDoodleImportFbxUI::OnSpawnAction))
 		.SetDisplayName(LOCTEXT("FdoodleTabTitle2", "Doodle Import Fbx"))
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 	FGlobalTabmanager::Get() //文件管理
@@ -196,7 +196,7 @@ void FdoodleEditorModule::ShutdownModule()
 	FDoodleCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(doodleTabName);
-	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::Name);
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(SDoodleImportFbxUI::UIName);
 	// zhanghang 变体相关 23/09/25
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(DoodleVariantCompoundWidget::Name);
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(UDoodleOrganizeCompoundWidget::Name);
