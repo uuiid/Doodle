@@ -118,6 +118,9 @@
 #include "Alembic/AbcCoreOgawa/All.h"
 #include "Alembic/AbcGeom/All.h"
 #include "Alembic/Abc/IObject.h"
+#include "GroomCacheImportOptions.h"
+
+
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
 const FName SDoodleImportFbxUI::UIName{TEXT("DoodleImportFbxUI")};
 
@@ -154,7 +157,7 @@ namespace
 		if (!L_Archive.valid()) return {0, 0};
 
 
-		return {NumType<Alembic::AbcGeom::ICurves>(L_Archive.getTop()), NumType<Alembic::AbcGeom::IPolyMesh>(L_Archive.getTop())};
+		return {NumType<Alembic::AbcGeom::IPolyMesh>(L_Archive.getTop()), NumType<Alembic::AbcGeom::ICurves>(L_Archive.getTop())};
 	}
 } // namespace
 
@@ -898,6 +901,39 @@ void UDoodleXgenImport_1::GenPathPrefix()
 
 void UDoodleXgenImport_1::ImportFile()
 {
+	UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
+	L_Data->GroupName = TEXT("doodle import");
+	L_Data->Filenames.Add(ImportPath);
+	L_Data->DestinationPath = ImportPathDir;
+	L_Data->bReplaceExisting = true;
+	L_Data->bSkipReadOnly = true;
+	L_Data->bReplaceExisting = true;
+
+
+	TArray<UClass*> L_ImportUiltClasses;
+	GetDerivedClasses(UFactory::StaticClass(),
+	                  L_ImportUiltClasses);
+	for (auto&& i : L_ImportUiltClasses)
+	{
+		// i->GetName();
+		UE_LOG(LogTemp, Log, TEXT("get class name %s"), *i->GetName());
+		if (i->GetName() == "HairStrandsFactory")
+			L_Data->Factory = i->GetDefaultObject<UFactory>();
+	}
+	L_Data->Factory->AssetImportTask = NewObject<UAssetImportTask>();
+	UGroomCacheImportOptions* L_Opt = NewObject<UGroomCacheImportOptions>();
+	L_Data->Factory->AssetImportTask->Options = L_Opt;
+	L_Opt->ImportSettings.FrameStart = StartTime;
+	L_Opt->ImportSettings.FrameEnd = EndTime;
+	L_Opt->ImportSettings.ConversionSettings.Rotation.X = -90.0;
+	L_Opt->ImportSettings.ConversionSettings.Rotation.Z = 180.0;
+	L_Opt->ImportSettings.ConversionSettings.Scale.X = -1.0;
+
+	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	
+	TArray<UObject*> L_Geos = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	EditorAssetSubsystem->SaveLoadedAssets(L_Geos);
 }
 
 void UDoodleXgenImport_1::AssembleScene()
