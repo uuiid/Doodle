@@ -19,7 +19,7 @@
 #include "CineCameraActor.h"
 #include "CineCameraComponent.h"
 #include "MovieSceneObjectBindingID.h"
- 
+
 
 /// 资产注册表
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -151,95 +151,108 @@
 #include "LevelEditorSubsystem.h"
 #include "Misc/ScopeExit.h"  // 作用域退出
 
-void FDoodleCreateLevel::ImportSkeletalMesh(const FString& InFbxpath) {
-  UDoodleFbxImport_1* L_FbxImport = NewObject<UDoodleFbxImport_1>();
-  L_FbxImport->ImportPath         = InFbxpath;
-  L_FbxImport->FindSkeleton(AllSkinObjs);
-  L_FbxImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), EImportSuffix::Lig);
-  AllImportData.Add(L_FbxImport);
+void FDoodleCreateLevel::ImportSkeletalMesh(const FString& InFbxpath)
+{
 }
 
-void FDoodleCreateLevel::ImportGeometryCache(const FString& InAbcPath) {
-  UDoodleAbcImport_1* L_AbcImport = NewObject<UDoodleAbcImport_1>();
-  L_AbcImport->ImportPath         = InAbcPath;
-  L_AbcImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InAbcPath), EImportSuffix::Lig);
-  AllImportData.Add(L_AbcImport);
+void FDoodleCreateLevel::ImportGeometryCache(const FString& InAbcPath)
+{
 }
 
-void FDoodleCreateLevel::ImportCamera(const FString& InFbxpath) {
-  UDoodleFbxCameraImport_1* L_FbxCameraImport = NewObject<UDoodleFbxCameraImport_1>();
-  L_FbxCameraImport->ImportPath               = InFbxpath;
-  L_FbxCameraImport->GenPathPrefix(UDoodleBaseImportData::GetPathPrefix(InFbxpath), EImportSuffix::Lig);
-  AllImportData.Add(L_FbxCameraImport);
+void FDoodleCreateLevel::ImportCamera(const FString& InFbxpath)
+{
 }
 
-namespace {
-bool IsCamera(UnFbx::FFbxImporter* InFbx) {
-  TArray<fbxsdk::FbxCamera*> L_Cameras{};
-  MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
-  return !L_Cameras.IsEmpty();
-}
-}  // namespace
+namespace
+{
+	bool IsCamera(UnFbx::FFbxImporter* InFbx)
+	{
+		TArray<fbxsdk::FbxCamera*> L_Cameras{};
+		MovieSceneToolHelpers::GetCameras(InFbx->Scene->GetRootNode(), L_Cameras);
+		return !L_Cameras.IsEmpty();
+	}
+} // namespace
 
-void FDoodleCreateLevel::ImportFile(const FString& InFile) {
-  if (!FPaths::FileExists(InFile)) {
-    return;
-  }
+void FDoodleCreateLevel::ImportFile(const FString& InFile)
+{
+	if (!FPaths::FileExists(InFile))
+	{
+		return;
+	}
 
-  FString l_ext = FPaths::GetExtension(InFile, true);
+	FString l_ext = FPaths::GetExtension(InFile, true);
 
-  if (l_ext == TEXT(".fbx")) {
-    UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
-    L_FbxImporter->ImportFromFile(*InFile, FPaths::GetExtension(InFile));
-    ON_SCOPE_EXIT { L_FbxImporter->ReleaseScene(); };
-    if (IsCamera(L_FbxImporter)) {
-      ImportCamera(InFile);
-    } else {
-      L_FbxImporter->ReleaseScene();
-      ImportSkeletalMesh(InFile);
-    }
-  } else if (l_ext == TEXT(".abc")) {
-    ImportGeometryCache(InFile);
-  }
-}
-
-void FDoodleCreateLevel::PreparationImport(const FString& InFile) {
-  if (!FPaths::FileExists(InFile)) {
-    return;
-  }
-
-  FString l_ext = FPaths::GetExtension(InFile, true);
-
-  if (l_ext == TEXT(".fbx")) {
-    UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
-    L_FbxImporter->ImportFromFile(*InFile, FPaths::GetExtension(InFile));
-    ON_SCOPE_EXIT { L_FbxImporter->ReleaseScene(); };
-    if (IsCamera(L_FbxImporter)) {
-      ImportCamera(InFile);
-    } else {
-      L_FbxImporter->ReleaseScene();
-      ImportSkeletalMesh(InFile);
-    }
-  } else if (l_ext == TEXT(".abc")) {
-    ImportGeometryCache(InFile);
-  }
+	if (l_ext == TEXT(".fbx"))
+	{
+		UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
+		L_FbxImporter->ImportFromFile(*InFile, FPaths::GetExtension(InFile));
+		ON_SCOPE_EXIT { L_FbxImporter->ReleaseScene(); };
+		if (IsCamera(L_FbxImporter))
+		{
+			ImportCamera(InFile);
+		}
+		else
+		{
+			L_FbxImporter->ReleaseScene();
+			ImportSkeletalMesh(InFile);
+		}
+	}
+	else if (l_ext == TEXT(".abc"))
+	{
+		ImportGeometryCache(InFile);
+	}
 }
 
-void FDoodleCreateLevel::ImportFiles(const TArray<FString>& InFiles) {
-  AllSkinObjs = FDoodleUSkeletonData_1::ListAllSkeletons();
-  for (auto&& i : InFiles) {
-    PreparationImport(i);
-  }
-  for (auto&& i : AllImportData) {
-    i->ImportFile();
-    UEditorAssetLibrary::SaveDirectory("/Game/Shot/");
-  }
+void FDoodleCreateLevel::PreparationImport(const FString& InFile)
+{
+	if (!FPaths::FileExists(InFile))
+	{
+		return;
+	}
+
+	FString l_ext = FPaths::GetExtension(InFile, true);
+
+	if (l_ext == TEXT(".fbx"))
+	{
+		UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
+		L_FbxImporter->ImportFromFile(*InFile, FPaths::GetExtension(InFile));
+		ON_SCOPE_EXIT { L_FbxImporter->ReleaseScene(); };
+		if (IsCamera(L_FbxImporter))
+		{
+			ImportCamera(InFile);
+		}
+		else
+		{
+			L_FbxImporter->ReleaseScene();
+			ImportSkeletalMesh(InFile);
+		}
+	}
+	else if (l_ext == TEXT(".abc"))
+	{
+		ImportGeometryCache(InFile);
+	}
 }
 
-void FDoodleCreateLevel::AddReferencedObjects(FReferenceCollector& Collector) {
-  for (auto&& i : AllImportData) {
-    Collector.AddReferencedObject(i);
-  }
+void FDoodleCreateLevel::ImportFiles(const TArray<FString>& InFiles)
+{
+	AllSkinObjs = FDoodleUSkeletonData_1::ListAllSkeletons();
+	for (auto&& i : InFiles)
+	{
+		PreparationImport(i);
+	}
+	for (auto&& i : AllImportData)
+	{
+		i->ImportFile();
+		UEditorAssetLibrary::SaveDirectory("/Game/Shot/");
+	}
+}
+
+void FDoodleCreateLevel::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	for (auto&& i : AllImportData)
+	{
+		Collector.AddReferencedObject(i);
+	}
 }
 
 FString FDoodleCreateLevel::GetReferencerName() const { return TEXT("Doodle Import"); }

@@ -153,7 +153,9 @@ public class doodleEditor : ModuleRules
 				"ImageCore",
 				"OpenColorIOWrapper",
                 "Blutility",
-				"BatchRender"
+				"BatchRender",
+				// 导入abc hair需要
+				"HairStrandsCore"
             }
 		);
 
