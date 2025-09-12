@@ -92,7 +92,6 @@ public:
 	 * @brief 根据导入的路径, 提取信息,  生成要导入ue4的路径
 	 *
 	 * @param In_Path 传入的路径(提取信息)
-	 * @return FString  返回的导入ue4的路径
 	 */
 	virtual void GenPathPrefix()
 	{

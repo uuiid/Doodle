@@ -119,6 +119,7 @@
 #include "Alembic/AbcGeom/All.h"
 #include "Alembic/Abc/IObject.h"
 #include "GroomCacheImportOptions.h"
+#include "ObjectTools.h"
 
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
@@ -918,22 +919,47 @@ void UDoodleXgenImport_1::ImportFile()
 		// i->GetName();
 		UE_LOG(LogTemp, Log, TEXT("get class name %s"), *i->GetName());
 		if (i->GetName() == "HairStrandsFactory")
-			L_Data->Factory = i->GetDefaultObject<UFactory>();
+			L_Data->Factory = DuplicateObject(i->GetDefaultObject<UFactory>(), L_Data);
 	}
-	L_Data->Factory->AssetImportTask = NewObject<UAssetImportTask>();
-	UGroomCacheImportOptions* L_Opt = NewObject<UGroomCacheImportOptions>();
+	if (!L_Data->Factory) return;
+	TArray<FString> L_String{};
+	bool bImportWasCancelled = false;
+	auto L_Name = ObjectTools::SanitizeObjectName(FPaths::GetBaseFilename(ImportPath));
+	FString PackageName = ObjectTools::SanitizeInvalidChars(FPaths::Combine(*ImportPathDir, *L_Name), INVALID_LONGPACKAGE_CHARACTERS);
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	if (!EditorAssetSubsystem->DoesDirectoryExist(ImportPathDir))
+	{
+		EditorAssetSubsystem->MakeDirectory(ImportPathDir);
+	}
+
+
+	UPackage* Pkg = CreatePackage(*PackageName);
+	Pkg->MarkAsFullyLoaded();
+	Pkg->SetIsExternallyReferenceable(true);
+	if (!ensure(Pkg))
+	{
+		// Failed to create the package to hold this asset for some reason
+		return;
+	}
+	L_Data->Factory->GetSupportedFileExtensions(L_String);
+
+	L_Data->Factory->AssetImportTask = NewObject<UAssetImportTask>(L_Data);
+	UGroomCacheImportOptions* L_Opt = NewObject<UGroomCacheImportOptions>(L_Data->Factory->AssetImportTask);
 	L_Data->Factory->AssetImportTask->Options = L_Opt;
+	L_Data->Factory->AssetImportTask->bAutomated = true;
 	L_Opt->ImportSettings.FrameStart = StartTime;
 	L_Opt->ImportSettings.FrameEnd = EndTime;
 	L_Opt->ImportSettings.ConversionSettings.Rotation.X = -90.0;
 	L_Opt->ImportSettings.ConversionSettings.Rotation.Z = 180.0;
 	L_Opt->ImportSettings.ConversionSettings.Scale.X = -1.0;
-
-	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-	
-	TArray<UObject*> L_Geos = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	EditorAssetSubsystem->SaveLoadedAssets(L_Geos);
+	L_Opt->ImportSettings.bImportGroomCache = true;
+	L_Data->Factory->ImportObject(L_Data->Factory->ResolveSupportedClass(), Pkg, FName{*L_Name}, RF_Public | RF_Standalone | RF_Transactional,
+	                              ImportPath, nullptr, bImportWasCancelled);
+	// const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+	//
+	// TArray<UObject*> L_Geos = AssetToolsModule.Get().ImportAssetsAutomated(L_Data);
+	// UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	// EditorAssetSubsystem->SaveLoadedAssets(L_Geos);
 }
 
 void UDoodleXgenImport_1::AssembleScene()
@@ -1418,6 +1444,8 @@ void SDoodleImportFbxUI::GenPathPrefix(const FString& In_Path_Prefix, EImportSuf
 {
 	Path_Prefix = In_Path_Prefix;
 	Path_Suffix = In_Path_Suffix;
+	for (auto&& i : ListImportData)
+		i->GenPathPrefix();
 
 	ListImportGui->RebuildList();
 }
