@@ -14,12 +14,16 @@
 #include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
-
+#include <spdlog/logger.h>
 namespace doodle::chrono {
 using namespace std::chrono;
 }
 
 #define USE_STD_FSYS
+
+namespace doodle {
+using logger_ptr = std::shared_ptr<spdlog::logger>;
+}
 
 namespace doodle::FSys {
 #ifdef USE_STD_FSYS
@@ -68,6 +72,7 @@ bool DOODLE_CORE_API is_hidden(const FSys::path& in_file_path);
  * @return 分裂后重新组合的文件名称
  */
 FSys::path split_uuid_path(const FSys::path& in_file_path);
+bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger = nullptr);
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS

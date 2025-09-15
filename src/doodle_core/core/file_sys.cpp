@@ -280,6 +280,28 @@ FSys::path split_uuid_path(const FSys::path &in_file_path) {
   return l_uuid_str1 / l_uuid_str2 / in_file_path;
 }
 
+bool copy_diff_impl(const FSys::path &from, const FSys::path &to) {
+  if (from.extension() == doodle_config::doodle_flag_name) return false;
+  if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
+      FSys::last_write_time(from) > FSys::last_write_time(to)) {
+    if (auto l_p = to.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    return FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
+  }
+  return false;
+}
+
+bool copy_diff(const FSys::path &from, const FSys::path &to, logger_ptr in_logger) {
+  if (!FSys::exists(from)) return false;
+  if (in_logger) in_logger->warn("复制 {} -> {}", from, to);
+  if (FSys::is_regular_file(from)) return copy_diff_impl(from, to);
+  bool l_ret{};
+  for (auto &&l_file : FSys::recursive_directory_iterator(from)) {
+    auto l_to_file = to / l_file.path().lexically_proximate(from);
+    if (l_file.is_regular_file()) l_ret |= copy_diff_impl(l_file.path(), l_to_file);
+  }
+  return l_ret;
+}
+
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS
