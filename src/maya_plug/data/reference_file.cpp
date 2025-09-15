@@ -20,12 +20,14 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/node/files_info.h>
 
+#include "data/reference_file.h"
 #include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
 #include "maya_conv_str.h"
 #include "maya_tool.h"
 #include <array>
 #include <filesystem>
+#include <fmt/format.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
 #include <maya/MFileIO.h>
@@ -119,6 +121,22 @@ FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) cons
 
   FSys::path l_path{l_name};
   l_path = l_path.generic_string();
+  l_path += ".fbx";
+  return l_path;
+}
+
+generate_rig_fbx_file_path::generate_rig_fbx_file_path() : generate_file_path_base() {}
+generate_rig_fbx_file_path::~generate_rig_fbx_file_path() = default;
+
+FSys::path generate_rig_fbx_file_path::get_path() const {
+  auto k_path = maya_file_io::work_path("rig");
+  if (!exists(k_path)) {
+    create_directories(k_path);
+  }
+  return k_path;
+}
+FSys::path generate_rig_fbx_file_path::get_name(const std::string &in_ref_name) const {
+  FSys::path l_path{fmt::format("SK_{}", maya_file_io::get_current_path().stem())};
   l_path += ".fbx";
   return l_path;
 }
