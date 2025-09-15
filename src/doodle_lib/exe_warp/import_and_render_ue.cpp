@@ -22,27 +22,7 @@
 namespace doodle {
 
 namespace import_and_render_ue_ns {
-bool copy_diff_impl(const FSys::path& from, const FSys::path& to) {
-  if (from.extension() == doodle_config::doodle_flag_name) return false;
-  if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
-      FSys::last_write_time(from) > FSys::last_write_time(to)) {
-    if (auto l_p = to.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-    return FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
-  }
-  return false;
-}
 
-bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
-  if (!FSys::exists(from)) return false;
-  in_logger->warn("复制 {} -> {}", from, to);
-  if (FSys::is_regular_file(from)) return copy_diff_impl(from, to);
-  bool l_ret{};
-  for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
-    auto l_to_file = to / l_file.path().lexically_proximate(from);
-    if (l_file.is_regular_file()) l_ret |= copy_diff_impl(l_file.path(), l_to_file);
-  }
-  return l_ret;
-}
 void fix_project(const FSys::path& in_project_path) {
   auto l_json                = nlohmann::json::parse(FSys::ifstream{in_project_path});
   auto&& l_plugin            = l_json["Plugins"];
@@ -248,18 +228,18 @@ void args::up_files(const FSys::path& in_out_image_path, const FSys::path& in_mo
   l_maya_out |= ranges::actions::unique;
 
   // 渲染输出文件
-  copy_diff(in_out_image_path, l_rem_path / in_out_image_path.lexically_proximate(l_scene), logger_ptr_);
+  FSys::copy_diff(in_out_image_path, l_rem_path / in_out_image_path.lexically_proximate(l_scene), logger_ptr_);
   // 渲染工程文件
-  copy_diff(l_scene / doodle_config::ue4_config, l_rem_path / doodle_config::ue4_config, logger_ptr_);
-  copy_diff(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content, logger_ptr_);
-  copy_diff(l_u_project, l_rem_path / l_u_project.filename(), logger_ptr_);
+  FSys::copy_diff(l_scene / doodle_config::ue4_config, l_rem_path / doodle_config::ue4_config, logger_ptr_);
+  FSys::copy_diff(l_scene / doodle_config::ue4_content, l_rem_path / doodle_config::ue4_content, logger_ptr_);
+  FSys::copy_diff(l_u_project, l_rem_path / l_u_project.filename(), logger_ptr_);
   // maya输出文件
   for (const auto& l_maya : l_maya_out) {
-    copy_diff(l_maya, l_rem_path.parent_path() / l_maya.stem(), logger_ptr_);
+    FSys::copy_diff(l_maya, l_rem_path.parent_path() / l_maya.stem(), logger_ptr_);
   }
-  copy_diff(in_move_path, l_rem_path.parent_path() / "mov" / in_move_path.filename(), logger_ptr_);
+  FSys::copy_diff(in_move_path, l_rem_path.parent_path() / "mov" / in_move_path.filename(), logger_ptr_);
   // 额外要求上传的序列图片
-  copy_diff(
+  FSys::copy_diff(
       in_out_image_path,
       FSys::path{project_.auto_upload_path_} / fmt::format("EP{:03}", episodes_.p_episodes) / "自动灯光序列帧" /
           in_out_image_path.filename(),
@@ -413,12 +393,12 @@ void args::down_files() {
         auto l_original = l_data.ue_file_.lexically_relative(l_root);
         scene_file_     = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
         l_data.update_files =
-            copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+            FSys::copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
         // 配置文件夹复制
-        copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
+        FSys::copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
         // 复制项目文件
         if (!FSys::exists(l_local_path / l_data.ue_prj_path_.filename()))
-          copy_diff(l_data.ue_prj_path_, l_local_path / l_data.ue_prj_path_.filename(), logger_ptr_);
+          FSys::copy_diff(l_data.ue_prj_path_, l_local_path / l_data.ue_prj_path_.filename(), logger_ptr_);
 
         render_project_ = l_local_path / l_data.ue_prj_path_.filename();
       } break;
@@ -426,7 +406,7 @@ void args::down_files() {
       // 角色文件
       case details::assets_type_enum::character:
         l_data.update_files =
-            copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+            FSys::copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
         break;
 
       // 道具文件
@@ -434,12 +414,12 @@ void args::down_files() {
         auto l_prop_path = l_data.ue_file_.lexically_relative(l_root / "Prop");
         if (l_prop_path.empty()) continue;
         auto l_prop_path_name = *l_prop_path.begin();
-        l_data.update_files   = copy_diff(
+        l_data.update_files   = FSys::copy_diff(
             l_down_path / doodle_config::ue4_content / "Prop" / l_prop_path_name,
             l_local_path / doodle_config::ue4_content / "Prop" / l_prop_path_name, logger_ptr_
         );
         /// 此处忽略错误
-        copy_diff(
+        FSys::copy_diff(
             l_down_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles",
             l_local_path / doodle_config::ue4_content / "Prop" / "a_PropPublicFiles", logger_ptr_
         );
@@ -458,10 +438,10 @@ void args::down_files() {
       auto l_local_path = g_root / project_.code_ / "maya_file";
       if (is_sim_ && !l_data.maya_solve_file_.empty()) {
         l_data.maya_local_file_ = l_local_path / l_data.maya_solve_file_.filename();
-        l_data.update_files |= copy_diff(l_data.maya_solve_file_, l_data.maya_local_file_, logger_ptr_);
+        l_data.update_files |= FSys::copy_diff(l_data.maya_solve_file_, l_data.maya_local_file_, logger_ptr_);
       } else {
         l_data.maya_local_file_ = l_local_path / l_data.maya_file_.filename();
-        l_data.update_files |= copy_diff(l_data.maya_file_, l_data.maya_local_file_, logger_ptr_);
+        l_data.update_files |= FSys::copy_diff(l_data.maya_file_, l_data.maya_local_file_, logger_ptr_);
       }
     }
 }
