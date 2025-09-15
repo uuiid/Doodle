@@ -198,6 +198,7 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
+    core_set::get_set().set_root("D:/sy_maigc");
     // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(core_set::get_set().get_cache_root("database") / "kitsu.database");
     // 初始化授权上下文

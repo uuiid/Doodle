@@ -21,6 +21,7 @@
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include "local.h"
+#include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http::local {
@@ -183,14 +184,18 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       if (in_json.contains("multi_uv_inspection"))
         l_arg_t->multi_uv_inspection_ = in_json["multi_uv_inspection"].get<bool>();
       arg_ = l_arg_t;
-    } else if (in_json.contains("image_to_move")) {
+    } else if (in_json.contains("image_to_move")) {  // 图片到视频
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
       in_json.get_to(*l_image_to_move_args);
       arg_ = l_image_to_move_args;
-    } else if (in_json.contains("connect_video")) {
+    } else if (in_json.contains("connect_video")) {  // 连接视频
       auto l_connect_video_args = std::make_shared<doodle::detail::connect_video_t>();
       in_json.get_to(*l_connect_video_args);
       arg_ = l_connect_video_args;
+    } else if (in_json.contains("export_rig")) {  /// 导出 rig
+      auto l_arg_t = std::make_shared<maya_exe_ns::export_rig_arg>();
+      in_json.get_to(*l_arg_t);
+      arg_ = l_arg_t;
     } else {  /// 导出fbx
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       in_json.get_to(*l_arg_t);

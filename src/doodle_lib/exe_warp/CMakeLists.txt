@@ -7,6 +7,7 @@ target_sources(
         async_read_pipe.h
         windows_hide.h
         check_files.h
+        export_rig_sk.h
 
         PRIVATE
         maya_exe.cpp
@@ -15,4 +16,5 @@ target_sources(
         async_read_pipe.cpp
         windows_hide.cpp
         check_files.cpp
+        export_rig_sk.cpp
 )
