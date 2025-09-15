@@ -47,7 +47,7 @@ struct DOODLE_CORE_API entity_link {
   // to json
   friend void to_json(nlohmann::json& j, const entity_link& p) {
     j["id"]            = p.uuid_id_;
-    j["entity_id"]  = p.entity_in_id_;
+    j["entity_id"]     = p.entity_in_id_;
     j["entity_out_id"] = p.entity_out_id_;
     j["data"]          = p.data_;
     j["nb_occurences"] = p.nb_occurences_;
@@ -74,15 +74,16 @@ struct DOODLE_CORE_API entity_asset_extend {
   std::string ban_ben_;
   std::optional<std::int32_t> ji_du_;
   std::optional<std::int32_t> kai_shi_ji_shu_;
+  std::optional<std::int32_t> chang_ci_{};
 
   bool is_empty() const {
     return !ji_shu_lie_ && deng_ji_.empty() && !gui_dang_ && bian_hao_.empty() && pin_yin_ming_cheng_.empty() &&
-           ban_ben_.empty() && !ji_du_ && !kai_shi_ji_shu_;
+           ban_ben_.empty() && !ji_du_ && !kai_shi_ji_shu_ && !chang_ci_;
   }
   static bool has_extend_data(const nlohmann::json& j) {
     return j.contains("ji_shu_lie") || j.contains("deng_ji") || j.contains("gui_dang") || j.contains("bian_hao") ||
            j.contains("pin_yin_ming_cheng") || j.contains("ban_ben") || j.contains("ji_du") ||
-           j.contains("kai_shi_ji_shu");
+           j.contains("kai_shi_ji_shu") || j.contains("chang_ci");
   }
 
   // to json
@@ -95,6 +96,7 @@ struct DOODLE_CORE_API entity_asset_extend {
     j["ban_ben"]            = p.ban_ben_;
     j["ji_du"]              = p.ji_du_;
     j["kai_shi_ji_shu"]     = p.kai_shi_ji_shu_;
+    j["chang_ci"]           = p.chang_ci_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, entity_asset_extend& p) {
@@ -106,6 +108,7 @@ struct DOODLE_CORE_API entity_asset_extend {
     if (j.contains("ban_ben")) j.at("ban_ben").get_to(p.ban_ben_);
     if (j.contains("ji_du")) j.at("ji_du").get_to(p.ji_du_);
     if (j.contains("kai_shi_ji_shu")) j.at("kai_shi_ji_shu").get_to(p.kai_shi_ji_shu_);
+    if (j.contains("chang_ci")) j.at("chang_ci").get_to(p.chang_ci_);
   }
 };
 
