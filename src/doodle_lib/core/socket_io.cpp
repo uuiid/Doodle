@@ -34,8 +34,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::ge
 
   // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
   if (!l_sid_data || l_sid_data->is_timeout() || l_sid_data->is_upgrade_to_websocket())
-    throw_exception(
-        http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
+    in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"
     );
   auto l_event = co_await l_sid_data->async_event();
   // default_logger_raw()->info("sid {} 接收到事件 {}", l_p.sid_, l_event);
@@ -48,7 +48,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::ge
 boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::post(session_data_ptr in_handle) {
   auto l_p = parse_query_data(in_handle->url_);
   // 注册
-  if (l_p.sid_.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "sid为空"});
+  if (l_p.sid_.is_nil()) in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "sid为空");
 
   if (in_handle->content_type_ != http::detail::content_type::text_plain)  // TODO: 二进制数据, 未实现
     co_return in_handle->make_msg(
@@ -59,8 +59,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
   auto l_body     = std::get<std::string>(in_handle->body_);
   auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
   if (!l_sid_data)
-    throw_exception(
-        http_request_error{boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"}
+    in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"
     );
   if (auto [l_r, l_ptr] = l_sid_data->handle_engine_io(l_body); !l_r) {
     // 继续处理 socket io 包
