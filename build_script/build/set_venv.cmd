@@ -1,5 +1,6 @@
 @echo off
-
+chcp 65001
+set VSLANG=1033
 if not exist "%my_pwd%/Doodle.code-workspace" goto set_pwd
 
 if not exist "%cd%/Doodle.code-workspace" goto set_pwd
@@ -21,3 +22,6 @@ call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build
 echo "Current Location is %my_pwd%"
 echo "build config Ninja_release%Doodle_suffix%"
 echo "build target release_exe%Doodle_suffix%"
+echo "%*"
+
+%*

@@ -4,12 +4,8 @@
     {
       "label": "cmake config",
       "type": "shell",
-      "command": "cmd.exe",
+      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
       "args": [
-        "/d",
-        "/c",
-        "'C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat'",
-        "'&'",
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--workflow",
         "--preset",
@@ -23,9 +19,12 @@
     {
       "label": "cmake build",
       "type": "shell",
-      "command": "${workspaceFolder}/src/cmd_debug/build_debug_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
       "args": [
-        "${input:build_target}"
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--build",
+        "--preset",
+        "debug_doodle"
       ],
       "problemMatcher": []
     },
@@ -38,25 +37,13 @@
     {
       "label": "build 5.2 plug",
       "type": "shell",
-      "command": "${workspaceFolder}/script/uePlug/build_5.cmd",
+      "command": "${workspaceFolder}/build_script/build/Build_UE.cmd",
       "problemMatcher": []
     },
     {
       "label": "build_all",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/build_all.cmd",
-      "problemMatcher": []
-    },
-    {
-      "label": "install",
-      "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/install.cmd",
-      "problemMatcher": []
-    },
-    {
-      "label": "build 5.2 plug and install",
-      "type": "shell",
-      "command": "${workspaceFolder}/script/uePlug/build_5.cmd;${workspaceFolder}/build_script/build/install.cmd",
       "problemMatcher": []
     },
     {
