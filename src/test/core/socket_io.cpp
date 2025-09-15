@@ -44,7 +44,6 @@ BOOST_AUTO_TEST_CASE(socket_io_test) {
   l_sid_ctx->on("/custom")->on_connect([l_sid_ctx](const std::shared_ptr<socket_io::socket_io_core>& in_data) {
     in_data->emit("auth", in_data->auth_);
   });
-  socket_io::create_socket_io(*l_rout_ptr, l_sid_ctx);
   http::run_http_listener(g_io_context(), l_rout_ptr, 50025);
   l_app.run();
 }

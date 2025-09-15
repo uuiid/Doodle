@@ -3,6 +3,7 @@
 
 #include <doodle_lib/http_client/dingding_client.h>
 
+#include <boost/process/v2/environment.hpp>
 #include <boost/test/tools/interface.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
@@ -13,10 +14,15 @@ BOOST_AUTO_TEST_CASE(access_token) {
   app_base l_app_base{};
   boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
 
-  auto l_env               = boost::this_process::environment();
-  std::string l_app_key    = l_env["DINGDING_APP_KEY"].to_string();
-  std::string l_app_secret = l_env["DINGDING_APP_SECRET"].to_string();
-  std::string l_mobile     = std::string{};
+  auto l_env = boost::process::v2::environment::current();
+
+  std::string l_app_key{};
+  std::string l_app_secret{};
+  for (auto&& l_it : l_env) {
+    if (l_it.key() == L"DINGDING_APP_KEY") l_app_key = l_it.value().string();
+    if (l_it.key() == L"DINGDING_APP_SECRET") l_app_secret = l_it.value().string();
+  }
+  std::string l_mobile = std::string{};
   BOOST_TEST(!l_mobile.empty());
 
   auto l_c          = std::make_shared<doodle::dingding::client>(l_ctx);
@@ -35,10 +41,14 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
       []() -> boost::asio::awaitable<std::tuple<boost::system::error_code>> {
         boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
 
-        auto l_env               = boost::this_process::environment();
-        std::string l_app_key    = l_env["DINGDING_APP_KEY"].to_string();
-        std::string l_app_secret = l_env["DINGDING_APP_SECRET"].to_string();
-        std::string l_mobile     = std::string{};
+        auto l_env = boost::process::v2::environment::current();
+        std::string l_app_key{};
+        std::string l_app_secret{};
+        for (auto&& l_it : l_env) {
+          if (l_it.key() == L"DINGDING_APP_KEY") l_app_key = l_it.value().string();
+          if (l_it.key() == L"DINGDING_APP_SECRET") l_app_secret = l_it.value().string();
+        }
+        std::string l_mobile = std::string{};
         BOOST_TEST(!l_mobile.empty());
 
         auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
@@ -66,11 +76,15 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
       []() -> boost::asio::awaitable<std::tuple<boost::system::error_code>> {
         boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
 
-        auto l_env               = boost::this_process::environment();
-        std::string l_app_key    = l_env["DINGDING_APP_KEY"].to_string();
-        std::string l_app_secret = l_env["DINGDING_APP_SECRET"].to_string();
-        std::string l_time_str   = "2024-05-10";
-        std::string l_user_id    = {};
+        auto l_env = boost::process::v2::environment::current();
+        std::string l_app_key{};
+        std::string l_app_secret{};
+        for (auto&& l_it : l_env) {
+          if (l_it.key() == L"DINGDING_APP_KEY") l_app_key = l_it.value().string();
+          if (l_it.key() == L"DINGDING_APP_SECRET") l_app_secret = l_it.value().string();
+        }
+        std::string l_time_str = "2024-05-10";
+        std::string l_user_id  = {};
         chrono::local_time_pos l_time{};
         std::istringstream l_iss{l_time_str};
         l_iss >> chrono::parse("%Y-%m-%d", l_time);

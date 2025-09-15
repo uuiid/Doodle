@@ -7,13 +7,34 @@
       "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
-        "--workflow",
         "--preset",
-        "config_debug"
+        "Ninja_debug"
       ],
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake config maya",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--preset",
+        "Ninja_RelWithDebInfo"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake config vs",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--preset",
+        "vs2022"
+      ],
       "problemMatcher": []
     },
     {
@@ -26,12 +47,6 @@
         "--preset",
         "debug_doodle"
       ],
-      "problemMatcher": []
-    },
-    {
-      "label": "run_work_computer",
-      "type": "shell",
-      "command": "${workspaceFolder}/build_script/deploy/run_work_computer.cmd",
       "problemMatcher": []
     },
     {
