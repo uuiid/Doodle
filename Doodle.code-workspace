@@ -177,12 +177,12 @@
 			"*.rh": "cpp"
 		},
 		"cmake.allowUnsupportedPresetsVersions": true,
-		"codeium.disableSupercomplete": false,
-		"codeium.detectProxy": false,
 		"github.copilot.chat.commitMessageGeneration.instructions": [
 			{
 				"text": "Write a commit message in the conventional commit convention. I'll send you an output of 'git diff --staged' command, and you convert it into a commit message."
 			}
-		]
+		],
+		"ai-commit.AI_COMMIT_LANGUAGE": "Simplified Chinese",
+		"ai-commit.AI_PROVIDER": "gemini"
 	}
 }
