@@ -12,6 +12,7 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -102,9 +103,9 @@ class run_post_task_local_cancel_manager {
 };
 
 class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
-  using arg_variant_type = std::variant<
-      std::shared_ptr<maya_exe_ns::arg>, std::shared_ptr<import_and_render_ue_ns::args>,
-      std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>>;
+  using arg_variant_type = std::variant < std::shared_ptr<maya_exe_ns::arg>,
+        std::shared_ptr<import_and_render_ue_ns::args>, std::shared_ptr<doodle::detail::image_to_move>,
+        std::shared_ptr<doodle::detail::connect_video_t>, std::shared_ptr<export_rig_sk_arg>>;
   arg_variant_type arg_;
   logger_ptr logger_{};
   // 强制等待一秒
@@ -192,9 +193,10 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       auto l_connect_video_args = std::make_shared<doodle::detail::connect_video_t>();
       in_json.get_to(*l_connect_video_args);
       arg_ = l_connect_video_args;
-    } else if (in_json.contains("export_rig")) {  /// 导出 rig
-      auto l_arg_t = std::make_shared<maya_exe_ns::export_rig_arg>();
+    } else if (in_json.contains("create_rig_sk")) {  /// 创建 rig
+      auto l_arg_t = std::make_shared<export_rig_sk_arg>();
       in_json.get_to(*l_arg_t);
+      l_arg_t->logger_ = logger_;
       arg_ = l_arg_t;
     } else {  /// 导出fbx
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
@@ -241,6 +243,8 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         l_arg->file_list_ |=
             ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
         doodle::detail::connect_video(l_arg->out_path_, logger_, l_arg->file_list_, l_arg->image_size_);
+      } else if (std::holds_alternative<std::shared_ptr<export_rig_sk_arg>>(arg_)) {
+        co_await std::get<std::shared_ptr<export_rig_sk_arg>>(arg_)->run();
       }
       task_info_->status_ = server_task_info_status::completed;
     } catch (const boost::system::system_error& e) {
