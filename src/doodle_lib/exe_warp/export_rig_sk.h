@@ -4,11 +4,15 @@
 
 #include <boost/signals2.hpp>
 
+#include <filesystem>
 #include <string>
-
 
 namespace doodle {
 struct export_rig_sk_arg {
+ private:
+  mutable FSys::path result_path_;
+
+ public:
   FSys::path maya_file_{};
   FSys::path ue_path_{};
   uuid asset_type_id_{};
@@ -17,6 +21,8 @@ struct export_rig_sk_arg {
   std::string ban_ben_{};
   logger_ptr logger_{};
   boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
+  // 获取结果
+  FSys::path get_result() const;
 
   // from json
   friend void from_json(const nlohmann::json& in_json, export_rig_sk_arg& out_obj) {

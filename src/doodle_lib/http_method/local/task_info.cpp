@@ -103,9 +103,10 @@ class run_post_task_local_cancel_manager {
 };
 
 class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
-  using arg_variant_type = std::variant < std::shared_ptr<maya_exe_ns::arg>,
-        std::shared_ptr<import_and_render_ue_ns::args>, std::shared_ptr<doodle::detail::image_to_move>,
-        std::shared_ptr<doodle::detail::connect_video_t>, std::shared_ptr<export_rig_sk_arg>>;
+  using arg_variant_type = std::variant<
+      std::shared_ptr<maya_exe_ns::arg>, std::shared_ptr<import_and_render_ue_ns::args>,
+      std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>,
+      std::shared_ptr<export_rig_sk_arg>>;
   arg_variant_type arg_;
   logger_ptr logger_{};
   // 强制等待一秒
@@ -197,7 +198,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       auto l_arg_t = std::make_shared<export_rig_sk_arg>();
       in_json.get_to(*l_arg_t);
       l_arg_t->logger_ = logger_;
-      arg_ = l_arg_t;
+      arg_             = l_arg_t;
     } else {  /// 导出fbx
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       in_json.get_to(*l_arg_t);
@@ -245,6 +246,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         doodle::detail::connect_video(l_arg->out_path_, logger_, l_arg->file_list_, l_arg->image_size_);
       } else if (std::holds_alternative<std::shared_ptr<export_rig_sk_arg>>(arg_)) {
         co_await std::get<std::shared_ptr<export_rig_sk_arg>>(arg_)->run();
+        task_info_->result_path_ = std::get<std::shared_ptr<export_rig_sk_arg>>(arg_)->get_result();
       }
       task_info_->status_ = server_task_info_status::completed;
     } catch (const boost::system::system_error& e) {
@@ -276,25 +278,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::get
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_data_ptr in_handle) {
-  std::optional<server_task_info_type> l_type{};
+  server_task_info_type l_type{server_task_info_type::unknown};
   for (auto&& i : in_handle->url_.params()) {
     if (i.has_value && i.key == "type") {
-      l_type = magic_enum::enum_cast<server_task_info_type>(i.value);
+      l_type = magic_enum::enum_cast<server_task_info_type>(i.value).value_or(server_task_info_type::unknown);
     }
   }
-  if (l_type) {
-    using namespace sqlite_orm;
-    if (auto l_list = g_ctx().get<sqlite_database>().impl_->storage_any_.get_all<server_task_info>(
-            where(c(&server_task_info::type_) == *l_type)
-        );
-        !l_list.empty()) {
-      for (auto&& i : l_list) i.get_last_line_log();
-      co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
-    }
-    co_return in_handle->make_msg("[]"s);
-  }
+  using namespace sqlite_orm;
+  auto l_list = g_ctx().get<sqlite_database>().impl_->storage_any_.get_all<server_task_info>(
+      where(l_type == server_task_info_type::unknown || c(&server_task_info::type_) == l_type)
+  );
 
-  co_return in_handle->make_msg((nlohmann::json{} = g_ctx().get<sqlite_database>().get_all<server_task_info>()).dump());
+  for (auto&& i : l_list) i.get_last_line_log();
+  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 void task::init_ctx() {
   static std::once_flag l_flag{};

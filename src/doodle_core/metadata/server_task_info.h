@@ -35,19 +35,20 @@ enum class server_task_info_status {
 };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    server_task_info_status,
-    {
-        {server_task_info_status::submitted, "submitted"},
-        {server_task_info_status::assigned, "assigned"},
-        {server_task_info_status::running, "running"},
-        {server_task_info_status::completed, "completed"},
-        {server_task_info_status::canceled, "canceled"},
-        {server_task_info_status::failed, "failed"},
-        {server_task_info_status::unknown, "unknown"},
-    }
+    server_task_info_status, {
+                                 {server_task_info_status::submitted, "submitted"},
+                                 {server_task_info_status::assigned, "assigned"},
+                                 {server_task_info_status::running, "running"},
+                                 {server_task_info_status::completed, "completed"},
+                                 {server_task_info_status::canceled, "canceled"},
+                                 {server_task_info_status::failed, "failed"},
+                                 {server_task_info_status::unknown, "unknown"},
+                             }
 );
 
 enum class server_task_info_type : std::int32_t {
+  // 未知类型
+  unknown    = -1,
   // 导出fbx任务
   export_fbx = 0,
   // 导出解算任务
@@ -62,19 +63,20 @@ enum class server_task_info_type : std::int32_t {
   check_maya,
   // 替换maya引用文件
   replace_maya_ref,
+  // 创建骨骼
+  create_rig_sk,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    server_task_info_type,
-    {
-        {server_task_info_type::export_fbx, "export_fbx"},
-        {server_task_info_type::export_sim, "export_sim"},
-        {server_task_info_type::auto_light, "auto_light"},
-        {server_task_info_type::merge_video, "merge_video"},
-        {server_task_info_type::connect_video, "connect_video"},
-        {server_task_info_type::check_maya, "check_maya"},
-        {server_task_info_type::replace_maya_ref, "replace_maya_ref"},
+    server_task_info_type, {
+                               {server_task_info_type::export_fbx, "export_fbx"},
+                               {server_task_info_type::export_sim, "export_sim"},
+                               {server_task_info_type::auto_light, "auto_light"},
+                               {server_task_info_type::merge_video, "merge_video"},
+                               {server_task_info_type::connect_video, "connect_video"},
+                               {server_task_info_type::check_maya, "check_maya"},
+                               {server_task_info_type::replace_maya_ref, "replace_maya_ref"},
 
-    }
+                           }
 );
 class server_task_info : boost::equality_comparable<server_task_info> {
  public:
@@ -110,6 +112,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   server_task_info_type type_{};
   std::string last_line_log_;
+  FSys::path result_path_;
 
   struct run_time_info_t {
     zoned_time start_time_{chrono::current_zone(), chrono::system_clock::now()};
@@ -170,7 +173,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["run_computer_id"] = p.run_computer_id_;
     j["type"]            = p.type_;
     j["last_line_log"]   = p.last_line_log_;
-    j["run_time_info"]       = p.run_time_info_;
+    j["run_time_info"]   = p.run_time_info_;
+    j["result_path"]     = p.result_path_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {

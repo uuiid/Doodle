@@ -52,7 +52,6 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() const {
   );
   FSys::copy_diff(l_ue_project, l_local_ue_project / l_ue_project.filename(), logger_);
   l_local_ue_project /= l_ue_project.filename();
-  logger_->warn("排队导入skin文件 {} ", l_local_ue_project);
 
   logger_->warn("排队导入skin文件 {} ", l_local_ue_project);
   // 添加三次重试
@@ -74,6 +73,9 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() const {
       if (i == 2) throw;
     }
   }
+  result_path_ = l_local_ue_project;
   co_return;
 }
+
+FSys::path export_rig_sk_arg::get_result() const { return result_path_; }
 }  // namespace doodle
