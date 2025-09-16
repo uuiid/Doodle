@@ -12,6 +12,7 @@ target_sources(doodle_lib
         fbx_file.h
         alembic_file.h
         scan_assets.h
+        asyn_task.h
 
         PRIVATE
         filesystem_extend.cpp
