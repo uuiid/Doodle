@@ -188,6 +188,7 @@
 				"database": "build/kitsu_new.database",
 				"name": "kitsu"
 			}
-		]
+		],
+		"sqliteViewer.maxFileSize": 500
 	}
 }

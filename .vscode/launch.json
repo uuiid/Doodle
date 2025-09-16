@@ -17,34 +17,20 @@
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
-            "environment": [],
-            "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
-            "name": "Doodle_debug_kitsu",
+            "name": "Doodle_debug_local",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
             "args": [
-                "--config=${workspaceFolder}/build/debug_server.json"
+                "--config=${workspaceFolder}/build/debug_server.json",
+                "--local",
+                "--port=50025"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
-            "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
-        },
-        {
-            "name": "Doodle_debug_file_association",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/Ninja_debug/bin/file_association_http.exe",
-            "args": [
-                "--config=${workspaceFolder}/build/debug_server.json"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
-            "console": "internalConsole",
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
