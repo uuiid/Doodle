@@ -4,7 +4,6 @@
 
 #include "reference_file.h"
 
-#include "doodle_core/exception/exception.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
@@ -21,11 +20,9 @@
 #include <maya_plug/node/files_info.h>
 
 #include "data/reference_file.h"
-#include "entt/entity/fwd.hpp"
 #include "exception/exception.h"
 #include "maya_conv_str.h"
 #include "maya_tool.h"
-#include <array>
 #include <filesystem>
 #include <fmt/format.h>
 #include <maya/MApiNamespace.h>
@@ -43,7 +40,6 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
-#include <string_view>
 #include <vector>
 
 namespace doodle::maya_plug {

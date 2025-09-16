@@ -20,6 +20,7 @@
 #include "exception/exception.h"
 #include "fmt/core.h"
 #include "maya_conv_str.h"
+#include <fmt/format.h>
 #include <maya/MAnimControl.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MDagModifier.h>
@@ -46,7 +47,8 @@ void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, cons
    *
    *  preserveOutsideKeys 这个选项会导致眼睛出现问题
    */
-  constexpr static auto maya_bakeResults_str{R"(
+  constexpr static auto maya_bakeResults_str{
+      R"(
 bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversamplingRate 1 -disableImplicitControl true -preserveOutsideKeys {} -sparseAnimCurveBake false -removeBakedAttributeFromLayer false -removeBakedAnimFromLayer false -bakeOnOverrideLayer false -minimizeRotation true -controlPoints false -shape true "{}";)"
   };
   auto l_comm =
@@ -153,10 +155,9 @@ FSys::path export_file_fbx::export_rig(const reference_file& in_ref, const std::
   default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
   fbx_write l_fbx_write{};
-  auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / maya_file_io::get_current_path().filename();
-  l_file.replace_extension(".fbx");
-  if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path))
-    FSys::create_directories(l_p_path);
+  auto l_file =
+      maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("SK_{}.fbx", maya_file_io::get_current_path().stem());
+  if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
   default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
   l_fbx_write.set_path(l_file);
   l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
