@@ -1,4 +1,5 @@
-﻿$logger_data = "[2024-12-06 13:36:45.014] [LQ_EP230_SC002A.ma] [warning] 开始运行maya",
+﻿
+$logger_data = "[2024-12-06 13:36:45.014] [LQ_EP230_SC002A.ma] [warning] 开始运行maya",
 "[2024-12-06 13:36:45.035] [LQ_EP230_SC002A.ma] [warning] 开始写入配置文件 C:/Users/Administrator/AppData/Local/Temp/Doodle/cache/maya/arg/v36451/fb6cb3ab-3dd7-463e-a2cf-ed3e4e3f7e16.json",
 "[2024-12-06 13:36:45.708] [LQ_EP230_SC002A.ma] [info] Warning: xml\catalogManager.cpp(1216): COLOR:XML:CATALOG_MANAGER: 无法加载变换目录: C:/Users/Administrator/Documents/maya/synColor/Shared/shared_catalog.cat",
 "[2024-12-06 13:36:48.543] [LQ_EP230_SC002A.ma] [info] 00:00:00   451MB         | log started Fri Dec  6 13:36:48 2024",
@@ -196,10 +197,34 @@
 "[2024-12-06 13:37:17.051] [LQ_EP230_SC002A.ma] [info] 警告: file: D:/SYWH/LQ/EP230/ma/LQ_EP230_SC002A.ma line 195661: 节点类型VRaySettingsNode无法识别；在此会话过程中保留节点信息",
 "[2024-12-06 13:42:53.521] [LQ_EP230_SC002A.ma] [info] 警告: line 1: Ch1103A_rig_hyw:upperLidMainCurve1CloseAutoShapeWrap_L (折回): 没有点被设置为向包裹加权尝试增加 maxDistance 设置";
 
-foreach ($log in $logger_data)
-{
+foreach ($log in $logger_data) {
     Write-Host "$log" ;
     Start-Sleep -Milliseconds 10;
 }
+$cmdLineArgs = [Environment]::GetCommandLineArgs()
+
+Write-Host "arg all " $cmdLineArgs
+# arg1  --config=D:/sy_maigc\maya/arg/v36806\a32b4bbe-3e99-4875-b465-b8c31094325f.json
+
+$file = ($cmdLineArgs[2] -split '--config=') | Select-Object -Last 1
+Write-Host "file $file"
+$Json = Get-Content -Path $file -Raw -Encoding UTF8 | ConvertFrom-Json;
+$file = $Json.out_path_file;
+Write-Host "file $file"
+
+$out_value = @"
+{
+  "begin_time": 1001,
+  "end_time": 1200,
+  "out_file_list": [
+    {
+      "out_file": "D:/test_files/test_anim_11_29/SK_Ch482A_Rig_mt.fbx",
+      "ref_file": ""
+    }
+  ]
+}
+"@;
+
+Set-Content -Path $file -Value $out_value;
 
 # ps2exe E:\Doodle\script\doodle_auto_light_process.ps1 E:\Doodle\build\install\bin\doodle_auto_light_process.exe
