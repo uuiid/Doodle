@@ -1,7 +1,11 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/server_task_info.h>
+
+#include <boost/signals2.hpp>
 
 #include <string>
+
 
 namespace doodle {
 struct export_rig_sk_arg {
@@ -12,6 +16,7 @@ struct export_rig_sk_arg {
   std::string pin_yin_ming_cheng_{};
   std::string ban_ben_{};
   logger_ptr logger_{};
+  boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
 
   // from json
   friend void from_json(const nlohmann::json& in_json, export_rig_sk_arg& out_obj) {
