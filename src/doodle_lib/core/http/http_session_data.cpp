@@ -19,12 +19,14 @@
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 
+#include <boost/asio/error.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 #include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/winapi/error_codes.hpp>
 
 #include "cryptopp/hex.h"
 #include <cryptopp/adler32.h>
@@ -274,11 +276,11 @@ boost::asio::awaitable<bool> session_data::parse_body() {
 
 void session_data::async_run_detached() {
   boost::asio::co_spawn(g_io_context(), run(), [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
-    try {
-      if (in_eptr) std::rethrow_exception(in_eptr);
-    } catch (const std::exception& e) {
-      l_shared->logger_->error(e.what());
-    };
+    if (in_eptr) l_shared->logger_->log(log_loc(), level::err, "async_run_detached");
+    // try {
+    //   if (in_eptr) std::rethrow_exception(in_eptr);
+    // } catch (const std::exception& e) {
+    // };
   });
 }
 

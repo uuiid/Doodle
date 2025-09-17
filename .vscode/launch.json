@@ -17,7 +17,8 @@
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "preLaunchTask": "cmake build"
         },
         {
             "name": "Doodle_debug_local",
@@ -31,7 +32,8 @@
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "preLaunchTask": "cmake build"
         },
         {
             "name": "Doodle_maya_debug",
