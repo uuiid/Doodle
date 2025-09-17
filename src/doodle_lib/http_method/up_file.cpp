@@ -62,6 +62,33 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base::get(session_data_ptr in_handle) {
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_task   = l_sql.get_by_uuid<task>(id_);
+  auto l_extend = l_sql.get_entity_asset_extend(l_task.entity_id_);
+  if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
+
+  task_info_.gui_dang_           = l_extend->gui_dang_.value_or(0);
+  task_info_.kai_shi_ji_shu_     = l_extend->kai_shi_ji_shu_.value_or(0);
+  task_info_.bian_hao_           = l_extend->bian_hao_;
+  task_info_.pin_yin_ming_cheng_ = l_extend->pin_yin_ming_cheng_;
+  task_info_.version_            = l_extend->ban_ben_;
+
+  auto l_entity                  = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_prj                     = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  if (!(l_task.task_type_id_ == task_type::get_character_id() ||
+        l_task.task_type_id_ == task_type::get_ground_model_id() ||
+        l_task.task_type_id_ == task_type::get_binding_id()))
+    throw_exception(doodle_error{"未知的 task_type 类型"});
+
+  task_info_.task_type_id_    = l_task.task_type_id_;
+  task_info_.entity_type_id_  = l_entity.entity_type_id_;
+  task_info_.asset_root_path_ = l_prj.asset_root_path_;
+
+  task_info_.root_path_       = l_prj.path_;
+  co_return in_handle->make_msg(nlohmann::json{{"file_path", task_info_.asset_root_path_ / gen_file_path()}});
+}
+
 void up_file_asset_base::move_file(session_data_ptr in_handle) {
   auto l_dir         = task_info_.root_path_ / task_info_.asset_root_path_ / gen_file_path();
   auto l_path        = l_dir / task_info_.file_path_;

@@ -37,6 +37,7 @@ class up_file_asset_base : public http_jwt_fun {
   virtual void move_file(session_data_ptr in_handle);
   task_info_t task_info_{};
   DOODLE_HTTP_FUN_OVERRIDE(post)
+  DOODLE_HTTP_FUN_OVERRIDE(get)
  public:
   uuid id_{};
 };

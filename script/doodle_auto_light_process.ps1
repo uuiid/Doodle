@@ -228,3 +228,4 @@ $out_value = @"
 Set-Content -Path $file -Value $out_value;
 
 # ps2exe E:\Doodle\script\doodle_auto_light_process.ps1 E:\Doodle\build\install\bin\doodle_auto_light_process.exe
+# ps2exe E:\Doodle\script\doodle_auto_light_process.ps1 E:\Doodle\build\install\bin\doodle_maya_exe_2020.exe
