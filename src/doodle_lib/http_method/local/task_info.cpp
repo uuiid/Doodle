@@ -246,7 +246,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         doodle::detail::connect_video(l_arg->out_path_, logger_, l_arg->file_list_, l_arg->image_size_);
       } else if (std::holds_alternative<std::shared_ptr<export_rig_sk_arg>>(arg_)) {
         co_await std::get<std::shared_ptr<export_rig_sk_arg>>(arg_)->run();
-        task_info_->result_path_ = std::get<std::shared_ptr<export_rig_sk_arg>>(arg_)->get_result();
       }
       task_info_->status_ = server_task_info_status::completed;
     } catch (const boost::system::system_error& e) {

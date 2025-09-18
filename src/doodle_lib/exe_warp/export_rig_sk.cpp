@@ -42,16 +42,18 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() const {
 
   auto l_ue_project = ue_exe_ns::find_ue_project_file(ue_path_);
   if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", ue_path_};
-  auto l_local_ue_project = core_set::get_set().get_cache_root(l_ue_project.stem());
+  auto l_local_ue_project     = core_set::get_set().get_cache_root(l_ue_project.stem()) / l_ue_project.filename();
+  auto l_local_ue_project_dir = l_local_ue_project.parent_path();
 
   FSys::copy_diff(
-      l_ue_project.parent_path() / doodle_config::ue4_content, l_local_ue_project / doodle_config::ue4_content, logger_
+      l_ue_project.parent_path() / doodle_config::ue4_content, l_local_ue_project_dir / doodle_config::ue4_content,
+      logger_
   );
   FSys::copy_diff(
-      l_ue_project.parent_path() / doodle_config::ue4_config, l_local_ue_project / doodle_config::ue4_config, logger_
+      l_ue_project.parent_path() / doodle_config::ue4_config, l_local_ue_project_dir / doodle_config::ue4_config,
+      logger_
   );
-  FSys::copy_diff(l_ue_project, l_local_ue_project / l_ue_project.filename(), logger_);
-  l_local_ue_project /= l_ue_project.filename();
+  FSys::copy_diff(l_ue_project, l_local_ue_project, logger_);
 
   logger_->warn("排队导入skin文件 {} ", l_local_ue_project);
   // 添加三次重试
@@ -73,14 +75,15 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() const {
       if (i == 2) throw;
     }
   }
-  result_path_ = l_local_ue_project;
 
   // 上传文件
   FSys::copy_diff(
-      l_local_ue_project.parent_path() / doodle_config::ue4_content,
+      l_local_ue_project_dir.parent_path() / doodle_config::ue4_content,
       l_ue_project.parent_path() / doodle_config::ue4_content, logger_
   );
-  FSys::rename(maya_file_, maya_file_.parent_path() / maya_file_.filename());
+  auto l_new_maya_file = maya_file_.parent_path() / maya_file_.filename();
+  if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
+  FSys::rename(maya_file_, l_new_maya_file);
   co_return;
 }
 
