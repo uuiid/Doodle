@@ -42,7 +42,9 @@
 #include <doodle_core/sqlite_orm/detail/std_vector_string.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
 
+#include <range/v3/view/split.hpp>
 #include <sqlite_orm/sqlite_orm.h>
+#include <type_traits>
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_status)
@@ -891,6 +893,17 @@ struct sqlite_database_impl {
     l_g.commit();
   }
 
+  /// 测试成员字段 uuid_id_ 是否存在，以及是否是 uuid 类型
+  template <typename T, typename = void>
+  struct has_uuid_id_impl : std::false_type {};
+
+  template <typename T>
+  struct has_uuid_id_impl<T, std::enable_if_t<std::is_same_v<uuid, decltype(std::declval<T>().uuid_id_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_uuid_id = has_uuid_id_impl<T>::value;
+
   template <typename T>
   boost::asio::awaitable<void> install_range(std::shared_ptr<std::vector<T>> in_data) {
     if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
@@ -904,40 +917,41 @@ struct sqlite_database_impl {
 
     DOODLE_TO_SQLITE_THREAD();
 
-#if DOODLE_SQLORM_USE_RETURNING
     auto l_g = storage_any_.transaction_guard();
-    for (std::size_t i = 0; i < l_split;) {
-      auto l_end = std::min(i + g_step_size, l_split);
-      storage_any_.insert_range<T>(in_data->begin() + i, in_data->begin() + l_end);
-      i = l_end;
-    }
-
-    for (std::size_t i = l_split; i < in_data->size();) {
-      auto l_end = std::min(i + g_step_size, in_data->size());
-      storage_any_.update_range<T>(in_data->begin() + i, in_data->begin() + l_end);
-      i = l_end;
-    }
-    l_g.commit();
-
-    for (std::size_t i = 0; i < l_split; ++i) {
-      using namespace sqlite_orm;
-      auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(c(&T::uuid_id_) == (*in_data)[i].uuid_id_));
-      if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
-    }
-#else
-    auto l_g = storage_any_.transaction_guard();
-    for (std::size_t i = 0; i < l_split; ++i) {
-      (*in_data)[i].id_ = storage_any_.insert<T>((*in_data)[i]);
+    if constexpr (has_uuid_id<T>) {
+      for (std::size_t i = 0; i < l_split;) {
+        auto l_end = std::min(i + g_step_size, l_split);
+        storage_any_.insert_range<T>(in_data->begin() + i, in_data->begin() + l_end);
+        i = l_end;
+      }
+    } else {
+      for (std::size_t i = 0; i < l_split; ++i) (*in_data)[i].id_ = storage_any_.insert<T>((*in_data)[i]);
     }
 
     for (std::size_t i = l_split; i < in_data->size(); ++i) {
-      storage_any_.update<T>((*in_data)[i]);
+      storage_any_.update<T>(in_data->at(i));
     }
     l_g.commit();
-#endif
-
     DOODLE_TO_SELF();
+
+    if constexpr (has_uuid_id<T>) {
+      std::map<uuid, std::int64_t> l_id_map{};
+      std::vector<uuid> l_uuids = ranges::subrange(in_data->begin(), in_data->begin() + l_split) |
+                                  ranges::views::transform([](const auto& in_) { return in_.uuid_id_; }) |
+                                  ranges::to<std::vector<uuid>>();
+
+      for (auto&& [key, val] : storage_any_.select(
+               sqlite_orm::columns(&T::id_, &T::uuid_id_), sqlite_orm::where(sqlite_orm::in(&T::uuid_id_, l_uuids))
+           )) {
+        l_id_map[val] = key;
+      }
+
+      for (std::size_t i = 0; i < l_split; ++i) {
+        (*in_data)[i].id_ = l_id_map[(*in_data)[i].uuid_id_];
+      }
+    }
   }
+
   template <typename T>
   void install_range_unsafe(std::shared_ptr<std::vector<T>> in_data) {
     if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
@@ -949,7 +963,6 @@ struct sqlite_database_impl {
     std::size_t l_split =
         std::distance(in_data->begin(), std::ranges::find_if(*in_data, [](const auto& in_) { return in_.id_ != 0; }));
 
-#if DOODLE_SQLORM_USE_RETURNING
     auto l_g = storage_any_.transaction_guard();
     for (std::size_t i = 0; i < l_split;) {
       auto l_end = std::min(i + g_step_size, l_split);
@@ -957,29 +970,26 @@ struct sqlite_database_impl {
       i = l_end;
     }
 
-    for (std::size_t i = l_split; i < in_data->size();) {
-      auto l_end = std::min(i + g_step_size, in_data->size());
-      storage_any_.update_range<T>(in_data->begin() + i, in_data->begin() + l_end);
-      i = l_end;
-    }
-    l_g.commit();
-
-    for (std::size_t i = 0; i < l_split; ++i) {
-      using namespace sqlite_orm;
-      auto l_v = storage_any_.select(&T::id_, sqlite_orm::where(c(&T::uuid_id_) == (*in_data)[i].uuid_id_));
-      if (!l_v.empty()) (*in_data)[i].id_ = l_v.front();
-    }
-#else
-    auto l_g = storage_any_.transaction_guard();
-    for (std::size_t i = 0; i < l_split; ++i) {
-      (*in_data)[i].id_ = storage_any_.insert<T>((*in_data)[i]);
-    }
-
     for (std::size_t i = l_split; i < in_data->size(); ++i) {
-      storage_any_.update<T>((*in_data)[i]);
+      storage_any_.update<T>(in_data->at(i));
     }
     l_g.commit();
-#endif
+    std::map<uuid, std::int64_t> l_id_map{};
+    {
+      std::vector<uuid> l_uuids = ranges::subrange(in_data->begin(), in_data->begin() + l_split) |
+                                  ranges::views::transform([](const auto& in_) { return in_.uuid_id_; }) |
+                                  ranges::to<std::vector<uuid>>();
+
+      for (auto&& [key, val] : storage_any_.select(
+               sqlite_orm::columns(&T::id_, &T::uuid_id_), sqlite_orm::where(sqlite_orm::in(&T::uuid_id_, l_uuids))
+           )) {
+        l_id_map[val] = key;
+      }
+    }
+
+    for (std::size_t i = 0; i < l_split; ++i) {
+      (*in_data)[i].id_ = l_id_map[(*in_data)[i].uuid_id_];
+    }
   }
   template <typename T>
   boost::asio::awaitable<void> remove(std::vector<std::int64_t> in_data) {
