@@ -74,6 +74,13 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() const {
     }
   }
   result_path_ = l_local_ue_project;
+
+  // 上传文件
+  FSys::copy_diff(
+      l_local_ue_project.parent_path() / doodle_config::ue4_content,
+      l_ue_project.parent_path() / doodle_config::ue4_content, logger_
+  );
+  FSys::rename(maya_file_, maya_file_.parent_path() / maya_file_.filename());
   co_return;
 }
 

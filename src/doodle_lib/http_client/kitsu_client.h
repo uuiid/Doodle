@@ -8,3 +8,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <tl/expected.hpp>
+
+namespace doodle::kitsu {
+
+}
