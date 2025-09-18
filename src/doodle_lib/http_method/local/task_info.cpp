@@ -195,6 +195,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
     }
+    arg_->set_logger(logger_);
   }
 
   void run() {
@@ -211,7 +212,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   boost::asio::awaitable<void> operator()() const {
     co_await wait();
     try {
-      co_await wait();
       emit_signal();
       co_await arg_->run();
       task_info_->status_ = server_task_info_status::completed;

@@ -21,6 +21,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   auto l_arg = std::make_shared<maya_exe_ns::export_rig_arg>();
   l_arg->set_file_path(maya_file_);
+  l_arg->set_logger(logger_);
   co_await l_arg->async_run_maya();
   auto l_maya_file = l_arg->get_out_arg();
   FSys::path l_import_game_path{doodle_config::ue4_game};

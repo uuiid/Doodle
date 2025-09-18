@@ -326,8 +326,8 @@ boost::asio::awaitable<void> arg::async_run_maya() {
       }
       break;
     case 1:
-    default:
       throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
+    default:
       break;
   }
   out_arg_ = get_out_arg_impl(out_path_file_);

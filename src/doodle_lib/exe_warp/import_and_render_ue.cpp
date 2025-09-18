@@ -158,6 +158,7 @@ boost::asio::awaitable<void> args::run() {
   maya_exe_ns::maya_out_arg l_out{};
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   maya_arg_->set_time_info(l_time_info);
+  maya_arg_->set_logger(logger_ptr_);
   for (int i = 0; i < 3; ++i) {
     try {
       co_await maya_arg_->run();
@@ -472,11 +473,11 @@ boost::asio::awaitable<void> args::crate_skin() {
       );
     }
 
-    auto l_maya_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
+    auto l_maya_arg = std::make_shared<maya_exe_ns::export_rig_arg>();
     l_maya_arg->set_file_path(l_data.maya_local_file_);
     l_maya_arg->set_logger(logger_ptr_);
     co_await l_maya_arg->async_run_maya();
-    auto l_maya_file      = l_maya_arg->get_out_arg();
+    auto l_maya_file = l_maya_arg->get_out_arg();
     if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", l_data.maya_file_});
     auto l_fbx = l_maya_file.out_file_list.front().out_file;
     nlohmann::json l_json{};

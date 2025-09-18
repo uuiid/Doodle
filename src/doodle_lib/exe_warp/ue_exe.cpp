@@ -186,8 +186,9 @@ boost::asio::awaitable<void> async_run_ue(
       if (l_exit_code != 0 || l_ec) throw_exception(doodle_error{"UE进程返回值错误 {}", l_exit_code});
       co_return;
     case 1:
-    default:
       throw_exception(doodle_error{"UE进程返回值错误 {}", l_exit_code});
+    default:
+      break;
   }
 }
 }  // namespace doodle
