@@ -44,11 +44,11 @@ bool cloth_sim::post(const nlohmann::json& in_argh) {
   bool l_ret                    = false;
   maya_exe_ns::qcloth_arg l_arg = in_argh.get<maya_exe_ns::qcloth_arg>();
 
-  if (l_arg.file_path.empty()) return l_ret;
+  if (l_arg.get_file_path().empty()) return l_ret;
   film_aperture_ = l_arg.film_aperture_;
   size_          = l_arg.size_;
   l_ret          = true;
-  out_path_file_ = l_arg.out_path_file_;
+  out_path_file_ = l_arg.get_out_path_file();
 
   if (FSys::is_directory(l_arg.sim_path)) {
     for (auto&& l_p : FSys::directory_iterator(l_arg.sim_path)) {
@@ -62,8 +62,8 @@ bool cloth_sim::post(const nlohmann::json& in_argh) {
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "AbcImport";)"));
   (MGlobal::executeCommand(d_str{fmt::format(R"(loadPlugin "qualoth_{}_x64")", MAYA_APP_VERSION)}));
 
-  maya_file_io::set_workspace(l_arg.file_path);
-  maya_file_io::open_file(l_arg.file_path);
+  maya_file_io::set_workspace(l_arg.get_file_path());
+  maya_file_io::open_file(l_arg.get_file_path());
   maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
 
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};

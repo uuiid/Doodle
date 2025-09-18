@@ -35,15 +35,15 @@ bool replace_file_facet::post(const nlohmann::json& in_argh) {
 
   maya_exe_ns::replace_file_arg l_arg = in_argh.get<maya_exe_ns::replace_file_arg>();
 
-  if (l_arg.file_path.empty()) return l_ret;
+  if (l_arg.get_file_path().empty()) return l_ret;
 
   g_ctx().emplace<reference_file_factory>();
   l_ret = true;
 
-  maya_file_io::set_workspace(l_arg.file_path);
+  maya_file_io::set_workspace(l_arg.get_file_path());
 
   auto l_s = boost::asio::make_strand(g_io_context());
-  boost::asio::post(l_s, [l_files = l_arg.file_list, l_path = l_arg.file_path, this]() {
+  boost::asio::post(l_s, [l_files = l_arg.file_list, l_path = l_arg.get_file_path(), this]() {
     this->replace_file(l_files, l_path);
   });
   boost::asio::post(l_s, [](auto&&...) { app_base::Get().stop_app(); });

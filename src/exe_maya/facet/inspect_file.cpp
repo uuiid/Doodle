@@ -22,9 +22,9 @@
 namespace doodle::maya_plug {
 bool inspect_file::post(const nlohmann::json& in_argh) {
   auto l_arg = in_argh.get<maya_exe_ns::inspect_file_arg>();
-  if (l_arg.file_path.empty()) return false;
-  maya_file_io::set_workspace(l_arg.file_path);
-  maya_file_io::open_file(l_arg.file_path, MFileIO::kLoadDefault);
+  if (l_arg.get_file_path().empty()) return false;
+  maya_file_io::set_workspace(l_arg.get_file_path());
+  maya_file_io::open_file(l_arg.get_file_path(), MFileIO::kLoadDefault);
   MStatus l_s{};
   maya_enum::maya_error_t l_e = maya_enum::maya_error_t::success;
   if (l_arg.surface_5_) {
@@ -209,7 +209,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
     }
   }
   if (l_e == maya_enum::maya_error_t::check_error)
-    throw_exception(doodle_error{enum_to_num(l_e), "检查文件 {} 失败", l_arg.file_path});
+    throw_exception(doodle_error{enum_to_num(l_e), "检查文件 {} 失败", l_arg.get_file_path()});
   app_base::Get().stop_app();
   return false;
 }

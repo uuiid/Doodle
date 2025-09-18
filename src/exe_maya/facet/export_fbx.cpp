@@ -112,16 +112,16 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
   bool l_ret                        = false;
   maya_exe_ns::export_fbx_arg l_arg = in_argh.get<maya_exe_ns::export_fbx_arg>();
 
-  if (l_arg.file_path.empty()) return l_ret;
-  out_path_file_ = l_arg.out_path_file_;
+  if (l_arg.get_file_path().empty()) return l_ret;
+  out_path_file_ = l_arg.get_out_path_file();
   film_aperture_ = l_arg.film_aperture_;
   size_          = l_arg.size_;
 
   l_ret          = true;
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
-  maya_file_io::set_workspace(l_arg.file_path);
-  maya_file_io::open_file(l_arg.file_path, MFileIO::kLoadDefault);
+  maya_file_io::set_workspace(l_arg.get_file_path());
+  maya_file_io::open_file(l_arg.get_file_path(), MFileIO::kLoadDefault);
 
   DOODLE_LOG_INFO("开始导出fbx");
   auto l_s = boost::asio::make_strand(g_io_context());
@@ -139,7 +139,7 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
       l_s,
       [l_target =
            maya_plug::maya_file_io::work_path(FSys::path{"fbx"} / maya_plug::maya_file_io::get_current_path().stem()) /
-           l_arg.file_path.filename()]() { maya_file_io::save_file(l_target); }
+           l_arg.get_file_path().filename()]() { maya_file_io::save_file(l_target); }
   );
   default_logger_raw()->info("导出动画中的文件");
   boost::asio::post(l_s, [this]() {
