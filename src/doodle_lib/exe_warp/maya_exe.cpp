@@ -6,7 +6,6 @@
 
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
-#include "doodle_core/logger/logger.h"
 #include <doodle_core/configure/config.h>
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/core_set.h>
@@ -26,7 +25,6 @@
 
 #include <filesystem>
 #include <fmt/core.h>
-#include <stack>
 #include <string>
 #include <winnt.h>
 #include <winreg/WinReg.hpp>
@@ -97,7 +95,7 @@ PYTHONPATH+:= scripts
   }
 }
 
-maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
+maya_exe_ns::maya_out_arg get_out_arg_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return {};
 
   std::ifstream l_file{in_path};
@@ -108,16 +106,147 @@ maya_exe_ns::maya_out_arg get_out_arg(const FSys::path& in_path) {
 }  // namespace
 
 namespace maya_exe_ns {
-FSys::path find_maya_path() { return find_maya_path_impl(); }
-}  // namespace maya_exe_ns
 
-boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
-    std::shared_ptr<maya_exe_ns::arg> in_arg, logger_ptr in_logger,
-    std::shared_ptr<server_task_info::run_time_info_t> in_time_info
-) {
+void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg::out_file_t& nlohmann_json_t) {
+  nlohmann_json_j["out_file"].get_to(nlohmann_json_t.out_file);
+  nlohmann_json_j["ref_file"].get_to(nlohmann_json_t.ref_file);
+  if (nlohmann_json_j.contains("hide_material_list"))
+    nlohmann_json_j.at("hide_material_list").get_to(nlohmann_json_t.hide_material_list);
+};
+
+void to_json(nlohmann::json& nlohmann_json_j, const maya_out_arg::out_file_t& nlohmann_json_t) {
+  nlohmann_json_j["out_file"]           = nlohmann_json_t.out_file.generic_string();
+  nlohmann_json_j["ref_file"]           = nlohmann_json_t.ref_file.generic_string();
+  nlohmann_json_j["hide_material_list"] = nlohmann_json_t.hide_material_list;
+};
+void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_json_t) {
+  nlohmann_json_j["begin_time"].get_to(nlohmann_json_t.begin_time);
+  nlohmann_json_j["end_time"].get_to(nlohmann_json_t.end_time);
+  nlohmann_json_j["out_file_list"].get_to(nlohmann_json_t.out_file_list);
+};
+
+void to_json(nlohmann::json& nlohmann_json_j, const maya_out_arg& nlohmann_json_t) {
+  nlohmann_json_j["begin_time"]    = nlohmann_json_t.begin_time;
+  nlohmann_json_j["end_time"]      = nlohmann_json_t.end_time;
+  nlohmann_json_j["out_file_list"] = nlohmann_json_t.out_file_list;
+};
+
+// form json
+void from_json(const nlohmann::json& in_json, arg& out_obj) {
+  if (in_json.contains("path")) in_json.at("path").get_to(out_obj.file_path);
+  if (in_json.contains("out_path_file")) in_json.at("out_path_file").get_to(out_obj.out_path_file_);
+}
+// to json
+void to_json(nlohmann::json& in_json, const arg& out_obj) {
+  in_json["path"]          = out_obj.file_path;
+  in_json["out_path_file"] = out_obj.out_path_file_;
+}
+
+void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
+  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+  if (in_json.contains("sim_path")) in_json.at("sim_path").get_to(out_obj.sim_path);
+  if (in_json.contains("replace_ref_file")) in_json.at("replace_ref_file").get_to(out_obj.replace_ref_file);
+  if (in_json.contains("sim_file")) in_json.at("sim_file").get_to(out_obj.sim_file);
+  if (in_json.contains("export_file")) in_json.at("export_file").get_to(out_obj.export_file);
+  if (in_json.contains("touch_sim")) in_json.at("touch_sim").get_to(out_obj.touch_sim);
+  if (in_json.contains("export_anim_file")) in_json.at("export_anim_file").get_to(out_obj.export_anim_file);
+  if (in_json.contains("create_play_blast")) in_json.at("create_play_blast").get_to(out_obj.create_play_blast_);
+  if (in_json.contains("camera_film_aperture"))
+    in_json.at("camera_film_aperture").get_to(out_obj.film_aperture_);
+  else
+    out_obj.film_aperture_ = 1.78;
+  if (in_json.contains("image_size")) in_json.at("image_size").get_to(out_obj.size_);
+}
+// to json
+void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+  in_json["sim_path"]             = out_obj.sim_path.generic_string();
+  in_json["replace_ref_file"]     = out_obj.replace_ref_file;
+  in_json["sim_file"]             = out_obj.sim_file;
+  in_json["export_file"]          = out_obj.export_file;
+  in_json["touch_sim"]            = out_obj.touch_sim;
+  in_json["export_anim_file"]     = out_obj.export_anim_file;
+  in_json["create_play_blast"]    = out_obj.create_play_blast_;
+  in_json["camera_film_aperture"] = out_obj.film_aperture_;
+  in_json["image_size"]           = out_obj.size_;
+}
+
+void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
+  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+
+  if (in_json.contains("create_play_blast")) in_json.at("create_play_blast").get_to(out_obj.create_play_blast_);
+  if (in_json.contains("rig_file_export")) in_json.at("rig_file_export").get_to(out_obj.rig_file_export_);
+  if (in_json.contains("camera_film_aperture"))
+    in_json.at("camera_film_aperture").get_to(out_obj.film_aperture_);
+  else
+    out_obj.film_aperture_ = 1.78;
+  if (in_json.contains("image_size")) in_json.at("image_size").get_to(out_obj.size_);
+}
+// to json
+void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+
+  in_json["create_play_blast"]    = out_obj.create_play_blast_;
+  in_json["rig_file_export"]      = out_obj.rig_file_export_;
+  in_json["camera_film_aperture"] = out_obj.film_aperture_;
+  in_json["image_size"]           = out_obj.size_;
+}
+
+void from_json(const nlohmann::json& in_json, replace_file_arg& out_obj) {
+  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+
+  if (in_json.contains("file_list")) in_json.at("file_list").get_to(out_obj.file_list);
+}
+// to json
+void to_json(nlohmann::json& in_json, const replace_file_arg& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+
+  in_json["file_list"] = out_obj.file_list;
+}
+void to_json(nlohmann::json& in_json, const export_rig_arg& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+}
+
+// form json
+void from_json(const nlohmann::json& in_json, inspect_file_arg& out_obj) {
+  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+
+  if (in_json.contains("surface_5")) in_json.at("surface_5").get_to(out_obj.surface_5_);
+  if (in_json.contains("rename_check")) in_json.at("rename_check").get_to(out_obj.rename_check_);
+  if (in_json.contains("name_length_check")) in_json.at("name_length_check").get_to(out_obj.name_length_check_);
+  if (in_json.contains("history_check")) in_json.at("history_check").get_to(out_obj.history_check_);
+  if (in_json.contains("special_copy_check")) in_json.at("special_copy_check").get_to(out_obj.special_copy_check_);
+  if (in_json.contains("uv_check")) in_json.at("uv_check").get_to(out_obj.uv_check_);
+  if (in_json.contains("kframe_check")) in_json.at("kframe_check").get_to(out_obj.kframe_check_);
+  if (in_json.contains("space_name_check")) in_json.at("space_name_check").get_to(out_obj.space_name_check_);
+  if (in_json.contains("only_default_camera_check"))
+    in_json.at("only_default_camera_check").get_to(out_obj.only_default_camera_check_);
+  if (in_json.contains("too_many_point_check"))
+    in_json.at("too_many_point_check").get_to(out_obj.too_many_point_check_);
+  if (in_json.contains("multi_uv_inspection")) in_json.at("multi_uv_inspection").get_to(out_obj.multi_uv_inspection_);
+}
+// to json
+void to_json(nlohmann::json& in_json, const inspect_file_arg& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+
+  in_json["surface_5"]                 = out_obj.surface_5_;
+  in_json["rename_check"]              = out_obj.rename_check_;
+  in_json["name_length_check"]         = out_obj.name_length_check_;
+  in_json["history_check"]             = out_obj.history_check_;
+  in_json["special_copy_check"]        = out_obj.special_copy_check_;
+  in_json["uv_check"]                  = out_obj.uv_check_;
+  in_json["kframe_check"]              = out_obj.kframe_check_;
+  in_json["space_name_check"]          = out_obj.space_name_check_;
+  in_json["only_default_camera_check"] = out_obj.only_default_camera_check_;
+  in_json["too_many_point_check"]      = out_obj.too_many_point_check_;
+}
+
+FSys::path find_maya_path() { return find_maya_path_impl(); }
+
+boost::asio::awaitable<void> arg::async_run_maya() {
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
-  in_logger->warn("开始运行maya");
-  if (in_time_info) in_time_info->start_time_ = std::chrono::system_clock::now();
+  logger_ptr_->warn("开始运行maya");
+  if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
   auto l_maya_path = find_maya_path_impl();
 
   auto l_this_exe  = co_await boost::asio::this_coro::executor;
@@ -125,16 +254,15 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
   auto l_run_path = install_maya_exe(l_maya_path);
   co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
 
-  auto l_out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
-                          fmt::format("{}.json", core_set::get_set().get_uuid());
+  out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
+                   fmt::format("{}.json", core_set::get_set().get_uuid());
 
-  in_arg->out_path_file_ = l_out_path_file_;
-  auto [l_key, l_args]   = in_arg->get_json_str();
-  if (!FSys::exists(l_out_path_file_.parent_path())) FSys::create_directories(l_out_path_file_.parent_path());
+  auto [l_key, l_args] = get_json_str();
+  if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
 
   auto l_arg_path = FSys::write_tmp_file("maya/arg", l_args, ".json");
 
-  in_logger->warn("配置命令行 {}", l_arg_path);
+  logger_ptr_->warn("配置命令行 {}", l_arg_path);
 
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(g_io_context());
 
@@ -148,29 +276,29 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
   l_env[L"Path"].push_back(l_run_path.parent_path().generic_wstring());
   l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
   add_maya_module();
-  auto l_out_pipe     = std::make_shared<boost::asio::readable_pipe>(g_io_context());
-  auto l_err_pipe     = std::make_shared<boost::asio::readable_pipe>(g_io_context());
+  auto l_out_pipe     = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
+  auto l_err_pipe     = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
 
   auto l_process_maya = boost::process::v2::process{
       g_io_context(),
       l_run_path,
       {fmt::format("--{}", l_key), fmt::format("--config={}", l_arg_path)},
-      boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
+      boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe},
       boost::process::v2::process_environment{l_env},
       boost::process::v2::process_start_dir{l_maya_path / "bin"},
       details::hide_and_not_create_windows
   };
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info), boost::asio::detached);
-  boost::asio::co_spawn(g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info), boost::asio::detached);
 
   l_timer->expires_after(chrono::seconds{core_set::get_set().timeout});
-  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t] =
+  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t, l_ec1, l_ec2] =
       co_await boost::asio::experimental::make_parallel_group(
           boost::process::v2::async_execute(std::move(l_process_maya), boost::asio::deferred),
-          l_timer->async_wait(boost::asio::deferred)
+          l_timer->async_wait(boost::asio::deferred),
+          async_read_pipe(l_out_pipe, logger_ptr_, boost::asio::deferred, level::info),
+          async_read_pipe(l_err_pipe, logger_ptr_, boost::asio::deferred, level::info)
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
-  if (in_time_info) in_time_info->end_time_ = std::chrono::system_clock::now();
+  if (time_info_) time_info_->end_time_ = std::chrono::system_clock::now();
   switch (l_array_completion_order[0]) {
     case 0:
       if (l_exit_code != 0 || l_ec) {
@@ -202,6 +330,28 @@ boost::asio::awaitable<maya_exe_ns::maya_out_arg> async_run_maya(
       throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
       break;
   }
-  co_return get_out_arg(l_out_path_file_);
+  out_arg_ = get_out_arg_impl(out_path_file_);
+  co_return;
 }
+
+boost::asio::awaitable<void> qcloth_arg::run() { return arg::async_run_maya(); }
+boost::asio::awaitable<void> export_fbx_arg::run() { return arg::async_run_maya(); }
+boost::asio::awaitable<void> replace_file_arg::run() { return arg::async_run_maya(); }
+boost::asio::awaitable<void> export_rig_arg::run() {
+  auto l_ret           = arg::async_run_maya();
+  auto l_new_maya_file = file_path.parent_path() / file_path.filename();
+  if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
+  FSys::rename(file_path, l_new_maya_file);
+  return l_ret;
+}
+boost::asio::awaitable<void> inspect_file_arg::run() {
+  auto l_ret           = arg::async_run_maya();
+  auto l_new_maya_file = file_path.parent_path() / file_path.filename();
+  if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
+  FSys::rename(file_path, l_new_maya_file);
+  return l_ret;
+}
+
+}  // namespace maya_exe_ns
+
 }  // namespace doodle

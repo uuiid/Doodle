@@ -54,5 +54,11 @@ void connect_video(
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
 }
+boost::asio::awaitable<void> connect_video_t::run() {
+  file_list_ |=
+      ranges::actions::sort([](const FSys::path &l_a, const FSys::path &l_b) { return l_a.stem() < l_b.stem(); });
+  connect_video(out_path_, logger_ptr_, file_list_, image_size_);
+  co_return;
+}
 
 }  // namespace doodle::detail

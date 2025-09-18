@@ -157,11 +157,11 @@ boost::asio::awaitable<void> args::run() {
   // 添加三次重试
   maya_exe_ns::maya_out_arg l_out{};
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
+  maya_arg_->set_time_info(l_time_info);
   for (int i = 0; i < 3; ++i) {
     try {
-      l_out              = co_await async_run_maya(maya_arg_, logger_ptr_, l_time_info);
+      co_await maya_arg_->run();
       l_time_info->info_ = "运行maya";
-
       break;
     } catch (const doodle_error& err) {
       logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", err.what(), i + 1);
@@ -170,6 +170,7 @@ boost::asio::awaitable<void> args::run() {
       if (i == 2) throw;
     }
   }
+  l_out = maya_arg_->get_out_arg();
   on_run_time_info_(*l_time_info);
   /// 将导出数据转移到数据块中
   begin_time_ = l_out.begin_time;
@@ -390,10 +391,11 @@ void args::down_files() {
     switch (l_data.type_) {
       // 场景文件
       case details::assets_type_enum::scene: {
-        auto l_original = l_data.ue_file_.lexically_relative(l_root);
-        scene_file_     = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
-        l_data.update_files =
-            FSys::copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+        auto l_original     = l_data.ue_file_.lexically_relative(l_root);
+        scene_file_         = fmt::format("/Game/{}/{}", l_original.parent_path().generic_string(), l_original.stem());
+        l_data.update_files = FSys::copy_diff(
+            l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_
+        );
         // 配置文件夹复制
         FSys::copy_diff(l_down_path / doodle_config::ue4_config, l_local_path / doodle_config::ue4_config, logger_ptr_);
         // 复制项目文件
@@ -405,8 +407,9 @@ void args::down_files() {
 
       // 角色文件
       case details::assets_type_enum::character:
-        l_data.update_files =
-            FSys::copy_diff(l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_);
+        l_data.update_files = FSys::copy_diff(
+            l_down_path / doodle_config::ue4_content, l_local_path / doodle_config::ue4_content, logger_ptr_
+        );
         break;
 
       // 道具文件
@@ -470,8 +473,10 @@ boost::asio::awaitable<void> args::crate_skin() {
     }
 
     auto l_maya_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
-    l_maya_arg->file_path = l_data.maya_local_file_;
-    auto l_maya_file      = co_await async_run_maya(l_maya_arg, logger_ptr_);
+    l_maya_arg->set_file_path(l_data.maya_local_file_);
+    l_maya_arg->set_logger(logger_ptr_);
+    co_await l_maya_arg->async_run_maya();
+    auto l_maya_file      = l_maya_arg->get_out_arg();
     if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", l_data.maya_file_});
     auto l_fbx = l_maya_file.out_file_list.front().out_file;
     nlohmann::json l_json{};

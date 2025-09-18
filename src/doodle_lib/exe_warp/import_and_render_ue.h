@@ -10,6 +10,7 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
 
+#include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
@@ -57,20 +58,20 @@ struct import_data_t {
   bool layering_;
 
   friend void to_json(nlohmann::json& j, const import_data_t& p) {
-    j["project"]            = p.project_.code_;
-    j["begin_time"]         = p.begin_time;
-    j["end_time"]           = p.end_time;
-    j["episode"]            = p.episode.p_episodes;
-    j["shot"]               = p.shot.p_shot;
-    j["shot_ab"]            = p.shot.get_shot_ab();
-    j["out_file_dir"]       = p.out_file_dir.generic_string();
-    j["original_map"]       = p.original_map;
-    j["render_map"]         = p.render_map;
-    j["files"]              = p.files;
-    j["import_dir"]         = p.import_dir;
-    j["create_map"]         = p.create_map;
+    j["project"]      = p.project_.code_;
+    j["begin_time"]   = p.begin_time;
+    j["end_time"]     = p.end_time;
+    j["episode"]      = p.episode.p_episodes;
+    j["shot"]         = p.shot.p_shot;
+    j["shot_ab"]      = p.shot.get_shot_ab();
+    j["out_file_dir"] = p.out_file_dir.generic_string();
+    j["original_map"] = p.original_map;
+    j["render_map"]   = p.render_map;
+    j["files"]        = p.files;
+    j["import_dir"]   = p.import_dir;
+    j["create_map"]   = p.create_map;
 
-    auto l_path             = p.level_sequence_import;
+    auto l_path       = p.level_sequence_import;
     l_path.replace_extension();
     j["level_sequence"] = l_path;
 
@@ -100,7 +101,8 @@ struct association_data {
   FSys::path ue_prj_path_{};
   FSys::path export_file_{};
 };
-struct args {
+class args : public async_task {
+ public:
   /// 需要填写
   episodes episodes_{};
   shot shot_{};
@@ -109,12 +111,11 @@ struct args {
   image_size size_{};
   bool layering_{};
   bool bind_skin_{};
-  logger_ptr logger_ptr_{};
   bool is_sim_{};
 
   boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
 
-  boost::asio::awaitable<void> run();
+  boost::asio::awaitable<void> run() override;
 
  private:
   boost::asio::awaitable<FSys::path> async_import_and_render_ue();

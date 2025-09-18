@@ -6,6 +6,7 @@
 
 #include "doodle_core/metadata/image_size.h"
 
+#include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle::detail {
@@ -15,10 +16,13 @@ void connect_video(
     const image_size &in_size
 );
 
-struct connect_video_t {
+class connect_video_t : public async_task {
+ public:
   FSys::path out_path_;
   std::vector<FSys::path> file_list_{};
   image_size image_size_;
+
+  boost::asio::awaitable<void> run() override;
 
   friend void from_json(const nlohmann::json &nlohmann_json_j, connect_video_t &nlohmann_json_t) {
     nlohmann_json_j["out_path"].get_to(nlohmann_json_t.out_path_);

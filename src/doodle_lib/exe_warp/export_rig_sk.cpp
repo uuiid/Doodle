@@ -16,12 +16,13 @@
 
 namespace doodle {
 
-boost::asio::awaitable<void> export_rig_sk_arg::run() const {
+boost::asio::awaitable<void> export_rig_sk_arg::run() {
   if (asset_type_id_.is_nil()) throw_exception(doodle_error{"asset_type_id 不能为空"});
 
-  auto l_arg       = std::make_shared<maya_exe_ns::export_rig_arg>();
-  l_arg->file_path = maya_file_;
-  auto l_maya_file = co_await async_run_maya(l_arg, logger_);
+  auto l_arg = std::make_shared<maya_exe_ns::export_rig_arg>();
+  l_arg->set_file_path(maya_file_);
+  co_await l_arg->async_run_maya();
+  auto l_maya_file = l_arg->get_out_arg();
   FSys::path l_import_game_path{doodle_config::ue4_game};
   if (asset_type_id_ == asset_type::get_character_id()) {
     l_import_game_path /= "Character";

@@ -151,5 +151,44 @@ void create_move(
 
   in_logger->info("成功完成任务");
 }
+
+void image_to_move::create_out_path(
+    const FSys::path& in_dir, const episodes& in_eps, const shot& in_shot, const std::string& in_project_short_string
+) {
+  FSys::path l_out = in_dir;
+
+  /// \brief 这里我们检查 shot，episode 进行路径的组合
+  if (!l_out.has_extension()) {
+    if (in_project_short_string.empty())
+      l_out /= fmt::format("EP{:03}_SC{:03}{}.mp4", in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum);
+    else
+      l_out /= fmt::format(
+          "{}_EP{:03}_SC{:03}{}.mp4", in_project_short_string, in_eps.p_episodes, in_shot.p_shot, in_shot.p_shot_enum
+      );
+  } else
+    l_out.extension().replace_extension(".mp4");
+
+  if (exists(l_out.parent_path())) create_directories(l_out.parent_path());
+  out_path_ = l_out;
+}
+
+boost::asio::awaitable<void> image_to_move::run() {
+  create_move(out_path_, logger_ptr_, vector_, image_size_);
+  co_return;
+}
+
+void image_to_move::set_image_attr_from_dir(const FSys::path& in_path) {
+  std::vector<FSys::path> l_paths{};
+  for (auto&& l_path_info : FSys::directory_iterator{in_path}) {
+    auto l_ext = l_path_info.path().extension();
+    if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") l_paths.emplace_back(l_path_info.path());
+  }
+  auto l_images = doodle::movie::image_attr::make_default_attr(&eps_, &shot_, l_paths);
+  for (auto&& l_image : l_images) {
+    l_image.watermarks_attr.emplace_back(user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
+  }
+  set_image_attr(l_images);
+}
+
 }  // namespace detail
 }  // namespace doodle

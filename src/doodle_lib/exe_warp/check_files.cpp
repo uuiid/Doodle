@@ -109,11 +109,11 @@ boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> check
   auto l_arg = std::make_shared<maya_exe_ns::export_fbx_arg>();
   tl::expected<maya_exe_ns::maya_out_arg, std::string> l_out{};
   l_arg->rig_file_export_ = true;
-  l_arg->file_path        = in_args->maya_rig_file_;
-  for (int i = 0; i < 3; ++i) {
-    l_out = co_await async_run_maya(l_arg, in_logger);
-    in_logger->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
-  }
+  // l_arg->file_path        = in_args->maya_rig_file_;
+  // for (int i = 0; i < 3; ++i) {
+  //   l_out = co_await async_run_maya(l_arg, in_logger);
+  //   in_logger->warn("运行maya错误 {}, 开始第{}次重试", l_out.error(), i + 1);
+  // }
   if (!l_out) co_return std::tuple(l_ec, "maya绑定文件错误");
 
   // 导入UE中, 检查Ue文件

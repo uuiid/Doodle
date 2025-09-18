@@ -4,7 +4,6 @@
 
 #include "ue_exe.h"
 
-#include "doodle_core/core/global_function.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/platform/win/register_file_type.h"
 #include <doodle_core/core/core_set.h>
@@ -14,7 +13,6 @@
 #include <doodle_lib/exe_warp/windows_hide.h>
 
 #include "boost/asio/readable_pipe.hpp"
-#include "boost/locale/encoding.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/process/process.hpp>
@@ -160,29 +158,25 @@ boost::asio::awaitable<void> async_run_ue(
   }
   l_env[L"UE-LocalDataCachePath"] = std::wstring{L"%GAMEDIR%DerivedDataCache"};
 
-  auto l_out_pipe   = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
-  auto l_err_pipe   = std::make_shared<boost::asio::readable_pipe>(co_await boost::asio::this_coro::executor);
+  auto l_out_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
+  auto l_err_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
 
-  auto l_process_ue = boost::process::v2::process{
+  auto l_process_ue               = boost::process::v2::process{
       co_await boost::asio::this_coro::executor,
       l_ue_path,
       in_arg,
-      boost::process::v2::process_stdio{nullptr, *l_out_pipe, *l_err_pipe},
+      boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe},
       boost::process::v2::process_environment{l_env},
       details::hide_and_not_create_windows
   };
-  boost::asio::co_spawn(
-      g_io_context(), async_read_pipe(l_out_pipe, in_logger, level::info, "utf-8"), boost::asio::detached
-  );
-  boost::asio::co_spawn(
-      g_io_context(), async_read_pipe(l_err_pipe, in_logger, level::info, "utf-8"), boost::asio::detached
-  );
 
   l_timer->expires_after(chrono::seconds{core_set::get_set().timeout * 5});
-  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t] =
+  auto [l_array_completion_order, l_ec, l_exit_code, l_ec_t, l_ec1, l_ec2] =
       co_await boost::asio::experimental::make_parallel_group(
           boost::process::v2::async_execute(std::move(l_process_ue), boost::asio::deferred),
-          l_timer->async_wait(boost::asio::deferred)
+          l_timer->async_wait(boost::asio::deferred),
+          async_read_pipe(l_out_pipe, in_logger, boost::asio::deferred, level::info, "utf-8"),
+          async_read_pipe(l_err_pipe, in_logger, boost::asio::deferred, level::info, "utf-8")
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
 

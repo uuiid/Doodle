@@ -21,6 +21,7 @@
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include "core/asyn_task.h"
 #include "local.h"
 #include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -103,11 +104,8 @@ class run_post_task_local_cancel_manager {
 };
 
 class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
-  using arg_variant_type = std::variant<
-      std::shared_ptr<maya_exe_ns::arg>, std::shared_ptr<import_and_render_ue_ns::args>,
-      std::shared_ptr<doodle::detail::image_to_move>, std::shared_ptr<doodle::detail::connect_video_t>,
-      std::shared_ptr<export_rig_sk_arg>>;
-  arg_variant_type arg_;
+  using async_task_ptr = std::shared_ptr<async_task>;
+  async_task_ptr arg_;
   logger_ptr logger_{};
   // 强制等待一秒
   boost::asio::awaitable<void> wait() const {
@@ -163,8 +161,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         l_arg_t->create_play_blast_         = true;
         l_import_and_render_args->maya_arg_ = l_arg_t;
       }
-      l_import_and_render_args->logger_ptr_ = logger_;
-      arg_                                  = l_import_and_render_args;
+      arg_ = l_import_and_render_args;
 
       l_import_and_render_args->on_run_time_info_.connect([this](const server_task_info::run_time_info_t& in_info) {
         task_info_->add_run_time_info(in_info);
@@ -178,13 +175,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     } else if (in_json.contains("category")) {  // 检查文件任务
       auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
       l_arg_t->config(in_json["category"].get<maya_exe_ns::inspect_file_type>());
-      l_arg_t->file_path          = in_json["path"].get<std::string>();
-
-      l_arg_t->history_check_     = in_json["history_check"].get<bool>();
-      l_arg_t->kframe_check_      = in_json["kframe_check"].get<bool>();
-      l_arg_t->name_length_check_ = in_json["name_length_check"].get<bool>();
-      if (in_json.contains("multi_uv_inspection"))
-        l_arg_t->multi_uv_inspection_ = in_json["multi_uv_inspection"].get<bool>();
+      in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
     } else if (in_json.contains("image_to_move")) {  // 图片到视频
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
@@ -222,31 +213,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     try {
       co_await wait();
       emit_signal();
-      if (std::holds_alternative<std::shared_ptr<import_and_render_ue_ns::args>>(arg_)) {
-        co_await std::get<std::shared_ptr<import_and_render_ue_ns::args>>(arg_)->run();
-      } else if (std::holds_alternative<std::shared_ptr<maya_exe_ns::arg>>(arg_)) {
-        co_await async_run_maya(std::get<std::shared_ptr<maya_exe_ns::arg>>(arg_), logger_);
-      } else if (std::holds_alternative<std::shared_ptr<doodle::detail::image_to_move>>(arg_)) {
-        auto l_arg = std::get<std::shared_ptr<doodle::detail::image_to_move>>(arg_);
-        std::vector<FSys::path> l_paths{};
-        for (auto&& l_path_info : FSys::directory_iterator{l_arg->path_}) {
-          auto l_ext = l_path_info.path().extension();
-          if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") l_paths.emplace_back(l_path_info.path());
-        }
-        auto l_images = doodle::movie::image_attr::make_default_attr(&l_arg->eps_, &l_arg->shot_, l_paths);
-        for (auto&& l_image : l_images) {
-          l_image.watermarks_attr.emplace_back(l_arg->user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
-        }
-        doodle::detail::create_move(l_arg->out_path_, logger_, l_images, l_arg->image_size_);
-
-      } else if (std::holds_alternative<std::shared_ptr<doodle::detail::connect_video_t>>(arg_)) {
-        auto l_arg = std::get<std::shared_ptr<doodle::detail::connect_video_t>>(arg_);
-        l_arg->file_list_ |=
-            ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
-        doodle::detail::connect_video(l_arg->out_path_, logger_, l_arg->file_list_, l_arg->image_size_);
-      } else if (std::holds_alternative<std::shared_ptr<export_rig_sk_arg>>(arg_)) {
-        co_await std::get<std::shared_ptr<export_rig_sk_arg>>(arg_)->run();
-      }
+      co_await arg_->run();
       task_info_->status_ = server_task_info_status::completed;
     } catch (const boost::system::system_error& e) {
       if (e.code() == boost::system::errc::operation_canceled) task_info_->status_ = server_task_info_status::canceled;

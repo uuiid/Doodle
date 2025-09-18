@@ -2,13 +2,15 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include <doodle_lib/core/asyn_task.h>
+
 #include <boost/signals2.hpp>
 
 #include <filesystem>
 #include <string>
 
 namespace doodle {
-struct export_rig_sk_arg {
+class export_rig_sk_arg : public async_task {
  private:
   mutable FSys::path result_path_;
 
@@ -34,6 +36,6 @@ struct export_rig_sk_arg {
     if (in_json.contains("ban_ben")) in_json.at("ban_ben").get_to(out_obj.ban_ben_);
   }
 
-  boost::asio::awaitable<void> run() const;
+  boost::asio::awaitable<void> run() override;
 };
 }  // namespace doodle
