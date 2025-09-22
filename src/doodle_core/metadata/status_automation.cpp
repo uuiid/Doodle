@@ -9,7 +9,9 @@
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 
+#include "core/chrono_.h"
 #include "sqlite_orm/sqlite_database.h"
+#include <chrono>
 
 namespace doodle {
 boost::asio::awaitable<void> status_automation::run(const std::shared_ptr<task>& in_task, const uuid& in_person_id) {
@@ -27,9 +29,11 @@ boost::asio::awaitable<void> status_automation::run(const std::shared_ptr<task>&
         auto l_task_type            = l_sql.get_by_uuid<task_type>(in_task_type_id_);
         auto l_task_status          = l_sql.get_by_uuid<task_status>(in_task_status_id_);
         auto l_comment              = std::make_shared<comment>(comment{
-                         .uuid_id_   = core_set::get_set().get_uuid(),
-                         .object_id_ = in_task->uuid_id_,
-                         .text_      = fmt::format("自动化任务 {}更改触发, 设置状态{} ", l_task_type.name_, l_task_status.name_),
+                         .uuid_id_    = core_set::get_set().get_uuid(),
+                         .object_id_  = in_task->uuid_id_,
+                         .text_       = fmt::format("自动化任务 {}更改触发, 设置状态{} ", l_task_type.name_, l_task_status.name_),
+                         .created_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()},
+                         .updated_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()},
                          .task_status_id_ = l_task_status.uuid_id_,
                          .person_id_      = in_person_id,
         });
