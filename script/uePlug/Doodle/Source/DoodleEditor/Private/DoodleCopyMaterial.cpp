@@ -482,7 +482,19 @@ void DoodleCopyMat::UnlockTextrue()
 	}
 }
 
+void DoodleCopyMat::CopyLightMap() {
+	/*FString LightMapPath;
+	FPackageName::TryConvertGameRelativePackagePathToLocalPath(TEXT("/Doodle"), LightMapPath);
+	LightMapPath = LightMapPath / TEXT("eye_fun");
+	FString DestinationDirectory = FPaths::ProjectContentDir() / TEXT("eye_fun");
+	IPlatformFile::GetPlatformPhysical().CopyDirectoryTree(*DestinationDirectory, *LightMapPath, false);
+	UE_LOG(LogTemp, Error, TEXT("DestinationDirectory：%s"),*DestinationDirectory);
+	UE_LOG(LogTemp, Error, TEXT("LightMapPath：%s"), *LightMapPath);*/
 
+	FString LightMap = TEXT("/Doodle/LightTest/Level/Environment");
+	UEditorLevelLibrary::LoadLevel(LightMap);
+	//LightMapPath = FPaths::ConvertRelativePathToFull(LightMapPath.Replace(TEXT("Content/"), TEXT("")));
+}
 void DoodleCopyMat::RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath)
 {
 	TArray<URenderJobInfo> RenderJobInfos;

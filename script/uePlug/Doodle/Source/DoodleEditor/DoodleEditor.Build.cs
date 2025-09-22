@@ -155,7 +155,9 @@ public class doodleEditor : ModuleRules
                 "Blutility",
 				"BatchRender",
 				// 导入abc hair需要
-				"HairStrandsCore"
+				"HairStrandsCore",
+				"GeometryFramework",
+				"GeometryScriptingCore"
             }
 		);
 

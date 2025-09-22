@@ -339,14 +339,14 @@ boost::asio::awaitable<void> export_fbx_arg::run() { return arg::async_run_maya(
 boost::asio::awaitable<void> replace_file_arg::run() { return arg::async_run_maya(); }
 boost::asio::awaitable<void> export_rig_arg::run() {
   auto l_ret           = arg::async_run_maya();
-  auto l_new_maya_file = file_path.parent_path() / file_path.filename();
+  auto l_new_maya_file = file_path.parent_path().parent_path() / file_path.filename();
   if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
   FSys::rename(file_path, l_new_maya_file);
   return l_ret;
 }
 boost::asio::awaitable<void> inspect_file_arg::run() {
   auto l_ret           = arg::async_run_maya();
-  auto l_new_maya_file = file_path.parent_path() / file_path.filename();
+  auto l_new_maya_file = file_path.parent_path().parent_path() / file_path.filename();
   if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
   FSys::rename(file_path, l_new_maya_file);
   return l_ret;

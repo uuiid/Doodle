@@ -34,7 +34,7 @@ class BATCHRENDER_API UBatchRenderQueue : public UObject
     
 public:
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable, Category = "Doodle|BatchRender")
     void RenderMovies();
     TArray<URenderJobInfo> BatchJobs;
     
