@@ -43,13 +43,13 @@ class image_to_move : public async_task {
   friend void from_json(const nlohmann::json& nlohmann_json_j, image_to_move& nlohmann_json_t) {
     FSys::path path_;
     nlohmann_json_j["path"].get_to(path_);
-    nlohmann_json_t.set_image_attr_from_dir(path_);
-    
     nlohmann_json_j["out_path"].get_to(nlohmann_json_t.out_path_);
     nlohmann_json_j["image_size"].get_to(nlohmann_json_t.image_size_);
     nlohmann_json_j["shot"].get_to(nlohmann_json_t.shot_);
     nlohmann_json_j["episodes"].get_to(nlohmann_json_t.eps_);
     nlohmann_json_j["user_name"].get_to(nlohmann_json_t.user_name_);
+    
+    nlohmann_json_t.set_image_attr_from_dir(path_);
   }
 
  private:

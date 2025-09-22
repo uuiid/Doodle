@@ -607,7 +607,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.bOverride_MotionBlurAmount = true;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.MotionBlurAmount = 0.0f;
-	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddPossessable(CameraActor->GetName(), CameraActor->GetClass());
+	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
 	TheLevelSequence->BindPossessableObject(CameraGuid, *CameraActor, TheRenderWorld);
 	const FMovieSceneBindingReference* L_MovieSceneBindingReference = TheLevelSequence->GetBindingReferences()->GetReference(CameraGuid, 0);
 	UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateCustomBindingFromBinding(
