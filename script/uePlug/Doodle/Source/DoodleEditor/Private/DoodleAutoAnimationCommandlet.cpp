@@ -602,13 +602,13 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	//--------------------
 	FActorSpawnParameters L_ActorSpawnParameters{};
 	L_ActorSpawnParameters.ObjectFlags &= ~RF_Transactional;
-	AActor* TempActor = TheRenderWorld->SpawnActor<ACineCameraActor>(L_ActorSpawnParameters);
+	AActor* TempActor = TheSequenceWorld->SpawnActor<ACineCameraActor>(L_ActorSpawnParameters);
 	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TempActor);
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.bOverride_MotionBlurAmount = true;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.MotionBlurAmount = 0.0f;
-	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddSpawnable(CameraActor->GetName(), *CameraActor);
-	TheLevelSequence->BindPossessableObject(CameraGuid, *CameraActor, TheRenderWorld);
+	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddPossessable(CameraActor->GetName(), CameraActor->GetClass());
+	TheLevelSequence->BindPossessableObject(CameraGuid, *CameraActor, TheSequenceWorld);
 	const FMovieSceneBindingReference* L_MovieSceneBindingReference = TheLevelSequence->GetBindingReferences()->GetReference(CameraGuid, 0);
 	UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateCustomBindingFromBinding(
 		*L_MovieSceneBindingReference, CameraActor, *TheLevelSequence->GetMovieScene());
@@ -665,7 +665,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	                                                      L_ImportFBXSettings, InOutParams);
 	//----------------
 	L_LevelSequencePlayer->Stop();
-	TempActor->Destroy();
+	// TempActor->Destroy();
 	L_LevelSequenceActor->Destroy();
 	FbxImporter->ReleaseScene();
 
@@ -788,6 +788,9 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	}
 	// L_LevelSequencePlayer->
 	// EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
+	// UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	// EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
+	
 	L_LevelSequencePlayer->ConditionalBeginDestroy();
 
 	GEngine->ForceGarbageCollection(true);
