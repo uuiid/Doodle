@@ -64,7 +64,7 @@
     {
       "label": "运行boost测试",
       "type": "shell",
-      "command": "${command:cmake.launchTargetPath}",
+      "command": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe",
       "args": [
         "--color_output=true",
         "--detect_memory_leaks=0",
@@ -76,7 +76,7 @@
     {
       "label": "运行boost测试自定义输入",
       "type": "shell",
-      "command": "${command:cmake.launchTargetPath} --color_output=true --detect_memory_leaks=0 --log_level=message --run_test=${input:arg_input}",
+      "command": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe --color_output=true --detect_memory_leaks=0 --log_level=message --run_test=${input:arg_input}",
       "problemMatcher": []
     }
   ],
@@ -116,7 +116,8 @@
         "kitsu/authenticated",
         "kitsu/get_task_directly",
         "kitsu/get_user",
-        "kitsu/get_task"
+        "kitsu/get_task",
+        "auto_light_test/utf16_test"
       ]
     }
   ]

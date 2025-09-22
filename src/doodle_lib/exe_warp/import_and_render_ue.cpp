@@ -4,7 +4,6 @@
 
 #include "import_and_render_ue.h"
 
-#include "doodle_core/core/core_set.h"
 #include <doodle_core/core/http_client_core.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -18,8 +17,6 @@
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include <boost/locale/encoding.hpp>
-#include <boost/locale/encoding_utf.hpp>
 #include <boost/system.hpp>
 
 namespace doodle {
@@ -27,12 +24,8 @@ namespace doodle {
 namespace import_and_render_ue_ns {
 
 void fix_project(const FSys::path& in_project_path) {
-  FSys::ifstream l_prj_path{in_project_path, std::ifstream::in | std::ifstream::binary};
-  if (!l_prj_path) throw_exception(doodle_error{"无法打开项目文件 {}", in_project_path});
-  auto l_str      = std::string{std::istreambuf_iterator<char>(l_prj_path), std::istreambuf_iterator<char>()};
-  l_str           = conv::between(l_str, "UTF-8", "UTF-16");
-  auto l_json     = nlohmann::json::parse(l_str);
-  auto&& l_plugin = l_json["Plugins"];
+  auto l_json                = nlohmann::json::parse(FSys::ifstream{in_project_path});
+  auto&& l_plugin            = l_json["Plugins"];
 
   static auto l_enabled_plug = [](nlohmann::json& in_json, const std::string& in_plug_name, bool in_enable = true) {
     bool l_has{};
@@ -54,8 +47,7 @@ void fix_project(const FSys::path& in_project_path) {
   l_enabled_plug(l_plugin, "MoviePipelineMaskRenderPass");
   l_enabled_plug(l_plugin, "MovieRenderPipeline");
   l_enabled_plug(l_plugin, "UAssetBrowser", false);
-  FSys::ofstream{in_project_path, std::ofstream::out | std::ofstream::binary}
-      << conv::between(l_json.dump(), "UTF-16", "UTF-8");
+  FSys::ofstream{in_project_path} << l_json.dump();
 }
 
 void fix_config(const FSys::path& in_project_path) {

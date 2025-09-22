@@ -32,3 +32,10 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
 using namespace doodle;
+BOOST_AUTO_TEST_SUITE(auto_light_test)
+
+BOOST_AUTO_TEST_CASE(utf16_test) {
+  doodle::import_and_render_ue_ns::fix_project("D:\\test_files\\doodle_plug.uproject");
+}
+
+BOOST_AUTO_TEST_SUITE_END()

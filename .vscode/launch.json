@@ -100,9 +100,10 @@
                 "--run_test=${input:test_}"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "preLaunchTask": "cmake build"
         }
     ],
     "inputs": [
@@ -133,7 +134,8 @@
                 "rpc_server/list_users",
                 "kitsu/login",
                 "kitsu/get_user",
-                "kitsu/get_task"
+                "kitsu/get_task",
+                "auto_light_test/utf16_test"
             ]
         }
     ],
