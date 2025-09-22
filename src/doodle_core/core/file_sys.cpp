@@ -100,7 +100,7 @@ void open_explorer(const path &in_path) {
 void backup_file(const path &source) {
   auto backup_path = source.parent_path() / "backup" / add_time_stamp(source).filename();
   if (!exists(backup_path.parent_path())) create_directories(backup_path.parent_path());
-  rename(source, backup_path);
+  copy_file(source, backup_path, copy_options::overwrite_existing);
 }
 path add_time_stamp(const path &in_path) {
   auto k_fn = in_path.stem();

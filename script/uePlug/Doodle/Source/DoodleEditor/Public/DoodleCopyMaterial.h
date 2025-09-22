@@ -26,12 +26,9 @@ private:
 	FReply BathImport();
 	FReply BathReameAss();
 
-	void FindErrorMaterials();
-	void UnlockTextrue();
-	void OnBatchRenderExecutorFinished(int32 Num);
-	void RenderCharacter(const FString& SequencePath, const FString& MapPath, const FString& OutPath);
-	bool bEnableSeparateTranslucency;
-	FReply set_marteral_deep();
+  void SkeletalMeshTessellation(USkeletalMesh* SkeletalMeshAsset);
+  void StaticMeshTessellation(UStaticMesh* StaticMeshAsset);
+  void Tessellation();
 
 	TArray<FString> OpenFileDialog(const FString& DialogTitle, const FString& DefaultPath, const FString& FileTypes);
 	FString OpenDirDialog(const FString& DialogTitle, const FString& DefaultPath);

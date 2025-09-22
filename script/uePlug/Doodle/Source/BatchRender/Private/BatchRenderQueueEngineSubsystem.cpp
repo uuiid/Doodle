@@ -4,7 +4,6 @@
 #include "Modules/ModuleManager.h"
 #include "MoviePipeline.h"
 #include "MoviePipelineInProcessExecutor.h"
-#include "UObject/SoftObjectPath.h"
 #include "LevelSequence.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(BatchRenderQueueEngineSubsystem)
@@ -80,7 +79,7 @@ UMoviePipelineExecutorJob* UBatchRenderQueueEngineSubsystem::AllocateJob(ULevelS
 	CurrentQueue->DeleteAllJobs();
 
 	UMoviePipelineExecutorJob* NewJob = CurrentQueue->AllocateNewJob(UMoviePipelineExecutorJob::StaticClass());
-	NewJob->SetSequence(FSoftObjectPath{InSequence});
+	NewJob->SetSequence(FSoftObjectPath(InSequence->GetPathName()));
 	NewJob->Map = FSoftObjectPath(GetWorld());
 	NewJob->JobName = NewJob->Sequence.GetAssetName();
 

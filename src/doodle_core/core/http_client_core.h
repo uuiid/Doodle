@@ -5,6 +5,8 @@
 #pragma once
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/core/co_queue.h>
+#include <doodle_core/core/core_set.h>
+#include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -12,25 +14,17 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/compose.hpp>
+#include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/ts/netfwd.hpp>
 #include <boost/beast.hpp>
+#include <boost/beast/http/file_body_fwd.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/url.hpp>
 
-#include <atomic>
 #include <magic_enum/magic_enum_all.hpp>
+
 namespace doodle::http::detail {
-
-namespace http_client_core_ns {
-enum state {
-  start,
-  resolve,
-  connect,
-  write,
-  read,
-};
-
-}  // namespace http_client_core_ns
 
 class http_client_data_base : public std::enable_shared_from_this<http_client_data_base> {
  public:
@@ -49,8 +43,6 @@ class http_client_data_base : public std::enable_shared_from_this<http_client_da
 
   using ssl_socket_t     = boost::beast::ssl_stream<socket_t>;
   using ssl_socket_ptr   = std::shared_ptr<ssl_socket_t>;
-
-  using buffer_type      = boost::beast::flat_buffer;
 
  private:
   boost::asio::any_io_executor executor_;
@@ -208,6 +200,161 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
 
   co_return std::make_tuple(boost::system::error_code{}, l_ret);
 }
+
 }  // namespace doodle::http::detail
 
-namespace doodle::http {}  // namespace doodle::http
+namespace doodle::http {
+template <typename SocketType>
+class http_stream_base : public std::enable_shared_from_this<http_stream_base<SocketType>> {
+ protected:
+  using resolver_t   = boost::asio::ip::tcp::resolver;
+  using resolver_ptr = std::shared_ptr<resolver_t>;
+
+  using buffer_type  = boost::beast::flat_buffer;
+  using channel_type = boost::asio::experimental::channel<void()>;
+  using socket_type  = SocketType;
+  boost::urls::scheme scheme_id_{};
+  std::string server_ip_{};
+  std::string server_port_{};
+  logger_ptr logger_{};
+  boost::asio::ip::tcp::resolver::results_type resolver_results_;
+  buffer_type buffer_{};
+
+  socket_type socket_;
+  channel_type queue_;
+  // 定时关闭
+  boost::system::error_code error_{};
+
+  class resolve_and_connect_compose {
+   public:
+    http_stream_base* self_;
+    boost::asio::coroutine coro_;
+    resolver_t resolver_;
+
+    template <typename Self>
+    void operator()(Self&& self, boost::system::error_code in_ec) {
+      BOOST_ASIO_CORO_REENTER(coro_) {
+        BOOST_ASIO_CORO_YIELD resolver_.async_resolve(self_->server_ip_, self_->server_port_, std::move(self));
+        self.complete(in_ec);
+      }
+    }
+
+    template <typename Self>
+    void operator()(
+        Self&& self, boost::system::error_code in_ec, boost::asio::ip::tcp::resolver::results_type in_results
+    ) {
+      BOOST_ASIO_CORO_REENTER(coro_) {
+        if (in_ec) {
+          self.complete(in_ec);
+          return;
+        }
+        self_->resolver_results_ = in_results;
+        BOOST_ASIO_CORO_YIELD self_->socket_.async_connect(self_->resolver_results_, std::move(self));
+        self.complete(in_ec);
+      }
+    }
+    template <typename Self>
+    void operator()(Self&& self, boost::system::error_code in_ec, boost::asio::ip::tcp::endpoint in_endpoint) {
+      BOOST_ASIO_CORO_REENTER(coro_) { self.complete(in_ec); }
+    }
+  };
+
+  template <typename RequestType, typename ResponseBody>
+  class read_and_write_compose {
+   public:
+    RequestType req_;
+    http_stream_base* self_;
+    boost::asio::coroutine coro_;
+    boost::beast::http::response<ResponseBody>& res_;
+
+    template <typename Self>
+    void operator()(Self&& self, boost::system::error_code in_ec = {}, std::size_t = 0) {
+      BOOST_ASIO_CORO_REENTER(coro_) {
+        while (!in_ec) {
+          BOOST_ASIO_CORO_YIELD self_->queue_.async_send(std::move(self));
+          BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, req_);
+          if (in_ec) {
+            BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
+            if (in_ec) break;
+
+            BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, req_);
+            if (in_ec) break;
+          }
+          BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(self_->socket_, self_->buffer_, res_);
+          if (in_ec) break;
+        }
+        self.complete(in_ec, res_);
+      }
+    }
+  };
+
+  // resolve and connect
+  template <typename Handle>
+  auto resolve_and_connect(Handle&& in_handle) {
+    return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
+        resolve_and_connect_compose{this, boost::asio::coroutine{}, resolver_t{socket_.get_executor()}}, in_handle
+    );
+  }
+
+ public:
+  template <typename... Args>
+  explicit http_stream_base(Args&&... args) : socket_(std::forward<Args>(args)...), queue_(g_io_context()) {}
+  ~http_stream_base() = default;
+
+  // 解析url
+  void parse_url(std::string in_url) {
+    boost::urls::url l_url{in_url};
+    server_ip_ = l_url.host();
+
+    if (l_url.has_port())
+      server_port_ = l_url.port();
+    else if (l_url.scheme() == "https")
+      server_port_ = "443";
+    else
+      server_port_ = "80";
+    scheme_id_ = l_url.scheme_id();
+  };
+
+  // read and write
+  template <typename ResponseBody, typename RequestType, typename Handle>
+  auto read_and_write(
+      boost::beast::http::request<RequestType>&& in_req, boost::beast::http::response<ResponseBody>& out_res,
+      Handle&& in_handle
+  ) {
+    in_req.payload_size();
+    return boost::asio::async_compose<Handle, void(boost::system::error_code, ResponseBody)>(
+        read_and_write_compose<RequestType, ResponseBody>{std::move(in_req), this, boost::asio::coroutine{}, out_res},
+        in_handle
+    );
+  }
+
+  // copy constructor
+  http_stream_base(const http_stream_base&)            = delete;
+  // move constructor
+  http_stream_base(http_stream_base&&)                 = delete;
+  // copy assignment
+  http_stream_base& operator=(const http_stream_base&) = delete;
+  // move assignment
+  http_stream_base& operator=(http_stream_base&&)      = delete;
+};
+
+class http_client : public http_stream_base<boost::beast::tcp_stream> {
+ public:
+  explicit http_client(std::string in_server_url) : http_stream_base(g_io_context()) { parse_url(in_server_url); }
+  ~http_client() = default;
+};
+
+class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::beast::tcp_stream>> {
+  boost::asio::ssl::context& ctx_;
+  void set_ssl();
+
+ public:
+  explicit http_client_ssl(std::string in_server_url, boost::asio::ssl::context& in_ctx)
+      : http_stream_base(boost::beast::ssl_stream<boost::beast::tcp_stream>(g_io_context(), in_ctx)), ctx_(in_ctx) {
+    parse_url(in_server_url);
+    set_ssl();
+  }
+  ~http_client_ssl() = default;
+};
+
+}  // namespace doodle::http

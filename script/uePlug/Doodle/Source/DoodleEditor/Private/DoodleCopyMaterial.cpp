@@ -36,7 +36,10 @@
 #include <EditorLevelLibrary.h>
 #include "Interfaces/IPluginManager.h"
 
-
+#include "UDynamicMesh.h"
+#include "GeometryScript/MeshAssetFunctions.h"
+#include "GeometryScript/MeshSubdivideFunctions.h"
+#include "GeometryScript/GeometryScriptTypes.h"
 namespace
 {
 	void print_test(USkeletalMesh* In_Obj)
@@ -234,9 +237,21 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 							[
 								SNew(SButton).OnClicked_Lambda([this]() -> FReply
 									{
+										CopyLightMap();
+										return FReply::Handled();
+									})
+									[
+										SNew(STextBlock).Text(FText::FromString(TEXT("加载灯光关卡")))
+									]
+									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("加载灯光关卡")); })
+							]
+							+ SUniformWrapPanel::Slot()
+							[
+								SNew(SButton).OnClicked_Lambda([this]() -> FReply
+									{
 										FString SequencePath = TEXT("/Doodle/LightTest/Level/Sequence");
 										FString MapPath = TEXT("/Doodle/LightTest/Level/Environment");
-										FString OutPath = TEXT("E:/d/project/myPlugins/Saved/ChRender/Temp");
+										FString OutPath = FPaths::ProjectSavedDir()/TEXT("ChRender/Temp");
 										RenderCharacter(SequencePath, MapPath, OutPath);
 										return FReply::Handled();
 									})
@@ -244,7 +259,20 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 										SNew(STextBlock).Text(FText::FromString(TEXT("渲染角色")))
 									]
 									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("渲染角色")); })
-							]
+							] 
+							+ SUniformWrapPanel::Slot()
+									[
+										SNew(SButton).OnClicked_Lambda([this]() -> FReply
+											{
+												Tessellation();
+												return FReply::Handled();
+											})
+											[
+												SNew(STextBlock).Text(FText::FromString(TEXT("曲面细分")))
+											]
+											.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("曲面细分")); })
+									]
+									
 
 					]
 			]
@@ -473,6 +501,88 @@ void DoodleCopyMat::RenderCharacter(const FString& SequencePath, const FString& 
 
 void DoodleCopyMat::OnBatchRenderExecutorFinished(int32 Num) {
 	UE_LOG(LogTemp, Error, TEXT("OnBatchRenderExecutorFinished"));
+}
+
+void DoodleCopyMat::SkeletalMeshTessellation(USkeletalMesh* SkeletalMeshAsset)
+{
+	UDynamicMeshPool* DynamicMeshPool = NewObject<UDynamicMeshPool>();
+	UDynamicMesh* DynamicMesh = DynamicMeshPool->RequestMesh();
+	FGeometryScriptMeshReadLOD RequestedLOD;
+	RequestedLOD.LODType = EGeometryScriptLODType::SourceModel;
+	RequestedLOD.LODIndex = 0;
+	FGeometryScriptCopyMeshFromAssetOptions AssetOptions;
+	EGeometryScriptOutcomePins Result;
+	UDynamicMesh* DynamicMesh1 = UGeometryScriptLibrary_StaticMeshFunctions::CopyMeshFromSkeletalMesh(
+		SkeletalMeshAsset,
+		DynamicMesh,
+		AssetOptions,
+		RequestedLOD,
+		Result
+	);
+	if (Result != EGeometryScriptOutcomePins::Success) {
+		return;
+	}
+	FGeometryScriptPNTessellateOptions Options;
+	UDynamicMesh* TargetMesh = UGeometryScriptLibrary_MeshSubdivideFunctions::ApplyPNTessellation(DynamicMesh1, Options, 2);
+	FGeometryScriptCopyMeshToAssetOptions CopyMeshOptions;
+	FGeometryScriptMeshWriteLOD TargetLOD;
+	EGeometryScriptOutcomePins Outcome;
+	UDynamicMesh* DynamicMesh2 = UGeometryScriptLibrary_StaticMeshFunctions::CopyMeshToSkeletalMesh(TargetMesh, SkeletalMeshAsset, CopyMeshOptions, TargetLOD, Outcome);
+	if (Outcome != EGeometryScriptOutcomePins::Success)
+	{
+		return;
+	}
+	DynamicMeshPool->ReturnMesh(DynamicMesh2);
+
+}
+
+void DoodleCopyMat::StaticMeshTessellation(UStaticMesh* StaticMeshAsset) 
+{
+
+	UDynamicMeshPool* DynamicMeshPool = NewObject<UDynamicMeshPool>();
+	UDynamicMesh* DynamicMesh = DynamicMeshPool->RequestMesh();
+	FGeometryScriptMeshReadLOD RequestedLOD;
+	RequestedLOD.LODType = EGeometryScriptLODType::SourceModel;
+	RequestedLOD.LODIndex = 0;
+	FGeometryScriptCopyMeshFromAssetOptions AssetOptions;
+	EGeometryScriptOutcomePins Result;
+	UDynamicMesh* DynamicMesh1 = UGeometryScriptLibrary_StaticMeshFunctions::CopyMeshFromStaticMesh(
+		StaticMeshAsset,
+		DynamicMesh,
+		AssetOptions,
+		RequestedLOD,
+		Result
+	);
+	if (Result != EGeometryScriptOutcomePins::Success) {
+		return;
+	}
+	FGeometryScriptPNTessellateOptions Options;
+	UDynamicMesh* TargetMesh = UGeometryScriptLibrary_MeshSubdivideFunctions::ApplyPNTessellation(DynamicMesh1, Options, 2);
+	FGeometryScriptCopyMeshToAssetOptions CopyMeshOptions;
+	FGeometryScriptMeshWriteLOD TargetLOD;
+	EGeometryScriptOutcomePins Outcome;
+	UDynamicMesh* DynamicMesh2 = UGeometryScriptLibrary_StaticMeshFunctions::CopyMeshToStaticMesh(TargetMesh, StaticMeshAsset, CopyMeshOptions, TargetLOD, Outcome);
+	if (Outcome != EGeometryScriptOutcomePins::Success)
+	{
+		return;
+	}
+	DynamicMeshPool->ReturnMesh(DynamicMesh2);
+
+}
+
+void DoodleCopyMat::Tessellation()
+{
+	TArray<UObject*> SelectecAssets = UEditorUtilityLibrary::GetSelectedAssets();
+	for (UObject* Asset : SelectecAssets) {
+		USkeletalMesh* SkeletalMeshAsset = Cast<USkeletalMesh>(Asset);
+		if (SkeletalMeshAsset) {
+			SkeletalMeshTessellation(SkeletalMeshAsset);
+		}
+		UStaticMesh* StaticMeshAsset = Cast<UStaticMesh>(Asset);
+		if (StaticMeshAsset) {
+			StaticMeshTessellation(StaticMeshAsset);
+		}
+	}
 }
 
 FReply DoodleCopyMat::set_marteral_deep()

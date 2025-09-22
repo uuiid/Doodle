@@ -93,6 +93,7 @@ void UBatchRenderQueue::OnQueueFinished(TArray<UMoviePipelineExecutorJob*> Jobs)
         FDateTime Now = FDateTime::Now();
         FString DefaultTimeString = Now.ToString();
         FString OutputFilePath = FPaths::GetPath(OutputDirectory)/ DefaultTimeString + TEXT(".mp4");
+        UE_LOG(LogTemp, Log, TEXT("Deleted file: %s"), *OutputFilePath);
         FTimerHandle handle;
         FTimerDelegate RigDelegate = FTimerDelegate::CreateLambda([=,this]()
             {

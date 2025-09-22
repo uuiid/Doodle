@@ -34,7 +34,7 @@ class BATCHRENDER_API UBatchRenderQueue : public UObject
     
 public:
 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void RenderMovies();
     TArray<URenderJobInfo> BatchJobs;
     

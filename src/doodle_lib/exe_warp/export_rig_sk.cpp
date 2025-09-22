@@ -85,7 +85,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   );
   auto l_new_maya_file = maya_file_.parent_path() / maya_file_.filename();
   if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
-  FSys::rename(maya_file_, l_new_maya_file);
+  FSys::copy_file(maya_file_, l_new_maya_file, FSys::copy_options::overwrite_existing);
   co_return;
 }
 
