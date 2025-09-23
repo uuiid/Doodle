@@ -135,7 +135,7 @@ FSys::path scan_rig_maya(const project& in_prj, const uuid& in_entity_type, cons
   return {};
 }
 FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend) {
-  FSys::path l_maya_path = in_prj.asset_root_path_ / "6-moxing" / "CFX" /
+  FSys::path l_maya_path = in_prj.asset_root_path_ / "CFX" /
                            fmt::format("{}_cloth.ma", in_extend.path_.stem().generic_string());
   if (exists(in_prj.path_ / l_maya_path)) return l_maya_path;
   return {};
