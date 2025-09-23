@@ -1,5 +1,8 @@
 #include "kitsu_client.h"
 
+#include "doodle_core/configure/config.h"
+#include "doodle_core/core/core_set.h"
+
 namespace doodle::kitsu {
 
 // from json kitsu_client::file_association
@@ -24,4 +27,26 @@ boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_as
     throw_exception(doodle_error{"kitsu get file association error"});
   co_return l_res.body().get<file_association>();
 }
+
+boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string& in_version) const {
+  auto l_file_name = fmt::format("Doodle_{}.{}.zip", version::build_info::get().version_str, in_version);
+  auto l_temp_path = core_set::get_set().get_cache_root("ue_plugin") / l_file_name;
+  if (FSys::exists(l_temp_path)) co_return l_temp_path;
+
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/Plugins/{}", l_file_name), 11
+  };
+  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  l_req.set(boost::beast::http::field::accept, "*");
+  l_req.prepare_payload();
+  boost::beast::http::response<boost::beast::http::file_body> l_res{};
+  boost::system::error_code l_ec{};
+  l_res.body().open(l_temp_path.string().c_str(), boost::beast::file_mode::write, l_ec);
+  if (l_ec) throw_exception(doodle_error{"kitsu get ue plugin open file error"});
+  if (!l_res.body().is_open()) throw_exception(doodle_error{"kitsu get ue plugin open file error"});
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok) throw_exception(doodle_error{"kitsu get ue plugin error"});
+  co_return l_temp_path;
+}
+
 }  // namespace doodle::kitsu

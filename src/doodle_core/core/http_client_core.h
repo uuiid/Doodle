@@ -302,7 +302,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   bool is_open() { return socket_.socket().is_open(); }
   void expires_after(std::chrono::seconds in_seconds) { socket_.expires_after(in_seconds); }
   // read and write
-  template <typename ResponseBody, typename RequestType, typename Handle>
+  template <typename ResponseBody, typename RequestType, typename Handle = boost::asio::use_awaitable_t<>>
   auto read_and_write(
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle = boost::asio::use_awaitable
@@ -387,7 +387,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   }
 
   // read and write
-  template <typename ResponseBody, typename RequestType, typename Handle>
+  template <typename ResponseBody, typename RequestType, typename Handle = boost::asio::use_awaitable_t<>>
   auto read_and_write(
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle = boost::asio::use_awaitable
