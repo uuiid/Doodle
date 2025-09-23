@@ -73,6 +73,7 @@ target_link_libraries(doodle_lib
         sqlite_orm::sqlite_orm
         OpenSSL::SSL
         mailio::mailio
+        unofficial::bit7z::bit7z64
         #        OpenSSL::applink
 )
 

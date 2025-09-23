@@ -97,6 +97,8 @@ find_package(Fbx 2020.3.4 REQUIRED)
 find_package(caches CONFIG REQUIRED)
 # email 库
 find_package(mailio CONFIG REQUIRED)
+# 寻找bit7z
+find_package(unofficial-bit7z CONFIG REQUIRED)
 # 启用测试
 enable_testing()
 set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})

@@ -38,6 +38,7 @@
     "wil",
     "cpp-base64",
     "tl-expected",
+    "bit7z",
     {
       "name": "sqlite3",
       "default-features": false,
