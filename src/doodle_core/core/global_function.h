@@ -10,9 +10,11 @@
 #include <boost/uuid/uuid.hpp>
 
 #include <entt/entt.hpp>
+#include <fmt/format.h>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <tl/expected.hpp>
+
 
 namespace boost::asio {
 class io_context;
