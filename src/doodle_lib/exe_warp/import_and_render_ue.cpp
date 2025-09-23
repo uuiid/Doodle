@@ -21,7 +21,7 @@
 #include <boost/system.hpp>
 
 #include "http_client/kitsu_client.h"
-
+#include <fmt/format.h>
 
 namespace doodle {
 
@@ -331,7 +331,7 @@ boost::asio::awaitable<void> args::fetch_association_data() {
       l_data.type_ = details::assets_type_enum::other;
       continue;
     }
-    auto l_res = co_await l_c->get_file_association(l_data.id);
+    auto l_res              = co_await l_c->get_file_association(l_data.id);
 
     l_data.ue_file_         = l_res.ue_file_;
     l_data.type_            = l_res.type_;
@@ -449,7 +449,7 @@ boost::asio::awaitable<void> args::crate_skin() {
     if (l_data.file_.extension() == ".abc") continue;
     if (l_data.maya_local_file_.empty()) continue;  // 防止空文件打开卡死进程
     auto l_import_game_path  = FSys::path{doodle_config::ue4_game} / "auto_light";
-    l_data.skin_             = l_import_game_path / l_data.maya_local_file_.stem();
+    l_data.skin_             = l_import_game_path / fmt::format("SK_{}", l_data.maya_local_file_.stem());
 
     auto l_import_local_path = render_project_.parent_path() / FSys::path{doodle_config::ue4_content} / "auto_light" /
                                l_data.maya_local_file_.filename();
