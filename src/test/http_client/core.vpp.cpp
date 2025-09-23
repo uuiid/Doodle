@@ -69,7 +69,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   class resolve_and_connect_compose {
    public:
     http_client* self_;
-    resolver_t& resolver_;
+    resolver_t resolver_;
 
     // 初次启动
     template <typename Self>
@@ -99,9 +99,8 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   // resolve and connect
   template <typename Handle>
   auto resolve_and_connect(Handle&& in_handle) {
-    resolver_t local_resolver{socket_.get_executor()};
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        resolve_and_connect_compose{this, local_resolver}, in_handle, local_resolver
+        resolve_and_connect_compose{this, resolver_t{socket_.get_executor()}}, in_handle
     );
   }
   bool is_open() { return socket_.socket().is_open(); }
@@ -129,7 +128,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   class resolve_and_connect_compose {
    public:
     http_client_ssl* self_;
-    resolver_t& resolver_;
+    resolver_t resolver_;
 
     // 初次启动
     template <typename Self>
@@ -172,9 +171,8 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   // resolve and connect
   template <typename Handle>
   auto resolve_and_connect(Handle&& in_handle) {
-    resolver_t local_resolver{socket_.get_executor()};
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        resolve_and_connect_compose{this, local_resolver}, in_handle, local_resolver
+        resolve_and_connect_compose{this, resolver_t{socket_.get_executor()}}, in_handle
     );
   }
 
@@ -220,9 +218,11 @@ class http_stream_base<SocketType>::read_and_write_compose {
 
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
       if (in_ec) goto end_complete;
+      self_->expires_after(30s);
       // }
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(self_->socket_, self_->buffer_, res_, std::move(self));
       if (in_ec) goto end_complete;
+      self_->expires_after(30s);
     end_complete:
       self.complete(in_ec);
     }
