@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
   // l_c->access_token(l_app_key, l_app_secret, false);
   auto l_f = boost::asio::co_spawn(
       g_io_context(),
-      []() -> boost::asio::awaitable<std::tuple<boost::system::error_code>> {
+      []() -> boost::asio::awaitable<void> {
         boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
 
         auto l_env = boost::process::v2::environment::current();
@@ -54,9 +54,8 @@ BOOST_AUTO_TEST_CASE(get_user_by_mobile) {
         auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
 
         l_c->access_token(l_app_key, l_app_secret);
-        auto [l_ec, l_r] = co_await l_c->get_user_by_mobile(l_mobile);
+        auto l_r = co_await l_c->get_user_by_mobile(l_mobile);
         app_base::Get().on_cancel.emit();
-        co_return std::make_tuple(l_ec);
       }(),
       boost::asio::use_future
   );
@@ -73,7 +72,7 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
 
   auto l_f = boost::asio::co_spawn(
       g_io_context(),
-      []() -> boost::asio::awaitable<std::tuple<boost::system::error_code>> {
+      []() -> boost::asio::awaitable<void> {
         boost::asio::ssl::context l_ctx{boost::asio::ssl::context::tlsv12_client};
 
         auto l_env = boost::process::v2::environment::current();
@@ -92,8 +91,8 @@ BOOST_AUTO_TEST_CASE(get_attendance_updatedata) {
         auto l_c = std::make_shared<doodle::dingding::client>(l_ctx);
 
         l_c->access_token(l_app_key, l_app_secret);
-        auto [l_ec, l_r] = co_await l_c->get_attendance_updatedata(l_user_id, l_time);
-        co_return std::make_tuple(l_ec);
+        auto l_r = co_await l_c->get_attendance_updatedata(l_user_id, l_time);
+        co_return;
       }(),
       boost::asio::use_future
   );

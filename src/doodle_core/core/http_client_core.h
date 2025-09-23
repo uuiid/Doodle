@@ -206,7 +206,7 @@ read_and_write(std::shared_ptr<http_client_data_base> in_client_data, boost::bea
 
 namespace doodle::http {
 template <typename SocketType>
-class http_stream_base : public std::enable_shared_from_this<http_stream_base<SocketType>> {
+class http_stream_base {
  protected:
   using resolver_t   = boost::asio::ip::tcp::resolver;
   using resolver_ptr = std::shared_ptr<resolver_t>;
@@ -300,7 +300,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
       boost::beast::http::request<RequestType>&& in_req, boost::beast::http::response<ResponseBody>& out_res,
-      Handle&& in_handle
+      Handle&& in_handle = boost::asio::use_awaitable
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
@@ -376,7 +376,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
-      Handle&& in_handle
+      Handle&& in_handle = boost::asio::use_awaitable
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(

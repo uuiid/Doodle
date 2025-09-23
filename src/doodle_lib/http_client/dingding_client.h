@@ -9,7 +9,7 @@
 
 namespace doodle::dingding {
 class client : public std::enable_shared_from_this<client> {
-  using https_client_core     = doodle::http::detail::http_client_data_base;
+  using https_client_core     = doodle::http::http_client_ssl;
   using https_client_core_ptr = std::shared_ptr<https_client_core>;
 
   using timer_t = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>::as_default_on_t<boost::asio::steady_timer>;
@@ -46,20 +46,15 @@ class client : public std::enable_shared_from_this<client> {
 
  public:
   explicit client(boost::asio::ssl::context& in_ctx)
-      : http_client_core_ptr_(std::make_shared<https_client_core>(g_io_context())),
-        http_client_core_ptr_old_(std::make_shared<https_client_core>(g_io_context())),
-        timer_ptr_{std::make_shared<timer_t>(g_io_context())} {
-    http_client_core_ptr_->init("https://api.dingtalk.com/", &in_ctx);
-    http_client_core_ptr_old_->init("https://oapi.dingtalk.com/", &in_ctx);
-  };
+      : http_client_core_ptr_(std::make_shared<https_client_core>("https://api.dingtalk.com/", in_ctx)),
+        http_client_core_ptr_old_(std::make_shared<https_client_core>("https://oapi.dingtalk.com/", in_ctx)),
+        timer_ptr_{std::make_shared<timer_t>(g_io_context())} {};
   ~client() = default;
 
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
   void access_token(const std::string& in_app_key, const std::string& in_app_secret);
 
-  boost::asio::awaitable<std::tuple<boost::system::error_code, std::string>> get_user_by_mobile(
-      const std::string& in_mobile
-  );
+  boost::asio::awaitable<std::string> get_user_by_mobile(const std::string& in_mobile);
 
   struct attendance_update {
     chrono::local_time_pos begin_time_;
@@ -84,8 +79,9 @@ class client : public std::enable_shared_from_this<client> {
   };
 
   // 获取考勤数据
-  boost::asio::awaitable<std::tuple<boost::system::error_code, std::vector<attendance_update>>>
-  get_attendance_updatedata(const std::string& in_user_id, const chrono::local_time_pos& in_work_date);
+  boost::asio::awaitable<std::vector<attendance_update>> get_attendance_updatedata(
+      const std::string& in_user_id, const chrono::local_time_pos& in_work_date
+  );
 };
 
 using client_ptr = std::shared_ptr<client>;
@@ -113,4 +109,4 @@ class dingding_company {
 
  private:
 };
-} // namespace doodle::dingding
+}  // namespace doodle::dingding

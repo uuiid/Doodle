@@ -52,7 +52,9 @@ auto create_clock_leave(const chrono::year_month_day& in_date) {
 }
 }  // namespace
 
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_create_post::post(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_create_post::post(
+    session_data_ptr in_handle
+) {
   auto l_logger                 = in_handle->logger_;
 
   auto l_json_1                 = in_handle->get_json();
@@ -83,16 +85,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_dingding_client =
       g_ctx().get<const dingding::dingding_company>().company_info_map_.at(l_user.dingding_company_id_).client_ptr;
   if (l_user.dingding_id_.empty()) {
-    auto [l_e3, l_dingding_id] = co_await l_dingding_client->get_user_by_mobile(l_user.phone_);
-    if (l_e3) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e3.message());
-    l_user.dingding_id_ = l_dingding_id;
+    l_user.dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_user.phone_);
     l_modify_user       = true;
   }
 
-  auto [l_e4, l_attend] =
+  auto l_attend =
       co_await l_dingding_client->get_attendance_updatedata(l_user.dingding_id_, chrono::local_days{l_date});
 
-  if (l_e4) co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, l_e4.message());
   auto l_attendance_list = std::make_shared<std::vector<attendance_helper::database_t>>();
 
   auto l_clock_overtime  = create_clock_overtime(l_date);  // 加班计算时间时钟
@@ -188,9 +187,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   l_json = *l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());
 }
-boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(
-    session_data_ptr in_handle
-) {
+boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(session_data_ptr in_handle) {
   std::vector<chrono::local_days> l_date_list{};
   auto l_end = chrono::local_days{chrono::year_month_day{year_month_ / chrono::last}};
   for (auto l_day = chrono::local_days{chrono::year_month_day{year_month_ / 1}}; l_day <= l_end;
