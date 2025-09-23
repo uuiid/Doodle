@@ -69,34 +69,26 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   class resolve_and_connect_compose {
    public:
     http_client* self_;
-    boost::asio::coroutine coro_;
-    resolver_t resolver_;
+    resolver_t& resolver_;
 
+    // 初次启动
     template <typename Self>
-    void operator()(Self&& self, boost::system::error_code in_ec = {}) {
-      BOOST_ASIO_CORO_REENTER(coro_) {
-        BOOST_ASIO_CORO_YIELD resolver_.async_resolve(self_->server_ip_, self_->server_port_, std::move(self));
-        self.complete(in_ec);
-      }
+    void operator()(Self&& self) {
+      resolver_.async_resolve(self_->server_ip_, self_->server_port_, std::move(self));
     }
-
     template <typename Self>
-    void operator()(
-        Self&& self, boost::system::error_code in_ec, boost::asio::ip::tcp::resolver::results_type in_results
-    ) {
-      BOOST_ASIO_CORO_REENTER(coro_) {
-        if (in_ec) {
-          self.complete(in_ec);
-          return;
-        }
-        self_->resolver_results_ = in_results;
-        BOOST_ASIO_CORO_YIELD self_->socket_.async_connect(self_->resolver_results_, std::move(self));
+    void operator()(Self&& self, boost::system::error_code in_ec, resolver_t::results_type in_results) {
+      self_->resolver_results_ = in_results;
+      if (in_ec) {
         self.complete(in_ec);
+        return;
       }
+      self_->socket_.async_connect(self_->resolver_results_, std::move(self));
     }
+    // 连接结束
     template <typename Self>
     void operator()(Self&& self, boost::system::error_code in_ec, boost::asio::ip::tcp::endpoint in_endpoint) {
-      BOOST_ASIO_CORO_REENTER(coro_) { self.complete(in_ec); }
+      self.complete(in_ec);
     }
   };
 
@@ -107,11 +99,13 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   // resolve and connect
   template <typename Handle>
   auto resolve_and_connect(Handle&& in_handle) {
+    resolver_t local_resolver{socket_.get_executor()};
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        resolve_and_connect_compose{this, boost::asio::coroutine{}, resolver_t{socket_.get_executor()}}, in_handle
+        resolve_and_connect_compose{this, local_resolver}, in_handle, local_resolver
     );
   }
-
+  bool is_open() { return socket_.socket().is_open(); }
+  void expires_after(std::chrono::seconds in_seconds) { socket_.expires_after(in_seconds); }
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
@@ -135,13 +129,12 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   class resolve_and_connect_compose {
    public:
     http_client_ssl* self_;
-    boost::asio::coroutine coro_;
     resolver_t& resolver_;
 
     // 初次启动
     template <typename Self>
     void operator()(Self&& self) {
-      run(std::forward<Self>(self), {});
+      resolver_.async_resolve(self_->server_ip_, self_->server_port_, std::move(self));
     }
     // 握手结束
     template <typename Self>
@@ -152,26 +145,19 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
     template <typename Self>
     void operator()(Self&& self, boost::system::error_code in_ec, resolver_t::results_type in_results) {
       self_->resolver_results_ = in_results;
-      run(std::forward<Self>(self), in_ec);
+      if (in_ec) {
+        self.complete(in_ec);
+        return;
+      }
+      boost::beast::get_lowest_layer(self_->socket_).async_connect(self_->resolver_results_, std::move(self));
     }
     template <typename Self>
     void operator()(Self&& self, boost::system::error_code in_ec, boost::asio::ip::tcp::endpoint in_endpoint) {
-      run(std::forward<Self>(self), in_ec);
-    }
-
-    template <typename Self>
-    void run(Self&& self, boost::system::error_code in_ec) {
-      BOOST_ASIO_CORO_REENTER(coro_) {
-        while (!in_ec) {
-          BOOST_ASIO_CORO_YIELD resolver_.async_resolve(self_->server_ip_, self_->server_port_, std::move(self));
-          if (in_ec) break;
-          BOOST_ASIO_CORO_YIELD self_->socket_.next_layer().async_connect(self_->resolver_results_, std::move(self));
-          if (in_ec) break;
-          BOOST_ASIO_CORO_YIELD self_->socket_.async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
-          if (in_ec) break;
-        }
+      if (in_ec) {
         self.complete(in_ec);
+        return;
       }
+      self_->socket_.async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
     }
   };
 
@@ -188,8 +174,13 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   auto resolve_and_connect(Handle&& in_handle) {
     resolver_t local_resolver{socket_.get_executor()};
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        resolve_and_connect_compose{this, boost::asio::coroutine{}, local_resolver}, in_handle, local_resolver
+        resolve_and_connect_compose{this, local_resolver}, in_handle, local_resolver
     );
+  }
+
+  bool is_open() { return socket_.next_layer().socket().is_open(); }
+  void expires_after(std::chrono::seconds in_seconds) {
+    boost::beast::get_lowest_layer(socket_).expires_after(in_seconds);
   }
 
   // read and write
@@ -220,23 +211,28 @@ class http_stream_base<SocketType>::read_and_write_compose {
   template <typename Self>
   void operator()(Self&& self, boost::system::error_code in_ec = {}, std::size_t = 0) {
     BOOST_ASIO_CORO_REENTER(coro_) {
-      while (!in_ec) {
-        BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
-        if (in_ec) {
-          BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
-          if (in_ec) break;
-
-          BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
-          if (in_ec) break;
-        }
-        BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(self_->socket_, self_->buffer_, res_, std::move(self));
-        if (in_ec) break;
+      // BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
+      // if (in_ec) {
+      if (!self_->is_open()) {
+        BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
+        if (in_ec) goto end_complete;
       }
+
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
+      if (in_ec) goto end_complete;
+      // }
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(self_->socket_, self_->buffer_, res_, std::move(self));
+      if (in_ec) goto end_complete;
+    end_complete:
       self.complete(in_ec);
     }
   }
 };
-
+void http_client_ssl::set_ssl() {
+  socket_.set_verify_mode(boost::asio::ssl::verify_none);
+  if (!SSL_set_tlsext_host_name(socket_.native_handle(), server_ip_.c_str()))
+    throw_exception(doodle_error{"SSL_set_tlsext_host_name error"});
+}
 }  // namespace doodle::http
 
 using namespace doodle;
