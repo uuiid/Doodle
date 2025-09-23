@@ -23,7 +23,7 @@ boost::asio::awaitable<void> client::refresh_token() {
   auto& l_json              = l_res.body();
   access_token_             = l_json["accessToken"].get<std::string>();
   chrono::seconds l_seconds = chrono::seconds(l_json["expireIn"].get<int>());
-  token_time_               = chrono::system_clock::now() + l_seconds;
+  token_time_               = chrono::system_clock::now() + l_seconds - chrono::seconds{10};  // 提前10秒过期
 }
 
 void client::access_token(const std::string& in_app_key, const std::string& in_app_secret) {

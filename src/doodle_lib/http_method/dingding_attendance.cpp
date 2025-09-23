@@ -83,7 +83,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
         in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有手机号");
 
   auto l_dingding_client =
-      g_ctx().get<const dingding::dingding_company>().company_info_map_.at(l_user.dingding_company_id_).client_ptr;
+      g_ctx().get<const dingding::dingding_company>().company_info_map_.at(l_user.dingding_company_id_).make_client();
   if (l_user.dingding_id_.empty()) {
     l_user.dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_user.phone_);
     l_modify_user       = true;

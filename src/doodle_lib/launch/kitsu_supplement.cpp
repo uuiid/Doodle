@@ -258,18 +258,15 @@ bool kitsu_supplement_main::init() {
     auto& l_d = g_ctx().emplace<dingding::dingding_company>();
 
     for (auto&& l_c : l_args.dingding_company_list_) {
-      l_d.company_info_map_
-          .emplace(
-              l_c.id_,
-              dingding::dingding_company::company_info{
-                  .corp_id    = l_c.id_,
-                  .app_key    = l_c.app_key_,
-                  .app_secret = l_c.app_secret_,
-                  .name       = l_c.name_,
-                  .client_ptr = std::make_shared<dingding::client>(*l_ssl_ctx)
-              }
-          )
-          .first->second.client_ptr->access_token(l_c.app_key_, l_c.app_secret_);
+      l_d.company_info_map_.emplace(
+          l_c.id_, dingding::dingding_company::company_info{
+                       .corp_id    = l_c.id_,
+                       .app_key    = l_c.app_key_,
+                       .app_secret = l_c.app_secret_,
+                       .name       = l_c.name_,
+                       .ctx_ptr    = l_ssl_ctx
+                   }
+      );
     }
   }
 

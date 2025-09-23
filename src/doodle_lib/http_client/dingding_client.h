@@ -5,6 +5,8 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <memory>
+
 // #include <asio/experimental/as_single.hpp>
 
 namespace doodle::dingding {
@@ -17,9 +19,6 @@ class client : public std::enable_shared_from_this<client> {
 
   https_client_core_ptr http_client_core_ptr_{};      // 新版本api
   https_client_core_ptr http_client_core_ptr_old_{};  // 旧版本api
-  timer_ptr_t timer_ptr_{};
-  timer_ptr_t timer_ptr_rest_ssl{};
-
   std::string access_token_;
 
   std::string app_key;
@@ -47,8 +46,7 @@ class client : public std::enable_shared_from_this<client> {
  public:
   explicit client(boost::asio::ssl::context& in_ctx)
       : http_client_core_ptr_(std::make_shared<https_client_core>("https://api.dingtalk.com/", in_ctx)),
-        http_client_core_ptr_old_(std::make_shared<https_client_core>("https://oapi.dingtalk.com/", in_ctx)),
-        timer_ptr_{std::make_shared<timer_t>(g_io_context())} {};
+        http_client_core_ptr_old_(std::make_shared<https_client_core>("https://oapi.dingtalk.com/", in_ctx)) {};
   ~client() = default;
 
   // 初始化, 必须调用, 否则无法使用, 获取授权后将自动2小时刷新一次
@@ -97,7 +95,14 @@ class dingding_company {
     std::string app_key;
     std::string app_secret;
     std::string name;
+    std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
     client_ptr client_ptr;
+
+    auto make_client() const {
+      auto l_client_ptr = std::make_shared<client>(*ctx_ptr);
+      l_client_ptr->access_token(app_key, app_secret);
+      return l_client_ptr;
+    }
 
     friend void to_json(nlohmann::json& j, const company_info& p) {
       j["id"]   = fmt::to_string(p.corp_id);
