@@ -341,14 +341,14 @@ boost::asio::awaitable<void> export_rig_arg::run() {
   auto l_ret           = arg::async_run_maya();
   auto l_new_maya_file = file_path.parent_path().parent_path() / file_path.filename();
   if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
-  FSys::copy_file(file_path, l_new_maya_file);
+  FSys::copy_file(file_path, l_new_maya_file, FSys::copy_options::overwrite_existing);
   return l_ret;
 }
 boost::asio::awaitable<void> inspect_file_arg::run() {
   auto l_ret           = arg::async_run_maya();
   auto l_new_maya_file = file_path.parent_path().parent_path() / file_path.filename();
   if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
-  FSys::copy_file(file_path, l_new_maya_file);
+  FSys::copy_file(file_path, l_new_maya_file, FSys::copy_options::overwrite_existing);
   return l_ret;
 }
 
