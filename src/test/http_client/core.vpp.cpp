@@ -51,4 +51,29 @@ BOOST_AUTO_TEST_CASE(quequ_t) {
   l_app_base.run();
 }
 
+BOOST_AUTO_TEST_CASE(quequ2_t) {
+  app_test l_app_base{};
+  auto l_c = std::make_shared<http::http_client>("http://www.baidu.com/");
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{boost::beast::http::verb::get, "/", 11};
+  l_req.keep_alive(true);
+  l_req.prepare_payload();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  auto l_work                              = boost::asio::make_work_guard(g_io_context());
+  std::shared_ptr<std::atomic_int32_t> l_p = std::make_shared<std::atomic_int32_t>(0);
+  // for (int i = 0; i < 100; ++i) {
+  l_c->read_and_write(l_req, l_res, [l_p, l_c, &l_res](boost::system::error_code in_ec) {
+    if (in_ec) {
+      BOOST_TEST_MESSAGE(in_ec.message());
+      BOOST_TEST(false);
+    } else {
+      l_p->fetch_add(1);
+      BOOST_TEST_MESSAGE(l_res.result());
+      BOOST_TEST(true);
+    }
+  });
+  // }
+
+  l_app_base.run();
+}
+
 BOOST_AUTO_TEST_SUITE_END()

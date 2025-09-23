@@ -136,7 +136,8 @@
                 "kitsu/get_user",
                 "kitsu/get_task",
                 "auto_light_test/utf16_test",
-                "http_test/quequ_t"
+                "http_test/quequ_t",
+                "http_test/quequ2_t"
             ]
         }
     ],
