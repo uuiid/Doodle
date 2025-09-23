@@ -9,6 +9,10 @@ DOODLE_HTTP_FUN(local_setting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+// /api/doodle/local_setting/tmp_dir/server_task
+DOODLE_HTTP_FUN(local_setting_tmp_dir_server_task)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 // /api/doodle/task
 DOODLE_HTTP_FUN(task)
 void init_ctx();

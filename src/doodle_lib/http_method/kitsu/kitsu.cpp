@@ -217,6 +217,7 @@ http_route_ptr create_kitsu_local_route() {
         .reg_t<local::task_instance>("/api/doodle/task/{}"_url(&local::task_instance::id_))
         .reg_t<local::task_instance_restart>("/api/doodle/task/{}/restart"_url(&local::task_instance_restart::id_))
         .reg_t<local::task_instance_log>("/api/doodle/task/{}/log"_url(&local::task_instance_log::id_))
+        .reg_t<local::local_setting_tmp_dir_server_task>("/api/doodle/local_setting/tmp_dir/server_task"_url)
 
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 

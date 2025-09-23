@@ -2,6 +2,7 @@
 // Created by TD on 24-12-3.
 //
 
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/authorization.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
@@ -73,6 +74,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
 
       }
   );
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> local_setting_tmp_dir_server_task::get(
+    session_data_ptr in_handle
+) {
+  co_return in_handle->make_msg(nlohmann::json{{"tmp_dir", core_set::get_set().get_cache_root("server_task")}});
 }
 
 }  // namespace doodle::http::local
