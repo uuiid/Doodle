@@ -15,9 +15,13 @@
 #include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/system.hpp>
+
+#include "http_client/kitsu_client.h"
+
 
 namespace doodle {
 
@@ -320,29 +324,18 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
 boost::asio::awaitable<void> args::fetch_association_data() {
   std::map<uuid, association_data> l_out{};
   boost::beast::tcp_stream l_stream{g_io_context()};
-  auto l_c = std::make_shared<http::detail::http_client_data_base>(co_await boost::asio::this_coro::executor);
-  l_c->init(core_set::get_set().server_ip);
+  auto l_c =
+      std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip, co_await boost::asio::this_coro::executor);
   for (auto&& l_data : import_files_) {
     if (l_data.is_camera_) {
       l_data.type_ = details::assets_type_enum::other;
       continue;
     }
-    boost::beast::http::request<boost::beast::http::empty_body> l_req{
-        boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", l_data.id), 11
-    };
-    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    l_req.set(boost::beast::http::field::accept, "application/json");
-    l_req.prepare_payload();
-    auto [l_ec, l_res] = co_await http::detail::read_and_write<boost::beast::http::string_body>(l_c, l_req);
+    auto l_res = co_await l_c->get_file_association(l_data.id);
 
-    if (l_res.result() != boost::beast::http::status::ok)
-      throw_exception(doodle_error{"未找到关联数据: {} {}", l_data.id, l_data.maya_file_});
-
-    auto l_json             = nlohmann::json::parse(l_res.body());
-
-    l_data.ue_file_         = l_json.at("ue_file").get<std::string>();
-    l_data.type_            = l_json.at("type").get<details::assets_type_enum>();
-    l_data.maya_solve_file_ = l_json.at("solve_file_").get<std::string>();
+    l_data.ue_file_         = l_res.ue_file_;
+    l_data.type_            = l_res.type_;
+    l_data.maya_solve_file_ = l_res.maya_file_;
     l_data.ue_prj_path_     = ue_exe_ns::find_ue_project_file(l_data.ue_file_);
   }
   // 检查文件

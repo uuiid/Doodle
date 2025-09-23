@@ -37,7 +37,6 @@ class http_work {
   timer_ptr timer_{};
 
   std::shared_ptr<http_websocket_client> websocket_client_{};
-  detail::http_client_data_base_ptr client_data_{};
 
   logger_ptr logger_{};
   computer_status status_{computer_status::online};

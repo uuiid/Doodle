@@ -45,30 +45,14 @@ boost::asio::awaitable<std::string> http_work::websocket_list_task_fun_launch(ht
 boost::asio::awaitable<tl::expected<http_work::run_task_info, std::string>> http_work::get_task_data() {
   run_task_info l_info{};
 
-  auto&& [l_ec, l_res] = co_await detail::read_and_write<basic_json_body>(
-      client_data_,
-      boost::beast::http::request<boost::beast::http::empty_body>{
-          boost::beast::http::verb::get, fmt::format("/api/doodle/task/{}", task_id_), 11
-      }
-  );
-  if (l_ec) {
-    co_return tl::make_unexpected(l_ec.message());
-  }
-  auto l_json     = l_res.body();
-
-  l_info.run_args = l_json["command"].get<std::vector<std::string>>();
-  l_info.run_exe  = l_json["exe"].get<std::string>();
-  l_info.status   = l_json["status"].get<server_task_info_status>();
   co_return tl::expected<http_work::run_task_info, std::string>{l_info};
 }
 
 void http_work::run(const std::string& in_url, const std::string& in_http_url, const uuid& in_uuid) {
-  executor_    = boost::asio::make_strand(g_io_context());
-  timer_       = std::make_shared<timer>(executor_);
-  url_         = in_url;
-  uuid_id_     = in_uuid;
-  client_data_ = std::make_shared<detail::http_client_data_base>(executor_);
-  client_data_->init(in_http_url);
+  executor_ = boost::asio::make_strand(g_io_context());
+  timer_    = std::make_shared<timer>(executor_);
+  url_      = in_url;
+  uuid_id_  = in_uuid;
   if (uuid_id_.is_nil()) uuid_id_ = core_set::get_set().user_id;
 
   websocket_client_ = std::make_shared<http_websocket_client>();
@@ -289,6 +273,5 @@ boost::asio::awaitable<void> http_work::async_set_task_status(server_task_info_s
   }
   co_return;
 }
-
 
 }  // namespace doodle::http

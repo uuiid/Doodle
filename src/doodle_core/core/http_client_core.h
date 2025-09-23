@@ -285,6 +285,11 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
 
  public:
   explicit http_client(std::string in_server_url) : http_stream_base(g_io_context()) { parse_url(in_server_url); }
+  template <typename ExecutorType>
+  explicit http_client(std::string in_server_url, ExecutorType&& in_executor)
+      : http_stream_base(std::forward<ExecutorType>(in_executor)) {
+    parse_url(in_server_url);
+  }
   ~http_client() = default;
 
   // resolve and connect
@@ -299,14 +304,12 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
-      boost::beast::http::request<RequestType>&& in_req, boost::beast::http::response<ResponseBody>& out_res,
+      boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle = boost::asio::use_awaitable
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        read_and_write_compose<http_client, RequestType, ResponseBody>{
-            std::move(in_req), this, boost::asio::coroutine{}, out_res
-        },
+        read_and_write_compose<http_client, RequestType, ResponseBody>{in_req, this, boost::asio::coroutine{}, out_res},
         in_handle
     );
   }
@@ -357,6 +360,17 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
     parse_url(in_server_url);
     set_ssl();
   }
+
+  template <typename ExecutorType>
+  explicit http_client_ssl(std::string in_server_url, boost::asio::ssl::context& in_ctx, ExecutorType&& in_executor)
+      : http_stream_base(
+            boost::beast::ssl_stream<boost::beast::tcp_stream>(std::forward<ExecutorType>(in_executor), in_ctx)
+        ),
+        ctx_(in_ctx) {
+    parse_url(in_server_url);
+    set_ssl();
+  }
+
   ~http_client_ssl() = default;
 
   // resolve and connect
