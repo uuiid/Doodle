@@ -73,6 +73,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
     };
     l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     l_req.set(boost::beast::http::field::accept, "application/json");
+    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
