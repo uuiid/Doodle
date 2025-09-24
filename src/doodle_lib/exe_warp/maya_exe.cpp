@@ -337,18 +337,8 @@ boost::asio::awaitable<void> arg::async_run_maya() {
 boost::asio::awaitable<void> qcloth_arg::run() { return arg::async_run_maya(); }
 boost::asio::awaitable<void> export_fbx_arg::run() { return arg::async_run_maya(); }
 boost::asio::awaitable<void> replace_file_arg::run() { return arg::async_run_maya(); }
-boost::asio::awaitable<void> export_rig_arg::run() {
-  co_await arg::async_run_maya();
-  auto l_new_maya_file = file_path.parent_path().parent_path() / file_path.filename();
-  if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
-  FSys::copy_file(file_path, l_new_maya_file, FSys::copy_options::overwrite_existing);
-}
-boost::asio::awaitable<void> inspect_file_arg::run() {
-  co_await arg::async_run_maya();
-  auto l_new_maya_file = file_path.parent_path().parent_path() / file_path.filename();
-  if (FSys::exists(l_new_maya_file)) FSys::backup_file(l_new_maya_file);
-  FSys::copy_file(file_path, l_new_maya_file, FSys::copy_options::overwrite_existing);
-}
+boost::asio::awaitable<void> export_rig_arg::run() { return arg::async_run_maya(); }
+boost::asio::awaitable<void> inspect_file_arg::run() { return arg::async_run_maya(); }
 
 }  // namespace maya_exe_ns
 
