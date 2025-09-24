@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(utf16_test) {
 BOOST_AUTO_TEST_CASE(install_plug_test) {
   app_base l_app_base{};
   core_set::get_set().ue4_version = "5.5";
-  auto l_path = FSys::path{"E:/Doodle/ue4.27"};
+  auto l_path = FSys::path{"E:/ue4.27"};
   boost::asio::co_spawn(g_io_context(), doodle::ue_exe_ns::install_doodle_plug(l_path), [](std::exception_ptr e) {
     if (e) {
       try {

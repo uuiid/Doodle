@@ -91,7 +91,7 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
     auto l_out_path = l_path.parent_path() / l_path.stem();
     if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
     if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
-    bit7z::Bit7zLibrary l_lib{};
+    bit7z::Bit7zLibrary l_lib{"7zip.dll"};
     bit7z::BitFileExtractor l_extractor{l_lib};
     l_extractor.extract(l_path.generic_string(), l_out_path.generic_string());
     l_out_path /= "Doodle";
@@ -108,9 +108,6 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
 
     DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
     copy(l_out_path, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
-    /// \brief 安装houdini labs 插件
-    install_SideFX_Labs(targetPath.parent_path() / "SideFX_Labs");
-    install_UnrealEngine5VLC(targetPath.parent_path() / "UnrealEngine5VLC");
   } catch (FSys::filesystem_error& error) {
     DOODLE_LOG_ERROR(boost::diagnostic_information(error));
     throw;

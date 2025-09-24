@@ -77,6 +77,14 @@ target_link_libraries(doodle_lib
         #        OpenSSL::applink
 )
 
+
+# 添加7zip动态库复制
+add_custom_command(
+        TARGET doodle_lib
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:7zip::7zip> ${CMAKE_BINARY_DIR}/bin
+)
+
 target_compile_definitions(doodle_lib
         PUBLIC
         WIN32_LEAN_AND_MEAN
