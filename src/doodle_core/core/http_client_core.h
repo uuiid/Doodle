@@ -24,6 +24,7 @@
 
 #include <magic_enum/magic_enum_all.hpp>
 #include <memory>
+#include <string>
 #include <utility>
 
 namespace doodle::http::detail {
@@ -229,6 +230,7 @@ class http_stream_base {
   boost::urls::scheme scheme_id_{};
   std::string server_ip_{};
   std::string server_port_{};
+  std::string server_ip_and_port_{};
   boost::asio::ip::tcp::resolver::results_type resolver_results_{};
   buffer_type buffer_{};
 
@@ -249,7 +251,9 @@ class http_stream_base {
       server_port_ = "443";
     else
       server_port_ = "80";
-    scheme_id_ = l_url.scheme_id();
+    scheme_id_          = l_url.scheme_id();
+
+    server_ip_and_port_ = server_ip_ + ":" + server_port_;
   };
 
   // copy constructor
@@ -315,7 +319,9 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        read_and_write_compose_parser<http_client, RequestType, ResponseBody>{in_req, this, boost::asio::coroutine{}, out_res},
+        read_and_write_compose_parser<http_client, RequestType, ResponseBody>{
+            in_req, this, boost::asio::coroutine{}, out_res
+        },
         in_handle
     );
   }
