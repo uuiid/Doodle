@@ -44,6 +44,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
   l_res.body().open(l_temp_path.string().c_str(), boost::beast::file_mode::write, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu get ue plugin open file error"});
   if (!l_res.body().is_open()) throw_exception(doodle_error{"kitsu get ue plugin open file error"});
+  http_client_ptr_->body_limit_ = 2ll * 1024 * 1024 * 1024;  // 2G
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok) throw_exception(doodle_error{"kitsu get ue plugin error"});
   co_return l_temp_path;

@@ -315,7 +315,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        read_and_write_compose<http_client, RequestType, ResponseBody>{in_req, this, boost::asio::coroutine{}, out_res},
+        read_and_write_compose_parser<http_client, RequestType, ResponseBody>{in_req, this, boost::asio::coroutine{}, out_res},
         in_handle
     );
   }
@@ -400,7 +400,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        read_and_write_compose<http_client_ssl, RequestType, ResponseBody>{
+        read_and_write_compose_parser<http_client_ssl, RequestType, ResponseBody>{
             in_req, this, boost::asio::coroutine{}, out_res
         },
         in_handle
@@ -446,6 +446,7 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
   boost::beast::http::request<RequestType>& req_;
   SelfType* self_;
   boost::asio::coroutine coro_;
+  boost::beast::http::response<ResponseBody>& res_;
   std::shared_ptr<boost::beast::http::response_parser<ResponseBody>> parser_;
 
   explicit read_and_write_compose_parser(
@@ -455,7 +456,8 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
       : req_(in_req),
         self_(in_self),
         coro_(in_coro),
-        parser_(std::make_shared<boost::beast::http::response_parser<ResponseBody>>(in_res)) {
+        res_(in_res),
+        parser_(std::make_shared<boost::beast::http::response_parser<ResponseBody>>(std::move(in_res))) {
     if (self_->body_limit_) parser_->body_limit(*self_->body_limit_);
   }
 
@@ -477,6 +479,7 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
       if (in_ec) goto end_complete;
       self_->expires_after(30s);
     end_complete:
+      if (!in_ec) res_ = parser_->release();
       self.complete(in_ec);
     }
   }
