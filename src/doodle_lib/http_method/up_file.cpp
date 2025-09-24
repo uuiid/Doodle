@@ -111,19 +111,38 @@ void up_file_asset_base::move_file(session_data_ptr in_handle) {
 // 其他    |
 
 FSys::path doodle_data_asset_file_maya::gen_file_path() {
-  if (task_info_.entity_type_id_ == asset_type::get_character_id())
-    return fmt::format(
-        "Ch/JD{:02d}_{:02d}/Ch{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
-    );
-  if (task_info_.entity_type_id_ == asset_type::get_prop_id() ||
-      task_info_.entity_type_id_ == asset_type::get_effect_id())
-    return fmt::format(
-        "Prop/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.pin_yin_ming_cheng_
-    );
-  if (task_info_.entity_type_id_ == asset_type::get_ground_id())
-    return fmt::format(
-        "BG/JD{:02d}_{:02d}/BG{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
-    );
+  if (task_info_.task_type_id_ == task_type::get_binding_id()) {
+    if (task_info_.entity_type_id_ == asset_type::get_character_id())
+      return fmt::format(
+          "Ch/JD{:02d}_{:02d}/Ch{}/Rig", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+      );
+    if (task_info_.entity_type_id_ == asset_type::get_prop_id() ||
+        task_info_.entity_type_id_ == asset_type::get_effect_id())
+      return fmt::format(
+          "Prop/JD{:02d}_{:02d}/{}/Rig", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_,
+          task_info_.pin_yin_ming_cheng_
+      );
+    if (task_info_.entity_type_id_ == asset_type::get_ground_id())
+      return fmt::format(
+          "BG/JD{:02d}_{:02d}/BG{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+      );
+  }
+  if (task_info_.task_type_id_ == task_type::get_ground_model_id() ||
+      task_info_.task_type_id_ == task_type::get_character_id()) {
+    if (task_info_.entity_type_id_ == asset_type::get_character_id())
+      return fmt::format(
+          "Ch/JD{:02d}_{:02d}/Ch{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+      );
+    if (task_info_.entity_type_id_ == asset_type::get_prop_id() ||
+        task_info_.entity_type_id_ == asset_type::get_effect_id())
+      return fmt::format(
+          "Prop/JD{:02d}_{:02d}/{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.pin_yin_ming_cheng_
+      );
+    if (task_info_.entity_type_id_ == asset_type::get_ground_id())
+      return fmt::format(
+          "BG/JD{:02d}_{:02d}/BG{}/Mod", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
+      );
+  }
 
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
