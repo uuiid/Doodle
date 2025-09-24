@@ -114,17 +114,14 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
   }
 }
 
-boost::system::error_code chick_ue_plug() {
+bool chick_ue_plug() {
   auto l_doodle_path = core_set::get_set().ue4_path / "Engine" / "Plugins" / "Doodle" / "Doodle.uplugin";
   std::string l_version{};
   if (FSys::exists(l_doodle_path)) {
     auto l_json = nlohmann::json::parse(FSys::ifstream{l_doodle_path});
     if (l_json.contains("VersionName")) l_version = l_json["VersionName"].get<std::string>();
   }
-  if (l_version != version::build_info::get().version_str) {
-    throw_exception(doodle_error{"UE4 插件版本不匹配 {} != {}", l_version, version::build_info::get().version_str});
-  }
-  return {};
+  return l_version == version::build_info::get().version_str;
 }
 }  // namespace
 
@@ -153,8 +150,13 @@ boost::asio::awaitable<void> async_run_ue(
 
   in_logger->info("开始检查 UE 版本");
   if (in_time) in_time->start_time_ = std::chrono::system_clock::now();
-  auto l_e1 = chick_ue_plug();
-  if (l_e1) throw_exception(doodle_error{"检查并安装 UE 版本失败: {}", l_e1.message()});
+  if (!chick_ue_plug()) {
+    in_logger->info("UE 插件已经是最新版本, 无需安装");
+  } else {
+    in_logger->info("UE 插件需要更新, 开始安装");
+    co_await ue_exe_ns::install_doodle_plug(core_set::get_set().ue4_path);
+    in_logger->info("UE 插件安装完成");
+  }
 
   auto l_ue_path = core_set::get_set().ue4_path / doodle_config::ue_path_obj;
   if (l_ue_path.empty()) throw_exception(doodle_error{"ue_exe 路径为空, 无法启动UE"});
