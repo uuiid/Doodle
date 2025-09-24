@@ -39,26 +39,30 @@ class pictures_base : public http_jwt_fun {
   void create_thumbnail_mp4(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
   void create_thumbnail_gif(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
   void create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, FSys::path in_name);
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(session_data_ptr in_handle);
-  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(session_data_ptr in_handle);
+  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
+      session_data_ptr in_handle, FSys::path in_path
+  );
+  boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(
+      session_data_ptr in_handle, FSys::path in_path
+  );
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_404(session_data_ptr in_handle);
   std::shared_ptr<FSys::path> root_;
 
  public:
   explicit pictures_base(const FSys::path& in_root) : root_(std::make_shared<FSys::path>(in_root)) {}
-  DOODLE_HTTP_FUN_OVERRIDE(get);
-  DOODLE_HTTP_FUN_OVERRIDE(post);
   uuid id_{};
 };
 
 // "api/doodle/pictures/{id}"
 DOODLE_HTTP_FUN_C(pictures_instance, pictures_base)
-explicit pictures_instance(const FSys::path& in_root) : base_type(in_root / "previews") {}
+explicit pictures_instance(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post);
 DOODLE_HTTP_FUN_END()
 // "api/doodle/pictures/thumbnails/{id}"
 DOODLE_HTTP_FUN_C(pictures_thumbnails, pictures_base)
-explicit pictures_thumbnails(const FSys::path& in_root) : base_type(in_root / "thumbnails") {}
-DOODLE_HTTP_FUN_OVERRIDE(post)
+explicit pictures_thumbnails(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets_tree/{id}/assets/{assets_id}"
 DOODLE_HTTP_JWT_FUN(assets_tree_link)

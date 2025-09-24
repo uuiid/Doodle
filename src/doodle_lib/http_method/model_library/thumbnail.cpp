@@ -77,10 +77,10 @@ void pictures_base::create_thumbnail_mp4(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_post(
-    session_data_ptr in_handle
+    session_data_ptr in_handle, FSys::path in_path
 ) {
   std::string l_name{fmt::format("{}", id_)};
-  FSys::path l_path = *root_;
+  FSys::path l_path = in_path;
 
   switch (in_handle->content_type_) {
     // case detail::content_type::image_gif:
@@ -99,11 +99,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(session_data_ptr in_handle) {
-  FSys::path l_path = *root_;
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(
+    session_data_ptr in_handle, FSys::path in_path
+) {
+  FSys::path l_path = in_path;
 
   l_path /= fmt::format("{}.png", id_);
-  if (auto l_new_path = FSys::split_uuid_path(l_path.filename()); FSys::exists(l_new_path)) l_path = l_new_path;
+  if (auto l_new_path = l_path.parent_path() / FSys::split_uuid_path(l_path.filename()); FSys::exists(l_new_path))
+    l_path = l_new_path;
 
   if (!FSys::exists(l_path)) {
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
@@ -142,14 +145,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::get(http::session_data_ptr in_handle) {
-  return thumbnail_get(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::post(session_data_ptr in_handle) {
+  return thumbnail_post(in_handle, *root_);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::post(session_data_ptr in_handle) {
-  return thumbnail_post(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::get(session_data_ptr in_handle) {
+  return thumbnail_get(in_handle, *root_ / "previews");
 }
-boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails::post(session_data_ptr in_handle) {
-  return http_function::post(in_handle);
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails::get(session_data_ptr in_handle) {
+  return thumbnail_get(in_handle, *root_ / "thumbnails");
 }
 
 }  // namespace doodle::http::model_library
