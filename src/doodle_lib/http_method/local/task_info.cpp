@@ -268,14 +268,8 @@ void task::init_ctx() {
   });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::post(session_data_ptr in_handle) {
-  if (in_handle->content_type_ != http::detail::content_type::application_json)
-    co_return in_handle->make_error_code_msg(
-        boost::beast::http::status::bad_request, boost::system::errc::make_error_code(boost::system::errc::bad_message),
-        "不是json请求"
-    );
   auto l_ptr  = std::make_shared<server_task_info>();
-
-  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json = in_handle->get_json();
   l_json.get_to(*l_ptr);
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};

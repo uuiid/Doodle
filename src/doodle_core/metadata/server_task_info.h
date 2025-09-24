@@ -182,7 +182,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j.at("source_computer").get_to(p.source_computer_);
     if (j.contains("submitter")) j.at("submitter").get_to(p.submitter_);
     if (j.contains("run_computer_id")) j.at("run_computer_id").get_to(p.run_computer_id_);
-    j.at("type").get_to(p.type_);
+    if (j.contains("type")) j.at("type").get_to(p.type_);
   }
 };
 }  // namespace doodle
