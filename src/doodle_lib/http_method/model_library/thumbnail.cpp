@@ -11,26 +11,32 @@
 namespace doodle::http::model_library {
 
 void pictures_base::create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, FSys::path in_name) {
-  auto l_path = in_path / "thumbnails" / in_name.replace_extension(".png");
-  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  auto l_thumbnails_path = in_path / "thumbnails" / in_name.replace_extension(".png");
+  auto l_preview_path    = in_path / "previews" / in_name.replace_extension(".png");
+
+  if (auto l_p = l_thumbnails_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (auto l_p = l_preview_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   cv::Mat l_image = cv::imdecode(
       cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
       cv::IMREAD_COLOR
   );
   if (l_image.empty()) return throw_exception(doodle_error{"图片解码失败"});
 
-  cv::imwrite((in_path / "previews" / in_name.replace_extension(".png")).generic_string(), l_image);
+  cv::imwrite(l_preview_path.generic_string(), l_image);
   if (l_image.cols > 192 || l_image.rows > 108) {
     auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
     cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
   }
-  cv::imwrite(l_path.generic_string(), l_image);
+  cv::imwrite(l_thumbnails_path.generic_string(), l_image);
 }
 void pictures_base::create_thumbnail_gif(
     const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
 ) {
-  auto l_path = in_path / "thumbnails" / in_name.replace_extension(".png");
-  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  auto l_thumbnails_path = in_path / "thumbnails" / in_name.replace_extension(".png");
+  auto l_preview_path    = in_path / "previews" / in_name.replace_extension(".gif");
+
+  if (auto l_p = l_thumbnails_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (auto l_p = l_preview_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   {
     cv::VideoCapture l_video{};
     l_video.open(in_data_path.generic_string());
@@ -46,9 +52,9 @@ void pictures_base::create_thumbnail_gif(
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
       cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
     }
-    cv::imwrite(l_path.generic_string(), l_image);
+    cv::imwrite(l_thumbnails_path.generic_string(), l_image);
   }
-  FSys::rename(in_data_path, in_path / "previews" / in_name.replace_extension(".gif"));
+  FSys::rename(in_data_path, l_preview_path);
 }
 void pictures_base::create_thumbnail_mp4(
     const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
