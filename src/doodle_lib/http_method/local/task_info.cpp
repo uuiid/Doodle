@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/core/app_base.h"
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
@@ -22,6 +23,7 @@
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include "core/asyn_task.h"
+#include "http_client/kitsu_client.h"
 #include "local.h"
 #include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -123,6 +125,18 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   run_long_task_local() = default;
   explicit run_long_task_local(std::shared_ptr<server_task_info> in_task_info) : task_info_(std::move(in_task_info)) {}
 
+  void set_arg(const async_task_ptr& in_arg) {
+    auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                         fmt::format("{}.log", task_info_->uuid_id_);
+    logger_ = std::make_shared<spdlog::async_logger>(
+        task_info_->name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+        spdlog::thread_pool()
+    );
+    logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
+    arg_ = in_arg;
+    arg_->set_logger(logger_);
+  }
+
   void load_form_json(const nlohmann::json& in_json) {
     auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                          fmt::format("{}.log", task_info_->uuid_id_);
@@ -174,7 +188,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
 
     } else if (in_json.contains("category")) {  // 检查文件任务
       auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
-      l_arg_t->config(in_json["category"].get<maya_exe_ns::inspect_file_type>());
       in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
     } else if (in_json.contains("image_to_move")) {  // 图片到视频
@@ -344,6 +357,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::pat
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
+}
+boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_instance::post(session_data_ptr in_handle) {
+  auto l_ptr   = std::make_shared<server_task_info>();
+  l_ptr->type_ = server_task_info_type::check_maya;
+  auto l_json  = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+  auto l_arg_t            = std::make_shared<maya_exe_ns::inspect_file_arg>();
+  l_json.get_to(*l_arg_t);
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_arg_t->set_file_path(co_await l_client->get_task_maya_file(id_));
+
+  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
 }  // namespace doodle::http::local

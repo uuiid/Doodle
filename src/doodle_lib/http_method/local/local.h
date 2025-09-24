@@ -28,6 +28,12 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
+// /api/doodle/task/inspect/{id}
+DOODLE_HTTP_FUN(task_inspect_instance)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/doodle/task/{id}/restart
 DOODLE_HTTP_FUN(task_instance_restart)
 DOODLE_HTTP_FUN_OVERRIDE(post)

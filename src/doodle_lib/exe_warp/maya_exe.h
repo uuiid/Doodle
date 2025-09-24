@@ -188,14 +188,9 @@ class DOODLELIB_API inspect_file_arg : public maya_exe_ns::arg {
   /// 多 UV 检查
   bool multi_uv_inspection_{};
 
-  void config(const inspect_file_type& in_type) {
-    switch (in_type) {
-      case inspect_file_type::model_maya:
-        surface_5_ = rename_check_ = name_length_check_ = history_check_ = special_copy_check_ = uv_check_ =
-            kframe_check_ = space_name_check_ = only_default_camera_check_ = too_many_point_check_ =
-                multi_uv_inspection_                                       = true;
-        break;
-    }
+  inspect_file_arg() {
+    surface_5_ = rename_check_ = name_length_check_ = history_check_ = special_copy_check_ = uv_check_ = kframe_check_ =
+        space_name_check_ = only_default_camera_check_ = too_many_point_check_ = multi_uv_inspection_ = true;
   }
 
   std::tuple<std::string, std::string> get_json_str() override {
