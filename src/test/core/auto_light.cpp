@@ -2,6 +2,7 @@
 // Created by TD on 2023/11/23.
 //
 
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -28,6 +29,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_suite.hpp>
@@ -36,6 +38,28 @@ BOOST_AUTO_TEST_SUITE(auto_light_test)
 
 BOOST_AUTO_TEST_CASE(utf16_test) {
   doodle::import_and_render_ue_ns::fix_project("D:\\test_files\\doodle_plug.uproject");
+}
+
+
+
+BOOST_AUTO_TEST_CASE(install_plug_test) {
+  app_base l_app_base{};
+  core_set::get_set().ue4_version = "5.5";
+  auto l_path = FSys::path{"E:/Doodle/ue4.27"};
+  boost::asio::co_spawn(g_io_context(), doodle::ue_exe_ns::install_doodle_plug(l_path), [](std::exception_ptr e) {
+    if (e) {
+      try {
+        std::rethrow_exception(e);
+      } catch (const std::exception& ex) {
+        BOOST_TEST_MESSAGE(ex.what());
+        BOOST_TEST(false);
+      }
+    } else {
+      BOOST_TEST(true);
+    }
+  });
+
+  l_app_base.run();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

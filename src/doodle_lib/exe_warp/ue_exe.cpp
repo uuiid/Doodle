@@ -11,14 +11,20 @@
 
 #include <doodle_lib/exe_warp/async_read_pipe.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 
 #include "boost/asio/readable_pipe.hpp"
 #include <boost/asio.hpp>
+#include <boost/asio/awaitable.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/process/process.hpp>
 #include <boost/system.hpp>
 
 #include "fmt/core.h"
+#include <bit7z/bit7z.hpp>
+#include <bit7z/bit7zlibrary.hpp>
+#include <bit7z/bitfileextractor.hpp>
+#include <bit7z/bitformat.hpp>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -78,16 +84,20 @@ void install_UnrealEngine5VLC(const FSys::path& path) {
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 
-void installUePath(const FSys::path& path) {
+boost::asio::awaitable<void> installUePath(const FSys::path& path) {
   try {
+    auto l_client   = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+    auto l_path     = co_await l_client->get_ue_plugin(core_set::get_set().ue4_version);
+    auto l_out_path = l_path.parent_path() / l_path.stem();
+    if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
+    if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
+    bit7z::Bit7zLibrary l_lib{};
+    bit7z::BitFileExtractor l_extractor{l_lib};
+    l_extractor.extract(l_path.generic_string(), l_out_path.generic_string());
+    l_out_path /= "Doodle";
+    if (!FSys::exists(l_out_path)) throw_exception(doodle_error{"UE 插件解压失败"});
+
     /// \brief 安装我们自己的插件
-    auto& set      = core_set::get_set();
-    auto sourePath = register_file_type::program_location().parent_path();
-    auto l_name{set.ue4_version};
-    if (auto l_f = l_name.find('.'); l_f != std::string::npos) {
-      l_name.erase(l_f, 1);
-    }
-    sourePath /= fmt::format("ue{}_Plug", l_name);
     auto targetPath = path / "Plugins" / "Doodle";
 
     if (FSys::exists(targetPath)) {
@@ -96,8 +106,8 @@ void installUePath(const FSys::path& path) {
       FSys::create_directories(targetPath);
     }
 
-    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, targetPath));
-    copy(sourePath, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
+    copy(l_out_path, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
     /// \brief 安装houdini labs 插件
     install_SideFX_Labs(targetPath.parent_path() / "SideFX_Labs");
     install_UnrealEngine5VLC(targetPath.parent_path() / "UnrealEngine5VLC");
@@ -133,6 +143,8 @@ FSys::path find_ue_project_file(const FSys::path& in_path) {
   if (in_path.empty()) return {};
   return find_u_pej(in_path);
 }
+
+boost::asio::awaitable<void> install_doodle_plug(const FSys::path& path) { return installUePath(path); }
 }  // namespace ue_exe_ns
 
 boost::asio::awaitable<void> async_run_ue(

@@ -37,7 +37,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
       boost::beast::http::verb::get, fmt::format("/Plugins/{}", l_file_name), 11
   };
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  l_req.set(boost::beast::http::field::accept, "*");
+  l_req.set(boost::beast::http::field::accept, "*/*");
   l_req.prepare_payload();
   boost::beast::http::response<boost::beast::http::file_body> l_res{};
   boost::system::error_code l_ec{};

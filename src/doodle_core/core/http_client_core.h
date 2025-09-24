@@ -23,6 +23,7 @@
 #include <boost/url.hpp>
 
 #include <magic_enum/magic_enum_all.hpp>
+#include <memory>
 #include <utility>
 
 namespace doodle::http::detail {
@@ -217,6 +218,8 @@ class http_stream_base {
 
   template <typename SelfType, typename RequestType, typename ResponseBody>
   class read_and_write_compose;
+  template <typename SelfType, typename RequestType, typename ResponseBody>
+  class read_and_write_compose_parser;
 
  public:
   template <typename... Args>
@@ -230,6 +233,9 @@ class http_stream_base {
   buffer_type buffer_{};
 
   socket_type socket_;
+
+  // 可选的 body 限制
+  std::optional<std::size_t> body_limit_{};
   // channel_type queue_;
 
   // 解析url
@@ -302,10 +308,10 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   bool is_open() { return socket_.socket().is_open(); }
   void expires_after(std::chrono::seconds in_seconds) { socket_.expires_after(in_seconds); }
   // read and write
-  template <typename ResponseBody, typename RequestType, typename Handle = boost::asio::use_awaitable_t<>>
+  template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
-      Handle&& in_handle = boost::asio::use_awaitable
+      Handle&& in_handle
   ) {
     in_req.payload_size();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
@@ -433,5 +439,46 @@ class http_stream_base<SocketType>::read_and_write_compose {
     }
   }
 };
+template <typename SocketType>
+template <typename SelfType, typename RequestType, typename ResponseBody>
+class http_stream_base<SocketType>::read_and_write_compose_parser {
+ public:
+  boost::beast::http::request<RequestType>& req_;
+  SelfType* self_;
+  boost::asio::coroutine coro_;
+  std::shared_ptr<boost::beast::http::response_parser<ResponseBody>> parser_;
 
+  explicit read_and_write_compose_parser(
+      boost::beast::http::request<RequestType>& in_req, SelfType* in_self, boost::asio::coroutine in_coro,
+      boost::beast::http::response<ResponseBody>& in_res
+  )
+      : req_(in_req),
+        self_(in_self),
+        coro_(in_coro),
+        parser_(std::make_shared<boost::beast::http::response_parser<ResponseBody>>(in_res)) {
+    if (self_->body_limit_) parser_->body_limit(*self_->body_limit_);
+  }
+
+  template <typename Self>
+  void operator()(Self&& self, boost::system::error_code in_ec = {}, std::size_t = 0) {
+    BOOST_ASIO_CORO_REENTER(coro_) {
+      // BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
+      // if (in_ec) {
+      if (!self_->is_open()) {
+        BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
+        if (in_ec) goto end_complete;
+      }
+
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
+      if (in_ec) goto end_complete;
+      self_->expires_after(30s);
+      // }
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(self_->socket_, self_->buffer_, *parser_, std::move(self));
+      if (in_ec) goto end_complete;
+      self_->expires_after(30s);
+    end_complete:
+      self.complete(in_ec);
+    }
+  }
+};
 }  // namespace doodle::http

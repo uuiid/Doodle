@@ -35,7 +35,7 @@ boost::asio::cancellation_slot app_base::cancellation_signals::slot() {
 }
 
 app_base* app_base::self = nullptr;
-bool app_base::init() { return false; }
+bool app_base::init() { return true; }
 app_base::app_base(int argc, const char* const argv[])
     : stop_(false), lib_ptr(std::make_shared<doodle_lib>()), arg_{argc, argv} {
   self = this;
