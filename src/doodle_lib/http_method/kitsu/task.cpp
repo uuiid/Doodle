@@ -319,6 +319,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
   auto l_assignees = l_sql.impl_->storage_any_.select(
       object<person>(true), from<person>(), where(in(&person::uuid_id_, l_task.assignees_))
   );
+  auto l_working_files = l_sql.impl_->storage_any_.get_all<working_file>(where(c(&working_file::task_id_) == id_));
   nlohmann::json l_ret{};
   l_ret = l_task;
   l_ret.update(
@@ -330,6 +331,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
           {"project", l_project},
           {"task_type", l_task_type},
           {"task_status", l_task_status},
+          {"working_files", l_working_files},
       }
   );
   co_return in_handle->make_msg(l_ret);

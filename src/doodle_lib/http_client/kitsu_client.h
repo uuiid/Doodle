@@ -35,6 +35,8 @@ class kitsu_client {
   boost::asio::awaitable<FSys::path> get_ue_plugin(const std::string& in_version) const;
 
   boost::asio::awaitable<FSys::path> get_task_maya_file(const uuid& in_task_id) const;
+
+  boost::asio::awaitable<project> get_project(const uuid& in_project_id) const;
 };
 
 }  // namespace doodle::kitsu

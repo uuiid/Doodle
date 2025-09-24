@@ -70,13 +70,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
   auto l_task = l_sql.impl_->storage_any_.get_all<working_file>(where(c(&working_file::task_id_) == id_));
   if (l_task.empty())
     in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有找到对应的working file");
-  auto l_it = ranges::find_if(l_task, [&](const working_file& i) { return i.software_type_ == software_enum::maya; });
-  if (l_it == l_task.end())
-    in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有找到对应的maya working file");
-  if (l_it->path_.empty() || !FSys::exists(l_it->path_))
-    in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有找到对应的maya working file");
-
-  co_return in_handle->make_msg(nlohmann::json{} = *l_it);
+  co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_working_file_many::post(
     session_data_ptr in_handle

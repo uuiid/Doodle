@@ -4,10 +4,13 @@
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task_type.h"
 #include "doodle_core/metadata/working_file.h"
 
 #include <boost/asio/awaitable.hpp>
+
+#include <vector>
 
 namespace doodle::kitsu {
 
@@ -61,16 +64,30 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
       task_type::get_character_id(), task_type::get_ground_model_id(), task_type::get_binding_id()
   };
   if (g_has_maya_file_task.contains(in_task_id)) throw_exception(doodle_error{"任务类型不支持获取maya文件"});
+  project l_prj{};
+  std::vector<working_file> l_list{};
+  {
+    nlohmann::json l_json_task_full{};
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_task_id), 11
+    };
+    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    l_req.set(boost::beast::http::field::accept, "application/json");
+    boost::beast::http::response<http::basic_json_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok)
+      throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
+    l_json_task_full = l_res.body().get<nlohmann::json>();
+    l_prj            = l_json_task_full.at("project").get<project>();
+    l_list           = l_json_task_full.at("working_files").get<std::vector<working_file>>();
+  }
 
-  boost::beast::http::request<boost::beast::http::empty_body> l_req{
-      boost::beast::http::verb::get, fmt::format("/api/actions/tasks/{}/working-file", in_task_id), 11
-  };
-  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  l_req.set(boost::beast::http::field::accept, "application/json");
-  boost::beast::http::response<http::basic_json_body> l_res{};
-  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-  if (l_res.result() != boost::beast::http::status::ok) throw_exception(doodle_error{"kitsu get task maya file error {}", l_res.result()});
-  co_return l_res.body().get<working_file>().path_;
+  auto l_it = ranges::find_if(l_list, [&](const working_file& i) { return i.software_type_ == software_enum::maya; });
+  if (l_it == l_list.end()) throw_exception(doodle_error{"没有找到对应的maya working file"});
+  auto l_path = l_prj.path_ / l_it->path_;
+  if (l_it->path_.empty() || !FSys::exists(l_path)) throw_exception(doodle_error{"maya working file 文件不存在"});
+
+  co_return l_path;
 }
 
 }  // namespace doodle::kitsu
