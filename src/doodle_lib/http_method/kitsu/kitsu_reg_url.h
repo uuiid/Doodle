@@ -38,6 +38,7 @@ DOODLE_HTTP_FUN_END()
 // /api/actions/tasks/{task_id}/working-file
 DOODLE_HTTP_JWT_FUN(actions_tasks_working_file)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/tasks/working-file-many
