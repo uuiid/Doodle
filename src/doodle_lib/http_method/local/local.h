@@ -4,6 +4,19 @@
 #pragma once
 #include <doodle_lib/core/http/http_function.h>
 namespace doodle::http::local {
+
+class local_http_fun : public http_function {
+  using base_type = http_function;
+
+ protected:
+  void parse_header(const session_data_ptr& in_handle) override;
+  std::string token_;
+
+ public:
+  local_http_fun() : base_type() {}
+  virtual ~local_http_fun() = default;
+};
+
 // /api/doodle/local_setting
 DOODLE_HTTP_FUN(local_setting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -28,13 +41,13 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/task/inspect/{id}
-DOODLE_HTTP_FUN(task_inspect_instance)
+// /api/doodle/task/{id}/inspect
+DOODLE_HTTP_FUN_C(task_inspect_instance, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/doodle/task/{id}/generate_uesk_file
-DOODLE_HTTP_FUN(task_instance_generate_uesk_file)
+DOODLE_HTTP_FUN_C(task_instance_generate_uesk_file, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()

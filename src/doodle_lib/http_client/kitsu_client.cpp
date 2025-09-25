@@ -32,6 +32,9 @@ boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_as
   };
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   l_req.set(boost::beast::http::field::accept, "application/json");
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  if (!kitsu_token_.empty())
+    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
   l_req.prepare_payload();
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
@@ -50,6 +53,9 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
   };
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   l_req.set(boost::beast::http::field::accept, "*/*");
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  if (!kitsu_token_.empty())
+    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
   boost::beast::http::response<boost::beast::http::file_body> l_res{};
   boost::system::error_code l_ec{};
   l_res.body().open(l_temp_path.string().c_str(), boost::beast::file_mode::write, l_ec);
@@ -77,6 +83,8 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
     l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     l_req.set(boost::beast::http::field::accept, "application/json");
     l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+    if (!kitsu_token_.empty())
+      l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
@@ -108,6 +116,8 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
     l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     l_req.set(boost::beast::http::field::accept, "application/json");
     l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+    if (!kitsu_token_.empty())
+      l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
@@ -132,6 +142,9 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
     };
     l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
     l_req.set(boost::beast::http::field::accept, "application/json");
+    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+    if (!kitsu_token_.empty())
+      l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
     l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);

@@ -369,6 +369,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   auto l_arg_t            = std::make_shared<maya_exe_ns::inspect_file_arg>();
   l_json.get_to(*l_arg_t);
   auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
   l_arg_t->set_file_path(co_await l_client->get_task_maya_file(id_));
 
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
@@ -393,6 +394,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
 
   auto l_arg_t    = std::dynamic_pointer_cast<export_rig_sk_arg>(co_await l_client->get_generate_uesk_file_arg(id_));
 

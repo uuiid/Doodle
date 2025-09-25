@@ -19,6 +19,18 @@
 
 namespace doodle::http::local {
 
+void local_http_fun::parse_header(const session_data_ptr& in_handle) {
+  auto l_jwt = in_handle->req_header_[boost::beast::http::field::cookie];
+  if (l_jwt.empty()) l_jwt = in_handle->req_header_[boost::beast::http::field::authorization];
+
+  if (auto l_it = l_jwt.find("access_token_cookie="); l_it != std::string::npos)
+    l_jwt = l_jwt.substr(l_it + 20, l_jwt.find(';', l_it) - l_it - 20);
+  else if (auto l_it_b = l_jwt.find("Bearer "); l_it_b != std::string::npos)
+    l_jwt = l_jwt.substr(l_it_b + 7, l_jwt.find(' ', l_it_b) - l_it_b - 7);
+  if (l_jwt.empty()) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先登录"});
+  token_ = l_jwt;
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get(session_data_ptr in_handle) {
   FSys::path l_maya_path{};
   try {

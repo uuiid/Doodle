@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <string>
 #include <tl/expected.hpp>
 
 namespace doodle {
@@ -24,6 +25,7 @@ class kitsu_client {
   using http_client_t     = doodle::http::http_client;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
   http_client_ptr_t http_client_ptr_{};
+  std::string kitsu_token_;
 
  public:
   explicit kitsu_client(const std::string& kitsu_url) : http_client_ptr_{std::make_shared<http_client_t>(kitsu_url)} {}
@@ -35,6 +37,9 @@ class kitsu_client {
     FSys::path maya_file_;
     details::assets_type_enum type_;
   };
+  // set token
+  void set_token(const std::string& in_token) { kitsu_token_ = in_token; }
+
   boost::asio::awaitable<file_association> get_file_association(const uuid& in_task_id) const;
 
   boost::asio::awaitable<FSys::path> get_ue_plugin(const std::string& in_version) const;

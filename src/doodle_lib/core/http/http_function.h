@@ -16,6 +16,7 @@
 
 #include "http_route.h"
 #include <magic_enum/magic_enum_all.hpp>
+#include <string>
 
 namespace doodle::http {
 
