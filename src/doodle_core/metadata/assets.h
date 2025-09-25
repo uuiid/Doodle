@@ -23,7 +23,21 @@ enum class assets_type_enum {
   cfx,
   other,  // 基本是相机
 };
-}
+
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    assets_type_enum, {
+                          {assets_type_enum::scene, "scene"},
+                          {assets_type_enum::prop, "prop"},
+                          {assets_type_enum::character, "character"},
+                          {assets_type_enum::rig, "rig"},
+                          {assets_type_enum::animation, "animation"},
+                          {assets_type_enum::vfx, "vfx"},
+                          {assets_type_enum::cfx, "cfx"},
+                          {assets_type_enum::other, "other"},
+                      }
+);
+}  // namespace details
+
 details::assets_type_enum convert_assets_type_enum(const uuid& in_assets_type_id);
 
 namespace assets_helper {
