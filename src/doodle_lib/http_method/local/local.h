@@ -33,6 +33,11 @@ DOODLE_HTTP_FUN(task_inspect_instance)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/doodle/task/{id}/generate_uesk_file
+DOODLE_HTTP_FUN(task_instance_generate_uesk_file)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 
 // /api/doodle/task/{id}/restart
 DOODLE_HTTP_FUN(task_instance_restart)

@@ -381,4 +381,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> task_instance_generate_uesk_file::post(
+    session_data_ptr in_handle
+) {
+  auto l_ptr   = std::make_shared<server_task_info>();
+  l_ptr->type_ = server_task_info_type::create_rig_sk;
+  auto l_json  = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+
+  auto l_arg_t    = std::dynamic_pointer_cast<export_rig_sk_arg>(co_await l_client->get_generate_uesk_file_arg(id_));
+
+  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
 }  // namespace doodle::http::local

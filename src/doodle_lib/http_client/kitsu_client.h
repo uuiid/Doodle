@@ -10,8 +10,13 @@
 #include <boost/asio/awaitable.hpp>
 
 #include <filesystem>
+#include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <tl/expected.hpp>
+
+namespace doodle {
+class async_task;
+}
 
 namespace doodle::kitsu {
 
@@ -37,6 +42,7 @@ class kitsu_client {
   boost::asio::awaitable<FSys::path> get_task_maya_file(const uuid& in_task_id) const;
 
   boost::asio::awaitable<project> get_project(const uuid& in_project_id) const;
+  boost::asio::awaitable<std::shared_ptr<async_task>> get_generate_uesk_file_arg(const uuid& in_task_id) const;
 };
 
 }  // namespace doodle::kitsu

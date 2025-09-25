@@ -7,6 +7,7 @@
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task_type.h"
 #include "doodle_core/metadata/working_file.h"
+#include <doodle_lib/exe_warp/export_rig_sk.h>
 
 #include <boost/asio/awaitable.hpp>
 
@@ -89,6 +90,28 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
   if (l_it->path_.empty() || !FSys::exists(l_path)) throw_exception(doodle_error{"maya working file 文件不存在"});
 
   co_return l_path;
+}
+boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_uesk_file_arg(
+    const uuid& in_task_id
+) const {
+  if (in_task_id != task_type::get_binding_id()) throw_exception(doodle_error{"任务类型不支持生成 ue sk 文件"});
+
+  nlohmann::json l_json_task_full{};
+  {
+    boost::beast::http::request<boost::beast::http::empty_body> l_req{
+        boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_task_id), 11
+    };
+    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    l_req.set(boost::beast::http::field::accept, "application/json");
+    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+    boost::beast::http::response<http::basic_json_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok)
+      throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
+    l_json_task_full = l_res.body().get<nlohmann::json>();
+  }
+  // todo: 这个还缺少第二次查询实体数据, 获取UE路径
+  co_return std::make_shared<export_rig_sk_arg>();
 }
 
 }  // namespace doodle::kitsu

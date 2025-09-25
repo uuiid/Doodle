@@ -35,6 +35,15 @@ class export_rig_sk_arg : public async_task {
     if (in_json.contains("pin_yin_ming_cheng")) in_json.at("pin_yin_ming_cheng").get_to(out_obj.pin_yin_ming_cheng_);
     if (in_json.contains("ban_ben")) in_json.at("ban_ben").get_to(out_obj.ban_ben_);
   }
+  // to json
+  friend void to_json(nlohmann::json& in_json, const export_rig_sk_arg& out_obj) {
+    in_json["maya_file"]          = out_obj.maya_file_;
+    in_json["ue_path"]            = out_obj.ue_path_;
+    in_json["asset_type_id"]      = out_obj.asset_type_id_;
+    in_json["bian_hao"]           = out_obj.bian_hao_;
+    in_json["pin_yin_ming_cheng"] = out_obj.pin_yin_ming_cheng_;
+    in_json["ban_ben"]            = out_obj.ban_ben_;
+  }
 
   boost::asio::awaitable<void> run() override;
 };
