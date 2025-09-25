@@ -6,7 +6,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/scan_assets.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 

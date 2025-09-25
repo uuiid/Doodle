@@ -9,7 +9,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
 #include "doodle_lib/core/http/http_function.h"
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 
 #include "boost/lexical_cast.hpp"
 

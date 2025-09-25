@@ -1,7 +1,6 @@
 target_sources(
         doodle_lib
         PUBLIC
-        kitsu.h
         kitsu_front_end.h
         epiboly.h
         kitsu_reg_url.h
@@ -9,7 +8,6 @@ target_sources(
 
         PRIVATE
         task.cpp
-        kitsu.cpp
         user.cpp
         kitsu_front_end.cpp
         project.cpp

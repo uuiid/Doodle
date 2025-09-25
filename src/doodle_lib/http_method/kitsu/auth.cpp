@@ -11,11 +11,10 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/seed_email.h>
 
-#include "kitsu.h"
 #include <cache.hpp>
 #include <cache_policy.hpp>
 #include <lru_cache_policy.hpp>

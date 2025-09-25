@@ -9,10 +9,8 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-
-#include "kitsu.h"
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> data_output_types::get(session_data_ptr in_handle) {

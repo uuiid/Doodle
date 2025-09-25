@@ -12,9 +12,9 @@
 
 #include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
-#include "kitsu.h"
 namespace doodle::http {
 namespace {
 struct create_comment_result : comment {

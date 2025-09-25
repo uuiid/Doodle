@@ -13,7 +13,7 @@
 #include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/file_association.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/seed_email.h>
 
 #include <winreg/WinReg.hpp>

@@ -18,7 +18,7 @@
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 namespace doodle::http {
 namespace {
 struct work_xlsx_task_info_helper_t {

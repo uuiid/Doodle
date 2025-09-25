@@ -4,7 +4,7 @@
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 
 #include "model_library.h"
 #include <opencv2/opencv.hpp>

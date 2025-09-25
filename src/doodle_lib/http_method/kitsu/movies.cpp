@@ -5,9 +5,8 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-
-#include "kitsu.h"
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> movies_low_preview_files::get(

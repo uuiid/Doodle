@@ -5,7 +5,8 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
-#include "kitsu.h"
+
+#include <doodle_lib/http_method/kitsu.h>
 namespace doodle::http {
 
 boost::asio::awaitable<boost::beast::http::message_generator> config::get(session_data_ptr in_handle) {

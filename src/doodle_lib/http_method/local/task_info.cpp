@@ -18,7 +18,7 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
 

@@ -9,10 +9,11 @@
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/http_method/kitsu.h>
 
-#include "kitsu.h"
 #include "kitsu_reg_url.h"
 #include <opencv2/opencv.hpp>
+
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
     session_data_ptr in_handle
@@ -22,7 +23,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 
   auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
   auto l_task    = l_sql.get_by_uuid<task>(task_id_);
-  default_logger_raw()->info("person {} actions_tasks_comments_add_preview {} {}", person_.person_.uuid_id_, task_id_, comment_id_);
+  default_logger_raw()->info(
+      "person {} actions_tasks_comments_add_preview {} {}", person_.person_.uuid_id_, task_id_, comment_id_
+  );
   auto l_revision = in_handle->get_json().value("revision", 0);
   if (l_revision == 0 && !l_sql.has_preview_file(comment_id_))
     l_revision = l_sql.get_next_preview_revision(task_id_);
@@ -109,13 +112,13 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
         g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / key / FSys::split_uuid_path(fmt::format("{}.png", in_id));
     if (auto l_p = l_new_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     auto l_new_cv = in_image.clone();
-    auto l_size_   = cv::Size{
+    auto l_size_  = cv::Size{
         size.first, size.second == 0
-                          ? boost::numeric_cast<std::int32_t>(
+                         ? boost::numeric_cast<std::int32_t>(
                               boost::numeric_cast<double>(in_image.rows) / boost::numeric_cast<double>(in_image.cols) *
                               boost::numeric_cast<double>(size.first)
                           )
-                          : std::int32_t{size.second}
+                         : std::int32_t{size.second}
     };
     cv::resize(l_new_cv, l_new_cv, l_size_, 0, 0);
     cv::imwrite(l_new_path.generic_string(), l_new_cv);

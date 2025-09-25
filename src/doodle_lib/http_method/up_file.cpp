@@ -13,7 +13,7 @@
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 
 #include "boost/beast/http/field.hpp"
 

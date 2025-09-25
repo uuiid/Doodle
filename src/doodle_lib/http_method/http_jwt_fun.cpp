@@ -10,7 +10,7 @@
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 
 #include <jwt-cpp/jwt.h>
 namespace doodle::http {

@@ -12,7 +12,7 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
-#include <doodle_lib/http_method/kitsu/kitsu.h>
+#include <doodle_lib/http_method/kitsu.h>
 namespace doodle::http {
 
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_tool_version::get(session_data_ptr in_handle) {
