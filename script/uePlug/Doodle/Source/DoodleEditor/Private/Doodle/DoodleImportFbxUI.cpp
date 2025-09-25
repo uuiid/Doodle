@@ -448,6 +448,38 @@ void UDoodleFbxCameraImport_1::ImportFile()
 		)
 	);
 
+
+	//--------------------------------生成关卡
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	L_Task_Scoped.EnterProgressFrame(
+		1, FText::Format(LOCTEXT("Import_ImportingCameraFile7", "检查关卡\"{0}\"..."), FText::FromString(ImportPathDir))
+	);
+	FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + TEXT("_LV");
+	UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
+	if (!L_ShotLevel)
+	{
+		// UPackage* Pkg = CreatePackage(*PackageName);
+		// Pkg->FullyLoad();
+		// Pkg->MarkPackageDirty();
+		const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
+		const FString BaseFileName = FPaths::GetBaseFilename(PackageName);
+
+		FAssetToolsModule& AssetToolsModule =
+			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+		L_ShotLevel = CastChecked<UWorld>(
+			AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
+		// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+		// AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
+
+		//------------------------
+		// L_ShotLevel->Modify();
+		EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
+		// TryCollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
+		L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
+	}
+	//---------------
+
+
 	// 打开fbx
 	UMovieSceneUserImportFBXSettings* L_ImportFBXSettings = GetMutableDefault<UMovieSceneUserImportFBXSettings>();
 	FFBXInOutParameters InOutParams;
@@ -571,10 +603,9 @@ void UDoodleFbxCameraImport_1::ImportFile()
 		FMovieSceneSequenceID L_CamSequenceID{};
 		if (!L_Task)
 		{
-			UWorld* L_World = GCurrentLevelEditingViewportClient ? GCurrentLevelEditingViewportClient->GetWorld() : nullptr;
 			FActorSpawnParameters L_ActorSpawnParameters{};
 			L_ActorSpawnParameters.ObjectFlags &= ~RF_Transactional;
-			if (auto L_Actor = CastChecked<ACineCameraActor>(L_World->SpawnActor<ACineCameraActor>(L_ActorSpawnParameters)))
+			if (auto L_Actor = CastChecked<ACineCameraActor>(L_ShotLevel->SpawnActor<ACineCameraActor>(L_ActorSpawnParameters)))
 			{
 				L_CameraActor = L_Actor;
 
@@ -593,7 +624,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 
 
 				L_CamGuid = L_MoveScene->AddPossessable(L_CameraActor->GetName(), L_CameraActor->GetClass());
-				L_ShotSequence->BindPossessableObject(L_CamGuid, *L_CameraActor, L_World);
+				L_ShotSequence->BindPossessableObject(L_CamGuid, *L_CameraActor, L_ShotLevel);
 
 				const FMovieSceneBindingReference* L_MovieSceneBindingReference = L_ShotSequence->GetBindingReferences()->GetReference(L_CamGuid, 0);
 				UMovieSceneCustomBinding* L_Bind = NewObject<UMovieSceneSpawnableActorBinding>()->CreateCustomBindingFromBinding(
@@ -619,6 +650,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 			// FSequencerUtilities::MakeNewSpawnable()
 
 			L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
+			EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
 		}
 
 		if (!L_Task) return;
@@ -691,35 +723,6 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	//    Factory);
 	//    FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
 
-	//--------------------------------生成关卡
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	L_Task_Scoped.EnterProgressFrame(
-		1, FText::Format(LOCTEXT("Import_ImportingCameraFile7", "检查关卡\"{0}\"..."), FText::FromString(ImportPathDir))
-	);
-	FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + TEXT("_LV");
-	UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
-	if (!L_ShotLevel)
-	{
-		// UPackage* Pkg = CreatePackage(*PackageName);
-		// Pkg->FullyLoad();
-		// Pkg->MarkPackageDirty();
-		const FString PackagePath = FPackageName::GetLongPackagePath(PackageName);
-		const FString BaseFileName = FPaths::GetBaseFilename(PackageName);
-
-		FAssetToolsModule& AssetToolsModule =
-			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-		L_ShotLevel = CastChecked<UWorld>(
-			AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
-		// FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		// AssetRegistryModule.Get().AssetCreated(L_ShotLevel);
-
-		//------------------------
-		// L_ShotLevel->Modify();
-		EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
-		// TryCollectGarbage(GARBAGE_COLLECTION_KEEPFLAGS, true);
-		L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
-	}
-	//---------------
 
 	const FString LigFolder1 = FString::Printf(TEXT("/Game/Shot/ep%.4d/map/Light_File/level"), Eps);
 	const FString LigFolder2 = FString::Printf(TEXT("/Game/Shot/ep%.4d/map/Light_File/other"), Eps);
