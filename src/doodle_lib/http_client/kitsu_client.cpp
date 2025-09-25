@@ -46,7 +46,6 @@ boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_as
 boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string& in_version) const {
   auto l_file_name = fmt::format("Doodle_{}.{}.zip", version::build_info::get().version_str, in_version);
   auto l_temp_path = core_set::get_set().get_cache_root("ue_plugin") / l_file_name;
-  if (FSys::exists(l_temp_path)) co_return l_temp_path;
 
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/Plugins/{}", l_file_name), 11
