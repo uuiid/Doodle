@@ -387,8 +387,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
 ) {
   auto l_ptr   = std::make_shared<server_task_info>();
   l_ptr->type_ = server_task_info_type::create_rig_sk;
-  auto l_json  = in_handle->get_json();
-  l_json.get_to(*l_ptr);
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();

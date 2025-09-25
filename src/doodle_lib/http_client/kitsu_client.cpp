@@ -71,7 +71,6 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
   static std::set<uuid> g_has_maya_file_task{
       task_type::get_character_id(), task_type::get_ground_model_id(), task_type::get_binding_id()
   };
-  if (g_has_maya_file_task.contains(in_task_id)) throw_exception(doodle_error{"任务类型不支持获取maya文件"});
   project l_prj{};
   std::vector<working_file> l_list{};
   {
@@ -88,9 +87,11 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
       throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
-    l_json_task_full = l_res.body().get<nlohmann::json>();
-    l_prj            = l_json_task_full.at("project").get<project>();
-    l_list           = l_json_task_full.at("working_files").get<std::vector<working_file>>();
+    l_json_task_full          = l_res.body().get<nlohmann::json>();
+    const auto l_task_type_id = l_json_task_full.at("task_type_id").get<uuid>();
+    if (!g_has_maya_file_task.contains(l_task_type_id)) throw_exception(doodle_error{"任务类型不支持获取maya文件"});
+    l_prj  = l_json_task_full.at("project").get<project>();
+    l_list = l_json_task_full.at("working_files").get<std::vector<working_file>>();
   }
 
   auto l_it = ranges::find_if(l_list, [&](const working_file& i) { return i.software_type_ == software_enum::maya; });
@@ -103,8 +104,6 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
 boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_uesk_file_arg(
     const uuid& in_task_id
 ) const {
-  if (in_task_id != task_type::get_binding_id()) throw_exception(doodle_error{"任务类型不支持生成 ue sk 文件"});
-
   uuid l_entity_id{};
   auto l_arg_ = std::make_shared<export_rig_sk_arg>();
   FSys::path l_project_path{};
@@ -124,8 +123,10 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
     const auto l_json_task_full = l_res.body().get<nlohmann::json>();
     l_entity_id                 = l_json_task_full.at("entity_id").get<uuid>();
     auto l_working_files        = l_json_task_full.at("working_files").get<std::vector<working_file>>();
+    const auto l_task_type_id   = l_json_task_full.at("task_type_id").get<uuid>();
+    if (l_task_type_id != task_type::get_binding_id()) throw_exception(doodle_error{"任务类型不支持生成 ue sk 文件"});
     // 搜索maya文件
-    auto l_it                   = ranges::find_if(l_working_files, [&](const working_file& i) {
+    auto l_it = ranges::find_if(l_working_files, [&](const working_file& i) {
       return i.software_type_ == software_enum::maya;
     });
     if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的maya working file"});
