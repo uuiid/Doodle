@@ -338,7 +338,7 @@ boost::asio::awaitable<void> args::fetch_association_data() {
       l_data.maya_solve_file_ = l_res.maya_file_;
       l_data.ue_prj_path_     = ue_exe_ns::find_ue_project_file(l_data.ue_file_);
     } catch (const doodle_error& in_err) {
-      logger_ptr_->warn("获取文件关联信息失败 {}", l_data.maya_file_);
+      logger_ptr_->warn("获取文件关联信息失败 {} {}", l_data.maya_file_, l_data.id);
       throw;
     }
   }
