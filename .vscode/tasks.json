@@ -94,9 +94,6 @@
       "args": [
         "${input:dep_opt}",
       ],
-      "dependsOn": [
-        "build_all"
-      ],
       "problemMatcher": []
     }
   ],
