@@ -79,9 +79,13 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   }
 
   // 上传文件
+  logger_ptr_->warn(
+      "上传文件 {} 到项目 {}", l_local_ue_project_dir / doodle_config::ue4_content,
+      l_ue_project.parent_path() / doodle_config::ue4_content
+  );
   FSys::copy_diff(
-      l_local_ue_project_dir.parent_path() / doodle_config::ue4_content,
-      l_ue_project.parent_path() / doodle_config::ue4_content, logger_ptr_
+      l_local_ue_project_dir / doodle_config::ue4_content, l_ue_project.parent_path() / doodle_config::ue4_content,
+      logger_ptr_
   );
   co_return;
 }
