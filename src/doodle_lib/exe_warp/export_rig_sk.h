@@ -21,6 +21,7 @@ class export_rig_sk_arg : public async_task {
   std::string bian_hao_{};
   std::string pin_yin_ming_cheng_{};
   std::string ban_ben_{};
+  FSys::path project_name_{};
   boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
   // 获取结果
   FSys::path get_result() const;

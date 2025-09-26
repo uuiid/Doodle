@@ -44,7 +44,8 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   auto l_ue_project = ue_exe_ns::find_ue_project_file(ue_path_);
   if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", ue_path_};
-  auto l_local_ue_project     = core_set::get_set().get_cache_root(l_ue_project.stem()) / l_ue_project.filename();
+  auto l_local_ue_project =
+      core_set::get_set().get_cache_root(project_name_ / l_ue_project.stem()) / l_ue_project.filename();
   auto l_local_ue_project_dir = l_local_ue_project.parent_path();
 
   FSys::copy_diff(

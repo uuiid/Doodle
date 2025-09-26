@@ -89,7 +89,8 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
       throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
     l_json_task_full          = l_res.body().get<nlohmann::json>();
     const auto l_task_type_id = l_json_task_full.at("task_type_id").get<uuid>();
-    if (!g_has_maya_file_task.contains(l_task_type_id)) throw_exception(doodle_error{"任务类型不支持获取maya文件 {}", l_task_type_id});
+    if (!g_has_maya_file_task.contains(l_task_type_id))
+      throw_exception(doodle_error{"任务类型不支持获取maya文件 {}", l_task_type_id});
     l_prj  = l_json_task_full.at("project").get<project>();
     l_list = l_json_task_full.at("working_files").get<std::vector<working_file>>();
   }
@@ -97,7 +98,8 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
   auto l_it = ranges::find_if(l_list, [&](const working_file& i) { return i.software_type_ == software_enum::maya; });
   if (l_it == l_list.end()) throw_exception(doodle_error{"没有找到对应的maya working file"});
   auto l_path = l_prj.path_ / l_it->path_;
-  if (l_it->path_.empty() || !FSys::exists(l_path)) throw_exception(doodle_error{"maya working file 文件不存在 {}", l_path});
+  if (l_it->path_.empty() || !FSys::exists(l_path))
+    throw_exception(doodle_error{"maya working file 文件不存在 {}", l_path});
 
   co_return l_path;
 }
@@ -130,10 +132,13 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
       return i.software_type_ == software_enum::maya;
     });
     if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的maya working file"});
-    l_project_path = l_json_task_full.at("project").get<project>().path_;
-    auto l_path    = l_project_path / l_it->path_;
-    if (l_it->path_.empty() || !FSys::exists(l_path)) throw_exception(doodle_error{"maya working file 文件不存在 {}", l_path});
-    l_arg_->maya_file_ = l_path;
+    const auto l_prj = l_json_task_full.at("project").get<project>();
+    l_project_path   = l_prj.path_;
+    auto l_path      = l_project_path / l_it->path_;
+    if (l_it->path_.empty() || !FSys::exists(l_path))
+      throw_exception(doodle_error{"maya working file 文件不存在 {}", l_path});
+    l_arg_->project_name_ = l_prj.code_.empty() ? l_prj.name_ : l_prj.code_;
+    l_arg_->maya_file_    = l_path;
   }
   // 查询 entity 细节
   {
