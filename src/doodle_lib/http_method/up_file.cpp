@@ -13,11 +13,13 @@
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/http_method/kitsu.h>
 
 #include "boost/beast/http/field.hpp"
 
 #include <cpp-base64/base64.h>
+
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base::post(session_data_ptr in_handle) {
   if (in_handle->content_type_ != detail::content_type::application_nuknown)
@@ -59,6 +61,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   task_info_.root_path_       = l_prj.path_;
   task_info_.file_path_       = l_d;
   move_file(in_handle);
+
+  if(l_d.extension() == ".ma" || l_d.extension() == ".uproject")
+    co_await scan_assets::scan_task_async(l_task);
+
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
