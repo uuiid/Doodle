@@ -530,5 +530,10 @@ DOODLE_HTTP_JWT_FUN(data_playlists_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/entity-types/{id}
+DOODLE_HTTP_JWT_FUN(data_entity_types_instance)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

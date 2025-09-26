@@ -20,6 +20,8 @@
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 #include <doodle_core/sqlite_orm/sqlite_upgrade.h>
 
+#include "metadata/entity_type.h"
+#include <optional>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle {
@@ -390,9 +392,9 @@ std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id
   auto l_persons       = impl_->storage_any_.get_all<person>(where(in(&person::uuid_id_, l_person_ids)));
   auto l_task_statuses = impl_->storage_any_.get_all<task_status>(where(in(&task_status::uuid_id_, l_task_status_ids)));
   auto l_editors       = impl_->storage_any_.get_all<person>(where(in(&person::uuid_id_, l_editor_ids)));
-  auto l_acknowledgements =
-      impl_->storage_any_.get_all<comment_acknoledgments>(where(in(&comment_acknoledgments::comment_id_, l_comment_ids))
-      );
+  auto l_acknowledgements = impl_->storage_any_.get_all<comment_acknoledgments>(
+      where(in(&comment_acknoledgments::comment_id_, l_comment_ids))
+  );
 
   struct previews_and_comment_id_t {
     decltype(preview_file::uuid_id_) uuid_id_;
@@ -651,17 +653,16 @@ std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
   ] : l_rows) {
     if (!l_entities_and_tasks_map.contains(uuid_id_)) {
       l_entities_and_tasks_map.emplace(
-          uuid_id_,
-          entities_and_tasks_t{
-              .uuid_id_         = uuid_id_,
-              .name_            = name_,
-              .status_          = status_,
-              .episode_id_      = episode_id_,
-              .description_     = description_,
-              .preview_file_id_ = preview_file_id_,
-              .canceled_        = canceled_,
+          uuid_id_, entities_and_tasks_t{
+                        .uuid_id_         = uuid_id_,
+                        .name_            = name_,
+                        .status_          = status_,
+                        .episode_id_      = episode_id_,
+                        .description_     = description_,
+                        .preview_file_id_ = preview_file_id_,
+                        .canceled_        = canceled_,
 
-          }
+                    }
       );
     }
     if (!task_id_.is_nil()) {
@@ -1010,6 +1011,28 @@ boost::asio::awaitable<void> sqlite_database::remove_playlist_shot_for_playlist(
   DOODLE_TO_SELF();
   co_return;
 }
+std::optional<task_type_asset_type_link> sqlite_database::get_task_type_asset_type_link(
+    const uuid& in_task_type_id, const uuid& in_asset_type_id
+) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<task_type_asset_type_link>(where(
+      c(&task_type_asset_type_link::task_type_id_) == in_task_type_id &&
+      c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id
+  ));
+  if (l_t.empty()) return std::nullopt;
+  return l_t.front();
+}
+boost::asio::awaitable<void> sqlite_database::remove_task_type_asset_type_link_by_asset_type(
+    const uuid& in_asset_type_id
+) {
+  using namespace sqlite_orm;
+  DOODLE_TO_SQLITE_THREAD_2();
+  impl_->storage_any_.remove_all<task_type_asset_type_link>(
+      where(c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)
+  );
+  DOODLE_TO_SELF();
+  co_return;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
@@ -1218,6 +1241,7 @@ DOODLE_INSTALL_RANGE(person_department_link)
 DOODLE_INSTALL_RANGE(working_file)
 DOODLE_INSTALL_RANGE(entity_link)
 DOODLE_INSTALL_RANGE(playlist_shot)
+DOODLE_INSTALL_RANGE(task_type_asset_type_link)
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)

@@ -38,13 +38,12 @@ struct DOODLE_CORE_API asset_type {
   // 特效
   static uuid get_effect_id();
 
-
   // from json
   template <typename BasicJsonType>
   friend void from_json(const BasicJsonType& j, asset_type& p) {
     j.at("name").get_to(p.name_);
     j.at("short_name").get_to(p.short_name_);
-    j.at("description").get_to(p.description_);
+    if (j.contains("description") && j.at("description").is_string()) j.at("description").get_to(p.description_);
     if (j.contains("task_types")) j.at("task_types").get_to(p.task_types_);
     j.at("archived").get_to(p.archived_);
   }

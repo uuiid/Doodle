@@ -11,6 +11,9 @@
 
 #include <boost/lockfree/spsc_queue.hpp>
 
+#include <optional>
+
+
 namespace doodle {
 struct preview_file;
 struct preview_files_for_entity_t;
@@ -31,6 +34,7 @@ struct entity_link;
 struct project_task_status_link;
 struct entity_asset_extend;
 struct playlist_shot;
+struct task_type_asset_type_link;
 struct working_file;
 namespace attendance_helper {
 struct database_t;
@@ -196,5 +200,9 @@ class sqlite_database {
   std::vector<playlist_shot> get_playlist_shot_entity(const uuid& in_playlist_id);
 
   boost::asio::awaitable<void> remove_playlist_shot_for_playlist(const uuid& in_playlist_id);
+  std::optional<task_type_asset_type_link> get_task_type_asset_type_link(
+      const uuid& in_task_type_id, const uuid& in_asset_type_id
+  );
+  boost::asio::awaitable<void> remove_task_type_asset_type_link_by_asset_type(const uuid& in_asset_type_id);
 };
 }  // namespace doodle

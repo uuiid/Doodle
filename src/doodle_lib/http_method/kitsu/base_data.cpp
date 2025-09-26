@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-4-8.
 //
+#include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/metadata/department.h>
@@ -10,6 +11,9 @@
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
+#include <memory>
+#include <vector>
+
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> departments::get(session_data_ptr in_handle) {
   person_.check_admin();
@@ -18,7 +22,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments::get(s
 }
 boost::asio::awaitable<boost::beast::http::message_generator> departments_instance::put(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql            = g_ctx().get<sqlite_database>();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
   in_handle->get_json().get_to(*l_department_ptr);
   co_await l_sql.install(l_department_ptr);
@@ -46,4 +50,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> status_automations
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_instance::put(
+    session_data_ptr in_handle
+) {
+  person_.check_admin();
+  auto l_sql            = g_ctx().get<sqlite_database>();
+  auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
+  in_handle->get_json().get_to(*l_asset_type_ptr);
+
+  auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
+  for (auto&& l_task_type_id : l_asset_type_ptr->task_types_) {
+    l_task_type_asset_type_link_list->emplace_back(
+        task_type_asset_type_link{
+            .asset_type_id_ = l_asset_type_ptr->uuid_id_,
+            .task_type_id_  = l_task_type_id,
+        }
+    );
+  }
+  co_await l_sql.remove_task_type_asset_type_link_by_asset_type(l_asset_type_ptr->uuid_id_);
+  co_await l_sql.install_range(l_task_type_asset_type_link_list);
+  co_await l_sql.install(l_asset_type_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
+}
 }  // namespace doodle::http
