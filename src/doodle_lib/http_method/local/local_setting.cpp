@@ -20,6 +20,7 @@
 namespace doodle::http::local {
 
 void local_http_fun::parse_header(const session_data_ptr& in_handle) {
+    if (in_handle->method() == boost::beast::http::verb::options) return;
   auto l_jwt = in_handle->req_header_[boost::beast::http::field::cookie];
   if (l_jwt.empty()) l_jwt = in_handle->req_header_[boost::beast::http::field::authorization];
 

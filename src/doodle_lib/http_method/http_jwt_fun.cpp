@@ -16,6 +16,7 @@
 namespace doodle::http {
 
 void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
+  if (in_handle->method() == boost::beast::http::verb::options) return;
   if (!g_ctx().contains<kitsu_ctx_t>()) return;
   auto l_jwt = in_handle->req_header_[boost::beast::http::field::cookie];
   if (l_jwt.empty()) l_jwt = in_handle->req_header_[boost::beast::http::field::authorization];
@@ -68,7 +69,8 @@ bool http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) con
 void http_jwt_fun::http_jwt_t::check_project_access(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
-  if (!(                                                                               //
+  if (
+      !(                                                                               //
           person_.role_ == person_role_type::admin ||                                  // 是管理员
           person_.role_ == person_role_type::manager ||                                // 是项目经理
           g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id)  // 在项目中
@@ -79,7 +81,8 @@ void http_jwt_fun::http_jwt_t::check_project_access(const uuid& in_project_id) c
 void http_jwt_fun::http_jwt_t::check_task_assign_access(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
-  if (!(                                                                                 //
+  if (
+      !(                                                                                 //
           (person_.role_ == person_role_type::admin ||                                   // 是管理员
            person_.role_ == person_role_type::manager ||                                 // 是项目经理
            g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id))  // 在项目中
