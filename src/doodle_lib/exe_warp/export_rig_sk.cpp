@@ -21,7 +21,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   auto l_arg = std::make_shared<maya_exe_ns::export_rig_arg>();
   l_arg->set_file_path(maya_file_);
-  l_arg->set_logger(logger_);
+  l_arg->set_logger(logger_ptr_);
   co_await l_arg->async_run_maya();
   auto l_maya_file = l_arg->get_out_arg();
   FSys::path l_import_game_path{doodle_config::ue4_game};
@@ -49,15 +49,15 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   FSys::copy_diff(
       l_ue_project.parent_path() / doodle_config::ue4_content, l_local_ue_project_dir / doodle_config::ue4_content,
-      logger_
+      logger_ptr_
   );
   FSys::copy_diff(
       l_ue_project.parent_path() / doodle_config::ue4_config, l_local_ue_project_dir / doodle_config::ue4_config,
-      logger_
+      logger_ptr_
   );
-  FSys::copy_diff(l_ue_project, l_local_ue_project, logger_);
+  FSys::copy_diff(l_ue_project, l_local_ue_project, logger_ptr_);
 
-  logger_->warn("排队导入skin文件 {} ", l_local_ue_project);
+  logger_ptr_->warn("排队导入skin文件 {} ", l_local_ue_project);
   // 添加三次重试
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   for (int i = 0; i < 3; ++i) {
@@ -65,13 +65,13 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
       co_await async_run_ue(
           {l_local_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
            "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
-          logger_, false, l_time_info
+          logger_ptr_, false, l_time_info
       );
       l_time_info->info_ = fmt::format("导入skin文件 {}", l_fbx);
       on_run_time_info_(*l_time_info);
       break;
     } catch (const doodle_error& error) {
-      logger_->warn("导入文件失败 开始第 {} 重试", i + 1);
+      logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
       l_time_info->info_ = fmt::format("导入skin文件 {} 重试", l_fbx);
       on_run_time_info_(*l_time_info);
       if (i == 2) throw;
@@ -81,7 +81,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   // 上传文件
   FSys::copy_diff(
       l_local_ue_project_dir.parent_path() / doodle_config::ue4_content,
-      l_ue_project.parent_path() / doodle_config::ue4_content, logger_
+      l_ue_project.parent_path() / doodle_config::ue4_content, logger_ptr_
   );
   co_return;
 }

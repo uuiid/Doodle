@@ -201,7 +201,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     } else if (in_json.contains("create_rig_sk")) {  /// 创建 rig
       auto l_arg_t = std::make_shared<export_rig_sk_arg>();
       in_json.get_to(*l_arg_t);
-      l_arg_t->logger_ = logger_;
       arg_             = l_arg_t;
     } else {  /// 导出fbx
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
@@ -390,6 +389,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_json = in_handle->get_json();
+  l_json.get_to(*l_ptr);
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
