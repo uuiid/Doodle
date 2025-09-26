@@ -3,7 +3,6 @@
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QScrollArea, QVBoxLayout, QSpacerItem, QSizePolicy, QWidget, QPushButton, QLabel, QFrame
 
-from doodle.style import main_style
 
 
 class DoodleScrollArea(QWidget):

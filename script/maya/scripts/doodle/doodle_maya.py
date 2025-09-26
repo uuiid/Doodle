@@ -246,3 +246,11 @@ class State(object):
     @staticmethod
     def remove_menu():
         cmds.deleteUI("doodle", menu=True)
+
+    @staticmethod
+    def set_controller_value(controller, value):
+        cmds.setAttr(controller, value)
+
+    @staticmethod
+    def get_controller_value(controller):
+        return cmds.getAttr(controller)
