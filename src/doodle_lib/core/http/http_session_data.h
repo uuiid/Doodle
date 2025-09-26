@@ -13,6 +13,7 @@
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
+#include <string>
 #include <tl/expected.hpp>
 
 namespace doodle::http {
@@ -67,6 +68,15 @@ class session_data : public std::enable_shared_from_this<session_data> {
   boost::asio::awaitable<void> async_websocket_session();
   boost::asio::awaitable<void> save_bode_file(const std::string& in_ext);
   boost::asio::awaitable<void> save_multipart_form_data_file();
+  std::string access_control_allow_origin_{"*"};
+
+  template <typename T>
+  auto set_response_header(T& in_res, std::string_view in_mine_type);
+
+  template <typename T>
+  auto set_response_file_header(
+      T& in_res, std::string_view in_mine_type, const FSys::path& in_path, bool has_cache_control
+  );
 
  public:
   session_data() = default;
@@ -95,6 +105,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   bool is_deflate() const { return req_header_[boost::beast::http::field::accept_encoding].contains("deflate"); }
   boost::asio::awaitable<void> run();
   const boost::beast::http::verb& method() const { return method_verb_; }
+  void set_access_control_allow_origin(const std::string& in_str) { access_control_allow_origin_ = in_str; }
 
   void async_run_detached();
   boost::beast::http::message_generator make_error_code_msg(

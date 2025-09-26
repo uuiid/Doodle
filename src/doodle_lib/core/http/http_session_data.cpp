@@ -47,14 +47,14 @@ std::string generate_etag(const FSys::path& in_path) {
   }
   return fmt::format("\"{}-{}-{}\"", l_time.time_since_epoch().count(), FSys::file_size(in_path), l_path_adler);
 }
+}  // namespace
 
 template <typename T>
-auto set_response_header(T& in_res, std::string_view in_mine_type) {
+auto session_data::set_response_header(T& in_res, std::string_view in_mine_type) {
   auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
-  ;
   in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
   in_res.set(boost::beast::http::field::content_type, in_mine_type);
-  in_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  in_res.set(boost::beast::http::field::access_control_allow_origin, access_control_allow_origin_);
   in_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
   in_res.set(boost::beast::http::field::access_control_allow_methods, "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   in_res.set(
@@ -64,7 +64,7 @@ auto set_response_header(T& in_res, std::string_view in_mine_type) {
   in_res.set(boost::beast::http::field::date, fmt::format("{:%a, %d %b %Y %T} GMT", l_time));
 }
 template <typename T>
-auto set_response_file_header(
+auto session_data::set_response_file_header(
     T& in_res, std::string_view in_mine_type, const FSys::path& in_path, bool has_cache_control
 ) {
   set_response_header(in_res, in_mine_type);
@@ -80,7 +80,7 @@ auto set_response_file_header(
   in_res.set(boost::beast::http::field::last_modified, fmt::format("{:%a, %d %b %Y %T} GMT", l_last_time));
   in_res.set(boost::beast::http::field::etag, generate_etag(in_path));
 }
-}  // namespace
+
 session_data::session_data(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr)
     : stream_(std::make_unique<tcp_stream_type>(std::move(in_socket))),
       route_ptr_(std::move(in_route_ptr)),
@@ -169,6 +169,7 @@ void session_data::set_session() {
     }
   }
   callback_.reset();
+  access_control_allow_origin_ = "*";
 }
 boost::asio::awaitable<void> session_data::save_bode_file(const std::string& in_ext) {
   auto l_file_request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::file_body>>(
