@@ -282,7 +282,7 @@ FSys::path split_uuid_path(const FSys::path &in_file_path) {
 
 bool copy_diff_impl(const FSys::path &from, const FSys::path &to) {
   if (from.extension() == doodle_config::doodle_flag_name) return false;
-  if (!FSys::exists(to) || FSys::file_size(from) != FSys::file_size(to) ||
+  if (!FSys::exists(to) /* || FSys::file_size(from) != FSys::file_size(to)  */||
       FSys::last_write_time(from) > FSys::last_write_time(to)) {
     if (auto l_p = to.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     return FSys::copy_file(from, to, FSys::copy_options::overwrite_existing);
