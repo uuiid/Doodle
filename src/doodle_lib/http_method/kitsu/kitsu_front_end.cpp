@@ -64,7 +64,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::g
   l_value = *cache_->Get(l_path);
 
   co_return in_handle->make_msg(
-      std::move(l_value), http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension()), .is_deflate_ = true}
+      std::move(l_value), http_header_ctrl{
+                              .mine_type_         = kitsu::mime_type(l_path.extension()),
+                              .has_cache_control_ = false,
+                              .is_deflate_        = true,
+                          }
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
