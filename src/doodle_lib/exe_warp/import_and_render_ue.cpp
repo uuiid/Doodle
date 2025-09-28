@@ -315,6 +315,7 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
       if (i == 2) throw;
     }
   }
+  l_time_info->end_time_ = std::chrono::system_clock::now();
   on_run_time_info_(*l_time_info);
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
