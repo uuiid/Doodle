@@ -650,7 +650,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 			// FSequencerUtilities::MakeNewSpawnable()
 
 			L_Task = L_ShotSequence->GetMovieScene()->GetCameraCutTrack();
-			EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
+			// EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
 		}
 
 		if (!L_Task) return;
@@ -786,6 +786,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 			EditorAssetSubsystem->MakeDirectory(FolderPath);
 		}
 	}
+	EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
 	L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile6", "开始导入帧 ..."));
 }
 

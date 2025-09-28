@@ -58,7 +58,7 @@
       }
     },
     {
-      "label": "build 5.2 plug",
+      "label": "build UE plug",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/Build_UE.cmd",
       "problemMatcher": []
