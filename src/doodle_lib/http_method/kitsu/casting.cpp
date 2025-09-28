@@ -1,6 +1,8 @@
 //
 // Created by TD on 25-8-21.
 //
+#include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -9,6 +11,9 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
+
+#include <map>
+#include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle::http {
 struct actions_projects_casting_replace_arg {
@@ -209,6 +214,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   person_.check_project_access(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_));
 }
+
+namespace {
+auto get_entity_link_by_entity_id(const uuid& in_entity_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+
+  using namespace sqlite_orm;
+  auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == in_entity_id));
+
+  return l_ret;
+}
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_entities_casting::put(
     session_data_ptr in_handle
 ) {
@@ -220,11 +237,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
 
+  std::map<std::int64_t, uuid> l_entity_org_links_map{};
+  for (auto&& i : get_entity_link_by_entity_id(entity_id_)) {
+    l_entity_org_links_map[i.id_] = i.uuid_id_;
+  }
+
   auto l_list = in_handle->get_json().get<std::vector<entity_link>>();
   for (auto&& i : l_list) {
     if (i.entity_out_id_.is_nil()) continue;
     auto l_link = l_sql.get_entity_link(entity_id_, i.entity_out_id_);
     if (l_link) {
+      if (l_entity_org_links_map.contains(l_link->id_)) l_entity_org_links_map.erase(l_link->id_);
       l_link->nb_occurences_ = i.nb_occurences_;
       l_link->label_         = i.label_;
       l_entity_links->emplace_back(*l_link);
@@ -264,18 +287,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
       );
       l_delay_events.emplace_back([i, this]() {
         socket_io::broadcast(
-            "entity-link:new",
-            nlohmann::json{
-                {"entity_link_id", i.uuid_id_},
-                {"entity_in_id", i.entity_in_id_},
-                {"entity_out_id", i.entity_out_id_},
-                {"nb_occurences", i.nb_occurences_},
-                {"project_id", project_id_}
-            }
+            "entity-link:new", nlohmann::json{
+                                   {"entity_link_id", i.uuid_id_},
+                                   {"entity_in_id", i.entity_in_id_},
+                                   {"entity_out_id", i.entity_out_id_},
+                                   {"nb_occurences", i.nb_occurences_},
+                                   {"project_id", project_id_}
+                               }
         );
       });
     }
   }
+
+  for (auto&& i : l_entity_org_links_map) co_await l_sql.remove<entity_link>(i.second);
+
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
   co_await l_sql.install_range(l_entity_links);
@@ -323,12 +348,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
     l_entity_links->emplace_back(*l_link);
     l_delay_events.emplace_back([&, this]() {
       socket_io::broadcast(
-          "entity-link:update",
-          nlohmann::json{
-              {"entity_link_id", l_link->uuid_id_},
-              {"nb_occurences", l_link->nb_occurences_},
-              {"project_id", project_id_}
-          }
+          "entity-link:update", nlohmann::json{
+                                    {"entity_link_id", l_link->uuid_id_},
+                                    {"nb_occurences", l_link->nb_occurences_},
+                                    {"project_id", project_id_}
+                                }
       );
     });
   }

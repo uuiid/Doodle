@@ -1261,6 +1261,7 @@ DOODLE_REMOVE_BY_UUID(assets_file_helper::database_t)
 DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(working_file)
+DOODLE_REMOVE_BY_UUID(entity_link)
 
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uuid>& in_data) {
