@@ -38,6 +38,20 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", maya_file_});
   auto l_fbx = l_maya_file.out_file_list.front().out_file;
+
+  if (!FSys::exists(l_fbx)) throw_exception(doodle_error{"文件 {} 不存在", l_fbx});
+  {
+    std::string l_new_fbx_name{};
+    if (asset_type_id_ == asset_type::get_character_id()) {
+      l_new_fbx_name = fmt::format("SK_Ch{}.fbx", bian_hao_, pin_yin_ming_cheng_);
+    } else if (asset_type_id_ == asset_type::get_prop_id()) {
+      l_new_fbx_name = fmt::format("SK_{}{}{}.fbx", pin_yin_ming_cheng_, ban_ben_.empty() ? "" : "_", ban_ben_);
+    }
+    logger_ptr_->info("重命名 {} 为 {}", l_fbx.filename(), l_new_fbx_name);
+    FSys::rename(l_fbx, l_fbx.parent_path() / l_new_fbx_name);
+    l_fbx = l_fbx.parent_path() / l_new_fbx_name;
+  }
+
   nlohmann::json l_json{};
   l_json            = import_and_render_ue_ns::import_skin_file{.fbx_file_ = l_fbx, .import_dir_ = l_import_game_path};
   auto l_tmp_path   = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
