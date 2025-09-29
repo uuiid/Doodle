@@ -481,7 +481,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateDirectionalLight()
 {
 	//-----------------------
 	MainDirectionalLight = TheSequenceWorld->SpawnActor<ADirectionalLight>(FVector::ZeroVector, FRotator::ZeroRotator);
-	MainDirectionalLight->SetBrightness(3.0f);
+	MainDirectionalLight->SetBrightness(0.5f);
 	MainDirectionalLight->GetLightComponent()->SetLightingChannels(false, true, false);
 
 	// 设置可移动性
@@ -731,7 +731,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 		L_SpotLight->GetLightComponent()->SetVolumetricScatteringIntensity(0.0f);
 		L_SpotLight->GetLightComponent()->SetLightingChannels(false, true, false);
 		L_SpotLight->SetMobility(EComponentMobility::Movable);
-		L_SpotLight->SetBrightness(1.0f);
+		L_SpotLight->SetBrightness(0.3f);
 		L_SpotLight->Destroy(true);
 		FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddSpawnable(L_SpotLight->GetActorLabel(), *L_SpotLight);
 		// FMovieSceneSpawnable* L_Spawnable = TheLevelSequence->GetMovieScene()->FindSpawnable(L_GUID);
