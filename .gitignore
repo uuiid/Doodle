@@ -80,6 +80,8 @@ CMakeUserPresets.json
 .run
 
 /vcpkg/
+# 外部库
+/lib
 
 
 # 二进制测试文件
