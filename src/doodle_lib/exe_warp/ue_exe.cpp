@@ -18,6 +18,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/process/process.hpp>
+#include <boost/scope/scope_exit.hpp>
 #include <boost/system.hpp>
 
 #include "fmt/core.h"
@@ -28,6 +29,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+
 
 namespace doodle {
 
@@ -85,33 +87,29 @@ void install_UnrealEngine5VLC(const FSys::path& path) {
 }
 
 boost::asio::awaitable<void> installUePath(const FSys::path& path) {
-  try {
-    auto l_client   = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
-    auto l_path     = co_await l_client->get_ue_plugin(core_set::get_set().ue4_version);
-    auto l_out_path = l_path.parent_path() / l_path.stem();
-    if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
-    if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
-    bit7z::Bit7zLibrary l_lib{"7zip.dll"};
-    bit7z::BitFileExtractor l_extractor{l_lib};
-    l_extractor.extract(l_path.generic_string(), l_out_path.generic_string());
-    l_out_path /= "Doodle";
-    if (!FSys::exists(l_out_path)) throw_exception(doodle_error{"UE 插件解压失败"});
+  boost::scope::scope_exit l_scope{[]{}};
+  auto l_client   = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_path     = co_await l_client->get_ue_plugin(core_set::get_set().ue4_version);
+  auto l_out_path = l_path.parent_path() / l_path.stem();
+  if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
+  if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
+  bit7z::Bit7zLibrary l_lib{"7zip.dll"};
+  bit7z::BitFileExtractor l_extractor{l_lib};
+  l_extractor.extract(l_path.generic_string(), l_out_path.generic_string());
+  l_out_path /= "Doodle";
+  if (!FSys::exists(l_out_path)) throw_exception(doodle_error{"UE 插件解压失败"});
 
-    /// \brief 安装我们自己的插件
-    auto targetPath = path / "Plugins" / "Doodle";
+  /// \brief 安装我们自己的插件
+  auto targetPath = path / "Plugins" / "Doodle";
 
-    if (FSys::exists(targetPath)) {
-      FSys::remove_all(targetPath);
-    } else {
-      FSys::create_directories(targetPath);
-    }
-
-    DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
-    copy(l_out_path, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
-  } catch (FSys::filesystem_error& error) {
-    DOODLE_LOG_ERROR(boost::diagnostic_information(error));
-    throw;
+  if (FSys::exists(targetPath)) {
+    FSys::remove_all(targetPath);
+  } else {
+    FSys::create_directories(targetPath);
   }
+
+  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
+  copy(l_out_path, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 
 bool chick_ue_plug() {

@@ -58,12 +58,19 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
   boost::beast::http::response<boost::beast::http::file_body> l_res{};
   boost::system::error_code l_ec{};
   l_res.body().open(l_temp_path.string().c_str(), boost::beast::file_mode::write, l_ec);
-  if (l_ec) throw_exception(doodle_error{"kitsu get ue plugin open file error"});
-  if (!l_res.body().is_open()) throw_exception(doodle_error{"kitsu get ue plugin open file error"});
+  auto l_colse_and_remove_file = [&]() {
+    l_res.body().close();
+    if (FSys::exists(l_temp_path)) FSys::remove(l_temp_path);
+  };
+
+  if (l_ec) l_colse_and_remove_file(), throw_exception(doodle_error{"kitsu get ue plugin open file error"});
+  if (!l_res.body().is_open())
+    l_colse_and_remove_file(), throw_exception(doodle_error{"kitsu get ue plugin open file error"});
   http_client_ptr_->body_limit_ = 2ll * 1024 * 1024 * 1024;  // 2G
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   http_client_ptr_->body_limit_.reset();
-  if (l_res.result() != boost::beast::http::status::ok) throw_exception(doodle_error{"kitsu get ue plugin error"});
+  if (l_res.result() != boost::beast::http::status::ok)
+    l_colse_and_remove_file(), throw_exception(doodle_error{"kitsu get ue plugin error"});
   co_return l_temp_path;
 }
 
@@ -122,7 +129,7 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
     auto l_working_files        = l_json_task_full.at("working_files").get<std::vector<working_file>>();
     const auto l_task_type_id   = l_json_task_full.at("task_type_id").get<uuid>();
     // 搜索maya文件
-    auto l_it = ranges::find_if(l_working_files, [&](const working_file& i) {
+    auto l_it                   = ranges::find_if(l_working_files, [&](const working_file& i) {
       return i.software_type_ == software_enum::maya;
     });
     if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的maya working file"});
