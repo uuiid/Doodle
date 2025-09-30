@@ -8,7 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
-  "builtin-baseline": "09b46f6e6678ef86ddb74f1b4333f503485ef551",
+  "builtin-baseline": "12c7955c3cf970113a920480c4006c2f944dab63",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
@@ -88,7 +88,14 @@
       ]
     },
     "dem-bones",
-    "winreg"
+    "winreg",
+    {
+      "name": "libtorch",
+      "default-features": true,
+      "features": [
+        "cuda"
+      ]
+    }
   ],
   "vcpkg-configuration": {
     "overlay-ports": [

@@ -20,7 +20,6 @@ call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build
 :end
 
 
-set CUDNN_PATH=E:/Doodle/lib/cudnn
 echo "Current Location is %my_pwd%"
 echo "build config Ninja_release%Doodle_suffix%"
 echo "build target release_exe%Doodle_suffix%"
