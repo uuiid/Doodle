@@ -160,6 +160,8 @@ bool http_jwt_fun::http_jwt_t::is_task_department_access(const task& in_task_id,
   if (std::ranges::find(in_person_id.departments_, l_task_type.uuid_id_) != in_person_id.departments_.end() &&
       person_.uuid_id_ == in_person_id.uuid_id_)
     return true;
+
+  return false;
 }
 
 void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) const {

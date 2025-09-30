@@ -2,23 +2,22 @@
 // Created by TD on 24-10-15.
 //
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
-#include "doodle_lib/core/http/http_function.h"
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
 
 #include "model_library.h"
-#include <tl/expected.hpp>
 #include <treehh/tree.hh>
 namespace doodle::http::model_library {
 
-tl::expected<void, std::string> check_data(const assets_helper::database_t& in_data) {
+void check_data(const assets_helper::database_t& in_data) {
   /// 检查是否存在引用自身
   if (!in_data.uuid_parent_.is_nil() && in_data.uuid_id_ == in_data.uuid_parent_)
-    return tl::make_unexpected(fmt::format(" {} 不能引用自身", in_data.uuid_id_));
+    throw_exception(doodle_error{"{} 不能引用自身", in_data.uuid_id_});
 
   /// 检查是否存在循环引用
   const auto& l_list = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
@@ -29,11 +28,10 @@ tl::expected<void, std::string> check_data(const assets_helper::database_t& in_d
   auto l_parent_uuid = in_data.uuid_parent_;
   for (int i = 0; i < 101; ++i) {
     if (l_parent_uuid.is_nil()) break;
-    if (!l_map.contains(l_parent_uuid)) return tl::make_unexpected(fmt::format("{} 未找到父节点", in_data.uuid_id_));
+    if (!l_map.contains(l_parent_uuid)) throw_exception(doodle_error{"{} 未找到父节点", in_data.uuid_id_});
     l_parent_uuid = l_map[l_parent_uuid]->uuid_parent_;
-    if (i == 100) return tl::make_unexpected(fmt::format(" {} 节点存在循环引用或者达到最大的深度", in_data.uuid_id_));
+    if (i == 100) throw_exception(doodle_error{" {} 节点存在循环引用或者达到最大的深度", in_data.uuid_id_});
   }
-  return {};
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::get(
