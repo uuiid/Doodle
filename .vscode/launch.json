@@ -44,7 +44,7 @@
                 "--cloth_sim_config=${workspaceFolder}/build/test_4.json"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
+            "cwd": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin",
             "environment": [
                 {
                     "name": "MAYA_LOCATION",
@@ -72,7 +72,6 @@
                 "${workspaceFolder}/build/test_sim_fbx.mel"
             ],
             "stopAtEntry": false,
-            "cwd": "${command:cmake.launchTargetDirectory}",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",

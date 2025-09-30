@@ -108,6 +108,16 @@ void http_jwt_fun::http_jwt_t::check_manager() const {
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+
+void http_jwt_fun::http_jwt_t::check_project_supervisor(const uuid& in_project_id) const {
+  if (is_project_supervisor(in_project_id)) return;
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+bool http_jwt_fun::http_jwt_t::is_project_supervisor(const uuid& in_project_id) const {
+  return is_project_manager(in_project_id) ||
+         (person_.role_ == person_role_type::supervisor &&
+          g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id));
+}
 void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) const {
   check_task_action_access(g_ctx().get<sqlite_database>().get_by_uuid<task>(in_task_id));
 }
@@ -131,23 +141,27 @@ void http_jwt_fun::http_jwt_t::check_task_action_access(const task& in_task_id) 
 }
 
 void http_jwt_fun::http_jwt_t::check_task_department_access(const task& in_task_id, const person& in_person_id) const {
-  if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::manager) return;
+  if (is_task_department_access(in_task_id, in_person_id)) return;
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+
+bool http_jwt_fun::http_jwt_t::is_task_department_access(const task& in_task_id, const person& in_person_id) const {
+  if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::manager) return true;
   auto l_sql = g_ctx().get<sqlite_database>();
-  if (l_sql.is_person_in_project(person_, in_task_id.project_id_)) return;
+  if (l_sql.is_person_in_project(person_, in_task_id.project_id_)) return true;
 
   auto l_task_type = l_sql.get_by_uuid<task_type>(in_task_id.task_type_id_);
   if (person_.role_ == person_role_type::supervisor) {
-    if (person_.departments_.empty()) return;
+    if (person_.departments_.empty()) return false;
     if (std::ranges::find(person_.departments_, l_task_type.uuid_id_) != person_.departments_.end() &&
         !in_person_id.departments_.empty())
-      return;
+      return true;
   }
   if (std::ranges::find(in_person_id.departments_, l_task_type.uuid_id_) != in_person_id.departments_.end() &&
       person_.uuid_id_ == in_person_id.uuid_id_)
-    return;
-
-  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+    return true;
 }
+
 void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) const {
   if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::manager) return;
   auto l_sql = g_ctx().get<sqlite_database>();

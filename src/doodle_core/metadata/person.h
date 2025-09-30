@@ -8,10 +8,10 @@
 #include <magic_enum/magic_enum_all.hpp>
 namespace doodle {
 enum class person_role_type {
-  user,        // 艺术家
+  user,        // 组员
   admin,       // 超级管理员
-  supervisor,  // 组长
-  manager,     // 项目经理
+  supervisor,  // 项目人
+  manager,     // 组长
   client,
   vendor,
 };
