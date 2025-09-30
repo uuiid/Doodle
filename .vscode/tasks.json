@@ -58,6 +58,39 @@
       }
     },
     {
+      "label": "cmake build maya",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--build",
+        "--preset",
+        "debug_maya_plug"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": true
+      }
+    },
+    {
+      "label": "cmake clean",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--build",
+        "${workspaceFolder}/build/${input:build_dir}",
+        "--target",
+        "clean"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "build UE plug",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/Build_UE.cmd",
@@ -103,6 +136,17 @@
       "type": "promptString",
       "description": "input arg",
       "default": "dingding_base/client_get_user_attendance"
+    },
+    {
+      "id": "build_dir",
+      "type": "pickString",
+      "description": "构建目录",
+      "options": [
+        "Ninja_debug",
+        "Ninja_RelWithDebInfo",
+        "Ninja_release",
+        "vs2022"
+      ]
     },
     {
       "id": "dep_opt",

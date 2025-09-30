@@ -48,7 +48,13 @@
       ]
     },
     "sqlite-orm",
-    "jwt-cpp",
+    {
+      "name": "jwt-cpp",
+      "default-features": true,
+      "features": [
+        "picojson"
+      ]
+    },
     "vpetrigo-caches",
     "mailio",
     {

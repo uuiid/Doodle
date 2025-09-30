@@ -80,7 +80,8 @@
                 }
             ],
             "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "preLaunchTask": "cmake build maya"
         },
         {
             "name": "maya (Windows) 附加",

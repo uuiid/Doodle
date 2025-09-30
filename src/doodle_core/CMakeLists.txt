@@ -54,7 +54,7 @@ target_link_libraries(
         Boost::contract
         Boost::filesystem
         Boost::coroutine
-
+        fmt::fmt
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT
         spdlog::spdlog
