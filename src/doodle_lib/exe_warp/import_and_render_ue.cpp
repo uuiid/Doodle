@@ -453,11 +453,11 @@ boost::asio::awaitable<void> args::crate_skin() {
     if (l_data.is_camera_) continue;  // 相机文件
     if (l_data.file_.extension() == ".abc") continue;
     if (l_data.maya_local_file_.empty()) continue;  // 防止空文件打开卡死进程
-    auto l_import_game_path  = FSys::path{doodle_config::ue4_game} / "auto_light";
-    l_data.skin_             = l_import_game_path / fmt::format("SK_{}", l_data.maya_local_file_.stem());
+    auto l_import_game_path = FSys::path{doodle_config::ue4_game} / "auto_light";
+    l_data.skin_            = l_import_game_path / fmt::format("SK_{}", l_data.maya_local_file_.stem());
 
-    auto l_import_local_path = render_project_.parent_path() / FSys::path{doodle_config::ue4_content} / "auto_light" /
-                               l_data.maya_local_file_.filename();
+    auto l_import_local_path =
+        render_project_.parent_path() / FSys::path{doodle_config::ue4_content} / "auto_light" / l_data.skin_.filename();
     l_import_local_path.replace_extension(".uasset");
     if (FSys::exists(l_import_local_path) && !l_data.update_files) continue;
 
