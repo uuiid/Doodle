@@ -1150,7 +1150,7 @@ void fbx_write::write(
     const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
     const MTime& in_end
 ) {
-  if (!logger_)
+  if (!logger_) {
     if (!g_ctx().contains<fbx_logger>())
       logger_ =
           g_ctx()
@@ -1158,6 +1158,7 @@ void fbx_write::write(
               .logger_;
     else
       logger_ = g_ctx().get<fbx_logger>().logger_;
+  }
 
   log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
 
@@ -1232,7 +1233,7 @@ void fbx_write::write(
 void fbx_write::write(
     MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture
 ) {
-  if (!logger_)
+  if (!logger_) {
     if (!g_ctx().contains<fbx_logger>())
       logger_ =
           g_ctx()
@@ -1240,6 +1241,7 @@ void fbx_write::write(
               .logger_;
     else
       logger_ = g_ctx().get<fbx_logger>().logger_;
+  }
 
   log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
 
