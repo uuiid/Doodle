@@ -21,6 +21,7 @@ install(TARGETS doodle_kitsu_supplement
         RUNTIME_DEPENDENCIES
         DIRECTORIES
         $<TARGET_FILE_DIR:Fbx::Fbx>
+        $ENV{CUDA_PATH}/bin
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )

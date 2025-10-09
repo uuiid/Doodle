@@ -51,6 +51,7 @@ install(TARGETS doodle_maya_exe
         RUNTIME_DEPENDENCIES
         DIRECTORIES
         ${MAYA_BASE_DIR}/bin
+        $ENV{CUDA_PATH}/bin
         $<TARGET_FILE_DIR:Fbx::Fbx>
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"

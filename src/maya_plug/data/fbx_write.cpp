@@ -889,6 +889,8 @@ void fbx_node_mesh::build_blend_shape() {
             std::string_view{"CheekRaiserLayer"},  std::string_view{"MouthNarrowLayer"},
             std::string_view{"CheekLayer"},        std::string_view{"RegionsLayer"},
             std::string_view{"UpMidLoLayer"},      std::string_view{"asFaceBS"},
+            std::string_view{"ByeLidLayer"},       std::string_view{"Envelope"},
+            std::string_view{"SquintLayer"},       std::string_view{"ByeBrowLayer"}
         };
         if (std::any_of(std::begin(l_name_list), std::end(l_name_list), [&](const std::string_view& in_name) -> bool {
               return conv::to_s(l_name) == in_name;

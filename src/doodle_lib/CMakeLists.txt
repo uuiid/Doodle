@@ -29,6 +29,7 @@ add_subdirectory(long_task)
 add_subdirectory(launch)
 add_subdirectory(http_method)
 add_subdirectory(http_client)
+add_subdirectory(ai)
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -74,6 +75,7 @@ target_link_libraries(doodle_lib
         OpenSSL::SSL
         mailio::mailio
         unofficial::bit7z::bit7z64
+        torch
         #        OpenSSL::applink
 )
 
