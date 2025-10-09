@@ -31,13 +31,24 @@ function(dow_minject)
 endfunction()
 dow_minject()
 
+# add_custom_command(
+#         TARGET doodle_kitsu_supplement
+#         POST_BUILD
+#         COMMAND ${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>
+# )
+# add_custom_target(genexdebug2
+#         COMMAND ${CMAKE_COMMAND} -E echo "${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>")
+
+
+# 复制动态加载库 E:\Doodle\vcpkg\buildtrees\libtorch\x64-windows-dbg\bin\
 add_custom_command(
         TARGET doodle_kitsu_supplement
         POST_BUILD
-        COMMAND ${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement>
+        # COMMAND ${CMAKE_COMMAND} -E echo "${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll" 
+
 )
-# add_custom_target(genexdebug2
-#         COMMAND ${CMAKE_COMMAND} -E echo "${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>")
+
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
