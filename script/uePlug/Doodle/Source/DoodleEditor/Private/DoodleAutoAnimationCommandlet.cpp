@@ -1354,7 +1354,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	if (UMoviePipelineAntiAliasingSetting* AntiAliasing = Cast<UMoviePipelineAntiAliasingSetting>(
 		Config->FindOrAddSettingByClass(UMoviePipelineAntiAliasingSetting::StaticClass())); AntiAliasing)
 	{
-		AntiAliasing->SpatialSampleCount = 7;
+		AntiAliasing->SpatialSampleCount = 1;
 		AntiAliasing->TemporalSampleCount = 1;
 		AntiAliasing->bOverrideAntiAliasing = true;
 		AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
