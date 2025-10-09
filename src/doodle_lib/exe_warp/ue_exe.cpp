@@ -148,7 +148,7 @@ boost::asio::awaitable<void> async_run_ue(
 
   in_logger->info("开始检查 UE 版本");
   if (in_time) in_time->start_time_ = std::chrono::system_clock::now();
-  if (!chick_ue_plug()) {
+  if (chick_ue_plug()) {
     in_logger->info("UE 插件已经是最新版本, 无需安装");
   } else {
     in_logger->info("UE 插件需要更新, 开始安装");
