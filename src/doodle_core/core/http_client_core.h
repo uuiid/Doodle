@@ -317,7 +317,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle
   ) {
-    in_req.payload_size();
+    in_req.prepare_payload();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
         read_and_write_compose_parser<http_client, RequestType, ResponseBody>{
             in_req, this, boost::asio::coroutine{}, out_res
@@ -404,7 +404,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle = boost::asio::use_awaitable
   ) {
-    in_req.payload_size();
+    in_req.prepare_payload();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
         read_and_write_compose_parser<http_client_ssl, RequestType, ResponseBody>{
             in_req, this, boost::asio::coroutine{}, out_res

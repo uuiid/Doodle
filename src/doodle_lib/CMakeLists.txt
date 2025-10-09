@@ -75,7 +75,7 @@ target_link_libraries(doodle_lib
         OpenSSL::SSL
         mailio::mailio
         unofficial::bit7z::bit7z64
-        torch
+        # torch
         #        OpenSSL::applink
 )
 
