@@ -62,6 +62,9 @@ install(TARGETS doodle_kitsu_supplement
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )
+install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll
+        DESTINATION bin
+)
 
 set(DOODLE_INSTALL_IGNORE_ITEM
         doodle_maya_exe_2018.exe
