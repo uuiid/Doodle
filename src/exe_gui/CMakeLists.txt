@@ -62,7 +62,16 @@ install(TARGETS doodle_kitsu_supplement
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )
-install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll
+
+find_file(libomp140_x86_64_dll
+        NAMES
+        libomp140.x86_64.dll
+        DOC
+        "libomp140.x86_64.dll"
+)
+
+install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll 
+        ${libomp140_x86_64_dll}
         DESTINATION bin
 )
 
