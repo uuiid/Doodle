@@ -10,8 +10,34 @@ set_target_properties(doodle_kitsu_supplement
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 target_link_libraries(doodle_kitsu_supplement
         PUBLIC
+        mimalloc
         doodle_lib
 )
+
+
+
+# 调整动态库导入模块顺序
+function(dow_minject)
+    include(ExternalProject)
+    ExternalProject_Add(
+            minject
+            GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+            GIT_TAG dev
+            CONFIGURE_COMMAND ""
+            BUILD_COMMAND ""
+            INSTALL_COMMAND ""
+    )
+    set(MIMALLOC_EXE ${CMAKE_BINARY_DIR}/_deps/minject-src/bin/minject.exe PARENT_SCOPE)
+endfunction()
+dow_minject()
+
+add_custom_command(
+        TARGET doodle_kitsu_supplement
+        POST_BUILD
+        COMMAND ${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>
+)
+# add_custom_target(genexdebug2
+#         COMMAND ${CMAKE_COMMAND} -E echo "${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>")
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)

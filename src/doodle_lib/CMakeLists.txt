@@ -48,7 +48,6 @@ add_custom_command(
 # message("doodle_time=${doodle_time}")
 target_link_libraries(doodle_lib
         PUBLIC
-        mimalloc
         doodle_core
         magic_enum::magic_enum
         Boost::locale
@@ -67,6 +66,7 @@ target_link_libraries(doodle_lib
         #        Fbx::Fbx # fbx
 
         PRIVATE
+        mimalloc
         netapi32.lib # NetUserGetLocalGroups
         Mpr.lib
         #        Microsoft::DirectXTK
@@ -76,7 +76,7 @@ target_link_libraries(doodle_lib
         OpenSSL::SSL
         mailio::mailio
         unofficial::bit7z::bit7z64
-        # torch
+        torch
         #        OpenSSL::applink
 )
 
