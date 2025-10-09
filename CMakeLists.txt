@@ -102,6 +102,8 @@ find_package(mailio CONFIG REQUIRED)
 find_package(unofficial-bit7z CONFIG REQUIRED)
 # 寻找 libtorch
 find_package(Torch CONFIG REQUIRED)
+# 寻找 mimalloc
+find_package(mimalloc CONFIG REQUIRED)
 
 # 启用测试
 enable_testing()

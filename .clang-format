@@ -1,6 +1,9 @@
 BasedOnStyle: Google
 IncludeBlocks: Regroup
 IncludeCategories:
+  - Regex: "mimalloc"
+    Priority: 1
+    SortPriority: 1
   - Regex: "doodle_core"
     Priority: 2
     SortPriority: 2

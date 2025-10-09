@@ -39,6 +39,7 @@
     "cpp-base64",
     "tl-expected",
     "bit7z",
+    "mimalloc",
     {
       "name": "sqlite3",
       "default-features": false,
