@@ -48,7 +48,9 @@ boost::asio::awaitable<std::string> client::get_user_by_mobile(const std::string
     throw_exception(doodle_error{fmt::format("get_user_by_mobile error: {}", l_res.result())});
 
   auto& l_json = l_res.body();
-  l_ret        = l_json["result"]["userid"].get<std::string>();
+  if (!(l_json.contains("result") && l_json.at("result").contains("userid")))
+    throw_exception(doodle_error{fmt::format("错误的电话号码或者所属公司")});
+  l_ret = l_json.at("result").at("userid").get<std::string>();
 
   co_return l_ret;
 }
