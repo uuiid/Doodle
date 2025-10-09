@@ -22,6 +22,7 @@ project(Doodle
         HOMEPAGE_URL https://github.com/uuiid/Doodle)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>")
 
 # 项目中所有的 std::string 类都是utf-8字节  认为 char -> char8
 add_compile_definitions(QT_NO_KEYWORDS UNICODE _UNICODE NOMINMAX)
