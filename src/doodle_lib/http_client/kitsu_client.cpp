@@ -11,8 +11,10 @@
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 
 #include <boost/asio/awaitable.hpp>
+#include <boost/scope/scope_exit.hpp>
 
 #include <filesystem>
+#include <fmt/compile.h>
 #include <vector>
 
 namespace doodle::kitsu {
@@ -66,9 +68,15 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
   if (l_ec) l_colse_and_remove_file(), throw_exception(doodle_error{"kitsu get ue plugin open file error"});
   if (!l_res.body().is_open())
     l_colse_and_remove_file(), throw_exception(doodle_error{"kitsu get ue plugin open file error"});
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->timeout_ = 30s;
+  }};
   http_client_ptr_->body_limit_ = 2ll * 1024 * 1024 * 1024;  // 2G
+  http_client_ptr_->timeout_    = 120s;
+  l_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", http_client_ptr_->timeout_.count()));
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-  http_client_ptr_->body_limit_.reset();
+
   if (l_res.result() != boost::beast::http::status::ok)
     l_colse_and_remove_file(), throw_exception(doodle_error{"kitsu get ue plugin error"});
   co_return l_temp_path;

@@ -168,7 +168,10 @@ void session_data::set_session() {
           boost::lexical_cast<std::int64_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8))
       };
     }
+  } else {
+    timeout_ = g_timeout;
   }
+
   callback_.reset();
   access_control_allow_origin_ = "*";
 }
