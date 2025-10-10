@@ -44,6 +44,7 @@ target_sources(
         working_file.h
         software.h
         playlist.h
+        ai_image_metadata.h
 
         PRIVATE
         assets.cpp

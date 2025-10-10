@@ -41,6 +41,7 @@
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/std_vector_string.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
+#include <doodle_core/metadata/ai_image_metadata.h>
 
 #include <range/v3/view/split.hpp>
 #include <sqlite_orm/sqlite_orm.h>
@@ -94,6 +95,17 @@ inline auto make_storage_doodle(const std::string& in_path) {
 
   return std::move(make_storage(
       in_path,  //
+      make_table<ai_image_metadata>(
+          "ai_image_metadata", make_column("id", &ai_image_metadata::id_, primary_key().autoincrement()),
+          make_column("uuid_id", &ai_image_metadata::uuid_id_, unique(), not_null()),
+          make_column("prompt", &ai_image_metadata::prompt_),
+          make_column("task_id", &ai_image_metadata::task_id_),
+          make_column("width", &ai_image_metadata::width_),
+          make_column("height", &ai_image_metadata::height_),
+          make_column("created_at", &ai_image_metadata::created_at_),
+          make_column("author", &ai_image_metadata::author_),
+          foreign_key(&ai_image_metadata::task_id_).references(&task::uuid_id_).on_delete.cascade()
+      ),
       make_unique_index(
           "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_
       ),

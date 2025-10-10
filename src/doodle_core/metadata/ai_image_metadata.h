@@ -7,7 +7,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 
-#include "core/chrono_.h"
 #include <string>
 
 namespace doodle {
