@@ -104,6 +104,13 @@
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis",
             "preLaunchTask": "cmake build"
+        },
+        {
+            "name": "PowerShell Launch Current File",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${file}",
+            "cwd": "${cwd}"
         }
     ],
     "inputs": [

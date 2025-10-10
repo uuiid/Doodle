@@ -117,22 +117,23 @@ function Initialize-Doodle
     Compress-UEPlugins -UEVersion "5.4" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
+
+    $Tags = git tag --sort=-v:refname;
+
     # 复制安装包
     if ($OnlyOne)
     {
         Copy-Item (Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip")[-1]  -Destination "$OutPath\dist"
-        $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
-        Set-Content -Path "$OutPath\dist\version.txt" -Value $DoodleVersionList[-1] -NoNewline
+        Set-Content -Path "$OutPath\dist\version.txt" -Value $Tags[1] -NoNewline
     }
     else
     {
         &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath
-        $DoodleVersionList = Get-ChildItem -Path "$DoodleBuildRelease\*" -Include "*.zip" | ForEach-Object { $_.Name.Split("-")[1] }
+        $Tags = $Tags[0..100];
         #         寻找版本号 3.6.678 并放在最后
         #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
-        $DoodleVersionList = $DoodleVersionList -join "`n"
         #        $DoodleVersionList += "`n3.6.678"
-        Set-Content -Path "$OutPath\dist\version.txt" -Value ($DoodleVersionList) -NoNewline
+        Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
     }
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist"
