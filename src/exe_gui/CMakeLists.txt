@@ -66,12 +66,27 @@ install(TARGETS doodle_kitsu_supplement
 find_file(libomp140_x86_64_dll
         NAMES
         libomp140.x86_64.dll
+        HINTS
+        ${MSVC_REDIST_DIR}/debug_nonredist/x64/Microsoft.VC143.OpenMP.LLVM
         DOC
         "libomp140.x86_64.dll"
+        REQUIRED
+        NO_DEFAULT_PATH
+)
+find_file(vcomp140_dll
+        NAMES
+        vcomp140.dll
+        HINTS
+        ${MSVC_REDIST_DIR}/x64/Microsoft.VC143.OpenMP
+        DOC
+        "vcomp140.dll"
+        REQUIRED
+        NO_DEFAULT_PATH
 )
 
 install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll 
         ${libomp140_x86_64_dll}
+        ${vcomp140_dll}
         DESTINATION bin
 )
 
