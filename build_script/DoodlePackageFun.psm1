@@ -119,6 +119,8 @@ function Initialize-Doodle
     Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
 
     $Tags = git tag --sort=-v:refname;
+    # 去除 前缀 v
+    $Tags = $Tags | ForEach-Object { $_ -replace "v", "" }
 
     # 复制安装包
     if ($OnlyOne)
@@ -129,7 +131,8 @@ function Initialize-Doodle
     else
     {
         &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath
-        $Tags = $Tags[0..100] | Sort-Object -Descending;
+        $Tags = $Tags[0..100]
+        [array]::Reverse($Tags)
         #         寻找版本号 3.6.678 并放在最后
         #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
         #        $DoodleVersionList += "`n3.6.678"
