@@ -129,7 +129,7 @@ function Initialize-Doodle
     else
     {
         &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath
-        $Tags = $Tags[0..100];
+        $Tags = $Tags[0..100] | Sort-Object -Descending;
         #         寻找版本号 3.6.678 并放在最后
         #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
         #        $DoodleVersionList += "`n3.6.678"
