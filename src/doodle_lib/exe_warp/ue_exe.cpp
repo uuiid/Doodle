@@ -30,7 +30,6 @@
 #include <memory>
 #include <string>
 
-
 namespace doodle {
 
 std::tuple<boost::system::error_code, std::string> get_file_version_impl(const FSys::path& in_path) {
@@ -87,7 +86,7 @@ void install_UnrealEngine5VLC(const FSys::path& path) {
 }
 
 boost::asio::awaitable<void> installUePath(const FSys::path& path) {
-  boost::scope::scope_exit l_scope{[]{}};
+  boost::scope::scope_exit l_scope{[] {}};
   auto l_client   = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
   auto l_path     = co_await l_client->get_ue_plugin(core_set::get_set().ue4_version);
   auto l_out_path = l_path.parent_path() / l_path.stem();
@@ -100,7 +99,7 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
   if (!FSys::exists(l_out_path)) throw_exception(doodle_error{"UE 插件解压失败"});
 
   /// \brief 安装我们自己的插件
-  auto targetPath = path / "Plugins" / "Doodle";
+  auto targetPath = path / "Engine" / "Plugins" / "Doodle";
 
   if (FSys::exists(targetPath)) {
     FSys::remove_all(targetPath);

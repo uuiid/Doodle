@@ -2,6 +2,7 @@
 // Created by TD on 2023/11/23.
 //
 
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/app_base.h>
@@ -40,12 +41,12 @@ BOOST_AUTO_TEST_CASE(utf16_test) {
   doodle::import_and_render_ue_ns::fix_project("D:\\test_files\\doodle_plug.uproject");
 }
 
-
-
 BOOST_AUTO_TEST_CASE(install_plug_test) {
   app_base l_app_base{};
+  core_set::get_set().server_ip   = "http://192.168.40.181";
+  core_set::get_set().ue4_path    = "D:/Program Files/Epic Games/UE_5.5";
   core_set::get_set().ue4_version = "5.5";
-  auto l_path = FSys::path{"E:/ue4.27"};
+  auto l_path                     = FSys::path{"E:/ue4.27"};
   boost::asio::co_spawn(g_io_context(), doodle::ue_exe_ns::install_doodle_plug(l_path), [](std::exception_ptr e) {
     if (e) {
       try {
