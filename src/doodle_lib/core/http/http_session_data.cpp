@@ -114,10 +114,12 @@ boost::asio::awaitable<void> session_data::run() {
     callback_ = (*route_ptr_)(method_verb_, url_.segments(), shared_from_this());
     logger_->info("请求 url {} {}", method_verb_, url_);
     // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
+    stream_->expires_after(timeout_);
     if (co_await parse_body()) co_return;
 
     std::unique_ptr<boost::beast::http::message_generator> l_gen{};
     try {
+      stream_->expires_after(timeout_);
       l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback(shared_from_this()));
     } catch (const http_request_error& e) {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
@@ -130,6 +132,7 @@ boost::asio::awaitable<void> session_data::run() {
     }
 
     logger_->info("回复 url {} {}", method_verb_, url_);
+    stream_->expires_after(timeout_);
     if (!keep_alive_) {
       co_await boost::beast::async_write(*stream_, std::move(*l_gen));
       co_return;
@@ -270,7 +273,6 @@ boost::asio::awaitable<bool> session_data::parse_body() {
         default:
           break;
       }
-      stream_->expires_after(timeout_);
 
       break;
     default:
