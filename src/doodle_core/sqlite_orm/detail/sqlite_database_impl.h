@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/attachment_file.h>
@@ -18,6 +19,7 @@
 #include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/organisation.h>
+#include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/playlist.h>
 #include <doodle_core/metadata/preview_background_file.h>
 #include <doodle_core/metadata/preview_file.h>
@@ -41,11 +43,11 @@
 #include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_core/sqlite_orm/detail/std_vector_string.h>
 #include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
-#include <doodle_core/metadata/ai_image_metadata.h>
 
 #include <range/v3/view/split.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <type_traits>
+
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_status)
@@ -104,7 +106,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("height", &ai_image_metadata::height_),
           make_column("created_at", &ai_image_metadata::created_at_),
           make_column("author", &ai_image_metadata::author_),
-          foreign_key(&ai_image_metadata::task_id_).references(&task::uuid_id_).on_delete.cascade()
+          foreign_key(&ai_image_metadata::author_).references(&person::uuid_id_).on_delete.cascade()
       ),
       make_unique_index(
           "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_

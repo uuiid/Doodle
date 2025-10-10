@@ -113,6 +113,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
     case detail::content_type::image_gif:
       l_size = create_thumbnail_gif(std::get<FSys::path>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
       break;
+    case detail::content_type::video_mp4:
+      l_size = create_thumbnail_mp4(std::get<FSys::path>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
+      break;
     default:
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");
       break;

@@ -425,5 +425,12 @@ std::vector<FSys::path> session_data::get_files() const {
     return std::get<multipart_body::value_type>(body_).get_files();
   return {};
 }
+FSys::path session_data::get_file() const {
+  if (std::holds_alternative<FSys::path>(body_)) return std::get<FSys::path>(body_);
+  if (std::holds_alternative<multipart_body::value_type>(body_) &&
+      !std::get<multipart_body::value_type>(body_).get_files().empty())
+    return std::get<multipart_body::value_type>(body_).get_files().front();
+  return {};
+}
 
 }  // namespace doodle::http::detail
