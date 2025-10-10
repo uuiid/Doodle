@@ -87,3 +87,6 @@ CMakeUserPresets.json
 # 二进制测试文件
 *.abc
 *.fbx
+
+# Ignore serena onboarding memories and related metadata
+.serena/memories/
