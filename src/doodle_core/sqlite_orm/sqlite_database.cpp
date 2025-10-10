@@ -20,6 +20,7 @@
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 #include <doodle_core/sqlite_orm/sqlite_upgrade.h>
 
+#include "metadata/ai_image_metadata.h"
 #include "metadata/entity_type.h"
 #include <optional>
 #include <sqlite_orm/sqlite_orm.h>
@@ -1044,6 +1045,7 @@ DOODLE_UUID_TO_ID(entity)
 DOODLE_UUID_TO_ID(working_file)
 DOODLE_UUID_TO_ID(attendance_helper::database_t)
 DOODLE_UUID_TO_ID(asset_type)
+DOODLE_UUID_TO_ID(ai_image_metadata)
 
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
@@ -1085,6 +1087,7 @@ DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(notification)
 DOODLE_GET_BY_UUID_SQL(comment)
 DOODLE_GET_BY_UUID_SQL(playlist)
+DOODLE_GET_BY_UUID_SQL(ai_image_metadata)
 DOODLE_GET_BY_UUID_SQL(organisation)
 template <>
 task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {
@@ -1164,6 +1167,7 @@ DOODLE_GET_ALL_SQL(studio)
 DOODLE_GET_ALL_SQL(working_file)
 DOODLE_GET_ALL_SQL(status_automation)
 DOODLE_GET_ALL_SQL(organisation)
+DOODLE_GET_ALL_SQL(ai_image_metadata)
 DOODLE_GET_ALL_SQL(project)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
@@ -1223,6 +1227,7 @@ DOODLE_INSTALL_SQL(attendance_helper::database_t)
 DOODLE_INSTALL_SQL(assets_file_helper::link_parent_t)
 DOODLE_INSTALL_SQL(working_file)
 DOODLE_INSTALL_SQL(playlist)
+DOODLE_INSTALL_SQL(ai_image_metadata)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
@@ -1262,6 +1267,7 @@ DOODLE_REMOVE_BY_UUID(assets_helper::database_t)
 DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(working_file)
 DOODLE_REMOVE_BY_UUID(entity_link)
+DOODLE_REMOVE_BY_UUID(ai_image_metadata)
 
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uuid>& in_data) {

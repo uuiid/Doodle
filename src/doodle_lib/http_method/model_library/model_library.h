@@ -4,6 +4,9 @@
 
 #pragma once
 #include <doodle_lib/http_method/http_jwt_fun.h>
+
+#include <utility>
+
 namespace doodle::http::model_library {
 // "api/doodle/model_library/context"
 DOODLE_HTTP_JWT_FUN(context)
@@ -13,6 +16,18 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(model_library_assets)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
+// "/api/doodle/ai_image"
+// 用于管理 AI 生成图片的元数据（创建/查询）
+DOODLE_HTTP_JWT_FUN(ai_image)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// "/api/doodle/ai_image/{id}"
+DOODLE_HTTP_JWT_FUN(ai_image_instance)
+DOODLE_HTTP_FUN_OVERRIDE(post);
+DOODLE_HTTP_FUN_OVERRIDE(delete_);
+uuid id_{};
 DOODLE_HTTP_FUN_END()
 
 // "api/doodle/model_library/assets/{id}"
@@ -36,9 +51,15 @@ DOODLE_HTTP_FUN_END()
 
 class pictures_base : public http_jwt_fun {
  protected:
-  void create_thumbnail_mp4(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
-  void create_thumbnail_gif(const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name);
-  void create_thumbnail_image(const std::string& in_data, const FSys::path& in_path, FSys::path in_name);
+  std::pair<std::size_t, std::size_t> create_thumbnail_mp4(
+      const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
+  );
+  std::pair<std::size_t, std::size_t> create_thumbnail_gif(
+      const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
+  );
+  std::pair<std::size_t, std::size_t> create_thumbnail_image(
+      const std::string& in_data, const FSys::path& in_path, FSys::path in_name
+  );
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
       session_data_ptr in_handle, FSys::path in_path
   );

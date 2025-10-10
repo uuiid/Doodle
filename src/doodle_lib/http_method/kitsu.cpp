@@ -14,6 +14,9 @@
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include "doodle_lib/http_method/computing_time.h"
+#include "doodle_lib/http_method/dingding_attendance.h"
+#include "doodle_lib/http_method/model_library/model_library.h"
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/socket_io.h>
@@ -29,9 +32,6 @@
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
 
-#include "http_method/computing_time.h"
-#include "http_method/dingding_attendance.h"
-#include "http_method/model_library/model_library.h"
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
@@ -197,6 +197,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_playlists_instance>("/api/data/playlists/{}"_url(&data_playlists_instance::id_))
       .reg_t<actions_projects_casting_replace>("/api/actions/projects/{}/casting/replace"_url(&actions_projects_casting_replace::project_id_))
       .reg_t<data_entity_types_instance>("/api/data/entity-types/{}"_url(&data_entity_types_instance::id_))
+      .reg_t<model_library::ai_image>("/api/doodle/ai_image"_url)
+      .reg_t<model_library::ai_image_instance>("/api/doodle/ai_image/{}"_url(&model_library::ai_image_instance::id_))
        // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
@@ -222,7 +224,9 @@ http_route_ptr create_kitsu_local_route() {
         .reg_t<local::task_instance_log>("/api/doodle/task/{}/log"_url(&local::task_instance_log::id_))
         .reg_t<local::local_setting_tmp_dir_server_task>("/api/doodle/local_setting/tmp_dir/server_task"_url)
         .reg_t<local::task_inspect_instance>("/api/doodle/task/{}/inspect"_url(&local::task_inspect_instance::id_))
-        .reg_t<local::task_instance_generate_uesk_file>("/api/doodle/task/{}/generate_uesk_file"_url(&local::task_instance_generate_uesk_file::id_))
+        .reg_t<local::task_instance_generate_uesk_file>(
+            "/api/doodle/task/{}/generate_uesk_file"_url(&local::task_instance_generate_uesk_file::id_)
+        )
 
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 

@@ -9,4 +9,5 @@ target_sources(
         thumbnail.cpp
         label.cpp
         context.cpp
+        ai_image.cpp
 )
