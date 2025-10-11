@@ -13,7 +13,6 @@
 
 #include <optional>
 
-
 namespace doodle {
 struct preview_file;
 struct preview_files_for_entity_t;
@@ -204,5 +203,7 @@ class sqlite_database {
       const uuid& in_task_type_id, const uuid& in_asset_type_id
   );
   boost::asio::awaitable<void> remove_task_type_asset_type_link_by_asset_type(const uuid& in_asset_type_id);
+  uuid get_project_status_open() const;
+  uuid get_project_status_closed() const;
 };
 }  // namespace doodle

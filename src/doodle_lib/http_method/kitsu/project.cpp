@@ -72,10 +72,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects::post(session_data_ptr in_handle) {
   person_.check_manager();
+  auto l_sql = g_ctx().get<sqlite_database>();
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
   l_prj->uuid_id_ = core_set::get_set().get_uuid();
+  l_prj->project_status_id_ = l_sql.get_project_status_open();
   co_await g_ctx().get<sqlite_database>().install(l_prj);
   co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
 }
@@ -111,6 +113,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   person_.check_project_manager(id_);
   auto l_status_id                        = l_json["task_status_id"].get<uuid>();
   auto l_prj_task_status_link             = std::make_shared<project_task_status_link>();
+  l_prj_task_status_link->uuid_id_        = core_set::get_set().get_uuid();
   l_prj_task_status_link->project_id_     = id_;
   l_prj_task_status_link->task_status_id_ = l_status_id;
   if (!g_ctx().get<sqlite_database>().get_project_task_status_link(id_, l_status_id))

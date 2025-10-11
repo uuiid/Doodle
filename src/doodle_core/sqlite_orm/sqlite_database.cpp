@@ -1035,6 +1035,20 @@ boost::asio::awaitable<void> sqlite_database::remove_task_type_asset_type_link_b
   co_return;
 }
 
+uuid sqlite_database::get_project_status_open() const {
+  using namespace sqlite_orm;
+  auto l_list = impl_->storage_any_.get_all<project_status>(where(c(&project_status::name_) == "Open"));
+  if (l_list.empty()) throw_exception(doodle_error{"Open状态不存在"});
+  return l_list.front().uuid_id_;
+}
+
+uuid sqlite_database::get_project_status_closed() const {
+  using namespace sqlite_orm;
+  auto l_list = impl_->storage_any_.get_all<project_status>(where(c(&project_status::name_) == "Closed"));
+  if (l_list.empty()) throw_exception(doodle_error{"Closed状态不存在"});
+  return l_list.front().uuid_id_;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
