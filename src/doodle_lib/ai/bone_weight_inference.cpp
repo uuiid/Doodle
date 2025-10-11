@@ -45,7 +45,7 @@ GraphSample build_sample_from_mesh(
   int64_t N       = vertices.size(0);
   int64_t B       = bone_positions.size(0);
 
-  // 1) adjacency from faces (undirected)
+  // 1) 面邻接（无向）
   auto options    = torch::TensorOptions().dtype(torch::kFloat32);
   torch::Tensor A = torch::zeros({N, N}, options);
   if (faces.numel() > 0) {
@@ -206,6 +206,17 @@ struct SkinWeightGCNImpl : torch::nn::Module {
       throw std::runtime_error("No bone embeddings provided to forward() and none registered in the model.");
     }
     // used_emb: [B, H]
+    // shape checks: used_emb must be 2D and its second dim must match h.size(1)
+    if (used_emb.dim() != 2) {
+      throw std::runtime_error("bone_embeddings must be a 2D tensor of shape [B, hidden_dim]");
+    }
+    auto emb_hidden_dim = used_emb.size(1);
+    auto node_hidden_dim = h.size(1);
+    if (emb_hidden_dim != node_hidden_dim) {
+      std::ostringstream ss;
+      ss << "bone_embeddings hidden-dim (" << emb_hidden_dim << ") does not match model hidden-dim (" << node_hidden_dim << ").";
+      throw std::runtime_error(ss.str());
+    }
     auto logits = torch::matmul(h, used_emb.t());  // [N, B]
     return torch::log_softmax(logits, /*dim=*/1);
   }
