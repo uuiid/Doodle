@@ -125,7 +125,7 @@
       "type": "shell",
       "command": "${workspaceFolder}/build_script/deployment_server.ps1",
       "args": [
-        "${input:dep_opt}",
+        "${input:dep_opt} ${input:dep_opt2}",
       ],
       "problemMatcher": []
     }
@@ -154,7 +154,16 @@
       "description": "部署选项",
       "options": [
         "-CopyServer",
-        "-CopyServer -BuildKitsu",
+        "-BuildKitsu",
+        ""
+      ]
+    },
+    {
+      "id": "dep_opt2",
+      "type": "pickString",
+      "description": "部署选项2",
+      "options": [
+        "-CopyServer",
         "-BuildKitsu",
         ""
       ]
