@@ -4,6 +4,7 @@
 
 #include <ATen/core/Reduction.h>
 #include <range/v3/action/sort.hpp>
+#include <sstream>
 
 #pragma comment(linker, "/include:mi_version")
 
@@ -36,12 +37,12 @@ torch::Tensor normalize_adjacency(const torch::Tensor& A) {
 // Example: build node features from vertices & bone positions
 // vertices: [N,3], bone_positions: [B,3], faces: [F,3] (optional)
 GraphSample build_sample_from_mesh(
-    const torch::Tensor& vertices,  // [N,3]
-    const std::vector<std::string>& bone_names,
-    const torch::Tensor& bone_positions,  // [B,3]
-    const torch::Tensor& faces,           // [F,3] or empty
-    const torch::Tensor& weights          // [N,B] ground truth distribution
-) {
+  const torch::Tensor& vertices,  // [N,3]
+  const std::vector<std::string>& bone_names,
+  const torch::Tensor& bone_positions,  // [B,3]
+  const torch::Tensor& faces,           // [F,3] or empty
+  const torch::Tensor& weights,         // [N,B] ground truth distribution
+  int K /*=4*/ ) {
   int64_t N       = vertices.size(0);
   int64_t B       = bone_positions.size(0);
 
@@ -65,16 +66,45 @@ GraphSample build_sample_from_mesh(
     // fallback: fully connected? or k-nearest; here we connect nothing (isolated)
   }
 
-  // 2) feature design: [vx, vy, vz] + distances to K nearest bones
-  int K                  = std::min<int>(4, (int)B);
-  torch::Tensor v_exp    = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
-  torch::Tensor b_exp    = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
-  torch::Tensor dists    = torch::norm(v_exp - b_exp, 2, -1);              // [N,B]
-  // take K smallest distances and also their values
-  auto sorted            = std::get<0>(dists.sort(1, /*descending=*/false));  // [N,B] sorted distances
-  torch::Tensor closest  = sorted.slice(1, 0, K);                             // [N,K]
-  // feature concat
-  torch::Tensor x        = torch::cat({vertices, closest}, /*dim=*/1);  // [N, 3+K]
+  // 2) feature design: [vx, vy, vz] + vectors to K nearest bones
+  // We use K = min(4, B) by default; for each vertex we find K nearest bones and
+  // compute bone_vector = bone_position - vertex (shape [3]). We flatten K vectors
+  // into a [K*3] block per vertex and concat with xyz to form features.
+  // Clamp K to number of bones available
+  K = std::min<int>(K, (int)B);
+  // expand for vectorized distance computation
+  torch::Tensor v_exp = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
+  torch::Tensor b_exp = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
+  torch::Tensor dists = torch::norm(v_exp - b_exp, 2, -1);              // [N,B]
+  // get sorted distances and their indices
+  auto sort_res = dists.sort(1, /*descending=*/false);
+  auto sorted_vals = std::get<0>(sort_res);   // [N,B]
+  auto sorted_idx  = std::get<1>(sort_res);   // [N,B]
+
+  // prepare closest vectors tensor [N, K*3]
+  auto vec_options = torch::TensorOptions().dtype(torch::kFloat32);
+  torch::Tensor closest_vecs = torch::zeros({N, K * 3}, vec_options);
+
+  // Accessors for efficient per-row gather
+  auto sorted_idx_acc = sorted_idx.accessor<int64_t, 2>();
+  auto vert_acc       = vertices.accessor<float, 2>();
+  auto bone_acc       = bone_positions.accessor<float, 2>();
+  for (int64_t i = 0; i < N; ++i) {
+    for (int j = 0; j < K; ++j) {
+      int64_t bidx = sorted_idx_acc[i][j];
+      // compute bone_position - vertex
+      float dx = bone_acc[bidx][0] - vert_acc[i][0];
+      float dy = bone_acc[bidx][1] - vert_acc[i][1];
+      float dz = bone_acc[bidx][2] - vert_acc[i][2];
+      // write into closest_vecs
+      closest_vecs[i][j * 3 + 0] = dx;
+      closest_vecs[i][j * 3 + 1] = dy;
+      closest_vecs[i][j * 3 + 2] = dz;
+    }
+  }
+
+  // feature concat: xyz + flattened K vectors -> [N, 3 + K*3]
+  torch::Tensor x = torch::cat({vertices, closest_vecs}, /*dim=*/1);  // [N, 3+K*3]
 
   // 3) normalize adjacency
   torch::Tensor adj_norm = normalize_adjacency(A);
@@ -286,7 +316,8 @@ int run(int argc, char** argv) {
   GraphDataset val_ds(val_files);
 
   // Model hyperparams
-  int in_channels = 3 + 4;  // example: xyz + K distances (K=4)
+  int K           = 4;    // number of nearest bone vectors used per vertex
+  int in_channels = 3 + K * 3;  // example: xyz + K * (dx,dy,dz)
   int hidden_dim  = 64;
   int num_bones   = 20;  // set according to dataset (can be changed or left 0 to require passing embeddings at forward)
 
