@@ -535,5 +535,10 @@ DOODLE_HTTP_JWT_FUN(data_entity_types_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/projects/{id}/settings/status-automations
+DOODLE_HTTP_JWT_FUN(data_project_settings_status_automations)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

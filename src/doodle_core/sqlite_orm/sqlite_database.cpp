@@ -1242,6 +1242,7 @@ DOODLE_INSTALL_SQL(assets_file_helper::link_parent_t)
 DOODLE_INSTALL_SQL(working_file)
 DOODLE_INSTALL_SQL(playlist)
 DOODLE_INSTALL_SQL(ai_image_metadata)
+DOODLE_INSTALL_SQL(project_status_automation_link)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)

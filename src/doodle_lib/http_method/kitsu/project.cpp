@@ -17,7 +17,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 
 #include "kitsu_reg_url.h"
-
+#include <algorithm>
 
 namespace doodle::http {
 
@@ -72,11 +72,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
-  l_prj->uuid_id_ = core_set::get_set().get_uuid();
+  l_prj->uuid_id_           = core_set::get_set().get_uuid();
   l_prj->project_status_id_ = l_sql.get_project_status_open();
   co_await g_ctx().get<sqlite_database>().install(l_prj);
   co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
@@ -276,5 +276,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_type_lin
   co_await l_sql.install(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_status_automations::post(
+    session_data_ptr in_handle
+) {
+  person_.check_project_manager(id_);
+  auto l_sql                   = g_ctx().get<sqlite_database>();
+  auto l_ptr                   = std::make_shared<project_status_automation_link>();
+  l_ptr->project_id_           = id_;
+  l_ptr->status_automation_id_ = in_handle->get_json().at("status_automation_id").get<uuid>();
 
+  auto l_prj                   = l_sql.get_by_uuid<project>(id_);
+  if (std::ranges::find(l_prj.status_automations_, l_ptr->status_automation_id_) == l_prj.status_automations_.end()) {
+    co_await l_sql.install(l_ptr);
+    l_prj.status_automations_.push_back(l_ptr->status_automation_id_);
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+}
 }  // namespace doodle::http
