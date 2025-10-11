@@ -125,7 +125,8 @@
       "type": "shell",
       "command": "${workspaceFolder}/build_script/deployment_server.ps1",
       "args": [
-        "${input:dep_opt} ${input:dep_opt2}",
+        "${input:dep_opt}",
+        "${input:dep_opt2}"
       ],
       "problemMatcher": []
     }
