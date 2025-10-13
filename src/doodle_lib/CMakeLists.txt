@@ -77,6 +77,7 @@ target_link_libraries(doodle_lib
         mailio::mailio
         unofficial::bit7z::bit7z64
         torch
+        Fbx::Fbx-static
         #        OpenSSL::applink
 )
 

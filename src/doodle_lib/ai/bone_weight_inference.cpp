@@ -2,7 +2,12 @@
 
 #include <mimalloc.h>
 
+#include <doodle_core/exception/exception.h>
+
 #include <ATen/core/Reduction.h>
+#include <fbxsdk.h>
+#include <fbxsdk/core/fbxmanager.h>
+#include <memory>
 #include <range/v3/action/sort.hpp>
 #include <sstream>
 
@@ -21,7 +26,21 @@ struct GraphSample {
   torch::Tensor y;
   // optional: node mask or other metadata
 };
+std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_path) {
+  // load fbx
+  auto manager =
+      std::shared_ptr<fbxsdk::FbxManager>(FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); });
+  FbxIOSettings* ios = FbxIOSettings::Create(manager.get(), IOSROOT);
+  manager->SetIOSettings(ios);
+  FbxScene* scene       = FbxScene::Create(manager.get(), "myScene");
+  FbxImporter* importer = FbxImporter::Create(manager.get(), "");
+  if (!importer->Initialize(fbx_path.generic_string().c_str(), -1, manager->GetIOSettings()))
+    throw_exception(doodle_error{"fbx open err {}", importer->GetStatus().GetErrorString()});
 
+  importer->Import(scene);
+
+  return {};
+}
 torch::Tensor normalize_adjacency(const torch::Tensor& A) {
   // A: [N, N], float
   auto I            = torch::eye(A.size(0), A.options());
@@ -37,12 +56,13 @@ torch::Tensor normalize_adjacency(const torch::Tensor& A) {
 // Example: build node features from vertices & bone positions
 // vertices: [N,3], bone_positions: [B,3], faces: [F,3] (optional)
 GraphSample build_sample_from_mesh(
-  const torch::Tensor& vertices,  // [N,3]
-  const std::vector<std::string>& bone_names,
-  const torch::Tensor& bone_positions,  // [B,3]
-  const torch::Tensor& faces,           // [F,3] or empty
-  const torch::Tensor& weights,         // [N,B] ground truth distribution
-  int K /*=4*/ ) {
+    const torch::Tensor& vertices,  // [N,3]
+    const std::vector<std::string>& bone_names,
+    const torch::Tensor& bone_positions,  // [B,3]
+    const torch::Tensor& faces,           // [F,3] or empty
+    const torch::Tensor& weights,         // [N,B] ground truth distribution
+    int K                                 /*=4*/
+) {
   int64_t N       = vertices.size(0);
   int64_t B       = bone_positions.size(0);
 
@@ -71,31 +91,31 @@ GraphSample build_sample_from_mesh(
   // compute bone_vector = bone_position - vertex (shape [3]). We flatten K vectors
   // into a [K*3] block per vertex and concat with xyz to form features.
   // Clamp K to number of bones available
-  K = std::min<int>(K, (int)B);
+  K                          = std::min<int>(K, (int)B);
   // expand for vectorized distance computation
-  torch::Tensor v_exp = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
-  torch::Tensor b_exp = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
-  torch::Tensor dists = torch::norm(v_exp - b_exp, 2, -1);              // [N,B]
+  torch::Tensor v_exp        = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
+  torch::Tensor b_exp        = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
+  torch::Tensor dists        = torch::norm(v_exp - b_exp, 2, -1);              // [N,B]
   // get sorted distances and their indices
-  auto sort_res = dists.sort(1, /*descending=*/false);
-  auto sorted_vals = std::get<0>(sort_res);   // [N,B]
-  auto sorted_idx  = std::get<1>(sort_res);   // [N,B]
+  auto sort_res              = dists.sort(1, /*descending=*/false);
+  auto sorted_vals           = std::get<0>(sort_res);  // [N,B]
+  auto sorted_idx            = std::get<1>(sort_res);  // [N,B]
 
   // prepare closest vectors tensor [N, K*3]
-  auto vec_options = torch::TensorOptions().dtype(torch::kFloat32);
+  auto vec_options           = torch::TensorOptions().dtype(torch::kFloat32);
   torch::Tensor closest_vecs = torch::zeros({N, K * 3}, vec_options);
 
   // Accessors for efficient per-row gather
-  auto sorted_idx_acc = sorted_idx.accessor<int64_t, 2>();
-  auto vert_acc       = vertices.accessor<float, 2>();
-  auto bone_acc       = bone_positions.accessor<float, 2>();
+  auto sorted_idx_acc        = sorted_idx.accessor<int64_t, 2>();
+  auto vert_acc              = vertices.accessor<float, 2>();
+  auto bone_acc              = bone_positions.accessor<float, 2>();
   for (int64_t i = 0; i < N; ++i) {
     for (int j = 0; j < K; ++j) {
-      int64_t bidx = sorted_idx_acc[i][j];
+      int64_t bidx               = sorted_idx_acc[i][j];
       // compute bone_position - vertex
-      float dx = bone_acc[bidx][0] - vert_acc[i][0];
-      float dy = bone_acc[bidx][1] - vert_acc[i][1];
-      float dz = bone_acc[bidx][2] - vert_acc[i][2];
+      float dx                   = bone_acc[bidx][0] - vert_acc[i][0];
+      float dy                   = bone_acc[bidx][1] - vert_acc[i][1];
+      float dz                   = bone_acc[bidx][2] - vert_acc[i][2];
       // write into closest_vecs
       closest_vecs[i][j * 3 + 0] = dx;
       closest_vecs[i][j * 3 + 1] = dy;
@@ -104,7 +124,7 @@ GraphSample build_sample_from_mesh(
   }
 
   // feature concat: xyz + flattened K vectors -> [N, 3 + K*3]
-  torch::Tensor x = torch::cat({vertices, closest_vecs}, /*dim=*/1);  // [N, 3+K*3]
+  torch::Tensor x        = torch::cat({vertices, closest_vecs}, /*dim=*/1);  // [N, 3+K*3]
 
   // 3) normalize adjacency
   torch::Tensor adj_norm = normalize_adjacency(A);
@@ -240,11 +260,12 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     if (used_emb.dim() != 2) {
       throw std::runtime_error("bone_embeddings must be a 2D tensor of shape [B, hidden_dim]");
     }
-    auto emb_hidden_dim = used_emb.size(1);
+    auto emb_hidden_dim  = used_emb.size(1);
     auto node_hidden_dim = h.size(1);
     if (emb_hidden_dim != node_hidden_dim) {
       std::ostringstream ss;
-      ss << "bone_embeddings hidden-dim (" << emb_hidden_dim << ") does not match model hidden-dim (" << node_hidden_dim << ").";
+      ss << "bone_embeddings hidden-dim (" << emb_hidden_dim << ") does not match model hidden-dim (" << node_hidden_dim
+         << ").";
       throw std::runtime_error(ss.str());
     }
     auto logits = torch::matmul(h, used_emb.t());  // [N, B]
@@ -316,7 +337,7 @@ int run(int argc, char** argv) {
   GraphDataset val_ds(val_files);
 
   // Model hyperparams
-  int K           = 4;    // number of nearest bone vectors used per vertex
+  int K           = 4;          // number of nearest bone vectors used per vertex
   int in_channels = 3 + K * 3;  // example: xyz + K * (dx,dy,dz)
   int hidden_dim  = 64;
   int num_bones   = 20;  // set according to dataset (can be changed or left 0 to require passing embeddings at forward)
