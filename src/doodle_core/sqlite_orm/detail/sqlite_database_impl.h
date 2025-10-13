@@ -102,6 +102,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("uuid_id", &ai_image_metadata::uuid_id_, unique(), not_null()),
           make_column("prompt", &ai_image_metadata::prompt_),
           make_column("task_id", &ai_image_metadata::task_id_),
+          make_column("category", &ai_image_metadata::category_, null()),
+          make_column("extension", &ai_image_metadata::extension_, null()),
           make_column("width", &ai_image_metadata::width_),
           make_column("height", &ai_image_metadata::height_),
           make_column("created_at", &ai_image_metadata::created_at_),

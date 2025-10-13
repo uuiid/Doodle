@@ -18,6 +18,10 @@ struct DOODLE_CORE_API ai_image_metadata {
   std::string prompt_;
   // 生成 生成id
   std::string task_id_;
+  // 分类
+  std::string category_;
+  // 扩展名
+  std::string extension_;
 
   // 图像尺寸
   std::int32_t width_;
@@ -38,6 +42,8 @@ struct DOODLE_CORE_API ai_image_metadata {
     j["height"]     = p.height_;
     j["created_at"] = p.created_at_;
     j["author"]     = p.author_;
+    j["category"]   = p.category_;
+    j["extension"]  = p.extension_;
   }
 
   friend void from_json(const nlohmann::json& j, ai_image_metadata& p) {
@@ -48,6 +54,8 @@ struct DOODLE_CORE_API ai_image_metadata {
     if (j.contains("height")) j["height"].get_to(p.height_);
     if (j.contains("created_at")) j["created_at"].get_to(p.created_at_);
     if (j.contains("author")) j["author"].get_to(p.author_);
+    if (j.contains("category")) j["category"].get_to(p.category_);
+    if (j.contains("extension")) j["extension"].get_to(p.extension_);
   }
 };
 

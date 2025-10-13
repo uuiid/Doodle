@@ -304,7 +304,7 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
            fmt::format(R"(-DoodleLevelSequence="{}")", l_import_data.level_sequence_import),
            fmt::format(R"(-DoodleMoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-log", "-stdout",
            "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-          logger_ptr_
+          logger_ptr_, true, l_time_info
       );
       l_time_info->info_ = "渲染UE";
       break;
@@ -315,7 +315,6 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
       if (i == 2) throw;
     }
   }
-  l_time_info->end_time_ = std::chrono::system_clock::now();
   on_run_time_info_(*l_time_info);
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
