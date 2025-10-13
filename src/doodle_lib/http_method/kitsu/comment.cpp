@@ -15,6 +15,9 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
+#include <fmt/format.h>
+#include <memory>
+
 namespace doodle::http {
 namespace {
 struct create_comment_result : comment {
@@ -42,11 +45,9 @@ struct create_comment_result : comment {
 };
 boost::asio::awaitable<create_comment_result> create_comment(
     std::shared_ptr<comment> in_comment, const http_jwt_fun::http_jwt_t* in_person, uuid in_task_id,
-    std::vector<FSys::path> in_files
+    std::vector<FSys::path> in_files, std::shared_ptr<task> in_task = nullptr
 ) {
-  if (!in_comment->text_.empty()) {
-    in_comment->text_ = boost::locale::conv::to_utf<char>(in_comment->text_, "UTF-8");
-  }
+  if (!in_comment->text_.empty()) in_comment->text_ = boost::locale::conv::to_utf<char>(in_comment->text_, "UTF-8");
 
   in_comment->uuid_id_    = core_set::get_set().get_uuid();
   in_comment->created_at_ = chrono::system_clock::now();
@@ -55,7 +56,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
 
   auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_task        = std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
+  auto l_task        = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
   auto l_task_status = l_sql.get_by_uuid<task_status>(in_comment->task_status_id_);
   l_task_status.check_retake_capping(*l_task);
   std::vector<attachment_file> l_attachment_files{};
@@ -218,6 +219,39 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     default_logger_raw()->info("{} 创建评论", person_.person_.email_);
     l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
   }
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
+
+struct actions_tasks_modify_date_comment_time_arg {
+  chrono::system_zoned_time start_date_;
+  chrono::system_zoned_time due_date_;
+  //  form json
+  friend void from_json(const nlohmann::json& j, actions_tasks_modify_date_comment_time_arg& p) {
+    j.at("start_date").get_to(p.start_date_);
+    j.at("due_date").get_to(p.due_date_);
+  }
+};
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modify_date_comment::post(
+    session_data_ptr in_handle
+) {
+  auto l_sql     = g_ctx().get<sqlite_database>();
+  auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
+  auto l_json    = in_handle->get_json();
+  l_json.get_to(*l_comment);
+  if (!l_comment->text_.empty()) l_comment->text_ = boost::locale::conv::to_utf<char>(l_comment->text_, "UTF-8");
+  auto l_arg       = l_json.get<actions_tasks_modify_date_comment_time_arg>();
+  auto l_task      = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
+  l_comment->text_ = fmt::format(
+      "原先时间 {} {} 修改到新的的时间 {} {} 原因: {}", l_task->start_date_, l_task->due_date_, l_arg.start_date_,
+      l_arg.due_date_, l_comment->text_
+  );
+
+  l_task->start_date_ = l_arg.start_date_;
+  l_task->due_date_   = l_arg.due_date_;
+  co_await l_sql.install(l_task);
+  auto l_result = co_await create_comment(l_comment, &person_, id_, {}, l_task);
+  default_logger_raw()->info("由 {} 创建评论 {}, 修改任务时间", person_.person_.email_, l_comment->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
