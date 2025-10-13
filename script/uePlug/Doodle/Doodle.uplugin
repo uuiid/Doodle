@@ -98,6 +98,10 @@
     {
       "Name": "GeometryScripting",
       "Enabled": true
+    },
+    {
+      "Name": "HairStrands",
+      "Enabled": true
     }
 	]
 }

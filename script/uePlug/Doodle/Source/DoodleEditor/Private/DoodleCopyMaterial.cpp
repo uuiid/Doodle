@@ -78,6 +78,9 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 {
 	// 这个是ue界面的创建方法
 	/// clang-format off
+	LevelPaths.Add(MakeShared<FString>(TEXT("灯光测试关卡")));
+	LevelPaths.Add(MakeShared<FString>(TEXT("环境光测试关卡")));
+	LevelPaths.Add(MakeShared<FString>(TEXT("角色制作查看关卡")));
 	FString ResourceDir = IPluginManager::Get().FindPlugin(TEXT("Doodle"))->GetBaseDir() / TEXT("Resources");
 	TSharedRef<SBorder> WaitBorder = SNew(SBorder)
 		.BorderImage(new FSlateImageBrush(ResourceDir / TEXT("Selection.png"), FVector2D(8.f, 8.f), FSlateColor(FLinearColor(0, 0, 0, 0.6f))))
@@ -234,7 +237,7 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("解锁贴图")); })
 							]
 							+ SUniformWrapPanel::Slot()
-							[
+							/*[
 								SNew(SButton).OnClicked_Lambda([this]() -> FReply
 									{
 										CopyLightMap();
@@ -244,13 +247,39 @@ void DoodleCopyMat::Construct(const FArguments& Arg)
 										SNew(STextBlock).Text(FText::FromString(TEXT("加载灯光关卡")))
 									]
 									.ToolTipText_Lambda([]() -> FText { return FText::FromString(TEXT("加载灯光关卡")); })
+							]*/
+							[
+								SNew(SComboBox<TSharedPtr<FString>>)
+									.OptionsSource(&LevelPaths)
+									.OnGenerateWidget_Lambda([](TSharedPtr<FString> InItem) -> TSharedRef<SWidget>
+										{
+											return SNew(STextBlock).Text(FText::FromString(*InItem));
+										})
+									.OnSelectionChanged_Lambda([this](TSharedPtr<FString> NewValue, ESelectInfo::Type SelectType)
+										{
+											if (NewValue.IsValid())
+											{
+												SelectedItem = *NewValue;
+												CopyLightMap();
+											}
+										})
+									[
+										SNew(STextBlock).Text_Lambda([this]() -> FText
+											{
+												if (SelectedItem.IsEmpty())
+												{
+													return FText::FromString(TEXT("选择灯光关卡"));
+												}
+												return FText::FromString(SelectedItem);
+											})
+									]
 							]
 							+ SUniformWrapPanel::Slot()
 							[
 								SNew(SButton).OnClicked_Lambda([this]() -> FReply
 									{
-										FString SequencePath = TEXT("/Doodle/LightTest/Level/Sequence");
-										FString MapPath = TEXT("/Doodle/LightTest/Level/Environment");
+										FString SequencePath = TEXT("/Doodle/灯光测试关卡/Level/Sequence");
+										FString MapPath = TEXT("/Doodle/灯光测试关卡/Level/Environment");
 										FString OutPath = FPaths::ProjectSavedDir()/TEXT("ChRender/Temp");
 										RenderCharacter(SequencePath, MapPath, OutPath);
 										return FReply::Handled();
@@ -490,8 +519,8 @@ void DoodleCopyMat::CopyLightMap() {
 	IPlatformFile::GetPlatformPhysical().CopyDirectoryTree(*DestinationDirectory, *LightMapPath, false);
 	UE_LOG(LogTemp, Error, TEXT("DestinationDirectory：%s"),*DestinationDirectory);
 	UE_LOG(LogTemp, Error, TEXT("LightMapPath：%s"), *LightMapPath);*/
-
-	FString LightMap = TEXT("/Doodle/LightTest/Level/Environment");
+	
+	FString LightMap = FString::Printf(TEXT("/Doodle/%s/Level/Environment"),*SelectedItem);
 	UEditorLevelLibrary::LoadLevel(LightMap);
 	//LightMapPath = FPaths::ConvertRelativePathToFull(LightMapPath.Replace(TEXT("Content/"), TEXT("")));
 }

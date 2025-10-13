@@ -43,4 +43,6 @@ private:
 private:
 	USkeletalMesh* copySoureSkinObj;
 	UObject* copySoureGeoCache;
+	TArray<TSharedPtr<FString>> LevelPaths;
+	FString SelectedItem;
 };
