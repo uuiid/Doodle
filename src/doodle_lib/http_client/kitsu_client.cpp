@@ -72,8 +72,8 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
     http_client_ptr_->body_limit_.reset();
     http_client_ptr_->timeout_ = 30s;
   }};
-  http_client_ptr_->body_limit_ = 2ll * 1024 * 1024 * 1024;  // 2G
-  http_client_ptr_->timeout_    = 120s;
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->timeout_    = 1000s;
   l_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", http_client_ptr_->timeout_.count()));
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
 

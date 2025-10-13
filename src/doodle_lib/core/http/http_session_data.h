@@ -52,7 +52,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   using string_request_parser_ptr     = std::shared_ptr<string_request_parser_type>;
   using file_request_parser_ptr       = std::shared_ptr<file_request_parser_type>;
   using multipart_request_parser_ptr  = std::shared_ptr<multipart_request_parser_type>;
-  static constexpr auto g_body_limit{10ll * 1024 * 1024 * 1024};  // 10G
+  static constexpr auto g_body_limit{800ll * 1024 * 1024 * 1024};  // 800G
   // 超时
   static constexpr auto g_timeout{std::chrono::seconds(30)};
   std::unique_ptr<tcp_stream_type> stream_;
