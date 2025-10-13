@@ -355,6 +355,9 @@ boost::beast::http::message_generator session_data::make_msg(
 
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
+
+  if (auto l_size = FSys::file_size(in_path); l_size > 1024 * 1024 * 1024)  // 1GB
+    stream_->expires_after(chrono::seconds{l_size / (100 * 1024 * 1024)} + timeout_);
   return l_res;
 }
 template <>
