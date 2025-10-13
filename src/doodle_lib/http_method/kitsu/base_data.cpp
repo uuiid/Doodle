@@ -12,6 +12,8 @@
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
+#include "core/http/http_session_data.h"
+#include "kitsu_reg_url.h"
 #include <memory>
 #include <vector>
 
@@ -79,6 +81,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::
   auto l_sql         = g_ctx().get<sqlite_database>();
   auto l_status      = std::make_shared<task_status>();
   l_status->uuid_id_ = core_set::get_set().get_uuid();
+  in_handle->get_json().get_to(*l_status);
+  co_await l_sql.install(l_status);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_status);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_instance::put(session_data_ptr in_handle) {
+  person_.check_admin();
+  auto l_sql         = g_ctx().get<sqlite_database>();
+  auto l_status      = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
   in_handle->get_json().get_to(*l_status);
   co_await l_sql.install(l_status);
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);

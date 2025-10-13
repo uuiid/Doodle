@@ -203,6 +203,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<model_library::ai_image_instance>("/api/doodle/ai_image/{}"_url(&model_library::ai_image_instance::id_))
       .reg_t<data_project_settings_status_automations>("/api/data/projects/{}/settings/status-automations"_url(&data_project_settings_status_automations::id_))
       .reg_t<data_task_status>("/api/data/task-status"_url) 
+      .reg_t<data_task_status_instance>("/api/data/task-status/{}"_url(&data_task_status_instance::id_)) 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
