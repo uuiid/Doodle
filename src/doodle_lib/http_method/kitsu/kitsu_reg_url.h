@@ -540,5 +540,10 @@ DOODLE_HTTP_JWT_FUN(data_project_settings_status_automations)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/task-status
+DOODLE_HTTP_JWT_FUN(data_task_status)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
 
 }  // namespace doodle::http
