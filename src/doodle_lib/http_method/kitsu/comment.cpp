@@ -15,6 +15,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
+#include <algorithm>
 #include <fmt/format.h>
 #include <memory>
 
@@ -229,6 +230,7 @@ struct actions_tasks_modify_date_comment_time_arg {
   friend void from_json(const nlohmann::json& j, actions_tasks_modify_date_comment_time_arg& p) {
     j.at("start_date").get_to(p.start_date_);
     j.at("due_date").get_to(p.due_date_);
+    if (p.start_date_.get_sys_time() > p.due_date_.get_sys_time()) std::swap(p.start_date_, p.due_date_);
   }
 };
 
