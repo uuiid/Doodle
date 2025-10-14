@@ -72,6 +72,7 @@
                 "${workspaceFolder}/build/test_sim_fbx.mel"
             ],
             "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin",
             "environment": [
                 {
                     "name": "MAYA_MODULE_PATH",
@@ -97,7 +98,7 @@
                 "--log_level=message",
                 "--color_output=true",
                 "--detect_memory_leaks=0",
-                "--run_test=${input:test_}"
+                "--run_test=${input:test_list}"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
@@ -115,39 +116,19 @@
     ],
     "inputs": [
         {
-            "id": "arg_input",
-            "type": "promptString",
-            "description": "input arg",
-            "default": ""
-        },
-        {
-            "id": "test_",
-            "type": "pickString",
-            "description": "test分类",
-            "options": [
-                "kitsu/authenticated2",
-                "blendshape_fbx",
-                "test_pca",
-                "copy_folder",
-                "xlsx_table/main",
-                "xlsx_table/msg_body",
-                "dingding/access_token",
-                "dingding/get_user_by_mobile",
-                "dingding/get_attendance_updatedata",
-                "auto_light/only_server",
-                "auto_light/only_works",
-                "auto_light/server_and_works",
-                "rpc_server/base",
-                "rpc_server/list_users",
-                "kitsu/login",
-                "kitsu/get_user",
-                "kitsu/get_task",
-                "auto_light_test/utf16_test",
-                "auto_light_test/install_plug_test",
-                "kitsu/get_ue_plugin",
-                "http_test/quequ_t",
-                "http_test/quequ2_t"
-            ]
+            "id": "test_list",
+            "type": "command",
+            "command": "extension.commandvariable.pickStringRemember",
+            "args": {
+                "fileName": "${workspaceFolder}/.vscode/test_list.json",
+                "fileFormat": "json",
+                "description": "选择测试",
+                "jsonOption": {
+                    "label": "content.options[__itemIdx__]",
+                    "value": "content.options[__itemIdx__]"
+                },
+                "debug": true
+            }
         }
     ],
     "compounds": [

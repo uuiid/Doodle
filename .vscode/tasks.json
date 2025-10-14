@@ -110,14 +110,20 @@
         "--color_output=true",
         "--detect_memory_leaks=0",
         "--log_level=message",
-        "--run_test=${input:test_}"
+        "--run_test=${input:test_list}"
       ],
       "problemMatcher": []
     },
     {
-      "label": "运行boost测试自定义输入",
+      "label": "test task arg",
       "type": "shell",
-      "command": "${workspaceFolder}/build/Ninja_debug/bin/test_main.exe --color_output=true --detect_memory_leaks=0 --log_level=message --run_test=${input:arg_input}",
+      "command": "echo",
+      "args": [
+        "--color_output=true",
+        "--detect_memory_leaks=0",
+        "--log_level=message",
+        "--run_test=${input:build_dir}"
+      ],
       "problemMatcher": []
     },
     {
@@ -140,14 +146,17 @@
     },
     {
       "id": "build_dir",
-      "type": "pickString",
-      "description": "构建目录",
-      "options": [
-        "Ninja_debug",
-        "Ninja_RelWithDebInfo",
-        "Ninja_release",
-        "vs2022"
-      ]
+      "type": "command",
+      "command": "extension.commandvariable.pickStringRemember",
+      "args": {
+        "fileName": "${workspaceFolder}/CMakePresets.json",
+        "fileFormat": "json",
+        "description": "选择构建",
+        "jsonOption": {
+          "label": "content.configurePresets[__itemIdx__].name",
+          "value": "content.configurePresets[__itemIdx__].name"
+        }
+      }
     },
     {
       "id": "dep_opt",
@@ -170,37 +179,18 @@
       ]
     },
     {
-      "id": "build_target",
-      "type": "pickString",
-      "description": "要构建的目标",
-      "options": [
-        "DoodleExe",
-        "doodle_core",
-        "bvh_test",
-        "dingding_base",
-        "test_time"
-      ]
-    },
-    {
-      "id": "test_",
-      "type": "pickString",
-      "description": "test分类",
-      "options": [
-        "xlsx_table/computing_time",
-        "dingding/access_token",
-        "dingding/get_user_by_mobile",
-        "dingding/get_attendance_updatedata",
-        "auto_light/only_server",
-        "auto_light/only_works",
-        "auto_light/server_and_works",
-        "rpc_server/base",
-        "rpc_server/list_users",
-        "kitsu/authenticated",
-        "kitsu/get_task_directly",
-        "kitsu/get_user",
-        "kitsu/get_task",
-        "auto_light_test/utf16_test"
-      ]
+      "id": "test_list",
+      "type": "command",
+      "command": "extension.commandvariable.pickStringRemember",
+      "args": {
+        "fileName": "${workspaceFolder}/.vscode/test_list.json",
+        "fileFormat": "json",
+        "description": "选择测试",
+        "jsonOption": {
+          "label": "content.options[__itemIdx__]",
+          "value": "content.options[__itemIdx__]"
+        }
+      }
     }
   ]
 }
