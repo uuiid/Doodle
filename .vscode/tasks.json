@@ -153,8 +153,7 @@
         "fileFormat": "json",
         "description": "选择构建",
         "jsonOption": {
-          "label": "content.configurePresets[__itemIdx__].name",
-          "value": "content.configurePresets[__itemIdx__].name"
+          "value": "content.configurePresets[__itemIdx__].hidden ? '' : content.configurePresets[__itemIdx__].name"
         }
       }
     },
