@@ -238,7 +238,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
     session_data_ptr in_handle
 ) {
   auto l_sql     = g_ctx().get<sqlite_database>();
-  auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
+  auto l_comment = std::make_shared<comment>();
   auto l_json    = in_handle->get_json();
   l_json.get_to(*l_comment);
   if (!l_comment->text_.empty()) l_comment->text_ = boost::locale::conv::to_utf<char>(l_comment->text_, "UTF-8");
