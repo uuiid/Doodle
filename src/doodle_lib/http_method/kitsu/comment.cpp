@@ -237,16 +237,20 @@ struct actions_tasks_modify_date_comment_time_arg {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modify_date_comment::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql     = g_ctx().get<sqlite_database>();
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
+
+  if (!(l_task->start_date_ && l_task->due_date_))
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务没有设置时间");
+
   auto l_comment = std::make_shared<comment>();
   auto l_json    = in_handle->get_json();
   l_json.get_to(*l_comment);
   if (!l_comment->text_.empty()) l_comment->text_ = boost::locale::conv::to_utf<char>(l_comment->text_, "UTF-8");
   auto l_arg       = l_json.get<actions_tasks_modify_date_comment_time_arg>();
-  auto l_task      = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
   l_comment->text_ = fmt::format(
-      "原先时间 {} {} 修改到新的的时间 {} {} 原因: {}", l_task->start_date_, l_task->due_date_, l_arg.start_date_,
-      l_arg.due_date_, l_comment->text_
+      "原先时间 {:%F} {:%F} 修改到新的的时间 {:%F} {:%F} 原因: {}", *l_task->start_date_, *l_task->due_date_,
+      l_arg.start_date_, l_arg.due_date_, l_comment->text_
   );
 
   l_task->start_date_ = l_arg.start_date_;
