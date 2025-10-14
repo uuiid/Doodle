@@ -7,9 +7,11 @@
 #include <ATen/core/Reduction.h>
 #include <fbxsdk.h>
 #include <fbxsdk/core/fbxmanager.h>
+#include <fbxsdk/scene/geometry/fbxnode.h>
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <sstream>
+#include <vector>
 
 #pragma comment(linker, "/include:mi_version")
 
@@ -36,8 +38,20 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
   FbxImporter* importer = FbxImporter::Create(manager.get(), "");
   if (!importer->Initialize(fbx_path.generic_string().c_str(), -1, manager->GetIOSettings()))
     throw_exception(doodle_error{"fbx open err {}", importer->GetStatus().GetErrorString()});
-
   importer->Import(scene);
+
+  // get mesh
+  auto l_root = scene->GetRootNode();
+  std::vector<FbxNode*> l_meshs{};
+  for (auto i = 0; i < l_root->GetChildCount(); i++) {
+    auto l_node = l_root->GetChild(i);
+    if (l_node->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
+      l_meshs.push_back(l_node);
+    }
+  }
+  if (l_meshs.empty()) throw_exception(doodle_error{"fbx mesh not found"});
+  for (auto i : l_meshs) {
+  }
 
   return {};
 }
