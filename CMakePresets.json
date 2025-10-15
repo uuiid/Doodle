@@ -88,8 +88,6 @@
       "displayName": "调试 doodle exe",
       "inherits": "debug",
       "targets": [
-        "generate_token",
-        "test_main",
         "doodle_kitsu_supplement"
       ]
     },
