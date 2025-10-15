@@ -47,7 +47,6 @@ struct DOODLE_CORE_API ai_image_metadata {
   }
 
   friend void from_json(const nlohmann::json& j, ai_image_metadata& p) {
-    if (j.contains("id")) j["id"].get_to(p.uuid_id_);
     if (j.contains("prompt")) j["prompt"].get_to(p.prompt_);
     if (j.contains("task_id")) j["task_id"].get_to(p.task_id_);
     if (j.contains("width")) j["width"].get_to(p.width_);
