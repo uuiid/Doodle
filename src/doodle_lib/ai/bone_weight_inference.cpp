@@ -2,6 +2,8 @@
 
 #include <mimalloc.h>
 
+#include "doodle_core/core/file_sys.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/exception/exception.h>
 
 #include <ATen/core/Reduction.h>
@@ -11,6 +13,7 @@
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <sstream>
+#include <torch/csrc/autograd/generated/variable_factories.h>
 #include <vector>
 
 #pragma comment(linker, "/include:mi_version")
@@ -28,8 +31,10 @@ struct GraphSample {
   torch::Tensor y;
   // optional: node mask or other metadata
 };
-std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_path) {
+std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger) {
   // load fbx
+  if (!in_logger) in_logger = spdlog::default_logger_raw();
+
   auto manager =
       std::shared_ptr<fbxsdk::FbxManager>(FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); });
   FbxIOSettings* ios = FbxIOSettings::Create(manager.get(), IOSROOT);
@@ -50,7 +55,16 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
     }
   }
   if (l_meshs.empty()) throw_exception(doodle_error{"fbx mesh not found"});
+
+  torch::Tensor l_tensor = torch::zeros({0, 3}, torch::kFloat32);
   for (auto i : l_meshs) {
+    in_logger->warn("fbx mesh: {}", i->GetName());
+    auto l_mesh       = i->GetMesh();
+    auto* l_vert      = l_mesh->GetControlPoints();
+    auto l_vert_count = l_mesh->GetControlPointsCount();
+    l_tensor          = torch::zeros({l_vert_count, 3}, torch::kFloat32);
+    for (auto j = 0; j < l_vert_count; j++)
+      l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
   }
 
   return {};
