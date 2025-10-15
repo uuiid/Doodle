@@ -797,7 +797,7 @@ void UDoodleFbxCameraImport_1::AssembleScene()
 void UDoodleAbcImport_1::GenPathPrefix()
 {
 	FString L_String = FString::Format(
-		TEXT("AbcI_{0}_{1}"),
+		TEXT("Import_{0}/AbcI_{0}_{1}"),
 		TArray<FStringFormatArg>{
 			FStringFormatArg{StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()))},
 			FStringFormatArg{FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))}
