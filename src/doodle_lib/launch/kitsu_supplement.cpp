@@ -233,8 +233,6 @@ bool kitsu_supplement_main::init() {
   get_register_info(l_args);
   core_set::get_set().set_root(l_args.kitsu_thumbnails_path_);
 
-  auto l_scan = g_ctx().emplace<std::shared_ptr<scan_win_service_t>>(std::make_shared<scan_win_service_t>());
-  l_scan->use_cache();
   // 初始化数据库
   g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
 
@@ -269,8 +267,6 @@ bool kitsu_supplement_main::init() {
       );
     }
   }
-
-  l_scan->start();
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route_2(l_args.kitsu_front_end_path_);
   // 开始运行服务器

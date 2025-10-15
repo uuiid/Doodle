@@ -1101,6 +1101,7 @@ DOODLE_GET_BY_UUID_SQL(task_status)
 DOODLE_GET_BY_UUID_SQL(notification)
 DOODLE_GET_BY_UUID_SQL(comment)
 DOODLE_GET_BY_UUID_SQL(playlist)
+DOODLE_GET_BY_UUID_SQL(working_file)
 DOODLE_GET_BY_UUID_SQL(ai_image_metadata)
 DOODLE_GET_BY_UUID_SQL(organisation)
 template <>
