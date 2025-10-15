@@ -23,6 +23,7 @@ using namespace std::chrono;
 
 namespace doodle {
 using logger_ptr = std::shared_ptr<spdlog::logger>;
+using logger_ptr_raw = spdlog::logger*;
 }
 
 namespace doodle::FSys {
