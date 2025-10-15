@@ -8,8 +8,13 @@
 
 #include <ATen/core/Reduction.h>
 #include <fbxsdk.h>
+#include <fbxsdk/core/base/fbxarray.h>
 #include <fbxsdk/core/fbxmanager.h>
+#include <fbxsdk/core/math/fbxvector4.h>
 #include <fbxsdk/scene/geometry/fbxnode.h>
+#include <fbxsdk/scene/geometry/fbxtrimnurbssurface.h>
+#include <fbxsdk/utils/fbxgeometryconverter.h>
+#include <fmt/format.h>
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <sstream>
@@ -39,32 +44,46 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
       std::shared_ptr<fbxsdk::FbxManager>(FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); });
   FbxIOSettings* ios = FbxIOSettings::Create(manager.get(), IOSROOT);
   manager->SetIOSettings(ios);
-  FbxScene* scene       = FbxScene::Create(manager.get(), "myScene");
+  FbxScene* l_scene     = FbxScene::Create(manager.get(), "myScene");
   FbxImporter* importer = FbxImporter::Create(manager.get(), "");
   if (!importer->Initialize(fbx_path.generic_string().c_str(), -1, manager->GetIOSettings()))
     throw_exception(doodle_error{"fbx open err {}", importer->GetStatus().GetErrorString()});
-  importer->Import(scene);
-
-  // get mesh
-  auto l_root = scene->GetRootNode();
-  std::vector<FbxNode*> l_meshs{};
-  for (auto i = 0; i < l_root->GetChildCount(); i++) {
-    auto l_node = l_root->GetChild(i);
-    if (l_node->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
-      l_meshs.push_back(l_node);
+  importer->Import(l_scene);
+  FbxNode* l_mesh_node{};
+  // get merge mesh
+  {
+    auto l_root = l_scene->GetRootNode();
+    FbxArray<FbxNode*> l_mesh_nodes;
+    for (auto i = 0; i < l_root->GetChildCount(); i++) {
+      auto l_node = l_root->GetChild(i);
+      if (l_node->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
+        l_mesh_nodes.Add(l_node);
+      }
     }
-  }
-  if (l_meshs.empty()) throw_exception(doodle_error{"fbx mesh not found"});
+    if (l_mesh_nodes.Size() == 0) throw_exception(doodle_error{"fbx mesh not found"});
 
-  torch::Tensor l_tensor = torch::zeros({0, 3}, torch::kFloat32);
-  for (auto i : l_meshs) {
-    in_logger->warn("fbx mesh: {}", i->GetName());
-    auto l_mesh       = i->GetMesh();
-    auto* l_vert      = l_mesh->GetControlPoints();
-    auto l_vert_count = l_mesh->GetControlPointsCount();
-    l_tensor          = torch::zeros({l_vert_count, 3}, torch::kFloat32);
-    for (auto j = 0; j < l_vert_count; j++)
-      l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
+    FbxGeometryConverter l_converter{manager.get()};
+    l_mesh_node = l_converter.MergeMeshes(l_mesh_nodes, fmt::format("main_{}", l_mesh_nodes.Size()).c_str(), l_scene);
+    if (!l_mesh_node) throw_exception(doodle_error{"merge mesh err"});
+
+    l_converter.RecenterSceneToWorldCenter(l_scene, 0.000001);
+    l_converter.Triangulate(l_mesh_node->GetMesh(), true);
+  }
+
+  auto l_mesh            = l_mesh_node->GetMesh();
+  auto* l_vert           = l_mesh->GetControlPoints();
+  auto l_vert_count      = l_mesh->GetControlPointsCount();
+  torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
+  torch::Tensor l_faces  = torch::zeros({l_vert_count, 3}, torch::kInt32);
+  for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
+
+  auto l_faces_num = l_mesh->GetPolygonCount();
+  for (auto j = 0; j < l_faces_num; j++) {
+    auto l_poly_size = l_mesh->GetPolygonSize(j);
+    for (auto k = 0; k < l_poly_size; k++) {
+      auto l_vert_index = l_mesh->GetPolygonVertex(j, k);
+      l_faces[j][k]     = l_vert_index;
+    }
   }
 
   return {};
