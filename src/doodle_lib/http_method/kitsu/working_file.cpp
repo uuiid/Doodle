@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-8-15.
 //
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/working_file.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -31,6 +32,7 @@ boost::asio::awaitable<void> scan_working_files() {
       default_logger_raw()->warn("{}", l_error.what());
     }
   }
+  default_logger_raw()->info("扫描完成, {} 个文件", l_working_files->size());
   if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
 }
 }  // namespace
