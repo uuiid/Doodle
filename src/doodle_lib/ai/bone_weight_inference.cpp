@@ -12,6 +12,7 @@
 #include <fbxsdk/core/fbxmanager.h>
 #include <fbxsdk/core/math/fbxvector4.h>
 #include <fbxsdk/scene/geometry/fbxnode.h>
+#include <fbxsdk/scene/geometry/fbxskin.h>
 #include <fbxsdk/scene/geometry/fbxtrimnurbssurface.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>
 #include <fmt/format.h>
@@ -53,6 +54,8 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
   // get merge mesh
   {
     auto l_root = l_scene->GetRootNode();
+    FbxGeometryConverter l_converter{manager.get()};
+    l_converter.RecenterSceneToWorldCenter(l_scene, 0.000001);
     FbxArray<FbxNode*> l_mesh_nodes;
     for (auto i = 0; i < l_root->GetChildCount(); i++) {
       auto l_node = l_root->GetChild(i);
@@ -62,11 +65,10 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
     }
     if (l_mesh_nodes.Size() == 0) throw_exception(doodle_error{"fbx mesh not found"});
 
-    FbxGeometryConverter l_converter{manager.get()};
     l_mesh_node = l_converter.MergeMeshes(l_mesh_nodes, fmt::format("main_{}", l_mesh_nodes.Size()).c_str(), l_scene);
     if (!l_mesh_node) throw_exception(doodle_error{"merge mesh err"});
+    for (auto i = 0; i < l_mesh_nodes.Size(); i++) l_scene->RemoveNode(l_mesh_nodes[i]);
 
-    l_converter.RecenterSceneToWorldCenter(l_scene, 0.000001);
     l_converter.Triangulate(l_mesh_node->GetMesh(), true);
   }
 
@@ -79,11 +81,22 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
 
   auto l_faces_num = l_mesh->GetPolygonCount();
   for (auto j = 0; j < l_faces_num; j++) {
-    auto l_poly_size = l_mesh->GetPolygonSize(j);
-    for (auto k = 0; k < l_poly_size; k++) {
+    for (auto k = 0; k < l_mesh->GetPolygonSize(j); k++) {
       auto l_vert_index = l_mesh->GetPolygonVertex(j, k);
       l_faces[j][k]     = l_vert_index;
     }
+  }
+  auto* l_sk = static_cast<FbxSkin*>(l_mesh->GetDeformer(0, FbxDeformer::eSkin));
+  if (!l_sk) throw_exception(doodle_error{"no skin found"});
+  auto l_sk_count                = l_sk->GetClusterCount();
+  torch::Tensor l_bone_positions = torch::zeros({l_sk_count, 3}, torch::kFloat32);
+  torch::Tensor l_bone_weights   = torch::zeros({l_vert_count, l_sk_count}, torch::kFloat32);
+  for (auto i = 0; i < l_sk_count; i++) {
+    auto l_cluster = l_sk->GetCluster(i);
+    auto l_joint   = l_cluster->GetLink();
+    auto l_matrix  = l_scene->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
+    FbxAMatrix l_matrix_t{};
+    l_cluster->GetTransformLinkMatrix(l_matrix_t);
   }
 
   return {};
