@@ -72,10 +72,15 @@ MStatus export_abc_file::doIt(const MArgList &in_arg) {
   }
   std::ranges::sort(dag_path_list, details::cmp_dag{});
   dag_path_list.erase(std::unique(dag_path_list.begin(), dag_path_list.end()), dag_path_list.end());
-  alembic::archive_out archive_out{file_name, dag_path_list, begin_time, end_time};
-  for (auto i = begin_time; i <= end_time; ++i) {
-    MAnimControl::setCurrentTime(i);
-    archive_out.write();
+  try {
+    alembic::archive_out archive_out{file_name, dag_path_list, begin_time, end_time};
+    for (auto i = begin_time; i <= end_time; ++i) {
+      MAnimControl::setCurrentTime(i);
+      archive_out.write();
+    }
+  } catch (std::exception const &e) {
+    default_logger_raw()->error("export_abc_file::doIt: {}", e.what());
+    return MS::kFailure;
   }
   return MS::kSuccess;
 }
