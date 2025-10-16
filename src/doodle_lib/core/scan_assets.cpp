@@ -135,8 +135,8 @@ FSys::path scan_rig_maya(const project& in_prj, const uuid& in_entity_type, cons
   return {};
 }
 FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend) {
-  FSys::path l_maya_path = in_prj.asset_root_path_ / "CFX" /
-                           fmt::format("{}_cloth.ma", in_extend.path_.stem().generic_string());
+  FSys::path l_maya_path =
+      in_prj.asset_root_path_ / "CFX" / fmt::format("{}_cloth.ma", in_extend.path_.stem().generic_string());
   if (exists(in_prj.path_ / l_maya_path)) return l_maya_path;
   return {};
 }
@@ -227,8 +227,9 @@ std::vector<working_file> scan_task(const task& in_task) {
     if (i.uuid_id_.is_nil()) {
       i.uuid_id_ = core_set::get_set().get_uuid();
     }
+    auto l_p = l_prj.path_ / i.path_;
 
-    if (auto l_p = l_prj.path_ / i.path_; FSys::software_flag_file(l_p).is_nil())
+    if (auto l_file_uuid = FSys::software_flag_file(l_p); l_file_uuid.is_nil() || l_file_uuid != i.uuid_id_)
       FSys::software_flag_file(l_p, i.uuid_id_);
     i.name_ = i.path_.filename().generic_string();
   }
