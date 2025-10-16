@@ -157,6 +157,7 @@ std::vector<working_file> scan_task(const task& in_task) {
   entity_asset_extend l_extend;
   if (auto l_entt_extend = l_sql.get_entity_asset_extend(l_entt.uuid_id_); !l_entt_extend.has_value()) {
     // 如果没有扩展数据, 则不进行扫描
+    default_logger_raw()->warn("资产 {} 扩展数据不存在", l_entt.name_);
     return {};
   } else
     l_extend = l_entt_extend.value();
@@ -167,7 +168,8 @@ std::vector<working_file> scan_task(const task& in_task) {
   if (!l_l_working_files_list.empty() && std::ranges::all_of(l_l_working_files_list, [&](const auto& l_file) {
         return !l_file.path_.empty() && FSys::exists(l_file.path_);
       }))
-    return {};  // 如果所有的工作文件都存在, 则不需要重新扫描
+    return default_logger_raw()->info("资产 {} 已经存在, 不需要重新扫描", l_entt.name_),
+           l_working_files;  // 如果所有的工作文件都存在, 则不需要重新扫描
   working_file l_maya_working_file{};
   working_file l_unreal_working_file{};
 
