@@ -158,7 +158,8 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       task_type::get_binding_id(),
       task_type::get_simulation_id(),
   };
-  if (!l_scan_uuids.contains(in_task.task_type_id_)) return {};  // 只处理特定类型的任务
+  auto l_result = std::make_shared<scan_result>();
+  if (!l_scan_uuids.contains(in_task.task_type_id_)) return l_result;  // 只处理特定类型的任务
 
   auto l_task_type_id = in_task.task_type_id_;
   auto l_sql          = g_ctx().get<sqlite_database>();
@@ -169,10 +170,9 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
   if (auto l_entt_extend = l_sql.get_entity_asset_extend(l_entt.uuid_id_); !l_entt_extend.has_value()) {
     // 如果没有扩展数据, 则不进行扫描
     default_logger_raw()->warn("资产 {} 扩展数据不存在", l_entt.name_);
-    return {};
+    return l_result;
   } else
     l_extend = l_entt_extend.value();
-  auto l_result               = std::make_shared<scan_result>();
 
   auto l_l_working_files_list = l_sql.get_working_file_by_task(in_task.uuid_id_);
 
@@ -218,9 +218,9 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       auto l_tasks = l_sql.impl_->storage_any_.get_all<task>(
           where(c(&task::entity_id_) == in_task.entity_id_ && c(&task::task_type_id_) == task_type::get_binding_id())
       );
-      if (l_tasks.empty()) return {};  // 没有绑定任务, 无法进行模拟
+      if (l_tasks.empty()) return l_result;  // 没有绑定任务, 无法进行模拟
       auto l_work_file = l_sql.get_working_file_by_task(l_tasks.front().uuid_id_);
-      if (l_work_file.empty()) return {};  // 没有绑定任务的工作文件, 无法进行模拟
+      if (l_work_file.empty()) return l_result;  // 没有绑定任务的工作文件, 无法进行模拟
       // 这里假设模拟的maya文件是绑定任务的maya文件
       l_maya_working_file.path_          = scan_sim_maya(l_prj, l_work_file.front());
       l_maya_working_file.software_type_ = software_enum::maya;

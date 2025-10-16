@@ -29,7 +29,8 @@ boost::asio::awaitable<void> scan_working_files() {
   std::size_t l_count{};
   for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
     try {
-      l_scan_result += *scan_assets::scan_task(i);
+      auto l_sc = scan_assets::scan_task(i);
+      l_scan_result += *l_sc;
       ++l_count;
     } catch (...) {
       default_logger_raw()->error(" 扫描任务 {} 失败 {}", i.name_, boost::current_exception_diagnostic_information());
@@ -87,7 +88,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   scan_assets::scan_result l_scan_result{};
   for (auto&& i : l_ids) {
     auto l_task = l_sql.get_by_uuid<task>(i);
-    l_scan_result += *scan_assets::scan_task(l_task);
+    auto l_sc   = scan_assets::scan_task(l_task);
+    l_scan_result += *l_sc;
   }
   co_await l_scan_result.install_async_sqlite();
 
