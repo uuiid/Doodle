@@ -2,6 +2,8 @@
 // Created by TD on 25-8-15.
 //
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/entity_type.h"
+#include "doodle_core/metadata/task.h"
 #include <doodle_core/metadata/working_file.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -27,7 +29,12 @@ boost::asio::awaitable<void> scan_working_files() {
   if (!l_delete_ids.empty()) co_await l_sql.remove<working_file>(l_delete_ids);
   scan_assets::scan_result l_scan_result{};
   std::size_t l_count{};
-  for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
+  using namespace sqlite_orm;
+  for (auto&& i : l_sql.impl_->storage_any_.iterate<task>(
+           join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+           join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+           where(not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids()))
+       )) {
     try {
       auto l_sc = scan_assets::scan_task(i);
       l_scan_result += *l_sc;
