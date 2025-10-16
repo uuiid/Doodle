@@ -230,24 +230,7 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
   for (auto&& i : {&l_maya_working_file, &l_unreal_working_file}) {
     auto l_p         = l_prj.path_ / i->path_;
     auto l_file_uuid = FSys::software_flag_file(l_p);
-    if (l_sql.uuid_to_id<working_file>(l_file_uuid) != 0) {
-      // 存在数据库中, 可以直接连接
-      using namespace sqlite_orm;
-      if (l_sql.impl_->storage_any_.count<working_file_entity_link>(where(
-              c(&working_file_entity_link::working_file_id_) == l_file_uuid &&
-              c(&working_file_entity_link::entity_id_) == l_entt.uuid_id_
-          )) == 0)
-        l_result->working_file_entity_links_.emplace_back(
-            working_file_entity_link{.working_file_id_ = l_file_uuid, .entity_id_ = l_entt.uuid_id_}
-        );
-      if (l_sql.impl_->storage_any_.count<working_file_task_link>(where(
-              c(&working_file_task_link::working_file_id_) == l_file_uuid &&
-              c(&working_file_task_link::task_id_) == in_task.uuid_id_
-          )) == 0)
-        l_result->working_file_task_links_.emplace_back(
-            working_file_task_link{.working_file_id_ = l_file_uuid, .task_id_ = in_task.uuid_id_}
-        );
-    } else {
+    if (l_sql.uuid_to_id<working_file>(l_file_uuid) == 0) {
       if (i->uuid_id_.is_nil()) {
         i->uuid_id_ = core_set::get_set().get_uuid();
       }
@@ -255,22 +238,24 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       i->name_ = i->path_.filename().generic_string();
       i->size_ = FSys::file_size(l_p);
       l_result->working_files_.emplace_back(*i);
-      using namespace sqlite_orm;
-      if (l_sql.impl_->storage_any_.count<working_file_entity_link>(where(
-              c(&working_file_entity_link::working_file_id_) == i->uuid_id_ &&
-              c(&working_file_entity_link::entity_id_) == l_entt.uuid_id_
-          )) == 0)
-        l_result->working_file_entity_links_.emplace_back(
-            working_file_entity_link{.working_file_id_ = i->uuid_id_, .entity_id_ = l_entt.uuid_id_}
-        );
-      if (l_sql.impl_->storage_any_.count<working_file_task_link>(where(
-              c(&working_file_task_link::working_file_id_) == i->uuid_id_ &&
-              c(&working_file_task_link::task_id_) == in_task.uuid_id_
-          )) == 0)
-        l_result->working_file_task_links_.emplace_back(
-            working_file_task_link{.working_file_id_ = i->uuid_id_, .task_id_ = in_task.uuid_id_}
-        );
+    } else {
+      *i = l_sql.get_by_uuid<working_file>(l_file_uuid);
     }
+    using namespace sqlite_orm;
+    if (l_sql.impl_->storage_any_.count<working_file_entity_link>(where(
+            c(&working_file_entity_link::working_file_id_) == i->uuid_id_ &&
+            c(&working_file_entity_link::entity_id_) == l_entt.uuid_id_
+        )) == 0)
+      l_result->working_file_entity_links_.emplace_back(
+          working_file_entity_link{.working_file_id_ = i->uuid_id_, .entity_id_ = l_entt.uuid_id_}
+      );
+    if (l_sql.impl_->storage_any_.count<working_file_task_link>(where(
+            c(&working_file_task_link::working_file_id_) == i->uuid_id_ &&
+            c(&working_file_task_link::task_id_) == in_task.uuid_id_
+        )) == 0)
+      l_result->working_file_task_links_.emplace_back(
+          working_file_task_link{.working_file_id_ = i->uuid_id_, .task_id_ = in_task.uuid_id_}
+      );
   }
   return l_result;
 }

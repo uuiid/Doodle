@@ -151,7 +151,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&working_file_task_link::working_file_id_)
               .references(&working_file::uuid_id_)
               .on_delete.cascade(),
-          foreign_key(&working_file_task_link::task_id_).references(&server_task_info::uuid_id_).on_delete.cascade()
+          foreign_key(&working_file_task_link::task_id_).references(&task::uuid_id_).on_delete.cascade()
       ),
       make_table<working_file_entity_link>(
           "working_file_entity_link", make_column("id", &working_file_entity_link::id_, primary_key().autoincrement()),

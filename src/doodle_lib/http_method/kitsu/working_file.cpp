@@ -32,7 +32,6 @@ boost::asio::awaitable<void> scan_working_files() {
   using namespace sqlite_orm;
   for (auto&& i : l_sql.impl_->storage_any_.iterate<task>(
            join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-           join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
            where(not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids()))
        )) {
     try {
@@ -40,7 +39,7 @@ boost::asio::awaitable<void> scan_working_files() {
       l_scan_result += *l_sc;
       ++l_count;
     } catch (...) {
-      default_logger_raw()->error(" 扫描任务 {} 失败 {}", i.name_, boost::current_exception_diagnostic_information());
+      default_logger_raw()->error("扫描任务 {} 失败 {}", i.name_, boost::current_exception_diagnostic_information());
     }
   }
   default_logger_raw()->info("扫描完成, {} 个文件", l_count);
