@@ -5,9 +5,12 @@
 #include "scan_assets.h"
 
 #include "doodle_core/metadata/task_type.h"
+#include "doodle_core/metadata/working_file.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
+
+#include <boost/asio/awaitable.hpp>
 namespace doodle::scan_assets {
 namespace {
 
@@ -140,7 +143,15 @@ FSys::path scan_sim_maya(const project& in_prj, const working_file& in_extend) {
   if (exists(in_prj.path_ / l_maya_path)) return l_maya_path;
   return {};
 }
-std::vector<working_file> scan_task(const task& in_task) {
+boost::asio::awaitable<void> scan_result::install_async_sqlite() {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (!working_files_.empty()) co_await l_sql.install_range(&working_files_);
+  if (!working_file_entity_links_.empty()) co_await l_sql.install_range(&working_file_entity_links_);
+  if (!working_file_task_links_.empty()) co_await l_sql.install_range(&working_file_task_links_);
+  co_return;
+}
+
+std::shared_ptr<scan_result> scan_task(const task& in_task) {
   static std::set<uuid> l_scan_uuids{
       task_type::get_character_id(),
       task_type::get_ground_model_id(),
@@ -161,7 +172,7 @@ std::vector<working_file> scan_task(const task& in_task) {
     return {};
   } else
     l_extend = l_entt_extend.value();
-  std::vector<working_file> l_working_files{};
+  auto l_result               = std::make_shared<scan_result>();
 
   auto l_l_working_files_list = l_sql.get_working_file_by_task(in_task.uuid_id_);
 
@@ -169,7 +180,7 @@ std::vector<working_file> scan_task(const task& in_task) {
         return !l_file.path_.empty() && FSys::exists(l_file.path_);
       }))
     return default_logger_raw()->info("资产 {} 已经存在, 不需要重新扫描", l_entt.name_),
-           l_working_files;  // 如果所有的工作文件都存在, 则不需要重新扫描
+           l_result;  // 如果所有的工作文件都存在, 则不需要重新扫描
   working_file l_maya_working_file{};
   working_file l_unreal_working_file{};
 
@@ -186,15 +197,11 @@ std::vector<working_file> scan_task(const task& in_task) {
       l_maya_working_file.description_   = "maya模型文件";
       l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
       l_maya_working_file.software_type_ = software_enum::maya;
-      if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
-        l_working_files.push_back(l_maya_working_file);
     }
     if (l_unreal_working_file.path_.empty() || !FSys::exists(l_unreal_working_file.path_)) {
       l_unreal_working_file.description_   = "UE模型文件";
       l_unreal_working_file.path_          = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend);
       l_unreal_working_file.software_type_ = software_enum::unreal_engine;
-      if (!l_unreal_working_file.path_.empty() || l_unreal_working_file.uuid_id_.is_nil())
-        l_working_files.push_back(l_unreal_working_file);
     }
 
   } else if (l_task_type_id == task_type::get_binding_id()) {
@@ -202,8 +209,6 @@ std::vector<working_file> scan_task(const task& in_task) {
       l_maya_working_file.description_   = "绑定maya模型文件";
       l_maya_working_file.path_          = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend);
       l_maya_working_file.software_type_ = software_enum::maya;
-      if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
-        l_working_files.push_back(l_maya_working_file);
     }
 
   } else if (l_task_type_id == task_type::get_simulation_id()) {
@@ -219,35 +224,65 @@ std::vector<working_file> scan_task(const task& in_task) {
       // 这里假设模拟的maya文件是绑定任务的maya文件
       l_maya_working_file.path_          = scan_sim_maya(l_prj, l_work_file.front());
       l_maya_working_file.software_type_ = software_enum::maya;
-      if (!l_maya_working_file.path_.empty() || l_maya_working_file.uuid_id_.is_nil())
-        l_working_files.push_back(l_maya_working_file);
     }
   }
-  for (auto&& i : l_working_files) {
-    i.task_id_   = in_task.uuid_id_;
-    i.entity_id_ = in_task.entity_id_;
-    if (i.uuid_id_.is_nil()) {
-      i.uuid_id_ = core_set::get_set().get_uuid();
-    }
-    auto l_p = l_prj.path_ / i.path_;
 
-    if (auto l_file_uuid = FSys::software_flag_file(l_p); l_file_uuid.is_nil() || l_file_uuid != i.uuid_id_)
-      FSys::software_flag_file(l_p, i.uuid_id_);
-    i.name_ = i.path_.filename().generic_string();
+  for (auto&& i : {&l_maya_working_file, &l_unreal_working_file}) {
+    auto l_p         = l_prj.path_ / i->path_;
+    auto l_file_uuid = FSys::software_flag_file(l_p);
+    if (l_sql.uuid_to_id<working_file>(l_file_uuid) != 0) {
+      // 存在数据库中, 可以直接连接
+      using namespace sqlite_orm;
+      if (l_sql.impl_->storage_any_.count<working_file_entity_link>(where(
+              c(&working_file_entity_link::working_file_id_) == l_file_uuid &&
+              c(&working_file_entity_link::entity_id_) == l_entt.uuid_id_
+          )) == 0)
+        l_result->working_file_entity_links_.emplace_back(
+            working_file_entity_link{.working_file_id_ = l_file_uuid, .entity_id_ = l_entt.uuid_id_}
+        );
+      if (l_sql.impl_->storage_any_.count<working_file_task_link>(where(
+              c(&working_file_task_link::working_file_id_) == l_file_uuid &&
+              c(&working_file_task_link::task_id_) == in_task.uuid_id_
+          )) == 0)
+        l_result->working_file_task_links_.emplace_back(
+            working_file_task_link{.working_file_id_ = l_file_uuid, .task_id_ = in_task.uuid_id_}
+        );
+    } else {
+      if (i->uuid_id_.is_nil()) {
+        i->uuid_id_ = core_set::get_set().get_uuid();
+      }
+      if (l_file_uuid.is_nil() || l_file_uuid != i->uuid_id_) FSys::software_flag_file(l_p, i->uuid_id_);
+      i->name_ = i->path_.filename().generic_string();
+      i->size_ = FSys::file_size(l_p);
+      l_result->working_files_.emplace_back(*i);
+      using namespace sqlite_orm;
+      if (l_sql.impl_->storage_any_.count<working_file_entity_link>(where(
+              c(&working_file_entity_link::working_file_id_) == l_file_uuid &&
+              c(&working_file_entity_link::entity_id_) == l_entt.uuid_id_
+          )) == 0)
+        l_result->working_file_entity_links_.emplace_back(
+            working_file_entity_link{.working_file_id_ = l_file_uuid, .entity_id_ = l_entt.uuid_id_}
+        );
+      if (l_sql.impl_->storage_any_.count<working_file_task_link>(where(
+              c(&working_file_task_link::working_file_id_) == l_file_uuid &&
+              c(&working_file_task_link::task_id_) == in_task.uuid_id_
+          )) == 0)
+        l_result->working_file_task_links_.emplace_back(
+            working_file_task_link{.working_file_id_ = l_file_uuid, .task_id_ = in_task.uuid_id_}
+        );
+    }
   }
-  return l_working_files;
+  return l_result;
 }
-boost::asio::awaitable<std::shared_ptr<std::vector<working_file>>> scan_task_async(const task& in_task) {
+boost::asio::awaitable<std::shared_ptr<scan_result>> scan_task_async(const task& in_task) {
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<std::int64_t> l_delete_ids{};
   for (auto&& l_f : l_sql.get_working_file_by_task(in_task.uuid_id_))
     if (!l_f.path_.empty() && !FSys::exists(l_f.path_)) l_delete_ids.emplace_back(l_f.id_);
   if (!l_delete_ids.empty()) co_await l_sql.remove<working_file>(l_delete_ids);
 
-  std::shared_ptr<std::vector<working_file>> l_working_files =
-      std::make_shared<std::vector<working_file>>(scan_task(in_task));
-  if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
-  *l_working_files = l_sql.get_working_file_by_task(in_task.uuid_id_);
+  auto l_working_files = scan_task(in_task);
+  co_await l_working_files->install_async_sqlite();
   co_return l_working_files;
 }
 

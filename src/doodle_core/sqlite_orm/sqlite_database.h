@@ -12,6 +12,7 @@
 #include <boost/lockfree/spsc_queue.hpp>
 
 #include <optional>
+#include <vector>
 
 namespace doodle {
 struct preview_file;
@@ -91,6 +92,8 @@ class sqlite_database {
    */
   template <typename T>
   boost::asio::awaitable<void> install_range(const std::shared_ptr<std::vector<T>>& in_data);
+  template <typename T>
+  boost::asio::awaitable<void> install_range(std::vector<T>* in_data);
 
   template <typename T>
   boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data);

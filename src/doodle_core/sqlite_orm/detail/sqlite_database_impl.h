@@ -100,12 +100,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_table<ai_image_metadata>(
           "ai_image_metadata", make_column("id", &ai_image_metadata::id_, primary_key().autoincrement()),
           make_column("uuid_id", &ai_image_metadata::uuid_id_, unique(), not_null()),
-          make_column("prompt", &ai_image_metadata::prompt_),
-          make_column("task_id", &ai_image_metadata::task_id_),
+          make_column("prompt", &ai_image_metadata::prompt_), make_column("task_id", &ai_image_metadata::task_id_),
           make_column("category", &ai_image_metadata::category_, null()),
           make_column("extension", &ai_image_metadata::extension_, null()),
-          make_column("width", &ai_image_metadata::width_),
-          make_column("height", &ai_image_metadata::height_),
+          make_column("width", &ai_image_metadata::width_), make_column("height", &ai_image_metadata::height_),
           make_column("created_at", &ai_image_metadata::created_at_),
           make_column("author", &ai_image_metadata::author_),
           foreign_key(&ai_image_metadata::author_).references(&person::uuid_id_).on_delete.cascade()
@@ -142,10 +140,29 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&playlist::episodes_id_).references(&entity::uuid_id_).on_delete.cascade(),
           foreign_key(&playlist::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
-      make_index("working_file_task_index", &working_file::task_id_),
-      make_index("working_file_entity_index", &working_file::entity_id_),
-      make_index("working_file_person_index", &working_file::person_id_),
-      make_table(
+      make_index("working_file_task_link_working_file_id_index", &working_file_task_link::working_file_id_),
+      make_index("working_file_task_link_task_id_index", &working_file_task_link::task_id_),
+      make_index("working_file_entity_link_working_file_id_index", &working_file_entity_link::working_file_id_),
+      make_index("working_file_entity_link_entity_id_index", &working_file_entity_link::entity_id_),
+      make_table<working_file_task_link>(
+          "working_file_task_link", make_column("id", &working_file_task_link::id_, primary_key().autoincrement()),
+          make_column("working_file_id", &working_file_task_link::working_file_id_, not_null()),
+          make_column("task_id", &working_file_task_link::task_id_, not_null()),
+          foreign_key(&working_file_task_link::working_file_id_)
+              .references(&working_file::uuid_id_)
+              .on_delete.cascade(),
+          foreign_key(&working_file_task_link::task_id_).references(&server_task_info::uuid_id_).on_delete.cascade()
+      ),
+      make_table<working_file_entity_link>(
+          "working_file_entity_link", make_column("id", &working_file_entity_link::id_, primary_key().autoincrement()),
+          make_column("working_file_id", &working_file_entity_link::working_file_id_, not_null()),
+          make_column("entity_id", &working_file_entity_link::entity_id_, not_null()),
+          foreign_key(&working_file_entity_link::working_file_id_)
+              .references(&working_file::uuid_id_)
+              .on_delete.cascade(),
+          foreign_key(&working_file_entity_link::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
+      ),
+      make_table<working_file>(
           "working_file", make_column("id", &working_file::id_, primary_key()),
           make_column("uuid_id", &working_file::uuid_id_, unique(), not_null()),
           make_column("name", &working_file::name_),                                                                 //
@@ -154,13 +171,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("size", &working_file::size_, not_null(), default_value(0)),
           make_column("checksum", &working_file::checksum_, not_null(), default_value(0)),
           make_column("path", &working_file::path_),  //
-          make_column("data", &working_file::data_),  //
-          make_column("software_type", &working_file::software_type_, not_null()),
-          make_column("task_id", &working_file::task_id_),                                                           //
-          make_column("entity_id", &working_file::entity_id_), make_column("person_id", &working_file::person_id_),  //
-          foreign_key(&working_file::task_id_).references(&task::uuid_id_).on_delete.cascade(),
-          foreign_key(&working_file::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),
-          foreign_key(&working_file::person_id_).references(&person::uuid_id_).on_delete.cascade()
+          make_column("software_type", &working_file::software_type_, not_null())
       ),
 
       make_index("server_task_info_tab_uuid_id_idx", &server_task_info::uuid_id_),
@@ -921,7 +932,7 @@ struct sqlite_database_impl {
   static constexpr bool has_uuid_id = has_uuid_id_impl<T>::value;
 
   template <typename T>
-  boost::asio::awaitable<void> install_range(std::shared_ptr<std::vector<T>> in_data) {
+  boost::asio::awaitable<void> install_range(std::vector<T>* in_data) {
     if (!std::is_sorted(in_data->begin(), in_data->end(), [](const auto& in_r, const auto& in_l) {
           return in_r.id_ < in_l.id_;
         }))

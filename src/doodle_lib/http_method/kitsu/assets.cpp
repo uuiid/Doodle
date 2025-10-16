@@ -2,6 +2,7 @@
 // Created by TD on 24-12-30.
 //
 
+#include "doodle_core/metadata/working_file.h"
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -14,7 +15,7 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-
+#include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle::http {
 namespace {
@@ -281,12 +282,18 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   l_task_ids.reserve(l_entities_and_tasks_map.size() * 10);
   for (auto&& l_i : l_entities_and_tasks_map)
     for (auto&& l_j : l_i.second.tasks_) l_task_ids.push_back(l_j.uuid_id_);
-  for (auto&& l_work_file :
-       l_sql.impl_->storage_any_.get_all<working_file>(where(in(&working_file::task_id_, l_task_ids)))) {
-    if (l_entities_and_tasks_map.contains(l_work_file.entity_id_)) {
-      auto& l_task = l_entities_and_tasks_map[l_work_file.entity_id_].tasks_;
-      if (l_task.size() > l_task_id_set.at(l_work_file.task_id_))
-        l_task.at(l_task_id_set.at(l_work_file.task_id_)).working_files_.emplace_back(l_work_file);
+  for (auto&& [l_work_file, l_task_id, l_entity_id] : l_sql.impl_->storage_any_.select(
+           columns(
+               object<working_file>(true), &working_file_task_link::task_id_, &working_file_entity_link::entity_id_
+           ),
+           join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))),
+           join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+           where(in(&working_file_task_link::task_id_, l_task_ids))
+       )) {
+    if (l_entities_and_tasks_map.contains(l_entity_id)) {
+      auto& l_task = l_entities_and_tasks_map[l_entity_id].tasks_;
+      if (l_task.size() > l_task_id_set.at(l_task_id))
+        l_task.at(l_task_id_set.at(l_task_id)).working_files_.emplace_back(l_work_file);
     }
   }
 

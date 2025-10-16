@@ -22,6 +22,7 @@
 
 #include "metadata/ai_image_metadata.h"
 #include "metadata/entity_type.h"
+#include "metadata/working_file.h"
 #include <optional>
 #include <sqlite_orm/sqlite_orm.h>
 
@@ -759,7 +760,10 @@ std::vector<status_automation> sqlite_database::get_project_status_automations(c
 }
 std::vector<working_file> sqlite_database::get_working_file_by_task(const uuid& in_task_id) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<working_file>(where(c(&working_file::task_id_) == in_task_id));
+  auto l_t = impl_->storage_any_.get_all<working_file>(
+      join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+      where(c(&working_file_task_link::task_id_) == in_task_id)
+  );
   return l_t;
 }
 
@@ -1261,6 +1265,8 @@ DOODLE_INSTALL_RANGE(task)
 DOODLE_INSTALL_RANGE(person_department_link)
 DOODLE_INSTALL_RANGE(working_file)
 DOODLE_INSTALL_RANGE(entity_link)
+DOODLE_INSTALL_RANGE(working_file_task_link)
+DOODLE_INSTALL_RANGE(working_file_entity_link)
 DOODLE_INSTALL_RANGE(playlist_shot)
 DOODLE_INSTALL_RANGE(task_type_asset_type_link)
 

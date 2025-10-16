@@ -317,7 +317,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
   auto l_assignees = l_sql.impl_->storage_any_.select(
       object<person>(true), from<person>(), where(in(&person::uuid_id_, l_task.assignees_))
   );
-  auto l_working_files = l_sql.impl_->storage_any_.get_all<working_file>(where(c(&working_file::task_id_) == id_));
+  auto l_working_files = l_sql.get_working_file_by_task(id_);
   nlohmann::json l_ret{};
   l_ret = l_task;
   l_ret.update(

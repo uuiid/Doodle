@@ -25,17 +25,19 @@ boost::asio::awaitable<void> scan_working_files() {
     if (!l_f.path_.empty() && !exists(l_f.path_)) l_delete_ids.emplace_back(l_f.id_);
   }
   if (!l_delete_ids.empty()) co_await l_sql.remove<working_file>(l_delete_ids);
-
-  std::shared_ptr<std::vector<working_file>> l_working_files = std::make_shared<std::vector<working_file>>();
+  scan_assets::scan_result l_scan_result{};
+  std::size_t l_count{};
   for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
     try {
-      *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
+      l_scan_result += *scan_assets::scan_task(i);
+      ++l_count;
     } catch (...) {
       default_logger_raw()->error(" 扫描任务 {} 失败 {}", i.name_, boost::current_exception_diagnostic_information());
     }
   }
-  default_logger_raw()->info("扫描完成, {} 个文件", l_working_files->size());
-  if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
+  default_logger_raw()->info("扫描完成, {} 个文件", l_count);
+  co_await l_scan_result.install_async_sqlite();
+  co_return;
 }
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_working_files_scan_all::post(
@@ -60,18 +62,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_working_fi
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql   = g_ctx().get<sqlite_database>();
-  auto l_task  = l_sql.get_by_uuid<task>(id_);
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = l_sql.get_by_uuid<task>(id_);
 
-  auto l_files = co_await scan_assets::scan_task_async(l_task);
-  co_return in_handle->make_msg(nlohmann::json{} = *l_files);
+  co_await scan_assets::scan_task_async(l_task);
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_working_file_by_task(id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::get(
     session_data_ptr in_handle
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
-  auto l_task = l_sql.impl_->storage_any_.get_all<working_file>(where(c(&working_file::task_id_) == id_));
+  auto l_task = l_sql.get_working_file_by_task(id_);
   if (l_task.empty())
     in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有找到对应的working file");
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
@@ -79,16 +81,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_working_file_many::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql                                                 = g_ctx().get<sqlite_database>();
-  auto l_ids                                                 = in_handle->get_json().get<std::vector<uuid>>();
-  std::shared_ptr<std::vector<working_file>> l_working_files = std::make_shared<std::vector<working_file>>();
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ids = in_handle->get_json().get<std::vector<uuid>>();
   std::map<uuid, std::vector<working_file>> l_work_map{};
+  scan_assets::scan_result l_scan_result{};
   for (auto&& i : l_ids) {
-    auto l_task                 = l_sql.get_by_uuid<task>(i);
-    l_work_map[l_task.uuid_id_] = scan_assets::scan_task(l_task);
-    *l_working_files |= ranges::actions::push_back(l_work_map[l_task.uuid_id_]);
+    auto l_task = l_sql.get_by_uuid<task>(i);
+    l_scan_result += *scan_assets::scan_task(l_task);
   }
-  if (!l_working_files->empty()) co_await l_sql.install_range(l_working_files);
+  co_await l_scan_result.install_async_sqlite();
+
+  for (auto&& i : l_ids) {
+    l_work_map[i] = l_sql.get_working_file_by_task(i);
+  }
+
   co_return in_handle->make_msg(nlohmann::json{} = l_work_map);
 }
 

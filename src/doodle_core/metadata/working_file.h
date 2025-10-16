@@ -15,6 +15,18 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                        // Add other software types as needed
                    }
 );
+
+struct working_file_task_link {
+  std::int64_t id_;
+  uuid working_file_id_;
+  uuid task_id_;
+};
+struct working_file_entity_link {
+  std::int64_t id_;
+  uuid working_file_id_;
+  uuid entity_id_;
+};
+
 struct working_file {
   DOODLE_BASE_FIELDS();
   std::string name_;
@@ -24,12 +36,8 @@ struct working_file {
   std::int64_t size_;
   std::int32_t checksum_;
   FSys::path path_;
-  nlohmann::json data_;
   software_enum software_type_;
 
-  uuid task_id_;
-  uuid entity_id_;
-  uuid person_id_;
   // uuid software_id_;
   // to_json
   friend void to_json(nlohmann::json& j, const working_file& p) {
@@ -41,11 +49,7 @@ struct working_file {
     j["size"]          = p.size_;
     j["checksum"]      = p.checksum_;
     j["path"]          = p.path_;
-    j["data"]          = p.data_;
     j["software_type"] = p.software_type_;
-    j["task_id"]       = p.task_id_;
-    j["entity_id"]     = p.entity_id_;
-    j["person_id"]     = p.person_id_;
   }
   // from_json
   friend void from_json(const nlohmann::json& j, working_file& p) {
@@ -57,11 +61,7 @@ struct working_file {
     j.at("size").get_to(p.size_);
     j.at("checksum").get_to(p.checksum_);
     j.at("path").get_to(p.path_);
-    j.at("data").get_to(p.data_);
     j.at("software_type").get_to(p.software_type_);
-    j.at("task_id").get_to(p.task_id_);
-    j.at("entity_id").get_to(p.entity_id_);
-    j.at("person_id").get_to(p.person_id_);
   }
 };
 }  // namespace doodle
