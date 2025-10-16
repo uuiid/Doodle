@@ -11,6 +11,8 @@
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
+#include <boost/exception/diagnostic_information.hpp>
+
 #include <sqlite_orm/sqlite_orm.h>
 namespace doodle::http {
 
@@ -28,8 +30,8 @@ boost::asio::awaitable<void> scan_working_files() {
   for (auto&& i : l_sql.impl_->storage_any_.iterate<task>()) {
     try {
       *l_working_files |= ranges::actions::push_back(scan_assets::scan_task(i));
-    } catch (const FSys::filesystem_error& l_error) {
-      default_logger_raw()->warn("{}", l_error.what());
+    } catch (...) {
+      default_logger_raw()->error(" 扫描任务 {} 失败 {}", i.name_, boost::current_exception_diagnostic_information());
     }
   }
   default_logger_raw()->info("扫描完成, {} 个文件", l_working_files->size());
