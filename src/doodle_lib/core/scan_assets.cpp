@@ -257,18 +257,18 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       l_result->working_files_.emplace_back(*i);
       using namespace sqlite_orm;
       if (l_sql.impl_->storage_any_.count<working_file_entity_link>(where(
-              c(&working_file_entity_link::working_file_id_) == l_file_uuid &&
+              c(&working_file_entity_link::working_file_id_) == i->uuid_id_ &&
               c(&working_file_entity_link::entity_id_) == l_entt.uuid_id_
           )) == 0)
         l_result->working_file_entity_links_.emplace_back(
-            working_file_entity_link{.working_file_id_ = l_file_uuid, .entity_id_ = l_entt.uuid_id_}
+            working_file_entity_link{.working_file_id_ = i->uuid_id_, .entity_id_ = l_entt.uuid_id_}
         );
       if (l_sql.impl_->storage_any_.count<working_file_task_link>(where(
-              c(&working_file_task_link::working_file_id_) == l_file_uuid &&
+              c(&working_file_task_link::working_file_id_) == i->uuid_id_ &&
               c(&working_file_task_link::task_id_) == in_task.uuid_id_
           )) == 0)
         l_result->working_file_task_links_.emplace_back(
-            working_file_task_link{.working_file_id_ = l_file_uuid, .task_id_ = in_task.uuid_id_}
+            working_file_task_link{.working_file_id_ = i->uuid_id_, .task_id_ = in_task.uuid_id_}
         );
     }
   }
