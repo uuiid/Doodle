@@ -69,4 +69,5 @@ video_thumbnail() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http::local
