@@ -8,6 +8,7 @@
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
@@ -15,6 +16,8 @@
 
 #include <boost/exception/diagnostic_information.hpp>
 
+#include <nlohmann/json_fwd.hpp>
+#include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 namespace doodle::http {
 
@@ -85,6 +88,35 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
     in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有找到对应的working file");
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
+// template <class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty,
+// _Ty>>> struct map_json_obj {
+//   using map_t = std::map<_Kty, _Ty, _Pr, _Alloc>;
+//   map_t l_map;
+//   explicit map_json_obj(const map_t& in_map) : l_map(in_map) {}
+//   // to json
+//   friend void to_json(nlohmann::json& io_json, const map_json_obj<_Kty, _Ty, _Pr, _Alloc>& in_obj) {
+//     for (auto&& i : in_obj.l_map) io_json[i.first] = i.second;
+//   }
+// };
+template <class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty, _Ty>>>
+nlohmann::json map_json_obj(nlohmann::json& io_json, const std::map<_Kty, _Ty, _Pr, _Alloc>& in_obj) {
+  for (auto&& i : in_obj) io_json[i.first] = i.second;
+  return io_json;
+}
+template <class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty, _Ty>>>
+nlohmann::json map_json_obj(const std::map<_Kty, _Ty, _Pr, _Alloc>& in_obj) {
+  nlohmann::json io_json{};
+  for (auto&& i : in_obj) {
+    if constexpr (std::is_same_v<std::decay_t<_Kty>, uuid>)
+      io_json[fmt::to_string(i.first)] = i.second;
+    else
+      io_json[i.first] = i.second;
+
+    // io_json.emplace_back(nlohmann::json{{i.first, i.second}});
+  }
+  return io_json;
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_working_file_many::post(
     session_data_ptr in_handle
 ) {
@@ -103,7 +135,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     l_work_map[i] = l_sql.get_working_file_by_task(i);
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_work_map);
+  co_return in_handle->make_msg(map_json_obj(l_work_map));
 }
-
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entities_working_file_many_get::post(
+    session_data_ptr in_handle
+) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ids = in_handle->get_json().get<std::vector<uuid>>();
+  std::map<uuid, std::vector<working_file>> l_work_map{};
+  using namespace sqlite_orm;
+  for (auto&& [l_work_file, l_entity_id] : l_sql.impl_->storage_any_.select(
+           columns(object<working_file>(true), &working_file_entity_link::entity_id_), from<working_file>(),
+           join<working_file_entity_link>(
+               on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))
+           ),
+           where(in(&working_file_entity_link::entity_id_, l_ids))
+       )) {
+    l_work_map[l_entity_id].emplace_back(std::move(l_work_file));
+  }
+  co_return in_handle->make_msg(map_json_obj(l_work_map));
+}
 }  // namespace doodle::http
