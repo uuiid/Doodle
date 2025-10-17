@@ -133,12 +133,12 @@ torch::Tensor normalize_adjacency(const torch::Tensor& A) {
 // Example: build node features from vertices & bone positions
 // vertices: [N,3], bone_positions: [B,3], faces: [F,3] (optional)
 GraphSample build_sample_from_mesh(
-    const torch::Tensor& vertices,        // [N,3]
-    const torch::Tensor& bone_positions,  // [B,3]
-    const torch::Tensor& faces,           // [F,3] or empty
-    const torch::Tensor& weights,         // [N,B] ground truth distribution
-    int K                                 /*=4*/
-) {
+  const torch::Tensor& vertices,        // [N,3]
+  const torch::Tensor& bone_positions,  // [B,3]
+  const torch::Tensor& faces,           // [F,3] or empty
+  const torch::Tensor& weights,         // [N,B] ground truth distribution
+  int K                                 /*=4*/,
+  const std::vector<int64_t>& bone_parents = std::vector<int64_t>()) {
   int64_t N       = vertices.size(0);
   int64_t B       = bone_positions.size(0);
 
@@ -205,27 +205,40 @@ GraphSample build_sample_from_mesh(
   // 3) normalize adjacency
   torch::Tensor adj_norm = normalize_adjacency(A);
 
-  // 4) build bone adjacency: connect bones by Kb nearest neighbors
+  // 4) build bone adjacency
+  // Prefer parent-child topology if provided (bone_parents length == B)
   torch::Tensor bone_adj = torch::zeros({B, B}, torch::TensorOptions().dtype(torch::kFloat32));
-  if (B > 1) {
-    int Kb = std::min<int>(4, (int)B - 1);
-    // pairwise distances between bones
-    auto b_exp1 = bone_positions.unsqueeze(1).expand({B, B, 3});
-    auto b_exp2 = bone_positions.unsqueeze(0).expand({B, B, 3});
-    auto b_dists = torch::norm(b_exp1 - b_exp2, 2, -1);  // [B,B]
-    auto sort_b = b_dists.sort(1, /*descending=*/false);
-    auto sorted_b_idx = std::get<1>(sort_b);  // [B,B]
-    auto sorted_b_idx_acc = sorted_b_idx.accessor<int64_t, 2>();
+  if ((int)bone_parents.size() == B) {
     for (int64_t i = 0; i < B; ++i) {
-      int added = 0;
-      for (int j = 1; j < B && added < Kb; ++j) {  // start from 1 to skip self
-        int64_t nb = sorted_b_idx_acc[i][j];
-        bone_adj[i][nb] = 1.0;
-        bone_adj[nb][i] = 1.0;
-        added++;
+      int64_t p = bone_parents[i];
+      if (p >= 0 && p < B) {
+        bone_adj[i][p] = 1.0;
+        bone_adj[p][i] = 1.0;
       }
     }
     bone_adj = normalize_adjacency(bone_adj);
+  } else {
+    // fallback: connect bones by Kb nearest neighbors
+    if (B > 1) {
+      int Kb = std::min<int>(4, (int)B - 1);
+      // pairwise distances between bones
+      auto b_exp1 = bone_positions.unsqueeze(1).expand({B, B, 3});
+      auto b_exp2 = bone_positions.unsqueeze(0).expand({B, B, 3});
+      auto b_dists = torch::norm(b_exp1 - b_exp2, 2, -1);  // [B,B]
+      auto sort_b = b_dists.sort(1, /*descending=*/false);
+      auto sorted_b_idx = std::get<1>(sort_b);  // [B,B]
+      auto sorted_b_idx_acc = sorted_b_idx.accessor<int64_t, 2>();
+      for (int64_t i = 0; i < B; ++i) {
+        int added = 0;
+        for (int j = 1; j < B && added < Kb; ++j) {  // start from 1 to skip self
+          int64_t nb = sorted_b_idx_acc[i][j];
+          bone_adj[i][nb] = 1.0;
+          bone_adj[nb][i] = 1.0;
+          added++;
+        }
+      }
+      bone_adj = normalize_adjacency(bone_adj);
+    }
   }
 
   GraphSample s;
@@ -329,6 +342,8 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   SkinWeightGCNImpl(int in_channels, int hidden_dim, int num_bones = 0) : gc1(nullptr), gc2(nullptr) {
     gc1  = register_module("gc1", GraphConv(in_channels, hidden_dim));
     gc2  = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
+    // bone graph conv: transforms bone embeddings via bone adjacency
+    bgc  = register_module("bgc", GraphConv(hidden_dim, hidden_dim));
     // global branch
     gfc1 = register_module("gfc1", torch::nn::Linear(in_channels, hidden_dim));
     gfc2 = register_module("gfc2", torch::nn::Linear(hidden_dim, hidden_dim));
@@ -384,7 +399,9 @@ struct SkinWeightGCNImpl : torch::nn::Module {
         ss << "bone_adj device (" << bone_adj.device() << ") does not match bone embeddings device (" << used_emb.device() << ")";
         throw std::runtime_error(ss.str());
       }
-      used_emb = torch::matmul(bone_adj, used_emb);
+      // use a learnable bone-graph conv layer instead of simple matmul
+      // GraphConv.forward expects (x, adj_norm) where x: [N, Fin], adj_norm: [N,N]
+      used_emb = bgc->forward(used_emb, bone_adj);
     }
     // used_emb: [B, H]
     // shape checks: used_emb must be 2D and its second dim must match h.size(1)
@@ -404,6 +421,7 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   }
 
   GraphConv gc1, gc2;
+  GraphConv bgc;
   torch::nn::Linear gfc1{nullptr}, gfc2{nullptr}, fc1{nullptr};
   // optional bone embedding matrix [B, hidden_dim]
   torch::Tensor bone_emb;
@@ -501,7 +519,8 @@ int run(int argc, char** argv) {
 
       optimizer.zero_grad();
   // pass optional bone_adj (may be undefined)
-  auto logp = model->forward(x, adj, torch::Tensor(), sample.bone_adj);  // [N, B] log-probs
+  torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
+  auto logp = model->forward(x, adj, torch::Tensor(), bone_adj);  // [N, B] log-probs
       auto loss = kl_loss_from_logprob(logp, y);
       loss.backward();
       optimizer.step();
@@ -519,7 +538,8 @@ int run(int argc, char** argv) {
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
       torch::NoGradGuard no_grad;
-  auto logp = model->forward(x, adj, torch::Tensor(), sample.bone_adj);
+  torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
+  auto logp = model->forward(x, adj, torch::Tensor(), bone_adj);
       auto loss = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
     }
