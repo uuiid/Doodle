@@ -85,10 +85,10 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
   auto* l_vert           = l_mesh->GetControlPoints();
   auto l_vert_count      = l_mesh->GetControlPointsCount();
   torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
-  torch::Tensor l_faces  = torch::zeros({l_vert_count, 3}, torch::kInt32);
   for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
-
+  
   auto l_faces_num = l_mesh->GetPolygonCount();
+  torch::Tensor l_faces  = torch::zeros({l_faces_num, 3}, torch::kInt32);
   for (auto j = 0; j < l_faces_num; j++) {
     for (auto k = 0; k < l_mesh->GetPolygonSize(j); k++) {
       auto l_vert_index = l_mesh->GetPolygonVertex(j, k);
