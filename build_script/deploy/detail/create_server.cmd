@@ -1,2 +1,2 @@
-nssm install doodle_file_association_http D:/doodle_exe/bin/file_association_http.exe
-nssm set doodle_file_association_http ObjectName .\administrator root
+nssm install doodle_kitsu_supplement D:/kitsu/bin/doodle_kitsu_supplement.exe
+nssm set doodle_kitsu_supplement ObjectName .\administrator root

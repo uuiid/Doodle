@@ -8,8 +8,8 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu
-&robocopy "$DoodleOut" "\\192.168.40.181\tmp" /s
-&robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\tmp\dist\assets" /MIR
+&robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s
+&robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\Dev\tmp\dist\assets" /MIR
 
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator,$RootPassword
@@ -19,7 +19,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
-    $LogPath = "D:\build_$timestamp.log"
+    $LogPath = "%TMP%\build_$timestamp.log"
     if ($Using:CopyServer -and ((Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash))
     {
         Write-Host "更新服务"
