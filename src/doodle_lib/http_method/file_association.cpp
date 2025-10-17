@@ -25,7 +25,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_associ
       sqlite_orm::where(sqlite_orm::c(&working_file_entity_link::working_file_id_) == id_)
   );
   if (l_entt_ids.empty())
-    in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found entity is empty");
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "file not found entity is empty");
   auto l_entt = l_sql.get_by_uuid<entity>(l_entt_ids.front());
   project_minimal l_prj{l_sql.get_by_uuid<project>(l_entt.project_id_)};
 
