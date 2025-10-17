@@ -95,8 +95,14 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
     auto l_cluster = l_sk->GetCluster(i);
     auto l_joint   = l_cluster->GetLink();
     auto l_matrix  = l_scene->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
-    FbxAMatrix l_matrix_t{};
-    l_cluster->GetTransformLinkMatrix(l_matrix_t);
+    FbxAMatrix l_matrix_tmp{};
+    l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
+    l_matrix            = l_matrix * l_matrix_tmp;
+    l_bone_positions[i] = torch::tensor({l_matrix.GetT()[0], l_matrix.GetT()[1], l_matrix.GetT()[2]});
+    auto l_controls     = l_cluster->GetControlPointIndices();
+    for (auto j = 0; j < l_cluster->GetControlPointIndicesCount(); j++) {
+      l_bone_weights[j][i] = l_controls[j];
+    }
   }
 
   return {};
@@ -116,8 +122,7 @@ torch::Tensor normalize_adjacency(const torch::Tensor& A) {
 // Example: build node features from vertices & bone positions
 // vertices: [N,3], bone_positions: [B,3], faces: [F,3] (optional)
 GraphSample build_sample_from_mesh(
-    const torch::Tensor& vertices,  // [N,3]
-    const std::vector<std::string>& bone_names,
+    const torch::Tensor& vertices,        // [N,3]
     const torch::Tensor& bone_positions,  // [B,3]
     const torch::Tensor& faces,           // [F,3] or empty
     const torch::Tensor& weights,         // [N,B] ground truth distribution
