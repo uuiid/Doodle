@@ -1,0 +1,1 @@
+robocopy \\192.168.40.181\d\kitsu_data D:\kitsu_data /MIR

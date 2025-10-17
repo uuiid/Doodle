@@ -12,7 +12,7 @@ Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu
 &robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\tmp\dist\assets" /MIR
 
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
-$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList auto_light,$RootPassword
+$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator,$RootPassword
 #Enter-PSSession -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic
 Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
