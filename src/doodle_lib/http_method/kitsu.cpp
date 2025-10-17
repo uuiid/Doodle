@@ -22,6 +22,7 @@
 #include <doodle_lib/core/socket_io.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/epiboly.h>
@@ -33,6 +34,7 @@
 #include <doodle_lib/http_method/up_file.h>
 
 #include "kitsu/kitsu_reg_url.h"
+
 
 namespace doodle::http {
 
@@ -233,6 +235,7 @@ http_route_ptr create_kitsu_local_route() {
         .reg_t<local::task_instance_generate_uesk_file>(
             "/api/doodle/task/{}/generate_uesk_file"_url(&local::task_instance_generate_uesk_file::id_)
         )
+        .reg_t<ai_train_binding_weights>("/api/doodle/ai/train-binding-weights"_url)
 
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 

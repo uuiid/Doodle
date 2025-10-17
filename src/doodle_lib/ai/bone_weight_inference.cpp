@@ -37,7 +37,7 @@ struct GraphSample {
   torch::Tensor y;
   // optional: node mask or other metadata
 };
-std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger) {
+std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger = nullptr) {
   // load fbx
   if (!in_logger) in_logger = spdlog::default_logger_raw();
 
@@ -370,6 +370,9 @@ void load_checkpoint(SkinWeightGCN& model, const std::string& path) {
 FSys::path run_bone_weight_inference(const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path) {
   auto l_files = in_fbx_files;
   l_files |= ranges::actions::sort;
+  for (auto&& l_f : l_files) {
+    load_fbx(l_f);
+  }
   return in_output_path;
 }
 
