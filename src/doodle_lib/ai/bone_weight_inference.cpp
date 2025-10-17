@@ -16,6 +16,7 @@
 #include <fbxsdk/scene/geometry/fbxtrimnurbssurface.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>
 #include <fmt/format.h>
+#include <functional>
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <sstream>
@@ -57,12 +58,20 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
     FbxGeometryConverter l_converter{manager.get()};
     l_converter.RecenterSceneToWorldCenter(l_scene, 0.000001);
     FbxArray<FbxNode*> l_mesh_nodes;
-    for (auto i = 0; i < l_root->GetChildCount(); i++) {
-      auto l_node = l_root->GetChild(i);
-      if (l_node->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
-        l_mesh_nodes.Add(l_node);
+
+    std::function<void(FbxNode*)> l_fun;
+    l_fun = [&](FbxNode* in_node) {
+      for (auto i = 0; i < in_node->GetChildCount(); i++) {
+        auto l_child = in_node->GetChild(i);
+        if (l_child->GetNodeAttribute() && l_child->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
+          l_mesh_nodes.Add(l_child);
+        } else {
+          l_fun(l_child);
+        }
       }
-    }
+    };
+
+    l_fun(l_root);
     if (l_mesh_nodes.Size() == 0) throw_exception(doodle_error{"fbx mesh not found"});
 
     l_mesh_node = l_converter.MergeMeshes(l_mesh_nodes, fmt::format("main_{}", l_mesh_nodes.Size()).c_str(), l_scene);
