@@ -278,24 +278,24 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
     }
   }
 
-  std::vector<uuid> l_task_ids{};
-  l_task_ids.reserve(l_entities_and_tasks_map.size() * 10);
-  for (auto&& l_i : l_entities_and_tasks_map)
-    for (auto&& l_j : l_i.second.tasks_) l_task_ids.push_back(l_j.uuid_id_);
-  for (auto&& [l_work_file, l_task_id, l_entity_id] : l_sql.impl_->storage_any_.select(
-           columns(
-               object<working_file>(true), &working_file_task_link::task_id_, &working_file_entity_link::entity_id_
-           ),
-           join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))),
-           join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
-           where(in(&working_file_task_link::task_id_, l_task_ids))
-       )) {
-    if (l_entities_and_tasks_map.contains(l_entity_id)) {
-      auto& l_task = l_entities_and_tasks_map[l_entity_id].tasks_;
-      if (l_task.size() > l_task_id_set.at(l_task_id))
-        l_task.at(l_task_id_set.at(l_task_id)).working_files_.emplace_back(l_work_file);
-    }
-  }
+  // std::vector<uuid> l_task_ids{};
+  // l_task_ids.reserve(l_entities_and_tasks_map.size() * 10);
+  // for (auto&& l_i : l_entities_and_tasks_map)
+  //   for (auto&& l_j : l_i.second.tasks_) l_task_ids.push_back(l_j.uuid_id_);
+  // for (auto&& [l_work_file, l_task_id, l_entity_id] : l_sql.impl_->storage_any_.select(
+  //          columns(
+  //              object<working_file>(true), &working_file_task_link::task_id_, &working_file_entity_link::entity_id_
+  //          ),
+  //          join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))),
+  //          join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+  //          where(in(&working_file_task_link::task_id_, l_task_ids))
+  //      )) {
+  //   if (l_entities_and_tasks_map.contains(l_entity_id)) {
+  //     auto& l_task = l_entities_and_tasks_map[l_entity_id].tasks_;
+  //     if (l_task.size() > l_task_id_set.at(l_task_id))
+  //       l_task.at(l_task_id_set.at(l_task_id)).working_files_.emplace_back(l_work_file);
+  //   }
+  // }
 
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
   return l_ret;
