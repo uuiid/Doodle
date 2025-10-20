@@ -139,7 +139,7 @@
     {
       "label": "复制数据库",
       "type": "shell",
-      "command": "copy \\\\192.168.40.181\\d\\kitsu_new.database E:\\Doodle\\build\\kitsu_new.db",
+      "command": "copy \\\\192.168.40.181\\Dev\\kitsu_new.database E:\\Doodle\\build\\kitsu_new.db",
       "problemMatcher": []
     }
   ],
