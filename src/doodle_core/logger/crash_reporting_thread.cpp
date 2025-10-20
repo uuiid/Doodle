@@ -74,10 +74,13 @@ crash_reporting_thread::~crash_reporting_thread() {
 void crash_reporting_thread::handle_crash() {
   FSys::path l_path{
       FSys::temp_directory_path() / "doodle" /
-      fmt::format("Minidump_{:%Y-%m-%d %H-%M-%S}.dmp", std::chrono::system_clock::now())};
+      fmt::format("Minidump_{:%Y-%m-%d %H-%M-%S}.dmp", std::chrono::system_clock::now())
+  };
   l_path = l_path.lexically_normal();
   l_path = l_path.make_preferred();
   if (!FSys::exists(l_path.parent_path())) FSys::create_directories(l_path.parent_path());
+  // set l_f = MiniDumpWithPrivateReadWriteMemory| MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithDataSegs |
+  // MiniDumpWithHandleData | MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo | MiniDumpWithUnloadedModules;
   wil::unique_hfile l_file_handle{::CreateFileW(
       l_path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr
   )};
