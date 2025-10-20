@@ -77,6 +77,8 @@ std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_mp4(
 ) {
   auto l_thumbnails_path = in_path / "thumbnails" / in_name.replace_extension(".png");
   auto l_preview_path    = in_path / "previews" / in_name.replace_extension(".mp4");
+  if (auto l_p = l_thumbnails_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (auto l_p = l_preview_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   std::pair<std::size_t, std::size_t> l_size{};
   {
     cv::VideoCapture l_video{};
