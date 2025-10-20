@@ -88,9 +88,9 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
   auto l_vert_count      = l_mesh->GetControlPointsCount();
   torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
   for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
-  
-  auto l_faces_num = l_mesh->GetPolygonCount();
-  torch::Tensor l_faces  = torch::zeros({l_faces_num, 3}, torch::kInt32);
+
+  auto l_faces_num      = l_mesh->GetPolygonCount();
+  torch::Tensor l_faces = torch::zeros({l_faces_num, 3}, torch::kInt32);
   for (auto j = 0; j < l_faces_num; j++) {
     for (auto k = 0; k < l_mesh->GetPolygonSize(j); k++) {
       auto l_vert_index = l_mesh->GetPolygonVertex(j, k);
@@ -133,12 +133,12 @@ torch::Tensor normalize_adjacency(const torch::Tensor& A) {
 // Example: build node features from vertices & bone positions
 // vertices: [N,3], bone_positions: [B,3], faces: [F,3] (optional)
 GraphSample build_sample_from_mesh(
-  const torch::Tensor& vertices,        // [N,3]
-  const torch::Tensor& bone_positions,  // [B,3]
-  const torch::Tensor& faces,           // [F,3] or empty
-  const torch::Tensor& weights,         // [N,B] ground truth distribution
-  int K                                 /*=4*/,
-  const std::vector<int64_t>& bone_parents = std::vector<int64_t>()) {
+    const torch::Tensor& vertices,        // [N,3]
+    const torch::Tensor& bone_positions,  // [B,3]
+    const torch::Tensor& faces,           // [F,3] or empty
+    const torch::Tensor& weights,         // [N,B] ground truth distribution
+    int K /*=4*/, const std::vector<int64_t>& bone_parents = std::vector<int64_t>()
+) {
   int64_t N       = vertices.size(0);
   int64_t B       = bone_positions.size(0);
 
@@ -220,18 +220,18 @@ GraphSample build_sample_from_mesh(
   } else {
     // fallback: connect bones by Kb nearest neighbors
     if (B > 1) {
-      int Kb = std::min<int>(4, (int)B - 1);
+      int Kb                = std::min<int>(4, (int)B - 1);
       // pairwise distances between bones
-      auto b_exp1 = bone_positions.unsqueeze(1).expand({B, B, 3});
-      auto b_exp2 = bone_positions.unsqueeze(0).expand({B, B, 3});
-      auto b_dists = torch::norm(b_exp1 - b_exp2, 2, -1);  // [B,B]
-      auto sort_b = b_dists.sort(1, /*descending=*/false);
-      auto sorted_b_idx = std::get<1>(sort_b);  // [B,B]
+      auto b_exp1           = bone_positions.unsqueeze(1).expand({B, B, 3});
+      auto b_exp2           = bone_positions.unsqueeze(0).expand({B, B, 3});
+      auto b_dists          = torch::norm(b_exp1 - b_exp2, 2, -1);  // [B,B]
+      auto sort_b           = b_dists.sort(1, /*descending=*/false);
+      auto sorted_b_idx     = std::get<1>(sort_b);  // [B,B]
       auto sorted_b_idx_acc = sorted_b_idx.accessor<int64_t, 2>();
       for (int64_t i = 0; i < B; ++i) {
         int added = 0;
         for (int j = 1; j < B && added < Kb; ++j) {  // start from 1 to skip self
-          int64_t nb = sorted_b_idx_acc[i][j];
+          int64_t nb      = sorted_b_idx_acc[i][j];
           bone_adj[i][nb] = 1.0;
           bone_adj[nb][i] = 1.0;
           added++;
@@ -242,10 +242,10 @@ GraphSample build_sample_from_mesh(
   }
 
   GraphSample s;
-  s.x   = x;
-  s.adj = adj_norm;
+  s.x        = x;
+  s.adj      = adj_norm;
   s.bone_adj = bone_adj;
-  s.y   = weights;
+  s.y        = weights;
   return s;
 }
 
@@ -304,9 +304,9 @@ class GraphDataset : public torch::data::Dataset<GraphDataset> {
       bone_adj = torch::Tensor();
     }
     GraphSample s;
-    s.x   = x;
-    s.adj = adj;
-    s.y   = y;
+    s.x        = x;
+    s.adj      = adj;
+    s.y        = y;
     s.bone_adj = bone_adj;
     return s;
   }
@@ -362,10 +362,9 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // If `bone_embeddings` is provided it will be used (shape [B, hidden_dim]).
   // Otherwise the registered `bone_emb` (if any) will be used.
   torch::Tensor forward(
-    const torch::Tensor& x,
-    const torch::Tensor& adj_norm,
-    const torch::Tensor& bone_embeddings = torch::Tensor(),
-    const torch::Tensor& bone_adj = torch::Tensor()) {
+      const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_embeddings = torch::Tensor(),
+      const torch::Tensor& bone_adj = torch::Tensor()
+  ) {
     // local branch
     auto l                 = torch::relu(gc1->forward(x, adj_norm));  // [N, H]
     l                      = torch::relu(gc2->forward(l, adj_norm));  // [N, H]
@@ -391,12 +390,14 @@ struct SkinWeightGCNImpl : torch::nn::Module {
       if (bone_adj.dim() != 2) throw std::runtime_error("bone_adj must be a 2D adjacency matrix [B, B]");
       if (bone_adj.size(0) != bone_adj.size(1) || bone_adj.size(0) != used_emb.size(0)) {
         std::ostringstream ss;
-        ss << "bone_adj must be square [B,B] and match used_emb rows: bone_adj=" << bone_adj.sizes() << " used_emb=" << used_emb.sizes();
+        ss << "bone_adj must be square [B,B] and match used_emb rows: bone_adj=" << bone_adj.sizes()
+           << " used_emb=" << used_emb.sizes();
         throw std::runtime_error(ss.str());
       }
       if (bone_adj.device() != used_emb.device()) {
         std::ostringstream ss;
-        ss << "bone_adj device (" << bone_adj.device() << ") does not match bone embeddings device (" << used_emb.device() << ")";
+        ss << "bone_adj device (" << bone_adj.device() << ") does not match bone embeddings device ("
+           << used_emb.device() << ")";
         throw std::runtime_error(ss.str());
       }
       // use a learnable bone-graph conv layer instead of simple matmul
@@ -420,8 +421,8 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     return torch::log_softmax(logits, /*dim=*/1);
   }
 
-  GraphConv gc1, gc2;
-  GraphConv bgc;
+  GraphConv gc1{nullptr}, gc2{nullptr};
+  GraphConv bgc{nullptr};
   torch::nn::Linear gfc1{nullptr}, gfc2{nullptr}, fc1{nullptr};
   // optional bone embedding matrix [B, hidden_dim]
   torch::Tensor bone_emb;
@@ -518,10 +519,10 @@ int run(int argc, char** argv) {
       auto y      = sample.y.to(device);
 
       optimizer.zero_grad();
-  // pass optional bone_adj (may be undefined)
-  torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
-  auto logp = model->forward(x, adj, torch::Tensor(), bone_adj);  // [N, B] log-probs
-      auto loss = kl_loss_from_logprob(logp, y);
+      // pass optional bone_adj (may be undefined)
+      torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
+      auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);  // [N, B] log-probs
+      auto loss              = kl_loss_from_logprob(logp, y);
       loss.backward();
       optimizer.step();
 
@@ -538,9 +539,9 @@ int run(int argc, char** argv) {
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
       torch::NoGradGuard no_grad;
-  torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
-  auto logp = model->forward(x, adj, torch::Tensor(), bone_adj);
-      auto loss = kl_loss_from_logprob(logp, y);
+      torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
+      auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);
+      auto loss              = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
     }
     val_loss /= std::max<size_t>(1, val_files.size());
