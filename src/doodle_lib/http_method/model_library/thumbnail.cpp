@@ -75,6 +75,8 @@ std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_gif(
 std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_mp4(
     const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
 ) {
+  auto l_thumbnails_path = in_path / "thumbnails" / in_name.replace_extension(".png");
+  auto l_preview_path    = in_path / "previews" / in_name.replace_extension(".mp4");
   std::pair<std::size_t, std::size_t> l_size{};
   {
     cv::VideoCapture l_video{};
@@ -92,9 +94,9 @@ std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_mp4(
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
       cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
     }
-    cv::imwrite((in_path / "thumbnails" / in_name.replace_extension(".png")).generic_string(), l_image);
+    cv::imwrite(l_thumbnails_path.generic_string(), l_image);
   }
-  FSys::rename(in_data_path, in_path / "previews" / in_name.replace_extension(".mp4"));
+  FSys::rename(in_data_path, l_preview_path);
 
   return l_size;
 }
