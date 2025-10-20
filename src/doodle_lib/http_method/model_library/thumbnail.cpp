@@ -75,23 +75,26 @@ std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_gif(
 std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_mp4(
     const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
 ) {
-  cv::VideoCapture l_video{};
-  l_video.open(in_data_path.generic_string());
-  if (!l_video.isOpened()) throw_exception(doodle_error{"mp4 打开失败"});
+  std::pair<std::size_t, std::size_t> l_size{};
+  {
+    cv::VideoCapture l_video{};
+    l_video.open(in_data_path.generic_string());
+    if (!l_video.isOpened()) throw_exception(doodle_error{"mp4 打开失败"});
 
-  auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
-  cv::Mat l_image{};
-  l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
-  l_video >> l_image;
-  if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+    auto l_video_count = l_video.get(cv::CAP_PROP_FRAME_COUNT);
+    cv::Mat l_image{};
+    l_video.set(cv::CAP_PROP_POS_FRAMES, std::clamp(l_video_count / 2, 0.0, l_video_count - 1));
+    l_video >> l_image;
+    if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+    l_size = {l_image.cols, l_image.rows};
 
-  std::pair<std::size_t, std::size_t> l_size = {l_image.cols, l_image.rows};
-
-  if (l_image.cols > 192 || l_image.rows > 108) {
-    auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-    cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+    if (l_image.cols > 192 || l_image.rows > 108) {
+      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      cv::resize(l_image, l_image, cv::Size{}, l_resize, l_resize);
+    }
+    cv::imwrite((in_path / "thumbnails" / in_name.replace_extension(".png")).generic_string(), l_image);
   }
-  cv::imwrite((in_path / "thumbnails" / in_name.replace_extension(".png")).generic_string(), l_image);
+  FSys::rename(in_data_path, in_path / "previews" / in_name.replace_extension(".mp4"));
 
   return l_size;
 }
@@ -133,11 +136,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thumbnail_get(
-    session_data_ptr in_handle, FSys::path in_path
+    session_data_ptr in_handle, FSys::path in_path, std::string in_extension
 ) {
   FSys::path l_path = in_path;
 
-  l_path /= fmt::format("{}.png", id_);
+  l_path /= fmt::format("{}{}", id_, in_extension);
   if (auto l_new_path = l_path.parent_path() / FSys::split_uuid_path(l_path.filename()); FSys::exists(l_new_path))
     l_path = l_new_path;
 
@@ -182,7 +185,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance:
   return thumbnail_post(in_handle, *root_);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::get(session_data_ptr in_handle) {
-  return thumbnail_get(in_handle, *root_ / "previews");
+  return thumbnail_get(in_handle, *root_ / "previews", ".png");
+}
+boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance_mp4::get(session_data_ptr in_handle) {
+  return thumbnail_get(in_handle, *root_ / "previews", ".mp4");
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails::get(session_data_ptr in_handle) {
   return thumbnail_get(in_handle, *root_ / "thumbnails");

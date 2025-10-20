@@ -47,14 +47,14 @@ struct DOODLE_CORE_API ai_image_metadata {
   }
 
   friend void from_json(const nlohmann::json& j, ai_image_metadata& p) {
-    if (j.contains("prompt")) j["prompt"].get_to(p.prompt_);
-    if (j.contains("task_id")) j["task_id"].get_to(p.task_id_);
-    if (j.contains("width")) j["width"].get_to(p.width_);
-    if (j.contains("height")) j["height"].get_to(p.height_);
-    if (j.contains("created_at")) j["created_at"].get_to(p.created_at_);
-    if (j.contains("author")) j["author"].get_to(p.author_);
-    if (j.contains("category")) j["category"].get_to(p.category_);
-    if (j.contains("extension")) j["extension"].get_to(p.extension_);
+    if (j.contains("prompt")) j.at("prompt").get_to(p.prompt_);
+    if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
+    if (j.contains("width")) j.at("width").get_to(p.width_);
+    if (j.contains("height")) j.at("height").get_to(p.height_);
+    if (j.contains("created_at")) j.at("created_at").get_to(p.created_at_);
+    if (j.contains("author")) j.at("author").get_to(p.author_);
+    if (j.contains("category")) j.at("category").get_to(p.category_);
+    if (j.contains("extension")) j.at("extension").get_to(p.extension_);
   }
 };
 

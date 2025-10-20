@@ -61,7 +61,7 @@ class pictures_base : public http_jwt_fun {
       const std::string& in_data, const FSys::path& in_path, FSys::path in_name
   );
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
-      session_data_ptr in_handle, FSys::path in_path
+      session_data_ptr in_handle, FSys::path in_path, std::string in_extension = ".png"
   );
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_post(
       session_data_ptr in_handle, FSys::path in_path
@@ -80,6 +80,13 @@ explicit pictures_instance(const FSys::path& in_root) : base_type(in_root) {}
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post);
 DOODLE_HTTP_FUN_END()
+
+DOODLE_HTTP_FUN_C(pictures_instance_mp4, pictures_base)
+explicit pictures_instance_mp4(const FSys::path& in_root) : base_type(in_root) {}
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+
+
 // "api/doodle/pictures/thumbnails/{id}"
 DOODLE_HTTP_FUN_C(pictures_thumbnails, pictures_base)
 explicit pictures_thumbnails(const FSys::path& in_root) : base_type(in_root) {}
