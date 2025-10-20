@@ -19,7 +19,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
-    $LogPath = "%TMP%\build_$timestamp.log"
+    $LogPath = "$env:TEMP\build_$timestamp.log"
     if ($Using:CopyServer -and ((Get-FileHash "$Target\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash))
     {
         Write-Host "更新服务"
