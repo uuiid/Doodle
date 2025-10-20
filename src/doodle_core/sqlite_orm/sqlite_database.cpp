@@ -4,6 +4,7 @@
 
 #include "sqlite_database.h"
 
+#include "doodle_core_fwd.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>
@@ -72,6 +73,12 @@ void sqlite_database::load(const FSys::path& in_path) {
   for (auto&& i : l_list) {
     i->upgrade(impl_);
   }
+}
+boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
+  DOODLE_TO_SQLITE_THREAD_2()
+
+  impl_->storage_any_.backup_to(in_path.generic_string());
+  DOODLE_TO_SELF();
 }
 
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(

@@ -70,6 +70,9 @@ class sqlite_database {
    */
   void load(const FSys::path& in_path);
 
+  /// 备份数据库
+  boost::asio::awaitable<void> backup(FSys::path in_path);
+
   template <typename T>
   std::vector<T> get_all();
 

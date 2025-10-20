@@ -556,10 +556,13 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_task_status)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-// //api/data/task-status/{id}
+// /api/data/task-status/{id}
 DOODLE_HTTP_JWT_FUN(data_task_status_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-
+// /api/doodle/backup
+DOODLE_HTTP_JWT_FUN(doodle_backup)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

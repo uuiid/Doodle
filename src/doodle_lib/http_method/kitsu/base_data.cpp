@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-4-8.
 //
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
@@ -9,6 +10,7 @@
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
@@ -16,7 +18,6 @@
 #include "kitsu_reg_url.h"
 #include <memory>
 #include <vector>
-
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> departments::get(session_data_ptr in_handle) {
@@ -85,12 +86,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::
   co_await l_sql.install(l_status);
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
 }
-boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_instance::put(session_data_ptr in_handle) {
+boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_instance::put(
+    session_data_ptr in_handle
+) {
   person_.check_admin();
-  auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_status      = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
   in_handle->get_json().get_to(*l_status);
   co_await l_sql.install(l_status);
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::post(session_data_ptr in_handle) {
+  person_.check_admin();
+  FSys::path l_file{
+      core_set::get_set().get_cache_root("backup") /
+      fmt::format("kitsu_{:%Y_%m_%d_%H_%M_%S}.db", chrono::system_clock::now())
+  };
+  co_await g_ctx().get<sqlite_database>().backup(l_file);
+  co_return in_handle->make_msg(nlohmann::json{} = l_file.generic_string());
+}
+
 }  // namespace doodle::http
