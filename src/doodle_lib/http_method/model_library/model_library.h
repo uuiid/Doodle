@@ -22,10 +22,10 @@ DOODLE_HTTP_FUN_END()
 // 用于管理 AI 生成图片的元数据（创建/查询）
 DOODLE_HTTP_JWT_FUN(ai_image)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post);
 DOODLE_HTTP_FUN_END()
 // "/api/doodle/ai_image/{id}"
 DOODLE_HTTP_JWT_FUN(ai_image_instance)
-DOODLE_HTTP_FUN_OVERRIDE(post);
 DOODLE_HTTP_FUN_OVERRIDE(delete_);
 uuid id_{};
 DOODLE_HTTP_FUN_END()
