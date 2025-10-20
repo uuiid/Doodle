@@ -6,10 +6,11 @@
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
+
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu
-&robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s
-&robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\Dev\tmp\dist\assets" /MIR
+&robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s | Out-Null
+&robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\Dev\tmp\dist\assets" /MIR | Out-Null
 
 $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator,$RootPassword
@@ -25,7 +26,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
         Write-Host "更新服务"
         Stop-Service -Force -Name doodle_kitsu_supplement
         Start-Sleep -Milliseconds 50
-        &robocopy "$Tmp\bin" "$Target\bin" /MIR /unilog+:$LogPath /w:1
+        &robocopy "$Tmp\bin" "$Target\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
         Start-Service -Name doodle_kitsu_supplement
     }
     &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1

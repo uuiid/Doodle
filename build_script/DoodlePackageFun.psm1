@@ -110,9 +110,10 @@ function Initialize-Doodle
 
 
     Write-Host "开始复制文件"
-    &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath
-    &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip"
-    &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath
+    Write-Host "robocopy 日志 $DoodleLogPath"
+    &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
+    &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
+    &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
     # 添加UE插件安装
     Compress-UEPlugins -UEVersion "5.4" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
@@ -130,7 +131,7 @@ function Initialize-Doodle
     }
     else
     {
-        &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath
+        &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath | Out-Null
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)
         #         寻找版本号 3.6.678 并放在最后
@@ -198,8 +199,8 @@ function Initialize-Doodle
         }
     )
 
-    &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath
-    &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath
+    &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
+    &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
 }
 
 
