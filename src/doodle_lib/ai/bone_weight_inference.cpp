@@ -17,6 +17,7 @@
 #include <fbxsdk/utils/fbxgeometryconverter.h>
 #include <fmt/format.h>
 #include <functional>
+#include <map>
 #include <memory>
 #include <range/v3/action/sort.hpp>
 #include <sstream>
@@ -102,10 +103,22 @@ std::vector<std::filesystem::path> load_fbx(const std::filesystem::path& fbx_pat
   auto l_sk_count                = l_sk->GetClusterCount();
   torch::Tensor l_bone_positions = torch::zeros({l_sk_count, 3}, torch::kFloat32);
   torch::Tensor l_bone_weights   = torch::zeros({l_vert_count, l_sk_count}, torch::kFloat32);
+  std::map<FbxNode*, std::int64_t> l_bone_index_map{};
+  for (auto i = 0; i < l_sk_count; i++) {
+    auto l_cluster            = l_sk->GetCluster(i);
+    auto l_joint              = l_cluster->GetLink();
+    l_bone_index_map[l_joint] = i;
+  }
+  std::vector<std::int64_t> l_bone_parents(l_sk_count, -1);
   for (auto i = 0; i < l_sk_count; i++) {
     auto l_cluster = l_sk->GetCluster(i);
     auto l_joint   = l_cluster->GetLink();
-    auto l_matrix  = l_scene->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
+
+    if (auto l_parent = l_joint->GetParent(); l_parent && l_bone_index_map.contains(l_parent)) {
+      l_bone_parents[i] = l_bone_index_map[l_parent];
+    }
+
+    auto l_matrix = l_scene->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
     FbxAMatrix l_matrix_tmp{};
     l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
     l_matrix            = l_matrix * l_matrix_tmp;
