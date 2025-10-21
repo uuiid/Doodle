@@ -22,6 +22,7 @@
 #include <range/v3/action/sort.hpp>
 #include <sstream>
 #include <torch/csrc/autograd/generated/variable_factories.h>
+#include <torch/types.h>
 #include <vector>
 
 #pragma comment(linker, "/include:mi_version")
@@ -61,26 +62,26 @@ GraphSample build_sample_from_mesh(
     const torch::Tensor& bone_positions,  // [B,3]
     const torch::Tensor& faces,           // [F,3] or empty
     const torch::Tensor& weights,         // [N,B] ground truth distribution
-    int K /*=4*/, const std::vector<int64_t>& bone_parents = std::vector<int64_t>()
+    int K /*=4*/, const std::vector<std::int64_t>& bone_parents = std::vector<std::int64_t>()
 ) {
-  int64_t N       = vertices.size(0);
-  int64_t B       = bone_positions.size(0);
+  std::int64_t N  = vertices.size(0);
+  std::int64_t B  = bone_positions.size(0);
 
   // 1) 面邻接（无向）
   auto options    = torch::TensorOptions().dtype(torch::kFloat32);
   torch::Tensor A = torch::zeros({N, N}, options);
   if (faces.numel() > 0) {
-    auto f_accessor = faces.accessor<int64_t, 2>();
-    for (int64_t i = 0; i < faces.size(0); ++i) {
-      int64_t a = f_accessor[i][0];
-      int64_t b = f_accessor[i][1];
-      int64_t c = f_accessor[i][2];
-      A[a][b]   = 1;
-      A[b][a]   = 1;
-      A[b][c]   = 1;
-      A[c][b]   = 1;
-      A[c][a]   = 1;
-      A[a][c]   = 1;
+    auto f_accessor = faces.accessor<std::int64_t, 2>();
+    for (std::int64_t i = 0; i < faces.size(0); ++i) {
+      std::int64_t a = f_accessor[i][0];
+      std::int64_t b = f_accessor[i][1];
+      std::int64_t c = f_accessor[i][2];
+      A[a][b]        = 1;
+      A[b][a]        = 1;
+      A[b][c]        = 1;
+      A[c][b]        = 1;
+      A[c][a]        = 1;
+      A[a][c]        = 1;
     }
   } else {
     // fallback: fully connected? or k-nearest; here we connect nothing (isolated)
@@ -106,12 +107,12 @@ GraphSample build_sample_from_mesh(
   torch::Tensor closest_vecs = torch::zeros({N, K * 3}, vec_options);
 
   // Accessors for efficient per-row gather
-  auto sorted_idx_acc        = sorted_idx.accessor<int64_t, 2>();
+  auto sorted_idx_acc        = sorted_idx.accessor<std::int64_t, 2>();
   auto vert_acc              = vertices.accessor<float, 2>();
   auto bone_acc              = bone_positions.accessor<float, 2>();
-  for (int64_t i = 0; i < N; ++i) {
+  for (std::int64_t i = 0; i < N; ++i) {
     for (int j = 0; j < K; ++j) {
-      int64_t bidx               = sorted_idx_acc[i][j];
+      std::int64_t bidx          = sorted_idx_acc[i][j];
       // compute bone_position - vertex
       float dx                   = bone_acc[bidx][0] - vert_acc[i][0];
       float dy                   = bone_acc[bidx][1] - vert_acc[i][1];
@@ -133,8 +134,8 @@ GraphSample build_sample_from_mesh(
   // Prefer parent-child topology if provided (bone_parents length == B)
   torch::Tensor bone_adj = torch::zeros({B, B}, torch::TensorOptions().dtype(torch::kFloat32));
   if ((int)bone_parents.size() == B) {
-    for (int64_t i = 0; i < B; ++i) {
-      int64_t p = bone_parents[i];
+    for (std::int64_t i = 0; i < B; ++i) {
+      std::int64_t p = bone_parents[i];
       if (p >= 0 && p < B) {
         bone_adj[i][p] = 1.0;
         bone_adj[p][i] = 1.0;
@@ -151,11 +152,11 @@ GraphSample build_sample_from_mesh(
       auto b_dists          = torch::norm(b_exp1 - b_exp2, 2, -1);  // [B,B]
       auto sort_b           = b_dists.sort(1, /*descending=*/false);
       auto sorted_b_idx     = std::get<1>(sort_b);  // [B,B]
-      auto sorted_b_idx_acc = sorted_b_idx.accessor<int64_t, 2>();
-      for (int64_t i = 0; i < B; ++i) {
+      auto sorted_b_idx_acc = sorted_b_idx.accessor<std::int64_t, 2>();
+      for (std::int64_t i = 0; i < B; ++i) {
         int added = 0;
         for (int j = 1; j < B && added < Kb; ++j) {  // start from 1 to skip self
-          int64_t nb      = sorted_b_idx_acc[i][j];
+          std::int64_t nb = sorted_b_idx_acc[i][j];
           bone_adj[i][nb] = 1.0;
           bone_adj[nb][i] = 1.0;
           added++;
@@ -223,7 +224,7 @@ GraphSample load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_lo
   for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
 
   auto l_faces_num      = l_mesh->GetPolygonCount();
-  torch::Tensor l_faces = torch::zeros({l_faces_num, 3}, torch::kInt32);
+  torch::Tensor l_faces = torch::zeros({l_faces_num, 3}, torch::kInt64);
   for (auto j = 0; j < l_faces_num; j++) {
     for (auto k = 0; k < l_mesh->GetPolygonSize(j); k++) {
       auto l_vert_index = l_mesh->GetPolygonVertex(j, k);
@@ -497,8 +498,8 @@ FSys::path run_bone_weight_inference(const std::vector<FSys::path>& in_fbx_files
     // --- training ---
     model->train();
     double epoch_loss = 0.0;
-    for (size_t i = 0; i < l_files.size(); ++i) {
-      auto sample = load_fbx(l_files[i]);
+    for (size_t i = 0; i < train_files.size(); ++i) {
+      auto sample = load_fbx(train_files[i]);
       // move to device
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
@@ -543,7 +544,7 @@ FSys::path run_bone_weight_inference(const std::vector<FSys::path>& in_fbx_files
   }
 
   // final save
-  save_checkpoint(model, "skin_gcn_final.pt");
+  save_checkpoint(model, in_output_path.generic_string());
   return in_output_path;
 }
 
