@@ -201,7 +201,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     } else if (in_json.contains("create_rig_sk")) {  /// 创建 rig
       auto l_arg_t = std::make_shared<export_rig_sk_arg>();
       in_json.get_to(*l_arg_t);
-      arg_             = l_arg_t;
+      arg_ = l_arg_t;
     } else {  /// 导出fbx
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       in_json.get_to(*l_arg_t);
@@ -333,7 +333,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_rest
   }
 
   l_ptr->clear_log_file();
-  l_ptr->status_             = server_task_info_status::submitted;
+  l_ptr->status_   = server_task_info_status::submitted;
+  l_ptr->run_time_ = {};
+  l_ptr->end_time_ = {};
+  l_ptr->run_time_info_.clear();
+  l_ptr->submit_time_        = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
   l_run_long_task_local->load_form_json(l_ptr->command_);
@@ -384,16 +388,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance_generate_uesk_file::post(
     session_data_ptr in_handle
 ) {
-  auto l_ptr   = std::make_shared<server_task_info>();
-  l_ptr->type_ = server_task_info_type::create_rig_sk;
+  auto l_ptr              = std::make_shared<server_task_info>();
+  l_ptr->type_            = server_task_info_type::create_rig_sk;
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
-  auto l_json = in_handle->get_json();
+  auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
 
-  auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
 
   auto l_arg_t    = std::dynamic_pointer_cast<export_rig_sk_arg>(co_await l_client->get_generate_uesk_file_arg(id_));
