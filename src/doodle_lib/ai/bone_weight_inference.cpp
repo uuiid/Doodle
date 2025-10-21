@@ -70,21 +70,19 @@ GraphSample build_sample_from_mesh(
   // 1) 面邻接（无向）
   auto options    = torch::TensorOptions().dtype(torch::kFloat32);
   torch::Tensor A = torch::zeros({N, N}, options);
-  if (faces.numel() > 0) {
-    auto f_accessor = faces.accessor<std::int64_t, 2>();
-    for (std::int64_t i = 0; i < faces.size(0); ++i) {
-      std::int64_t a = f_accessor[i][0];
-      std::int64_t b = f_accessor[i][1];
-      std::int64_t c = f_accessor[i][2];
-      A[a][b]        = 1;
-      A[b][a]        = 1;
-      A[b][c]        = 1;
-      A[c][b]        = 1;
-      A[c][a]        = 1;
-      A[a][c]        = 1;
-    }
-  } else {
-    // fallback: fully connected? or k-nearest; here we connect nothing (isolated)
+  if (faces.numel() < 0) throw std::runtime_error("faces tensor has negative numel");
+
+  auto f_accessor = faces.accessor<std::int64_t, 2>();
+  for (std::int64_t i = 0; i < faces.size(0); ++i) {
+    std::int64_t a = f_accessor[i][0];
+    std::int64_t b = f_accessor[i][1];
+    std::int64_t c = f_accessor[i][2];
+    A[a][b]        = 1;
+    A[b][a]        = 1;
+    A[b][c]        = 1;
+    A[c][b]        = 1;
+    A[c][a]        = 1;
+    A[a][c]        = 1;
   }
 
   // 2) feature design: [vx, vy, vz] + vectors to K nearest bones
@@ -133,38 +131,15 @@ GraphSample build_sample_from_mesh(
   // 4) build bone adjacency
   // Prefer parent-child topology if provided (bone_parents length == B)
   torch::Tensor bone_adj = torch::zeros({B, B}, torch::TensorOptions().dtype(torch::kFloat32));
-  if ((int)bone_parents.size() == B) {
-    for (std::int64_t i = 0; i < B; ++i) {
-      std::int64_t p = bone_parents[i];
-      if (p >= 0 && p < B) {
-        bone_adj[i][p] = 1.0;
-        bone_adj[p][i] = 1.0;
-      }
-    }
-    bone_adj = normalize_adjacency(bone_adj);
-  } else {
-    // fallback: connect bones by Kb nearest neighbors
-    if (B > 1) {
-      int Kb                = std::min<int>(4, (int)B - 1);
-      // pairwise distances between bones
-      auto b_exp1           = bone_positions.unsqueeze(1).expand({B, B, 3});
-      auto b_exp2           = bone_positions.unsqueeze(0).expand({B, B, 3});
-      auto b_dists          = torch::norm(b_exp1 - b_exp2, 2, -1);  // [B,B]
-      auto sort_b           = b_dists.sort(1, /*descending=*/false);
-      auto sorted_b_idx     = std::get<1>(sort_b);  // [B,B]
-      auto sorted_b_idx_acc = sorted_b_idx.accessor<std::int64_t, 2>();
-      for (std::int64_t i = 0; i < B; ++i) {
-        int added = 0;
-        for (int j = 1; j < B && added < Kb; ++j) {  // start from 1 to skip self
-          std::int64_t nb = sorted_b_idx_acc[i][j];
-          bone_adj[i][nb] = 1.0;
-          bone_adj[nb][i] = 1.0;
-          added++;
-        }
-      }
-      bone_adj = normalize_adjacency(bone_adj);
+  if ((int)bone_parents.size() != B) throw std::runtime_error("bone_parents length != B");
+  for (std::int64_t i = 0; i < B; ++i) {
+    std::int64_t p = bone_parents[i];
+    if (p >= 0 && p < B) {
+      bone_adj[i][p] = 1.0;
+      bone_adj[p][i] = 1.0;
     }
   }
+  bone_adj = normalize_adjacency(bone_adj);
 
   GraphSample s;
   s.x        = x;
