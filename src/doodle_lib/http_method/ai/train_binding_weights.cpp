@@ -20,7 +20,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_train_binding_w
     session_data_ptr in_handle
 ) {
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_args>();
-  ai::run_bone_weight_inference(l_args.input_path_, l_args.output_path_);
+  ai::bone_weight_inference_model::train(l_args.input_path_, l_args.output_path_);
   co_return in_handle->make_msg(nlohmann::json{});
 }
 }  // namespace doodle::http

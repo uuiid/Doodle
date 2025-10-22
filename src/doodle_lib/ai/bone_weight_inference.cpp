@@ -443,7 +443,9 @@ void load_checkpoint(SkinWeightGCN& model, const std::string& path) {
   model->load(archive);
 }
 
-FSys::path run_bone_weight_inference(const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path) {
+std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
+    const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
+) {
   auto l_files = in_fbx_files;
   l_files |= ranges::actions::sort;
   size_t n      = l_files.size();
@@ -520,7 +522,7 @@ FSys::path run_bone_weight_inference(const std::vector<FSys::path>& in_fbx_files
 
   // final save
   save_checkpoint(model, in_output_path.generic_string());
-  return in_output_path;
+  return {};
 }
 
 int run(int argc, char** argv) {
