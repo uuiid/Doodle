@@ -41,7 +41,8 @@ struct GraphSample {
   // optional: bone adjacency [B, B] (normalized)
   torch::Tensor bone_adj;
   // optional: node mask or other metadata
-  torch::Tensor bone_emb;
+  // raw bone features (e.g. bone positions or other per-bone descriptors): [B, F]
+  torch::Tensor bone_feat;
 };
 
 torch::Tensor normalize_adjacency(const torch::Tensor& A) {
@@ -147,6 +148,8 @@ GraphSample build_sample_from_mesh(
   s.adj      = adj_norm;
   s.bone_adj = bone_adj;
   s.y        = weights;
+  // include raw bone features in the sample so dataset/model can project them
+  s.bone_feat = bone_positions; // [B, 3]
   return s;
 }
 
@@ -295,11 +298,18 @@ class GraphDataset : public torch::data::Dataset<GraphDataset> {
     } catch (...) {
       bone_adj = torch::Tensor();
     }
+      torch::Tensor bone_feat;
+      try {
+        archive.read("bone_feat", bone_feat);
+      } catch (...) {
+        bone_feat = torch::Tensor();
+      }
     GraphSample s;
     s.x        = x;
     s.adj      = adj;
     s.y        = y;
     s.bone_adj = bone_adj;
+      s.bone_feat = bone_feat;
     return s;
   }
 
@@ -327,15 +337,17 @@ TORCH_MODULE(GraphConv);
 
 // Full model
 struct SkinWeightGCNImpl : torch::nn::Module {
-  // num_bones can be dynamic. If a positive num_bones is provided to the ctor,
-  // we register a parameter matrix `bone_emb` of shape [num_bones, hidden_dim].
-  // Alternatively, callers may pass a bone_embeddings tensor to forward()
-  // of shape [B, hidden_dim], where B is the number of bones for that sample.
-  SkinWeightGCNImpl(int in_channels, int hidden_dim) : gc1(nullptr), gc2(nullptr) {
+  // This model now expects raw per-bone features (bone_feat) of dimension F.
+  // The model contains a learnable projector `bone_proj` which maps bone_feat -> hidden_dim.
+  // bone_proj makes the dataset free to provide raw bone descriptors (e.g. positions, transforms).
+  SkinWeightGCNImpl(int in_channels, int hidden_dim, int bone_feat_dim = 3) :
+      gc1(nullptr), gc2(nullptr) {
     gc1  = register_module("gc1", GraphConv(in_channels, hidden_dim));
     gc2  = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
     // bone graph conv: transforms bone embeddings via bone adjacency
     bgc  = register_module("bgc", GraphConv(hidden_dim, hidden_dim));
+    // linear projector to map raw bone features [B, bone_feat_dim] -> [B, hidden_dim]
+    bone_proj = register_module("bone_proj", torch::nn::Linear(bone_feat_dim, hidden_dim));
     // global branch
     gfc1 = register_module("gfc1", torch::nn::Linear(in_channels, hidden_dim));
     gfc2 = register_module("gfc2", torch::nn::Linear(hidden_dim, hidden_dim));
@@ -346,9 +358,10 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // forward returns log probabilities per node (for KLDiv use)
   // If `bone_embeddings` is provided it will be used (shape [B, hidden_dim]).
   // Otherwise the registered `bone_emb` (if any) will be used.
+  // forward now accepts raw `bone_feat` of shape [B, F] (F == bone_feat_dim passed to ctor).
   torch::Tensor forward(
-      const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_embeddings,
-      const torch::Tensor& bone_adj
+    const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_feat,
+    const torch::Tensor& bone_adj
   ) {
     // local branch
     auto l                 = torch::relu(gc1->forward(x, adj_norm));  // [N, H]
@@ -365,10 +378,13 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     auto feat              = torch::cat({l, g_bcast}, /*dim=*/1);  // [N, 2H]
     auto h                 = torch::relu(fc1->forward(feat));      // [N, H]
 
-    // determine bone embedding matrix
-    torch::Tensor used_emb = bone_embeddings;
+    // project raw bone features to hidden space
+    if (!bone_feat.defined()) throw std::runtime_error("bone_feat must be provided to the model forward");
+    if (bone_feat.dim() != 2) throw std::runtime_error("bone_feat must be a 2D tensor [B, F]");
+    // project: [B, F] -> [B, H]
+    auto used_emb = torch::relu(bone_proj->forward(bone_feat));
 
-    // if bone adjacency provided, aggregate bone embeddings: bone_adj @ used_emb -> [B, H]
+    // validate bone_adj and used_emb shapes/devices
     if (!bone_adj.defined()) throw std::runtime_error("bone_adj must be provided to aggregate bone embeddings");
     if (bone_adj.dim() != 2) throw std::runtime_error("bone_adj must be a 2D adjacency matrix [B, B]");
     if (bone_adj.size(0) != bone_adj.size(1) || bone_adj.size(0) != used_emb.size(0)) {
@@ -383,8 +399,7 @@ struct SkinWeightGCNImpl : torch::nn::Module {
          << ")";
       throw std::runtime_error(ss.str());
     }
-    // use a learnable bone-graph conv layer instead of simple matmul
-    // GraphConv.forward expects (x, adj_norm) where x: [N, Fin], adj_norm: [N,N]
+    // aggregate via bone graph conv
     used_emb = bgc->forward(used_emb, bone_adj);
 
     // used_emb: [B, H]
@@ -406,6 +421,7 @@ struct SkinWeightGCNImpl : torch::nn::Module {
 
   GraphConv gc1{nullptr}, gc2{nullptr};
   GraphConv bgc{nullptr};
+  torch::nn::Linear bone_proj{nullptr};
   torch::nn::Linear gfc1{nullptr}, gfc2{nullptr}, fc1{nullptr};
 };
 TORCH_MODULE(SkinWeightGCN);
@@ -473,8 +489,9 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
 
       optimizer.zero_grad();
       // pass optional bone_adj (may be undefined)
-      torch::Tensor bone_adj = sample.bone_adj.to(device);
-      auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);  // [N, B] log-probs
+  torch::Tensor bone_adj = sample.bone_adj.to(device);
+  torch::Tensor bone_feat = sample.bone_feat.to(device);
+  auto logp              = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] log-probs
       auto loss              = kl_loss_from_logprob(logp, y);
       loss.backward();
       optimizer.step();
@@ -493,7 +510,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       auto y      = sample.y.to(device);
       torch::NoGradGuard no_grad;
       torch::Tensor bone_adj = sample.bone_adj.to(device);
-      auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);
+      torch::Tensor bone_feat = sample.bone_feat.to(device);
+      auto logp              = model->forward(x, adj, bone_feat, bone_adj);
       auto loss              = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
     }
