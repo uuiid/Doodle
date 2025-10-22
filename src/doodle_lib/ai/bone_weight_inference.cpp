@@ -41,6 +41,7 @@ struct GraphSample {
   // optional: bone adjacency [B, B] (normalized)
   torch::Tensor bone_adj;
   // optional: node mask or other metadata
+  torch::Tensor bone_emb;
 };
 
 torch::Tensor normalize_adjacency(const torch::Tensor& A) {
@@ -330,7 +331,7 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // we register a parameter matrix `bone_emb` of shape [num_bones, hidden_dim].
   // Alternatively, callers may pass a bone_embeddings tensor to forward()
   // of shape [B, hidden_dim], where B is the number of bones for that sample.
-  SkinWeightGCNImpl(int in_channels, int hidden_dim, int num_bones = 0) : gc1(nullptr), gc2(nullptr) {
+  SkinWeightGCNImpl(int in_channels, int hidden_dim) : gc1(nullptr), gc2(nullptr) {
     gc1  = register_module("gc1", GraphConv(in_channels, hidden_dim));
     gc2  = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
     // bone graph conv: transforms bone embeddings via bone adjacency
@@ -340,21 +341,14 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     gfc2 = register_module("gfc2", torch::nn::Linear(hidden_dim, hidden_dim));
     // fusion and final
     fc1  = register_module("fc1", torch::nn::Linear(hidden_dim * 2, hidden_dim));
-
-    // optional: register a bone embedding matrix when num_bones > 0
-    if (num_bones > 0) {
-      bone_emb = register_parameter("bone_emb", torch::randn({num_bones, hidden_dim}) * 0.01);
-    } else {
-      bone_emb = torch::Tensor();
-    }
   }
 
   // forward returns log probabilities per node (for KLDiv use)
   // If `bone_embeddings` is provided it will be used (shape [B, hidden_dim]).
   // Otherwise the registered `bone_emb` (if any) will be used.
   torch::Tensor forward(
-      const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_embeddings = torch::Tensor(),
-      const torch::Tensor& bone_adj = torch::Tensor()
+      const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_embeddings,
+      const torch::Tensor& bone_adj
   ) {
     // local branch
     auto l                 = torch::relu(gc1->forward(x, adj_norm));  // [N, H]
@@ -372,29 +366,27 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     auto h                 = torch::relu(fc1->forward(feat));      // [N, H]
 
     // determine bone embedding matrix
-    torch::Tensor used_emb = bone_embeddings.defined() ? bone_embeddings : bone_emb;
-    if (!used_emb.defined()) {
-      throw std::runtime_error("No bone embeddings provided to forward() and none registered in the model.");
-    }
+    torch::Tensor used_emb = bone_embeddings;
+
     // if bone adjacency provided, aggregate bone embeddings: bone_adj @ used_emb -> [B, H]
-    if (bone_adj.defined()) {
-      if (bone_adj.dim() != 2) throw std::runtime_error("bone_adj must be a 2D adjacency matrix [B, B]");
-      if (bone_adj.size(0) != bone_adj.size(1) || bone_adj.size(0) != used_emb.size(0)) {
-        std::ostringstream ss;
-        ss << "bone_adj must be square [B,B] and match used_emb rows: bone_adj=" << bone_adj.sizes()
-           << " used_emb=" << used_emb.sizes();
-        throw std::runtime_error(ss.str());
-      }
-      if (bone_adj.device() != used_emb.device()) {
-        std::ostringstream ss;
-        ss << "bone_adj device (" << bone_adj.device() << ") does not match bone embeddings device ("
-           << used_emb.device() << ")";
-        throw std::runtime_error(ss.str());
-      }
-      // use a learnable bone-graph conv layer instead of simple matmul
-      // GraphConv.forward expects (x, adj_norm) where x: [N, Fin], adj_norm: [N,N]
-      used_emb = bgc->forward(used_emb, bone_adj);
+    if (!bone_adj.defined()) throw std::runtime_error("bone_adj must be provided to aggregate bone embeddings");
+    if (bone_adj.dim() != 2) throw std::runtime_error("bone_adj must be a 2D adjacency matrix [B, B]");
+    if (bone_adj.size(0) != bone_adj.size(1) || bone_adj.size(0) != used_emb.size(0)) {
+      std::ostringstream ss;
+      ss << "bone_adj must be square [B,B] and match used_emb rows: bone_adj=" << bone_adj.sizes()
+         << " used_emb=" << used_emb.sizes();
+      throw std::runtime_error(ss.str());
     }
+    if (bone_adj.device() != used_emb.device()) {
+      std::ostringstream ss;
+      ss << "bone_adj device (" << bone_adj.device() << ") does not match bone embeddings device (" << used_emb.device()
+         << ")";
+      throw std::runtime_error(ss.str());
+    }
+    // use a learnable bone-graph conv layer instead of simple matmul
+    // GraphConv.forward expects (x, adj_norm) where x: [N, Fin], adj_norm: [N,N]
+    used_emb = bgc->forward(used_emb, bone_adj);
+
     // used_emb: [B, H]
     // shape checks: used_emb must be 2D and its second dim must match h.size(1)
     if (used_emb.dim() != 2) {
@@ -415,8 +407,6 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   GraphConv gc1{nullptr}, gc2{nullptr};
   GraphConv bgc{nullptr};
   torch::nn::Linear gfc1{nullptr}, gfc2{nullptr}, fc1{nullptr};
-  // optional bone embedding matrix [B, hidden_dim]
-  torch::Tensor bone_emb;
 };
 TORCH_MODULE(SkinWeightGCN);
 
@@ -457,7 +447,6 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   int K           = 4;          // number of nearest bone vectors used per vertex
   int in_channels = 3 + K * 3;  // example: xyz + K * (dx,dy,dz)
   int hidden_dim  = 64;
-  int num_bones   = 20;  // set according to dataset (can be changed or left 0 to require passing embeddings at forward)
 
   torch::Device device(torch::kCUDA);
   if (!torch::cuda::is_available()) {
@@ -465,7 +454,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     std::cout << "CUDA not available, using CPU\n";
   }
 
-  SkinWeightGCN model{in_channels, hidden_dim, num_bones};
+  SkinWeightGCN model{in_channels, hidden_dim};
   model->to(device);
 
   torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
@@ -484,7 +473,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
 
       optimizer.zero_grad();
       // pass optional bone_adj (may be undefined)
-      torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
+      torch::Tensor bone_adj = sample.bone_adj.to(device);
       auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);  // [N, B] log-probs
       auto loss              = kl_loss_from_logprob(logp, y);
       loss.backward();
@@ -503,7 +492,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
       torch::NoGradGuard no_grad;
-      torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
+      torch::Tensor bone_adj = sample.bone_adj.to(device);
       auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);
       auto loss              = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
@@ -523,107 +512,6 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   // final save
   save_checkpoint(model, in_output_path.generic_string());
   return {};
-}
-
-int run(int argc, char** argv) {
-  // basic CLI
-  if (argc < 2) {
-    std::cout << "Usage: " << argv[0] << " <data_dir_with_pt_samples>\n";
-    return 1;
-  }
-  std::string data_dir = argv[1];
-
-  // Gather .pt files in data_dir
-  std::vector<std::string> files;
-  for (auto& p : std::filesystem::directory_iterator(data_dir)) {
-    if (p.path().extension() == ".pt") files.push_back(p.path().string());
-  }
-  if (files.empty()) {
-    std::cerr << "No .pt sample files found in " << data_dir << "\n";
-    return 1;
-  }
-  std::sort(files.begin(), files.end());
-
-  // Split train/val (80/20)
-  size_t n      = files.size();
-  size_t ntrain = size_t(n * 0.8);
-  std::vector<std::string> train_files(files.begin(), files.begin() + ntrain);
-  std::vector<std::string> val_files(files.begin() + ntrain, files.end());
-
-  GraphDataset train_ds(train_files);
-  GraphDataset val_ds(val_files);
-
-  // Model hyperparams
-  int K           = 4;          // number of nearest bone vectors used per vertex
-  int in_channels = 3 + K * 3;  // example: xyz + K * (dx,dy,dz)
-  int hidden_dim  = 64;
-  int num_bones   = 20;  // set according to dataset (can be changed or left 0 to require passing embeddings at forward)
-
-  torch::Device device(torch::kCUDA);
-  if (!torch::cuda::is_available()) {
-    device = torch::Device(torch::kCPU);
-    std::cout << "CUDA not available, using CPU\n";
-  }
-
-  SkinWeightGCN model{in_channels, hidden_dim, num_bones};
-  model->to(device);
-
-  torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
-
-  int epochs = 50;
-  for (int epoch = 1; epoch <= epochs; ++epoch) {
-    // --- training ---
-    model->train();
-    double epoch_loss = 0.0;
-    for (size_t i = 0; i < train_files.size(); ++i) {
-      auto sample = train_ds.load_sample_file(i);
-      // move to device
-      auto x      = sample.x.to(device);
-      auto adj    = sample.adj.to(device);
-      auto y      = sample.y.to(device);
-
-      optimizer.zero_grad();
-      // pass optional bone_adj (may be undefined)
-      torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
-      auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);  // [N, B] log-probs
-      auto loss              = kl_loss_from_logprob(logp, y);
-      loss.backward();
-      optimizer.step();
-
-      epoch_loss += loss.item<double>();
-    }
-    epoch_loss /= std::max<size_t>(1, train_files.size());
-
-    // --- validation ---
-    model->eval();
-    double val_loss = 0.0;
-    for (size_t i = 0; i < val_files.size(); ++i) {
-      auto sample = val_ds.load_sample_file(i);
-      auto x      = sample.x.to(device);
-      auto adj    = sample.adj.to(device);
-      auto y      = sample.y.to(device);
-      torch::NoGradGuard no_grad;
-      torch::Tensor bone_adj = sample.bone_adj.defined() ? sample.bone_adj.to(device) : torch::Tensor();
-      auto logp              = model->forward(x, adj, torch::Tensor(), bone_adj);
-      auto loss              = kl_loss_from_logprob(logp, y);
-      val_loss += loss.item<double>();
-    }
-    val_loss /= std::max<size_t>(1, val_files.size());
-
-    std::cout << "Epoch " << epoch << " TrainLoss: " << epoch_loss << " ValLoss: " << val_loss << "\n";
-
-    // checkpoint
-    if (epoch % 10 == 0) {
-      std::string ckpt = "skin_gcn_epoch_" + std::to_string(epoch) + ".pt";
-      save_checkpoint(model, ckpt);
-      std::cout << "Saved checkpoint: " << ckpt << "\n";
-    }
-  }
-
-  // final save
-  save_checkpoint(model, "skin_gcn_final.pt");
-  std::cout << "Training finished. Saved skin_gcn_final.pt\n";
-  return 0;
 }
 
 }  // namespace doodle::ai

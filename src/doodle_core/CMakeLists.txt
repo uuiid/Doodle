@@ -55,6 +55,7 @@ target_link_libraries(
         Boost::filesystem
         Boost::coroutine
         Boost::process
+        Boost::interprocess
         fmt::fmt
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT

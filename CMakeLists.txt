@@ -64,6 +64,7 @@ find_package(Boost CONFIGS REQUIRED COMPONENTS
         log_setup
         url
         process
+        interprocess
 )
 
 

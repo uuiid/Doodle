@@ -32,6 +32,7 @@
     "boost-lambda2",
     "boost-units",
     "boost-lockfree",
+    "boost-interprocess",
     "argh",
     "cmakerc",
     "treehh",
