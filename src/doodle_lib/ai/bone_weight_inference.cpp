@@ -144,12 +144,12 @@ GraphSample build_sample_from_mesh(
   bone_adj = normalize_adjacency(bone_adj);
 
   GraphSample s;
-  s.x        = x;
-  s.adj      = adj_norm;
-  s.bone_adj = bone_adj;
-  s.y        = weights;
+  s.x         = x;
+  s.adj       = adj_norm;
+  s.bone_adj  = bone_adj;
+  s.y         = weights;
   // include raw bone features in the sample so dataset/model can project them
-  s.bone_feat = bone_positions; // [B, 3]
+  s.bone_feat = bone_positions;  // [B, 3]
   return s;
 }
 
@@ -244,79 +244,6 @@ GraphSample load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_lo
   return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
 }
 
-// ============= Dataset (simple file-based dataset) =============
-// For simplicity, we assume each sample is stored as a .pt file (torch::save)
-// with a dict: { "x": Tensor, "adj": Tensor, "y": Tensor }
-// We will provide a load_sample function to read these.
-class GraphDataset : public torch::data::Dataset<GraphDataset> {
- public:
-  GraphDataset(const std::vector<std::string>& files) : files_(files) {}
-
-  torch::data::Example<> get(size_t index) override {
-    // load sample file
-    auto filename = files_.at(index);
-    torch::Tensor x, adj, y;
-    // We'll read a scriptmodule-like archive storing tensors under keys "x","adj","y"
-    torch::serialize::InputArchive archive;
-    archive.load_from(filename);
-    archive.read("x", x);
-    archive.read("adj", adj);
-    archive.read("y", y);
-    // optional bone adjacency (read into local and ignore for this minimal get)
-    try {
-      torch::Tensor bone_adj;
-      archive.read("bone_adj", bone_adj);
-    } catch (...) {
-      // missing is fine
-    }
-
-    // For DataLoader compatibility, we will pack x and adj into one tensor via a custom scheme:
-    // return data as a tuple-like tensor is inconvenient; instead we'll return a single tensor
-    // by concatenating shapes: but simplest for clarity is to return x as data and y as target,
-    // and keep adj in a parallel vector in memory (not ideal). For full generality, user can
-    // implement a custom collate. Here we cheat: save adj as extra channels in x? To keep clear,
-    // we will serialize adj into a 1D tensor appended to x -- BUT for clarity in this example,
-    // we will not use DataLoader batching and instead iterate files manually in the training loop.
-    // So this get is not used. Still implement minimal.
-    return {x, y};
-  }
-
-  torch::optional<size_t> size() const override { return files_.size(); }
-
-  // convenience loader for manual iteration
-  GraphSample load_sample_file(size_t index) {
-    auto filename = files_.at(index);
-    torch::Tensor x, adj, y;
-    torch::serialize::InputArchive archive;
-    archive.load_from(filename);
-    archive.read("x", x);
-    archive.read("adj", adj);
-    archive.read("y", y);
-    torch::Tensor bone_adj;
-    try {
-      archive.read("bone_adj", bone_adj);
-    } catch (...) {
-      bone_adj = torch::Tensor();
-    }
-      torch::Tensor bone_feat;
-      try {
-        archive.read("bone_feat", bone_feat);
-      } catch (...) {
-        bone_feat = torch::Tensor();
-      }
-    GraphSample s;
-    s.x        = x;
-    s.adj      = adj;
-    s.y        = y;
-    s.bone_adj = bone_adj;
-      s.bone_feat = bone_feat;
-    return s;
-  }
-
- private:
-  std::vector<std::string> files_;
-};
-
 // ============= Model Definition =============
 // Graph convolution layer (spectral style): H' = norm_adj @ H @ W
 struct GraphConvImpl : torch::nn::Module {
@@ -340,19 +267,18 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // This model now expects raw per-bone features (bone_feat) of dimension F.
   // The model contains a learnable projector `bone_proj` which maps bone_feat -> hidden_dim.
   // bone_proj makes the dataset free to provide raw bone descriptors (e.g. positions, transforms).
-  SkinWeightGCNImpl(int in_channels, int hidden_dim, int bone_feat_dim = 3) :
-      gc1(nullptr), gc2(nullptr) {
-    gc1  = register_module("gc1", GraphConv(in_channels, hidden_dim));
-    gc2  = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
+  SkinWeightGCNImpl(int in_channels, int hidden_dim, int bone_feat_dim = 3) : gc1(nullptr), gc2(nullptr) {
+    gc1       = register_module("gc1", GraphConv(in_channels, hidden_dim));
+    gc2       = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
     // bone graph conv: transforms bone embeddings via bone adjacency
-    bgc  = register_module("bgc", GraphConv(hidden_dim, hidden_dim));
+    bgc       = register_module("bgc", GraphConv(hidden_dim, hidden_dim));
     // linear projector to map raw bone features [B, bone_feat_dim] -> [B, hidden_dim]
     bone_proj = register_module("bone_proj", torch::nn::Linear(bone_feat_dim, hidden_dim));
     // global branch
-    gfc1 = register_module("gfc1", torch::nn::Linear(in_channels, hidden_dim));
-    gfc2 = register_module("gfc2", torch::nn::Linear(hidden_dim, hidden_dim));
+    gfc1      = register_module("gfc1", torch::nn::Linear(in_channels, hidden_dim));
+    gfc2      = register_module("gfc2", torch::nn::Linear(hidden_dim, hidden_dim));
     // fusion and final
-    fc1  = register_module("fc1", torch::nn::Linear(hidden_dim * 2, hidden_dim));
+    fc1       = register_module("fc1", torch::nn::Linear(hidden_dim * 2, hidden_dim));
   }
 
   // forward returns log probabilities per node (for KLDiv use)
@@ -360,23 +286,23 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // Otherwise the registered `bone_emb` (if any) will be used.
   // forward now accepts raw `bone_feat` of shape [B, F] (F == bone_feat_dim passed to ctor).
   torch::Tensor forward(
-    const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_feat,
-    const torch::Tensor& bone_adj
+      const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_feat,
+      const torch::Tensor& bone_adj
   ) {
     // local branch
-    auto l                 = torch::relu(gc1->forward(x, adj_norm));  // [N, H]
-    l                      = torch::relu(gc2->forward(l, adj_norm));  // [N, H]
+    auto l       = torch::relu(gc1->forward(x, adj_norm));  // [N, H]
+    l            = torch::relu(gc2->forward(l, adj_norm));  // [N, H]
 
     // global branch: linear on node features -> pooled
-    auto g                 = torch::relu(gfc1->forward(x));  // [N, H]
-    g                      = torch::relu(gfc2->forward(g));  // [N, H]
-    auto g_pool            = g.mean(0, /*keepdim=*/true);    // [1, H]
+    auto g       = torch::relu(gfc1->forward(x));  // [N, H]
+    g            = torch::relu(gfc2->forward(g));  // [N, H]
+    auto g_pool  = g.mean(0, /*keepdim=*/true);    // [1, H]
     // broadcast to nodes
-    auto g_bcast           = g_pool.expand({x.size(0), g_pool.size(1)});  // [N,H]
+    auto g_bcast = g_pool.expand({x.size(0), g_pool.size(1)});  // [N,H]
 
     // concat
-    auto feat              = torch::cat({l, g_bcast}, /*dim=*/1);  // [N, 2H]
-    auto h                 = torch::relu(fc1->forward(feat));      // [N, H]
+    auto feat    = torch::cat({l, g_bcast}, /*dim=*/1);  // [N, 2H]
+    auto h       = torch::relu(fc1->forward(feat));      // [N, H]
 
     // project raw bone features to hidden space
     if (!bone_feat.defined()) throw std::runtime_error("bone_feat must be provided to the model forward");
@@ -489,10 +415,10 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
 
       optimizer.zero_grad();
       // pass optional bone_adj (may be undefined)
-  torch::Tensor bone_adj = sample.bone_adj.to(device);
-  torch::Tensor bone_feat = sample.bone_feat.to(device);
-  auto logp              = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] log-probs
-      auto loss              = kl_loss_from_logprob(logp, y);
+      torch::Tensor bone_adj  = sample.bone_adj.to(device);
+      torch::Tensor bone_feat = sample.bone_feat.to(device);
+      auto logp               = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] log-probs
+      auto loss               = kl_loss_from_logprob(logp, y);
       loss.backward();
       optimizer.step();
 
@@ -509,10 +435,10 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
       torch::NoGradGuard no_grad;
-      torch::Tensor bone_adj = sample.bone_adj.to(device);
+      torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
-      auto logp              = model->forward(x, adj, bone_feat, bone_adj);
-      auto loss              = kl_loss_from_logprob(logp, y);
+      auto logp               = model->forward(x, adj, bone_feat, bone_adj);
+      auto loss               = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
     }
     val_loss /= std::max<size_t>(1, val_files.size());
