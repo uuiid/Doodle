@@ -12,7 +12,6 @@
 
 #include <doodle_lib/core/alembic_file.h>
 #include <doodle_lib/core/fbx_file.h>
-#include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>

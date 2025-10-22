@@ -5,7 +5,6 @@ target_sources(doodle_lib
         filesystem_extend.h
         observable_container.h
         holidaycn_time.h
-        scan_win_service.h
         cache_manger.h
         socket_io.h
         base64.h
@@ -17,13 +16,11 @@ target_sources(doodle_lib
         PRIVATE
         filesystem_extend.cpp
         holidaycn_time.cpp
-        scan_win_service.cpp
         socket_io.cpp
         base64.cpp
         fbx_file.cpp
         alembic_file.cpp
         scan_assets.cpp
 )
-add_subdirectory(scan_assets)
 add_subdirectory(http)
 add_subdirectory(socket_io)

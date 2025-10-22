@@ -9,9 +9,9 @@
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/assets.h>
 
 #include <doodle_lib/core/asyn_task.h>
-#include <doodle_lib/core/scan_assets/base.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <boost/signals2/signal.hpp>

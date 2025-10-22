@@ -4,9 +4,9 @@
 
 #pragma once
 #include <doodle_core/core/http_client_core.h>
+#include <doodle_core/metadata/assets.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
-#include <doodle_lib/core/scan_assets/base.h>
 namespace doodle::http {
 class http_route;
 using http_route_ptr = std::shared_ptr<http_route>;

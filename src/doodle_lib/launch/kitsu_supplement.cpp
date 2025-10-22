@@ -7,7 +7,6 @@
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
-#include <doodle_lib/core/scan_win_service.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computing_time.h>
