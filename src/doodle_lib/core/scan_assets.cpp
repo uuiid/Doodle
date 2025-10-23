@@ -5,6 +5,7 @@
 #include "scan_assets.h"
 
 #include "doodle_core/metadata/entity.h"
+#include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/task_type.h"
 #include "doodle_core/metadata/working_file.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
@@ -14,6 +15,7 @@
 #include <boost/asio/awaitable.hpp>
 
 #include "core/scan_assets.h"
+#include <filesystem>
 #include <memory>
 
 namespace doodle::scan_assets {
@@ -67,6 +69,29 @@ FSys::path scan_scene_maya(const project& in_prj, const entity_asset_extend& in_
       fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
       fmt::format(
           "{}{}{}_Low.ma", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
+      );
+  if (exists(in_prj.path_ / l_path)) return l_path;
+  return {};
+}
+FSys::path scan_scene_alembic(const project& in_prj, const entity_asset_extend& in_extend) {
+  auto l_path =
+      in_prj.asset_root_path_ / "BG" /
+      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_.value_or(0), in_extend.kai_shi_ji_shu_.value_or(0)) /
+      fmt::format("BG{}", in_extend.bian_hao_) / "Mod" /
+      fmt::format(
+          "{}{}{}_Low.abc", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
+      );
+  if (exists(in_prj.path_ / l_path)) return l_path;
+  return {};
+}
+FSys::path scan_scene_unreal_engine_sk(const project& in_prj, const entity_asset_extend& in_extend) {
+  auto l_path =
+      in_prj.asset_root_path_ / "BG" /
+      fmt::format("JD{:02d}_{:02d}", in_extend.gui_dang_.value_or(0), in_extend.kai_shi_ji_shu_.value_or(0)) /
+      fmt::format("BG{}", in_extend.bian_hao_) / in_extend.pin_yin_ming_cheng_ / doodle_config::ue4_content /
+      in_extend.pin_yin_ming_cheng_ / "SK" /
+      fmt::format(
+          "SK_{}{}{}.uasset", in_extend.pin_yin_ming_cheng_, in_extend.ban_ben_.empty() ? "" : "_", in_extend.ban_ben_
       );
   if (exists(in_prj.path_ / l_path)) return l_path;
   return {};
@@ -126,6 +151,12 @@ FSys::path scan_maya(const project& in_prj, const uuid& in_entity_type, const en
   if (in_entity_type == asset_type::get_prop_id() || in_entity_type == asset_type::get_effect_id())
     return scan_prop_maya(in_prj, in_extend);
   if (in_entity_type == asset_type::get_ground_id()) return scan_scene_maya(in_prj, in_extend);
+  return {};
+}
+FSys::path scan_alembic(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend) {
+  if (in_entity_type == asset_type::get_ground_id()) {
+    return scan_scene_alembic(in_prj, in_extend);
+  }
   return {};
 }
 FSys::path scan_unreal_engine(const project& in_prj, const uuid& in_entity_type, const entity_asset_extend& in_extend) {
@@ -223,18 +254,35 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       }))
     return default_logger_raw()->info("资产 {} 已经存在, 不需要重新扫描", l_entt.name_),
            l_result;  // 如果所有的工作文件都存在, 则不需要重新扫描
-  working_file l_maya_working_file{};
-  working_file l_unreal_working_file{};
+  working_file l_maya_working_file{}, l_unreal_working_file{}, l_alembic_working_file{}, l_unreal_sk_working_file{};
 
   for (auto&& i : l_l_working_files_list) {
     if (i.software_type_ == software_enum::maya) {
       l_maya_working_file = i;
     } else if (i.software_type_ == software_enum::unreal_engine) {
       l_unreal_working_file = i;
+    } else if (i.software_type_ == software_enum::alembic) {
+      l_alembic_working_file = i;
+    } else if (i.software_type_ == software_enum::unreal_engine_sk) {
+      l_unreal_sk_working_file = i;
     }
   }
 
   if (l_task_type_id == task_type::get_character_id() || l_task_type_id == task_type::get_ground_model_id()) {
+    if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
+      l_maya_working_file.description_   = "maya模型文件";
+      l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
+      l_maya_working_file.software_type_ = software_enum::maya;
+      scan_add_linked_data(l_maya_working_file, l_result, l_prj, l_entt, in_task);
+    }
+    if (l_unreal_sk_working_file.path_.empty() || !FSys::exists(l_unreal_sk_working_file.path_)) {
+      l_unreal_sk_working_file.description_   = "UE SK文件";
+      l_unreal_sk_working_file.path_          = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend);
+      l_unreal_sk_working_file.software_type_ = software_enum::unreal_engine_sk;
+      scan_add_linked_data(l_unreal_sk_working_file, l_result, l_prj, l_entt, in_task);
+    }
+
+  } else if (l_task_type_id == task_type::get_ground_model_id()) {
     if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
       l_maya_working_file.description_   = "maya模型文件";
       l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
@@ -247,8 +295,22 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       l_unreal_working_file.software_type_ = software_enum::unreal_engine;
       scan_add_linked_data(l_unreal_working_file, l_result, l_prj, l_entt, in_task);
     }
+    if (l_alembic_working_file.path_.empty() || !FSys::exists(l_alembic_working_file.path_)) {
+      l_alembic_working_file.description_   = "alembic地编模型文件";
+      l_alembic_working_file.path_          = scan_alembic(l_prj, l_entt.entity_type_id_, l_extend);
+      l_alembic_working_file.software_type_ = software_enum::alembic;
+      scan_add_linked_data(l_alembic_working_file, l_result, l_prj, l_entt, in_task);
+    }
+    if (l_unreal_sk_working_file.path_.empty() || !FSys::exists(l_unreal_sk_working_file.path_)) {
+      l_unreal_sk_working_file.description_   = "UE地编SK文件";
+      l_unreal_sk_working_file.path_          = scan_scene_unreal_engine_sk(l_prj, l_extend);
+      l_unreal_sk_working_file.software_type_ = software_enum::unreal_engine_sk;
+      scan_add_linked_data(l_unreal_sk_working_file, l_result, l_prj, l_entt, in_task);
+    }
 
-  } else if (l_task_type_id == task_type::get_binding_id()) {
+  }
+
+  else if (l_task_type_id == task_type::get_binding_id()) {
     if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
       l_maya_working_file.description_   = "绑定maya模型文件";
       l_maya_working_file.path_          = scan_rig_maya(l_prj, l_entt.entity_type_id_, l_extend);

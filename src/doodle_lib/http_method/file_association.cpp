@@ -44,7 +44,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_file_associ
          )) {
       if (l_t == task_type::get_simulation_id())
         l_solve_path = l_wf.path_;
-      else if (l_t == task_type::get_character_id() || l_t == task_type::get_ground_model_id())
+      else if ((l_t == task_type::get_character_id() || l_t == task_type::get_ground_model_id()) &&
+               (l_wf.software_type_ == software_enum::unreal_engine ||
+                l_wf.software_type_ == software_enum::unreal_engine_sk))
         l_ue_path = l_wf.path_;
       else if (l_t == task_type::get_binding_id())
         l_maya_path = l_wf.path_;

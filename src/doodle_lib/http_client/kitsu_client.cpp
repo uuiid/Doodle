@@ -166,18 +166,17 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
       throw_exception(doodle_error{"kitsu get entity error {}", l_res.result()});
     const auto l_json_entity = l_res.body().get<nlohmann::json>();
     l_json_entity.get_to(*l_arg_);
-    for (auto&& i : l_json_entity["tasks"])
-      if (i["task_type_id"].get<uuid>() == task_type::get_character_id()) {
-        auto l_working_files = i["working_files"].get<std::vector<working_file>>();
-        auto l_it            = ranges::find_if(l_working_files, [&](const working_file& i) {
-          return i.software_type_ == software_enum::unreal_engine;
-        });
-        if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的ue working file"});
-        l_arg_->ue_path_ = l_project_path / l_it->path_;
-        if (l_it->path_.empty() || !FSys::exists(l_arg_->ue_path_))
-          throw_exception(doodle_error{"ue working file 文件不存在 {}", l_arg_->ue_path_});
-        break;
-      }
+    for (auto&& i : l_json_entity.at("tasks")) {
+      auto l_working_files = i.at("working_files").get<std::vector<working_file>>();
+      auto l_it            = ranges::find_if(l_working_files, [&](const working_file& i) {
+        return i.software_type_ == software_enum::unreal_engine || i.software_type_ == software_enum::unreal_engine_sk;
+      });
+      if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的ue working file"});
+      l_arg_->ue_path_ = l_project_path / l_it->path_;
+      if (l_it->path_.empty() || !FSys::exists(l_arg_->ue_path_))
+        throw_exception(doodle_error{"ue working file 文件不存在 {}", l_arg_->ue_path_});
+      break;
+    }
   }
 
   co_return l_arg_;
