@@ -4,6 +4,7 @@
 
 #include "image_to_move.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
@@ -183,6 +184,7 @@ void image_to_move::set_image_attr_from_dir(const FSys::path& in_path) {
     auto l_ext = l_path_info.path().extension();
     if (l_ext == ".png" || l_ext == ".exr" || l_ext == ".jpg") l_paths.emplace_back(l_path_info.path());
   }
+  if(l_paths.empty()) throw_exception(doodle_error{ "路径下没有图片(格式必须是 .png, .jpg, .exr)" });
   auto l_images = doodle::movie::image_attr::make_default_attr(&eps_, &shot_, l_paths);
   for (auto&& l_image : l_images) {
     l_image.watermarks_attr.emplace_back(user_name_, 0.7, 0.2, movie::image_watermark::rgb_default);
