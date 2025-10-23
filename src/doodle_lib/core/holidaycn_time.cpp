@@ -46,10 +46,9 @@ holidaycn_time2::~holidaycn_time2() = default;
 void holidaycn_time2::set_clock(business::work_clock2 &in_work_clock) const {
   for (auto &&[key, value] : work_day_map)
     if (value.is_odd_day)
-      in_work_clock -= std::make_tuple(value.date, value.date + chrono::days{1}, value.name);
+      in_work_clock -= std::make_tuple(value.date, value.date + chrono::days{1});
     else
-      for (auto &&[l_b, l_e] : work_time)
-        in_work_clock += std::make_tuple(value.date + l_b, value.date + l_e, value.name + "调休");
+      for (auto &&[l_b, l_e] : work_time) in_work_clock += std::make_tuple(value.date + l_b, value.date + l_e);
 }
 bool holidaycn_time2::is_working_day(const chrono::local_days &in_day) const {
   chrono::weekday l_weekday{in_day};
