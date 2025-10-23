@@ -73,25 +73,14 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   FSys::copy_diff(l_ue_project, l_local_ue_project, logger_ptr_);
 
   logger_ptr_->warn("排队导入skin文件 {} ", l_local_ue_project);
-  // 添加三次重试
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
-  for (int i = 0; i < 3; ++i) {
-    try {
-      co_await async_run_ue(
-          {l_local_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
-           "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
-          logger_ptr_, false, l_time_info
-      );
-      l_time_info->info_ = fmt::format("导入skin文件 {}", l_fbx);
-      on_run_time_info_(*l_time_info);
-      break;
-    } catch (const doodle_error& error) {
-      logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
-      l_time_info->info_ = fmt::format("导入skin文件 {} 重试", l_fbx);
-      on_run_time_info_(*l_time_info);
-      if (i == 2) throw;
-    }
-  }
+  co_await async_run_ue(
+      {l_local_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
+       "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
+      logger_ptr_, false, l_time_info
+  );
+  l_time_info->info_ = fmt::format("导入skin文件 {}", l_fbx);
+  on_run_time_info_(*l_time_info);
 
   // 上传文件
   logger_ptr_->warn(

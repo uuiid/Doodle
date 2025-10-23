@@ -162,18 +162,8 @@ boost::asio::awaitable<void> args::run() {
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   maya_arg_->set_time_info(l_time_info);
   maya_arg_->set_logger(logger_ptr_);
-  for (int i = 0; i < 3; ++i) {
-    try {
-      co_await maya_arg_->run();
-      l_time_info->info_ = "运行maya";
-      break;
-    } catch (const doodle_error& err) {
-      logger_ptr_->warn("运行maya错误 {}, 开始第{}次重试", err.what(), i + 1);
-      l_time_info->info_ = fmt::format("运行maya错误:{}", err.what());
-      on_run_time_info_(*l_time_info);
-      if (i == 2) throw;
-    }
-  }
+  l_time_info->info_ = "运行maya";
+  co_await maya_arg_->run();
   l_out = maya_arg_->get_out_arg();
   on_run_time_info_(*l_time_info);
   /// 将导出数据转移到数据块中
@@ -266,24 +256,13 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
       FSys::path{l_import_data.import_dir}.lexically_relative(g_ue_game_path)
   );
 
-  // 添加三次重试
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
-  for (int i = 0; i < 3; ++i) {
-    try {
-      co_await async_run_ue(
-          {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
-           "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
-          logger_ptr_, true, l_time_info
-      );
-      l_time_info->info_ = "导入文件";
-      break;
-    } catch (const doodle_error& err) {
-      logger_ptr_->warn("导入文件失败 开始第 {} 重试", i + 1);
-      l_time_info->info_ = fmt::format("导入文件失败:{}", err.what());
-      on_run_time_info_(*l_time_info);
-      if (i == 2) throw;
-    }
-  }
+  co_await async_run_ue(
+      {render_project_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+       "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
+      logger_ptr_, true, l_time_info
+  );
+  l_time_info->info_ = "导入文件";
   on_run_time_info_(*l_time_info);
 
   logger_ptr_->warn("导入文件完成");
@@ -296,24 +275,14 @@ boost::asio::awaitable<FSys::path> args::async_import_and_render_ue() {
     }
   }
   l_time_info = std::make_shared<server_task_info::run_time_info_t>();
-  for (int i = 0; i < 3; ++i) {
-    try {
-      co_await async_run_ue(
-          {render_project_.generic_string(), l_import_data.render_map.generic_string(),
-           fmt::format(R"(-DoodleLevelSequence="{}")", l_import_data.level_sequence_import),
-           fmt::format(R"(-DoodleMoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-log", "-stdout",
-           "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-          logger_ptr_, true, l_time_info
-      );
-      l_time_info->info_ = "渲染UE";
-      break;
-    } catch (const doodle_error& err) {
-      logger_ptr_->warn("渲染失败 开始第 {} 重试", i + 1);
-      l_time_info->info_ = fmt::format("渲染失败:{}", err.what());
-      on_run_time_info_(*l_time_info);
-      if (i == 2) throw;
-    }
-  }
+  co_await async_run_ue(
+      {render_project_.generic_string(), l_import_data.render_map.generic_string(),
+       fmt::format(R"(-DoodleLevelSequence="{}")", l_import_data.level_sequence_import),
+       fmt::format(R"(-DoodleMoviePipelineConfig="{}")", l_import_data.movie_pipeline_config), "-log", "-stdout",
+       "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
+      logger_ptr_, true, l_time_info
+  );
+  l_time_info->info_ = "渲染UE";
   on_run_time_info_(*l_time_info);
 
   logger_ptr_->warn("完成渲染, 输出目录 {}", l_import_data.out_file_dir);
