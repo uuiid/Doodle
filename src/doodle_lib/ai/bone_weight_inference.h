@@ -20,8 +20,9 @@ class bone_weight_inference_model {
   void load_model(const FSys::path& in_model_path);
   FSys::path get_model_path() const;
 
-  torch::Tensor predict(
-      const torch::Tensor& node_features, const torch::Tensor& node_adj, const torch::Tensor& bone_emb = {}
+ 
+  void predict_by_fbx(
+      const FSys::path& in_fbx_path, const FSys::path& out_fbx_path, logger_ptr_raw in_logger = nullptr
   );
   // 训练模型
   static std::shared_ptr<bone_weight_inference_model> train(

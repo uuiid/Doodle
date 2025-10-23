@@ -7,6 +7,7 @@
 #include <doodle_core/exception/exception.h>
 
 #include <ATen/core/Reduction.h>
+#include <c10/core/DeviceType.h>
 #include <fbxsdk.h>
 #include <fbxsdk/core/base/fbxarray.h>
 #include <fbxsdk/core/fbxmanager.h>
@@ -15,6 +16,7 @@
 #include <fbxsdk/scene/geometry/fbxskin.h>
 #include <fbxsdk/scene/geometry/fbxtrimnurbssurface.h>
 #include <fbxsdk/utils/fbxgeometryconverter.h>
+#include <filesystem>
 #include <fmt/format.h>
 #include <functional>
 #include <map>
@@ -153,25 +155,32 @@ GraphSample build_sample_from_mesh(
   return s;
 }
 
-GraphSample load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger = nullptr) {
-  // load fbx
-  if (!in_logger) in_logger = spdlog::default_logger_raw();
-
-  auto manager =
-      std::shared_ptr<fbxsdk::FbxManager>(FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); });
-  FbxIOSettings* ios = FbxIOSettings::Create(manager.get(), IOSROOT);
-  manager->SetIOSettings(ios);
-  FbxScene* l_scene     = FbxScene::Create(manager.get(), "myScene");
-  FbxImporter* importer = FbxImporter::Create(manager.get(), "");
-  if (!importer->Initialize(fbx_path.generic_string().c_str(), -1, manager->GetIOSettings()))
-    throw_exception(doodle_error{"fbx open err {}", importer->GetStatus().GetErrorString()});
-  importer->Import(l_scene);
-  FbxNode* l_mesh_node{};
-  // get merge mesh
-  {
-    auto l_root = l_scene->GetRootNode();
-    FbxGeometryConverter l_converter{manager.get()};
-    l_converter.RecenterSceneToWorldCenter(l_scene, 0.000001);
+struct fbx_scene {
+  std::shared_ptr<fbxsdk::FbxManager> manager_;
+  fbxsdk::FbxScene* scene_;
+  logger_ptr_raw logger_;
+  FSys::path fbx_path_;
+  FbxNode* mesh_node_{};
+  fbxsdk::FbxMesh* mesh_{};
+  explicit fbx_scene(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger)
+      : fbx_path_(fbx_path), logger_(in_logger) {
+    manager_ = std::shared_ptr<fbxsdk::FbxManager>(fbxsdk::FbxManager::Create(), [](fbxsdk::FbxManager* in_ptr) {
+      in_ptr->Destroy();
+    });
+    fbxsdk::FbxIOSettings* ios = fbxsdk::FbxIOSettings::Create(manager_.get(), IOSROOT);
+    manager_->SetIOSettings(ios);
+    scene_                        = fbxsdk::FbxScene::Create(manager_.get(), "myScene");
+    fbxsdk::FbxImporter* importer = fbxsdk::FbxImporter::Create(manager_.get(), "");
+    if (!importer->Initialize(fbx_path.generic_string().c_str(), -1, manager_->GetIOSettings()))
+      throw_exception(doodle_error{"fbx open err {}", importer->GetStatus().GetErrorString()});
+    importer->Import(scene_);
+    preprocessing();
+    mesh_ = mesh_node_->GetMesh();
+  }
+  void preprocessing() {
+    auto l_root = scene_->GetRootNode();
+    FbxGeometryConverter l_converter{manager_.get()};
+    l_converter.RecenterSceneToWorldCenter(scene_, 0.000001);
     FbxArray<FbxNode*> l_mesh_nodes;
 
     std::function<void(FbxNode*)> l_fun;
@@ -189,60 +198,82 @@ GraphSample load_fbx(const std::filesystem::path& fbx_path, logger_ptr_raw in_lo
     l_fun(l_root);
     if (l_mesh_nodes.Size() == 0) throw_exception(doodle_error{"fbx mesh not found"});
 
-    l_mesh_node = l_converter.MergeMeshes(l_mesh_nodes, fmt::format("main_{}", l_mesh_nodes.Size()).c_str(), l_scene);
-    if (!l_mesh_node) throw_exception(doodle_error{"merge mesh err"});
-    for (auto i = 0; i < l_mesh_nodes.Size(); i++) l_scene->RemoveNode(l_mesh_nodes[i]);
-
-    l_converter.Triangulate(l_mesh_node->GetMesh(), true);
+    mesh_node_ = l_converter.MergeMeshes(l_mesh_nodes, fmt::format("main_{}", l_mesh_nodes.Size()).c_str(), scene_);
+    if (!mesh_node_) throw_exception(doodle_error{"merge mesh err"});
+    for (auto i = 0; i < l_mesh_nodes.Size(); i++) scene_->RemoveNode(l_mesh_nodes[i]);
+    l_converter.Triangulate(mesh_node_->GetMesh(), true);
   }
 
-  auto l_mesh            = l_mesh_node->GetMesh();
-  auto* l_vert           = l_mesh->GetControlPoints();
-  auto l_vert_count      = l_mesh->GetControlPointsCount();
-  torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
-  for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
+  GraphSample get_sample() {
+    auto* l_vert           = mesh_->GetControlPoints();
+    auto l_vert_count      = mesh_->GetControlPointsCount();
+    torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
+    for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
 
-  auto l_faces_num      = l_mesh->GetPolygonCount();
-  torch::Tensor l_faces = torch::zeros({l_faces_num, 3}, torch::kInt64);
-  for (auto j = 0; j < l_faces_num; j++) {
-    for (auto k = 0; k < l_mesh->GetPolygonSize(j); k++) {
-      auto l_vert_index = l_mesh->GetPolygonVertex(j, k);
-      l_faces[j][k]     = l_vert_index;
+    auto l_faces_num      = mesh_->GetPolygonCount();
+    torch::Tensor l_faces = torch::zeros({l_faces_num, 3}, torch::kInt64);
+    for (auto j = 0; j < l_faces_num; j++) {
+      for (auto k = 0; k < mesh_->GetPolygonSize(j); k++) {
+        auto l_vert_index = mesh_->GetPolygonVertex(j, k);
+        l_faces[j][k]     = l_vert_index;
+      }
     }
-  }
-  auto* l_sk = static_cast<FbxSkin*>(l_mesh->GetDeformer(0, FbxDeformer::eSkin));
-  if (!l_sk) throw_exception(doodle_error{"no skin found"});
-  auto l_sk_count                = l_sk->GetClusterCount();
-  torch::Tensor l_bone_positions = torch::zeros({l_sk_count, 3}, torch::kFloat32);
-  torch::Tensor l_bone_weights   = torch::zeros({l_vert_count, l_sk_count}, torch::kFloat32);
-  std::map<FbxNode*, std::int64_t> l_bone_index_map{};
-  for (auto i = 0; i < l_sk_count; i++) {
-    auto l_cluster            = l_sk->GetCluster(i);
-    auto l_joint              = l_cluster->GetLink();
-    l_bone_index_map[l_joint] = i;
-  }
-  std::vector<std::int64_t> l_bone_parents(l_sk_count, -1);
-  for (auto i = 0; i < l_sk_count; i++) {
-    auto l_cluster = l_sk->GetCluster(i);
-    auto l_joint   = l_cluster->GetLink();
+    auto* l_sk = static_cast<FbxSkin*>(mesh_->GetDeformer(0, FbxDeformer::eSkin));
+    if (!l_sk) throw_exception(doodle_error{"no skin found"});
+    auto l_sk_count                = l_sk->GetClusterCount();
+    torch::Tensor l_bone_positions = torch::zeros({l_sk_count, 3}, torch::kFloat32);
+    torch::Tensor l_bone_weights   = torch::zeros({l_vert_count, l_sk_count}, torch::kFloat32);
+    std::map<FbxNode*, std::int64_t> l_bone_index_map{};
+    for (auto i = 0; i < l_sk_count; i++) {
+      auto l_cluster            = l_sk->GetCluster(i);
+      auto l_joint              = l_cluster->GetLink();
+      l_bone_index_map[l_joint] = i;
+    }
+    std::vector<std::int64_t> l_bone_parents(l_sk_count, -1);
+    for (auto i = 0; i < l_sk_count; i++) {
+      auto l_cluster = l_sk->GetCluster(i);
+      auto l_joint   = l_cluster->GetLink();
 
-    if (auto l_parent = l_joint->GetParent(); l_parent && l_bone_index_map.contains(l_parent)) {
-      l_bone_parents[i] = l_bone_index_map[l_parent];
+      if (auto l_parent = l_joint->GetParent(); l_parent && l_bone_index_map.contains(l_parent)) {
+        l_bone_parents[i] = l_bone_index_map[l_parent];
+      }
+
+      auto l_matrix = scene_->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
+      FbxAMatrix l_matrix_tmp{};
+      l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
+      l_matrix            = l_matrix * l_matrix_tmp;
+      l_bone_positions[i] = torch::tensor({l_matrix.GetT()[0], l_matrix.GetT()[1], l_matrix.GetT()[2]});
+      auto l_controls     = l_cluster->GetControlPointIndices();
+      for (auto j = 0; j < l_cluster->GetControlPointIndicesCount(); j++) {
+        l_bone_weights[j][i] = l_controls[j];
+      }
     }
 
-    auto l_matrix = l_scene->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
-    FbxAMatrix l_matrix_tmp{};
-    l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
-    l_matrix            = l_matrix * l_matrix_tmp;
-    l_bone_positions[i] = torch::tensor({l_matrix.GetT()[0], l_matrix.GetT()[1], l_matrix.GetT()[2]});
-    auto l_controls     = l_cluster->GetControlPointIndices();
-    for (auto j = 0; j < l_cluster->GetControlPointIndicesCount(); j++) {
-      l_bone_weights[j][i] = l_controls[j];
-    }
+    return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
   }
-
-  return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
-}
+  void write_weights_to_fbx(const torch::Tensor& weights) {
+    auto l_vert_count = mesh_->GetControlPointsCount();
+    if (weights.size(0) != l_vert_count)
+      throw_exception(doodle_error{"weights size mismatch: expected {}, got {}", l_vert_count, weights.size(0)});
+    auto* l_sk = static_cast<FbxSkin*>(mesh_->GetDeformer(0, FbxDeformer::eSkin));
+    if (!l_sk) throw_exception(doodle_error{"no skin found"});
+    auto l_sk_count  = l_sk->GetClusterCount();
+    auto weights_acc = weights.accessor<float, 2>();
+    for (auto i = 0; i < l_sk_count; i++) {
+      auto l_cluster = l_sk->GetCluster(i);
+      l_cluster->SetControlPointIWCount(0);
+      for (auto j = 0; j < l_vert_count; j++) {
+        auto w = weights_acc[j][i];
+        if (w > 1e-6) l_cluster->AddControlPointIndex(j, w);
+      }
+    }
+    fbxsdk::FbxExporter* exporter = fbxsdk::FbxExporter::Create(manager_.get(), "");
+    if (!exporter->Initialize(fbx_path_.generic_string().c_str(), -1, manager_->GetIOSettings()))
+      throw_exception(doodle_error{"fbx export err {}", exporter->GetStatus().GetErrorString()});
+    exporter->Export(scene_);
+    exporter->Destroy();
+  }
+};
 
 // ============= Model Definition =============
 // Graph convolution layer (spectral style): H' = norm_adj @ H @ W
@@ -407,7 +438,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     model->train();
     double epoch_loss = 0.0;
     for (size_t i = 0; i < train_files.size(); ++i) {
-      auto sample = load_fbx(train_files[i]);
+      fbx_scene l_fbx{train_files[i], nullptr};
+      auto sample = l_fbx.get_sample();
       // move to device
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
@@ -430,7 +462,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     model->eval();
     double val_loss = 0.0;
     for (size_t i = 0; i < val_files.size(); ++i) {
-      auto sample = load_fbx(val_files[i]);
+      fbx_scene l_fbx{val_files[i], nullptr};
+      auto sample = l_fbx.get_sample();
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
@@ -456,6 +489,41 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   // final save
   save_checkpoint(model, in_output_path.generic_string());
   return {};
+}
+class bone_weight_inference_model::impl {
+ public:
+  torch::Device device_;
+  SkinWeightGCN model_;
+
+ public:
+  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_() {
+    if (!torch::cuda::is_available()) {
+      device_ = torch::Device(torch::kCPU);
+      std::cout << "CUDA not available, using CPU\n";
+    }
+    model_ = SkinWeightGCN(15, 64);
+    model_->to(device_);
+    load_checkpoint(model_, in_model_path.generic_string());
+    model_->eval();
+  }
+};
+void bone_weight_inference_model::load_model(const FSys::path& in_model_path) {
+  pimpl_ = std::make_shared<impl>(in_model_path);
+}
+
+void bone_weight_inference_model::predict_by_fbx(
+    const FSys::path& in_fbx_path, const FSys::path& out_fbx_path, logger_ptr_raw in_logger
+) {
+  if (!pimpl_) throw_exception(doodle_error{"模型未加载"});
+  fbx_scene l_fbx{in_fbx_path, in_logger};
+  auto sample             = l_fbx.get_sample();
+  auto x                  = sample.x.to(pimpl_->device_);
+  auto adj                = sample.adj.to(pimpl_->device_);
+  torch::Tensor bone_adj  = sample.bone_adj.to(pimpl_->device_);
+  torch::Tensor bone_feat = sample.bone_feat.to(pimpl_->device_);
+  torch::Tensor logp      = pimpl_->model_->forward(x, adj, bone_feat, bone_adj);
+  auto bone_weights       = torch::exp(logp);
+  l_fbx.write_weights_to_fbx(bone_weights.cpu());
 }
 
 }  // namespace doodle::ai
