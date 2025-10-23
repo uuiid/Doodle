@@ -283,12 +283,6 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
     }
 
   } else if (l_task_type_id == task_type::get_ground_model_id()) {
-    if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
-      l_maya_working_file.description_   = "maya模型文件";
-      l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
-      l_maya_working_file.software_type_ = software_enum::maya;
-      scan_add_linked_data(l_maya_working_file, l_result, l_prj, l_entt, in_task);
-    }
     if (l_unreal_working_file.path_.empty() || !FSys::exists(l_unreal_working_file.path_)) {
       l_unreal_working_file.description_   = "UE模型文件";
       l_unreal_working_file.path_          = scan_unreal_engine(l_prj, l_entt.entity_type_id_, l_extend);
@@ -301,11 +295,19 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
       l_alembic_working_file.software_type_ = software_enum::alembic;
       scan_add_linked_data(l_alembic_working_file, l_result, l_prj, l_entt, in_task);
     }
+    if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
+      l_maya_working_file.description_   = "maya模型文件";
+      l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
+      l_maya_working_file.software_type_ = software_enum::maya;
+      if (!l_maya_working_file.path_.empty() && FSys::exists(l_maya_working_file.path_))
+        scan_add_linked_data(l_maya_working_file, l_result, l_prj, l_entt, in_task);
+    }
     if (l_unreal_sk_working_file.path_.empty() || !FSys::exists(l_unreal_sk_working_file.path_)) {
       l_unreal_sk_working_file.description_   = "UE地编SK文件";
       l_unreal_sk_working_file.path_          = scan_scene_unreal_engine_sk(l_prj, l_extend);
       l_unreal_sk_working_file.software_type_ = software_enum::unreal_engine_sk;
-      scan_add_linked_data(l_unreal_sk_working_file, l_result, l_prj, l_entt, in_task);
+      if (!l_unreal_sk_working_file.path_.empty() && FSys::exists(l_unreal_sk_working_file.path_))
+        scan_add_linked_data(l_unreal_sk_working_file, l_result, l_prj, l_entt, in_task);
     }
 
   }
