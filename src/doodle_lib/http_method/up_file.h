@@ -7,7 +7,6 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
-#include "up_file.h"
 namespace doodle {
 struct entity_asset_extend;
 struct asset_type;

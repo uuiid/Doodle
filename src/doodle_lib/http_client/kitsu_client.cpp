@@ -132,7 +132,7 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
       throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
-    const auto l_json_task_full = l_res.body().get<nlohmann::json>();
+    const auto l_json_task_full = l_res.body();
     l_entity_id                 = l_json_task_full.at("entity_id").get<uuid>();
     auto l_working_files        = l_json_task_full.at("working_files").get<std::vector<working_file>>();
     const auto l_task_type_id   = l_json_task_full.at("task_type_id").get<uuid>();
