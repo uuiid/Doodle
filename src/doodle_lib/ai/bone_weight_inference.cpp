@@ -244,8 +244,9 @@ struct fbx_scene {
       l_matrix            = l_matrix * l_matrix_tmp;
       l_bone_positions[i] = torch::tensor({l_matrix.GetT()[0], l_matrix.GetT()[1], l_matrix.GetT()[2]});
       auto l_controls     = l_cluster->GetControlPointIndices();
+      auto l_weights      = l_cluster->GetControlPointWeights();
       for (auto j = 0; j < l_cluster->GetControlPointIndicesCount(); j++) {
-        l_bone_weights[j][i] = l_controls[j];
+        l_bone_weights[l_controls[j]][i] = l_weights[j];
       }
     }
 
