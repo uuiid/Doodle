@@ -210,7 +210,6 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
   }
   if (l_e == maya_enum::maya_error_t::check_error)
     throw_exception(doodle_error{enum_to_num(l_e), "检查文件 {} 失败", l_arg.get_file_path()});
-  app_base::Get().stop_app();
   return false;
 }
 

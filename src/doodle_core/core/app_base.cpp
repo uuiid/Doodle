@@ -109,6 +109,13 @@ std::int32_t app_base::run() {
     }
   }
 
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
+  on_cancel.emit();
+  on_stop();
+  facets_.clear();
+  if (sig_ptr) sig_ptr->cancel();
+  g_io_context().stop();
+
   return exit_code;
 }
 
