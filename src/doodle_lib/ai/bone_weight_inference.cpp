@@ -158,10 +158,11 @@ GraphSample build_sample_from_mesh(
 struct fbx_scene {
   std::shared_ptr<fbxsdk::FbxManager> manager_;
   fbxsdk::FbxScene* scene_;
-  logger_ptr_raw logger_;
   FSys::path fbx_path_;
   FbxNode* mesh_node_{};
   fbxsdk::FbxMesh* mesh_{};
+
+  logger_ptr_raw logger_;
   explicit fbx_scene(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger)
       : fbx_path_(fbx_path), logger_(in_logger) {
     manager_ = std::shared_ptr<fbxsdk::FbxManager>(fbxsdk::FbxManager::Create(), [](fbxsdk::FbxManager* in_ptr) {
@@ -299,7 +300,8 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // This model now expects raw per-bone features (bone_feat) of dimension F.
   // The model contains a learnable projector `bone_proj` which maps bone_feat -> hidden_dim.
   // bone_proj makes the dataset free to provide raw bone descriptors (e.g. positions, transforms).
-  SkinWeightGCNImpl(int in_channels, int hidden_dim, int bone_feat_dim = 3) : gc1(nullptr), gc2(nullptr) {
+  SkinWeightGCNImpl(int in_channels, int hidden_dim, int bone_feat_dim = 3)
+      : gc1(nullptr), gc2(nullptr), bgc(nullptr), bone_proj(nullptr), gfc1(nullptr), gfc2(nullptr), fc1(nullptr) {
     gc1       = register_module("gc1", GraphConv(in_channels, hidden_dim));
     gc2       = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
     // bone graph conv: transforms bone embeddings via bone adjacency
@@ -377,10 +379,10 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     return torch::log_softmax(logits, /*dim=*/1);
   }
 
-  GraphConv gc1{nullptr}, gc2{nullptr};
-  GraphConv bgc{nullptr};
-  torch::nn::Linear bone_proj{nullptr};
-  torch::nn::Linear gfc1{nullptr}, gfc2{nullptr}, fc1{nullptr};
+  GraphConv gc1, gc2;
+  GraphConv bgc;
+  torch::nn::Linear bone_proj;
+  torch::nn::Linear gfc1, gfc2, fc1;
 };
 TORCH_MODULE(SkinWeightGCN);
 
@@ -497,12 +499,11 @@ class bone_weight_inference_model::impl {
   SkinWeightGCN model_;
 
  public:
-  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_() {
+  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(15, 64) {
     if (!torch::cuda::is_available()) {
       device_ = torch::Device(torch::kCPU);
       std::cout << "CUDA not available, using CPU\n";
     }
-    model_ = SkinWeightGCN(15, 64);
     model_->to(device_);
     load_checkpoint(model_, in_model_path.generic_string());
     model_->eval();
