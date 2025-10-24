@@ -404,7 +404,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
     l_arg_t = std::dynamic_pointer_cast<export_rig_sk_arg>(co_await l_client->get_generate_uesk_file_arg(id_));
   } catch (const doodle_error& e) {
     l_ptr->status_        = server_task_info_status::failed;
-    l_ptr->last_line_log_ = fmt::format("获取任务数据失败: {}", e.what());
+    l_ptr->last_line_log_ = fmt::format("获取任务数据失败, 多数是前期环节中的文件未找到: {}", e.what());
     l_ptr->end_time_      = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   }
   if (l_arg_t) {
