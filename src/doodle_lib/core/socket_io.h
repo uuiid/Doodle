@@ -10,7 +10,6 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
-
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 namespace doodle::socket_io {
@@ -23,11 +22,9 @@ void websocket_callback(
 ) override;
 [[nodiscard]] bool has_websocket() const override;
 std::shared_ptr<sid_ctx> sid_ctx_;
-explicit socket_io_http(std::shared_ptr<sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) {
-  init();
-}
+explicit socket_io_http(std::shared_ptr<sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) { init(); }
 void init();
-std::string generate_register_reply() const;
-};
+std::string generate_register_reply(const std::shared_ptr<sid_data>& in_data) const;
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::socket_io

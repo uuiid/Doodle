@@ -3,10 +3,13 @@
 //
 
 #pragma once
+#include "doodle_core/core/global_function.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/core/socket_io/core_enum.h>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/signals2/signal.hpp>
 
 namespace doodle ::socket_io {
@@ -64,36 +67,33 @@ class sid_ctx {
 
  private:
   using signal_type_ptr = std::shared_ptr<signal_type>;
-  /// 线程锁
-  mutable std::shared_mutex mutex_;
 
-  /// 线程安全
   std::map<uuid, std::weak_ptr<sid_data>> sid_map_{};
-
-  /// 线程安全
   std::map<std::string, socket_io_packet_ptr> socket_map_{};
-
-  /// 线程不安全
   std::map<std::string, signal_type_ptr> signal_map_{};
+  // decltype(boost::asio::make_strand(g_io_context()))
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{};
 
   void clear_timeout_sid();
+  boost::asio::awaitable<void> emit_impl(const socket_io_packet_ptr& in_data) const;
 
  public:
   handshake_data handshake_data_{};
   sid_ctx();
-  /// 线程安全
-  std::shared_ptr<sid_data> generate();
-  /// 线程安全
-  std::shared_ptr<sid_data> get_sid(const uuid& in_sid) const;
 
-  /// 线程不安全
-  signal_type_ptr on(const std::string& in_namespace);
+  void register_namespace(const std::string& in_namespace);
 
-  void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
+  /// 线程安全
+  boost::asio::awaitable<std::shared_ptr<sid_data>> generate();
+  /// 线程安全
+  boost::asio::awaitable<std::shared_ptr<sid_data>> get_sid(const uuid& in_sid) const;
+  /// 线程安全
+  boost::asio::awaitable<signal_type_ptr> on(const std::string& in_namespace);
+
+  boost::asio::awaitable<void> emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
   /// 发出信号
   void emit(const socket_io_packet_ptr& in_data) const;
 
-
-  bool has_register(const std::string& in_namespace) const { return signal_map_.contains(in_namespace); }
+  boost::asio::awaitable<bool> has_register(const std::string& in_namespace) const;
 };
 }  // namespace doodle::socket_io

@@ -93,25 +93,25 @@ std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::s
   return {l_ret, l_ptr};
 }
 
-void sid_data::handle_socket_io(socket_io_packet& in_body) {
-  if (!ctx_->has_register(in_body.namespace_)) {
+boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_body) {
+  if (!(co_await ctx_->has_register(in_body.namespace_))) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
     seed_message(std::make_shared<socket_io_packet>(in_body));
-    return;
+    co_return;
   }
 
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
       auto l_ptr                              = std::make_shared<socket_io_core>(ctx_, shared_from_this());
       socket_io_contexts_[in_body.namespace_] = l_ptr;
-      l_ptr->set_namespace(in_body.namespace_, in_body.json_data_);
+      co_await l_ptr->set_namespace(in_body.namespace_, in_body.json_data_);
       auto l_p        = std::make_shared<socket_io_packet>();
       l_p->type_      = socket_io_packet_type::connect;
       l_p->namespace_ = in_body.namespace_;
       l_p->json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
       seed_message(l_p);
-      ctx_->emit_connect(l_ptr);
+      co_await ctx_->emit_connect(l_ptr);
       break;
     }
     case socket_io_packet_type::disconnect:
@@ -121,16 +121,16 @@ void sid_data::handle_socket_io(socket_io_packet& in_body) {
         auto l_ptr    = socket_io_contexts_[in_body.namespace_];
         if (!in_body.namespace_.empty()) {
           // 转移到主名称空间
-          l_ptr->set_namespace({}, in_body.json_data_);
+          co_await l_ptr->set_namespace({}, in_body.json_data_);
           socket_io_contexts_[""] = l_ptr;
-          ctx_->emit_connect(l_ptr);
+          co_await ctx_->emit_connect(l_ptr);
         } else
           socket_io_contexts_.erase(in_body.namespace_);
       }
       break;
     case socket_io_packet_type::event:
     case socket_io_packet_type::binary_event:
-      ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
+      (co_await ctx_->on(in_body.namespace_))->message(std::make_shared<socket_io_packet>(std::move(in_body)));
       break;
     case socket_io_packet_type::ack:
     case socket_io_packet_type::connect_error:

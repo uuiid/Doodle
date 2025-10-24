@@ -26,10 +26,9 @@ socket_io_websocket_core::socket_io_websocket_core(
       write_queue_limitation_(std::make_shared<awaitable_queue_limitation>()),
       handle_(std::move(in_handle)) {}
 
-packet_base_ptr socket_io_websocket_core::generate_register_reply() {
+packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::shared_ptr<sid_data>& in_data) const {
   auto l_hd = sid_ctx_->handshake_data_;
-  sid_data_ = sid_ctx_->generate();
-  l_hd.sid_ = sid_data_->get_sid();
+  l_hd.sid_ = in_data->get_sid();
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
   auto l_ptr            = std::make_shared<engine_io_packet>(engine_io_packet_type::open, l_json.dump());
@@ -50,9 +49,9 @@ void socket_io_websocket_core::async_run() {
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // 注册
   if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil())
-    co_await async_write_websocket(generate_register_reply());
+    co_await async_write_websocket(generate_register_reply(co_await sid_ctx_->generate()));
   else
-    sid_data_ = sid_ctx_->get_sid(l_p.sid_);
+    sid_data_ = co_await sid_ctx_->get_sid(l_p.sid_);
 
   /// 查看是否有锁, 有锁直接返回
   if (sid_data_->is_locked()) co_return async_close_websocket();
@@ -112,7 +111,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       co_await web_stream_->async_read(l_buffer_);
       l_socket_io.binary_data_.emplace_back(l_body_);
     }
-    sid_data_->handle_socket_io(l_socket_io);
+    co_await sid_data_->handle_socket_io(l_socket_io);
   }
   socket_io_contexts_.clear();
 }

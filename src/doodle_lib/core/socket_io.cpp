@@ -19,18 +19,17 @@ namespace doodle::socket_io {
 
 void socket_io_http::init() { g_ctx().emplace<sid_ctx&>(*sid_ctx_); }
 
-std::string socket_io_http::generate_register_reply() const {
+std::string socket_io_http::generate_register_reply(const std::shared_ptr<sid_data>& in_data) const {
   auto l_hd             = sid_ctx_->handshake_data_;
-  auto l_sid_data       = sid_ctx_->generate();
-  l_hd.sid_             = l_sid_data->get_sid();
+  l_hd.sid_             = in_data->get_sid();
   nlohmann::json l_json = l_hd;
   return dump_message(l_json.dump(), engine_io_packet_type::open);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::get(session_data_ptr in_handle) {
   auto l_p = parse_query_data(in_handle->url_);
   // 注册
-  if (l_p.sid_.is_nil()) co_return in_handle->make_msg(generate_register_reply());
-  auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
+  if (l_p.sid_.is_nil()) co_return in_handle->make_msg(generate_register_reply(co_await sid_ctx_->generate()));
+  auto l_sid_data = co_await sid_ctx_->get_sid(l_p.sid_);
 
   // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
   if (!l_sid_data || l_sid_data->is_timeout() || l_sid_data->is_upgrade_to_websocket())
@@ -57,7 +56,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
     );
 
   auto l_body     = std::get<std::string>(in_handle->body_);
-  auto l_sid_data = sid_ctx_->get_sid(l_p.sid_);
+  auto l_sid_data = co_await sid_ctx_->get_sid(l_p.sid_);
   if (!l_sid_data)
     in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"
@@ -65,7 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
   if (auto [l_r, l_ptr] = l_sid_data->handle_engine_io(l_body); !l_r) {
     // 继续处理 socket io 包
     auto l_packet = socket_io_packet::parse(l_body);
-    l_sid_data->handle_socket_io(l_packet);
+    co_await l_sid_data->handle_socket_io(l_packet);
   };
   co_return in_handle->make_msg(
       std::string{"OK"},
