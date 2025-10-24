@@ -65,7 +65,7 @@
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
         "--preset",
-        "debug_maya_plug"
+        "debug_maya"
       ],
       "problemMatcher": [],
       "presentation": {

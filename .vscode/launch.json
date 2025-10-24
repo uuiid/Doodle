@@ -41,7 +41,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin/doodle_maya_exe_2020.exe",
             "args": [
-                "--cloth_sim_config=${workspaceFolder}/build/test_4.json"
+                "--config=${workspaceFolder}/build/test_4.json",
+                "--inspect_file"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin",
@@ -59,7 +60,6 @@
                     "value": "${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya"
                 }
             ],
-            "console": "externalTerminal",
             "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {

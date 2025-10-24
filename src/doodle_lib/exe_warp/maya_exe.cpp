@@ -300,7 +300,10 @@ boost::asio::awaitable<void> arg::async_run_maya() {
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
   if (time_info_) time_info_->end_time_ = std::chrono::system_clock::now();
   switch (l_array_completion_order[0]) {
+    case 1:
+      throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
     case 0:
+    default:
       if (l_exit_code != 0 || l_ec) {
         switch (maya_enum::maya_error_t{l_exit_code}) {
           case maya_enum::maya_error_t::unknown_error:
@@ -324,10 +327,6 @@ boost::asio::awaitable<void> arg::async_run_maya() {
             throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
         }
       }
-      break;
-    case 1:
-      throw_exception(doodle_error{"maya 运行超时 {}", l_ec.message()});
-    default:
       break;
   }
   out_arg_ = get_out_arg_impl(out_path_file_);
