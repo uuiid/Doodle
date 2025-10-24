@@ -3,12 +3,14 @@
 //
 
 #include "sqlite_database_impl.h"
+
+#include <type_traits>
 namespace doodle::details {
 using namespace sqlite_orm;
 template <class O, class T, class... Op>
 using Column    = internal::column_t<T, const T& (O::*)() const, void (O::*)(T), Op...>;
-using Storage   = internal::storage_t<internal::table_t<
-      server_task_info, false,                                                                                  //
+using Storage   = internal::storage_t<internal::base_table<
+      server_task_info, std::false_type,                                                                        //
       internal::column_t<decltype(&server_task_info::id_), internal::empty_setter, internal::primary_key_t<>>,  //
       internal::column_t<
           decltype(&server_task_info::uuid_id_), internal::empty_setter, internal::unique_t<>, internal::not_null_t>,  //
