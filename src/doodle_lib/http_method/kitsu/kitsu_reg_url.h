@@ -44,6 +44,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(actions_tasks_working_file)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/tasks/working-file-many
@@ -62,6 +63,9 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(actions_working_files_scan_all)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+
+
+
 // /api/data/projects/{project_id}/shots
 DOODLE_HTTP_JWT_FUN(data_project_shots)
 DOODLE_HTTP_FUN_OVERRIDE(get)

@@ -88,6 +88,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
     in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有找到对应的working file");
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
 }
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::delete_(
+    session_data_ptr in_handle
+) {
+  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_task         = l_sql.get_by_uuid<task>(id_);
+  auto l_work_file_id = in_handle->get_json().at("id").get<uuid>();
+  using namespace sqlite_orm;
+  if (auto l_work_file_link = l_sql.impl_->storage_any_.get_all<working_file_task_link>(where(
+          c(&working_file_task_link::working_file_id_) == l_work_file_id && c(&working_file_task_link::task_id_) == id_
+      ));
+      !l_work_file_link.empty()) {
+    co_await l_sql.remove<working_file_task_link>(l_work_file_link.front().id_);
+  }
+  co_return in_handle->make_msg_204();
+}
 // template <class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty,
 // _Ty>>> struct map_json_obj {
 //   using map_t = std::map<_Kty, _Ty, _Pr, _Alloc>;

@@ -1287,6 +1287,7 @@ DOODLE_REMOVE_BY_ID(comment)
 DOODLE_REMOVE_BY_ID(assets_file_helper::link_parent_t)
 DOODLE_REMOVE_BY_ID(comment_acknoledgments)
 DOODLE_REMOVE_BY_ID(project_person_link)
+DOODLE_REMOVE_BY_ID(working_file_task_link)
 DOODLE_REMOVE_BY_ID(working_file)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
