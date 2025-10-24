@@ -2,9 +2,9 @@
 
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
-        REPO uuiid/sqlite_orm
-        REF da2368c12dc123e2c3bfc8e7b40883811ded08ff
-        SHA512 da4b6b074f1f6add4ebaea349c01912be8f1cc4ea92c0ce82e4f4e12e01e3d74ab7346a3c10da13b9680fb3aae5d6fc9908a4e19ce66f534edd54d72731dbca8
+        REPO fnc12/sqlite_orm
+        REF 92b7959b1d54dd4d8c6038f6fcd18fa899bd30b4
+        SHA512 c9eecec3da55cbb9d5f6c5aec53126456339a5a410fc0f437c052599704f9e7051c5f176386e133897191d8e4e6530d9d85c83f047483b1e4cd0cd39e2f962c7
         HEAD_REF dev
         PATCHES
         fix-dependency.patch
