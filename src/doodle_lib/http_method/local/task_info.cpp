@@ -399,16 +399,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
 
   auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
+  std::shared_ptr<export_rig_sk_arg> l_arg_t;
+  try {
+    l_arg_t = std::dynamic_pointer_cast<export_rig_sk_arg>(co_await l_client->get_generate_uesk_file_arg(id_));
+  } catch (const doodle_error& e) {
+    l_ptr->status_        = server_task_info_status::failed;
+    l_ptr->last_line_log_ = fmt::format("获取任务数据失败: {}", e.what());
+    l_ptr->end_time_      = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  }
+  if (l_arg_t) {
+    l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+    co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
-  auto l_arg_t    = std::dynamic_pointer_cast<export_rig_sk_arg>(co_await l_client->get_generate_uesk_file_arg(id_));
-
-  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
-  co_await g_ctx().get<sqlite_database>().install(l_ptr);
-
-  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
-  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
-  l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
+    if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+    auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+    l_run_long_task_local->set_arg(l_arg_t);
+    l_run_long_task_local->run();
+  } else {
+    co_await g_ctx().get<sqlite_database>().install(l_ptr);
+  }
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
