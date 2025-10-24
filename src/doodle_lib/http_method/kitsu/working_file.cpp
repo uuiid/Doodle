@@ -100,7 +100,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
       ));
       !l_work_file_link.empty()) {
     co_await l_sql.remove<working_file_task_link>(l_work_file_link.front().id_);
+    co_await l_sql.delete_working_file_orphaned();
   }
+
   co_return in_handle->make_msg_204();
 }
 // template <class _Kty, class _Ty, class _Pr = std::less<_Kty>, class _Alloc = std::allocator<std::pair<const _Kty,

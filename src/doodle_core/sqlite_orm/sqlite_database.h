@@ -211,5 +211,8 @@ class sqlite_database {
   boost::asio::awaitable<void> remove_task_type_asset_type_link_by_asset_type(const uuid& in_asset_type_id);
   uuid get_project_status_open() const;
   uuid get_project_status_closed() const;
+
+  // 删除孤立的, 没有和其他连接的工作文件
+  boost::asio::awaitable<void> delete_working_file_orphaned();
 };
 }  // namespace doodle

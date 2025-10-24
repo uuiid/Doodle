@@ -1060,6 +1060,18 @@ uuid sqlite_database::get_project_status_closed() const {
   return l_list.front().uuid_id_;
 }
 
+boost::asio::awaitable<void> sqlite_database::delete_working_file_orphaned() {
+  DOODLE_TO_SQLITE_THREAD_2();
+  using namespace sqlite_orm;
+
+  impl_->storage_any_.remove_all<working_file>(where(not_in(
+      &working_file::uuid_id_,
+      union_(select(&working_file_task_link::working_file_id_), select(&working_file_entity_link::working_file_id_))
+  )));
+  DOODLE_TO_SELF();
+  co_return;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
