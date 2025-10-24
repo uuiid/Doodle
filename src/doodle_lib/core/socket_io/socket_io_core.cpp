@@ -11,7 +11,6 @@
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 #include <doodle_lib/core/socket_io/websocket_impl.h>
 
-#include "core/socket_io.h"
 #include "sid_data.h"
 namespace doodle::socket_io {
 socket_io_core::socket_io_core(sid_ctx* in_ctx, const socket_io_sid_data_ptr& in_sid_data)

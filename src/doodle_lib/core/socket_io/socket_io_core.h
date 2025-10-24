@@ -59,8 +59,8 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
   // destructor
   ~socket_io_core()                                      = default;
   // copy constructor
-  socket_io_core(const socket_io_core& other)            = default;
-  socket_io_core& operator=(const socket_io_core& other) = default;
+  socket_io_core(const socket_io_core& other)            = delete;
+  socket_io_core& operator=(const socket_io_core& other) = delete;
   // move constructor
   socket_io_core(socket_io_core&& other)                 = default;
   socket_io_core& operator=(socket_io_core&& other)      = default;
