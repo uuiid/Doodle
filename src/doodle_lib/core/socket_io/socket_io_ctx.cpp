@@ -49,7 +49,7 @@ boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::generate() {
   co_return l_ptr;
 }
 
-boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::get_sid(const uuid& in_sid) const {
+boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::get_sid(uuid in_sid) const {
   // 加锁
 
   DOODLE_TO_EXECUTOR(strand_);
@@ -59,7 +59,7 @@ boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::get_sid(const uuid& i
 
   co_return l_ptr;
 }
-boost::asio::awaitable<sid_ctx::signal_type_ptr> sid_ctx::on(const std::string& in_namespace) {
+boost::asio::awaitable<sid_ctx::signal_type_ptr> sid_ctx::on(std::string in_namespace) {
   DOODLE_TO_EXECUTOR(strand_);
   signal_type_ptr l_ptr{};
   if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
@@ -70,7 +70,7 @@ boost::asio::awaitable<sid_ctx::signal_type_ptr> sid_ctx::on(const std::string& 
   co_return l_ptr;
 }
 
-boost::asio::awaitable<void> sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const {
+boost::asio::awaitable<void> sid_ctx::emit_connect(std::shared_ptr<socket_io_core> in_data) const {
   DOODLE_TO_EXECUTOR(strand_);
   if (signal_map_.contains(in_data->get_namespace())) signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
   DOODLE_TO_SELF();
@@ -95,7 +95,7 @@ boost::asio::awaitable<void> sid_ctx::emit_impl(const socket_io_packet_ptr& in_d
   in_data->start_dump();
   for (auto& l_ptr : l_sid_data) l_ptr->seed_message(in_data);
 }
-boost::asio::awaitable<bool> sid_ctx::has_register(const std::string& in_namespace) const {
+boost::asio::awaitable<bool> sid_ctx::has_register(std::string in_namespace) const {
   DOODLE_TO_EXECUTOR(strand_);
   bool l_ret = signal_map_.contains(in_namespace);
   DOODLE_TO_SELF();
@@ -103,8 +103,7 @@ boost::asio::awaitable<bool> sid_ctx::has_register(const std::string& in_namespa
 }
 void sid_ctx::register_namespace(const std::string& in_namespace) {
   boost::asio::post(strand_, [this, in_namespace]() {
-    if (!signal_map_.contains(in_namespace))
-      signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
+    if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
   });
 }
 }  // namespace socket_io

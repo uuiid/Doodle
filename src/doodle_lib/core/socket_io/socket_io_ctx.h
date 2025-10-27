@@ -86,14 +86,14 @@ class sid_ctx {
   /// 线程安全
   boost::asio::awaitable<std::shared_ptr<sid_data>> generate();
   /// 线程安全
-  boost::asio::awaitable<std::shared_ptr<sid_data>> get_sid(const uuid& in_sid) const;
+  boost::asio::awaitable<std::shared_ptr<sid_data>> get_sid(uuid in_sid) const;
   /// 线程安全
-  boost::asio::awaitable<signal_type_ptr> on(const std::string& in_namespace);
+  boost::asio::awaitable<signal_type_ptr> on(std::string in_namespace);
 
-  boost::asio::awaitable<void> emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
+  boost::asio::awaitable<void> emit_connect(std::shared_ptr<socket_io_core> in_data) const;
   /// 发出信号
   void emit(const socket_io_packet_ptr& in_data) const;
 
-  boost::asio::awaitable<bool> has_register(const std::string& in_namespace) const;
+  boost::asio::awaitable<bool> has_register(std::string in_namespace) const;
 };
 }  // namespace doodle::socket_io
