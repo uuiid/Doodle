@@ -48,7 +48,20 @@ add_custom_command(
         # COMMAND ${CMAKE_COMMAND} -E echo "${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll" 
 
 )
-
+# 添加生成 PDB 文件
+target_compile_options(
+        doodle_kitsu_supplement
+        PRIVATE
+        "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RELEASE>>:/Zi>"
+)
+target_link_options(
+        doodle_kitsu_supplement 
+        PRIVATE 
+        "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RELEASE>>:/DEBUG>"
+        "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RELEASE>>:/OPT:REF>"
+        "$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RELEASE>>:/OPT:ICF>"
+)
+ 
 
 # 定义安装逻辑
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
