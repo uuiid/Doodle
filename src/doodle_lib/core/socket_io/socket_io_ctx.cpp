@@ -78,23 +78,28 @@ boost::asio::awaitable<sid_ctx::signal_type_ptr> sid_ctx::on(std::string in_name
 void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const {
   if (!in_data) return;
   boost::asio::post(strand_, [this, in_data]() {
-    if (!signal_map_.contains(in_data->get_namespace())) return;
-    signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
+    try {
+      if (!signal_map_.contains(in_data->get_namespace())) return;
+      signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
+    } catch (...) {
+      default_logger_raw()->error(boost::current_exception_diagnostic_information());
+    }
   });
 }
 
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
-  boost::asio::co_spawn(strand_, emit_impl(in_data), [](std::exception_ptr in_eptr) {
+  if (!in_data) return;
+  boost::asio::post(strand_, [this, in_data]() {
     try {
-      if (in_eptr) std::rethrow_exception(in_eptr);
-    } catch (const std::exception& e) {
-      default_logger_raw()->error(e.what());
-    };
+      emit_impl(in_data);
+    } catch (...) {
+      default_logger_raw()->error(boost::current_exception_diagnostic_information());
+    }
   });
 }
-boost::asio::awaitable<void> sid_ctx::emit_impl(const socket_io_packet_ptr& in_data) const {
-  if (!signal_map_.contains(in_data->namespace_)) co_return;
-  if (!in_data) co_return;
+void sid_ctx::emit_impl(const socket_io_packet_ptr& in_data) const {
+  if (!signal_map_.contains(in_data->namespace_)) return;
+  if (!in_data) return;
   std::vector<std::shared_ptr<sid_data>> l_sid_data{};
   for (auto l_it : sid_map_)
     if (auto l_ptr = l_it.second.lock(); l_ptr) l_sid_data.emplace_back(l_ptr);

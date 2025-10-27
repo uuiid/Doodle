@@ -75,7 +75,7 @@ class sid_ctx {
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{};
 
   void clear_timeout_sid();
-  boost::asio::awaitable<void> emit_impl(const socket_io_packet_ptr& in_data) const;
+  void emit_impl(const socket_io_packet_ptr& in_data) const;
 
  public:
   handshake_data handshake_data_{};
