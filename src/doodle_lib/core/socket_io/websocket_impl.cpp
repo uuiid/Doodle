@@ -36,7 +36,7 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
 }
 
 void socket_io_websocket_core::async_run() {
-  if (!sid_data_) return;
+  if (!sid_data_) return async_close_websocket();
   boost::asio::co_spawn(g_io_context(), run(), [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
     try {
       if (in_eptr) std::rethrow_exception(in_eptr);
