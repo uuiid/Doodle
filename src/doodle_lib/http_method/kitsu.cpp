@@ -47,7 +47,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
   (*l_router)
       // clang-format off
       // 我们自己的后端
-      // .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
+      .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
       .reg_t<doodle_data_asset_file_maya>("/api/doodle/data/asset/{}/file/maya"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_ue>("/api/doodle/data/asset/{}/file/ue"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_image>("/api/doodle/data/asset/{}/file/image"_url(&doodle_data_asset_file_image::id_))

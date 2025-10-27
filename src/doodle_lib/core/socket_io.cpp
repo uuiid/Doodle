@@ -61,7 +61,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::po
   auto l_body     = std::get<std::string>(in_handle->body_);
   auto l_sid_data = co_await sid_ctx_->get_sid(l_p.sid_);
   if (!l_sid_data)
-    in_handle->make_error_code_msg(
+    co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"
     );
   if (auto [l_r, l_ptr] = l_sid_data->handle_engine_io(l_body); !l_r) {
