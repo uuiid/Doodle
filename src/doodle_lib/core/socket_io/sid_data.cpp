@@ -111,7 +111,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
       l_p->namespace_ = in_body.namespace_;
       l_p->json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
       seed_message(l_p);
-      co_await ctx_->emit_connect(l_ptr);
+      ctx_->emit_connect(l_ptr);
       break;
     }
     case socket_io_packet_type::disconnect:
@@ -123,7 +123,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
           // 转移到主名称空间
           co_await l_ptr->set_namespace({}, in_body.json_data_);
           socket_io_contexts_[""] = l_ptr;
-          co_await ctx_->emit_connect(l_ptr);
+          ctx_->emit_connect(l_ptr);
         } else
           socket_io_contexts_.erase(in_body.namespace_);
       }

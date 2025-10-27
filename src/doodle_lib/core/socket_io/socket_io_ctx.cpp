@@ -10,8 +10,9 @@
 #include <doodle_lib/core/socket_io/socket_io_core.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 
-#include <utility>
+#include <boost/asio/post.hpp>
 
+#include <utility>
 
 namespace doodle {
 namespace socket_io {
@@ -74,13 +75,12 @@ boost::asio::awaitable<sid_ctx::signal_type_ptr> sid_ctx::on(std::string in_name
   co_return l_ptr;
 }
 
-boost::asio::awaitable<void> sid_ctx::emit_connect(std::shared_ptr<socket_io_core> in_data) const {
-  auto l_data = std::move(in_data);
-  if (!l_data) co_return;
-  
-  DOODLE_TO_EXECUTOR(strand_);
-  if (signal_map_.contains(l_data->get_namespace())) signal_map_.at(l_data->get_namespace())->on_connect_(l_data);
-  DOODLE_TO_SELF();
+void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const {
+  if (!in_data) return;
+  boost::asio::post(strand_, [this, in_data]() {
+    if (!signal_map_.contains(in_data->get_namespace())) return;
+    signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
+  });
 }
 
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {

@@ -90,7 +90,7 @@ class sid_ctx {
   /// 线程安全
   boost::asio::awaitable<signal_type_ptr> on(std::string in_namespace);
 
-  boost::asio::awaitable<void> emit_connect(std::shared_ptr<socket_io_core> in_data) const;
+  void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
   /// 发出信号
   void emit(const socket_io_packet_ptr& in_data) const;
 
