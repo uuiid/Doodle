@@ -229,7 +229,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_sql = g_ctx().get<sqlite_database>();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的镜头 id ");
-  if (l_sql.uuid_to_id<project>(project_id_))
+  if (l_sql.uuid_to_id<project>(project_id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
 
   co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(id_, {}));
@@ -241,7 +241,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_sql = g_ctx().get<sqlite_database>();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
-  if (l_sql.uuid_to_id<project>(project_id_))
+  if (l_sql.uuid_to_id<project>(project_id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
   co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity({}, id_));
 }
