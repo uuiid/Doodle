@@ -85,8 +85,6 @@ void crash_reporting_thread::handle_crash() {
   l_path = l_path.lexically_normal();
   l_path = l_path.make_preferred();
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-  // set l_f = MiniDumpWithPrivateReadWriteMemory| MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithDataSegs |
-  // MiniDumpWithHandleData | MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo | MiniDumpWithUnloadedModules;
   wil::unique_hfile l_file_handle{::CreateFileW(
       l_path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr
   )};
@@ -99,11 +97,13 @@ void crash_reporting_thread::handle_crash() {
   l_exception_info.ClientPointers    = FALSE;
   //(MINIDUMP_TYPE)(MiniDumpWithPrivateReadWriteMemory|MiniDumpWithDataSegs|
   // MiniDumpWithHandleData|MiniDumpWithFullMemoryInfo|MiniDumpWithThreadInfo|MiniDumpWithUnloadedModules);
+  MINIDUMP_TYPE l_f                  = MINIDUMP_TYPE(
+      MiniDumpNormal | MiniDumpWithPrivateReadWriteMemory | MiniDumpWithIndirectlyReferencedMemory |
+      MiniDumpWithDataSegs | MiniDumpWithHandleData | MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo |
+      MiniDumpWithUnloadedModules
+  );
   wil::unique_hmodule l_module{::GetModuleHandleW(L"dbghelp.dll")};
   auto l_func = reinterpret_cast<decltype(&::MiniDumpWriteDump)>(::GetProcAddress(l_module.get(), "MiniDumpWriteDump"));
-  l_func(
-      ::GetCurrentProcess(), ::GetCurrentProcessId(), l_file_handle.get(), MiniDumpNormal, &l_exception_info, nullptr,
-      nullptr
-  );
+  l_func(::GetCurrentProcess(), ::GetCurrentProcessId(), l_file_handle.get(), l_f, &l_exception_info, nullptr, nullptr);
 }
 }  // namespace doodle::detail
