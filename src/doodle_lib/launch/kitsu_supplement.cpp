@@ -1,7 +1,9 @@
 #include "kitsu_supplement.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/authorization.h>
+#include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
@@ -16,6 +18,7 @@
 #include <doodle_lib/http_method/seed_email.h>
 
 #include <winreg/WinReg.hpp>
+
 namespace doodle {
 
 struct kitsu_supplement_args_t {
@@ -166,6 +169,7 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 
 bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
+  g_ctx().emplace<detail::crash_reporting_thread>();
   kitsu_supplement_args_t l_args{
       .kitsu_url_ = "http://192.168.40.182",
       .port_      = 80,

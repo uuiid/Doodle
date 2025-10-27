@@ -6,6 +6,7 @@
 
 #include <boost/process.hpp>
 
+#include "core/app_base.h"
 #include <DbgHelp.h>
 #include <Windows.h>
 #include <fmt/chrono.h>
@@ -21,9 +22,13 @@ LONG WINAPI DoodleUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo) {
   //  ReportCrash(ExceptionInfo);
   //  GIsCriticalError = true;
   //  FPlatformMisc::RequestExit(true);
+  // g_ctx().get<crash_reporting_thread>().stop();
   g_ctx().get<crash_reporting_thread>().on_crashed(ExceptionInfo);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  app_base::Get().stop_app(ExceptionInfo->ExceptionRecord->ExceptionCode);
+  return EXCEPTION_EXECUTE_HANDLER;
 
-  return EXCEPTION_CONTINUE_SEARCH;  // Not really important, RequestExit() terminates the process just above.
+  // return EXCEPTION_CONTINUE_SEARCH;  // Not really important, RequestExit() terminates the process just above.
 }
 }  // namespace
 class crash_reporting_thread::impl {
@@ -60,6 +65,7 @@ void crash_reporting_thread::on_crashed(LPEXCEPTION_POINTERS InExceptionInfo) {
   impl_ptr_->thread_id_      = ::GetCurrentThreadId();
   impl_ptr_->exception_info_ = InExceptionInfo;
   impl_ptr_->crash_count_    = impl::input_type::crash;
+  impl_ptr_->condition_.notify_one();
 }
 void crash_reporting_thread::stop() {
   impl_ptr_->crash_count_ = impl::input_type::user_stop;
@@ -74,11 +80,11 @@ crash_reporting_thread::~crash_reporting_thread() {
 void crash_reporting_thread::handle_crash() {
   FSys::path l_path{
       FSys::temp_directory_path() / "doodle" /
-      fmt::format("Minidump_{:%Y-%m-%d %H-%M-%S}.dmp", std::chrono::system_clock::now())
+      fmt::format("Minidump_{:%Y_%m_%d_%H_%M_%S}.dmp", std::chrono::system_clock::now())
   };
   l_path = l_path.lexically_normal();
   l_path = l_path.make_preferred();
-  if (!FSys::exists(l_path.parent_path())) FSys::create_directories(l_path.parent_path());
+  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   // set l_f = MiniDumpWithPrivateReadWriteMemory| MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithDataSegs |
   // MiniDumpWithHandleData | MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo | MiniDumpWithUnloadedModules;
   wil::unique_hfile l_file_handle{::CreateFileW(
@@ -100,5 +106,4 @@ void crash_reporting_thread::handle_crash() {
       nullptr
   );
 }
-void crash_reporting_thread::wait_until_crash_handled() { std::unique_lock l_lock{impl_ptr_->mutex_}; }
 }  // namespace doodle::detail
