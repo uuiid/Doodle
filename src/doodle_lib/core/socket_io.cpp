@@ -17,7 +17,10 @@
 #include <boost/asio/experimental/parallel_group.hpp>
 namespace doodle::socket_io {
 
-void socket_io_http::init() { g_ctx().emplace<sid_ctx&>(*sid_ctx_); }
+void socket_io_http::init() {
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, [this]() { g_ctx().emplace<sid_ctx&>(*sid_ctx_); });
+}
 
 std::string socket_io_http::generate_register_reply(const std::shared_ptr<sid_data>& in_data) const {
   auto l_hd             = sid_ctx_->handshake_data_;

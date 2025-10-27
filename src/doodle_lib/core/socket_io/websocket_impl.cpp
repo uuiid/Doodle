@@ -36,6 +36,7 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
 }
 
 void socket_io_websocket_core::async_run() {
+  if (!sid_data_) return;
   boost::asio::co_spawn(g_io_context(), run(), [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
     try {
       if (in_eptr) std::rethrow_exception(in_eptr);
@@ -95,7 +96,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
 
 boost::asio::awaitable<void> socket_io_websocket_core::run() {
   co_await init();
-  if(!sid_data_) co_return;
+  if (!sid_data_) co_return;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
     std::string l_body{};
