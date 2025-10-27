@@ -54,7 +54,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
     sid_data_ = co_await sid_ctx_->get_sid(l_p.sid_);
 
   /// 查看是否有锁, 有锁直接返回
-  if (sid_data_->is_locked()) co_return async_close_websocket();
+  if (!sid_data_ || sid_data_->is_locked()) co_return async_close_websocket();
   sid_lock_ = sid_data_->get_lock();
   // boost::beast::flat_buffer l_buffer{};
   if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
@@ -95,6 +95,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
 
 boost::asio::awaitable<void> socket_io_websocket_core::run() {
   co_await init();
+  if(!sid_data_) co_return;
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     // boost::beast::flat_buffer l_buffer{};
     std::string l_body{};
