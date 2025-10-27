@@ -2,6 +2,7 @@
 // Created by TD on 25-7-28.
 //
 
+#include "doodle_core/metadata/working_file.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -11,6 +12,9 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
+
+#include <sqlite_orm/sqlite_orm.h>
+
 namespace doodle::http {
 namespace {
 struct shots_with_tasks_result {

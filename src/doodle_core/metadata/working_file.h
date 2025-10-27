@@ -66,4 +66,15 @@ struct working_file {
     j.at("software_type").get_to(p.software_type_);
   }
 };
+
+struct working_file_and_link : working_file {
+  uuid entity_id_;
+  uuid task_id_;
+  // to json
+  friend void to_json(nlohmann::json& j, const working_file_and_link& p) {
+    to_json(j, static_cast<const working_file&>(p));
+    j["entity_id"] = p.entity_id_;
+    j["task_id"]   = p.task_id_;
+  }
+};
 }  // namespace doodle

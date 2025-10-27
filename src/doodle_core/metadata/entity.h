@@ -29,8 +29,8 @@ struct DOODLE_CORE_API asset_instance_link {
 
 struct DOODLE_CORE_API entity_link {
   DOODLE_BASE_FIELDS();
-  uuid entity_in_id_;
-  uuid entity_out_id_;
+  uuid entity_in_id_;   // 指向镜头,序列等
+  uuid entity_out_id_;  // 指向资产
   nlohmann::json data_;
   std::int32_t nb_occurences_{1};
   std::string label_;

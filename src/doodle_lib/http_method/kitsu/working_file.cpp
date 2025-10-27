@@ -2,7 +2,9 @@
 // Created by TD on 25-8-15.
 //
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
+#include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
 #include <doodle_core/metadata/working_file.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -19,6 +21,8 @@
 #include <nlohmann/json_fwd.hpp>
 #include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
+#include <vector>
+#include <winsock2.h>
 namespace doodle::http {
 
 namespace {
@@ -172,4 +176,74 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   }
   co_return in_handle->make_msg(map_json_obj(l_work_map));
 }
+
+std::vector<working_file_and_link> get_working_files_for_entity(const uuid& in_shot_id, const uuid& in_sequence_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+
+  std::vector<working_file_and_link> l_working_files{};
+  l_working_files.reserve(128);
+  std::set<uuid> l_working_file_ids{};
+  using namespace sqlite_orm;
+
+  constexpr auto shot     = "shot"_alias.for_<entity>();
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  for (auto&& [l_working_file, l_entity_id, l_task_id] : l_sql.impl_->storage_any_.select(
+           columns(
+               object<working_file>(true), &working_file_entity_link::entity_id_, &working_file_task_link::task_id_
+           ),
+           from<working_file>(),
+           join<working_file_entity_link>(
+               on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))
+           ),
+           join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+           where(in(
+               &working_file_entity_link::entity_id_,
+               select(
+                   &entity_link::entity_out_id_, from<entity_link>(),
+                   join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+                   join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+                   where(
+                       (in_shot_id.is_nil() || c(shot->*&entity::uuid_id_) == in_shot_id) &&
+                       (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id)
+                   )
+               )
+
+           ))
+       )) {
+    if (l_working_file_ids.contains(l_working_file.uuid_id_)) continue;
+    l_working_file_ids.emplace(l_working_file.uuid_id_);
+    l_working_files.emplace_back(
+        working_file_and_link{
+            working_file{l_working_file},
+            l_entity_id,
+            l_task_id,
+        }
+    );
+  }
+  return l_working_files;
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_working_file::get(
+    session_data_ptr in_handle
+) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (l_sql.uuid_to_id<entity>(id_) == 0)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的镜头 id ");
+  if (l_sql.uuid_to_id<project>(project_id_))
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
+
+  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(id_, {}));
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_sequences_working_file::get(
+    session_data_ptr in_handle
+) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (l_sql.uuid_to_id<entity>(id_) == 0)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
+  if (l_sql.uuid_to_id<project>(project_id_))
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
+  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity({}, id_));
+}
+
 }  // namespace doodle::http
