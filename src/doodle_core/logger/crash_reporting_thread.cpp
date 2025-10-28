@@ -95,12 +95,12 @@ void crash_reporting_thread::handle_crash() {
   l_exception_info.ThreadId          = impl_ptr_->thread_id_;
   l_exception_info.ExceptionPointers = impl_ptr_->exception_info_;
   l_exception_info.ClientPointers    = FALSE;
-  //(MINIDUMP_TYPE)(MiniDumpWithPrivateReadWriteMemory|MiniDumpWithDataSegs|
-  // MiniDumpWithHandleData|MiniDumpWithFullMemoryInfo|MiniDumpWithThreadInfo|MiniDumpWithUnloadedModules);
+  //      MiniDumpNormal | MiniDumpWithPrivateReadWriteMemory | MiniDumpWithIndirectlyReferencedMemory |
+  // MiniDumpWithDataSegs | MiniDumpWithHandleData | MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo |
+  // MiniDumpWithUnloadedModules
   MINIDUMP_TYPE l_f                  = MINIDUMP_TYPE(
-      MiniDumpNormal | MiniDumpWithPrivateReadWriteMemory | MiniDumpWithIndirectlyReferencedMemory |
-      MiniDumpWithDataSegs | MiniDumpWithHandleData | MiniDumpWithFullMemoryInfo | MiniDumpWithThreadInfo |
-      MiniDumpWithUnloadedModules
+      MiniDumpNormal | MiniDumpWithFullMemory | MiniDumpWithFullMemoryInfo | MiniDumpWithHandleData |
+      MiniDumpWithThreadInfo | MiniDumpWithUnloadedModules
   );
   wil::unique_hmodule l_module{::GetModuleHandleW(L"dbghelp.dll")};
   auto l_func = reinterpret_cast<decltype(&::MiniDumpWriteDump)>(::GetProcAddress(l_module.get(), "MiniDumpWriteDump"));
