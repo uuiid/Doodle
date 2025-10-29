@@ -100,21 +100,36 @@ GraphSample build_sample_from_mesh(
   // compute bone_vector = bone_position - vertex (shape [3]). We flatten K vectors
   // into a [K*3] block per vertex and concat with xyz to form features.
   // Clamp K to number of bones available
-  K                          = std::min<int>(K, (int)B);
+  // 2）
+  // 特征设计：[vx，vy，vz]+向量到K个最近的骨骼我们默认使用K=min（4，B）；对于每个顶点，
+  // 我们找到K个最近的骨骼，并计算bone_vector=bone_position顶点（shape[3]）。
+  // 我们将K个向量展平为每个顶点[K*3]个块，并用xyz进行concat以形成特征。将K夹紧到可用的骨骼数量
+  K                   = std::min<int>(K, (int)B);
   // expand for vectorized distance computation
-  torch::Tensor v_exp        = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
-  torch::Tensor b_exp        = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
-  torch::Tensor dists        = torch::norm(v_exp - b_exp, 2, -1);              // [N,B]
-  // get sorted distances and their indices
-  auto sort_res              = dists.sort(1, /*descending=*/false);
-  auto sorted_vals           = std::get<0>(sort_res);  // [N,B]
-  auto sorted_idx            = std::get<1>(sort_res);  // [N,B]
+  torch::Tensor v_exp = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
+  torch::Tensor b_exp = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
+  torch::Tensor dists = torch::norm(v_exp - b_exp, 2, -1);              // [N,B]
+  // get K nearest bones per-vertex. Use topk instead of full sort to avoid
+  // potential comparator issues in large sorts and for performance.
+  // guard against NaNs/InFs in distances which may lead to unstable ordering
+  // 获取每个顶点最近的K个骨骼。使用topk而不是全排序，以避免大排序中潜在的比较器问题，并提高性能。在距离上防止NaNs/InFs，这可能会导致排序不稳定
+  if (torch::isnan(dists).any().item<bool>() || torch::isinf(dists).any().item<bool>()) {
+    // replace NaN/Inf with a large finite value so they are treated as far-away
+    auto large = torch::full_like(dists, 1e30f);
+    dists      = torch::where(torch::isfinite(dists), dists, large);
+  }
+
+  // topk: values and indices of K smallest distances along dim=1
+  // topk：沿dim=1的K最小距离的值和索引
+  auto topk_res              = dists.topk(K, /*dim=*/1, /*largest=*/false, /*sorted=*/true);
+  auto sorted_vals           = std::get<0>(topk_res);  // [N,K]
+  auto sorted_idx            = std::get<1>(topk_res);  // [N,K]
 
   // prepare closest vectors tensor [N, K*3]
   auto vec_options           = torch::TensorOptions().dtype(torch::kFloat32);
   torch::Tensor closest_vecs = torch::zeros({N, K * 3}, vec_options);
 
-  // Accessors for efficient per-row gather
+  // Use accessors to avoid per-element tensor allocation inside loop
   auto sorted_idx_acc        = sorted_idx.accessor<std::int64_t, 2>();
   auto vert_acc              = vertices.accessor<float, 2>();
   auto bone_acc              = bone_positions.accessor<float, 2>();
@@ -125,7 +140,7 @@ GraphSample build_sample_from_mesh(
       float dx                   = bone_acc[bidx][0] - vert_acc[i][0];
       float dy                   = bone_acc[bidx][1] - vert_acc[i][1];
       float dz                   = bone_acc[bidx][2] - vert_acc[i][2];
-      // write into closest_vecs
+      // write into closest_vecs (use tensor indexing of a single element)
       closest_vecs[i][j * 3 + 0] = dx;
       closest_vecs[i][j * 3 + 1] = dy;
       closest_vecs[i][j * 3 + 2] = dz;
@@ -221,7 +236,7 @@ struct fbx_scene {
     auto l_vert_count      = mesh_->GetControlPointsCount();
     torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
     for (auto j = 0; j < l_vert_count; j++) {
-      auto l_pos = l_vert[j] + root_offset_;
+      auto l_pos  = l_vert[j] + root_offset_;
       l_tensor[j] = torch::tensor({l_pos[0], l_pos[1], l_pos[2]});
     }
 
@@ -240,8 +255,9 @@ struct fbx_scene {
     torch::Tensor l_bone_weights   = torch::zeros({l_vert_count, l_sk_count}, torch::kFloat32);
     std::map<FbxNode*, std::int64_t> l_bone_index_map{};
     for (auto i = 0; i < l_sk_count; i++) {
-      auto l_cluster            = l_sk->GetCluster(i);
-      auto l_joint              = l_cluster->GetLink();
+      auto l_cluster = l_sk->GetCluster(i);
+      auto l_joint   = l_cluster->GetLink();
+      logger_->warn("bone {} index {}", l_joint->GetName(), i);
       l_bone_index_map[l_joint] = i;
     }
     std::vector<std::int64_t> l_bone_parents(l_sk_count, -1);
@@ -253,7 +269,7 @@ struct fbx_scene {
         l_bone_parents[i] = l_bone_index_map[l_parent];
       }
 
-      auto l_matrix = scene_->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
+      auto l_matrix       = scene_->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
       // FbxAMatrix l_matrix_tmp{};
       // l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
       // l_matrix            = l_matrix * l_matrix_tmp;
@@ -265,8 +281,8 @@ struct fbx_scene {
       }
     }
     // logger_->warn(
-    //     "tensor \n{}\n bone_positions \n{}\n faces \n{}\n bone_weights \n{}\n bone_parents \n{}\n" l_tensor, l_bone_positions, l_faces,
-    //     l_bone_weights, l_bone_parents
+    //     "tensor \n{}\n bone_positions \n{}\n faces \n{}\n bone_weights \n{}\n bone_parents \n{}\n" l_tensor,
+    //     l_bone_positions, l_faces, l_bone_weights, l_bone_parents
     // );
     return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
   }
