@@ -70,11 +70,13 @@ struct working_file {
 struct working_file_and_link : working_file {
   uuid entity_id_;
   uuid task_id_;
+  uuid task_type_id_;
   // to json
   friend void to_json(nlohmann::json& j, const working_file_and_link& p) {
     to_json(j, static_cast<const working_file&>(p));
     j["entity_id"] = p.entity_id_;
     j["task_id"]   = p.task_id_;
+    j["task_type_id"] = p.task_type_id_;
   }
 };
 }  // namespace doodle

@@ -138,6 +138,20 @@ nlohmann::json map_json_obj(const std::map<_Kty, _Ty, _Pr, _Alloc>& in_obj) {
   return io_json;
 }
 
+std::map<uuid, std::vector<working_file>> get_working_files_for_tasks(const std::vector<uuid>& in_task_ids) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  std::map<uuid, std::vector<working_file>> l_work_map{};
+  using namespace sqlite_orm;
+  for (auto&& [l_w, l_task_id] : l_sql.impl_->storage_any_.select(
+           columns(object<working_file>(true), &working_file_task_link::task_id_), from<working_file>(),
+           join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+           where(in(&working_file_task_link::task_id_, in_task_ids))
+       )) {
+    l_work_map[l_task_id].emplace_back(l_w);
+  }
+  return l_work_map;
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_working_file_many::post(
     session_data_ptr in_handle
 ) {
@@ -152,29 +166,54 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   }
   co_await l_scan_result.install_async_sqlite();
 
-  for (auto&& i : l_ids) {
-    l_work_map[i] = l_sql.get_working_file_by_task(i);
-  }
-
-  co_return in_handle->make_msg(map_json_obj(l_work_map));
+  co_return in_handle->make_msg(map_json_obj(get_working_files_for_tasks(l_ids)));
 }
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entities_working_file_many_get::post(
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entities_working_file_many::post(
     session_data_ptr in_handle
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ids = in_handle->get_json().get<std::vector<uuid>>();
-  std::map<uuid, std::vector<working_file>> l_work_map{};
+  std::vector<uuid> l_task_ids{};
+
+  scan_assets::scan_result l_scan_result{};
   using namespace sqlite_orm;
-  for (auto&& [l_work_file, l_entity_id] : l_sql.impl_->storage_any_.select(
-           columns(object<working_file>(true), &working_file_entity_link::entity_id_), from<working_file>(),
+  for (auto&& [i] : l_sql.impl_->storage_any_.select(
+           columns(object<task>(true)), from<task>(), join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+           where(in(&entity::uuid_id_, l_ids))
+       )) {
+    auto l_sc = scan_assets::scan_task(i);
+    l_scan_result += *l_sc;
+    l_task_ids.emplace_back(i.uuid_id_);
+  }
+  co_await l_scan_result.install_async_sqlite();
+
+  std::vector<working_file_and_link> l_working_files{};
+  l_working_files.reserve(128);
+  std::set<uuid> l_working_file_ids{};
+  using namespace sqlite_orm;
+
+  constexpr auto shot     = "shot"_alias.for_<entity>();
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  for (auto&& [l_working_file, l_entity_id, l_task_id, l_task_type_id] : l_sql.impl_->storage_any_.select(
+           columns(
+               object<working_file>(true), &working_file_entity_link::entity_id_, &working_file_task_link::task_id_,
+               &task::task_type_id_
+           ),
+           from<working_file>(),
            join<working_file_entity_link>(
                on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))
            ),
-           where(in(&working_file_entity_link::entity_id_, l_ids))
+           join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+           join<task>(on(c(&task::uuid_id_) == c(&working_file_task_link::task_id_))),
+           where(in(&working_file_task_link::task_id_, l_task_ids))
        )) {
-    l_work_map[l_entity_id].emplace_back(std::move(l_work_file));
+    l_working_file_ids.emplace(l_working_file.uuid_id_);
+    l_working_files.emplace_back(
+        working_file_and_link{working_file{l_working_file}, l_entity_id, l_task_id, l_task_type_id}
+    );
   }
-  co_return in_handle->make_msg(map_json_obj(l_work_map));
+
+  co_return in_handle->make_msg(l_working_files);
 }
 
 std::vector<working_file_and_link> get_working_files_for_entity(const uuid& in_shot_id, const uuid& in_sequence_id) {
@@ -187,15 +226,17 @@ std::vector<working_file_and_link> get_working_files_for_entity(const uuid& in_s
 
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
-  for (auto&& [l_working_file, l_entity_id, l_task_id] : l_sql.impl_->storage_any_.select(
+  for (auto&& [l_working_file, l_entity_id, l_task_id, l_task_type_id] : l_sql.impl_->storage_any_.select(
            columns(
-               object<working_file>(true), &working_file_entity_link::entity_id_, &working_file_task_link::task_id_
+               object<working_file>(true), &working_file_entity_link::entity_id_, &working_file_task_link::task_id_,
+               &task::task_type_id_
            ),
            from<working_file>(),
            join<working_file_entity_link>(
                on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))
            ),
            join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+           join<task>(on(c(&task::uuid_id_) == c(&working_file_task_link::task_id_))),
            where(in(
                &working_file_entity_link::entity_id_,
                select(
@@ -210,14 +251,9 @@ std::vector<working_file_and_link> get_working_files_for_entity(const uuid& in_s
 
            ))
        )) {
-    if (l_working_file_ids.contains(l_working_file.uuid_id_)) continue;
     l_working_file_ids.emplace(l_working_file.uuid_id_);
     l_working_files.emplace_back(
-        working_file_and_link{
-            working_file{l_working_file},
-            l_entity_id,
-            l_task_id,
-        }
+        working_file_and_link{working_file{l_working_file}, l_entity_id, l_task_id, l_task_type_id}
     );
   }
   return l_working_files;

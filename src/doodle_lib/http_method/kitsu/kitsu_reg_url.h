@@ -52,8 +52,8 @@ DOODLE_HTTP_JWT_FUN(actions_projects_tasks_working_file_many)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/actions/projects/{project_id}/entities/working-file-many/get
-DOODLE_HTTP_JWT_FUN(actions_projects_entities_working_file_many_get)
+// /api/actions/projects/{project_id}/entities/working-file-many
+DOODLE_HTTP_JWT_FUN(actions_projects_entities_working_file_many)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
