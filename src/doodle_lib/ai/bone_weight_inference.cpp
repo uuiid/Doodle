@@ -257,7 +257,7 @@ struct fbx_scene {
     for (auto i = 0; i < l_sk_count; i++) {
       auto l_cluster = l_sk->GetCluster(i);
       auto l_joint   = l_cluster->GetLink();
-      logger_->warn("bone {} index {}", l_joint->GetName(), i);
+      // logger_->warn("bone {} index {}", l_joint->GetName(), i);
       l_bone_index_map[l_joint] = i;
     }
     std::vector<std::int64_t> l_bone_parents(l_sk_count, -1);
