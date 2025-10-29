@@ -264,10 +264,14 @@ struct fbx_scene {
     for (auto i = 0; i < l_sk_count; i++) {
       auto l_cluster = l_sk->GetCluster(i);
       auto l_joint   = l_cluster->GetLink();
-
-      if (auto l_parent = l_joint->GetParent(); l_parent && l_bone_index_map.contains(l_parent)) {
-        l_bone_parents[i] = l_bone_index_map[l_parent];
-      }
+      auto l_parent  = l_joint->GetParent();
+      do {
+        if (l_parent && l_bone_index_map.contains(l_parent)) {
+          l_bone_parents[i] = l_bone_index_map[l_parent];
+          break;
+        }
+        l_parent = l_parent->GetParent();
+      } while (l_parent);
 
       auto l_matrix       = scene_->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
       // FbxAMatrix l_matrix_tmp{};
