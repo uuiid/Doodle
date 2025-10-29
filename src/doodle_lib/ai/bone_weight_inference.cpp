@@ -30,6 +30,12 @@
 #pragma comment(linker, "/include:mi_version")
 
 #include <torch/csrc/api/include/torch/torch.h>
+
+namespace fmt {
+template <typename Char_T>
+struct formatter<::torch::Tensor, Char_T> : basic_ostream_formatter<Char_T> {};
+}  // namespace fmt
+
 namespace doodle::ai {
 
 struct GraphSample {
@@ -152,6 +158,7 @@ GraphSample build_sample_from_mesh(
   s.y         = weights;
   // include raw bone features in the sample so dataset/model can project them
   s.bone_feat = bone_positions;  // [B, 3]
+
   return s;
 }
 
@@ -161,10 +168,12 @@ struct fbx_scene {
   FSys::path fbx_path_;
   FbxNode* mesh_node_{};
   fbxsdk::FbxMesh* mesh_{};
+  fbxsdk::FbxVector4 root_offset_{};
 
   logger_ptr_raw logger_;
   explicit fbx_scene(const std::filesystem::path& fbx_path, logger_ptr_raw in_logger)
       : fbx_path_(fbx_path), logger_(in_logger) {
+    if (!in_logger) logger_ = spdlog::default_logger_raw();
     manager_ = std::shared_ptr<fbxsdk::FbxManager>(fbxsdk::FbxManager::Create(), [](fbxsdk::FbxManager* in_ptr) {
       in_ptr->Destroy();
     });
@@ -182,6 +191,7 @@ struct fbx_scene {
     auto l_root = scene_->GetRootNode();
     FbxGeometryConverter l_converter{manager_.get()};
     l_converter.RecenterSceneToWorldCenter(scene_, 0.000001);
+    root_offset_ = l_root->GetChild(0)->LclTranslation.Get();
     FbxArray<FbxNode*> l_mesh_nodes;
 
     std::function<void(FbxNode*)> l_fun;
@@ -200,6 +210,7 @@ struct fbx_scene {
     if (l_mesh_nodes.Size() == 0) throw_exception(doodle_error{"fbx mesh not found"});
 
     mesh_node_ = l_converter.MergeMeshes(l_mesh_nodes, fmt::format("main_{}", l_mesh_nodes.Size()).c_str(), scene_);
+    scene_->GetRootNode()->AddChild(mesh_node_);
     if (!mesh_node_) throw_exception(doodle_error{"merge mesh err"});
     for (auto i = 0; i < l_mesh_nodes.Size(); i++) scene_->RemoveNode(l_mesh_nodes[i]);
     l_converter.Triangulate(mesh_node_->GetMesh(), true);
@@ -209,7 +220,10 @@ struct fbx_scene {
     auto* l_vert           = mesh_->GetControlPoints();
     auto l_vert_count      = mesh_->GetControlPointsCount();
     torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
-    for (auto j = 0; j < l_vert_count; j++) l_tensor[j] = torch::tensor({l_vert[j][0], l_vert[j][1], l_vert[j][2]});
+    for (auto j = 0; j < l_vert_count; j++) {
+      auto l_pos = l_vert[j] + root_offset_;
+      l_tensor[j] = torch::tensor({l_pos[0], l_pos[1], l_pos[2]});
+    }
 
     auto l_faces_num      = mesh_->GetPolygonCount();
     torch::Tensor l_faces = torch::zeros({l_faces_num, 3}, torch::kInt64);
@@ -240,9 +254,9 @@ struct fbx_scene {
       }
 
       auto l_matrix = scene_->GetAnimationEvaluator()->GetNodeGlobalTransform(l_joint);
-      FbxAMatrix l_matrix_tmp{};
-      l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
-      l_matrix            = l_matrix * l_matrix_tmp;
+      // FbxAMatrix l_matrix_tmp{};
+      // l_cluster->GetTransformLinkMatrix(l_matrix_tmp);
+      // l_matrix            = l_matrix * l_matrix_tmp;
       l_bone_positions[i] = torch::tensor({l_matrix.GetT()[0], l_matrix.GetT()[1], l_matrix.GetT()[2]});
       auto l_controls     = l_cluster->GetControlPointIndices();
       auto l_weights      = l_cluster->GetControlPointWeights();
@@ -250,7 +264,10 @@ struct fbx_scene {
         l_bone_weights[l_controls[j]][i] = l_weights[j];
       }
     }
-
+    // logger_->warn(
+    //     "tensor \n{}\n bone_positions \n{}\n faces \n{}\n bone_weights \n{}\n bone_parents \n{}\n" l_tensor, l_bone_positions, l_faces,
+    //     l_bone_weights, l_bone_parents
+    // );
     return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
   }
   void write_weights_to_fbx(const torch::Tensor& weights) {
@@ -269,8 +286,15 @@ struct fbx_scene {
         if (w > 1e-6) l_cluster->AddControlPointIndex(j, w);
       }
     }
+    write_fbx(fbx_path_);
+  }
+
+  void write_fbx(const std::filesystem::path& out_path) {
     fbxsdk::FbxExporter* exporter = fbxsdk::FbxExporter::Create(manager_.get(), "");
-    if (!exporter->Initialize(fbx_path_.generic_string().c_str(), -1, manager_->GetIOSettings()))
+    if (!exporter->Initialize(
+            out_path.generic_string().c_str(),
+            manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"), manager_->GetIOSettings()
+        ))
       throw_exception(doodle_error{"fbx export err {}", exporter->GetStatus().GetErrorString()});
     exporter->Export(scene_);
     exporter->Destroy();
