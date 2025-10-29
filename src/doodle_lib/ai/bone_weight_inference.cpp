@@ -528,7 +528,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     // checkpoint
     if (epoch % 10 == 0) {
       std::string ckpt = "skin_gcn_epoch_" + std::to_string(epoch) + ".pt";
-      save_checkpoint(model, ckpt);
+      save_checkpoint(model, fmt::format("{}/{}_{}{}", in_output_path.parent_path(), in_output_path.stem(), epoch, in_output_path.extension()));
       std::cout << "Saved checkpoint: " << ckpt << "\n";
     }
   }
