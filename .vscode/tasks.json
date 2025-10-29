@@ -13,7 +13,9 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "problemMatcher": []
+      "problemMatcher": [
+        "$msCompile"
+      ]
     },
     {
       "label": "cmake config maya",
@@ -24,7 +26,9 @@
         "--preset",
         "Ninja_RelWithDebInfo"
       ],
-      "problemMatcher": []
+      "problemMatcher": [
+        "$msCompile"
+      ]
     },
     {
       "label": "cmake config vs",
@@ -35,7 +39,9 @@
         "--preset",
         "vs2022"
       ],
-      "problemMatcher": []
+      "problemMatcher": [
+        "$msCompile"
+      ]
     },
     {
       "label": "cmake build",
@@ -47,14 +53,17 @@
         "--preset",
         "debug_doodle"
       ],
-      "problemMatcher": [],
+      "problemMatcher": [
+        "$msCompile"
+      ],
       "presentation": {
         "echo": true,
         "reveal": "always",
         "focus": false,
         "panel": "shared",
         "showReuseMessage": true,
-        "clear": true
+        "clear": true,
+        "close": true
       }
     },
     {
@@ -67,7 +76,9 @@
         "--preset",
         "debug_maya"
       ],
-      "problemMatcher": [],
+      "problemMatcher": [
+        "$msCompile"
+      ],
       "presentation": {
         "echo": true,
         "reveal": "always",
@@ -88,13 +99,17 @@
         "--target",
         "clean"
       ],
-      "problemMatcher": []
+      "problemMatcher": [
+        "$msCompile"
+      ]
     },
     {
       "label": "build UE plug",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/build/Build_UE.cmd",
-      "problemMatcher": []
+      "problemMatcher": [
+        "$msCompile"
+      ]
     },
     {
       "label": "build_all",
