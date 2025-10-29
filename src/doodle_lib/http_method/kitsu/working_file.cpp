@@ -171,6 +171,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entities_working_file_many::post(
     session_data_ptr in_handle
 ) {
+  person_.check_project_manager(id_);
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ids = in_handle->get_json().get<std::vector<uuid>>();
   std::vector<uuid> l_task_ids{};
