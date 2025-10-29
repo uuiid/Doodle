@@ -80,7 +80,7 @@ GraphSample build_sample_from_mesh(
   // 1) 面邻接（无向）
   auto options    = torch::TensorOptions().dtype(torch::kFloat32);
   torch::Tensor A = torch::zeros({N, N}, options);
-  if (faces.numel() < 0) throw std::runtime_error("faces tensor has negative numel");
+  if (faces.numel() <= 0) throw std::runtime_error("faces tensor has negative numel");
 
   auto f_accessor = faces.accessor<std::int64_t, 2>();
   for (std::int64_t i = 0; i < faces.size(0); ++i) {
