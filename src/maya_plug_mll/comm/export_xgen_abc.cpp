@@ -26,6 +26,7 @@
 #include <filesystem>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
+#include <maya/MDagPath.h>
 #include <maya/MDistance.h>
 #include <maya/MDoubleArray.h>
 #include <maya/MFn.h>
@@ -35,6 +36,8 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
+#include <set>
+#include <string>
 #include <xgen/src/sggeom/SgVec3T.h>
 #include <xgen/src/sggeom/SgXform3T.h>
 #include <xgen/src/xgcore/XgCreator.h>
@@ -111,7 +114,7 @@ class xgen_alembic_out {
   bool init_{false};
 
   void open() {
-    if(auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    if (auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     DOODLE_LOG_INFO(
         "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), begin_time_.value(),
         end_time_.as(MTime::kSeconds)
@@ -360,11 +363,12 @@ bool XgenRender::getArchiveBoundingBox(const char* in_filename, XGenRenderAPI::b
 
 struct palette_warp {
   XgPalette* palette_ptr;
-  MDagPath palette_dag;
+  std::string dag_namespace;
 };
 
 struct xgen_abc_export::impl {
   std::vector<palette_warp> palette_v{};
+  std::set<std::string> select_des_name{};
   MTime begin_time_;
   MTime end_time_;
   std::string create_render_args(const palette_warp& in_, const XgDescription* in_des, const XgPatch* in_patch);
@@ -388,7 +392,7 @@ std::string xgen_abc_export::impl::create_render_args(
     const palette_warp& in_, const XgDescription* in_des, const XgPatch* in_patch
 ) {
   auto l_current_frame = MAnimControl::currentTime();
-  auto l_namespace     = get_name_space(in_.palette_dag);
+  auto l_namespace     = in_.dag_namespace;
   std::double_t l_unit_conv{1};  // default cm;
   switch (MDistance::uiUnit()) {
     case MDistance::kInches:
@@ -425,9 +429,9 @@ std::string xgen_abc_export::impl::create_render_args(
       "-debug 1 -warning 1 -stats 1{8}{1} -palette {2} -description {3} -patch {4} -frame {5} "
       "-file {6}__{2}.xgen -geom {7} -fps {9} -interpolation linear  -motionSamplesLookup 0.0 "
       "-motionSamplesPlacement 0.0 -world {0};0;0;0;0;{0};0;0;0;0;{0};0;0;0;0;1",
-      l_unit_conv, l_namespace, in_.palette_ptr->name(), in_des->name(), in_patch->name(),
-      l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path, !l_namespace.empty() ? " -nameSpace " : "",
-      details::fps()
+      l_unit_conv, l_namespace, xgutil::stripNameSpace(in_.palette_ptr->name()), xgutil::stripNameSpace(in_des->name()),
+      xgutil::stripNameSpace(in_patch->name()), l_current_frame.as(MTime::uiUnit()), l_file_path, l_geom_file_path,
+      !l_namespace.empty() ? " -nameSpace " : "", details::fps()
   );
 
   return l_str;
@@ -448,9 +452,11 @@ MStatus xgen_abc_export::redoIt() {
   std::vector<std::unique_ptr<xgen_render_des>> l_render_list{};
   // 初始化渲染器
   for (auto&& i : p_i->palette_v) {
-    auto l_namespace = get_name_space(i.palette_dag);
+    auto l_namespace = i.dag_namespace;
     for (auto j = 0; j < i.palette_ptr->numDescriptions(); ++j) {
-      auto l_des         = i.palette_ptr->description(j);
+      auto l_des = i.palette_ptr->description(j);
+      if (!p_i->select_des_name.contains(l_des->name())) continue;
+
       auto& l_des_render = l_render_list.emplace_back(std::make_unique<xgen_render_des>());
       if (!l_des) {
         displayError(
@@ -458,7 +464,7 @@ MStatus xgen_abc_export::redoIt() {
         );
         continue;
       }
-      l_abc_file_path_gen->add_external_string = l_des->name();
+      l_abc_file_path_gen->add_external_string = xgutil::stripNameSpace(l_des->name());
 
       auto l_out_path                          = (*l_abc_file_path_gen)(l_namespace);
       displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
@@ -478,9 +484,9 @@ MStatus xgen_abc_export::redoIt() {
           );
           continue;
         }
-        auto& l_render_        = l_des_render->face_list_.emplace_back(std::make_unique<xgen_render_face>());
-        l_render_->main_render = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_);
-        auto l_args            = p_i->create_render_args(i, l_des, l_ptr);
+        auto& l_render_           = l_des_render->face_list_.emplace_back(std::make_unique<xgen_render_face>());
+        l_render_->main_render    = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_);
+        auto l_args               = p_i->create_render_args(i, l_des, l_ptr);
         // displayInfo(l_args.c_str());
         l_render_->patch_renderer = std::unique_ptr<XGenRenderAPI::PatchRenderer>{
             XGenRenderAPI::PatchRenderer::init(l_render_->main_render.get(), l_args.c_str())
@@ -495,6 +501,7 @@ MStatus xgen_abc_export::redoIt() {
       }
     }
   }
+  if (l_render_list.empty()) return MStatus::kFailure;
 
   for (auto i = p_i->begin_time_; i <= p_i->end_time_; ++i) {
     MAnimControl::setCurrentTime(i);
@@ -525,13 +532,15 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
   MItSelectionList it_list{list, MFn::kDagNode, &status};
   maya_chick(status);
   std::vector<MDagPath> dag_path_list{};
+  for (auto&& i : XgPalette::palettes())
+    if (auto l_ptr = XgPalette::palette(i); l_ptr) p_i->palette_v.emplace_back(l_ptr, xgutil::objNameSpace(i)).dag_namespace.pop_back();
+
   for (; !it_list.isDone(); it_list.next()) {
     MDagPath l_dag_path{};
     status = it_list.getDagPath(l_dag_path);
     maya_chick(status);
+    p_i->select_des_name.emplace(get_node_name(l_dag_path));
     // displayInfo(l_dag_path.fullPathName());
-    if (auto l_ptr = XgPalette::palette(get_node_name(l_dag_path)); l_ptr)
-      p_i->palette_v.emplace_back(l_ptr, l_dag_path);
   }
 }
 
