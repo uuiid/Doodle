@@ -144,15 +144,17 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_index("working_file_task_link_task_id_index", &working_file_task_link::task_id_),
       make_index("working_file_entity_link_working_file_id_index", &working_file_entity_link::working_file_id_),
       make_index("working_file_entity_link_entity_id_index", &working_file_entity_link::entity_id_),
+      make_unique_index("working_file_task_link_unique", &working_file_task_link::working_file_id_, &working_file_task_link::task_id_),
       make_table<working_file_task_link>(
-          "working_file_task_link", make_column("id", &working_file_task_link::id_, primary_key().autoincrement()),
-          make_column("working_file_id", &working_file_task_link::working_file_id_, not_null()),
-          make_column("task_id", &working_file_task_link::task_id_, not_null()),
-          foreign_key(&working_file_task_link::working_file_id_)
-              .references(&working_file::uuid_id_)
-              .on_delete.cascade(),
-          foreign_key(&working_file_task_link::task_id_).references(&task::uuid_id_).on_delete.cascade()
+        "working_file_task_link", make_column("id", &working_file_task_link::id_, primary_key().autoincrement()),
+        make_column("working_file_id", &working_file_task_link::working_file_id_, not_null()),
+        make_column("task_id", &working_file_task_link::task_id_, not_null()),
+        foreign_key(&working_file_task_link::working_file_id_)
+        .references(&working_file::uuid_id_)
+        .on_delete.cascade(),
+        foreign_key(&working_file_task_link::task_id_).references(&task::uuid_id_).on_delete.cascade()
       ),
+      make_unique_index("working_file_entity_link_unique", &working_file_entity_link::working_file_id_, &working_file_entity_link::entity_id_),
       make_table<working_file_entity_link>(
           "working_file_entity_link", make_column("id", &working_file_entity_link::id_, primary_key().autoincrement()),
           make_column("working_file_id", &working_file_entity_link::working_file_id_, not_null()),
