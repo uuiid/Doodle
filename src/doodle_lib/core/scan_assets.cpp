@@ -268,7 +268,7 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
     }
   }
 
-  if (l_task_type_id == task_type::get_character_id() || l_task_type_id == task_type::get_ground_model_id()) {
+  if (l_task_type_id == task_type::get_character_id()) {
     if (l_maya_working_file.path_.empty() || !FSys::exists(l_maya_working_file.path_)) {
       l_maya_working_file.description_   = "maya模型文件";
       l_maya_working_file.path_          = scan_maya(l_prj, l_entt.entity_type_id_, l_extend);
