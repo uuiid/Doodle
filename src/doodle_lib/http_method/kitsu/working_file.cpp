@@ -291,11 +291,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_task = l_sql.get_by_uuid<task>(id_);
   using namespace sqlite_orm;
-  auto l_r = l_sql.impl_->storage_any_.get_all<working_file>(
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(object<working_file>(true), &task::task_type_id_), from<working_file>(),
+
       join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))),
+      join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
+      join<task>(on(c(&task::uuid_id_) == c(&working_file_task_link::task_id_))),
       where(c(&working_file_entity_link::entity_id_) == l_task.entity_id_)
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_r);
+  std::vector<working_file_and_link> l_working_files{l_r.size()};
+  for (auto&& [l_working_file, l_task_type_id] : l_r)
+    l_working_files.emplace_back(working_file_and_link{working_file{l_working_file}, {}, {}, l_task_type_id});
+  co_return in_handle->make_msg(nlohmann::json{} = l_working_files);
 }
 
 }  // namespace doodle::http
