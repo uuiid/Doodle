@@ -299,7 +299,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
       join<task>(on(c(&task::uuid_id_) == c(&working_file_task_link::task_id_))),
       where(c(&working_file_entity_link::entity_id_) == l_task.entity_id_)
   );
-  std::vector<working_file_and_link> l_working_files{l_r.size()};
+  std::vector<working_file_and_link> l_working_files{};
+  l_working_files.reserve(l_r.size());
   for (auto&& [l_working_file, l_task_type_id] : l_r)
     l_working_files.emplace_back(working_file_and_link{working_file{l_working_file}, {}, {}, l_task_type_id});
   co_return in_handle->make_msg(nlohmann::json{} = l_working_files);
