@@ -238,7 +238,7 @@ class scan_base {
       const std::vector<working_file>& in_working_files, const project& in_prj, const entity& in_entt,
       const task& in_task, const entity_asset_extend& in_extend
   )
-      : l_prj(in_prj), l_entt(in_entt), in_task(in_task), l_extend(in_extend) {
+      : l_prj(in_prj), l_entt(in_entt), in_task(in_task), l_extend(in_extend), l_result(std::make_shared<scan_result>()) {
     for (auto&& i : in_working_files) {
       if (i.software_type_ == software_enum::maya) {
         l_maya_working_file = i;
