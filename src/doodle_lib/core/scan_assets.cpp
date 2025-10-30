@@ -4,6 +4,7 @@
 
 #include "scan_assets.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/task_type.h"
@@ -187,15 +188,16 @@ void scan_add_linked_data(
 ) {
   auto l_sql       = g_ctx().get<sqlite_database>();
   auto l_p         = in_prj.path_ / in_working_file.path_;
+  auto l_exists    = FSys::exists(l_p);
   auto l_file_uuid = FSys::software_flag_file(l_p);
   if (l_sql.uuid_to_id<working_file>(l_file_uuid) == 0) {
     if (in_working_file.uuid_id_.is_nil()) {
       in_working_file.uuid_id_ = core_set::get_set().get_uuid();
     }
-    if (l_file_uuid.is_nil() || l_file_uuid != in_working_file.uuid_id_)
+    if (l_exists && (l_file_uuid.is_nil() || l_file_uuid != in_working_file.uuid_id_))
       FSys::software_flag_file(l_p, in_working_file.uuid_id_);
     in_working_file.name_ = in_working_file.path_.filename().generic_string();
-    in_working_file.size_ = FSys::file_size(l_p);
+    in_working_file.size_ = l_exists ? FSys::file_size(l_p) : 0;
     in_result->working_files_.emplace_back(in_working_file);
   } else {
     in_working_file = l_sql.get_by_uuid<working_file>(l_file_uuid);
@@ -238,7 +240,11 @@ class scan_base {
       const std::vector<working_file>& in_working_files, const project& in_prj, const entity& in_entt,
       const task& in_task, const entity_asset_extend& in_extend
   )
-      : l_prj(in_prj), l_entt(in_entt), in_task(in_task), l_extend(in_extend), l_result(std::make_shared<scan_result>()) {
+      : l_prj(in_prj),
+        l_entt(in_entt),
+        in_task(in_task),
+        l_extend(in_extend),
+        l_result(std::make_shared<scan_result>()) {
     for (auto&& i : in_working_files) {
       if (i.software_type_ == software_enum::maya) {
         l_maya_working_file = i;
@@ -418,8 +424,7 @@ std::shared_ptr<scan_result> scan_task(const task& in_task) {
     throw_exception(doodle_error{"不支持的任务类型扫描 {}", l_task_type_id});
 
   l_scanner->scan();
-  l_scanner->l_result = l_result;
-  return l_result;
+  return l_scanner->l_result;
 }
 boost::asio::awaitable<std::shared_ptr<scan_result>> scan_task_async(const task& in_task) {
   auto l_sql = g_ctx().get<sqlite_database>();
