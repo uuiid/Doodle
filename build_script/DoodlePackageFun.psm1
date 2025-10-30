@@ -1,5 +1,4 @@
-﻿class OffDays
-{
+﻿class OffDays {
     [string]$name
     [string]$date
     [bool]$isOffDay
@@ -11,35 +10,29 @@
 #Set-Item WSMan:\localhost\Service\AllowUnencrypted -Value True
 # Get-ExecutionPolicy
 # Set-ExecutionPolicy RemoteSigned
-function Add-Compensatory()
-{
+function Add-Compensatory() {
     param (
         [string] $Path,
         [System.Management.Automation.PSObject[]]$OffDays
     )
-    if (-not (Test-Path -Path $Path))
-    {
+    if (-not (Test-Path -Path $Path)) {
         Write-Host "文件不存在 $Path"
         return
     }
     $Json = Get-Content -Path $Path -Raw -Encoding UTF8 | ConvertFrom-Json;
-    foreach ($day in $OffDays)
-    {
+    foreach ($day in $OffDays) {
         $it = $Json.days | Where-Object { $_.date -eq $day.date }
-        if ($it)
-        {
+        if ($it) {
             $it.isOffDay = $day.isOffDay
             $it.name = $day.name
         }
-        else
-        {
+        else {
             $Json.days += $day
         }
     }
     $Json | ConvertTo-Json  | Set-Content -Path $Path -Encoding UTF8
 }
-function Compress-UEPlugins()
-{
+function Compress-UEPlugins() {
     param(
         [string]$UEVersion,
         [string]$DoodleVersion,
@@ -47,13 +40,11 @@ function Compress-UEPlugins()
         [string]$OutPath
     )
 
-    if (-Not (Test-Path "$OutPath\dist\Plugins"))
-    {
+    if (-Not (Test-Path "$OutPath\dist\Plugins")) {
         New-Item "$OutPath\dist\Plugins" -ItemType Directory
     }
     $UEPluginsPath = "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
-    if (Test-Path $UEPluginsPath)
-    {
+    if (Test-Path $UEPluginsPath) {
         Write-Host "UE插件包已存在: $UEPluginsPath"
         return
     }
@@ -62,12 +53,10 @@ function Compress-UEPlugins()
     $UEPluginsJson.VersionName = $DoodleVersion
     $UEPluginsJson.Version = [int]($DoodleVersion -replace "\.", "")
     # 判断属性 EnabledByDefault 是否存在
-    if (-not $UEPluginsJson.PSObject.Properties["EnabledByDefault"])
-    {
+    if (-not $UEPluginsJson.PSObject.Properties["EnabledByDefault"]) {
         $UEPluginsJson | Add-Member -MemberType NoteProperty -Name "EnabledByDefault" -Value $true
     }
-    else
-    {
+    else {
         $UEPluginsJson.EnabledByDefault = $true
     }
 
@@ -76,15 +65,13 @@ function Compress-UEPlugins()
     Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
 }
 
-function Initialize-Doodle
-{
+function Initialize-Doodle {
     param(
         [string]$OutPath,
         [Switch]$BuildKitsu,
         [switch]$OnlyOne
     )
-    if (-not (Test-Path $OutPath))
-    {
+    if (-not (Test-Path $OutPath)) {
         New-Item $OutPath -ItemType Directory
     }
     $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
@@ -97,12 +84,10 @@ function Initialize-Doodle
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
-    if ($BuildKitsu)
-    {
+    if ($BuildKitsu) {
         Write-Host "开始构建文件"
-        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1","run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
-        if ($NpmResult.ExitCode -ne 0)
-        {
+        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
+        if ($NpmResult.ExitCode -ne 0) {
             # 抛出异常
             throw "构建失败"
         }
@@ -123,13 +108,11 @@ function Initialize-Doodle
     $Tags = $Tags | ForEach-Object { $_ -replace "v", "" }
 
     # 复制安装包
-    if ($OnlyOne)
-    {
+    if ($OnlyOne) {
         Copy-Item (Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip")[-1]  -Destination "$OutPath\dist"
         Set-Content -Path "$OutPath\dist\version.txt" -Value $Tags[1] -NoNewline
     }
-    else
-    {
+    else {
         &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath | Out-Null
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)
@@ -145,55 +128,50 @@ function Initialize-Doodle
     # 先查看标签, 再组合下载url
 
     # 检查文件是否是三个月以上的旧文件
-    if ((Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].LastWriteTime - (Get-Date).AddMonths(-3) -lt 0)
-    {
+    if ((Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].LastWriteTime - (Get-Date).AddMonths(-3) -lt 0) {
         $tag = (Invoke-WebRequest -Uri https://api.github.com/repos/NateScarlet/holiday-cn/tags -Headers @{ "accept" = "application/json" } |
-                ConvertFrom-Json)[0].name
+            ConvertFrom-Json)[0].name
         # 检查文件是否存在
-        if (-not (Test-Path "$DoodleBuildRoot\holiday-cn-$tag.zip"))
-        {
-            Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
-        }
+        Invoke-WebRequest -Uri https://github.com/NateScarlet/holiday-cn/releases/latest/download/holiday-cn-$tag.zip -OutFile "$DoodleBuildRoot\holiday-cn-$tag.zip"
         Expand-Archive -Path "$DoodleBuildRoot\holiday-cn-$tag.zip" -DestinationPath $DoodleTimePath -Force
     }
-    else
-    {
+    else {
         Expand-Archive -Path (Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].FullName -DestinationPath $DoodleTimePath -Force
     }
 
 
     Add-Compensatory -Path "$DoodleTimePath\2024.json" @(
         [System.Management.Automation.PSObject]@{
-            name = "公司年假补班"
-            date = "2024-12-14"
+            name     = "公司年假补班"
+            date     = "2024-12-14"
             isOffDay = $false
         },
         [System.Management.Automation.PSObject]@{
-            name = "公司年假补班"
-            date = "2024-12-29"
+            name     = "公司年假补班"
+            date     = "2024-12-29"
             isOffDay = $false
         }
     )
 
     Add-Compensatory -Path "$DoodleTimePath\2025.json" @(
         [System.Management.Automation.PSObject]@{
-            name = "公司年假补班"
-            date = "2025-01-11"
+            name     = "公司年假补班"
+            date     = "2025-01-11"
             isOffDay = $false
         },
         [System.Management.Automation.PSObject]@{
-            name = "公司放假"
-            date = "2025-01-26"
+            name     = "公司放假"
+            date     = "2025-01-26"
             isOffDay = $true
         },
         [System.Management.Automation.PSObject]@{
-            name = "公司放假"
-            date = "2025-01-27"
+            name     = "公司放假"
+            date     = "2025-01-27"
             isOffDay = $true
         },
         [System.Management.Automation.PSObject]@{
-            name = "公司放假"
-            date = "2025-02-05"
+            name     = "公司放假"
+            date     = "2025-02-05"
             isOffDay = $true
         }
     )
