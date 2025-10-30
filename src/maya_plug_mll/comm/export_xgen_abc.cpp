@@ -23,6 +23,7 @@
 #include <Alembic/AbcGeom/OPolyMesh.h>
 #include <Alembic/AbcGeom/OXform.h>
 #include <Alembic/AbcGeom/XformOp.h>
+#include <filesystem>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDistance.h>
@@ -110,6 +111,7 @@ class xgen_alembic_out {
   bool init_{false};
 
   void open() {
+    if(auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
     DOODLE_LOG_INFO(
         "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), begin_time_.value(),
         end_time_.as(MTime::kSeconds)
