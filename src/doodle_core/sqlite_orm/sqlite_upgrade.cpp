@@ -76,76 +76,19 @@ struct upgrade_init_t : sqlite_upgrade {
     DOODLE_TASK_TYPE(simulation, 解算资产)
     DOODLE_TASK_TYPE(effect, 特效资产)
 #undef DOODLE_TASK_TYPE
+    using namespace sqlite_orm;
+    in_data->storage_any_.remove_all<working_file>(where(not_in(
+        &working_file::uuid_id_,
+        union_(select(&working_file_task_link::working_file_id_), select(&working_file_entity_link::working_file_id_))
+    )));
   }
 };  // namespace doodle::details
 
 struct upgrade_2_t : sqlite_upgrade {
-  struct notification_old {
-    DOODLE_BASE_FIELDS();
-    bool read_{};
-    bool change_{};  // 指向的task 状态是否发生了改变, 比如从完成到返修
-    notification_type type_;
-    uuid person_id_;  // 接收通知的人
-    uuid author_id_;  // 评论的作者
-    uuid comment_id_;
-    uuid task_id_;
-    uuid reply_id_;
-    chrono::system_zoned_time created_at_{chrono::system_clock::now()};
-    notification_old() = default;
-
-    operator notification() const {
-      notification l_ret{
-          .uuid_id_    = uuid_id_,
-          .read_       = read_,
-          .change_     = change_,
-          .type_       = type_,
-          .person_id_  = person_id_,
-          .author_id_  = author_id_,
-          .comment_id_ = comment_id_,
-          .task_id_    = task_id_,
-          .reply_id_   = reply_id_,
-          .created_at_ = created_at_
-      };
-      return l_ret;
-    }
-  };
   std::shared_ptr<std::vector<notification>> notifications_{};
 
-  explicit upgrade_2_t(const FSys::path& in_path) {
-    using namespace sqlite_orm;
-    auto l_p = make_storage(
-        in_path.generic_string(), connection_control{},
-        make_table<notification_old>(
-            "notification",                                                            //
-            make_column("id", &notification_old::id_, primary_key().autoincrement()),  //
-            make_column("uuid", &notification_old::uuid_id_, unique(), not_null()),    //
-            make_column("read", &notification_old::read_),                             //
-            make_column("change", &notification_old::change_),                         //
-            make_column("type", &notification_old::type_),                             //
-            make_column("person_id", &notification_old::person_id_, not_null()),       //
-            make_column("author_id", &notification_old::author_id_, not_null()),       //
-            make_column("comment_id", &notification_old::comment_id_),                 //
-            make_column("task_id", &notification_old::task_id_, not_null()),           //
-            make_column("reply_id", &notification_old::reply_id_)
-        )
-    );
-
-    l_p.open_forever();
-
-    auto l_time = chrono::system_clock::now() - chrono::days{90};
-    if (!l_p.table_exists("notification")) return;
-    notifications_ = std::make_shared<std::vector<notification>>();
-
-    auto l_list    = l_p.get_all<notification_old>();
-    l_p.drop_table_if_exists("notification");
-    for (auto i = 0; i < l_list.size(); ++i) {
-      l_list[i].created_at_ = l_time + chrono::seconds{i};
-      notifications_->emplace_back(l_list[i]);
-    }
-  }
-  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
-    if (notifications_ && !notifications_->empty()) in_data->install_range_unsafe(notifications_);
-  }
+  explicit upgrade_2_t(const FSys::path& in_path) {}
+  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {}
   ~upgrade_2_t() override = default;
 };
 
