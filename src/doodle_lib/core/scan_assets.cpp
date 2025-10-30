@@ -188,8 +188,8 @@ void scan_add_linked_data(
 ) {
   auto l_sql       = g_ctx().get<sqlite_database>();
   auto l_p         = in_prj.path_ / in_working_file.path_;
-  auto l_exists    = FSys::exists(l_p);
-  auto l_file_uuid = FSys::software_flag_file(l_p);
+  auto l_exists    = !in_working_file.path_.empty() && FSys::exists(l_p);
+  auto l_file_uuid = l_exists ? FSys::software_flag_file(l_p) : uuid{};
   if (l_sql.uuid_to_id<working_file>(l_file_uuid) == 0) {
     if (in_working_file.uuid_id_.is_nil()) {
       in_working_file.uuid_id_ = core_set::get_set().get_uuid();
