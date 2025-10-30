@@ -1,6 +1,7 @@
 #include "kitsu_client.h"
 
 #include "doodle_core/configure/config.h"
+#include "doodle_core/configure/static_value.h"
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
@@ -11,8 +12,11 @@
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 
 #include <boost/asio/awaitable.hpp>
+#include <boost/beast/http/empty_body.hpp>
+#include <boost/beast/http/file_body_fwd.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include <cpp-base64/base64.h>
 #include <filesystem>
 #include <fmt/compile.h>
 #include <vector>
@@ -26,9 +30,7 @@ void from_json(const nlohmann::json& j, kitsu_client::file_association& fa) {
   j.at("type").get_to(fa.type_);
 }
 
-boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_association(
-    const uuid& in_task_id
-) const {
+boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_association(uuid in_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", in_task_id), 11
   };
@@ -45,7 +47,7 @@ boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_as
   co_return l_res.body().get<file_association>();
 }
 
-boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string& in_version) const {
+boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(std::string in_version) const {
   auto l_file_name = fmt::format("Doodle_{}.{}.zip", version::build_info::get().version_str, in_version);
   auto l_temp_path = core_set::get_set().get_cache_root("ue_plugin") / l_file_name;
 
@@ -82,7 +84,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(const std::string
   co_return l_temp_path;
 }
 
-boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& in_task_id) const {
+boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task_id) const {
   project l_prj{};
   std::vector<working_file> l_list{};
   {
@@ -113,9 +115,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(const uuid& 
 
   co_return l_path;
 }
-boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_uesk_file_arg(
-    const uuid& in_task_id
-) const {
+boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_uesk_file_arg(uuid in_task_id) const {
   uuid l_entity_id{};
   auto l_arg_ = std::make_shared<export_rig_sk_arg>();
   FSys::path l_project_path{};
@@ -180,6 +180,95 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
   }
 
   co_return l_arg_;
+}
+boost::asio::awaitable<void> kitsu_client::upload_asset_file(
+    std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
+) const {
+  boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
+  l_req.set(boost::beast::http::field::content_description, in_file_field_name);
+  l_req.set(boost::beast::http::field::content_type, "application/octet-stream");
+  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  l_req.set(boost::beast::http::field::accept, "application/json");
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  boost::system::error_code l_ec{};
+  l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
+  if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
+
+  boost::beast::http::response<boost::beast::http::empty_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"kitsu upload file error {} {}", in_file_path, l_res.result()});
+
+  co_return;
+}
+boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const {
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->timeout_ = 30s;
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->timeout_    = 1000s;
+  return upload_asset_file(
+      fmt::format("/api/doodle/data/asset/{}/file/maya", in_task_id), in_file_path,
+      base64_encode(in_file_path.filename().generic_string())
+  );
+}
+boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const {
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->timeout_ = 30s;
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->timeout_    = 1000s;
+  if (in_file_path.extension() != doodle_config::ue4_uproject_ext)
+    throw_exception(doodle_error{"上传的文件不是ue工程文件 {}", in_file_path});
+
+  auto l_uproject_dir = in_file_path.parent_path();
+  if (FSys::exists(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
+    // 如果存在Prop文件夹，则上传Prop文件夹
+    for (auto&& p :
+         FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
+      if (p.is_directory()) continue;
+      co_await upload_asset_file(
+          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
+      );
+    }
+  } else {
+    // 否则上传工程文件
+    for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content)) {
+      if (p.is_directory()) continue;
+      co_await upload_asset_file(
+          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
+      );
+    }
+    for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_config)) {
+      if (p.is_directory()) continue;
+      co_await upload_asset_file(
+          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
+      );
+    }
+  }
+
+  co_await upload_asset_file(
+      fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), in_file_path,
+      base64_encode(in_file_path.filename().generic_string())
+  );
+  co_return;
+}
+boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const {
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->timeout_ = 30s;
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->timeout_    = 1000s;
+  return upload_asset_file(
+      fmt::format("/api/doodle/data/asset/{}/file/image", in_task_id), in_file_path,
+      base64_encode(in_file_path.filename().generic_string())
+  );
 }
 
 }  // namespace doodle::kitsu

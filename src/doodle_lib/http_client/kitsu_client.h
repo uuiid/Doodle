@@ -27,6 +27,10 @@ class kitsu_client {
   http_client_ptr_t http_client_ptr_{};
   std::string kitsu_token_;
 
+  boost::asio::awaitable<void> upload_asset_file(
+      std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
+  ) const;
+
  public:
   explicit kitsu_client(const std::string& kitsu_url) : http_client_ptr_{std::make_shared<http_client_t>(kitsu_url)} {}
   template <typename ExecutorType>
@@ -40,14 +44,17 @@ class kitsu_client {
   // set token
   void set_token(const std::string& in_token) { kitsu_token_ = in_token; }
 
-  boost::asio::awaitable<file_association> get_file_association(const uuid& in_task_id) const;
+  boost::asio::awaitable<file_association> get_file_association(uuid in_task_id) const;
 
-  boost::asio::awaitable<FSys::path> get_ue_plugin(const std::string& in_version) const;
+  boost::asio::awaitable<FSys::path> get_ue_plugin(std::string in_version) const;
 
-  boost::asio::awaitable<FSys::path> get_task_maya_file(const uuid& in_task_id) const;
+  boost::asio::awaitable<FSys::path> get_task_maya_file(uuid in_task_id) const;
 
-  boost::asio::awaitable<project> get_project(const uuid& in_project_id) const;
-  boost::asio::awaitable<std::shared_ptr<async_task>> get_generate_uesk_file_arg(const uuid& in_task_id) const;
+  boost::asio::awaitable<project> get_project(uuid in_project_id) const;
+  boost::asio::awaitable<std::shared_ptr<async_task>> get_generate_uesk_file_arg(uuid in_task_id) const;
+  boost::asio::awaitable<void> upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const;
+  boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
+  boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
 };
 
 }  // namespace doodle::kitsu

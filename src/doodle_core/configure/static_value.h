@@ -31,6 +31,8 @@ constexpr std::string_view ue4_uproject_ext{R"(.uproject)"};
 constexpr std::string_view ue4_saved{R"(Saved)"};
 constexpr std::string_view ue4_movie_renders{R"(MovieRenders)"};
 constexpr std::string_view ue4_game{R"(/Game)"};
+constexpr std::string_view ue4_prop{R"(Prop)"};
+
 constexpr std::string_view ue4_shot{R"(Shot)"};
 constexpr std::string_view hello_world_doodle{R"(hello world! doodle)"};                // 客户端发送
 constexpr std::string_view hello_world_doodle_server{R"(hello world! doodle server)"};  // 服务器发送
