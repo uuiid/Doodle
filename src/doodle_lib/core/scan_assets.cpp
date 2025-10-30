@@ -327,7 +327,7 @@ class scan_prop : public scan_base {
     }
     if (l_unreal_sk_working_file.path_.empty() || !FSys::exists(l_unreal_sk_working_file.path_)) {
       l_unreal_sk_working_file.description_   = "UE地编SK文件";
-      l_unreal_sk_working_file.path_          = scan_scene_unreal_engine_sk(l_prj, l_extend);
+      l_unreal_sk_working_file.path_          = scan_prop_unreal_engine(l_prj, l_extend);
       l_unreal_sk_working_file.software_type_ = software_enum::unreal_engine_sk;
       scan_add_linked_data(l_unreal_sk_working_file, l_result, l_prj, l_entt, in_task);
     }
