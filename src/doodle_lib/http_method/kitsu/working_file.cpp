@@ -283,4 +283,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity({}, id_));
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file_reference::get(
+    session_data_ptr in_handle
+) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (l_sql.uuid_to_id<task>(id_) == 0)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
+  auto l_task = l_sql.get_by_uuid<task>(id_);
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.get_all<working_file>(
+      join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))),
+      where(c(&working_file_entity_link::entity_id_) == l_task.entity_id_)
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_r);
+}
+
 }  // namespace doodle::http

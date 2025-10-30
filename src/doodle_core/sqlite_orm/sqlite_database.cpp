@@ -1084,6 +1084,7 @@ DOODLE_UUID_TO_ID(attendance_helper::database_t)
 DOODLE_UUID_TO_ID(asset_type)
 DOODLE_UUID_TO_ID(ai_image_metadata)
 DOODLE_UUID_TO_ID(project)
+DOODLE_UUID_TO_ID(task)
 
 DOODLE_ID_TO_UUID(assets_file_helper::database_t)
 DOODLE_ID_TO_UUID(assets_helper::database_t)
