@@ -62,14 +62,15 @@ function Compress-UEPlugins() {
 
     $UEPluginsJson | ConvertTo-Json | Set-Content -Path $UEPluginsJsonPath -Encoding UTF8
 
-    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
+    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle.$UEVersion.zip"
 }
 
 function Initialize-Doodle {
     param(
         [string]$OutPath,
         [Switch]$BuildKitsu,
-        [switch]$OnlyOne
+        [switch]$OnlyOne,
+        [switch]$CreateUEPlugins
     )
     if (-not (Test-Path $OutPath)) {
         New-Item $OutPath -ItemType Directory
@@ -100,8 +101,15 @@ function Initialize-Doodle {
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
     &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
     # 添加UE插件安装
-    Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
-    Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
+    if ($CreateUEPlugins) {
+        Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+        Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
+    }
+    if (-not (Test-Path $OutPath\dist\Plugins\Doodle.$UEVersion.zip)) {
+        Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+    }
+    
+    Copy-Item $OutPath\dist\Plugins\Doodle.$UEVersion.zip -Destination $OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip
 
     $Tags = git tag --sort=-v:refname;
     # 去除 前缀 v
