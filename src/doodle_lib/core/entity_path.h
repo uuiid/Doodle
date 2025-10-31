@@ -1,12 +1,10 @@
 #pragma once
-#include "doodle_core/configure/static_value.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/project.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <filesystem>
-#include <memory>
 
 namespace doodle {
 /// 角色模型maya 绑定路径
@@ -20,6 +18,7 @@ FSys::path get_entity_character_model_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& bian_hao_
 );
+FSys::path get_entity_character_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 
 /// 道具模型maya 绑定路径
 FSys::path get_entity_prop_rig_maya_path(

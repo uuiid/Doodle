@@ -30,6 +30,14 @@ FSys::path get_entity_character_model_maya_path(
 ) {
   return asset_root_path_ / fmt::format("Ch/JD{:02d}_{:02d}/Ch{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
 }
+FSys::path get_entity_character_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+  if (in_prj_.asset_root_path_.empty() || !in_extend_.gui_dang_ || !in_extend_.kai_shi_ji_shu_ ||
+      in_extend_.bian_hao_.empty())
+    throw std::runtime_error("无法生成角色模型maya 路径，缺少 资产根路径、归档、开始集或编号 信息");
+  return get_entity_character_model_maya_path(
+      in_prj_.asset_root_path_, *in_extend_.gui_dang_, *in_extend_.kai_shi_ji_shu_, in_extend_.bian_hao_
+  );
+}
 
 /// 道具模型maya 绑定路径
 FSys::path get_entity_prop_rig_maya_path(
