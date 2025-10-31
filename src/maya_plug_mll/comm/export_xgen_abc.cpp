@@ -36,6 +36,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
+#include <memory>
 #include <set>
 #include <string>
 #include <xgen/src/sggeom/SgVec3T.h>
@@ -56,7 +57,7 @@
 #include <xgen/src/xgrenderer/XgRenderAPIUtils.h>
 namespace doodle::maya_plug {
 
-void creare_curve(const XGenRenderAPI::vec3* in_point, std::size_t in_size) {
+void creare_curve_test(const XGenRenderAPI::vec3* in_point, std::size_t in_size) {
   MPointArray l_point_array{};
   l_point_array.setLength(in_size);
   MDoubleArray l_double_array{};
@@ -440,8 +441,9 @@ std::string xgen_abc_export::impl::create_render_args(
 struct xgen_render_face {
   std::unique_ptr<XgenRender> main_render{};
   std::unique_ptr<XGenRenderAPI::PatchRenderer> patch_renderer{};
-  std::map<std::uint32_t, std::unique_ptr<XGenRenderAPI::FaceRenderer>> face_render{};
+  std::unique_ptr<XGenRenderAPI::ParallelRenderer> parallel_renderer{};
 };
+
 struct xgen_render_des {
   std::shared_ptr<xgen_alembic_out> xgen_alembic_out_ptr_{};
   std::vector<std::unique_ptr<xgen_render_face>> face_list_{};
@@ -491,13 +493,15 @@ MStatus xgen_abc_export::redoIt() {
         l_render_->patch_renderer = std::unique_ptr<XGenRenderAPI::PatchRenderer>{
             XGenRenderAPI::PatchRenderer::init(l_render_->main_render.get(), l_args.c_str())
         };
+        l_render_->parallel_renderer = std::unique_ptr<XGenRenderAPI::ParallelRenderer>{
+            XGenRenderAPI::ParallelRenderer::init(l_render_->patch_renderer.get())
+        };
         XGenRenderAPI::bbox l_sub_bbox{};
         std::uint32_t l_face_id = -1;
-        while (l_render_->patch_renderer->nextFace(l_sub_bbox, l_face_id)) {
-          l_render_->face_render.emplace(
-              l_face_id, XGenRenderAPI::FaceRenderer::init(l_render_->patch_renderer.get(), l_face_id)
+        while (l_render_->patch_renderer->nextFace(l_sub_bbox, l_face_id))
+          l_render_->parallel_renderer->enqueue(
+              XGenRenderAPI::FaceRenderer::init(l_render_->patch_renderer.get(), l_face_id)
           );
-        }
       }
     }
   }
@@ -508,9 +512,7 @@ MStatus xgen_abc_export::redoIt() {
     for (auto&& l_list : l_render_list) {
       l_list->xgen_alembic_out_ptr_->write_begin();
       for (auto&& l_r : l_list->face_list_) {
-        XGenRenderAPI::bbox l_sub_bbox{};
-        std::uint32_t l_face_id = -1;
-        while (l_r->patch_renderer->nextFace(l_sub_bbox, l_face_id)) l_r->face_render.at(l_face_id)->render();
+        l_r->parallel_renderer->spawnAndWait();
       }
       l_list->xgen_alembic_out_ptr_->write_end();
     }
@@ -533,7 +535,8 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
   maya_chick(status);
   std::vector<MDagPath> dag_path_list{};
   for (auto&& i : XgPalette::palettes())
-    if (auto l_ptr = XgPalette::palette(i); l_ptr) p_i->palette_v.emplace_back(l_ptr, xgutil::objNameSpace(i)).dag_namespace.pop_back();
+    if (auto l_ptr = XgPalette::palette(i); l_ptr)
+      p_i->palette_v.emplace_back(l_ptr, xgutil::objNameSpace(i)).dag_namespace.pop_back();
 
   for (; !it_list.isDone(); it_list.next()) {
     MDagPath l_dag_path{};
