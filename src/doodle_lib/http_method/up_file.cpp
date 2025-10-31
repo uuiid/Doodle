@@ -12,6 +12,7 @@
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 
 #include <doodle_lib/core/cache_manger.h>
+#include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/scan_assets.h>
@@ -122,23 +123,22 @@ void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
 FSys::path doodle_data_asset_file_maya::gen_file_path() {
   if (task_type_id_ == task_type::get_binding_id()) {
     if (entity_type_id_ == asset_type::get_character_id())
-      return asset_root_path_ / fmt::format("Ch/JD{:02d}_{:02d}/Ch{}/Rig", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_character_rig_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
     if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-      return asset_root_path_ /
-             fmt::format("Prop/JD{:02d}_{:02d}/{}/Rig", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+      return get_entity_prop_rig_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
     if (entity_type_id_ == asset_type::get_ground_id())
-      return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_ground_rig_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
   }
   if (task_type_id_ == task_type::get_ground_model_id() || task_type_id_ == task_type::get_character_id()) {
     if (entity_type_id_ == asset_type::get_character_id())
-      return asset_root_path_ / fmt::format("Ch/JD{:02d}_{:02d}/Ch{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_character_model_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
     if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-      return asset_root_path_ / fmt::format("Prop/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+      return get_entity_prop_model_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
     if (entity_type_id_ == asset_type::get_ground_id())
-      return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_ground_model_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
   }
   if (task_type_id_ == task_type::get_simulation_id()) {
-    return asset_root_path_ / "CFX";
+    return get_entity_simulation_asset_path(asset_root_path_);
   }
 
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
@@ -146,44 +146,37 @@ FSys::path doodle_data_asset_file_maya::gen_file_path() {
 
 FSys::path doodle_data_asset_file_ue::gen_file_path() {
   if (entity_type_id_ == asset_type::get_character_id())
-    return asset_root_path_ /
-           fmt::format("Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
+    return get_entity_asset_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
   if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-    return asset_root_path_ /
-           fmt::format(
-               "Prop/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", gui_dang_, kai_shi_ji_shu_, gui_dang_, kai_shi_ji_shu_
-           );
+    return get_entity_prop_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_);
   if (entity_type_id_ == asset_type::get_ground_id())
-    return asset_root_path_ /
-           fmt::format("BG/JD{:02d}_{:02d}/BG{}/{}", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
+    return get_entity_ground_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
 FSys::path doodle_data_asset_file_image::gen_file_path() {
   if (entity_type_id_ == asset_type::get_character_id())
-    return asset_root_path_ / fmt::format("Ch/JD{:02d}_{:02d}/Ch{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+    return get_entity_asset_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
   if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-    return asset_root_path_ / fmt::format("Prop/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+    return get_entity_prop_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
   if (entity_type_id_ == asset_type::get_ground_id())
-    return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+    return get_entity_ground_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
 FSys::path doodle_data_shots_file_maya::gen_file_path() {
   if (task_type_id_ == task_type::get_animation_id())
-    return FSys::path{} / "03_Workflow" / "shots" / episode_name_ / "ma";
+    return get_shots_animation_maya_path(episode_name_);
   else if (task_type_id_ == task_type::get_simulation_task_id())
-    return FSys::path{} / "03_Workflow" / "shots" / episode_name_ / "sim";
+    return get_shots_simulation_maya_path(episode_name_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
 FSys::path doodle_data_shots_file_output::gen_file_path() {
   if (task_type_id_ == task_type::get_animation_id())
-    return FSys::path{} / "03_Workflow" / "shots" / episode_name_ / "fbx" /
-           fmt::format("{}_{}_{}", project_code_, episode_name_, shot_name_);
+    return get_shots_animation_output_path(project_code_, episode_name_, shot_name_);
   else if (task_type_id_ == task_type::get_simulation_task_id())
-    return FSys::path{} / "03_Workflow" / "shots" / episode_name_ / "abc" /
-           fmt::format("{}_{}_{}", project_code_, episode_name_, shot_name_);
+    return get_shots_simulation_output_path(project_code_, episode_name_, shot_name_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 

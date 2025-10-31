@@ -9,14 +9,14 @@
 
 namespace doodle {
 /// 角色模型maya 绑定路径
-inline FSys::path get_entity_asset_rig_maya_path(
+inline FSys::path get_entity_character_rig_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& bian_hao_
 ) {
   return asset_root_path_ / fmt::format("Ch/JD{:02d}_{:02d}/Ch{}/Rig", gui_dang_, kai_shi_ji_shu_, bian_hao_);
 }
 /// 角色模型maya 路径
-inline FSys::path get_entity_asset_model_maya_path(
+inline FSys::path get_entity_character_model_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& bian_hao_
 ) {
@@ -95,6 +95,10 @@ inline FSys::path get_entity_ground_image_path(
     const std::string& bian_hao_
 ) {
   return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
+}
+/// 获得解算资产路径
+inline FSys::path get_entity_simulation_asset_path(const FSys::path& asset_root_path_) {
+  return asset_root_path_ / "CFX";
 }
 
 /// 动画镜头maya路径

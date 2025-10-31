@@ -41,8 +41,6 @@ class up_file_asset_base : public up_file_base {
   std::string pin_yin_ming_cheng_{};
   std::string version_{};
 
-  FSys::path root_path_{};
-  FSys::path file_path_{};
   FSys::path asset_root_path_{};
 
   virtual void query_task_info(session_data_ptr in_handle) override;
