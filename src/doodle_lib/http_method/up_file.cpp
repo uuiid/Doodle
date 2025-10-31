@@ -146,7 +146,7 @@ FSys::path doodle_data_asset_file_maya::gen_file_path() {
 
 FSys::path doodle_data_asset_file_ue::gen_file_path() {
   if (entity_type_id_ == asset_type::get_character_id())
-    return get_entity_asset_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
+    return get_entity_character_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
   if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
     return get_entity_prop_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_);
   if (entity_type_id_ == asset_type::get_ground_id())
@@ -156,7 +156,7 @@ FSys::path doodle_data_asset_file_ue::gen_file_path() {
 
 FSys::path doodle_data_asset_file_image::gen_file_path() {
   if (entity_type_id_ == asset_type::get_character_id())
-    return get_entity_asset_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+    return get_entity_character_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
   if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
     return get_entity_prop_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
   if (entity_type_id_ == asset_type::get_ground_id())

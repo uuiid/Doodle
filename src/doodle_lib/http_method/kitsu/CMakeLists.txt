@@ -35,4 +35,5 @@ target_sources(
         output_types.cpp
         working_file.cpp
         casting.cpp
+        auto_task.cpp
 )

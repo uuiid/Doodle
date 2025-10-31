@@ -69,6 +69,13 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/shots/{shot_id}/run-ue-assembly
+DOODLE_HTTP_JWT_FUN(actions_projects_shots_run_ue_assembly)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/actions/projects/{project_id}/sequences/{sequence_id}/working-file
 DOODLE_HTTP_JWT_FUN(actions_projects_sequences_working_file)
 DOODLE_HTTP_FUN_OVERRIDE(get)
