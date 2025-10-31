@@ -34,7 +34,10 @@ struct task_type {
   static uuid get_simulation_id();
   /// 特效资产
   static uuid get_effect_id();
-
+  /// 动画
+  static uuid get_animation_id();
+  /// 解算
+  static uuid get_simulation_task_id();
 
   // from json
   template <typename BasicJsonType>

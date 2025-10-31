@@ -218,6 +218,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
           &actions_projects_sequences_working_file::id_
       ))
       .reg_t<actions_tasks_working_file_reference>("/api/actions/tasks/{}/working-file/reference"_url(&actions_tasks_working_file_reference::id_))
+      .reg_t<doodle_data_shots_file_maya>("/api/doodle/data/shots/{task_id}/file/maya"_url(&doodle_data_shots_file_maya::id_))
+      .reg_t<doodle_data_shots_file_output>("/api/doodle/data/shots/{task_id}/file/output"_url(&doodle_data_shots_file_output::id_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

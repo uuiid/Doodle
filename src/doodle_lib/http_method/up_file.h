@@ -7,6 +7,9 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
+#include <string>
+
+
 namespace doodle {
 struct entity_asset_extend;
 struct asset_type;
@@ -30,6 +33,10 @@ class up_file_asset_base : public http_jwt_fun {
     FSys::path root_path_{};
     FSys::path file_path_{};
     FSys::path asset_root_path_{};
+
+    std::string episode_name_{};
+    std::string shot_name_{};
+    std::string project_code_{};
   };
 
   virtual FSys::path gen_file_path() = 0;
@@ -41,16 +48,24 @@ class up_file_asset_base : public http_jwt_fun {
   uuid id_{};
 };
 
-// "api/doodle/data/asset/{task_id}/file/maya"
+// /api/doodle/data/asset/{task_id}/file/maya
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_maya, up_file_asset_base)
 FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
-// "api/doodle/data/asset/{task_id}/file/ue"
+// /api/doodle/data/asset/{task_id}/file/ue
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_ue, up_file_asset_base)
 FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
-// "api/doodle/data/asset/{task_id}/file/image"
+// /api/doodle/data/asset/{task_id}/file/image
 DOODLE_HTTP_FUN_C(doodle_data_asset_file_image, up_file_asset_base)
+FSys::path gen_file_path() override;
+DOODLE_HTTP_FUN_END()
+// /api/doodle/data/shots/{task_id}/file/maya
+DOODLE_HTTP_FUN_C(doodle_data_shots_file_maya, up_file_asset_base)
+FSys::path gen_file_path() override;
+DOODLE_HTTP_FUN_END()
+// /api/doodle/data/shots/{task_id}/file/output
+DOODLE_HTTP_FUN_C(doodle_data_shots_file_output, up_file_asset_base)
 FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

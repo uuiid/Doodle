@@ -48,7 +48,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   task_info_.version_            = l_extend->ban_ben_;
 
   auto l_entity                  = l_sql.get_by_uuid<entity>(l_task.entity_id_);
-  auto l_prj                     = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  task_info_.shot_name_          = l_entity.name_;
+
+  if (!l_entity.parent_id_.is_nil()) {
+    auto l_parent_entity     = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
+    task_info_.episode_name_ = l_parent_entity.name_;
+  }
+  auto l_prj = l_sql.get_by_uuid<project>(l_entity.project_id_);
   if (!(l_task.task_type_id_ == task_type::get_character_id() ||
         l_task.task_type_id_ == task_type::get_ground_model_id() ||
         l_task.task_type_id_ == task_type::get_binding_id()))
@@ -57,12 +63,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_asset_base
   task_info_.task_type_id_    = l_task.task_type_id_;
   task_info_.entity_type_id_  = l_entity.entity_type_id_;
   task_info_.asset_root_path_ = l_prj.asset_root_path_;
+  task_info_.project_code_    = l_prj.code_;
 
   task_info_.root_path_       = l_prj.path_;
   task_info_.file_path_       = l_d;
   move_file(in_handle);
-
-  if (l_d.extension() == ".ma" || l_d.extension() == ".uproject") co_await scan_assets::scan_task_async(l_task);
 
   co_return in_handle->make_msg(nlohmann::json{});
 }
@@ -201,6 +206,24 @@ FSys::path doodle_data_asset_file_image::gen_file_path() {
                "BG/JD{:02d}_{:02d}/BG{}", task_info_.gui_dang_, task_info_.kai_shi_ji_shu_, task_info_.bian_hao_
            );
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
+}
+
+FSys::path doodle_data_shots_file_maya::gen_file_path() {
+  if (task_info_.task_type_id_ == task_type::get_animation_id())
+    return FSys::path{} / "03_Workflow" / "shots" / task_info_.episode_name_ / "ma";
+  else if (task_info_.task_type_id_ == task_type::get_simulation_task_id())
+    return FSys::path{} / "03_Workflow" / "shots" / task_info_.episode_name_ / "sim";
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
+}
+
+FSys::path doodle_data_shots_file_output::gen_file_path() {
+  if (task_info_.task_type_id_ == task_type::get_animation_id())
+    return FSys::path{} / "03_Workflow" / "shots" / task_info_.episode_name_ / "fbx" /
+           fmt::format("{}_{}_{}", task_info_.project_code_, task_info_.episode_name_, task_info_.shot_name_);
+  else if (task_info_.task_type_id_ == task_type::get_simulation_task_id())
+    return FSys::path{} / "03_Workflow" / "shots" / task_info_.episode_name_ / "abc" /
+           fmt::format("{}_{}_{}", task_info_.project_code_, task_info_.episode_name_, task_info_.shot_name_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
 }  // namespace doodle::http
