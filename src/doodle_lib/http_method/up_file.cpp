@@ -4,6 +4,7 @@
 
 #include "up_file.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/task.h"
@@ -105,8 +106,10 @@ void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
     auto l_parent_entity = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
     episode_name_        = l_parent_entity.name_;
   }
-  auto l_prj = l_sql.get_by_uuid<project>(l_entity.project_id_);
-  root_path_ = l_prj.path_;
+  auto l_prj    = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  project_code_ = l_prj.code_;
+  root_path_    = l_prj.path_;
+  return;
 }
 //         | 角色 | 地编模型 | 绑定
 // 角色    |
