@@ -154,8 +154,24 @@
     {
       "label": "复制数据库",
       "type": "shell",
-      "command": "copy \\\\192.168.40.181\\Dev\\kitsu_new.database E:\\Doodle\\build\\kitsu_new.db",
-      "problemMatcher": []
+      "command": "${workspaceFolder}/build_script/copy_db.ps1",
+      "problemMatcher": [
+        {
+          "owner": "powershell",
+          "severity": "error",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^At (.*):(\\d+) char:(\\d+)(.*)",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        }
+      ]
     }
   ],
   "inputs": [
