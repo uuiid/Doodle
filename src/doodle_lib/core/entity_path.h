@@ -83,11 +83,9 @@ std::string get_entity_ground_ue_sk_name(
 );
 std::string get_entity_ground_ue_sk_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_);
 /// 场景名称 alembic 名称
-std::string get_entity_ground_alembic_name(
-    const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
-);
-std::string get_entity_ground_alembic_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_);
-
+std::string get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
+std::string get_entity_ground_alembic_name(const entity_asset_extend& in_extend_);
+std::string get_entity_ground_rig_name(const entity_asset_extend& in_extend_);
 /// 角色模型图片 路径
 FSys::path get_entity_character_image_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,

@@ -10,6 +10,7 @@
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -19,10 +20,12 @@
 #include <boost/exception/diagnostic_information.hpp>
 
 #include <nlohmann/json_fwd.hpp>
+#include <range/v3/action/push_back.hpp>
 #include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
 #include <winsock2.h>
+
 namespace doodle::http {
 
 namespace {
@@ -216,46 +219,149 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   co_return in_handle->make_msg(l_working_files);
 }
 
-std::vector<working_file_and_link> get_working_files_for_entity(const uuid& in_shot_id, const uuid& in_sequence_id) {
+std::vector<working_file_and_link> create_character_working_files(
+    const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
+) {
+  std::vector<working_file_and_link> l_working_files{};
+  l_working_files.reserve(4);
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "角色UE工作文件",
+              .path_        = get_entity_character_ue_path(in_project, in_entity_asset_extend) /
+                       get_entity_character_ue_name(in_entity_asset_extend),
+              .software_type_ = software_enum::unreal_engine,
+
+          },
+          in_entity.uuid_id_,
+      }
+  );
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_   = "角色Maya rig工作文件",
+              .path_          = get_entity_character_rig_maya_path(in_project, in_entity_asset_extend),
+              .software_type_ = software_enum::maya,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+
+  return l_working_files;
+}
+
+std::vector<working_file_and_link> create_prop_working_files(
+    const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
+) {
+  std::vector<working_file_and_link> l_working_files{};
+  l_working_files.reserve(3);
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "道具UE工作文件",
+              .path_        = get_entity_prop_ue_path(in_project, in_entity_asset_extend) /
+                       get_entity_prop_ue_name(in_entity_asset_extend),
+              .software_type_ = software_enum::unreal_engine,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_   = "道具Maya建模工作文件",
+              .path_          = get_entity_prop_model_maya_path(in_project, in_entity_asset_extend),
+              .software_type_ = software_enum::maya,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+
+  return l_working_files;
+}
+std::vector<working_file_and_link> create_ground_working_files(
+    const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
+) {
+  std::vector<working_file_and_link> l_working_files{};
+  l_working_files.reserve(2);
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_   = "场景UE工作文件",
+              .path_          = get_entity_ground_ue_path(in_project, in_entity_asset_extend),
+              .software_type_ = software_enum::unreal_engine,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "场景Maya建模工作文件",
+              .path_        = get_entity_ground_model_maya_path(in_project, in_entity_asset_extend) /
+                       get_entity_ground_alembic_name(in_entity_asset_extend),
+              .software_type_ = software_enum::alembic,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "场景Maya建模rig工作文件",
+              .path_        = get_entity_ground_model_maya_path(in_project, in_entity_asset_extend) /
+                       get_entity_ground_rig_name(in_entity_asset_extend),
+              .software_type_ = software_enum::alembic,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+
+  return l_working_files;
+}
+
+std::vector<working_file_and_link> get_working_files_for_entity(
+    const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
+) {
   auto l_sql = g_ctx().get<sqlite_database>();
 
   std::vector<working_file_and_link> l_working_files{};
-  l_working_files.reserve(128);
-  std::set<uuid> l_working_file_ids{};
   using namespace sqlite_orm;
 
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
-  for (auto&& [l_working_file, l_entity_id, l_task_id, l_task_type_id] : l_sql.impl_->storage_any_.select(
-           columns(
-               object<working_file>(true), &working_file_entity_link::entity_id_, &working_file_task_link::task_id_,
-               &task::task_type_id_
-           ),
-           from<working_file>(),
-           join<working_file_entity_link>(
-               on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))
-           ),
-           join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
-           join<task>(on(c(&task::uuid_id_) == c(&working_file_task_link::task_id_))),
-           where(in(
-               &working_file_entity_link::entity_id_,
-               select(
-                   &entity_link::entity_out_id_, from<entity_link>(),
-                   join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                   join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                   where(
-                       (in_shot_id.is_nil() || c(shot->*&entity::uuid_id_) == in_shot_id) &&
-                       (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id)
-                   )
-               )
-
-           ))
-       )) {
-    l_working_file_ids.emplace(l_working_file.uuid_id_);
-    l_working_files.emplace_back(
-        working_file_and_link{working_file{l_working_file}, l_entity_id, l_task_id, l_task_type_id}
-    );
+  auto l_assets           = l_sql.impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(in(
+          &entity::uuid_id_, select(
+                                 &entity_link::entity_out_id_, from<entity_link>(),
+                                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+                                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+                                 where(
+                                     (in_shot_id.is_nil() || c(shot->*&entity::uuid_id_) == in_shot_id) &&
+                                     (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id)
+                                 )
+                             )
+      ))
+  );
+  auto l_prj = l_sql.get_by_uuid<project>(in_project_id);
+  for (auto&& [l_entity, l_entity_asset_extend] : l_assets) {
+    if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
+      l_working_files |=
+          ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
+    } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
+               l_entity.entity_type_id_ == asset_type::get_effect_id()) {
+      l_working_files |= ranges::actions::push_back(create_prop_working_files(l_prj, l_entity, l_entity_asset_extend));
+    } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
+      l_working_files |=
+          ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
+    }
   }
+  for (auto&& i : l_working_files) {
+    if (!FSys::exists(i.path_)) i.path_ = FSys::path{};
+  }
+
   return l_working_files;
 }
 
@@ -268,7 +374,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(id_, {}));
+  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, id_, {}));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_sequences_working_file::get(
@@ -279,7 +385,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的项目 id ");
-  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity({}, id_));
+  co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, {}, id_));
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file_reference::get(

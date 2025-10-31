@@ -177,13 +177,16 @@ std::string get_entity_ground_ue_sk_name(const std::string& bian_hao_, const ent
   return get_entity_ground_ue_sk_name(bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
 /// 场景名称 alembic 名称
-std::string get_entity_ground_alembic_name(
-    const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
-) {
+std::string get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
   return fmt::format("{}{}{}_Low.abc", pin_yin_ming_cheng_, ban_ben_.empty() ? "" : "_", ban_ben_);
 }
-std::string get_entity_ground_alembic_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_) {
-  return get_entity_ground_alembic_name(bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
+std::string get_entity_ground_alembic_name(const entity_asset_extend& in_extend_) {
+  return get_entity_ground_alembic_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
+}
+std::string get_entity_ground_rig_name(const entity_asset_extend& in_extend_) {
+  return fmt::format(
+      "{}{}{}_Low.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
+  );
 }
 
 /// 角色模型图片 路径
