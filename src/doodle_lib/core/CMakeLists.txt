@@ -12,6 +12,7 @@ target_sources(doodle_lib
         alembic_file.h
         scan_assets.h
         asyn_task.h
+        entity_path.h
 
         PRIVATE
         filesystem_extend.cpp
@@ -21,6 +22,7 @@ target_sources(doodle_lib
         fbx_file.cpp
         alembic_file.cpp
         scan_assets.cpp
+        entity_path.cpp
 )
 add_subdirectory(http)
 add_subdirectory(socket_io)
