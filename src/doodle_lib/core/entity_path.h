@@ -25,22 +25,26 @@ FSys::path get_entity_prop_rig_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& pin_yin_ming_cheng_
 );
+FSys::path get_entity_prop_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 /// 道具模型maya 路径
 FSys::path get_entity_prop_model_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& pin_yin_ming_cheng_
 );
+FSys::path get_entity_prop_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 /// 场景模型maya 绑定路径
 FSys::path get_entity_ground_rig_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& bian_hao_
 );
+FSys::path get_entity_ground_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 
 /// 场景模型maya 路径
 FSys::path get_entity_ground_model_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
     const std::string& bian_hao_
 );
+FSys::path get_entity_ground_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 /// 角色模型ue 路径
 FSys::path get_entity_character_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
