@@ -108,6 +108,8 @@ FSys::path get_entity_ground_image_path(const project& in_prj_, const entity_ass
 /// 获得解算资产路径
 FSys::path get_entity_simulation_asset_path(const FSys::path& asset_root_path_);
 FSys::path get_entity_simulation_asset_path(const project& in_prj_);
+FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend& in_extend_);
 /// 动画镜头maya路径
 FSys::path get_shots_animation_maya_path(const std::string& episode_name_);
 FSys::path get_shots_animation_maya_path(const entity& episode_);

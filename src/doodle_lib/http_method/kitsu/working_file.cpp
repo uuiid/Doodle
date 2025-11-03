@@ -246,7 +246,17 @@ std::vector<working_file_and_link> create_character_working_files(
           in_entity.uuid_id_,
       }
   );
-
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "角色Maya 解算工作文件",
+              .path_        = get_entity_simulation_asset_path(in_project) /
+                       get_entity_simulation_character_asset_name(in_entity_asset_extend),
+              .software_type_ = software_enum::maya,
+          },
+          in_entity.uuid_id_,
+      }
+  );
   return l_working_files;
 }
 
@@ -277,7 +287,17 @@ std::vector<working_file_and_link> create_prop_working_files(
           in_entity.uuid_id_,
       }
   );
-
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "道具Maya 解算工作文件",
+              .path_        = get_entity_simulation_asset_path(in_project) /
+                       get_entity_simulation_prop_asset_name(in_entity_asset_extend),
+              .software_type_ = software_enum::maya,
+          },
+          in_entity.uuid_id_,
+      }
+  );
   return l_working_files;
 }
 std::vector<working_file_and_link> create_ground_working_files(
@@ -312,7 +332,7 @@ std::vector<working_file_and_link> create_ground_working_files(
               .description_ = "场景Maya建模rig工作文件",
               .path_        = get_entity_ground_model_maya_path(in_project, in_entity_asset_extend) /
                        get_entity_ground_rig_name(in_entity_asset_extend),
-              .software_type_ = software_enum::alembic,
+              .software_type_ = software_enum::maya,
           },
           in_entity.uuid_id_,
       }

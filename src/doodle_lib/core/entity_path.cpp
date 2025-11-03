@@ -320,6 +320,12 @@ FSys::path get_entity_simulation_asset_path(const FSys::path& asset_root_path_) 
 FSys::path get_entity_simulation_asset_path(const project& in_prj_) {
   return get_entity_simulation_asset_path(in_prj_.asset_root_path_);
 }
+FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend& in_extend_) {
+  return get_entity_prop_rig_maya_name(in_extend_).stem().string() + "_cloth.ma";
+}
+FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend& in_extend_) {
+  return get_entity_character_rig_maya_name(in_extend_).stem().string() + "_cloth.ma";
+}
 /// 动画镜头maya路径
 FSys::path get_shots_animation_maya_path(const std::string& episode_name_) {
   return FSys::path{"03_Workflow"} / "shots" / episode_name_ / "ma";
