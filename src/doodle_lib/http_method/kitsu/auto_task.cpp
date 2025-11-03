@@ -22,6 +22,7 @@
 #include <map>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <vector>
 
 namespace doodle::http {
 namespace {
@@ -94,7 +95,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
             boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
         }
     );
-  std::map<std::string, std::size_t> l_asset_infos_key_map{};
+  std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
     auto&& l_info = l_ret.asset_infos_[i];
     auto l_stem   = l_info.shot_output_path_.stem().string();
@@ -106,7 +107,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     } else if (auto l_low_post = l_key.find("_Low"); l_low_post != std::string::npos) {
       l_key = l_key.substr(0, l_size - l_low_post + 4);
     }
-    l_asset_infos_key_map[l_key] = i;
+    l_asset_infos_key_map[l_key].emplace_back(i);
   }
 
   auto l_assets = l_sql.impl_->storage_any_.select(
@@ -125,13 +126,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
       if (l_asset_infos_key_map.contains(l_asset_extend.bian_hao_)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
-          l_ret.asset_infos_[l_asset_infos_key_map[l_asset_extend.bian_hao_]].ue_asset_path_ =
-              get_entity_character_ue_path(
-                  l_prj.asset_root_path_, l_asset_extend.gui_dang_.value(), l_asset_extend.kai_shi_ji_shu_.value(),
-                  l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_
-              );
-          l_ret.asset_infos_[l_asset_infos_key_map[l_asset_extend.bian_hao_]].ue_sk_path_ =
-              get_entity_character_ue_name(l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_);
+          for (auto&& l_idx : l_asset_infos_key_map[l_asset_extend.bian_hao_]) {
+            l_ret.asset_infos_[l_idx].ue_asset_path_ = get_entity_character_ue_path(
+                l_prj.asset_root_path_, l_asset_extend.gui_dang_.value(), l_asset_extend.kai_shi_ji_shu_.value(),
+                l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_
+            );
+            l_ret.asset_infos_[l_idx].ue_sk_path_ =
+                get_entity_character_ue_name(l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_);
+          }
         } else
           throw_exception(
               http_request_error{
@@ -149,14 +151,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       );
       if (l_asset_infos_key_map.contains(l_key)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
-          l_ret.asset_infos_[l_asset_infos_key_map[l_key]].ue_asset_path_ = get_entity_prop_ue_path(
-              l_prj.asset_root_path_, l_asset_extend.gui_dang_.value(), l_asset_extend.kai_shi_ji_shu_.value()
-          );
-          l_ret.asset_infos_[l_asset_infos_key_map[l_key]].ue_sk_path_ = get_entity_prop_ue_name(
-              l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
-          );
-          l_ret.asset_infos_[l_asset_infos_key_map[l_key]].ue_asset_path_ /=
-              l_ret.asset_infos_[l_asset_infos_key_map[l_key]].ue_sk_path_.parent_path().parent_path();
+          for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
+            l_ret.asset_infos_[l_idx].ue_asset_path_ = get_entity_prop_ue_path(
+                l_prj.asset_root_path_, l_asset_extend.gui_dang_.value(), l_asset_extend.kai_shi_ji_shu_.value()
+            );
+            l_ret.asset_infos_[l_idx].ue_sk_path_ = get_entity_prop_ue_name(
+                l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
+            );
+            l_ret.asset_infos_[l_idx].ue_asset_path_ /=
+                l_ret.asset_infos_[l_idx].ue_sk_path_.parent_path().parent_path();
+          }
         } else
           throw_exception(
               http_request_error{
@@ -188,9 +192,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_asset_extend.ban_ben_
       );
       if (l_asset_infos_key_map.contains(l_key)) {
-        l_ret.asset_infos_[l_asset_infos_key_map[l_key]].ue_sk_path_ = get_entity_ground_ue_sk_name(
-            l_asset_extend.ban_ben_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
-        );
+        for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
+          l_ret.asset_infos_[l_idx].ue_sk_path_ = get_entity_ground_ue_sk_name(
+              l_asset_extend.ban_ben_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
+          );
+        }
       }
 
     } else {
