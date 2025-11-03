@@ -88,6 +88,11 @@ function Initialize-Doodle {
     $UEVersion = "5.5"
     if ($BuildKitsu) {
         Write-Host "开始构建文件"
+        $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+        if ($NpmResult.ExitCode -ne 0) {
+            # 抛出异常
+            throw "拉取失败"
+        }
         $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0) {
             # 抛出异常
