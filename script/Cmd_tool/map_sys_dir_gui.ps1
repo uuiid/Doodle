@@ -2,24 +2,24 @@
 # 这个是外部使用的脚本
 
 $map_item = @(
-@( "C:\sy\DuBuXiaoYao_8", "", "独步逍遥" ),
-@( "C:\sy\WuDiJianHun_8", "", "无敌剑魂" ),
-@( "C:\sy\CangFeng_8", "", "藏锋" ),
-@( "C:\sy\WanGuShenHua_8", "", "万古神话" ),
-@( "C:\sy\RenJianZuiDeYi_8", "", "人间最得意" ),
-@( "C:\sy\LianQiShiWanNian_8", "", "炼气十万年" ),
-@( "C:\sy\WuJinShenYu_8", "", "无尽神域" ),
-@( "C:\sy\WanYuFengShen_9", "", "万域封神" ),
-@( "C:\sy\KuangShenMoZun_9", "", "狂神魔尊" ),
-@( "C:\sy\WGXD", "", "独步万古" ),
-@( "C:\sy\ZMLCLWDSWD", "", "宗门里除了我都是卧底" ),
-@( "C:\sy\WDSXTQL", "", "我的师兄太强了" ),
-@( "C:\sy\WSMSHWDL", "", "我什么时候无敌了"),
-@( "C:\sy\SSWH", "", "双生武魂")
+    @( "C:\sy\DuBuXiaoYao_8", "", "独步逍遥" ),
+    @( "C:\sy\WuDiJianHun_8", "", "无敌剑魂" ),
+    @( "C:\sy\CangFeng_8", "", "藏锋" ),
+    @( "C:\sy\WanGuShenHua_8", "", "万古神话" ),
+    @( "C:\sy\RenJianZuiDeYi_8", "", "人间最得意" ),
+    @( "C:\sy\LianQiShiWanNian_8", "", "炼气十万年" ),
+    @( "C:\sy\WuJinShenYu_8", "", "无尽神域" ),
+    @( "C:\sy\WanYuFengShen_9", "", "万域封神" ),
+    @( "C:\sy\KuangShenMoZun_9", "", "狂神魔尊" ),
+    @( "C:\sy\WGXD", "", "独步万古" ),
+    @( "C:\sy\ZMLCLWDSWD", "", "宗门里除了我都是卧底" ),
+    @( "C:\sy\WDSXTQL", "", "我的师兄太强了" ),
+    @( "C:\sy\WSMSHWDL", "", "我什么时候无敌了"),
+    @( "C:\sy\SSWH", "", "双生武魂"),
+    @( "C:\sy\DYX", "", "盗妖行")
 )
 
-function Add-SyDir
-{
+function Add-SyDir {
     $main_ini = @"
 [.ShellClassInfo]
 InfoTip=@Shell32.dll,-12688
@@ -41,11 +41,9 @@ FolderType=
 Logo =
 
 "@;
-    if (Test-Path -Path "C:\sy")
-    {
+    if (Test-Path -Path "C:\sy") {
     }
-    else
-    {
+    else {
         New-Item "C:\sy" -ItemType Directory
     }
     Set-Content -Path "C:\sy\desktop.ini" -Value $main_ini -Encoding "unicode" -Force
@@ -55,36 +53,30 @@ Logo =
 
 # $map_item |Format-Table -Property @{name="index";expression={$global:index;$global:index+=1}},name;
 
-function Add-SymLink
-{
-    try
-    {
+function Add-SymLink {
+    try {
         for ($i = 0; $i -lt $map_item.Count; $i++) {
             "index {0} name {1}" -f $i, $map_item[$i][2]
         }
         $indexstring = Read-Host "选择项目进行路径标准化(请输入索引)";
         $value = $indexstring -as [Double];
-        if ($value -cge $map_item.Length)
-        {
+        if ($value -cge $map_item.Length) {
             Read-Host "没有这个项目 按Enter键后退出";
             exit;
         }
         $pathstring = Read-Host "输入项目"$map_item[$value][2]"所在位置";
 
-        if (Test-Path $map_item[$value][0])
-        {
+        if (Test-Path $map_item[$value][0]) {
             Write-Host "检查到已存在"$map_item[$value][0]",删除路径后重新标准化"
             $fod = Get-Item -Path $map_item[$value][0]
             $fod.Delete()
         }
 
-        if (Test-Path $pathstring)
-        {
+        if (Test-Path $pathstring) {
             $path = Get-Item -Path $pathstring;
             $pathstring = $path.FullName;
         }
-        else
-        {
+        else {
             Read-Host "没有从目录中检查到路径" $pathstring ", 按Enter键后退出";
             exit;
         }
@@ -110,15 +102,14 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
         $file.Attributes = 'Archive, System, Hidden'
         # ps2.0 不支持符号连接, 使用cmd创建脚本
         #    New-Item -ItemType SymbolicLink -Path $map_item[$value][0] -Target $pathstring
-        $str_cmd = "mklink /D {0} {1}" -f $map_item[$value][0],$pathstring
+        $str_cmd = "mklink /D {0} {1}" -f $map_item[$value][0], $pathstring
         cmd.exe /c $str_cmd
     }
-    catch
-    {
+    catch {
         Write-Host "出现异常， 请联系自作人员"
     }
     Read-Host "标准化路径完成, 按Enter键后退出"
 }
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 E:\Doodle\script\Cmd_tool\map_waibao_5.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 E:\Doodle\script\Cmd_tool\map_waibao_6.exe -requireAdmin
