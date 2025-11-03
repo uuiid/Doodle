@@ -130,7 +130,7 @@ std::string get_entity_prop_ue_name(
     const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
 ) {
   return fmt::format(
-      "{}/Prop/{}/Mesh/SK_{}{}{}.uasset", doodle_config::ue4_content, pin_yin_ming_cheng_, bian_hao_,
+      "{}/Prop/{}/Mesh/SK_{}{}{}.uasset", doodle_config::ue4_content, pin_yin_ming_cheng_, pin_yin_ming_cheng_,
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
