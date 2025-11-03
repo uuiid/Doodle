@@ -86,8 +86,10 @@ class cache_manger_user : public boost::noncopyable {
       if (!l_task.empty()) {
         auto l_user = g_ctx().get<sqlite_database>().impl_->storage_any_.select(
             &person::last_name_, from<person>(),
-            in(&person::uuid_id_,
-               select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == l_task.front()))),
+            where(
+                in(&person::uuid_id_,
+                   select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == l_task.front())))
+            ),
             limit(1)
         );
 
