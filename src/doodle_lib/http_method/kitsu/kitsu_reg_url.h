@@ -47,22 +47,7 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/actions/tasks/{task_id}/working-file/reference
-DOODLE_HTTP_JWT_FUN(actions_tasks_working_file_reference)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
 
-// /api/actions/projects/{project_id}/tasks/working-file-many
-DOODLE_HTTP_JWT_FUN(actions_projects_tasks_working_file_many)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
-// /api/actions/projects/{project_id}/entities/working-file-many
-DOODLE_HTTP_JWT_FUN(actions_projects_entities_working_file_many)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/shots/{shot_id}/working-file
 DOODLE_HTTP_JWT_FUN(actions_projects_shots_working_file)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -83,10 +68,7 @@ uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/actions/working-file/scan-all
-DOODLE_HTTP_JWT_FUN(actions_working_files_scan_all)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_FUN_END()
+
 
 // /api/data/projects/{project_id}/shots
 DOODLE_HTTP_JWT_FUN(data_project_shots)

@@ -169,8 +169,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_file_status>("/api/data/file-status"_url)
       .reg_t<data_output_types>("/api/data/output-types"_url)
       .reg_t<actions_tasks_working_file>("/api/actions/tasks/{}/working-file"_url(&actions_tasks_working_file::id_))
-      .reg_t<actions_projects_tasks_working_file_many>("/api/actions/projects/{}/tasks/working-file-many"_url(&actions_projects_tasks_working_file_many::id_))
-      .reg_t<actions_working_files_scan_all>("/api/actions/working-file/scan-all"_url)
       .reg_t<data_project_shots>("/api/data/projects/{}/shots"_url(&data_project_shots::project_id_))
       .reg_t<data_sequence_instance>("/api/data/sequences/{}"_url(&data_sequence_instance::id_))
       .reg_t<actions_projects_task_types_create_tasks>("/api/actions/projects/{}/task-types/{}/create-tasks/{}"_url(
@@ -207,7 +205,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_task_status>("/api/data/task-status"_url) 
       .reg_t<data_task_status_instance>("/api/data/task-status/{}"_url(&data_task_status_instance::id_)) 
       .reg_t<actions_tasks_modify_date_comment>("/api/actions/tasks/{}/modify-date-comment"_url(&actions_tasks_modify_date_comment::id_))
-      .reg_t<actions_projects_entities_working_file_many>("/api/actions/projects/{}/entities/working-file-many"_url(&actions_projects_entities_working_file_many::id_))
       .reg_t<doodle_backup>("/api/doodle/backup"_url)
       .reg_t<actions_projects_shots_working_file>("/api/actions/projects/{}/shots/{}/working-file"_url(
           &actions_projects_shots_working_file::project_id_,
@@ -217,7 +214,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
           &actions_projects_sequences_working_file::project_id_,
           &actions_projects_sequences_working_file::id_
       ))
-      .reg_t<actions_tasks_working_file_reference>("/api/actions/tasks/{}/working-file/reference"_url(&actions_tasks_working_file_reference::id_))
       .reg_t<doodle_data_shots_file_maya>("/api/doodle/data/shots/{}/file/maya"_url(&doodle_data_shots_file_maya::id_))
       .reg_t<doodle_data_shots_file_output>("/api/doodle/data/shots/{}/file/output"_url(&doodle_data_shots_file_output::id_))
       .reg_t<actions_projects_shots_run_ue_assembly>("/api/actions/projects/{}/shots/{}/run-ue-assembly"_url(

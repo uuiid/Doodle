@@ -97,7 +97,7 @@ class cache_manger_user : public boost::noncopyable {
           l_user_abbreviation.reserve(8);
           l_user_abbreviation.push_back('_');
           for (auto&& l_ : l_user.front())
-            if (std::isupper(l_)) l_user_abbreviation.push_back(l_);
+            if (std::isupper(l_)) l_user_abbreviation.push_back(std::tolower(l_));
         }
       }
       set(id, l_user_abbreviation);
@@ -239,29 +239,25 @@ FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_
   );
 }
 /// 场景模型 ue map 名称
-std::string get_entity_ground_ue_map_name(
-    const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
-) {
+std::string get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
   return fmt::format(
       "{}/{}/Map/{}{}{}.umap", doodle_config::ue4_content, pin_yin_ming_cheng_, pin_yin_ming_cheng_,
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-std::string get_entity_ground_ue_map_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_) {
-  return get_entity_ground_ue_map_name(bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
+std::string get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_) {
+  return get_entity_ground_ue_map_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
 
 ///  场景模型 ue sk 名称
-std::string get_entity_ground_ue_sk_name(
-    const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
-) {
+std::string get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
   return fmt::format(
       "{}/{}/SK/SK_{}{}{}.uasset", doodle_config::ue4_content, pin_yin_ming_cheng_, pin_yin_ming_cheng_,
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-std::string get_entity_ground_ue_sk_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_) {
-  return get_entity_ground_ue_sk_name(bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
+std::string get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
+  return get_entity_ground_ue_sk_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
 /// 场景名称 alembic 名称
 std::string get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {

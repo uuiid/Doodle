@@ -181,9 +181,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                 l_prj.asset_root_path_, l_asset_extend.gui_dang_.value_or(0),
                 l_asset_extend.kai_shi_ji_shu_.value_or(0), l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_
             ) /
-            get_entity_ground_ue_map_name(
-                l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
-            );
+            get_entity_ground_ue_map_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
       } else
         throw_exception(
             http_request_error{
@@ -197,9 +195,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       );
       if (l_asset_infos_key_map.contains(l_key)) {
         for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-          l_ret.asset_infos_[l_idx].ue_sk_path_ = get_entity_ground_ue_sk_name(
-              l_asset_extend.ban_ben_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
-          );
+          l_ret.asset_infos_[l_idx].ue_sk_path_ =
+              get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
         }
       }
 

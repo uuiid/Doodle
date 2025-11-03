@@ -74,15 +74,11 @@ FSys::path get_entity_ground_ue_path(
 );
 FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 /// 场景模型 ue map 名称
-std::string get_entity_ground_ue_map_name(
-    const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
-);
-std::string get_entity_ground_ue_map_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_);
+std::string get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
+std::string get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_);
 ///  场景模型 ue sk 名称
-std::string get_entity_ground_ue_sk_name(
-    const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
-);
-std::string get_entity_ground_ue_sk_name(const std::string& bian_hao_, const entity_asset_extend& in_extend_);
+std::string get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
+std::string get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_);
 /// 场景名称 alembic 名称
 std::string get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
 std::string get_entity_ground_alembic_name(const entity_asset_extend& in_extend_);
