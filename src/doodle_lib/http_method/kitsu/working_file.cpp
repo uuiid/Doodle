@@ -212,9 +212,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
            where(in(&working_file_task_link::task_id_, l_task_ids))
        )) {
     l_working_file_ids.emplace(l_working_file.uuid_id_);
-    l_working_files.emplace_back(
-        working_file_and_link{working_file{l_working_file}, l_entity_id, l_task_id, l_task_type_id}
-    );
+    l_working_files.emplace_back(working_file_and_link{working_file{l_working_file}, l_entity_id, {}});
   }
 
   co_return in_handle->make_msg(l_working_files);
@@ -413,7 +411,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
   std::vector<working_file_and_link> l_working_files{};
   l_working_files.reserve(l_r.size());
   for (auto&& [l_working_file, l_task_type_id] : l_r)
-    l_working_files.emplace_back(working_file_and_link{working_file{l_working_file}, {}, {}, l_task_type_id});
+    l_working_files.emplace_back(working_file_and_link{working_file{l_working_file}});
   co_return in_handle->make_msg(nlohmann::json{} = l_working_files);
 }
 
