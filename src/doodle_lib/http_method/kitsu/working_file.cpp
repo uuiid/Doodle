@@ -361,7 +361,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
   }
   for (auto&& i : l_working_files) {
     i.name_ = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
-    if (!FSys::exists(i.path_)) i.path_ = FSys::path{};
+    if (!FSys::exists(l_prj.path_ / i.path_)) i.path_ = FSys::path{};
   }
 
   return l_working_files;
