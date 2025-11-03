@@ -1,13 +1,26 @@
 #include "entity_path.h"
 
+#include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/doodle_macro.h"
+#include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
+#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
+#include <boost/core/noncopyable.hpp>
+
+#include <cache.hpp>
+#include <cache_policy.hpp>
+#include <cctype>
 #include <filesystem>
+#include <lru_cache_policy.hpp>
+#include <range/v3/view/filter.hpp>
+#include <sqlite_orm/sqlite_orm.h>
 #include <string>
 
 namespace doodle {
@@ -37,6 +50,71 @@ FSys::path get_entity_character_model_maya_path(const project& in_prj_, const en
       in_extend_.bian_hao_
   );
 }
+namespace {
+class cache_manger_user : public boost::noncopyable {
+  template <typename Key, typename Value>
+  using lru_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::LRUCachePolicy>;
+
+  struct cache_value {
+    std::string user_abbreviation_;
+    std::chrono::time_point<std::chrono::system_clock> time_point_;
+  };
+
+  using cache_type = lru_cache_t<uuid, cache_value>;
+  cache_type cache_;
+
+ public:
+  cache_manger_user() : cache_(1024 * 1024) {}
+  // copy
+
+  void set(const uuid& id, const std::string& user_abbreviation) {
+    cache_.Put(id, cache_value{user_abbreviation, std::chrono::system_clock::now()});
+  }
+
+  std::string get(const uuid& id) {
+    if (auto l_value = cache_.TryGet(id);
+        l_value.second && l_value.first->time_point_ + 300s > std::chrono::system_clock::now()) {
+      return l_value.first->user_abbreviation_;
+    } else {
+      using namespace sqlite_orm;
+      auto l_sql  = g_ctx().get<sqlite_database>();
+      auto l_task = l_sql.impl_->storage_any_.select(
+          &task::uuid_id_, from<task>(),
+          where(c(&task::entity_id_) == id && c(&task::task_type_id_) == task_type::get_binding_id()), limit(1)
+      );
+      std::string l_user_abbreviation{};
+      if (!l_task.empty()) {
+        auto l_user = g_ctx().get<sqlite_database>().impl_->storage_any_.select(
+            &person::last_name_, from<person>(),
+            in(&person::uuid_id_,
+               select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == l_task.front()))),
+            limit(1)
+        );
+
+        if (!l_user.empty()) {
+          l_user_abbreviation.reserve(8);
+          l_user_abbreviation.push_back('_');
+          for (auto&& l_ : l_user.front())
+            if (std::isupper(l_)) l_user_abbreviation.push_back(l_);
+        }
+      }
+      set(id, l_user_abbreviation);
+      return l_user_abbreviation;
+    }
+  }
+  void erase(const uuid& id) { cache_.Remove(id); }
+};
+cache_manger_user& g_get_cache_manger_user_abbreviation() {
+  static cache_manger_user g_user_abbreviation{};
+  return g_user_abbreviation;
+}
+}  // namespace
+
+FSys::path get_entity_character_rig_maya_name(const entity_asset_extend& in_extend_) {
+  auto l_entity_id = in_extend_.entity_id_;
+
+  return fmt::format("Ch{}_rig{}.ma", in_extend_.bian_hao_, g_get_cache_manger_user_abbreviation().get(l_entity_id));
+}
 /// 道具模型maya 绑定路径
 FSys::path get_entity_prop_rig_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
@@ -50,6 +128,13 @@ FSys::path get_entity_prop_rig_maya_path(const project& in_prj_, const entity_as
       in_extend_.pin_yin_ming_cheng_
   );
 }
+FSys::path get_entity_prop_rig_maya_name(const entity_asset_extend& in_extend_) {
+  return fmt::format(
+      "{}{}_rig{}.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_,
+      g_get_cache_manger_user_abbreviation().get(in_extend_.entity_id_)
+  );
+}
+
 /// 道具模型maya 路径
 FSys::path get_entity_prop_model_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,

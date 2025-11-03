@@ -238,8 +238,9 @@ std::vector<working_file_and_link> create_character_working_files(
   l_working_files.emplace_back(
       working_file_and_link{
           working_file{
-              .description_   = "角色Maya rig工作文件",
-              .path_          = get_entity_character_rig_maya_path(in_project, in_entity_asset_extend),
+              .description_ = "角色Maya rig工作文件",
+              .path_        = get_entity_character_rig_maya_path(in_project, in_entity_asset_extend) /
+                       get_entity_character_rig_maya_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya,
           },
           in_entity.uuid_id_,
@@ -268,8 +269,9 @@ std::vector<working_file_and_link> create_prop_working_files(
   l_working_files.emplace_back(
       working_file_and_link{
           working_file{
-              .description_   = "道具Maya建模工作文件",
-              .path_          = get_entity_prop_model_maya_path(in_project, in_entity_asset_extend),
+              .description_ = "道具Maya建模工作文件",
+              .path_        = get_entity_prop_model_maya_path(in_project, in_entity_asset_extend) /
+                       get_entity_prop_rig_maya_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya,
           },
           in_entity.uuid_id_,
