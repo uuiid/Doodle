@@ -348,6 +348,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
   );
   auto l_prj = l_sql.get_by_uuid<project>(in_project_id);
   for (auto&& [l_entity, l_entity_asset_extend] : l_assets) {
+    auto l_begin = l_working_files.size();
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
       l_working_files |=
           ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
@@ -357,6 +358,9 @@ std::vector<working_file_and_link> get_working_files_for_entity(
     } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
       l_working_files |=
           ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
+    }
+    for (auto i = l_begin; i < l_working_files.size(); ++i) {
+      l_working_files[i].entity_type_id_ = l_entity.entity_type_id_;
     }
   }
   for (auto&& i : l_working_files) {

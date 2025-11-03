@@ -69,6 +69,7 @@ struct working_file {
 
 struct working_file_and_link : working_file {
   uuid entity_id_;
+  uuid entity_type_id_;
   uuid task_id_;
   uuid task_type_id_;
   // to json
@@ -77,6 +78,7 @@ struct working_file_and_link : working_file {
     j["entity_id"] = p.entity_id_;
     j["task_id"]   = p.task_id_;
     j["task_type_id"] = p.task_type_id_;
+    j["entity_type_id"] = p.entity_type_id_;
   }
 };
 }  // namespace doodle
