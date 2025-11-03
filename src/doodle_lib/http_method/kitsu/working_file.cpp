@@ -23,6 +23,7 @@
 #include <range/v3/action/push_back.hpp>
 #include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
+#include <string>
 #include <vector>
 #include <winsock2.h>
 
@@ -359,6 +360,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
     }
   }
   for (auto&& i : l_working_files) {
+    i.name_ = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
     if (!FSys::exists(i.path_)) i.path_ = FSys::path{};
   }
 
