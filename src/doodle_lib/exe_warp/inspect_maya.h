@@ -5,13 +5,14 @@
 
 #include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 
 #include <boost/signals2.hpp>
 
-#include "http_client/kitsu_client.h"
 #include <filesystem>
 #include <memory>
 #include <string>
+
 
 namespace doodle {
 

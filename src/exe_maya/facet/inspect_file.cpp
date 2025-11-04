@@ -6,6 +6,7 @@
 
 #include "doodle_core/core/app_base.h"
 
+#include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <maya_plug/data/m_namespace.h>
@@ -21,7 +22,7 @@
 #include <maya/MItDependencyGraph.h>
 namespace doodle::maya_plug {
 bool inspect_file::post(const nlohmann::json& in_argh) {
-  auto l_arg = in_argh.get<maya_exe_ns::inspect_file_arg>();
+  auto l_arg = in_argh.get<inspect_file_arg>();
   if (l_arg.get_file_path().empty()) return false;
   maya_file_io::set_workspace(l_arg.get_file_path());
   maya_file_io::open_file(l_arg.get_file_path(), MFileIO::kLoadDefault);
