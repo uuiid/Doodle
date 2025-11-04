@@ -56,8 +56,8 @@ FSys::path get_entity_character_ue_path(
 FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 
 /// 角色模型 ue 名称
-std::string get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_);
-std::string get_entity_character_ue_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_);
+FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_);
 /// 道具模型ue 路径
 FSys::path get_entity_prop_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_
@@ -66,10 +66,10 @@ FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_ex
 FSys::path get_entity_prop_ue_public_files_path();
 FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_);
 /// 道具模型 ue 名称
-std::string get_entity_prop_ue_name(
+FSys::path get_entity_prop_ue_name(
     const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
 );
-std::string get_entity_prop_ue_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_);
 /// 场景模型ue 路径
 FSys::path get_entity_ground_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
@@ -77,15 +77,15 @@ FSys::path get_entity_ground_ue_path(
 );
 FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 /// 场景模型 ue map 名称
-std::string get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
-std::string get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
+FSys::path get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_);
 ///  场景模型 ue sk 名称
-std::string get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
-std::string get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
+FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_);
 /// 场景名称 alembic 名称
-std::string get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
-std::string get_entity_ground_alembic_name(const entity_asset_extend& in_extend_);
-std::string get_entity_ground_rig_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
+FSys::path get_entity_ground_alembic_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_rig_name(const entity_asset_extend& in_extend_);
 /// 角色模型图片 路径
 FSys::path get_entity_character_image_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
@@ -126,9 +126,9 @@ FSys::path get_shots_simulation_output_path(
 );
 FSys::path get_shots_simulation_output_path(const entity& episode_, const entity& shot_, const project& prj_);
 /// 动画文件名称
-std::string get_shots_animation_file_name(
+FSys::path get_shots_animation_file_name(
     const std::string& episode_name_, const std::string& shot_name_, const std::string& project_code_
 );
-std::string get_shots_animation_file_name(const entity& episode_, const entity& shot_, const project& prj_);
+FSys::path get_shots_animation_file_name(const entity& episode_, const entity& shot_, const project& prj_);
 FSys::path conv_ue_game_path(const FSys::path& in_path);
 }  // namespace doodle

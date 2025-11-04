@@ -72,7 +72,7 @@ class cache_manger_user : public boost::noncopyable {
     cache_.Put(id, cache_value{user_abbreviation, std::chrono::system_clock::now()});
   }
 
-  std::string get(const uuid& id) {
+  FSys::path get(const uuid& id) {
     if (auto l_value = cache_.TryGet(id);
         l_value.second && l_value.first->time_point_ + 300s > std::chrono::system_clock::now()) {
       return l_value.first->user_abbreviation_;
@@ -197,12 +197,12 @@ FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_ass
   );
 }
 /// 角色模型 ue 名称
-std::string get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_) {
+FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_) {
   return fmt::format(
       "{}/Character/{}/Meshs/SK_Ch{}.uasset", doodle_config::ue4_content, pin_yin_ming_cheng_, bian_hao_
   );
 }
-std::string get_entity_character_ue_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_) {
   return get_entity_character_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_);
 }
 /// 道具模型ue 路径
@@ -225,7 +225,7 @@ FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_) 
   return FSys::path{doodle_config::ue4_content} / in_extend_.pin_yin_ming_cheng_;
 }
 /// 道具模型 ue 名称
-std::string get_entity_prop_ue_name(
+FSys::path get_entity_prop_ue_name(
     const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
 ) {
   return fmt::format(
@@ -233,7 +233,7 @@ std::string get_entity_prop_ue_name(
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-std::string get_entity_prop_ue_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_) {
   return get_entity_prop_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
 /// 场景模型ue 路径
@@ -251,34 +251,34 @@ FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_
   );
 }
 /// 场景模型 ue map 名称
-std::string get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
+FSys::path get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
   return fmt::format(
       "{}/{}/Map/{}{}{}.umap", doodle_config::ue4_content, pin_yin_ming_cheng_, pin_yin_ming_cheng_,
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-std::string get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_) {
   return get_entity_ground_ue_map_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
 
 ///  场景模型 ue sk 名称
-std::string get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
+FSys::path get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
   return fmt::format(
       "{}/{}/SK/SK_{}{}{}.uasset", doodle_config::ue4_content, pin_yin_ming_cheng_, pin_yin_ming_cheng_,
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-std::string get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
   return get_entity_ground_ue_sk_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
 /// 场景名称 alembic 名称
-std::string get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
+FSys::path get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {
   return fmt::format("{}{}{}_Low.abc", pin_yin_ming_cheng_, ban_ben_.empty() ? "" : "_", ban_ben_);
 }
-std::string get_entity_ground_alembic_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_alembic_name(const entity_asset_extend& in_extend_) {
   return get_entity_ground_alembic_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
-std::string get_entity_ground_rig_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_rig_name(const entity_asset_extend& in_extend_) {
   return fmt::format(
       "{}{}{}_Low.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
   );
@@ -370,12 +370,12 @@ FSys::path get_shots_simulation_output_path(const entity& episode_, const entity
   return get_shots_simulation_output_path(episode_.name_, shot_.name_, prj_.code_);
 }
 /// 动画文件名称
-std::string get_shots_animation_file_name(
+FSys::path get_shots_animation_file_name(
     const std::string& episode_name_, const std::string& shot_name_, const std::string& project_code_
 ) {
   return fmt::format("{}_{}_{}", project_code_, episode_name_, shot_name_);
 }
-std::string get_shots_animation_file_name(const entity& episode_, const entity& shot_, const project& prj_) {
+FSys::path get_shots_animation_file_name(const entity& episode_, const entity& shot_, const project& prj_) {
   return get_shots_animation_file_name(episode_.name_, shot_.name_, prj_.code_);
 }
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
