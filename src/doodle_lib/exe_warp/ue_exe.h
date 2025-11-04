@@ -19,6 +19,7 @@ std::string get_file_version(const FSys::path& in_path);
 FSys::path find_ue_project_file(const FSys::path& in_path);
 
 boost::asio::awaitable<void> install_doodle_plug(const FSys::path& path);
+FSys::path find_u_pej(const FSys::path& in_path);
 }  // namespace ue_exe_ns
 
 class ue_ctx {

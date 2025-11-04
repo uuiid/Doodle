@@ -62,6 +62,8 @@ FSys::path get_entity_prop_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_
 );
 FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_ue_public_files_path();
+FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_);
 /// 道具模型 ue 名称
 std::string get_entity_prop_ue_name(
     const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_

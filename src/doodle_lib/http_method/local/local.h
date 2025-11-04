@@ -69,5 +69,10 @@ video_thumbnail() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
-
+// /api/actions/projects/{project_id}/shots/{shot_id}/run-ue-assembly
+DOODLE_HTTP_FUN_C(actions_projects_shots_run_ue_assembly_local, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::local

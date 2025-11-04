@@ -1,5 +1,6 @@
 #include "entity_path.h"
 
+#include "doodle_core/configure/static_value.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/doodle_macro.h"
 #include "doodle_core/metadata/person.h"
@@ -211,6 +212,13 @@ FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_ex
   return get_entity_prop_ue_path(
       in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_.value_or(0)
   );
+}
+
+FSys::path get_entity_prop_ue_public_files_path() {
+  return FSys::path{doodle_config::ue4_content} / "a_PropPublicFiles";
+}
+FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_) {
+  return FSys::path{doodle_config::ue4_content} / in_extend_.pin_yin_ming_cheng_;
 }
 /// 道具模型 ue 名称
 std::string get_entity_prop_ue_name(

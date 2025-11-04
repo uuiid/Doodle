@@ -1,5 +1,6 @@
 #pragma once
 
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/project.h"
 #include <doodle_core/core/http_client_core.h>
 #include <doodle_core/metadata/assets.h>
@@ -55,6 +56,7 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
+  boost::asio::awaitable<std::shared_ptr<async_task>> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
 };
 
 }  // namespace doodle::kitsu

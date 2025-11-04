@@ -5,16 +5,20 @@
 #pragma once
 #include "doodle_core/metadata/server_task_info.h"
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/shot.h>
-#include <doodle_core/metadata/assets.h>
 
 #include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
 #include <boost/signals2/signal.hpp>
+
+#include <filesystem>
+#include <nlohmann/json_fwd.hpp>
+#include <vector>
 
 namespace doodle {
 namespace import_and_render_ue_ns {
@@ -167,11 +171,55 @@ class args : public async_task {
 };
 void fix_project(const FSys::path& in_project_path);
 void fix_config(const FSys::path& in_project_path);
+
 }  // namespace import_and_render_ue_ns
 
 // 清除 1001 以前的帧数
 tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
     const FSys::path& in_path, std::int32_t in_frame
 );
+
+class run_ue_assembly_local : public async_task {
+ public:
+  boost::asio::awaitable<void> run() override;
+  // to json
+  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) {}
+  // from json
+  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) {}
+
+  struct run_ue_assembly_asset_info {
+    FSys::path shot_output_path_;  // 需要组装的fbx
+    FSys::path ue_sk_path_;        // 组装对应的fbx
+    // to json
+    friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
+      j["shot_output_path"] = p.shot_output_path_;
+      j["ue_sk_path"]       = p.ue_sk_path_;
+    }
+  };
+  struct file_copy_info {
+    FSys::path from_;
+    FSys::path to_;
+    // to json
+    friend void to_json(nlohmann::json& j, const file_copy_info& p) {
+      j["from"] = p.from_;
+      j["to"]   = p.to_;
+    }
+  };
+
+  struct run_ue_assembly_arg {
+    std::vector<run_ue_assembly_asset_info> asset_infos_;
+    FSys::path camera_file_path_;
+    FSys::path ue_main_project_path_;
+    std::vector<file_copy_info> ue_asset_path_;  // 需要复制的UE路径
+
+    // to josn
+    friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
+      j["asset_infos"]          = p.asset_infos_;
+      j["camera_file_path"]     = p.camera_file_path_;
+      j["ue_main_project_path"] = p.ue_main_project_path_;
+      j["ue_asset_path"]        = p.ue_asset_path_;
+    }
+  };
+};
 
 }  // namespace doodle

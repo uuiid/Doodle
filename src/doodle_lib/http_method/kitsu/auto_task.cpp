@@ -2,6 +2,8 @@
 // Created by TD on 24-12-30.
 //
 
+#include "doodle_core/configure/static_value.h"
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
 #include <doodle_core/metadata/user.h>
@@ -13,6 +15,8 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -25,33 +29,7 @@
 #include <vector>
 
 namespace doodle::http {
-namespace {
 
-struct run_ue_assembly_asset_info {
-  FSys::path shot_output_path_;
-  FSys::path ue_asset_path_;
-  FSys::path ue_sk_path_;
-  // to json
-  friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
-    j["shot_output_path"] = p.shot_output_path_;
-    j["ue_asset_path"]    = p.ue_asset_path_;
-    j["ue_sk_path"]       = p.ue_sk_path_;
-  }
-};
-
-struct run_ue_assembly_ret {
-  std::vector<run_ue_assembly_asset_info> asset_infos_;
-  FSys::path camera_file_path_;
-  FSys::path ue_main_project_path_;
-  // to josn
-  friend void to_json(nlohmann::json& j, const run_ue_assembly_ret& p) {
-    j["asset_infos"]          = p.asset_infos_;
-    j["camera_file_path"]     = p.camera_file_path_;
-    j["ue_main_project_path"] = p.ue_main_project_path_;
-  }
-};
-
-}  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly::post(
     session_data_ptr in_handle
 ) {
@@ -66,7 +44,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
 
-  run_ue_assembly_ret l_ret{};
+  run_ue_assembly_local::run_ue_assembly_arg l_ret{};
   FSys::path l_shot_path_dir{};
   /// tag: 格式化路径
   if (l_shot_task.task_type_id_ == task_type::get_animation_id()) {
@@ -86,7 +64,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       if (l_stem.find("_camera_") != std::string::npos)
         l_ret.camera_file_path_ = l_path.path();
       else
-        l_ret.asset_infos_.emplace_back(run_ue_assembly_asset_info{.shot_output_path_ = l_path.path()});
+        l_ret.asset_infos_.emplace_back(
+            run_ue_assembly_local::run_ue_assembly_asset_info{.shot_output_path_ = l_path.path()}
+        );
     }
   }
   if (l_ret.camera_file_path_.empty())
@@ -126,17 +106,53 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                              )
       ))
   );
+  FSys::path l_scene_ue_path{core_set::get_set().get_cache_root()};
+  /// 寻找主场景资产, 并生成对应的本地ue资产路径
+  if (auto l_scene_it = std::find_if(
+          l_assets.begin(), l_assets.end(),
+          [](const auto& in_pair) { return std::get<0>(in_pair).entity_type_id_ == asset_type::get_scene_id(); }
+      );
+      l_scene_it == l_assets.end()) {
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request, "镜头关联的资产中未找到场景类型资产，无法生成 ue 主工程路径"
+        }
+    );
+  } else {
+    auto&& [l_scene_asset, l_scene_asset_extend] = *l_scene_it;
+    if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
+      l_ret.ue_main_project_path_ =
+          get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / get_entity_ground_ue_map_name(l_scene_asset_extend);
+      auto&& l_uprj = ue_exe_ns::find_u_pej(l_ret.ue_main_project_path_);
+      l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
+      l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
+      l_ret.ue_asset_path_.emplace_back(
+          get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
+          l_scene_ue_path / doodle_config::ue4_content
+      );
+      l_ret.ue_asset_path_.emplace_back(
+          get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
+          l_scene_ue_path / doodle_config::ue4_config
+      );
+    } else
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request,
+              fmt::format("资产 {} 缺少归档或开始集信息，无法生成 ue 主工程路径", l_scene_asset.name_)
+          }
+      );
+  }
+
   for (auto&& [l_asset, l_asset_extend] : l_assets) {
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
       if (l_asset_infos_key_map.contains(l_asset_extend.bian_hao_)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
           for (auto&& l_idx : l_asset_infos_key_map[l_asset_extend.bian_hao_]) {
-            l_ret.asset_infos_[l_idx].ue_asset_path_ = get_entity_character_ue_path(
-                l_prj.asset_root_path_, l_asset_extend.gui_dang_.value(), l_asset_extend.kai_shi_ji_shu_.value(),
-                l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_
+            l_ret.asset_infos_[l_idx].ue_sk_path_ = get_entity_character_ue_name(l_asset_extend);
+            l_ret.ue_asset_path_.emplace_back(
+                get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
+                l_scene_ue_path / doodle_config::ue4_content
             );
-            l_ret.asset_infos_[l_idx].ue_sk_path_ =
-                get_entity_character_ue_name(l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_);
           }
         } else
           throw_exception(
@@ -156,14 +172,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       if (l_asset_infos_key_map.contains(l_key)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-            l_ret.asset_infos_[l_idx].ue_asset_path_ = get_entity_prop_ue_path(
-                l_prj.asset_root_path_, l_asset_extend.gui_dang_.value(), l_asset_extend.kai_shi_ji_shu_.value()
-            );
             l_ret.asset_infos_[l_idx].ue_sk_path_ = get_entity_prop_ue_name(
                 l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
             );
-            l_ret.asset_infos_[l_idx].ue_asset_path_ /=
-                l_ret.asset_infos_[l_idx].ue_sk_path_.parent_path().parent_path();
+
+            l_ret.ue_asset_path_.emplace_back(
+                get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
+                l_scene_ue_path / get_entity_prop_ue_public_files_path()
+            );
+            l_ret.ue_asset_path_.emplace_back(
+                get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_files_path(l_asset_extend),
+                l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend)
+            );
           }
         } else
           throw_exception(
@@ -175,29 +195,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       }
 
     } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
-      if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
-        l_ret.ue_main_project_path_ =
-            get_entity_ground_ue_path(
-                l_prj.asset_root_path_, l_asset_extend.gui_dang_.value_or(0),
-                l_asset_extend.kai_shi_ji_shu_.value_or(0), l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_
-            ) /
-            get_entity_ground_ue_map_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
-      } else
-        throw_exception(
-            http_request_error{
-                boost::beast::http::status::bad_request,
-                fmt::format("资产 {} 缺少归档或开始集信息，无法生成 ue 主工程路径", l_asset.name_)
-            }
-        );
       auto l_key = fmt::format(
           "{}{}{}_Low", l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_.empty() ? "" : "_",
           l_asset_extend.ban_ben_
       );
       if (l_asset_infos_key_map.contains(l_key)) {
-        for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
+        for (auto&& l_idx : l_asset_infos_key_map[l_key])
           l_ret.asset_infos_[l_idx].ue_sk_path_ =
               get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
-        }
       }
 
     } else {
@@ -211,7 +216,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   }
 
   for (auto&& l_info : l_ret.asset_infos_) {
-    if (l_info.ue_asset_path_.empty() && l_info.ue_sk_path_.empty()) {
+    if (l_info.ue_sk_path_.empty()) {
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request,
@@ -220,6 +225,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       );
     }
     l_info.ue_sk_path_ = conv_ue_game_path(l_info.ue_sk_path_);
+  }
+  for (auto&& l_path : l_ret.ue_asset_path_) {
+    l_path.from_ = l_prj.path_ / l_path.from_;
+    if (!FSys::exists(l_path.from_)) {
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
+          }
+      );
+    }
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }

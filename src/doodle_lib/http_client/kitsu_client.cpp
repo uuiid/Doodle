@@ -10,6 +10,7 @@
 #include "doodle_core/metadata/working_file.h"
 
 #include <doodle_lib/exe_warp/export_rig_sk.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/empty_body.hpp>
@@ -270,5 +271,25 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
       base64_encode(in_file_path.filename().generic_string())
   );
 }
-
+boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_ue_assembly(
+    uuid in_project_id, uuid in_shot_task_id
+) const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::post,
+      fmt::format("/api/actions/projects/{}/shots/{}/run-ue-assembly", in_project_id, in_shot_task_id), 11
+  };
+  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  l_req.set(boost::beast::http::field::accept, "application/json");
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  if (!kitsu_token_.empty())
+    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
+  boost::beast::http::response<http::basic_json_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"kitsu get ue assembly error {}", l_res.result()});
+  auto l_json = l_res.body().get<nlohmann::json>();
+  auto l_task = std::make_shared<run_ue_assembly_local>();
+  l_json.get_to(*l_task);
+  co_return l_task;
+}
 }  // namespace doodle::kitsu
