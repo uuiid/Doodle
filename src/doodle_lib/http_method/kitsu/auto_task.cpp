@@ -4,6 +4,7 @@
 
 #include "doodle_core/configure/static_value.h"
 #include "doodle_core/core/core_set.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
 #include <doodle_core/metadata/user.h>
@@ -15,12 +16,15 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include <boost/asio/awaitable.hpp>
 
 #include <filesystem>
 #include <fmt/format.h>
@@ -55,8 +59,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "任务类型不支持该操作"});
 
-  l_shot_path_dir       = l_prj.path_ / l_shot_path_dir;
-  auto l_shot_file_name = get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+  l_shot_path_dir = l_prj.path_ / l_shot_path_dir;
+  auto l_shot_file_name =
+      get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
 
   for (auto&& l_path : FSys::directory_iterator{l_shot_path_dir}) {
     auto l_stem = l_path.path().stem().string();
@@ -106,7 +111,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                              )
       ))
   );
-  FSys::path l_scene_ue_path{core_set::get_set().get_cache_root()};
+  FSys::path l_scene_ue_path{core_set::get_set().get_cache_root().parent_path()};
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   if (auto l_scene_it = std::find_if(
           l_assets.begin(), l_assets.end(),
@@ -239,4 +244,75 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_rig_sk::get(
+    session_data_ptr in_handle
+) {
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = l_sql.get_by_uuid<task>(task_id_);
+  if (l_task.task_type_id_ != task_type::get_binding_id())
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "只有绑定任务才支持导出 rig sk");
+  auto l_asset         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_asset_extends = l_sql.get_entity_asset_extend(l_asset.uuid_id_);
+  auto l_prj           = l_sql.get_by_uuid<project>(l_asset.project_id_);
+  if (!l_asset_extends)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "实体缺少资产扩展信息");
+  export_rig_sk_arg::data_t l_arg{};
+  auto l_ue_scene_path = core_set::get_set().get_cache_root().parent_path() / l_prj.code_;
+  if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
+    auto l_ue_name          = get_entity_character_ue_name(*l_asset_extends);
+    auto l_ue_path          = get_entity_character_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project       = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
+    l_arg.ue_asset_copy_path_.emplace_back(
+        l_prj.path_ / l_ue_path / doodle_config::ue4_content, l_ue_scene_path / doodle_config::ue4_content
+    );
+    l_arg.ue_asset_copy_path_.emplace_back(
+        l_prj.path_ / l_ue_path / doodle_config::ue4_config, l_ue_scene_path / doodle_config::ue4_config
+    );
+    l_arg.ue_asset_copy_path_.emplace_back(l_ue_project, l_ue_scene_path / l_ue_project.filename());
+    l_arg.ue_project_path_ = l_ue_scene_path / l_ue_project.filename();
+    l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
+
+  } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
+             l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+    auto l_ue_name          = get_entity_prop_ue_name(*l_asset_extends);
+    auto l_ue_path          = get_entity_prop_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project       = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
+    l_arg.ue_asset_copy_path_.emplace_back(
+        l_prj.path_ / l_ue_path / get_entity_prop_ue_public_files_path(),
+        l_ue_scene_path / get_entity_prop_ue_public_files_path()
+    );
+    l_arg.ue_asset_copy_path_.emplace_back(
+        l_prj.path_ / l_ue_path / get_entity_prop_ue_files_path(*l_asset_extends),
+        l_ue_scene_path / get_entity_prop_ue_files_path(*l_asset_extends)
+    );
+    l_arg.ue_asset_copy_path_.emplace_back(l_ue_project, l_ue_scene_path / l_ue_project.filename());
+    l_arg.ue_project_path_ = l_ue_scene_path / l_ue_project.filename();
+    l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
+
+  } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
+    auto l_ue_name    = get_entity_ground_ue_sk_name(l_asset_extends->pin_yin_ming_cheng_, l_asset_extends->ban_ben_);
+    auto l_ue_path    = get_entity_ground_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
+    l_arg.ue_asset_copy_path_.emplace_back(
+        l_prj.path_ / l_ue_path / doodle_config::ue4_content, l_ue_scene_path / doodle_config::ue4_content
+    );
+    l_arg.ue_asset_copy_path_.emplace_back(
+        l_prj.path_ / l_ue_path / doodle_config::ue4_config, l_ue_scene_path / doodle_config::ue4_config
+    );
+    l_arg.ue_asset_copy_path_.emplace_back(l_ue_project, l_ue_scene_path / l_ue_project.filename());
+    l_arg.ue_project_path_ = l_ue_scene_path / l_ue_project.filename();
+    l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
+
+  } else {
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::bad_request, "仅支持角色和道具, 地编, 特效类型资产导出 rig sk"
+    );
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+}
+
 }  // namespace doodle::http

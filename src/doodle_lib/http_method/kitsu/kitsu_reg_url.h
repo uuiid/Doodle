@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+
 namespace doodle::http {
 // /api/auth/login
 DOODLE_HTTP_FUN(auth_login)
@@ -47,6 +48,11 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/tasks/{task_id}/export-rig-sk
+DOODLE_HTTP_JWT_FUN(actions_tasks_export_rig_sk)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid task_id_{};
+DOODLE_HTTP_FUN_END()
 
 // /api/actions/projects/{project_id}/shots/{shot_id}/working-file
 DOODLE_HTTP_JWT_FUN(actions_projects_shots_working_file)
@@ -67,8 +73,6 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-
-
 
 // /api/data/projects/{project_id}/shots
 DOODLE_HTTP_JWT_FUN(data_project_shots)

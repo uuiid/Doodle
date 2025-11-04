@@ -220,6 +220,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
           &actions_projects_shots_run_ue_assembly::project_id_,
           &actions_projects_shots_run_ue_assembly::id_
       ))
+      .reg_t<actions_tasks_export_rig_sk>("/api/actions/tasks/{}/export-rig-sk"_url(&actions_tasks_export_rig_sk::task_id_))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
