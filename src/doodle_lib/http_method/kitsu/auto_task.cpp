@@ -23,6 +23,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include <filesystem>
+#include <fmt/format.h>
 #include <map>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
@@ -83,13 +84,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
     auto&& l_info = l_ret.asset_infos_[i];
     auto l_stem   = l_info.shot_output_path_.stem().string();
-    auto l_key    = l_stem.substr(l_shot_file_name.size());
+    auto l_key    = l_stem.substr(l_shot_file_name.size() + 1);  // add '_'
     // find _rig and _Low
-    auto l_size   = l_key.size();
     if (auto l_rig_post = l_key.find("_rig"); l_rig_post != std::string::npos) {
-      l_key = l_key.substr(0, l_size - l_rig_post);
+      l_key = l_key.substr(0, l_rig_post);
     } else if (auto l_low_post = l_key.find("_Low"); l_low_post != std::string::npos) {
-      l_key = l_key.substr(0, l_size - l_low_post + 4);
+      l_key = l_key.substr(0, l_low_post + 4);
     }
     l_asset_infos_key_map[l_key].emplace_back(i);
   }
@@ -110,7 +110,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   if (auto l_scene_it = std::find_if(
           l_assets.begin(), l_assets.end(),
-          [](const auto& in_pair) { return std::get<0>(in_pair).entity_type_id_ == asset_type::get_scene_id(); }
+          [](const auto& in_pair) { return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id(); }
       );
       l_scene_it == l_assets.end()) {
     throw_exception(
@@ -121,17 +121,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   } else {
     auto&& [l_scene_asset, l_scene_asset_extend] = *l_scene_it;
     if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
-      l_ret.ue_main_project_path_ =
-          get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / get_entity_ground_ue_map_name(l_scene_asset_extend);
+      l_ret.ue_main_project_path_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
+                                    get_entity_ground_ue_map_name(l_scene_asset_extend);
       auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ret.ue_main_project_path_);
       l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
       l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
       l_ret.ue_asset_path_.emplace_back(
-          get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
+          l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
           l_scene_ue_path / doodle_config::ue4_content
       );
       l_ret.ue_asset_path_.emplace_back(
-          get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
+          l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
           l_scene_ue_path / doodle_config::ue4_config
       );
     } else
@@ -145,12 +145,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   for (auto&& [l_asset, l_asset_extend] : l_assets) {
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
-      if (l_asset_infos_key_map.contains(l_asset_extend.bian_hao_)) {
+      auto l_key = fmt::format("Ch{}", l_asset_extend.bian_hao_);
+      if (l_asset_infos_key_map.contains(l_key)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
-          for (auto&& l_idx : l_asset_infos_key_map[l_asset_extend.bian_hao_]) {
+          for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
             l_ret.asset_infos_[l_idx].ue_sk_path_ = get_entity_character_ue_name(l_asset_extend);
             l_ret.ue_asset_path_.emplace_back(
-                get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
+                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
             );
           }
@@ -177,11 +178,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
             );
 
             l_ret.ue_asset_path_.emplace_back(
-                get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
+                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
                 l_scene_ue_path / get_entity_prop_ue_public_files_path()
             );
             l_ret.ue_asset_path_.emplace_back(
-                get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_files_path(l_asset_extend),
+                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) /
+                    get_entity_prop_ue_files_path(l_asset_extend),
                 l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend)
             );
           }
@@ -227,7 +229,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     l_info.ue_sk_path_ = conv_ue_game_path(l_info.ue_sk_path_);
   }
   for (auto&& l_path : l_ret.ue_asset_path_) {
-    l_path.from_ = l_prj.path_ / l_path.from_;
     if (!FSys::exists(l_path.from_)) {
       throw_exception(
           http_request_error{
