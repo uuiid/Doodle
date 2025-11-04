@@ -11,6 +11,7 @@
 
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/ue_exe.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/empty_body.hpp>
@@ -215,6 +216,41 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
       base64_encode(in_file_path.filename().generic_string())
   );
 }
+boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
+    uuid in_task_id, std::shared_ptr<std::vector<FSys::path>> in_file_path
+) const {
+  if (!in_file_path) throw_exception(doodle_error{"上传ue资产文件路径不能为空"});
+  if (in_file_path->empty()) throw_exception(doodle_error{"上传ue资产文件路径不能为空"});
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->timeout_ = 30s;
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->timeout_    = 1000s;
+
+  auto l_ue_project_file        = ue_exe_ns::find_ue_project_file(in_file_path->front());
+
+  if (l_ue_project_file.extension() != doodle_config::ue4_uproject_ext)
+    throw_exception(doodle_error{"上传的文件不是ue工程文件, 或者UE工程内部文件 {}", *in_file_path});
+
+  auto l_uproject_dir = l_ue_project_file.parent_path();
+
+  for (auto&& l_path : *in_file_path) {
+    for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
+      if (p.is_directory()) continue;
+      co_await upload_asset_file(
+          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
+      );
+    }
+  }
+  co_await upload_asset_file(
+      fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), l_ue_project_file,
+      base64_encode(l_ue_project_file.filename().generic_string())
+  );
+  co_return;
+}
+
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const {
   boost::scope::scope_exit l_exit{[&]() {
     http_client_ptr_->body_limit_.reset();
@@ -260,6 +296,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
   );
   co_return;
 }
+
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const {
   boost::scope::scope_exit l_exit{[&]() {
     http_client_ptr_->body_limit_.reset();

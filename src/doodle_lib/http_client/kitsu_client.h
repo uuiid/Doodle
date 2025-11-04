@@ -15,6 +15,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <tl/expected.hpp>
+#include <vector>
 
 namespace doodle {
 class async_task;
@@ -54,6 +55,11 @@ class kitsu_client {
   boost::asio::awaitable<project> get_project(uuid in_project_id) const;
   boost::asio::awaitable<std::shared_ptr<async_task>> get_generate_uesk_file_arg(uuid in_task_id) const;
   boost::asio::awaitable<void> upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const;
+  /// 上传多个UE文件中部分文件
+  boost::asio::awaitable<void> upload_asset_file_ue(
+      uuid in_task_id, std::shared_ptr<std::vector<FSys::path>> in_file_path
+  ) const;
+  /// 上传整个工程文件
   boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<std::shared_ptr<async_task>> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
