@@ -182,10 +182,6 @@ tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
 class run_ue_assembly_local : public async_task {
  public:
   boost::asio::awaitable<void> run() override;
-  // to json
-  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) {}
-  // from json
-  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) {}
 
   struct run_ue_assembly_asset_info {
     FSys::path shot_output_path_;  // 需要组装的fbx
@@ -195,6 +191,11 @@ class run_ue_assembly_local : public async_task {
       j["shot_output_path"] = p.shot_output_path_;
       j["ue_sk_path"]       = p.ue_sk_path_;
     }
+    // from json
+    friend void from_json(const nlohmann::json& j, run_ue_assembly_asset_info& p) {
+      j.at("shot_output_path").get_to(p.shot_output_path_);
+      j.at("ue_sk_path").get_to(p.ue_sk_path_);
+    }
   };
   struct file_copy_info {
     FSys::path from_;
@@ -203,6 +204,11 @@ class run_ue_assembly_local : public async_task {
     friend void to_json(nlohmann::json& j, const file_copy_info& p) {
       j["from"] = p.from_;
       j["to"]   = p.to_;
+    }
+    // from json
+    friend void from_json(const nlohmann::json& j, file_copy_info& p) {
+      j.at("from").get_to(p.from_);
+      j.at("to").get_to(p.to_);
     }
   };
 
@@ -219,7 +225,22 @@ class run_ue_assembly_local : public async_task {
       j["ue_main_project_path"] = p.ue_main_project_path_;
       j["ue_asset_path"]        = p.ue_asset_path_;
     }
+    // from json
+    friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
+      j.at("asset_infos").get_to(p.asset_infos_);
+      j.at("camera_file_path").get_to(p.camera_file_path_);
+      j.at("ue_main_project_path").get_to(p.ue_main_project_path_);
+      j.at("ue_asset_path").get_to(p.ue_asset_path_);
+    }
   };
+
+ private:
+  run_ue_assembly_arg arg_;
+
+  // to json
+  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) { j = p.arg_; }
+  // from json
+  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) { j.get_to(p.arg_); }
 };
 
 }  // namespace doodle

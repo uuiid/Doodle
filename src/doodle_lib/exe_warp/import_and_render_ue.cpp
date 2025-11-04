@@ -580,4 +580,6 @@ tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
   return l_move_paths;
 }
 
+boost::asio::awaitable<void> run_ue_assembly_local::run() { co_return; }
+
 }  // namespace doodle

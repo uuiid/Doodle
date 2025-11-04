@@ -123,7 +123,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
       l_ret.ue_main_project_path_ =
           get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / get_entity_ground_ue_map_name(l_scene_asset_extend);
-      auto&& l_uprj = ue_exe_ns::find_u_pej(l_ret.ue_main_project_path_);
+      auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ret.ue_main_project_path_);
       l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
       l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
       l_ret.ue_asset_path_.emplace_back(
