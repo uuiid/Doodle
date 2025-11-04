@@ -121,67 +121,20 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task
 boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_uesk_file_arg(uuid in_task_id) const {
   uuid l_entity_id{};
   auto l_arg_ = std::make_shared<export_rig_sk_arg>();
-  FSys::path l_project_path{};
-  {
-    boost::beast::http::request<boost::beast::http::empty_body> l_req{
-        boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_task_id), 11
-    };
-    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    l_req.set(boost::beast::http::field::accept, "application/json");
-    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-    if (!kitsu_token_.empty())
-      l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
-    boost::beast::http::response<http::basic_json_body> l_res{};
-    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-    if (l_res.result() != boost::beast::http::status::ok)
-      throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
-    const auto l_json_task_full = l_res.body();
-    l_entity_id                 = l_json_task_full.at("entity_id").get<uuid>();
-    auto l_working_files        = l_json_task_full.at("working_files").get<std::vector<working_file>>();
-    const auto l_task_type_id   = l_json_task_full.at("task_type_id").get<uuid>();
-    // 搜索maya文件
-    auto l_it                   = ranges::find_if(l_working_files, [&](const working_file& i) {
-      return i.software_type_ == software_enum::maya;
-    });
-    if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的maya working file"});
-    const auto l_prj = l_json_task_full.at("project").get<project>();
-    l_project_path   = l_prj.path_;
-    auto l_path      = l_project_path / l_it->path_;
-    if (l_it->path_.empty() || !FSys::exists(l_path))
-      throw_exception(doodle_error{"maya working file 文件不存在 {}", l_path});
-    l_arg_->project_name_ = l_prj.code_.empty() ? l_prj.name_ : l_prj.code_;
-    l_arg_->maya_file_    = l_path;
-  }
-  // 查询 entity 细节
-  {
-    boost::beast::http::request<boost::beast::http::empty_body> l_req{
-        boost::beast::http::verb::get, fmt::format("/api/data/assets/{}", l_entity_id), 11
-    };
-    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    l_req.set(boost::beast::http::field::accept, "application/json");
-    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-    if (!kitsu_token_.empty())
-      l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
-    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-    boost::beast::http::response<http::basic_json_body> l_res{};
-    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-    if (l_res.result() != boost::beast::http::status::ok)
-      throw_exception(doodle_error{"kitsu get entity error {}", l_res.result()});
-    const auto l_json_entity = l_res.body().get<nlohmann::json>();
-    l_json_entity.get_to(*l_arg_);
-    for (auto&& i : l_json_entity.at("tasks")) {
-      auto l_working_files = i.at("working_files").get<std::vector<working_file>>();
-      auto l_it            = ranges::find_if(l_working_files, [&](const working_file& i) {
-        return i.software_type_ == software_enum::unreal_engine || i.software_type_ == software_enum::unreal_engine_sk;
-      });
-      if (l_it == l_working_files.end()) throw_exception(doodle_error{"没有找到对应的ue working file"});
-      l_arg_->ue_path_ = l_project_path / l_it->path_;
-      if (l_it->path_.empty() || !FSys::exists(l_arg_->ue_path_))
-        throw_exception(doodle_error{"ue working file 文件不存在 {}", l_arg_->ue_path_});
-      break;
-    }
-  }
-
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/api/actions/tasks/{}/export-rig-sk", in_task_id), 11
+  };
+  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  l_req.set(boost::beast::http::field::accept, "application/json");
+  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  if (!kitsu_token_.empty())
+    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
+  boost::beast::http::response<http::basic_json_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
+  l_res.body().get_to(*l_arg_);;
+  l_arg_->task_id_      = in_task_id;
   co_return l_arg_;
 }
 boost::asio::awaitable<void> kitsu_client::upload_asset_file(

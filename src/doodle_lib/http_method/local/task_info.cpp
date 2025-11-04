@@ -29,7 +29,6 @@
 #include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
 
-
 namespace doodle::http::local {
 namespace {
 boost::asio::awaitable<void> task_emit(const std::shared_ptr<server_task_info>& in_ptr) {
@@ -402,7 +401,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
     l_ptr->end_time_      = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   }
   if (l_arg_t) {
-    l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+    l_arg_t->kitsu_client_ = l_client;
+    l_json.get_to(*l_arg_t);
+    l_ptr->command_        = (nlohmann::json{} = *l_arg_t);
     co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
     if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
