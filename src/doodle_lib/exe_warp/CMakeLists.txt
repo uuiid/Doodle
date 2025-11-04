@@ -8,6 +8,7 @@ target_sources(
         windows_hide.h
         check_files.h
         export_rig_sk.h
+        inspect_maya.h
 
         PRIVATE
         maya_exe.cpp
@@ -17,4 +18,5 @@ target_sources(
         windows_hide.cpp
         check_files.cpp
         export_rig_sk.cpp
+        inspect_maya.cpp
 )

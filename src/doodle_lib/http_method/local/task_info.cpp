@@ -15,6 +15,7 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
@@ -27,6 +28,7 @@
 #include "local.h"
 #include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
+
 
 namespace doodle::http::local {
 namespace {
@@ -186,10 +188,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         emit_signal();
       });
 
-    } else if (in_json.contains("category")) {  // 检查文件任务
-      auto l_arg_t = std::make_shared<maya_exe_ns::inspect_file_arg>();
-      in_json.get_to(*l_arg_t);
-      arg_ = l_arg_t;
     } else if (in_json.contains("image_to_move")) {  // 图片到视频
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
       in_json.get_to(*l_image_to_move_args);
@@ -369,12 +367,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
-  auto l_arg_t            = std::make_shared<maya_exe_ns::inspect_file_arg>();
+  auto l_arg_t            = std::make_shared<inspect_file_arg>(token_, id_);
   l_json.get_to(*l_arg_t);
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
-  l_client->set_token(token_);
-  l_arg_t->set_file_path(co_await l_client->get_task_maya_file(id_));
-
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
