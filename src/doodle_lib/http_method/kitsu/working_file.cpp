@@ -114,11 +114,24 @@ std::vector<working_file_and_link> create_prop_working_files(
           in_entity.uuid_id_,
       }
   );
+
   l_working_files.emplace_back(
       working_file_and_link{
           working_file{
-              .description_ = "道具Maya建模工作文件",
+              .description_ = "道具Maya 模型工作文件",
               .path_        = get_entity_prop_model_maya_path(in_project, in_entity_asset_extend) /
+                       get_entity_prop_model_maya_name(in_entity_asset_extend),
+              .software_type_ = software_enum::maya,
+          },
+          in_entity.uuid_id_,
+      }
+  );
+
+  l_working_files.emplace_back(
+      working_file_and_link{
+          working_file{
+              .description_ = "道具Maya rig工作文件",
+              .path_        = get_entity_prop_rig_maya_path(in_project, in_entity_asset_extend) /
                        get_entity_prop_rig_maya_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya,
           },
@@ -168,7 +181,7 @@ std::vector<working_file_and_link> create_ground_working_files(
   l_working_files.emplace_back(
       working_file_and_link{
           working_file{
-              .description_ = "场景Maya建模工作文件",
+              .description_ = "场景Maya alembic 工作文件",
               .path_        = get_entity_ground_model_maya_path(in_project, in_entity_asset_extend) /
                        get_entity_ground_alembic_name(in_entity_asset_extend),
               .software_type_ = software_enum::alembic,
@@ -179,7 +192,7 @@ std::vector<working_file_and_link> create_ground_working_files(
   l_working_files.emplace_back(
       working_file_and_link{
           working_file{
-              .description_ = "场景Maya建模rig工作文件",
+              .description_ = "场景Maya rig工作文件",
               .path_        = get_entity_ground_model_maya_path(in_project, in_entity_asset_extend) /
                        get_entity_ground_rig_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya,

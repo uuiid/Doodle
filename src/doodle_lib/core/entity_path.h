@@ -34,6 +34,7 @@ FSys::path get_entity_prop_model_maya_path(
     const std::string& pin_yin_ming_cheng_
 );
 FSys::path get_entity_prop_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_model_maya_name(const entity_asset_extend& in_extend_);
 /// 场景模型maya 绑定路径
 FSys::path get_entity_ground_rig_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,

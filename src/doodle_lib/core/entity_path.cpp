@@ -137,7 +137,11 @@ FSys::path get_entity_prop_rig_maya_name(const entity_asset_extend& in_extend_) 
       g_get_cache_manger_user_abbreviation().get(in_extend_.entity_id_)
   );
 }
-
+FSys::path get_entity_prop_model_maya_name(const entity_asset_extend& in_extend_) {
+  return fmt::format(
+      "{}{}.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_
+  );
+}
 /// 道具模型maya 路径
 FSys::path get_entity_prop_model_maya_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
