@@ -15,6 +15,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/empty_body.hpp>
 #include <boost/beast/http/file_body_fwd.hpp>
+#include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/scope/scope_exit.hpp>
 
 #include <cpp-base64/base64.h>
@@ -195,7 +196,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
 
-  boost::beast::http::response<boost::beast::http::empty_body> l_res{};
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
     throw_exception(doodle_error{"kitsu upload file error {} {}", in_file_path, l_res.result()});
