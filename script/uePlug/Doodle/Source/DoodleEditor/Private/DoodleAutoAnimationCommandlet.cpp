@@ -790,7 +790,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	// EditorActorSubsystem->DestroyActor(L_LevelSequenceActor);
 	// UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	// EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
-	
+
 	L_LevelSequencePlayer->ConditionalBeginDestroy();
 
 	GEngine->ForceGarbageCollection(true);
@@ -1275,6 +1275,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 	UMoviePipelineOutputSetting* OutputSetting = Cast<UMoviePipelineOutputSetting>(
 		Config->FindOrAddSettingByClass(UMoviePipelineOutputSetting::StaticClass()));
 	OutputSetting->OutputDirectory.Path = DestinationPath;
+	OutputSetting->FileNameFormat = FPaths::GetBaseFilename(DestinationPath) + ".{frame_number}";
 	OutputSetting->OutputResolution.X = ImageSize.Width;
 	OutputSetting->OutputResolution.Y = ImageSize.Height;
 	OutputSetting->bUseCustomFrameRate = true;
@@ -1310,7 +1311,10 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		if (UMoviePipelineImageSequenceOutput_PNG* FormatSetting = Config->FindSetting<UMoviePipelineImageSequenceOutput_PNG>())
 			Config->RemoveSetting(FormatSetting);
 	}
-	else { Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass()); }
+	else
+	{
+		Config->FindOrAddSettingByClass(UMoviePipelineImageSequenceOutput_PNG::StaticClass());
+	}
 
 	// 设置控制台变量
 	if (UMoviePipelineConsoleVariableSetting* ConsoleVar = Cast<UMoviePipelineConsoleVariableSetting>(
@@ -1360,7 +1364,7 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
 		AntiAliasing->bRenderWarmUpFrames = true;
 		AntiAliasing->EngineWarmUpCount = 64;
-		AntiAliasing->RenderWarmUpCount = 64;
+		AntiAliasing->RenderWarmUpCount = 128;
 	}
 	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(
 		Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())); GameOver)
