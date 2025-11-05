@@ -56,6 +56,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   // 上传文件
   logger_ptr_->warn("上传文件 {} ", impl_.update_ue_path_);
+  co_await kitsu_client_->upload_asset_file_maya(task_id_, maya_file_);
   co_await kitsu_client_->upload_asset_file_ue(
       task_id_, std::make_shared<std::vector<FSys::path>>(std::vector<FSys::path>{impl_.update_ue_path_})
   );
