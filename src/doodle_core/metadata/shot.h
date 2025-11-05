@@ -6,6 +6,7 @@
 #include <magic_enum/magic_enum_all.hpp>
 
 namespace doodle {
+struct entity;
 class DOODLE_CORE_API shot {
  public:
   enum class shot_ab_enum;
@@ -17,30 +18,31 @@ class DOODLE_CORE_API shot {
   shot();
   explicit shot(std::int32_t in_shot, shot_ab_enum in_ab);
   explicit shot(std::int32_t in_shot, std::string in_ab);
+  explicit shot(const entity& in_entity);
 
   // clang-format off
   enum class shot_ab_enum { None, A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z };
   // clang-format on
 
-  [[nodiscard]] const std::int32_t &get_shot() const noexcept;
-  void set_shot(const std::int32_t &in_shot);
+  [[nodiscard]] const std::int32_t& get_shot() const noexcept;
+  void set_shot(const std::int32_t& in_shot);
 
   [[nodiscard]] std::string get_shot_ab() const noexcept;
   [[nodiscard]] shot_ab_enum get_shot_ab_enum() const noexcept;
-  void set_shot_ab(const std::string &ShotAb) noexcept;
-  inline void set_shot_ab(const shot_ab_enum &ShotAb) { set_shot_ab(std::string{magic_enum::enum_name(ShotAb)}); };
+  void set_shot_ab(const std::string& ShotAb) noexcept;
+  inline void set_shot_ab(const shot_ab_enum& ShotAb) { set_shot_ab(std::string{magic_enum::enum_name(ShotAb)}); };
 
   [[nodiscard]] std::string str() const;
-  bool operator<(const shot &rhs) const;
-  bool operator>(const shot &rhs) const;
-  bool operator<=(const shot &rhs) const;
-  bool operator>=(const shot &rhs) const;
-  bool operator==(const shot &in_rhs) const;
-  bool operator!=(const shot &in_rhs) const;
-  inline bool analysis(const FSys::path &in_path) { return analysis(in_path.generic_string()); };
-  bool analysis(const std::string &in_path);
+  bool operator<(const shot& rhs) const;
+  bool operator>(const shot& rhs) const;
+  bool operator<=(const shot& rhs) const;
+  bool operator>=(const shot& rhs) const;
+  bool operator==(const shot& in_rhs) const;
+  bool operator!=(const shot& in_rhs) const;
+  inline bool analysis(const FSys::path& in_path) { return analysis(in_path.generic_string()); };
+  bool analysis(const std::string& in_path);
 
-  friend std::size_t hash_value(const shot &value) {
+  friend std::size_t hash_value(const shot& value) {
     std::size_t seed = 0;
 
     boost::hash_combine(seed, value.p_shot);
@@ -50,14 +52,14 @@ class DOODLE_CORE_API shot {
   }
 
  private:
-  friend void to_json(nlohmann::json &j, const shot &p) {
+  friend void to_json(nlohmann::json& j, const shot& p) {
     j["shot"]      = p.p_shot;
     j["shot_enum"] = p.p_shot_enum;
   }
-  friend void from_json(const nlohmann::json &j, shot &p) {
+  friend void from_json(const nlohmann::json& j, shot& p) {
     j.at("shot").get_to(p.p_shot);
     if (j.contains("shot_enum") && j.at("shot_enum").is_string() &&
-        !j.at("shot_enum").get_ptr<const std::string *>()->empty())
+        !j.at("shot_enum").get_ptr<const std::string*>()->empty())
       p.p_shot_enum =
           magic_enum::enum_cast<shot_ab_enum>(j.at("shot_enum").get<std::string>()).value_or(shot_ab_enum::A);
   }
@@ -73,7 +75,7 @@ namespace fmt {
 template <>
 struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
   template <typename FormatContext>
-  auto format(const ::doodle::shot::shot_ab_enum &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
+  auto format(const ::doodle::shot::shot_ab_enum& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     switch (in_) {
       case ::doodle::shot::shot_ab_enum::None:
         break;
@@ -92,7 +94,7 @@ struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
 template <>
 struct formatter<::doodle::shot> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(const ::doodle::shot &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
+  auto format(const ::doodle::shot& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     auto l_str = fmt::format("sc_{}{}", in_.p_shot, in_.p_shot_enum);
     formatter<std::string>::format(l_str, ctx);
     return ctx.out();
@@ -103,11 +105,11 @@ struct formatter<::doodle::shot> : formatter<std::string> {
 namespace std {
 template <>
 struct hash<doodle::shot> {
-  std::size_t operator()(const doodle::shot &value) const noexcept {
+  std::size_t operator()(const doodle::shot& value) const noexcept {
     std::size_t seed = 0;
     boost::hash_combine(seed, value.p_shot);
     boost::hash_combine(seed, value.p_shot_enum);
-    return  seed;
+    return seed;
   }
 };
-}
+}  // namespace std

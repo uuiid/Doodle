@@ -1,15 +1,24 @@
 #include "shot.h"
 
 #include <doodle_core/logger/logger.h>
+#include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/episodes.h>
 
 #include <boost/algorithm/string.hpp>
+
+#include <string>
+
 namespace doodle {
 
 shot::shot() : shot(-1, shot_ab_enum::None) {}
 shot::shot(std::int32_t in_shot, shot_ab_enum in_ab) : p_shot(std::move(in_shot)), p_shot_enum(std::move(in_ab)) {}
 shot::shot(std::int32_t in_shot, std::string in_ab)
     : shot(in_shot, magic_enum::enum_cast<shot_ab_enum>(in_ab).value_or(shot_ab_enum::None)) {}
+shot::shot(const entity& in_entity)
+    : p_shot(std::stoi(in_entity.name_.substr(2, in_entity.name_.size() - 2 - 1))),
+      p_shot_enum(magic_enum::enum_cast<shot_ab_enum>(in_entity.name_.size() - 1).value_or(shot_ab_enum::None)) {}
+
+
 const int32_t& shot::get_shot() const noexcept { return p_shot; }
 
 void shot::set_shot(const int32_t& in_shot) {
@@ -47,8 +56,6 @@ bool shot::analysis(const std::string& in_path) {
   }
   return k_r;
 }
-
-
 
 bool shot::operator==(const shot& in_rhs) const { return p_shot == in_rhs.p_shot && p_shot_enum == in_rhs.p_shot_enum; }
 bool shot::operator!=(const shot& in_rhs) const { return !(in_rhs == *this); }
