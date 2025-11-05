@@ -13,10 +13,12 @@
 
 #include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 
 #include <boost/signals2/signal.hpp>
 
 #include <filesystem>
+#include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <vector>
 
@@ -233,14 +235,23 @@ class run_ue_assembly_local : public async_task {
       j.at("ue_asset_path").get_to(p.ue_asset_path_);
     }
   };
+  uuid shot_task_id_{};
+  std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 
  private:
   run_ue_assembly_arg arg_;
 
   // to json
-  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) { j = p.arg_; }
+  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) {
+    j                 = p.arg_;
+    j["shot_task_id"] = p.shot_task_id_;
+  }
   // from json
-  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) { j.get_to(p.arg_); }
+  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) {
+    j.get_to(p.arg_);
+
+    if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
+  }
 };
 
 }  // namespace doodle

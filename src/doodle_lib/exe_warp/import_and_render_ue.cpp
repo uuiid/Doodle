@@ -4,6 +4,7 @@
 
 #include "import_and_render_ue.h"
 
+#include "doodle_core/core/file_sys.h"
 #include <doodle_core/core/http_client_core.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -580,6 +581,13 @@ tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
   return l_move_paths;
 }
 
-boost::asio::awaitable<void> run_ue_assembly_local::run() { co_return; }
+boost::asio::awaitable<void> run_ue_assembly_local::run() {
+  // 复制文件
+  for (auto&& [p_from, p_to] : arg_.ue_asset_path_) {
+    FSys::copy_diff(p_from, p_to, logger_ptr_);
+  }
+
+  co_return;
+}
 
 }  // namespace doodle

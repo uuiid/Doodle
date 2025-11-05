@@ -403,7 +403,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   if (l_arg_t) {
     l_arg_t->kitsu_client_ = l_client;
     l_json.get_to(*l_arg_t);
-    l_ptr->command_        = (nlohmann::json{} = *l_arg_t);
+    l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
     co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
     if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
@@ -433,7 +433,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_client->set_token(token_);
   std::shared_ptr<run_ue_assembly_local> l_arg_t;
   try {
-    l_arg_t = std::dynamic_pointer_cast<run_ue_assembly_local>(co_await l_client->get_generate_uesk_file_arg(id_));
+    l_arg_t = std::dynamic_pointer_cast<run_ue_assembly_local>(co_await l_client->get_ue_assembly(project_id_, id_));
+    l_arg_t->kitsu_client_ = l_client;
+    l_arg_t->shot_task_id_ = id_;
   } catch (const doodle_error& e) {
     l_ptr->status_        = server_task_info_status::failed;
     l_ptr->last_line_log_ = fmt::format("获取任务数据失败, 多数是前期环节中的文件未找到: {}", e.what());
