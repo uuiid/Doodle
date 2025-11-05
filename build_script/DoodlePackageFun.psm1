@@ -115,6 +115,9 @@ function Initialize-Doodle {
         Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
         Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
     }
+    if (Test-Path $OutPath\dist\Plugins\Doodle.$UEVersion.zip) {
+        Remove-Item $OutPath\dist\Plugins\Doodle.$UEVersion.zip
+    }
     if (-not (Test-Path $OutPath\dist\Plugins\Doodle.$UEVersion.zip)) {
         Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     }
