@@ -234,16 +234,20 @@ class run_ue_assembly_local : public async_task {
 
   struct run_ue_assembly_asset_info {
     FSys::path shot_output_path_;  // 需要组装的fbx
-    FSys::path ue_sk_path_;        // 组装对应的fbx
+    FSys::path skin_path_;         // 组装对应的fbx
+    std::string type_;             // 是fbx, 还是 abc
+
     // to json
     friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
-      j["shot_output_path"] = p.shot_output_path_;
-      j["ue_sk_path"]       = p.ue_sk_path_;
+      j["path"]      = p.shot_output_path_;
+      j["skin_path"] = p.skin_path_;
+      j["type"]      = p.type_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, run_ue_assembly_asset_info& p) {
-      j.at("shot_output_path").get_to(p.shot_output_path_);
-      j.at("ue_sk_path").get_to(p.ue_sk_path_);
+      j.at("path").get_to(p.shot_output_path_);
+      j.at("skin_path").get_to(p.skin_path_);
+      j.at("type").get_to(p.type_);
     }
   };
   struct file_copy_info {
@@ -263,16 +267,35 @@ class run_ue_assembly_local : public async_task {
 
   struct run_ue_assembly_arg {
     std::vector<run_ue_assembly_asset_info> asset_infos_;
-    FSys::path camera_file_path_;
-    FSys::path ue_main_project_path_;
+    FSys::path camera_file_path_;                // 相机路径
+    FSys::path ue_main_project_path_;            // 主项目路径
     std::vector<file_copy_info> ue_asset_path_;  // 需要复制的UE路径
 
+    std::int32_t begin_time_;
+    std::int32_t end_time_;
+    FSys::path out_file_dir_;
+    std::string original_map_;          // 主场景路径
+    FSys::path render_map_;             // 渲染关卡, 这个放置外面, 包含下面两个子关卡
+    std::string create_map_;            // 创建的关卡(放置骨骼网格体)
+    std::string import_dir_;            // 导入的fbx和abc路径
+    FSys::path movie_pipeline_config_;  // 电影管线配置
+    image_size size_;                   // 渲染的尺寸
     // to josn
     friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
-      j["asset_infos"]          = p.asset_infos_;
-      j["camera_file_path"]     = p.camera_file_path_;
-      j["ue_main_project_path"] = p.ue_main_project_path_;
-      j["ue_asset_path"]        = p.ue_asset_path_;
+      j["asset_infos"]           = p.asset_infos_;
+      j["camera_file_path"]      = p.camera_file_path_;
+      j["ue_main_project_path"]  = p.ue_main_project_path_;
+      j["ue_asset_path"]         = p.ue_asset_path_;
+
+      j["begin_time"]            = p.begin_time_;
+      j["end_time"]              = p.end_time_;
+      j["out_file_dir"]          = p.out_file_dir_;
+      j["original_map"]          = p.original_map_;
+      j["render_map"]            = p.render_map_;
+      j["create_map"]            = p.create_map_;
+      j["import_dir"]            = p.import_dir_;
+      j["movie_pipeline_config"] = p.movie_pipeline_config_;
+      j["size"]                  = p.size_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
@@ -280,6 +303,16 @@ class run_ue_assembly_local : public async_task {
       j.at("camera_file_path").get_to(p.camera_file_path_);
       j.at("ue_main_project_path").get_to(p.ue_main_project_path_);
       j.at("ue_asset_path").get_to(p.ue_asset_path_);
+
+      j.at("begin_time").get_to(p.begin_time_);
+      j.at("end_time").get_to(p.end_time_);
+      j.at("out_file_dir").get_to(p.out_file_dir_);
+      j.at("original_map").get_to(p.original_map_);
+      j.at("render_map").get_to(p.render_map_);
+      j.at("create_map").get_to(p.create_map_);
+      j.at("import_dir").get_to(p.import_dir_);
+      j.at("movie_pipeline_config").get_to(p.movie_pipeline_config_);
+      j.at("size").get_to(p.size_);
     }
   };
   uuid shot_task_id_{};
