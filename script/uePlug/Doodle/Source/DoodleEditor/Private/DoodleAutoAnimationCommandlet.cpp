@@ -302,7 +302,8 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		ImageSize.Width = L_Size->GetIntegerField(TEXT("width"));
 	}
 	Layering = JsonObject->GetBoolField(TEXT("layering"));;
-	ImportFiles.Add(FImportFiles2{EImportFilesType2::Camera, JsonObject->GetStringField(TEXT("camera_file_path")), nullptr, {}});
+	if (JsonObject->HasField(TEXT("camera_file_path")))
+		ImportFiles.Add(FImportFiles2{EImportFilesType2::Camera, JsonObject->GetStringField(TEXT("camera_file_path")), nullptr, {}});
 	for (TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("files")); const TSharedPtr<FJsonValue>& JsonFile : JsonFiles)
 	{
 		TSharedPtr<FJsonObject> Obj = JsonFile->AsObject();
@@ -447,7 +448,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 
 	//--------------------------
 	TheLevelSequence->GetMovieScene()->SetDisplayRate(Rate);
-	TheLevelSequence->GetMovieScene()->SetTickResolutionDirectly(Rate);
+	// TheLevelSequence->GetMovieScene()->SetTickResolutionDirectly(Rate);
 	//--------------------
 	TheLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
@@ -605,7 +606,7 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	ACineCameraActor* CameraActor = CastChecked<ACineCameraActor>(TempActor);
 	CameraActor->GetCineCameraComponent()->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 	CameraActor->GetCineCameraComponent()->PostProcessSettings.bOverride_MotionBlurAmount = true;
-	CameraActor->GetCineCameraComponent()->PostProcessSettings.MotionBlurAmount = 0.0f;
+	CameraActor->GetCineCameraComponent()->PostProcessSettings.MotionBlurAmount = 0.1f;
 	FGuid CameraGuid = TheLevelSequence->GetMovieScene()->AddPossessable(CameraActor->GetName(), CameraActor->GetClass());
 	TheLevelSequence->BindPossessableObject(CameraGuid, *CameraActor, TheSequenceWorld);
 	const FMovieSceneBindingReference* L_MovieSceneBindingReference = TheLevelSequence->GetBindingReferences()->GetReference(CameraGuid, 0);
