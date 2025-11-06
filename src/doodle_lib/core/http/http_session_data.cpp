@@ -426,6 +426,7 @@ nlohmann::json session_data::get_json() const {
 std::vector<FSys::path> session_data::get_files() const {
   if (content_type_ == content_type::multipart_form_data && std::holds_alternative<multipart_body::value_type>(body_))
     return std::get<multipart_body::value_type>(body_).get_files();
+   if (std::holds_alternative<FSys::path>(body_)) return {std::get<FSys::path>(body_)};
   return {};
 }
 FSys::path session_data::get_file() const {

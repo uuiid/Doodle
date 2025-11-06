@@ -244,10 +244,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     );
   person_.check_task_action_access(l_preview_file->task_id_);
   FSys::path l_file;
-  if (auto l_fs = in_handle->get_files(); l_fs.empty())
+  if (auto l_fs = in_handle->get_file(); l_fs.empty())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "请上传预览文件"});
   else
-    l_file = l_fs[0];
+    l_file = l_fs;
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     auto l_size     = save_variants(l_file, l_preview_file->uuid_id_);
     /// 将原始文件添加到相应的位置中
