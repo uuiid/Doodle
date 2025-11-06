@@ -43,7 +43,7 @@ function Compress-UEPlugins() {
     if (-Not (Test-Path "$OutPath\dist\Plugins")) {
         New-Item "$OutPath\dist\Plugins" -ItemType Directory
     }
-    $UEPluginsPath = "$OutPath\dist\Plugins\Doodle.$UEVersion.zip"
+    $UEPluginsPath = "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
     if (Test-Path $UEPluginsPath) {
         Write-Host "UE插件包已存在: $UEPluginsPath"
         return
@@ -62,15 +62,14 @@ function Compress-UEPlugins() {
 
     $UEPluginsJson | ConvertTo-Json | Set-Content -Path $UEPluginsJsonPath -Encoding UTF8
 
-    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle.$UEVersion.zip"
+    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
 }
 
 function Initialize-Doodle {
     param(
         [string]$OutPath,
         [Switch]$BuildKitsu,
-        [switch]$OnlyOne,
-        [switch]$CreateUEPlugins
+        [switch]$OnlyOne
     )
     if (-not (Test-Path $OutPath)) {
         New-Item $OutPath -ItemType Directory
@@ -85,7 +84,6 @@ function Initialize-Doodle {
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
-    $UEVersion = "5.5"
     if ($BuildKitsu) {
         Write-Host "开始构建文件"
         $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
@@ -106,23 +104,9 @@ function Initialize-Doodle {
     &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
     &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
-
     # 添加UE插件安装
-    if ($CreateUEPlugins) {
-        if (Test-Path $OutPath\dist\Plugins\Doodle.$UEVersion.zip) {
-            Remove-Item $OutPath\dist\Plugins\Doodle.$UEVersion.zip
-        }
-        Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
-        Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
-    }
-    if (Test-Path $OutPath\dist\Plugins\Doodle.$UEVersion.zip) {
-        Remove-Item $OutPath\dist\Plugins\Doodle.$UEVersion.zip
-    }
-    if (-not (Test-Path $OutPath\dist\Plugins\Doodle.$UEVersion.zip)) {
-        Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
-    }
-    
-    Copy-Item $OutPath\dist\Plugins\Doodle.$UEVersion.zip -Destination $OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip
+    Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+    Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
 
     $Tags = git tag --sort=-v:refname;
     # 去除 前缀 v
