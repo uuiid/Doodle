@@ -337,7 +337,7 @@ FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend&
 }
 /// 动画镜头maya路径
 FSys::path get_shots_animation_maya_path(const std::string& episode_name_) {
-  return FSys::path{"03_Workflow"} / "shots" / episode_name_ / "ma";
+  return FSys::path{"03_Workflow"} / "Shots" / episode_name_ / "ma";
   ;
 }
 FSys::path get_shots_animation_maya_path(const entity& episode_) {
@@ -347,7 +347,7 @@ FSys::path get_shots_animation_maya_path(const entity& episode_) {
 FSys::path get_shots_animation_output_path(
     const std::string& episode_name_, const std::string& shot_name_, const std::string& project_code_
 ) {
-  return FSys::path{} / "03_Workflow" / "shots" / episode_name_ / "fbx" /
+  return FSys::path{} / "03_Workflow" / "Shots" / episode_name_ / "fbx" /
          fmt::format("{}_{}_{}", project_code_, episode_name_, shot_name_);
 }
 FSys::path get_shots_animation_output_path(const entity& episode_, const entity& shot_, const project& prj_) {
@@ -355,7 +355,7 @@ FSys::path get_shots_animation_output_path(const entity& episode_, const entity&
 }
 /// 解算镜头maya路径
 FSys::path get_shots_simulation_maya_path(const std::string& episode_name_) {
-  return FSys::path{"03_Workflow"} / "shots" / episode_name_ / "sim";
+  return FSys::path{"03_Workflow"} / "Shots" / episode_name_ / "sim";
 }
 FSys::path get_shots_simulation_maya_path(const entity& episode_) {
   return get_shots_simulation_maya_path(episode_.name_);
@@ -364,7 +364,7 @@ FSys::path get_shots_simulation_maya_path(const entity& episode_) {
 FSys::path get_shots_simulation_output_path(
     const std::string& episode_name_, const std::string& shot_name_, const std::string& project_code_
 ) {
-  return FSys::path{} / "03_Workflow" / "shots" / episode_name_ / "abc" /
+  return FSys::path{} / "03_Workflow" / "Shots" / episode_name_ / "abc" /
          fmt::format("{}_{}_{}", project_code_, episode_name_, shot_name_);
 }
 FSys::path get_shots_simulation_output_path(const entity& episode_, const entity& shot_, const project& prj_) {
