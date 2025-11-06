@@ -17,6 +17,7 @@
 
 #include "kitsu_reg_url.h"
 #include <opencv2/opencv.hpp>
+#include <spdlog/spdlog.h>
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
@@ -131,6 +132,7 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
 }
 /// 创建视频平铺图像
 auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_size) {
+  spdlog::warn("创建视频平铺图像, 目标尺寸 {}x{}", in_size.width, in_size.height);
   std::double_t l_frame_count = in_capture.get(cv::CAP_PROP_FRAME_COUNT);
   auto l_rows                 = std::min(480, boost::numeric_cast<std::int32_t>(std::ceil(l_frame_count / 8)));
   std::int32_t l_cols{8};
@@ -198,6 +200,10 @@ auto handle_video_file(
     };
     if (!l_high_vc.isOpened() || !l_low_vc.isOpened())
       throw_exception(doodle_error{"无法创建视频文件: {} ", in_path.generic_string()});
+    spdlog::warn(
+        "处理视频文件 {}, 目标高分辨率 {}x{}, 低分辨率 {}x{}", in_path.generic_string(), l_high_size.width,
+        l_high_size.height, l_low_size.width, l_low_size.height
+    );
     while (l_video.read(l_frame)) {
       if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
       if (l_frame.cols != l_high_size.width || l_frame.rows != l_high_size.height) {
