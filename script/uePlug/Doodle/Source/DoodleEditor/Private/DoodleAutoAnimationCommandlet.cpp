@@ -301,17 +301,16 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		ImageSize.Height = L_Size->GetIntegerField(TEXT("height"));
 		ImageSize.Width = L_Size->GetIntegerField(TEXT("width"));
 	}
-	Layering = JsonObject->GetBoolField(TEXT("layering"));
-
+	Layering = JsonObject->GetBoolField(TEXT("layering"));;
+	ImportFiles.Add(FImportFiles2{EImportFilesType2::Camera, JsonObject->GetStringField(TEXT("camera_file_path")), nullptr, {}});
 	for (TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("files")); const TSharedPtr<FJsonValue>& JsonFile : JsonFiles)
 	{
 		TSharedPtr<FJsonObject> Obj = JsonFile->AsObject();
 		const FString Path = Obj->GetStringField(TEXT("path"));
 		const FString Type = Obj->GetStringField(TEXT("type"));
 		if (!FPaths::FileExists(Path)) continue;
-		EImportFilesType2 Type2 = EImportFilesType2::Camera;
-		if (Type == TEXT("cam")) Type2 = EImportFilesType2::Camera;
-		else if (Type == TEXT("char")) Type2 = EImportFilesType2::Character;
+		EImportFilesType2 Type2 = EImportFilesType2::Character;
+		if (Type == TEXT("char")) Type2 = EImportFilesType2::Character;
 		else if (Type == TEXT("geo")) Type2 = EImportFilesType2::Geometry;
 		USkeleton* L_Skeleton{};
 		if (Obj->HasField(TEXT("skin_path")))
