@@ -281,9 +281,10 @@ class run_ue_assembly_local : public async_task {
     FSys::path movie_pipeline_config_;  // 电影管线配置
     FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
     image_size size_;                   // 渲染的尺寸
+    bool layering_;
     // to josn
     friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
-      j["asset_infos"]           = p.asset_infos_;
+      j["files"]                 = p.asset_infos_;
       j["camera_file_path"]      = p.camera_file_path_;
       j["ue_main_project_path"]  = p.ue_main_project_path_;
       j["ue_asset_path"]         = p.ue_asset_path_;
@@ -296,12 +297,13 @@ class run_ue_assembly_local : public async_task {
       j["create_map"]            = p.create_map_;
       j["import_dir"]            = p.import_dir_;
       j["movie_pipeline_config"] = p.movie_pipeline_config_;
-      j["level_sequence_import"] = p.level_sequence_import_;
+      j["level_sequence"]        = p.level_sequence_import_;
       j["size"]                  = p.size_;
+      j["layering"]              = p.layering_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
-      j.at("asset_infos").get_to(p.asset_infos_);
+      j.at("files").get_to(p.asset_infos_);
       j.at("camera_file_path").get_to(p.camera_file_path_);
       j.at("ue_main_project_path").get_to(p.ue_main_project_path_);
       j.at("ue_asset_path").get_to(p.ue_asset_path_);
@@ -314,8 +316,9 @@ class run_ue_assembly_local : public async_task {
       j.at("create_map").get_to(p.create_map_);
       j.at("import_dir").get_to(p.import_dir_);
       j.at("movie_pipeline_config").get_to(p.movie_pipeline_config_);
-      j.at("level_sequence_import").get_to(p.level_sequence_import_);
+      j.at("level_sequence").get_to(p.level_sequence_import_);
       j.at("size").get_to(p.size_);
+      j.at("layering").get_to(p.layering_);
     }
   };
   uuid shot_task_id_{};
