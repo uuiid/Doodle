@@ -2,6 +2,7 @@
 // Created by TD on 25-3-27.
 //
 
+#include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/metadata/comment.h"
 #include "doodle_core/metadata/entity.h"
@@ -168,8 +169,10 @@ auto handle_video_file(
 ) {
   auto l_low_file_path =
       g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "lowdef" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
+  auto l_low_file_path_backup = FSys::add_time_stamp(l_low_file_path);
   auto l_high_file_path =
       g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "previews" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
+  auto l_high_file_path_backup = FSys::add_time_stamp(l_high_file_path);
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
@@ -186,11 +189,11 @@ auto handle_video_file(
   cv::Mat l_frame{};
   {
     auto l_low_vc = cv::VideoWriter{
-        l_low_file_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+        l_low_file_path_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
         boost::numeric_cast<std::double_t>(in_fps), l_low_size
     };
     auto l_high_vc = cv::VideoWriter{
-        l_high_file_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+        l_high_file_path_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
         boost::numeric_cast<std::double_t>(in_fps), l_high_size
     };
     if (!l_high_vc.isOpened() || !l_low_vc.isOpened())
@@ -215,8 +218,15 @@ auto handle_video_file(
   auto l_tiles = create_video_tile_image(l_video, l_high_size);
   auto l_path =
       g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}.png", in_id));
+  auto l_path_backup = FSys::add_time_stamp(l_path);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   cv::imwrite(l_path.generic_string(), l_tiles);
+
+  {  // rename
+    FSys::rename(l_low_file_path_backup, l_low_file_path);
+    FSys::rename(l_high_file_path_backup, l_high_file_path);
+    FSys::rename(l_path_backup, l_path);
+  }
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
