@@ -6,7 +6,6 @@
 
 #include <string>
 
-
 namespace doodle {
 
 episodes::episodes() : p_episodes(-1) {}
@@ -14,7 +13,8 @@ episodes::episodes() : p_episodes(-1) {}
 episodes::episodes(std::int32_t in_episodes) : p_episodes(in_episodes) {
   DOODLE_CHICK(p_episodes >= 0, doodle_error{"集数无法为负"});
 }
-episodes::episodes(const entity& in_entity) : p_episodes(std::stoi(in_entity.name_.substr(2))) {}
+episodes::episodes(const entity& in_entity)
+    : p_episodes(in_entity.name_.starts_with("EP") ? std::stoi(in_entity.name_.substr(2)) : 0) {}
 
 // Episodes::~Episodes() {
 //   if (p_metadata_flctory_ptr_)

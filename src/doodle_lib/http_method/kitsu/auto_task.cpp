@@ -144,8 +144,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
       auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
                            get_entity_ground_ue_map_name(l_scene_asset_extend);
-      l_ret.out_file_dir_ = l_ret.original_map_ =
-          conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
+      l_ret.original_map_          = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
       l_ret.movie_pipeline_config_ = fmt::format(
           "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_prj.code_,
           l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
@@ -166,11 +165,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_prj.code_, l_episodes.get_episodes(),
           l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
       );
-      auto&& l_uprj               = ue_exe_ns::find_ue_project_file(l_ue_main_map);
-      l_ret.ue_main_project_path_ = l_uprj;
+      auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
       l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
 
-      l_ret.render_map_ =
+      l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
+      l_ret.out_file_dir_ =
           l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
           fmt::format(
               "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
@@ -281,15 +280,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
   }
 
-  for (auto&& l_path : l_ret.ue_asset_path_) {
-    if (!FSys::exists(l_path.from_)) {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
-          }
-      );
-    }
-  }
+  // for (auto&& l_path : l_ret.ue_asset_path_) {
+  //   if (!FSys::exists(l_path.from_)) {
+  //     throw_exception(
+  //         http_request_error{
+  //             boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
+  //         }
+  //     );
+  //   }
+  // }
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 

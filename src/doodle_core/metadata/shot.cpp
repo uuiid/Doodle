@@ -6,6 +6,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <cctype>
 #include <string>
 
 namespace doodle {
@@ -15,9 +16,18 @@ shot::shot(std::int32_t in_shot, shot_ab_enum in_ab) : p_shot(std::move(in_shot)
 shot::shot(std::int32_t in_shot, std::string in_ab)
     : shot(in_shot, magic_enum::enum_cast<shot_ab_enum>(in_ab).value_or(shot_ab_enum::None)) {}
 shot::shot(const entity& in_entity)
-    : p_shot(std::stoi(in_entity.name_.substr(2, in_entity.name_.size() - 2 - 1))),
-      p_shot_enum(magic_enum::enum_cast<shot_ab_enum>(in_entity.name_.size() - 1).value_or(shot_ab_enum::None)) {}
-
+    : p_shot(
+          in_entity.name_.starts_with("SC")
+              ? std::stoi(in_entity.name_.substr(
+                    2, in_entity.name_.size() - 2 - (std::isdigit(in_entity.name_.back() ? 0 : 1))
+                ))
+              : 0
+      ),
+      p_shot_enum(
+          std::isdigit(in_entity.name_.back())
+              ? shot_ab_enum::None
+              : magic_enum::enum_cast<shot_ab_enum>(in_entity.name_.size() - 1).value_or(shot_ab_enum::None)
+      ) {}
 
 const int32_t& shot::get_shot() const noexcept { return p_shot; }
 
