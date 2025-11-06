@@ -17,6 +17,10 @@
 namespace doodle {
 
 boost::asio::awaitable<void> export_rig_sk_arg::run() {
+  {
+    auto l_json = co_await kitsu_client_->get_generate_uesk_file_arg(task_id_);
+    l_json.get_to(impl_);
+  }
   auto l_arg = std::make_shared<maya_exe_ns::export_rig_arg>();
   l_arg->set_file_path(maya_file_);
   l_arg->set_logger(logger_ptr_);

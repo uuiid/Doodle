@@ -24,7 +24,14 @@
 
 namespace doodle {
 namespace import_and_render_ue_ns {
-
+struct import_skin_file {
+  FSys::path fbx_file_{};
+  FSys::path import_dir_{};
+  friend void to_json(nlohmann::json& j, const import_skin_file& p) {
+    j["fbx_file"]   = p.fbx_file_;
+    j["import_dir"] = p.import_dir_;
+  }
+};
 void fix_project(const FSys::path& in_project_path);
 void fix_config(const FSys::path& in_project_path);
 

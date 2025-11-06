@@ -109,10 +109,6 @@ bool auto_light_process_t::operator()(const argh::parser& in_arh, std::vector<st
   l_shot.analysis(l_file);
 
   spdlog::default_logger()->sinks().emplace_back(l_sink);
-  import_and_render_ue_ns::args l_args{};
-  l_args.episodes_ = l_episodes;
-  l_args.project_  = l_project;
-  l_args.shot_     = l_shot;
 
   return false;
 }

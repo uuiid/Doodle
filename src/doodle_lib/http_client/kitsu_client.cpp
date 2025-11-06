@@ -119,9 +119,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task
 
   co_return l_path;
 }
-boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_uesk_file_arg(uuid in_task_id) const {
-  uuid l_entity_id{};
-  auto l_arg_ = std::make_shared<export_rig_sk_arg>();
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_generate_uesk_file_arg(uuid in_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/actions/tasks/{}/export-rig-sk", in_task_id), 11
   };
@@ -134,10 +132,8 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
     throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
-  l_res.body().get_to(*l_arg_);
-  ;
-  l_arg_->task_id_ = in_task_id;
-  co_return l_arg_;
+
+  co_return l_res.body();
 }
 boost::asio::awaitable<void> kitsu_client::upload_asset_file(
     std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
