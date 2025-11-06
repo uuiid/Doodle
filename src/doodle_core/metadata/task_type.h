@@ -36,7 +36,7 @@ struct task_type {
   static uuid get_effect_id();
   /// 动画
   static uuid get_animation_id();
-  /// 解算
+  /// 解算任务
   static uuid get_simulation_task_id();
 
   // from json

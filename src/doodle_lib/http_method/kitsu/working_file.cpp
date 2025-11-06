@@ -6,6 +6,7 @@
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
+#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/metadata/working_file.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -56,6 +57,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
   co_return in_handle->make_msg_204();
 }
 
+bool entity_has_simulation_asset(const uuid& in_entity_id) {
+  using namespace sqlite_orm;
+  return g_ctx().get<sqlite_database>().impl_->storage_any_.count<task>(
+             where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_simulation_id())
+         ) > 0;
+}
+
 std::vector<working_file_and_link> create_character_working_files(
     const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
 ) {
@@ -84,17 +92,18 @@ std::vector<working_file_and_link> create_character_working_files(
           in_entity.uuid_id_,
       }
   );
-  l_working_files.emplace_back(
-      working_file_and_link{
-          working_file{
-              .description_ = "角色Maya 解算工作文件",
-              .path_        = get_entity_simulation_asset_path(in_project) /
-                       get_entity_simulation_character_asset_name(in_entity_asset_extend),
-              .software_type_ = software_enum::maya_sim,
-          },
-          in_entity.uuid_id_,
-      }
-  );
+  if (entity_has_simulation_asset(in_entity.uuid_id_))
+    l_working_files.emplace_back(
+        working_file_and_link{
+            working_file{
+                .description_ = "角色Maya 解算工作文件",
+                .path_        = get_entity_simulation_asset_path(in_project) /
+                         get_entity_simulation_character_asset_name(in_entity_asset_extend),
+                .software_type_ = software_enum::maya_sim,
+            },
+            in_entity.uuid_id_,
+        }
+    );
   return l_working_files;
 }
 
@@ -138,17 +147,18 @@ std::vector<working_file_and_link> create_prop_working_files(
           in_entity.uuid_id_,
       }
   );
-  l_working_files.emplace_back(
-      working_file_and_link{
-          working_file{
-              .description_ = "道具Maya 解算工作文件",
-              .path_        = get_entity_simulation_asset_path(in_project) /
-                       get_entity_simulation_prop_asset_name(in_entity_asset_extend),
-              .software_type_ = software_enum::maya_sim,
-          },
-          in_entity.uuid_id_,
-      }
-  );
+  if (entity_has_simulation_asset(in_entity.uuid_id_))
+    l_working_files.emplace_back(
+        working_file_and_link{
+            working_file{
+                .description_ = "道具Maya 解算工作文件",
+                .path_        = get_entity_simulation_asset_path(in_project) /
+                         get_entity_simulation_prop_asset_name(in_entity_asset_extend),
+                .software_type_ = software_enum::maya_sim,
+            },
+            in_entity.uuid_id_,
+        }
+    );
   return l_working_files;
 }
 std::vector<working_file_and_link> create_ground_working_files(
