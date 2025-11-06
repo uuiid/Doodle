@@ -36,7 +36,9 @@ void shot::set_shot(const int32_t& in_shot) {
   p_shot = in_shot;
 }
 
-std::string shot::get_shot_ab() const noexcept { return std::string{magic_enum::enum_name(p_shot_enum)}; }
+std::string shot::get_shot_ab() const noexcept {
+  return p_shot_enum != shot_ab_enum::None ? std::string{magic_enum::enum_name(p_shot_enum)} : "";
+}
 
 shot::shot_ab_enum shot::get_shot_ab_enum() const noexcept { return p_shot_enum; }
 
