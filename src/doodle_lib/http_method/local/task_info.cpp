@@ -409,6 +409,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   std::shared_ptr<run_ue_assembly_local> l_arg_t = std::make_shared<run_ue_assembly_local>();
   l_arg_t->kitsu_client_                         = l_client;
   l_arg_t->shot_task_id_                         = id_;
+  l_arg_t->project_id_                           = project_id_;
+
   l_arg_t->on_run_time_info_.connect([l_ptr](const server_task_info::run_time_info_t& in_info) {
     l_ptr->add_run_time_info(in_info);
     // auto l_v = std::visit(*this, arg_);

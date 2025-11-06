@@ -136,24 +136,18 @@ class run_ue_assembly_local : public async_task {
     }
   };
   uuid shot_task_id_{};
+  uuid project_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
-  
+
   boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
 
  private:
   run_ue_assembly_arg arg_;
 
   // to json
-  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) {
-    j                 = p.arg_;
-    j["shot_task_id"] = p.shot_task_id_;
-  }
+  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) { j = p.arg_; }
   // from json
-  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) {
-    j.get_to(p.arg_);
-
-    if (j.contains("shot_task_id")) j.at("shot_task_id").get_to(p.shot_task_id_);
-  }
+  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) { j.get_to(p.arg_); }
 };
 
 }  // namespace doodle
