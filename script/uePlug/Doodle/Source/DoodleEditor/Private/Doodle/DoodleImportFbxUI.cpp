@@ -252,7 +252,10 @@ void UDoodleFbxImport_1::ImportFile()
 	K_FBX_F->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
 	K_FBX_F->ImportUI->SkeletalMeshImportData->bUseT0AsRefPose = false;
 	K_FBX_F->ImportUI->bAutomatedImportShouldDetectType = false;
-	K_FBX_F->ImportUI->AnimSequenceImportData->AnimationLength = FBXALIT_ExportedTime;
+	K_FBX_F->ImportUI->AnimSequenceImportData->AnimationLength = FBXALIT_SetRange;
+	K_FBX_F->ImportUI->AnimSequenceImportData->FrameImportRange.Min = StartTime - Import_Time_Off;
+	K_FBX_F->ImportUI->AnimSequenceImportData->FrameImportRange.Max = EndTime;
+
 	K_FBX_F->ImportUI->AnimSequenceImportData->bImportBoneTracks = true;
 	K_FBX_F->ImportUI->bAllowContentTypeImport = true;
 	K_FBX_F->ImportUI->TextureImportData->MaterialSearchLocation = EMaterialSearchLocation::UnderRoot;
@@ -390,7 +393,7 @@ void UDoodleFbxImport_1::AssembleScene()
 			L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
 			UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
 				L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-			UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
+			UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime - Import_Time_Off, AnimSeq, -1);
 			AnimSection->SetPreRollFrames(50);
 			L_Actor->Modify();
 			L_ShotLevel->Modify();
@@ -832,8 +835,8 @@ void UDoodleAbcImport_1::ImportFile()
 	k_abc_stting->ConversionSettings.Rotation.Z = 0.0;
 
 	k_abc_stting->GeometryCacheSettings.bFlattenTracks = true; // 合并轨道
-	k_abc_stting->SamplingSettings.bSkipEmpty = true; // 跳过空白帧
-	k_abc_stting->SamplingSettings.FrameStart = StartTime; // 开始帧
+	k_abc_stting->SamplingSettings.bSkipEmpty = false; // 跳过空白帧
+	k_abc_stting->SamplingSettings.FrameStart = StartTime - Import_Time_Off; // 开始帧
 	k_abc_stting->SamplingSettings.FrameEnd = EndTime; // 结束帧
 	k_abc_stting->SamplingSettings.FrameSteps = 1; // 帧步数
 
@@ -883,7 +886,7 @@ void UDoodleAbcImport_1::AssembleScene()
 			UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
 				L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
 			UMovieSceneSection* AnimSection =
-				L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_Actor->GetGeometryCacheComponent());
+				L_MovieSceneGeoTrack->AddNewAnimation(StartTime - Import_Time_Off, L_Actor->GetGeometryCacheComponent());
 			AnimSection->SetPreRollFrames(50);
 			L_Actor->Modify();
 			L_ShotLevel->Modify();
@@ -952,7 +955,7 @@ void UDoodleXgenImport_1::ImportFile()
 	UGroomCacheImportOptions* L_Opt = NewObject<UGroomCacheImportOptions>(L_Data->Factory->AssetImportTask);
 	L_Data->Factory->AssetImportTask->Options = L_Opt;
 	L_Data->Factory->AssetImportTask->bAutomated = true;
-	L_Opt->ImportSettings.FrameStart = StartTime;
+	L_Opt->ImportSettings.FrameStart = StartTime - Import_Time_Off;
 	L_Opt->ImportSettings.FrameEnd = EndTime;
 	L_Opt->ImportSettings.ConversionSettings.Rotation.X = -90.0;
 	L_Opt->ImportSettings.ConversionSettings.Rotation.Z = 180.0;
