@@ -280,15 +280,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
   }
 
-  // for (auto&& l_path : l_ret.ue_asset_path_) {
-  //   if (!FSys::exists(l_path.from_)) {
-  //     throw_exception(
-  //         http_request_error{
-  //             boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
-  //         }
-  //     );
-  //   }
-  // }
+  for (auto&& l_path : l_ret.ue_asset_path_) {
+    if (!FSys::exists(l_path.from_)) {
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
+          }
+      );
+    }
+  }
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 

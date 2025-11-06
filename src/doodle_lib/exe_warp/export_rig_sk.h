@@ -58,12 +58,12 @@ class export_rig_sk_arg : public async_task {
   // from json
   friend void from_json(const nlohmann::json& in_json, export_rig_sk_arg& out_obj) {
     in_json.get_to(out_obj.impl_);
-    if (in_json.contains("maya_file")) in_json.at("maya_file").get_to(out_obj.maya_file_);
+    if (in_json.contains("path")) in_json.at("path").get_to(out_obj.maya_file_);
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const export_rig_sk_arg& out_obj) {
     in_json              = out_obj.impl_;
-    in_json["maya_file"] = out_obj.maya_file_;
+    in_json["path"] = out_obj.maya_file_;
   }
 
   boost::asio::awaitable<void> run() override;
