@@ -2,6 +2,7 @@
 // Created by TD on 25-3-27.
 //
 
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/metadata/comment.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/preview_file.h"
@@ -10,6 +11,8 @@
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
+
+#include <boost/asio/post.hpp>
 
 #include "kitsu_reg_url.h"
 #include <opencv2/opencv.hpp>
@@ -148,6 +151,17 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
   return l_tiles;
 }
 
+auto get_handle_video_file(
+    const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size
+) {
+  auto l_high_file_path =
+      g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "previews" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
+  auto l_video         = cv::VideoCapture{in_path.generic_string()};
+  cv::Size l_high_size = in_size;
+  auto l_duration      = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
+  return std::make_tuple(l_high_size, l_duration, l_high_file_path);
+}
+
 /// 处理上传的视频文件 格式化大小, 生成预览文件
 auto handle_video_file(
     const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size
@@ -245,8 +259,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     auto l_prj                               = l_sql.get_by_uuid<project>(l_task.project_id_);
     auto l_prj_size                          = l_prj.get_resolution();
 
-    auto&& [l_size, l_duration, l_high_file] = handle_video_file(
+    auto&& [l_size, l_duration, l_high_file] = get_handle_video_file(
         l_new_path, l_preview_file->uuid_id_, l_prj.fps_, cv::Size{l_prj_size.first, l_prj_size.second}
+    );
+    boost::asio::post(
+        g_io_context(),
+        [l_new_path, uuid = l_preview_file->uuid_id_, fps = l_prj.fps_,
+         size = cv::Size{l_prj_size.first, l_prj_size.second}]() { handle_video_file(l_new_path, uuid, fps, size); }
     );
 
     l_file                         = l_high_file;
