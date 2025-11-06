@@ -156,37 +156,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
       in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
-    } else if (in_json.contains("is_sim")) {  /// 自动灯光
-      auto l_import_and_render_args = std::make_shared<import_and_render_ue_ns::args>();
-      in_json.get_to(*l_import_and_render_args);
-      if (in_json["is_sim"].get<bool>()) {
-        auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
-        in_json.get_to(*l_arg_t);
-        l_arg_t->sim_path                   = l_import_and_render_args->project_.path_ / "6-moxing" / "CFX";
-        l_arg_t->export_file                = true;
-        l_arg_t->touch_sim                  = true;
-        l_arg_t->export_anim_file           = true;
-        l_arg_t->create_play_blast_         = true;
-
-        l_import_and_render_args->maya_arg_ = l_arg_t;
-        l_import_and_render_args->is_sim_   = true;
-      } else {
-        auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
-        in_json.get_to(*l_arg_t);
-        l_arg_t->create_play_blast_         = true;
-        l_import_and_render_args->maya_arg_ = l_arg_t;
-      }
-      arg_ = l_import_and_render_args;
-
-      l_import_and_render_args->on_run_time_info_.connect([this](const server_task_info::run_time_info_t& in_info) {
-        task_info_->add_run_time_info(in_info);
-        // auto l_v = std::visit(*this, arg_);
-        boost::asio::co_spawn(
-            g_io_context(), g_ctx().get<sqlite_database>().install(task_info_), boost::asio::detached
-        );
-        emit_signal();
-      });
-
     } else if (in_json.contains("image_to_move")) {  // 图片到视频
       auto l_image_to_move_args = std::make_shared<doodle::detail::image_to_move>();
       in_json.get_to(*l_image_to_move_args);
@@ -246,6 +215,12 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_);
   }
 };
+
+void emit_signal(const std::shared_ptr<server_task_info>& in_ptr) {
+  default_logger_raw()->warn("写出事件 {} {}", "doodle:task_info:update", (nlohmann::json{} = *in_ptr).dump());
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *in_ptr);
+}
+
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance::get(session_data_ptr in_handle) {
@@ -431,27 +406,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
-  std::shared_ptr<run_ue_assembly_local> l_arg_t;
-  try {
-    l_arg_t = std::dynamic_pointer_cast<run_ue_assembly_local>(co_await l_client->get_ue_assembly(project_id_, id_));
-    l_arg_t->kitsu_client_ = l_client;
-    l_arg_t->shot_task_id_ = id_;
-  } catch (const doodle_error& e) {
-    l_ptr->status_        = server_task_info_status::failed;
-    l_ptr->last_line_log_ = fmt::format("获取任务数据失败, 多数是前期环节中的文件未找到: {}", e.what());
-    l_ptr->end_time_      = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  }
-  if (l_arg_t) {
-    l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
-    co_await g_ctx().get<sqlite_database>().install(l_ptr);
+  std::shared_ptr<run_ue_assembly_local> l_arg_t = std::make_shared<run_ue_assembly_local>();
+  l_arg_t->kitsu_client_                         = l_client;
+  l_arg_t->shot_task_id_                         = id_;
+  l_arg_t->on_run_time_info_.connect([l_ptr](const server_task_info::run_time_info_t& in_info) {
+    l_ptr->add_run_time_info(in_info);
+    // auto l_v = std::visit(*this, arg_);
+    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_ptr), boost::asio::detached);
+    emit_signal(l_ptr);
+  });
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
-    if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
-    auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
-    l_run_long_task_local->set_arg(l_arg_t);
-    l_run_long_task_local->run();
-  } else {
-    co_await g_ctx().get<sqlite_database>().install(l_ptr);
-  }
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }

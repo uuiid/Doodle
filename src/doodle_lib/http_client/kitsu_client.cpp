@@ -22,6 +22,7 @@
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <fmt/compile.h>
+#include <nlohmann/json_fwd.hpp>
 #include <vector>
 
 namespace doodle::kitsu {
@@ -133,8 +134,9 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_generate_u
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
     throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
-  l_res.body().get_to(*l_arg_);;
-  l_arg_->task_id_      = in_task_id;
+  l_res.body().get_to(*l_arg_);
+  ;
+  l_arg_->task_id_ = in_task_id;
   co_return l_arg_;
 }
 boost::asio::awaitable<void> kitsu_client::upload_asset_file(
@@ -262,9 +264,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
       base64_encode(in_file_path.filename().generic_string())
   );
 }
-boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_ue_assembly(
-    uuid in_project_id, uuid in_shot_task_id
-) const {
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::post,
       fmt::format("/api/actions/projects/{}/shots/{}/run-ue-assembly", in_project_id, in_shot_task_id), 11
@@ -278,9 +278,7 @@ boost::asio::awaitable<std::shared_ptr<async_task>> kitsu_client::get_ue_assembl
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
     throw_exception(doodle_error{"kitsu get ue assembly error {}", l_res.result()});
-  auto l_json = l_res.body().get<nlohmann::json>();
-  auto l_task = std::make_shared<run_ue_assembly_local>();
-  l_json.get_to(*l_task);
-  co_return l_task;
+
+  co_return l_res.body();
 }
 }  // namespace doodle::kitsu

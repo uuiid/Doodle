@@ -62,7 +62,7 @@ class kitsu_client {
   /// 上传整个工程文件
   boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
-  boost::asio::awaitable<std::shared_ptr<async_task>> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
+  boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
 };
 
 }  // namespace doodle::kitsu
