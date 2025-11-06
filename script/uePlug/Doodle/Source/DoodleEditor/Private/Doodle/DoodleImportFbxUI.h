@@ -77,7 +77,6 @@ public:
 
 	int32_t StartTime{};
 	int32_t EndTime{};
-	int32_t Import_Time_Off{5};
 
 	/// @brief 导入后的路径
 	FString ImportPathDir{};
