@@ -206,6 +206,12 @@ FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std:
 FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_) {
   return get_entity_character_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_);
 }
+FSys::path get_entity_sim_character_ue_name(const entity_asset_extend& in_extend_) {
+  return fmt::format(
+      "{}/Character/{}/Meshs/SK_Ch{}_cloth.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.bian_hao_
+  );
+}
 /// 道具模型ue 路径
 FSys::path get_entity_prop_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_
@@ -236,6 +242,12 @@ FSys::path get_entity_prop_ue_name(
 }
 FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_) {
   return get_entity_prop_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
+}
+FSys::path get_entity_sim_prop_ue_name(const entity_asset_extend& in_extend_) {
+  return fmt::format(
+      "{}/Prop/{}/Mesh/SK_{}{}{}_cloth.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
+  );
 }
 /// 场景模型ue 路径
 FSys::path get_entity_ground_ue_path(
@@ -271,6 +283,12 @@ FSys::path get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, 
 }
 FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
   return get_entity_ground_ue_sk_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
+}
+FSys::path get_entity_sim_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
+  return fmt::format(
+      "{}/{}/SK/SK_{}{}{}_cloth.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
+  );
 }
 /// 场景名称 alembic 名称
 FSys::path get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_) {

@@ -58,6 +58,7 @@ FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_ass
 /// 角色模型 ue 名称
 FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_);
 FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_sim_character_ue_name(const entity_asset_extend& in_extend_);
 /// 道具模型ue 路径
 FSys::path get_entity_prop_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_
@@ -70,6 +71,7 @@ FSys::path get_entity_prop_ue_name(
     const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_
 );
 FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_sim_prop_ue_name(const entity_asset_extend& in_extend_);
 /// 场景模型ue 路径
 FSys::path get_entity_ground_ue_path(
     const FSys::path& asset_root_path_, std::int32_t gui_dang_, std::int32_t kai_shi_ji_shu_,
@@ -82,6 +84,7 @@ FSys::path get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_);
 ///  场景模型 ue sk 名称
 FSys::path get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
 FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_sim_ground_ue_sk_name(const entity_asset_extend& in_extend_);
 /// 场景名称 alembic 名称
 FSys::path get_entity_ground_alembic_name(const std::string& pin_yin_ming_cheng_, const std::string& ban_ben_);
 FSys::path get_entity_ground_alembic_name(const entity_asset_extend& in_extend_);
