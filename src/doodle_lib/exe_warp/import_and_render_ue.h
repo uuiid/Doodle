@@ -282,6 +282,9 @@ class run_ue_assembly_local : public async_task {
     FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
     image_size size_;                   // 渲染的尺寸
     bool layering_;
+    FSys::path create_move_path_;  // 合成视屏的路径
+    shot shot_;
+    episodes episodes_;
     // to josn
     friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
       j["files"]                 = p.asset_infos_;
@@ -300,6 +303,9 @@ class run_ue_assembly_local : public async_task {
       j["level_sequence"]        = p.level_sequence_import_;
       j["size"]                  = p.size_;
       j["layering"]              = p.layering_;
+      j["create_move_path"]      = p.create_move_path_;
+      j["shot"]                  = p.shot_;
+      j["episodes"]              = p.episodes_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
@@ -319,10 +325,14 @@ class run_ue_assembly_local : public async_task {
       j.at("level_sequence").get_to(p.level_sequence_import_);
       j.at("size").get_to(p.size_);
       j.at("layering").get_to(p.layering_);
+      j.at("create_move_path").get_to(p.create_move_path_);
+      j.at("shot").get_to(p.shot_);
+      j.at("episodes").get_to(p.episodes_);
     }
   };
   uuid shot_task_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
+  boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
 
  private:
   run_ue_assembly_arg arg_;

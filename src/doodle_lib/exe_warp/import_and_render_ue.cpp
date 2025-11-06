@@ -582,12 +582,57 @@ tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
 }
 
 boost::asio::awaitable<void> run_ue_assembly_local::run() {
-  // 
+  //
   for (auto&& [p_from, p_to] : arg_.ue_asset_path_) {
     FSys::copy_diff(p_from, p_to, logger_ptr_);
   }
+  nlohmann::json l_json{};
+  l_json          = arg_;
+  auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+  logger_ptr_->warn("排队导入文件 {} ", arg_.ue_main_project_path_);
 
-  co_return;
+  auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
+  co_await async_run_ue(
+      {arg_.ue_main_project_path_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
+       "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
+      logger_ptr_, true, l_time_info
+  );
+  l_time_info->info_ = "导入文件";
+  on_run_time_info_(*l_time_info);
+
+  logger_ptr_->warn("导入文件完成");
+  logger_ptr_->warn("排队渲染, 输出目录 {}", arg_.out_file_dir_);
+  if (exists(arg_.out_file_dir_)) {
+    try {
+      FSys::remove_all(arg_.out_file_dir_);
+    } catch (const FSys::filesystem_error& err) {
+      logger_ptr_->error("渲染删除上次输出错误:{}", err.what());
+    }
+  }
+  l_time_info = std::make_shared<server_task_info::run_time_info_t>();
+  co_await async_run_ue(
+      {arg_.ue_main_project_path_.generic_string(), arg_.render_map_.generic_string(),
+       fmt::format(R"(-DoodleLevelSequence="{}")", arg_.level_sequence_import_),
+       fmt::format(R"(-DoodleMoviePipelineConfig="{}")", arg_.movie_pipeline_config_), "-log", "-stdout",
+       "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
+      logger_ptr_, true, l_time_info
+  );
+  l_time_info->info_ = "渲染UE";
+  on_run_time_info_(*l_time_info);
+
+  logger_ptr_->warn("完成渲染, 输出目录 {}", arg_.out_file_dir_);
+
+  // 合成视屏
+  logger_ptr_->warn("开始合成视屏 :{}", arg_.out_file_dir_);
+  {
+    boost::system::error_code l_ec{};
+    auto l_move_paths = clean_1001_before_frame(arg_.out_file_dir_, arg_.begin_time_);
+    if (!l_move_paths) throw_exception(doodle_error{l_move_paths.error()});
+    detail::create_move(
+        arg_.create_move_path_, logger_ptr_,
+        movie::image_attr::make_default_attr(&arg_.episodes_, &arg_.shot_, *l_move_paths), arg_.size_
+    );
+  }
 }
 
 }  // namespace doodle
