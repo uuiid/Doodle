@@ -56,8 +56,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   constexpr auto sequence = "sequence"_alias.for_<entity>();
 
   run_ue_assembly_local::run_ue_assembly_arg l_ret{};
+  l_ret.episodes_ = l_episodes;
+  l_ret.shot_     = l_shot;
 
-  l_ret.size_ = image_size{.width = l_prj.get_resolution().first, .height = l_prj.get_resolution().second};
+  l_ret.size_     = image_size{.width = l_prj.get_resolution().first, .height = l_prj.get_resolution().second};
   FSys::path l_shot_path_dir{};
   FSys::path l_sim_shot_path_dir{};
   std::set<std::string> l_sim_output_key{};
@@ -195,6 +197,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           fmt::format(
               "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
           );
+      l_ret.create_move_path_ =
+          l_ret.out_file_dir_.parent_path() / l_ret.out_file_dir_.filename().replace_extension(".mp4");
 
       l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
       l_ret.ue_asset_path_.emplace_back(

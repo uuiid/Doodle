@@ -224,9 +224,7 @@ void fix_config(const FSys::path& in_project_path);
 }  // namespace import_and_render_ue_ns
 
 // 清除 1001 以前的帧数
-tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
-    const FSys::path& in_path, std::int32_t in_frame
-);
+std::vector<FSys::path> clean_1001_before_frame(const FSys::path& in_path, std::int32_t in_frame);
 
 class run_ue_assembly_local : public async_task {
  public:

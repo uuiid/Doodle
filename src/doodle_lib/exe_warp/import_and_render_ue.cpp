@@ -333,9 +333,8 @@ FSys::path args::create_move(const FSys::path& in_out_image_path) const {
   {
     boost::system::error_code l_ec{};
     auto l_move_paths = clean_1001_before_frame(in_out_image_path, begin_time_);
-    if (!l_move_paths) throw_exception(doodle_error{l_move_paths.error()});
     detail::create_move(
-        l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(&episodes_, &shot_, *l_move_paths), size_
+        l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(&episodes_, &shot_, l_move_paths), size_
     );
   }
   return l_movie_path;
@@ -540,12 +539,10 @@ import_data_t args::gen_import_config() {
 }
 }  // namespace import_and_render_ue_ns
 
-tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
-    const FSys::path& in_path, std::int32_t in_frame
-) {
+std::vector<FSys::path> clean_1001_before_frame(const FSys::path& in_path, std::int32_t in_frame) {
   std::vector<FSys::path> l_move_paths{};
   std::vector<FSys::path> l_remove_paths{};
-  if (!FSys::is_directory(in_path)) return tl::make_unexpected("没有这样的目录");
+  if (!FSys::is_directory(in_path)) throw_exception(doodle_error{"没有这样的目录 {}", in_path});
 
   for (auto&& l_path : FSys::directory_iterator{in_path}) {
     auto l_ext = l_path.path().extension();
@@ -573,7 +570,7 @@ tl::expected<std::vector<FSys::path>, std::string> clean_1001_before_frame(
       l_move_paths.emplace_back(l_path.path());
     }
   }
-  if (l_move_paths.empty()) return tl::make_unexpected("未扫描到文件");
+  if (l_move_paths.empty()) throw_exception(doodle_error{"未扫描到文件"});
   std::error_code l_sys_ec{};
   for (auto&& l_path : l_remove_paths) {
     FSys::remove(l_path, l_sys_ec);
@@ -623,14 +620,13 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
   logger_ptr_->warn("完成渲染, 输出目录 {}", arg_.out_file_dir_);
 
   // 合成视屏
-  logger_ptr_->warn("开始合成视屏 :{}", arg_.out_file_dir_);
+  logger_ptr_->warn("开始合成视屏 :{}", arg_.create_move_path_);
   {
     boost::system::error_code l_ec{};
     auto l_move_paths = clean_1001_before_frame(arg_.out_file_dir_, arg_.begin_time_);
-    if (!l_move_paths) throw_exception(doodle_error{l_move_paths.error()});
     detail::create_move(
         arg_.create_move_path_, logger_ptr_,
-        movie::image_attr::make_default_attr(&arg_.episodes_, &arg_.shot_, *l_move_paths), arg_.size_
+        movie::image_attr::make_default_attr(&arg_.episodes_, &arg_.shot_, l_move_paths), arg_.size_
     );
   }
 }
