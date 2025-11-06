@@ -274,11 +274,12 @@ class run_ue_assembly_local : public async_task {
     std::int32_t begin_time_;
     std::int32_t end_time_;
     FSys::path out_file_dir_;
-    std::string original_map_;          // 主场景路径
+    FSys::path original_map_;           // 主场景路径
     FSys::path render_map_;             // 渲染关卡, 这个放置外面, 包含下面两个子关卡
-    std::string create_map_;            // 创建的关卡(放置骨骼网格体)
-    std::string import_dir_;            // 导入的fbx和abc路径
+    FSys::path create_map_;             // 创建的关卡(放置骨骼网格体)
+    FSys::path import_dir_;             // 导入的fbx和abc路径
     FSys::path movie_pipeline_config_;  // 电影管线配置
+    FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
     image_size size_;                   // 渲染的尺寸
     // to josn
     friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
@@ -295,6 +296,7 @@ class run_ue_assembly_local : public async_task {
       j["create_map"]            = p.create_map_;
       j["import_dir"]            = p.import_dir_;
       j["movie_pipeline_config"] = p.movie_pipeline_config_;
+      j["level_sequence_import"] = p.level_sequence_import_;
       j["size"]                  = p.size_;
     }
     // from json
@@ -312,6 +314,7 @@ class run_ue_assembly_local : public async_task {
       j.at("create_map").get_to(p.create_map_);
       j.at("import_dir").get_to(p.import_dir_);
       j.at("movie_pipeline_config").get_to(p.movie_pipeline_config_);
+      j.at("level_sequence_import").get_to(p.level_sequence_import_);
       j.at("size").get_to(p.size_);
     }
   };

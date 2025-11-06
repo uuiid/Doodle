@@ -7,6 +7,8 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
+#include "doodle_core/metadata/episodes.h"
+#include "doodle_core/metadata/shot.h"
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -45,16 +47,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
   auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
+
+  episodes l_episodes{l_episode_entity};
+  shot l_shot{l_shot_entity};
+
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
 
   run_ue_assembly_local::run_ue_assembly_arg l_ret{};
+
+  l_ret.size_ = image_size{.width = l_prj.get_resolution().first, .height = l_prj.get_resolution().second};
   FSys::path l_shot_path_dir{};
+  bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   /// tag: 格式化路径
   if (l_shot_task.task_type_id_ == task_type::get_animation_id()) {
     l_shot_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  } else if (l_shot_task.task_type_id_ == task_type::get_simulation_task_id()) {
+  } else if (l_is_simulation_task) {
     l_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "任务类型不支持该操作"});
@@ -67,9 +76,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     auto l_stem = l_path.path().stem().string();
     if (l_stem.starts_with(l_shot_file_name) &&
         (l_path.path().extension() == ".abc" || l_path.path().extension() == ".fbx")) {
-      if (l_stem.find("_camera_") != std::string::npos)
+      if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) {
         l_ret.camera_file_path_ = l_path.path();
-      else
+        // 名称形式 _camera_0001-0240
+        l_ret.begin_time_       = std::stoll(l_stem.substr(l_cam + 8, 4));   // "_camera_" 长度8, 时间长度 4
+        l_ret.end_time_         = std::stoll(l_stem.substr(l_cam + 13, 4));  // "_camera_" 长度8, 时间长度 4 加 '-' = 13
+
+      } else
         l_ret.asset_infos_.emplace_back(
             run_ue_assembly_local::run_ue_assembly_asset_info{
                 .shot_output_path_ = l_path.path(), .type_ = l_path.path().extension() == ".fbx" ? "char" : "geo"
@@ -127,11 +140,42 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     );
   } else {
     auto&& [l_scene_asset, l_scene_asset_extend] = *l_scene_it;
+    const auto l_suffix                          = l_is_simulation_task ? "_JS" : "_DH";
     if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
-      l_ret.ue_main_project_path_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
-                                    get_entity_ground_ue_map_name(l_scene_asset_extend);
-      auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ret.ue_main_project_path_);
+      auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
+                           get_entity_ground_ue_map_name(l_scene_asset_extend);
+      l_ret.out_file_dir_ = l_ret.original_map_ =
+          conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
+      l_ret.movie_pipeline_config_ = fmt::format(
+          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_prj.code_,
+          l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
+      );
+      l_ret.level_sequence_import_ = fmt::format(
+          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}", l_prj.code_,
+          l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      );
+      l_ret.create_map_ = fmt::format(
+          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_prj.code_,
+          l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      );
+      l_ret.import_dir_ = fmt::format(
+          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/files/", l_prj.code_, l_episodes.get_episodes(),
+          l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      );
+      l_ret.render_map_ = fmt::format(
+          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_prj.code_, l_episodes.get_episodes(),
+          l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      );
+      auto&& l_uprj               = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+      l_ret.ue_main_project_path_ = l_uprj;
       l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
+
+      l_ret.render_map_ =
+          l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
+          fmt::format(
+              "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
+          );
+
       l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
       l_ret.ue_asset_path_.emplace_back(
           l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
