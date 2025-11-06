@@ -59,36 +59,57 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   l_ret.size_ = image_size{.width = l_prj.get_resolution().first, .height = l_prj.get_resolution().second};
   FSys::path l_shot_path_dir{};
+  FSys::path l_sim_shot_path_dir{};
+  std::set<std::string> l_sim_output_key{};
   bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   /// tag: 格式化路径
   if (l_shot_task.task_type_id_ == task_type::get_animation_id()) {
     l_shot_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
   } else if (l_is_simulation_task) {
-    l_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+    l_sim_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "任务类型不支持该操作"});
 
   l_shot_path_dir = l_prj.path_ / l_shot_path_dir;
+  if (l_is_simulation_task) l_sim_shot_path_dir = l_prj.path_ / l_shot_path_dir;
   auto l_shot_file_name =
       get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
 
+  if (l_is_simulation_task) {
+    for (auto&& l_path : FSys::directory_iterator{l_sim_shot_path_dir}) {
+      auto l_stem = l_path.path().stem().string();
+      if (!(l_stem.starts_with(l_shot_file_name) &&
+            (l_path.path().extension() == ".abc" || l_path.path().extension() == ".fbx")))
+        continue;
+      if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
+
+      l_ret.asset_infos_.emplace_back(
+          run_ue_assembly_local::run_ue_assembly_asset_info{
+              .shot_output_path_ = l_path.path(), .type_ = l_path.path().extension() == ".fbx" ? "char" : "geo"
+          }
+      );
+      l_sim_output_key.emplace(l_stem);
+    }
+  }
+
   for (auto&& l_path : FSys::directory_iterator{l_shot_path_dir}) {
     auto l_stem = l_path.path().stem().string();
-    if (l_stem.starts_with(l_shot_file_name) &&
-        (l_path.path().extension() == ".abc" || l_path.path().extension() == ".fbx")) {
-      if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) {
-        l_ret.camera_file_path_ = l_path.path();
-        // 名称形式 _camera_0001-0240
-        l_ret.begin_time_       = std::stoll(l_stem.substr(l_cam + 8, 4));   // "_camera_" 长度8, 时间长度 4
-        l_ret.end_time_         = std::stoll(l_stem.substr(l_cam + 13, 4));  // "_camera_" 长度8, 时间长度 4 加 '-' = 13
+    if (!(l_stem.starts_with(l_shot_file_name) && l_path.path().extension() == ".fbx")) continue;
 
-      } else
-        l_ret.asset_infos_.emplace_back(
-            run_ue_assembly_local::run_ue_assembly_asset_info{
-                .shot_output_path_ = l_path.path(), .type_ = l_path.path().extension() == ".fbx" ? "char" : "geo"
-            }
-        );
+    if (l_sim_output_key.contains(l_stem)) continue;
+    if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) {
+      l_ret.camera_file_path_ = l_path.path();
+      // 名称形式 _camera_0001-0240
+      l_ret.begin_time_       = std::stoll(l_stem.substr(l_cam + 8, 4));   // "_camera_" 长度8, 时间长度 4
+      l_ret.end_time_         = std::stoll(l_stem.substr(l_cam + 13, 4));  // "_camera_" 长度8, 时间长度 4 加 '-' = 13
+      continue;
     }
+
+    l_ret.asset_infos_.emplace_back(
+        run_ue_assembly_local::run_ue_assembly_asset_info{
+            .shot_output_path_ = l_path.path(), .type_ = l_path.path().extension() == ".fbx" ? "char" : "geo"
+        }
+    );
   }
   if (l_ret.camera_file_path_.empty())
     throw_exception(
