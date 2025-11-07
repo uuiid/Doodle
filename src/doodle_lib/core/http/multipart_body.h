@@ -25,6 +25,7 @@
 #include <string>
 #include <string_view>
 #include <sys/stat.h>
+#include <utility>
 
 namespace doodle::http {
 
@@ -92,23 +93,12 @@ struct multipart_body {
     };
     static constexpr char CR = '\r';
     static constexpr char LF = '\n';
-#define NOTIFY_CB(FOR)                     \
-  do {                                     \
-    if (p->settings->on_##FOR) {           \
-      if (p->settings->on_##FOR(p) != 0) { \
-        return i;                          \
-      }                                    \
-    }                                      \
+#define NOTIFY_CB(FOR)      \
+  do {                      \
+    if (on_##FOR(p) != 0) { \
+      return i;             \
+    }                       \
   } while (0)
-
-    // #define EMIT_DATA_CB(FOR, ptr, len)                                            \
-    //   do {                                                                         \
-    //     if (p->settings->on_##FOR) {                                               \
-    //       if (p->settings->on_##FOR(p, std::string_view{ptr, ptr + (len)}) != 0) { \
-    //         return i;                                                              \
-    //       }                                                                        \
-    //     }                                                                          \
-    //   } while (0)
 
 #define EMIT_DATA_CB(FOR, ptr, len)   \
   do {                                \
@@ -148,18 +138,12 @@ struct multipart_body {
     int on_header_field(multipart_parser* p, Iterator in_begin, std::size_t in_length) {
       std::string l_field{in_begin, in_begin + in_length};
       spdlog::debug("on_header_field: {}", l_field);
-      auto* l_reader = static_cast<reader*>(p->data);
-      boost::algorithm::to_lower(l_field);
-      if (l_field == "content-disposition") {
-        l_reader->part_ = multipart_body_impl::part_value_type{};
-      }
       return 0;
     }
     template <typename Iterator>
     int on_header_value(multipart_parser* p, Iterator in_begin, std::size_t in_length) {
       std::string l_value{in_begin, in_begin + in_length};
       spdlog::debug("on_header_value: {}", l_value);
-      auto* l_reader = static_cast<reader*>(p->data);
       boost::algorithm::to_lower(l_value);
       if (l_value.find("multipart/form-data") != std::string::npos) {
         auto l_end = l_value.find(";");
@@ -171,44 +155,53 @@ struct multipart_body {
           if (l_part.find("name=") == 0) {
             auto l_name = l_part.substr(5);
             boost::algorithm::trim_if(l_name, boost::is_any_of("\""));
-            l_reader->part_.name = l_name;
+            part_.name = l_name;
           } else if (l_part.find("filename=") == 0) {
             auto l_filename = l_part.substr(9);
             boost::algorithm::trim_if(l_filename, boost::is_any_of("\""));
-            l_reader->part_.file_name = l_filename;
+            part_.file_name = l_filename;
           }
         }
       } else if (l_value.find("content-type") != std::string::npos) {
         auto l_type = l_value.substr(13);
         boost::algorithm::trim(l_type);
-        l_reader->part_.content_type = detail::get_content_type(l_type);
+        part_.content_type = detail::get_content_type(l_type);
       }
       return 0;
     }
     template <typename Iterator>
     int on_part_data(multipart_parser* p, Iterator in_begin, std::size_t in_length) {
-      auto* l_reader = static_cast<reader*>(p->data);
       // spdlog::debug("on_part_data: {} bytes", in_length);
-      if (!l_reader->out_file_) {
-        if (!l_reader->part_.file_name.empty()) {
-          auto l_tmp_path =
-              core_set::get_set().get_cache_root("http") /
-              (core_set::get_set().get_uuid_str() + FSys::path{l_reader->part_.file_name}.extension().string());
-          l_reader->out_file_.emplace(l_tmp_path, std::ios::binary);
-          l_reader->part_.body_ = l_tmp_path;
+      if (!out_file_) {
+        if (!part_.file_name.empty()) {
+          auto l_tmp_path = core_set::get_set().get_cache_root("http") /
+                            (core_set::get_set().get_uuid_str() + FSys::path{part_.file_name}.extension().string());
+          out_file_.emplace(l_tmp_path, std::ios::binary);
+          part_.body_ = l_tmp_path;
         } else {
-          l_reader->part_.body_ = std::string{};
+          part_.body_ = std::string{};
         }
       }
       std::string l_value{in_begin, in_begin + in_length};
-      if (l_reader->out_file_) {
-        (*l_reader->out_file_) << l_value;
-        // l_reader->out_file_->write(in_view.data(), in_view.length());
+      if (out_file_) {
+        (*out_file_) << l_value;
+        // out_file_->write(in_view.data(), in_view.length());
       } else {
-        std::get<std::string>(l_reader->part_.body_) += l_value;
+        std::get<std::string>(part_.body_) += l_value;
       }
       return 0;
     }
+
+    int on_part_data_begin(multipart_parser* p) {
+      part_ = multipart_body_impl::part_value_type{};
+      return 0;
+    }
+    int on_headers_complete(multipart_parser* p) { return 0; }
+    int on_part_data_end(multipart_parser* p) {
+      body_.parts_.emplace_back(std::move(part_));
+      return 0;
+    }
+    int on_body_end(multipart_parser* p) { return 0; }
 
    public:
     template <bool isRequest, class Fields>
