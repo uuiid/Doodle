@@ -8,12 +8,310 @@
 #include <doodle_lib/core/http/http_content_type.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/buffers_iterator.hpp>
 #include <boost/asio/ssl/error.hpp>
+#include <boost/beast/core/buffers_cat.hpp>
+#include <boost/beast/core/buffers_suffix.hpp>
+#include <boost/beast/core/ostream.hpp>
 #include <boost/beast/http.hpp>
 
+#include <iterator>
+#include <memory>
+#include <spdlog/spdlog.h>
 #include <string>
+#include <string_view>
+#include <sys/stat.h>
+
 namespace doodle::http {
+
 struct multipart_body {
+  enum state {
+    s_uninitialized = 1,
+    s_start,
+    s_start_boundary,
+    s_header_field_start,
+    s_header_field,
+    s_headers_almost_done,
+    s_header_value_start,
+    s_header_value,
+    s_header_value_almost_done,
+    s_part_data_start,
+    s_part_data,
+    s_part_data_almost_boundary,
+    s_part_data_boundary,
+    s_part_data_almost_end,
+    s_part_data_end,
+    s_part_data_final_hyphen,
+    s_end
+  };
+  struct multipart_parser_settings;
+
+  struct multipart_parser {
+    void* data;
+
+    size_t index;
+    size_t boundary_length;
+
+    unsigned char state;
+
+    const multipart_parser_settings* settings;
+
+    std::string lookbehind;
+    std::string multipart_boundary;
+
+    explicit multipart_parser(const std::string& boundary, const multipart_parser_settings* settings)
+        : index(0),
+          boundary_length(boundary.length()),
+          state(s_start),
+          settings(settings),
+          lookbehind(boundary.length() + 8, '\0'),
+          multipart_boundary(boundary) {}
+  };
+  typedef int (*multipart_data_cb)(multipart_parser*, const char* at, size_t length);
+  typedef int (*multipart_notify_cb)(multipart_parser*);
+  struct multipart_parser_settings {
+    multipart_data_cb on_header_field;
+    multipart_data_cb on_header_value;
+    multipart_data_cb on_part_data;
+
+    multipart_notify_cb on_part_data_begin;
+    multipart_notify_cb on_headers_complete;
+    multipart_notify_cb on_part_data_end;
+    multipart_notify_cb on_body_end;
+  };
+  static constexpr char CR = '\r';
+  static constexpr char LF = '\n';
+#define NOTIFY_CB(FOR)                     \
+  do {                                     \
+    if (p->settings->on_##FOR) {           \
+      if (p->settings->on_##FOR(p) != 0) { \
+        return i;                          \
+      }                                    \
+    }                                      \
+  } while (0)
+
+// #define EMIT_DATA_CB(FOR, ptr, len)                  \
+//   do {                                               \
+//     if (p->settings->on_##FOR) {                     \
+//       if (p->settings->on_##FOR(p, ptr, len) != 0) { \
+//         return i;                                    \
+//       }                                              \
+//     }                                                \
+//   } while (0)
+#define EMIT_DATA_CB(FOR, ptr, len) ;
+
+  static void multipart_log(const char* fmt, ...) {}
+  template <typename Iterator>
+  static size_t multipart_parser_execute(multipart_parser* p, Iterator buf, size_t len) {
+    size_t i    = 0;
+    size_t mark = 0;
+    char c, cl;
+    int is_last = 0;
+
+    while (i < len) {
+      c       = *buf;
+      is_last = (i == (len - 1));
+      switch (p->state) {
+        case s_start:
+          multipart_log("s_start");
+          p->index = 0;
+          p->state = s_start_boundary;
+
+        /* fallthrough */
+        case s_start_boundary:
+          multipart_log("s_start_boundary");
+          if (p->index == p->boundary_length) {
+            if (c != CR) {
+              return i;
+            }
+            p->index++;
+            break;
+          } else if (p->index == (p->boundary_length + 1)) {
+            if (c != LF) {
+              return i;
+            }
+            p->index = 0;
+            NOTIFY_CB(part_data_begin);
+            p->state = s_header_field_start;
+            break;
+          }
+          if (i < 2) {
+            break;  // first '--'
+          }
+          if (c != p->multipart_boundary[p->index]) {
+            return i;
+          }
+          p->index++;
+          break;
+
+        case s_header_field_start:
+          multipart_log("s_header_field_start");
+          mark     = i;
+          p->state = s_header_field;
+
+        /* fallthrough */
+        case s_header_field:
+          multipart_log("s_header_field");
+          if (c == CR) {
+            p->state = s_headers_almost_done;
+            break;
+          }
+
+          if (c == ' ' || c == '\t') {
+            p->state = s_header_value_start;
+            break;
+          }
+
+          if (c == '-') {
+            break;
+          }
+
+          if (c == ':') {
+            EMIT_DATA_CB(header_field, buf + mark, i - mark);
+            p->state = s_header_value_start;
+            break;
+          }
+
+          cl = tolower(c);
+          if ((c != '-') && (cl < 'a' || cl > 'z')) {
+            multipart_log("invalid character in header name");
+            return i;
+          }
+          if (is_last) EMIT_DATA_CB(header_field, buf + mark, (i - mark) + 1);
+          break;
+
+        case s_headers_almost_done:
+          multipart_log("s_headers_almost_done");
+          if (c != LF) {
+            return i;
+          }
+
+          p->state = s_part_data_start;
+          break;
+
+        case s_header_value_start:
+          multipart_log("s_header_value_start");
+          if (c == ' ' || c == '\t') {
+            break;
+          }
+
+          mark     = i;
+          p->state = s_header_value;
+
+        /* fallthrough */
+        case s_header_value:
+          multipart_log("s_header_value");
+          if (c == CR) {
+            EMIT_DATA_CB(header_value, buf + mark, i - mark);
+            p->state = s_header_value_almost_done;
+            break;
+          }
+          if (is_last) EMIT_DATA_CB(header_value, buf + mark, (i - mark) + 1);
+          break;
+
+        case s_header_value_almost_done:
+          multipart_log("s_header_value_almost_done");
+          if (c != LF) {
+            return i;
+          }
+          p->state = s_header_field_start;
+          break;
+
+        case s_part_data_start:
+          multipart_log("s_part_data_start");
+          NOTIFY_CB(headers_complete);
+          mark     = i;
+          p->state = s_part_data;
+
+        /* fallthrough */
+        case s_part_data:
+          multipart_log("s_part_data");
+          if (c == CR && i >= len - p->boundary_length - 6) {
+            EMIT_DATA_CB(part_data, buf + mark, i - mark);
+            mark             = i;
+            p->state         = s_part_data_almost_boundary;
+            p->lookbehind[0] = CR;
+            break;
+          }
+          if (is_last) EMIT_DATA_CB(part_data, buf + mark, (i - mark) + 1);
+          break;
+
+        case s_part_data_almost_boundary:
+          multipart_log("s_part_data_almost_boundary");
+          if (c == LF) {
+            p->state = s_part_data_boundary;
+            i += 2;  // first '--'
+            p->lookbehind[1] = LF;
+            p->index         = 0;
+            break;
+          }
+          EMIT_DATA_CB(part_data, p->lookbehind.data(), 1);
+          p->state = s_part_data;
+          mark     = i--;
+          break;
+
+        case s_part_data_boundary:
+          multipart_log("s_part_data_boundary");
+          if (p->multipart_boundary[p->index] != c) {
+            EMIT_DATA_CB(part_data, p->lookbehind.data(), 2 + p->index);
+            p->state = s_part_data;
+            mark     = i--;
+            break;
+          }
+          p->lookbehind[2 + p->index] = c;
+          if ((++p->index) == p->boundary_length) {
+            NOTIFY_CB(part_data_end);
+            p->state = s_part_data_almost_end;
+          }
+          break;
+
+        case s_part_data_almost_end:
+          multipart_log("s_part_data_almost_end");
+          if (c == '-') {
+            p->state = s_part_data_final_hyphen;
+            break;
+          }
+          if (c == CR) {
+            p->state = s_part_data_end;
+            break;
+          }
+          return i;
+
+        case s_part_data_final_hyphen:
+          multipart_log("s_part_data_final_hyphen");
+          if (c == '-') {
+            NOTIFY_CB(body_end);
+            p->state = s_end;
+            break;
+          }
+          return i;
+
+        case s_part_data_end:
+          multipart_log("s_part_data_end");
+          if (c == LF) {
+            p->state = s_header_field_start;
+            NOTIFY_CB(part_data_begin);
+            break;
+          }
+          return i;
+
+        case s_end:
+          multipart_log("s_end: %02X", (int)c);
+          break;
+
+        default:
+          multipart_log("Multipart parser unrecoverable error");
+          return 0;
+      }
+      ++i;
+      ++buf;
+    }
+
+    return len;
+  }
+
   struct part_value_type {
     std::string name{};
     std::string file_name{};
@@ -67,13 +365,11 @@ struct multipart_body {
   class reader {
     value_type& body_;
     part_value_type part_;
-    parser_line_state line_state_;
-    std::optional<std::size_t> length_{0};
     std::string boundary_{};
     std::optional<std::ofstream> out_file_;
     boost::beast::http::fields& fields_;
-
-    std::string buffer_;
+    std::shared_ptr<multipart_parser> parser_;
+    multipart_parser_settings settings_{};
 
     enum boundary_state {
       boundary_error,  // 边界错误
@@ -89,148 +385,95 @@ struct multipart_body {
         }
       }
     }
+    static int on_header_field(multipart_parser* p, const char* at, size_t length) {
+      std::string l_field{at, length};
+      spdlog::debug("on_header_field: {}", l_field);
+      auto* l_reader = static_cast<reader*>(p->data);
+      boost::algorithm::to_lower(l_field);
+      if (l_field == "Content-Disposition") {
+        l_reader->part_ = part_value_type{};
+      }
+      return 0;
+    }
+    static int on_header_value(multipart_parser* p, const char* at, size_t length) {
+      std::string l_value{at, length};
+      spdlog::debug("on_header_value: {}", l_value);
+      auto* l_reader = static_cast<reader*>(p->data);
+      boost::algorithm::to_lower(l_value);
+      if (l_value.find("multipart/form-data") != std::string::npos) {
+        auto l_end = l_value.find(";");
+        // 解析 name 和 filename
+        std::vector<std::string> l_parts;
+        boost::algorithm::split(l_parts, l_value, boost::is_any_of(";"));
+        for (auto&& l_part : l_parts) {
+          boost::algorithm::trim(l_part);
+          if (l_part.find("name=") == 0) {
+            auto l_name = l_part.substr(5);
+            boost::algorithm::trim_if(l_name, boost::is_any_of("\""));
+            l_reader->part_.name = l_name;
+          } else if (l_part.find("filename=") == 0) {
+            auto l_filename = l_part.substr(9);
+            boost::algorithm::trim_if(l_filename, boost::is_any_of("\""));
+            l_reader->part_.file_name = l_filename;
+          }
+        }
+      } else if (l_value.find("content-type") != std::string::npos) {
+        auto l_type = l_value.substr(13);
+        boost::algorithm::trim(l_type);
+        l_reader->part_.content_type = detail::get_content_type(l_type);
+      }
+      return 0;
+    }
+    static int on_part_data(multipart_parser* p, const char* at, size_t length) {
+      auto* l_reader = static_cast<reader*>(p->data);
+      spdlog::debug("on_part_data: {} bytes", length);
+      if (!l_reader->out_file_) {
+        if (!l_reader->part_.file_name.empty()) {
+          auto l_tmp_path =
+              core_set::get_set().get_cache_root("http") /
+              (core_set::get_set().get_uuid_str() + FSys::path{l_reader->part_.file_name}.extension().string());
+          l_reader->out_file_.emplace(l_tmp_path, std::ios::binary);
+          l_reader->part_.body_ = l_tmp_path;
+        } else {
+          l_reader->part_.body_ = std::string{};
+        }
+      }
+      if (l_reader->out_file_) {
+        l_reader->out_file_->write(at, length);
+      } else {
+        std::get<std::string>(l_reader->part_.body_).append(at, length);
+      }
+      return 0;
+    }
 
    public:
     template <bool isRequest, class Fields>
     explicit reader(boost::beast::http::header<isRequest, Fields>& in_header, value_type& b)
-        : body_(b), line_state_(parser_line_state::boundary), fields_{in_header} {}
+        : body_(b),
+          fields_{in_header},
+          settings_{
+              &on_header_field, &on_header_value, &on_part_data, nullptr,
+              nullptr,          nullptr,          nullptr
+
+          } {}
     void init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec) {
       get_boundary();
-      line_state_ = parser_line_state::boundary;
-      ec          = {};
-      if (length) length_ = *length;
-    }
-    template <class InIt>
-    void parser_headers(InIt const& in_begin, InIt const& in_end) {
-      std::string in_header{in_begin, in_end};
-      if (auto l_it = in_header.find(':'); l_it != in_header.npos) {
-        auto l_c = in_header.substr(0, l_it);
-        boost::to_lower(l_c);
-        if (l_c == "content-disposition") {
-          if (auto l_pos = in_header.find("name="); l_pos != in_header.npos) {
-            auto l_end_pos = in_header.find(';', l_pos);
-            part_.name     = in_header.substr(l_pos + 6, l_end_pos - (l_pos + 6) - 1);
-            if (l_end_pos == in_header.npos) part_.name.pop_back();
-          }
-          if (auto l_pos = in_header.find("filename="); l_pos != in_header.npos) {
-            auto l_end_pos  = in_header.find(';', l_pos);
-            part_.file_name = in_header.substr(l_pos + 10, l_end_pos - (l_pos + 10) - 1);
-            if (l_end_pos == in_header.npos) part_.file_name.pop_back();
-          }
-        }
-        if (l_c == "content-type") {
-          if (auto l_pos = in_header.find(':'); l_pos != in_header.npos) {
-            auto l_str         = in_header.substr(l_pos + 2, in_header.find(l_pos, ';'));
-            part_.content_type = detail::get_content_type(l_str);
-          }
-        }
-      }
-    }
-    /**
-     * @brief 为了数据的完整性, 会传入数据和 \r\n, 需要在解析时去掉 \r\n(在二进制数据中可能会有 \r\n, 需要特殊处理)
-     * @tparam InIt 传入的迭代器
-     * @param in_begin 开始位置
-     * @param in_end 结束位置
-     */
-    template <class InIt>
-    void add_data(InIt const& in_begin, InIt const& in_end) {
-      switch (part_.content_type) {
-        case detail::content_type::application_json:
-        case detail::content_type::unknown:
-          if (!std::holds_alternative<std::string>(part_.body_)) {
-            part_.body_ = std::string{in_begin, in_end};
-          } else
-            std::get<std::string>(part_.body_) += std::string{in_begin, in_end - 2};  // 去掉 \r\n
-          break;
-        default:
-          if (!std::holds_alternative<FSys::path>(part_.body_)) {
-            auto l_path =
-                core_set::get_set().get_cache_root("http") / core_set::get_set().get_uuid_str() / part_.file_name;
-            part_.body_ = l_path;
-            if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-            out_file_ = std::make_optional<std::ofstream>(l_path, std::ios::out | std::ios::binary);
-          }
-          (*out_file_) << std::string{in_begin, in_end};
-          break;
-      }
-    }
-    void parser_part_end() {
-      body_.parts_.emplace_back(std::move(part_));
-      part_     = {};
-      out_file_ = {};
-    }
-    template <class ConstBufferSequence>
-    std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
-      // auto const l_extra = boost::beast::buffer_bytes(buffers);
-      std::size_t l_size = 0;
-      ec                 = {};
-      // buffer_.
-      // boost::beast::buffer
-      const auto& l_buff = boost::beast::buffers_cat(boost::asio::buffer(buffer_), buffers);
-      auto l_begin = boost::asio::buffers_begin(l_buff), l_end = boost::asio::buffers_end(l_buff);
-      decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
-      while (l_end_eof != l_end && *++l_end_eof != '\n') l_end_eof = std::find(l_end_eof, l_end, '\r');
-      if (line_state_ != parser_line_state::data && l_end_eof == l_end)
-        return buffer_ = {l_begin, l_end}, boost::beast::buffer_bytes(buffers);  // 不是完整的一行, 直接返回, 下次解析
-      l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1) - buffer_.size();  // +1 是为了包含 \n
-      {
-        auto l_end_eof_t = l_end_eof;
-        --l_end_eof_t;
-        switch (line_state_) {
-          case parser_line_state::boundary:
-            switch (is_boundary(l_begin, l_end_eof_t)) {
-              case boundary_error:;  // 边界错误
-                return ec = boost::asio::error::invalid_argument, 0;
-              case boundary:
-                line_state_ = parser_line_state::header;  // 解析到边界, 进入头部解析状态
-                break;
-              case boundary_end:
-                line_state_ = parser_line_state::eof_end;  // 最后一个边界, 进入结束状态
-                break;
-            }
-            break;
-          case parser_line_state::header:
-            if (l_begin == l_end_eof_t)
-              line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
-            else
-              parser_headers(l_begin, l_end_eof_t);
-            break;
-          case parser_line_state::data:
-            if (is_boundary(l_begin, l_end_eof_t))
-              return line_state_ = parser_line_state::boundary, parser_part_end(),
-                     0;  // 是边界分隔符, 说明数据已经结束, 需要解析到下一个边界, 在下一次循环中解析
-            add_data(l_begin, l_end_eof == l_end ? l_end : ++l_end_eof);
-            // l_size = boost::beast::buffer_bytes(buffers);
-            break;
-          case parser_line_state::eof_end:
-            break;
-        }
-      }
-      buffer_.clear();
-      return l_size;
+      ec            = {};
+      parser_       = std::make_shared<multipart_parser>(boundary_, &settings_);
+      parser_->data = this;
     }
 
-    // 比较边界分隔符
-    template <typename Iter>
-    boundary_state is_boundary(const Iter& in_begin, const Iter& in_end) const {
-      std::int64_t l_index{-2};
-      auto l_max_size = static_cast<std::int64_t>(boundary_.size());
-      for (auto l_it = in_begin; l_it != in_end; ++l_it, ++l_index) {
-        switch (l_index) {
-          case -2:
-          case -1:
-            if (*l_it != '-') return boundary_error;  // 前两个个字符必须是 -
-            break;
-          default:
-            if (l_index >= l_max_size) {
-              if (*l_it != '-') return boundary_error;             // 最后两个个字符必须是 -
-              if (l_index == l_max_size + 1) return boundary_end;  // 最后一个字符是 - , 说明是最后的边界
-            } else {
-              if (*l_it != boundary_[l_index]) return boundary_error;  // 后续字符必须与边界分隔符一致
-            }
-        }
-      }
-      return boundary;
+    template <class ConstBufferSequence>
+    std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
+      auto const l_extra = boost::beast::buffer_bytes(buffers);
+      auto l_buff        = boost::beast::buffers_cat(buffers);
+      std::size_t l_size_all{};
+
+      const std::size_t l_size = multipart_parser_execute(parser_.get(), boost::asio::buffers_begin(buffers), l_extra);
+
+      ec                       = {};
+
+      return l_size_all;
     }
 
     void finish(boost::system::error_code& ec) { ec = {}; }

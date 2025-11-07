@@ -3,12 +3,15 @@
 //
 #ifdef DOODLE_TEST_1
 #include "multipart_body.h"
+
 /* Based on node-formidable by Felix Geisendörfer
  * Igor Afonov - afonov@gmail.com - 2012
  * MIT License - http://www.opensource.org/licenses/mit-license.php
  */
-#ifndef _multipart_parser_h
-#define _multipart_parser_h
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,17 +50,6 @@ void* multipart_parser_get_data(multipart_parser* p);
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
-#endif
-
-/* Based on node-formidable by Felix Geisendörfer
- * Igor Afonov - afonov@gmail.com - 2012
- * MIT License - http://www.opensource.org/licenses/mit-license.php
- */
-
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 
 static void multipart_log(const char* format, ...) {
 #ifdef DEBUG_MULTIPART
@@ -126,9 +118,13 @@ enum state {
 };
 
 multipart_parser* multipart_parser_init(const char* boundary, const multipart_parser_settings* settings) {
-  multipart_parser* p = malloc(sizeof(multipart_parser) + strlen(boundary) + strlen(boundary) + 9);
+  multipart_parser* p =
+      static_cast<multipart_parser>(malloc(sizeof(multipart_parser) + strlen(boundary) + strlen(boundary) + 9));
+  if (!p) {
+    return NULL;
+  }
 
-  strcpy(p->multipart_boundary, boundary);
+  strcpy_s(p->multipart_boundary, boundary);
   p->boundary_length = strlen(boundary);
 
   p->lookbehind      = (p->multipart_boundary + p->boundary_length + 1);
