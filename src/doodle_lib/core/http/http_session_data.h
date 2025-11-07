@@ -17,6 +17,7 @@
 #include <tl/expected.hpp>
 
 namespace doodle::http {
+struct multipart_body;
 class http_websocket_client;
 struct capture_t;
 class http_route;
