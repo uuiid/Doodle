@@ -188,7 +188,7 @@ struct multipart_body {
     template <typename Iterator>
     int on_part_data(multipart_parser* p, Iterator in_begin, std::size_t in_length) {
       auto* l_reader = static_cast<reader*>(p->data);
-      spdlog::debug("on_part_data: {} bytes", in_length);
+      // spdlog::debug("on_part_data: {} bytes", in_length);
       if (!l_reader->out_file_) {
         if (!l_reader->part_.file_name.empty()) {
           auto l_tmp_path =
@@ -231,7 +231,7 @@ struct multipart_body {
 
       ec                       = {};
 
-      return l_size_all;
+      return l_size;
     }
 
     void finish(boost::system::error_code& ec) { ec = {}; }
@@ -247,7 +247,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
   auto l_begin = buf;
 
   while (i < len) {
-    c       = *buf;
+    c       = *(buf + i);
     is_last = (i == (len - 1));
     switch (p->state) {
       case s_start:
@@ -442,7 +442,6 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         return 0;
     }
     ++i;
-    ++buf;
   }
 
   return len;
