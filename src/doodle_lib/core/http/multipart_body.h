@@ -217,7 +217,6 @@ struct multipart_body {
     template <class ConstBufferSequence>
     std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
       auto const l_extra = boost::beast::buffer_bytes(buffers);
-      auto l_buff        = boost::beast::buffers_cat(buffers);
       std::size_t l_size_all{};
 
       const std::size_t l_size = multipart_parser_execute(parser_.get(), boost::asio::buffers_begin(buffers), l_extra);
