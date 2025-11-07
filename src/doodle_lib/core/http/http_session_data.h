@@ -7,12 +7,13 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/core/http/http_content_type.h>
-#include <doodle_lib/core/http/multipart_body.h>
+#include <doodle_lib/core/http/multipart_body_value.h>
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/url.hpp>
 
+#include "core/http/multipart_body_value.h"
 #include <string>
 #include <tl/expected.hpp>
 
@@ -91,7 +92,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   bool keep_alive_{};
 
   content_type content_type_{content_type::text_plain};
-  std::variant<std::string, nlohmann::json, FSys::path, multipart_body::value_type>
+  std::variant<std::string, nlohmann::json, FSys::path, multipart_body_impl::value_type_impl>
       body_;  // std::variant<std::string, nlohmann::json>
   // 请求头
   boost::beast::http::request_header<> req_header_;

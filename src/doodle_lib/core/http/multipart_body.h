@@ -6,6 +6,7 @@
 #include "doodle_core/core/core_set.h"
 
 #include <doodle_lib/core/http/http_content_type.h>
+#include <doodle_lib/core/http/multipart_body_value.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -17,6 +18,7 @@
 #include <boost/beast/core/ostream.hpp>
 #include <boost/beast/http.hpp>
 
+#include "core/http/multipart_body_value.h"
 #include <iterator>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -27,55 +29,11 @@
 namespace doodle::http {
 
 struct multipart_body {
-  struct part_value_type {
-    std::string name{};
-    std::string file_name{};
-    detail::content_type content_type{detail::content_type::unknown};
-    std::variant<std::string, FSys::path> body_{};
-  };
-  enum class parser_line_state { boundary, header, data, eof_end };
-
-  struct value_type_impl {
-    std::vector<part_value_type> parts_{};
-
-    nlohmann::json to_json() const {
-      nlohmann::json l_json{};
-      for (auto&& i : parts_) {
-        std::visit(
-            overloaded{
-                [&](const FSys::path&) {},
-                [&](const std::string& in_body) {
-                  if (nlohmann::json::accept(in_body)) {
-                    l_json[i.name] = nlohmann::json::parse(in_body);
-                  } else
-                    l_json[i.name] = in_body;
-                },
-            },
-            i.body_
-        );
-      }
-      return l_json;
-    }
-    std::vector<FSys::path> get_files() const {
-      std::vector<FSys::path> l_result{};
-      for (auto&& i : parts_) {
-        std::visit(
-            overloaded{
-                [&](const FSys::path& in_path) { l_result.emplace_back(in_path); },
-                [&](const std::string&) {},
-            },
-            i.body_
-        );
-      }
-      return l_result;
-    }
-  };
-
   // struct value_type {
   //   std::vector<part_value_type> parts_{};
   //   std::string boundary_{};
   // };
-  using value_type = value_type_impl;
+  using value_type = multipart_body_impl::value_type_impl;
 
   class reader {
     enum state {
@@ -165,7 +123,7 @@ struct multipart_body {
     size_t multipart_parser_execute(multipart_parser* p, Iterator buf, size_t len);
 
     value_type& body_;
-    part_value_type part_;
+    multipart_body_impl::part_value_type part_;
     std::string boundary_{};
     std::optional<std::ofstream> out_file_;
     boost::beast::http::fields& fields_;
@@ -193,7 +151,7 @@ struct multipart_body {
       auto* l_reader = static_cast<reader*>(p->data);
       boost::algorithm::to_lower(l_field);
       if (l_field == "Content-Disposition") {
-        l_reader->part_ = part_value_type{};
+        l_reader->part_ = multipart_body_impl::part_value_type{};
       }
       return 0;
     }
