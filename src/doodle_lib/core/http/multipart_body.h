@@ -200,12 +200,12 @@ struct multipart_body {
           l_reader->part_.body_ = std::string{};
         }
       }
+      std::string l_value{in_begin, in_begin + in_length};
       if (l_reader->out_file_) {
-        std::string l_value{in_begin, in_begin + in_length};
         (*l_reader->out_file_) << l_value;
         // l_reader->out_file_->write(in_view.data(), in_view.length());
       } else {
-        std::get<std::string>(l_reader->part_.body_).append(in_begin, in_begin + in_length);
+        std::get<std::string>(l_reader->part_.body_) += l_value;
       }
       return 0;
     }
@@ -243,7 +243,8 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
   size_t i    = 0;
   size_t mark = 0;
   char c, cl;
-  int is_last = 0;
+  int is_last  = 0;
+  auto l_begin = buf;
 
   while (i < len) {
     c       = *buf;
@@ -304,7 +305,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         }
 
         if (c == ':') {
-          EMIT_DATA_CB(header_field, buf + mark, i - mark);
+          EMIT_DATA_CB(header_field, l_begin + mark, i - mark);
           p->state = s_header_value_start;
           break;
         }
@@ -314,7 +315,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
           multipart_log("invalid character in header name");
           return i;
         }
-        if (is_last) EMIT_DATA_CB(header_field, buf + mark, (i - mark) + 1);
+        if (is_last) EMIT_DATA_CB(header_field, l_begin + mark, (i - mark) + 1);
         break;
 
       case s_headers_almost_done:
@@ -339,11 +340,11 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
       case s_header_value:
         multipart_log("s_header_value");
         if (c == CR) {
-          EMIT_DATA_CB(header_value, buf + mark, i - mark);
+          EMIT_DATA_CB(header_value, l_begin + mark, i - mark);
           p->state = s_header_value_almost_done;
           break;
         }
-        if (is_last) EMIT_DATA_CB(header_value, buf + mark, (i - mark) + 1);
+        if (is_last) EMIT_DATA_CB(header_value, l_begin + mark, (i - mark) + 1);
         break;
 
       case s_header_value_almost_done:
@@ -364,13 +365,13 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
       case s_part_data:
         multipart_log("s_part_data");
         if (c == CR && i >= len - p->boundary_length - 6) {
-          EMIT_DATA_CB(part_data, buf + mark, i - mark);
+          EMIT_DATA_CB(part_data, l_begin + mark, i - mark);
           mark             = i;
           p->state         = s_part_data_almost_boundary;
           p->lookbehind[0] = CR;
           break;
         }
-        if (is_last) EMIT_DATA_CB(part_data, buf + mark, (i - mark) + 1);
+        if (is_last) EMIT_DATA_CB(part_data, l_begin + mark, (i - mark) + 1);
         break;
 
       case s_part_data_almost_boundary:
