@@ -201,6 +201,8 @@ struct multipart_body {
         }
       }
       if (l_reader->out_file_) {
+        auto l_str = boost::beast::make_printable(boost::asio::buffer(in_begin, in_length));
+        (*l_reader->out_file_) << l_str;
         // l_reader->out_file_->write(in_view.data(), in_view.length());
       } else {
         std::get<std::string>(l_reader->part_.body_).append(in_begin, in_begin + in_length);
