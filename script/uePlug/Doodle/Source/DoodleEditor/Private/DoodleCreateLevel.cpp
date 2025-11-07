@@ -144,8 +144,8 @@
 #include "Widgets/Notifications/SNotificationList.h"  // 编辑器通知
 
 // 自定义导入abc
-#include "Doodle/Abc/DoodleAbcImportSettings.h"
-#include "Doodle/Abc/DoodleAlembicImportFactory.h"
+#include "AbcImportSettings.h"
+#include "AlembicImportFactory.h"
 
 /// 关卡编辑器子系统
 #include "LevelEditorSubsystem.h"

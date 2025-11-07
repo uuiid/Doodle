@@ -87,8 +87,8 @@
 #include "Animation/SkeletalMeshActor.h"  // 骨骼actor
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "CineCameraActor.h"  // 相机
-#include "Doodle/Abc/DoodleAbcImportSettings.h"
-#include "Doodle/Abc/DoodleAlembicImportFactory.h"
+#include "AbcImportSettings.h"
+#include "AlembicImportFactory.h"
 #include "EditorAssetLibrary.h"  // save asset
 #include "EditorLevelUtils.h"
 #include "EngineAnalytics.h"  // 分析
@@ -817,12 +817,12 @@ void UDoodleAbcImport_1::ImportFile()
 	L_Data->bSkipReadOnly = true;
 	L_Data->bReplaceExisting = true;
 
-	UDoodleAbcImportFactory* k_abc_f = NewObject<UDoodleAbcImportFactory>(L_Data);
+	UAlembicImportFactory* k_abc_f = NewObject<UAlembicImportFactory>(L_Data);
 	L_Data->Factory = k_abc_f;
-	UDoodleAbcImportSettings* k_abc_stting = NewObject<UDoodleAbcImportSettings>(L_Data);
+	UAbcImportSettings* k_abc_stting = NewObject<UAbcImportSettings>(L_Data);
 	k_abc_f->ImportSettings = k_abc_stting;
 
-	k_abc_stting->ImportType = EDoodleAlembicImportType::GeometryCache; // 导入为几何缓存
+	k_abc_stting->ImportType = EAlembicImportType::GeometryCache; // 导入为几何缓存
 	k_abc_stting->ConversionSettings.bFlipV = true;
 	k_abc_stting->ConversionSettings.Scale.X = 1.0;
 	k_abc_stting->ConversionSettings.Scale.Y = -1.0;

@@ -116,8 +116,8 @@ public class doodleEditor : ModuleRules
 				//"Foliage", // 导出场景使用
 				"MeshDescription", //修改sk使用
 				"MeshBuilder", //修改sk使用
-				"DoodleAbc", // 我们自己的导入
-
+				"AlembicLibrary", // abc 导入
+				"AlembicImporter", //abc 导入
 				"SequencerScriptingEditor",
 				"MovieRenderPipelineCore", // 远程渲染需要
 				"MovieRenderPipelineEditor", //远程渲染需要
@@ -152,13 +152,13 @@ public class doodleEditor : ModuleRules
 				"SlateCore",
 				"ImageCore",
 				"OpenColorIOWrapper",
-                "Blutility",
+				"Blutility",
 				"BatchRender",
 				// 导入abc hair需要
 				"HairStrandsCore",
 				"GeometryFramework",
 				"GeometryScriptingCore"
-            }
+			}
 		);
 
 

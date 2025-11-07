@@ -42,10 +42,10 @@
 #include "MoviePipelineDeferredPasses.h"
 #include "Engine/LevelStreamingDynamic.h"
 #include "EditorLevelUtils.h"
-#include "Doodle/Abc/DoodleAlembicImportFactory.h"
+#include "AlembicImportFactory.h"
 #include "Materials/MaterialInstanceConstant.h"
 ///-------------
-#include "Doodle/Abc/DoodleAbcImportSettings.h"
+#include "AbcImportSettings.h"
 #include "GeometryCache.h"       //
 #include "GeometryCacheActor.h"
 #include "GeometryCacheComponent.h"
@@ -811,12 +811,12 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const
 	Task->bReplaceExisting = true;
 	Task->bSave = true;
 	//------------------------
-	UDoodleAbcImportFactory* k_abc_f = NewObject<UDoodleAbcImportFactory>(Task);
+	UAlembicImportFactory* k_abc_f = NewObject<UAlembicImportFactory>(Task);
 	Task->Factory = k_abc_f;
-	UDoodleAbcImportSettings* k_abc_stting = NewObject<UDoodleAbcImportSettings>(Task);
+	UAbcImportSettings* k_abc_stting = NewObject<UAbcImportSettings>(Task);
 	k_abc_f->ImportSettings = k_abc_stting;
 	//--------------------
-	k_abc_stting->ImportType = EDoodleAlembicImportType::GeometryCache;
+	k_abc_stting->ImportType = EAlembicImportType::GeometryCache;
 	k_abc_stting->ConversionSettings.bFlipV = true;
 	k_abc_stting->ConversionSettings.Scale.X = 1.0;
 	k_abc_stting->ConversionSettings.Scale.Y = -1.0;
