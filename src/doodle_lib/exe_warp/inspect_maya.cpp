@@ -39,6 +39,9 @@ void to_json(nlohmann::json& in_json, const inspect_file_arg& out_obj) {
 }
 boost::asio::awaitable<void> inspect_file_arg::run() {
   if (!client_) throw_exception(doodle_error{"客户端指针未初始化"});
+
+  if (client_->get_token().empty()) throw_exception(doodle_error{"未登录, token 为空, 请重新启动软件"});
+
   if (task_id_.is_nil()) throw_exception(doodle_error{"任务ID未初始化"});
   co_await arg::async_run_maya();
 

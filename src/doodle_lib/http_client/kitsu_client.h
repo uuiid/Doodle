@@ -45,6 +45,8 @@ class kitsu_client {
   };
   // set token
   void set_token(const std::string& in_token) { kitsu_token_ = in_token; }
+  // get token
+  const std::string& get_token() const { return kitsu_token_; }
 
   boost::asio::awaitable<file_association> get_file_association(uuid in_task_id) const;
 

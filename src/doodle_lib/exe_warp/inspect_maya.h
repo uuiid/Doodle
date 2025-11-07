@@ -13,7 +13,6 @@
 #include <memory>
 #include <string>
 
-
 namespace doodle {
 
 enum class inspect_file_type { model_maya };
@@ -51,10 +50,6 @@ class DOODLELIB_API inspect_file_arg : public maya_exe_ns::arg {
   std::shared_ptr<kitsu::kitsu_client> client_{};
   uuid task_id_{};
 
-  inspect_file_arg() {
-    surface_5_ = rename_check_ = name_length_check_ = history_check_ = special_copy_check_ = uv_check_ = kframe_check_ =
-        space_name_check_ = only_default_camera_check_ = too_many_point_check_ = multi_uv_inspection_ = true;
-  }
   explicit inspect_file_arg(const std::string& in_token, const uuid& in_task_id)
       : client_(std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip)), task_id_(in_task_id) {
     client_->set_token(in_token);
