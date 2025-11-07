@@ -73,10 +73,10 @@ struct multipart_body {
 
       explicit multipart_parser(const std::string& boundary, const multipart_parser_settings* settings)
           : index(0),
-            boundary_length(boundary.length()),
+            boundary_length(boundary.size()),
             state(s_start),
             settings(settings),
-            lookbehind(boundary.length() + 8, '\0'),
+            lookbehind(boundary.size() + 8, '\0'),
             multipart_boundary(boundary) {}
     };
     typedef int (*multipart_data_cb)(multipart_parser*, std::string_view);
@@ -218,6 +218,7 @@ struct multipart_body {
     std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
       auto const l_extra = boost::beast::buffer_bytes(buffers);
       std::size_t l_size_all{};
+      spdlog::warn("multipart_body put: {} bytes {}", l_extra, boost::beast::buffers_to_string(buffers));
 
       const std::size_t l_size = multipart_parser_execute(parser_.get(), boost::asio::buffers_begin(buffers), l_extra);
 
@@ -243,13 +244,13 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
     is_last = (i == (len - 1));
     switch (p->state) {
       case s_start:
-        multipart_log("s_start");
+        spdlog::debug("s_start");
         p->index = 0;
         p->state = s_start_boundary;
 
       /* fallthrough */
       case s_start_boundary:
-        multipart_log("s_start_boundary");
+        // spdlog::debug("s_start_boundary");
         if (p->index == p->boundary_length) {
           if (c != CR) {
             return i;
@@ -275,13 +276,13 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_header_field_start:
-        multipart_log("s_header_field_start");
+        // spdlog::debug("s_header_field_start");
         mark     = i;
         p->state = s_header_field;
 
       /* fallthrough */
       case s_header_field:
-        multipart_log("s_header_field");
+        // spdlog::debug("s_header_field");
         if (c == CR) {
           p->state = s_headers_almost_done;
           break;
@@ -304,14 +305,14 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
 
         cl = tolower(c);
         if ((c != '-') && (cl < 'a' || cl > 'z')) {
-          multipart_log("invalid character in header name");
+          // spdlog::debug("invalid character in header name");
           return i;
         }
         if (is_last) EMIT_DATA_CB(header_field, l_begin + mark, (i - mark) + 1);
         break;
 
       case s_headers_almost_done:
-        multipart_log("s_headers_almost_done");
+        // spdlog::debug("s_headers_almost_done");
         if (c != LF) {
           return i;
         }
@@ -320,7 +321,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_header_value_start:
-        multipart_log("s_header_value_start");
+        // spdlog::debug("s_header_value_start");
         if (c == ' ' || c == '\t') {
           break;
         }
@@ -330,7 +331,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
 
       /* fallthrough */
       case s_header_value:
-        multipart_log("s_header_value");
+        // spdlog::debug("s_header_value");
         if (c == CR) {
           EMIT_DATA_CB(header_value, l_begin + mark, i - mark);
           p->state = s_header_value_almost_done;
@@ -340,7 +341,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_header_value_almost_done:
-        multipart_log("s_header_value_almost_done");
+        // spdlog::debug("s_header_value_almost_done");
         if (c != LF) {
           return i;
         }
@@ -348,15 +349,15 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_part_data_start:
-        multipart_log("s_part_data_start");
+        // spdlog::debug("s_part_data_start");
         NOTIFY_CB(headers_complete);
         mark     = i;
         p->state = s_part_data;
 
       /* fallthrough */
       case s_part_data:
-        multipart_log("s_part_data");
-        if (c == CR && i >= len - p->boundary_length - 6) {
+        // spdlog::debug("s_part_data");
+        if (c == CR) {
           EMIT_DATA_CB(part_data, l_begin + mark, i - mark);
           mark             = i;
           p->state         = s_part_data_almost_boundary;
@@ -367,7 +368,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_part_data_almost_boundary:
-        multipart_log("s_part_data_almost_boundary");
+        // spdlog::debug("s_part_data_almost_boundary");
         if (c == LF) {
           p->state = s_part_data_boundary;
           i += 2;  // first '--'
@@ -381,7 +382,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_part_data_boundary:
-        multipart_log("s_part_data_boundary");
+        // spdlog::debug("s_part_data_boundary");
         if (p->multipart_boundary[p->index] != c) {
           EMIT_DATA_CB(part_data, p->lookbehind.data(), 2 + p->index);
           p->state = s_part_data;
@@ -396,7 +397,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         break;
 
       case s_part_data_almost_end:
-        multipart_log("s_part_data_almost_end");
+        // spdlog::debug("s_part_data_almost_end");
         if (c == '-') {
           p->state = s_part_data_final_hyphen;
           break;
@@ -408,7 +409,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         return i;
 
       case s_part_data_final_hyphen:
-        multipart_log("s_part_data_final_hyphen");
+        // spdlog::debug("s_part_data_final_hyphen");
         if (c == '-') {
           NOTIFY_CB(body_end);
           p->state = s_end;
@@ -417,7 +418,7 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         return i;
 
       case s_part_data_end:
-        multipart_log("s_part_data_end");
+        // spdlog::debug("s_part_data_end");
         if (c == LF) {
           p->state = s_header_field_start;
           NOTIFY_CB(part_data_begin);
@@ -426,11 +427,11 @@ size_t multipart_body::reader::multipart_parser_execute(multipart_parser* p, Ite
         return i;
 
       case s_end:
-        multipart_log("s_end: %02X", (int)c);
+        // spdlog::debug("s_end: {}", (int)c);
         break;
 
       default:
-        multipart_log("Multipart parser unrecoverable error");
+        // spdlog::debug("Multipart parser unrecoverable error");
         return 0;
     }
     ++i;
