@@ -49,7 +49,7 @@ class DOODLELIB_API inspect_file_arg : public maya_exe_ns::arg {
 
   std::shared_ptr<kitsu::kitsu_client> client_{};
   uuid task_id_{};
-
+ inspect_file_arg() = default;
   explicit inspect_file_arg(const std::string& in_token, const uuid& in_task_id)
       : client_(std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip)), task_id_(in_task_id) {
     client_->set_token(in_token);
