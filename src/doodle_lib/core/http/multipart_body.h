@@ -150,7 +150,7 @@ struct multipart_body {
       spdlog::debug("on_header_field: {}", l_field);
       auto* l_reader = static_cast<reader*>(p->data);
       boost::algorithm::to_lower(l_field);
-      if (l_field == "Content-Disposition") {
+      if (l_field == "content-disposition") {
         l_reader->part_ = multipart_body_impl::part_value_type{};
       }
       return 0;
