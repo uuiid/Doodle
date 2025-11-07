@@ -46,8 +46,6 @@ struct multipart_body {
     std::optional<std::ofstream> out_file_;
     boost::beast::http::fields& fields_;
 
-    std::string buffer_;
-
     enum boundary_state {
       boundary_error,  // 边界错误
       boundary,        // 正常的边界
@@ -76,6 +74,7 @@ struct multipart_body {
     template <class InIt>
     void parser_headers(InIt const& in_begin, InIt const& in_end) {
       std::string in_header{in_begin, in_end};
+      spdlog::debug("multipart header: {}", in_header);
       if (auto l_it = in_header.find(':'); l_it != in_header.npos) {
         auto l_c = in_header.substr(0, l_it);
         boost::to_lower(l_c);
@@ -139,13 +138,12 @@ struct multipart_body {
       ec                 = {};
       // buffer_.
       // boost::beast::buffer
-      const auto& l_buff = boost::beast::buffers_cat(boost::asio::buffer(buffer_), buffers);
-      auto l_begin = boost::asio::buffers_begin(l_buff), l_end = boost::asio::buffers_end(l_buff);
+      auto l_begin = boost::asio::buffers_begin(buffers), l_end = boost::asio::buffers_end(buffers);
       decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
       while (l_end_eof != l_end && *++l_end_eof != '\n') l_end_eof = std::find(l_end_eof, l_end, '\r');
-      if (line_state_ != parser_line_state::data && l_end_eof == l_end)
-        return buffer_ = {l_begin, l_end}, boost::beast::buffer_bytes(buffers);  // 不是完整的一行, 直接返回, 下次解析
-      l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1) - buffer_.size();  // +1 是为了包含 \n
+      spdlog::debug("multipart line: {}", std::string{l_begin, l_end_eof});
+      if (line_state_ != parser_line_state::data && l_end_eof == l_end) return 0;  // 不是完整的一行, 直接返回, 下次解析
+      l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1);  // +1 是为了包含 \n
       {
         auto l_end_eof_t = l_end_eof;
         --l_end_eof_t;
@@ -169,41 +167,45 @@ struct multipart_body {
               parser_headers(l_begin, l_end_eof_t);
             break;
           case parser_line_state::data:
-            if (is_boundary(l_begin, l_end_eof_t))
-              return line_state_ = parser_line_state::boundary, parser_part_end(),
-                     0;  // 是边界分隔符, 说明数据已经结束, 需要解析到下一个边界, 在下一次循环中解析
-            add_data(l_begin, l_end_eof == l_end ? l_end : ++l_end_eof);
-            // l_size = boost::beast::buffer_bytes(buffers);
+            switch (is_boundary(l_begin, l_end_eof_t)) {
+              case boundary_error:;  // 不是边界, 说明是数据
+                add_data(l_begin, l_end_eof == l_end ? l_end : ++l_end_eof);
+                break;
+              case boundary:
+                line_state_ = parser_line_state::boundary;
+                parser_part_end();
+                break;
+              case boundary_end:
+                line_state_ = parser_line_state::eof_end;
+                parser_part_end();
+            }
             break;
           case parser_line_state::eof_end:
             break;
         }
       }
-      buffer_.clear();
       return l_size;
     }
 
     // 比较边界分隔符
     template <typename Iter>
     boundary_state is_boundary(const Iter& in_begin, const Iter& in_end) const {
-      std::int64_t l_index{-2};
-      auto l_max_size = static_cast<std::int64_t>(boundary_.size());
-      for (auto l_it = in_begin; l_it != in_end; ++l_it, ++l_index) {
-        switch (l_index) {
-          case -2:
-          case -1:
-            if (*l_it != '-') return boundary_error;  // 前两个个字符必须是 -
-            break;
-          default:
-            if (l_index >= l_max_size) {
-              if (*l_it != '-') return boundary_error;             // 最后两个个字符必须是 -
-              if (l_index == l_max_size + 1) return boundary_end;  // 最后一个字符是 - , 说明是最后的边界
-            } else {
-              if (*l_it != boundary_[l_index]) return boundary_error;  // 后续字符必须与边界分隔符一致
-            }
+      auto l_len = std::distance(in_begin, in_end);
+      if (l_len == boundary_.size()) {
+        if (std::equal(in_begin, in_end, boundary_.begin())) {
+          return boundary;
+        }
+      } else if (l_len == boundary_.size() + 2) {
+        if (std::equal(in_begin + 2, in_end, boundary_.begin()) && *(in_begin) == '-' && *(in_begin + 1) == '-') {
+          return boundary;
+        }
+      } else if (l_len == boundary_.size() + 4) {
+        if (std::equal(in_begin + 2, in_end - 2, boundary_.begin()) && *(in_begin) == '-' && *(in_begin + 1) == '-' &&
+            *(in_end - 2) == '-' && *(in_end - 1) == '-') {
+          return boundary_end;
         }
       }
-      return boundary;
+      return boundary_error;
     }
 
     void finish(boost::system::error_code& ec) { ec = {}; }
