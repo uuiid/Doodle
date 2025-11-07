@@ -144,6 +144,8 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   l_req.set(boost::beast::http::field::accept, "application/json");
   l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  if (!kitsu_token_.empty())
+    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
   boost::system::error_code l_ec{};
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
