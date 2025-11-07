@@ -47,9 +47,9 @@ struct multipart_body {
     boost::beast::http::fields& fields_;
 
     enum boundary_state {
-      boundary_error,  // 边界错误
-      boundary,        // 正常的边界
-      boundary_end,    // 最后的边界
+      not_boundary,  // 边界错误
+      boundary,      // 正常的边界
+      boundary_end,  // 最后的边界
     };
 
     void get_boundary() {
@@ -74,7 +74,6 @@ struct multipart_body {
     template <class InIt>
     void parser_headers(InIt const& in_begin, InIt const& in_end) {
       std::string in_header{in_begin, in_end};
-      spdlog::debug("multipart header: {}", in_header);
       if (auto l_it = in_header.find(':'); l_it != in_header.npos) {
         auto l_c = in_header.substr(0, l_it);
         boost::to_lower(l_c);
@@ -141,7 +140,7 @@ struct multipart_body {
       auto l_begin = boost::asio::buffers_begin(buffers), l_end = boost::asio::buffers_end(buffers);
       decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
       while (l_end_eof != l_end && *++l_end_eof != '\n') l_end_eof = std::find(l_end_eof, l_end, '\r');
-      spdlog::debug("multipart line: {}", std::string{l_begin, l_end_eof});
+      if (line_state_ != parser_line_state::data) spdlog::debug("multipart line: {}", std::string{l_begin, l_end_eof});
       if (line_state_ != parser_line_state::data && l_end_eof == l_end) return 0;  // 不是完整的一行, 直接返回, 下次解析
       l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1);  // +1 是为了包含 \n
       {
@@ -150,7 +149,7 @@ struct multipart_body {
         switch (line_state_) {
           case parser_line_state::boundary:
             switch (is_boundary(l_begin, l_end_eof_t)) {
-              case boundary_error:;  // 边界错误
+              case not_boundary:;  // 边界错误
                 return ec = boost::asio::error::invalid_argument, 0;
               case boundary:
                 line_state_ = parser_line_state::header;  // 解析到边界, 进入头部解析状态
@@ -168,11 +167,11 @@ struct multipart_body {
             break;
           case parser_line_state::data:
             switch (is_boundary(l_begin, l_end_eof_t)) {
-              case boundary_error:;  // 不是边界, 说明是数据
+              case not_boundary:;  // 不是边界, 说明是数据
                 add_data(l_begin, l_end_eof == l_end ? l_end : ++l_end_eof);
                 break;
               case boundary:
-                line_state_ = parser_line_state::boundary;
+                line_state_ = parser_line_state::header;
                 parser_part_end();
                 break;
               case boundary_end:
@@ -205,7 +204,7 @@ struct multipart_body {
           return boundary_end;
         }
       }
-      return boundary_error;
+      return not_boundary;
     }
 
     void finish(boost::system::error_code& ec) { ec = {}; }
