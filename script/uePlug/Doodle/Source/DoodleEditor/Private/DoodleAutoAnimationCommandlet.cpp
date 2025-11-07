@@ -448,7 +448,7 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 
 	//--------------------------
 	TheLevelSequence->GetMovieScene()->SetDisplayRate(Rate);
-	TheLevelSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{120'000, 1});
+	TheLevelSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{60'000, 1});
 	//--------------------
 	TheLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);

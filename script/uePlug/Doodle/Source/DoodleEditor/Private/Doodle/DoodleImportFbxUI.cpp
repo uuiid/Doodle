@@ -561,7 +561,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 
 	// 设置定序器属性
 	L_ShotSequence->GetMovieScene()->SetDisplayRate(L_Rate);
-	L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{120'000, 1});
+	L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{60'000, 1});
 
 	L_ShotSequence->GetMovieScene()->Modify();
 
