@@ -140,7 +140,6 @@ struct multipart_body {
       auto l_begin = boost::asio::buffers_begin(buffers), l_end = boost::asio::buffers_end(buffers);
       decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
       while (l_end_eof != l_end && *++l_end_eof != '\n') l_end_eof = std::find(l_end_eof, l_end, '\r');
-      if (line_state_ != parser_line_state::data) spdlog::debug("multipart line: {}", std::string{l_begin, l_end_eof});
       if (line_state_ != parser_line_state::data && l_end_eof == l_end) return 0;  // 不是完整的一行, 直接返回, 下次解析
       l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1);  // +1 是为了包含 \n
       {
