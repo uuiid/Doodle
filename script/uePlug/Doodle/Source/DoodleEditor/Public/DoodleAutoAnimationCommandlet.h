@@ -117,6 +117,7 @@ private:
 	FString ImportPath;
 
 	FFrameRate Rate{25, 1};
+	FFrameRate TickRate{60000, 1};
 	FFrameNumber Offset{50};
 
 	/// 传入的主关卡, 用来拿到主关卡中的子关卡, 不进行渲染

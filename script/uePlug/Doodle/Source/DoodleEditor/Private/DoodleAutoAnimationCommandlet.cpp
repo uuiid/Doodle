@@ -448,11 +448,14 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 
 	//--------------------------
 	TheLevelSequence->GetMovieScene()->SetDisplayRate(Rate);
-	TheLevelSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{60'000, 1});
+	TheLevelSequence->GetMovieScene()->SetTickResolutionDirectly(TickRate);
 	//--------------------
 	TheLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
-	TheLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - Offset, L_End + 1}, true);
+	TheLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
+		                                                    (L_Start - Offset) * (TickRate / Rate).Denominator,
+		                                                    (L_End + 1) * (TickRate / Rate).Denominator
+	                                                    }, true);
 	TheLevelSequence->GetMovieScene()->Modify();
 }
 
@@ -824,6 +827,7 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const
 	k_abc_stting->ConversionSettings.Rotation.X = 90.0;
 	k_abc_stting->ConversionSettings.Rotation.Y = 0.0;
 	k_abc_stting->ConversionSettings.Rotation.Z = 0.0;
+	k_abc_stting->MaterialSettings.bFindMaterials = true;
 	//--------------------------
 	k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;
 	k_abc_stting->SamplingSettings.bSkipEmpty = true; //

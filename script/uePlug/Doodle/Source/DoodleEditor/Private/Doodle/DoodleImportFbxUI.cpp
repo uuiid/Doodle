@@ -570,9 +570,13 @@ void UDoodleFbxCameraImport_1::ImportFile()
 
 	/// 设置范围
 	FFrameNumber offset{50};
+	FFrameRate Rate{25, 1};
 	L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
 	L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
-	L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{L_Start - offset, L_End + 1}, true);
+	L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
+		                                                  (L_Start - offset) * (TickRate / Rate).Denominator,
+		                                                  (L_End + 1) * (TickRate / Rate).Denominator
+	                                                  }, true);
 	//-------Add Visibility Track
 	UMovieSceneLevelVisibilityTrack* NewTrack =
 		L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
@@ -833,6 +837,7 @@ void UDoodleAbcImport_1::ImportFile()
 	k_abc_stting->ConversionSettings.Rotation.X = 90.0;
 	k_abc_stting->ConversionSettings.Rotation.Y = 0.0;
 	k_abc_stting->ConversionSettings.Rotation.Z = 0.0;
+	k_abc_stting->MaterialSettings.bFindMaterials = true;
 
 	k_abc_stting->GeometryCacheSettings.bFlattenTracks = true; // 合并轨道
 	k_abc_stting->SamplingSettings.bSkipEmpty = false; // 跳过空白帧
