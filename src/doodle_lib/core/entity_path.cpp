@@ -226,10 +226,10 @@ FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_ex
 }
 
 FSys::path get_entity_prop_ue_public_files_path() {
-  return FSys::path{doodle_config::ue4_content} / "a_PropPublicFiles";
+  return FSys::path{doodle_config::ue4_content} / "Prop" / "a_PropPublicFiles";
 }
 FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_) {
-  return FSys::path{doodle_config::ue4_content} / in_extend_.pin_yin_ming_cheng_;
+  return FSys::path{doodle_config::ue4_content} / "Prop" / in_extend_.pin_yin_ming_cheng_;
 }
 /// 道具模型 ue 名称
 FSys::path get_entity_prop_ue_name(
