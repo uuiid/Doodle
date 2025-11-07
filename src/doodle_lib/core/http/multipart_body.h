@@ -145,7 +145,7 @@ struct multipart_body {
       std::string l_value{in_begin, in_begin + in_length};
       spdlog::debug("on_header_value: {}", l_value);
       boost::algorithm::to_lower(l_value);
-      if (l_value.find("multipart/form-data") != std::string::npos) {
+      if (l_value.find("form-data") != std::string::npos) {
         auto l_end = l_value.find(";");
         // 解析 name 和 filename
         std::vector<std::string> l_parts;
@@ -218,7 +218,7 @@ struct multipart_body {
     std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
       auto const l_extra = boost::beast::buffer_bytes(buffers);
       std::size_t l_size_all{};
-      spdlog::warn("multipart_body put: {} bytes {}", l_extra, boost::beast::buffers_to_string(buffers));
+      // spdlog::warn("multipart_body put: {} bytes {}", l_extra, boost::beast::buffers_to_string(buffers));
 
       const std::size_t l_size = multipart_parser_execute(parser_.get(), boost::asio::buffers_begin(buffers), l_extra);
 
