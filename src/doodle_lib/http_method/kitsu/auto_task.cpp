@@ -344,7 +344,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   if (!l_asset_extends)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "实体缺少资产扩展信息");
   export_rig_sk_arg::data_t l_arg{};
-  auto l_ue_scene_path = core_set::get_set().get_cache_root().parent_path() / l_prj.code_;
+  auto l_ue_scene_path =
+      core_set::get_set().get_cache_root().parent_path() / doodle_config::doodle_token_name / l_prj.code_;
   if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
     auto l_ue_name          = get_entity_character_ue_name(*l_asset_extends);
     auto l_ue_path          = get_entity_character_ue_path(l_prj, *l_asset_extends);
