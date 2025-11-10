@@ -120,6 +120,7 @@ class run_ue_assembly_local : public async_task {
       j["create_move_path"]      = p.create_move_path_;
       j["shot"]                  = p.shot_;
       j["episodes"]              = p.episodes_;
+      j["update_ue_path"]        = p.update_ue_path_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
@@ -142,6 +143,7 @@ class run_ue_assembly_local : public async_task {
       j.at("create_move_path").get_to(p.create_move_path_);
       j.at("shot").get_to(p.shot_);
       j.at("episodes").get_to(p.episodes_);
+      j.at("update_ue_path").get_to(p.update_ue_path_);
     }
   };
   uuid shot_task_id_{};
