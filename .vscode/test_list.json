@@ -13,6 +13,8 @@
     "kitsu/get_task_directly",
     "kitsu/get_user",
     "kitsu/get_task",
+    "kitsu/up_file",
+    "kitsu/up_file_ue",
     "auto_light_test/utf16_test"
   ]
 }

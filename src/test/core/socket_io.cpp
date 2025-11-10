@@ -29,18 +29,18 @@ BOOST_AUTO_TEST_CASE(socket_io_test) {
 
   auto l_rout_ptr = std::make_shared<http::http_route>();
 
-  auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
-  l_sid_ctx->on("events");
-  l_sid_ctx->on({})->on_connect([l_sid_ctx](const std::shared_ptr<socket_io::socket_io_core>& in_data) {
-    in_data->emit("auth", in_data->auth_);
-    in_data->on_message(
-        "message", [in_data](const nlohmann::json& in_json) { in_data->emit("message-back", in_json); },
-        [in_data](const std::vector<std::string>& in_str) { in_data->emit("message-back", in_str); }
-    );
-  });
-  l_sid_ctx->on("/custom")->on_connect([l_sid_ctx](const std::shared_ptr<socket_io::socket_io_core>& in_data) {
-    in_data->emit("auth", in_data->auth_);
-  });
+  // auto l_sid_ctx  = std::make_shared<socket_io::sid_ctx>();
+  // l_sid_ctx->on("events");
+  // l_sid_ctx->on({})->on_connect([l_sid_ctx](const std::shared_ptr<socket_io::socket_io_core>& in_data) {
+  //   in_data->emit("auth", in_data->auth_);
+  //   in_data->on_message(
+  //       "message", [in_data](const nlohmann::json& in_json) { in_data->emit("message-back", in_json); },
+  //       [in_data](const std::vector<std::string>& in_str) { in_data->emit("message-back", in_str); }
+  //   );
+  // });
+  // l_sid_ctx->on("/custom")->on_connect([l_sid_ctx](const std::shared_ptr<socket_io::socket_io_core>& in_data) {
+  //   in_data->emit("auth", in_data->auth_);
+  // });
   http::run_http_listener(g_io_context(), l_rout_ptr, 50025);
   l_app.run();
 }
