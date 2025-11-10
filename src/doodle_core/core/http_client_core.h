@@ -31,19 +31,23 @@ namespace doodle::http {
 template <typename SocketType>
 class http_stream_base {
  protected:
-  using resolver_t   = boost::asio::ip::tcp::resolver;
-  using resolver_ptr = std::shared_ptr<resolver_t>;
+  using resolver_t      = boost::asio::ip::tcp::resolver;
+  using resolver_ptr    = std::shared_ptr<resolver_t>;
 
-  using buffer_type  = boost::beast::flat_buffer;
-  using channel_type = boost::asio::experimental::channel<void()>;
-  using socket_type  = SocketType;
+  using buffer_type     = boost::beast::flat_buffer;
+  using channel_type    = boost::asio::experimental::channel<void()>;
+  using socket_type     = SocketType;
+  using socket_type_ptr = std::unique_ptr<socket_type>;
 
   template <typename SelfType, typename RequestType, typename ResponseBody>
   class read_and_write_compose_parser;
 
+  socket_type_ptr socket_;
+
  public:
   template <typename... Args>
-  explicit http_stream_base(Args&&... args) : buffer_{}, socket_(std::forward<Args>(args)...) {}
+  explicit http_stream_base(Args&&... args)
+      : buffer_{}, socket_(std::make_unique<socket_type>(std::forward<Args>(args)...)) {}
   ~http_stream_base() = default;
 
   boost::urls::scheme scheme_id_{};
@@ -52,8 +56,6 @@ class http_stream_base {
   std::string server_ip_and_port_{};
   boost::asio::ip::tcp::resolver::results_type resolver_results_{};
   buffer_type buffer_{};
-
-  socket_type socket_;
 
   // 可选的 body 限制
   std::optional<std::size_t> body_limit_{};
@@ -104,7 +106,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
         self.complete(in_ec);
         return;
       }
-      self_->socket_.async_connect(self_->resolver_results_, std::move(self));
+      self_->socket_->async_connect(self_->resolver_results_, std::move(self));
     }
     // 连接结束
     template <typename Self>
@@ -126,11 +128,12 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   template <typename Handle>
   auto resolve_and_connect(Handle&& in_handle) {
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        resolve_and_connect_compose{this, resolver_t{socket_.get_executor()}}, in_handle
+        resolve_and_connect_compose{this, resolver_t{socket_->get_executor()}}, in_handle
     );
   }
-  bool is_open() { return socket_.socket().is_open(); }
-  void expires_after(std::chrono::seconds in_seconds) { socket_.expires_after(in_seconds); }
+  bool is_open() { return socket_->socket().is_open(); }
+  void reset_socket() { socket_ = std::make_unique<socket_type>(socket_->get_executor()); }
+  void expires_after(std::chrono::seconds in_seconds) { socket_->expires_after(in_seconds); }
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
@@ -174,7 +177,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
         self.complete(in_ec);
         return;
       }
-      boost::beast::get_lowest_layer(self_->socket_).async_connect(self_->resolver_results_, std::move(self));
+      boost::beast::get_lowest_layer(*self_->socket_).async_connect(self_->resolver_results_, std::move(self));
     }
     template <typename Self>
     void operator()(Self&& self, boost::system::error_code in_ec, boost::asio::ip::tcp::endpoint in_endpoint) {
@@ -182,7 +185,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
         self.complete(in_ec);
         return;
       }
-      self_->socket_.async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
+      self_->socket_->async_handshake(boost::asio::ssl::stream_base::client, std::move(self));
     }
   };
 
@@ -209,13 +212,17 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   template <typename Handle>
   auto resolve_and_connect(Handle&& in_handle) {
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
-        resolve_and_connect_compose{this, resolver_t{socket_.get_executor()}}, in_handle
+        resolve_and_connect_compose{this, resolver_t{socket_->get_executor()}}, in_handle
     );
   }
 
-  bool is_open() { return socket_.next_layer().socket().is_open(); }
+  bool is_open() { return socket_->next_layer().socket().is_open(); }
+  void reset_socket() {
+    socket_ = std::make_unique<boost::beast::ssl_stream<boost::beast::tcp_stream>>(socket_->get_executor(), ctx_);
+    set_ssl();
+  }
   void expires_after(std::chrono::seconds in_seconds) {
-    boost::beast::get_lowest_layer(socket_).expires_after(in_seconds);
+    boost::beast::get_lowest_layer(*socket_).expires_after(in_seconds);
   }
 
   // read and write
