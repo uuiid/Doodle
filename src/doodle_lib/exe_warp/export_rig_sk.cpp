@@ -38,6 +38,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   if (!FSys::exists(l_fbx)) throw_exception(doodle_error{"文件 {} 不存在", l_fbx});
   logger_ptr_->info("重命名 {} 为 {}", l_fbx.filename(), impl_.import_game_path_.stem());
   FSys::rename(l_fbx, l_fbx.parent_path() / impl_.import_game_path_.stem().replace_extension(l_fbx.extension()));
+  l_fbx = l_fbx.parent_path() / impl_.import_game_path_.stem().replace_extension(l_fbx.extension());
 
   nlohmann::json l_json{};
   l_json = import_and_render_ue_ns::import_skin_file{
