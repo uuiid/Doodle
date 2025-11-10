@@ -40,11 +40,10 @@ namespace fmt {
  *
  */
 template <>
-struct formatter<::doodle::episodes> : formatter<std::string> {
+struct formatter<::doodle::episodes> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    auto l_str = fmt::format("ep_{}", in_.p_episodes);
-    return formatter<std::string>::format(l_str, ctx);
+    return formatter<std::int32_t>::format(in_.p_episodes, ctx);
   }
 };
 }  // namespace fmt

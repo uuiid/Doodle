@@ -217,7 +217,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       );
       l_ret.update_ue_path_.emplace_back(
           l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
-          FSys::path{l_prj.auto_upload_path_} / fmt::format("{}_{}", l_ret.episodes_, l_ret.shot_) /
+          FSys::path{l_prj.auto_upload_path_} / fmt::format("EP{}_SC{}", l_ret.episodes_, l_ret.shot_) /
               l_scene_ue_path.stem() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders
 
       );

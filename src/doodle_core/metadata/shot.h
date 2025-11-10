@@ -92,11 +92,13 @@ struct formatter<::doodle::shot::shot_ab_enum> : formatter<fmt::string_view> {
  *
  */
 template <>
-struct formatter<::doodle::shot> : formatter<std::string> {
+struct formatter<::doodle::shot> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::shot& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    auto l_str = fmt::format("sc_{}{}", in_.p_shot, in_.p_shot_enum);
-    formatter<std::string>::format(l_str, ctx);
+    auto l_out = formatter<std::int32_t>::format(in_.p_shot, ctx);
+    if (in_.p_shot_enum != ::doodle::shot::shot_ab_enum::None) {
+      fmt::format_to(l_out, "{}", in_.p_shot_enum);
+    }
     return ctx.out();
   }
 };
