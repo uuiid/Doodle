@@ -234,6 +234,10 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
         movie::image_attr::make_default_attr(&arg_.episodes_, &arg_.shot_, l_move_paths), arg_.size_
     );
   }
+  for (auto&& p : arg_.update_ue_path_) {
+    logger_ptr_->info("复制UE资源文件 from {} to {}", p.from_, p.to_);
+    FSys::copy_diff(p.from_, p.to_, logger_ptr_);
+  }
 }
 
 }  // namespace doodle

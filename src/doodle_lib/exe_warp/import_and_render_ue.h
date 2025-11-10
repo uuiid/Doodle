@@ -17,6 +17,7 @@
 
 #include <boost/signals2/signal.hpp>
 
+#include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -79,9 +80,10 @@ class run_ue_assembly_local : public async_task {
 
   struct run_ue_assembly_arg {
     std::vector<run_ue_assembly_asset_info> asset_infos_;
-    FSys::path camera_file_path_;                // 相机路径
-    FSys::path ue_main_project_path_;            // 主项目路径
-    std::vector<file_copy_info> ue_asset_path_;  // 需要复制的UE路径
+    FSys::path camera_file_path_;                 // 相机路径
+    FSys::path ue_main_project_path_;             // 主项目路径
+    std::vector<file_copy_info> ue_asset_path_;   // 需要复制的UE路径
+    std::vector<file_copy_info> update_ue_path_;  // 上传的UE路径
 
     std::int32_t begin_time_;
     std::int32_t end_time_;

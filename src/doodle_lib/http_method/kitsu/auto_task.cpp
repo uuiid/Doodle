@@ -209,6 +209,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
           l_scene_ue_path / doodle_config::ue4_config
       );
+      l_ret.update_ue_path_.emplace_back(
+          l_scene_ue_path / doodle_config::ue4_content, FSys::path{l_prj.auto_upload_path_} /
+                                                            fmt::format("{}_{}", l_ret.episodes_, l_ret.shot_) /
+                                                            l_scene_ue_path.stem() / doodle_config::ue4_content
+
+      );
+      l_ret.update_ue_path_.emplace_back(
+          l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
+          FSys::path{l_prj.auto_upload_path_} / fmt::format("{}_{}", l_ret.episodes_, l_ret.shot_) /
+              l_scene_ue_path.stem() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders
+
+      );
     } else
       throw_exception(
           http_request_error{
