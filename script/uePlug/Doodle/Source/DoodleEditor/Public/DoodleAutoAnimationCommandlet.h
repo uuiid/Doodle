@@ -138,7 +138,6 @@ private:
 
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
-	int32_t Import_Time_Off{5};
 	//-----------
 	TArray<FImportFiles2> ImportFiles;
 

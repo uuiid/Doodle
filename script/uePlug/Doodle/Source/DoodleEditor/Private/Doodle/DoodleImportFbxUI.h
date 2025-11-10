@@ -77,7 +77,6 @@ public:
 
 	int32_t StartTime{};
 	int32_t EndTime{};
-	int32_t Import_Time_Off{5};
 	FFrameRate TickRate{60000, 1};
 
 	/// @brief 导入后的路径
