@@ -8,6 +8,9 @@
 
 #include <boost/asio/experimental/concurrent_channel.hpp>
 #include <boost/signals2.hpp>
+
+#include <atomic>
+
 namespace doodle::socket_io {
 struct packet_base;
 class sid_ctx;
@@ -54,6 +57,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   void seed_message(const std::shared_ptr<packet_base>& in_message);
   // 取消消息队列等待
   void cancel_async_event();
+
  private:
   boost::asio::awaitable<void> impl_run();
   struct lock_type {
@@ -71,7 +75,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   std::atomic_bool close_;
   channel_type channel_;
   // 阻止消息接收
-  bool block_message_;
+  std::atomic_bool block_message_;
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   boost::asio::cancellation_signal channel_signal_;
