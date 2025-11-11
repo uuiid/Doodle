@@ -65,15 +65,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   std::set<std::string> l_sim_output_key{};
   bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   /// tag: 格式化路径
-  if (l_shot_task.task_type_id_ == task_type::get_animation_id()) {
-    l_shot_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  } else if (l_is_simulation_task) {
+  l_shot_path_dir           = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+  if (l_is_simulation_task) {
     l_sim_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "任务类型不支持该操作"});
 
   l_shot_path_dir = l_prj.path_ / l_shot_path_dir;
-  if (l_is_simulation_task) l_sim_shot_path_dir = l_prj.path_ / l_shot_path_dir;
+  if (l_is_simulation_task) l_sim_shot_path_dir = l_prj.path_ / l_sim_shot_path_dir;
   auto l_shot_file_name =
       get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
 
