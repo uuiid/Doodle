@@ -239,8 +239,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
             l_ret.asset_infos_[l_idx].skin_path_ =
                 l_is_simulation_task
-                    ? get_entity_character_ue_name(l_asset_extend)
-                    : get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_);
+                    ? get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
+                    : get_entity_character_ue_name(l_asset_extend);
 
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
@@ -267,10 +267,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
             l_ret.asset_infos_[l_idx].skin_path_ =
                 l_is_simulation_task
-                    ? get_entity_prop_ue_name(
+                    ? get_entity_sim_prop_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
+                    : get_entity_prop_ue_name(
                           l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
-                      )
-                    : get_entity_sim_prop_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_);
+                      );
 
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
@@ -300,8 +300,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
         for (auto&& l_idx : l_asset_infos_key_map[l_key])
           l_ret.asset_infos_[l_idx].skin_path_ =
               l_is_simulation_task
-                  ? get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_)
-                  : get_entity_sim_ground_ue_sk_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_);
+                  ? get_entity_sim_ground_ue_sk_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
+                  : get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
       }
 
     } else {
