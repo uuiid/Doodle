@@ -30,7 +30,6 @@ boost::asio::awaitable<boost::system::error_code> http_websocket_client::init(
       },
       spdlog::thread_pool(), spdlog::async_overflow_policy::block
   );
-  write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
 
   using resolver_type     = executor_type::as_default_on_t<boost::asio::ip::tcp::resolver>;
   auto l_resolver         = std::make_shared<resolver_type>(g_io_context());
@@ -71,7 +70,6 @@ void http_websocket_client::init(
   web_stream_             = std::make_shared<boost::beast::websocket::stream<tcp_stream_type>>(std::move(in_stream));
   websocket_route_        = in_websocket_route;
   logger_                 = in_logger;
-  write_queue_limitation_ = std::make_shared<awaitable_queue_limitation>();
   data_                   = std::make_shared<detail::http_websocket_data>();
   data_->client_          = weak_from_this();
   data_->logger_          = logger_;
@@ -123,7 +121,6 @@ boost::asio::awaitable<void> http_websocket_client::async_read_websocket() {
 }
 
 boost::asio::awaitable<boost::system::error_code> http_websocket_client::async_write_websocket(std::string in_data) {
-  auto l_g              = co_await write_queue_limitation_->queue(boost::asio::use_awaitable);
   auto [l_ec_w, l_tr_w] = co_await web_stream_->async_write(boost::asio::buffer(in_data));
   if (l_ec_w) {
     logger_->error(l_ec_w.what());
