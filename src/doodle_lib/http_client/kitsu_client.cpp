@@ -139,7 +139,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
     std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
 ) const {
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
-  l_req.set(boost::beast::http::field::content_description, in_file_field_name);
+  l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);
   l_req.set(boost::beast::http::field::content_type, "application/octet-stream");
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   l_req.set(boost::beast::http::field::accept, "application/json");
@@ -152,7 +152,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
 
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-  if (l_res.result() != boost::beast::http::status::ok)
+  if (l_res.result() != boost::beast::http::status::no_content)
     throw_exception(doodle_error{"kitsu upload file error {} {} {}", in_file_path, l_res.result(), l_res.body()});
 
   co_return;
