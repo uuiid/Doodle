@@ -274,7 +274,7 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
     l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-  if (l_res.result() != boost::beast::http::status::ok)
+  if (l_res.result() != boost::beast::http::status::created)
     throw_exception(doodle_error{"kitsu get ue assembly error {}", l_res.result()});
 
   co_return l_res.body();
