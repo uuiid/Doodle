@@ -151,8 +151,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     if (in_json.contains("replace_ref_file")) {  /// 解算文件
       auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
       in_json.get_to(*l_arg_t);
-      l_arg_t->sim_path = FSys::path{in_json["project"]["path"].get<std::string>()} / "6-moxing" / "CFX";
-      arg_              = l_arg_t;
+      l_arg_t->sim_path = FSys::path{in_json["project"]["path"].get<std::string>()} /
+                          in_json["project"]["asset_root_path"].get<std::string>() / "CFX";
+      arg_ = l_arg_t;
     } else if (in_json.contains("file_list")) {  /// 替换文件
       auto l_arg_t = std::make_shared<maya_exe_ns::replace_file_arg>();
       in_json.get_to(*l_arg_t);
@@ -165,10 +166,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       auto l_connect_video_args = std::make_shared<doodle::detail::connect_video_t>();
       in_json.get_to(*l_connect_video_args);
       arg_ = l_connect_video_args;
-    } else if (in_json.contains("create_rig_sk")) {  /// 创建 rig
-      auto l_arg_t = std::make_shared<export_rig_sk_arg>();
-      in_json.get_to(*l_arg_t);
-      arg_ = l_arg_t;
     } else {  /// 导出fbx
       auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
       in_json.get_to(*l_arg_t);
