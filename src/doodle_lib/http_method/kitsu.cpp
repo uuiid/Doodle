@@ -250,7 +250,12 @@ http_route_ptr create_kitsu_local_route() {
             "/api/doodle/task/{}/generate_uesk_file"_url(&local::task_instance_generate_uesk_file::id_)
         )
         .reg_t<ai_train_binding_weights>("/api/doodle/ai/train-binding-weights"_url)
-
+        .reg_t<local::actions_projects_shots_run_ue_assembly_local>(
+            "/api/actions/projects/{}/shots/{}/run-ue-assembly"_url(
+                &local::actions_projects_shots_run_ue_assembly_local::project_id_,
+                &local::actions_projects_shots_run_ue_assembly_local::id_
+            )
+        )
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 
         ;
