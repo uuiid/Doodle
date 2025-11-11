@@ -153,7 +153,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
-    throw_exception(doodle_error{"kitsu upload file error {} {}", in_file_path, l_res.result()});
+    throw_exception(doodle_error{"kitsu upload file error {} {} {}", in_file_path, l_res.result(), l_res.body()});
 
   co_return;
 }
