@@ -3,6 +3,10 @@
 		{
 			"path": ".",
 			"name": "doodleMain"
+		},
+		{
+			"path": "src/test_js",
+			"name": "test_js"
 		}
 	],
 	"settings": {
