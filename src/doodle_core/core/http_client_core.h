@@ -42,12 +42,16 @@ class http_stream_base {
   template <typename SelfType, typename RequestType, typename ResponseBody>
   class read_and_write_compose_parser;
 
+  buffer_type buffer_{};
   socket_type_ptr socket_;
+  chrono::sys_time_pos last_use_time_;
 
  public:
   template <typename... Args>
   explicit http_stream_base(Args&&... args)
-      : buffer_{}, socket_(std::make_unique<socket_type>(std::forward<Args>(args)...)) {}
+      : buffer_{},
+        socket_(std::make_unique<socket_type>(std::forward<Args>(args)...)),
+        last_use_time_(chrono::sys_time_pos::clock::now()) {}
   ~http_stream_base() = default;
 
   boost::urls::scheme scheme_id_{};
@@ -55,7 +59,6 @@ class http_stream_base {
   std::string server_port_{};
   std::string server_ip_and_port_{};
   boost::asio::ip::tcp::resolver::results_type resolver_results_{};
-  buffer_type buffer_{};
 
   // 可选的 body 限制
   std::optional<std::size_t> body_limit_{};
@@ -77,7 +80,10 @@ class http_stream_base {
 
     server_ip_and_port_ = server_ip_ + ":" + server_port_;
   };
-
+  bool is_timeout() {
+    auto l_now = chrono::sys_time_pos::clock::now();
+    return (l_now - last_use_time_) > (timeout_ - 3s);
+  }
   // copy constructor
   http_stream_base(const http_stream_base&)            = delete;
   // move constructor
@@ -132,8 +138,12 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
     );
   }
   bool is_open() { return socket_->socket().is_open(); }
+
   void reset_socket() { socket_ = std::make_unique<socket_type>(socket_->get_executor()); }
-  void expires_after(std::chrono::seconds in_seconds) { socket_->expires_after(in_seconds); }
+  void expires_after(std::chrono::seconds in_seconds) {
+    socket_->expires_after(in_seconds);
+    last_use_time_ = chrono::sys_time_pos::clock::now();
+  }
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
@@ -223,6 +233,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
   }
   void expires_after(std::chrono::seconds in_seconds) {
     boost::beast::get_lowest_layer(*socket_).expires_after(in_seconds);
+    last_use_time_ = chrono::sys_time_pos::clock::now();
   }
 
   // read and write
@@ -268,17 +279,21 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
     BOOST_ASIO_CORO_REENTER(coro_) {
       // BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, std::as_const(req_), std::move(self));
       // if (in_ec) {
+      if (self_->is_timeout()) {
+        self_->reset_socket();
+      }
+
       self_->expires_after(self_->timeout_);
       if (!self_->is_open()) {
         BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
         if (in_ec) goto end_complete;
       }
 
-      BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(self_->socket_, req_, std::move(self));
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*self_->socket_, req_, std::move(self));
       if (in_ec) goto end_complete;
       self_->expires_after(self_->timeout_);
       // }
-      BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(self_->socket_, self_->buffer_, *parser_, std::move(self));
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(*self_->socket_, self_->buffer_, *parser_, std::move(self));
       if (in_ec) goto end_complete;
       self_->expires_after(self_->timeout_);
     end_complete:
