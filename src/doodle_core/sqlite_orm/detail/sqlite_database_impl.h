@@ -66,7 +66,6 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::entity_status);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::contract_types);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::notification_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::software_enum);
-DOODLE_SQLITE_ENUM_TYPE_(::doodle::simulation_status);
 DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
