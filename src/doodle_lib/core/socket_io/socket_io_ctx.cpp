@@ -48,7 +48,7 @@ boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::generate() {
   // 加锁
   auto l_ptr = std::make_shared<sid_data>(this);
   l_ptr->run();
-  sid_map_.emplace(l_ptr->sid_, l_ptr);
+  sid_map_.emplace(l_ptr->get_sid(), l_ptr);
   DOODLE_TO_SELF();
   co_return l_ptr;
 }

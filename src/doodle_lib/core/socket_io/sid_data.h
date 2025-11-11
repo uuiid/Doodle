@@ -41,7 +41,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   void update_sid_time();
   void upgrade_to_websocket() { is_upgrade_to_websocket_ = true; }
   void close();
-  uuid get_sid() const { return sid_; }
+  const uuid& get_sid() const { return sid_; }
 
   std::shared_ptr<void> get_lock();
   bool is_locked() const;
@@ -65,7 +65,6 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
     explicit lock_type(sid_data* in_data) : data_{in_data} { ++data_->lock_count_; }
     ~lock_type() { --data_->lock_count_; }
   };
-  friend class sid_ctx;
   friend class socket_io_websocket_core;
   sid_ctx* ctx_;
   const uuid sid_;
