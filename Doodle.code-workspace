@@ -193,6 +193,7 @@
 				"name": "kitsu"
 			}
 		],
-		"sqliteViewer.maxFileSize": 500
+		"sqliteViewer.maxFileSize": 500,
+		"powershell.cwd": "doodleMain"
 	}
 }

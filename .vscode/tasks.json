@@ -4,7 +4,7 @@
     {
       "label": "cmake config",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--preset",
@@ -20,7 +20,7 @@
     {
       "label": "cmake config maya",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--preset",
@@ -33,7 +33,7 @@
     {
       "label": "cmake config vs",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--preset",
@@ -46,7 +46,7 @@
     {
       "label": "cmake build",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
@@ -69,7 +69,7 @@
     {
       "label": "cmake build maya",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
@@ -91,7 +91,7 @@
     {
       "label": "cmake clean",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/set_venv.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
@@ -114,7 +114,13 @@
     {
       "label": "build_all",
       "type": "shell",
-      "command": "${workspaceFolder}/build_script/build/build_all.cmd",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--workflow",
+        "--preset",
+        "build_release",
+      ],
       "problemMatcher": []
     },
     {

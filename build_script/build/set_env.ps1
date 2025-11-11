@@ -1,0 +1,21 @@
+
+# Source - https://stackoverflow.com/a/2124759
+# Posted by Andy S, modified by community. See post 'Timeline' for change history
+# Retrieved 2025-11-11, License - CC BY-SA 4.0
+
+Push-Location 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\'
+cmd /c "vcvars64.bat&set" |
+ForEach-Object {
+  if ($_ -match "=") {
+    $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
+  }
+}
+Pop-Location
+write-host "`nVisual Studio 2010 Command Prompt variables set." -ForegroundColor Yellow
+
+$DoodleRoot = Convert-Path "$PSScriptRoot/../..";
+
+Write-Host "First argument: $($args[1..($args.Count -1)])"
+if ($args.Length -ne 0) {
+    Start-Process -FilePath $args[0] -ArgumentList $args[1..($args.Count - 1)] -WorkingDirectory $DoodleRoot -NoNewWindow -Wait 
+}
