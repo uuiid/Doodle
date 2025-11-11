@@ -26,7 +26,7 @@ enum class simulation_status {
   none,
   cloth,
   hair,
-  cloth_and_hair,
+  cloth_hair,
 };
 
 struct DOODLE_CORE_API asset_instance_link {
