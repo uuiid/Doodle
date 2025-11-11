@@ -66,10 +66,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   /// tag: 格式化路径
   l_shot_path_dir           = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  if (l_is_simulation_task) {
+  if (l_is_simulation_task)
     l_sim_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  } else
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "任务类型不支持该操作"});
 
   l_shot_path_dir = l_prj.path_ / l_shot_path_dir;
   if (l_is_simulation_task) l_sim_shot_path_dir = l_prj.path_ / l_sim_shot_path_dir;

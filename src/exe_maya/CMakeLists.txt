@@ -5,7 +5,6 @@ add_executable(
 )
 
 add_subdirectory(facet)
-add_subdirectory(cloth_sim)
 add_subdirectory(core)
 add_subdirectory(data)
 add_subdirectory(launch)
