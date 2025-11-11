@@ -78,7 +78,6 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
           if (in_eptr) std::rethrow_exception(in_eptr);
         } catch (const std::exception& e) {
           l_shared->logger_->error(e.what());
-          l_shared->async_close_websocket();
         }
       }
   );
