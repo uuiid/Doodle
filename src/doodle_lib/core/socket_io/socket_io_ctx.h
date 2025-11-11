@@ -93,6 +93,8 @@ class sid_ctx {
   void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
   /// 发出信号
   void emit(const socket_io_packet_ptr& in_data) const;
+  /// 针对单条连接发出信号
+  void emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_sid) const;
 
   boost::asio::awaitable<bool> has_register(std::string in_namespace) const;
 };

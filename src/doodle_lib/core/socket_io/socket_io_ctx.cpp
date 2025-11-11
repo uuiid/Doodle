@@ -97,6 +97,17 @@ void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
     }
   });
 }
+void sid_ctx::emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_sid) const {
+  if (!in_data) return;
+  boost::asio::post(strand_, [this, in_data, in_sid]() {
+    try {
+      if (!sid_map_.contains(in_sid)) return;
+      if (auto l_ptr = sid_map_.at(in_sid).lock(); l_ptr) l_ptr->seed_message(in_data);
+    } catch (...) {
+      default_logger_raw()->error(boost::current_exception_diagnostic_information());
+    }
+  });
+}
 void sid_ctx::emit_impl(const socket_io_packet_ptr& in_data) const {
   if (!signal_map_.contains(in_data->namespace_)) return;
   if (!in_data) return;
