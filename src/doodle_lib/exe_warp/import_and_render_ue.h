@@ -17,6 +17,7 @@
 
 #include <boost/signals2/signal.hpp>
 
+#include <bitset>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
@@ -46,9 +47,10 @@ class run_ue_assembly_local : public async_task {
   boost::asio::awaitable<void> run() override;
 
   struct run_ue_assembly_asset_info {
-    FSys::path shot_output_path_;  // 需要组装的fbx
-    FSys::path skin_path_;         // 组装对应的fbx
-    std::string type_;             // 是fbx, 还是 abc
+    FSys::path shot_output_path_;     // 需要组装的fbx
+    FSys::path skin_path_;            // 组装对应的fbx
+    std::string type_;                // 是fbx, 还是 abc
+    std::bitset<2> simulation_type_;  // 0: 带布料 1: 带毛发
 
     // to json
     friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
