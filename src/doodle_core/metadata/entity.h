@@ -72,6 +72,12 @@ struct DOODLE_CORE_API entity_shot_extend {
   DOODLE_BASE_FIELDS();
   uuid entity_id_;
   simulation_status sim_status_{simulation_status::none};
+  // to json
+  friend void to_json(nlohmann::json& j, const entity_shot_extend& p) { j["sim_status"] = p.sim_status_; }
+  // from json
+  friend void from_json(const nlohmann::json& j, entity_shot_extend& p) {
+    if (j.contains("sim_status")) j.at("sim_status").get_to(p.sim_status_);
+  }
 };
 struct DOODLE_CORE_API entity_asset_extend {
   DOODLE_BASE_FIELDS();
