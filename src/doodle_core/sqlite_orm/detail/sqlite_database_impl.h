@@ -480,7 +480,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
         make_column("id", &entity_shot_extend::id_, primary_key().autoincrement()),
         make_column("uuid", &entity_shot_extend::uuid_id_, unique(), not_null()),
         make_column("entity_id", &entity_shot_extend::entity_id_),
-        make_column("sim_status", &entity_shot_extend::sim_status_),
         foreign_key(&entity_shot_extend::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
       make_index("entity_asset_extend_entity_id_idx", &entity_asset_extend::entity_id_),
