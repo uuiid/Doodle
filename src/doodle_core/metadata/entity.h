@@ -21,6 +21,14 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                     {entity_status::complete, "complete"},
                     {entity_status::canceled, "canceled"}}
 )
+/// 解算状态
+enum class simulation_status {
+  none,
+  cloth,
+  hair,
+  cloth_and_hair,
+};
+
 struct DOODLE_CORE_API asset_instance_link {
   std::int32_t id_;
   uuid entity_id_;
@@ -60,7 +68,11 @@ struct DOODLE_CORE_API entity_concept_link {
   uuid entity_id_;
   uuid entity_out_id_;
 };
-
+struct DOODLE_CORE_API entity_shot_extend {
+  DOODLE_BASE_FIELDS();
+  uuid entity_id_;
+  simulation_status sim_status_{simulation_status::none};
+};
 struct DOODLE_CORE_API entity_asset_extend {
   DOODLE_BASE_FIELDS();
 
