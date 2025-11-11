@@ -6,6 +6,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
+#include <bitset>
 
 namespace doodle {
 
@@ -22,12 +23,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                     {entity_status::canceled, "canceled"}}
 )
 /// 解算状态
-enum class simulation_status {
-  none,
-  cloth,
-  hair,
-  cloth_hair,
-};
+const constexpr std::bitset<2> simulation_status_cloth = 0b01;
+const constexpr std::bitset<2> simulation_status_hair  = 0b10;
 
 struct DOODLE_CORE_API asset_instance_link {
   std::int32_t id_;

@@ -3,6 +3,7 @@
 #include "doodle_core/configure/static_value.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/doodle_macro.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -112,6 +113,15 @@ cache_manger_user& g_get_cache_manger_user_abbreviation() {
   static cache_manger_user g_user_abbreviation{};
   return g_user_abbreviation;
 }
+
+std::string entity_sim_type_to_string(const std::bitset<2>& sim_type_) {
+  std::string l_ret{};
+  if (sim_type_.test(0)) l_ret += "_cloth";
+  if (sim_type_.test(1)) l_ret += "_hair";
+
+  return l_ret;
+}
+
 }  // namespace
 
 FSys::path get_entity_character_rig_maya_name(const entity_asset_extend& in_extend_) {
@@ -206,10 +216,13 @@ FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std:
 FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_) {
   return get_entity_character_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_);
 }
-FSys::path get_entity_sim_character_ue_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_sim_character_ue_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
+  std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
+  if (l_sim_type_suffix.empty()) throw doodle_error{"模拟类型必须至少启用一个模拟, {}", in_extend_.bian_hao_};
+
   return fmt::format(
-      "{}/Character/{}/Meshs/SK_Ch{}_cloth.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
-      in_extend_.bian_hao_
+      "{}/Character/{}/Meshs/SK_Ch{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.bian_hao_, l_sim_type_suffix
   );
 }
 /// 道具模型ue 路径
@@ -243,10 +256,13 @@ FSys::path get_entity_prop_ue_name(
 FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_) {
   return get_entity_prop_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
-FSys::path get_entity_sim_prop_ue_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_sim_prop_ue_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
+  std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
+  if (l_sim_type_suffix.empty()) throw doodle_error{"模拟类型必须至少启用一个模拟, {}", in_extend_.pin_yin_ming_cheng_};
+
   return fmt::format(
-      "{}/Prop/{}/Mesh/SK_{}{}{}_cloth.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
-      in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
+      "{}/Prop/{}/Mesh/SK_{}{}{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_, l_sim_type_suffix
   );
 }
 /// 场景模型ue 路径
@@ -284,10 +300,12 @@ FSys::path get_entity_ground_ue_sk_name(const std::string& pin_yin_ming_cheng_, 
 FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
   return get_entity_ground_ue_sk_name(in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_);
 }
-FSys::path get_entity_sim_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_sim_ground_ue_sk_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
+  std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
+  if (l_sim_type_suffix.empty()) throw doodle_error{"模拟类型必须至少启用一个模拟, {}", in_extend_.pin_yin_ming_cheng_};
   return fmt::format(
-      "{}/{}/SK/SK_{}{}{}_cloth.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
-      in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
+      "{}/{}/SK/SK_{}{}{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_, l_sim_type_suffix
   );
 }
 /// 场景名称 alembic 名称
