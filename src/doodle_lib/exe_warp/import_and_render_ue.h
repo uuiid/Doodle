@@ -51,6 +51,7 @@ class run_ue_assembly_local : public async_task {
     FSys::path skin_path_;            // 组装对应的fbx
     std::string type_;                // 是fbx, 还是 abc
     std::bitset<2> simulation_type_;  // 0: 带布料 1: 带毛发
+    FSys::path ue_project_dir_;       // ue项目文件夹路径
 
     // to json
     friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {

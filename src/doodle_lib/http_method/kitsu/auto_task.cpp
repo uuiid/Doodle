@@ -238,7 +238,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                 l_is_simulation_task
                     ? get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
                     : get_entity_character_ue_name(l_asset_extend);
-
+            l_ret.asset_infos_[l_idx].ue_project_dir_ =
+                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend);
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
@@ -268,7 +269,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                     : get_entity_prop_ue_name(
                           l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
                       );
-
+            l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend);
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
                 l_scene_ue_path / get_entity_prop_ue_public_files_path()
@@ -294,11 +295,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_asset_extend.ban_ben_
       );
       if (l_asset_infos_key_map.contains(l_key)) {
-        for (auto&& l_idx : l_asset_infos_key_map[l_key])
+        for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
           l_ret.asset_infos_[l_idx].skin_path_ =
               l_is_simulation_task
                   ? get_entity_sim_ground_ue_sk_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
                   : get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
+          l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend);
+        }
       }
 
     } else {
@@ -310,6 +313,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       );
     }
   }
+
+#ifdef NDEBUG
+  for (auto&& l_path : l_ret.ue_asset_path_) {
+    if (!FSys::exists(l_path.from_)) {
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
+          }
+      );
+    }
+  }
+  for (auto&& l_info : l_ret.asset_infos_) {
+    if (!FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)) {
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request,
+              fmt::format(
+                  "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
+                  (l_info.ue_project_dir_ / l_info.skin_path_).string()
+              )
+          }
+      );
+    }
+  }
+#endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
     if (l_info.skin_path_.empty()) {
@@ -323,17 +351,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
     sk_conv_bone_name(l_info.skin_path_);
   }
-#ifdef NDEBUG
-  for (auto&& l_path : l_ret.ue_asset_path_) {
-    if (!FSys::exists(l_path.from_)) {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
-          }
-      );
-    }
-  }
-#endif
+
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 
