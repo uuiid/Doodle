@@ -571,8 +571,8 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
 	L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
 	L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
-		                                                  (L_Start - offset) * (TickRate / Rate).Denominator,
-		                                                  (L_End + 1) * (TickRate / Rate).Denominator
+		                                                  (L_Start - offset) * (TickRate.Numerator / Rate.Numerator),
+		                                                  (L_End + 1) * (TickRate.Numerator / Rate.Numerator)
 	                                                  }, true);
 	//-------Add Visibility Track
 	UMovieSceneLevelVisibilityTrack* NewTrack =

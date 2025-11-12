@@ -453,8 +453,8 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 	TheLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
-		                                                    (L_Start - Offset) * (TickRate / Rate).Denominator,
-		                                                    (L_End + 1) * (TickRate / Rate).Denominator
+		                                                    (L_Start - Offset) * (TickRate.Numerator / Rate.Numerator),
+		                                                    (L_End + 1) * (TickRate.Numerator / Rate.Numerator)
 	                                                    }, true);
 	TheLevelSequence->GetMovieScene()->Modify();
 }
