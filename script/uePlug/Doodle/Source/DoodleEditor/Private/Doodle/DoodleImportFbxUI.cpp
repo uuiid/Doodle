@@ -390,8 +390,8 @@ void UDoodleFbxImport_1::AssembleScene()
 			L_MovieSceneSpawnTrack->AddSection(*L_MovieSceneSpawnSection);
 			UMovieSceneSkeletalAnimationTrack* L_MovieSceneSkeletalAnim =
 				L_MoveScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(L_GUID);
-			UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime, AnimSeq, -1);
-			AnimSection->SetPreRollFrames(50);
+			UMovieSceneSection* AnimSection = L_MovieSceneSkeletalAnim->AddNewAnimationOnRow(StartTime * FrameTick, AnimSeq, -1);
+			AnimSection->SetPreRollFrames(50 * FrameTick);
 			L_Actor->Modify();
 			L_ShotLevel->Modify();
 			UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
@@ -567,12 +567,11 @@ void UDoodleFbxCameraImport_1::ImportFile()
 
 	/// 设置范围
 	FFrameNumber offset{50};
-	FFrameRate Rate{25, 1};
 	L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
 	L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
 	L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
-		                                                  (L_Start - offset) * (TickRate.Numerator / Rate.Numerator),
-		                                                  (L_End + 1) * (TickRate.Numerator / Rate.Numerator)
+		                                                  (L_Start - offset) * FrameTick,
+		                                                  (L_End + 1) * FrameTick
 	                                                  }, true);
 	//-------Add Visibility Track
 	UMovieSceneLevelVisibilityTrack* NewTrack =
@@ -888,8 +887,8 @@ void UDoodleAbcImport_1::AssembleScene()
 			UMovieSceneGeometryCacheTrack* L_MovieSceneGeoTrack =
 				L_MoveScene->AddTrack<UMovieSceneGeometryCacheTrack>(L_GUID);
 			UMovieSceneSection* AnimSection =
-				L_MovieSceneGeoTrack->AddNewAnimation(StartTime, L_Actor->GetGeometryCacheComponent());
-			AnimSection->SetPreRollFrames(50);
+				L_MovieSceneGeoTrack->AddNewAnimation(StartTime * FrameTick, L_Actor->GetGeometryCacheComponent());
+			AnimSection->SetPreRollFrames(50 * FrameTick);
 			L_Actor->Modify();
 			L_ShotLevel->Modify();
 			UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();

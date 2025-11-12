@@ -58,12 +58,14 @@ public:
 	GENERATED_BODY()
 	UDoodleBaseImportData()
 	{
+		FrameTick = TickRate.Numerator / Rate.Numerator;
 	};
 
 	explicit UDoodleBaseImportData(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
 		: ImportPath(InString)
 		, ImportUI(In_ImportUI)
 	{
+		FrameTick = TickRate.Numerator / Rate.Numerator;
 	}
 
 
@@ -78,7 +80,8 @@ public:
 	int32_t StartTime{};
 	int32_t EndTime{};
 	FFrameRate TickRate{60000, 1};
-
+	FFrameRate Rate{25, 1};
+	int32 FrameTick{};
 	/// @brief 导入后的路径
 	FString ImportPathDir{};
 

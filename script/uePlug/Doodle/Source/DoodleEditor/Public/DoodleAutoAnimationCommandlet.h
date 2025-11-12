@@ -138,6 +138,7 @@ private:
 
 	FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
+	int32 FrameTick{};
 	//-----------
 	TArray<FImportFiles2> ImportFiles;
 
