@@ -422,8 +422,8 @@ FSys::path conv_ue_game_path(const FSys::path& in_path) {
   l_path.replace_extension(l_path.stem());
   return l_path;
 }
-void sk_conv_bone_name(FSys::path& in_name) {
+FSys::path sk_conv_bone_name(const FSys::path& in_name) {
   auto l_str = in_name.stem();
-  in_name.parent_path() /= fmt::format("{0}_Skeleton.{0}_Skeleton", l_str);
+  return in_name.parent_path() / fmt::format("{0}_Skeleton.{0}_Skeleton", l_str);
 }
 }  // namespace doodle

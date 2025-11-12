@@ -141,5 +141,5 @@ FSys::path get_shots_animation_file_name(
 );
 FSys::path get_shots_animation_file_name(const entity& episode_, const entity& shot_, const project& prj_);
 FSys::path conv_ue_game_path(const FSys::path& in_path);
-void sk_conv_bone_name(FSys::path& in_name);
+FSys::path sk_conv_bone_name(const FSys::path& in_name);
 }  // namespace doodle
