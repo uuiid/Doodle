@@ -81,6 +81,7 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
   if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
   bit7z::Bit7zLibrary l_lib{"7zip.dll"};
   bit7z::BitFileExtractor l_extractor{l_lib};
+  l_extractor.test(l_path.generic_string());
   l_extractor.extract(l_path.generic_string(), l_out_path.generic_string());
   l_out_path /= "Doodle";
   if (!FSys::exists(l_out_path)) throw_exception(doodle_error{"UE 插件解压失败"});
