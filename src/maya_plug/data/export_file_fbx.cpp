@@ -4,7 +4,10 @@
 
 #include "export_file_fbx.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/doodle_core_fwd.h>
+
+#include <boost/scope/scope_exit.hpp>
 
 #include "maya_plug_fwd.h"
 #include <maya_plug/abc/alembic_archive_out.h>
@@ -20,6 +23,7 @@
 #include "exception/exception.h"
 #include "fmt/core.h"
 #include "maya_conv_str.h"
+#include <filesystem>
 #include <fmt/format.h>
 #include <maya/MAnimControl.h>
 #include <maya/MApiNamespace.h>
@@ -123,7 +127,7 @@ FSys::path export_file_fbx::export_anim(
   return l_file_path;
 }
 
-FSys::path export_file_fbx::export_rig(const reference_file& in_ref, const std::vector<cloth_interface>& in_cloth) {
+std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref) {
   MSelectionList l_select{};
   MDagPath l_main_path{};
   if (auto l_s = l_select.add(d_str{fmt::format(":{}", "UE4")}, true); l_s) {
@@ -143,29 +147,73 @@ FSys::path export_file_fbx::export_rig(const reference_file& in_ref, const std::
     l_path.pop();
     l_export_list.push_back(l_path);
   }
-
-  if (!in_cloth.empty()) {
-    std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj(in_cloth);
-    // 排除 export_sim 中的物体
-    std::erase_if(l_export_list, [&](const MDagPath& in) {
-      return std::ranges::find(l_export_sim, in) != l_export_sim.end();
-    });
+  auto l_export_list_old = l_export_list;
+  std::vector<FSys::path> l_ret{};
+  auto l_stem = maya_file_io::get_current_path().stem().generic_string();
+  /// xxx_rig_yyt.ma -> xxx
+  if (auto l_stem_pos = l_stem.find("_rig"); l_stem_pos != std::string::npos) {
+    l_stem = l_stem.substr(0, l_stem_pos);
+  } else {
+    throw doodle_error{
+        "无法从场景名称 {} 中提取 _rig 标识, 无法进行 rig 导出",
+        maya_file_io::get_current_path().stem().generic_string()
+    };
   }
 
-  default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
+  auto l_export_sim_cloth = in_ref.get_all_cloth_obj();
+  auto l_export_sim_hair  = in_ref.get_all_hair_obj();
+  if (!l_export_sim_cloth.empty()) {
+    l_export_list = l_export_list_old;
+    // 排除 export_sim 中的物体
+    std::erase_if(l_export_list, [&](const MDagPath& in) {
+      return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end();
+    });
+    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
-  fbx_write l_fbx_write{};
-  auto l_file =
-      maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("SK_{}.fbx", maya_file_io::get_current_path().stem());
-  if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
-  default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
-  l_fbx_write.set_path(l_file);
-  l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
-  return l_file;
+    fbx_write l_fbx_write{};
+    auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("SK_{}_cloth.fbx", l_stem);
+    if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
+    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    l_fbx_write.set_path(l_file);
+    l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
+  }
+  if (!l_export_sim_hair.empty()) {
+    l_export_list = l_export_list_old;
+    // 排除 export_sim 中的物体
+    std::erase_if(l_export_list_old, [&](const MDagPath& in) {
+      return std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
+    });
+    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list_old, "\n"));
+
+    fbx_write l_fbx_write{};
+    auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("SK_{}_hair.fbx", l_stem);
+    if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
+    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    l_fbx_write.set_path(l_file);
+    l_fbx_write.write(l_export_list_old, MAnimControl::minTime(), MAnimControl::maxTime());
+  }
+  if (!l_export_sim_cloth.empty() && !l_export_sim_hair.empty()) {
+    l_export_list = l_export_list_old;
+    // 排除 export_sim 中的物体
+    std::erase_if(l_export_list, [&](const MDagPath& in) {
+      return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end() ||
+             std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
+    });
+    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
+
+    fbx_write l_fbx_write{};
+    auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("SK_{}_cloth_hair.fbx", l_stem);
+    if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
+    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    l_fbx_write.set_path(l_file);
+    l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
+  }
+
+  return l_ret;
 }
 
-FSys::path export_file_fbx::export_sim(
-    const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const std::vector<cloth_interface>& in_cloth
+std::vector<FSys::path> export_file_fbx::export_sim(
+    const reference_file& in_ref, const generate_file_path_ptr in_gen_file
 ) {
   std::vector<MDagPath> l_export_list{};
   auto l_export_group = in_ref.export_group_attr();
@@ -184,35 +232,58 @@ FSys::path export_file_fbx::export_sim(
   }
 
   // bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
-
-  auto l_file_path = (*in_gen_file)(in_ref);
-  log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
-
-  std::vector<MDagPath> l_export_sim = in_ref.get_alll_cloth_obj(in_cloth);
-  // 排除 export_sim 中的物体
+  std::vector<FSys::path> l_ret{};
+  auto l_fbx_file_path = (*in_gen_file)(in_ref);
+  log_info(fmt::format("导出fbx文件路径 {}", l_fbx_file_path));
+  l_ret.emplace_back(l_fbx_file_path);
+  std::vector<MDagPath> l_export_sim_cloth = in_ref.get_all_cloth_obj();
+  auto l_export_sim_hair                   = in_ref.get_all_hair_obj();
+  // 排除 export_sim_cloth 中的物体
   std::erase_if(l_export_list, [&](const MDagPath& in) {
-    return std::ranges::find(l_export_sim, in) != l_export_sim.end();
+    return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end();
+  });
+  // 排除 export_sim_hair 中的物体
+  std::erase_if(l_export_list, [&](const MDagPath& in) {
+    return std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
   });
 
   {
     fbx_write l_fbx_write{};
-    l_fbx_write.set_path(l_file_path);
+    l_fbx_write.set_path(l_fbx_file_path);
     l_fbx_write.write(l_export_list, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
   }
 
-  l_file_path.replace_extension(".abc");
-  default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
-  {
+  boost::scope::scope_exit l_ex{[&]() { in_gen_file->add_external_string = {}; }};
+  if (!l_export_sim_cloth.empty()) {
+    in_gen_file->add_external_string = "cloth";
+    auto l_file_path                 = (*in_gen_file)(in_ref);
+    l_file_path.replace_extension(".abc");
+    default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
     alembic::archive_out l_archive_out{
-        l_file_path, l_export_sim, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
+        l_file_path, l_export_sim_cloth, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
     };
     for (auto i = in_gen_file->begin_end_time.first; i <= in_gen_file->begin_end_time.second; ++i) {
       MAnimControl::setCurrentTime(i);
       l_archive_out.write();
     }
+    l_ret.emplace_back(l_file_path);
+  }
+  if (!l_export_sim_hair.empty()) {
+    in_gen_file->add_external_string = "hair";
+    auto l_file_path                 = (*in_gen_file)(in_ref);
+    l_file_path.replace_extension(".abc");
+    default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
+    alembic::archive_out l_archive_out{
+        l_file_path, l_export_sim_hair, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
+    };
+    for (auto i = in_gen_file->begin_end_time.first; i <= in_gen_file->begin_end_time.second; ++i) {
+      MAnimControl::setCurrentTime(i);
+      l_archive_out.write();
+    }
+    l_ret.emplace_back(l_file_path);
   }
 
-  return l_file_path;
+  return l_ret;
 }
 
 FSys::path export_file_fbx::export_cam(const generate_file_path_ptr& in_gen, std::double_t in_film_aperture) {

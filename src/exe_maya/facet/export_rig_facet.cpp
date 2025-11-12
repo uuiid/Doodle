@@ -64,11 +64,11 @@ bool export_rig_facet::post(const nlohmann::json& in_argh) {
   cloth_factory_interface l_cf{};
   std::vector<cloth_interface> l_cloth_interfaces{};
   if (qcloth_factory::has_cloth()) {
-    l_cf = std::make_shared<qcloth_factory>();
+    l_cf               = std::make_shared<qcloth_factory>();
     l_cloth_interfaces = l_cf->create_cloth();
   }
-  auto l_out_path = l_ex.export_rig(l_ref, l_cloth_interfaces);
-  l_out_arg.out_file_list.emplace_back(l_out_path, FSys::path{});
+  auto l_out_path = l_ex.export_rig(l_ref);
+  for (auto&& p : l_out_path) l_out_arg.out_file_list.emplace_back(p, FSys::path{});
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());

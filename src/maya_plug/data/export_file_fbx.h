@@ -12,6 +12,7 @@
 #include <maya/MTime.h>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace doodle::maya_plug {
 class sequence_to_blend_shape;
@@ -32,14 +33,11 @@ class export_file_fbx {
       const reference_file& in_ref, const generate_file_path_ptr in_gen_file, const MSelectionList& in_exclude = {}
   );
 
-  FSys::path export_sim(
-      const reference_file& in_ref, const generate_file_path_ptr in_gen_file,
-      const std::vector<cloth_interface>& in_cloth
-  );
+  std::vector<FSys::path> export_sim(const reference_file& in_ref, const generate_file_path_ptr in_gen_file);
 
   FSys::path export_cam(const generate_file_path_ptr& in_gen, std::double_t in_film_aperture);
 
-  FSys::path export_rig(const reference_file& in_ref, const std::vector<cloth_interface>& in_cloth);
+  std::vector<FSys::path> export_rig(const reference_file& in_ref);
 };
 
 }  // namespace doodle::maya_plug

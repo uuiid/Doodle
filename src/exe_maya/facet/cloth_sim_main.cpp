@@ -181,13 +181,8 @@ void cloth_sim::export_abc() {
   export_file_fbx l_ex_fbx{};
   ranges::for_each(ref_files_, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
-    auto l_path = l_ex_fbx.export_sim(in_handle, l_gen, cloth_lists_);
-    if (!l_path.empty()) {
-      l_path.replace_extension(".abc");
-      out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());
-      l_path.replace_extension(".fbx");
-      out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());
-    }
+    auto l_path = l_ex_fbx.export_sim(in_handle, l_gen);
+    for (auto& p : l_path) out_arg_.out_file_list.emplace_back(p, in_handle.get_abs_path());
   });
 }
 
@@ -215,8 +210,8 @@ void cloth_sim::export_anim_file() {
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");
-  out_arg_.begin_time = anim_begin_time_.value();
-  out_arg_.end_time   = MAnimControl::maxTime().value();
+  out_arg_.begin_time   = anim_begin_time_.value();
+  out_arg_.end_time     = MAnimControl::maxTime().value();
 
   nlohmann::json l_json = out_arg_;
   if (!out_path_file_.empty()) {

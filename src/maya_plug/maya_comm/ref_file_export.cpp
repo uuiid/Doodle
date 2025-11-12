@@ -4,7 +4,6 @@
 
 #include "ref_file_export.h"
 
-
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/reference_file.h>
@@ -19,6 +18,7 @@
 #include <maya/MItSelectionList.h>
 #include <maya/MNamespace.h>
 #include <maya/MSelectionList.h>
+
 namespace doodle {
 namespace maya_plug {
 MSyntax ref_file_export_syntax() {
@@ -51,7 +51,7 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
   export_file_fbx l_ex_fbx{};
   ranges::for_each(l_refs, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
-    l_ex_fbx.export_sim(in_handle, l_gen, l_cloth);
+    l_ex_fbx.export_sim(in_handle, l_gen);
   });
 
   return MStatus{};

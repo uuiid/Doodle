@@ -8,6 +8,7 @@
 #include "entt/entity/fwd.hpp"
 #include "maya/MApiNamespace.h"
 #include "maya/MString.h"
+#include <maya/MDagPath.h>
 #include <maya/MSelectionList.h>
 #include <maya/MTime.h>
 #include <vector>
@@ -25,10 +26,10 @@ class generate_file_path_base : boost::less_than_comparable<generate_file_path_b
   friend struct fmt::formatter;
 
   virtual FSys::path get_path() const                               = 0;
-  virtual FSys::path get_name(const std::string &in_ref_name) const = 0;
+  virtual FSys::path get_name(const std::string& in_ref_name) const = 0;
 
-  std::string get_extract_scene_name(const std::string &in_name) const;
-  std::string get_extract_reference_name(const std::string &in_name) const;
+  std::string get_extract_scene_name(const std::string& in_name) const;
+  std::string get_extract_reference_name(const std::string& in_name) const;
 
  public:
   generate_file_path_base()          = default;
@@ -37,10 +38,10 @@ class generate_file_path_base : boost::less_than_comparable<generate_file_path_b
   std::optional<std::string> add_external_string;
 
   std::pair<MTime, MTime> begin_end_time;
-  FSys::path operator()(const reference_file &in_ref) const;
-  FSys::path operator()(const std::string &in_name_space) const;
-  [[nodiscard("")]] bool operator==(const generate_file_path_base &in) const noexcept;
-  [[nodiscard("")]] bool operator<(const generate_file_path_base &in) const noexcept;
+  FSys::path operator()(const reference_file& in_ref) const;
+  FSys::path operator()(const std::string& in_name_space) const;
+  [[nodiscard("")]] bool operator==(const generate_file_path_base& in) const noexcept;
+  [[nodiscard("")]] bool operator<(const generate_file_path_base& in) const noexcept;
 };
 
 class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_path>, public generate_file_path_base {
@@ -52,7 +53,7 @@ class generate_fbx_file_path : boost::less_than_comparable<generate_fbx_file_pat
 
  protected:
   [[nodiscard("")]] FSys::path get_path() const override;
-  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
+  [[nodiscard("")]] FSys::path get_name(const std::string& in_ref_name) const override;
 
  public:
   generate_fbx_file_path();
@@ -66,7 +67,7 @@ class generate_rig_fbx_file_path : boost::less_than_comparable<generate_rig_fbx_
                                    public generate_file_path_base {
  protected:
   [[nodiscard("")]] FSys::path get_path() const override;
-  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
+  [[nodiscard("")]] FSys::path get_name(const std::string& in_ref_name) const override;
   friend struct fmt::formatter<generate_file_path_base>;
 
  public:
@@ -77,7 +78,7 @@ class generate_rig_fbx_file_path : boost::less_than_comparable<generate_rig_fbx_
 class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_path>, public generate_fbx_file_path {
  protected:
   [[nodiscard("")]] FSys::path get_path() const override;
-  [[nodiscard("")]] FSys::path get_name(const std::string &in_ref_name) const override;
+  [[nodiscard("")]] FSys::path get_name(const std::string& in_ref_name) const override;
   friend struct fmt::formatter<generate_file_path_base>;
   bool export_fbx{};
 
@@ -107,14 +108,14 @@ class reference_file : public boost::totally_ordered<reference_file> {
 
  public:
   reference_file();
-  explicit reference_file(const MObject &in_ref_node);
+  explicit reference_file(const MObject& in_ref_node);
 
   [[nodiscard]] MSelectionList get_collision_model() const;
 
   [[nodiscard]] std::string get_namespace() const;
 
-  [[nodiscard]] bool has_node(const MSelectionList &in_list);
-  [[nodiscard]] bool has_node(const MObject &in_node) const;
+  [[nodiscard]] bool has_node(const MSelectionList& in_list);
+  [[nodiscard]] bool has_node(const MObject& in_node) const;
   inline MObject get_file_info_node() const { return file_info_node_; }
   void set_use_sim(bool in_use_sim);
   bool get_use_sim() const;
@@ -131,12 +132,12 @@ class reference_file : public boost::totally_ordered<reference_file> {
   /**
    * @brief 没有加载的引用和资产不存在的文件返回false 我们认为这不是异常, 属于正常情况
    */
-  bool replace_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map);
-  bool has_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) const;
+  bool replace_sim_assets_file(const std::map<std::string, FSys::path>& in_sim_file_map);
+  bool has_sim_assets_file(const std::map<std::string, FSys::path>& in_sim_file_map) const;
 
-  bool replace_file(const FSys::path &in_handle);
+  bool replace_file(const FSys::path& in_handle);
   // 重命名名称空间
-  void rename_namespace(const std::string &in_name);
+  void rename_namespace(const std::string& in_name);
   std::optional<MDagPath> get_field_dag() const;
 
   enum class export_type : std::uint32_t {
@@ -156,12 +157,13 @@ class reference_file : public boost::totally_ordered<reference_file> {
    */
   MSelectionList get_all_object() const;
 
-  std::vector<MDagPath> get_alll_cloth_obj(const std::vector<cloth_interface> &in_cloth) const;
+  std::vector<MDagPath> get_all_cloth_obj() const;
+  std::vector<MDagPath> get_all_hair_obj() const;
 
-  friend bool operator==(const reference_file &lhs, const reference_file &rhs) {
+  friend bool operator==(const reference_file& lhs, const reference_file& rhs) {
     return lhs.file_info_node_ == rhs.file_info_node_;
   }
-  friend bool operator<(const reference_file &lhs, const reference_file &rhs) {
+  friend bool operator<(const reference_file& lhs, const reference_file& rhs) {
     return lhs.get_file_namespace() < rhs.get_file_namespace();
   }
 };
@@ -172,7 +174,7 @@ class reference_file_factory {
   ~reference_file_factory() = default;
 
   [[nodiscard]] std::vector<reference_file> create_ref() const;
-  [[nodiscard]] std::vector<reference_file> create_ref(const MSelectionList &in_list) const;
+  [[nodiscard]] std::vector<reference_file> create_ref(const MSelectionList& in_list) const;
 };
 
 }  // namespace doodle::maya_plug
@@ -184,7 +186,7 @@ namespace fmt {
 template <>
 struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(const ::doodle::maya_plug::reference_file_ns::generate_abc_file_path &in_, FormatContext &ctx) const
+  auto format(const ::doodle::maya_plug::reference_file_ns::generate_abc_file_path& in_, FormatContext& ctx) const
       -> decltype(ctx.out()) {
     return fmt::format_to(
         ctx.out(), "extract_scene_name : {} extract_reference_name : {} use_add_range : {} add_external_string : {}",
@@ -197,7 +199,7 @@ struct formatter< ::doodle::maya_plug::reference_file_ns::generate_abc_file_path
 template <>
 struct formatter< ::doodle::maya_plug::reference_file> : formatter<std::string> {
   template <typename FormatContext>
-  auto format(const ::doodle::maya_plug::reference_file &in_, FormatContext &ctx) const -> decltype(ctx.out()) {
+  auto format(const ::doodle::maya_plug::reference_file& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     return fmt::format_to(ctx.out(), "{}", in_.get_namespace());
   }
 };

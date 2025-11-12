@@ -13,6 +13,7 @@
 #include <boost/asio/awaitable.hpp>
 
 #include <filesystem>
+#include <spdlog/spdlog.h>
 
 namespace doodle {
 
@@ -33,32 +34,29 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   }
 
   if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", maya_file_});
-  auto l_fbx = l_maya_file.out_file_list.front().out_file;
 
-  if (!FSys::exists(l_fbx)) throw_exception(doodle_error{"文件 {} 不存在", l_fbx});
-  logger_ptr_->info("重命名 {} 为 {}", l_fbx.filename(), impl_.import_game_path_.stem());
-  FSys::rename(l_fbx, l_fbx.parent_path() / impl_.import_game_path_.stem().replace_extension(l_fbx.extension()));
-  l_fbx = l_fbx.parent_path() / impl_.import_game_path_.stem().replace_extension(l_fbx.extension());
+  for (auto& p : l_maya_file.out_file_list) {
+    SPDLOG_INFO("导出 {}", p.out_file);
 
-  nlohmann::json l_json{};
-  l_json = import_and_render_ue_ns::import_skin_file{
-      .fbx_file_ = l_fbx, .import_dir_ = impl_.import_game_path_.parent_path()
-  };
-  auto l_tmp_path   = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+    nlohmann::json l_json{};
+    l_json = import_and_render_ue_ns::import_skin_file{
+        .fbx_file_ = p.out_file, .import_dir_ = impl_.import_game_path_.parent_path()
+    };
+    auto l_tmp_path   = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
 
-  auto l_ue_project = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
-  if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};
+    auto l_ue_project = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
+    if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};
 
-  logger_ptr_->warn("排队导入skin文件 {} ", l_ue_project);
-  auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
-  co_await async_run_ue(
-      {l_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
-       "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
-      logger_ptr_, false, l_time_info
-  );
-  l_time_info->info_ = fmt::format("导入skin文件 {}", l_fbx);
-  on_run_time_info_(*l_time_info);
-
+    logger_ptr_->warn("排队导入skin文件 {} {}", l_ue_project, p.out_file);
+    auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
+    co_await async_run_ue(
+        {l_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+         "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
+        logger_ptr_, false, l_time_info
+    );
+    l_time_info->info_ = fmt::format("导入skin文件 {}", p.out_file);
+    on_run_time_info_(*l_time_info);
+  }
   // 上传文件
   logger_ptr_->warn("上传文件 {} ", impl_.update_ue_path_);
   co_await kitsu_client_->upload_asset_file_maya(task_id_, maya_file_);

@@ -46,30 +46,30 @@ namespace doodle::maya_plug {
 
 namespace reference_file_ns {
 
-FSys::path generate_file_path_base::operator()(const reference_file &in_ref) const {
+FSys::path generate_file_path_base::operator()(const reference_file& in_ref) const {
   return get_path() / get_name(in_ref.export_group_attr().has_value() ? in_ref.get_namespace() : ""s);
 }
-FSys::path generate_file_path_base::operator()(const std::string &in_name_space) const {
+FSys::path generate_file_path_base::operator()(const std::string& in_name_space) const {
   return get_path() / get_name(in_name_space);
 }
 
-bool generate_file_path_base::operator==(const generate_file_path_base &in) const noexcept {
+bool generate_file_path_base::operator==(const generate_file_path_base& in) const noexcept {
   return std::tie(extract_reference_name, extract_scene_name, use_add_range, add_external_string) ==
          std::tie(in.extract_reference_name, in.extract_scene_name, in.use_add_range, in.add_external_string);
 }
 
-bool generate_file_path_base::operator<(const generate_file_path_base &in) const noexcept {
+bool generate_file_path_base::operator<(const generate_file_path_base& in) const noexcept {
   return std::tie(extract_reference_name, extract_scene_name, use_add_range, add_external_string) <
          std::tie(in.extract_reference_name, in.extract_scene_name, in.use_add_range, in.add_external_string);
 }
-std::string generate_file_path_base::get_extract_scene_name(const std::string &in_name) const {
+std::string generate_file_path_base::get_extract_scene_name(const std::string& in_name) const {
   std::string l_out_name{};
 
   if (!extract_scene_name.empty() && !format_scene_name.empty()) {
     try {
       std::regex const l_regex{extract_scene_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_scene_name);
-    } catch (const std::regex_error &in) {
+    } catch (const std::regex_error& in) {
       DOODLE_LOG_ERROR("提取 {} 场景名称 {} 异常 {}", extract_scene_name, in_name, in.what());
     }
   } else {
@@ -78,13 +78,13 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string &i
   DOODLE_LOG_INFO("正则 {} 提取完成场景名称 {}", extract_scene_name, l_out_name);
   return l_out_name;
 }
-std::string generate_file_path_base::get_extract_reference_name(const std::string &in_name) const {
+std::string generate_file_path_base::get_extract_reference_name(const std::string& in_name) const {
   std::string l_out_name{};
   if (!extract_reference_name.empty()) {
     try {
       std::regex const l_regex{extract_reference_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_reference_name);
-    } catch (const std::regex_error &in) {
+    } catch (const std::regex_error& in) {
       DOODLE_LOG_ERROR("提取 {} 引用 {} 异常 {}", in_name, extract_reference_name, in.what());
     }
   } else {
@@ -103,7 +103,7 @@ FSys::path generate_fbx_file_path::get_path() const {
   }
   return k_path;
 }
-FSys::path generate_fbx_file_path::get_name(const std::string &in_ref_name) const {
+FSys::path generate_fbx_file_path::get_name(const std::string& in_ref_name) const {
   auto l_name = fmt::format(
       "{}_{}", get_extract_scene_name(maya_file_io::get_current_path().stem().generic_string()),
       is_camera_attr ? camera_suffix : get_extract_reference_name(in_ref_name)
@@ -131,7 +131,7 @@ FSys::path generate_rig_fbx_file_path::get_path() const {
   }
   return k_path;
 }
-FSys::path generate_rig_fbx_file_path::get_name(const std::string &in_ref_name) const {
+FSys::path generate_rig_fbx_file_path::get_name(const std::string& in_ref_name) const {
   FSys::path l_path{fmt::format("SK_{}", maya_file_io::get_current_path().stem())};
   l_path += ".fbx";
   return l_path;
@@ -146,7 +146,7 @@ FSys::path generate_abc_file_path::get_path() const {
   }
   return k_path;
 }
-FSys::path generate_abc_file_path::get_name(const std::string &in_ref_name) const {
+FSys::path generate_abc_file_path::get_name(const std::string& in_ref_name) const {
   auto l_path = generate_fbx_file_path::get_name(in_ref_name);
 
   l_path.replace_extension(export_fbx ? ".fbx" : ".abc");
@@ -162,7 +162,7 @@ generate_fbx_file_path::~generate_fbx_file_path() = default;
 }  // namespace reference_file_ns
 
 reference_file::reference_file() = default;
-reference_file::reference_file(const MObject &in_ref_node) : file_info_node_(in_ref_node) {}
+reference_file::reference_file(const MObject& in_ref_node) : file_info_node_(in_ref_node) {}
 
 std::string reference_file::get_file_namespace() const {
   return file_info_node_.isNull() ? std::string{}
@@ -248,7 +248,7 @@ std::string reference_file::get_namespace() const {
   return l_n;
 }
 
-bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) const {
+bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path>& in_sim_file_map) const {
   FSys::path k_m_str{get_abs_path()};
   auto l_stem = k_m_str.stem().generic_string();
   if (l_stem.ends_with("_cloth")) {
@@ -262,7 +262,7 @@ bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path>
   return true;
 }
 
-bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::path> &in_sim_file_map) {
+bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::path>& in_sim_file_map) {
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
@@ -292,7 +292,7 @@ bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::p
   /// \brief 替换引用文件
   return replace_file(in_sim_file_map.at(k_vfx_path));
 }
-bool reference_file::replace_file(const FSys::path &in_handle) {
+bool reference_file::replace_file(const FSys::path& in_handle) {
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
     default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
@@ -312,8 +312,8 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
   {
     maya_call_guard l_guard{MSceneMessage::addCheckReferenceCallback(
         MSceneMessage::kBeforeLoadReferenceCheck,
-        [](bool *retCode, const MObject &referenceNode, MFileObject &file, void *clientData) {
-          auto *self  = reinterpret_cast<search_file_info_t *>(clientData);
+        [](bool* retCode, const MObject& referenceNode, MFileObject& file, void* clientData) {
+          auto* self  = reinterpret_cast<search_file_info_t*>(clientData);
           auto l_path = self->path;
           MStatus k_s{};
           k_s = file.setRawFullName(conv::to_ms(self->path.generic_string()));
@@ -329,7 +329,7 @@ bool reference_file::replace_file(const FSys::path &in_handle) {
   }
   return true;
 }
-void reference_file::rename_namespace(const std::string &in_name) {
+void reference_file::rename_namespace(const std::string& in_name) {
   MStatus k_s{};
   auto l_name_d = in_name;
   for (int l_i = 1; l_i < 1000 && MNamespace::namespaceExists(d_str{l_name_d}); ++l_i) {
@@ -343,7 +343,7 @@ void reference_file::rename_namespace(const std::string &in_name) {
   doodle::maya_plug::set_attribute(file_info_node_, "reference_file_namespace", l_name_d);
 }
 
-bool reference_file::has_node(const MSelectionList &in_list) {
+bool reference_file::has_node(const MSelectionList& in_list) {
   if (get_namespace().empty()) return false;
   MStatus k_s{};
   MObject k_node{};
@@ -359,7 +359,7 @@ bool reference_file::has_node(const MSelectionList &in_list) {
   return false;
 }
 
-bool reference_file::has_node(const MObject &in_node) const {
+bool reference_file::has_node(const MObject& in_node) const {
   MStatus k_s{};
   auto k_objs = MNamespace::getNamespaceObjects(d_str{get_namespace()}, false, &k_s);
   for (int l_i = 0; l_i < k_objs.length(); ++l_i) {
@@ -442,8 +442,7 @@ std::optional<MDagPath> reference_file::get_field_dag() const {
 
   return {};
 }
-
-std::vector<MDagPath> reference_file::get_alll_cloth_obj(const std::vector<cloth_interface> &in_cloth) const {
+std::vector<MDagPath> reference_file::get_all_cloth_obj() const {
   std::vector<MDagPath> l_export_path{};
   MStatus l_status{};
   MFnDagNode l_child_dag{};
@@ -452,30 +451,44 @@ std::vector<MDagPath> reference_file::get_alll_cloth_obj(const std::vector<cloth
 
   MObject l_export_group{l_root->node(&l_status)};
   maya_chick(l_status);
-  for (auto &&l_cloth : in_cloth) {
-    if (l_cloth->get_namespace() == get_namespace()) {
-      auto l_obj = l_cloth->get_shape().node();
-      for (MItDependencyGraph l_it{
-               l_obj, MFn::kMesh, MItDependencyGraph::Direction::kDownstream,
-               MItDependencyGraph::Traversal::kDepthFirst, MItDependencyGraph::Level::kNodeLevel, &l_status
-           };
-           !l_it.isDone(); l_it.next()) {
-        auto l_current_path = get_dag_path(get_transform(l_it.currentItem(&l_status)));
-        maya_chick(l_status);
-        l_status = l_child_dag.setObject(l_current_path);
-        maya_chick(l_status);
-        if (l_child_dag.hasParent(l_export_group)) {
-          auto l_path = l_current_path;
-          if (auto l_it_j = ranges::find_if(l_export_path, boost::lambda2::_1 == l_path);
-              l_it_j == l_export_path.end()) {
-            l_export_path.emplace_back(l_current_path);
-          }
-        }
-      }
-    }
+  MItDag l_it{};
+  maya_chick(l_it.reset(l_export_group, MItDag::kDepthFirst, MFn::kMesh));
+  MDagPath l_path{};
+  for (; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getPath(l_path));
+    l_path.pop();
+    l_status = l_child_dag.setObject(l_path);
+    maya_chick(l_status);
+    if (l_child_dag.hasAttribute("cloth") && l_child_dag.findPlug("cloth", false, &l_status).asBool())
+      l_export_path.push_back(l_path);
   }
   return l_export_path;
 }
+
+std::vector<MDagPath> reference_file::get_all_hair_obj() const {
+  std::vector<MDagPath> l_export_path{};
+  MStatus l_status{};
+  MFnDagNode l_child_dag{};
+  auto l_root = export_group_attr();
+  if (!l_root) return {};
+
+  MObject l_export_group{l_root->node(&l_status)};
+  maya_chick(l_status);
+  MItDag l_it{};
+  maya_chick(l_it.reset(l_export_group, MItDag::kDepthFirst, MFn::kMesh));
+  MDagPath l_path{};
+  for (; !l_it.isDone(); l_it.next()) {
+    maya_chick(l_it.getPath(l_path));
+    l_path.pop();
+    l_status = l_child_dag.setObject(l_path);
+    maya_chick(l_status);
+    if (l_child_dag.hasAttribute("hair") && l_child_dag.findPlug("hair", false, &l_status).asBool())
+      l_export_path.push_back(l_path);
+  }
+  return l_export_path;
+}
+
+ 
 
 std::vector<reference_file> reference_file_factory::create_ref() const {
   MStatus l_status{};
@@ -495,7 +508,7 @@ std::vector<reference_file> reference_file_factory::create_ref() const {
   }
   return l_ret;
 }
-std::vector<reference_file> reference_file_factory::create_ref(const MSelectionList &in_list) const {
+std::vector<reference_file> reference_file_factory::create_ref(const MSelectionList& in_list) const {
   std::vector<reference_file> l_ret{};
 
   MStatus l_status{};
