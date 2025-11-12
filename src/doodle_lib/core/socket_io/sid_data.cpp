@@ -38,7 +38,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     if (is_timeout()) co_return;
     l_timer.expires_after(ctx_->handshake_data_.ping_interval_);
     co_await l_timer.async_wait(boost::asio::use_awaitable);
-    seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::ping));
+    seed_message_ping();
   }
   co_return;
 }
@@ -145,6 +145,13 @@ void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
   if (in_message->get_dump_data().empty()) in_message->start_dump();
   // default_logger_raw()->error("seed_message {}", in_message->get_dump_data());
   channel_.try_send(boost::system::error_code{}, in_message);
+}
+void sid_data::seed_message_ping() {
+  auto l_ptr = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
+  l_ptr->start_dump();
+  channel_.async_send(boost::system::error_code{}, l_ptr, [](boost::system::error_code ec) {
+    if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
+  });
 }
 void sid_data::cancel_async_event() {
   if (channel_signal_.slot().has_handler()) channel_signal_.emit(boost::asio::cancellation_type::all);

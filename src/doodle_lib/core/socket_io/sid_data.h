@@ -59,6 +59,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   void cancel_async_event();
 
  private:
+  void seed_message_ping();
   boost::asio::awaitable<void> impl_run();
   struct lock_type {
     sid_data* data_;
