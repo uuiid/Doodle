@@ -120,10 +120,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
             boost::beast::http::status::bad_request, "未找到镜头(camera)文件，请确保镜头文件已上传至服务器"
         }
     );
-  if (l_ret.asset_infos_.empty())
-    throw_exception(
-        http_request_error{boost::beast::http::status::bad_request, "未找到资产文件，请确保资产文件已上传至服务器"}
-    );
+
   std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
     auto&& l_info = l_ret.asset_infos_[i];
