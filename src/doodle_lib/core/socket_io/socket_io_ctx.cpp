@@ -34,7 +34,7 @@ sid_ctx::sid_ctx()
 
 void sid_ctx::clear_timeout_sid() {
   for (auto it = sid_map_.begin(); it != sid_map_.end();) {
-    if (it->second.expired()) {
+    if (it->second->is_timeout()) {
       it = sid_map_.erase(it);
     } else {
       ++it;
@@ -58,8 +58,9 @@ boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::get_sid(uuid in_sid) 
   auto l_sid = std::move(in_sid);
   DOODLE_TO_EXECUTOR(strand_);
   std::shared_ptr<sid_data> l_ptr{};
-  l_ptr = sid_map_.contains(l_sid) ? sid_map_.at(l_sid).lock() : nullptr;
+  l_ptr = sid_map_.contains(l_sid) ? sid_map_.at(l_sid) : nullptr;
   DOODLE_TO_SELF();
+  if (l_ptr->is_timeout()) l_ptr = nullptr;
 
   co_return l_ptr;
 }
@@ -102,7 +103,7 @@ void sid_ctx::emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_si
   boost::asio::post(strand_, [this, in_data, in_sid]() {
     try {
       if (!sid_map_.contains(in_sid)) return;
-      if (auto l_ptr = sid_map_.at(in_sid).lock(); l_ptr) l_ptr->seed_message(in_data);
+      if (auto l_ptr = sid_map_.at(in_sid); l_ptr) l_ptr->seed_message(in_data);
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
@@ -113,7 +114,7 @@ void sid_ctx::emit_impl(const socket_io_packet_ptr& in_data) const {
   if (!in_data) return;
   std::vector<std::shared_ptr<sid_data>> l_sid_data{};
   for (auto l_it : sid_map_)
-    if (auto l_ptr = l_it.second.lock(); l_ptr) l_sid_data.emplace_back(l_ptr);
+    if (auto l_ptr = l_it.second; l_ptr) l_sid_data.emplace_back(l_ptr);
   in_data->start_dump();
   for (auto& l_ptr : l_sid_data) l_ptr->seed_message(in_data);
 }

@@ -11,6 +11,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/signals2/signal.hpp>
+#include <memory>
 
 namespace doodle ::socket_io {
 class socket_io_core;
@@ -68,7 +69,7 @@ class sid_ctx {
  private:
   using signal_type_ptr = std::shared_ptr<signal_type>;
 
-  std::map<uuid, std::weak_ptr<sid_data>> sid_map_{};
+  std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
   std::map<std::string, socket_io_packet_ptr> socket_map_{};
   std::map<std::string, signal_type_ptr> signal_map_{};
   // decltype(boost::asio::make_strand(g_io_context()))
