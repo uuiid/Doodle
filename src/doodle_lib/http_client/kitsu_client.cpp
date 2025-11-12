@@ -165,7 +165,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
   return upload_asset_file(
-      fmt::format("/api/doodle/data/asset/{}/file/maya", in_task_id), in_file_path,
+      fmt::format("/api/doodle/data/assets/{}/file/maya", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
   );
 }
@@ -192,13 +192,13 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
     for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
       if (p.is_directory()) continue;
       co_await upload_asset_file(
-          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
       );
     }
   }
   co_await upload_asset_file(
-      fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), l_ue_project_file,
+      fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), l_ue_project_file,
       base64_encode(l_ue_project_file.filename().generic_string())
   );
   co_return;
@@ -221,7 +221,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
          FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
       if (p.is_directory()) continue;
       co_await upload_asset_file(
-          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
       );
     }
@@ -230,21 +230,21 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content)) {
       if (p.is_directory()) continue;
       co_await upload_asset_file(
-          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
       );
     }
     for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_config)) {
       if (p.is_directory()) continue;
       co_await upload_asset_file(
-          fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), p.path(),
+          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
       );
     }
   }
 
   co_await upload_asset_file(
-      fmt::format("/api/doodle/data/asset/{}/file/ue", in_task_id), in_file_path,
+      fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
   );
   co_return;
@@ -258,7 +258,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
   return upload_asset_file(
-      fmt::format("/api/doodle/data/asset/{}/file/image", in_task_id), in_file_path,
+      fmt::format("/api/doodle/data/assets/{}/file/image", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
   );
 }
