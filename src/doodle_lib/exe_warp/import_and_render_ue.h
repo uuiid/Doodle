@@ -56,7 +56,7 @@ class run_ue_assembly_local : public async_task {
     // to json
     friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
       j["path"]      = p.shot_output_path_;
-      j["skin_path"] = p.skin_path_;
+      j["skin_path"] = p.skin_path_.generic_string();
       j["type"]      = p.type_;
     }
     // from json
