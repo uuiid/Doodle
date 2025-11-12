@@ -209,8 +209,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       );
       l_ret.update_ue_path_.emplace_back(
           l_scene_ue_path / doodle_config::ue4_content, l_prj.path_ / "03_Workflow" / "Shot" /
-                                                            fmt::format("EP{:03}", l_ret.episodes_) /
+                                                            fmt::format("EP{:04}", l_ret.episodes_) /
                                                             l_scene_ue_path.stem() / doodle_config::ue4_content
+
+      );
+      l_ret.update_ue_path_.emplace_back(
+          l_scene_ue_path / doodle_config::ue4_config, l_prj.path_ / "03_Workflow" / "Shot" /
+                                                           fmt::format("EP{:04}", l_ret.episodes_) /
+                                                           l_scene_ue_path.stem() / doodle_config::ue4_config
+
+      );
+      l_ret.update_ue_path_.emplace_back(
+          l_scene_ue_path / l_uprj.filename(), l_prj.path_ / "03_Workflow" / "Shot" /
+                                                   fmt::format("EP{:04}", l_ret.episodes_) / l_scene_ue_path.stem() /
+                                                   l_uprj.filename()
 
       );
       l_ret.update_ue_path_.emplace_back(

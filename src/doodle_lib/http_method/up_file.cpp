@@ -79,9 +79,12 @@ void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
   auto l_entity       = l_sql.get_by_uuid<entity>(l_task.entity_id_);
 
   auto l_prj          = l_sql.get_by_uuid<project>(l_entity.project_id_);
-  if (!(l_task.task_type_id_ == task_type::get_character_id() ||
-        l_task.task_type_id_ == task_type::get_ground_model_id() ||
-        l_task.task_type_id_ == task_type::get_binding_id()))
+  if (!(
+          l_task.task_type_id_ == task_type::get_character_id() ||
+          l_task.task_type_id_ == task_type::get_ground_model_id() ||
+          l_task.task_type_id_ == task_type::get_binding_id() || l_task.task_type_id_ == task_type::get_simulation_id()
+
+      ))
     throw_exception(doodle_error{"未知的 task_type 类型"});
 
   task_type_id_    = l_task.task_type_id_;
