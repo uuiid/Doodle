@@ -144,10 +144,7 @@ void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
   if (!in_message) return;
   if (in_message->get_dump_data().empty()) in_message->start_dump();
   // default_logger_raw()->error("seed_message {}", in_message->get_dump_data());
-  if (!channel_.try_send(boost::system::error_code{}, in_message))
-    channel_.async_send(boost::system::error_code{}, in_message, [](boost::system::error_code ec) {
-      if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
-    });
+  channel_.try_send(boost::system::error_code{}, in_message);
 }
 void sid_data::cancel_async_event() {
   if (channel_signal_.slot().has_handler()) channel_signal_.emit(boost::asio::cancellation_type::all);
