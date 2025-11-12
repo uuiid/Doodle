@@ -208,15 +208,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_scene_ue_path / doodle_config::ue4_config
       );
       l_ret.update_ue_path_.emplace_back(
-          l_scene_ue_path / doodle_config::ue4_content, FSys::path{l_prj.auto_upload_path_} / "03_Workflow" / "Shot" /
+          l_scene_ue_path / doodle_config::ue4_content, l_prj.path_ / "03_Workflow" / "Shot" /
                                                             fmt::format("EP{:03}", l_ret.episodes_) /
                                                             l_scene_ue_path.stem() / doodle_config::ue4_content
 
       );
       l_ret.update_ue_path_.emplace_back(
           l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
-          FSys::path{l_prj.auto_upload_path_} / "03_Workflow" / "Shot" / fmt::format("EP{:03}", l_ret.episodes_) /
-              l_scene_ue_path.stem() / doodle_config::ue4_saved / doodle_config::ue4_movie_renders
+          FSys::path{l_prj.auto_upload_path_} / fmt::format("EP{:03}", l_ret.episodes_) / "自动灯光序列"
 
       );
     } else
