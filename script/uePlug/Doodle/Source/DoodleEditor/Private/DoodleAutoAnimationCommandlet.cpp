@@ -1367,8 +1367,8 @@ void UDoodleAutoAnimationCommandlet::OnSaveReanderConfig()
 		AntiAliasing->bOverrideAntiAliasing = true;
 		AntiAliasing->AntiAliasingMethod = EAntiAliasingMethod::AAM_TSR;
 		AntiAliasing->bRenderWarmUpFrames = true;
-		AntiAliasing->EngineWarmUpCount = 64;
-		AntiAliasing->RenderWarmUpCount = 128;
+		AntiAliasing->EngineWarmUpCount = 128;
+		AntiAliasing->RenderWarmUpCount = 64;
 	}
 	if (UMoviePipelineGameOverrideSetting* GameOver = Cast<UMoviePipelineGameOverrideSetting>(
 		Config->FindOrAddSettingByClass(UMoviePipelineGameOverrideSetting::StaticClass())); GameOver)
