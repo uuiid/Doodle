@@ -65,6 +65,15 @@ function Compress-UEPlugins() {
     Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
 }
 
+function Get-GitKitsuCommendID() {
+    $DoodleKitsuRoot = "E:\source\kitsu"
+    $TempPath = "$env:TEMP/doodle_kitsu_git.txt"
+    Start-Process -FilePath "git.exe" -ArgumentList  "rev-parse", "HEAD" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -RedirectStandardOutput $TempPath
+
+    $id = Get-Content $TempPath
+    return $id;
+}
+
 function Initialize-Doodle {
     param(
         [string]$OutPath,
@@ -84,19 +93,22 @@ function Initialize-Doodle {
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
-    if ($BuildKitsu) {
-        Write-Host "开始构建文件"
-        $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
-        if ($NpmResult.ExitCode -ne 0) {
-            # 抛出异常
-            throw "拉取失败"
-        }
+    Write-Host "开始检查文件"
+    $id = Get-GitKitsuCommendID
+
+    $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+    if ($NpmResult.ExitCode -ne 0) {
+        # 抛出异常
+        throw "拉取失败"
+    }
+    if ($id -ne (Get-GitKitsuCommendID)) {
         $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0) {
             # 抛出异常
             throw "构建失败"
         }
     }
+
 
 
     Write-Host "开始复制文件"
