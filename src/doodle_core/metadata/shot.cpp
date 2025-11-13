@@ -26,7 +26,8 @@ shot::shot(const entity& in_entity)
       p_shot_enum(
           std::isdigit(in_entity.name_.back())
               ? shot_ab_enum::None
-              : magic_enum::enum_cast<shot_ab_enum>(in_entity.name_.size() - 1).value_or(shot_ab_enum::None)
+              : magic_enum::enum_cast<shot_ab_enum>(in_entity.name_.substr(in_entity.name_.size() - 1))
+                    .value_or(shot_ab_enum::None)
       ) {}
 
 const int32_t& shot::get_shot() const noexcept { return p_shot; }
