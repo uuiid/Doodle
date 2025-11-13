@@ -59,7 +59,7 @@ boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::get_sid(uuid in_sid) 
   DOODLE_TO_EXECUTOR(strand_);
   std::shared_ptr<sid_data> l_ptr{};
   l_ptr = sid_map_.contains(l_sid) ? sid_map_.at(l_sid) : nullptr;
-  if (l_ptr->is_timeout()) l_ptr = nullptr;
+  if (l_ptr && l_ptr->is_timeout()) l_ptr = nullptr;
   DOODLE_TO_SELF();
 
   co_return l_ptr;
