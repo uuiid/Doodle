@@ -15,6 +15,10 @@
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/exception/diagnostic_information.hpp>
+
+#include <spdlog/spdlog.h>
+
 namespace doodle::socket_io {
 
 socket_io_websocket_core::socket_io_websocket_core(
@@ -39,8 +43,8 @@ void socket_io_websocket_core::async_run() {
   boost::asio::co_spawn(g_io_context(), run(), [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
     try {
       if (in_eptr) std::rethrow_exception(in_eptr);
-    } catch (const std::exception& e) {
-      l_shared->logger_->error(e.what());
+    } catch (...) {
+      SPDLOG_WARN(boost::current_exception_diagnostic_information());
     };
   });
 }
