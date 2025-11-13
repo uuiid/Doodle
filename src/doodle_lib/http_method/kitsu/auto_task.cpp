@@ -418,7 +418,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
 ) {
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_task = l_sql.get_by_uuid<task>(task_id_);
-  if (l_task.task_type_id_ != task_type::get_binding_id())
+  if (l_task.task_type_id_ != task_type::get_binding_id() && l_task.task_type_id_ != task_type::get_simulation_id())
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "只有绑定任务才支持导出 rig sk");
   auto l_asset         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_asset_extends = l_sql.get_entity_asset_extend(l_asset.uuid_id_);
