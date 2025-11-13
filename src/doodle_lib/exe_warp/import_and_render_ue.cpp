@@ -181,6 +181,7 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
     auto l_arg_json = co_await kitsu_client_->get_ue_assembly(project_id_, shot_task_id_);
     l_arg_json.get_to(arg_);
   }
+  auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
   //
   for (auto&& [p_from, p_to] : arg_.ue_asset_path_) {
     FSys::copy_diff(p_from, p_to, logger_ptr_);
@@ -197,7 +198,7 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
   co_await async_run_ue(
       {arg_.ue_main_project_path_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
        "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
-      logger_ptr_, true, l_time_info
+      logger_ptr_, false, l_time_info
   );
   l_time_info->info_ = "导入文件";
   on_run_time_info_(*l_time_info);
@@ -217,7 +218,7 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
        fmt::format(R"(-DoodleLevelSequence="{}")", arg_.level_sequence_import_),
        fmt::format(R"(-DoodleMoviePipelineConfig="{}")", arg_.movie_pipeline_config_), "-log", "-stdout",
        "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-      logger_ptr_, true, l_time_info
+      logger_ptr_, false, l_time_info
   );
   l_time_info->info_ = "渲染UE";
   on_run_time_info_(*l_time_info);
