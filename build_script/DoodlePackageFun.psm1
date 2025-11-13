@@ -77,7 +77,6 @@ function Get-GitKitsuCommendID() {
 function Initialize-Doodle {
     param(
         [string]$OutPath,
-        [Switch]$BuildKitsu,
         [switch]$OnlyOne
     )
     if (-not (Test-Path $OutPath)) {
@@ -102,6 +101,7 @@ function Initialize-Doodle {
         throw "拉取失败"
     }
     if ($id -ne (Get-GitKitsuCommendID)) {
+        Write-Host "开始构建 Kitsu"
         $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
         if ($NpmResult.ExitCode -ne 0) {
             # 抛出异常
