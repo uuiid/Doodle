@@ -28,6 +28,7 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include <cstddef>
 #include <filesystem>
 #include <fmt/format.h>
 #include <map>
@@ -36,7 +37,12 @@
 #include <vector>
 
 namespace doodle::http {
-
+namespace {
+struct sim_map_anim {
+  std::size_t to_fbx_idx_{};
+  std::size_t to_abc_idx_{};
+};
+}  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly::post(
     session_data_ptr in_handle
 ) {
@@ -84,7 +90,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
       l_ret.asset_infos_.emplace_back(
           run_ue_assembly_local::run_ue_assembly_asset_info{
-              .shot_output_path_ = l_path.path(), .type_ = l_path.path().extension() == ".fbx" ? "char" : "geo"
+              .shot_output_path_ = l_path.path(),
+              .type_             = l_path.path().extension() == ".fbx" ? run_ue_assembly_local::import_ue_type::char_
+                                                                       : run_ue_assembly_local::import_ue_type::geo
           }
       );
 
@@ -110,7 +118,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
     l_ret.asset_infos_.emplace_back(
         run_ue_assembly_local::run_ue_assembly_asset_info{
-            .shot_output_path_ = l_path.path(), .type_ = l_path.path().extension() == ".fbx" ? "char" : "geo"
+            .shot_output_path_ = l_path.path(),
+            .type_             = l_path.path().extension() == ".fbx" ? run_ue_assembly_local::import_ue_type::char_
+                                                                     : run_ue_assembly_local::import_ue_type::geo
         }
     );
   }
@@ -121,6 +131,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
         }
     );
 
+  // 构建对应的寻找 sk 的 key map
   std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
     auto&& l_info = l_ret.asset_infos_[i];
@@ -133,6 +144,41 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       l_key = l_key.substr(0, l_low_post + 4);
     }
     l_asset_infos_key_map[l_key].emplace_back(i);
+  }
+  /// 如果是解算, 还需要构建对应的解算 abc 文件和 fbx 文件对, 并将 fbx 的 simulation_type_ 赋值给 char_ 类型的
+  /// asset_info
+  if (l_is_simulation_task) {
+    for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
+      if (l_ret.asset_infos_[i].type_ != run_ue_assembly_local::import_ue_type::geo) continue;
+
+      auto&& l_info = l_ret.asset_infos_[i];
+      auto l_stem   = l_info.shot_output_path_.stem().string();
+      // remove _cloth or _hair
+      if (l_info.simulation_type_.test(0)) {
+        auto l_cloth_pos = l_stem.find("_cloth");
+        if (l_cloth_pos != std::string::npos) {
+          l_stem = l_stem.erase(l_cloth_pos, 6);
+        }
+      }
+      if (l_info.simulation_type_.test(1)) {
+        auto l_hair_pos = l_stem.find("_hair");
+        if (l_hair_pos != std::string::npos) {
+          l_stem = l_stem.erase(l_hair_pos, 5);
+        }
+      }
+
+      if (auto l_it = std::ranges::find_if(
+              l_ret.asset_infos_,
+              [&](const auto& in_info) {
+                if (in_info.type_ != run_ue_assembly_local::import_ue_type::char_) return false;
+                auto l_char_stem = in_info.shot_output_path_.stem().string();
+                return l_char_stem == l_stem;
+              }
+          );
+          l_it != l_ret.asset_infos_.end()) {
+        l_it->simulation_type_ = l_info.simulation_type_;
+      }
+    }
   }
 
   auto l_assets = l_sql.impl_->storage_any_.select(
@@ -245,10 +291,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       if (l_asset_infos_key_map.contains(l_key)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-            l_ret.asset_infos_[l_idx].skin_path_ =
-                l_is_simulation_task
-                    ? get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
-                    : get_entity_character_ue_name(l_asset_extend);
+            if (l_ret.asset_infos_[l_idx].type_ == run_ue_assembly_local::import_ue_type::char_)
+              l_ret.asset_infos_[l_idx].skin_path_ =
+                  l_ret.asset_infos_[l_idx].simulation_type_.any()
+                      ? get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
+                      : get_entity_character_ue_name(l_asset_extend);
             l_ret.asset_infos_[l_idx].ue_project_dir_ =
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend);
             l_ret.ue_asset_path_.emplace_back(
@@ -275,7 +322,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
             l_ret.asset_infos_[l_idx].skin_path_ =
-                l_is_simulation_task
+                l_ret.asset_infos_[l_idx].simulation_type_.any()
                     ? get_entity_sim_prop_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
                     : get_entity_prop_ue_name(
                           l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
@@ -308,7 +355,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
       if (l_asset_infos_key_map.contains(l_key)) {
         for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
           l_ret.asset_infos_[l_idx].skin_path_ =
-              l_is_simulation_task
+              l_ret.asset_infos_[l_idx].simulation_type_.any()
                   ? get_entity_sim_ground_ue_sk_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
                   : get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
           l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend);
@@ -336,7 +383,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     }
   }
   for (auto&& l_info : l_ret.asset_infos_) {
-    if (!FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)) {
+    if (l_info.type_ == run_ue_assembly_local::import_ue_type::char_ &&
+        !FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)) {
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request,
@@ -351,7 +399,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 #endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
-    if (l_info.skin_path_.empty()) {
+    if (l_info.skin_path_.empty() && l_info.type_ == run_ue_assembly_local::import_ue_type::char_) {
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request,

@@ -46,10 +46,12 @@ class run_ue_assembly_local : public async_task {
  public:
   boost::asio::awaitable<void> run() override;
 
+  enum class import_ue_type { geo, char_ };
+
   struct run_ue_assembly_asset_info {
     FSys::path shot_output_path_;     // 需要组装的fbx
     FSys::path skin_path_;            // 组装对应的fbx
-    std::string type_;                // 是fbx, 还是 abc
+    import_ue_type type_;             // 是fbx, 还是 abc
     std::bitset<2> simulation_type_;  // 0: 带布料 1: 带毛发
     FSys::path ue_project_dir_;       // ue项目文件夹路径
 
@@ -163,5 +165,10 @@ class run_ue_assembly_local : public async_task {
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) { j.get_to(p.arg_); }
 };
-
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    run_ue_assembly_local::import_ue_type, {
+                                               {run_ue_assembly_local::import_ue_type::geo, "geo"},
+                                               {run_ue_assembly_local::import_ue_type::char_, "char"},
+                                           }
+);
 }  // namespace doodle
