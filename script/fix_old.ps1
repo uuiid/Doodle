@@ -1,4 +1,12 @@
-$Root = Convert-Path "$PSScriptRoot";
+if ($MyInvocation.MyCommand.CommandType -eq "ExternalScript")
+{ $ScriptPath = Split-Path -Parent -Path $MyInvocation.MyCommand.Definition }
+else {
+  $ScriptPath = Split-Path -Parent -Path ([Environment]::GetCommandLineArgs()[0]) 
+  if (!$ScriptPath) { $ScriptPath = "." } 
+}
+
+
+$Root = Convert-Path $ScriptPath;
 $MayaFile = Get-ChildItem -Path $Root -Filter "*.ma";
 $MayaExe = Get-ItemPropertyValue -Path 'HKLM:SOFTWARE\Autodesk\Maya\2020\Setup\InstallPath' -Name MAYA_INSTALL_LOCATION
 $MayaExe = Convert-Path "$MayaExe/bin/mayapy.exe"
@@ -40,6 +48,8 @@ quit()
 Set-Content $FixScript -Value $MayaPyScript -Encoding UTF8;
 
 foreach ($item in $MayaFile) {
-  $item = $item.FullName.Replace("\","/")
+  $item = $item.FullName.Replace("\", "/")
   Start-Process -FilePath $MayaExe -ArgumentList $FixScript, $item -WorkingDirectory $Root -NoNewWindow -Wait 
 }
+
+# ps2exe E:\Doodle\script\fix_old.ps1 E:\Doodle\script\Cmd_tool\fix_old.exe
