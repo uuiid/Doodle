@@ -12,11 +12,25 @@ ForEach-Object {
 }
 Pop-Location
 write-host "`nVisual Studio 2010 Command Prompt variables set." -ForegroundColor Yellow
-$env:chcp=65001
-$env:VSLANG=1033
+$env:chcp = 65001
+$env:VSLANG = 1033
 $DoodleRoot = Convert-Path "$PSScriptRoot/../..";
+function Get-ChildProcesses ($ParentProcessId) {
+  $filter = "parentprocessid = '$($ParentProcessId)'"
+  Get-CIMInstance -ClassName win32_process -filter $filter | Foreach-Object {
+    $_
+    if ($_.ParentProcessId -ne $_.ProcessId) {
+      Get-ChildProcesses $_.ProcessId
+    }
+  }
+}
+
 
 Write-Host "First argument: $($args[1..($args.Count -1)])"
 if ($args.Length -ne 0) {
-    Start-Process -FilePath $args[0] -ArgumentList $args[1..($args.Count - 1)] -WorkingDirectory $DoodleRoot -NoNewWindow -Wait 
+  $CmakeProcess = Start-Process -FilePath $args[0] -ArgumentList $args[1..($args.Count - 1)] -WorkingDirectory $DoodleRoot -NoNewWindow -PassThru
+  while ($CmakeProcess.HasExited -eq $false) {
+    $CmakeProcess.Refresh()
+  }
 }
+
