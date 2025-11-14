@@ -4,6 +4,7 @@
 
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/comment.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/preview_file.h"
@@ -13,11 +14,13 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/post.hpp>
 
 #include "kitsu_reg_url.h"
 #include <algorithm>
 #include <filesystem>
+#include <memory>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
 
@@ -185,7 +188,8 @@ auto get_handle_video_file(
 
 /// 处理上传的视频文件 格式化大小, 生成预览文件
 auto handle_video_file(
-    const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size
+    const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size,
+    const std::shared_ptr<preview_file>& in_preview_file
 ) {
   auto l_low_file_path =
       g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "lowdef" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
@@ -252,6 +256,8 @@ auto handle_video_file(
     FSys::rename(l_path_backup, l_path);
   }
   SPDLOG_WARN("生成视频 {} {}, 图片 {}", l_low_file_path, l_high_file_path, l_path);
+  in_preview_file->file_size_ = FSys::exists(l_high_file_path) ? FSys::file_size(l_high_file_path) : 0;
+  boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(in_preview_file), boost::asio::detached);
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
@@ -298,9 +304,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
         l_new_path, l_preview_file->uuid_id_, l_prj.fps_, cv::Size{l_prj_size.first, l_prj_size.second}
     );
     boost::asio::post(
-        g_io_context(),
-        [l_new_path, uuid = l_preview_file->uuid_id_, fps = l_prj.fps_,
-         size = cv::Size{l_prj_size.first, l_prj_size.second}]() { handle_video_file(l_new_path, uuid, fps, size); }
+        g_io_context(), [l_new_path, uuid = l_preview_file->uuid_id_, fps = l_prj.fps_, l_preview_file,
+                         size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
+          handle_video_file(l_new_path, uuid, fps, size, l_preview_file);
+        }
     );
 
     l_file                         = l_high_file;
