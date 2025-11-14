@@ -6,7 +6,7 @@
 #include <doodle_core/metadata/base.h>
 namespace doodle {
 
-enum class software_enum { maya, unreal_engine, alembic, unreal_engine_sk, maya_sim };
+enum class software_enum { maya, unreal_engine, alembic, unreal_engine_sk, maya_sim, maya_rig };
 
 NLOHMANN_JSON_SERIALIZE_ENUM(
     software_enum, {
@@ -15,6 +15,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                        {software_enum::alembic, "alembic"},
                        {software_enum::unreal_engine_sk, "unreal_engine_sk"},
                        {software_enum::maya_sim, "maya_sim"},
+                       {software_enum::maya_rig, "maya_rig"},
                        // Add other software types as needed
                    }
 );
