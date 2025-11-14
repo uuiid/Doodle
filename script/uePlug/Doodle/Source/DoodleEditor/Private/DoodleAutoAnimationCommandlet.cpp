@@ -830,7 +830,7 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateGeometryImportTask(const
 	k_abc_stting->MaterialSettings.bFindMaterials = true;
 	//--------------------------
 	k_abc_stting->GeometryCacheSettings.bFlattenTracks = true;
-	k_abc_stting->SamplingSettings.bSkipEmpty = true; //
+	k_abc_stting->SamplingSettings.bSkipEmpty = false; //
 	k_abc_stting->SamplingSettings.FrameStart = L_Start.Value; //
 	k_abc_stting->SamplingSettings.FrameEnd = L_End.Value; // 
 	k_abc_stting->SamplingSettings.FrameSteps = 1; //

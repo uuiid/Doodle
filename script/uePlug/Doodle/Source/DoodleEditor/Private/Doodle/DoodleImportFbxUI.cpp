@@ -836,7 +836,7 @@ void UDoodleAbcImport_1::ImportFile()
 	k_abc_stting->MaterialSettings.bFindMaterials = true;
 
 	k_abc_stting->GeometryCacheSettings.bFlattenTracks = true; // 合并轨道
-	k_abc_stting->SamplingSettings.bSkipEmpty = true; // 跳过空白帧
+	k_abc_stting->SamplingSettings.bSkipEmpty = false; // 跳过空白帧
 	k_abc_stting->SamplingSettings.FrameStart = StartTime; // 开始帧
 	k_abc_stting->SamplingSettings.FrameEnd = EndTime; // 结束帧
 	k_abc_stting->SamplingSettings.FrameSteps = 1; // 帧步数
