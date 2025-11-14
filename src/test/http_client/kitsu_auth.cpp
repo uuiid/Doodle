@@ -65,13 +65,20 @@ BOOST_AUTO_TEST_CASE(up_file_ue) {
 }
 BOOST_AUTO_TEST_CASE(create_comment_task) {
   app_base l_app_base{};
-  auto l_f = boost::asio::co_spawn(
+  core_set::get_set().server_ip = "http://192.168.20.89:50025";
+  auto l_f                      = boost::asio::co_spawn(
       g_io_context(),
       []() -> boost::asio::awaitable<void> {
         auto l_c = std::make_shared<::doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+        l_c->set_token(
+            "eyJhbGciOiJIUzI1NiJ9."
+                                 "eyJleHAiOjU5NTg5Mjk1NzMsImlhdCI6MTc1NzkyNDc3MywiaWRlbnRpdHlfdHlwZSI6InBlcnNvbiIsImp0aSI6IjY5YThkMDkzLWRjYW"
+                                 "ItNDg5MC04ZjlkLWM1MWVmMDY1ZDAzYiIsIm5iZiI6MTc1NzkyNDc3Mywic3ViIjoiNjlhOGQwOTMtZGNhYi00ODkwLThmOWQtYzUxZWYw"
+                                 "NjVkMDNiIn0.6gA3BdCxhuhYPzyBp_my0yHR7gJmIercSyjGBDexqtw"
+        );
         co_await l_c->comment_task(
             from_uuid_str("d7210472-de23-4b76-8332-3470e0442190"), "测试通过客户端创建评论",
-            "D:/test_files/test_xgen/scenes/ce.ma"
+            "C:/Users/TD/Downloads/test_mp4.mp4"
         );
         app_base::Get().on_cancel.emit();
       }(),
