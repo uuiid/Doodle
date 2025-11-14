@@ -234,6 +234,7 @@ auto handle_video_file(
     FSys::rename(l_high_file_path_backup, l_high_file_path);
     FSys::rename(l_path_backup, l_path);
   }
+  SPDLOG_WARN("生成视频 {} {}, 图片 {}", l_low_file_path, l_high_file_path, l_path);
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
