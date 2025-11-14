@@ -28,7 +28,7 @@
             "args": [
                 "--config=${workspaceFolder}/build/debug_server.json",
                 "--local",
-                "--port=50025"
+                "--port=50026"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
@@ -136,6 +136,13 @@
             "configurations": [
                 "Doodle_debug",
                 "debug_test"
+            ]
+        },
+        {
+            "name": "Doodle_sercer/local",
+            "configurations": [
+                "Doodle_debug",
+                "Doodle_debug_local"
             ]
         }
     ]

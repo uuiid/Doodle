@@ -44,7 +44,9 @@ void kitsu_client::set_req_headers(boost::beast::http::request<T>& req, const st
   req.set(boost::beast::http::field::accept, "application/json");
   req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
   if (!kitsu_token_.empty()) req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
-  if (!in_content_type.empty()) req.set(boost::beast::http::field::content_type, in_content_type);
+  if (!in_content_type.empty() && req.method() != boost::beast::http::verb::get &&
+      req.method() != boost::beast::http::verb::options)
+    req.set(boost::beast::http::field::content_type, in_content_type);
 }
 
 boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_association(uuid in_task_id) const {
@@ -260,7 +262,7 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
       boost::beast::http::verb::post,
       fmt::format("/api/actions/projects/{}/shots/{}/run-ue-assembly", in_project_id, in_shot_task_id), 11
   };
-  set_req_headers(l_req);
+  set_req_headers(l_req, {});
 
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);

@@ -53,7 +53,7 @@ core_set::core_set()
 #ifdef NDEBUG
       server_ip("http://192.168.40.181")
 #else
-      server_ip("http://192.168.20.89:5000")
+      server_ip("http://192.168.20.89:50025")
 #endif
      {
   p_doc /= "doodle";
