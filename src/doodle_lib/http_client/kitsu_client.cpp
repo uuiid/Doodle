@@ -303,6 +303,7 @@ boost::asio::awaitable<void> kitsu_client::comment_task(
         fmt::format("/api/actions/tasks/{}/comments/{}/add-preview", in_task_id, l_comment_id), 11
     };
     set_req_headers(l_req, "application/json");
+    l_req.body() = "{}";
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
