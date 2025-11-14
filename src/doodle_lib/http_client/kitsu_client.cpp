@@ -6,12 +6,14 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/project.h"
+#include "doodle_core/metadata/task_status.h"
 #include "doodle_core/metadata/task_type.h"
 #include "doodle_core/metadata/working_file.h"
 
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_method/kitsu.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/empty_body.hpp>
@@ -19,10 +21,12 @@
 #include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include "core/http/json_body.h"
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <fmt/compile.h>
 #include <nlohmann/json_fwd.hpp>
+#include <string>
 #include <vector>
 
 namespace doodle::kitsu {
@@ -34,16 +38,20 @@ void from_json(const nlohmann::json& j, kitsu_client::file_association& fa) {
   j.at("type").get_to(fa.type_);
 }
 
+template <typename T>
+void kitsu_client::set_req_headers(boost::beast::http::request<T>& req, const std::string& in_content_type) const {
+  req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+  req.set(boost::beast::http::field::accept, "application/json");
+  req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
+  if (!kitsu_token_.empty()) req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
+  if (!in_content_type.empty()) req.set(boost::beast::http::field::content_type, in_content_type);
+}
+
 boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_association(uuid in_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", in_task_id), 11
   };
-  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-  if (!kitsu_token_.empty())
-    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
-  l_req.prepare_payload();
+  set_req_headers(l_req);
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
@@ -96,11 +104,8 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task
     boost::beast::http::request<boost::beast::http::empty_body> l_req{
         boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_task_id), 11
     };
-    l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-    l_req.set(boost::beast::http::field::accept, "application/json");
-    l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-    if (!kitsu_token_.empty())
-      l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
+    set_req_headers(l_req);
+
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
@@ -123,11 +128,8 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_generate_uesk_file_arg(
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/actions/tasks/{}/export-rig-sk", in_task_id), 11
   };
-  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-  if (!kitsu_token_.empty())
-    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
+  set_req_headers(l_req);
+
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
@@ -139,13 +141,8 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
     std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
 ) const {
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
+  set_req_headers(l_req, "application/octet-stream");
   l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);
-  l_req.set(boost::beast::http::field::content_type, "application/octet-stream");
-  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-  if (!kitsu_token_.empty())
-    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
   boost::system::error_code l_ec{};
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
@@ -267,11 +264,8 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
       boost::beast::http::verb::post,
       fmt::format("/api/actions/projects/{}/shots/{}/run-ue-assembly", in_project_id, in_shot_task_id), 11
   };
-  l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-  l_req.set(boost::beast::http::field::accept, "application/json");
-  l_req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_and_port_);
-  if (!kitsu_token_.empty())
-    l_req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", kitsu_token_));
+  set_req_headers(l_req);
+
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::created)
@@ -279,4 +273,61 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
 
   co_return l_res.body();
 }
+
+boost::asio::awaitable<void> kitsu_client::comment_task(
+    uuid in_task_id, const std::string& in_comment, const FSys::path& in_attach_files, const uuid& in_task_status_id,
+    const std::vector<std::string>& in_checklists, const std::vector<std::string>& in_links
+) const {
+  if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
+  uuid l_comment_id{};
+  uuid l_preview_id{};
+  {
+    nlohmann::json l_json{};
+    l_json["comment"]        = in_comment;
+    l_json["task_status_id"] = in_task_status_id;
+    l_json["checklists"]     = in_checklists;
+    boost::beast::http::request<boost::beast::http::string_body> l_req{
+        boost::beast::http::verb::post, fmt::format("/api/actions/tasks/{}/comment", in_task_id), 11
+    };
+    set_req_headers(l_req, "application/json");
+    l_req.body() = l_json.dump();
+    boost::beast::http::response<http::basic_json_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+      throw_exception(doodle_error{"kitsu comment task error {} {}", l_res.result(), l_res.body().dump()});
+    l_comment_id = l_res.body().at("id").get<uuid>();
+  }
+  {  // 创建预览
+    boost::beast::http::request<boost::beast::http::string_body> l_req{
+        boost::beast::http::verb::post,
+        fmt::format("/api/actions/tasks/{}/comments/{}/add-preview", in_task_id, l_comment_id), 11
+    };
+    set_req_headers(l_req, "application/json");
+    boost::beast::http::response<http::basic_json_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+      throw_exception(doodle_error{"kitsu comment task add preview error {} {}", l_res.result(), l_res.body().dump()});
+    l_preview_id = l_res.body().at("id").get<uuid>();
+  }
+  {  // 上传附件
+    boost::beast::http::request<boost::beast::http::file_body> l_req{
+        boost::beast::http::verb::post, fmt::format("/api/pictures/preview-files/{}", l_preview_id), 11
+    };
+    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_attach_files.extension())});
+    boost::system::error_code l_ec{};
+    l_req.body().open(in_attach_files.string().c_str(), boost::beast::file_mode::read, l_ec);
+    if (l_ec)
+      throw_exception(
+          doodle_error{"kitsu upload comment preview open file error {} {}", in_attach_files, l_ec.message()}
+      );
+    boost::beast::http::response<boost::beast::http::string_body> l_res{};
+    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+    if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+      throw_exception(
+          doodle_error{"kitsu upload comment preview error {} {} {}", in_attach_files, l_res.result(), l_res.body()}
+      );
+  }
+  co_return;
+}
+
 }  // namespace doodle::kitsu
