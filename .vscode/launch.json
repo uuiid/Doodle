@@ -103,8 +103,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis",
-            "preLaunchTask": "cmake build"
+            "visualizerFile": "${workspaceFolder}/stl.natvis"
         },
         {
             "name": "PowerShell Launch Current File",
@@ -133,9 +132,10 @@
     ],
     "compounds": [
         {
-            "name": "Doodle_sercer/client",
+            "name": "Doodle_sercer/test",
             "configurations": [
-                "Doodle_debug"
+                "Doodle_debug",
+                "debug_test"
             ]
         }
     ]

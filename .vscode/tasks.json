@@ -215,9 +215,11 @@
       "type": "command",
       "command": "extension.commandvariable.pickStringRemember",
       "args": {
+        "key": "build_dir_key",
         "fileName": "${workspaceFolder}/CMakePresets.json",
         "fileFormat": "json",
         "description": "选择构建",
+        "addLabelToTop": "${remember:build_dir_key}",
         "jsonOption": {
           "value": "content.configurePresets[__itemIdx__].hidden ? '' : content.configurePresets[__itemIdx__].name"
         }
@@ -237,8 +239,6 @@
       "type": "command",
       "command": "extension.commandvariable.pickStringRemember",
       "args": {
-        "key": "test_list_key",
-        "addLabelToTop": "${remember:test_list_key}",
         "fileName": "${workspaceFolder}/.vscode/test_list.json",
         "fileFormat": "json",
         "description": "选择测试",
