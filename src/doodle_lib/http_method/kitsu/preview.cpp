@@ -16,6 +16,7 @@
 #include <boost/asio/post.hpp>
 
 #include "kitsu_reg_url.h"
+#include <filesystem>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
 
@@ -295,7 +296,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});
 
   l_preview_file->status_     = preview_file_statuses::ready;
-  l_preview_file->file_size_  = FSys::file_size(l_file);
+  l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
   l_preview_file->updated_at_ = chrono::system_clock::now();
   co_await l_sql.install(l_preview_file);
 
