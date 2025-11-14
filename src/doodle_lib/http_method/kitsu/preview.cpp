@@ -137,41 +137,27 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
 }
 /// 创建视频平铺图像
 auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_size) {
-  SPDLOG_WARN("创建视频平铺图像, 目标尺寸 {}x{}", in_size.width, in_size.height);
+  spdlog::warn("创建视频平铺图像, 目标尺寸 {}x{}", in_size.width, in_size.height);
   std::double_t l_frame_count = in_capture.get(cv::CAP_PROP_FRAME_COUNT);
-  std::double_t l_fps         = in_capture.get(cv::CAP_PROP_FPS);
-  const std::int32_t l_cols{8};
-
-  // 计算每秒需要的瓦片数（每秒取一帧）
-  std::double_t l_duration_seconds = l_frame_count / l_fps;
-  std::int32_t l_total_tiles       = boost::numeric_cast<std::int32_t>(std::ceil(l_duration_seconds));
-  auto l_rows =
-      std::clamp(boost::numeric_cast<std::int32_t>(std::ceil(l_total_tiles / static_cast<double>(l_cols))), 10, 480);
-
-  // 计算实际需要采样的帧间隔（每秒一帧）
-  std::double_t l_step = l_fps;
-
+  auto l_rows                 = std::min(480, boost::numeric_cast<std::int32_t>(std::ceil(l_frame_count / 8)));
+  std::int32_t l_cols{8};
+  // 确认步进大小
+  std::double_t l_step = l_frame_count > l_rows * l_cols ? l_frame_count / l_rows / l_cols : 1.0;
   std::int32_t l_height{100}, l_width{boost::numeric_cast<std::int32_t>(in_size.aspectRatio() * 100)};
   cv::Mat l_tiles = cv::Mat::zeros(l_rows * l_height, l_cols * l_width, CV_8UC3);
   cv::Mat l_frame{};
-
-  std::int32_t l_tile_index = 0;
-  for (std::double_t l_i = 0; l_i < l_frame_count && l_tile_index < l_rows * l_cols; l_i += l_step) {
+  for (std::double_t l_i = 0; l_i < l_frame_count; l_i += l_step) {
     in_capture.set(cv::CAP_PROP_POS_FRAMES, std::floor(l_i));
+    std::int32_t l_row{boost::numeric_cast<std::int32_t>(std::floor(l_i / l_cols))},
+        l_col{boost::numeric_cast<std::int32_t>(std::floor(l_i)) % l_cols};
 
-    std::int32_t l_row = l_tile_index / l_cols;
-    std::int32_t l_col = l_tile_index % l_cols;
-
-    if (in_capture.read(l_frame) && !l_frame.empty()) {
+    if (in_capture.read(l_frame)) {
       cv::resize(l_frame, l_frame, cv::Size{l_width, l_height}, 0, 0);
       l_frame.copyTo(l_tiles(cv::Rect{l_col * l_width, l_row * l_height, l_width, l_height}));
-      l_tile_index++;
     }
   }
 
-  SPDLOG_WARN(
-      "生成视频平铺图像完成, 总帧数 {}, 采样帧数 {}, 行数 {}, 列数 {}", l_frame_count, l_tile_index, l_rows, l_cols
-  );
+  SPDLOG_WARN("生成视频平铺图像完成, 行数 {}, 列数 {}", l_rows, l_cols);
   return l_tiles;
 }
 
