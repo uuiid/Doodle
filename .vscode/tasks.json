@@ -50,8 +50,31 @@
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
-        "--preset",
-        "debug_doodle"
+        "--target",
+        "doodle_kitsu_supplement"
+      ],
+      "problemMatcher": [
+        "$msCompile"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": true,
+        "clear": true,
+        "close": true
+      }
+    },
+    {
+      "label": "cmake build test",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--build",
+        "--target",
+        "test_main"
       ],
       "problemMatcher": [
         "$msCompile"
