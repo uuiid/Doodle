@@ -2,22 +2,12 @@
 # 这个是外部使用的脚本
 
 $map_item = @(
-    @( "C:\sy\DuBuXiaoYao_8", "", "独步逍遥_8" ),
-    @( "C:\sy\DuBuXiaoYao", "", "独步逍遥" ),
     @( "C:\sy\WuDiJianHun_8", "", "无敌剑魂_8" ),
     @( "C:\sy\WuDiJianHun", "", "无敌剑魂" ),
-    @( "C:\sy\CangFeng_8", "", "藏锋_8" ),
-    @( "C:\sy\CangFeng", "", "藏锋" ),
-    @( "C:\sy\WanGuShenHua_8", "", "万古神话_8" ),
-    @( "C:\sy\WanGuShenHua", "", "万古神话" ),
     @( "C:\sy\RenJianZuiDeYi_8", "", "人间最得意_8" ),
     @( "C:\sy\RenJianZuiDeYi", "", "人间最得意" ),
     @( "C:\sy\LianQiShiWanNian_8", "", "炼气十万年_8" ),
     @( "C:\sy\LianQiShiWanNian", "", "炼气十万年" ),
-    @( "C:\sy\WuJinShenYu_8", "", "无尽神域_8" ),
-    @( "C:\sy\WuJinShenYu", "", "无尽神域" ),
-    @( "C:\sy\WanYuFengShen_9", "", "万域封神" ),
-    @( "C:\sy\KuangShenMoZun_9", "", "狂神魔尊" ),
     @( "C:\sy\WGXD", "", "独步万古" ),
     @( "C:\sy\ZMLCLWDSWD", "", "宗门里除了我都是卧底" ),
     @( "C:\sy\WDSXTQL", "", "我的师兄太强了" ),
