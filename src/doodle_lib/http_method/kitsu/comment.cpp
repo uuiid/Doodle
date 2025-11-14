@@ -54,10 +54,13 @@ boost::asio::awaitable<create_comment_result> create_comment(
   in_comment->created_at_ = chrono::system_clock::now();
   in_comment->updated_at_ = chrono::system_clock::now();
   in_comment->person_id_  = in_person->person_.uuid_id_;
+
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
 
-  auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_task        = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
+
+  if (in_comment->task_status_id_.is_nil()) in_comment->task_status_id_ = l_task->task_status_id_;
   auto l_task_status = l_sql.get_by_uuid<task_status>(in_comment->task_status_id_);
   l_task_status.check_retake_capping(*l_task);
   std::vector<attachment_file> l_attachment_files{};
