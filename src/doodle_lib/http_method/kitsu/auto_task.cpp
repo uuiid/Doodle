@@ -429,9 +429,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   auto l_ue_scene_path =
       core_set::get_set().get_cache_root().parent_path() / doodle_config::doodle_token_name / l_prj.code_;
   if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
-    auto l_ue_name          = get_entity_character_ue_name(*l_asset_extends);
-    auto l_ue_path          = get_entity_character_ue_path(l_prj, *l_asset_extends);
-    auto l_ue_project       = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    auto l_ue_name    = get_entity_character_ue_name(*l_asset_extends);
+    auto l_ue_path    = get_entity_character_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    l_ue_scene_path /= l_ue_project.stem();
     l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
     l_arg.ue_asset_copy_path_.emplace_back(
         l_prj.path_ / l_ue_path / doodle_config::ue4_content, l_ue_scene_path / doodle_config::ue4_content
@@ -445,9 +446,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
 
   } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
              l_asset.entity_type_id_ == asset_type::get_effect_id()) {
-    auto l_ue_name          = get_entity_prop_ue_name(*l_asset_extends);
-    auto l_ue_path          = get_entity_prop_ue_path(l_prj, *l_asset_extends);
-    auto l_ue_project       = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    auto l_ue_name    = get_entity_prop_ue_name(*l_asset_extends);
+    auto l_ue_path    = get_entity_prop_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    l_ue_scene_path /= l_ue_project.stem();
     l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
     l_arg.ue_asset_copy_path_.emplace_back(
         l_prj.path_ / l_ue_path / get_entity_prop_ue_public_files_path(),
@@ -465,6 +467,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     auto l_ue_name    = get_entity_ground_ue_sk_name(l_asset_extends->pin_yin_ming_cheng_, l_asset_extends->ban_ben_);
     auto l_ue_path    = get_entity_ground_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    l_ue_scene_path /= l_ue_project.stem();
     l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
     l_arg.ue_asset_copy_path_.emplace_back(
         l_prj.path_ / l_ue_path / doodle_config::ue4_content, l_ue_scene_path / doodle_config::ue4_content

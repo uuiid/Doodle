@@ -194,10 +194,6 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
       );
     }
   }
-  co_await upload_asset_file(
-      fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), l_ue_project_file,
-      base64_encode(l_ue_project_file.filename().generic_string())
-  );
   co_return;
 }
 
