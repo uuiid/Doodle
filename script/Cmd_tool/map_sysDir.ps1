@@ -8,28 +8,41 @@ class map_dir
 
 $map_item = @(
     [map_dir]@{ link = "C:\sy\ChengXv_8"; source = "\\192.168.10.250\public\Prism_projects"; name = "程序开发_250" },
+    [map_dir]@{ link = "C:\sy\ChengXv"; source = "\\192.168.10.250\public\Prism_projects"; name = "程序开发_250" },
     [map_dir]@{ link = "C:\sy\donghuagongxiang_8"; source = "\\192.168.10.250\public\动画共享"; name = "动画共享_250" },
+    [map_dir]@{ link = "C:\sy\donghuagongxiang"; source = "\\192.168.10.250\public\动画共享"; name = "动画共享_250" },
     [map_dir]@{ link = "C:\sy\HouQi_8"; source = "\\192.168.10.250\public\HouQi"; name = "后期_250" },
+    [map_dir]@{ link = "C:\sy\HouQi"; source = "\\192.168.10.250\public\HouQi"; name = "后期_250" },
     [map_dir]@{ link = "C:\sy\MeiYiGiao_8"; source = "\\192.168.10.250\public\美易高"; name = "美易高" },
+    [map_dir]@{ link = "C:\sy\MeiYiGiao"; source = "\\192.168.10.250\public\美易高"; name = "美易高" },
     [map_dir]@{ link = "C:\sy\jianji_250"; source = "\\192.168.10.250\public\11-剪辑"; name = "剪辑_250" },
     [map_dir]@{ link = "C:\sy\JianJi_9"; source = "\\192.168.10.218\jianji"; name = "剪辑_218" },
     [map_dir]@{ link = "C:\sy\HouQi_9"; source = "\\192.168.10.218\houqi"; name = "后期_218" },
     [map_dir]@{ link = "C:\sy\JianJi_8"; source = "\\192.168.10.240\public\剪辑_240"; name = "剪辑_240" },
+    [map_dir]@{ link = "C:\sy\JianJi"; source = "\\192.168.10.240\public\剪辑_240"; name = "剪辑_240" },
     [map_dir]@{ link = "C:\sy\doodle"; source = "\\192.168.10.242\public\doodle"; name = "软件" },
 
     [map_dir]@{ link = "C:\sy\ChangAnHuanJie_8"; source = "\\192.168.10.240\public\changanhuanjie"; name = "长安幻街_240" },
+    [map_dir]@{ link = "C:\sy\ChangAnHuanJie"; source = "\\192.168.10.240\public\changanhuanjie"; name = "长安幻街_240" },
     [map_dir]@{ link = "C:\sy\WuJinShenYu_8"; source = "\\192.168.10.240\public\WuJinShenYu"; name = "无尽神域_240" },
+    [map_dir]@{ link = "C:\sy\WuJinShenYu"; source = "\\192.168.10.240\public\WuJinShenYu"; name = "无尽神域_240" },
     [map_dir]@{ link = "C:\sy\WuDiJianHun_8"; source = "\\192.168.10.240\public\WuDiJianHun"; name = "无敌剑魂_240" },
+    [map_dir]@{ link = "C:\sy\WuDiJianHun"; source = "\\192.168.10.240\public\WuDiJianHun"; name = "无敌剑魂_240" },
     [map_dir]@{ link = "C:\sy\WanGuShenHua_8"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
+    [map_dir]@{ link = "C:\sy\WanGuShenHua"; source = "\\192.168.10.240\public\WanGuShenHua"; name = "万古神话_240" },
     [map_dir]@{ link = "C:\sy\LianQiShiWanNian_8"; source = "\\192.168.10.253\public\LianQiShiWanNian"; name = "炼气十万年_240" },
+    [map_dir]@{ link = "C:\sy\LianQiShiWanNian"; source = "\\192.168.10.253\public\LianQiShiWanNian"; name = "炼气十万年_240" },
     [map_dir]@{ link = "C:\sy\CangFeng_8"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
+    [map_dir]@{ link = "C:\sy\CangFeng"; source = "\\192.168.10.240\public\CangFeng"; name = "藏锋_240" },
     [map_dir]@{ link = "C:\sy\WGXD"; source = "\\192.168.10.242\public\WGXD"; name = "万古邪帝_240" },
     [map_dir]@{ link = "C:\sy\LongMaiWuShen"; source = "\\192.168.10.240\public\LongMaiWuShen"; name = "龙脉武神_240" },
     [map_dir]@{ link = "C:\sy\RenJianZuiDeYi_8"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" },
+    [map_dir]@{ link = "C:\sy\RenJianZuiDeYi"; source = "\\192.168.10.240\public\renjianzuideyi"; name = "人间最得意_240" },
 
     [map_dir]@{ link = "C:\sy\WanYuFengShen_9"; source = "\\192.168.10.218\WanYuFengShen"; name = "万域封神_218" },
     [map_dir]@{ link = "C:\sy\KuangShenMoZun_9"; source = "\\192.168.10.218\KuangShenMoZun"; name = "狂神魔尊_218" },
     [map_dir]@{ link = "C:\sy\DuBuXiaoYao_8"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
+    [map_dir]@{ link = "C:\sy\DuBuXiaoYao"; source = "\\192.168.10.250\public\DuBuXiaoYao_3"; name = "独步逍遥v3_250" },
     [map_dir]@{ link = "C:\sy\SSWH"; source = "\\192.168.10.240\public\SSWH"; name = "双生武魂_240" },
     [map_dir]@{ link = "C:\sy\WDSXTQL"; source = "\\192.168.10.242\public\WDSXTQL"; name = "我的师兄太强了_240" },
     [map_dir]@{ link = "C:\sy\ZMLCLWDSWD"; source = "\\192.168.10.240\public\ZMLCLWDSWD"; name = "宗门里除了我都是卧底_240" },
@@ -163,4 +176,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run4.22.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run5.exe -requireAdmin
