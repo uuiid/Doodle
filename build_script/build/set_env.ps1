@@ -31,6 +31,8 @@ if ($args.Length -ne 0) {
   $CmakeProcess = Start-Process -FilePath $args[0] -ArgumentList $args[1..($args.Count - 1)] -WorkingDirectory $DoodleRoot -NoNewWindow -PassThru
   while ($CmakeProcess.HasExited -eq $false) {
     $CmakeProcess.Refresh()
+    # 等待 0.1s
+    Start-Sleep -Milliseconds 100
   }
 }
 
