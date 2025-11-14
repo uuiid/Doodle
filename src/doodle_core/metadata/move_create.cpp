@@ -136,4 +136,15 @@ std::vector<image_attr> image_attr::make_default_attr(
 
   return list;
 }
+std::vector<image_attr> image_attr::make_default_attr(const std::vector<FSys::path>& in_path_list) {
+  std::vector<image_attr> list{};
+  list = in_path_list | ranges::views::transform([&](const FSys::path& in_path) -> image_attr {
+           image_attr l_attribute{};
+           l_attribute.path_attr = in_path;
+           return l_attribute;
+         }) |
+         ranges::to_vector;
+  image_attr::extract_num(list);
+  return list;
+}
 }  // namespace doodle::movie

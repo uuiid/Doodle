@@ -36,9 +36,12 @@ class DOODLE_CORE_API image_attr : boost::totally_ordered<image_attr> {
 
   static void extract_num(std::vector<image_attr>& in_image_list);
 
+  /// 包含水印的默认属性生成, 水印包含 集数, 镜头号, 时间, 帧率, 帧数等
   static std::vector<image_attr> make_default_attr(
       const episodes* in_episodes, const shot* in_shot, const std::vector<FSys::path>& in_path_list
   );
+  /// 这个是不包含任何的水印, 只是单纯的路径转换和排序
+  static std::vector<image_attr> make_default_attr(const std::vector<FSys::path>& in_path_list);
 
   bool operator<(const image_attr& in_rhs) const noexcept;
   bool operator==(const image_attr& in_rhs) const noexcept;

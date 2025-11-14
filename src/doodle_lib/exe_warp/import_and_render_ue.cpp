@@ -231,14 +231,14 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
     boost::system::error_code l_ec{};
     auto l_move_paths = clean_1001_before_frame(arg_.out_file_dir_, arg_.begin_time_);
     detail::create_move(
-        arg_.create_move_path_, logger_ptr_,
-        movie::image_attr::make_default_attr(&arg_.episodes_, &arg_.shot_, l_move_paths), arg_.size_
+        arg_.create_move_path_, logger_ptr_, movie::image_attr::make_default_attr(l_move_paths), arg_.size_
     );
   }
   for (auto&& p : arg_.update_ue_path_) {
     logger_ptr_->info("复制UE资源文件 from {} to {}", p.from_, p.to_);
     FSys::copy_diff(p.from_, p.to_, logger_ptr_);
   }
+  co_await kitsu_client_->comment_task(shot_task_id_, "ue自动运行生成视频", arg_.create_move_path_);
 }
 
 }  // namespace doodle
