@@ -85,8 +85,7 @@
       "displayName": "调试 doodle exe",
       "inherits": "debug",
       "targets": [
-        "doodle_kitsu_supplement",
-        "test_main"
+        "doodle_kitsu_supplement"
       ]
     },
     {

@@ -50,8 +50,8 @@
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
-        "--target",
-        "doodle_kitsu_supplement"
+        "--preset",
+        "debug_doodle"
       ],
       "problemMatcher": [
         "$msCompile"
@@ -73,6 +73,7 @@
       "args": [
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--build",
+        "${workspaceFolder}/build/${input:build_dir}",
         "--target",
         "test_main"
       ],
@@ -86,7 +87,7 @@
         "panel": "dedicated",
         "showReuseMessage": true,
         "clear": true,
-        "close": true
+        "close": false
       }
     },
     {
@@ -236,13 +237,14 @@
       "type": "command",
       "command": "extension.commandvariable.pickStringRemember",
       "args": {
+        "key": "test_list_key",
+        "addLabelToTop": "${remember:test_list_key}",
         "fileName": "${workspaceFolder}/.vscode/test_list.json",
         "fileFormat": "json",
         "description": "选择测试",
-        "jsonOption": {
-          "label": "content.options[__itemIdx__]",
-          "value": "content.options[__itemIdx__]"
-        }
+        "jsonOption": [
+          "content.options[__itemIdx__]"
+        ]
       }
     }
   ]
