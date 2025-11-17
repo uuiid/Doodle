@@ -21,6 +21,7 @@
 #ifdef fsin
 #undef fsin
 #endif
+#include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include "boost/asio/post.hpp"
@@ -42,6 +43,7 @@
 #include <maya/MAnimControl.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
+
 
 namespace doodle::maya_plug {
 
@@ -106,7 +108,7 @@ void export_fbx_facet::play_blast() {
 
 bool export_fbx_facet::post(const nlohmann::json& in_argh) {
   bool l_ret                        = false;
-  maya_exe_ns::export_fbx_arg l_arg = in_argh.get<maya_exe_ns::export_fbx_arg>();
+  export_fbx_arg l_arg = in_argh.get<export_fbx_arg>();
 
   if (l_arg.get_file_path().empty()) return l_ret;
   out_path_file_ = l_arg.get_out_path_file();

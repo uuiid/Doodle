@@ -17,6 +17,7 @@
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -167,7 +168,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       in_json.get_to(*l_connect_video_args);
       arg_ = l_connect_video_args;
     } else {  /// 导出fbx
-      auto l_arg_t = std::make_shared<maya_exe_ns::export_fbx_arg>();
+      auto l_arg_t = std::make_shared<export_fbx_arg>();
       in_json.get_to(*l_arg_t);
       arg_ = l_arg_t;
     }
