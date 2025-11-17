@@ -28,6 +28,7 @@
 #include <fmt/compile.h>
 #include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
 
@@ -166,6 +167,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
+  SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/maya", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
@@ -193,6 +195,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
   for (auto&& l_path : *in_file_path) {
     for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
       if (p.is_directory()) continue;
+      SPDLOG_WARN("上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -218,6 +221,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     for (auto&& p :
          FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
       if (p.is_directory()) continue;
+      SPDLOG_WARN("上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -227,6 +231,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     // 否则上传工程文件
     for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content)) {
       if (p.is_directory()) continue;
+      SPDLOG_WARN("上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -234,6 +239,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     }
     for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_config)) {
       if (p.is_directory()) continue;
+      SPDLOG_WARN("上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -255,6 +261,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
+  SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/image", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
