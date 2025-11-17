@@ -53,6 +53,11 @@ DOODLE_HTTP_JWT_FUN(actions_tasks_export_rig_sk)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/tasks/{task_id}/export-anim-fbx
+DOODLE_HTTP_JWT_FUN(actions_tasks_export_anim_fbx)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid task_id_{};
+DOODLE_HTTP_FUN_END()
 
 // /api/actions/projects/{project_id}/shots/{shot_id}/working-file
 DOODLE_HTTP_JWT_FUN(actions_projects_shots_working_file)

@@ -28,6 +28,7 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include "exe_warp/export_fbx_arg.h"
 #include <cstddef>
 #include <filesystem>
 #include <fmt/format.h>
@@ -484,6 +485,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
         boost::beast::http::status::bad_request, "仅支持角色和道具, 地编, 特效类型资产导出 rig sk"
     );
   }
+  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_anim_fbx::post(
+    session_data_ptr in_handle
+) {
+  auto l_sql            = g_ctx().get<sqlite_database>();
+  auto l_task           = l_sql.get_by_uuid<task>(task_id_);
+  auto l_proj           = l_sql.get_by_uuid<project>(l_task.project_id_);
+  auto l_entity         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
+  episodes l_episodes{l_episode_entity};
+  shot l_shot{l_entity};
+
+  export_fbx_arg::get_export_fbx_arg l_arg{};
+  l_arg.movie_file_ = get_shots_animation_file_name(l_episode_entity.name_, l_entity.name_, l_proj.code_);
+  l_arg.movie_file_.replace_extension(".mp4");
+  l_arg.film_aperture_ = l_proj.get_film_aperture();
+  l_arg.size_          = image_size{.width = l_proj.get_resolution().first, .height = l_proj.get_resolution().second};
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
