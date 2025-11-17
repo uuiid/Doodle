@@ -45,6 +45,10 @@ class http_stream_base {
   buffer_type buffer_{};
   socket_type_ptr socket_;
   chrono::sys_time_pos last_use_time_;
+  chrono::seconds timeout_{30};
+  std::optional<chrono::seconds> next_timeout_{30};
+
+  virtual void expires_after_impl(std::chrono::seconds in_seconds) = 0;
 
  public:
   template <typename... Args>
@@ -62,8 +66,17 @@ class http_stream_base {
 
   // 可选的 body 限制
   std::optional<std::size_t> body_limit_{};
-  chrono::seconds timeout_{30};
-  // channel_type queue_;
+  void expires_after(std::chrono::seconds in_seconds) {
+    expires_after_impl(in_seconds);
+    last_use_time_ = chrono::sys_time_pos::clock::now();
+    if (next_timeout_) {
+      timeout_ = *next_timeout_;
+      next_timeout_.reset();
+    }
+  }
+
+  void set_timeout(std::chrono::seconds in_seconds) { next_timeout_ = in_seconds; }
+  const std::chrono::seconds& get_timeout() const { return timeout_; }
 
   // 解析url
   void parse_url(std::string in_url) {
@@ -84,6 +97,7 @@ class http_stream_base {
     auto l_now = chrono::sys_time_pos::clock::now();
     return (l_now - last_use_time_) > (timeout_ - 3s);
   }
+
   // copy constructor
   http_stream_base(const http_stream_base&)            = delete;
   // move constructor
@@ -140,10 +154,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
   bool is_open() { return socket_->socket().is_open(); }
 
   void reset_socket() { socket_ = std::make_unique<socket_type>(socket_->get_executor()); }
-  void expires_after(std::chrono::seconds in_seconds) {
-    socket_->expires_after(in_seconds);
-    last_use_time_ = chrono::sys_time_pos::clock::now();
-  }
+  void expires_after_impl(std::chrono::seconds in_seconds) { socket_->expires_after(in_seconds); }
   // read and write
   template <typename ResponseBody, typename RequestType, typename Handle>
   auto read_and_write(
@@ -231,9 +242,8 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
     socket_ = std::make_unique<boost::beast::ssl_stream<boost::beast::tcp_stream>>(socket_->get_executor(), ctx_);
     set_ssl();
   }
-  void expires_after(std::chrono::seconds in_seconds) {
+  void expires_after_impl(std::chrono::seconds in_seconds) {
     boost::beast::get_lowest_layer(*socket_).expires_after(in_seconds);
-    last_use_time_ = chrono::sys_time_pos::clock::now();
   }
 
   // read and write
