@@ -5,6 +5,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <filesystem>
 
 namespace doodle {
 
@@ -19,6 +20,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   image_size size_{};
 
   FSys::path maya_file_{};
+  FSys::path movie_file_{};
   uuid task_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 

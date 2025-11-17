@@ -27,7 +27,7 @@ using filetime_duration = std::chrono::duration<std::int64_t, std::ratio<1, 10'0
 constexpr std::chrono::duration<std::int64_t> nt_to_unix_epoch{INT64_C(-11644473600)};
 static constexpr chrono::seconds S_epoch_diff{6437664000};
 
-std::time_t last_write_time_t(const path &in_path) {
+std::time_t last_write_time_t(const path& in_path) {
   auto k_time = last_write_time(in_path);
 #if defined(_WIN32) && defined(_MSC_VER)
 
@@ -48,7 +48,7 @@ std::time_t last_write_time_t(const path &in_path) {
 #endif
 }
 
-chrono::sys_time_pos last_write_time_point(const path &in_path) {
+chrono::sys_time_pos last_write_time_point(const path& in_path) {
   auto k_time = last_write_time(in_path);
 #if defined(_WIN32) && defined(_MSC_VER)
 
@@ -69,26 +69,26 @@ chrono::sys_time_pos last_write_time_point(const path &in_path) {
   return k_sys_time_pos;
 #endif
 }
-void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point) {
+void last_write_time_point(const path& in_path, const std::chrono::system_clock::time_point& in_time_point) {
   const auto asDuration  = chrono::duration_cast<filetime_duration>(in_time_point.time_since_epoch());
   const auto withNtEpoch = asDuration - nt_to_unix_epoch;
   std::filesystem::file_time_type k_time{withNtEpoch};
   std::filesystem::last_write_time(in_path, k_time);
 }
 #else
-std::time_t last_write_time_t(const path &in_path) { return last_write_time(in_path); }
+std::time_t last_write_time_t(const path& in_path) { return last_write_time(in_path); }
 
-chrono::sys_time_pos last_write_time_point(const path &in_path) {
+chrono::sys_time_pos last_write_time_point(const path& in_path) {
   return chrono::sys_time_pos::clock::from_time_t(last_write_time(in_path));
 }
 
-void last_write_time_point(const path &in_path, const std::chrono::system_clock::time_point &in_time_point) {
+void last_write_time_point(const path& in_path, const std::chrono::system_clock::time_point& in_time_point) {
   last_write_time(in_path, std::chrono::system_clock::to_time_t(in_time_point));
 }
 
 #endif
 
-void open_explorer(const path &in_path) {
+void open_explorer(const path& in_path) {
   DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
   ShellExecute(
       nullptr, _T("open"), _T("EXPLORER.EXE"), in_path.lexically_normal().native().c_str(), nullptr, SW_SHOWDEFAULT
@@ -96,12 +96,12 @@ void open_explorer(const path &in_path) {
   // std::system(fmt::format(R"(explorer.exe {})", in_path.generic_string()).c_str());
 }
 
-void backup_file(const path &source) {
+void backup_file(const path& source) {
   auto backup_path = source.parent_path() / "backup" / add_time_stamp(source).filename();
   if (!exists(backup_path.parent_path())) create_directories(backup_path.parent_path());
   copy_file(source, backup_path, copy_options::overwrite_existing);
 }
-path add_time_stamp(const path &in_path) {
+path add_time_stamp(const path& in_path) {
   auto k_fn = in_path.stem();
   k_fn += fmt::format("_{:%Y_%m_%d_%H_%M_%S}", std::chrono::system_clock::now());
   k_fn += in_path.extension();
@@ -109,16 +109,22 @@ path add_time_stamp(const path &in_path) {
   return k_path;
 }
 
-std::vector<path> list_files(const path &in_dir) {
-  return std::vector<path>{directory_iterator{in_dir}, directory_iterator{}};
+std::vector<path> list_files(const path& in_dir, const FSys::path& in_extension) {
+  std::vector<path> l_out_files;
+  for (const auto& l_it : directory_iterator{in_dir}) {
+    if (l_it.is_regular_file() && (in_extension.empty() || l_it.path().extension() == in_extension)) {
+      l_out_files.emplace_back(l_it.path());
+    }
+  }
+  return l_out_files;
 }
-bool is_sub_path(const path &in_parent, const path &in_child) {
+bool is_sub_path(const path& in_parent, const path& in_child) {
   return boost::istarts_with(in_parent.generic_string(), in_child.generic_string());
 }
 
 FSys::path write_tmp_file(
-    const std::string &in_falg, const std::string &in_string, const std::string &in_extension,
-    const std::optional<std::string> &in_file_name, std::int32_t in_model
+    const std::string& in_falg, const std::string& in_string, const std::string& in_extension,
+    const std::optional<std::string>& in_file_name, std::int32_t in_model
 ) {
   auto tmp_path = core_set::get_set().get_cache_root(
       fmt::format(
@@ -141,7 +147,7 @@ FSys::path write_tmp_file(
   return k_tmp_path;
 }
 
-FSys::path from_quotation_marks(const std::string &in_string) {
+FSys::path from_quotation_marks(const std::string& in_string) {
   if (in_string.empty()) return FSys::path{};
   if (*in_string.begin() == '"' && *(--in_string.end()) == '"') {
     return FSys::path{in_string.substr(1, in_string.size() - 1)};
@@ -150,13 +156,13 @@ FSys::path from_quotation_marks(const std::string &in_string) {
 }
 
 FSys::path get_cache_path() { return FSys::temp_directory_path() / "Doodle" / "cache"; }
-FSys::path get_cache_path(const FSys::path &in_path) {
+FSys::path get_cache_path(const FSys::path& in_path) {
   auto l_tmp = get_cache_path() / in_path;
   if (!FSys::exists(l_tmp)) FSys::create_directories(l_tmp);
   return l_tmp;
 }
 
-bool folder_is_save(const FSys::path &in_file_path) {
+bool folder_is_save(const FSys::path& in_file_path) {
 // #define DOODLE_FSYS_WIN32
 #ifdef DOODLE_FSYS_WIN32
   DWORD l_len{};
@@ -214,7 +220,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
   auto l_temp = l_path / core_set::get_set().get_uuid_str();
   try {
     FSys::fstream{l_temp, std::ios::out} << "test_file";
-  } catch (const FSys::filesystem_error &e) {
+  } catch (const FSys::filesystem_error& e) {
     DOODLE_LOG_INFO("文件 {} 不可写入 {}", l_path.generic_string(), e.what());
     return false;
   }
@@ -227,7 +233,7 @@ bool folder_is_save(const FSys::path &in_file_path) {
   return true;
 #endif
 }
-void software_flag_file(const FSys::path &in_file_path, const boost::uuids::uuid &in_uuid) {
+void software_flag_file(const FSys::path& in_file_path, const boost::uuids::uuid& in_uuid) {
   if (!FSys::exists(in_file_path.parent_path())) return;
 
   auto l_path = in_file_path;
@@ -249,7 +255,7 @@ void software_flag_file(const FSys::path &in_file_path, const boost::uuids::uuid
   //  }
   //  THROW_IF_WIN32_BOOL_FALSE(::SetFileAttributesW(l_path.c_str(), l_file_attr | FILE_ATTRIBUTE_HIDDEN));
 }
-bool is_hidden(const FSys::path &in_file_path) {
+bool is_hidden(const FSys::path& in_file_path) {
   if (!FSys::exists(in_file_path.parent_path())) return false;
   auto l_file_info = ::GetFileAttributesW(in_file_path.c_str());
   if (l_file_info == INVALID_FILE_ATTRIBUTES) {
@@ -258,7 +264,7 @@ bool is_hidden(const FSys::path &in_file_path) {
   }
   return (l_file_info & FILE_ATTRIBUTE_HIDDEN) == FILE_ATTRIBUTE_HIDDEN;
 }
-boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
+boost::uuids::uuid software_flag_file(const FSys::path& in_file_path) {
   auto l_path = in_file_path;
   l_path.replace_extension(doodle_config::doodle_flag_name);
   if (!FSys::exists(l_path)) return boost::uuids::nil_uuid();
@@ -269,17 +275,17 @@ boost::uuids::uuid software_flag_file(const FSys::path &in_file_path) {
   return l_uuid;
 };
 
-bool is_windows_remote_path(const FSys::path &in_file_path) {
+bool is_windows_remote_path(const FSys::path& in_file_path) {
   return in_file_path.has_root_path() && in_file_path.root_path().generic_string().starts_with("//");
 }
-FSys::path split_uuid_path(const FSys::path &in_file_path) {
+FSys::path split_uuid_path(const FSys::path& in_file_path) {
   auto l_filename        = in_file_path.stem().generic_string();
   FSys::path l_uuid_str1 = l_filename.substr(0, 3);
   auto l_uuid_str2       = l_filename.substr(3, 3);
   return l_uuid_str1 / l_uuid_str2 / in_file_path;
 }
 
-bool copy_diff_impl(const FSys::path &from, const FSys::path &to, logger_ptr in_logger) {
+bool copy_diff_impl(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
   if (from.extension() == doodle_config::doodle_flag_name) return false;
   if (!FSys::exists(to) /* || FSys::file_size(from) != FSys::file_size(to)  */ ||
       FSys::last_write_time(from) > FSys::last_write_time(to)) {
@@ -290,12 +296,12 @@ bool copy_diff_impl(const FSys::path &from, const FSys::path &to, logger_ptr in_
   return false;
 }
 
-bool copy_diff(const FSys::path &from, const FSys::path &to, logger_ptr in_logger) {
+bool copy_diff(const FSys::path& from, const FSys::path& to, logger_ptr in_logger) {
   if (!FSys::exists(from)) return false;
   if (in_logger) in_logger->warn("复制 {} -> {}", from, to);
   if (FSys::is_regular_file(from)) return copy_diff_impl(from, to, in_logger);
   bool l_ret{};
-  for (auto &&l_file : FSys::recursive_directory_iterator(from)) {
+  for (auto&& l_file : FSys::recursive_directory_iterator(from)) {
     auto l_to_file = to / l_file.path().lexically_proximate(from);
     if (l_file.is_regular_file()) l_ret |= copy_diff_impl(l_file.path(), l_to_file, in_logger);
   }
@@ -308,10 +314,10 @@ bool copy_diff(const FSys::path &from, const FSys::path &to, logger_ptr in_logge
 
 namespace nlohmann {
 // template <>
-void adl_serializer<boost::filesystem::path>::to_json(json &j, const boost::filesystem::path &in_path) {
+void adl_serializer<boost::filesystem::path>::to_json(json& j, const boost::filesystem::path& in_path) {
   j = in_path.generic_string();
 }
-void adl_serializer<boost::filesystem::path>::from_json(const json &j, boost::filesystem::path &in_path) {
+void adl_serializer<boost::filesystem::path>::from_json(const json& j, boost::filesystem::path& in_path) {
   in_path = j.get<std::string>();
 }
 }  // namespace nlohmann

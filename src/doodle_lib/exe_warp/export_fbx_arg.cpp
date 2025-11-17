@@ -1,5 +1,13 @@
 #include "export_fbx_arg.h"
 
+#include "doodle_core/core/file_sys.h"
+#include "doodle_core/metadata/image_size.h"
+#include "doodle_core/metadata/move_create.h"
+
+#include <doodle_lib/long_task/image_to_move.h>
+
+#include <filesystem>
+
 namespace doodle {
 void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
   from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
@@ -21,6 +29,16 @@ void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
   in_json["camera_film_aperture"] = out_obj.film_aperture_;
   in_json["image_size"]           = out_obj.size_;
 }
-boost::asio::awaitable<void> export_fbx_arg::run() { co_await arg::async_run_maya(); }
+boost::asio::awaitable<void> export_fbx_arg::run() {
+  co_await arg::async_run_maya();
+  if (!out_arg_.movie_file_dir.empty()) {
+    SPDLOG_INFO("导出排屏目录 {}", out_arg_.movie_file_dir);
+
+    detail::create_move(
+        movie_file_, logger_ptr_,
+        movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), size_
+    );
+  }
+}
 
 }  // namespace doodle

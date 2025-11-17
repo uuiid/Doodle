@@ -22,9 +22,9 @@ using namespace std::chrono;
 #define USE_STD_FSYS
 
 namespace doodle {
-using logger_ptr = std::shared_ptr<spdlog::logger>;
+using logger_ptr     = std::shared_ptr<spdlog::logger>;
 using logger_ptr_raw = spdlog::logger*;
-}
+}  // namespace doodle
 
 namespace doodle::FSys {
 #ifdef USE_STD_FSYS
@@ -48,7 +48,7 @@ DOODLE_CORE_API void last_write_time_point(
 DOODLE_CORE_API path add_time_stamp(const path& in_path);
 DOODLE_CORE_API void open_explorer(const path& in_path);
 DOODLE_CORE_API void backup_file(const path& source);
-DOODLE_CORE_API std::vector<path> list_files(const path& in_dir);
+DOODLE_CORE_API std::vector<path> list_files(const path& in_dir, const FSys::path& in_extension = {});
 DOODLE_CORE_API bool is_sub_path(const path& in_parent, const path& in_child);
 
 FSys::path DOODLE_CORE_API write_tmp_file(
