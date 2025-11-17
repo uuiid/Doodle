@@ -44,14 +44,11 @@
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
 
-
 namespace doodle::maya_plug {
 
-void export_fbx_facet::create_ref_file() {
+void export_fbx_facet::export_fbx() {
   DOODLE_LOG_INFO("开始扫瞄引用");
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-}
-void export_fbx_facet::export_fbx() {
   export_file_fbx l_ex{};
   maya_exe_ns::maya_out_arg l_out_arg{};
   auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
@@ -69,6 +66,15 @@ void export_fbx_facet::export_fbx() {
   auto l_cam_path = l_ex.export_cam(l_gen, film_aperture_);
 
   l_out_arg.out_file_list.emplace_back(l_cam_path);
+
+  if (create_play_blast_) {
+    DOODLE_LOG_INFO("开始排屏");
+    class play_blast l_p{};
+
+    const MTime k_end_time   = MAnimControl::maxTime();
+    l_out_arg.movie_file_dir = l_p.play_blast_(anim_begin_time_, k_end_time, size_);
+  }
+
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
@@ -76,44 +82,21 @@ void export_fbx_facet::export_fbx() {
     FSys::ofstream{out_path_file_} << l_json.dump(4);
   } else
     log_info(fmt::format("导出文件 {}", l_json.dump(4)));
-}
 
-void export_fbx_facet::rig_file_export() {
-  // export_file_fbx l_ex{};
-  // maya_exe_ns::maya_out_arg l_out_arg{};
-  // auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
-  // l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
-  // l_out_arg.begin_time  = anim_begin_time_.value();
-  // l_out_arg.end_time    = MAnimControl::maxTime().value();
-  // auto l_out_path       = l_ex.export_rig();
-  // l_out_arg.out_file_list.emplace_back(l_out_path, FSys::path{});
-  // nlohmann::json l_json = l_out_arg;
-  // if (!out_path_file_.empty()) {
-  //   if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
-  //   default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
-  //   FSys::ofstream{out_path_file_} << l_json.dump(4);
-  // } else
-  //   log_info(fmt::format("导出文件 {}", l_json.dump(4)));
-}
-
-void export_fbx_facet::play_blast() {
-  DOODLE_LOG_INFO("开始排屏");
-  class play_blast l_p{};
-
-  const MTime k_end_time = MAnimControl::maxTime();
-  l_p.play_blast_(anim_begin_time_, k_end_time, size_);
+  app_base::Get().stop_app();
 }
 
 bool export_fbx_facet::post(const nlohmann::json& in_argh) {
-  bool l_ret                        = false;
+  bool l_ret           = false;
   export_fbx_arg l_arg = in_argh.get<export_fbx_arg>();
 
   if (l_arg.get_file_path().empty()) return l_ret;
-  out_path_file_ = l_arg.get_out_path_file();
-  film_aperture_ = l_arg.film_aperture_;
-  size_          = l_arg.size_;
+  out_path_file_     = l_arg.get_out_path_file();
+  film_aperture_     = l_arg.film_aperture_;
+  size_              = l_arg.size_;
+  create_play_blast_ = l_arg.create_play_blast_;
 
-  l_ret          = true;
+  l_ret              = true;
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
   maya_file_io::set_workspace(l_arg.get_file_path());
@@ -138,16 +121,8 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
            l_arg.get_file_path().filename()]() { maya_file_io::save_file(l_target); }
   );
   default_logger_raw()->info("导出动画中的文件");
-  boost::asio::post(l_s, [this]() {
-    this->create_ref_file();
-    this->export_fbx();
-  });
-  if (l_arg.create_play_blast_) {
-    DOODLE_LOG_INFO("安排排屏");
-    boost::asio::post(l_s, [l_s, this]() { this->play_blast(); });
-  }
 
-  boost::asio::post(l_s, [](auto&&...) { app_base::Get().stop_app(); });
+  boost::asio::post(l_s, [this]() { this->export_fbx(); });
 
   return l_ret;
 }

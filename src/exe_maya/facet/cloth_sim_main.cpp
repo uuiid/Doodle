@@ -166,10 +166,9 @@ void cloth_sim::play_blast() {
   DOODLE_LOG_INFO("开始排屏");
   class play_blast l_p{};
 
-  const MTime k_end_time = MAnimControl::maxTime();
-  l_p.set_save_dir(maya_file_io::work_path() / "mov");
-  l_p.conjecture_ep_sc();
-  l_p.play_blast_(anim_begin_time_, k_end_time, size_);
+  const MTime k_end_time  = MAnimControl::maxTime();
+
+  out_arg_.movie_file_dir = l_p.play_blast_(anim_begin_time_, k_end_time, size_);
 }
 
 void cloth_sim::export_abc() {

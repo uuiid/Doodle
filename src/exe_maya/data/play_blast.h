@@ -13,6 +13,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "maya/MApiNamespace.h"
+#include <filesystem>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MString.h>
@@ -36,7 +37,7 @@ class play_blast {
  public:
   play_blast();
 
-  MStatus play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size);
+  FSys::path play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size);
 
   inline FSys::path get_out_path() const { return get_file_dir(); }
 };

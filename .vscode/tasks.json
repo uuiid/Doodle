@@ -63,7 +63,7 @@
         "panel": "dedicated",
         "showReuseMessage": true,
         "clear": true,
-        "close": true
+        "close": false
       }
     },
     {

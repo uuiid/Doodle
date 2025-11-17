@@ -17,12 +17,11 @@ class export_fbx_facet final {
   MTime anim_begin_time_{};
   std::double_t film_aperture_{};
   image_size size_{};
+  bool create_play_blast_{false};
 
-  void create_ref_file();
   void export_fbx();
   void rig_file_export();
 
-  void play_blast();
   std::vector<reference_file> ref_files_{};
   // 输出结果路径
   FSys::path out_path_file_{};
