@@ -167,6 +167,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
+  http_client_ptr_->reset_socket();
   SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/maya", in_task_id), in_file_path,
@@ -184,8 +185,9 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
+  http_client_ptr_->reset_socket();
 
-  auto l_ue_project_file        = ue_exe_ns::find_ue_project_file(in_file_path->front());
+  auto l_ue_project_file = ue_exe_ns::find_ue_project_file(in_file_path->front());
 
   if (l_ue_project_file.extension() != doodle_config::ue4_uproject_ext)
     throw_exception(doodle_error{"上传的文件不是ue工程文件, 或者UE工程内部文件 {}", *in_file_path});
@@ -214,6 +216,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
   http_client_ptr_->timeout_    = 1000s;
   if (in_file_path.extension() != doodle_config::ue4_uproject_ext)
     throw_exception(doodle_error{"上传的文件不是ue工程文件 {}", in_file_path});
+  http_client_ptr_->reset_socket();
 
   auto l_uproject_dir = in_file_path.parent_path();
   if (FSys::exists(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
@@ -262,6 +265,8 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   http_client_ptr_->timeout_    = 1000s;
   SPDLOG_WARN("上传文件 {}", in_file_path);
+  http_client_ptr_->reset_socket();
+
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/image", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
