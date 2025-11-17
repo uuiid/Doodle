@@ -17,6 +17,7 @@
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/beast/http/empty_body.hpp>
+#include <boost/beast/http/field.hpp>
 #include <boost/beast/http/file_body_fwd.hpp>
 #include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/scope/scope_exit.hpp>
@@ -25,6 +26,7 @@
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <fmt/compile.h>
+#include <fmt/format.h>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <vector>
@@ -145,6 +147,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
   set_req_headers(l_req, "application/octet-stream");
   l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);
+  l_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", http_client_ptr_->timeout_.count()));
   boost::system::error_code l_ec{};
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
