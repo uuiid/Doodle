@@ -69,6 +69,13 @@ class kitsu_client {
   /// 上传整个工程文件
   boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
+  /// 上传镜头动画maya文件
+  boost::asio::awaitable<void> upload_shot_animation_maya(uuid in_shot_task_id, FSys::path in_file_path);
+  /// 上传镜头动画导出文件
+  boost::asio::awaitable<void> upload_shot_animation_export_file(
+      uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
+  );
+
   boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
   /// 对task进行评论(并且附加预览图或者视频)
   boost::asio::awaitable<void> comment_task(
@@ -76,6 +83,7 @@ class kitsu_client {
       const uuid& in_task_status_id = uuid{}, const std::vector<std::string>& in_checklists = {},
       const std::vector<std::string>& in_links = {}
   ) const;
+  boost::asio::awaitable<nlohmann::json> get_export_anim_fbx(uuid in_task_id) const;
 };
 
 }  // namespace doodle::kitsu
