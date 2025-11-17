@@ -18,6 +18,11 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "presentation": {
+                "hidden": true,
+                "group": "",
+                "order": 1
+            }
         },
         {
             "name": "Doodle_debug_local",
@@ -32,6 +37,11 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "presentation": {
+                "hidden": true,
+                "group": "",
+                "order": 1
+            }
         },
         {
             "name": "Doodle_maya_debug",
@@ -58,7 +68,12 @@
                     "value": "${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya"
                 }
             ],
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "presentation": {
+                "hidden": false,
+                "group": "maya",
+                "order": 1
+            }
         },
         {
             "name": "maya",
@@ -79,13 +94,23 @@
             ],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/stl.natvis",
-            "preLaunchTask": "cmake build maya"
+            "preLaunchTask": "cmake build maya",
+            "presentation": {
+                "hidden": false,
+                "group": "maya",
+                "order": 1
+            }
         },
         {
             "name": "maya (Windows) 附加",
             "type": "cppvsdbg",
             "request": "attach",
-            "processId": "${command:pickProcess}"
+            "processId": "${command:pickProcess}",
+            "presentation": {
+                "hidden": false,
+                "group": "maya",
+                "order": 1
+            }
         },
         {
             "name": "debug_test",
@@ -101,7 +126,12 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
             "console": "internalConsole",
-            "visualizerFile": "${workspaceFolder}/stl.natvis"
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "presentation": {
+                "hidden": false,
+                "group": "test",
+                "order": 1
+            }
         },
         {
             "name": "PowerShell Launch Current File",
@@ -134,20 +164,38 @@
             "configurations": [
                 "Doodle_debug",
                 "debug_test"
-            ]
+            ],
+            "preLaunchTask": "cmake build",
+            "presentation": {
+                "hidden": false,
+                "group": "test",
+                "order": 1
+            }
         },
         {
             "name": "Doodle_sercer/local",
             "configurations": [
                 "Doodle_debug",
                 "Doodle_debug_local"
-            ]
+            ],
+            "preLaunchTask": "cmake build",
+            "presentation": {
+                "hidden": false,
+                "group": "main",
+                "order": 1
+            }
         },
         {
             "name": "only server",
             "configurations": [
                 "Doodle_debug"
-            ]
+            ],
+            "preLaunchTask": "cmake build",
+            "presentation": {
+                "hidden": false,
+                "group": "main",
+                "order": 1
+            }
         }
     ]
 }
