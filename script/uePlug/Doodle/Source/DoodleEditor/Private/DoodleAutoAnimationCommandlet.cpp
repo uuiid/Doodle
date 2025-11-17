@@ -1403,11 +1403,11 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 	LFilter.ClassPaths.Add(UMaterial::StaticClass()->GetClassPathName());
 
 	TArray<UObject*> L_Save{};
-
+	UE_LOG(LogTemp, Log, TEXT("开始修正材质参数"));
 	IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
 	{
-		if (FPaths::IsUnderDirectory(InAss.PackagePath.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(
-			InAss.PackagePath.ToString(), TEXT("/Game/Prop/")))
+		if (FPaths::IsUnderDirectory(InAss.PackageName.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(
+			InAss.PackageName.ToString(), TEXT("/Game/Prop/")))
 		{
 			if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset()))
 			{
@@ -1415,11 +1415,15 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
 				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
 				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+				UE_LOG(LogTemp, Log, TEXT("修正材质参数 %s"), *InAss.PackageName.ToString());
+
 				L_Save.Add(L_Mat);
 			};
 		}
 		return true;
 	});
+	UE_LOG(LogTemp, Log, TEXT("修正材质参数完成"));
+
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	EditorAssetSubsystem->SaveLoadedAssets(L_Save);
 }
