@@ -42,8 +42,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
   auto l_router  = std::make_shared<http_route>();
   auto l_ctx     = g_ctx().get<kitsu_ctx_t>();
-  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
-  l_sid_ctx->register_namespace("/events");
+  // auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
+  // l_sid_ctx->register_namespace("/events");
   (*l_router)
       // clang-format off
       // 我们自己的后端
