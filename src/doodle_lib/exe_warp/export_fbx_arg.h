@@ -18,10 +18,8 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   bool create_play_blast_{};
   bool rig_file_export_{};
   std::double_t film_aperture_{};
-  image_size size_{};
 
   FSys::path maya_file_{};
-  FSys::path movie_file_{};
   uuid task_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 
