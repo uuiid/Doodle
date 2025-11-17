@@ -107,18 +107,6 @@ maya_exe_ns::maya_out_arg get_out_arg_impl(const FSys::path& in_path) {
 
 namespace maya_exe_ns {
 
-void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg::out_file_t& nlohmann_json_t) {
-  nlohmann_json_j["out_file"].get_to(nlohmann_json_t.out_file);
-  nlohmann_json_j["ref_file"].get_to(nlohmann_json_t.ref_file);
-  if (nlohmann_json_j.contains("hide_material_list"))
-    nlohmann_json_j.at("hide_material_list").get_to(nlohmann_json_t.hide_material_list);
-};
-
-void to_json(nlohmann::json& nlohmann_json_j, const maya_out_arg::out_file_t& nlohmann_json_t) {
-  nlohmann_json_j["out_file"]           = nlohmann_json_t.out_file.generic_string();
-  nlohmann_json_j["ref_file"]           = nlohmann_json_t.ref_file.generic_string();
-  nlohmann_json_j["hide_material_list"] = nlohmann_json_t.hide_material_list;
-};
 void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_json_t) {
   nlohmann_json_j["begin_time"].get_to(nlohmann_json_t.begin_time);
   nlohmann_json_j["end_time"].get_to(nlohmann_json_t.end_time);
@@ -206,7 +194,6 @@ void to_json(nlohmann::json& in_json, const replace_file_arg& out_obj) {
 void to_json(nlohmann::json& in_json, const export_rig_arg& out_obj) {
   to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
 }
-
 
 FSys::path find_maya_path() { return find_maya_path_impl(); }
 

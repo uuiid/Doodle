@@ -182,7 +182,7 @@ void cloth_sim::export_abc() {
   ranges::for_each(ref_files_, [&](reference_file& in_handle) {
     l_gen->set_fbx_path(true);
     auto l_path = l_ex_fbx.export_sim(in_handle, l_gen);
-    for (auto& p : l_path) out_arg_.out_file_list.emplace_back(p, in_handle.get_abs_path());
+    for (auto& p : l_path) out_arg_.out_file_list.emplace_back(p);
   });
 }
 
@@ -200,13 +200,13 @@ void cloth_sim::export_anim_file() {
       [&](reference_file& in_handle) {
         if (!in_handle.is_loaded()) in_handle.load_file();
         auto l_path = l_ex.export_anim(in_handle, l_gen);
-        out_arg_.out_file_list.emplace_back(l_path, in_handle.get_abs_path());
+        out_arg_.out_file_list.emplace_back(l_path);
       }
   );
 
   // 导出相机
   camera_path_ = l_ex.export_cam(l_gen, film_aperture_);
-  out_arg_.out_file_list.emplace_back(camera_path_, FSys::path{});  // 导出相机
+  out_arg_.out_file_list.emplace_back(camera_path_);  // 导出相机
 }
 void cloth_sim::write_config() {
   default_logger_raw()->log(log_loc(), level::info, "导出动画文件完成, 开始写出配置文件");

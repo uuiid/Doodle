@@ -68,7 +68,7 @@ bool export_rig_facet::post(const nlohmann::json& in_argh) {
     l_cloth_interfaces = l_cf->create_cloth();
   }
   auto l_out_path = l_ex.export_rig(l_ref);
-  for (auto&& p : l_out_path) l_out_arg.out_file_list.emplace_back(p, FSys::path{});
+  for (auto&& p : l_out_path) l_out_arg.out_file_list.emplace_back(p);
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());

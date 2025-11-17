@@ -26,22 +26,9 @@ class maya_exe;
 namespace maya_exe_ns {
 
 struct maya_out_arg {
-  struct out_file_t {
-    // 输出文件
-    FSys::path out_file{};
-    // 引用文件
-    FSys::path ref_file{};
-    // 需要隐藏的材质列表
-    std::vector<std::string> hide_material_list{};
-
-    friend void from_json(const nlohmann::json& nlohmann_json_j, out_file_t& nlohmann_json_t);
-
-    friend void to_json(nlohmann::json& nlohmann_json_j, const out_file_t& nlohmann_json_t);
-  };
-
   std::uint32_t begin_time{};
   std::uint32_t end_time{};
-  std::vector<out_file_t> out_file_list{};
+  std::vector<FSys::path> out_file_list{};
 
   friend void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_json_t);
 

@@ -217,10 +217,7 @@ $out_value = @"
   "begin_time": 1001,
   "end_time": 1200,
   "out_file_list": [
-    {
-      "out_file": "D:/test_files/test_anim_11_29/SK_Ch482A_Rig_mt.fbx",
-      "ref_file": ""
-    }
+    "D:/test_files/test_anim_11_29/SK_Ch482A_Rig_mt.fbx"
   ]
 }
 "@;

@@ -60,17 +60,13 @@ void export_fbx_facet::export_fbx() {
     if (i.export_group_attr()) {
       auto l_path = l_ex.export_anim(i, l_gen);
       if (!l_path.empty()) {
-        l_out_arg.out_file_list.emplace_back(l_path, i.get_abs_path());
+        l_out_arg.out_file_list.emplace_back(l_path);
       }
-    } else {
-      auto l_path = i.get_abs_path();
-      if (!l_path.empty()) l_out_arg.out_file_list.emplace_back(FSys::path{}, l_path);
     }
   }
   auto l_cam_path = l_ex.export_cam(l_gen, film_aperture_);
 
-  l_out_arg.out_file_list.emplace_back(l_cam_path, FSys::path{});
-
+  l_out_arg.out_file_list.emplace_back(l_cam_path);
   nlohmann::json l_json = l_out_arg;
   if (!out_path_file_.empty()) {
     if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());

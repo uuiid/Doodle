@@ -36,25 +36,24 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", maya_file_});
 
   for (auto& p : l_maya_file.out_file_list) {
-    SPDLOG_INFO("导出 {}", p.out_file);
+    SPDLOG_INFO("导出 {}", p);
 
     nlohmann::json l_json{};
-    l_json = import_and_render_ue_ns::import_skin_file{
-        .fbx_file_ = p.out_file, .import_dir_ = impl_.import_game_path_.parent_path()
-    };
+    l_json =
+        import_and_render_ue_ns::import_skin_file{.fbx_file_ = p, .import_dir_ = impl_.import_game_path_.parent_path()};
     auto l_tmp_path   = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
 
     auto l_ue_project = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
     if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};
 
-    logger_ptr_->warn("排队导入skin文件 {} {}", l_ue_project, p.out_file);
+    logger_ptr_->warn("排队导入skin文件 {} {}", l_ue_project, p);
     auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
     co_await async_run_ue(
         {l_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
          "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
         logger_ptr_, false, l_time_info
     );
-    l_time_info->info_ = fmt::format("导入skin文件 {}", p.out_file);
+    l_time_info->info_ = fmt::format("导入skin文件 {}", p);
     on_run_time_info_(*l_time_info);
   }
   // 上传文件
