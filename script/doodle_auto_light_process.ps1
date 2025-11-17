@@ -198,8 +198,8 @@ $logger_data = "[2024-12-06 13:36:45.014] [LQ_EP230_SC002A.ma] [warning] 开始�
 "[2024-12-06 13:42:53.521] [LQ_EP230_SC002A.ma] [info] 警告: line 1: Ch1103A_rig_hyw:upperLidMainCurve1CloseAutoShapeWrap_L (折回): 没有点被设置为向包裹加权尝试增加 maxDistance 设置";
 
 foreach ($log in $logger_data) {
-    Write-Host "$log" ;
-    Start-Sleep -Milliseconds 10;
+  Write-Host "$log" ;
+  Start-Sleep -Milliseconds 10;
 }
 $cmdLineArgs = [Environment]::GetCommandLineArgs()
 
@@ -217,8 +217,15 @@ $out_value = @"
   "begin_time": 1001,
   "end_time": 1200,
   "out_file_list": [
-    "D:/test_files/test_anim_11_29/SK_Ch482A_Rig_mt.fbx"
-  ]
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch220B_Rig_xqx_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch270A_rig_xqx_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch461A_rig_mhc_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch464E_rig_tjb_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_HuangTianZhanJi_rig_lzy_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_JianLingYao_rig_zsf_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch029B_Rig_XHQ_1001-1090.fbx"
+  ],
+  "movie_file_dir": ""
 }
 "@;
 

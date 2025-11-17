@@ -94,12 +94,8 @@ void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
   root_path_       = l_prj.path_;
 }
 void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
-  auto l_task = l_sql.get_by_uuid<task>(id_);
-
-  if (!(l_task.task_type_id_ == task_type::get_animation_id() ||
-        l_task.task_type_id_ == task_type::get_simulation_task_id()))
-    throw_exception(doodle_error{"未知的 task_type 类型"});
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_task   = l_sql.get_by_uuid<task>(id_);
 
   task_type_id_ = l_task.task_type_id_;
 
