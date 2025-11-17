@@ -42,12 +42,12 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
 
   auto l_router  = std::make_shared<http_route>();
   auto l_ctx     = g_ctx().get<kitsu_ctx_t>();
-  // auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
-  // l_sid_ctx->register_namespace("/events");
+  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
+  l_sid_ctx->register_namespace("/events");
   (*l_router)
       // clang-format off
       // 我们自己的后端
-      // .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
+      .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
       .reg_t<doodle_data_asset_file_maya>("/api/doodle/data/assets/{}/file/maya"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_ue>("/api/doodle/data/assets/{}/file/ue"_url(&doodle_data_asset_file_image::id_))
       .reg_t<doodle_data_asset_file_image>("/api/doodle/data/assets/{}/file/image"_url(&doodle_data_asset_file_image::id_))
