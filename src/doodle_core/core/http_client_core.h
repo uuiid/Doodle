@@ -45,8 +45,10 @@ class http_stream_base {
   buffer_type buffer_{};
   socket_type_ptr socket_;
   chrono::sys_time_pos last_use_time_;
-  chrono::seconds timeout_{30};
-  std::optional<chrono::seconds> next_timeout_{30};
+  static constexpr auto default_timeout_ = chrono::seconds{30};
+
+  chrono::seconds timeout_{default_timeout_};
+  std::optional<chrono::seconds> next_timeout_{default_timeout_};
 
   virtual void expires_after_impl(std::chrono::seconds in_seconds) = 0;
 
@@ -252,6 +254,8 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle = boost::asio::use_awaitable
   ) {
+    if (timeout_ != default_timeout_)
+      in_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", timeout_.count()));
     in_req.prepare_payload();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
         read_and_write_compose_parser<http_client_ssl, RequestType, ResponseBody>{
