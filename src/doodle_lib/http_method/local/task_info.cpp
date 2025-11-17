@@ -13,11 +13,11 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
-#include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -59,6 +59,8 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
   }
   void flush_() override {}
   void set_state() {
+    if (task_info_->status_ != server_task_info_status::submitted) return;
+
     task_info_->status_   = server_task_info_status::running;
     task_info_->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     boost::asio::co_spawn(
