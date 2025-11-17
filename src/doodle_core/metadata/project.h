@@ -5,6 +5,9 @@
 #include <doodle_core/metadata/metadata_descriptor.h>
 #include <doodle_core/metadata/person.h>
 
+#include <cmath>
+
+
 namespace doodle {
 
 enum class project_styles {
@@ -159,6 +162,7 @@ struct project {
   FSys::path asset_root_path_{};       // 资产的根路径(相对于项目路径)
   // std::pair<width,height>
   std::pair<std::int32_t, std::int32_t> get_resolution() const;
+  std::double_t get_film_aperture() const;
   friend void from_json(const nlohmann::json& j, project& p) {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("code")) j.at("code").get_to(p.code_);
