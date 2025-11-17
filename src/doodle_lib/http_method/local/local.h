@@ -52,11 +52,7 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/doodle/task/{id}/restart
-DOODLE_HTTP_FUN(task_instance_restart)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
+
 // /api/doodle/task/{id}/log
 DOODLE_HTTP_FUN(task_instance_log)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -75,4 +71,11 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/shots/{shot_id}/export-anim-fbx
+DOODLE_HTTP_FUN_C(actions_projects_shots_export_anim_fbx_local, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http::local

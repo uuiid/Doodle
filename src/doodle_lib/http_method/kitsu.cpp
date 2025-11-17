@@ -243,7 +243,6 @@ http_route_ptr create_kitsu_local_route() {
     (*l_rout_ptr)
         .reg_t<local::task>("/api/doodle/task"_url)
         .reg_t<local::task_instance>("/api/doodle/task/{}"_url(&local::task_instance::id_))
-        .reg_t<local::task_instance_restart>("/api/doodle/task/{}/restart"_url(&local::task_instance_restart::id_))
         .reg_t<local::task_instance_log>("/api/doodle/task/{}/log"_url(&local::task_instance_log::id_))
         .reg_t<local::local_setting_tmp_dir_server_task>("/api/doodle/local_setting/tmp_dir/server_task"_url)
         .reg_t<local::task_inspect_instance>("/api/doodle/task/{}/inspect"_url(&local::task_inspect_instance::id_))
@@ -255,6 +254,12 @@ http_route_ptr create_kitsu_local_route() {
             "/api/actions/projects/{}/shots/{}/run-ue-assembly"_url(
                 &local::actions_projects_shots_run_ue_assembly_local::project_id_,
                 &local::actions_projects_shots_run_ue_assembly_local::id_
+            )
+        )
+        .reg_t<local::actions_projects_shots_export_anim_fbx_local>(
+            "/api/actions/projects/{}/shots/{}/export-anim-fbx"_url(
+                &local::actions_projects_shots_export_anim_fbx_local::project_id_,
+                &local::actions_projects_shots_export_anim_fbx_local::id_
             )
         )
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)

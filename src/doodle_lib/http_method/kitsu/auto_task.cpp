@@ -488,7 +488,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_anim_fbx::post(
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_anim_fbx::get(
     session_data_ptr in_handle
 ) {
   auto l_sql            = g_ctx().get<sqlite_database>();

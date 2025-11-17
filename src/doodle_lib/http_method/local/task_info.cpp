@@ -288,36 +288,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::del
   co_await g_ctx().get<sqlite_database>().remove<server_task_info>(id_);
   co_return in_handle->make_msg(nlohmann::json{});
 }
-boost::asio::awaitable<boost::beast::http::message_generator> task_instance_restart::post(session_data_ptr in_handle) {
-  auto l_ptr = std::make_shared<server_task_info>(g_ctx().get<sqlite_database>().get_by_uuid<server_task_info>(id_));
-  switch (l_ptr->status_) {
-    case server_task_info_status::submitted:
-    case server_task_info_status::assigned:
-    case server_task_info_status::running:
-    case server_task_info_status::unknown:
-      co_return in_handle->make_error_code_msg(boost::beast::http::status::method_not_allowed, "任务未完成, 无法重启");
-      break;
-    case server_task_info_status::completed:
-      break;
-    case server_task_info_status::canceled:
-      break;
-    case server_task_info_status::failed:
-      break;
-  }
-
-  l_ptr->clear_log_file();
-  l_ptr->status_   = server_task_info_status::submitted;
-  l_ptr->run_time_ = {};
-  l_ptr->end_time_ = {};
-  l_ptr->run_time_info_.clear();
-  l_ptr->submit_time_        = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
-  // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
-  l_run_long_task_local->load_form_json(l_ptr->command_);
-  co_await g_ctx().get<sqlite_database>().install(l_ptr);
-  l_run_long_task_local->run();
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
-}
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance::patch(session_data_ptr in_handle) {
   auto l_server_task_info =
@@ -415,6 +385,34 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
 
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_export_anim_fbx_local::post(
+    session_data_ptr in_handle
+) {
+  auto l_ptr              = std::make_shared<server_task_info>();
+  l_ptr->type_            = server_task_info_type::export_fbx;
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_json             = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+  std::shared_ptr<export_fbx_arg> l_arg_t = std::make_shared<export_fbx_arg>();
+  l_arg_t->kitsu_client_                  = l_client;
+  l_arg_t->task_id_                       = id_;
+  l_arg_t->maya_file_                     = l_json["path"].get<FSys::path>();
+  l_ptr->command_                         = (nlohmann::json{} = *l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
