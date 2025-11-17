@@ -21,11 +21,7 @@ namespace doodle::maya_plug {
 
 class play_blast {
  private:
-  FSys::path p_save_path;
   MString p_camera_path;
-
-  episodes p_eps;
-  shot p_shot;
 
   MTime p_current_time;
   std::string p_uuid;
@@ -35,7 +31,6 @@ class play_blast {
   static void captureCallback(MHWRender::MDrawContext& context, void* clientData);
 
   FSys::path get_file_path(const MTime& in_time) const;
-  FSys::path get_file_path() const;
   FSys::path get_file_dir() const;
 
  public:
@@ -43,13 +38,7 @@ class play_blast {
 
   MStatus play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size);
 
-  bool conjecture_ep_sc();
-
-  FSys::path set_save_path(const FSys::path& in_save_path);
-  FSys::path set_save_dir(const FSys::path& in_save_dir);
-  FSys::path set_save_filename(const FSys::path& in_save_filename);
-
-  FSys::path get_out_path() const;
+  inline FSys::path get_out_path() const { return get_file_dir(); }
 };
 
 }  // namespace doodle::maya_plug

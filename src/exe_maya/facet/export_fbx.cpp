@@ -101,8 +101,6 @@ void export_fbx_facet::play_blast() {
   class play_blast l_p{};
 
   const MTime k_end_time = MAnimControl::maxTime();
-  l_p.set_save_dir(maya_file_io::work_path() / "mov");
-  l_p.conjecture_ep_sc();
   l_p.play_blast_(anim_begin_time_, k_end_time, size_);
 }
 
