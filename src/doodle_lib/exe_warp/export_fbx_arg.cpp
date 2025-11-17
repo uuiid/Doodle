@@ -43,6 +43,8 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     auto l_path = maya_file_.parent_path() / "mov" / l_out_arg_.movie_file_.filename();
     if (FSys::exists(l_path)) {
       l_out_arg_.movie_file_ = l_path;
+    } else {
+      l_out_arg_.movie_file_.clear();
     }
     out_arg_.out_file_list = FSys::list_files(maya_file_.parent_path() / "fbx", ".fbx");
   } else {
@@ -58,6 +60,8 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
           l_out_arg_.movie_file_, logger_ptr_,
           movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), l_out_arg_.size_
       );
+    } else {
+      l_out_arg_.movie_file_.clear();
     }
   }
 

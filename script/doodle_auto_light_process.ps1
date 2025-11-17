@@ -217,13 +217,13 @@ $out_value = @"
   "begin_time": 1001,
   "end_time": 1200,
   "out_file_list": [
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch220B_Rig_xqx_1001-1090.fbx",
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch270A_rig_xqx_1001-1090.fbx",
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch461A_rig_mhc_1001-1090.fbx",
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch464E_rig_tjb_1001-1090.fbx",
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_HuangTianZhanJi_rig_lzy_1001-1090.fbx",
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_JianLingYao_rig_zsf_1001-1090.fbx",
-"D:/test_files/test_anim_12_14/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch029B_Rig_XHQ_1001-1090.fbx"
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch220B_Rig_xqx_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch270A_rig_xqx_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch461A_rig_mhc_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch464E_rig_tjb_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_HuangTianZhanJi_rig_lzy_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_JianLingYao_rig_zsf_1001-1090.fbx",
+"D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch029B_Rig_XHQ_1001-1090.fbx"
   ],
   "movie_file_dir": ""
 }
