@@ -79,12 +79,12 @@ class http_stream_base {
   // 可选的 body 限制
   std::optional<std::size_t> body_limit_{};
   void expires_after(std::chrono::seconds in_seconds) {
-    expires_after_impl(in_seconds);
     last_use_time_ = chrono::sys_time_pos::clock::now();
     if (next_timeout_) {
       timeout_ = *next_timeout_;
       next_timeout_.reset();
     }
+    expires_after_impl(in_seconds);
   }
 
   void set_timeout(std::chrono::seconds in_seconds) { next_timeout_ = in_seconds; }
