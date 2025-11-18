@@ -34,7 +34,7 @@ class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
 
 class DOODLELIB_API qcloth_update_arg : public async_task {
  public:
-  std::vector<FSys::path> alembic_files_{};
+  FSys::path alembic_file_dir_{};
   uuid task_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 

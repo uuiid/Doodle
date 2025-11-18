@@ -31,21 +31,29 @@ void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj) {
 }
 
 void from_json(const nlohmann::json& in_json, qcloth_update_arg& out_obj) {
-  if (in_json.contains("alembic_files")) in_json.at("alembic_files").get_to(out_obj.alembic_files_);
+  if (in_json.contains("path")) in_json.at("path").get_to(out_obj.alembic_file_dir_);
   if (in_json.contains("task_id")) in_json.at("task_id").get_to(out_obj.task_id_);
 }
 
 void to_json(nlohmann::json& in_json, const qcloth_update_arg& out_obj) {
-  in_json["alembic_files"] = out_obj.alembic_files_;
-  in_json["task_id"]       = out_obj.task_id_;
+  in_json["path"]    = out_obj.alembic_file_dir_;
+  in_json["task_id"] = out_obj.task_id_;
 }
 
 boost::asio::awaitable<void> qcloth_arg::run() { return arg::async_run_maya(); }
 
 boost::asio::awaitable<void> qcloth_update_arg::run() {
-  SPDLOG_INFO("上传qcloth abc文件数量 {} {}", alembic_files_.size(), fmt::join(alembic_files_, "\n "));
-  for (auto& p : alembic_files_) {
-    co_await kitsu_client_->upload_shot_animation_export_file(task_id_, p.parent_path(), p.filename());
+  auto l_abc = FSys::list_files(alembic_file_dir_, ".abc");
+  auto l_fbx = FSys::list_files(alembic_file_dir_, ".fbx");
+  SPDLOG_INFO(
+      "上传qcloth abc文件数量 {} {}, fbx {} {}", l_abc.size(), fmt::join(l_abc, "\n "), l_fbx.size(),
+      fmt::join(l_fbx, "\n ")
+  );
+  for (auto& p : l_abc) {
+    co_await kitsu_client_->upload_shot_animation_export_file(task_id_, alembic_file_dir_, p.filename());
+  }
+  for (auto& p : l_fbx) {
+    co_await kitsu_client_->upload_shot_animation_export_file(task_id_, alembic_file_dir_, p.filename());
   }
   co_return;
 }
