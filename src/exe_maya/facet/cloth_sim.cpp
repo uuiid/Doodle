@@ -11,7 +11,8 @@
 #include <doodle_core/core/doodle_lib.h>
 #include <doodle_core/doodle_core.h>
 
-#include "doodle_lib/exe_warp/maya_exe.h"
+#include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/qcloth_arg.h>
 
 #include <fmt/format.h>
 
@@ -41,8 +42,8 @@
 namespace doodle::maya_plug {
 
 bool cloth_sim::post(const nlohmann::json& in_argh) {
-  bool l_ret                    = false;
-  maya_exe_ns::qcloth_arg l_arg = in_argh.get<maya_exe_ns::qcloth_arg>();
+  bool l_ret       = false;
+  qcloth_arg l_arg = in_argh.get<qcloth_arg>();
 
   if (l_arg.get_file_path().empty()) return l_ret;
   film_aperture_ = l_arg.film_aperture_;

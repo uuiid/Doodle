@@ -10,7 +10,8 @@ target_sources(
         export_rig_sk.h
         inspect_maya.h
         export_fbx_arg.h
-
+        qcloth_arg.h
+        
         PRIVATE
         maya_exe.cpp
         ue_exe.cpp
@@ -21,4 +22,5 @@ target_sources(
         export_rig_sk.cpp
         inspect_maya.cpp
         export_fbx_arg.cpp
+        qcloth_arg.cpp
 )

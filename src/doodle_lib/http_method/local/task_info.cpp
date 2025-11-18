@@ -18,6 +18,7 @@
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
+#include <doodle_lib/exe_warp/qcloth_arg.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -152,7 +153,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     logger_->sinks().emplace_back(std::make_shared<run_post_task_local_impl_sink_mt>(task_info_));
 
     if (in_json.contains("replace_ref_file")) {  /// 解算文件
-      auto l_arg_t = std::make_shared<maya_exe_ns::qcloth_arg>();
+      auto l_arg_t = std::make_shared<qcloth_arg>();
       in_json.get_to(*l_arg_t);
       l_arg_t->sim_path = FSys::path{in_json["project"]["path"].get<std::string>()} /
                           in_json["project"]["asset_root_path"].get<std::string>() / "CFX";
@@ -196,9 +197,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
       task_info_->status_ = server_task_info_status::completed;
     } catch (const boost::system::system_error& e) {
       if (e.code() == boost::system::errc::operation_canceled) task_info_->status_ = server_task_info_status::canceled;
-      logger_->error("用户取消 {}", e.what());
+      logger_->error("{}", e.what());
       task_info_->status_        = server_task_info_status::canceled;
-      task_info_->last_line_log_ = fmt::format("用户取消 {}", e.what());
+      task_info_->last_line_log_ = fmt::format("{}", e.what());
     } catch (...) {
       task_info_->status_ = server_task_info_status::failed;
       auto l_err_str      = boost::current_exception_diagnostic_information() |
@@ -416,4 +417,34 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_update_sim_abc_local::post(
+    session_data_ptr in_handle
+) {
+  auto l_ptr              = std::make_shared<server_task_info>();
+  l_ptr->type_            = server_task_info_type::export_sim;
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_json             = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+  std::shared_ptr<qcloth_update_arg> l_arg_t = std::make_shared<qcloth_update_arg>();
+  l_arg_t->kitsu_client_              = l_client;
+  l_arg_t->task_id_                   = id_;
+  l_json.get_to(*l_arg_t);
+  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
 }  // namespace doodle::http::local

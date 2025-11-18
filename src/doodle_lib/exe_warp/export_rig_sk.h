@@ -11,6 +11,7 @@
 #include <string>
 
 namespace doodle {
+
 class export_rig_sk_arg : public async_task {
  private:
  public:
@@ -62,7 +63,7 @@ class export_rig_sk_arg : public async_task {
   }
   // to json
   friend void to_json(nlohmann::json& in_json, const export_rig_sk_arg& out_obj) {
-    in_json              = out_obj.impl_;
+    in_json         = out_obj.impl_;
     in_json["path"] = out_obj.maya_file_;
   }
 

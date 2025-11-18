@@ -77,5 +77,10 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-
+// /api/actions/projects/{project_id}/shots/{shot_id}/update-sim-abc
+DOODLE_HTTP_FUN_C(actions_projects_shots_update_sim_abc_local, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::local

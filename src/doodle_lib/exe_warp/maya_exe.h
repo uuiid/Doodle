@@ -67,29 +67,7 @@ class arg : public async_task {
   boost::asio::awaitable<void> async_run_maya();
 };
 
-class DOODLELIB_API qcloth_arg : public maya_exe_ns::arg {
- public:
-  constexpr static std::string_view k_name{"cloth_sim"};
-  FSys::path sim_path{};
-  bool replace_ref_file;
-  bool sim_file;
-  bool export_file;  // 导出abc文件
-  bool touch_sim;
-  bool export_anim_file;
-  bool create_play_blast_{};
-  std::double_t film_aperture_{};
-  image_size size_{};
 
-  // form json
-  friend void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj);
-  // to json
-  friend void to_json(nlohmann::json& in_json, const qcloth_arg& out_obj);
-
-  std::tuple<std::string, std::string> get_json_str() override {
-    return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
-  }
-  boost::asio::awaitable<void> run() override;
-};
 
 
 class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
