@@ -51,7 +51,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
     co_await async_run_ue(
         {l_ue_project.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
          "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-ImportRig={}", l_tmp_path)},
-        logger_ptr_, false, l_time_info
+        logger_ptr_, true, l_time_info
     );
     l_time_info->info_ = fmt::format("导入skin文件 {}", p);
     on_run_time_info_(*l_time_info);
