@@ -46,7 +46,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     } else {
       l_out_arg_.movie_file_.clear();
     }
-    out_arg_.out_file_list = FSys::list_files(maya_file_.parent_path() / "fbx", ".fbx");
+    out_arg_.out_file_list = FSys::list_files(l_root_dir / "fbx", ".fbx");
   } else {
     co_await arg::async_run_maya();
     if (!out_arg_.movie_file_dir.empty()) {
