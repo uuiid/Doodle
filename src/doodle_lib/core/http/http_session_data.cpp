@@ -114,7 +114,7 @@ boost::asio::awaitable<void> session_data::run() {
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     set_session();
     callback_ = (*route_ptr_)(method_verb_, url_.segments(), shared_from_this());
-    logger_->info("请求 url {} {}", method_verb_, url_);
+    logger_->info("请求 url {} {} t:{}", method_verb_, url_, timeout_);
     // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
     stream_->expires_after(timeout_);
     if (co_await parse_body()) co_return;
