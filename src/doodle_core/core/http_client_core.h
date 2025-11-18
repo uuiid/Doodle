@@ -311,8 +311,9 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
       if (!self_->is_open()) {
         BOOST_ASIO_CORO_YIELD self_->resolve_and_connect(std::move(self));
         if (in_ec) goto end_complete;
+        self_->expires_after(self_->timeout_);
       }
-
+      
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*self_->socket_, req_, std::move(self));
       if (in_ec) goto end_complete;
       self_->expires_after(self_->timeout_);
