@@ -299,6 +299,22 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_export_file(
       base64_encode(in_file_name.generic_string())
   );
 }
+boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
+    uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
+) {
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->set_timeout(30s);
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->set_timeout(100s);
+  SPDLOG_WARN("上传文件 {}", in_dir / in_file_name);
+
+  co_return co_await upload_asset_file(
+      fmt::format("/api/doodle/data/shots/{}/file/other", in_shot_task_id), in_dir / in_file_name,
+      base64_encode(in_file_name.generic_string())
+  );
+}
 
 boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{

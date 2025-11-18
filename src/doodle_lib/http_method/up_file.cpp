@@ -21,6 +21,7 @@
 #include "boost/beast/http/field.hpp"
 
 #include <cpp-base64/base64.h>
+#include <filesystem>
 
 namespace doodle::http {
 
@@ -176,6 +177,14 @@ FSys::path doodle_data_shots_file_output::gen_file_path() {
     return get_shots_animation_output_path(episode_name_, shot_name_, project_code_);
   else if (task_type_id_ == task_type::get_simulation_task_id())
     return get_shots_simulation_output_path(episode_name_, shot_name_, project_code_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
+}
+
+FSys::path doodle_data_shots_file_other::gen_file_path() {
+  if (task_type_id_ == task_type::get_animation_id())
+    return get_shots_animation_maya_path(episode_name_).parent_path();
+  else if (task_type_id_ == task_type::get_simulation_task_id())
+    return get_shots_simulation_maya_path(episode_name_).parent_path();
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 

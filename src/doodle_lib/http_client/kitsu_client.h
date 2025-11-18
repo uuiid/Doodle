@@ -69,10 +69,14 @@ class kitsu_client {
   /// 上传整个工程文件
   boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
-  /// 上传镜头动画maya文件
+  /// 上传镜头maya文件
   boost::asio::awaitable<void> upload_shot_animation_maya(uuid in_shot_task_id, FSys::path in_file_path);
-  /// 上传镜头动画导出文件
+  /// 上传镜头导出文件
   boost::asio::awaitable<void> upload_shot_animation_export_file(
+      uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
+  );
+  /// 上传镜头其他文件
+  boost::asio::awaitable<void> upload_shot_animation_other_file(
       uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
   );
 
