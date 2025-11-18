@@ -110,7 +110,7 @@ std::vector<working_file_and_link> create_character_working_files(
             working_file{
                 .description_ = "角色UE解算 cloth sk文件",
                 .path_        = get_entity_character_ue_path(in_project, in_entity_asset_extend) /
-                         get_entity_sim_ground_ue_sk_name(in_entity_asset_extend, simulation_status_cloth),
+                         get_entity_sim_character_ue_name(in_entity_asset_extend, simulation_status_cloth),
                 .software_type_ = software_enum::unreal_engine,
 
             },
@@ -123,7 +123,7 @@ std::vector<working_file_and_link> create_character_working_files(
             working_file{
                 .description_ = "角色UE解算 hair sk文件",
                 .path_        = get_entity_character_ue_path(in_project, in_entity_asset_extend) /
-                         get_entity_sim_ground_ue_sk_name(in_entity_asset_extend, simulation_status_hair),
+                         get_entity_sim_character_ue_name(in_entity_asset_extend, simulation_status_hair),
                 .software_type_ = software_enum::unreal_engine,
 
             },
@@ -136,7 +136,7 @@ std::vector<working_file_and_link> create_character_working_files(
             working_file{
                 .description_ = "角色UE解算  cloth hair sk文件",
                 .path_        = get_entity_character_ue_path(in_project, in_entity_asset_extend) /
-                         get_entity_sim_ground_ue_sk_name(in_entity_asset_extend, simulation_status_cloth_hair),
+                         get_entity_sim_character_ue_name(in_entity_asset_extend, simulation_status_cloth_hair),
                 .software_type_ = software_enum::unreal_engine,
 
             },
