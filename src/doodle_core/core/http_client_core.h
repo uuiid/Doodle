@@ -51,6 +51,16 @@ class http_stream_base {
   std::optional<chrono::seconds> next_timeout_{default_timeout_};
 
   virtual void expires_after_impl(std::chrono::seconds in_seconds) = 0;
+  template <typename T>
+  void set_request_timeout(boost::beast::http::request<T>& in_req) {
+    if (timeout_ != default_timeout_ || (next_timeout_ && *next_timeout_ != default_timeout_)) {
+      if (next_timeout_) {
+        in_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", (*next_timeout_).count()));
+      } else {
+        in_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", timeout_.count()));
+      }
+    }
+  }
 
  public:
   template <typename... Args>
@@ -163,6 +173,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle
   ) {
+    set_request_timeout(in_req);
     in_req.prepare_payload();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
         read_and_write_compose_parser<http_client, RequestType, ResponseBody>{
@@ -254,8 +265,7 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
       boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res,
       Handle&& in_handle = boost::asio::use_awaitable
   ) {
-    if (timeout_ != default_timeout_)
-      in_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", timeout_.count()));
+    set_request_timeout(in_req);
     in_req.prepare_payload();
     return boost::asio::async_compose<Handle, void(boost::system::error_code)>(
         read_and_write_compose_parser<http_client_ssl, RequestType, ResponseBody>{
