@@ -19,6 +19,7 @@
 #include <entt/entt.hpp>
 #include <spdlog/common.h>
 #include <spdlog/logger.h>
+#include <spdlog/spdlog.h>
 namespace boost::asio {
 class io_context;
 class thread_pool;
@@ -38,6 +39,15 @@ namespace level {}  // namespace level
 
 #define DOODLE_TO_SELF() \
   co_await boost::asio::post(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
+
+#define G_DETACHED_LOG(...)                                           \
+  [__VA_ARGS__](std::exception_ptr in_ptr) {                          \
+    try {                                                             \
+      if (in_ptr) std::rethrow_exception(in_ptr);                     \
+    } catch (...) {                                                   \
+      SPDLOG_WARN(boost::current_exception_diagnostic_information()); \
+    };                                                                \
+  }
 
 // #include <>
 namespace doodle {
