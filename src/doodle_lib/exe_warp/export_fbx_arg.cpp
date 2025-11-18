@@ -40,7 +40,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
 
   if (only_upload_) {
     SPDLOG_INFO("仅上传文件 {}", maya_file_);
-    auto l_path = maya_file_.parent_path() / "mov" / l_out_arg_.movie_file_.filename();
+    auto l_path = l_root_dir / "mov" / l_out_arg_.movie_file_.filename();
     if (FSys::exists(l_path)) {
       l_out_arg_.movie_file_ = l_path;
     } else {
@@ -50,7 +50,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   } else {
     co_await arg::async_run_maya();
     if (!out_arg_.movie_file_dir.empty()) {
-      auto l_path = maya_file_.parent_path() / "mov" / l_out_arg_.movie_file_.filename();
+      auto l_path = l_root_dir / "mov" / l_out_arg_.movie_file_.filename();
       SPDLOG_INFO("导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_path);
       if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) {
         FSys::create_directories(l_p);

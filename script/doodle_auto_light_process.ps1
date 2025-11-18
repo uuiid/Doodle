@@ -225,7 +225,7 @@ $out_value = @"
 "D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_JianLingYao_rig_zsf_1001-1090.fbx",
 "D:/test_files/test_anim_12_14/fbx/LQ_EP094_SC026_AN/LQ_EP094_SC026_AN_Ch029B_Rig_XHQ_1001-1090.fbx"
   ],
-  "movie_file_dir": ""
+  "movie_file_dir": "D:/test_files/LSQSH_JWZC/Saved/MovieRenders/SX_EP016_SC001"
 }
 "@;
 
