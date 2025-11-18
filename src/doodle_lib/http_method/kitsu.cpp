@@ -263,6 +263,12 @@ http_route_ptr create_kitsu_local_route() {
                 &local::actions_projects_shots_export_anim_fbx_local::id_
             )
         )
+        .reg_t<local::actions_projects_shots_update_sim_abc_local>(
+            "/api/actions/projects/{}/shots/{}/update-sim-abc"_url(
+                &local::actions_projects_shots_update_sim_abc_local::project_id_,
+                &local::actions_projects_shots_update_sim_abc_local::id_
+            )
+        )
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 
         ;
