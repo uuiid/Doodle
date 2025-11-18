@@ -10,6 +10,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/awaitable.hpp>
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -30,7 +31,8 @@ class kitsu_client {
   std::string kitsu_token_;
 
   boost::asio::awaitable<void> upload_asset_file(
-      std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
+      std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name,
+      chrono::seconds in_timeout = chrono::seconds{300}
   ) const;
 
   template <typename T>

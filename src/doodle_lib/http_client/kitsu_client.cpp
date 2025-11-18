@@ -143,8 +143,14 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_generate_uesk_file_arg(
   co_return l_res.body();
 }
 boost::asio::awaitable<void> kitsu_client::upload_asset_file(
-    std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
+    std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name, chrono::seconds in_timeout
 ) const {
+  boost::scope::scope_exit l_exit{[&]() {
+    http_client_ptr_->body_limit_.reset();
+    http_client_ptr_->set_timeout(30s);
+  }};
+  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
+  http_client_ptr_->set_timeout(in_timeout);
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
   set_req_headers(l_req, "application/octet-stream");
   l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);
@@ -162,12 +168,6 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   co_return;
 }
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const {
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
   SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/maya", in_task_id), in_file_path,
@@ -179,12 +179,6 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
 ) const {
   if (!in_file_path) throw_exception(doodle_error{"上传ue资产文件路径不能为空"});
   if (in_file_path->empty()) throw_exception(doodle_error{"上传ue资产文件路径不能为空"});
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
 
   auto l_ue_project_file = ue_exe_ns::find_ue_project_file(in_file_path->front());
 
@@ -207,12 +201,6 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
 }
 
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const {
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
   if (in_file_path.extension() != doodle_config::ue4_uproject_ext)
     throw_exception(doodle_error{"上传的文件不是ue工程文件 {}", in_file_path});
 
@@ -256,13 +244,6 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
 }
 
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const {
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
   SPDLOG_WARN("上传文件 {}", in_file_path);
 
   return upload_asset_file(
@@ -272,15 +253,8 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
 }
 
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_maya(uuid in_shot_task_id, FSys::path in_file_path) {
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
   SPDLOG_WARN("上传文件 {}", in_file_path);
-
-  co_return co_await upload_asset_file(
+  return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/maya", in_shot_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
   );
@@ -289,15 +263,8 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_maya(uuid in_sh
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_export_file(
     uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
 ) {
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
   SPDLOG_WARN("上传文件 {}", in_dir / in_file_name);
-
-  co_return co_await upload_asset_file(
+  return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/output", in_shot_task_id), in_dir / in_file_name,
       base64_encode(in_file_name.generic_string())
   );
@@ -305,15 +272,8 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_export_file(
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
     uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
 ) {
-  boost::scope::scope_exit l_exit{[&]() {
-    http_client_ptr_->body_limit_.reset();
-    http_client_ptr_->set_timeout(30s);
-  }};
-  http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(100s);
   SPDLOG_WARN("上传文件 {}", in_dir / in_file_name);
-
-  co_return co_await upload_asset_file(
+  return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/other", in_shot_task_id), in_dir / in_file_name,
       base64_encode(in_file_name.generic_string())
   );
