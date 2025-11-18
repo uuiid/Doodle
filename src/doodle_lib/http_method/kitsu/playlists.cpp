@@ -95,18 +95,19 @@ struct base_playlist_t {
       const entity& in_entt, const uuid& in_task_id,
       const std::map<uuid, std::vector<preview_files_for_entity_t>>& in_v, const uuid& in_task_type_id
   )
-      : id_(in_entt.uuid_id_), name_(in_entt.name_), preview_file_task_id_(in_task_id), preview_file_previews_(in_v) {
-    if (!in_task_type_id.is_nil() && preview_file_previews_.map_.contains(in_task_type_id) &&
-        !preview_file_previews_.map_.at(in_task_type_id).empty()) {
-      auto&& l_pf               = preview_file_previews_.map_.at(in_task_type_id).front();
-      preview_file_id_          = l_pf.uuid_id_;
-      preview_file_extension_   = l_pf.extension_;
-      preview_file_width_       = l_pf.width_;
-      preview_file_height_      = l_pf.height_;
-      preview_file_duration_    = l_pf.duration_;
-      preview_file_revision_    = l_pf.revision_;
-      preview_file_status_      = l_pf.status_;
-      preview_file_annotations_ = l_pf.annotations_;
+      : id_(in_entt.uuid_id_), name_(in_entt.name_), preview_file_task_id_(in_task_id), preview_files_(in_v) {
+    if (!in_task_type_id.is_nil() && preview_files_.map_.contains(in_task_type_id) &&
+        !preview_files_.map_.at(in_task_type_id).empty()) {
+      auto&& l_pf                 = preview_files_.map_.at(in_task_type_id).front();
+      preview_file_id_            = l_pf.uuid_id_;
+      preview_file_extension_     = l_pf.extension_;
+      preview_file_width_         = l_pf.width_;
+      preview_file_height_        = l_pf.height_;
+      preview_file_duration_      = l_pf.duration_;
+      preview_file_revision_      = l_pf.revision_;
+      preview_file_status_        = l_pf.status_;
+      preview_file_annotations_   = l_pf.annotations_;
+      preview_file_previews_list_ = l_pf.previews_;
     }
   }
 
@@ -114,6 +115,7 @@ struct base_playlist_t {
     std::map<uuid, std::vector<preview_files_for_entity_t>> map_;
     // to json
     friend void to_json(nlohmann::json& j, const preview_files_for_entity_map_t& p) {
+      if (p.map_.empty()) j = nlohmann::json::array();
       for (auto&& [key, value] : p.map_) j[fmt::to_string(key)] = value;
     }
   };
@@ -136,7 +138,8 @@ struct base_playlist_t {
   decltype(preview_file::revision_) preview_file_revision_;
   decltype(preview_file::status_) preview_file_status_;
   decltype(preview_file::annotations_) preview_file_annotations_;
-  preview_files_for_entity_map_t preview_file_previews_;
+  preview_files_for_entity_map_t preview_files_;
+  std::vector<preview_files_for_entity_t> preview_file_previews_list_;
 
   // to json
   friend void to_json(nlohmann::json& j, const base_playlist_t& p) {
@@ -153,9 +156,9 @@ struct base_playlist_t {
     j["preview_file_revision"]    = p.preview_file_revision_;
     j["preview_file_status"]      = p.preview_file_status_;
     j["preview_file_annotations"] = p.preview_file_annotations_;
-    j["preview_file_previews"]    = p.preview_file_previews_;
+    j["preview_file_previews"]    = p.preview_file_previews_list_;
 
-    j["preview_files"]            = p.preview_file_previews_;
+    j["preview_files"]            = p.preview_files_;
   }
 };
 struct shot_for_playlist_t : base_playlist_t {
