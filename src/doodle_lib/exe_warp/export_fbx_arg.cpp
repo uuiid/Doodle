@@ -66,16 +66,12 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   }
 
   co_await kitsu_client_->upload_shot_animation_maya(task_id_, maya_file_);
-  if (!l_out_arg_.movie_file_.empty())
-    co_await kitsu_client_->upload_shot_animation_export_file(
-        task_id_, l_root_dir, l_out_arg_.movie_file_.lexically_proximate(l_root_dir)
-    );
   for (auto& l_p : out_arg_.out_file_list) {
     SPDLOG_INFO("上传导出文件 {}", l_p);
-    co_await kitsu_client_->upload_shot_animation_export_file(
-        task_id_, l_root_dir, l_p.lexically_proximate(l_root_dir)
-    );
+    co_await kitsu_client_->upload_shot_animation_export_file(task_id_, l_p.parent_path(), l_p.filename());
   }
+  if (!l_out_arg_.movie_file_.empty())
+    co_await kitsu_client_->comment_task(task_id_, "自动导出和上传文件", l_out_arg_.movie_file_);
 }
 
 }  // namespace doodle

@@ -173,9 +173,9 @@ FSys::path doodle_data_shots_file_maya::gen_file_path() {
 
 FSys::path doodle_data_shots_file_output::gen_file_path() {
   if (task_type_id_ == task_type::get_animation_id())
-    return get_shots_animation_output_path(project_code_, episode_name_, shot_name_);
+    return get_shots_animation_output_path(episode_name_, shot_name_, project_code_);
   else if (task_type_id_ == task_type::get_simulation_task_id())
-    return get_shots_simulation_output_path(project_code_, episode_name_, shot_name_);
+    return get_shots_simulation_output_path(episode_name_, shot_name_, project_code_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
