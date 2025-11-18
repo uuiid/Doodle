@@ -36,7 +36,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> socket_io_http::ge
 
   // 心跳超时检查 或者已经进行了协议升级, 直接返回错误
   if (!l_sid_data || l_sid_data->is_timeout() || l_sid_data->is_upgrade_to_websocket())
-    in_handle->make_error_code_msg(
+    co_return in_handle->make_error_code_msg(
         boost::beast::http::status::bad_request, "sid超时, 或者已经进行了协议升级, 或者已经关闭"
     );
   auto l_event = co_await l_sid_data->async_event();
