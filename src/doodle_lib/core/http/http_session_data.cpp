@@ -6,6 +6,7 @@
 
 #include "doodle_core/core/core_set.h"
 // ReSharper disable once CppUnusedIncludeDirective
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/lib_warp/boost_fmt_beast.h>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -284,13 +285,7 @@ boost::asio::awaitable<bool> session_data::parse_body() {
 }
 
 void session_data::async_run_detached() {
-  boost::asio::co_spawn(g_io_context(), run(), [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
-    if (in_eptr) l_shared->logger_->log(log_loc(), level::err, "async_run_detached");
-    // try {
-    //   if (in_eptr) std::rethrow_exception(in_eptr);
-    // } catch (const std::exception& e) {
-    // };
-  });
+  boost::asio::co_spawn(g_io_context(), run(), G_DETACHED_LOG(self = shared_from_this()));
 }
 
 boost::beast::http::message_generator session_data::make_error_code_msg(
