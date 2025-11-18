@@ -109,4 +109,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 }
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 E:\Doodle\script\Cmd_tool\map_waibao_7.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sys_dir_gui.ps1 E:\Doodle\script\Cmd_tool\map_waibao_8.exe -requireAdmin
