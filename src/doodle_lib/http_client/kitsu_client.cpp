@@ -152,6 +152,8 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
 
+  SPDLOG_INFO("开始上传文件 {} 到 {}", in_file_path, in_upload_url);
+
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::no_content)
