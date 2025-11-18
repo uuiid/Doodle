@@ -257,8 +257,8 @@ std::vector<working_file_and_link> get_working_files_for_entity(
     }
   }
   for (auto&& i : l_working_files) {
-    i.name_ = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
-    if (!FSys::exists(l_prj.path_ / i.path_)) i.path_ = FSys::path{};
+    i.name_      = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
+    i.is_exists_ = FSys::exists(l_prj.path_ / i.path_);
   }
 
   return l_working_files;
@@ -312,8 +312,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
     l_working_files = create_ground_working_files(l_prj, l_entity, l_entity_asset_extend);
   }
   for (auto&& i : l_working_files) {
-    i.name_ = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
-    if (!FSys::exists(l_prj.path_ / i.path_)) i.path_ = FSys::path{};
+    i.name_      = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
+    i.is_exists_ = FSys::exists(l_prj.path_ / i.path_);
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_working_files);
 }

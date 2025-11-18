@@ -70,12 +70,14 @@ struct working_file {
 struct working_file_and_link : working_file {
   uuid entity_id_;
   uuid entity_type_id_;
+  bool is_exists_{};
 
   // to json
   friend void to_json(nlohmann::json& j, const working_file_and_link& p) {
     to_json(j, static_cast<const working_file&>(p));
     j["entity_id"]      = p.entity_id_;
     j["entity_type_id"] = p.entity_type_id_;
+    j["is_exists"]      = p.is_exists_;
   }
 };
 }  // namespace doodle
