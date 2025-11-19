@@ -427,7 +427,7 @@ FSys::path conv_normal_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();
   boost::replace_all(l_str, doodle_config::ue4_game, doodle_config::ue4_content);
   FSys::path l_path{l_str};
-  l_path.replace_extension(doodle_config::ue4_uasset_ext);
+  if (l_path.has_extension()) l_path.replace_extension(doodle_config::ue4_uasset_ext);
   return l_path;
 }
 
