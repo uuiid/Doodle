@@ -40,7 +40,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   auto l_import_root = l_ue_project.parent_path() / conv_normal_path(impl_.import_game_path_.parent_path());
 
   for (auto& p : l_maya_file.out_file_list) {
-    SPDLOG_INFO("导出 {}", p);
+    SPDLOG_LOGGER_WARN(logger_ptr_, "导出 {}", p);
 
     for (auto&& l_ufile : {
              (l_import_root / p.stem()).replace_extension(doodle_config::ue4_uasset_ext),
@@ -48,7 +48,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
              (l_import_root / fmt::format("{}_PhysicsAsset", p.stem())).replace_extension(doodle_config::ue4_uasset_ext)
          }) {
       if (FSys::exists(l_ufile)) {
-        SPDLOG_INFO("删除旧的资产 {}", l_ufile);
+        SPDLOG_LOGGER_WARN(logger_ptr_, "删除旧的资产 {}", l_ufile);
         FSys::remove(l_ufile);
       }
     }
