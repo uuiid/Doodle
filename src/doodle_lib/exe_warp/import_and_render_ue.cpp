@@ -200,8 +200,8 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
 
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   co_await async_run_ue(
-      {arg_.ue_main_project_path_.generic_string(), "-windowed", "-log", "-stdout", "-AllowStdOutLogVerbosity",
-       "-ForceLogFlush", "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
+      {arg_.ue_main_project_path_.generic_string(), "-windowed", "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
+       "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
       logger_ptr_, false, l_time_info
   );
   l_time_info->info_ = "导入文件";
@@ -217,13 +217,23 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
     }
   }
   l_time_info = std::make_shared<server_task_info::run_time_info_t>();
-  co_await async_run_ue(
-      {arg_.ue_main_project_path_.generic_string(), arg_.render_map_.generic_string(),
-       fmt::format(R"(-DoodleLevelSequence="{}")", arg_.level_sequence_import_),
-       fmt::format(R"(-DoodleMoviePipelineConfig="{}")", arg_.movie_pipeline_config_), "-log", "-stdout",
-       "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-      logger_ptr_, false, l_time_info
-  );
+  /// 重试三次
+  for (int i = 0; i < 3; ++i) {
+    try {
+      co_await async_run_ue(
+          {arg_.ue_main_project_path_.generic_string(), arg_.render_map_.generic_string(),
+           fmt::format(R"(-DoodleLevelSequence="{}")", arg_.level_sequence_import_),
+           fmt::format(R"(-DoodleMoviePipelineConfig="{}")", arg_.movie_pipeline_config_), "-log",
+           "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
+          logger_ptr_, false, l_time_info
+      );
+      break;
+    } catch (const doodle_error& err) {
+      logger_ptr_->error("渲染失败 第 {} 次错误: {}", i + 1, err.what());
+      if (i == 2) throw;
+      logger_ptr_->warn("等待5秒后重试渲染");
+    }
+  }
   l_time_info->info_ = "渲染UE";
   on_run_time_info_(*l_time_info);
 
