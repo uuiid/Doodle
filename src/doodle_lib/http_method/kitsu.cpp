@@ -168,7 +168,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_assets>("/api/data/assets"_url)
       .reg_t<data_file_status>("/api/data/file-status"_url)
       .reg_t<data_output_types>("/api/data/output-types"_url)
-      .reg_t<actions_tasks_working_file>("/api/actions/tasks/{}/working-file"_url(&actions_tasks_working_file::id_))
+      .reg_t<actions_entity_working_file>("/api/actions/entity/{}/working-file"_url(&actions_entity_working_file::id_))
+      .reg_t<actions_projects_entity_working_file_many>("/api/actions/projects/{}/entity/working-file-many"_url(&actions_projects_entity_working_file_many::id_))
       .reg_t<data_project_shots>("/api/data/projects/{}/shots"_url(&data_project_shots::project_id_))
       .reg_t<data_sequence_instance>("/api/data/sequences/{}"_url(&data_sequence_instance::id_))
       .reg_t<actions_projects_task_types_create_tasks>("/api/actions/projects/{}/task-types/{}/create-tasks/{}"_url(

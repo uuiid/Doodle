@@ -41,13 +41,17 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-// /api/actions/tasks/{task_id}/working-file
-DOODLE_HTTP_JWT_FUN(actions_tasks_working_file)
-DOODLE_HTTP_FUN_OVERRIDE(post)
+// /api/actions/entity/{entity_id}/working-file
+DOODLE_HTTP_JWT_FUN(actions_entity_working_file)
 DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/entity/working-file-many
+DOODLE_HTTP_JWT_FUN(actions_projects_entity_working_file_many)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/actions/tasks/{task_id}/export-rig-sk
 DOODLE_HTTP_JWT_FUN(actions_tasks_export_rig_sk)
 DOODLE_HTTP_FUN_OVERRIDE(get)

@@ -20,6 +20,7 @@
 
 #include <boost/exception/diagnostic_information.hpp>
 
+#include <map>
 #include <nlohmann/json_fwd.hpp>
 #include <range/v3/action/push_back.hpp>
 #include <range/v3/view/unique.hpp>
@@ -29,33 +30,6 @@
 #include <winsock2.h>
 
 namespace doodle::http {
-
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::post(
-    session_data_ptr in_handle
-) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
-  auto l_task = l_sql.get_by_uuid<task>(id_);
-
-  co_await scan_assets::scan_task_async(l_task);
-  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_working_file_by_task(id_));
-}
-
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::delete_(
-    session_data_ptr in_handle
-) {
-  auto l_sql          = g_ctx().get<sqlite_database>();
-  auto l_task         = l_sql.get_by_uuid<task>(id_);
-  auto l_work_file_id = in_handle->get_json().at("id").get<uuid>();
-  using namespace sqlite_orm;
-  if (auto l_work_file_link = l_sql.impl_->storage_any_.get_all<working_file_task_link>(where(
-          c(&working_file_task_link::working_file_id_) == l_work_file_id && c(&working_file_task_link::task_id_) == id_
-      ));
-      !l_work_file_link.empty()) {
-    co_await l_sql.remove<working_file_task_link>(l_work_file_link.front().id_);
-  }
-
-  co_return in_handle->make_msg_204();
-}
 
 bool entity_has_simulation_asset(const uuid& in_entity_id) {
   using namespace sqlite_orm;
@@ -327,19 +301,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg(nlohmann::json{} = get_working_files_for_entity(project_id_, {}, id_));
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_working_file::get(
+boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_working_file::get(
     session_data_ptr in_handle
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
-  if (l_sql.uuid_to_id<task>(id_) == 0)
+  if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
-  auto l_task = l_sql.get_by_uuid<task>(id_);
-  auto l_prj  = l_sql.get_by_uuid<project>(l_task.project_id_);
+  auto l_entity_ = l_sql.get_by_uuid<entity>(id_);
+  auto l_prj     = l_sql.get_by_uuid<project>(l_entity_.project_id_);
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(c(&entity::uuid_id_) == l_task.entity_id_)
+      where(c(&entity::uuid_id_) == id_)
   );
   std::vector<working_file_and_link> l_working_files{};
   if (auto&& [l_entity, l_entity_asset_extend] = l_r.front();
@@ -356,5 +330,56 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_work
     i.is_exists_ = FSys::exists(l_prj.path_ / i.path_);
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_working_files);
+}
+
+template <typename Kty, typename Ty>
+struct map_to_json {
+  std::map<Kty, Ty> data_;
+  //   template <typename Kty, typename Ty>
+  friend void to_json(nlohmann::json& j, const map_to_json<Kty, Ty>& p) {
+    j = nlohmann::json::object();
+    for (auto&& [k, v] : p.data_) {
+      j[fmt::format("{}", k)] = v;
+    }
+  }
+};
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entity_working_file_many::post(
+    session_data_ptr in_handle
+) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (l_sql.uuid_to_id<task>(id_) == 0)
+    co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
+  auto l_prj        = l_sql.get_by_uuid<project>(id_);
+  auto l_entity_ids = in_handle->get_json().get<std::vector<uuid>>();
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(in(&entity::uuid_id_, l_entity_ids))
+  );
+  std::vector<working_file_and_link> l_working_files{};
+  if (auto&& [l_entity, l_entity_asset_extend] = l_r.front();
+      l_entity.entity_type_id_ == asset_type::get_character_id()) {
+    l_working_files = create_character_working_files(l_prj, l_entity, l_entity_asset_extend);
+  } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
+             l_entity.entity_type_id_ == asset_type::get_effect_id()) {
+    l_working_files = create_prop_working_files(l_prj, l_entity, l_entity_asset_extend);
+  } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
+    l_working_files = create_ground_working_files(l_prj, l_entity, l_entity_asset_extend);
+  }
+  for (auto&& i : l_working_files) {
+    i.name_      = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
+    i.is_exists_ = FSys::exists(l_prj.path_ / i.path_);
+  }
+
+  std::map<uuid, std::vector<working_file_and_link>> l_entity_working_file_map{};
+  for (auto&& i : l_working_files) {
+    l_entity_working_file_map[i.entity_id_].push_back(i);
+  }
+
+  co_return in_handle->make_msg(
+      nlohmann::json{} = map_to_json<uuid, std::vector<working_file_and_link>>{l_entity_working_file_map}
+  );
 }
 }  // namespace doodle::http
