@@ -5,6 +5,8 @@
 #include "import_and_render_ue.h"
 
 #include "doodle_core/core/file_sys.h"
+#include "doodle_core/metadata/task_status.h"
+#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/core/http_client_core.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
@@ -240,7 +242,9 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
     logger_ptr_->info("复制UE资源文件 from {} to {}", p.from_, p.to_);
     FSys::copy_diff(p.from_, p.to_, logger_ptr_);
   }
-  co_await kitsu_client_->comment_task(shot_task_id_, "ue自动运行生成视频", arg_.create_move_path_);
+  co_await kitsu_client_->comment_task(
+      shot_task_id_, "ue自动运行生成视频", arg_.create_move_path_, task_status::get_completed()
+  );
 }
 
 }  // namespace doodle

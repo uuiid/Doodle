@@ -23,6 +23,7 @@
 #include <boost/scope/scope_exit.hpp>
 
 #include "core/http/json_body.h"
+#include <chrono>
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <fmt/compile.h>
@@ -143,14 +144,15 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_generate_uesk_file_arg(
   co_return l_res.body();
 }
 boost::asio::awaitable<void> kitsu_client::upload_asset_file(
-    std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name, chrono::seconds in_timeout
+    std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
 ) const {
   boost::scope::scope_exit l_exit{[&]() {
     http_client_ptr_->body_limit_.reset();
     http_client_ptr_->set_timeout(30s);
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  http_client_ptr_->set_timeout(in_timeout);
+  if (auto l_size = FSys::file_size(in_file_path); l_size > 10ll * 1024 * 1024)
+    http_client_ptr_->set_timeout(chrono::seconds(l_size / (10ll * 1024 * 1024)) + 300s);  // 10MB/s 上传速度
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
   set_req_headers(l_req, "application/octet-stream");
   l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);

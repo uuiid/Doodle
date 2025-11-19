@@ -20,5 +20,20 @@ void task_status::check_retake_capping(const task& in_task) {
         }
     );
 }
+const uuid& task_status::get_completed() {
+  // 4ffc748e-4e58-4336-ba83-51910253514e
+  static const uuid g_completed_id{
+      {0x4f, 0xfc, 0x74, 0x8e, 0x4e, 0x58, 0x43, 0x36, 0xba, 0x83, 0x51, 0x91, 0x02, 0x53, 0x51, 0x4e}
+  };
+  return g_completed_id;
+}
+
+const uuid& task_status::get_to_do() {
+  // 9704a092-76ac-406d-89e5-1dd862e03e82
+  static const uuid g_to_do_id{
+      {0x97, 0x04, 0xa0, 0x92, 0x76, 0xac, 0x40, 0x6d, 0x89, 0xe5, 0x1d, 0xd8, 0x62, 0xe0, 0x3e, 0x82}
+  };
+  return g_to_do_id;
+}
 
 }  // namespace doodle

@@ -48,6 +48,7 @@ constexpr std::string_view task_status_todo{"Todo"};
 constexpr std::string_view entity_type_sequence{"Sequence"};
 constexpr std::string_view entity_type_episode{"Episode"};
 constexpr std::string_view entity_type_shot{"Shot"};
+constexpr auto g_timeout{std::chrono::seconds(30)};
 namespace work_websocket_event {
 constexpr std::string_view post_task{R"(post_task)"};
 constexpr std::string_view list_task{R"(get_task)"};

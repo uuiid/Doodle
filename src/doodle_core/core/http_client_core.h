@@ -18,6 +18,7 @@
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/asio/ts/netfwd.hpp>
 #include <boost/beast.hpp>
+#include <boost/beast/http.hpp>
 #include <boost/beast/http/file_body_fwd.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/url.hpp>
@@ -45,19 +46,29 @@ class http_stream_base {
   buffer_type buffer_{};
   socket_type_ptr socket_;
   chrono::sys_time_pos last_use_time_;
-  static constexpr auto default_timeout_ = chrono::seconds{30};
 
-  chrono::seconds timeout_{default_timeout_};
-  std::optional<chrono::seconds> next_timeout_{default_timeout_};
+  chrono::seconds timeout_{doodle_config::g_timeout};
+  std::optional<chrono::seconds> next_timeout_{doodle_config::g_timeout};
 
   virtual void expires_after_impl(std::chrono::seconds in_seconds) = 0;
   template <typename T>
   void set_request_timeout(boost::beast::http::request<T>& in_req) {
-    if (timeout_ != default_timeout_ || (next_timeout_ && *next_timeout_ != default_timeout_)) {
+    if (timeout_ != doodle_config::g_timeout || (next_timeout_ && *next_timeout_ != doodle_config::g_timeout)) {
       if (next_timeout_) {
         in_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", (*next_timeout_).count()));
       } else {
         in_req.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", timeout_.count()));
+      }
+    }
+  }
+  template <typename T>
+  void parse_response_timeout(const boost::beast::http::response<T>& in_res) {
+    if (auto l_keep_alive = in_res.find(boost::beast::http::field::keep_alive); l_keep_alive != in_res.end()) {
+      auto l_value = l_keep_alive->value();
+      if (auto l_it = l_value.find("timeout="); l_it != std::string_view::npos) {
+        timeout_ = std::chrono::seconds{
+            boost::lexical_cast<std::int64_t>(l_value.substr(l_it + 8, l_value.find(',', l_it) - l_it - 8))
+        };
       }
     }
   }
@@ -313,11 +324,17 @@ class http_stream_base<SocketType>::read_and_write_compose_parser {
         if (in_ec) goto end_complete;
         self_->expires_after(self_->timeout_);
       }
-      
+
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_write(*self_->socket_, req_, std::move(self));
       if (in_ec) goto end_complete;
       self_->expires_after(self_->timeout_);
       // }
+      BOOST_ASIO_CORO_YIELD boost::beast::http::async_read_header(
+          *self_->socket_, self_->buffer_, *parser_, std::move(self)
+      );
+      if (in_ec) goto end_complete;
+      self_->parse_response_timeout(parser_->get());
+      self_->expires_after(self_->timeout_);
       BOOST_ASIO_CORO_YIELD boost::beast::http::async_read(*self_->socket_, self_->buffer_, *parser_, std::move(self));
       if (in_ec) goto end_complete;
       self_->expires_after(self_->timeout_);

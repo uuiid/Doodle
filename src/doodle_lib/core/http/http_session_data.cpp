@@ -175,7 +175,7 @@ void session_data::set_session() {
     }
     // SPDLOG_LOGGER_WARN(logger_, "超时设置 {}", timeout_);
   } else {
-    timeout_ = g_timeout;
+    timeout_ = doodle_config::g_timeout;
   }
 
   callback_.reset();
@@ -354,7 +354,10 @@ boost::beast::http::message_generator session_data::make_msg(
   l_res.prepare_payload();
 
   if (auto l_size = FSys::file_size(in_path); l_size > 1024 * 1024 * 1024)  // 1GB
+  {
     timeout_ += chrono::seconds(l_size / (20 * 1024 * 1024));
+    l_res.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", timeout_.count()));
+  }
   return l_res;
 }
 template <>

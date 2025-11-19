@@ -27,6 +27,8 @@ struct DOODLE_CORE_API task_status {
   bool for_concept_;
 
   void check_retake_capping(const task& in_task);
+  static const uuid& get_completed();
+  static const uuid& get_to_do();
 
   // form json
   friend void from_json(const nlohmann::json& in_json, task_status& out_obj) {

@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <doodle_core/configure/static_value.h>
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/core/http/http_content_type.h>
@@ -15,6 +16,7 @@
 
 #include <string>
 #include <tl/expected.hpp>
+
 
 namespace doodle::http {
 struct multipart_body;
@@ -55,7 +57,6 @@ class session_data : public std::enable_shared_from_this<session_data> {
   using multipart_request_parser_ptr  = std::shared_ptr<multipart_request_parser_type>;
   static constexpr auto g_body_limit{800ll * 1024 * 1024 * 1024};  // 800G
   // 超时
-  static constexpr auto g_timeout{std::chrono::seconds(30)};
   std::unique_ptr<tcp_stream_type> stream_;
   std::variant<
       empty_request_parser_ptr, string_request_parser_ptr, file_request_parser_ptr, multipart_request_parser_ptr>
@@ -63,7 +64,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   http_function_ptr callback_;
   boost::beast::flat_buffer buffer_;
   boost::beast::http::verb method_verb_{};
-  chrono::seconds timeout_{g_timeout};
+  chrono::seconds timeout_{doodle_config::g_timeout};
   void set_session();
   boost::asio::awaitable<bool> parse_body();
   boost::asio::awaitable<void> async_websocket_session();
