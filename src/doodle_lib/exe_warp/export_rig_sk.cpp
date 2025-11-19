@@ -6,6 +6,7 @@
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity_type.h"
 
+#include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -35,15 +36,27 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
 
   if (l_maya_file.out_file_list.empty()) throw_exception(doodle_error{"文件 {}, 未能输出骨架fbx", maya_file_});
 
+  auto l_ue_project  = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
+  auto l_import_root = l_ue_project.parent_path() / conv_normal_path(impl_.import_game_path_.parent_path());
+
   for (auto& p : l_maya_file.out_file_list) {
     SPDLOG_INFO("导出 {}", p);
 
+    for (auto&& l_ufile : {
+             (l_import_root / p.stem()).replace_extension(doodle_config::ue4_uasset_ext),
+             (l_import_root / fmt::format("{}_Skeleton", p.stem())).replace_extension(doodle_config::ue4_uasset_ext),
+             (l_import_root / fmt::format("{}_PhysicsAsset", p.stem())).replace_extension(doodle_config::ue4_uasset_ext)
+         }) {
+      if (FSys::exists(l_ufile)) {
+        SPDLOG_INFO("删除旧的资产 {}", l_ufile);
+        FSys::remove(l_ufile);
+      }
+    }
     nlohmann::json l_json{};
     l_json =
         import_and_render_ue_ns::import_skin_file{.fbx_file_ = p, .import_dir_ = impl_.import_game_path_.parent_path()};
-    auto l_tmp_path   = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
+    auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
 
-    auto l_ue_project = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
     if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};
 
     logger_ptr_->warn("排队导入skin文件 {} {}", l_ue_project, p);

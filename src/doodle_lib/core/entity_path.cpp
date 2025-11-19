@@ -422,6 +422,15 @@ FSys::path conv_ue_game_path(const FSys::path& in_path) {
   l_path.replace_extension(l_path.stem());
   return l_path;
 }
+
+FSys::path conv_normal_path(const FSys::path& in_path) {
+  auto l_str = in_path.generic_string();
+  boost::replace_all(l_str, doodle_config::ue4_game, doodle_config::ue4_content);
+  FSys::path l_path{l_str};
+  l_path.replace_extension(doodle_config::ue4_uasset_ext);
+  return l_path;
+}
+
 FSys::path sk_conv_bone_name(const FSys::path& in_name) {
   auto l_str = in_name.stem();
   return in_name.parent_path() / fmt::format("{0}_Skeleton.{0}_Skeleton", l_str);
