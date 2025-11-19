@@ -22,6 +22,7 @@
 
 #include <cpp-base64/base64.h>
 #include <filesystem>
+#include <spdlog/spdlog.h>
 
 namespace doodle::http {
 
@@ -58,6 +59,7 @@ void up_file_base::move_file(session_data_ptr in_handle) {
 
   if (exists(l_path)) FSys::rename(l_path, l_backup_path);
   FSys::rename(l_tmp_path, l_path);
+  SPDLOG_LOGGER_INFO(in_handle->logger_, "转移文件 {} {}", l_tmp_path, l_path);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::get(session_data_ptr in_handle) {
