@@ -36,6 +36,7 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
   auto l_ptr            = std::make_shared<engine_io_packet>(engine_io_packet_type::open, l_json.dump());
+  l_ptr->start_dump();
   return l_ptr;
 }
 
@@ -50,10 +51,13 @@ void socket_io_websocket_core::async_run() {
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
+  bool l_is_register{false};
   // 注册
-  if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil())
-    co_await async_write_websocket(generate_register_reply(co_await sid_ctx_->generate()));
-  else
+  if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil()) {
+    sid_data_ = co_await sid_ctx_->generate();
+    co_await async_write_websocket(generate_register_reply(sid_data_));
+    l_is_register = true;
+  } else
     sid_data_ = co_await sid_ctx_->get_sid(l_p.sid_);
 
   /// 查看是否有锁, 有锁直接返回
@@ -62,7 +66,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // boost::beast::flat_buffer l_buffer{};
   if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
 
-  {  // 第一次验证ping pong
+  if (!l_is_register) {
+    // 第一次验证ping pong
     std::string l_body{};
     auto l_buffer = boost::asio::dynamic_buffer(l_body);
     co_await web_stream_->async_read(l_buffer);
@@ -74,7 +79,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   }
 
   sid_data_->upgrade_to_websocket();
-  sid_data_->cancel_async_event();
+  if (!l_is_register) sid_data_->cancel_async_event();
   boost::asio::co_spawn(
       co_await boost::asio::this_coro::executor, async_write(),
       [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
@@ -85,8 +90,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
         }
       }
   );
-
-  {  // 第二次验证 升级协议
+  if (!l_is_register) {  // 第二次验证 升级协议
     std::string l_body{};
     auto l_buffer = boost::asio::dynamic_buffer(l_body);
     co_await web_stream_->async_read(l_buffer);
