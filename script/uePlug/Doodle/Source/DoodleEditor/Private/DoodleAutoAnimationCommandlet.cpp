@@ -856,6 +856,7 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(cons
 	K_FBX_F->ImportUI->bImportTextures = false;
 	K_FBX_F->ImportUI->bResetToFbxOnMaterialConflict = false;
 	//----------------------
+	K_FBX_F->ImportUI->SkeletalMeshImportData->NormalImportMethod = EFBXNormalImportMethod::FBXNIM_ImportNormalsAndTangents;
 	K_FBX_F->ImportUI->SkeletalMeshImportData->bImportMorphTargets = true;
 	K_FBX_F->ImportUI->SkeletalMeshImportData->bUseT0AsRefPose = false;
 	K_FBX_F->ImportUI->bAutomatedImportShouldDetectType = false;
