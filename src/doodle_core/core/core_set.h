@@ -4,6 +4,7 @@
 
 #include <boost/process.hpp>
 
+#include <atomic>
 #include <cstdint>
 #include <string>
 
@@ -15,7 +16,7 @@ class doodle_lib;
 /**
  * @brief 全局静态设置类
  *
- * @warning 这个类本身的初始化极为基本和简单， 初始化请使用 core_set_init 分步调用
+ * @warning 这个类本身的初始化极为基本和简单
  */
 
 class DOODLE_CORE_API core_set : public boost::noncopyable {
@@ -23,24 +24,23 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   friend class doodle_lib;
 
  public:
-  static core_set &get_set();
+  static core_set& get_set();
 
-  void set_root(const FSys::path &in_root);
+  void set_root(const FSys::path& in_root);
   [[nodiscard]] FSys::path get_cache_root() const;
-  [[nodiscard]] FSys::path get_cache_root(const FSys::path &in_path) const;
+  [[nodiscard]] FSys::path get_cache_root(const FSys::path& in_path) const;
 
   // doc路径
   [[nodiscard]] FSys::path get_doc() const;
 
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
-  std::string get_uuid_str(const std::string &in_add);
+  std::string get_uuid_str(const std::string& in_add);
 
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
 
   std::locale utf8_locale;
-
 
   static std::string get_render_url();
 
@@ -59,7 +59,6 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
 
   std::string server_ip{};
   /// 保管库的地址
-
   std::uint8_t assets_file_widgets_size;
   /// 欢迎窗口的变量
   bool next_time_{};
@@ -67,6 +66,8 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
 
   std::string authorize_{};
   void save();
+  // 只读模式
+  std::atomic_bool read_only_mode_{false};
 
  private:
   // 用户名称
@@ -83,16 +84,15 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
 
  private:
   // 这里是序列化的代码
-  friend void to_json(nlohmann::json &j, const core_set &p);
-  friend void from_json(const nlohmann::json &j, core_set &p);
+  friend void to_json(nlohmann::json& j, const core_set& p);
+  friend void from_json(const nlohmann::json& j, core_set& p);
 };
 
-void to_json(nlohmann::json &j, const core_set &p);
-void from_json(const nlohmann::json &j, core_set &p);
+void to_json(nlohmann::json& j, const core_set& p);
+void from_json(const nlohmann::json& j, core_set& p);
 
 namespace win {
 /// FOLDERID_Fonts
-FSys::path DOODLE_CORE_API get_font();
 FSys::path DOODLE_CORE_API get_pwd();
 
 }  // namespace win

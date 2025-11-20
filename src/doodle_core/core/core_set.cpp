@@ -24,19 +24,7 @@ FSys::path win::get_pwd() {
   return k_path;
 }
 
-FSys::path win::get_font() {
-  /// 这里我们手动做一些工作
-  /// 获取环境变量 FOLDERID_Documents
-  PWSTR pManager;
-  SHGetKnownFolderPath(FOLDERID_Fonts, NULL, nullptr, &pManager);
-  if (!pManager) throw_exception(doodle_error{error_enum::null_string, "获取字体路径失败"});
-
-  auto k_path = FSys::path{pManager};
-  CoTaskMemFree(pManager);
-  return k_path;
-}
-
-core_set &core_set::get_set() {
+core_set& core_set::get_set() {
   static core_set install{};
   return install;
 }
@@ -55,7 +43,7 @@ core_set::core_set()
 #else
       server_ip("http://192.168.20.89:50025")
 #endif
-     {
+{
   p_doc /= "doodle";
   if (!FSys::exists(p_doc)) FSys::create_directories(p_doc);
 
@@ -80,7 +68,7 @@ core_set::core_set()
       FSys::ifstream l_in_josn{l_k_setting_file_name, std::ifstream::binary};
       auto l_data = nlohmann::json::parse(l_in_josn);
       l_data.at("setting").get_to(*this);
-    } catch (const nlohmann::json::parse_error &err) {
+    } catch (const nlohmann::json::parse_error& err) {
       DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
     }
   }
@@ -101,11 +89,11 @@ std::string core_set::get_render_url() {
 #endif
 }
 
-void core_set::set_root(const FSys::path &in_root) { p_root = in_root; }
+void core_set::set_root(const FSys::path& in_root) { p_root = in_root; }
 
 FSys::path core_set::get_cache_root() const { return p_root; }
 
-FSys::path core_set::get_cache_root(const FSys::path &in_path) const {
+FSys::path core_set::get_cache_root(const FSys::path& in_path) const {
   auto path = p_root / in_path;
   if (!FSys::exists(path)) FSys::create_directories(path);
   return path;
@@ -123,7 +111,7 @@ void core_set::save() {
   }
 }
 
-void to_json(nlohmann::json &j, const core_set &p) {
+void to_json(nlohmann::json& j, const core_set& p) {
   j["organization_name"]        = p.organization_name;
   j["max_thread"]               = p.p_max_thread;
   j["timeout"]                  = p.timeout;
@@ -140,7 +128,7 @@ void to_json(nlohmann::json &j, const core_set &p) {
   j["authorize"]                = p.authorize_;
 }
 
-void from_json(const nlohmann::json &j, core_set &p) {
+void from_json(const nlohmann::json& j, core_set& p) {
   if (j.count("organization_name")) j.at("organization_name").get_to(p.organization_name);
   if (j.count("ue4_setting")) {
     j["ue4_setting"].at("ue4_path").get_to(p.ue4_path);
@@ -167,6 +155,6 @@ void from_json(const nlohmann::json &j, core_set &p) {
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
 }
 
-std::string core_set::get_uuid_str(const std::string &in_add) { return get_uuid_str() + in_add; }
+std::string core_set::get_uuid_str(const std::string& in_add) { return get_uuid_str() + in_add; }
 
 }  // namespace doodle

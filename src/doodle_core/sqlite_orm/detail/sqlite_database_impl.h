@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_core/core/app_base.h>
+#include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -858,9 +859,11 @@ struct sqlite_database_impl {
   }
 
 #define DOODLE_TO_SQLITE_THREAD()                                 \
+  if (core_set::get_set().read_only_mode_) co_return;             \
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
 #define DOODLE_TO_SQLITE_THREAD_2()                               \
+  if (core_set::get_set().read_only_mode_) co_return;             \
   auto this_executor = co_await boost::asio::this_coro::executor; \
   co_await boost::asio::post(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));
 
