@@ -361,12 +361,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   std::vector<working_file_and_link> l_working_files{};
   for (auto&& [l_entity, l_entity_asset_extend] : l_r) {
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
-      l_working_files = create_character_working_files(l_prj, l_entity, l_entity_asset_extend);
+      l_working_files |= ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
     } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
                l_entity.entity_type_id_ == asset_type::get_effect_id()) {
-      l_working_files = create_prop_working_files(l_prj, l_entity, l_entity_asset_extend);
+      l_working_files |= ranges::actions::push_back(create_prop_working_files(l_prj, l_entity, l_entity_asset_extend));
     } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
-      l_working_files = create_ground_working_files(l_prj, l_entity, l_entity_asset_extend);
+      l_working_files |= ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
     }
   }
 
