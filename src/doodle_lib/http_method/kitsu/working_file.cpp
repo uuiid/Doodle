@@ -348,7 +348,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
     session_data_ptr in_handle
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
-  if (l_sql.uuid_to_id<task>(id_) == 0)
+  if (l_sql.uuid_to_id<project>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_prj        = l_sql.get_by_uuid<project>(id_);
   auto l_entity_ids = in_handle->get_json().get<std::vector<uuid>>();
