@@ -406,8 +406,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   std::shared_ptr<export_fbx_arg> l_arg_t = std::make_shared<export_fbx_arg>();
   l_arg_t->kitsu_client_                  = l_client;
   l_arg_t->task_id_                       = id_;
-  l_arg_t->maya_file_                     = l_json["path"].get<FSys::path>();
-  l_ptr->command_                         = (nlohmann::json{} = *l_arg_t);
+  l_json.get_to(*l_arg_t);
+  l_arg_t->maya_file_ = l_json["path"].get<FSys::path>();
+  l_ptr->command_     = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
@@ -433,8 +434,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
   std::shared_ptr<qcloth_update_arg> l_arg_t = std::make_shared<qcloth_update_arg>();
-  l_arg_t->kitsu_client_              = l_client;
-  l_arg_t->task_id_                   = id_;
+  l_arg_t->kitsu_client_                     = l_client;
+  l_arg_t->task_id_                          = id_;
   l_json.get_to(*l_arg_t);
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
