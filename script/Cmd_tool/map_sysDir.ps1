@@ -1,6 +1,5 @@
 ﻿Write-Host " 准备测试服务器 .... 请点击确认按钮并等待完成..."
-class map_dir
-{
+class map_dir {
     [string]$link;
     [string]$source;
     [string]$name;
@@ -39,8 +38,7 @@ $map_item = @(
     [map_dir]@{ link = "C:\sy\LQSWN_JCB"; source = "\\192.168.10.253\public\LQSWN_JCB"; name = "LQSWN_JCB" },
     [map_dir]@{ link = "C:\sy\DYX"; source = "\\192.168.10.253\public\DYX"; name = "DYX" }
 )
-function Add-SyDir
-{
+function Add-SyDir {
     $main_ini = @"
 [.ShellClassInfo]
 InfoTip=@Shell32.dll,-12688
@@ -62,18 +60,15 @@ FolderType=
 Logo =
 
 "@;
-    foreach ($i in Get-Childitem -Path "C:\sy")
-    {
+    foreach ($i in Get-Childitem -Path "C:\sy") {
         $path = "C:\sy\" + $i
         (Get-Item -Path $path).Delete()
         Write-Host "删除 " $path
     }
     # Remove-Item -Path "C:\sy" -Recurse -Confirm -ErrorAction Stop
-    if (Test-Path -Path "C:\sy")
-    {
+    if (Test-Path -Path "C:\sy") {
     }
-    else
-    {
+    else {
         New-Item "C:\sy" -ItemType Directory
     }
     Set-Content -Path "C:\sy\desktop.ini" -Value $main_ini -Encoding "unicode" -Force
@@ -81,48 +76,40 @@ Logo =
     $file.Attributes = 'Archive, System, Hidden'
 }
 
-function Add-SymLink
-{
-    foreach ($item in $map_item)
-    {
+function Add-SymLink {
+    foreach ($item in $map_item) {
         $item -is [map_dir]
 
-        try
-        {
+        try {
 
             # $test_file_path = $item.source + "\test.run_txt"
             Get-Childitem -Path $item.source -ErrorAction Stop
             # New-Item -Path $test_file_path -ItemType File -Force -ErrorAction Stop
             # Remove-Item -Path $test_file_path -ErrorAction Stop
-            if (Test-Path $item.source)
-            {
-                if (Test-Path $item.link)
-                {
+            if (Test-Path $item.source) {
+                if (Test-Path $item.link) {
                     $fod = Get-Item -Path $item.link
                     $fod.Delete()
                 }
                 New-Item -ItemType SymbolicLink -Path $item.link -Target $item.source
+
             }
         }
-        catch [System.Management.Automation.ActionPreferenceStopException]
-        {
+        catch [System.Management.Automation.ActionPreferenceStopException] {
             Write-Host "目录" $item.source "没有访问权限， 取消映射"
         }
-        catch
-        {
+        catch {
             $message = $_
             Write-Warning "catch all 目录 $message"
         }
     }
 }
 
-function Add-Tile
-{
+function Add-Tile {
     param (
 
     )
-    foreach ($item in $map_item)
-    {
+    foreach ($item in $map_item) {
         Write-Host "开始创建 目录 " $item.source " 的别名"
         $ini = $item.source + "\desktop.ini"
         $con = @"
@@ -140,18 +127,15 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
     Prop6 = 31,this is comment
 
 "@
-        try
-        {
+        try {
             Set-Content -Path $ini -Value $con -Encoding "unicode" -Force -ErrorAction Stop
             $file = Get-Item -Path $ini -Force
             $file.Attributes = 'Archive, System, Hidden'
         }
-        catch [System.Management.Automation.ActionPreferenceStopException]
-        {
+        catch [System.Management.Automation.ActionPreferenceStopException] {
             Write-Host "目录" $item.source "没有访问权限， 不写入"
         }
-        catch
-        {
+        catch {
             $message = $_
             Write-Warning "catch all 目录 $message"
         }
@@ -160,4 +144,4 @@ IconResource=C:\WINDOWS\System32\SHELL32.dll,43
 Add-Tile;
 Add-SyDir;
 Add-SymLink;
-# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run5.exe -requireAdmin
+# ps2exe E:\Doodle\script\Cmd_tool\map_sysDir.ps1 E:\Doodle\script\Cmd_tool\run5.1.exe -requireAdmin
