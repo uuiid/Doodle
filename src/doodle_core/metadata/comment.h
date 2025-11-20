@@ -37,8 +37,8 @@ struct DOODLE_CORE_API comment {
   nlohmann::json checklist_{nlohmann::json::array()};
   bool pinned_;
   std::vector<std::string> links;
-  chrono::system_zoned_time created_at_;
-  chrono::system_zoned_time updated_at_;
+  chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
+  chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   void set_comment_mentions(const uuid& in_project_id);
   void set_comment_department_mentions();

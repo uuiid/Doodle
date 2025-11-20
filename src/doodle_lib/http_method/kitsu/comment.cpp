@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-4-29.
 //
+#include "doodle_core/core/chrono_.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
@@ -16,6 +17,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include <algorithm>
+#include <chrono>
 #include <fmt/format.h>
 #include <memory>
 
@@ -51,8 +53,8 @@ boost::asio::awaitable<create_comment_result> create_comment(
   if (!in_comment->text_.empty()) in_comment->text_ = boost::locale::conv::to_utf<char>(in_comment->text_, "UTF-8");
 
   in_comment->uuid_id_    = core_set::get_set().get_uuid();
-  in_comment->created_at_ = chrono::system_clock::now();
-  in_comment->updated_at_ = chrono::system_clock::now();
+  in_comment->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+  in_comment->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   in_comment->person_id_  = in_person->person_.uuid_id_;
 
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
