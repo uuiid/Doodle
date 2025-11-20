@@ -319,6 +319,7 @@ boost::asio::awaitable<void> kitsu_client::comment_task(
       throw_exception(doodle_error{"kitsu comment task error {} {}", l_res.result(), l_res.body().dump()});
     l_comment_id = l_res.body().at("id").get<uuid>();
   }
+  if (in_attach_files.empty()) co_return;
   {  // 创建预览
     boost::beast::http::request<boost::beast::http::string_body> l_req{
         boost::beast::http::verb::post,

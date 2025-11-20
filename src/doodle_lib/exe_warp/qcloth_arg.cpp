@@ -1,5 +1,7 @@
 #include "qcloth_arg.h"
 
+#include <doodle_core/metadata/task_status.h>
+
 namespace doodle {
 void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
   from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
@@ -55,6 +57,8 @@ boost::asio::awaitable<void> qcloth_update_arg::run() {
   for (auto& p : l_fbx) {
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, alembic_file_dir_, p.filename());
   }
+  co_await kitsu_client_->comment_task(task_id_, "自动导出和上传文件", {}, task_status::get_nearly_completed());
+
   co_return;
 }
 

@@ -3,6 +3,7 @@
 //
 #include "task_status.h"
 
+#include "doodle_core_fwd.h"
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -26,6 +27,14 @@ const uuid& task_status::get_completed() {
       {0x4f, 0xfc, 0x74, 0x8e, 0x4e, 0x58, 0x43, 0x36, 0xba, 0x83, 0x51, 0x91, 0x02, 0x53, 0x51, 0x4e}
   };
   return g_completed_id;
+}
+
+const uuid& task_status::get_nearly_completed() {
+  // 1cbeaa6b-7825-4bcd-8878-6f9fb05ac493
+  static const uuid g_nearly_completed_id{
+      {0x1c, 0xbe, 0xaa, 0x6b, 0x78, 0x25, 0x4b, 0xcd, 0x88, 0x78, 0x6f, 0x9f, 0xb0, 0x5a, 0xc4, 0x93}
+  };
+  return g_nearly_completed_id;
 }
 
 const uuid& task_status::get_to_do() {

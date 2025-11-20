@@ -3,6 +3,8 @@
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/move_create.h"
+#include "doodle_core/metadata/task_status.h"
+#include "doodle_core/metadata/task_type.h"
 
 #include <doodle_lib/long_task/image_to_move.h>
 
@@ -71,9 +73,10 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     SPDLOG_INFO("上传导出文件 {}", l_p);
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, l_p.parent_path(), l_p.filename());
   }
+  co_await kitsu_client_->comment_task(
+      task_id_, "自动导出和上传文件", l_out_arg_.movie_file_, task_status::get_nearly_completed()
+  );
   if (!l_out_arg_.movie_file_.empty()) {
-    co_await kitsu_client_->comment_task(task_id_, "自动导出和上传文件", l_out_arg_.movie_file_);
-
     co_await kitsu_client_->upload_shot_animation_other_file(
         task_id_, l_root_dir, l_out_arg_.movie_file_.lexically_proximate(l_root_dir)
     );

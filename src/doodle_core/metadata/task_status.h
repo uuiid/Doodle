@@ -28,6 +28,8 @@ struct DOODLE_CORE_API task_status {
 
   void check_retake_capping(const task& in_task);
   static const uuid& get_completed();
+  // nearly completed
+  static const uuid& get_nearly_completed();
   static const uuid& get_to_do();
 
   // form json
