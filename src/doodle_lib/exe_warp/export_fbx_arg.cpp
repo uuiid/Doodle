@@ -17,6 +17,7 @@ void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
   if (in_json.contains("camera_film_aperture")) in_json.at("camera_film_aperture").get_to(out_obj.film_aperture_);
   if (in_json.contains("image_size")) in_json.at("image_size").get_to(out_obj.size_);
   if (in_json.contains("only_upload")) in_json.at("only_upload").get_to(out_obj.only_upload_);
+  if (in_json.contains("path")) in_json.at("path").get_to(out_obj.maya_file_);
 }
 // to json
 void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {

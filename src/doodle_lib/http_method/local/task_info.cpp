@@ -407,7 +407,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_arg_t->kitsu_client_                  = l_client;
   l_arg_t->task_id_                       = id_;
   l_json.get_to(*l_arg_t);
-  l_arg_t->maya_file_ = l_json["path"].get<FSys::path>();
   l_ptr->command_     = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
