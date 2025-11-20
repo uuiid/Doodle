@@ -169,6 +169,20 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
 
   co_return;
 }
+
+boost::asio::awaitable<void> kitsu_client::remove_asset_file(std::string in_upload_url) const {
+  SPDLOG_INFO("开始备份文件 {}", in_upload_url);
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::delete_, in_upload_url, 11
+  };
+  set_req_headers(l_req);
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::no_content)
+    throw_exception(doodle_error{"kitsu remove file error {} {}", l_res.result(), l_res.body()});
+  co_return;
+}
+
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const {
   SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
@@ -176,6 +190,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
       base64_encode(in_file_path.filename().generic_string())
   );
 }
+
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
     uuid in_task_id, std::shared_ptr<std::vector<FSys::path>> in_file_path
 ) const {
@@ -280,7 +295,24 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
       base64_encode(in_file_name.generic_string())
   );
 }
-
+boost::asio::awaitable<void> kitsu_client::remove_asset_file_maya(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/assets/{}/file/maya", in_uuid));
+}
+boost::asio::awaitable<void> kitsu_client::remove_asset_file_ue(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/assets/{}/file/ue", in_uuid));
+}
+boost::asio::awaitable<void> kitsu_client::remove_asset_file_image(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/assets/{}/file/image", in_uuid));
+}
+boost::asio::awaitable<void> kitsu_client::remove_shot_animation_maya(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/maya", in_uuid));
+}
+boost::asio::awaitable<void> kitsu_client::remove_shot_animation_export_file(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/output", in_uuid));
+}
+boost::asio::awaitable<void> kitsu_client::remove_shot_animation_other_file(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/other", in_uuid));
+}
 boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::post,

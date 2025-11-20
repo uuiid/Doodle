@@ -51,6 +51,7 @@ boost::asio::awaitable<void> qcloth_update_arg::run() {
       "上传qcloth abc文件数量 {} {}, fbx {} {}", l_abc.size(), fmt::join(l_abc, "\n "), l_fbx.size(),
       fmt::join(l_fbx, "\n ")
   );
+  co_await kitsu_client_->remove_shot_animation_export_file(task_id_);
   for (auto& p : l_abc) {
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, alembic_file_dir_, p.filename());
   }

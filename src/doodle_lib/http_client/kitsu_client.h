@@ -33,7 +33,7 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_asset_file(
       std::string in_upload_url, FSys::path in_file_path, std::string in_file_field_name
   ) const;
-
+  boost::asio::awaitable<void> remove_asset_file(std::string in_upload_url) const;
   template <typename T>
   void set_req_headers(
       boost::beast::http::request<T>& req, const std::string& in_content_type = "application/json"
@@ -80,7 +80,12 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_shot_animation_other_file(
       uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
   );
-
+  boost::asio::awaitable<void> remove_asset_file_maya(const uuid& in_uuid);
+  boost::asio::awaitable<void> remove_asset_file_ue(const uuid& in_uuid);
+  boost::asio::awaitable<void> remove_asset_file_image(const uuid& in_uuid);
+  boost::asio::awaitable<void> remove_shot_animation_maya(const uuid& in_uuid);
+  boost::asio::awaitable<void> remove_shot_animation_export_file(const uuid& in_uuid);
+  boost::asio::awaitable<void> remove_shot_animation_other_file(const uuid& in_uuid);
   boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
   /// 对task进行评论(并且附加预览图或者视频)
   boost::asio::awaitable<void> comment_task(
