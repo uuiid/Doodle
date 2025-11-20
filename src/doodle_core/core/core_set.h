@@ -44,9 +44,6 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
 
   static std::string get_render_url();
 
-  // 部门
-  std::string organization_name;
-
   FSys::path p_root;
   FSys::path p_doc;
 
@@ -58,11 +55,6 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   std::string layout_config;
 
   std::string server_ip{};
-  /// 保管库的地址
-  std::uint8_t assets_file_widgets_size;
-  /// 欢迎窗口的变量
-  bool next_time_{};
-  boost::uuids::uuid user_id;
 
   std::string authorize_{};
   void save();

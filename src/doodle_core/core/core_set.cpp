@@ -30,13 +30,11 @@ core_set& core_set::get_set() {
 }
 
 core_set::core_set()
-    : user_id(),
-      p_doc(win::get_pwd()),
+    : p_doc(win::get_pwd()),
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
       timeout(3600),
       maya_version(2020),
-      assets_file_widgets_size(5),
       p_uuid_gen(boost::uuids::random_generator{}),
 #ifdef NDEBUG
       server_ip("http://192.168.40.181")
@@ -71,9 +69,6 @@ core_set::core_set()
     } catch (const nlohmann::json::parse_error& err) {
       DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
     }
-  }
-  if (user_id.is_nil()) {
-    user_id = get_uuid();
   }
 }
 
@@ -112,24 +107,20 @@ void core_set::save() {
 }
 
 void to_json(nlohmann::json& j, const core_set& p) {
-  j["organization_name"]        = p.organization_name;
   j["max_thread"]               = p.p_max_thread;
   j["timeout"]                  = p.timeout;
   j["ue4_path"]                 = p.ue4_path;
   j["ue4_version"]              = p.ue4_version;
   j["maya_replace_save_dialog"] = p.maya_replace_save_dialog;
   j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
-  j["user_id"]                  = p.user_id;
   j["user_name"]                = p.user_name;
   j["maya_version"]             = p.maya_version;
   j["layout_config"]            = p.layout_config;
-  j["assets_file_widgets_size"] = p.assets_file_widgets_size;
-  j["next_time_"]               = p.next_time_;
+
   j["authorize"]                = p.authorize_;
 }
 
 void from_json(const nlohmann::json& j, core_set& p) {
-  if (j.count("organization_name")) j.at("organization_name").get_to(p.organization_name);
   if (j.count("ue4_setting")) {
     j["ue4_setting"].at("ue4_path").get_to(p.ue4_path);
     j["ue4_setting"].at("ue4_version").get_to(p.ue4_version);
@@ -140,18 +131,13 @@ void from_json(const nlohmann::json& j, core_set& p) {
   j.at("timeout").get_to(p.timeout);
   if (j.contains("maya_replace_save_dialog")) j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
   if (j.contains("maya_force_resolve_link")) j.at("maya_force_resolve_link").get_to(p.maya_force_resolve_link);
-  if (j.contains("user_id"))
-    j.at("user_id").get_to(p.user_id);
-  else
-    p.user_id = p.get_uuid();
   /// \brief 兼容旧版本段配置文件
   if (j.contains("user_")) j.at("user_").get_to(p.user_name);
   if (j.contains("user_name")) j.at("user_name").get_to(p.user_name);
 
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
   if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
-  if (j.contains("assets_file_widgets_size")) j.at("assets_file_widgets_size").get_to(p.assets_file_widgets_size);
-  if (j.contains("next_time_")) j.at("next_time_").get_to(p.next_time_);
+
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
 }
 

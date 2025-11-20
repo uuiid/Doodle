@@ -53,7 +53,6 @@ void http_work::run(const std::string& in_url, const std::string& in_http_url, c
   timer_    = std::make_shared<timer>(executor_);
   url_      = in_url;
   uuid_id_  = in_uuid;
-  if (uuid_id_.is_nil()) uuid_id_ = core_set::get_set().user_id;
 
   websocket_client_ = std::make_shared<http_websocket_client>();
   logger_           = g_logger_ctrl().make_log("http_work");

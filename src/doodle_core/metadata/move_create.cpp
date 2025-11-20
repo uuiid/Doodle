@@ -112,9 +112,6 @@ std::vector<image_attr> image_attr::make_default_attr(
               fmt::format("sc{:04}{}", in_shot->p_shot, in_shot->p_shot_enum), 0.15, 0.1, image_watermark::rgb_default
           );
 
-        l_attribute.watermarks_attr.emplace_back(
-            core_set::get_set().organization_name, 0.28, 0.1, image_watermark::rgb_default
-        );
         return l_attribute;
       }) |
       ranges::to_vector;
