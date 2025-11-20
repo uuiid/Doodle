@@ -206,24 +206,25 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_task_status>("/api/data/task-status"_url) 
       .reg_t<data_task_status_instance>("/api/data/task-status/{}"_url(&data_task_status_instance::id_)) 
       .reg_t<actions_tasks_modify_date_comment>("/api/actions/tasks/{}/modify-date-comment"_url(&actions_tasks_modify_date_comment::id_))
-      .reg_t<doodle_backup>("/api/doodle/backup"_url)
       .reg_t<actions_projects_shots_working_file>("/api/actions/projects/{}/shots/{}/working-file"_url(
-          &actions_projects_shots_working_file::project_id_,
-          &actions_projects_shots_working_file::id_
+        &actions_projects_shots_working_file::project_id_,
+        &actions_projects_shots_working_file::id_
       ))
       .reg_t<actions_projects_sequences_working_file>("/api/actions/projects/{}/sequences/{}/working-file"_url(
-          &actions_projects_sequences_working_file::project_id_,
-          &actions_projects_sequences_working_file::id_
+        &actions_projects_sequences_working_file::project_id_,
+        &actions_projects_sequences_working_file::id_
       ))
       .reg_t<doodle_data_shots_file_maya>("/api/doodle/data/shots/{}/file/maya"_url(&doodle_data_shots_file_maya::id_))
       .reg_t<doodle_data_shots_file_output>("/api/doodle/data/shots/{}/file/output"_url(&doodle_data_shots_file_output::id_))
       .reg_t<doodle_data_shots_file_other>("/api/doodle/data/shots/{}/file/other"_url(&doodle_data_shots_file_other::id_))
       .reg_t<actions_projects_shots_run_ue_assembly>("/api/actions/projects/{}/shots/{}/run-ue-assembly"_url(
-          &actions_projects_shots_run_ue_assembly::project_id_,
-          &actions_projects_shots_run_ue_assembly::id_
+        &actions_projects_shots_run_ue_assembly::project_id_,
+        &actions_projects_shots_run_ue_assembly::id_
       ))
       .reg_t<actions_tasks_export_rig_sk>("/api/actions/tasks/{}/export-rig-sk"_url(&actions_tasks_export_rig_sk::task_id_))
       .reg_t<actions_tasks_export_anim_fbx>("/api/actions/tasks/{}/export-anim-fbx"_url(&actions_tasks_export_anim_fbx::task_id_))
+      .reg_t<doodle_backup>("/api/doodle/backup"_url)
+      .reg_t<doodle_stop_server>("/api/doodle/stop-server"_url)
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on

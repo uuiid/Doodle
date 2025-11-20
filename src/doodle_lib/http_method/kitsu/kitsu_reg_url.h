@@ -586,4 +586,8 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(doodle_backup)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+// /api/doodle/stop-server
+DOODLE_HTTP_JWT_FUN(doodle_stop_server)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

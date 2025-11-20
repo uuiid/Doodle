@@ -106,4 +106,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
   co_return in_handle->make_msg(nlohmann::json{} = l_file.generic_string());
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server::post(session_data_ptr in_handle) {
+  person_.check_admin();
+  app_base::Get().stop_app(true);
+  co_return in_handle->make_msg(nlohmann::json{} = "server stopping");
+}
 }  // namespace doodle::http

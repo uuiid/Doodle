@@ -27,7 +27,8 @@ boost::asio::awaitable<void> detail::run_http_listener(
     l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
     auto l_local_endpoint = l_acceptor.local_endpoint();
     std::cout << l_local_endpoint.port() << std::endl;
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
+           app_base::Get().is_stopped() == false) {
       auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
       if (l_ec) {
         if (l_ec == boost::asio::error::operation_aborted) {
