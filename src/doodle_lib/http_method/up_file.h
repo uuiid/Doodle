@@ -28,6 +28,7 @@ class up_file_base : public http_jwt_fun {
   uuid id_{};
   DOODLE_HTTP_FUN_OVERRIDE(post)
   DOODLE_HTTP_FUN_OVERRIDE(get)
+  DOODLE_HTTP_FUN_OVERRIDE(delete_)
 };
 
 class up_file_asset_base : public up_file_base {
