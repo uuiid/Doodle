@@ -359,15 +359,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
       where(in(&entity::uuid_id_, l_entity_ids))
   );
   std::vector<working_file_and_link> l_working_files{};
-  if (auto&& [l_entity, l_entity_asset_extend] = l_r.front();
-      l_entity.entity_type_id_ == asset_type::get_character_id()) {
-    l_working_files = create_character_working_files(l_prj, l_entity, l_entity_asset_extend);
-  } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
-             l_entity.entity_type_id_ == asset_type::get_effect_id()) {
-    l_working_files = create_prop_working_files(l_prj, l_entity, l_entity_asset_extend);
-  } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
-    l_working_files = create_ground_working_files(l_prj, l_entity, l_entity_asset_extend);
+  for (auto&& [l_entity, l_entity_asset_extend] : l_r) {
+    if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
+      l_working_files = create_character_working_files(l_prj, l_entity, l_entity_asset_extend);
+    } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
+               l_entity.entity_type_id_ == asset_type::get_effect_id()) {
+      l_working_files = create_prop_working_files(l_prj, l_entity, l_entity_asset_extend);
+    } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
+      l_working_files = create_ground_working_files(l_prj, l_entity, l_entity_asset_extend);
+    }
   }
+
   for (auto&& i : l_working_files) {
     i.name_      = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
     i.is_exists_ = FSys::exists(l_prj.path_ / i.path_);
