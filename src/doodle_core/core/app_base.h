@@ -78,7 +78,7 @@ class DOODLE_CORE_API app_base {
 
   virtual void stop_app(std::int32_t in_exit_code = 0);
   bool is_stopped() const { return stop_; }
-  void set_stopped(bool in_stop) { stop_ = in_stop; }
+  void set_stopped(bool in_stop);
 
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
