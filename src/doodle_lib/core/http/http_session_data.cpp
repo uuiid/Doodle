@@ -157,7 +157,7 @@ boost::asio::awaitable<void> session_data::run() {
 }
 
 void session_data::set_session() {
-  if (std::visit([](auto&& in_ptr) { return in_ptr->is_header_done(); }, request_parser_))
+  if (!std::visit([](auto&& in_ptr) { return in_ptr->is_header_done(); }, request_parser_))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求解析失败, 请求头未完成解析"});
 
   std::visit(

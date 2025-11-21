@@ -26,6 +26,7 @@
 #include "kitsu_reg_url.h"
 #include <chrono>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <vector>
 
 namespace doodle::http {
@@ -126,6 +127,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
   l_timer->expires_after(20min);  // 20分钟
 #endif
   l_timer->async_wait([l_timer](const boost::system::error_code&) { app_base::Get().stop_app(); });
+  SPDLOG_LOGGER_WARN(in_handle->logger_, "用户 {} 停止了服务器", person_.person_.get_full_name());
   co_return in_handle->make_msg(nlohmann::json{} = "server stopping");
 }
 }  // namespace doodle::http
