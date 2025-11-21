@@ -76,9 +76,12 @@
 #include "Sections/MovieScene3DAttachSection.h"
 
 // 渲染图片
+#include "LODUtilities.h"
 #include "MoviePipelineInProcessExecutor.h"
 #include "MoviePipelinePIEExecutor.h"
+#include "Animation/DebugSkelMeshComponent.h"
 #include "Bindings/MovieSceneSpawnableActorBinding.h"
+#include "Engine/SkeletalMeshLODSettings.h"
 
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
@@ -928,6 +931,23 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 					}
 				}
 			}
+			// 生成 lod
+			if (TmpSkeletalMesh)
+			{
+				static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
+					GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
+				TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
+				FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
+				{
+					FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
+					check(TmpSkeletalMesh);
+
+					FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 5, false, true);
+					TmpSkeletalMesh->PostEditChange();
+					TmpSkeletalMesh->MarkPackageDirty();
+				}
+			}
+
 			//------------
 			if (AnimSeq && TmpSkeletalMesh)
 			{
