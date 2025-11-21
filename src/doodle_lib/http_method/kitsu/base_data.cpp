@@ -120,7 +120,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
   g_ctx().get<detail::http_listener_cancellation_slot>().signal_.emit(boost::asio::cancellation_type::all);
   core_set::get_set().read_only_mode_ = true;
   auto l_timer                        = std::make_shared<boost::asio::system_timer>(g_io_context());
+#ifndef NDEBUG
+  l_timer->expires_after(20s);  // 20秒
+#else
   l_timer->expires_after(20min);  // 20分钟
+#endif
   l_timer->async_wait([l_timer](const boost::system::error_code&) { app_base::Get().stop_app(); });
   co_return in_handle->make_msg(nlohmann::json{} = "server stopping");
 }
