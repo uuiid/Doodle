@@ -82,11 +82,12 @@ function Initialize-Doodle {
     if (-not (Test-Path $OutPath)) {
         New-Item $OutPath -ItemType Directory
     }
+    $DoodleTMPDir = [System.IO.Path]::GetTempPath()
     $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
     $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build"
     $DoodleBuildRelease = Convert-Path "$DoodleBuildRoot/Ninja_release"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
-    $DoodleLogPath = $DoodleBuildRoot + "\build_$timestamp.log"
+    $DoodleLogPath = $DoodleTMPDir + "\build_$timestamp.log"
     $DoodleVersion = ((Get-ChildItem "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP" -Directory)[0] -split "-")[1]
     $DoodleSource = Convert-Path "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP/Doodle-$DoodleVersion-win64"
     $DoodleKitsuRoot = "E:\source\kitsu"
@@ -195,6 +196,8 @@ function Initialize-Doodle {
 
     &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
+
+    return $DoodleVersion;
 }
 
 
