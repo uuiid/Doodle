@@ -175,7 +175,7 @@ boost::asio::awaitable<void> kitsu_client::remove_asset_file(std::string in_uplo
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::delete_, in_upload_url, 11
   };
-  set_req_headers(l_req);
+  set_req_headers(l_req, {});
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::no_content)
