@@ -9,7 +9,6 @@
 
 #include <bitset>
 
-
 namespace doodle {
 
 enum class entity_status {
@@ -197,6 +196,7 @@ struct DOODLE_CORE_API entity {
     if (j.contains("code") && !j.at("code").is_null()) j.at("code").get_to(p.code_);
     if (j.contains("status") && !j.at("status").is_null()) j.at("status").get_to(p.status_);
     if (j.contains("is_casting_standby")) j.at("is_casting_standby").get_to(p.is_casting_standby_);
+    if (j.contains("parent_id")) j.at("parent_id").get_to(p.parent_id_);
   }
 };
 }  // namespace doodle
