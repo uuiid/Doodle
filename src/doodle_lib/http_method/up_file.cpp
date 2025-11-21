@@ -68,7 +68,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::get(
 }
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::delete_(session_data_ptr in_handle) {
   query_task_info(in_handle);
-  if (file_path_.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失根路径"});
   auto l_dir         = root_path_ / gen_file_path();
   auto l_backup_path = l_dir.parent_path() / "backup" / FSys::add_time_stamp(l_dir.filename());
   if (auto l_p = l_backup_path.parent_path(); !exists(l_p)) create_directories(l_p);
