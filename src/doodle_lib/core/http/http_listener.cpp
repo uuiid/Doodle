@@ -5,10 +5,14 @@
 #include "http_listener.h"
 
 #include "doodle_core/core/core_set.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/app_base.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
+
+#include <boost/asio/bind_cancellation_slot.hpp>
+
 namespace doodle::http {
 boost::asio::awaitable<void> detail::run_http_listener(
     boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port
@@ -27,8 +31,7 @@ boost::asio::awaitable<void> detail::run_http_listener(
     l_acceptor.listen(boost::asio::socket_base::max_listen_connections);
     auto l_local_endpoint = l_acceptor.local_endpoint();
     std::cout << l_local_endpoint.port() << std::endl;
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
-           app_base::Get().is_stopped() == false) {
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       auto [l_ec, l_socket] = co_await l_acceptor.async_accept();
       if (l_ec) {
         if (l_ec == boost::asio::error::operation_aborted) {
@@ -45,9 +48,13 @@ boost::asio::awaitable<void> detail::run_http_listener(
   }
 }
 void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port) {
+  g_ctx().emplace<detail::http_listener_cancellation_slot>();
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+      boost::asio::bind_cancellation_slot(
+          g_ctx().get<detail::http_listener_cancellation_slot>().slot(),
+          boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+      )
   );
 }
 }  // namespace doodle::http

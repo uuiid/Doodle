@@ -1,7 +1,10 @@
 //
 // Created by TD on 25-4-8.
 //
+#include "doodle_core/core/app_base.h"
 #include "doodle_core/core/core_set.h"
+#include "doodle_core/core/global_function.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
@@ -12,10 +15,16 @@
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 
+#include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include <boost/asio/cancellation_type.hpp>
+#include <boost/asio/system_timer.hpp>
+#include <boost/system/detail/error_code.hpp>
 
 #include "core/http/http_session_data.h"
 #include "kitsu_reg_url.h"
+#include <chrono>
 #include <memory>
 #include <vector>
 
@@ -108,8 +117,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
 
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server::post(session_data_ptr in_handle) {
   person_.check_admin();
-  app_base::Get().set_stopped(true);
+  g_ctx().get<detail::http_listener_cancellation_slot>().signal_.emit(boost::asio::cancellation_type::all);
   core_set::get_set().read_only_mode_ = true;
+  auto l_timer                        = std::make_shared<boost::asio::system_timer>(g_io_context());
+  l_timer->expires_after(20min);  // 20分钟
+  l_timer->async_wait([l_timer](const boost::system::error_code&) { app_base::Get().stop_app(); });
   co_return in_handle->make_msg(nlohmann::json{} = "server stopping");
 }
 }  // namespace doodle::http

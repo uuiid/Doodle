@@ -119,10 +119,6 @@ std::int32_t app_base::run() {
   return exit_code;
 }
 
-void app_base::set_stopped(bool in_stop) {
-  stop_     = in_stop;
-  exit_code = 0;
-}
 std::int32_t app_base::poll_one() {
   if (stop_) return 0;
   try {
