@@ -4,6 +4,7 @@
 
 #include "http_session_data.h"
 
+#include "doodle_core/core/app_base.h"
 #include "doodle_core/core/core_set.h"
 // ReSharper disable once CppUnusedIncludeDirective
 #include "doodle_core/doodle_core_fwd.h"
@@ -20,6 +21,7 @@
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 
+#include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
@@ -285,7 +287,10 @@ boost::asio::awaitable<bool> session_data::parse_body() {
 }
 
 void session_data::async_run_detached() {
-  boost::asio::co_spawn(g_io_context(), run(), G_DETACHED_LOG(self = shared_from_this()));
+  boost::asio::co_spawn(
+      g_io_context(), run(),
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), G_DETACHED_LOG(self = shared_from_this()))
+  );
 }
 
 boost::beast::http::message_generator session_data::make_error_code_msg(
