@@ -73,7 +73,6 @@ class DOODLE_CORE_API app_base {
   // get argh
   inline const argh::parser& arg() const { return arg_; }
 
-  boost::signals2::signal<void()> on_stop;
   cancellation_signals on_cancel;
 
   virtual void stop_app(std::int32_t in_exit_code = 0);

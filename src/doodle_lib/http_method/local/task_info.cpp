@@ -105,10 +105,6 @@ class run_post_task_local_cancel_manager {
         itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second]->slot().has_handler())
       sigs_[itr->second]->emit(boost::asio::cancellation_type::all);
   }
-  void cancel_all() {
-    std::lock_guard<std::recursive_mutex> _(mtx_);
-    for (auto& sig : sigs_) sig->emit(boost::asio::cancellation_type::all);
-  }
 };
 
 class run_long_task_local : public std::enable_shared_from_this<run_long_task_local> {
@@ -184,7 +180,9 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         g_io_context(), (*this)(),
         boost::asio::bind_cancellation_slot(
             g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_),
-            boost::asio::consign(boost::asio::detached, shared_from_this())
+            boost::asio::bind_cancellation_slot(
+                app_base::Get().on_cancel.slot(), (boost::asio::consign(boost::asio::detached, shared_from_this()))
+            )
         )
     );
   }
@@ -250,7 +248,6 @@ void task::init_ctx() {
     if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
     if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
     g_ctx().emplace<run_post_task_local_cancel_manager>();
-    app_base::Get().on_stop.connect([]() { g_ctx().get<run_post_task_local_cancel_manager>().cancel_all(); });
   });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::post(session_data_ptr in_handle) {
@@ -407,7 +404,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_arg_t->kitsu_client_                  = l_client;
   l_arg_t->task_id_                       = id_;
   l_json.get_to(*l_arg_t);
-  l_ptr->command_     = (nlohmann::json{} = *l_arg_t);
+  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);

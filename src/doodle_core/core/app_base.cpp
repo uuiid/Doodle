@@ -111,7 +111,6 @@ std::int32_t app_base::run() {
 
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   on_cancel.emit();
-  on_stop();
   facets_.clear();
   if (sig_ptr) sig_ptr->cancel();
   g_io_context().stop();
@@ -131,11 +130,9 @@ std::int32_t app_base::poll_one() {
 void app_base::stop_app(std::int32_t in_exit_code) {
   stop_     = true;
   exit_code = in_exit_code;
-  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   on_cancel.emit();
-  on_stop();
   facets_.clear();
-  if (sig_ptr) sig_ptr->cancel();
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   g_io_context().stop();
 }
 
