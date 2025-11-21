@@ -40,6 +40,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
         close_{false},
         block_message_(),
         strand_(boost::asio::make_strand(g_io_context())),
+        write_strand_(boost::asio::make_strand(g_io_context())),
         message_queue_() {}
 
   bool is_upgrade_to_websocket() const;
@@ -83,6 +84,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+  boost::asio::strand<boost::asio::io_context::executor_type> write_strand_;
   boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> message_queue_;
   std::shared_ptr<packet_base> ping_message_;
 

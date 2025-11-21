@@ -4,6 +4,8 @@
 
 #include "sid_data.h"
 
+#include "doodle_core/core/global_function.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/logger/logger.h>
 
 #include <doodle_lib/core/socket_io/engine_io.h>
@@ -11,6 +13,7 @@
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 
@@ -143,12 +146,19 @@ void sid_data::seed_message_ping() {
   write_websocket();
 }
 void sid_data::write_websocket() {
-  if (auto l_websocket = socket_io_websocket_core_.lock(); l_websocket) {
-    l_websocket->write_msg();
-  }
+  if (is_timeout()) return;
+  if (auto l_websocket = socket_io_websocket_core_.lock(); l_websocket)
+    if (auto l_msg = get_message(); l_msg)
+      boost::asio::co_spawn(
+          write_strand_, l_websocket->async_write_websocket(l_msg), G_DETACHED_LOG(l_w = l_websocket)
+      );
 }
 packet_base_ptr sid_data::get_message() {
-  if (ping_message_) return ping_message_;
+  if (ping_message_) {
+    auto l_ptr = ping_message_;
+    ping_message_.reset();
+    return l_ptr;
+  }
   std::shared_ptr<packet_base> l_msg{};
   if (message_queue_.pop(l_msg) && l_msg && !l_msg->get_dump_data().empty()) return l_msg;
   return nullptr;

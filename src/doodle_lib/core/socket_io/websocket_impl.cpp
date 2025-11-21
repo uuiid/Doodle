@@ -31,7 +31,10 @@ socket_io_websocket_core::socket_io_websocket_core(
     : logger_(in_handle->logger_),
       web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))),
       sid_ctx_(in_sid_ctx),
-      handle_(std::move(in_handle)) {}
+      handle_(std::move(in_handle)),
+      queue_(std::make_shared<awaitable_queue_limitation>())
+
+{}
 
 packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::shared_ptr<sid_data>& in_data) const {
   auto l_hd = sid_ctx_->handshake_data_;
@@ -106,7 +109,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(packet_base_ptr in_data) {
   if (!in_data) co_return;
-  DOODLE_TO_EXECUTOR(web_stream_->get_executor());
+  auto l_g = co_await queue_->queue(boost::asio::use_awaitable);
+  if (sid_data_->is_timeout()) co_return async_close_websocket();
   if (!web_stream_) co_return;
   auto l_str = in_data->get_dump_data();
   // default_logger_raw()->error("async_write_websocket {}", l_str);
@@ -128,7 +132,6 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(pac
       co_await web_stream_->async_write(boost::asio::buffer(l_str));
     }
   }
-  DOODLE_TO_SELF();
 }
 void socket_io_websocket_core::async_close_websocket() {
   if (!web_stream_) return;
