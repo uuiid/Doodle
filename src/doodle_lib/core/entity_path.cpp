@@ -208,13 +208,11 @@ FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_ass
   );
 }
 /// 角色模型 ue 名称
-FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_) {
-  return fmt::format(
-      "{}/Character/{}/Meshs/SK_Ch{}.uasset", doodle_config::ue4_content, pin_yin_ming_cheng_, bian_hao_
-  );
-}
 FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_) {
-  return get_entity_character_ue_name(in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_);
+  return fmt::format(
+      "{}/Character/{}/Meshs/SK_Ch{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
+      in_extend_.bian_hao_, in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_
+  );
 }
 FSys::path get_entity_sim_character_ue_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
   std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);

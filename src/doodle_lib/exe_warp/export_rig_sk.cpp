@@ -39,6 +39,17 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   auto l_ue_project  = ue_exe_ns::find_ue_project_file(impl_.ue_project_path_);
   auto l_import_root = l_ue_project.parent_path() / conv_normal_path(impl_.import_game_path_.parent_path());
 
+  for (auto&& p : l_maya_file.out_file_list) {
+    if (impl_.rename_map_.contains(p.stem().generic_string())) {
+      auto l_new_p =
+          p.parent_path() / (impl_.rename_map_.at(p.stem().generic_string()) + p.extension().generic_string());
+      SPDLOG_LOGGER_WARN(logger_ptr_, "重命名 {} -> {}", p, l_new_p);
+      FSys::rename(p, l_new_p);
+      p = l_new_p;
+    } else
+      throw_exception(doodle_error{"文件名无法找到重命名配置 {}", p});
+  }
+
   for (auto& p : l_maya_file.out_file_list) {
     SPDLOG_LOGGER_WARN(logger_ptr_, "导出 {}", p);
 

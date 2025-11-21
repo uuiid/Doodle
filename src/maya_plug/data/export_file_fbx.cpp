@@ -150,15 +150,6 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
   auto l_export_list_old = l_export_list;
   std::vector<FSys::path> l_ret{};
   auto l_stem = maya_file_io::get_current_path().stem().generic_string();
-  /// xxx_rig_yyt.ma -> xxx
-  if (auto l_stem_pos = l_stem.find("_rig"); l_stem_pos != std::string::npos) {
-    l_stem = l_stem.substr(0, l_stem_pos);
-  } else {
-    throw doodle_error{
-        "无法从场景名称 {} 中提取 _rig 标识, 无法进行 rig 导出",
-        maya_file_io::get_current_path().stem().generic_string()
-    };
-  }
 
   auto l_export_sim_cloth = in_ref.get_all_cloth_obj();
   auto l_export_sim_hair  = in_ref.get_all_hair_obj();

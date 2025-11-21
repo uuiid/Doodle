@@ -57,7 +57,6 @@ FSys::path get_entity_character_ue_path(
 FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
 
 /// 角色模型 ue 名称
-FSys::path get_entity_character_ue_name(const std::string& bian_hao_, const std::string& pin_yin_ming_cheng_);
 FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_);
 FSys::path get_entity_sim_character_ue_name(
     const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth

@@ -9,6 +9,8 @@
 
 #include <filesystem>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace doodle {
 
@@ -34,12 +36,15 @@ class export_rig_sk_arg : public async_task {
     FSys::path update_ue_path_{};
     FSys::path ue_project_path_{};
     std::vector<file_copy_info> ue_asset_copy_path_;  // 需要复制的UE路径
-                                                      // to json
+    std::map<std::string, std::string> rename_map_;   // 重命名映射
+
+    // to json
     friend void to_json(nlohmann::json& j, const data_t& p) {
       j["import_game_path"]   = p.import_game_path_;
       j["update_ue_path"]     = p.update_ue_path_;
       j["ue_project_path"]    = p.ue_project_path_;
       j["ue_asset_copy_path"] = p.ue_asset_copy_path_;
+      j["rename_map"]         = p.rename_map_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, data_t& p) {
@@ -47,6 +52,7 @@ class export_rig_sk_arg : public async_task {
       if (j.contains("update_ue_path")) j.at("update_ue_path").get_to(p.update_ue_path_);
       if (j.contains("ue_project_path")) j.at("ue_project_path").get_to(p.ue_project_path_);
       if (j.contains("ue_asset_copy_path")) j.at("ue_asset_copy_path").get_to(p.ue_asset_copy_path_);
+      if (j.contains("rename_map")) j.at("rename_map").get_to(p.rename_map_);
     }
   };
   data_t impl_{};
