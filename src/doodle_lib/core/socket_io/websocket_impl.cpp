@@ -16,7 +16,10 @@
 
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/scope/scope_exit.hpp>
 
+#include "core/socket_io/socket_io_packet.h"
+#include <memory>
 #include <spdlog/spdlog.h>
 
 namespace doodle::socket_io {
@@ -41,22 +44,18 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
 }
 
 void socket_io_websocket_core::async_run() {
-  boost::asio::co_spawn(g_io_context(), run(), [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
-    try {
-      if (in_eptr) std::rethrow_exception(in_eptr);
-    } catch (...) {
-      SPDLOG_WARN(boost::current_exception_diagnostic_information());
-    };
-  });
+  boost::asio::co_spawn(g_io_context(), run(), G_DETACHED_LOG(l_shared = shared_from_this()));
+}
+void socket_io_websocket_core::write_msg() {
+  if (writing_) return;
+  boost::asio::co_spawn(g_io_context(), async_write(), G_DETACHED_LOG(l_shared = shared_from_this()));
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
-  bool l_is_register{false};
   // 注册
   if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil()) {
     sid_data_ = co_await sid_ctx_->generate();
     co_await async_write_websocket(generate_register_reply(sid_data_));
-    l_is_register = true;
   } else
     sid_data_ = co_await sid_ctx_->get_sid(l_p.sid_);
 
@@ -66,37 +65,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // boost::beast::flat_buffer l_buffer{};
   if (!web_stream_) throw_exception(std::runtime_error("web_stream_ is null"));
 
-  if (!l_is_register) {
-    // 第一次验证ping pong
-    std::string l_body{};
-    auto l_buffer = boost::asio::dynamic_buffer(l_body);
-    co_await web_stream_->async_read(l_buffer);
-    if (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet != engine_io_packet_type::ping)
-      async_close_websocket();
-    auto l_ptr = std::make_shared<engine_io_packet>(engine_io_packet_type::pong, l_body.erase(0, 1));
-    l_ptr->start_dump();
-    co_await async_write_websocket(l_ptr);
-  }
-
   sid_data_->upgrade_to_websocket();
-  if (!l_is_register) sid_data_->cancel_async_event();
-  boost::asio::co_spawn(
-      co_await boost::asio::this_coro::executor, async_write(),
-      [l_shared = shared_from_this()](std::exception_ptr in_eptr) {
-        try {
-          if (in_eptr) std::rethrow_exception(in_eptr);
-        } catch (const std::exception& e) {
-          l_shared->logger_->error(e.what());
-        }
-      }
-  );
-  if (!l_is_register) {  // 第二次验证 升级协议
-    std::string l_body{};
-    auto l_buffer = boost::asio::dynamic_buffer(l_body);
-    co_await web_stream_->async_read(l_buffer);
-    if (auto l_engine_packet = parse_engine_packet(l_body); l_engine_packet != engine_io_packet_type::upgrade)
-      async_close_websocket();
-  }
+  sid_data_->socket_io_websocket_core_ = shared_from_this();
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::run() {
@@ -124,9 +94,11 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
-  boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
+  if (writing_) co_return;
+  writing_ = true;
+  boost::scope::scope_exit l_guard{[this]() { writing_ = false; }};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    co_await async_write_websocket(co_await sid_data_->channel_.async_receive(boost::asio::use_awaitable));
+    if (auto l_ptr = sid_data_->get_message(); l_ptr) co_await async_write_websocket(l_ptr);
     if (sid_data_->is_timeout()) co_return async_close_websocket();
   }
   co_return;

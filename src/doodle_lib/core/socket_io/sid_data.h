@@ -7,9 +7,14 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/asio/experimental/concurrent_channel.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 #include <boost/signals2.hpp>
 
+#include "websocket_impl.h"
 #include <atomic>
+#include <memory>
 
 namespace doodle::socket_io {
 struct packet_base;
@@ -33,8 +38,9 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
         last_time_{std::chrono::system_clock::now()},
         is_upgrade_to_websocket_{false},
         close_{false},
-        channel_(g_io_context(), 9999),
-        block_message_() {}
+        block_message_(),
+        strand_(boost::asio::make_strand(g_io_context())),
+        message_queue_() {}
 
   bool is_upgrade_to_websocket() const;
   bool is_timeout() const;
@@ -42,6 +48,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   void upgrade_to_websocket() { is_upgrade_to_websocket_ = true; }
   void close();
   const uuid& get_sid() const { return sid_; }
+  packet_base_ptr get_message();
 
   std::shared_ptr<void> get_lock();
   bool is_locked() const;
@@ -51,15 +58,13 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   /// 处理 engine io 包, 结束处理返回 true, 继续处理返回 false,
   /// 第二个参数是必须立即返回的 engine io 包, 这个包的优先级最高, 不进入队列
   std::tuple<bool, std::shared_ptr<packet_base>> handle_engine_io(std::string& in_data);
-
-  boost::asio::awaitable<std::shared_ptr<packet_base>> async_event();
-
   void seed_message(const std::shared_ptr<packet_base>& in_message);
-  // 取消消息队列等待
-  void cancel_async_event();
+  socket_io_websocket_core_wptr socket_io_websocket_core_;
 
  private:
+  void seed_message_self(const std::shared_ptr<packet_base>& in_message);
   void seed_message_ping();
+  void write_websocket();
   boost::asio::awaitable<void> impl_run();
   struct lock_type {
     sid_data* data_;
@@ -73,13 +78,13 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   std::atomic_bool is_upgrade_to_websocket_;
   std::atomic_int lock_count_;
   std::atomic_bool close_;
-  channel_type channel_;
   // 阻止消息接收
   std::atomic_bool block_message_;
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
-  boost::asio::cancellation_signal channel_signal_;
-  std::shared_ptr<boost::asio::system_timer> timer_;
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+  boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> message_queue_;
+  std::shared_ptr<packet_base> ping_message_;
 
   struct block_message_guard {
     sid_data* data_;

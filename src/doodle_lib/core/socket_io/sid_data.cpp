@@ -29,7 +29,6 @@ std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(
 bool sid_data::is_locked() const { return lock_count_ > 0; }
 
 void sid_data::run() {
-  timer_ = std::make_shared<boost::asio::system_timer>(g_io_context());
   boost::asio::co_spawn(g_io_context(), impl_run(), boost::asio::consign(boost::asio::detached, shared_from_this()));
 }
 boost::asio::awaitable<void> sid_data::impl_run() {
@@ -41,26 +40,6 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     seed_message_ping();
   }
   co_return;
-}
-
-boost::asio::awaitable<std::shared_ptr<packet_base>> sid_data::async_event() {
-  timer_->expires_after(ctx_->handshake_data_.ping_timeout_);
-  std::shared_ptr<packet_base> l_message{std::make_shared<engine_io_packet>(engine_io_packet_type::noop)};
-  l_message->start_dump();
-  if (auto [l_arr, l_e1, l_str_var, l_e2] =
-          co_await boost::asio::experimental::parallel_group(
-              channel_.async_receive(boost::asio::deferred),
-              timer_->async_wait(boost::asio::bind_cancellation_slot(channel_signal_.slot(), boost::asio::deferred))
-          )
-              .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::use_awaitable);
-      l_arr[0] == 0)
-    l_message = l_str_var;
-  if (is_timeout()) {
-    l_message = std::make_shared<engine_io_packet>(engine_io_packet_type::noop);
-    l_message->start_dump();
-  }
-
-  co_return l_message;
 }
 
 std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::string& in_data) {
@@ -87,7 +66,7 @@ std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::s
     case engine_io_packet_type::upgrade:
       upgrade_to_websocket();
     case engine_io_packet_type::noop:
-      seed_message(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
+      seed_message_self(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
       break;
   }
   return {l_ret, l_ptr};
@@ -97,7 +76,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
   if (!(co_await ctx_->has_register(in_body.namespace_))) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
-    seed_message(std::make_shared<socket_io_packet>(in_body));
+    seed_message_self(std::make_shared<socket_io_packet>(in_body));
     co_return;
   }
 
@@ -110,7 +89,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
       l_p->type_      = socket_io_packet_type::connect;
       l_p->namespace_ = in_body.namespace_;
       l_p->json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      seed_message(l_p);
+      seed_message_self(l_p);
       ctx_->emit_connect(l_ptr);
       break;
     }
@@ -142,19 +121,36 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
 void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
   if (block_message_) return;
   if (!in_message) return;
-  if (in_message->get_dump_data().empty()) in_message->start_dump();
-  // default_logger_raw()->error("seed_message {}", in_message->get_dump_data());
-  channel_.try_send(boost::system::error_code{}, in_message);
-}
-void sid_data::seed_message_ping() {
-  auto l_ptr = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
-  l_ptr->start_dump();
-  channel_.async_send(boost::system::error_code{}, l_ptr, [](boost::system::error_code ec) {
-    if (ec) default_logger_raw()->error("seed_message error {}", ec.message());
+  if (in_message->get_dump_data().empty()) return;
+  boost::asio::post(strand_, [this, in_message]() {
+    message_queue_.push(in_message);
+    write_websocket();
   });
 }
-void sid_data::cancel_async_event() {
-  if (channel_signal_.slot().has_handler()) channel_signal_.emit(boost::asio::cancellation_type::all);
+void sid_data::seed_message_self(const std::shared_ptr<packet_base>& in_message) {
+  if (block_message_) return;
+  if (!in_message) return;
+  if (in_message->get_dump_data().empty()) in_message->start_dump();
+  // default_logger_raw()->error("seed_message {}", in_message->get_dump_data());
+  boost::asio::post(strand_, [this, in_message]() {
+    message_queue_.push(in_message);
+    write_websocket();
+  });
 }
-
+void sid_data::seed_message_ping() {
+  ping_message_ = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
+  ping_message_->start_dump();
+  write_websocket();
+}
+void sid_data::write_websocket() {
+  if (auto l_websocket = socket_io_websocket_core_.lock(); l_websocket) {
+    l_websocket->write_msg();
+  }
+}
+packet_base_ptr sid_data::get_message() {
+  if (ping_message_) return ping_message_;
+  std::shared_ptr<packet_base> l_msg{};
+  if (message_queue_.pop(l_msg) && l_msg && !l_msg->get_dump_data().empty()) return l_msg;
+  return nullptr;
+}
 }  // namespace doodle::socket_io

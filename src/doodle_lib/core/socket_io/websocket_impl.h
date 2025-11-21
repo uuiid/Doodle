@@ -11,6 +11,8 @@
 
 #include <boost/signals2.hpp>
 
+#include <atomic>
+
 namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
@@ -30,9 +32,18 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::shared_ptr<void> sid_lock_{};
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
+  std::atomic_bool writing_{false};
+
+  struct write_guard {
+    socket_io_websocket_core* self_;
+    explicit write_guard(socket_io_websocket_core* in_self) : self_(in_self) { self_->writing_ = true; }
+    ~write_guard() { self_->writing_ = false; }
+  };
+
   boost::asio::awaitable<void> init();
   packet_base_ptr generate_register_reply(const std::shared_ptr<sid_data>& in_data) const;
   boost::asio::awaitable<void> async_write();
+  boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
 
  public:
   explicit socket_io_websocket_core(
@@ -43,8 +54,8 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   ~socket_io_websocket_core() = default;
 
   boost::asio::awaitable<void> run();
+  void write_msg();
   void async_run();
-  boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
   void async_close_websocket();
 };
 }  // namespace doodle::socket_io

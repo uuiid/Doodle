@@ -5,7 +5,9 @@ const URL = "http://localhost:50025";
 const l_list = [];
 
 for (let index = 0; index < 500; index++) {
-  const socket = io(`${URL}/events`);
+  const socket = io(`${URL}/events`, {
+    transports: ["websocket"]
+  });
   socket.on("doodle:task_info:update", (...args) => console.log("message", ...args));
   socket.onAny((event, ...args) => {
     console.log(`got ${event}`);

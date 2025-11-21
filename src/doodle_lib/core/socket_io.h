@@ -15,8 +15,6 @@
 namespace doodle::socket_io {
 DOODLE_HTTP_FUN(socket_io_http)
 using session_data_ptr = std::shared_ptr<http::session_data>;
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(post)
 void websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
 ) override;
@@ -24,7 +22,6 @@ void websocket_callback(
 std::shared_ptr<sid_ctx> sid_ctx_;
 explicit socket_io_http(std::shared_ptr<sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) { init(); }
 void init();
-std::string generate_register_reply(const std::shared_ptr<sid_data>& in_data) const;
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::socket_io
