@@ -36,6 +36,7 @@
 #include <cryptopp/filters.h>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <variant>
 namespace doodle::http::detail {
 namespace {
 
@@ -156,6 +157,9 @@ boost::asio::awaitable<void> session_data::run() {
 }
 
 void session_data::set_session() {
+  if (std::visit([](auto&& in_ptr) { return in_ptr->is_header_done(); }, request_parser_))
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求解析失败, 请求头未完成解析"});
+
   std::visit(
       [this](auto&& in_ptr) {
         auto& l_req = in_ptr->get();
