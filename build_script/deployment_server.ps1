@@ -31,7 +31,6 @@ if ($CopyServer) {
     Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
         $Kitsu_Ip = "192.168.40.181"
         Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
-        return;
         #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
 
         $headers = @{
@@ -45,6 +44,7 @@ if ($CopyServer) {
         $LogPath = "$env:TEMP\build_$timestamp.log"
         # 找到停止的服务
         $StopedServers = ""
+        # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
         foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
             if ($server.Status -eq "Stopped") {
                 $StopedServers = $server.Name
@@ -52,7 +52,7 @@ if ($CopyServer) {
                     Write-Host "更新服务 $($server.Name)"
                     &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
                     Start-Service -InputObject $server
-                    Set-Service -Name $server.Name -StartupType AutomaticDelayedStart
+                    Set-Service -Name $server.Name -StartupType Automatic
                 }
             }
             else {
