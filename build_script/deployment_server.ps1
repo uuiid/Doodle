@@ -43,21 +43,21 @@ if ($CopyServer) {
         $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
         $LogPath = "$env:TEMP\build_$timestamp.log"
         # 找到停止的服务
-        $StopedServers = ""
+        $UpdataServers = false
         # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
         foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
             if ($server.Status -eq "Stopped") {
-                $StopedServers = $server.Name
-                if ((Get-FileHash "$Target\$StopedServers\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
+                if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
                     Write-Host "更新服务 $($server.Name)"
                     &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
                     Start-Service -InputObject $server
                     Set-Service -Name $server.Name -StartupType Automatic
+                    $UpdataServers = true 
                 }
             }
             else {
-                if ((Get-FileHash "$Target\$StopedServers\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
-                    Write-Host "服务 $($server.Name) 未停止，设置为手动启动"
+                if ($UpdataServers) {
+                    Write-Host "服务 $($server.Name) 未停止 将在 $((Get-Date).AddMinutes(20)) 停止，设置为手动启动"
                     Set-Service -Name $server.Name -StartupType Manual 
                 }
             }
