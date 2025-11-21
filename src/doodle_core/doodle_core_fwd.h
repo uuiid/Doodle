@@ -40,13 +40,18 @@ namespace level {}  // namespace level
 #define DOODLE_TO_SELF() \
   co_await boost::asio::post(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
 
-#define G_DETACHED_LOG(...)                                           \
-  [__VA_ARGS__](std::exception_ptr in_ptr) {                          \
-    try {                                                             \
-      if (in_ptr) std::rethrow_exception(in_ptr);                     \
-    } catch (...) {                                                   \
-      SPDLOG_WARN(boost::current_exception_diagnostic_information()); \
-    };                                                                \
+#define G_DETACHED_LOG(...)                                                \
+  [__VA_ARGS__](std::exception_ptr in_ptr) {                               \
+    try {                                                                  \
+      if (in_ptr) std::rethrow_exception(in_ptr);                          \
+    } catch (const boost::system::system_error& in_err) {                  \
+      if (in_err.code() == boost::asio::error::connection_aborted) return; \
+      if (in_err.code() == boost::asio::error::operation_aborted) return;  \
+                                                                           \
+      SPDLOG_WARN(boost::current_exception_diagnostic_information());      \
+    } catch (...) {                                                        \
+      SPDLOG_WARN(boost::current_exception_diagnostic_information());      \
+    };                                                                     \
   }
 
 // #include <>
