@@ -109,7 +109,7 @@ function Initialize-Doodle {
         }
     }
     Write-Host "开始备份pdb文件"
-    &Robocopy "$DoodleBuildRoot\Ninja_release\bin" "$DoodleBuildRoot\pdb\$DoodleVersion\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
+    &Robocopy "$DoodleBuildRoot\Ninja_release\bin\" "$DoodleBuildRoot\pdb\$DoodleVersion\" /MIR /unilog+:$DoodleLogPath | Out-Null
 
     Write-Host "开始复制文件"
     Write-Host "robocopy 日志 $DoodleLogPath"
