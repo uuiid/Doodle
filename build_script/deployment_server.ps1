@@ -33,16 +33,22 @@ if ($CopyServer) {
         Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
         return;
         #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
-        curl --location --request POST "http://$Kitsu_Ip/api/doodle/stop-server" --header "Authorization: Bearer $Using:KitsuCookies"
+
+        $headers = @{
+            "Authorization" = "Bearer $Using:KitsuCookies"
+        }
+
+        Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers 
         $Target = "D:"
         $Tmp = "D:\tmp"
         $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
         $LogPath = "$env:TEMP\build_$timestamp.log"
         # 找到停止的服务
- 
-        foreach ($server in (Get-Service "doodle_kitsu_*")) {
+        $StopedServers = ""
+        foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
             if ($server.Status -eq "Stopped") {
-                if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
+                $StopedServers = $server.Name
+                if ((Get-FileHash "$Target\$StopedServers\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
                     Write-Host "更新服务 $($server.Name)"
                     &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
                     Start-Service -InputObject $server
@@ -50,8 +56,10 @@ if ($CopyServer) {
                 }
             }
             else {
-                Write-Host "服务 $($server.Name) 未停止，设置为手动启动"
-                Set-Service -Name $server.Name -StartupType Manual 
+                if ((Get-FileHash "$Target\$StopedServers\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
+                    Write-Host "服务 $($server.Name) 未停止，设置为手动启动"
+                    Set-Service -Name $server.Name -StartupType Manual 
+                }
             }
         }
     }
