@@ -161,7 +161,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path& in_path, c
   auto l_path = in_path / fmt::format("{}.txt", in_name);
   std::shared_ptr<spdlog::async_logger> l_logger;
   try {
-    rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 512ull);
+    rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull);
     l_logger            = std::make_shared<spdlog::async_logger>(
         in_name, rotating_file_sink_, spdlog::thread_pool(), spdlog::async_overflow_policy::block
     );
@@ -283,4 +283,4 @@ bool logger_ctrl::add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_pt
   SPDLOG_DEBUG(fmt::format("初始化日志 {}", in_name));
   return true;
 }
-} // namespace doodle::details
+}  // namespace doodle::details
