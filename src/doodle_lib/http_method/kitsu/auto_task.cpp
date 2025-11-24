@@ -429,11 +429,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   export_rig_sk_arg::data_t l_arg{};
   auto l_ue_scene_path =
       core_set::get_set().get_cache_root().parent_path() / doodle_config::doodle_token_name / l_prj.code_;
+  bool l_is_sim = l_task.task_type_id_ == task_type::get_simulation_id();
   if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
     auto l_ue_name        = get_entity_character_ue_name(*l_asset_extends);
     auto l_ue_path        = get_entity_character_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project     = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
-    auto l_maya_file_name = get_entity_character_rig_maya_name(*l_asset_extends);
+    auto l_maya_file_name = l_is_sim ? get_entity_simulation_character_asset_name(*l_asset_extends)
+                                     : get_entity_character_rig_maya_name(*l_asset_extends);
 
     auto&& [l_it, l__] =
         l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
@@ -459,7 +461,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     auto l_ue_path        = get_entity_prop_ue_path(l_prj, *l_asset_extends);
     auto l_ue_project     = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
 
-    auto l_maya_file_name = get_entity_prop_rig_maya_name(*l_asset_extends);
+    auto l_maya_file_name = l_is_sim ? get_entity_simulation_prop_asset_name(*l_asset_extends)
+                                     : get_entity_prop_rig_maya_name(*l_asset_extends);
 
     auto&& [l_it, l__] =
         l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
