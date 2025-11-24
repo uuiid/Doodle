@@ -92,7 +92,8 @@ class http_stream_base {
   void expires_after(std::chrono::seconds in_seconds) {
     last_use_time_ = chrono::sys_time_pos::clock::now();
     if (next_timeout_) {
-      timeout_ = *next_timeout_;
+      timeout_   = *next_timeout_;
+      in_seconds = timeout_;
       next_timeout_.reset();
     }
     expires_after_impl(in_seconds);

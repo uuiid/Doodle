@@ -47,7 +47,7 @@ if ($CopyServer) {
         # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
         foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
             if ($server.Status -eq "Stopped") {
-                if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
+            if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
                     Write-Host "更新服务 $($server.Name)"
                     &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
                     Start-Service -InputObject $server

@@ -152,7 +152,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
   if (auto l_size = FSys::file_size(in_file_path); l_size > 10ll * 1024 * 1024)
-    http_client_ptr_->set_timeout(chrono::seconds(l_size / (10ll * 1024 * 1024)) + 300s);  // 10MB/s 上传速度
+    http_client_ptr_->set_timeout(chrono::seconds(l_size / (10ll * 1024 * 1024)) + 30s);  // 10MB/s 上传速度
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
   set_req_headers(l_req, "application/octet-stream");
   l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);
