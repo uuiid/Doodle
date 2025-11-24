@@ -52,7 +52,7 @@ if ($CopyServer) {
                     &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
                     Start-Service -InputObject $server
                     Set-Service -Name $server.Name -StartupType Automatic
-                    $UpdataServers = $false 
+                    $UpdataServers = $true
                 }
             }
             else {
