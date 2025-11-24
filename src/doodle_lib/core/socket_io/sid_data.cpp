@@ -53,6 +53,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     co_await l_timer.async_wait(boost::asio::use_awaitable);
     seed_message_ping();
   }
+  close();
   co_return;
 }
 
