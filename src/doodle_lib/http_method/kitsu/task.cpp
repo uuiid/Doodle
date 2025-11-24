@@ -2,6 +2,8 @@
 // Created by TD on 24-8-20.
 //
 
+#include "doodle_core/metadata/task.h"
+
 #include "doodle_core/metadata/notification.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/project.h>
@@ -13,6 +15,10 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include <memory>
+#include <nlohmann/json_fwd.hpp>
+#include <vector>
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links::post(session_data_ptr in_handle) {
@@ -40,35 +46,42 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign::put(session_data_ptr in_handle) {
-  auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_person_data = l_sql.get_by_uuid<person>(id_);
-  auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
-  nlohmann::json l_ret{};
+  auto l_sql                                 = g_ctx().get<sqlite_database>();
+  auto l_person_data                         = l_sql.get_by_uuid<person>(id_);
+  auto l_task_ids                            = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
+  std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
+  std::shared_ptr<std::vector<assignees_table>> l_assignees_table = std::make_shared<std::vector<assignees_table>>();
+  std::shared_ptr<std::vector<notification>> l_notifications      = std::make_shared<std::vector<notification>>();
+  l_tasks->reserve(l_task_ids.size());
+  l_assignees_table->reserve(l_task_ids.size());
+  l_notifications->reserve(l_task_ids.size());
   for (auto&& l_task_id : l_task_ids) {
-    auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(l_task_id));
-    person_.check_task_department_access(*l_task, person_.person_);
-    l_ret.emplace_back(*l_task);
+    auto l_task = l_sql.get_by_uuid<task>(l_task_id);
+    person_.check_task_department_access(l_task, person_.person_);
     // 这里需要检查一下, 是否已经将任务分配给了这个人
-    if (l_sql.is_task_assigned_to_person(l_task->uuid_id_, l_person_data.uuid_id_)) continue;
-    auto l_task_assign   = std::make_shared<assignees_table>();
-    l_task->assigner_id_ = person_.person_.uuid_id_;
-    co_await l_sql.install(l_task);
-    l_task_assign->person_id_ = l_person_data.uuid_id_;
-    l_task_assign->task_id_   = l_task->uuid_id_;
-    co_await l_sql.install(l_task_assign);
+    if (l_sql.is_task_assigned_to_person(l_task.uuid_id_, l_person_data.uuid_id_)) continue;
+    assignees_table l_task_assign{};
+    l_task.assigner_id_ = person_.person_.uuid_id_;
+    l_tasks->emplace_back(l_task);
+    l_task_assign.person_id_ = l_person_data.uuid_id_;
+    l_task_assign.task_id_   = l_task.uuid_id_;
+    l_assignees_table->emplace_back(l_task_assign);
     // 这里需要检查一下, 任务的分配人是否是当前用户
     if (person_.person_.uuid_id_ != l_person_data.uuid_id_) {
-      auto l_notification         = std::make_shared<notification>();
-      l_notification->uuid_id_    = core_set::get_set().get_uuid();
-      l_notification->type_       = notification_type::assignation;
-      l_notification->task_id_    = l_task->uuid_id_;
-      l_notification->author_id_  = person_.person_.uuid_id_;
-      l_notification->person_id_  = l_person_data.uuid_id_;
-      l_notification->created_at_ = chrono::system_clock::now();
-      co_await l_sql.install(l_notification);
+      notification l_notification{};
+      l_notification.uuid_id_    = core_set::get_set().get_uuid();
+      l_notification.type_       = notification_type::assignation;
+      l_notification.task_id_    = l_task.uuid_id_;
+      l_notification.author_id_  = person_.person_.uuid_id_;
+      l_notification.person_id_  = l_person_data.uuid_id_;
+      l_notification.created_at_ = chrono::system_clock::now();
+      l_notifications->emplace_back(l_notification);
     }
   }
-  co_return in_handle->make_msg(l_ret);
+  co_await l_sql.install_range(l_tasks);
+  co_await l_sql.install_range(l_assignees_table);
+  co_await l_sql.install_range(l_notifications);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_tasks);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks::get(session_data_ptr in_handle) {
