@@ -116,7 +116,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 void socket_io_websocket_core::async_write() {
   if (writing_) return;
   if (!sid_data_) return;
-  if (sid_data_->is_timeout()) return;
+  if (sid_data_->is_timeout()) return writing_ = true, async_close_websocket();
   // SPDLOG_LOGGER_WARN(logger_, "thread {} async_write", std::this_thread::get_id());
   if (auto l_ptr = sid_data_->get_message(); l_ptr)
     writing_ = true,
