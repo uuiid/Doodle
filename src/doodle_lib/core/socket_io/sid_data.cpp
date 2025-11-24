@@ -38,10 +38,7 @@ void sid_data::run() {
   boost::asio::co_spawn(
       g_io_context(), impl_run(),
       boost::asio::bind_cancellation_slot(
-          ctx_->on_cancel.slot(),
-          boost::asio::bind_cancellation_slot(
-              app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
-          )
+          ctx_->on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
 }
@@ -54,6 +51,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     seed_message_ping();
   }
   close();
+  seed_message_ping();
   co_return;
 }
 

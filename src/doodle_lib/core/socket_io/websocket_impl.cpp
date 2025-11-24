@@ -64,15 +64,7 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
 // }
 
 void socket_io_websocket_core::async_run() {
-  boost::asio::co_spawn(
-      g_io_context(), run(),
-      boost::asio::bind_cancellation_slot(
-          sid_ctx_->on_cancel.slot(),
-          boost::asio::bind_cancellation_slot(
-              app_base::Get().on_cancel.slot(), G_DETACHED_LOG(l_shared = shared_from_this())
-          )
-      )
-  );
+  boost::asio::co_spawn(g_io_context(), run(), G_DETACHED_LOG(l_shared = shared_from_this()));
 }
 void socket_io_websocket_core::write_msg() {
   if (writing_) return;
