@@ -116,7 +116,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 void socket_io_websocket_core::async_write() {
   if (writing_) return;
   if (!sid_data_) return;
-  if (sid_data_->is_timeout()) return async_close_websocket();
+  if (sid_data_->is_timeout()) return;
   // SPDLOG_LOGGER_WARN(logger_, "thread {} async_write", std::this_thread::get_id());
   if (auto l_ptr = sid_data_->get_message(); l_ptr)
     writing_ = true,
@@ -158,16 +158,13 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(pac
   }
 }
 void socket_io_websocket_core::async_close_websocket() {
-  // if (!web_stream_) return;
-  // boost::asio::post(close_strand_, [this, self = shared_from_this()]() {
-  //   auto l_g = boost::asio::make_work_guard(close_strand_);
-  //   web_stream_->async_close(
-  //       boost::beast::websocket::close_code::normal,
-  //       [self = shared_from_this(), this](const boost::system::error_code& in_ec) {
-  //         if (in_ec) logger_->error(in_ec.what());
-  //       }
-  //   );
-  // });
+  if (!web_stream_) return;
+  web_stream_->async_close(
+      boost::beast::websocket::close_code::normal,
+      [self = shared_from_this(), this](const boost::system::error_code& in_ec) {
+        if (in_ec) logger_->error(in_ec.what());
+      }
+  );
 }
 
 }  // namespace doodle::socket_io
