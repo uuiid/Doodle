@@ -141,8 +141,9 @@ void sid_data::seed_message_self(const std::shared_ptr<packet_base>& in_message)
   });
 }
 void sid_data::seed_message_ping() {
-  ping_message_ = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
-  ping_message_->start_dump();
+  auto l_ping_message_ = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
+  l_ping_message_->start_dump();
+  ping_message_ = l_ping_message_;
   write_websocket();
 }
 void sid_data::write_websocket() {
