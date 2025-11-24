@@ -17,23 +17,6 @@
 
 namespace doodle {
 
-void app_base::cancellation_signals::emit(boost::asio::cancellation_type ct) {
-  std::lock_guard _(mtx);
-
-  for (auto& sig : sigs) sig.emit(ct);
-}
-
-boost::asio::cancellation_slot app_base::cancellation_signals::slot() {
-  std::lock_guard _(mtx);
-
-  auto itr = std::find_if(sigs.begin(), sigs.end(), [](boost::asio::cancellation_signal& sig) {
-    return !sig.slot().has_handler();
-  });
-
-  if (itr != sigs.end()) return itr->slot();
-  return sigs.emplace_back().slot();
-}
-
 app_base* app_base::self = nullptr;
 bool app_base::init() { return true; }
 app_base::app_base(int argc, const char* const argv[])

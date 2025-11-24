@@ -12,6 +12,7 @@ target_sources(
         http_client_core.h
         co_queue.h
         authorization.h
+        cancellation_signals.h
 
         PRIVATE
         core_set.cpp
@@ -23,5 +24,6 @@ target_sources(
         co_queue.cpp
         authorization.cpp
         global_function.cpp
+        cancellation_signals.cpp
 )
 add_subdirectory(bcrypt)

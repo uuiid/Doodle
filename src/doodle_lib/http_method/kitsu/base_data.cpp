@@ -16,6 +16,7 @@
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 
 #include <doodle_lib/core/http/http_listener.h>
+#include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include <boost/asio/cancellation_type.hpp>
@@ -120,7 +121,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
   person_.check_admin();
   g_ctx().get<detail::http_listener_cancellation_slot>().signal_.emit(boost::asio::cancellation_type::all);
   core_set::get_set().read_only_mode_ = true;
-  auto l_timer                        = std::make_shared<boost::asio::system_timer>(g_io_context());
+  if (g_ctx().contains<socket_io::sid_ctx>()) {
+    g_ctx().get<socket_io::sid_ctx>().on_cancel.emit(boost::asio::cancellation_type::all);
+  }
+
+  auto l_timer = std::make_shared<boost::asio::system_timer>(g_io_context());
 #ifndef NDEBUG
   l_timer->expires_after(20s);  // 20秒
 #else

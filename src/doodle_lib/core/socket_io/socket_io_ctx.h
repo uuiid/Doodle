@@ -4,6 +4,7 @@
 
 #pragma once
 #include "doodle_core/core/global_function.h"
+#include <doodle_core/core/cancellation_signals.h>
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/core/socket_io/core_enum.h>
@@ -11,6 +12,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/signals2/signal.hpp>
+
 #include <memory>
 
 namespace doodle ::socket_io {
@@ -98,5 +100,7 @@ class sid_ctx {
   void emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_sid) const;
 
   boost::asio::awaitable<bool> has_register(std::string in_namespace) const;
+
+  cancellation_signals on_cancel;
 };
 }  // namespace doodle::socket_io

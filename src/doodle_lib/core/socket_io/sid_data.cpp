@@ -6,6 +6,7 @@
 
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/core/app_base.h>
 #include <doodle_core/logger/logger.h>
 
 #include <doodle_lib/core/socket_io/engine_io.h>
@@ -19,6 +20,7 @@
 #include <boost/lockfree/detail/uses_optional.hpp>
 
 #include "websocket_impl.h"
+
 namespace doodle::socket_io {
 using namespace boost::asio::experimental::awaitable_operators;
 bool sid_data::is_upgrade_to_websocket() const { return is_upgrade_to_websocket_; }
@@ -33,7 +35,15 @@ std::shared_ptr<void> sid_data::get_lock() { return std::make_shared<lock_type>(
 bool sid_data::is_locked() const { return lock_count_ > 0; }
 
 void sid_data::run() {
-  boost::asio::co_spawn(g_io_context(), impl_run(), boost::asio::consign(boost::asio::detached, shared_from_this()));
+  boost::asio::co_spawn(
+      g_io_context(), impl_run(),
+      boost::asio::bind_cancellation_slot(
+          ctx_->on_cancel.slot(),
+          boost::asio::bind_cancellation_slot(
+              app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          )
+      )
+  );
 }
 boost::asio::awaitable<void> sid_data::impl_run() {
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};

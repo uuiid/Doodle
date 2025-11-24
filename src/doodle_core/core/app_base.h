@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <doodle_core/core/cancellation_signals.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/logger/logger.h>
 #include <doodle_core/platform/win/windows_alias.h>
@@ -12,6 +13,7 @@
 
 #include <argh.h>
 #include <thread>
+
 
 namespace doodle {
 /**
@@ -25,15 +27,6 @@ namespace doodle {
 class DOODLE_CORE_API app_base {
  public:
  protected:
-  class cancellation_signals {
-    std::list<boost::asio::cancellation_signal> sigs;
-    std::mutex mtx;
-
-   public:
-    void emit(boost::asio::cancellation_type ct = boost::asio::cancellation_type::all);
-
-    boost::asio::cancellation_slot slot();
-  };
   static app_base* self;
   doodle_lib_ptr lib_ptr;
 
