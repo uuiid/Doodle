@@ -55,8 +55,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   l_tasks->reserve(l_task_ids.size());
   l_assignees_table->reserve(l_task_ids.size());
   l_notifications->reserve(l_task_ids.size());
-  for (auto&& l_task_id : l_task_ids) {
-    auto l_task = l_sql.get_by_uuid<task>(l_task_id);
+  using namespace sqlite_orm;
+  auto l_tasks_get = l_sql.impl_->storage_any_.get_all<task>(where(in(&task::uuid_id_, l_task_ids)));
+  for (auto&& l_task : l_tasks_get) {
     person_.check_task_department_access(l_task, person_.person_);
     // 这里需要检查一下, 是否已经将任务分配给了这个人
     if (l_sql.is_task_assigned_to_person(l_task.uuid_id_, l_person_data.uuid_id_)) continue;
