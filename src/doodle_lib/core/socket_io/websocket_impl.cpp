@@ -4,6 +4,7 @@
 
 #include "websocket_impl.h"
 
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/co_queue.h>
 
@@ -14,7 +15,12 @@
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/bind_executor.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/post.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/scope/scope_exit.hpp>
 
@@ -32,7 +38,8 @@ socket_io_websocket_core::socket_io_websocket_core(
       web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))),
       sid_ctx_(in_sid_ctx),
       handle_(std::move(in_handle)),
-      queue_(std::make_shared<awaitable_queue_limitation>())
+      queue_(std::make_shared<awaitable_queue_limitation>()),
+      strand_(boost::asio::make_strand(g_io_context()))
 
 {}
 
@@ -45,13 +52,23 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
   l_ptr->start_dump();
   return l_ptr;
 }
+// template <typename Handle>
+// decltype(boost::asio::async_initiate<
+//          Handle, void(boost::system::error_code)>(std::declval<Handle>(), std::declval<socket_io_websocket_core*>()))
+// socket_io_websocket_core::async_write_websocket_impl(Handle&& in_handle) {
+//   return boost::asio::async_result<Handle, void(boost::system::error_code)>(
+
+//   );
+// }
 
 void socket_io_websocket_core::async_run() {
   boost::asio::co_spawn(g_io_context(), run(), G_DETACHED_LOG(l_shared = shared_from_this()));
 }
 void socket_io_websocket_core::write_msg() {
   if (writing_) return;
-  boost::asio::co_spawn(g_io_context(), async_write(), G_DETACHED_LOG(l_shared = shared_from_this()));
+  boost::asio::post(strand_, boost::asio::bind_executor(strand_, [self = shared_from_this()]() {
+                      self->async_write();
+                    }));
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
@@ -96,20 +113,27 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   socket_io_contexts_.clear();
 }
 
-boost::asio::awaitable<void> socket_io_websocket_core::async_write() {
-  if (writing_) co_return;
-  writing_ = true;
-  boost::scope::scope_exit l_guard{[this]() { writing_ = false; }};
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    if (auto l_ptr = sid_data_->get_message(); l_ptr) co_await async_write_websocket(l_ptr);
-    if (sid_data_->is_timeout()) co_return async_close_websocket();
-  }
-  co_return;
+void socket_io_websocket_core::async_write() {
+  if (writing_) return;
+  if (!sid_data_) return;
+  if (sid_data_->is_timeout()) return async_close_websocket();
+  // SPDLOG_LOGGER_WARN(logger_, "thread {} async_write", std::this_thread::get_id());
+  if (auto l_ptr = sid_data_->get_message(); l_ptr)
+    writing_ = true,
+    web_stream_->async_write(
+        boost::asio::buffer(l_ptr->get_dump_data()),
+        boost::asio::bind_executor(
+            strand_, [self = shared_from_this(), l_ptr](const boost::system::error_code& in_ec, std::size_t) {
+              self->writing_ = false;
+              if (in_ec) return self->logger_->error(in_ec.what());
+              self->async_write();
+            }
+        )
+    );
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(packet_base_ptr in_data) {
   if (!in_data) co_return;
-  auto l_g = co_await queue_->queue(boost::asio::use_awaitable);
   if (sid_data_->is_timeout()) co_return async_close_websocket();
   if (!web_stream_) co_return;
   auto l_str = in_data->get_dump_data();
@@ -134,13 +158,16 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(pac
   }
 }
 void socket_io_websocket_core::async_close_websocket() {
-  if (!web_stream_) return;
-  web_stream_->async_close(
-      boost::beast::websocket::close_code::normal,
-      [self = shared_from_this(), this](const boost::system::error_code& in_ec) {
-        if (in_ec) logger_->error(in_ec.what());
-      }
-  );
+  // if (!web_stream_) return;
+  // boost::asio::post(close_strand_, [this, self = shared_from_this()]() {
+  //   auto l_g = boost::asio::make_work_guard(close_strand_);
+  //   web_stream_->async_close(
+  //       boost::beast::websocket::close_code::normal,
+  //       [self = shared_from_this(), this](const boost::system::error_code& in_ec) {
+  //         if (in_ec) logger_->error(in_ec.what());
+  //       }
+  //   );
+  // });
 }
 
 }  // namespace doodle::socket_io

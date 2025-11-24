@@ -9,6 +9,9 @@
 
 #include <doodle_lib/core/http/http_session_data.h>
 
+#include <boost/asio/async_result.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/signals2.hpp>
 
 #include <atomic>
@@ -34,6 +37,13 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   std::atomic_bool writing_{false};
   std::shared_ptr<awaitable_queue_limitation> queue_;
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{};
+
+  // template <typename Handle>
+  // decltype(boost::asio::async_initiate<
+  //          Handle, void(boost::system::error_code)>(std::declval<Handle>(),
+  //          std::declval<socket_io_websocket_core*>()))
+  // async_write_websocket_impl(Handle&& in_handle);
 
   struct write_guard {
     socket_io_websocket_core* self_;
@@ -43,7 +53,8 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   boost::asio::awaitable<void> init();
   packet_base_ptr generate_register_reply(const std::shared_ptr<sid_data>& in_data) const;
-  boost::asio::awaitable<void> async_write();
+  void async_write();
+  boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
 
  public:
   explicit socket_io_websocket_core(
@@ -54,7 +65,6 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   ~socket_io_websocket_core() = default;
 
   boost::asio::awaitable<void> run();
-  boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
   void write_msg();
   void async_run();
   void async_close_websocket();
