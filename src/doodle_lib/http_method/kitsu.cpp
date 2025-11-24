@@ -271,6 +271,7 @@ http_route_ptr create_kitsu_local_route() {
                 &local::actions_projects_shots_update_sim_abc_local::id_
             )
         )
+        .reg_t<local::tools_add_watermark>("/api/actions/tools/add-watermark"_url)
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 
         ;

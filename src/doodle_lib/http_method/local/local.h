@@ -52,7 +52,6 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
-
 // /api/doodle/task/{id}/log
 DOODLE_HTTP_FUN(task_instance_log)
 DOODLE_HTTP_FUN_OVERRIDE(get)
@@ -83,4 +82,9 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/tools/add-watermark
+DOODLE_HTTP_FUN_C(tools_add_watermark, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http::local

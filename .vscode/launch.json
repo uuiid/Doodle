@@ -196,6 +196,18 @@
                 "group": "main",
                 "order": 1
             }
+        },
+        {
+            "name": "only local",
+            "configurations": [
+                "Doodle_debug_local"
+            ],
+            "preLaunchTask": "cmake build",
+            "presentation": {
+                "hidden": false,
+                "group": "main",
+                "order": 1
+            }
         }
     ]
 }
