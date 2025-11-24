@@ -47,8 +47,8 @@ boost::asio::awaitable<void> qcloth_arg::run() { return arg::async_run_maya(); }
 boost::asio::awaitable<void> qcloth_update_arg::run() {
   auto l_abc = FSys::list_files(alembic_file_dir_, ".abc");
   auto l_fbx = FSys::list_files(alembic_file_dir_, ".fbx");
-  SPDLOG_INFO(
-      "上传qcloth abc文件数量 {} {}, fbx {} {}", l_abc.size(), fmt::join(l_abc, "\n "), l_fbx.size(),
+  SPDLOG_LOGGER_INFO(
+      logger_ptr_, "上传qcloth abc文件数量 {} {}, fbx {} {}", l_abc.size(), fmt::join(l_abc, "\n "), l_fbx.size(),
       fmt::join(l_fbx, "\n ")
   );
   co_await kitsu_client_->remove_shot_animation_export_file(task_id_);

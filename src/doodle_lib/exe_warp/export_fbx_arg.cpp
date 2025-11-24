@@ -42,7 +42,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   auto l_root_dir = maya_file_.parent_path().parent_path();
 
   if (only_upload_) {
-    SPDLOG_INFO("仅上传文件 {}", maya_file_);
+    SPDLOG_LOGGER_INFO(logger_ptr_, "仅上传文件 {}", maya_file_);
     auto l_path = l_root_dir / "mov" / l_out_arg_.movie_file_.filename();
     if (FSys::exists(l_path)) {
       l_out_arg_.movie_file_ = l_path;
@@ -54,7 +54,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     co_await arg::async_run_maya();
     if (!out_arg_.movie_file_dir.empty()) {
       auto l_path = l_root_dir / "mov" / l_out_arg_.movie_file_.filename();
-      SPDLOG_INFO("导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_path);
+      SPDLOG_LOGGER_INFO(logger_ptr_, "导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_path);
       if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) {
         FSys::create_directories(l_p);
       }
@@ -71,7 +71,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   co_await kitsu_client_->upload_shot_animation_maya(task_id_, maya_file_);
   co_await kitsu_client_->remove_shot_animation_export_file(task_id_);
   for (auto& l_p : out_arg_.out_file_list) {
-    SPDLOG_INFO("上传导出文件 {}", l_p);
+    SPDLOG_LOGGER_INFO(logger_ptr_, "上传导出文件 {}", l_p);
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, l_p.parent_path(), l_p.filename());
   }
   co_await kitsu_client_->comment_task(

@@ -180,7 +180,7 @@ std::vector<FSys::path> clean_1001_before_frame(const FSys::path& in_path, std::
 }
 
 boost::asio::awaitable<void> run_ue_assembly_local::run() {
-  SPDLOG_WARN("开始运行组装");
+  SPDLOG_LOGGER_WARN(logger_ptr_, "开始运行组装");
   {
     auto l_arg_json = co_await kitsu_client_->get_ue_assembly(project_id_, shot_task_id_);
     l_arg_json.get_to(arg_);
