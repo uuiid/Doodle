@@ -6,15 +6,19 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/core/socket_io/socket_io_packet.h>
+#include <doodle_lib/core/socket_io/engine_io.h>
+
 #include <boost/asio/experimental/concurrent_channel.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
+#include <boost/lockfree/spsc_value.hpp>
 #include <boost/signals2.hpp>
 
-#include "websocket_impl.h"
 #include <atomic>
 #include <memory>
+
 
 namespace doodle::socket_io {
 struct packet_base;
@@ -86,7 +90,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::asio::strand<boost::asio::io_context::executor_type> write_strand_;
   boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> message_queue_;
-  std::shared_ptr<packet_base> ping_message_;
+  boost::lockfree::spsc_value<std::shared_ptr<packet_base>> ping_message_;
 
   struct block_message_guard {
     sid_data* data_;

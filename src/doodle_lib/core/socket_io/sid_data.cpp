@@ -16,6 +16,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/lockfree/detail/uses_optional.hpp>
 
 #include "websocket_impl.h"
 namespace doodle::socket_io {
@@ -143,21 +144,16 @@ void sid_data::seed_message_self(const std::shared_ptr<packet_base>& in_message)
 void sid_data::seed_message_ping() {
   auto l_ping_message_ = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
   l_ping_message_->start_dump();
-  ping_message_ = l_ping_message_;
+  ping_message_.write(l_ping_message_);
   write_websocket();
 }
 void sid_data::write_websocket() {
   if (is_timeout()) return;
-  if (auto l_websocket = socket_io_websocket_core_.lock(); l_websocket)
-    if (auto l_msg = get_message(); l_msg)
-      boost::asio::co_spawn(
-          write_strand_, l_websocket->async_write_websocket(l_msg), G_DETACHED_LOG(l_w = l_websocket)
-      );
+  if (auto l_websocket = socket_io_websocket_core_.lock(); l_websocket) l_websocket->write_msg();
 }
 packet_base_ptr sid_data::get_message() {
-  if (ping_message_) {
-    auto l_ptr = ping_message_;
-    ping_message_.reset();
+  if (auto l_ping_message_ = ping_message_.read(boost::lockfree::uses_optional); l_ping_message_) {
+    auto l_ptr = *l_ping_message_;
     return l_ptr;
   }
   std::shared_ptr<packet_base> l_msg{};

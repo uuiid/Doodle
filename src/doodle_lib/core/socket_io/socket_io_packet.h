@@ -52,5 +52,5 @@ struct socket_io_packet : public packet_base {
   /// 自动包含 engine.io 的消息头
   const std::vector<std::string>& get_binary_data() const override;
 };
-
+using packet_base_ptr = std::shared_ptr<packet_base>;
 }  // namespace doodle::socket_io
