@@ -567,6 +567,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&entity::parent_id_).references(&entity::uuid_id_),              //
           foreign_key(&entity::source_id_).references(&entity::uuid_id_)               //
       ),
+      make_unique_index("task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_, &task_type_asset_type_link::asset_type_id_),
+      make_index("task_type_asset_type_link_task_type_id_index", &task_type_asset_type_link::task_type_id_),
+      make_index("task_type_asset_type_link_asset_type_id_index", &task_type_asset_type_link::asset_type_id_),
       make_table<task_type_asset_type_link>(
           "task_type_asset_type_link",                                                           //
           make_column("id", &task_type_asset_type_link::id_, primary_key().autoincrement()),     //
