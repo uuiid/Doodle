@@ -70,7 +70,6 @@ r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
 r.Nanite.ProjectEnabled=True
-r.DefaultFeature.AutoExposure=False
 r.AllowOcclusionQueries=False
 r.DefaultFeature.MotionBlur=False
 r.CustomDepth=3
@@ -94,7 +93,6 @@ r.Streaming.PoolSize=16384
 r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject=False
 r.Lumen.HardwareRayTracing=False
 r.Nanite.ProjectEnabled=True
-r.DefaultFeature.AutoExposure=False
 r.AllowOcclusionQueries=False
 r.DefaultFeature.MotionBlur=False
 r.CustomDepth=3
@@ -117,7 +115,6 @@ r.CustomDepth=3
     l_set_data("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject", "False");
     l_set_data("r.Lumen.HardwareRayTracing", "False");
     l_set_data("r.Nanite.ProjectEnabled", "True");
-    l_set_data("r.DefaultFeature.AutoExposure", "False");  // 自动曝光
     l_set_data("r.AllowOcclusionQueries", "False");        // 遮蔽剔除
     l_set_data("r.DefaultFeature.MotionBlur", "False");    // 移动模糊
     l_set_data("r.CustomDepth", "3");                      // 自定义深度 3(启用模板)
