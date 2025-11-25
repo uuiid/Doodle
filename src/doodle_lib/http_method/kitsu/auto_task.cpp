@@ -453,11 +453,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     auto l_maya_file_name = l_is_sim ? get_entity_simulation_character_asset_name(*l_asset_extends)
                                      : get_entity_character_rig_maya_name(*l_asset_extends);
 
-    auto&& [l_it, l__] =
-        l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
-    l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_it->first), fmt::format("{}_cloth", l_it->second));
-    l_arg.rename_map_.emplace(fmt::format("{}_hair", l_it->first), fmt::format("{}_hair", l_it->second));
-    l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_it->first), fmt::format("{}_cloth_hair", l_it->second));
+    if (!l_is_sim) {
+      l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
+    } else {
+      auto l_name        = l_maya_file_name.stem().generic_string();
+      auto l_ue_name_sim = l_ue_name.stem().generic_string();
+      l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_name), fmt::format("{}_cloth", l_ue_name_sim));
+      l_arg.rename_map_.emplace(fmt::format("{}_hair", l_name), fmt::format("{}_hair", l_ue_name_sim));
+      l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_name), fmt::format("{}_cloth_hair", l_ue_name_sim));
+    }
 
     l_ue_scene_path /= l_ue_project.stem();
     l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
@@ -485,11 +489,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     auto l_maya_file_name = l_is_sim ? get_entity_simulation_prop_asset_name(*l_asset_extends)
                                      : get_entity_prop_rig_maya_name(*l_asset_extends);
 
-    auto&& [l_it, l__] =
-        l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
-    l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_it->first), fmt::format("{}_cloth", l_it->second));
-    l_arg.rename_map_.emplace(fmt::format("{}_hair", l_it->first), fmt::format("{}_hair", l_it->second));
-    l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_it->first), fmt::format("{}_cloth_hair", l_it->second));
+    if (!l_is_sim) {
+      l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
+    } else {
+      auto l_name        = l_maya_file_name.stem().generic_string();
+      auto l_ue_name_sim = l_ue_name.stem().generic_string();
+      l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_name), fmt::format("{}_cloth", l_ue_name_sim));
+      l_arg.rename_map_.emplace(fmt::format("{}_hair", l_name), fmt::format("{}_hair", l_ue_name_sim));
+      l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_name), fmt::format("{}_cloth_hair", l_ue_name_sim));
+    }
 
     l_ue_scene_path /= l_ue_project.stem();
     l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
@@ -510,11 +518,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     auto l_ue_path = get_entity_ground_ue_path(l_prj, *l_asset_extends);
 
     auto l_maya_file_name = get_entity_ground_rig_name(*l_asset_extends);
-    auto&& [l_it, l__] =
-        l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
-    l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_it->first), fmt::format("{}_cloth", l_it->second));
-    l_arg.rename_map_.emplace(fmt::format("{}_hair", l_it->first), fmt::format("{}_hair", l_it->second));
-    l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_it->first), fmt::format("{}_cloth_hair", l_it->second));
+    if (!l_is_sim) {
+      l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_ue_name.stem().generic_string());
+    } else {
+      auto l_name        = l_maya_file_name.stem().generic_string();
+      auto l_ue_name_sim = l_ue_name.stem().generic_string();
+      l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_name), fmt::format("{}_cloth", l_ue_name_sim));
+      l_arg.rename_map_.emplace(fmt::format("{}_hair", l_name), fmt::format("{}_hair", l_ue_name_sim));
+      l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_name), fmt::format("{}_cloth_hair", l_ue_name_sim));
+    }
 
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
     if (l_ue_project.empty())
