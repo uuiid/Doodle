@@ -44,7 +44,7 @@ class DOODLE_CORE_API app_base {
   bool use_multithread_{false};
   /// 初始化函数, 返回true继续运行, 返回false退出
   virtual bool init();
-
+  void set_exit_code(std::int32_t in_exit_code);
  public:
   explicit app_base(int argc, const char* const argv[]);
   explicit app_base(std::int32_t argc, const wchar_t* const argv[]);

@@ -26,6 +26,9 @@ app_base::app_base(int argc, const char* const argv[])
   default_logger_raw()->flush();
   add_signal();
 }
+void app_base::set_exit_code(std::int32_t in_exit_code) {
+  if (exit_code == 0) exit_code = in_exit_code;
+}
 
 namespace {
 struct comline_data {
@@ -60,13 +63,13 @@ std::int32_t app_base::run() {
     try {
       g_io_context().run();
     } catch (const doodle_error& in_err) {
-      exit_code = in_err.error_code_ == 0 ? -1 : in_err.error_code_;
+      set_exit_code(in_err.error_code_ == 0 ? -1 : in_err.error_code_);
       default_logger_raw()->error(in_err.what());
     } catch (const std::system_error& in_err) {
-      exit_code = in_err.code().value();
+      set_exit_code(in_err.code().value());
       default_logger_raw()->error(in_err.what());
     } catch (...) {
-      exit_code = 1;
+      set_exit_code(1);
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
@@ -76,13 +79,13 @@ std::int32_t app_base::run() {
         try {
           g_io_context().run();
         } catch (const doodle_error& in_err) {
-          exit_code = in_err.error_code_ == 0 ? -1 : in_err.error_code_;
+          set_exit_code(in_err.error_code_ == 0 ? -1 : in_err.error_code_);
           default_logger_raw()->error(in_err.what());
         } catch (const std::system_error& in_err) {
-          exit_code = in_err.code().value();
+          set_exit_code(in_err.code().value());
           default_logger_raw()->error(in_err.what());
         } catch (...) {
-          exit_code = 1;
+          set_exit_code(1);
           default_logger_raw()->error(boost::current_exception_diagnostic_information());
         }
       });
@@ -92,12 +95,8 @@ std::int32_t app_base::run() {
     }
   }
 
-  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
-  on_cancel.emit();
   facets_.clear();
-  if (sig_ptr) sig_ptr->cancel();
-  g_io_context().stop();
-
+  spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   return exit_code;
 }
 
