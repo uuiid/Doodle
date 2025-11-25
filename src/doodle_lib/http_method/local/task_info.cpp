@@ -180,9 +180,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
         g_io_context(), (*this)(),
         boost::asio::bind_cancellation_slot(
             g_ctx().get<run_post_task_local_cancel_manager>().add(task_info_->uuid_id_),
-            boost::asio::bind_cancellation_slot(
-                app_base::Get().on_cancel.slot(), (boost::asio::consign(boost::asio::detached, shared_from_this()))
-            )
+            boost::asio::consign(boost::asio::detached, shared_from_this())
         )
     );
   }
