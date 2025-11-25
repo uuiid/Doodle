@@ -25,6 +25,8 @@
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <boost/asio/bind_cancellation_slot.hpp>
+
 #include "core/asyn_task.h"
 #include "http_client/kitsu_client.h"
 #include "local.h"
@@ -104,6 +106,12 @@ class run_post_task_local_cancel_manager {
     if (auto itr = sigs_index.find(in_id);
         itr != sigs_index.end() && itr->second < sigs_.size() && sigs_[itr->second]->slot().has_handler())
       sigs_[itr->second]->emit(boost::asio::cancellation_type::all);
+  }
+  void cancel_all() {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    for (auto& sig : sigs_) {
+      if (sig->slot().has_handler()) sig->emit(boost::asio::cancellation_type::all);
+    }
   }
 };
 
@@ -246,6 +254,9 @@ void task::init_ctx() {
     if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
     if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
     g_ctx().emplace<run_post_task_local_cancel_manager>();
+    app_base::Get().on_cancel.slot().assign([](boost::asio::cancellation_type_t) {
+      g_ctx().get<run_post_task_local_cancel_manager>().cancel_all();
+    });
   });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::post(session_data_ptr in_handle) {
