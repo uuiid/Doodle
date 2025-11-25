@@ -234,6 +234,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
       );
       auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+      if (l_uprj.empty())
+        throw_exception(
+            http_request_error{
+                boost::beast::http::status::bad_request,
+                fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
+            }
+        );
       l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
 
       l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
@@ -435,9 +442,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
       core_set::get_set().get_cache_root().parent_path() / doodle_config::doodle_token_name / l_prj.code_;
   bool l_is_sim = l_task.task_type_id_ == task_type::get_simulation_id();
   if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
-    auto l_ue_name        = get_entity_character_ue_name(*l_asset_extends);
-    auto l_ue_path        = get_entity_character_ue_path(l_prj, *l_asset_extends);
-    auto l_ue_project     = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    auto l_ue_name    = get_entity_character_ue_name(*l_asset_extends);
+    auto l_ue_path    = get_entity_character_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    if (l_ue_project.empty())
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::bad_request,
+          fmt::format("未找到角色 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
+      );
     auto l_maya_file_name = l_is_sim ? get_entity_simulation_character_asset_name(*l_asset_extends)
                                      : get_entity_character_rig_maya_name(*l_asset_extends);
 
@@ -461,9 +473,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
 
   } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
              l_asset.entity_type_id_ == asset_type::get_effect_id()) {
-    auto l_ue_name        = get_entity_prop_ue_name(*l_asset_extends);
-    auto l_ue_path        = get_entity_prop_ue_path(l_prj, *l_asset_extends);
-    auto l_ue_project     = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    auto l_ue_name    = get_entity_prop_ue_name(*l_asset_extends);
+    auto l_ue_path    = get_entity_prop_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    if (l_ue_project.empty())
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::bad_request,
+          fmt::format("未找到道具 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
+      );
 
     auto l_maya_file_name = l_is_sim ? get_entity_simulation_prop_asset_name(*l_asset_extends)
                                      : get_entity_prop_rig_maya_name(*l_asset_extends);
@@ -500,6 +517,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_it->first), fmt::format("{}_cloth_hair", l_it->second));
 
     auto l_ue_project = ue_exe_ns::find_ue_project_file(l_prj.path_ / l_ue_path);
+    if (l_ue_project.empty())
+      co_return in_handle->make_error_code_msg(
+          boost::beast::http::status::bad_request,
+          fmt::format("未找到地编 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
+      );
+
     l_ue_scene_path /= l_ue_project.stem();
     l_arg.import_game_path_ = conv_ue_game_path(l_ue_name);
     l_arg.ue_asset_copy_path_.emplace_back(
