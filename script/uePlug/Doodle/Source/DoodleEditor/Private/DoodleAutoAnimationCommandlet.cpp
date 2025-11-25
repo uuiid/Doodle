@@ -134,35 +134,35 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
 
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	for (UAssetImportTask* Task : AssetTools.ImportAssetTasks(TArray{L_Task}))
+	AssetTools.ImportAssetTasks(TArray{L_Task});
+
+	if (TArray<UObject*> ImportedObjs = L_Task->GetObjects(); !ImportedObjs.IsEmpty())
 	{
-		if (TArray<UObject*> ImportedObjs = Task->GetObjects(); !ImportedObjs.IsEmpty())
+		USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
+		if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
 		{
-			USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
-			if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
-			{
-				UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
-				TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
-			}
+			UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
+			TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
+		}
 
-			// 生成 lod
-			if (TmpSkeletalMesh)
+		// 生成 lod
+		if (TmpSkeletalMesh)
+		{
+			static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
+				GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
+			TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
+			FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
 			{
-				static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
-					GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
-				TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
-				FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
-				{
-					FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
-					check(TmpSkeletalMesh);
+				FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
+				check(TmpSkeletalMesh);
 
-					FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 5, false, true);
-					TmpSkeletalMesh->PostEditChange();
-					TmpSkeletalMesh->MarkPackageDirty();
-				}
+				FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 5, false, true);
+				TmpSkeletalMesh->PostEditChange();
+				TmpSkeletalMesh->MarkPackageDirty();
 			}
 		}
 	}
+
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 }
 
