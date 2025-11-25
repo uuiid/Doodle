@@ -44,7 +44,7 @@ boost::asio::awaitable<void> detail::run_http_listener(
     }
   } catch (...) {
     default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-    app_base::Get().stop_app();
+    app_base::Get().stop_app(1);
   }
 }
 void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in_route_ptr, std::uint16_t in_port) {
