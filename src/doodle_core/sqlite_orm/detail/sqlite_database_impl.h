@@ -145,17 +145,22 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_index("working_file_task_link_task_id_index", &working_file_task_link::task_id_),
       make_index("working_file_entity_link_working_file_id_index", &working_file_entity_link::working_file_id_),
       make_index("working_file_entity_link_entity_id_index", &working_file_entity_link::entity_id_),
-      make_unique_index("working_file_task_link_unique", &working_file_task_link::working_file_id_, &working_file_task_link::task_id_),
-      make_table<working_file_task_link>(
-        "working_file_task_link", make_column("id", &working_file_task_link::id_, primary_key().autoincrement()),
-        make_column("working_file_id", &working_file_task_link::working_file_id_, not_null()),
-        make_column("task_id", &working_file_task_link::task_id_, not_null()),
-        foreign_key(&working_file_task_link::working_file_id_)
-        .references(&working_file::uuid_id_)
-        .on_delete.cascade(),
-        foreign_key(&working_file_task_link::task_id_).references(&task::uuid_id_).on_delete.cascade()
+      make_unique_index(
+          "working_file_task_link_unique", &working_file_task_link::working_file_id_, &working_file_task_link::task_id_
       ),
-      make_unique_index("working_file_entity_link_unique", &working_file_entity_link::working_file_id_, &working_file_entity_link::entity_id_),
+      make_table<working_file_task_link>(
+          "working_file_task_link", make_column("id", &working_file_task_link::id_, primary_key().autoincrement()),
+          make_column("working_file_id", &working_file_task_link::working_file_id_, not_null()),
+          make_column("task_id", &working_file_task_link::task_id_, not_null()),
+          foreign_key(&working_file_task_link::working_file_id_)
+              .references(&working_file::uuid_id_)
+              .on_delete.cascade(),
+          foreign_key(&working_file_task_link::task_id_).references(&task::uuid_id_).on_delete.cascade()
+      ),
+      make_unique_index(
+          "working_file_entity_link_unique", &working_file_entity_link::working_file_id_,
+          &working_file_entity_link::entity_id_
+      ),
       make_table<working_file_entity_link>(
           "working_file_entity_link", make_column("id", &working_file_entity_link::id_, primary_key().autoincrement()),
           make_column("working_file_id", &working_file_entity_link::working_file_id_, not_null()),
@@ -207,19 +212,23 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("server_status", &computer::server_status_),            //
           make_column("client_status", &computer::client_status_)
       ),
-      make_table("assets_link_parent_t",
-          make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
+      make_table(
+          "assets_link_parent_t", make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
           make_column("assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_, not_null()),
           make_column("assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, not_null()),
-          foreign_key(&assets_file_helper::link_parent_t::assets_type_uuid_).references(&assets_helper::database_t::uuid_id_).on_delete.cascade(),
-          foreign_key(&assets_file_helper::link_parent_t::assets_uuid_).references(&assets_file_helper::database_t::uuid_id_).on_delete.cascade()
+          foreign_key(&assets_file_helper::link_parent_t::assets_type_uuid_)
+              .references(&assets_helper::database_t::uuid_id_)
+              .on_delete.cascade(),
+          foreign_key(&assets_file_helper::link_parent_t::assets_uuid_)
+              .references(&assets_file_helper::database_t::uuid_id_)
+              .on_delete.cascade()
       ),
       make_index("assets_file_tab_uuid_id_index_2", &assets_file_helper::database_t::uuid_id_),
       make_table(
           "assets_file_tab_2",  //
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null()),
-          make_column("label", &assets_file_helper::database_t::label_),
+          make_column("label", &assets_file_helper::database_t::label_, unique()),
           make_column("path", &assets_file_helper::database_t::path_),
           make_column("notes", &assets_file_helper::database_t::notes_),
           make_column("active", &assets_file_helper::database_t::active_),
@@ -227,6 +236,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("extension", &assets_file_helper::database_t::extension_, default_value(".png"s))
       ),
       make_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_),
+      make_index("assets_tab_label", &assets_helper::database_t::label_),
       make_table(
           "assets_tab",  //
           make_column("id", &assets_helper::database_t::id_, primary_key()),
@@ -271,28 +281,37 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("grade", &work_xlsx_task_info_helper::database_t::grade_),
           make_column("project_id", &work_xlsx_task_info_helper::database_t::project_id_),
           make_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_),
-          foreign_key(&work_xlsx_task_info_helper::database_t::person_id_).references(&person::uuid_id_).on_delete.cascade()
+          foreign_key(&work_xlsx_task_info_helper::database_t::person_id_)
+              .references(&person::uuid_id_)
+              .on_delete.cascade()
       ),
       /// 这个下方是模拟kitsu的表
+      make_index("attachment_file_comment_id_index", &attachment_file::comment_id_),
+      make_index("attachment_file_chat_message_id_index", &attachment_file::chat_message_id_),
       make_table<attachment_file>(
-        "attachment_file",  //
-        make_column("id", &attachment_file::id_, primary_key().autoincrement()),
-        make_column("uuid", &attachment_file::uuid_id_, unique(), not_null()),
-        make_column("name", &attachment_file::name_),
-        make_column("size", &attachment_file::size_),
-        make_column("extension", &attachment_file::extension_),
-        make_column("mimetype", &attachment_file::mimetype_),
-        make_column("comment_id", &attachment_file::comment_id_),
-        make_column("chat_message_id", &attachment_file::chat_message_id_),
-        foreign_key(&attachment_file::comment_id_).references(&comment::uuid_id_)
+          "attachment_file",  //
+          make_column("id", &attachment_file::id_, primary_key().autoincrement()),
+          make_column("uuid", &attachment_file::uuid_id_, unique(), not_null()),
+          make_column("name", &attachment_file::name_), make_column("size", &attachment_file::size_),
+          make_column("extension", &attachment_file::extension_), make_column("mimetype", &attachment_file::mimetype_),
+          make_column("comment_id", &attachment_file::comment_id_, unique()),
+          make_column("chat_message_id", &attachment_file::chat_message_id_, unique()),
+          foreign_key(&attachment_file::comment_id_).references(&comment::uuid_id_)
       ),
+      make_unique_index(
+          "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
+      ),
+      make_unique_index("subscription_task_uc", &subscription::person_id_, &subscription::task_id_),
+      make_index("subscription_person_id_index", &subscription::person_id_),
+      make_index("subscription_task_id_index", &subscription::task_id_),
+      make_index("subscription_entity_id_index", &subscription::entity_id_),
+      make_index("subscription_task_type_id_index", &subscription::task_type_id_),
       make_table<subscription>(
           "subscription",  //
           make_column("id", &subscription::id_, primary_key().autoincrement()),
           make_column("uuid", &subscription::uuid_id_, unique(), not_null()),
           make_column("person_id", &subscription::person_id_, not_null()),
-          make_column("task_id", &subscription::task_id_),
-          make_column("entity_id", &subscription::entity_id_),
+          make_column("task_id", &subscription::task_id_), make_column("entity_id", &subscription::entity_id_),
           make_column("task_type_id", &subscription::task_type_id_),
           foreign_key(&subscription::person_id_).references(&person::id_),
           foreign_key(&subscription::task_id_).references(&task::uuid_id_),
@@ -305,9 +324,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &assignees_table::id_, primary_key().autoincrement()),
           make_column("person_id", &assignees_table::person_id_, not_null()),
           make_column("task_id", &assignees_table::task_id_, not_null()),
-          foreign_key(&assignees_table::person_id_).references(&person::id_),
-          foreign_key(&assignees_table::task_id_).references(&task::uuid_id_)
+          foreign_key(&assignees_table::person_id_).references(&person::id_).on_delete.cascade(),
+          foreign_key(&assignees_table::task_id_).references(&task::uuid_id_).on_delete.cascade()
       ),
+      make_index("comment_preview_link_comment_id_index", &comment_preview_link::comment_id_),
+      make_index("comment_preview_link_preview_file_id_index", &comment_preview_link::preview_file_id_),
       make_table<comment_preview_link>(
           "comment_preview_link",                                                                   //
           make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),             //
@@ -316,56 +337,61 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&comment_preview_link::comment_id_).references(&comment::uuid_id_),           //
           foreign_key(&comment_preview_link::preview_file_id_).references(&preview_file::uuid_id_)  //
       ),
+      make_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_),
+      make_index("preview_file_task_id_index", &preview_file::task_id_),
+      make_index("preview_file_person_id_index", &preview_file::person_id_),
       make_table<preview_file>(
-          "preview_file",                                                        //
-          make_column("id", &preview_file::id_, primary_key().autoincrement()),  //
-          make_column("uuid", &preview_file::uuid_id_, unique(), not_null()),    //
-          make_column("name", &preview_file::name_),                             //
-          make_column("original_name", &preview_file::original_name_),           //
-          make_column("revision", &preview_file::revision_),                     //
-          make_column("position", &preview_file::position_),                     //
-          make_column("extension", &preview_file::extension_),                   //
-          make_column("description", &preview_file::description_),               //
-          make_column("path", &preview_file::path_),                             //
-          make_column("source", &preview_file::source_),                         //
-          make_column("file_size", &preview_file::file_size_),                   //
-          make_column("status", &preview_file::status_),                         //
-          make_column("validation_status", &preview_file::validation_status_),   //
-          make_column("annotations", &preview_file::annotations_),               //
-          make_column("width", &preview_file::width_),                           //
-          make_column("height", &preview_file::height_),                         //
-          make_column("duration", &preview_file::duration_),                     //
-          make_column("task_id", &preview_file::task_id_),                       //
-          make_column("shotgun_id", &preview_file::shotgun_id_),         //
-          make_column("person_id", &preview_file::person_id_),                   //
-          make_column("source_file_id", &preview_file::source_file_id_),                   //
-          make_column("is_movie", &preview_file::is_movie_),         //
-          make_column("url", &preview_file::url_),         //
-          make_column("uploaded_movie_url", &preview_file::uploaded_movie_url_),         //
-          make_column("uploaded_movie_name", &preview_file::uploaded_movie_name_),         //
-          make_column("created_at", &preview_file::created_at_),                 //
-          make_column("updated_at", &preview_file::updated_at_),                 //
-          foreign_key(&preview_file::task_id_).references(&task::uuid_id_),      //
-          foreign_key(&preview_file::person_id_).references(&person::uuid_id_)   //
+          "preview_file",                                                           //
+          make_column("id", &preview_file::id_, primary_key().autoincrement()),     //
+          make_column("uuid", &preview_file::uuid_id_, unique(), not_null()),       //
+          make_column("name", &preview_file::name_, unique()),                      //
+          make_column("original_name", &preview_file::original_name_),              //
+          make_column("revision", &preview_file::revision_),                        //
+          make_column("position", &preview_file::position_),                        //
+          make_column("extension", &preview_file::extension_),                      //
+          make_column("description", &preview_file::description_),                  //
+          make_column("path", &preview_file::path_),                                //
+          make_column("source", &preview_file::source_),                            //
+          make_column("file_size", &preview_file::file_size_),                      //
+          make_column("status", &preview_file::status_),                            //
+          make_column("validation_status", &preview_file::validation_status_),      //
+          make_column("annotations", &preview_file::annotations_),                  //
+          make_column("width", &preview_file::width_),                              //
+          make_column("height", &preview_file::height_),                            //
+          make_column("duration", &preview_file::duration_),                        //
+          make_column("task_id", &preview_file::task_id_),                          //
+          make_column("shotgun_id", &preview_file::shotgun_id_),                    //
+          make_column("person_id", &preview_file::person_id_),                      //
+          make_column("source_file_id", &preview_file::source_file_id_),            //
+          make_column("is_movie", &preview_file::is_movie_),                        //
+          make_column("url", &preview_file::url_),                                  //
+          make_column("uploaded_movie_url", &preview_file::uploaded_movie_url_),    //
+          make_column("uploaded_movie_name", &preview_file::uploaded_movie_name_),  //
+          make_column("created_at", &preview_file::created_at_),                    //
+          make_column("updated_at", &preview_file::updated_at_),                    //
+          foreign_key(&preview_file::task_id_).references(&task::uuid_id_),         //
+          foreign_key(&preview_file::person_id_).references(&person::uuid_id_)      //
       ),
       make_table<notification>(
-          "notification_2",                                                          //
+          "notification_2",                                                        //
           make_column("id", &notification::id_, primary_key().autoincrement()),    //
           make_column("uuid", &notification::uuid_id_, unique(), not_null()),      //
           make_column("read", &notification::read_),                               //
           make_column("change", &notification::change_),                           //
           make_column("type", &notification::type_),                               //
-          make_column("person_id", &notification::person_id_, not_null()),                     //
-          make_column("author_id", &notification::author_id_, not_null()),                     //
+          make_column("person_id", &notification::person_id_, not_null()),         //
+          make_column("author_id", &notification::author_id_, not_null()),         //
           make_column("comment_id", &notification::comment_id_),                   //
-          make_column("task_id", &notification::task_id_, not_null()),                         //
-          make_column("reply_id", &notification::reply_id_),//
+          make_column("task_id", &notification::task_id_, not_null()),             //
+          make_column("reply_id", &notification::reply_id_),                       //
           make_column("created_at", &notification::created_at_),                   //
           foreign_key(&notification::person_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::author_id_).references(&person::uuid_id_),    //
           foreign_key(&notification::comment_id_).references(&comment::uuid_id_),  //
           foreign_key(&notification::task_id_).references(&task::uuid_id_)
       ),
+      make_index("comment_mentions_comment_id_index", &comment_mentions::comment_id_),
+      make_index("comment_mentions_person_id_index", &comment_mentions::person_id_),
       make_table<comment_mentions>(
           "comment_mentions",                                                          //
           make_column("id", &comment_mentions::id_, primary_key().autoincrement()),    //
@@ -374,6 +400,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&comment_mentions::comment_id_).references(&comment::uuid_id_),  //
           foreign_key(&comment_mentions::person_id_).references(&person::uuid_id_)
       ),
+      make_index("comment_department_mentions_comment_id_index", &comment_department_mentions::comment_id_),
+      make_index("comment_department_mentions_department_id_index", &comment_department_mentions::department_id_),
       make_table<comment_department_mentions>(
           "comment_department_mentions",                                                          //
           make_column("id", &comment_department_mentions::id_, primary_key().autoincrement()),    //
@@ -382,6 +410,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&comment_department_mentions::comment_id_).references(&comment::uuid_id_),  //
           foreign_key(&comment_department_mentions::department_id_).references(&department::uuid_id_)
       ),
+      make_index("comment_acknoledgments_comment_id_index", &comment_acknoledgments::comment_id_),
+      make_index("comment_acknoledgments_person_id_index", &comment_acknoledgments::person_id_),
       make_table<comment_acknoledgments>(
           "comment_acknoledgments",                                                          //
           make_column("id", &comment_acknoledgments::id_, primary_key().autoincrement()),    //
@@ -390,30 +420,42 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&comment_acknoledgments::comment_id_).references(&comment::uuid_id_),  //
           foreign_key(&comment_acknoledgments::person_id_).references(&person::uuid_id_)
       ),
+      make_index("comment_task_status_id_index", &comment::task_status_id_),
+      make_index("comment_person_id_index", &comment::person_id_),
+      make_index("comment_editor_id_index", &comment::editor_id_),
+      make_index("comment_preview_file_id_index", &comment::preview_file_id_),
+      make_index("comment_object_id_index", &comment::object_id_),
+      make_index("comment_object_type_index", &comment::object_type_),
       make_table<comment>(
-          "comment",                                                                                       //
-          make_column("id", &comment::id_, primary_key().autoincrement()),                                 //
-          make_column("uuid", &comment::uuid_id_, unique(), not_null()),                                //
-          make_column("shotgun_id", &comment::shotgun_id_),                                                //
-          make_column("object_id", &comment::object_id_, not_null()),                                                  //
-          make_column("object_type", &comment::object_type_, not_null()),                                              //
-          make_column("text", &comment::text_),                                                            //
-          make_column("data", &comment::data_),                                                            //
-          make_column("replies", &comment::replies_),                                                      //
-          make_column("checklist", &comment::checklist_),                                                  //
-          make_column("pinned", &comment::pinned_),                                                        //
-          make_column("links", &comment::links),//
-          make_column("created_at", &comment::created_at_),                                                //
+          "comment",                                                        //
+          make_column("id", &comment::id_, primary_key().autoincrement()),  //
+          make_column("uuid", &comment::uuid_id_, unique(), not_null()),    //
+          make_column("shotgun_id", &comment::shotgun_id_),                 //
+          make_column("object_id", &comment::object_id_, not_null()),       //
+          make_column("object_type", &comment::object_type_, not_null()),   //
+          make_column("text", &comment::text_),                             //
+          make_column("data", &comment::data_),                             //
+          make_column("replies", &comment::replies_),                       //
+          make_column("checklist", &comment::checklist_),                   //
+          make_column("pinned", &comment::pinned_),                         //
+          make_column("links", &comment::links),                            //
+          make_column("created_at", &comment::created_at_),                 //
           make_column("updated_at", &comment::updated_at_),
-          make_column("task_status_id", &comment::task_status_id_),  //
-          make_column("person_id", &comment::person_id_, not_null()),                                                                        //
-          make_column("editor_id", &comment::editor_id_),                                                  //
-          make_column("preview_file_id", &comment::preview_file_id_),                                      //
-          foreign_key(&comment::task_status_id_).references(&task::uuid_id_),                              //
-          foreign_key(&comment::person_id_).references(&person::uuid_id_),                                 //
-          foreign_key(&comment::editor_id_).references(&person::uuid_id_),                                 //
-          foreign_key(&comment::preview_file_id_).references(&preview_file::uuid_id_)                      //
+          make_column("task_status_id", &comment::task_status_id_),                    //
+          make_column("person_id", &comment::person_id_, not_null()),                  //
+          make_column("editor_id", &comment::editor_id_),                              //
+          make_column("preview_file_id", &comment::preview_file_id_),                  //
+          foreign_key(&comment::task_status_id_).references(&task_status::uuid_id_),   //
+          foreign_key(&comment::person_id_).references(&person::uuid_id_),             //
+          foreign_key(&comment::editor_id_).references(&person::uuid_id_),             //
+          foreign_key(&comment::preview_file_id_).references(&preview_file::uuid_id_)  //
       ),
+      make_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_),
+      make_index("task_project_id_index", &task::project_id_),
+      make_index("task_task_type_id_index", &task::task_type_id_),
+      make_index("task_task_status_id_index", &task::task_status_id_),
+      make_index("task_entity_id_index", &task::entity_id_),
+      make_index("task_assigner_id_index", &task::assigner_id_),
       make_table<task>(
           "task",                                                                  //
           make_column("id", &task::id_, primary_key().autoincrement()),            //
@@ -491,6 +533,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("chang_ci", &entity_asset_extend::chang_ci_),                        //
           foreign_key(&entity_asset_extend::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
+      make_index("ix_entity_project_id", &entity::project_id_),
+      make_index("ix_entity_entity_type_id", &entity::entity_type_id_),
+      make_index("ix_entity_parent_id", &entity::parent_id_),
+      make_index("ix_entity_source_id", &entity::source_id_),
+      make_unique_index("entity_uc", &entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_),
       make_table<entity>(
           "entity",                                                                    //
           make_column("id", &entity::id_, primary_key().autoincrement()),              //
@@ -528,6 +575,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&task_type_asset_type_link::asset_type_id_).references(&asset_type::uuid_id_).on_delete.cascade(),
           foreign_key(&task_type_asset_type_link::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
+      make_index("project_person_link_project_id_index", &project_person_link::project_id_),
+      make_index("project_person_link_person_id_index", &project_person_link::person_id_),
       make_table<project_person_link>(
           "project_person_link",  //
           make_column("id", &project_person_link::id_, primary_key().autoincrement()),
@@ -536,7 +585,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("shotgun_id", &project_person_link::shotgun_id_),
           foreign_key(&project_person_link::project_id_).references(&project::uuid_id_),
           foreign_key(&project_person_link::person_id_).references(&person::uuid_id_)
-      ),
+        ),
+      make_unique_index("project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_),
+      make_index("project_task_type_link_project_id_index", &project_task_type_link::project_id_),
+      make_index("project_task_type_link_task_type_id_index", &project_task_type_link::task_type_id_),
       make_table<project_task_type_link>(
           "project_task_type_link",  //
           make_column("id", &project_task_type_link::id_, primary_key().autoincrement()),
@@ -547,6 +599,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_task_type_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_task_type_link::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
+      make_unique_index("project_task_status_link_uc", &project_task_status_link::project_id_, &project_task_status_link::task_status_id_),
+      make_index("project_task_status_link_project_id_index", &project_task_status_link::project_id_),
+      make_index("project_task_status_link_task_status_id_index", &project_task_status_link::task_status_id_),
       make_table<project_task_status_link>(
           "project_task_status_link",  //
           make_column("id", &project_task_status_link::id_, primary_key().autoincrement()),
@@ -566,6 +621,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&project_asset_type_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
           foreign_key(&project_asset_type_link::asset_type_id_).references(&asset_type::uuid_id_).on_delete.cascade()
       ),
+      make_index("project_status_automation_link_project_id_index", &project_status_automation_link::project_id_),
+      make_index("project_status_automation_link_status_automation_id_index", &project_status_automation_link::status_automation_id_),
       make_table<project_status_automation_link>(
           "project_status_automation_link",
           make_column("id", &project_status_automation_link::id_, primary_key().autoincrement()),
@@ -646,7 +703,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
               .references(&department::uuid_id_)
               .on_delete.cascade()
       ),
-      make_table<metadata_descriptor>(
+      make_table<metadata_descriptor>( // 元数据装饰弃用
           "metadata_descriptor",                                                        //
           make_column("id", &metadata_descriptor::id_, primary_key().autoincrement()),  //
           make_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique()),    //
@@ -662,10 +719,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "project_status",                                                        //
           make_column("id", &project_status::id_, primary_key().autoincrement()),  //
           make_column("uuid", &project_status::uuid_id_, not_null(), unique()),    //
-          make_column("name", &project_status::name_, not_null()),                             //
+          make_column("name", &project_status::name_, not_null(), unique()),                             //
           make_column("color", &project_status::color_, not_null())
       ),
-
+      make_index("department_link_person_id_index", &person_department_link::person_id_),
+      make_index("department_link_department_id_index", &person_department_link::department_id_),
       make_table<person_department_link>(
           "department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
           make_column("person_id", &person_department_link::person_id_),
@@ -673,6 +731,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&person_department_link::person_id_).references(&person::uuid_id_).on_delete.cascade(),
           foreign_key(&person_department_link::department_id_).references(&department::uuid_id_).on_delete.cascade()
       ),
+      make_unique_index("department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_),
       make_table<person>(
           "person",                                                                                           //
           make_column("id", &person::id_, primary_key().autoincrement()),                                     //
@@ -719,6 +778,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("dingding_id", &person::dingding_id_),
           make_column("dingding_company_id", &person::dingding_company_id_)
       ),
+      make_index("preview_background_file_uuid_id_index", &preview_background_file::uuid_id_),
+      make_index("preview_background_file_is_default_index", &preview_background_file::is_default_),
       make_table<preview_background_file>(
           "preview_background_file",                                                        //
           make_column("id", &preview_background_file::id_, primary_key().autoincrement()),  //
@@ -730,6 +791,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("extension", &preview_background_file::extension_),                   //
           make_column("file_size", &preview_background_file::file_size_)                    //
       ),
+      make_index("status_automation_in_task_type_id_index", &status_automation::in_task_type_id_),
+      make_index("status_automation_in_task_status_id_index", &status_automation::in_task_status_id_),
+      make_index("status_automation_out_task_type_id_index", &status_automation::out_task_type_id_),
+      make_index("status_automation_out_task_status_id_index", &status_automation::out_task_status_id_),
       make_table<status_automation>(
           "status_automation",                                                             //
           make_column("id", &status_automation::id_, primary_key().autoincrement()),       //
@@ -747,6 +812,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&status_automation::out_task_type_id_).references(&task_type::uuid_id_),         //
           foreign_key(&status_automation::out_task_status_id_).references(&task_status::uuid_id_)      //
       ),
+      make_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_),
+      make_index("task_type_department_id_index", &task_type::department_id_),
       make_table<task_type>(
           "task_type",                                                        //
           make_column("id", &task_type::id_, primary_key().autoincrement()),  //
@@ -763,6 +830,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("department_id", &task_type::department_id_),          //
           foreign_key(&task_type::department_id_).references(&department::uuid_id_)
       ),
+      make_index("department_uuid_id_index", &department::uuid_id_),
       make_table<department>(
           "department",                                                        //
           make_column("id", &department::id_, primary_key().autoincrement()),  //
@@ -771,6 +839,12 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("color", &department::color_, not_null()),                           //
           make_column("archived", &department::archived_)                      //
       ),
+      make_index("task_status_uuid_id_index", &task_status::uuid_id_),
+      make_index("task_status_name_index", &task_status::name_),
+      make_index("task_status_short_name_index", &task_status::short_name_),
+      make_index("task_status_is_done_index", &task_status::is_done_),
+      make_index("task_status_is_default_index", &task_status::is_default_),
+      make_index("task_status_feedback_request_index", &task_status::is_feedback_request_),
       make_table<task_status>(
           "task_status",                                                           //
           make_column("id", &task_status::id_, primary_key().autoincrement()),     //
@@ -794,7 +868,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "asset_type",                                                        //
           make_column("id", &asset_type::id_, primary_key().autoincrement()),  //
           make_column("uuid", &asset_type::uuid_id_, not_null(), unique()),    //
-          make_column("name", &asset_type::name_, not_null()),                 //
+          make_column("name", &asset_type::name_, not_null(), unique()),                 //
           make_column("short_name", &asset_type::short_name_),                 //
           make_column("description", &asset_type::description_),               //
           make_column("archived", &asset_type::archived_)                      //
