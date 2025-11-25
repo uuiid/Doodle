@@ -375,7 +375,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
 #ifdef NDEBUG
   for (auto&& l_path : l_ret.ue_asset_path_) {
-    if (!FSys::exists(l_path.from_)) {
+    if (l_path.from_.empty())
+      throw_exception(
+          http_request_error{boost::beast::http::status::bad_request, fmt::format("UE 场景可能没有启动器等原因")}
+      );
+    if (l_info.type_ == run_ue_assembly_local::import_ue_type::char_ && !FSys::exists(l_path.from_)) {
       throw_exception(
           http_request_error{
               boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
