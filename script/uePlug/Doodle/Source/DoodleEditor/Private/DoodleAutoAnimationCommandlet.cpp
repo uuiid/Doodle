@@ -132,7 +132,37 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	FString FbxPath = JsonObject->GetStringField(TEXT("fbx_file"));
 	UAssetImportTask* L_Task = CreateCharacterImportTask(FbxPath, nullptr, false);
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-	AssetTools.ImportAssetTasks(TArray{L_Task});
+
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+	for (UAssetImportTask* Task : AssetTools.ImportAssetTasks(TArray{L_Task}))
+	{
+		if (TArray<UObject*> ImportedObjs = Task->GetObjects(); !ImportedObjs.IsEmpty())
+		{
+			USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
+			if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
+			{
+				UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
+				TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
+			}
+
+			// 生成 lod
+			if (TmpSkeletalMesh)
+			{
+				static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
+					GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
+				TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
+				FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
+				{
+					FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
+					check(TmpSkeletalMesh);
+
+					FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 5, false, true);
+					TmpSkeletalMesh->PostEditChange();
+					TmpSkeletalMesh->MarkPackageDirty();
+				}
+			}
+		}
+	}
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 }
 
@@ -931,22 +961,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 					}
 				}
 			}
-			// 生成 lod
-			if (TmpSkeletalMesh)
-			{
-				static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
-					GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
-				TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
-				FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
-				{
-					FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
-					check(TmpSkeletalMesh);
 
-					FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 5, false, true);
-					TmpSkeletalMesh->PostEditChange();
-					TmpSkeletalMesh->MarkPackageDirty();
-				}
-			}
 
 			//------------
 			if (AnimSeq && TmpSkeletalMesh)
