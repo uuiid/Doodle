@@ -52,8 +52,7 @@ void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
       boost::asio::bind_cancellation_slot(
-          g_ctx().get<detail::http_listener_cancellation_slot>().slot(),
-          boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+          g_ctx().get<detail::http_listener_cancellation_slot>().slot(), boost::asio::detached
       )
   );
 }
