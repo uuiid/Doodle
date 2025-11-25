@@ -727,6 +727,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       ),
       make_index("department_link_person_id_index", &person_department_link::person_id_),
       make_index("department_link_department_id_index", &person_department_link::department_id_),
+      make_unique_index("department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_),
       make_table<person_department_link>(
           "department_link", make_column("id", &person_department_link::id_, primary_key().autoincrement()),
           make_column("person_id", &person_department_link::person_id_),
@@ -734,7 +735,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           foreign_key(&person_department_link::person_id_).references(&person::uuid_id_).on_delete.cascade(),
           foreign_key(&person_department_link::department_id_).references(&department::uuid_id_).on_delete.cascade()
       ),
-      make_unique_index("department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_),
       make_table<person>(
           "person",                                                                                           //
           make_column("id", &person::id_, primary_key().autoincrement()),                                     //
