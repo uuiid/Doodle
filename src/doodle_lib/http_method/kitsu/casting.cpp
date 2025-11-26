@@ -15,6 +15,7 @@
 #include <map>
 #include <range/v3/range/conversion.hpp>
 #include <sqlite_orm/sqlite_orm.h>
+#include <vector>
 
 namespace doodle::http {
 struct actions_projects_casting_replace_arg {
@@ -226,6 +227,15 @@ auto get_entity_link_by_entity_id(const uuid& in_entity_id) {
   return l_ret;
 }
 
+auto get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+
+  using namespace sqlite_orm;
+  auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(in(&entity_link::entity_in_id_, in_entity_id)));
+
+  return l_ret;
+}
+
 std::optional<entity_link> find_entity_link(std::vector<entity_link>& in_entity_links, const uuid& in_entity_out_id) {
   auto l_it =
       std::find_if(in_entity_links.begin(), in_entity_links.end(), [&in_entity_out_id](const entity_link& in_link) {
@@ -355,8 +365,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   auto l_sql                                               = g_ctx().get<sqlite_database>();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
+  auto l_shot_linke = get_entity_link_by_entity_id(
+      l_list | ranges::views::transform(&actions_projects_casting_replace_arg::entity_id_) | ranges::to_vector
+  );
   for (auto&& i : l_list) {
-    auto l_link = l_sql.get_entity_link(i.entity_id_, i.asset_from_id_);
+    auto l_link = find_entity_link(l_shot_linke, i.asset_from_id_);
     if (!l_link) continue;
     l_link->entity_out_id_ = i.asset_to_id_;
     l_entity_links->emplace_back(*l_link);
