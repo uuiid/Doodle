@@ -19,11 +19,8 @@ $Credential = New-Object -TypeName System.Management.Automation.PSCredential -Ar
 #Enter-PSSession -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic
 
 # "C:\Program Files\PowerShell\7\pwsh.exe"  -NoExit -Command { Enter-PSSession -ComputerName 192.168.40.181 -Credential (New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, (ConvertTo-SecureString "root" -AsPlainText -Force)) -Authentication Basic }
-Get-WinEvent -FilterHashtable @{
-    Logname      = 'Application'
-    ProviderName = 'nssm'
-    StartTime    = ((Get-Date).AddDays(-1))
-}
+# 显示事件日志
+
 Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
@@ -33,6 +30,11 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1
 }
 
+Get-WinEvent  -ComputerName 192.168.40.181 -Credential $Credential -FilterHashtable @{
+    Logname      = 'Application'
+    ProviderName = 'nssm'
+    StartTime    = ((Get-Date).AddDays(-1))
+} |  Format-List -Property TimeCreated, Message
 if ($CopyServer) {
     Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
         $Kitsu_Ip = "192.168.40.181"
