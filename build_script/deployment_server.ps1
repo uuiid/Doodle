@@ -18,6 +18,8 @@ $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
 $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, $RootPassword
 #Enter-PSSession -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic
 
+# Enter-PSSession -ComputerName 192.168.40.181 -Credential (New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, (ConvertTo-SecureString "root" -AsPlainText -Force)) -Authentication Basic
+
 Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
