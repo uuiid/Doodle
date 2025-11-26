@@ -183,7 +183,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
     auto l_image = cv::Mat::zeros(l_args.image_size_.second, l_args.image_size_.first, CV_8UC3);
     auto l_out   = add_watermark_to_image(l_image, l_args, l_ft2, l_text_size, l_color, l_thickness);
     std::vector<uchar> l_buffer{};
-    cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
+    cv::imencode(".png", l_out, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
     co_return in_handle->make_msg(std::move(l_buffer), "image/png");
   }
 
