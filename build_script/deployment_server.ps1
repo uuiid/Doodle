@@ -30,11 +30,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
     &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1
 }
 
-Get-WinEvent  -ComputerName 192.168.40.181 -Credential $Credential -FilterHashtable @{
-    Logname      = 'Application'
-    ProviderName = 'nssm'
-    StartTime    = ((Get-Date).AddDays(-1))
-} |  Format-List -Property TimeCreated, Message
+
 if ($CopyServer) {
     Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
         $Kitsu_Ip = "192.168.40.181"
