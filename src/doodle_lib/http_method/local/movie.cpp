@@ -147,11 +147,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
       break;
     }
   }
-  if (l_preview) {
-    auto l_args = in_handle->get_json().get<tools_add_watermark_arg_t>();
-    FSys::ofstream{core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name}
-        << in_handle->get_json().dump(2);
 
+  nlohmann::json l_json{};
+  if (!FSys::exists(core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name))
+    l_json = tools_add_watermark_arg_t{};
+  else
+    l_json = nlohmann::json::parse(
+        FSys::ifstream{core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name}
+    );
+
+  if (l_preview) {
+    auto l_args = l_json.get<tools_add_watermark_arg_t>();
     cv::Ptr<cv::freetype::FreeType2> const l_ft2{cv::freetype::createFreeType2()};
     l_ft2->loadFontData(std::string{doodle_config::font_default}, 0);
 
@@ -175,13 +181,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
     cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
     co_return in_handle->make_msg(std::move(l_buffer), "image/png");
   }
-  nlohmann::json l_json{};
-  if (!FSys::exists(core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name))
-    l_json = tools_add_watermark_arg_t{};
-  else
-    l_json = nlohmann::json::parse(
-        FSys::ifstream{core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name}
-    );
+
   co_return in_handle->make_msg(l_json);
 }
 
