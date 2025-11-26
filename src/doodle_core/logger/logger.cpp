@@ -127,17 +127,7 @@ void rotating_file_sink<Mutex>::rotate_() {
   //  auto l_target = base_filename_;
   base_filename_.replace_filename(fmt::format("{}.{}.{}.txt", file_stem_, pid, ++index_));
   file_helper_.open(base_filename_, std::ios_base::app | std::ios_base::out | std::ios_base::binary);
-  current_size_ = 0;
 
-  // delete existing file
-  std::error_code l_ec{};
-  if (index_ > max_files_) {
-    for (std::size_t i = index_ - max_files_; i > 0; --i) {
-      auto l_target = base_filename_;
-      l_target.replace_filename(fmt::format("{}.{}.{}.txt", file_stem_, pid, i));
-      FSys::remove(l_target, l_ec);
-    }
-  }
 }
 
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
