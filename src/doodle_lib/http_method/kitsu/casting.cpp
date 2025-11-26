@@ -318,7 +318,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
   if (!l_seq_links.empty()) co_await l_sql.install_range(l_entity_links);
-  for (auto&& i : l_delay_events) i();
+  // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
       "shot:casting-update",
       nlohmann::json{
