@@ -73,7 +73,7 @@ std::int32_t app_base::run() {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
-    std::vector<std::thread> l_threads{std::thread::hardware_concurrency() * 3};
+    std::vector<std::thread> l_threads{std::thread::hardware_concurrency() - 1};
     for (auto& l_thread : l_threads) {
       l_thread = std::thread([this] {
         try {
