@@ -311,12 +311,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
       });
     }
   }
-
-  co_await l_sql.remove<entity_link>(l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector);
+  if (auto l_id_list = l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector;
+      !l_id_list.empty())
+    co_await l_sql.remove<entity_link>(l_id_list);
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
-  co_await l_sql.install_range(l_entity_links);
+  if (!l_seq_links.empty()) co_await l_sql.install_range(l_entity_links);
   for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
       "shot:casting-update",
