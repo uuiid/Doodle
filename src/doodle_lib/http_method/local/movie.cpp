@@ -3,7 +3,11 @@
 //
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/core/file_sys.h"
+#include "doodle_core/core/global_function.h"
 
+#include <doodle_lib/core/socket_io/broadcast.h>
+
+#include <boost/asio/post.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
 #include "local.h"
@@ -17,6 +21,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 
 namespace doodle::http::local {
 
@@ -208,18 +213,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
     };
   }
 
-  for (auto&& l_image_path : l_args.image_paths_) {
-    if (!exists(l_image_path))
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request, fmt::format("图片文件不存在: {}", l_image_path.generic_string())
-          }
+  boost::asio::post(g_io_context(), [l_args, l_ft2, l_text_size, l_color, l_thickness]() {
+    for (auto&& l_image_path : l_args.image_paths_) {
+      if (!exists(l_image_path))
+        throw_exception(
+            http_request_error{
+                boost::beast::http::status::bad_request,
+                fmt::format("图片文件不存在: {}", l_image_path.generic_string())
+            }
+        );
+      auto l_image = cv::imread(l_image_path.generic_string(), cv::IMREAD_UNCHANGED);
+      if (l_image.empty()) continue;
+      auto l_out = add_watermark_to_image(l_image, l_args, l_ft2, l_text_size, l_color, l_thickness);
+      cv::imwrite((l_args.out_path_ / l_image_path.filename().replace_extension(".png")).generic_string(), l_out);
+      socket_io::broadcast(
+          "tools:add_watermark:progress",
+          nlohmann::json{
+              {"image_path", l_image_path.generic_string()},
+              {"out_path", (l_args.out_path_ / l_image_path.filename().replace_extension(".png")).generic_string()}
+          },
+          "/events"
       );
-    auto l_image = cv::imread(l_image_path.generic_string(), cv::IMREAD_UNCHANGED);
-    if (l_image.empty()) continue;
-    auto l_out = add_watermark_to_image(l_image, l_args, l_ft2, l_text_size, l_color, l_thickness);
-    cv::imwrite((l_args.out_path_ / l_image_path.filename().replace_extension(".png")).generic_string(), l_out);
-  }
+    }
+  });
   co_return in_handle->make_msg_204();
 }
 
