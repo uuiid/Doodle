@@ -22,7 +22,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle::http::local {
 
 struct video_thumbnail_cache : caches::fixed_sized_cache<uuid, std::vector<uchar>, caches::LRUCachePolicy> {
@@ -173,9 +172,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
     if (!l_args.watermark_color_.empty() && l_args.watermark_color_.front() == '#' &&
         l_args.watermark_color_.length() == 7) {
       l_color = cv::Scalar{
-          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(1, 2), nullptr, 16)),
+          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(5, 2), nullptr, 16)),
           boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(3, 2), nullptr, 16)),
-          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(5, 2), nullptr, 16))
+          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(1, 2), nullptr, 16)),
       };
     }
 
