@@ -13,6 +13,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
 
 #include <map>
+#include <range/v3/range/conversion.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle::http {
@@ -224,6 +225,21 @@ auto get_entity_link_by_entity_id(const uuid& in_entity_id) {
 
   return l_ret;
 }
+
+std::optional<entity_link> find_entity_link(std::vector<entity_link>& in_entity_links, const uuid& in_entity_out_id) {
+  auto l_it =
+      std::find_if(in_entity_links.begin(), in_entity_links.end(), [&in_entity_out_id](const entity_link& in_link) {
+        return in_link.entity_out_id_ == in_entity_out_id;
+      });
+
+  if (l_it != in_entity_links.end()) {
+    auto l_ret = *l_it;
+    in_entity_links.erase(l_it);
+    return l_ret;
+  }
+  return std::nullopt;
+}
+
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_entities_casting::put(
@@ -236,18 +252,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
+  auto l_seq        = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
 
-  std::map<std::int64_t, uuid> l_entity_org_links_map{};
-  for (auto&& i : get_entity_link_by_entity_id(entity_id_)) {
-    l_entity_org_links_map[i.id_] = i.uuid_id_;
-  }
+  auto l_shot_links = get_entity_link_by_entity_id(entity_id_);
+  auto l_seq_links  = get_entity_link_by_entity_id(l_seq.uuid_id_);
 
-  auto l_list = in_handle->get_json().get<std::vector<entity_link>>();
+  auto l_list       = in_handle->get_json().get<std::vector<entity_link>>();
   for (auto&& i : l_list) {
     if (i.entity_out_id_.is_nil()) continue;
-    auto l_link = l_sql.get_entity_link(entity_id_, i.entity_out_id_);
+    auto l_link = find_entity_link(l_shot_links, i.entity_out_id_);
     if (l_link) {
-      if (l_entity_org_links_map.contains(l_link->id_)) l_entity_org_links_map.erase(l_link->id_);
       l_link->nb_occurences_ = i.nb_occurences_;
       l_link->label_         = i.label_;
       l_entity_links->emplace_back(*l_link);
@@ -260,8 +274,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
         );
       });
     } else {
-      auto l_seq      = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
-      auto l_seq_link = l_sql.get_entity_link(l_seq.uuid_id_, i.entity_out_id_);
+      auto l_seq_link = find_entity_link(l_seq_links, i.entity_out_id_);
       if (!l_seq_link) {
         l_entity_links->emplace_back(
             entity_link{
@@ -299,7 +312,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     }
   }
 
-  for (auto&& i : l_entity_org_links_map) co_await l_sql.remove<entity_link>(i.second);
+  co_await l_sql.remove<entity_link>(l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector);
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
