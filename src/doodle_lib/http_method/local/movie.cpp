@@ -140,6 +140,41 @@ cv::Mat add_watermark_to_image(
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermark::get(session_data_ptr in_handle) {
+  bool l_preview{};
+  for (auto&& [l_key, l_value, l_has_value] : in_handle->url_.params()) {
+    if (l_key == "preview") {
+      l_preview = true;
+      break;
+    }
+  }
+  if (l_preview) {
+    auto l_args = in_handle->get_json().get<tools_add_watermark_arg_t>();
+    FSys::ofstream{core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name}
+        << in_handle->get_json().dump(2);
+
+    cv::Ptr<cv::freetype::FreeType2> const l_ft2{cv::freetype::createFreeType2()};
+    l_ft2->loadFontData(std::string{doodle_config::font_default}, 0);
+
+    constexpr std::int32_t l_thickness = -1;
+    std::int32_t l_baseline            = 0;
+    auto l_text_size   = l_ft2->getTextSize(l_args.watermark_text_, l_args.watermark_height_, l_thickness, &l_baseline);
+    cv::Scalar l_color = cv::Scalar::all(255);
+    if (!l_args.watermark_color_.empty() && l_args.watermark_color_.front() == '#' &&
+        l_args.watermark_color_.length() == 7) {
+      l_color = cv::Scalar{
+          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(1, 2), nullptr, 16)),
+          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(3, 2), nullptr, 16)),
+          boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(5, 2), nullptr, 16))
+      };
+    }
+
+    /// 创建一张黑色图片
+    auto l_image = cv::Mat::zeros(l_args.image_size_.second, l_args.image_size_.first, CV_8UC3);
+    auto l_out   = add_watermark_to_image(l_image, l_args, l_ft2, l_text_size, l_color, l_thickness);
+    std::vector<uchar> l_buffer{};
+    cv::imencode(".png", l_image, l_buffer, {cv::IMWRITE_PNG_BILEVEL, 0});
+    co_return in_handle->make_msg(std::move(l_buffer), "image/png");
+  }
   nlohmann::json l_json{};
   if (!FSys::exists(core_set::get_set().get_cache_root() / tools_add_watermark_arg_t::g_config_name))
     l_json = tools_add_watermark_arg_t{};
