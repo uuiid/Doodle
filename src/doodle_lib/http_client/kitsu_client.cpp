@@ -115,7 +115,7 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok)
-      throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
+      throw_exception(doodle_error{"kitsu get task error {} {}", l_res.result(), l_res.body().dump()});
     l_json_task_full          = l_res.body().get<nlohmann::json>();
     const auto l_task_type_id = l_json_task_full.at("task_type_id").get<uuid>();
     l_prj                     = l_json_task_full.at("project").get<project>();
@@ -139,7 +139,7 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_generate_uesk_file_arg(
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok)
-    throw_exception(doodle_error{"kitsu get task error {}", l_res.result()});
+    throw_exception(doodle_error{"kitsu get task error {} {}", l_res.result(), l_res.body().dump()});
 
   co_return l_res.body();
 }
