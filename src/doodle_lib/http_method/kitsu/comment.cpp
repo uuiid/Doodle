@@ -216,7 +216,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many::post(
     session_data_ptr in_handle
 ) {
-  person_.check_project_manager(id_);
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<create_comment_result> l_result{};
   for (auto&& i : in_handle->get_json()) {
