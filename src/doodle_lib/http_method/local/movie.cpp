@@ -206,9 +206,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
   if (!l_args.watermark_color_.empty() && l_args.watermark_color_.front() == '#' &&
       l_args.watermark_color_.length() == 7) {
     l_color = cv::Scalar{
-        boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(1, 2), nullptr, 16)),
+        boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(5, 2), nullptr, 16)),
         boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(3, 2), nullptr, 16)),
-        boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(5, 2), nullptr, 16))
+        boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(1, 2), nullptr, 16)),
     };
   }
   auto l_uuid = core_set::get_set().get_uuid();
@@ -223,7 +223,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
         );
       auto l_image = cv::imread(l_image_path.generic_string(), cv::IMREAD_UNCHANGED);
       if (l_image.empty()) continue;
+      auto l_old_size = l_image.size();
+      // 计算像素 等比缩放
+      auto l_aspect_ratio =
+          boost::numeric_cast<std::double_t>(l_image.cols) / boost::numeric_cast<std::double_t>(l_image.rows);
+      cv::resize(
+          l_image, l_image,
+          cv::Size{
+              l_args.image_size_.first,
+              boost::numeric_cast<std::int32_t>(
+                  boost::numeric_cast<std::double_t>(l_args.image_size_.first) / l_aspect_ratio
+              )
+          }
+      );
       auto l_out = add_watermark_to_image(l_image, l_args, l_ft2, l_text_size, l_color, l_thickness);
+      // 重新缩放回去
+      cv::resize(l_out, l_out, l_old_size);
       cv::imwrite((l_args.out_path_ / l_image_path.filename().replace_extension(".png")).generic_string(), l_out);
       socket_io::broadcast(
           "tools:add_watermark:progress",
