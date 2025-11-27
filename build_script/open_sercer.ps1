@@ -13,7 +13,7 @@ Invoke-Command -Session $NewSession -ScriptBlock {
   Get-NssmLog
 }
 
-Connect-PSSession -Session $NewSession
+Enter-PSSession -Session $NewSession 
 
 
 
