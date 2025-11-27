@@ -7,7 +7,6 @@
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
-$KitsuCookies = $env:KITSU_COOKIES;
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
 
@@ -19,6 +18,7 @@ $NewSession = New-ServerPSSession
 # "C:\Program Files\PowerShell\7\pwsh.exe"  -NoExit -Command { Enter-PSSession -ComputerName 192.168.40.181 -Credential (New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, (ConvertTo-SecureString "root" -AsPlainText -Force)) -Authentication Basic }
 # 显示事件日志
 
+$KitsuCookies = $env:KITSU_COOKIES;
 Invoke-Command -Session $NewSession -ScriptBlock {
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
@@ -30,13 +30,14 @@ Invoke-Command -Session $NewSession -ScriptBlock {
 
 
 if ($CopyServer) {
-    Invoke-Command -Session $NewSession -ScriptBlock {
+    Invoke-Command -Session $NewSession  -ArgumentList $KitsuCookies -ScriptBlock {
+        param ($KitsuCookies)
         $Kitsu_Ip = "192.168.40.181"
         Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
         #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
 
         $headers = @{
-            "Authorization" = "Bearer $Using:KitsuCookies"
+            "Authorization" = "Bearer $KitsuCookies"
         }
 
         Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers 
@@ -68,7 +69,7 @@ if ($CopyServer) {
         }
         $schedJob = Get-ScheduledJob -Name "Doodle-Stop" -ErrorAction SilentlyContinue
         if (-not $schedJob) {
-            $schedJob = Register-ScheduledJob -Name "Doodle-Stop" -ScriptBlock {} -Credential $Using:Credential -Authentication Basic
+            $schedJob = Register-ScheduledJob -Name "Doodle-Stop" -ScriptBlock {}
         }
         $Trg = New-JobTrigger -Once -At (Get-Date).AddMinutes(20)
         Set-ScheduledJob -InputObject $schedJob -Trigger $Trg -ScriptBlock {
