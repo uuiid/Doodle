@@ -256,8 +256,8 @@ struct fbx_scene {
     torch::Tensor l_bone_weights   = torch::zeros({l_vert_count, l_sk_count}, torch::kFloat32);
     std::map<FbxNode*, std::int64_t> l_bone_index_map{};
     for (auto i = 0; i < l_sk_count; i++) {
-      auto l_cluster = l_sk->GetCluster(i);
-      auto l_joint   = l_cluster->GetLink();
+      auto l_cluster            = l_sk->GetCluster(i);
+      auto l_joint              = l_cluster->GetLink();
       // logger_->warn("bone {} index {}", l_joint->GetName(), i);
       l_bone_index_map[l_joint] = i;
     }
@@ -453,7 +453,22 @@ void load_checkpoint(SkinWeightGCN& model, const std::string& path) {
   archive.load_from(path);
   model->load(archive);
 }
+namespace {
+// 计算事件并记录时间差
+struct event_timer {
+  std::string event_name_;
+  std::chrono::high_resolution_clock::time_point start_time_;
 
+  explicit event_timer(const std::string& event_name)
+      : event_name_(event_name), start_time_(std::chrono::high_resolution_clock::now()) {}
+
+  ~event_timer() {
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time_).count();
+    SPDLOG_WARN("Event '{}' took {} ms", event_name_, duration);
+  }
+};
+}  // namespace
 std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
@@ -472,7 +487,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   torch::Device device(torch::kCUDA);
   if (!torch::cuda::is_available()) {
     device = torch::Device(torch::kCPU);
-    std::cout << "CUDA not available, using CPU\n";
+    SPDLOG_WARN("CUDA not available, using CPU");
   }
 
   SkinWeightGCN model{in_channels, hidden_dim};
@@ -487,6 +502,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     double epoch_loss = 0.0;
     for (size_t i = 0; i < train_files.size(); ++i) {
       fbx_scene l_fbx{train_files[i], nullptr};
+
       auto sample = l_fbx.get_sample();
       // move to device
       auto x      = sample.x.to(device);
@@ -497,8 +513,10 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       // pass optional bone_adj (may be undefined)
       torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
-      auto logp               = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] log-probs
-      auto loss               = kl_loss_from_logprob(logp, y);
+
+      event_timer timer{"model forward"};
+      auto logp = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] log-probs
+      auto loss = kl_loss_from_logprob(logp, y);
       loss.backward();
       optimizer.step();
 
@@ -518,6 +536,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       torch::NoGradGuard no_grad;
       torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
+      event_timer timer{"model forward val"};
       auto logp               = model->forward(x, adj, bone_feat, bone_adj);
       auto loss               = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
@@ -527,7 +546,12 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     SPDLOG_WARN("Epoch {} TrainLoss: {} ValLoss: {}", epoch, epoch_loss, val_loss);
     // checkpoint
     if (epoch % 10 == 0) {
-      save_checkpoint(model, fmt::format("{}/{}_{}{}", in_output_path.parent_path(), in_output_path.stem(), epoch, in_output_path.extension()));
+      save_checkpoint(
+          model,
+          fmt::format(
+              "{}/{}_{}{}", in_output_path.parent_path(), in_output_path.stem(), epoch, in_output_path.extension()
+          )
+      );
     }
   }
 
@@ -544,7 +568,7 @@ class bone_weight_inference_model::impl {
   explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(15, 64) {
     if (!torch::cuda::is_available()) {
       device_ = torch::Device(torch::kCPU);
-      std::cout << "CUDA not available, using CPU\n";
+      SPDLOG_WARN("CUDA not available, using CPU");
     }
     model_->to(device_);
     load_checkpoint(model_, in_model_path.generic_string());
