@@ -14,6 +14,7 @@
 
 #include <map>
 #include <range/v3/range/conversion.hpp>
+#include <spdlog/common.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
 
@@ -322,12 +323,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     }
   }
   if (auto l_id_list = l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector;
-      !l_id_list.empty())
+      !l_id_list.empty()) {
     co_await l_sql.remove<entity_link>(l_id_list);
+    SPDLOG_LEVEL_WARN(in_handle->logger_, "移除实体链接 {}", fmt::join(l_id_list, ", "));
+  }
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
-  if (!l_seq_links.empty()) co_await l_sql.install_range(l_entity_links);
+  if (!l_seq_links.empty()) {
+    co_await l_sql.install_range(l_entity_links);
+    SPDLOG_LEVEL_WARN(in_handle->logger_, "新增/更新实体链接 {}", l_entity_links->size());
+  }
   // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
       "shot:casting-update",

@@ -211,8 +211,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
         boost::numeric_cast<std::double_t>(std::stoi(l_args.watermark_color_.substr(5, 2), nullptr, 16))
     };
   }
-
-  boost::asio::post(g_io_context(), [l_args, l_ft2, l_text_size, l_color, l_thickness]() {
+  auto l_uuid = core_set::get_set().get_uuid();
+  boost::asio::post(g_io_context(), [l_args, l_ft2, l_text_size, l_color, l_thickness, l_uuid]() {
     for (auto&& l_image_path : l_args.image_paths_) {
       if (!exists(l_image_path))
         throw_exception(
@@ -228,6 +228,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
       socket_io::broadcast(
           "tools:add_watermark:progress",
           nlohmann::json{
+              {"id", l_uuid},
               {"image_path", l_image_path.generic_string()},
               {"out_path", (l_args.out_path_ / l_image_path.filename().replace_extension(".png")).generic_string()}
           },
@@ -235,7 +236,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
       );
     }
   });
-  co_return in_handle->make_msg_204();
+  co_return in_handle->make_msg(nlohmann::json{{"id", l_uuid}});
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermark::put(session_data_ptr in_handle) {
