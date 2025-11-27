@@ -297,7 +297,9 @@ boost::asio::awaitable<bool> session_data::parse_body() {
 void session_data::async_run_detached() {
   boost::asio::co_spawn(
       g_io_context(), run(),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), G_DETACHED_LOG(self = shared_from_this()))
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+      )
   );
 }
 
