@@ -4,7 +4,6 @@ target_sources(
         computer.h
         computing_time.h
         dingding_attendance.h
-        file_association.h
         tool_version.h
         up_file.h
         http_jwt_fun.h
@@ -15,7 +14,6 @@ target_sources(
         computer.cpp
         computing_time.cpp
         dingding_attendance.cpp
-        file_association.cpp
         computer_reg_data.cpp
         tool_version.cpp
         up_file.cpp

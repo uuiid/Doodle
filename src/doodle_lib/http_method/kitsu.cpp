@@ -24,7 +24,6 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/computer.h>
-#include <doodle_lib/http_method/file_association.h>
 #include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
