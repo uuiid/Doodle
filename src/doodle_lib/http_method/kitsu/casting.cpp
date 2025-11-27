@@ -331,7 +331,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
-  if (!l_seq_links.empty()) {
+  if (!l_entity_links->empty()) {
     co_await l_sql.install_range(l_entity_links);
     SPDLOG_LOGGER_WARN(in_handle->logger_, "新增/更新实体链接 {}", l_entity_links->size());
   }
