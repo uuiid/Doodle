@@ -22,9 +22,12 @@
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/asio/deferred.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
+#include <boost/asio/experimental/cancellation_condition.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/iostreams/categories.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
@@ -146,12 +149,13 @@ boost::asio::awaitable<void> session_data::run() {
     request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
     std::visit([](auto&& in_ptr) { in_ptr->body_limit(g_body_limit); }, request_parser_);
     using namespace boost::asio::experimental::awaitable_operators;
-    co_await (
+    co_await boost::asio::experimental::make_parallel_group(
         boost::beast::http::async_read_header(
-            *stream_, buffer_, *std::get<empty_request_parser_ptr>(request_parser_)
-        ) &&
-        boost::beast::async_write(*stream_, std::move(*l_gen))
-    );
+            *stream_, buffer_, *std::get<empty_request_parser_ptr>(request_parser_), boost::asio::deferred
+        ),
+        boost::beast::async_write(*stream_, std::move(*l_gen), boost::asio::deferred)
+    )
+        .async_wait(boost::asio::experimental::wait_for_one_error{}, boost::asio::use_awaitable);
     stream_->expires_after(timeout_);
   }
 }
