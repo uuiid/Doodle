@@ -109,15 +109,14 @@ session_data::session_data(boost::asio::ip::tcp::socket in_socket, http_route_pt
 }
 
 boost::asio::awaitable<void> session_data::run() {
-  request_parser_ = std::make_shared<empty_request_parser_type>();
-  std::visit([](auto&& in_ptr) { in_ptr->body_limit(g_body_limit); }, request_parser_);
-
-  co_await std::visit(
-      [this](auto&& in_ptr) { return boost::beast::http::async_read_header(*stream_, buffer_, *in_ptr); },
-      request_parser_
-  );
-  stream_->expires_after(timeout_);
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    request_parser_ = std::make_shared<empty_request_parser_type>();
+    std::visit([](auto&& in_ptr) { in_ptr->body_limit(g_body_limit); }, request_parser_);
+    co_await std::visit(
+        [this](auto&& in_ptr) { return boost::beast::http::async_read_header(*stream_, buffer_, *in_ptr); },
+        request_parser_
+    );
+    stream_->expires_after(timeout_);
     set_session();
     callback_ = (*route_ptr_)(method_verb_, url_.segments(), shared_from_this());
     logger_->info("请求 url {} {} t:{}", method_verb_, url_, timeout_);
@@ -146,17 +145,7 @@ boost::asio::awaitable<void> session_data::run() {
       co_await boost::beast::async_write(*stream_, std::move(*l_gen));
       co_return;
     }
-    // 初始化新的 parser
-    request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::empty_body>>();
-    std::visit([](auto&& in_ptr) { in_ptr->body_limit(g_body_limit); }, request_parser_);
-    using namespace boost::asio::experimental::awaitable_operators;
-    co_await boost::asio::experimental::make_parallel_group(
-        boost::beast::http::async_read_header(
-            *stream_, buffer_, *std::get<empty_request_parser_ptr>(request_parser_), boost::asio::deferred
-        ),
-        boost::beast::async_write(*stream_, std::move(*l_gen), boost::asio::deferred)
-    )
-        .async_wait(boost::asio::experimental::wait_for_one_error{}, boost::asio::use_awaitable);
+    co_await boost::beast::async_write(*stream_, std::move(*l_gen));
     stream_->expires_after(timeout_);
   }
 }
