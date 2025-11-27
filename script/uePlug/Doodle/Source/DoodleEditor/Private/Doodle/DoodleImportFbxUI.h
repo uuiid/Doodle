@@ -50,6 +50,7 @@ public:
 	static TArray<FDoodleUSkeletonData_1> ListAllSkeletons();
 };
 
+class ULevelSequence;
 
 UCLASS()
 class UDoodleBaseImportData : public UObject
@@ -88,6 +89,8 @@ public:
 protected:
 	// 生成导入的路径
 	FString GetImportPath(const FString& In_Path_Prefix) const;
+
+	static ULevelSequence* CreateLevelSequence(const FString& InCreatePath);
 
 public:
 	// @brief获取文件名称中的开始和结束, 以及集数, 镜头号等等
@@ -151,8 +154,6 @@ public:
 	GENERATED_BODY()
 	// 初次导入
 	bool FirstImport{false};
-	EImportSuffix Path_Suffix;
-	FString Path_Prefix;
 
 	UDoodleFbxCameraImport_1()
 	{
@@ -166,7 +167,6 @@ public:
 
 	void GenPathPrefix() override;
 	void ImportFile() override;
-	void AssembleScene() override;
 };
 
 UCLASS()

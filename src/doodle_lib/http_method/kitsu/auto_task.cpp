@@ -222,7 +222,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
       );
       l_ret.create_map_ = fmt::format(
-          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_prj.code_,
+          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}_LV", l_prj.code_,
           l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
       );
       l_ret.import_dir_ = fmt::format(
