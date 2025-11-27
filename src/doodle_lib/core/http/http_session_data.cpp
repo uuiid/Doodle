@@ -141,11 +141,8 @@ boost::asio::awaitable<void> session_data::run() {
 
     logger_->info("回复 url {} {}", method_verb_, url_);
     stream_->expires_after(timeout_);
-    if (!keep_alive_) {
-      co_await boost::beast::async_write(*stream_, std::move(*l_gen));
-      co_return;
-    }
     co_await boost::beast::async_write(*stream_, std::move(*l_gen));
+    if (!keep_alive_) co_return;
     stream_->expires_after(timeout_);
   }
 }
