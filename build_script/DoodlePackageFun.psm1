@@ -201,4 +201,14 @@ function Initialize-Doodle {
 }
 
 
-Export-ModuleMember -Function Initialize-Doodle
+function New-ServerPSSession {
+    $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
+    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, $RootPassword
+    $NewSession = Get-PSSession -ComputerName 192.168.40.181 -ErrorAction SilentlyContinue
+    if (-not $NewSession) {
+        $NewSession = New-PSSession -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic
+    }
+    return $NewSession;
+}
+
+Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession

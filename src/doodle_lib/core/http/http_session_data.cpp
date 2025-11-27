@@ -138,6 +138,7 @@ boost::asio::awaitable<void> session_data::run() {
           boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
       ));
     }
+    if (!l_gen) co_return logger_->error("回复生成器为空 {}", url_);
 
     logger_->info("回复 url {} {}", method_verb_, url_);
     stream_->expires_after(timeout_);

@@ -14,14 +14,12 @@ Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$
 &robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s | Out-Null
 &robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\Dev\tmp\dist\assets" /MIR | Out-Null
 
-$RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
-$Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, $RootPassword
-#Enter-PSSession -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic
+$NewSession = New-ServerPSSession
 
 # "C:\Program Files\PowerShell\7\pwsh.exe"  -NoExit -Command { Enter-PSSession -ComputerName 192.168.40.181 -Credential (New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, (ConvertTo-SecureString "root" -AsPlainText -Force)) -Authentication Basic }
 # 显示事件日志
 
-Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
+Invoke-Command -Session $NewSession -ScriptBlock {
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
@@ -32,7 +30,7 @@ Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authenticat
 
 
 if ($CopyServer) {
-    Invoke-Command -ComputerName 192.168.40.181 -Credential $Credential -Authentication Basic -ScriptBlock {
+    Invoke-Command -Session $NewSession -ScriptBlock {
         $Kitsu_Ip = "192.168.40.181"
         Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
         #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
