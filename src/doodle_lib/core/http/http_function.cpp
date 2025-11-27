@@ -121,6 +121,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> http_function::cal
     default:
       return other_callback(in_handle);
   }
+  return other_callback(in_handle);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::other_callback(
