@@ -22,6 +22,7 @@
 #include <map>
 #include <memory>
 #include <range/v3/action/sort.hpp>
+#include <spdlog/spdlog.h>
 #include <sstream>
 #include <torch/csrc/autograd/generated/variable_factories.h>
 #include <torch/types.h>
@@ -523,7 +524,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     }
     val_loss /= std::max<size_t>(1, val_files.size());
 
-    spdlog::default_logger_raw()->warn("Epoch {} TrainLoss: {} ValLoss: {}", epoch, epoch_loss, val_loss);
+    SPDLOG_WARN("Epoch {} TrainLoss: {} ValLoss: {}", epoch, epoch_loss, val_loss);
     // checkpoint
     if (epoch % 10 == 0) {
       save_checkpoint(model, fmt::format("{}/{}_{}{}", in_output_path.parent_path(), in_output_path.stem(), epoch, in_output_path.extension()));
