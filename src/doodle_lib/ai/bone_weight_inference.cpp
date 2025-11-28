@@ -27,6 +27,7 @@
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <torch/csrc/autograd/generated/variable_factories.h>
+#include <torch/serialize.h>
 #include <torch/types.h>
 #include <vector>
 
@@ -75,11 +76,13 @@ torch::Tensor normalize_adjacency(const torch::Tensor& A) {
 // Example: build node features from vertices & bone positions
 // vertices: [N,3], bone_positions: [B,3], faces: [F,3] (optional)
 GraphSample build_sample_from_mesh(
-    const torch::Tensor& vertices,        // [N,3]
-    const torch::Tensor& bone_positions,  // [B,3]
-    const torch::Tensor& faces,           // [F,3] or empty
-    const torch::Tensor& weights,         // [N,B] ground truth distribution
-    int K /*=4*/, const std::vector<std::int64_t>& bone_parents = std::vector<std::int64_t>()
+    const torch::Tensor& vertices,                  // [N,3]
+    const torch::Tensor& bone_positions,            // [B,3]
+    const torch::Tensor& faces,                     // [F,3] or empty
+    const torch::Tensor& weights,                   // [N,B] ground truth distribution
+    int K,                                          //  =4
+    const std::vector<std::int64_t>& bone_parents,  //
+    torch::Device in_device
 ) {
   std::int64_t N  = vertices.size(0);
   std::int64_t B  = bone_positions.size(0);
@@ -158,7 +161,7 @@ GraphSample build_sample_from_mesh(
   torch::Tensor x        = torch::cat({vertices, closest_vecs}, /*dim=*/1);  // [N, 3+K*3]
 
   // 3) normalize adjacency
-  torch::Tensor adj_norm = normalize_adjacency(A);
+  torch::Tensor adj_norm = normalize_adjacency(A.to(in_device));
 
   // 4) build bone adjacency
   // Prefer parent-child topology if provided (bone_parents length == B)
@@ -171,7 +174,7 @@ GraphSample build_sample_from_mesh(
       bone_adj[p][i] = 1.0;
     }
   }
-  bone_adj = normalize_adjacency(bone_adj);
+  bone_adj = normalize_adjacency(bone_adj.to(in_device));
 
   GraphSample s;
   s.x         = x;
@@ -238,7 +241,7 @@ struct fbx_scene {
     l_converter.Triangulate(mesh_node_->GetMesh(), true);
   }
 
-  GraphSample get_sample(int K = 4) {
+  GraphSample get_sample(int K, torch::Device in_device) {
     auto* l_vert           = mesh_->GetControlPoints();
     auto l_vert_count      = mesh_->GetControlPointsCount();
     torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
@@ -295,7 +298,7 @@ struct fbx_scene {
     //     "tensor \n{}\n bone_positions \n{}\n faces \n{}\n bone_weights \n{}\n bone_parents \n{}\n" l_tensor,
     //     l_bone_positions, l_faces, l_bone_weights, l_bone_parents
     // );
-    return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, K, l_bone_parents);
+    return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, K, l_bone_parents, in_device);
   }
   void write_weights_to_fbx(const torch::Tensor& weights, const std::filesystem::path& out_path) {
     auto l_vert_count = mesh_->GetControlPointsCount();
@@ -513,13 +516,15 @@ struct event_timer {
 };
 }  // namespace
 
-std::vector<GraphSample> load_fbx_model(const std::vector<FSys::path>& in_model_path, std::int32_t in_K) {
+std::vector<GraphSample> load_fbx_model(
+    const std::vector<FSys::path>& in_model_path, std::int32_t in_K, torch::Device in_device
+) {
   std::vector<GraphSample> l_samples{};
   for (const auto& l_path : in_model_path) {
     fbx_scene l_fbx{l_path, nullptr};
 
     event_timer timer{fmt::format("loading fbx model {}", l_path.generic_string())};
-    l_samples.push_back(l_fbx.get_sample(in_K));
+    l_samples.push_back(l_fbx.get_sample(in_K, in_device));
   }
   return l_samples;
 }
@@ -527,6 +532,10 @@ std::vector<GraphSample> load_fbx_model(const std::vector<FSys::path>& in_model_
 std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
+  if (auto l_p = in_output_path.parent_path(); !FSys::exists(l_p)) {
+    FSys::create_directories(l_p);
+  }
+
   auto l_files = in_fbx_files;
   l_files |= ranges::actions::sort;
   size_t n      = l_files.size();
@@ -560,7 +569,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   const int patience   = 20;  // Early stopping patience
 
   SPDLOG_WARN("Loading training data... 时间会长一些，请耐心等待");
-  auto l_samples = load_fbx_model(train_files, K);
+  auto l_samples     = load_fbx_model(train_files, K, device);
+  auto l_val_samples = load_fbx_model(val_files, K, device);
   SPDLOG_WARN("Training data loaded: {} samples", l_samples.size());
 
   for (int epoch = 1; epoch <= epochs; ++epoch) {
@@ -593,8 +603,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     // --- validation ---
     model->eval();
     double val_loss = 0.0;
-    for (size_t i = 0; i < val_files.size(); ++i) {
-      auto sample = l_samples[i];
+    for (size_t i = 0; i < l_val_samples.size(); ++i) {
+      auto sample = l_val_samples[i];
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
@@ -606,7 +616,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       auto loss = smooth_l1_loss_with_sparsity(pred, y, 0.001);
       val_loss += loss.item<double>();
     }
-    val_loss /= std::max<size_t>(1, val_files.size());
+    val_loss /= std::max<size_t>(1, l_val_samples.size());
 
     // 学习率调度
     scheduler.step();
@@ -673,7 +683,7 @@ void bone_weight_inference_model::predict_by_fbx(
 ) {
   if (!pimpl_) throw_exception(doodle_error{"模型未加载"});
   fbx_scene l_fbx{in_fbx_path, in_logger};
-  auto sample                = l_fbx.get_sample(10);
+  auto sample                = l_fbx.get_sample(10, pimpl_->device_);
   auto x                     = sample.x.to(pimpl_->device_);
   auto adj                   = sample.adj.to(pimpl_->device_);
   torch::Tensor bone_adj     = sample.bone_adj.to(pimpl_->device_);
