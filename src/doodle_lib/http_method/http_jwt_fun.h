@@ -38,7 +38,7 @@ class http_jwt_fun : public http_function {
     void check_project_supervisor(const uuid& in_project_id) const;
     bool is_project_supervisor(const uuid& in_project_id) const;
 
-    // 检查是否可以进行任务操作
+    // 检查是否可以进行任务操作(只要 supervisor manager user 求在团队中)
     void check_task_action_access(const uuid& in_task_id) const;
     void check_task_action_access(const task& in_task_id) const;
     /// 检查是否可以被更改为目标状态
