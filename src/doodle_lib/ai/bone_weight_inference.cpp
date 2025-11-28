@@ -85,7 +85,7 @@ GraphSample build_sample_from_mesh(
     const torch::Tensor& bone_positions,            // [B,3]
     const torch::Tensor& faces,                     // [F,3] or empty
     const torch::Tensor& weights,                   // [N,B] ground truth distribution
-    int K,                                          //  =4
+    int in_K,                                       //  =4
     const std::vector<std::int64_t>& bone_parents,  //
     torch::Device in_device
 ) {
@@ -119,7 +119,7 @@ GraphSample build_sample_from_mesh(
   // 特征设计：[vx，vy，vz]+向量到K个最近的骨骼我们默认使用K=min（4，B）；对于每个顶点，
   // 我们找到K个最近的骨骼，并计算bone_vector=bone_position顶点（shape[3]）。
   // 我们将K个向量展平为每个顶点[K*3]个块，并用xyz进行concat以形成特征。将K夹紧到可用的骨骼数量
-  K                   = std::min<int>(K, (int)B);
+  int actual_K        = std::min<int>(in_K, (int)B);
   // expand for vectorized distance computation
   torch::Tensor v_exp = vertices.unsqueeze(1).expand({N, B, 3});        // [N,B,3]
   torch::Tensor b_exp = bone_positions.unsqueeze(0).expand({N, B, 3});  // [N,B,3]
@@ -136,20 +136,20 @@ GraphSample build_sample_from_mesh(
 
   // topk: values and indices of K smallest distances along dim=1
   // topk：沿dim=1的K最小距离的值和索引
-  auto topk_res              = dists.topk(K, /*dim=*/1, /*largest=*/false, /*sorted=*/true);
+  auto topk_res              = dists.topk(actual_K, /*dim=*/1, /*largest=*/false, /*sorted=*/true);
   auto sorted_vals           = std::get<0>(topk_res);  // [N,K]
   auto sorted_idx            = std::get<1>(topk_res);  // [N,K]
 
   // prepare closest vectors tensor [N, K*3]
   auto vec_options           = torch::TensorOptions().dtype(torch::kFloat32);
-  torch::Tensor closest_vecs = torch::zeros({N, K * 3}, vec_options);
+  torch::Tensor closest_vecs = torch::zeros({N, in_K * 3}, vec_options);
 
   // Use accessors to avoid per-element tensor allocation inside loop
   auto sorted_idx_acc        = sorted_idx.accessor<std::int64_t, 2>();
   auto vert_acc              = vertices.accessor<float, 2>();
   auto bone_acc              = bone_positions.accessor<float, 2>();
   for (std::int64_t i = 0; i < N; ++i) {
-    for (int j = 0; j < K; ++j) {
+    for (int j = 0; j < actual_K; ++j) {
       std::int64_t bidx          = sorted_idx_acc[i][j];
       // compute bone_position - vertex
       float dx                   = bone_acc[bidx][0] - vert_acc[i][0];
