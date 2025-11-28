@@ -46,7 +46,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_train_binding_w
     session_data_ptr in_handle
 ) {
   auto l_args     = in_handle->get_json().get<ai_train_binding_weights_put_args>();
-  auto l_out_path = l_args.model_path_.parent_path() / (l_args.model_path_.stem().string() + "_bound.fbx");
+  auto l_out_path = l_args.fbx_path_.parent_path() / (l_args.fbx_path_.stem().string() + "_bound.fbx");
   boost::asio::post(g_io_context(), [l_args, l_out_path]() {
     doodle::ai::bone_weight_inference_model l_model{l_args.model_path_};
     SPDLOG_WARN("开始推理模型 {} {} {}", l_args.model_path_, l_args.fbx_path_, l_out_path);

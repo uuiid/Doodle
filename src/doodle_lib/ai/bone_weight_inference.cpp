@@ -291,7 +291,7 @@ struct fbx_scene {
     // );
     return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
   }
-  void write_weights_to_fbx(const torch::Tensor& weights) {
+  void write_weights_to_fbx(const torch::Tensor& weights, const std::filesystem::path& out_path) {
     auto l_vert_count = mesh_->GetControlPointsCount();
     if (weights.size(0) != l_vert_count)
       throw_exception(doodle_error{"weights size mismatch: expected {}, got {}", l_vert_count, weights.size(0)});
@@ -307,18 +307,21 @@ struct fbx_scene {
         if (w > 1e-6) l_cluster->AddControlPointIndex(j, w);
       }
     }
-    write_fbx(fbx_path_);
+    write_fbx(out_path);
   }
 
   void write_fbx(const std::filesystem::path& out_path) {
-    fbxsdk::FbxExporter* exporter = fbxsdk::FbxExporter::Create(manager_.get(), "");
+    SPDLOG_WARN("writing fbx to {}", out_path.generic_string());
+    auto exporter = std::shared_ptr<fbxsdk::FbxExporter>{
+        fbxsdk::FbxExporter::Create(manager_.get(), ""), [](fbxsdk::FbxExporter* in_ptr) { in_ptr->Destroy(); }
+    };
     if (!exporter->Initialize(
             out_path.generic_string().c_str(),
             manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"), manager_->GetIOSettings()
         ))
       throw_exception(doodle_error{"fbx export err {}", exporter->GetStatus().GetErrorString()});
     exporter->Export(scene_);
-    exporter->Destroy();
+
   }
 };
 
@@ -537,8 +540,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
       event_timer timer{"model forward val"};
-      auto logp               = model->forward(x, adj, bone_feat, bone_adj);
-      auto loss               = kl_loss_from_logprob(logp, y);
+      auto logp = model->forward(x, adj, bone_feat, bone_adj);
+      auto loss = kl_loss_from_logprob(logp, y);
       val_loss += loss.item<double>();
     }
     val_loss /= std::max<size_t>(1, val_files.size());
@@ -591,7 +594,7 @@ void bone_weight_inference_model::predict_by_fbx(
   torch::Tensor bone_feat = sample.bone_feat.to(pimpl_->device_);
   torch::Tensor logp      = pimpl_->model_->forward(x, adj, bone_feat, bone_adj);
   auto bone_weights       = torch::exp(logp);
-  l_fbx.write_weights_to_fbx(bone_weights.cpu());
+  l_fbx.write_weights_to_fbx(bone_weights.cpu(), out_fbx_path);
 }
 
 }  // namespace doodle::ai
