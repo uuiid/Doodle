@@ -299,6 +299,9 @@ struct fbx_scene {
     if (!l_sk) throw_exception(doodle_error{"no skin found"});
     auto l_sk_count  = l_sk->GetClusterCount();
     auto weights_acc = weights.accessor<float, 2>();
+    // 打印骨骼权重
+    // SPDLOG_WARN("writing weights to fbx: {}", weights);
+
     for (auto i = 0; i < l_sk_count; i++) {
       auto l_cluster = l_sk->GetCluster(i);
       l_cluster->SetControlPointIWCount(0);
@@ -321,7 +324,6 @@ struct fbx_scene {
         ))
       throw_exception(doodle_error{"fbx export err {}", exporter->GetStatus().GetErrorString()});
     exporter->Export(scene_);
-
   }
 };
 
@@ -363,9 +365,7 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     fc1       = register_module("fc1", torch::nn::Linear(hidden_dim * 2, hidden_dim));
   }
 
-  // forward returns log probabilities per node (for KLDiv use)
-  // If `bone_embeddings` is provided it will be used (shape [B, hidden_dim]).
-  // Otherwise the registered `bone_emb` (if any) will be used.
+  // forward 返回归一化的概率分布（用于 Smooth L1 损失）
   // forward now accepts raw `bone_feat` of shape [B, F] (F == bone_feat_dim passed to ctor).
   torch::Tensor forward(
       const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_feat,
@@ -424,7 +424,8 @@ struct SkinWeightGCNImpl : torch::nn::Module {
       throw std::runtime_error(ss.str());
     }
     auto logits = torch::matmul(h, used_emb.t());  // [N, B]
-    return torch::log_softmax(logits, /*dim=*/1);
+    // 使用 softmax 而非 log_softmax，输出概率分布用于 Smooth L1 损失
+    return torch::softmax(logits, /*dim=*/1);
   }
 
   GraphConv gc1, gc2;
@@ -435,14 +436,46 @@ struct SkinWeightGCNImpl : torch::nn::Module {
 TORCH_MODULE(SkinWeightGCN);
 
 // ============= Loss & Metrics =============
-torch::Tensor kl_loss_from_logprob(const torch::Tensor& log_pred, const torch::Tensor& target) {
-  // target is a prob distribution [N, B], log_pred is log probabilities [N, B]
-  // PyTorch kl_div expects input = log-prob, target = prob
-  auto loss = torch::kl_div(log_pred, target, /*reduction=*//* torch::kBatchMean */ at::Reduction::Mean);
+// 使用 Smooth L1 损失 + L1 稀疏正则化，更适合稀疏骨骼权重
+torch::Tensor smooth_l1_loss_with_sparsity(
+    const torch::Tensor& pred, const torch::Tensor& target, float lambda_l1 = 0.001
+) {
+  // pred: [N, B] 预测的权重分布
+  // target: [N, B] 目标权重分布
+  // Smooth L1 对异常值更鲁棒，且不像KL散度那样过度惩罚低概率区域
+  auto smooth_l1 = torch::smooth_l1_loss(pred, target, at::Reduction::Mean);
+
+  // L1 正则化鼓励稀疏性（大部分权重接近0）
+  auto l1_reg    = torch::mean(torch::abs(pred));
+
+  auto loss      = smooth_l1 + lambda_l1 * l1_reg;
   return loss;
 }
 
-// optional: L2 between predicted expected bone index? but we stick to KL
+// Top-K 稀疏化：只保留每个顶点最大的K个权重，其余置0并重新归一化
+torch::Tensor apply_topk_sparsity(const torch::Tensor& weights, int K = 4) {
+  // weights: [N, B]
+  auto N              = weights.size(0);
+  auto B              = weights.size(1);
+  K                   = std::min(K, (int)B);
+
+  // 获取每行的Top-K值和索引
+  auto topk_res       = weights.topk(K, /*dim=*/1, /*largest=*/true, /*sorted=*/true);
+  auto topk_vals      = std::get<0>(topk_res);  // [N, K]
+  auto topk_idx       = std::get<1>(topk_res);  // [N, K]
+
+  // 创建稀疏权重矩阵
+  auto sparse_weights = torch::zeros_like(weights);
+
+  // 使用scatter填充Top-K权重
+  sparse_weights.scatter_(1, topk_idx, topk_vals);
+
+  // 重新归一化，确保每行和为1
+  auto row_sums  = sparse_weights.sum(1, /*keepdim=*/true).clamp_min(1e-8);
+  sparse_weights = sparse_weights / row_sums;
+
+  return sparse_weights;
+}
 
 // ============= Training / Evaluation =============
 void save_checkpoint(const SkinWeightGCN& model, const std::string& path) {
@@ -482,10 +515,10 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   std::vector<FSys::path> train_files(l_files.begin(), l_files.begin() + ntrain);
   std::vector<FSys::path> val_files(l_files.begin() + ntrain, l_files.end());
 
-  // Model hyperparams
-  int K           = 4;          // number of nearest bone vectors used per vertex
+  // Model hyperparams - 增加模型容量以更好地学习稀疏分布
+  int K           = 10;         // number of nearest bone vectors used per vertex
   int in_channels = 3 + K * 3;  // example: xyz + K * (dx,dy,dz)
-  int hidden_dim  = 64;
+  int hidden_dim  = 256;        // 从 64 增加到 256，提升模型表达能力
 
   torch::Device device(torch::kCUDA);
   if (!torch::cuda::is_available()) {
@@ -496,9 +529,17 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   SkinWeightGCN model{in_channels, hidden_dim};
   model->to(device);
 
-  torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(1e-3));
+  // 降低学习率到 5e-4，避免陷入平均解
+  torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(5e-4));
 
-  int epochs = 50;
+  // 添加学习率调度器：余弦退火
+  int epochs           = 100;  // 增加训练轮数到 100
+  auto scheduler       = torch::optim::StepLR(optimizer, /*step_size=*/30, /*gamma=*/0.5);
+
+  float best_val_loss  = std::numeric_limits<float>::max();
+  int patience_counter = 0;
+  const int patience   = 20;  // Early stopping patience
+
   for (int epoch = 1; epoch <= epochs; ++epoch) {
     // --- training ---
     model->train();
@@ -518,8 +559,9 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       torch::Tensor bone_feat = sample.bone_feat.to(device);
 
       event_timer timer{"model forward"};
-      auto logp = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] log-probs
-      auto loss = kl_loss_from_logprob(logp, y);
+      auto pred = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] 概率分布
+      // 使用新的 Smooth L1 + L1 稀疏正则化损失
+      auto loss = smooth_l1_loss_with_sparsity(pred, y, 0.001);
       loss.backward();
       optimizer.step();
 
@@ -540,13 +582,37 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
       event_timer timer{"model forward val"};
-      auto logp = model->forward(x, adj, bone_feat, bone_adj);
-      auto loss = kl_loss_from_logprob(logp, y);
+      auto pred = model->forward(x, adj, bone_feat, bone_adj);
+      auto loss = smooth_l1_loss_with_sparsity(pred, y, 0.001);
       val_loss += loss.item<double>();
     }
     val_loss /= std::max<size_t>(1, val_files.size());
 
-    SPDLOG_WARN("Epoch {} TrainLoss: {} ValLoss: {}", epoch, epoch_loss, val_loss);
+    // 学习率调度
+    scheduler.step();
+
+    SPDLOG_WARN(
+        "Epoch {} TrainLoss: {:.6f} ValLoss: {:.6f} LR: {:.6f}", epoch, epoch_loss, val_loss,
+        optimizer.param_groups()[0].options().get_lr()
+    );
+
+    // Early stopping
+    if (val_loss < best_val_loss) {
+      best_val_loss    = val_loss;
+      patience_counter = 0;
+      // 保存最佳模型
+      save_checkpoint(
+          model,
+          fmt::format("{}/{}_best{}", in_output_path.parent_path(), in_output_path.stem(), in_output_path.extension())
+      );
+    } else {
+      patience_counter++;
+      if (patience_counter >= patience) {
+        SPDLOG_WARN("Early stopping at epoch {}", epoch);
+        break;
+      }
+    }
+
     // checkpoint
     if (epoch % 10 == 0) {
       save_checkpoint(
@@ -568,7 +634,7 @@ class bone_weight_inference_model::impl {
   SkinWeightGCN model_;
 
  public:
-  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(15, 64) {
+  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(15, 128) {
     if (!torch::cuda::is_available()) {
       device_ = torch::Device(torch::kCPU);
       SPDLOG_WARN("CUDA not available, using CPU");
@@ -587,13 +653,14 @@ void bone_weight_inference_model::predict_by_fbx(
 ) {
   if (!pimpl_) throw_exception(doodle_error{"模型未加载"});
   fbx_scene l_fbx{in_fbx_path, in_logger};
-  auto sample             = l_fbx.get_sample();
-  auto x                  = sample.x.to(pimpl_->device_);
-  auto adj                = sample.adj.to(pimpl_->device_);
-  torch::Tensor bone_adj  = sample.bone_adj.to(pimpl_->device_);
-  torch::Tensor bone_feat = sample.bone_feat.to(pimpl_->device_);
-  torch::Tensor logp      = pimpl_->model_->forward(x, adj, bone_feat, bone_adj);
-  auto bone_weights       = torch::exp(logp);
+  auto sample                = l_fbx.get_sample();
+  auto x                     = sample.x.to(pimpl_->device_);
+  auto adj                   = sample.adj.to(pimpl_->device_);
+  torch::Tensor bone_adj     = sample.bone_adj.to(pimpl_->device_);
+  torch::Tensor bone_feat    = sample.bone_feat.to(pimpl_->device_);
+  torch::Tensor pred_weights = pimpl_->model_->forward(x, adj, bone_feat, bone_adj);
+  // 应用 Top-10 稀疏化：只保留每个顶点最大的10个权重
+  auto bone_weights          = apply_topk_sparsity(pred_weights, 10);
   l_fbx.write_weights_to_fbx(bone_weights.cpu(), out_fbx_path);
 }
 
