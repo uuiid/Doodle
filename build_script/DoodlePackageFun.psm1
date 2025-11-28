@@ -114,6 +114,9 @@ function Initialize-Doodle {
         }
     }
     Write-Host "开始备份pdb文件"
+    if (-not (Test-Path "$DoodleBuildRoot\pdb\$DoodleVersion\")) {
+        New-Item -Path "$DoodleBuildRoot\pdb\$DoodleVersion\" -ItemType Directory
+    }
     Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.pdb" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
 
     Write-Host "开始复制文件"
