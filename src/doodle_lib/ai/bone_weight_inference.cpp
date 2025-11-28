@@ -7,6 +7,7 @@
 #include <doodle_core/exception/exception.h>
 
 #include <ATen/core/Reduction.h>
+#include <c10/core/Device.h>
 #include <c10/core/DeviceType.h>
 #include <fbxsdk.h>
 #include <fbxsdk/core/base/fbxarray.h>
@@ -35,6 +36,10 @@
 namespace fmt {
 template <typename Char_T>
 struct formatter<::torch::Tensor, Char_T> : basic_ostream_formatter<Char_T> {};
+
+template <typename Char_T>
+struct formatter<::torch::Device, Char_T> : basic_ostream_formatter<Char_T> {};
+
 }  // namespace fmt
 
 namespace doodle::ai {
