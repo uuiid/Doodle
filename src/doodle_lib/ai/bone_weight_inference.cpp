@@ -590,7 +590,6 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
 
-      event_timer timer{"model forward"};
       auto pred = model->forward(x, adj, bone_feat, bone_adj);  // [N, B] 概率分布
       // 使用新的 Smooth L1 + L1 稀疏正则化损失
       auto loss = smooth_l1_loss_with_sparsity(pred, y, 0.001);
@@ -612,7 +611,6 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
       torch::NoGradGuard no_grad;
       torch::Tensor bone_adj  = sample.bone_adj.to(device);
       torch::Tensor bone_feat = sample.bone_feat.to(device);
-      event_timer timer{"model forward val"};
       auto pred = model->forward(x, adj, bone_feat, bone_adj);
       auto loss = smooth_l1_loss_with_sparsity(pred, y, 0.001);
       val_loss += loss.item<double>();
