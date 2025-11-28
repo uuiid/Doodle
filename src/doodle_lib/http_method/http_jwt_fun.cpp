@@ -70,9 +70,10 @@ void http_jwt_fun::http_jwt_t::check_project_access(const uuid& in_project_id) c
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   if (
-      !(                                                                               //
-          person_.role_ == person_role_type::admin ||                                  // 是管理员
-          person_.role_ == person_role_type::manager ||                                // 是项目经理
+      !(                                                 //
+          person_.role_ == person_role_type::admin ||    // 是管理员
+          person_.role_ == person_role_type::manager ||  // 是项目经理
+          person_.role_ == person_role_type::supervisor ||                             // 是项目主管
           g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id)  // 在项目中
       )                                                                                //
   )

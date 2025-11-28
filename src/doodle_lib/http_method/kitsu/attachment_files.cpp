@@ -19,7 +19,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_fi
     throw_exception(http_request_error{boost::beast::http::status::not_found, "未找到对应的文件"});
   if (!l_attachment_file.comment_id_.is_nil()) {
     auto l_task = l_sql.get_by_uuid<task>(l_sql.get_by_uuid<comment>(l_attachment_file.comment_id_).object_id_);
-    person_.check_project_manager(l_task.project_id_);
+    person_.check_project_access(l_task.project_id_);
   }
   auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
                 FSys::split_uuid_path(fmt::to_string(l_attachment_file.uuid_id_));
