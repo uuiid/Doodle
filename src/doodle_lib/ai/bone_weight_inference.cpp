@@ -9,6 +9,7 @@
 #include <ATen/core/Reduction.h>
 #include <c10/core/Device.h>
 #include <c10/core/DeviceType.h>
+#include <cstdint>
 #include <fbxsdk.h>
 #include <fbxsdk/core/base/fbxarray.h>
 #include <fbxsdk/core/fbxmanager.h>
@@ -494,6 +495,7 @@ void load_checkpoint(SkinWeightGCN& model, const std::string& path) {
   archive.load_from(path);
   model->load(archive);
 }
+
 namespace {
 // 计算事件并记录时间差
 struct event_timer {
@@ -510,6 +512,18 @@ struct event_timer {
   }
 };
 }  // namespace
+
+std::vector<GraphSample> load_fbx_model(const std::vector<FSys::path>& in_model_path, std::int32_t in_K) {
+  std::vector<GraphSample> l_samples{};
+  for (const auto& l_path : in_model_path) {
+    fbx_scene l_fbx{l_path, nullptr};
+
+    event_timer timer{fmt::format("loading fbx model {}", l_path.generic_string())};
+    l_samples.push_back(l_fbx.get_sample(in_K));
+  }
+  return l_samples;
+}
+
 std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
@@ -545,14 +559,16 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   int patience_counter = 0;
   const int patience   = 20;  // Early stopping patience
 
+  SPDLOG_WARN("Loading training data... 时间会长一些，请耐心等待");
+  auto l_samples = load_fbx_model(train_files, K);
+  SPDLOG_WARN("Training data loaded: {} samples", l_samples.size());
+
   for (int epoch = 1; epoch <= epochs; ++epoch) {
     // --- training ---
     model->train();
     double epoch_loss = 0.0;
-    for (size_t i = 0; i < train_files.size(); ++i) {
-      fbx_scene l_fbx{train_files[i], nullptr};
-
-      auto sample = l_fbx.get_sample(K);
+    for (size_t i = 0; i < l_samples.size(); ++i) {
+      auto sample = l_samples[i];
       // move to device
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
@@ -572,14 +588,13 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
 
       epoch_loss += loss.item<double>();
     }
-    epoch_loss /= std::max<size_t>(1, train_files.size());
+    epoch_loss /= std::max<size_t>(1, l_samples.size());
 
     // --- validation ---
     model->eval();
     double val_loss = 0.0;
     for (size_t i = 0; i < val_files.size(); ++i) {
-      fbx_scene l_fbx{val_files[i], nullptr};
-      auto sample = l_fbx.get_sample(K);
+      auto sample = l_samples[i];
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
