@@ -88,7 +88,11 @@ function Initialize-Doodle {
     $DoodleBuildRelease = Convert-Path "$DoodleBuildRoot/Ninja_release"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $DoodleLogPath = $DoodleTMPDir + "\build_$timestamp.log"
-    $DoodleVersion = ((Get-ChildItem "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP" -Directory)[0] -split "-")[1]
+    $Tags = git tag --sort=-v:refname;
+    # 去除 前缀 v
+    $Tags = $Tags | ForEach-Object { $_ -replace "v", "" }
+    $DoodleVersion = $Tags[0]
+    Write-Host "当前最新版本号: $DoodleVersion"
     $DoodleSource = Convert-Path "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP/Doodle-$DoodleVersion-win64"
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
@@ -110,7 +114,7 @@ function Initialize-Doodle {
         }
     }
     Write-Host "开始备份pdb文件"
-    &Robocopy "$DoodleBuildRoot\Ninja_release\bin\" "$DoodleBuildRoot\pdb\$DoodleVersion\" /MIR /unilog+:$DoodleLogPath | Out-Null
+    Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.pdb" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
 
     Write-Host "开始复制文件"
     Write-Host "robocopy 日志 $DoodleLogPath"
@@ -121,9 +125,7 @@ function Initialize-Doodle {
     Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
     Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
 
-    $Tags = git tag --sort=-v:refname;
-    # 去除 前缀 v
-    $Tags = $Tags | ForEach-Object { $_ -replace "v", "" }
+
 
     # 复制安装包
     if ($OnlyOne) {
