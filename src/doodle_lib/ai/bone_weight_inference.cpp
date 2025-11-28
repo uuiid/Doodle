@@ -46,6 +46,11 @@ struct formatter<::torch::Device, Char_T> : basic_ostream_formatter<Char_T> {};
 
 namespace doodle::ai {
 
+namespace {
+constexpr auto g_K        = 10;           // number of nearest bone vectors used per vertex
+constexpr auto g_channels = 3 + g_K * 3;  // xyz + K bone vectors
+constexpr auto g_hidden   = 256;          // 从 64 增加到 256，提升模型表达能力
+}  // namespace
 struct GraphSample {
   // node features: [num_nodes, in_dim]
   torch::Tensor x;
@@ -462,7 +467,7 @@ torch::Tensor smooth_l1_loss_with_sparsity(
 }
 
 // Top-K 稀疏化：只保留每个顶点最大的K个权重，其余置0并重新归一化
-torch::Tensor apply_topk_sparsity(const torch::Tensor& weights, int K = 4) {
+torch::Tensor apply_topk_sparsity(const torch::Tensor& weights, int K) {
   // weights: [N, B]
   auto N              = weights.size(0);
   auto B              = weights.size(1);
@@ -544,17 +549,13 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   std::vector<FSys::path> val_files(l_files.begin() + ntrain, l_files.end());
 
   // Model hyperparams - 增加模型容量以更好地学习稀疏分布
-  int K           = 10;         // number of nearest bone vectors used per vertex
-  int in_channels = 3 + K * 3;  // example: xyz + K * (dx,dy,dz)
-  int hidden_dim  = 256;        // 从 64 增加到 256，提升模型表达能力
-
   torch::Device device(torch::kCUDA);
   if (!torch::cuda::is_available()) {
     device = torch::Device(torch::kCPU);
     SPDLOG_WARN("CUDA not available, using CPU");
   }
 
-  SkinWeightGCN model{in_channels, hidden_dim};
+  SkinWeightGCN model{g_channels, g_hidden};
   model->to(device);
 
   // 降低学习率到 5e-4，避免陷入平均解
@@ -569,8 +570,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   const int patience   = 20;  // Early stopping patience
 
   SPDLOG_WARN("Loading training data... 时间会长一些，请耐心等待");
-  auto l_samples     = load_fbx_model(train_files, K, device);
-  auto l_val_samples = load_fbx_model(val_files, K, device);
+  auto l_samples     = load_fbx_model(train_files, g_K, device);
+  auto l_val_samples = load_fbx_model(val_files, g_K, device);
   SPDLOG_WARN("Training data loaded: {} samples", l_samples.size());
 
   for (int epoch = 1; epoch <= epochs; ++epoch) {
@@ -664,7 +665,7 @@ class bone_weight_inference_model::impl {
   SkinWeightGCN model_;
 
  public:
-  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(33, 256) {
+  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(g_channels, g_hidden) {
     if (!torch::cuda::is_available()) {
       device_ = torch::Device(torch::kCPU);
       SPDLOG_WARN("CUDA not available, using CPU");
@@ -683,15 +684,15 @@ void bone_weight_inference_model::predict_by_fbx(
 ) {
   if (!pimpl_) throw_exception(doodle_error{"模型未加载"});
   fbx_scene l_fbx{in_fbx_path, in_logger};
-  auto sample                = l_fbx.get_sample(10, pimpl_->device_);
+  auto sample                = l_fbx.get_sample(g_K, pimpl_->device_);
   auto x                     = sample.x.to(pimpl_->device_);
   auto adj                   = sample.adj.to(pimpl_->device_);
   torch::Tensor bone_adj     = sample.bone_adj.to(pimpl_->device_);
   torch::Tensor bone_feat    = sample.bone_feat.to(pimpl_->device_);
   torch::Tensor pred_weights = pimpl_->model_->forward(x, adj, bone_feat, bone_adj);
   // 应用 Top-10 稀疏化：只保留每个顶点最大的10个权重
-  auto bone_weights          = apply_topk_sparsity(pred_weights, 10);
-  l_fbx.write_weights_to_fbx(bone_weights.cpu(), out_fbx_path);
+  // auto bone_weights          = apply_topk_sparsity(pred_weights, g_K);
+  l_fbx.write_weights_to_fbx(pred_weights.cpu(), out_fbx_path);
 }
 
 }  // namespace doodle::ai
