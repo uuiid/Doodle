@@ -47,7 +47,7 @@ struct formatter<::torch::Device, Char_T> : basic_ostream_formatter<Char_T> {};
 namespace doodle::ai {
 
 namespace {
-constexpr auto g_K        = 10;           // number of nearest bone vectors used per vertex
+constexpr auto g_K        = 32;           // number of nearest bone vectors used per vertex
 constexpr auto g_channels = 3 + g_K * 3;  // xyz + K bone vectors
 constexpr auto g_hidden   = 256;          // 从 64 增加到 256，提升模型表达能力
 }  // namespace
