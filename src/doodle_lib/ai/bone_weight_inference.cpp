@@ -303,12 +303,30 @@ struct fbx_scene {
     //     "tensor \n{}\n bone_positions \n{}\n faces \n{}\n bone_weights \n{}\n bone_parents \n{}\n" l_tensor,
     //     l_bone_positions, l_faces, l_bone_weights, l_bone_parents
     // );
+
+    // Normalize inputs to avoid large values causing model collapse
+    auto max_val = l_tensor.abs().max().item<float>();
+    if (max_val < 1e-6) max_val = 1.0;
+    l_tensor         = l_tensor / max_val;
+    l_bone_positions = l_bone_positions / max_val;
+
     return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, K, l_bone_parents, in_device);
   }
   void write_weights_to_fbx(const torch::Tensor& weights, const std::filesystem::path& out_path) {
     auto l_vert_count = mesh_->GetControlPointsCount();
     if (weights.size(0) != l_vert_count)
       throw_exception(doodle_error{"weights size mismatch: expected {}, got {}", l_vert_count, weights.size(0)});
+
+    // Clear all skins to avoid ghost weights
+    auto l_skin_count = mesh_->GetDeformerCount(FbxDeformer::eSkin);
+    for (int s = 0; s < l_skin_count; ++s) {
+      auto* l_skin_deformer = static_cast<FbxSkin*>(mesh_->GetDeformer(s, FbxDeformer::eSkin));
+      auto l_cluster_count  = l_skin_deformer->GetClusterCount();
+      for (int i = 0; i < l_cluster_count; ++i) {
+        l_skin_deformer->GetCluster(i)->SetControlPointIWCount(0);
+      }
+    }
+
     auto* l_sk = static_cast<FbxSkin*>(mesh_->GetDeformer(0, FbxDeformer::eSkin));
     if (!l_sk) throw_exception(doodle_error{"no skin found"});
     auto l_sk_count  = l_sk->GetClusterCount();
@@ -318,7 +336,6 @@ struct fbx_scene {
 
     for (auto i = 0; i < l_sk_count; i++) {
       auto l_cluster = l_sk->GetCluster(i);
-      l_cluster->SetControlPointIWCount(0);
       for (auto j = 0; j < l_vert_count; j++) {
         auto w = weights_acc[j][i];
         if (w > 1e-6) l_cluster->AddControlPointIndex(j, w);
