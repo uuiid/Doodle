@@ -232,7 +232,7 @@ struct fbx_scene {
     l_converter.Triangulate(mesh_node_->GetMesh(), true);
   }
 
-  GraphSample get_sample() {
+  GraphSample get_sample(int K = 4) {
     auto* l_vert           = mesh_->GetControlPoints();
     auto l_vert_count      = mesh_->GetControlPointsCount();
     torch::Tensor l_tensor = torch::zeros({l_vert_count, 3}, torch::kFloat32);
@@ -289,7 +289,7 @@ struct fbx_scene {
     //     "tensor \n{}\n bone_positions \n{}\n faces \n{}\n bone_weights \n{}\n bone_parents \n{}\n" l_tensor,
     //     l_bone_positions, l_faces, l_bone_weights, l_bone_parents
     // );
-    return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, 4, l_bone_parents);
+    return build_sample_from_mesh(l_tensor, l_bone_positions, l_faces, l_bone_weights, K, l_bone_parents);
   }
   void write_weights_to_fbx(const torch::Tensor& weights, const std::filesystem::path& out_path) {
     auto l_vert_count = mesh_->GetControlPointsCount();
@@ -547,7 +547,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     for (size_t i = 0; i < train_files.size(); ++i) {
       fbx_scene l_fbx{train_files[i], nullptr};
 
-      auto sample = l_fbx.get_sample();
+      auto sample = l_fbx.get_sample(K);
       // move to device
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
@@ -574,7 +574,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
     double val_loss = 0.0;
     for (size_t i = 0; i < val_files.size(); ++i) {
       fbx_scene l_fbx{val_files[i], nullptr};
-      auto sample = l_fbx.get_sample();
+      auto sample = l_fbx.get_sample(K);
       auto x      = sample.x.to(device);
       auto adj    = sample.adj.to(device);
       auto y      = sample.y.to(device);
@@ -634,13 +634,13 @@ class bone_weight_inference_model::impl {
   SkinWeightGCN model_;
 
  public:
-  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(15, 128) {
+  explicit impl(const FSys::path& in_model_path) : device_(torch::kCUDA), model_(33, 256) {
     if (!torch::cuda::is_available()) {
       device_ = torch::Device(torch::kCPU);
       SPDLOG_WARN("CUDA not available, using CPU");
     }
-    model_->to(device_);
     load_checkpoint(model_, in_model_path.generic_string());
+    model_->to(device_);
     model_->eval();
   }
 };
@@ -653,7 +653,7 @@ void bone_weight_inference_model::predict_by_fbx(
 ) {
   if (!pimpl_) throw_exception(doodle_error{"模型未加载"});
   fbx_scene l_fbx{in_fbx_path, in_logger};
-  auto sample                = l_fbx.get_sample();
+  auto sample                = l_fbx.get_sample(10);
   auto x                     = sample.x.to(pimpl_->device_);
   auto adj                   = sample.adj.to(pimpl_->device_);
   torch::Tensor bone_adj     = sample.bone_adj.to(pimpl_->device_);
