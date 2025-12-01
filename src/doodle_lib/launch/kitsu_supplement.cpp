@@ -224,7 +224,6 @@ bool kitsu_supplement_main::init() {
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
     );
-    // 打开内存数据库
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_epiboly_route(l_args.kitsu_front_end_path_);

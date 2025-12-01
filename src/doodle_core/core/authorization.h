@@ -15,8 +15,8 @@ class DOODLE_CORE_API authorization {
  public:
   explicit authorization(const std::string& in_data);
 
-  /// 检查授权是否过期
-  [[nodiscard]] bool is_expire() const;
+  /// 检查授权 是否有效 true 有效 false 无效
+  [[nodiscard]] bool is_valid() const;
   void load_authorization_data(const std::string& in_str);
 
   chrono::sys_time_pos::duration get_expire_time() const;

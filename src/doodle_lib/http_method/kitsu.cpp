@@ -32,6 +32,7 @@
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
 
+#include "kitsu/epiboly.h"
 #include "kitsu/kitsu_reg_url.h"
 
 namespace doodle::http {
@@ -239,7 +240,7 @@ http_route_ptr create_kitsu_local_route() {
 
       ;
 
-  if (g_ctx().get<authorization>().is_expire())
+  if (g_ctx().get<authorization>().is_valid())
     (*l_rout_ptr)
         .reg_t<local::task>("/api/doodle/task"_url)
         .reg_t<local::task_instance>("/api/doodle/task/{}"_url(&local::task_instance::id_))
@@ -289,7 +290,9 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
 
       ;
-
+  if (g_ctx().get<authorization>().is_valid())
+    (*l_router).reg_t<epiboly_actions_projects_export_anim_fbx>("/api/actions/projects/{}/export-anim-fbx"_url);
+  
   return l_router;
 }
 
