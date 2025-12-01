@@ -1,6 +1,9 @@
 #include "qcloth_arg.h"
 
+#include "doodle_core/metadata/image_size.h"
 #include <doodle_core/metadata/task_status.h>
+
+#include <doodle_lib/long_task/image_to_move.h>
 
 namespace doodle {
 void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
@@ -42,7 +45,21 @@ void to_json(nlohmann::json& in_json, const qcloth_update_arg& out_obj) {
   in_json["task_id"] = out_obj.task_id_;
 }
 
-boost::asio::awaitable<void> qcloth_arg::run() { return arg::async_run_maya(); }
+boost::asio::awaitable<void> qcloth_arg::run() {
+  co_await arg::async_run_maya();
+  auto l_root_dir = file_path.parent_path().parent_path();
+
+  if (!out_arg_.movie_file_dir.empty()) {
+    auto l_path = l_root_dir / "mov" / file_path.stem().concat(".mp4");
+    SPDLOG_LOGGER_INFO(logger_ptr_, "导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_path);
+    if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) {
+      FSys::create_directories(l_p);
+    }
+    detail::create_move(
+        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), {}
+    );
+  }
+}
 
 boost::asio::awaitable<void> qcloth_update_arg::run() {
   auto l_abc = FSys::list_files(alembic_file_dir_, ".abc");
