@@ -457,6 +457,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 }  // namespace doodle::http::local
 
 namespace doodle::http {
+
+void epiboly_actions_projects_export_anim_fbx::init_ctx() {
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, []() {
+    if (!g_ctx().contains<maya_ctx>()) g_ctx().emplace<maya_ctx>();
+    if (!g_ctx().contains<ue_ctx>()) g_ctx().emplace<ue_ctx>();
+    g_ctx().emplace<local::run_post_task_local_cancel_manager>();
+    app_base::Get().on_cancel.slot().assign([](boost::asio::cancellation_type_t) {
+      g_ctx().get<local::run_post_task_local_cancel_manager>().cancel_all();
+    });
+  });
+}
+
+
 boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_projects_export_anim_fbx::post(
     session_data_ptr in_handle
 ) {

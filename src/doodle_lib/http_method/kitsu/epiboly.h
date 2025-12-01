@@ -12,6 +12,9 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/export-anim-fbx
 DOODLE_HTTP_FUN(epiboly_actions_projects_export_anim_fbx)
+
+void init_ctx();
+epiboly_actions_projects_export_anim_fbx() : base_type() { init_ctx(); }
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
