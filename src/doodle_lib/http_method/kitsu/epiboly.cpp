@@ -18,7 +18,7 @@ namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> epiboly_user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_json{};
   l_json["projects"] = g_ctx().get<sqlite_database>().get_all<project>();
-  co_return in_handle->make_msg(l_json.dump());
+  co_return in_handle->make_msg(l_json);
 }
 
 }  // namespace doodle::http

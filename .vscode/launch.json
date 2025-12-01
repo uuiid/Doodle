@@ -20,7 +20,7 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis",
             "presentation": {
                 "hidden": true,
-                "group": "",
+                "group": "main",
                 "order": 1
             }
         },
@@ -39,8 +39,26 @@
             "visualizerFile": "${workspaceFolder}/stl.natvis",
             "presentation": {
                 "hidden": true,
-                "group": "",
+                "group": "main",
                 "order": 1
+            }
+        },
+        {
+            "name": "Doodle_debug_epiboly",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
+            "args": [
+                "--config=${workspaceFolder}/build/debug_server.json",
+                "--epiboly",
+                "--port=50026"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "presentation": {
+                "group": "main",
+                "order": 1,
             }
         },
         {

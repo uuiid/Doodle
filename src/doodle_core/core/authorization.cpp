@@ -80,7 +80,7 @@ authorization::authorization(const std::string& in_data) : p_i(std::make_shared<
   load_authorization_data(in_data);
 }
 
-bool authorization::is_valid() const { return p_i->l_time.get_sys_time() < chrono::system_clock::now(); }
+bool authorization::is_valid() const { return p_i->l_time.get_sys_time() > chrono::system_clock::now(); }
 void authorization::generate_token(const FSys::path& in_path) {
   DOODLE_CHICK(!in_path.empty(), doodle_error{"传入路径为空"});
   impl l_impl{};

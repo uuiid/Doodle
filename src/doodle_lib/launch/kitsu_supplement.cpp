@@ -225,6 +225,8 @@ bool kitsu_supplement_main::init() {
         l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
     );
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+    // 初始化授权上下文
+    g_ctx().emplace<authorization>(core_set::get_set().authorize_);
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_epiboly_route(l_args.kitsu_front_end_path_);
     // 开始运行服务器
