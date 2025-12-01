@@ -291,8 +291,10 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
 
       ;
   if (g_ctx().get<authorization>().is_valid())
-    (*l_router).reg_t<epiboly_actions_projects_export_anim_fbx>("/api/actions/projects/{}/export-anim-fbx"_url);
-  
+    (*l_router).reg_t<epiboly_actions_projects_export_anim_fbx>(
+        "/api/actions/projects/{}/export-anim-fbx"_url(&epiboly_actions_projects_export_anim_fbx::project_id_)
+    );
+
   return l_router;
 }
 
