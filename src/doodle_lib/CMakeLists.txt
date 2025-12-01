@@ -95,12 +95,6 @@ target_compile_definitions(doodle_lib
         PRIVATE
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
 )
-if (DOODLE_KITSU)
-    target_compile_definitions(doodle_lib
-            PUBLIC
-            DOODLE_KITSU
-    )
-endif ()
 
 target_compile_options(doodle_lib
         PUBLIC
