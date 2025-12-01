@@ -7,11 +7,15 @@
 namespace doodle {
 class DOODLE_CORE_API image_size {
  public:
-
-  std::int32_t width ;
-  std::int32_t height ;
-  friend  void to_json(nlohmann::json& j, const image_size& p) { j["width"] = p.width; j["height"] = p.height; }
-  friend void from_json(const nlohmann::json& j, image_size& p) { j["width"].get_to(p.width); j["height"].get_to(p.height); }
-
+  std::int32_t width{0};
+  std::int32_t height{0};
+  friend void to_json(nlohmann::json& j, const image_size& p) {
+    j["width"]  = p.width;
+    j["height"] = p.height;
+  }
+  friend void from_json(const nlohmann::json& j, image_size& p) {
+    j["width"].get_to(p.width);
+    j["height"].get_to(p.height);
+  }
 };
-}
+}  // namespace doodle

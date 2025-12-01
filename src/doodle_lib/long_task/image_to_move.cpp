@@ -13,6 +13,7 @@
 #include "opencv2/core.hpp"
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
+#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace doodle {
@@ -119,11 +120,11 @@ void create_move(
   if (FSys::exists(in_out_path)) {
     FSys::remove(in_out_path);
   }
-  if (in_image_size.width == 0 || in_image_size.height == 0) {
+  if (in_image_size.width <= 0 || in_image_size.height <= 0) {
     cv::Mat l_image = cv::imread(l_vector.front().path_attr.generic_string());
     if (l_image.empty())
       throw_exception(doodle_error{fmt::format("{} 图片读取失败 无法获取图片尺寸", l_vector.front().path_attr)});
-    in_logger->info("未指定输出尺寸，使用第一张图片尺寸 {}x{}", l_image.cols, l_image.rows);
+    SPDLOG_LOGGER_INFO(in_logger, "未指定输出尺寸，使用第一张图片尺寸 {}x{}", l_image.cols, l_image.rows);
   }
   const cv::Size k_size{in_image_size.width, in_image_size.height};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};
