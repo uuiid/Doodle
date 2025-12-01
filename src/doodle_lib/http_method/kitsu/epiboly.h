@@ -6,16 +6,13 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 namespace doodle::http {
-// /api/config
-DOODLE_HTTP_FUN(epiboly_config)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_END()
-// /api/auth/authenticated
-DOODLE_HTTP_FUN(epiboly_authenticated)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_END()
 // /api/data/user/context
 DOODLE_HTTP_FUN(epiboly_user_context)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/export-anim-fbx
+DOODLE_HTTP_FUN(epiboly_actions_projects_export_anim_fbx)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

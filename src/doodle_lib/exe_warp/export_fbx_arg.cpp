@@ -31,6 +31,7 @@ void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
   in_json["image_size"]           = out_obj.size_;
   in_json["only_upload"]          = out_obj.only_upload_;
 }
+
 boost::asio::awaitable<void> export_fbx_arg::run() {
   get_export_fbx_arg l_out_arg_{};
   {
@@ -80,6 +81,29 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   if (!l_out_arg_.movie_file_.empty()) {
     co_await kitsu_client_->upload_shot_animation_other_file(
         task_id_, l_root_dir, l_out_arg_.movie_file_.lexically_proximate(l_root_dir)
+    );
+  }
+}
+
+void from_json(const nlohmann::json& in_json, export_fbx_arg_epiboly& out_obj) {
+  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+}
+// to json
+void to_json(nlohmann::json& in_json, const export_fbx_arg_epiboly& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+}
+
+boost::asio::awaitable<void> export_fbx_arg_epiboly::run() {
+  co_await arg::async_run_maya();
+  auto l_root_dir = file_path.parent_path().parent_path();
+  if (!out_arg_.movie_file_dir.empty()) {
+    auto l_path = l_root_dir / "mov" / file_path.stem().concat(".mp4");
+    SPDLOG_LOGGER_INFO(logger_ptr_, "导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_path);
+    if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) {
+      FSys::create_directories(l_p);
+    }
+    detail::create_move(
+        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), {}
     );
   }
 }

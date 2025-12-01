@@ -281,8 +281,8 @@ http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
       .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
 
       // 外包
-      .reg_t<epiboly_config>("/api/config"_url)
-      .reg_t<epiboly_authenticated>("/api/auth/authenticated"_url)
+      .reg_t<config>("/api/config"_url)
+      .reg_t<authenticated>("/api/auth/authenticated"_url)
       .reg_t<epiboly_user_context>("/api/data/user/context"_url)
 
       // 最后注册nodejs前端

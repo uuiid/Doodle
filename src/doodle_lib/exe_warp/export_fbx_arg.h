@@ -54,4 +54,22 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   }
   boost::asio::awaitable<void> run() override;
 };
+
+/**
+ * @brief fbx导出
+ */
+class DOODLELIB_API export_fbx_arg_epiboly : public maya_exe_ns::arg {
+ public:
+  constexpr static std::string_view k_name{"export_fbx"};
+
+  // form json
+  friend void from_json(const nlohmann::json& in_json, export_fbx_arg_epiboly& out_obj);
+  // to json
+  friend void to_json(nlohmann::json& in_json, const export_fbx_arg_epiboly& out_obj);
+  std::tuple<std::string, std::string> get_json_str() override {
+    return std::tuple<std::string, std::string>{k_name, (nlohmann::json{} = *this).dump()};
+  }
+  boost::asio::awaitable<void> run() override;
+};
+
 }  // namespace doodle

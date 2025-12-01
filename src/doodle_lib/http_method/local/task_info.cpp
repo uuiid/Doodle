@@ -10,6 +10,10 @@
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include "doodle_lib/core/asyn_task.h"
+#include "doodle_lib/http_client/kitsu_client.h"
+#include "doodle_lib/http_method/kitsu/epiboly.h"
+#include "doodle_lib/http_method/local/local.h"
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
@@ -27,9 +31,6 @@
 
 #include <boost/asio/bind_cancellation_slot.hpp>
 
-#include "core/asyn_task.h"
-#include "http_client/kitsu_client.h"
-#include "local.h"
 #include <filesystem>
 #include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -454,3 +455,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 }
 
 }  // namespace doodle::http::local
+
+namespace doodle::http {
+boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_projects_export_anim_fbx::post(
+    session_data_ptr in_handle
+) {
+  auto l_ptr              = std::make_shared<server_task_info>();
+  l_ptr->type_            = server_task_info_type::export_fbx;
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_json             = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+
+  std::shared_ptr<export_fbx_arg_epiboly> l_arg_t = std::make_shared<export_fbx_arg_epiboly>();
+  l_json.get_to(*l_arg_t);
+  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<local::run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+}  // namespace doodle::http
