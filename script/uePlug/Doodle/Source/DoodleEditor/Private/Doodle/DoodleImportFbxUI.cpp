@@ -407,30 +407,28 @@ void UDoodleFbxCameraImport_1::GenPathPrefix()
 {
 	FString L_Folder = GetImportPath(ImportUI->GetPathPrefix());
 	FString L_Base = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *ImportUI->GetPathPrefix().ToUpper(), Eps, Shot, *ShotAb);
-	// switch (ImportUI->GetPathSuffix())
-	// {
-	// case EImportSuffix::Lig:
-	// 	L_Folder /= "Import_";
-	// 	L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-	// 	L_Base += TEXT("_");
-	// 	L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-	// 	break;
-	// case EImportSuffix::Vfx:
-	// 	L_Folder /= "Import_";
-	// 	L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-	// 	L_Base += TEXT("_");
-	// 	L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-	// 	break;
-	// case EImportSuffix::End:
-	// 	break;
-	// default:
-	// 	break;
-	// }
+	switch (ImportUI->GetPathSuffix())
+	{
+	case EImportSuffix::Lig:
+		ShotLevel_Suffix = TEXT("_Zong");
+		break;
+	case EImportSuffix::Vfx:
+		L_Folder /= "Import_";
+		L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
+		L_Base += TEXT("_");
+		L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
+		ShotLevel_Suffix = TEXT("_LV");
+		break;
+	case EImportSuffix::End:
+		break;
+	default:
+		break;
+	}
 
 	ImportPathDir = L_Folder / L_Base;
 }
 
-ULevelSequence* UDoodleBaseImportData::CreateLevelSequence(const FString& InCreatePath)
+ULevelSequence* UDoodleBaseImportData::CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End)
 {
 	ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *InCreatePath);
 
@@ -472,14 +470,28 @@ ULevelSequence* UDoodleBaseImportData::CreateLevelSequence(const FString& InCrea
 		L_Pkg->MarkPackageDirty();
 		SavePackageHelper(L_Pkg, L_Package_Name);
 	}
+
+
+	// 设置定序器属性
+	L_ShotSequence->GetMovieScene()->SetDisplayRate(Rate);
+	L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(TickRate);
+
+	L_ShotSequence->GetMovieScene()->Modify();
+
+	/// 设置范围
+	FFrameNumber offset{50};
+	L_ShotSequence->GetMovieScene()->SetWorkingRange((Start - 30 - offset) / Rate, (In_End + 30) / Rate);
+	L_ShotSequence->GetMovieScene()->SetViewRange((Start - 30 - offset) / Rate, (In_End + 30) / Rate);
+	L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
+		                                                  (Start - offset) * FrameTick,
+		                                                  (In_End + 1) * FrameTick
+	                                                  }, true);
 	return L_ShotSequence;
 }
 
 
 void UDoodleFbxCameraImport_1::ImportFile()
 {
-	const FFrameRate L_Rate{25, 1};
-	constexpr FFrameNumber L_Start{1001};
 	FFrameNumber L_End{1200};
 
 	FScopedSlowTask L_Task_Scoped{6.0f, LOCTEXT("Import_CAm", "导入camera")};
@@ -502,7 +514,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	);
 	UWorld* L_ShotLevel{};
 	{
-		FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + TEXT("_Zong");
+		FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + ShotLevel_Suffix;
 		L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
 		if (!L_ShotLevel)
 		{
@@ -552,7 +564,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	);
 	// 获取结束帧
 	L_End = (int32)L_Fbx_Time.GetStop().GetFrameCount(fbxsdk::FbxTime::ePAL);
-	UE_LOG(LogTemp, Log, TEXT("fbx time %d -> %d"), L_Start.Value, L_End.Value);
+	UE_LOG(LogTemp, Log, TEXT("fbx time %d -> %d"), Start.Value, L_End.Value);
 
 	L_Task_Scoped.EnterProgressFrame(
 		1,
@@ -563,24 +575,10 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	if (!L_ShotSequence)
 	{
 		FirstImport = true;
-		L_ShotSequence = CreateLevelSequence(ImportPathDir);
+		L_ShotSequence = CreateLevelSequence(ImportPathDir, L_End);
 	}
 	L_Task_Scoped.EnterProgressFrame(1, LOCTEXT("Import_ImportingCameraFile3", "设置定序器以及相机 ..."));
 
-	// 设置定序器属性
-	L_ShotSequence->GetMovieScene()->SetDisplayRate(L_Rate);
-	L_ShotSequence->GetMovieScene()->SetTickResolutionDirectly(FFrameRate{60'000, 1});
-
-	L_ShotSequence->GetMovieScene()->Modify();
-
-	/// 设置范围
-	FFrameNumber offset{50};
-	L_ShotSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
-	L_ShotSequence->GetMovieScene()->SetViewRange((L_Start - 30 - offset) / L_Rate, (L_End + 30) / L_Rate);
-	L_ShotSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
-		                                                  (L_Start - offset) * FrameTick,
-		                                                  (L_End + 1) * FrameTick
-	                                                  }, true);
 	//-------Add Visibility Track
 	UMovieSceneLevelVisibilityTrack* NewTrack =
 		L_ShotSequence->GetMovieScene()->FindTrack<UMovieSceneLevelVisibilityTrack>();
@@ -650,7 +648,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 				//      UMovieSceneCameraCutSection* L_MovieSceneCameraCutSection =
 				//          CastChecked<UMovieSceneCameraCutSection>(L_Task->CreateNewSection());
 				//      L_MovieSceneCameraCutSection->SetCameraGuid(L_CamGuid);
-				MovieSceneToolHelpers::CreateCameraCutSectionForCamera(L_MoveScene, L_CamGuid, L_Start);
+				MovieSceneToolHelpers::CreateCameraCutSectionForCamera(L_MoveScene, L_CamGuid, Start);
 				UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = L_MoveScene->AddTrack<UMovieSceneSpawnTrack>(L_CamGuid);
 				UMovieSceneSpawnSection* L_MovieSceneSpawnSection =
 					CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
@@ -746,56 +744,45 @@ void UDoodleFbxCameraImport_1::ImportFile()
 		switch (ImportUI->GetPathSuffix())
 		{
 		case EImportSuffix::Lig:
-
-			L_Folder /= "Import_";
-			L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-			L_Base += TEXT("_");
-			L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-			if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder1))
-			{
-				EditorAssetSubsystem->MakeDirectory(LigFolder1);
-			}
-			if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder2))
-			{
-				EditorAssetSubsystem->MakeDirectory(LigFolder2);
-			}
-			break;
-		case EImportSuffix::Vfx:
 			{
 				L_Folder /= "Import_";
 				L_Folder += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
 				L_Base += TEXT("_");
 				L_Base += StaticEnum<EImportSuffix>()->GetNameStringByValue(static_cast<uint8>(ImportUI->GetPathSuffix()));
-				FString LongImportPathDir = FPackageName::GetLongPackagePath(ImportPathDir);
-				FString FolderPath = FPaths::Combine(LongImportPathDir, TEXT("Vfx"));
-				if (!EditorAssetSubsystem->DoesDirectoryExist(FolderPath))
+				if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder1))
 				{
-					EditorAssetSubsystem->MakeDirectory(FolderPath);
+					EditorAssetSubsystem->MakeDirectory(LigFolder1);
+				}
+				if (!EditorAssetSubsystem->DoesDirectoryExist(LigFolder2))
+				{
+					EditorAssetSubsystem->MakeDirectory(LigFolder2);
+				}
+				FString LigFolder3 = L_Folder / L_Base;
+				if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
+				{
+					CreateLevelSequence(LigFolder3, L_End);
+					EditorAssetSubsystem->SaveAsset(LigFolder3, false);
+				}
+				LigFolder3 += TEXT("_LV");
+				if (UWorld* L_Level = LoadObject<UWorld>(nullptr, *LigFolder3); !L_Level)
+				{
+					const FString PackagePath = FPackageName::GetLongPackagePath(LigFolder3);
+					const FString BaseFileName = FPaths::GetBaseFilename(LigFolder3);
+					FAssetToolsModule& AssetToolsModule =
+						FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
+					L_Level = CastChecked<UWorld>(
+						AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
+
+					EditorAssetSubsystem->SaveLoadedAsset(L_Level, false);
 				}
 			}
+			break;
+		case EImportSuffix::Vfx:
 			break;
 		case EImportSuffix::End:
 			break;
 		default:
 			break;
-		}
-		FString LigFolder3 = L_Folder / L_Base;
-		if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
-		{
-			CreateLevelSequence(LigFolder3);
-			EditorAssetSubsystem->SaveAsset(LigFolder3, false);
-		}
-		LigFolder3 += TEXT("_LV");
-		if (UWorld* L_Level = LoadObject<UWorld>(nullptr, *LigFolder3); !L_Level)
-		{
-			const FString PackagePath = FPackageName::GetLongPackagePath(LigFolder3);
-			const FString BaseFileName = FPaths::GetBaseFilename(LigFolder3);
-			FAssetToolsModule& AssetToolsModule =
-				FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-			L_Level = CastChecked<UWorld>(
-				AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
-
-			EditorAssetSubsystem->SaveLoadedAsset(L_Level, false);
 		}
 	}
 

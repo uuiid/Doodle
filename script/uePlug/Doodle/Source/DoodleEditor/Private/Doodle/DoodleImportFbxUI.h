@@ -85,12 +85,13 @@ public:
 	int32 FrameTick{};
 	/// @brief 导入后的路径
 	FString ImportPathDir{};
+	static constexpr FFrameNumber Start{1001};
 
 protected:
 	// 生成导入的路径
 	FString GetImportPath(const FString& In_Path_Prefix) const;
 
-	static ULevelSequence* CreateLevelSequence(const FString& InCreatePath);
+	ULevelSequence* CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End);
 
 public:
 	// @brief获取文件名称中的开始和结束, 以及集数, 镜头号等等
@@ -154,6 +155,7 @@ public:
 	GENERATED_BODY()
 	// 初次导入
 	bool FirstImport{false};
+	FString ShotLevel_Suffix{};
 
 	UDoodleFbxCameraImport_1()
 	{
