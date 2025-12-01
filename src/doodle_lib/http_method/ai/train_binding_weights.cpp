@@ -38,6 +38,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_train_binding_w
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
   boost::asio::post(g_io_context(), [l_args]() {
     doodle::ai::bone_weight_inference_model::train(l_args.input_path_, l_args.output_path_);
+#ifndef NDEBUG
+    doodle::ai::bone_weight_inference_model l_model{l_args.output_path_};
+    for (auto i = 0; i < l_args.input_path_.size() && i < 4; i++) {
+      auto l_out_path = l_args.input_path_[i].parent_path() / (l_args.input_path_[i].stem().string() + "_bound.fbx");
+      SPDLOG_WARN("开始推理模型 {} {} {}", l_args.output_path_, l_args.input_path_[i], l_out_path);
+      if (FSys::exists(l_out_path)) FSys::remove(l_out_path);
+      l_model.predict_by_fbx(l_args.input_path_[i], l_out_path);
+    }
+#endif
   });
   co_return in_handle->make_msg(nlohmann::json{});
 }
