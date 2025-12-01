@@ -579,7 +579,7 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(5e-4));
 
   // 添加学习率调度器：余弦退火
-  int epochs           = 150;  // 增加训练轮数到 150
+  int epochs           = 250;  // 增加训练轮数到 250
   auto scheduler       = torch::optim::StepLR(optimizer, /*step_size=*/30, /*gamma=*/0.8);
 
   float best_val_loss  = std::numeric_limits<float>::max();
@@ -642,22 +642,22 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
         optimizer.param_groups()[0].options().get_lr()
     );
 
-    // Early stopping
-    if (val_loss < best_val_loss) {
-      best_val_loss    = val_loss;
-      patience_counter = 0;
-      // 保存最佳模型
-      save_checkpoint(
-          model,
-          fmt::format("{}/{}_best{}", in_output_path.parent_path(), in_output_path.stem(), in_output_path.extension())
-      );
-    } else {
-      patience_counter++;
-      if (patience_counter >= patience) {
-        SPDLOG_WARN("Early stopping at epoch {}", epoch);
-        break;
-      }
-    }
+    // // Early stopping
+    // if (val_loss < best_val_loss) {
+    //   best_val_loss    = val_loss;
+    //   patience_counter = 0;
+    //   // 保存最佳模型
+    //   save_checkpoint(
+    //       model,
+    //       fmt::format("{}/{}_best{}", in_output_path.parent_path(), in_output_path.stem(), in_output_path.extension())
+    //   );
+    // } else {
+    //   patience_counter++;
+    //   if (patience_counter >= patience) {
+    //     SPDLOG_WARN("Early stopping at epoch {}", epoch);
+    //     break;
+    //   }
+    // }
 
     // checkpoint
     if (epoch % 10 == 0) {
