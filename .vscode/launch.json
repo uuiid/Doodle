@@ -157,6 +157,15 @@
             "request": "launch",
             "script": "${file}",
             "cwd": "${cwd}"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "运行socketio",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/src/test_js/test/socket_io.js"
         }
     ],
     "inputs": [
