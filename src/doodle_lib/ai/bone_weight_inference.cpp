@@ -47,7 +47,7 @@ struct formatter<::torch::Device, Char_T> : basic_ostream_formatter<Char_T> {};
 namespace doodle::ai {
 
 namespace {
-constexpr auto g_K        = 32;           // number of nearest bone vectors used per vertex
+constexpr auto g_K        = 16;           // number of nearest bone vectors used per vertex
 constexpr auto g_channels = 3 + g_K * 3;  // xyz + K bone vectors
 constexpr auto g_hidden   = 256;          // 从 64 增加到 256，提升模型表达能力
 }  // namespace
@@ -579,8 +579,8 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
   torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(5e-4));
 
   // 添加学习率调度器：余弦退火
-  int epochs           = 100;  // 增加训练轮数到 100
-  auto scheduler       = torch::optim::StepLR(optimizer, /*step_size=*/30, /*gamma=*/0.5);
+  int epochs           = 150;  // 增加训练轮数到 150
+  auto scheduler       = torch::optim::StepLR(optimizer, /*step_size=*/30, /*gamma=*/0.8);
 
   float best_val_loss  = std::numeric_limits<float>::max();
   int patience_counter = 0;
