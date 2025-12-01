@@ -70,7 +70,7 @@ auto session_data::set_response_header(T& in_res, std::string_view in_mine_type)
       "Authorization, Origin, X-Requested-With, Content-Type, Accept"
   );
   in_res.set(boost::beast::http::field::date, fmt::format("{:%a, %d %b %Y %T} GMT", l_time));
-  in_res.set(boost::beast::http::field::vary, "Origin");
+  in_res.set(boost::beast::http::field::vary, "Cookie");
 }
 template <typename T>
 auto session_data::set_response_file_header(
