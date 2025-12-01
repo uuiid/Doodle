@@ -4,8 +4,9 @@ Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 
 $DoodleExePath = "E:\source\doodle\dist\win-unpacked\*"
 $DoodleOut = Convert-Path "$PSScriptRoot/../build"
-
+Remove-Item -Path "$DoodleOut/epiboly/*" -Recurse -Force
 Initialize-Doodle -OutPath "$DoodleOut/epiboly" -OnlyOne
+
 Copy-Item $DoodleExePath -Destination "$DoodleOut/epiboly" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly" -Include "*.zip" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly/dist" -Include "*.exe" -Recurse -Force

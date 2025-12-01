@@ -123,19 +123,12 @@ function Initialize-Doodle {
     Write-Host "robocopy 日志 $DoodleLogPath"
     &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
-    &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
-    # 添加UE插件安装
-    Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
-    Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
-
-
-
     # 复制安装包
-    if ($OnlyOne) {
-        Copy-Item (Get-ChildItem "$DoodleBuildRelease\*" -Include "*.zip")[-1]  -Destination "$OutPath\dist"
-        Set-Content -Path "$OutPath\dist\version.txt" -Value $Tags[1] -NoNewline
-    }
-    else {
+    if ( -not $OnlyOne) {
+        &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
+        # 添加UE插件安装
+        Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+        Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
         &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath | Out-Null
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)

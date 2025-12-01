@@ -181,6 +181,12 @@
       "problemMatcher": []
     },
     {
+      "label": "生成外包文件",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/package_epiboly.ps1",
+      "problemMatcher": []
+    },
+    {
       "label": "复制数据库",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/copy_db.ps1",
