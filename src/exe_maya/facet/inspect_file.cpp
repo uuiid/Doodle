@@ -9,6 +9,7 @@
 #include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 
+#include "maya_plug/exception/exception.h"
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_clear_scenes.h>
 #include <maya_plug/data/maya_file_io.h>
@@ -115,15 +116,18 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
     }
   }
 
-  if (false) {
+  if (true) {
     default_logger_raw()->info("开始检查UV");
     MFnMesh l_mesh{};
+    std::int32_t l_uv_id{};
     for (MItDag l_iter{MItDag::kDepthFirst, MFn::kMesh, &l_s}; !l_iter.isDone(); l_iter.next()) {
       maya_chick(l_mesh.setObject(l_iter.currentItem()));
       if (l_mesh.numUVSets() == 0) {
         default_logger_raw()->error("存在UV缺失 {}", get_node_full_name(l_mesh.object()));
         l_e = maya_enum::maya_error_t::check_error;
       }
+
+      auto l_uv_name = l_mesh.currentUVSetName();
       std::vector<std::int32_t> l_polygon{};
       for (auto l_i = 0; l_i < l_mesh.numPolygons(); ++l_i) {
         MIntArray l_vertices{};
@@ -134,20 +138,23 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
           l_e = maya_enum::maya_error_t::check_error;
           continue;
         }
-        maya_chick(l_mesh.getPolygonUV(l_i, 0, l_point_x.x, l_point_x.y));
-        maya_chick(l_mesh.getPolygonUV(l_i, 1, l_point_org.x, l_point_org.y));
-        maya_chick(l_mesh.getPolygonUV(l_i, 2, l_point_y.x, l_point_y.y));
-        MVector l_x{l_point_x - l_point_org}, l_y{l_point_y - l_point_org};
-        if ((l_x ^ l_y) * MVector::zAxis < 0) {
-          l_polygon.emplace_back(l_i);
-        }
+
+        for (auto&& i = 0; i < l_mesh.polygonVertexCount(l_i); ++i)
+          maya_chick(l_mesh.getPolygonUVid(l_i, i, l_uv_id, &l_uv_name));
+        // maya_chick(l_mesh.getPolygonUV(l_i, 0, l_point_x.x, l_point_x.y));
+        // maya_chick(l_mesh.getPolygonUV(l_i, 1, l_point_org.x, l_point_org.y));
+        // maya_chick(l_mesh.getPolygonUV(l_i, 2, l_point_y.x, l_point_y.y));
+        // MVector l_x{l_point_x - l_point_org}, l_y{l_point_y - l_point_org};
+        // if ((l_x ^ l_y) * MVector::zAxis < 0) {
+        //   l_polygon.emplace_back(l_i);
+        // }
       }
-      if (l_polygon.size() > 0) {
-        default_logger_raw()->error(
-            "存在反面 {}:\n {}", get_node_full_name(l_mesh.object()),
-            fmt::join(l_polygon | ranges::views::chunk(10), "\n")
-        );
-      }
+      // if (l_polygon.size() > 0) {
+      //   default_logger_raw()->error(
+      //       "存在反面 {}:\n {}", get_node_full_name(l_mesh.object()),
+      //       fmt::join(l_polygon | ranges::views::chunk(10), "\n")
+      //   );
+      // }
     }
   }
 
