@@ -417,13 +417,13 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     auto feat    = torch::cat({l, g_bcast}, /*dim=*/1);  // [N, 2H]
     auto h       = torch::relu(fc1->forward(feat));      // [N, H]
 
-    // project raw bone features to hidden space
+    // 将原始骨骼特征投影到隐藏空间
     if (!bone_feat.defined()) throw std::runtime_error("bone_feat must be provided to the model forward");
     if (bone_feat.dim() != 2) throw std::runtime_error("bone_feat must be a 2D tensor [B, F]");
     // project: [B, F] -> [B, H]
     auto used_emb = torch::relu(bone_proj->forward(bone_feat));
 
-    // validate bone_adj and used_emb shapes/devices
+    // 验证boneAdj和已使用的emb形状/设备
     if (!bone_adj.defined()) throw std::runtime_error("bone_adj must be provided to aggregate bone embeddings");
     if (bone_adj.dim() != 2) throw std::runtime_error("bone_adj must be a 2D adjacency matrix [B, B]");
     if (bone_adj.size(0) != bone_adj.size(1) || bone_adj.size(0) != used_emb.size(0)) {
@@ -432,17 +432,11 @@ struct SkinWeightGCNImpl : torch::nn::Module {
          << " used_emb=" << used_emb.sizes();
       throw std::runtime_error(ss.str());
     }
-    if (bone_adj.device() != used_emb.device()) {
-      std::ostringstream ss;
-      ss << "bone_adj device (" << bone_adj.device() << ") does not match bone embeddings device (" << used_emb.device()
-         << ")";
-      throw std::runtime_error(ss.str());
-    }
-    // aggregate via bone graph conv
+    // 通过骨图conv进行聚集
     used_emb = bgc->forward(used_emb, bone_adj);
 
     // used_emb: [B, H]
-    // shape checks: used_emb must be 2D and its second dim must match h.size(1)
+    // 形状检查: used_emb 必须是2D张量，其第二维必须与 h.size(1) 匹配
     if (used_emb.dim() != 2) {
       throw std::runtime_error("bone_embeddings must be a 2D tensor of shape [B, hidden_dim]");
     }
