@@ -277,16 +277,19 @@ http_route_ptr create_kitsu_local_route() {
 }
 
 http_route_ptr create_kitsu_epiboly_route(const FSys::path& in_root) {
-  auto l_router = std::make_shared<http_route>();
+  auto l_router  = std::make_shared<http_route>();
+  auto l_sid_ctx = std::make_shared<socket_io::sid_ctx>();
+  l_sid_ctx->register_namespace("/events");
   (*l_router)
       .reg_t<doodle_tool_version>("/api/doodle/tool/version"_url)
-
+      .reg_t<local::local_setting>("/api/doodle/local_setting"_url)  //
       // 外包
       .reg_t<config>("/api/config"_url)
       .reg_t<authenticated>("/api/auth/authenticated"_url)
       .reg_t<epiboly_user_context>("/api/data/user/context"_url)
 
       // 最后注册nodejs前端
+      .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
 
       ;

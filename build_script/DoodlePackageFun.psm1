@@ -135,8 +135,8 @@ function Initialize-Doodle {
         #         寻找版本号 3.6.678 并放在最后
         #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
         #        $DoodleVersionList += "`n3.6.678"
-        Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
     }
+    Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist"
 
