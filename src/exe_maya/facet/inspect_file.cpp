@@ -142,6 +142,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
         for (auto&& i = 0; i < l_mesh.polygonVertexCount(l_i); ++i) {
           if (auto l_stat = l_mesh.getPolygonUVid(l_i, i, l_uv_id, &l_uv_name); l_stat.error()) {
             default_logger_raw()->error("存在UV缺失 {} 面id: {}", get_node_full_name(l_mesh.object()), i);
+            l_e = maya_enum::maya_error_t::check_error;
           }
         }
         // maya_chick(l_mesh.getPolygonUV(l_i, 0, l_point_x.x, l_point_x.y));
