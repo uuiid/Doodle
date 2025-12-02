@@ -16,9 +16,14 @@
 #include <boost/beast/core/buffers_cat.hpp>
 #include <boost/beast/core/buffers_suffix.hpp>
 #include <boost/beast/core/ostream.hpp>
+#include <boost/beast/core/static_buffer.hpp>
 #include <boost/beast/http.hpp>
 
 #include "core/http/multipart_body_value.h"
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -37,6 +42,10 @@ struct multipart_body {
   using value_type      = multipart_body_impl::value_type_impl;
   using part_value_type = multipart_body_impl::part_value_type;
   enum class parser_line_state { boundary, header, data, eof_end };
+
+  // 换行符
+  static constexpr std::array<char, 2> newline_{'\r', '\n'};
+
   class reader {
     value_type& body_;
     part_value_type part_;
@@ -45,6 +54,7 @@ struct multipart_body {
     std::string boundary_{};
     std::optional<std::ofstream> out_file_;
     boost::beast::http::fields& fields_;
+    boost::beast::static_buffer<4096> buffer_;
 
     enum boundary_state {
       not_boundary,  // 边界错误
@@ -131,17 +141,40 @@ struct multipart_body {
       out_file_ = {};
     }
     template <class ConstBufferSequence>
-    std::size_t put(ConstBufferSequence const& buffers, boost::system::error_code& ec) {
-      // auto const l_extra = boost::beast::buffer_bytes(buffers);
+    std::size_t put(ConstBufferSequence const& in_buffers, boost::system::error_code& ec) {
+      auto const l_extra = boost::beast::buffer_bytes(in_buffers);
       std::size_t l_size = 0;
       ec                 = {};
-      // buffer_.
-      // boost::beast::buffer
-      auto l_begin = boost::asio::buffers_begin(buffers), l_end = boost::asio::buffers_end(buffers);
-      decltype(l_begin) l_end_eof = std::find(l_begin, l_end, '\r');
-      while (l_end_eof != l_end && *++l_end_eof != '\n') l_end_eof = std::find(l_end_eof, l_end, '\r');
-      if (line_state_ != parser_line_state::data && l_end_eof == l_end) return 0;  // 不是完整的一行, 直接返回, 下次解析
-      l_size = std::distance(l_begin, l_end_eof == l_end ? l_end : l_end_eof + 1);  // +1 是为了包含 \n
+      const static std::boyer_moore_searcher searcher_new_line_{
+          std::begin(newline_),
+          std::end(newline_),
+      };
+      auto l_my_buffers_size = buffer_.size();
+      auto l_new_buffers     = boost::beast::buffers_cat(buffer_.cdata(), in_buffers);
+      auto l_begin = boost::asio::buffers_begin(l_new_buffers), l_end = boost::asio::buffers_end(l_new_buffers);
+      // l_end_eof 指向 \r\n 位置中的 \r
+      decltype(l_begin) l_end_eof = std::search(l_begin, l_end, searcher_new_line_);
+
+      if (l_end_eof == l_end) {  // 不是完整的一行
+        if (line_state_ == parser_line_state::data) {
+          add_data(l_begin, l_end);
+          l_size = l_extra;
+          return l_size;
+        }
+        if (l_extra > 4096) {
+          BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::message_size);
+          return 0;
+        }
+        SPDLOG_INFO("复制字节 {}", l_extra);
+        boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
+        buffer_.commit(l_extra);
+        return l_extra;
+      }
+
+      ++l_end_eof;
+      l_size = std::distance(l_begin, l_end_eof) + 1;  // +1 是为了包含 \n 自身
+      buffer_.consume(l_size);                         // 清空缓存
+      l_size = l_size > l_my_buffers_size ? l_size - l_my_buffers_size : 0;
       {
         auto l_end_eof_t = l_end_eof;
         --l_end_eof_t;
