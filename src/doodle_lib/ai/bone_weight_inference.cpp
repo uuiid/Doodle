@@ -382,7 +382,15 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   // The model contains a learnable projector `bone_proj` which maps bone_feat -> hidden_dim.
   // bone_proj makes the dataset free to provide raw bone descriptors (e.g. positions, transforms).
   SkinWeightGCNImpl(int in_channels, int hidden_dim, int bone_feat_dim = 3)
-      : gc1(nullptr), gc2(nullptr), bgc(nullptr), bone_proj(nullptr), gfc1(nullptr), gfc2(nullptr), fc1(nullptr) {
+      : gc1(nullptr),
+        gc2(nullptr),
+        bgc(nullptr),
+        bone_proj(nullptr),
+        gfc1(nullptr),
+        gfc2(nullptr),
+        dfc1(nullptr),
+        dfc2(nullptr),
+        fc1(nullptr) {
     gc1       = register_module("gc1", GraphConv(in_channels, hidden_dim));
     gc2       = register_module("gc2", GraphConv(hidden_dim, hidden_dim));
     // bone graph conv: transforms bone embeddings via bone adjacency
@@ -392,8 +400,11 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     // global branch
     gfc1      = register_module("gfc1", torch::nn::Linear(in_channels, hidden_dim));
     gfc2      = register_module("gfc2", torch::nn::Linear(hidden_dim, hidden_dim));
+    // detail branch (new): preserves local features without smoothing
+    dfc1      = register_module("dfc1", torch::nn::Linear(in_channels, hidden_dim));
+    dfc2      = register_module("dfc2", torch::nn::Linear(hidden_dim, hidden_dim));
     // fusion and final
-    fc1       = register_module("fc1", torch::nn::Linear(hidden_dim * 2, hidden_dim));
+    fc1       = register_module("fc1", torch::nn::Linear(hidden_dim * 3, hidden_dim));
   }
 
   // forward 返回归一化的概率分布（用于 Smooth L1 损失）
@@ -413,9 +424,13 @@ struct SkinWeightGCNImpl : torch::nn::Module {
     // broadcast to nodes
     auto g_bcast = g_pool.expand({x.size(0), g_pool.size(1)});  // [N,H]
 
-    // concat
-    auto feat    = torch::cat({l, g_bcast}, /*dim=*/1);  // [N, 2H]
-    auto h       = torch::relu(fc1->forward(feat));      // [N, H]
+    // 细节分支：保留局部特征而不进行平滑处理
+    auto d       = torch::relu(dfc1->forward(x));  // [N, H]
+    d            = torch::relu(dfc2->forward(d));  // [N, H]
+
+    // concat: Local(GCN) + Global(Pooled) + Detail(MLP)
+    auto feat    = torch::cat({l, g_bcast, d}, /*dim=*/1);  // [N, 3H]
+    auto h       = torch::relu(fc1->forward(feat));         // [N, H]
 
     // 将原始骨骼特征投影到隐藏空间
     if (!bone_feat.defined()) throw std::runtime_error("bone_feat must be provided to the model forward");
@@ -456,7 +471,9 @@ struct SkinWeightGCNImpl : torch::nn::Module {
   GraphConv gc1, gc2;
   GraphConv bgc;
   torch::nn::Linear bone_proj;
-  torch::nn::Linear gfc1, gfc2, fc1;
+  torch::nn::Linear gfc1, gfc2;
+  torch::nn::Linear dfc1, dfc2;
+  torch::nn::Linear fc1;
 };
 TORCH_MODULE(SkinWeightGCN);
 
@@ -635,24 +652,6 @@ std::shared_ptr<bone_weight_inference_model> bone_weight_inference_model::train(
         "Epoch {} TrainLoss: {:.6f} ValLoss: {:.6f} LR: {:.6f}", epoch, epoch_loss, val_loss,
         optimizer.param_groups()[0].options().get_lr()
     );
-
-    // // Early stopping
-    // if (val_loss < best_val_loss) {
-    //   best_val_loss    = val_loss;
-    //   patience_counter = 0;
-    //   // 保存最佳模型
-    //   save_checkpoint(
-    //       model,
-    //       fmt::format("{}/{}_best{}", in_output_path.parent_path(), in_output_path.stem(),
-    //       in_output_path.extension())
-    //   );
-    // } else {
-    //   patience_counter++;
-    //   if (patience_counter >= patience) {
-    //     SPDLOG_WARN("Early stopping at epoch {}", epoch);
-    //     break;
-    //   }
-    // }
 
     // checkpoint
     if (epoch % 10 == 0) {
