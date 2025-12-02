@@ -14,9 +14,11 @@
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 
+#include <boost/asio/as_tuple.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/experimental/awaitable_operators.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/lockfree/detail/uses_optional.hpp>
 
 #include "websocket_impl.h"
@@ -47,11 +49,12 @@ boost::asio::awaitable<void> sid_data::impl_run() {
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     if (is_timeout()) co_return;
     l_timer.expires_after(ctx_->handshake_data_.ping_interval_);
-    co_await l_timer.async_wait(boost::asio::use_awaitable);
+    auto&& [l_ec] = co_await l_timer.async_wait(boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>{});
+    if (l_ec) break;
     seed_message_ping();
   }
-  close();
   seed_message_ping();
+  close();
   co_return;
 }
 
