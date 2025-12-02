@@ -51,6 +51,7 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     l_timer.expires_after(ctx_->handshake_data_.ping_interval_);
     auto&& [l_ec] = co_await l_timer.async_wait(boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>{});
     if (l_ec) break;
+    if (auto l_websocket = socket_io_websocket_core_.lock(); !l_websocket) co_return;
     seed_message_ping();
   }
   seed_message_ping();
