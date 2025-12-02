@@ -28,7 +28,7 @@ sid_ctx::sid_ctx()
       handshake_data_{
           .upgrades_      = {transport_type::websocket},
           .ping_interval_ = chrono::milliseconds{25000},
-          .ping_timeout_  = chrono::milliseconds{20000},
+          .ping_timeout_  = chrono::milliseconds{40000},
           .max_payload_   = 1000000
       } {}
 
