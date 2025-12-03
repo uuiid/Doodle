@@ -202,17 +202,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("run_time_info", &server_task_info::run_time_info_),
           make_column("result_path", &server_task_info::result_path_)
       ),
-      make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
-      make_table(
-          "computer_tab",                                                     //
-          make_column("id", &computer::id_, primary_key()),                   //
-          make_column("uuid_id", &computer::uuid_id_, unique(), not_null()),  //
-          make_column("name", &computer::name_),                              //
-          make_column("ip", &computer::ip_),                                  //
-          make_column("server_status", &computer::server_status_),            //
-          make_column("client_status", &computer::client_status_)
-      ),
-      make_table(
+      make_table<assets_file_helper::link_parent_t>(
           "assets_link_parent_t", make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
           make_column("assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_, not_null()),
           make_column("assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, not_null()),
@@ -224,7 +214,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
               .on_delete.cascade()
       ),
       make_index("assets_file_tab_uuid_id_index_2", &assets_file_helper::database_t::uuid_id_),
-      make_table(
+      make_table<assets_file_helper::database_t>(
           "assets_file_tab_2",  //
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null()),
@@ -237,7 +227,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       ),
       make_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_),
       make_index("assets_tab_label", &assets_helper::database_t::label_),
-      make_table(
+      make_table<assets_helper::database_t>(
           "assets_tab",  //
           make_column("id", &assets_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_helper::database_t::uuid_id_, unique(), not_null()),
@@ -247,7 +237,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       ),
       make_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_),
       make_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_),
-      make_table(
+      make_table<attendance_helper::database_t>(
           "attendance_tab",                                                       //
           make_column("id", &attendance_helper::database_t::id_, primary_key()),  //
           make_column("uuid_id", &attendance_helper::database_t::uuid_id_, unique(), not_null()),
@@ -263,7 +253,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
       ),
 
       make_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_),
-      make_table(
+      make_table<work_xlsx_task_info_helper::database_t>(
           "work_xlsx_task_info_tab",                                                       //
           make_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key()),  //
           make_column("uuid_id", &work_xlsx_task_info_helper::database_t::uuid_id_, unique(), not_null()),
