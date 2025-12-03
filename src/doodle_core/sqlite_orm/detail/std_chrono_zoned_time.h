@@ -7,6 +7,7 @@
 #include <chrono>
 #include <fmt/chrono.h>
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 namespace sqlite_orm {
 
@@ -30,7 +31,13 @@ struct type_printer<std::chrono::zoned_time<Duration>> : public text_printer {};
 template <typename Duration>
 struct statement_binder<std::chrono::zoned_time<Duration>> : public statement_binder<std::string> {
   int bind(sqlite3_stmt* stmt, int index, const std::chrono::zoned_time<Duration>& value) const {
-    return statement_binder<std::string>::bind(stmt, index, fmt::to_string(value.get_sys_time()));
+    try {
+      return statement_binder<std::string>::bind(stmt, index, fmt::to_string(value.get_sys_time()));
+    } catch (fmt::format_error& err) {
+      SPDLOG_ERROR(err.what());
+      auto l_new = std::chrono::system_clock::now();
+      return statement_binder<std::string>::bind(stmt, index, fmt::to_string(l_new));
+    }
   }
 };
 
@@ -56,7 +63,7 @@ struct row_extractor<std::chrono::zoned_time<Duration>> : row_extractor<std::str
     // static std::locale g_utf_8_locale{"UTF-8"};
     const auto l_str = row_extractor<std::string>::extract(stmt, columnIndex);
     std::istringstream l_istr{l_str};
-    std::chrono::time_point<std::chrono::system_clock, Duration> l_value{};
+    std::chrono::time_point<std::chrono::system_clock, Duration> l_value{std::chrono::system_clock::now()};
     if (l_istr >> parse("%F %T", l_value))
       ;
     else if (l_istr.clear(), l_istr.str(l_str), l_istr >> parse("%F", l_value))
