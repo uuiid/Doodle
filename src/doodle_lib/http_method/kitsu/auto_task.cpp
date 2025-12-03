@@ -9,6 +9,7 @@
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/episodes.h"
 #include "doodle_core/metadata/shot.h"
+#include "doodle_core/metadata/task_type.h"
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -18,8 +19,10 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
+#include <doodle_lib/exe_warp/task_sync.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
@@ -28,7 +31,6 @@
 
 #include <boost/asio/awaitable.hpp>
 
-#include "exe_warp/export_fbx_arg.h"
 #include <cstddef>
 #include <filesystem>
 #include <fmt/format.h>
@@ -578,6 +580,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_task   = l_sql.get_by_uuid<task>(task_id_);
   auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
-  
+  task_sync::args l_arg{};
+  if (l_entity.entity_type_id_ == task_type::get_effect_id()) {
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 }  // namespace doodle::http
