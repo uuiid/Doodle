@@ -218,7 +218,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "assets_file_tab_2",  //
           make_column("id", &assets_file_helper::database_t::id_, primary_key()),
           make_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null()),
-          make_column("label", &assets_file_helper::database_t::label_, unique()),
+          make_column("label", &assets_file_helper::database_t::label_),
           make_column("path", &assets_file_helper::database_t::path_),
           make_column("notes", &assets_file_helper::database_t::notes_),
           make_column("active", &assets_file_helper::database_t::active_),
@@ -282,10 +282,12 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "attachment_file",  //
           make_column("id", &attachment_file::id_, primary_key().autoincrement()),
           make_column("uuid", &attachment_file::uuid_id_, unique(), not_null()),
-          make_column("name", &attachment_file::name_), make_column("size", &attachment_file::size_),
-          make_column("extension", &attachment_file::extension_), make_column("mimetype", &attachment_file::mimetype_),
-          make_column("comment_id", &attachment_file::comment_id_, unique()),
-          make_column("chat_message_id", &attachment_file::chat_message_id_, unique()),
+          make_column("name", &attachment_file::name_),//
+          make_column("size", &attachment_file::size_),//
+          make_column("extension", &attachment_file::extension_),//
+          make_column("mimetype", &attachment_file::mimetype_),//
+          make_column("comment_id", &attachment_file::comment_id_),
+          make_column("chat_message_id", &attachment_file::chat_message_id_),
           foreign_key(&attachment_file::comment_id_)
               .references(&comment::uuid_id_)
               .on_delete.cascade()
@@ -479,7 +481,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("task_status_id", &task::task_status_id_),                   //
           make_column("entity_id", &task::entity_id_),                             //
           make_column("assigner_id", &task::assigner_id_),                         //
-          foreign_key(&task::project_id_).references(&project::uuid_id_).on_delete.set_null(),          //
+          foreign_key(&task::project_id_).references(&project::uuid_id_).on_delete.cascade(),          //
           foreign_key(&task::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade(),      //
           foreign_key(&task::task_status_id_).references(&task_status::uuid_id_).on_delete.cascade(),  //
           foreign_key(&task::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),            //
