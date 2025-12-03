@@ -898,6 +898,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
   ));
 }
 using sqlite_orm_type = decltype(make_storage_doodle(""));
+
+sqlite_orm_type make_storage_doodle_impl(const std::string& in_path);
+
 }  // namespace details
 struct sqlite_database_impl {
   using sqlite_orm_type = details::sqlite_orm_type;
@@ -912,7 +915,7 @@ struct sqlite_database_impl {
 
   explicit sqlite_database_impl(const FSys::path& in_path, bool sync_mode = true)
       : strand_(boost::asio::make_strand(g_io_context())),
-        storage_any_(std::move(details::make_storage_doodle(in_path.generic_string()))) {
+        storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string()))) {
     storage_any_.on_open = [this](sqlite3* in_) {
       raw_sqlite_handle_ = in_;
       default_logger_raw()->info("数据库连接已打开");
