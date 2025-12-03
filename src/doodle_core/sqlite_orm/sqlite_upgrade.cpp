@@ -7,7 +7,15 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_upgrade.h>
 
+#include <boost/hana/ext/std/tuple.hpp>
+
+#include <filesystem>
+#include <memory>
+#include <spdlog/spdlog.h>
+#include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <tuple>
+#include <type_traits>
 namespace doodle::details {
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -25,6 +33,7 @@ struct upgrade_init_t : sqlite_upgrade {
   };
   explicit upgrade_init_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    return;  // 已经不需要初始化数据了
     if (in_data->uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
       auto l_label      = std::make_shared<assets_helper::database_t>();
       l_label->uuid_id_ = g_lable_id;
@@ -85,10 +94,95 @@ struct upgrade_init_t : sqlite_upgrade {
 };  // namespace doodle::details
 
 struct upgrade_2_t : sqlite_upgrade {
-  std::shared_ptr<std::vector<notification>> notifications_{};
+  using all_tb = std::tuple<
+      std::vector<organisation>,                            //
+      std::vector<studio>,                                  //
+      std::vector<asset_type>,                              //
+      std::vector<task_status>,                             //
+      std::vector<department>,                              //
+      std::vector<task_type>,                               //
+      std::vector<status_automation>,                       //
+      std::vector<preview_background_file>,                 //
+      std::vector<person>,                                  //
+      std::vector<person_department_link>,                  //
+      std::vector<project_status>,                          //
+      std::vector<project>,                                 //
+      std::vector<project_preview_background_file_link>,    //
+      std::vector<project_status_automation_link>,          //
+      std::vector<project_asset_type_link>,                 //
+      std::vector<project_task_status_link>,                //
+      std::vector<project_task_type_link>,                  //
+      std::vector<project_person_link>,                     //
+      std::vector<task_type_asset_type_link>,               //
+      std::vector<entity_asset_extend>,                     //
+      std::vector<entity_concept_link>,                     //
+      std::vector<notification>,                            //
+      std::vector<preview_file>,                            //
+      std::vector<comment_preview_link>,                    //
+      std::vector<assignees_table>,                         //
+      std::vector<subscription>,                            //
+      std::vector<attachment_file>,                         //
+      std::vector<work_xlsx_task_info_helper::database_t>,  //
+      std::vector<attendance_helper::database_t>,           //
+      std::vector<assets_helper::database_t>,               //
+      std::vector<assets_file_helper::database_t>,          //
+      std::vector<assets_file_helper::link_parent_t>,       //
+      std::vector<server_task_info>,                        //
+      std::vector<working_file>,                            //
+      std::vector<working_file_entity_link>,                //
+      std::vector<working_file_task_link>,                  //
+      std::vector<playlist>,                                //
+      std::vector<playlist_shot>,                           //
+      std::vector<ai_image_metadata>,                       //
+      std::vector<entity>,                                  //
+      std::vector<task>,                                    //
+      std::vector<comment>,                                 //
+      std::vector<comment_acknoledgments>,                  //
+      std::vector<comment_department_mentions>,             //
+      std::vector<comment_mentions>,                        //
+      std::vector<entity_link>>;
+  std::shared_ptr<all_tb> data_;
 
-  explicit upgrade_2_t(const FSys::path& in_path) {}
-  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {}
+  explicit upgrade_2_t(const FSys::path& in_path) {
+    {
+      sqlite_database_impl l_db{in_path, false};
+      if (!l_db.storage_any_.table_exists("chat_message")) return;
+      data_ = std::make_shared<all_tb>();
+      // all_tb l_t{};
+      // boost::hana::to_tuple(l_t);
+      boost::hana::for_each(*data_, [&](auto in_t) {
+        using table_t                          = typename decltype(in_t)::value_type;
+        auto l_list                            = l_db.storage_any_.get_all<table_t>();
+        std::get<std::vector<table_t>>(*data_) = std::move(l_list);
+        // in_t          = std::move(l_list);
+      });
+    }
+    FSys::rename(in_path, in_path.string() + ".bak");
+  }
+  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    if (!data_) return;
+    in_data->storage_any_.vacuum();
+    sqlite3_exec(static_cast<sqlite3*>(in_data->raw_sqlite_handle_), "PRAGMA foreign_keys=OFF;", nullptr, nullptr, nullptr);
+    auto l_g = in_data->storage_any_.transaction_guard();
+    boost::hana::for_each(*data_, [&](auto& in_t) {
+      auto l_name = typeid(typename std::decay_t<decltype(in_t)>::value_type).name();
+      SPDLOG_WARN("install {}", l_name);
+      if (in_t.size() > 500) {
+        constexpr std::size_t batch_size = 500;
+        for (std::size_t i = 0; i < in_t.size(); i += batch_size) {
+          auto l_end = std::min(i + batch_size, in_t.size());
+          in_data->storage_any_.insert_range(
+              in_t.begin() + static_cast<std::ptrdiff_t>(i), in_t.begin() + static_cast<std::ptrdiff_t>(l_end)
+          );
+        }
+      } else {
+        in_data->storage_any_.insert_range(in_t.begin(), in_t.end());
+      }
+    });
+    l_g.commit();
+    data_.reset();
+    sqlite3_exec(static_cast<sqlite3*>(in_data->raw_sqlite_handle_), "PRAGMA foreign_keys=ON;", nullptr, nullptr, nullptr);
+  }
   ~upgrade_2_t() override = default;
 };
 

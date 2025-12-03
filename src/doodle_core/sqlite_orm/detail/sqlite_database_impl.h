@@ -906,10 +906,15 @@ struct sqlite_database_impl {
   using strand_type_ptr = std::shared_ptr<strand_type>;
   strand_type strand_;
   sqlite_orm_type storage_any_;
+  void* raw_sqlite_handle_{nullptr};
 
   explicit sqlite_database_impl(const FSys::path& in_path, bool sync_mode = true)
       : strand_(boost::asio::make_strand(g_io_context())),
         storage_any_(std::move(details::make_storage_doodle(in_path.generic_string()))) {
+    storage_any_.on_open = [this](sqlite3* in_) {
+      raw_sqlite_handle_ = in_;
+      default_logger_raw()->info("数据库连接已打开");
+    };
     storage_any_.open_forever();
     if (sync_mode) try {
         auto l_g   = storage_any_.transaction_guard();
