@@ -286,7 +286,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("extension", &attachment_file::extension_), make_column("mimetype", &attachment_file::mimetype_),
           make_column("comment_id", &attachment_file::comment_id_, unique()),
           make_column("chat_message_id", &attachment_file::chat_message_id_, unique()),
-          foreign_key(&attachment_file::comment_id_).references(&comment::uuid_id_)
+          foreign_key(&attachment_file::comment_id_)
+              .references(&comment::uuid_id_)
+              .on_delete.cascade()
       ),
       make_unique_index(
           "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
@@ -303,10 +305,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("person_id", &subscription::person_id_, not_null()),
           make_column("task_id", &subscription::task_id_), make_column("entity_id", &subscription::entity_id_),
           make_column("task_type_id", &subscription::task_type_id_),
-          foreign_key(&subscription::person_id_).references(&person::id_),
-          foreign_key(&subscription::task_id_).references(&task::uuid_id_),
-          foreign_key(&subscription::entity_id_).references(&entity::uuid_id_),
-          foreign_key(&subscription::task_type_id_).references(&task_type::uuid_id_)
+          foreign_key(&subscription::person_id_).references(&person::uuid_id_).on_delete.cascade(),
+          foreign_key(&subscription::task_id_).references(&task::uuid_id_).on_delete.cascade(),
+          foreign_key(&subscription::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),
+          foreign_key(&subscription::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
       make_index("assignations_task_id_index", &assignees_table::task_id_),
       make_table<assignees_table>(
@@ -314,7 +316,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &assignees_table::id_, primary_key().autoincrement()),
           make_column("person_id", &assignees_table::person_id_, not_null()),
           make_column("task_id", &assignees_table::task_id_, not_null()),
-          foreign_key(&assignees_table::person_id_).references(&person::id_).on_delete.cascade(),
+          foreign_key(&assignees_table::person_id_).references(&person::uuid_id_).on_delete.cascade(),
           foreign_key(&assignees_table::task_id_).references(&task::uuid_id_).on_delete.cascade()
       ),
       make_index("comment_preview_link_comment_id_index", &comment_preview_link::comment_id_),
@@ -324,8 +326,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),             //
           make_column("comment_id", &comment_preview_link::comment_id_),                            //
           make_column("preview_file_id", &comment_preview_link::preview_file_id_),                  //
-          foreign_key(&comment_preview_link::comment_id_).references(&comment::uuid_id_),           //
-          foreign_key(&comment_preview_link::preview_file_id_).references(&preview_file::uuid_id_)  //
+          foreign_key(&comment_preview_link::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),           //
+          foreign_key(&comment_preview_link::preview_file_id_).references(&preview_file::uuid_id_).on_delete.cascade()  //
       ),
       make_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_),
       make_index("preview_file_task_id_index", &preview_file::task_id_),
@@ -359,8 +361,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("uploaded_movie_name", &preview_file::uploaded_movie_name_),  //
           make_column("created_at", &preview_file::created_at_),                    //
           make_column("updated_at", &preview_file::updated_at_),                    //
-          foreign_key(&preview_file::task_id_).references(&task::uuid_id_),         //
-          foreign_key(&preview_file::person_id_).references(&person::uuid_id_)      //
+          foreign_key(&preview_file::task_id_).references(&task::uuid_id_).on_delete.cascade(),         //
+          foreign_key(&preview_file::person_id_).references(&person::uuid_id_).on_delete.set_null()      //
       ),
       make_table<notification>(
           "notification_2",                                                        //
@@ -375,10 +377,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("task_id", &notification::task_id_, not_null()),             //
           make_column("reply_id", &notification::reply_id_),                       //
           make_column("created_at", &notification::created_at_),                   //
-          foreign_key(&notification::person_id_).references(&person::uuid_id_),    //
-          foreign_key(&notification::author_id_).references(&person::uuid_id_),    //
-          foreign_key(&notification::comment_id_).references(&comment::uuid_id_),  //
-          foreign_key(&notification::task_id_).references(&task::uuid_id_)
+          foreign_key(&notification::person_id_).references(&person::uuid_id_).on_delete.cascade(),    //
+          foreign_key(&notification::author_id_).references(&person::uuid_id_).on_delete.cascade(),    //
+          foreign_key(&notification::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&notification::task_id_).references(&task::uuid_id_).on_delete.cascade()
       ),
       make_index("comment_mentions_comment_id_index", &comment_mentions::comment_id_),
       make_index("comment_mentions_person_id_index", &comment_mentions::person_id_),
@@ -387,8 +389,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &comment_mentions::id_, primary_key().autoincrement()),    //
           make_column("comment_id", &comment_mentions::comment_id_),                   //
           make_column("person_id", &comment_mentions::person_id_),                     //
-          foreign_key(&comment_mentions::comment_id_).references(&comment::uuid_id_),  //
-          foreign_key(&comment_mentions::person_id_).references(&person::uuid_id_)
+          foreign_key(&comment_mentions::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&comment_mentions::person_id_).references(&person::uuid_id_).on_delete.cascade()
       ),
       make_index("comment_department_mentions_comment_id_index", &comment_department_mentions::comment_id_),
       make_index("comment_department_mentions_department_id_index", &comment_department_mentions::department_id_),
@@ -397,8 +399,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &comment_department_mentions::id_, primary_key().autoincrement()),    //
           make_column("comment_id", &comment_department_mentions::comment_id_),                   //
           make_column("department_id", &comment_department_mentions::department_id_),             //
-          foreign_key(&comment_department_mentions::comment_id_).references(&comment::uuid_id_),  //
-          foreign_key(&comment_department_mentions::department_id_).references(&department::uuid_id_)
+          foreign_key(&comment_department_mentions::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&comment_department_mentions::department_id_).references(&department::uuid_id_).on_delete.cascade()
       ),
       make_index("comment_acknoledgments_comment_id_index", &comment_acknoledgments::comment_id_),
       make_index("comment_acknoledgments_person_id_index", &comment_acknoledgments::person_id_),
@@ -407,8 +409,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &comment_acknoledgments::id_, primary_key().autoincrement()),    //
           make_column("comment_id", &comment_acknoledgments::comment_id_),                   //
           make_column("person_id", &comment_acknoledgments::person_id_),                     //
-          foreign_key(&comment_acknoledgments::comment_id_).references(&comment::uuid_id_),  //
-          foreign_key(&comment_acknoledgments::person_id_).references(&person::uuid_id_)
+          foreign_key(&comment_acknoledgments::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&comment_acknoledgments::person_id_).references(&person::uuid_id_).on_delete.cascade()
       ),
       make_index("comment_task_status_id_index", &comment::task_status_id_),
       make_index("comment_person_id_index", &comment::person_id_),
@@ -435,10 +437,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("person_id", &comment::person_id_, not_null()),                  //
           make_column("editor_id", &comment::editor_id_),                              //
           make_column("preview_file_id", &comment::preview_file_id_),                  //
-          foreign_key(&comment::task_status_id_).references(&task_status::uuid_id_),   //
-          foreign_key(&comment::person_id_).references(&person::uuid_id_),             //
-          foreign_key(&comment::editor_id_).references(&person::uuid_id_),             //
-          foreign_key(&comment::preview_file_id_).references(&preview_file::uuid_id_)  //
+          foreign_key(&comment::task_status_id_).references(&task_status::uuid_id_).on_delete.cascade(),   //
+          foreign_key(&comment::person_id_).references(&person::uuid_id_).on_delete.set_null(),             //
+          foreign_key(&comment::editor_id_).references(&person::uuid_id_).on_delete.set_null(),             //
+          foreign_key(&comment::preview_file_id_).references(&preview_file::uuid_id_).on_delete.set_null()  //
       ),
       make_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_),
       make_index("task_project_id_index", &task::project_id_),
@@ -477,11 +479,11 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("task_status_id", &task::task_status_id_),                   //
           make_column("entity_id", &task::entity_id_),                             //
           make_column("assigner_id", &task::assigner_id_),                         //
-          foreign_key(&task::project_id_).references(&project::uuid_id_),          //
-          foreign_key(&task::task_type_id_).references(&task_type::uuid_id_),      //
-          foreign_key(&task::task_status_id_).references(&task_status::uuid_id_),  //
-          foreign_key(&task::entity_id_).references(&entity::uuid_id_),            //
-          foreign_key(&task::assigner_id_).references(&person::uuid_id_),
+          foreign_key(&task::project_id_).references(&project::uuid_id_).on_delete.set_null(),          //
+          foreign_key(&task::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade(),      //
+          foreign_key(&task::task_status_id_).references(&task_status::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&task::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),            //
+          foreign_key(&task::assigner_id_).references(&person::uuid_id_).on_delete.set_null(),
           check(c(&task::difficulty_) > 0 && c(&task::difficulty_) < 6)
       ),
 
@@ -494,8 +496,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("data", &entity_link::data_),                                //
           make_column("nb_occurences", &entity_link::nb_occurences_),              //
           make_column("label", &entity_link::label_),              //
-          foreign_key(&entity_link::entity_in_id_).references(&entity::uuid_id_),  //
-          foreign_key(&entity_link::entity_out_id_).references(&entity::uuid_id_)
+          foreign_key(&entity_link::entity_in_id_).references(&entity::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&entity_link::entity_out_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
 
       make_table<entity_concept_link>(                                                     //
@@ -503,8 +505,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("id", &entity_concept_link::id_, primary_key().autoincrement()),     //
           make_column("entity_in_id", &entity_concept_link::entity_id_),                      //
           make_column("entity_out_id", &entity_concept_link::entity_out_id_),              //
-          foreign_key(&entity_concept_link::entity_id_).references(&entity::uuid_id_),     //
-          foreign_key(&entity_concept_link::entity_out_id_).references(&entity::uuid_id_)  //
+          foreign_key(&entity_concept_link::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),     //
+          foreign_key(&entity_concept_link::entity_out_id_).references(&entity::uuid_id_).on_delete.cascade()  //
       ),
       make_index("entity_asset_extend_entity_id_idx", &entity_asset_extend::entity_id_),
       make_table<entity_asset_extend>(
@@ -549,13 +551,13 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("preview_file_id", &entity::preview_file_id_),                   //
           make_column("ready_for", &entity::ready_for_),                               //
           make_column("created_by", &entity::created_by_),                             //
-          foreign_key(&entity::project_id_).references(&project::uuid_id_),            //
-          foreign_key(&entity::entity_type_id_).references(&asset_type::uuid_id_),     //
-          foreign_key(&entity::preview_file_id_).references(&preview_file::uuid_id_),  //
-          foreign_key(&entity::ready_for_).references(&task_type::uuid_id_),           //
-          foreign_key(&entity::created_by_).references(&person::uuid_id_),             //
-          foreign_key(&entity::parent_id_).references(&entity::uuid_id_),              //
-          foreign_key(&entity::source_id_).references(&entity::uuid_id_)               //
+          foreign_key(&entity::project_id_).references(&project::uuid_id_).on_delete.cascade(),            //
+          foreign_key(&entity::entity_type_id_).references(&asset_type::uuid_id_).on_delete.cascade(),     //
+          foreign_key(&entity::preview_file_id_).references(&preview_file::uuid_id_).on_delete.set_null(),  //
+          foreign_key(&entity::ready_for_).references(&task_type::uuid_id_).on_delete.set_null(),           //
+          foreign_key(&entity::created_by_).references(&person::uuid_id_).on_delete.set_null(),             //
+          foreign_key(&entity::parent_id_).references(&entity::uuid_id_).on_delete.cascade(),              //
+          foreign_key(&entity::source_id_).references(&entity::uuid_id_).on_delete.cascade()               //
       ),
       make_unique_index("task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_, &task_type_asset_type_link::asset_type_id_),
       make_index("task_type_asset_type_link_task_type_id_index", &task_type_asset_type_link::task_type_id_),
@@ -576,8 +578,8 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("project_id", &project_person_link::project_id_, not_null()),
           make_column("person_id", &project_person_link::person_id_, not_null()),
           make_column("shotgun_id", &project_person_link::shotgun_id_),
-          foreign_key(&project_person_link::project_id_).references(&project::uuid_id_),
-          foreign_key(&project_person_link::person_id_).references(&person::uuid_id_)
+          foreign_key(&project_person_link::project_id_).references(&project::uuid_id_).on_delete.cascade(),
+          foreign_key(&project_person_link::person_id_).references(&person::uuid_id_).on_delete.cascade()
         ),
       make_unique_index("project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_),
       make_index("project_task_type_link_project_id_index", &project_task_type_link::project_id_),
@@ -680,9 +682,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("asset_root_path", &project::asset_root_path_, default_value("")),
 
 
-          foreign_key(&project::project_status_id_).references(&project_status::uuid_id_),
+          foreign_key(&project::project_status_id_).references(&project_status::uuid_id_).on_delete.cascade(),
           foreign_key(&project::default_preview_background_file_id_)
-              .references(&preview_background_file::uuid_id_)
+              .references(&preview_background_file::uuid_id_).on_delete.set_null()
       ),
       make_table<metadata_descriptor_department_link>(
           "metadata_descriptor_department_link",  //
@@ -800,10 +802,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("out_task_status_id", &status_automation::out_task_status_id_),      //
           make_column("import_last_revision", &status_automation::import_last_revision_),  //
           make_column("archived", &status_automation::archived_),                           //
-          foreign_key(&status_automation::in_task_type_id_).references(&task_type::uuid_id_),          //
-          foreign_key(&status_automation::in_task_status_id_).references(&task_status::uuid_id_),      //
-          foreign_key(&status_automation::out_task_type_id_).references(&task_type::uuid_id_),         //
-          foreign_key(&status_automation::out_task_status_id_).references(&task_status::uuid_id_)      //
+          foreign_key(&status_automation::in_task_type_id_).references(&task_type::uuid_id_).on_delete.cascade(),          //
+          foreign_key(&status_automation::in_task_status_id_).references(&task_status::uuid_id_).on_delete.cascade(),      //
+          foreign_key(&status_automation::out_task_type_id_).references(&task_type::uuid_id_).on_delete.cascade(),         //
+          foreign_key(&status_automation::out_task_status_id_).references(&task_status::uuid_id_).on_delete.cascade()      //
       ),
       make_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_),
       make_index("task_type_department_id_index", &task_type::department_id_),
@@ -821,7 +823,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("archived", &task_type::archived_),                     //
           make_column("shotgun_id", &task_type::shotgun_id_),                  //
           make_column("department_id", &task_type::department_id_),          //
-          foreign_key(&task_type::department_id_).references(&department::uuid_id_)
+          foreign_key(&task_type::department_id_).references(&department::uuid_id_).on_delete.set_null()
       ),
       make_index("department_uuid_id_index", &department::uuid_id_),
       make_table<department>(
