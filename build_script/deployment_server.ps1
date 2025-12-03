@@ -10,17 +10,10 @@ Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
 
-&robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s | Out-Null
-&robocopy "$DoodleOut\dist\assets" "\\192.168.40.181\Dev\tmp\dist\assets" /MIR | Out-Null
-
 $NewSession = New-ServerPSSession
-
-# "C:\Program Files\PowerShell\7\pwsh.exe"  -NoExit -Command { Enter-PSSession -ComputerName 192.168.40.181 -Credential (New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, (ConvertTo-SecureString "root" -AsPlainText -Force)) -Authentication Basic }
-# 显示事件日志
-
 $KitsuCookies = $env:KITSU_COOKIES;
 Invoke-Command -Session $NewSession -ScriptBlock {
-    #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe")
+    &robocopy "\\192.168.20.89\Doodle2\build\pack" "D:\tmp" /MIR | Out-Null
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
