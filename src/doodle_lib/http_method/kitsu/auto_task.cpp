@@ -574,4 +574,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync::get(session_data_ptr in_handle) {
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_task   = l_sql.get_by_uuid<task>(task_id_);
+  auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  
+}
 }  // namespace doodle::http

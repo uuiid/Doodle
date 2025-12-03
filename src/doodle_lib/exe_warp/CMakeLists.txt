@@ -11,6 +11,7 @@ target_sources(
         inspect_maya.h
         export_fbx_arg.h
         qcloth_arg.h
+        task_sync.h
         
         PRIVATE
         maya_exe.cpp
@@ -23,4 +24,6 @@ target_sources(
         inspect_maya.cpp
         export_fbx_arg.cpp
         qcloth_arg.cpp
+        task_sync.cpp
+
 )
