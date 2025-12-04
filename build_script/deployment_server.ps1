@@ -10,19 +10,9 @@ Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
 
+&Robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s /w:1 
+
 $NewSession = New-ServerPSSession
-
-
-Invoke-Command -Session $NewSession -ScriptBlock {
-    $Tmp = "D:\tmp"
-    Remove-Item -Path "$Tmp/dist/assets" -Recurse -Force
-    Remove-Item -Path "$Tmp/dist/css" -Recurse -Force
-    Remove-Item -Path "$Tmp/dist/fonts" -Recurse -Force
-}
-
-
-# copy item only if different
-Copy-Item -Path "$DoodleOut\*" -Destination "D:\tmp" -Recurse -ToSession $NewSession -Force
 
 $KitsuCookies = $env:KITSU_COOKIES;
 Invoke-Command -Session $NewSession -ScriptBlock {
