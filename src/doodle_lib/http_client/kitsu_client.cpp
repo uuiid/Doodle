@@ -155,6 +155,11 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
     http_client_ptr_->set_timeout(chrono::seconds(l_size / (1024 * 1024)) + 30s);  // 1MB/s 上传速度
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
   set_req_headers(l_req, "application/octet-stream");
+  auto l_last_mod_time = chrono::clock_cast<chrono::system_clock>(FSys::last_write_time(in_file_path));
+  l_req.set(
+      boost::beast::http::field::last_modified,
+      fmt::format("{} GMT", fmt::format("{:%a, %d %b %Y %H:%M:%S}", l_last_mod_time))
+  );
   l_req.set(boost::beast::http::field::content_disposition, in_file_field_name);
   boost::system::error_code l_ec{};
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
@@ -300,8 +305,7 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_ue(
 ) {
   SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
-      fmt::format("/api/doodle/data/shots/{}/file/ue", in_shot_task_id), in_file_path,
-      base64_encode(in_file_field_name)
+      fmt::format("/api/doodle/data/shots/{}/file/ue", in_shot_task_id), in_file_path, base64_encode(in_file_field_name)
   );
 }
 boost::asio::awaitable<void> kitsu_client::remove_asset_file_maya(const uuid& in_uuid) {

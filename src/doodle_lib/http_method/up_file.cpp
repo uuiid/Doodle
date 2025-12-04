@@ -20,6 +20,7 @@
 
 #include "boost/beast/http/field.hpp"
 
+#include <chrono>
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <spdlog/spdlog.h>
@@ -41,6 +42,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::post
   } catch (...) {
     default_logger_raw()->error("base64 decode error {}", boost::current_exception_diagnostic_information());
   }
+  received_file_path_ = std::get<FSys::path>(in_handle->body_);
+  if (in_handle->req_header_.count(boost::beast::http::field::last_modified) != 0) {
+    auto l_time_str = in_handle->req_header_[boost::beast::http::field::last_modified];
+    chrono::system_clock::time_point l_tm{};
+    std::istringstream l_ss(l_time_str);
+    l_ss.imbue(std::locale("C"));
+    if (l_ss >> chrono::parse("%a, %d %b %Y %H:%M:%S", l_tm)) {
+      FSys::last_write_time(
+          std::get<FSys::path>(in_handle->body_), chrono::clock_cast<FSys::file_time_type::clock>(l_tm)
+      );
+    }
+  }
+
   file_path_ = l_d;
   query_task_info(in_handle);
   move_file(in_handle);

@@ -4,11 +4,13 @@
 
 #pragma once
 #include "doodle_core/metadata/entity.h"
+
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <string>
+
 
 namespace doodle {
 struct entity_asset_extend;
@@ -24,6 +26,8 @@ class up_file_base : public http_jwt_fun {
   virtual void move_file(session_data_ptr in_handle);
   FSys::path file_path_{};
   FSys::path root_path_{};
+  // 接收到的文件路径
+  FSys::path received_file_path_{};
 
  public:
   uuid id_{};
