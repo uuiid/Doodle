@@ -295,11 +295,13 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
       base64_encode(in_file_name.generic_string())
   );
 }
-boost::asio::awaitable<void> kitsu_client::upload_shot_animation_ue(uuid in_shot_task_id, FSys::path in_file_path) {
+boost::asio::awaitable<void> kitsu_client::upload_shot_animation_ue(
+    uuid in_shot_task_id, FSys::path in_file_path, std::string in_file_field_name
+) {
   SPDLOG_WARN("上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/ue", in_shot_task_id), in_file_path,
-      base64_encode(in_file_path.filename().generic_string())
+      base64_encode(in_file_field_name)
   );
 }
 boost::asio::awaitable<void> kitsu_client::remove_asset_file_maya(const uuid& in_uuid) {

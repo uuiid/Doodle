@@ -80,7 +80,9 @@ class kitsu_client {
       uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
   );
   /// 上传镜头UE文件
-  boost::asio::awaitable<void> upload_shot_animation_ue(uuid in_shot_task_id, FSys::path in_file_path);
+  boost::asio::awaitable<void> upload_shot_animation_ue(
+      uuid in_shot_task_id, FSys::path in_file_path, std::string in_file_field_name
+  );
   boost::asio::awaitable<void> remove_asset_file_maya(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_ue(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_image(const uuid& in_uuid);
