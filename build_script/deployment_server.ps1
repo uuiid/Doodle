@@ -11,9 +11,11 @@ $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
 
 $NewSession = New-ServerPSSession
+# copy item only if different
+Copy-Item -Path "$DoodleOut\*" -Destination "D:\tmp" -Recurse -ToSession $NewSession -Force
+
 $KitsuCookies = $env:KITSU_COOKIES;
 Invoke-Command -Session $NewSession -ScriptBlock {
-    &robocopy "\\192.168.20.89\Doodle2\build\pack" "D:\tmp" /MIR | Out-Null
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
