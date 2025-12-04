@@ -31,10 +31,12 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <filesystem>
 #include <fmt/format.h>
 #include <map>
+#include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <vector>
@@ -45,6 +47,35 @@ struct sim_map_anim {
   std::size_t to_fbx_idx_{};
   std::size_t to_abc_idx_{};
 };
+// 检查是否存在多个场景
+auto check_multiple_scene(const auto& in_vector) {
+  auto l_r = std::count_if(in_vector.begin(), in_vector.end(), [](const auto& in_info) -> bool {
+    return std::get<0>(in_info).entity_type_id_ == asset_type::get_ground_id();
+  });
+  if (l_r == 0)
+    throw_exception(
+        http_request_error{boost::beast::http::status::bad_request, "未找到场景类型资产，无法生成 ue 主工程路径"}
+    );
+  if (l_r > 1)
+    throw_exception(
+        http_request_error{boost::beast::http::status::bad_request, "存在多个场景类型资产，无法生成 ue 主工程路径"}
+    );
+  return std::find_if(in_vector.begin(), in_vector.end(), [](const auto& in_pair) {
+    return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id();
+  });
+}
+// 检查可选属性是否填充完整
+template <typename T, typename... Args>
+void check_optional(const std::optional<T>& in_opt, fmt::format_string<Args...> fmt_str, Args&&... in_args) {
+  if (!in_opt)
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request,
+            fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
+        }
+    );
+}
+
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly::post(
     session_data_ptr in_handle
@@ -198,102 +229,85 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   );
   FSys::path l_scene_ue_path{core_set::get_set().get_cache_root().parent_path()};
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
-  if (auto l_scene_it = std::find_if(
-          l_assets.begin(), l_assets.end(),
-          [](const auto& in_pair) { return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id(); }
-      );
-      l_scene_it == l_assets.end()) {
+
+  auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
+  check_optional(l_scene_asset_extend.gui_dang_, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
+  check_optional(l_scene_asset_extend.kai_shi_ji_shu_, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_);
+  const auto l_suffix = l_is_simulation_task ? "_JS" : "_DH";
+  auto l_ue_main_map  = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
+                       get_entity_ground_ue_map_name(l_scene_asset_extend);
+  l_ret.original_map_          = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
+  l_ret.movie_pipeline_config_ = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_prj.code_,
+      l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
+  );
+  l_ret.level_sequence_import_ = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}", l_prj.code_,
+      l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+  );
+  l_ret.create_map_ = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}_LV", l_prj.code_,
+      l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+  );
+  l_ret.import_dir_ = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/files/", l_prj.code_, l_episodes.get_episodes(),
+      l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+  );
+  l_ret.render_map_ = fmt::format(
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_prj.code_, l_episodes.get_episodes(),
+      l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+  );
+  auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+  if (l_uprj.empty())
     throw_exception(
         http_request_error{
-            boost::beast::http::status::bad_request, "镜头关联的资产中未找到场景类型资产，无法生成 ue 主工程路径"
+            boost::beast::http::status::bad_request,
+            fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
         }
     );
-  } else {
-    auto&& [l_scene_asset, l_scene_asset_extend] = *l_scene_it;
-    const auto l_suffix                          = l_is_simulation_task ? "_JS" : "_DH";
-    if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
-      auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
-                           get_entity_ground_ue_map_name(l_scene_asset_extend);
-      l_ret.original_map_          = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
-      l_ret.movie_pipeline_config_ = fmt::format(
-          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_prj.code_,
-          l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
-      );
-      l_ret.level_sequence_import_ = fmt::format(
-          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}", l_prj.code_,
-          l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-      );
-      l_ret.create_map_ = fmt::format(
-          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}_LV", l_prj.code_,
-          l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-      );
-      l_ret.import_dir_ = fmt::format(
-          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/files/", l_prj.code_, l_episodes.get_episodes(),
-          l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-      );
-      l_ret.render_map_ = fmt::format(
-          "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_prj.code_, l_episodes.get_episodes(),
-          l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-      );
-      auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
-      if (l_uprj.empty())
-        throw_exception(
-            http_request_error{
-                boost::beast::http::status::bad_request,
-                fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
-            }
-        );
-      l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
+  l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
 
-      l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
-      l_ret.out_file_dir_ =
-          l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
-          fmt::format(
-              "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
-          );
-      l_ret.create_move_path_ =
-          l_ret.out_file_dir_.parent_path() / l_ret.out_file_dir_.filename().replace_extension(".mp4");
+  l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
+  l_ret.out_file_dir_ =
+      l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
+      fmt::format(
+          "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
+      );
+  l_ret.create_move_path_ =
+      l_ret.out_file_dir_.parent_path() / l_ret.out_file_dir_.filename().replace_extension(".mp4");
 
-      l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
-      l_ret.ue_asset_path_.emplace_back(
-          l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
-          l_scene_ue_path / doodle_config::ue4_content
-      );
-      l_ret.ue_asset_path_.emplace_back(
-          l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
-          l_scene_ue_path / doodle_config::ue4_config
-      );
-      l_ret.update_ue_path_.emplace_back(
-          l_scene_ue_path / doodle_config::ue4_content, l_prj.path_ / "03_Workflow" / "Shot" /
-                                                            fmt::format("EP{:04}", l_ret.episodes_) /
-                                                            l_scene_ue_path.stem() / doodle_config::ue4_content
+  l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
+  l_ret.ue_asset_path_.emplace_back(
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
+      l_scene_ue_path / doodle_config::ue4_content
+  );
+  l_ret.ue_asset_path_.emplace_back(
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
+      l_scene_ue_path / doodle_config::ue4_config
+  );
+  l_ret.update_ue_path_.emplace_back(
+      l_scene_ue_path / doodle_config::ue4_content, l_prj.path_ / "03_Workflow" / "Shot" /
+                                                        fmt::format("EP{:04}", l_ret.episodes_) /
+                                                        l_scene_ue_path.stem() / doodle_config::ue4_content
 
-      );
-      l_ret.update_ue_path_.emplace_back(
-          l_scene_ue_path / doodle_config::ue4_config, l_prj.path_ / "03_Workflow" / "Shot" /
-                                                           fmt::format("EP{:04}", l_ret.episodes_) /
-                                                           l_scene_ue_path.stem() / doodle_config::ue4_config
+  );
+  l_ret.update_ue_path_.emplace_back(
+      l_scene_ue_path / doodle_config::ue4_config, l_prj.path_ / "03_Workflow" / "Shot" /
+                                                       fmt::format("EP{:04}", l_ret.episodes_) /
+                                                       l_scene_ue_path.stem() / doodle_config::ue4_config
 
-      );
-      l_ret.update_ue_path_.emplace_back(
-          l_scene_ue_path / l_uprj.filename(), l_prj.path_ / "03_Workflow" / "Shot" /
-                                                   fmt::format("EP{:04}", l_ret.episodes_) / l_scene_ue_path.stem() /
-                                                   l_uprj.filename()
+  );
+  l_ret.update_ue_path_.emplace_back(
+      l_scene_ue_path / l_uprj.filename(), l_prj.path_ / "03_Workflow" / "Shot" /
+                                               fmt::format("EP{:04}", l_ret.episodes_) / l_scene_ue_path.stem() /
+                                               l_uprj.filename()
 
-      );
-      l_ret.update_ue_path_.emplace_back(
-          l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
-          FSys::path{l_prj.auto_upload_path_} / fmt::format("EP{:03}", l_ret.episodes_) / "自动灯光序列"
+  );
+  l_ret.update_ue_path_.emplace_back(
+      l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
+      FSys::path{l_prj.auto_upload_path_} / fmt::format("EP{:03}", l_ret.episodes_) / "自动灯光序列"
 
-      );
-    } else
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format("资产 {} 缺少归档或开始集信息，无法生成 ue 主工程路径", l_scene_asset.name_)
-          }
-      );
-  }
+  );
 
   for (auto&& [l_asset, l_asset_extend] : l_assets) {
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
@@ -600,98 +614,34 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
                              )
       ))
   );
-
+  check_multiple_scene(l_assets);
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
-  if (auto l_scene_it = std::find_if(
-          l_assets.begin(), l_assets.end(),
-          [](const auto& in_pair) { return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id(); }
-      );
-      l_scene_it == l_assets.end()) {
+  task_sync::args l_arg{};
+  auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
+  check_optional(l_scene_asset_extend.gui_dang_, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
+  check_optional(l_scene_asset_extend.kai_shi_ji_shu_, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_);
+
+  auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
+                       get_entity_ground_ue_map_name(l_scene_asset_extend);
+  auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
+  if (l_uprj.empty())
     throw_exception(
         http_request_error{
-            boost::beast::http::status::bad_request, "镜头关联的资产中未找到场景类型资产，无法生成 ue 主工程路径"
+            boost::beast::http::status::bad_request,
+            fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
         }
     );
-  } else {
-    auto&& [l_scene_asset, l_scene_asset_extend] = *l_scene_it;
-    // if (l_scene_asset_extend.gui_dang_ && l_scene_asset_extend.kai_shi_ji_shu_) {
-    //   auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
-    //                        get_entity_ground_ue_map_name(l_scene_asset_extend);
-    //   l_ret.original_map_          = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
-    //   l_ret.movie_pipeline_config_ = fmt::format(
-    //       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_prj.code_,
-    //       l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
-    //   );
-    //   l_ret.level_sequence_import_ = fmt::format(
-    //       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}", l_prj.code_,
-    //       l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-    //   );
-    //   l_ret.create_map_ = fmt::format(
-    //       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}_LV", l_prj.code_,
-    //       l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-    //   );
-    //   l_ret.import_dir_ = fmt::format(
-    //       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/files/", l_prj.code_, l_episodes.get_episodes(),
-    //       l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-    //   );
-    //   l_ret.render_map_ = fmt::format(
-    //       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_prj.code_,
-    //       l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-    //   );
-    //   auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
-    //   if (l_uprj.empty())
-    //     throw_exception(
-    //         http_request_error{
-    //             boost::beast::http::status::bad_request,
-    //             fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
-    //         }
-    //     );
-    //   l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
+  auto l_scene_ue_path = FSys::path{l_prj.code_} / l_uprj.stem();
+  l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
+  l_arg.download_file_list_.emplace_back(
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
+      l_scene_ue_path / doodle_config::ue4_content
+  );
+  l_arg.download_file_list_.emplace_back(
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
+      l_scene_ue_path / doodle_config::ue4_config
+  );
 
-    //   l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
-    //   l_ret.out_file_dir_ =
-    //       l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
-    //       fmt::format(
-    //           "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
-    //       );
-    //   l_ret.create_move_path_ =
-    //       l_ret.out_file_dir_.parent_path() / l_ret.out_file_dir_.filename().replace_extension(".mp4");
-
-    //   l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
-    //   l_ret.ue_asset_path_.emplace_back(
-    //       l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
-    //       l_scene_ue_path / doodle_config::ue4_content
-    //   );
-    //   l_ret.ue_asset_path_.emplace_back(
-    //       l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
-    //       l_scene_ue_path / doodle_config::ue4_config
-    //   );
-    //   l_ret.update_ue_path_.emplace_back(
-    //       l_scene_ue_path / doodle_config::ue4_content, l_prj.path_ / "03_Workflow" / "Shot" /
-    //                                                         fmt::format("EP{:04}", l_ret.episodes_) /
-    //                                                         l_scene_ue_path.stem() / doodle_config::ue4_content
-
-    //   );
-    //   l_ret.update_ue_path_.emplace_back(
-    //       l_scene_ue_path / doodle_config::ue4_config, l_prj.path_ / "03_Workflow" / "Shot" /
-    //                                                        fmt::format("EP{:04}", l_ret.episodes_) /
-    //                                                        l_scene_ue_path.stem() / doodle_config::ue4_config
-
-    //   );
-    //   l_ret.update_ue_path_.emplace_back(
-    //       l_scene_ue_path / l_uprj.filename(), l_prj.path_ / "03_Workflow" / "Shot" /
-    //                                                fmt::format("EP{:04}", l_ret.episodes_) / l_scene_ue_path.stem() /
-    //                                                l_uprj.filename()
-
-    //   );
-    //   l_ret.update_ue_path_.emplace_back(
-    //       l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
-    //       FSys::path{l_prj.auto_upload_path_} / fmt::format("EP{:03}", l_ret.episodes_) / "自动灯光序列"
-
-    //   );
-  }
-
-  task_sync::args l_arg{};
   if (l_task.task_type_id_ == task_type::get_shot_effect_id()) {
     l_arg.download_file_list_.emplace_back(
         l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{}", l_episode_entity.name_) /
