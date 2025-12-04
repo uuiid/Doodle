@@ -605,6 +605,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   );
 
   auto l_scene_ue_path = FSys::path{l_prj.code_} / l_uprj.stem();
+
+  /// 添加场景文件下载
   l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
   l_arg.download_file_list_.emplace_back(
       l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
@@ -614,6 +616,39 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
       l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
       l_scene_ue_path / doodle_config::ue4_config
   );
+
+  for (auto&& [l_asset, l_asset_extend] : l_assets) {
+    if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
+      DOODLE_CHICK_HTTP(l_asset_extend.gui_dang_, bad_request, "资产 {} 缺少扩展信息 归档", l_asset.name_);
+      DOODLE_CHICK_HTTP(l_asset_extend.kai_shi_ji_shu_, bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_);
+      l_arg.download_file_list_.emplace_back(
+          l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
+          l_scene_ue_path / doodle_config::ue4_content
+      );
+
+    } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
+               l_asset.entity_type_id_ == asset_type::get_effect_id()) {
+      DOODLE_CHICK_HTTP(l_asset_extend.gui_dang_, bad_request, "资产 {} 缺少扩展信息 归档", l_asset.name_);
+      DOODLE_CHICK_HTTP(l_asset_extend.kai_shi_ji_shu_, bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_);
+      l_arg.download_file_list_.emplace_back(
+          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
+          l_scene_ue_path / get_entity_prop_ue_public_files_path()
+      );
+      l_arg.download_file_list_.emplace_back(
+          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_files_path(l_asset_extend),
+          l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend)
+      );
+
+    } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
+    } else {
+      throw_exception(
+          http_request_error{
+              boost::beast::http::status::bad_request, "不支持的资产类型: {}",
+              l_sql.get_by_uuid<asset_type>(l_asset.entity_type_id_).name_
+          }
+      );
+    }
+  }
 
   auto l_vfx_path = FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot /
                     fmt::format("ep{:04}", l_episodes) /
