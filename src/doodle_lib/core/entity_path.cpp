@@ -413,6 +413,15 @@ FSys::path get_shots_animation_file_name(
 FSys::path get_shots_animation_file_name(const entity& episode_, const entity& shot_, const project& prj_) {
   return get_shots_animation_file_name(episode_.name_, shot_.name_, prj_.code_);
 }
+// 生成特效 ue路径
+FSys::path get_shots_effect_ue_path(const entity& episode_) {
+  return FSys::path{"8-texiao"} / "Vfx_File" / episode_.name_;
+}
+// 生成灯光 ue路径
+FSys::path get_shots_lighting_ue_path(const entity& episode_) {
+  return FSys::path{"9-houqi"} / "Light_File" / episode_.name_;
+}
+
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();
   boost::replace_all(l_str, doodle_config::ue4_content, doodle_config::ue4_game);
