@@ -16,9 +16,16 @@
 #include <stdexcept>
 #include <string>
 
-namespace doodle {
+namespace magic_enum::customize {
+template <>
+struct enum_range<boost::beast::http::status> {
+  static constexpr int min = 99;
+  static constexpr int max = 512;
+  // (max - min) must be less than UINT16_MAX.
+};
+}  // namespace magic_enum::customize
 
-namespace bsys = boost::system;
+namespace doodle {
 
 namespace maya_enum {
 enum class maya_error_t : std::int32_t {
@@ -66,11 +73,12 @@ enum error_t : std::int32_t {
 
 };
 }  // namespace error_enum
+
 class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
   std::int32_t error_code_;
   explicit doodle_error(const std::string& message) : std::runtime_error(message), error_code_(0) {};
-  
+
   template <typename... Args>
   explicit doodle_error(fmt::format_string<Args...> fmt_str, Args&&... in_args)
       : std::runtime_error(
@@ -83,7 +91,7 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
             fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
         ),
         error_code_(in_core){};
-  
+
   template <typename... Args>
   explicit doodle_error(boost::beast::http::status in_core, fmt::format_string<Args...> fmt_str, Args&&... in_args)
       : std::runtime_error(
