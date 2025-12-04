@@ -33,7 +33,11 @@ struct task_type {
   /// 解算资产
   static uuid get_simulation_id();
   /// 特效资产
-  static uuid get_effect_id();
+  static uuid get_effect_asset_id();
+  /// 镜头特效
+  static uuid get_shot_effect_id();
+  /// 灯光
+  static uuid get_lighting_id();
   /// 动画
   static uuid get_animation_id();
   /// 解算任务
