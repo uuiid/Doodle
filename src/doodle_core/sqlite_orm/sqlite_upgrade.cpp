@@ -83,7 +83,7 @@ struct upgrade_init_t : sqlite_upgrade {
     DOODLE_TASK_TYPE(ground_model, 地编模型)
     DOODLE_TASK_TYPE(binding, 绑定)
     DOODLE_TASK_TYPE(simulation, 解算资产)
-    DOODLE_TASK_TYPE(effect, 特效资产)
+    DOODLE_TASK_TYPE(effect_asset, 特效资产)
 #undef DOODLE_TASK_TYPE
     using namespace sqlite_orm;
     in_data->storage_any_.remove_all<working_file>(where(not_in(
