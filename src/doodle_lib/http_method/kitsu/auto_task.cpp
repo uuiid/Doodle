@@ -603,6 +603,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   DOODLE_CHICK_HTTP(
       !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
   );
+
   auto l_scene_ue_path = FSys::path{l_prj.code_} / l_uprj.stem();
   l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
   l_arg.download_file_list_.emplace_back(
@@ -614,13 +615,68 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
       l_scene_ue_path / doodle_config::ue4_config
   );
 
-  if (l_task.task_type_id_ == task_type::get_shot_effect_id()) {
+  auto l_vfx_path = FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot /
+                    fmt::format("ep{:04}", l_episodes) /
+                    fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_Vfx";
+  auto l_vfx_path2 =
+      FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "Vfx";
+  // 灯光额外要下载特效的文件
+  if (l_task.task_type_id_ == task_type::get_lighting_id()) {
     l_arg.download_file_list_.emplace_back(
-        l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{}", l_episode_entity.name_) /
-        fmt::format("SC{:03}", l_shot.get_shot()) / "Effect" /
-        fmt::format("{}_EP{:03}_SC{:03}_Effect.ma", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot())
+        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path,
+        l_scene_ue_path / l_vfx_path
+
+    );
+    l_arg.download_file_list_.emplace_back(
+        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path2,
+        l_scene_ue_path / l_vfx_path2
+
+    );
+  }
+
+  // 开始填充上传列表
+  if (l_task.task_type_id_ == task_type::get_shot_effect_id()) {
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_vfx_path,
+        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path
+
+    );
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_vfx_path2,
+        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path2
+
     );
   } else if (l_task.task_type_id_ == task_type::get_lighting_id()) {
+    auto l_light_path =
+        FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "map";
+    auto l_light_path2 = FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot /
+                         fmt::format("ep{:04}", l_episodes) /
+                         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_Light";
+    auto l_light_path3 =
+        FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}{:03}_sc{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
+    auto l_light_path4 =
+        FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}{:03}_sc{:03}{}_Zong", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
+
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path,
+        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path
+    );
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path2,
+        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path2
+    );
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path3,
+        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path3
+    );
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path4,
+        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path4
+    );
   } else {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "仅支持灯光和特效任务同步信息获取"});
   }
