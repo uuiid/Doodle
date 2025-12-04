@@ -104,7 +104,7 @@ boost::asio::awaitable<void> export_fbx_arg_epiboly::run() {
       FSys::create_directories(l_p);
     }
     detail::create_move(
-        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), {}
+        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), size_
     );
   }
 }
