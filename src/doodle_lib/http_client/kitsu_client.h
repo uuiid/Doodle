@@ -10,7 +10,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/awaitable.hpp>
 
-#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -80,6 +79,8 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_shot_animation_other_file(
       uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
   );
+  /// 上传镜头UE文件
+  boost::asio::awaitable<void> upload_shot_animation_ue(uuid in_shot_task_id, FSys::path in_file_path);
   boost::asio::awaitable<void> remove_asset_file_maya(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_ue(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_image(const uuid& in_uuid);
@@ -94,6 +95,7 @@ class kitsu_client {
       const std::vector<std::string>& in_links = {}
   ) const;
   boost::asio::awaitable<nlohmann::json> get_export_anim_fbx(uuid in_task_id) const;
+  boost::asio::awaitable<nlohmann::json> get_task_sync(uuid in_task_id) const;
 };
 
 }  // namespace doodle::kitsu
