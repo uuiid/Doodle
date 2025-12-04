@@ -2,6 +2,8 @@
 
 #include "doodle_core/core/file_sys.h"
 
+#include <doodle_lib/exe_warp/ue_exe.h>
+
 #include <filesystem>
 
 namespace doodle {
@@ -41,15 +43,25 @@ boost::asio::awaitable<void> task_sync::run() {
 
   if (update_) {
     for (auto&& l_info : l_total_args.update_file_list_) {
-      auto l_local_path = l_root / l_info.from_path_;
+      auto l_ue_project_dir = ue_exe_ns::find_ue_project_file(l_root / l_info.to_path_).parent_path().parent_path();
+      auto l_local_path     = l_root / l_info.from_path_;
       if (!FSys::exists(l_local_path)) continue;
-      for (auto&& p : FSys::recursive_directory_iterator(l_local_path)) {
-        if (p.is_directory()) continue;
-        auto l_relative_path = p.path().lexically_relative(l_local_path);
-        auto l_remote_path   = l_info.to_path_ / l_relative_path;
-        if (FSys::is_diff(p.path(), l_remote_path))
-          co_await kitsu_client_->upload_shot_animation_ue(l_info.task_id_, p.path(), l_relative_path.generic_string());
-      }
+      if (FSys::is_directory(l_local_path))
+        for (auto&& p : FSys::recursive_directory_iterator(l_local_path)) {
+          if (p.is_directory()) continue;
+          auto l_relative_path = p.path().lexically_relative(l_ue_project_dir);
+          auto l_remote_path   = l_info.to_path_ / l_relative_path;
+          if (FSys::is_diff(p.path(), l_remote_path))
+            co_await kitsu_client_->upload_shot_animation_ue(
+                l_info.task_id_, p.path(), l_relative_path.generic_string()
+            );
+        }
+      else {
+        auto l_relative_path = l_local_path.lexically_relative(l_ue_project_dir);
+        co_await kitsu_client_->upload_shot_animation_ue(
+            l_info.task_id_, l_local_path, l_relative_path.generic_string()
+        );
+      };
     }
   }
 
