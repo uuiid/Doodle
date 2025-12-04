@@ -16,8 +16,8 @@ void task_status::check_retake_capping(const task& in_task) {
   if (in_task.retake_count_ >= l_prj.max_retakes_)
     throw_exception(
         http_request_error{
-            boost::beast::http::status::bad_request,
-            fmt::format("任务 {} 已经超过最大重拍次数 {}", in_task.name_, l_prj.max_retakes_)
+            boost::beast::http::status::bad_request, "任务 {} 已经超过最大重拍次数 {}", in_task.name_,
+            l_prj.max_retakes_
         }
     );
 }

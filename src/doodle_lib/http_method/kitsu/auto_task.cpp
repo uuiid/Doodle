@@ -5,6 +5,7 @@
 #include "doodle_core/configure/static_value.h"
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/episodes.h"
@@ -63,17 +64,6 @@ auto check_multiple_scene(const auto& in_vector) {
   return std::find_if(in_vector.begin(), in_vector.end(), [](const auto& in_pair) {
     return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id();
   });
-}
-// 检查可选属性是否填充完整
-template <typename T, typename... Args>
-void check_optional(const std::optional<T>& in_opt, fmt::format_string<Args...> fmt_str, Args&&... in_args) {
-  if (!in_opt)
-    throw_exception(
-        http_request_error{
-            boost::beast::http::status::bad_request,
-            fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
-        }
-    );
 }
 
 }  // namespace
@@ -231,8 +221,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
 
   auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
-  check_optional(l_scene_asset_extend.gui_dang_, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
-  check_optional(l_scene_asset_extend.kai_shi_ji_shu_, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_);
+  DOODLE_CHICK_HTTP(l_scene_asset_extend.gui_dang_, bad_request, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
+  DOODLE_CHICK_HTTP(
+      l_scene_asset_extend.kai_shi_ji_shu_, bad_request, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_
+  );
   const auto l_suffix = l_is_simulation_task ? "_JS" : "_DH";
   auto l_ue_main_map  = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
                        get_entity_ground_ue_map_name(l_scene_asset_extend);
@@ -261,8 +253,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   if (l_uprj.empty())
     throw_exception(
         http_request_error{
-            boost::beast::http::status::bad_request,
-            fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
+            boost::beast::http::status::bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径",
+            l_scene_asset.name_
         }
     );
   l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
@@ -330,8 +322,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
         } else
           throw_exception(
               http_request_error{
-                  boost::beast::http::status::bad_request,
-                  fmt::format("资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径", l_asset.name_)
+                  boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
+                  l_asset.name_
               }
           );
       }
@@ -365,8 +357,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
         } else
           throw_exception(
               http_request_error{
-                  boost::beast::http::status::bad_request,
-                  fmt::format("资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径", l_asset.name_)
+                  boost::beast::http::status::bad_request, "资产 {} 缺少归档或开始集信息，无法生成 ue 资产路径",
+                  l_asset.name_
               }
           );
       }
@@ -389,52 +381,34 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     } else {
       throw_exception(
           http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format("不支持的资产类型: {}", l_sql.get_by_uuid<asset_type>(l_asset.entity_type_id_).name_)
+              boost::beast::http::status::bad_request, "不支持的资产类型: {}",
+              l_sql.get_by_uuid<asset_type>(l_asset.entity_type_id_).name_
           }
       );
     }
   }
 
-#ifdef NDEBUG
+  // #ifdef NDEBUG
   for (auto&& l_path : l_ret.ue_asset_path_) {
-    if (l_path.from_.empty())
-      throw_exception(
-          http_request_error{boost::beast::http::status::bad_request, fmt::format("UE 场景可能没有启动器等原因")}
-      );
-    if (!FSys::exists(l_path.from_)) {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request, fmt::format("UE 资产源路径不存在: {}", l_path.from_.string())
-          }
-      );
-    }
+    DOODLE_CHICK_HTTP(!l_path.from_.empty(), bad_request, "UE 场景可能没有启动器等原因");
+    DOODLE_CHICK_HTTP(FSys::exists(l_path.from_), bad_request, "UE 资产源路径不存在: {}", l_path.from_.string())
   }
   for (auto&& l_info : l_ret.asset_infos_) {
-    if (l_info.type_ == run_ue_assembly_local::import_ue_type::char_ &&
-        !FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)) {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format(
-                  "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
-                  (l_info.ue_project_dir_ / l_info.skin_path_).string()
-              )
-          }
-      );
-    }
+    DOODLE_CHICK_HTTP(
+        !(l_info.type_ == run_ue_assembly_local::import_ue_type::char_ &&
+          !FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)),
+        bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
+        (l_info.ue_project_dir_ / l_info.skin_path_).string()
+
+    )
   }
-#endif
+  // #endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
-    if (l_info.skin_path_.empty() && l_info.type_ == run_ue_assembly_local::import_ue_type::char_) {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request,
-              fmt::format("无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string())
-          }
-      );
-    }
+    DOODLE_CHICK_HTTP(
+        !(l_info.skin_path_.empty() && l_info.type_ == run_ue_assembly_local::import_ue_type::char_), bad_request,
+        "无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string()
+    );
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
   }
 
@@ -618,19 +592,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};
   auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
-  check_optional(l_scene_asset_extend.gui_dang_, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
-  check_optional(l_scene_asset_extend.kai_shi_ji_shu_, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_);
+  DOODLE_CHICK_HTTP(l_scene_asset_extend.gui_dang_, bad_request, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
+  DOODLE_CHICK_HTTP(
+      l_scene_asset_extend.kai_shi_ji_shu_, bad_request, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_
+  );
 
   auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
                        get_entity_ground_ue_map_name(l_scene_asset_extend);
   auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
-  if (l_uprj.empty())
-    throw_exception(
-        http_request_error{
-            boost::beast::http::status::bad_request,
-            fmt::format("未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_)
-        }
-    );
+  DOODLE_CHICK_HTTP(
+      !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
+  );
   auto l_scene_ue_path = FSys::path{l_prj.code_} / l_uprj.stem();
   l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
   l_arg.download_file_list_.emplace_back(

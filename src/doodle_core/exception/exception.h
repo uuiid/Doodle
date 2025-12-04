@@ -4,12 +4,14 @@
 #include <doodle_core/doodle_core_pch.h>
 
 #include <boost/beast.hpp>
+#include <boost/beast/http/status.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/exception/exception.hpp>
 #include <boost/system.hpp>
 #include <boost/throw_exception.hpp>
 
 #include <filesystem>
+#include <magic_enum/magic_enum.hpp>
 #include <spdlog/common.h>
 #include <stdexcept>
 #include <string>
@@ -68,6 +70,7 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
  public:
   std::int32_t error_code_;
   explicit doodle_error(const std::string& message) : std::runtime_error(message), error_code_(0) {};
+  
   template <typename... Args>
   explicit doodle_error(fmt::format_string<Args...> fmt_str, Args&&... in_args)
       : std::runtime_error(
@@ -80,20 +83,22 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
             fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
         ),
         error_code_(in_core){};
+  
   template <typename... Args>
   explicit doodle_error(boost::beast::http::status in_core, fmt::format_string<Args...> fmt_str, Args&&... in_args)
       : std::runtime_error(
             fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
         ),
         error_code_(static_cast<std::int32_t>(in_core)){};
+  template <typename... Args>
+  explicit doodle_error(boost::beast::http::status in_core, const std::string& fmt_str)
+      : std::runtime_error(fmt_str), error_code_(static_cast<std::int32_t>(in_core)){};
+  boost::beast::http::status code_status_() const {
+    return magic_enum::enum_cast<boost::beast::http::status>(error_code_)
+        .value_or(boost::beast::http::status::internal_server_error);
+  }
 };
-
-class DOODLE_CORE_API http_request_error : public std::runtime_error {
- public:
-  boost::beast::http::status code_status_;
-  explicit http_request_error(boost::beast::http::status in_status, const std::string& message)
-      : std::runtime_error(message), code_status_{in_status} {};
-};
+using http_request_error = doodle_error;
 
 template <typename exception_type>
 [[noreturn]] inline void throw_exception(
@@ -105,6 +110,10 @@ template <typename exception_type>
 #define DOODLE_CHICK(condition, ...) \
   if (!(condition)) {                \
     throw_exception(__VA_ARGS__);    \
+  }
+#define DOODLE_CHICK_HTTP(condition, in_status, ...)                                   \
+  if (!(condition)) {                                                                  \
+    throw_exception(doodle_error{boost::beast::http::status::in_status, __VA_ARGS__}); \
   }
 
 }  // namespace doodle

@@ -37,6 +37,7 @@
 #include "cryptopp/hex.h"
 #include <cryptopp/adler32.h>
 #include <cryptopp/filters.h>
+#include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <variant>
@@ -130,7 +131,7 @@ boost::asio::awaitable<void> session_data::run() {
       l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback(shared_from_this()));
     } catch (const http_request_error& e) {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
-      l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_, e.what()));
+      l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
     } catch (...) {
       logger_->log(log_loc(), level::err, "回复错误 {}", boost::current_exception_diagnostic_information());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(
