@@ -25,6 +25,7 @@
 #include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/qcloth_arg.h>
+#include <doodle_lib/exe_warp/task_sync.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -456,6 +457,35 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
+boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sync_local::post(
+    session_data_ptr in_handle
+) {
+  auto l_ptr              = std::make_shared<server_task_info>();
+  l_ptr->type_            = server_task_info_type::project_sync;
+  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_json             = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+
+  std::shared_ptr<task_sync> l_arg_t = std::make_shared<task_sync>();
+  l_arg_t->kitsu_client_             = l_client;
+  l_json.get_to(*l_arg_t);
+  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
 }  // namespace doodle::http::local
 
 namespace doodle::http {
@@ -502,4 +532,5 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
+
 }  // namespace doodle::http

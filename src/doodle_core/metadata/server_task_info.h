@@ -65,6 +65,8 @@ enum class server_task_info_type : std::int32_t {
   replace_maya_ref,
   // 创建骨骼
   create_rig_sk,
+  // 同步文件
+  project_sync,
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
     server_task_info_type, {
