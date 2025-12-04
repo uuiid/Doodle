@@ -4,10 +4,12 @@
 
 #include "doodle_core/core/app_base.h"
 #include "doodle_core/core/core_set.h"
+#include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
+#include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/server_task_info.h>
 
 #include "doodle_lib/core/asyn_task.h"
@@ -470,7 +472,6 @@ void epiboly_actions_projects_export_anim_fbx::init_ctx() {
   });
 }
 
-
 boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_projects_export_anim_fbx::post(
     session_data_ptr in_handle
 ) {
@@ -479,13 +480,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
   l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+  // 在外包的后端中, 会载入数据库, 可以使用  project_id_ 获取项目数据
+  auto l_project          = g_ctx().get<sqlite_database>().get_by_uuid<project>(project_id_);
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
 
   std::shared_ptr<export_fbx_arg_epiboly> l_arg_t = std::make_shared<export_fbx_arg_epiboly>();
   l_json.get_to(*l_arg_t);
-  l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
+
+  l_arg_t->create_play_blast_ = true;
+  l_arg_t->film_aperture_     = l_project.get_film_aperture();
+  l_arg_t->size_              = image_size{l_project.get_resolution().first, l_project.get_resolution().second};
+  l_ptr->command_             = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);

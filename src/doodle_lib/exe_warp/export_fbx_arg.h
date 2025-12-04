@@ -16,7 +16,6 @@ namespace doodle {
 class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
  public:
   bool create_play_blast_{};
-  bool rig_file_export_{};
   bool only_upload_{};
   std::double_t film_aperture_{};
   image_size size_{};
@@ -61,7 +60,9 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
 class DOODLELIB_API export_fbx_arg_epiboly : public maya_exe_ns::arg {
  public:
   constexpr static std::string_view k_name{"export_fbx"};
-
+  bool create_play_blast_{};
+  std::double_t film_aperture_{};
+  image_size size_{};
   // form json
   friend void from_json(const nlohmann::json& in_json, export_fbx_arg_epiboly& out_obj);
   // to json
