@@ -690,11 +690,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
     auto l_light_path3 =
         FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
-        fmt::format("{}{:03}_sc{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
+        fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
     auto l_light_path4 =
         FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
-        fmt::format("{}{:03}_sc{:03}{}_Zong", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
+        fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
 
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_light_path,
