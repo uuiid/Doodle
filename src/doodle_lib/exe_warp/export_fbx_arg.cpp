@@ -90,7 +90,6 @@ void from_json(const nlohmann::json& in_json, export_fbx_arg_epiboly& out_obj) {
 void to_json(nlohmann::json& in_json, const export_fbx_arg_epiboly& out_obj) {
   to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
   in_json["create_play_blast"]    = out_obj.create_play_blast_;
-  in_json["rig_file_export"]      = out_obj.rig_file_export_;
   in_json["camera_film_aperture"] = out_obj.film_aperture_;
   in_json["image_size"]           = out_obj.size_;
 }
