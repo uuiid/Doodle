@@ -79,10 +79,9 @@ function Initialize-Doodle {
         [string]$OutPath,
         [switch]$OnlyOne
     )
-    if (Test-Path $OutPath) {
-        Remove-Item $OutPath -Recurse -Force
+    if (-not (Test-Path $OutPath)) {
+        New-Item $OutPath -ItemType Directory
     }
-    New-Item $OutPath -ItemType Directory
     $DoodleTMPDir = [System.IO.Path]::GetTempPath()
     $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
     $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build"
