@@ -658,12 +658,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   // 灯光额外要下载特效的文件
   if (l_task.task_type_id_ == task_type::get_lighting_id()) {
     l_arg.download_file_list_.emplace_back(
-        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path,
+        l_prj.path_ / get_shots_effect_ue_path(l_episode_entity) / l_uprj.stem() / l_vfx_path,
         l_scene_ue_path / l_vfx_path
 
     );
     l_arg.download_file_list_.emplace_back(
-        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path2,
+        l_prj.path_ / get_shots_effect_ue_path(l_episode_entity) / l_uprj.stem() / l_vfx_path2,
         l_scene_ue_path / l_vfx_path2
 
     );
@@ -673,12 +673,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   if (l_task.task_type_id_ == task_type::get_shot_effect_id()) {
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_vfx_path,
-        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path
+        l_prj.path_ / get_shots_effect_ue_path(l_episode_entity) / l_uprj.stem() / l_vfx_path
 
     );
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_vfx_path2,
-        l_prj.path_ / "8-texiao" / "Vfx_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_vfx_path2
+        l_prj.path_ / get_shots_effect_ue_path(l_episode_entity) / l_uprj.stem() / l_vfx_path2
 
     );
   } else if (l_task.task_type_id_ == task_type::get_lighting_id()) {
@@ -698,19 +698,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
 
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_light_path,
-        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path
+        l_prj.path_ / get_shots_lighting_ue_path(l_episode_entity) / l_uprj.stem() / l_light_path
     );
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_light_path2,
-        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path2
+        l_prj.path_ / get_shots_lighting_ue_path(l_episode_entity) / l_uprj.stem() / l_light_path2
     );
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_light_path3,
-        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path3
+        l_prj.path_ / get_shots_lighting_ue_path(l_episode_entity) / l_uprj.stem() / l_light_path3
     );
     l_arg.update_file_list_.emplace_back(
         l_scene_ue_path / l_light_path4,
-        l_prj.path_ / "9-houqi" / "Light_File" / fmt::format("Ep{:03}", l_episodes) / l_uprj.stem() / l_light_path4
+        l_prj.path_ / get_shots_lighting_ue_path(l_episode_entity) / l_uprj.stem() / l_light_path4
     );
   } else {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "仅支持灯光和特效任务同步信息获取"});
