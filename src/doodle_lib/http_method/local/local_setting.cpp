@@ -48,6 +48,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get
           {"UE_path", core_set::get_set().ue4_path},
           {"UE_version", core_set::get_set().ue4_version},
           {"timeout", core_set::get_set().timeout},
+          {"user_work_root", core_set::get_set().user_work_root_},
       }
   );
 }
@@ -69,6 +70,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
   if (!l_set.ue4_path.empty() && !FSys::exists(l_set.ue4_path / "Engine" / "Binaries" / "Win64" / "UnrealEditor.exe"))
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "UE4路径不正确"});
   if (l_json.contains("timeout")) l_set.timeout = l_json["timeout"].get<std::uint32_t>();
+  if (l_json.contains("user_work_root")) l_set.user_work_root_ = l_json["user_work_root"].get<std::string>();
 
   l_set.save();
   FSys::path l_maya_path{};
@@ -85,6 +87,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
           {"UE_path", l_set.ue4_path},
           {"UE_version", l_set.ue4_version},
           {"timeout", l_set.timeout},
+          {"user_work_root", l_set.user_work_root_},
 
       }
   );

@@ -60,6 +60,8 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   void save();
   // 只读模式
   std::atomic_bool read_only_mode_{false};
+  // 用户工作根目录
+  FSys::path user_work_root_{};
 
  private:
   // 用户名称
