@@ -120,13 +120,16 @@ void create_move(
   if (FSys::exists(in_out_path)) {
     FSys::remove(in_out_path);
   }
-  if (in_image_size.width <= 0 || in_image_size.height <= 0) {
+  auto l_size = in_image_size;
+  if (l_size.width <= 0 || l_size.height <= 0) {
     cv::Mat l_image = cv::imread(l_vector.front().path_attr.generic_string());
     if (l_image.empty())
       throw_exception(doodle_error{fmt::format("{} 图片读取失败 无法获取图片尺寸", l_vector.front().path_attr)});
     SPDLOG_LOGGER_INFO(in_logger, "未指定输出尺寸，使用第一张图片尺寸 {}x{}", l_image.cols, l_image.rows);
+    l_size.width  = l_image.cols;
+    l_size.height = l_image.rows;
   }
-  const cv::Size k_size{in_image_size.width, in_image_size.height};
+  const cv::Size k_size{l_size.width, l_size.height};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};
   auto k_image = cv::Mat{};
   const auto& k_size_len = l_vector.size();
