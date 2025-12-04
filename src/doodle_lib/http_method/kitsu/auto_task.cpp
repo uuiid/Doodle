@@ -650,11 +650,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
     }
   }
 
-  auto l_vfx_path = FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot /
+  auto l_vfx_path = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
                     fmt::format("ep{:04}", l_episodes) /
                     fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_Vfx";
   auto l_vfx_path2 =
-      FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "Vfx";
+      FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "Vfx";
   // 灯光额外要下载特效的文件
   if (l_task.task_type_id_ == task_type::get_lighting_id()) {
     l_arg.download_file_list_.emplace_back(
@@ -683,16 +683,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
     );
   } else if (l_task.task_type_id_ == task_type::get_lighting_id()) {
     auto l_light_path =
-        FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "map";
-    auto l_light_path2 = FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot /
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "map";
+    auto l_light_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
                          fmt::format("ep{:04}", l_episodes) /
                          fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_Light";
     auto l_light_path3 =
-        FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
         fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
     auto l_light_path4 =
-        FSys::path{doodle_config::ue4_config} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
         fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
 
