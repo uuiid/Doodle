@@ -47,7 +47,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::post
     auto l_time_str = in_handle->req_header_[boost::beast::http::field::last_modified];
     chrono::system_clock::time_point l_tm{};
     std::istringstream l_ss(l_time_str);
-    if (l_ss >> chrono::parse("%a, %d %b %Y %H:%M:%S", l_tm)) {
+    if (l_ss >> chrono::parse("%a, %d %b %Y %H:%M:%S GMT", l_tm)) {
       FSys::last_write_time(
           std::get<FSys::path>(in_handle->body_), chrono::clock_cast<FSys::file_time_type::clock>(l_tm)
       );
