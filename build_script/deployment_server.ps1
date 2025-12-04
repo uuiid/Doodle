@@ -11,6 +11,16 @@ $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
 
 $NewSession = New-ServerPSSession
+
+
+Invoke-Command -Session $NewSession -ScriptBlock {
+    $Tmp = "D:\tmp"
+    Remove-Item -Path "$Tmp/dist/assets" -Recurse -Force
+    Remove-Item -Path "$Tmp/dist/css" -Recurse -Force
+    Remove-Item -Path "$Tmp/dist/fonts" -Recurse -Force
+}
+
+
 # copy item only if different
 Copy-Item -Path "$DoodleOut\*" -Destination "D:\tmp" -Recurse -ToSession $NewSession -Force
 
