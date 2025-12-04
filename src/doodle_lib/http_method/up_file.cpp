@@ -118,10 +118,12 @@ void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
   if (!l_entity.parent_id_.is_nil()) {
     auto l_parent_entity = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
     episode_name_        = l_parent_entity.name_;
+    episode_             = l_parent_entity;
   }
   auto l_prj    = l_sql.get_by_uuid<project>(l_entity.project_id_);
   project_code_ = l_prj.code_;
   root_path_    = l_prj.path_;
+  shot_         = l_entity;
   return;
 }
 //         | 角色 | 地编模型 | 绑定
@@ -197,6 +199,13 @@ FSys::path doodle_data_shots_file_other::gen_file_path() {
     return get_shots_animation_maya_path(episode_name_).parent_path();
   else if (task_type_id_ == task_type::get_simulation_task_id())
     return get_shots_simulation_maya_path(episode_name_).parent_path();
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
+}
+FSys::path doodle_data_shots_file_ue::gen_file_path() {
+  if (task_type_id_ == task_type::get_shot_effect_id())
+    return get_shots_effect_ue_path(episode_);
+  else if (task_type_id_ == task_type::get_lighting_id())
+    return get_shots_lighting_ue_path(episode_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 

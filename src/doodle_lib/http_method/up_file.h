@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "doodle_core/metadata/entity.h"
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
@@ -55,6 +56,8 @@ class up_file_shots_base : public up_file_base {
   std::string episode_name_{};
   std::string shot_name_{};
   std::string project_code_{};
+  entity episode_;
+  entity shot_;
   uuid task_type_id_{};
   virtual void query_task_info(session_data_ptr in_handle) override;
 
@@ -83,6 +86,10 @@ FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/other
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_other, up_file_shots_base)
+FSys::path gen_file_path() override;
+DOODLE_HTTP_FUN_END()
+// /api/doodle/data/shots/{task_id}/file/ue
+DOODLE_HTTP_FUN_C(doodle_data_shots_file_ue, up_file_shots_base)
 FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
