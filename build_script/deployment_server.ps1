@@ -11,6 +11,8 @@ $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
 
 &Robocopy "$DoodleOut" "\\192.168.40.181\Dev\tmp" /s /w:1 
+&Robocopy "$DoodleOut\dist" "\\192.168.40.181\Dev\tmp\dist" /MIR /w:1 
+
 
 $NewSession = New-ServerPSSession
 
