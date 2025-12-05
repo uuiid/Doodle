@@ -16,7 +16,7 @@ Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$
 
 $NewSession = New-ServerPSSession
 
-$KitsuCookies = $env:KITSU_COOKIES;
+$KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
 Invoke-Command -Session $NewSession -ScriptBlock {
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
