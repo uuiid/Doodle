@@ -154,21 +154,6 @@ function Initialize-Doodle {
     else {
         Expand-Archive -Path (Get-ChildItem "$DoodleBuildRoot/holiday-cn-*.zip")[-1].FullName -DestinationPath $DoodleTimePath -Force
     }
-
-
-    Add-Compensatory -Path "$DoodleTimePath\2024.json" @(
-        [System.Management.Automation.PSObject]@{
-            name     = "公司年假补班"
-            date     = "2024-12-14"
-            isOffDay = $false
-        },
-        [System.Management.Automation.PSObject]@{
-            name     = "公司年假补班"
-            date     = "2024-12-29"
-            isOffDay = $false
-        }
-    )
-
     Add-Compensatory -Path "$DoodleTimePath\2025.json" @(
         [System.Management.Automation.PSObject]@{
             name     = "公司年假补班"
@@ -189,9 +174,25 @@ function Initialize-Doodle {
             name     = "公司放假"
             date     = "2025-02-05"
             isOffDay = $true
+        },
+        [System.Management.Automation.PSObject]@{
+            name     = "公司年假补班"
+            date     = "2025-12-28"
+            isOffDay = $false
         }
     )
-
+    Add-Compensatory -Path "$DoodleTimePath\2026.json" @(
+        [System.Management.Automation.PSObject]@{
+            name     = "公司年假补班"
+            date     = "2026-01-24"
+            isOffDay = $false
+        }, 
+        [System.Management.Automation.PSObject]@{
+            name     = "公司年假补班"
+            date     = "2026-02-07"
+            isOffDay = $false
+        }
+    )
     &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
 
