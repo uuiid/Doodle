@@ -1,6 +1,6 @@
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 $NewSession = New-ServerPSSession
-# (Get-Service "doodle_kitsu_*" | Sort-Object Status |  Format-List Name, Status, StartType)
+# winget install --id Microsoft.PowerShell
 Invoke-Command -Session $NewSession -ScriptBlock {
   function Get-NssmLog {
     (Get-WinEvent -FilterHashtable @{
