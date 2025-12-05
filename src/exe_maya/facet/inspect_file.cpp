@@ -17,8 +17,10 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
+#include <maya/MApiNamespace.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
 #include <maya/MItDag.h>
 #include <maya/MItDependencyGraph.h>
 namespace doodle::maya_plug {
@@ -220,6 +222,35 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
       }
     }
   }
+
+  if (true) {
+    default_logger_raw()->info("检查冻结变换");
+    MFnTransform l_dag_node{};
+    for (MItDag l_iter{MItDag::kDepthFirst, MFn::kTransform, &l_s}; !l_iter.isDone(); l_iter.next()) {
+      maya_chick(l_dag_node.setObject(l_iter.currentItem()));
+      auto l_translate_mat = l_dag_node.transformation();
+      maya_chick(l_s);
+
+      auto l_translate = l_translate_mat.getTranslation(MSpace::kWorld, &l_s);
+      maya_chick(l_s);
+      std::double_t l_scale[3]{};
+      maya_chick(l_translate_mat.getScale(l_scale, MSpace::kWorld));
+      maya_chick(l_s);
+      std::double_t l_rot[3]{};
+      MTransformationMatrix::RotationOrder l_order{};
+      maya_chick(l_translate_mat.getRotation(l_rot, l_order));
+
+      if (!((std::abs(l_translate.x) < 0.0001 && std::abs(l_translate.y) < 0.0001 &&
+             std::abs(l_translate.z) < 0.0001) &&
+            (std::abs(l_scale[0] - 1.0) < 0.0001 && std::abs(l_scale[1] - 1.0) < 0.0001 &&
+             std::abs(l_scale[2] - 1.0) < 0.0001) &&
+            (std::abs(l_rot[0]) < 0.0001 && std::abs(l_rot[1]) < 0.0001 && std::abs(l_rot[2]) < 0.0001))) {
+        default_logger_raw()->error("存在未冻结变换 {}", get_node_full_name(l_dag_node.object()));
+        l_e = maya_enum::maya_error_t::check_error;
+      }
+    }
+  }
+
   if (l_e == maya_enum::maya_error_t::check_error)
     throw_exception(doodle_error{enum_to_num(l_e), "检查文件 {} 失败", l_arg.get_file_path()});
   app_base::Get().stop_app();
