@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/json_warp.h>
 
+#include <cmath>
 #include <magic_enum/magic_enum_all.hpp>
 #include <nlohmann/json.hpp>
 #include <strstream>
@@ -103,6 +104,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   zoned_time submit_time_{};
 
   uuid run_computer_id_{};
+
+  std::float_t progress_{0.0};
 
   // 开始运行任务的时间
   std::optional<zoned_time> run_time_{};
