@@ -118,6 +118,7 @@ void to_json(nlohmann::json& j, const core_set& p) {
   j["layout_config"]            = p.layout_config;
 
   j["authorize"]                = p.authorize_;
+  j["user_work_root"]           = p.user_work_root_;
 }
 
 void from_json(const nlohmann::json& j, core_set& p) {
@@ -139,6 +140,7 @@ void from_json(const nlohmann::json& j, core_set& p) {
   if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
 
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
+  if (j.contains("user_work_root")) j.at("user_work_root").get_to(p.user_work_root_);
 }
 
 std::string core_set::get_uuid_str(const std::string& in_add) { return get_uuid_str() + in_add; }

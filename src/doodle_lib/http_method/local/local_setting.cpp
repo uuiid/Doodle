@@ -54,10 +54,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> local_setting::post(session_data_ptr in_handle) {
-  auto& l_set        = core_set::get_set();
-  auto l_json        = in_handle->get_json();
-  l_set.p_max_thread = l_json["maya_parallel_quantity"];
-  g_ctx().get<maya_ctx>().queue_->set_limit(l_set.p_max_thread);
+  auto& l_set = core_set::get_set();
+  auto l_json = in_handle->get_json();
+  if (l_json.contains("maya_parallel_quantity")) {
+    l_set.p_max_thread = l_json["maya_parallel_quantity"];
+    g_ctx().get<maya_ctx>().queue_->set_limit(l_set.p_max_thread);
+  }
   auto& l_au = g_ctx().get<authorization>();
   if (l_json.contains("authorize") && l_json["authorize"].is_string())
     if (auto& l_a = l_json["authorize"];
