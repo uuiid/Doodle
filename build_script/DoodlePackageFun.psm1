@@ -3,7 +3,7 @@
     [string]$date
     [bool]$isOffDay
 }
-#Set-Item WSMan:\localhost\Client\TrustedHosts -Value '*'
+#Set-Item WSMan:\localhost\Client\TrustedHosts -Value '*' -Concatenate -Force
 #Set-Item WSMan:\localhost\Client\Auth\Basic -Value True
 #Set-Item WSMan:\localhost\Service\Auth\Basic -Value True
 #Set-Item WSMan:\localhost\Client\AllowUnencrypted -Value True
