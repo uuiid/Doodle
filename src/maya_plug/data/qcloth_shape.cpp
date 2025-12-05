@@ -118,7 +118,7 @@ MObject qcloth_shape::get_ql_solver() {
       break;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
+  DOODLE_CHICK(!l_object.isNull(), "没有找到qlSolver解算核心");
   return l_object;
 }
 
@@ -139,14 +139,14 @@ MDagPath qcloth_shape::cloth_mesh() const {
     break;
   }
 
-  DOODLE_CHICK(!l_mesh.isNull(), doodle_error{"没有找到布料模型节点"s});
+  DOODLE_CHICK(!l_mesh.isNull(), "没有找到布料模型节点");
   auto l_path = get_dag_path(l_mesh);
   DOODLE_LOG_INFO("找到布料节点 {}", l_path);
   return l_path;
 }
 
 void qcloth_shape::sim_cloth() const {
-  DOODLE_CHICK(!obj.isNull(), doodle_error{"空组件"});
+  DOODLE_CHICK(!obj.isNull(), "空组件");
   MStatus k_s{};
   auto k_plug = get_plug(obj, "outputMesh");
   /// \brief 使用这种方式评估网格
@@ -234,7 +234,7 @@ MObject qcloth_shape::get_solver() const {
       return l_object;
     }
   }
-  DOODLE_CHICK(!l_object.isNull(), doodle_error{"没有找到qlSolver解算核心"s});
+  DOODLE_CHICK(!l_object.isNull(), "没有找到qlSolver解算核心");
   return l_object;
 }
 

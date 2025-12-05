@@ -21,12 +21,10 @@ class container_source {
  public:
   using char_type = typename Container::value_type;
   using category  = boost::iostreams::source_tag;
-  explicit container_source(Container& container)
-      : container_(container), pos_(0) {}
+  explicit container_source(Container& container) : container_(container), pos_(0) {}
   std::streamsize read(char_type* s, std::streamsize n) {
     using namespace std;
-    auto amt =
-        static_cast<std::streamsize>(container_.size() - pos_);
+    auto amt               = static_cast<std::streamsize>(container_.size() - pos_);
     std::streamsize result = (min)(n, amt);
     if (result != 0) {
       std::copy(container_.begin() + pos_, container_.begin() + pos_ + result, s);
@@ -76,13 +74,11 @@ class container_device {
  public:
   using char_type = typename Container::value_type;
   using category  = boost::iostreams::seekable_device_tag;
-  explicit container_device(Container& container)
-      : container_(container), pos_(0) {}
+  explicit container_device(Container& container) : container_(container), pos_(0) {}
 
   std::streamsize read(char_type* s, std::streamsize n) {
     using namespace std;
-    auto amt =
-        static_cast<std::streamsize>(container_.size() - pos_);
+    auto amt               = static_cast<std::streamsize>(container_.size() - pos_);
     std::streamsize result = (min)(n, amt);
     if (result != 0) {
       std::copy(container_.begin() + pos_, container_.begin() + pos_ + result, s);
@@ -96,9 +92,8 @@ class container_device {
     using namespace std;
     std::streamsize result = 0;
     if (pos_ != container_.size()) {
-      auto amt =
-          static_cast<std::streamsize>(container_.size() - pos_);
-      result = (min)(n, amt);
+      auto amt = static_cast<std::streamsize>(container_.size() - pos_);
+      result   = (min)(n, amt);
       std::copy(s, s + result, container_.begin() + pos_);
       pos_ += result;
     }
@@ -120,13 +115,13 @@ class container_device {
     } else if (way == BOOST_IOS::end) {
       next = container_.size() + off - 1;
     } else {
-      DOODLE_CHICK(false, doodle_error{"bad seek direction"});
+      DOODLE_CHICK(false, "bad seek direction");
       //      throw BOOST_IOSTREAMS_FAILURE("bad seek direction");
     }
 
     // Check for errors
     if (next < 0 || next > static_cast<boost::iostreams::stream_offset>(container_.size()))
-      DOODLE_CHICK(false, doodle_error{"bad seek offset"});
+      DOODLE_CHICK(false, "bad seek offset");
     //      throw BOOST_IOSTREAMS_FAILURE("bad seek offset");
 
     pos_ = next;
@@ -150,14 +145,15 @@ class container_device {
  * @tparam Device 后端类
  * @tparam Buffer 缓冲区类
  */
-template <class CharT = char, class Container = std::vector<CharT>, class Device = container_source<Container>, class Buffer = boost::iostreams::stream_buffer<Device> >
+template <
+    class CharT = char, class Container = std::vector<CharT>, class Device = container_source<Container>,
+    class Buffer = boost::iostreams::stream_buffer<Device> >
 class base_vector_istream : public std::istream {
   Buffer _vector_buffer;
 
  public:
   explicit base_vector_istream(Container& cnt)
-      : std::istream(std::addressof(_vector_buffer)),
-        _vector_buffer(Device(cnt)) {}
+      : std::istream(std::addressof(_vector_buffer)), _vector_buffer(Device(cnt)) {}
 };
 
 /**
@@ -168,14 +164,15 @@ class base_vector_istream : public std::istream {
  * @tparam Device 后端类
  * @tparam Buffer 缓冲区类
  */
-template <class CharT = char, class Container = std::vector<CharT>, class Device = container_sink<Container>, class Buffer = boost::iostreams::stream_buffer<Device> >
+template <
+    class CharT = char, class Container = std::vector<CharT>, class Device = container_sink<Container>,
+    class Buffer = boost::iostreams::stream_buffer<Device> >
 class base_vector_ostream : public std::ostream {
   Buffer _vector_buffer;
 
  public:
   explicit base_vector_ostream(Container& cnt)
-      : _vector_buffer(Device(cnt)),
-        std::ostream(std::addressof(_vector_buffer)) {}
+      : _vector_buffer(Device(cnt)), std::ostream(std::addressof(_vector_buffer)) {}
 };
 
 /**
@@ -186,14 +183,15 @@ class base_vector_ostream : public std::ostream {
  * @tparam Device 后端类
  * @tparam Buffer 缓冲区类
  */
-template <class CharT = char, class Container = std::vector<CharT>, class Device = container_device<Container>, class Buffer = boost::iostreams::stream_buffer<Device> >
+template <
+    class CharT = char, class Container = std::vector<CharT>, class Device = container_device<Container>,
+    class Buffer = boost::iostreams::stream_buffer<Device> >
 class base_vector_iostream : public std::iostream {
   Buffer _vector_buffer;
 
  public:
   explicit base_vector_iostream(Container& cnt)
-      : _vector_buffer(Device(cnt)),
-        std::iostream(std::addressof(_vector_buffer)) {}
+      : _vector_buffer(Device(cnt)), std::iostream(std::addressof(_vector_buffer)) {}
 };
 /**
  * @brief std char 容器

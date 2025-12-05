@@ -34,9 +34,9 @@ maya_camera::maya_camera(const MDagPath& in_path) : maya_camera() {
 
 void maya_camera::chick() const {
   MStatus k_s{};
-  DOODLE_CHICK(p_path.isValid(&k_s), doodle_error{"无效的dag 路径"s});
+  DOODLE_CHICK(p_path.isValid(&k_s), "无效的dag 路径");
   DOODLE_MAYA_CHICK(k_s);
-  DOODLE_CHICK(p_path.hasFn(MFn::Type::kCamera, &k_s), doodle_error{"dag 路径不兼容 MFn::Type::kCamera"s});
+  DOODLE_CHICK(p_path.hasFn(MFn::Type::kCamera, &k_s), "dag 路径不兼容 MFn::Type::kCamera");
   DOODLE_MAYA_CHICK(k_s);
 }
 

@@ -117,7 +117,7 @@ template <typename exception_type>
 
 #define DOODLE_CHICK(condition, ...) \
   if (!(condition)) {                \
-    throw_exception(__VA_ARGS__);    \
+    throw_exception(doodle_error{__VA_ARGS__});    \
   }
 #define DOODLE_CHICK_HTTP(condition, in_status, ...)                                   \
   if (!(condition)) {                                                                  \

@@ -96,7 +96,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
 
   {
     MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
-    DOODLE_CHICK(renderer != nullptr, doodle_error{"无法获取渲染器"});
+    DOODLE_CHICK(renderer != nullptr, "无法获取渲染器");
 
     //    renderer->addNotification(
     //        &play_blast::captureCallback, p_post_render_notification_name,

@@ -33,7 +33,7 @@ shot::shot(const entity& in_entity)
 const int32_t& shot::get_shot() const noexcept { return p_shot; }
 
 void shot::set_shot(const int32_t& in_shot) {
-  DOODLE_CHICK(in_shot >= 0, doodle_error{"shot无法为负"});
+  DOODLE_CHICK(in_shot >= 0, "shot无法为负");
   p_shot = in_shot;
 }
 

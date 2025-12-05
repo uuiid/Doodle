@@ -83,7 +83,7 @@ MObject get_skin_custer(const MObject& in_anim_node) {
     DOODLE_MAYA_CHICK(l_s);
   }
 
-  DOODLE_CHICK(!l_skin_cluster.isNull(), doodle_error{"没有找到皮肤簇变形节点"s});
+  DOODLE_CHICK(!l_skin_cluster.isNull(), "没有找到皮肤簇变形节点");
   return l_skin_cluster;
 }
 
@@ -220,7 +220,7 @@ MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_no
 
   l_s = k_select.add(d_str{fmt::format("{}Base*", l_name)});
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_CHICK(k_select.length() > 0, doodle_error{"无法找到包裹生成的网格"});
+  DOODLE_CHICK(k_select.length() > 0, "无法找到包裹生成的网格");
   MObject l_r{};
   l_s = k_select.getDependNode(0, l_r);
   DOODLE_MAYA_CHICK(l_s);
@@ -297,7 +297,7 @@ std::tuple<MObject, MObject> qlCreateCloth(const MObject& in_object) {
     l_mesh = i.currentItem(&l_s);
     DOODLE_MAYA_CHICK(l_s);
   }
-  DOODLE_CHICK(!l_mesh.isNull(), doodle_error{"找不到解算网格的输出端"s});
+  DOODLE_CHICK(!l_mesh.isNull(), "找不到解算网格的输出端");
 
   return std::make_tuple(l_cloth_shape, l_mesh);
 }
@@ -341,9 +341,7 @@ std::tuple<MObject, MObject> _add_collider_(const MObject& in_collider) {
     if (l_node.hasFn(MFn::kMesh)) l_collider_offset = l_node;
   }
 
-  DOODLE_CHICK(
-      !l_collider.isNull() && !l_collider_offset.isNull(), doodle_error{"寻找的的解算网格体和偏移网格体不一致"s}
-  );
+  DOODLE_CHICK(!l_collider.isNull() && !l_collider_offset.isNull(), "寻找的的解算网格体和偏移网格体不一致");
   return std::make_tuple(l_collider, l_collider_offset);
 }
 
@@ -489,7 +487,7 @@ void create_sim_cloth(const MObject& in_obj, const std::vector<MObject>& in_list
   add_child(in_group.deformBase_grp, k_warp);
   {
     /// 创建解算网络的输出 这个可以用融合变形(其中先选择主动变形物体, 再选择被变形物体)
-    DOODLE_CHICK(l_high_mesh.size() == in_list.size(), doodle_error{"节点数量不一致"s});
+    DOODLE_CHICK(l_high_mesh.size() == in_list.size(), "节点数量不一致");
     for (int l_i = 0; l_i < l_high_mesh.size(); ++l_i) {
       transfer_dynamic(l_high_mesh[l_i], in_list[l_i]);
     }

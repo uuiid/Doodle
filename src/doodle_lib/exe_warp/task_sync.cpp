@@ -1,6 +1,7 @@
 #include "doodle_lib/exe_warp/task_sync.h"
 
 #include "doodle_core/core/file_sys.h"
+#include "doodle_core/exception/exception.h"
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 
@@ -44,7 +45,8 @@ boost::asio::awaitable<void> task_sync::run() {
   if (update_) {
     for (auto&& l_info : l_total_args.update_file_list_) {
       auto l_ue_project_dir = ue_exe_ns::find_ue_project_file(l_root / l_info.to_path_).parent_path().parent_path();
-      auto l_local_path     = l_root / l_info.from_path_;
+      DOODLE_CHICK(!l_ue_project_dir.empty(), "未找到本地UE项目 {}", (l_root / l_info.to_path_));
+      auto l_local_path = l_root / l_info.from_path_;
       if (!FSys::exists(l_local_path)) continue;
       if (FSys::is_directory(l_local_path))
         for (auto&& p : FSys::recursive_directory_iterator(l_local_path)) {

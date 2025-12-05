@@ -419,7 +419,7 @@ void dem_bones_comm::get_arg(const MArgList& in_arg) {
 
   k_s = k_prase.getObjects(p_i->select_list);
   DOODLE_MAYA_CHICK(k_s);
-  DOODLE_CHICK(p_i->select_list.length() > 0, doodle_error{"未获得选中物体"s});
+  DOODLE_CHICK(p_i->select_list.length() > 0, "未获得选中物体");
 }
 MStatus dem_bones_comm::doIt(const MArgList& in_arg) {
   get_arg(in_arg);
