@@ -314,6 +314,14 @@ bool is_diff(const FSys::path& in_path1, const FSys::path& in_path2) {
   return false;
 }
 
+bool is_old_file(const FSys::path& in_path1, const FSys::path& in_path2) {
+  if (!FSys::exists(in_path1)) return true;
+  if (!FSys::exists(in_path2)) return false;
+  // if (FSys::file_size(in_path1) != FSys::file_size(in_path2)) return false;
+  if (FSys::last_write_time(in_path1) < FSys::last_write_time(in_path2)) return true;
+  return false;
+}
+
 }  // namespace doodle::FSys
 
 #ifndef USE_STD_FSYS
