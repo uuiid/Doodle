@@ -26,9 +26,24 @@ Invoke-Command -Session $NewSession -ScriptBlock {
   }
 
 
+  function Set-NssmReg {
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\doodle_kitsu_supplement_2\Parameters\AppExit" -Name "0" -Value "Exit"
+    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\doodle_kitsu_supplement\Parameters\AppExit" -Name "0" -Value "Exit"
+  }
 
+  function New-NssmServer {
+    $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
+    $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, $RootPassword
 
+    &D:\nssm.exe install doodle_kitsu_supplement_2 D:/doodle_kitsu_supplement_2/bin/doodle_kitsu_supplement.exe
+    &D:\nssm.exe install doodle_kitsu_supplement D:/doodle_kitsu_supplement/bin/doodle_kitsu_supplement.exe
 
+    Set-Service -Name "doodle_kitsu_supplement_2" -Credential $Credential
+    Set-Service -Name "doodle_kitsu_supplement" -Credential $Credential
+
+    Set-Service -Name "doodle_kitsu_supplement_2" -StartupType Manual 
+    Set-Service -Name "doodle_kitsu_supplement" -StartupType Automatic
+  }
 
 
 
