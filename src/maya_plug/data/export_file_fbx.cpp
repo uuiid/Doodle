@@ -149,7 +149,7 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
   }
   auto l_export_list_old = l_export_list;
   std::vector<FSys::path> l_ret{};
-  auto l_stem = maya_file_io::get_current_path().stem().generic_string();
+  auto l_stem             = maya_file_io::get_current_path().stem().generic_string();
 
   auto l_export_sim_cloth = in_ref.get_all_cloth_obj();
   auto l_export_sim_hair  = in_ref.get_all_hair_obj();
@@ -218,6 +218,21 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
   return l_ret;
 }
 
+bool has_attr(const std::vector<MDagPath>& in_vector) {
+  // 确定有 exp_anim 属性
+  MFnDagNode l_dep{};
+  for (auto l_path : in_vector) {
+    maya_chick(l_dep.setObject(l_path));
+    if (l_dep.hasAttribute(d_str{"exp_anim"})) {
+      MPlug l_plug = l_dep.findPlug(d_str{"exp_anim"}, true);
+      bool l_value{};
+      maya_chick(l_plug.getValue(l_value));
+      return l_value;
+    }
+  }
+  return false;
+}
+
 std::vector<FSys::path> export_file_fbx::export_sim(
     const reference_file& in_ref, const generate_file_path_ptr in_gen_file
 ) {
@@ -244,6 +259,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
   l_ret.emplace_back(l_fbx_file_path);
   std::vector<MDagPath> l_export_sim_cloth = in_ref.get_all_cloth_obj();
   auto l_export_sim_hair                   = in_ref.get_all_hair_obj();
+
   // 排除 export_sim_cloth 中的物体
   std::erase_if(l_export_list, [&](const MDagPath& in) {
     return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end();
@@ -253,7 +269,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
     return std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
   });
 
-  {
+  if (has_attr(l_export_sim_cloth) || has_attr(l_export_sim_hair)) {
     fbx_write l_fbx_write{};
     l_fbx_write.set_path(l_fbx_file_path);
     l_fbx_write.write(l_export_list, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second);
