@@ -53,14 +53,14 @@ boost::asio::awaitable<void> task_sync::run() {
           if (p.is_directory()) continue;
           auto l_relative_path = p.path().lexically_relative(l_ue_project_dir);
           auto l_remote_path   = l_info.to_path_ / p.path().lexically_relative(l_local_path);
-          if (!FSys::is_old_file(p.path(), l_remote_path))
+          if (FSys::is_old_file(l_remote_path, p.path()))
             co_await kitsu_client_->upload_shot_animation_ue(
                 l_info.task_id_, p.path(), l_relative_path.generic_string()
             );
         }
       else {
         auto l_relative_path = l_local_path.lexically_relative(l_ue_project_dir);
-        if (!FSys::is_old_file(l_local_path, l_info.to_path_))
+        if (FSys::is_old_file(l_info.to_path_, l_local_path))
           co_await kitsu_client_->upload_shot_animation_ue(
               l_info.task_id_, l_local_path, l_relative_path.generic_string()
           );
