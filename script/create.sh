@@ -116,7 +116,7 @@ Environment="MAIL_USERNAME=19975298467@163.com"
 Environment="MAIL_PASSWORD=WIGOMKIGPOKFJKEB"
 Environment="MAIL_USE_TLS=True"
 Environment="MAIL_DEFAULT_SENDER=19975298467@163.com"
-Environment="DOMAIN_NAME=192.168.40.181"
+Environment="DOMAIN_NAME=192.168.0.181"
 Environment="DOMAIN_PROTOCOL=http"
 
 Environment="USER_LIMIT=400"
@@ -189,11 +189,11 @@ server {
     }
 
     # location /api/file_exists {
-    #     proxy_pass http://192.168.40.181:50021;
+    #     proxy_pass http://192.168.0.181:50021;
     # }
     #
     # location /api/doodle {
-    #     proxy_pass http://192.168.40.181:50025;
+    #     proxy_pass http://192.168.0.181:50025;
     # }
 
 

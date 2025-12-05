@@ -1,7 +1,7 @@
 $DataSource = "$PSScriptRoot/../build/kitsu_new.db"
 # Install-Module PSSQLite
 Import-Module PSSQLite
-Copy-Item "\\192.168.40.181\Dev\kitsu_new.database" $DataSource -Force
+Copy-Item "\\192.168.0.181\Dev\kitsu_new.database" $DataSource -Force
 $prjs = Invoke-SqliteQuery -DataSource $DataSource -Query "select *from project;"
 foreach ($p in $prjs) { 
   # //192.168.10.250/dd to D:/

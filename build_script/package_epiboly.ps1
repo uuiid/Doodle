@@ -20,7 +20,7 @@ Remove-Item -Path "$DoodleOut/epiboly" -Include "*.zip" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly/dist" -Include "*.exe" -Recurse -Force
 
 $DataSource = "$DoodleOut/epiboly/epiboly.database"
-Copy-Item "\\192.168.40.181\Dev\kitsu_new.database" $DataSource -Force
+Copy-Item "\\192.168.0.181\Dev\kitsu_new.database" $DataSource -Force
 $Tabls = Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT name FROM sqlite_master WHERE type='table';"
 foreach ($Tab in $Tabls) {
     if ($Tab.name -eq "sqlite_sequence") { continue }

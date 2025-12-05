@@ -37,7 +37,7 @@ core_set::core_set()
       maya_version(2020),
       p_uuid_gen(boost::uuids::random_generator{}),
 #ifdef NDEBUG
-      server_ip("http://192.168.40.181")
+      server_ip("http://192.168.0.181")
 #else
       server_ip("http://192.168.20.89:50025")
 #endif
@@ -78,7 +78,7 @@ FSys::path core_set::get_doc() const { return p_doc; }
 
 std::string core_set::get_render_url() {
 #ifdef NDEBUG
-  return {"http://192.168.40.181:50023"};
+  return {"http://192.168.0.181:50023"};
 #else
   return {"http://192.168.20.89:50023"};
 #endif

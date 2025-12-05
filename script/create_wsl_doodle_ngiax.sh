@@ -19,7 +19,7 @@ sudo nano /etc/nginx/sites-available/doodle
 server {
     listen 801;
     # listen 4431 ssl;
-    server_name 192.168.40.181;
+    server_name 192.168.0.181;
 
     # ssl_certificate     /opt/ssl/cert.crt;  
     # ssl_certificate_key  /opt/ssl/cert.key;
