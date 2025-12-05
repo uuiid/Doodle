@@ -1,2 +1,0 @@
-nssm install doodle_kitsu_supplement_2 D:/doodle_kitsu_supplement_2/bin/doodle_kitsu_supplement.exe
-nssm set doodle_kitsu_supplement ObjectName .\administrator root

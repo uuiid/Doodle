@@ -1,1 +1,0 @@
-robocopy \\192.168.20.89\ue\UE_5.4 "C:\Program Files\Epic Games\UE_5.4" /s /ndl /np /njh /njs /ns /nc /nfl

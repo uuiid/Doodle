@@ -1,4 +1,0 @@
-Windows Registry Editor Version 5.00
-
-[HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run]
-"doodle_run"="cmd /c cd /D D:\\doodle_exe\\bin&&call D:\\doodle_exe\\bin\\....exe"
