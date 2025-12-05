@@ -14,6 +14,11 @@ inline MString to_ms(const std::string& in_string) {
   k_r.setUTF8(in_string.c_str());
   return k_r;
 }
+inline MString to_ms(const std::wstring& in_string) {
+  MString k_r{};
+  k_r.setWChar(in_string.c_str());
+  return k_r;
+}
 
 }  // namespace conv
 
