@@ -29,7 +29,7 @@ Invoke-Command -Session $NewSession -ScriptBlock {
 if ($CopyServer) {
     Invoke-Command -Session $NewSession  -ArgumentList $KitsuCookies -ScriptBlock {
         param ($KitsuCookies)
-        $Kitsu_Ip = "192.168.40.181"
+        $Kitsu_Ip = "127.0.0.1"
         Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
         #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
 

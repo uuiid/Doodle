@@ -114,7 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
       fmt::format("kitsu_{:%Y_%m_%d_%H_%M_%S}.db", chrono::system_clock::now())
   };
   co_await g_ctx().get<sqlite_database>().backup(l_file);
-  co_return in_handle->make_msg(nlohmann::json{} = l_file.generic_string());
+  co_return in_handle->make_msg(l_file.generic_string());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server::post(session_data_ptr in_handle) {

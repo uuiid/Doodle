@@ -14,6 +14,28 @@ Invoke-Command -Session $NewSession -ScriptBlock {
     Get-Service "doodle_kitsu_*" | Sort-Object Status |  Format-List Name, Status, StartType
   }
 
+  function Add-Backup {
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-File D:\backup.ps1"
+    $trigger = New-ScheduledTaskTrigger -Daily -At "9:00 AM"
+    Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "Doodle-Backup" -Description "Doodle 自动备份任务" -RunLevel Highest -Force
+  }
+
+
+  function Get-Backup {
+    return Get-ScheduledTask -TaskName "Doodle-Backup"
+  }
+
+
+
+
+
+
+
+
+
+
+
+
   Get-NssmLog
   Get-NssmSer
 }
