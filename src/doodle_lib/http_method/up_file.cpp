@@ -24,6 +24,7 @@
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <spdlog/spdlog.h>
+#include <string>
 
 namespace doodle::http {
 
@@ -60,12 +61,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::post
   co_return in_handle->make_msg_204();
 }
 
+std::string up_file_base::get_current_time_str_hour() const {
+  auto l_now = chrono::system_clock::now();
+  return fmt::format("{:%Y_%m_%d_%H}/", chrono::floor<chrono::hours>(l_now));
+}
+
 void up_file_base::move_file(session_data_ptr in_handle) {
   if (file_path_.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失根路径"});
-  auto l_dir         = root_path_ / gen_file_path();
-  auto l_path        = l_dir / file_path_;
-  auto l_backup_path = root_path_ / "backup" / FSys::add_time_stamp(file_path_.filename());
-  auto l_tmp_path    = std::get<FSys::path>(in_handle->body_);
+  auto l_dir  = root_path_ / gen_file_path();
+  auto l_path = l_dir / file_path_;
+  auto l_backup_path =
+      root_path_ / "backup" / get_current_time_str_hour() / FSys::add_time_stamp(file_path_.filename());
+  auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
 
   if (auto l_p = l_path.parent_path(); !exists(l_p)) create_directories(l_p);
   if (auto l_p = l_backup_path.parent_path(); !exists(l_p)) create_directories(l_p);
@@ -82,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::get(
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::delete_(session_data_ptr in_handle) {
   query_task_info(in_handle);
   auto l_dir         = root_path_ / gen_file_path();
-  auto l_backup_path = root_path_ / "backup" / FSys::add_time_stamp(l_dir.filename());
+  auto l_backup_path = root_path_ / "backup" / get_current_time_str_hour() / FSys::add_time_stamp(l_dir.filename());
   if (auto l_p = l_backup_path.parent_path(); !exists(l_p)) create_directories(l_p);
   if (FSys::exists(l_dir)) {
     FSys::rename(l_dir, l_backup_path);
