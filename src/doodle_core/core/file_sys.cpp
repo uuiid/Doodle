@@ -315,10 +315,9 @@ bool is_diff(const FSys::path& in_path1, const FSys::path& in_path2) {
 }
 
 bool is_old_file(const FSys::path& in_path1, const FSys::path& in_path2) {
-  if (!FSys::exists(in_path1)) return true;
-  if (!FSys::exists(in_path2)) return false;
-  // if (FSys::file_size(in_path1) != FSys::file_size(in_path2)) return false;
-  if (FSys::last_write_time(in_path1) < FSys::last_write_time(in_path2)) return true;
+  auto l_time_1 = FSys::exists(in_path1) ? FSys::last_write_time(in_path1) : FSys::file_time_type::min();
+  auto l_time_2 = FSys::exists(in_path2) ? FSys::last_write_time(in_path2) : FSys::file_time_type::min();
+  if (l_time_1 < l_time_2) return true;
   return false;
 }
 
