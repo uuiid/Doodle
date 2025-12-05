@@ -32,7 +32,7 @@ Invoke-Command -Session $NewSession -ScriptBlock {
   }
 
   function New-NssmServer {
-    $RootPassword = ConvertTo-SecureString "root" -AsPlainText -Force
+    $RootPassword = ConvertTo-SecureString "sywh.123" -AsPlainText -Force
     $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, $RootPassword
 
     &D:\nssm.exe install doodle_kitsu_supplement_2 D:/doodle_kitsu_supplement_2/bin/doodle_kitsu_supplement.exe
