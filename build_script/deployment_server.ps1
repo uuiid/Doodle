@@ -64,16 +64,6 @@ if ($CopyServer) {
                 }
             }
         }
-        $schedJob = Get-ScheduledJob -Name "Doodle-Stop" -ErrorAction SilentlyContinue
-        if (-not $schedJob) {
-            $schedJob = Register-ScheduledJob -Name "Doodle-Stop" -ScriptBlock {}
-        }
-        $Trg = New-JobTrigger -Once -At (Get-Date).AddMinutes(20)
-        Set-ScheduledJob -InputObject $schedJob -Trigger $Trg -ScriptBlock {
-            Stop-Service -Name $ScrversName
-            Set-Service -Name $ScrversName -StartupType Manual 
-        } 
-
     }
 }
  
