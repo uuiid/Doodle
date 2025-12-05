@@ -61,13 +61,13 @@ class DOODLELIB_API task_sync : public async_task {
   // from json
   friend void from_json(const nlohmann::json& in_json, task_sync& out_obj) {
     in_json.at("task_ids").get_to(out_obj.task_ids_);
-    in_json.at("update").get_to(out_obj.update_);
+    in_json.at("upload").get_to(out_obj.update_);
     in_json.at("download").get_to(out_obj.download_);
   }
   // to json
   friend void to_json(nlohmann::json& out_json, const task_sync& in_obj) {
     out_json["task_ids"] = in_obj.task_ids_;
-    out_json["update"]   = in_obj.update_;
+    out_json["upload"]   = in_obj.update_;
     out_json["download"] = in_obj.download_;
   }
 
