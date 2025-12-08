@@ -415,11 +415,11 @@ FSys::path get_shots_animation_file_name(const entity& episode_, const entity& s
 }
 // 生成特效 ue路径
 FSys::path get_shots_effect_ue_path(const entity& episode_) {
-  return FSys::path{"8-texiao"} / "Vfx_File" / episode_.name_;
+  return FSys::path{"8_VFX"} / "Vfx_File" / episode_.name_;
 }
 // 生成灯光 ue路径
 FSys::path get_shots_lighting_ue_path(const entity& episode_) {
-  return FSys::path{"9-houqi"} / "Light_File" / episode_.name_;
+  return FSys::path{"9_LIGHT"} / "Light_File" / episode_.name_;
 }
 
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
