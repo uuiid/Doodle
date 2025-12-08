@@ -20,6 +20,16 @@ Invoke-Command -Session $NewSession -ScriptBlock {
     Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "Doodle-Backup" -Description "Doodle 自动备份任务" -RunLevel Highest -Force
   }
 
+  function Add-ClearTmp {
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-File D:\clear_tmp.ps1"
+    $trigger = New-ScheduledTaskTrigger -Daily -At "0:02 AM"
+    Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "Doodle-ClearTmp" -Description "Doodle 自动清理临时文件任务" -RunLevel Highest -Force
+  }
+
+  function Get-ClearTmp {
+    return Get-ScheduledTask -TaskName "Doodle-ClearTmp"
+  }
+
 
   function Get-Backup {
     return Get-ScheduledTask -TaskName "Doodle-Backup"
