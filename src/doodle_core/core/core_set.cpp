@@ -78,7 +78,7 @@ FSys::path core_set::get_doc() const { return p_doc; }
 
 std::string core_set::get_render_url() {
 #ifdef NDEBUG
-  return {"http://192.168.0.181:50023"};
+  return {"http://192.168.0.181"};
 #else
   return {"http://192.168.20.89:50023"};
 #endif
