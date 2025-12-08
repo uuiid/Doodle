@@ -228,13 +228,22 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
   if (true) {
     default_logger_raw()->info("检查冻结变换");
     MFnTransform l_dag_node{};
+    MDagPath l_dag_path{};
     for (MItDag l_iter{MItDag::kDepthFirst, MFn::kTransform, &l_s}; !l_iter.isDone(); l_iter.next()) {
-      maya_chick(l_dag_node.setObject(l_iter.currentItem()));
+      maya_chick(l_iter.getPath(l_dag_path));
+      maya_chick(l_dag_node.setObject(l_dag_path));
+
+      auto l_full_name = get_node_full_name(l_dag_path);
+      std::uint32_t l_num;
+      if (l_dag_path.numberOfShapesDirectlyBelow(l_num); l_num == 1)
+        maya_chick(l_dag_path.extendToShape());
+      else if (l_num > 1)
+        maya_chick(l_dag_path.extendToShapeDirectlyBelow(0));
+      
       auto l_translate_mat = l_dag_node.transformation();
       maya_chick(l_s);
-      auto l_dag_path = l_dag_node.dagPath();
-      if (l_dag_path.hasFn(MFn::kCamera)) continue;  // 跳过相机
-      if (l_dag_path.hasFn(MFn::kLight)) continue;   // 跳过灯光
+      if (l_dag_path.hasFn(MFn::kCamera)) continue;   // 跳过相机
+      if (l_dag_path.hasFn(MFn::kLight)) continue;    // 跳过灯光
       if (l_dag_path.hasFn(MFn::kLocator)) continue;  // 跳过定位器
       if (l_dag_path.hasFn(MFn::kJoint)) continue;    // 跳过骨骼
 
@@ -252,7 +261,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
             (std::abs(l_scale[0] - 1.0) < 0.0001 && std::abs(l_scale[1] - 1.0) < 0.0001 &&
              std::abs(l_scale[2] - 1.0) < 0.0001) &&
             (std::abs(l_rot[0]) < 0.0001 && std::abs(l_rot[1]) < 0.0001 && std::abs(l_rot[2]) < 0.0001))) {
-        default_logger_raw()->error("存在未冻结变换 {}", get_node_full_name(l_iter.currentItem()));
+        default_logger_raw()->error("存在未冻结变换 {}", l_full_name);
         l_e = maya_enum::maya_error_t::check_error;
       }
     }
