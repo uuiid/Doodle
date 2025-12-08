@@ -230,24 +230,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                        get_entity_ground_ue_map_name(l_scene_asset_extend);
   l_ret.original_map_          = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
   l_ret.movie_pipeline_config_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/{0}_EP{1:03}_SC{2:03}{3}_Config", l_prj.code_,
-      l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/{0}_EP{1:03}_SC{2:03}_Config", l_prj.code_, l_episodes, l_shot
   );
   l_ret.level_sequence_import_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}", l_prj.code_,
-      l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/{0}_EP{1:03}_SC{2:03}{3}", l_prj.code_, l_episodes, l_shot,
+      l_suffix
   );
   l_ret.create_map_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/{0}_EP{1:03}_SC{2:03}{3}{4}_LV", l_prj.code_,
-      l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/{0}_EP{1:03}_SC{2:03}{3}_LV", l_prj.code_, l_episodes, l_shot,
+      l_suffix
   );
-  l_ret.import_dir_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/files/", l_prj.code_, l_episodes.get_episodes(),
-      l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
-  );
+  l_ret.import_dir_ =
+      fmt::format("/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/files/", l_prj.code_, l_episodes, l_shot, l_suffix);
   l_ret.render_map_ = fmt::format(
-      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}{3}/Import{4}/sc{2:03}{3}{4}", l_prj.code_, l_episodes.get_episodes(),
-      l_shot.get_shot(), l_shot.get_shot_ab(), l_suffix
+      "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/Import{3}/sc{2:03}{3}", l_prj.code_, l_episodes, l_shot, l_suffix
   );
   auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
   if (l_uprj.empty())
@@ -257,14 +253,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
             l_scene_asset.name_
         }
     );
-  l_scene_ue_path /= l_prj.code_ / l_uprj.stem();
+  l_scene_ue_path /= l_prj.code_;
+  l_scene_ue_path /= fmt::format("EP{:04}", l_episodes) / l_uprj.stem();
 
   l_ret.ue_main_project_path_ = l_scene_ue_path / l_uprj.filename();
-  l_ret.out_file_dir_ =
-      l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
-      fmt::format(
-          "{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes.get_episodes(), l_shot.get_shot(), l_shot.get_shot_ab()
-      );
+  l_ret.out_file_dir_         = l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders /
+                        fmt::format("{}_EP{:03}_SC{:03}", l_prj.code_, l_episodes, l_shot);
   l_ret.create_move_path_ =
       l_ret.out_file_dir_.parent_path() / l_ret.out_file_dir_.filename().replace_extension(".mp4");
 
@@ -604,7 +598,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
       !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
   );
 
-  auto l_scene_ue_path = FSys::path{l_prj.code_} / l_uprj.stem();
+  auto l_scene_ue_path = FSys::path{l_prj.code_} / fmt::format("EP{:04}", l_episodes) / l_uprj.stem();
 
   /// 添加场景文件下载
   l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
