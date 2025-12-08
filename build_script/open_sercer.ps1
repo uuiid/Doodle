@@ -16,7 +16,7 @@ Invoke-Command -Session $NewSession -ScriptBlock {
 
   function Add-Backup {
     $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-File D:\backup.ps1"
-    $trigger = New-ScheduledTaskTrigger -Daily -At "9:00 AM"
+    $trigger = New-ScheduledTaskTrigger -Daily -At "0:01 AM"
     Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "Doodle-Backup" -Description "Doodle 自动备份任务" -RunLevel Highest -Force
   }
 
