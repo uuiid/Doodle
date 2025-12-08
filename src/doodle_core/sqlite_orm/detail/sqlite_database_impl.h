@@ -913,7 +913,7 @@ struct sqlite_database_impl {
   sqlite_orm_type storage_any_;
   void* raw_sqlite_handle_{nullptr};
 
-  explicit sqlite_database_impl(const FSys::path& in_path, bool sync_mode = true)
+  explicit sqlite_database_impl(const FSys::path& in_path)
       : strand_(boost::asio::make_strand(g_io_context())),
         storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string()))) {
     storage_any_.on_open = [this](sqlite3* in_) {
@@ -921,20 +921,20 @@ struct sqlite_database_impl {
       default_logger_raw()->info("数据库连接已打开");
     };
     storage_any_.open_forever();
-    if (sync_mode) try {
-        auto l_g   = storage_any_.transaction_guard();
-        auto l_map = storage_any_.sync_schema();
-        l_map = l_map | ranges::views::filter([](const std::pair<std::string, sqlite_orm::sync_schema_result>& in) {
-                  return in.second != sqlite_orm::sync_schema_result::already_in_sync;
-                }) |
-                ranges::to<std::map<std::string, sqlite_orm::sync_schema_result>>();
-        if (!l_map.empty())
-          for (auto&& [t, m] : l_map) default_logger_raw()->info("数据库更新 {} {}", t, magic_enum::enum_name(m));
-        l_g.commit();
-      } catch (...) {
-        default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
-      }
-    default_logger_raw()->info("sql thread safe {} ", sqlite_orm::threadsafe());
+  }
+
+  void sync_schema() try {
+    auto l_g   = storage_any_.transaction_guard();
+    auto l_map = storage_any_.sync_schema();
+    l_map      = l_map | ranges::views::filter([](const std::pair<std::string, sqlite_orm::sync_schema_result>& in) {
+              return in.second != sqlite_orm::sync_schema_result::already_in_sync;
+            }) |
+            ranges::to<std::map<std::string, sqlite_orm::sync_schema_result>>();
+    if (!l_map.empty())
+      for (auto&& [t, m] : l_map) default_logger_raw()->info("数据库更新 {} {}", t, magic_enum::enum_name(m));
+    l_g.commit();
+  } catch (...) {
+    default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
   }
 
 #define DOODLE_TO_SQLITE_THREAD()                                 \

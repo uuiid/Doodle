@@ -72,6 +72,7 @@ void sqlite_database::load(const FSys::path& in_path) {
   for (auto&& i : l_list) {
     i->upgrade(impl_);
   }
+  impl_->sync_schema();
   impl_->storage_any_.pragma.journal_mode(sqlite_orm::journal_mode::WAL);
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
