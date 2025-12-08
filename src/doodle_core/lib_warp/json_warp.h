@@ -100,8 +100,13 @@ struct [[maybe_unused]] adl_serializer<std::chrono::time_point<Clock, Duration>>
     try {
       if (in_time.time_since_epoch() <= Duration{0} && std::is_same_v<Clock, std::chrono::local_t>)
         j = "1970-01-01 00:00:00";
-      else
-        j = std::format("{:%F %T}", in_time);
+      else {
+        if constexpr (std::is_same_v<Clock, std::chrono::local_t>) {
+          j = std::format("{:%FT%T}", in_time);
+        } else {
+          j = std::format("{:%FT%T}Z", in_time);
+        }
+      }
     } catch (const fmt::format_error& in_err) {
       // j = nlohmann::json::value_t::null;
       throw nlohmann::json::other_error::create(502, in_err.what(), &j);
