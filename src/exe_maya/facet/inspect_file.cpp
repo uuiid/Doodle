@@ -18,6 +18,8 @@
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include <maya/MApiNamespace.h>
+#include <maya/MDagPath.h>
+#include <maya/MFn.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
@@ -230,6 +232,11 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
       maya_chick(l_dag_node.setObject(l_iter.currentItem()));
       auto l_translate_mat = l_dag_node.transformation();
       maya_chick(l_s);
+      auto l_dag_path = l_dag_node.dagPath();
+      if (l_dag_path.hasFn(MFn::kCamera)) continue;  // 跳过相机
+      if (l_dag_path.hasFn(MFn::kLight)) continue;   // 跳过灯光
+      if (l_dag_path.hasFn(MFn::kLocator)) continue;  // 跳过定位器
+      if (l_dag_path.hasFn(MFn::kJoint)) continue;    // 跳过骨骼
 
       auto l_translate = l_translate_mat.getTranslation(MSpace::kWorld, &l_s);
       maya_chick(l_s);
@@ -245,7 +252,7 @@ bool inspect_file::post(const nlohmann::json& in_argh) {
             (std::abs(l_scale[0] - 1.0) < 0.0001 && std::abs(l_scale[1] - 1.0) < 0.0001 &&
              std::abs(l_scale[2] - 1.0) < 0.0001) &&
             (std::abs(l_rot[0]) < 0.0001 && std::abs(l_rot[1]) < 0.0001 && std::abs(l_rot[2]) < 0.0001))) {
-        default_logger_raw()->error("存在未冻结变换 {}", get_node_full_name(l_dag_node.object()));
+        default_logger_raw()->error("存在未冻结变换 {}", get_node_full_name(l_iter.currentItem()));
         l_e = maya_enum::maya_error_t::check_error;
       }
     }
