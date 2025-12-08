@@ -64,6 +64,8 @@ boost::asio::awaitable<void> qcloth_arg::run() {
 boost::asio::awaitable<void> qcloth_update_arg::run() {
   auto l_abc = FSys::list_files(alembic_file_dir_, ".abc");
   auto l_fbx = FSys::list_files(alembic_file_dir_, ".fbx");
+  kitsu_client_->set_logger(logger_ptr_);
+
   SPDLOG_LOGGER_INFO(
       logger_ptr_, "上传qcloth abc文件数量 {} {}, fbx {} {}", l_abc.size(), fmt::join(l_abc, "\n "), l_fbx.size(),
       fmt::join(l_fbx, "\n ")

@@ -165,7 +165,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
   l_req.body().open(in_file_path.string().c_str(), boost::beast::file_mode::read, l_ec);
   if (l_ec) throw_exception(doodle_error{"kitsu upload file open file error {} {}", in_file_path, l_ec.message()});
 
-  SPDLOG_INFO("开始上传文件 {} 到 {}", in_file_path, in_upload_url);
+  SPDLOG_LOGGER_INFO(logger_, "开始上传文件 {} 到 {}", in_file_path, in_upload_url);
 
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
@@ -189,7 +189,7 @@ boost::asio::awaitable<void> kitsu_client::remove_asset_file(std::string in_uplo
 }
 
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const {
-  SPDLOG_WARN("上传文件 {}", in_file_path);
+  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/maya", in_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
@@ -212,7 +212,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
   for (auto&& l_path : *in_file_path) {
     for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
       if (p.is_directory()) continue;
-      SPDLOG_WARN("上传文件 {}", p.path());
+      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -232,7 +232,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     for (auto&& p :
          FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
       if (p.is_directory()) continue;
-      SPDLOG_WARN("上传文件 {}", p.path());
+      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -242,7 +242,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     // 否则上传工程文件
     for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content)) {
       if (p.is_directory()) continue;
-      SPDLOG_WARN("上传文件 {}", p.path());
+      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -250,7 +250,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
     }
     for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_config)) {
       if (p.is_directory()) continue;
-      SPDLOG_WARN("上传文件 {}", p.path());
+      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
       co_await upload_asset_file(
           fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
           base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
@@ -266,7 +266,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id,
 }
 
 boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const {
-  SPDLOG_WARN("上传文件 {}", in_file_path);
+  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_file_path);
 
   return upload_asset_file(
       fmt::format("/api/doodle/data/assets/{}/file/image", in_task_id), in_file_path,
@@ -275,7 +275,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_image(uuid in_task_
 }
 
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_maya(uuid in_shot_task_id, FSys::path in_file_path) {
-  SPDLOG_WARN("上传文件 {}", in_file_path);
+  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/maya", in_shot_task_id), in_file_path,
       base64_encode(in_file_path.filename().generic_string())
@@ -285,7 +285,7 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_maya(uuid in_sh
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_export_file(
     uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
 ) {
-  SPDLOG_WARN("上传文件 {}", in_dir / in_file_name);
+  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_dir / in_file_name);
   return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/output", in_shot_task_id), in_dir / in_file_name,
       base64_encode(in_file_name.generic_string())
@@ -294,7 +294,7 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_export_file(
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
     uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
 ) {
-  SPDLOG_WARN("上传文件 {}", in_dir / in_file_name);
+  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_dir / in_file_name);
   return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/other", in_shot_task_id), in_dir / in_file_name,
       base64_encode(in_file_name.generic_string())
@@ -303,7 +303,7 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_ue(
     uuid in_shot_task_id, FSys::path in_file_path, std::string in_file_field_name
 ) {
-  SPDLOG_WARN("上传文件 {}", in_file_path);
+  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_file_path);
   return upload_asset_file(
       fmt::format("/api/doodle/data/shots/{}/file/ue", in_shot_task_id), in_file_path, base64_encode(in_file_field_name)
   );

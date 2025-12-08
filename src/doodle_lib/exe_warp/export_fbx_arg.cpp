@@ -31,6 +31,8 @@ void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
 }
 
 boost::asio::awaitable<void> export_fbx_arg::run() {
+  kitsu_client_->set_logger(logger_ptr_);
+
   get_export_fbx_arg l_out_arg_{};
   {
     auto l_args = co_await kitsu_client_->get_export_anim_fbx(task_id_);
@@ -104,7 +106,8 @@ boost::asio::awaitable<void> export_fbx_arg_epiboly::run() {
       FSys::create_directories(l_p);
     }
     detail::create_move(
-        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), size_
+        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")),
+        size_
     );
   }
 }

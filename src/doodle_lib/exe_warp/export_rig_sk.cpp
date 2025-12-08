@@ -19,6 +19,8 @@
 namespace doodle {
 
 boost::asio::awaitable<void> export_rig_sk_arg::run() {
+  kitsu_client_->set_logger(logger_ptr_);
+
   {
     auto l_json = co_await kitsu_client_->get_generate_uesk_file_arg(task_id_);
     l_json.get_to(impl_);

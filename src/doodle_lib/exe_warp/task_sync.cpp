@@ -31,6 +31,7 @@ task_sync::args& task_sync::args::operator+=(const args& in_other) {
 
 boost::asio::awaitable<void> task_sync::run() {
   args l_total_args;
+  kitsu_client_->set_logger(logger_ptr_);
   for (auto&& l_task_id : task_ids_) {
     auto l_file_sync_info = co_await kitsu_client_->get_task_sync(l_task_id);
     auto l_arg            = l_file_sync_info.get<args>();
@@ -40,7 +41,8 @@ boost::asio::awaitable<void> task_sync::run() {
   auto l_root = core_set::get_set().user_work_root_;
 
   if (download_)
-    for (auto&& l_info : l_total_args.download_file_list_) FSys::copy_diff(l_info.from_path_, l_root / l_info.to_path_);
+    for (auto&& l_info : l_total_args.download_file_list_)
+      FSys::copy_diff(l_info.from_path_, l_root / l_info.to_path_, logger_ptr_);
 
   if (update_) {
     for (auto&& l_info : l_total_args.update_file_list_) {
