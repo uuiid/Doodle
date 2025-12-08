@@ -87,6 +87,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<data_tasks_comments_ack>("/api/data/tasks/{}/comments/{}/ack"_url(&data_tasks_comments_ack::task_id_, &data_tasks_comments_ack::comment_id_))
       .reg_t<data_projects_team>("/api/data/projects/{}/team"_url(&data_projects_team::id_))
       .reg_t<auth_login>("/api/auth/login"_url)
+      .reg_t<auth_refresh_token>("/api/auth/refresh-token"_url)
       .reg_t<data_projects>("/api/data/projects"_url)
       .reg_t<data_project_settings_task_types>("/api/data/projects/{}/settings/task-types"_url(&data_project_settings_task_types::id_))
       .reg_t<data_project_settings_task_status>("/api/data/projects/{}/settings/task-status"_url(&data_project_settings_task_status::id_))

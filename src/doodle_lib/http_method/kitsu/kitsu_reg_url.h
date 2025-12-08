@@ -11,6 +11,10 @@ namespace doodle::http {
 DOODLE_HTTP_FUN(auth_login)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+// /api/auth/refresh-token
+DOODLE_HTTP_JWT_FUN(auth_refresh_token)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 // /api/data/projects
 DOODLE_HTTP_JWT_FUN(data_projects)
 DOODLE_HTTP_FUN_OVERRIDE(post)

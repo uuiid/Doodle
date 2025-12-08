@@ -9,10 +9,11 @@
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
-#include <doodle_lib/http_method/kitsu.h>
 #include <jwt-cpp/jwt.h>
+
 namespace doodle::http {
 namespace {
 struct login_data {
@@ -112,6 +113,60 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
       boost::beast::http::field::set_cookie,
       fmt::format(
           "refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/auth/refresh-token; SameSite=Lax", l_refresh_token
+      )
+  );
+  l_res.body() = l_json.dump();
+
+  l_res.prepare_payload();
+
+  co_return boost::beast::http::message_generator{std::move(l_res)};
+}
+
+boost::asio::awaitable<boost::beast::http::message_generator> auth_refresh_token::get(session_data_ptr in_handle) {
+  default_logger_raw()->info("用户 {} 刷新 token", person_.person_.email_);
+
+  nlohmann::json l_json{};
+  l_json["login"]     = true;
+  auto& l_ctx         = g_ctx().get<kitsu_ctx_t>();
+  auto l_access_token = jwt::create()
+                            .set_payload_claim("identity_type", jwt::claim{"person"s})
+                            .set_issued_at(chrono::system_clock::now())
+                            .set_id(fmt::to_string(person_.person_.uuid_id_))
+                            .set_subject(fmt::to_string(person_.person_.uuid_id_))
+                            .set_not_before(chrono::system_clock::now())
+                            .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+                            .sign(jwt::algorithm::hs256{l_ctx.secret_});
+  l_json["access_token"] = l_access_token;
+  auto l_refresh_token   = jwt::create()
+                             .set_payload_claim("identity_type", jwt::claim{"person"s})
+                             .set_issued_at(chrono::system_clock::now())
+                             .set_id(fmt::to_string(person_.person_.uuid_id_))
+                             .set_subject(fmt::to_string(person_.person_.uuid_id_))
+                             .set_not_before(chrono::system_clock::now())
+                             .set_expires_at(chrono::system_clock::now() + chrono::days{15})
+                             .sign(jwt::algorithm::hs256{l_ctx.secret_});
+  l_json["refresh_token"] = l_refresh_token;
+  boost::beast::http::response<boost::beast::http::string_body> l_res{
+      boost::beast::http::status::ok, in_handle->version_
+  };
+  l_res.set(boost::beast::http::field::content_type, "application/json; charset=utf-8");
+  l_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+  l_res.set(boost::beast::http::field::access_control_allow_origin, "*");
+  l_res.keep_alive(in_handle->keep_alive_);
+  // if (req_header_[boost::beast::http::field::accept_encoding].contains("deflate")) {
+  //   l_res.body() = zlib_compress(std::move(in_body));
+  //   l_res.set(boost::beast::http::field::content_encoding, "deflate");
+  // } else
+
+  l_res.set(
+      boost::beast::http::field::set_cookie,
+      fmt::format("access_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/; SameSite=Lax", l_access_token)
+  );
+  l_res.insert(
+      boost::beast::http::field::set_cookie,
+      fmt::format(
+          "refresh_token_cookie={}; Max-Age=31540000; HttpOnly; Path=/api/auth/refresh-token; SameSite=Lax",
+          l_refresh_token
       )
   );
   l_res.body() = l_json.dump();
