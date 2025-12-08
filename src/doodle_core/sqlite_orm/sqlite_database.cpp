@@ -69,10 +69,10 @@ void sqlite_database::load(const FSys::path& in_path) {
 
   auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
   impl_       = std::make_shared<sqlite_database_impl>(in_path);
+  impl_->sync_schema();
   for (auto&& i : l_list) {
     i->upgrade(impl_);
   }
-  impl_->sync_schema();
   impl_->storage_any_.pragma.journal_mode(sqlite_orm::journal_mode::WAL);
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
