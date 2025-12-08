@@ -132,7 +132,7 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
       if (in_time.get_sys_time().time_since_epoch() <= Duration{0})
         j = "1970-01-01 00:00:00";
       else
-        j = in_time.get_local_time();
+        j = in_time.get_sys_time();
     } catch (const fmt::format_error& in_err) {
       throw nlohmann::json::other_error::create(502, in_err.what(), &j);
     }
@@ -147,11 +147,10 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
       in_time = time_point{std::chrono::current_zone(), l_time};
     else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%FT%T%Ez", l_time))
       in_time = time_point{std::chrono::current_zone(), l_time};
-    else if (std::chrono::time_point<std::chrono::local_t, Duration> l_loc_time{};
-             in.clear(), in.str(l_str), in >> std::chrono::parse("%F %T", l_loc_time))
-      in_time = time_point{std::chrono::current_zone(), l_loc_time};
-    else if (in.clear(), in.exceptions(std::ios::failbit), in.str(l_str), in >> std::chrono::parse("%F", l_loc_time))
-      in_time = time_point{std::chrono::current_zone(), l_loc_time};
+    else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%F %T", l_time))
+      in_time = time_point{std::chrono::current_zone(), l_time};
+    else if (in.clear(), in.exceptions(std::ios::failbit), in.str(l_str), in >> std::chrono::parse("%F", l_time))
+      in_time = time_point{std::chrono::current_zone(), l_time};
     // std::chrono::local_time<Duration> l_local_time = j.get<std::chrono::local_time<Duration>>();
     // in_time = std::chrono::zoned_time<Duration>{std::chrono::current_zone(), l_local_time};
   }
