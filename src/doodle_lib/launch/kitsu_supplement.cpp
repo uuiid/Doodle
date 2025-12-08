@@ -234,7 +234,6 @@ bool kitsu_supplement_main::init() {
     return true;
   }
   get_register_info(l_args);
-  core_set::get_set().set_root(l_args.kitsu_thumbnails_path_);
 
   // 初始化数据库
   g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
