@@ -156,7 +156,7 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 				FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
 				check(TmpSkeletalMesh);
 
-				FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 5, false, true);
+				FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 3, false, true);
 				TmpSkeletalMesh->PostEditChange();
 				TmpSkeletalMesh->MarkPackageDirty();
 			}
