@@ -168,7 +168,7 @@ GraphSample build_sample_from_mesh(
   // 3) normalize adjacency
   torch::Tensor adj_norm = normalize_adjacency(A.to(in_device));
 
-  // 4) build bone adjacency
+  // 4) 建立骨骼邻接
   // Prefer parent-child topology if provided (bone_parents length == B)
   torch::Tensor bone_adj = torch::zeros({B, B}, torch::TensorOptions().dtype(torch::kFloat32));
   if ((int)bone_parents.size() != B) throw std::runtime_error("bone_parents length != B");
@@ -359,7 +359,7 @@ struct fbx_scene {
 };
 
 // ============= Model Definition =============
-// Graph convolution layer (spectral style): H' = norm_adj @ H @ W
+//图卷积层（光谱样式）：H'=norm_adj @H @W
 struct GraphConvImpl : torch::nn::Module {
   GraphConvImpl(int in_dim, int out_dim) {
     W = register_parameter("W", torch::randn({in_dim, out_dim}) * 0.01);
@@ -413,22 +413,22 @@ struct SkinWeightGCNImpl : torch::nn::Module {
       const torch::Tensor& x, const torch::Tensor& adj_norm, const torch::Tensor& bone_feat,
       const torch::Tensor& bone_adj
   ) {
-    // local branch
+    // 局部分支
     auto l       = torch::relu(gc1->forward(x, adj_norm));  // [N, H]
     l            = torch::relu(gc2->forward(l, adj_norm));  // [N, H]
 
-    // global branch: linear on node features -> pooled
+    // 全局分支：对节点特征进行线性变换 -> 池化
     auto g       = torch::relu(gfc1->forward(x));  // [N, H]
     g            = torch::relu(gfc2->forward(g));  // [N, H]
     auto g_pool  = g.mean(0, /*keepdim=*/true);    // [1, H]
-    // broadcast to nodes
+    // 广播到节点数量
     auto g_bcast = g_pool.expand({x.size(0), g_pool.size(1)});  // [N,H]
 
     // 细节分支：保留局部特征而不进行平滑处理
     auto d       = torch::relu(dfc1->forward(x));  // [N, H]
     d            = torch::relu(dfc2->forward(d));  // [N, H]
 
-    // concat: Local(GCN) + Global(Pooled) + Detail(MLP)
+    // concat: 局部(GCN) + 全局(池化) + 细节(MLP)
     auto feat    = torch::cat({l, g_bcast, d}, /*dim=*/1);  // [N, 3H]
     auto h       = torch::relu(fc1->forward(feat));         // [N, H]
 
