@@ -15,6 +15,7 @@
 #include "boost/numeric/conversion/cast.hpp"
 
 #include "maya_plug/data/maya_conv_str.h"
+#include "maya_plug/exception/exception.h"
 #include "maya_plug/main/maya_plug_fwd.h"
 #include <maya_plug/data/maya_camera.h>
 
@@ -161,7 +162,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
         };
         auto k_p             = get_file_path(i);
         MString const k_path = conv::to_ms(k_p.generic_string());
-        l_tex_manager->saveTexture(l_tex.get(), k_path);
+        maya_chick(l_tex_manager->saveTexture(l_tex.get(), k_path));
       }
     }
     //    renderer->removeNotification(p_post_render_notification_name, MHWRender::MPassContext::kEndRenderSemantic);
