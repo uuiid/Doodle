@@ -68,7 +68,8 @@
             "program": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin/doodle_maya_exe_2020.exe",
             "args": [
                 "--config=${workspaceFolder}/build/test_4.json",
-                "--inspect_file"
+                // "--inspect_file",
+                "--export_fbx"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin",
