@@ -81,6 +81,7 @@ FSys::path play_blast::get_file_path(const MTime& in_time) const {
 
 FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size) {
   p_uuid = core_set::get_set().get_uuid_str();
+  MGlobal::executeCommand("hwRenderLoad;");
   MStatus k_s{};
 
   auto k_cam = maya_camera::conjecture();
@@ -131,7 +132,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
     for (MTime i{in_start}; i <= in_end; ++i) {
       MAnimControl::setCurrentTime(i);
 
-      renderer->render(d_str{fmt::format("batch:{}", l_cam_path)}, &l_rt, 1);
+      renderer->render(conv::to_ms(fmt::format("batch:{}", l_cam_path)), &l_rt, 1);
 
       if (l_rt) {
         int l_row_pitch      = 0;
