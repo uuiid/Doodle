@@ -200,7 +200,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
               }
           );
           l_it != l_ret.asset_infos_.end()) {
-        l_it->simulation_type_ = l_info.simulation_type_;
+        l_it->simulation_type_ |= l_info.simulation_type_;
       }
     }
   }
