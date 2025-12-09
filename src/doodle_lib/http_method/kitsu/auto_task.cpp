@@ -217,7 +217,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
                              )
       ))
   );
-  FSys::path l_scene_ue_path{core_set::get_set().get_cache_root().parent_path()};
+  FSys::path l_scene_ue_path{"D:/sy_magic/ue_projects/"};  // 默认路径
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
 
   auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
