@@ -83,6 +83,10 @@ FSys::path play_blast::get_file_path(const MTime& in_time) const {
 FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size) {
   p_uuid = core_set::get_set().get_uuid_str();
   MGlobal::executeCommand("hwRenderLoad;");
+  MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.floatingPointRTEnable" 0;)");
+  MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.multiSampleEnable" 0;)");
+  MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.ssaoEnable" 0;)");
+  MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.textureMaxResMode" 0;)");
   MStatus k_s{};
 
   auto k_cam = maya_camera::conjecture();
@@ -133,7 +137,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
     for (MTime i{in_start}; i <= in_end; ++i) {
       MAnimControl::setCurrentTime(i);
 
-      renderer->render(conv::to_ms(fmt::format("batch:{}", l_cam_path)), &l_rt, 1);
+      DOODLE_CHICK(renderer->render(conv::to_ms(fmt::format("batch:{}", l_cam_path)), &l_rt, 1), "渲染失败");
 
       if (l_rt) {
         int l_row_pitch      = 0;
@@ -160,7 +164,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
               if (in_texture) l_tex_manager->releaseTexture(in_texture);
             }
         };
-        auto k_p             = get_file_path(i);
+        auto k_p = get_file_path(i);
         MString const k_path = conv::to_ms(k_p.generic_string());
         maya_chick(l_tex_manager->saveTexture(l_tex.get(), k_path));
       }
