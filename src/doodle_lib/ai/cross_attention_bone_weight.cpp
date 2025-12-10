@@ -4,6 +4,7 @@
 
 #include <ATen/core/TensorBody.h>
 #include <memory>
+#include <torch/types.h>
 #include <vector>
 
 namespace doodle::ai {
@@ -34,6 +35,8 @@ struct LocalPointTransformerBlockImpl : torch::nn::Module {
     auto k      = fc_k->forward(x);
     auto v      = fc_v->forward(x);
     // 注意力计算
+    torch::Tensor k_nei;
+    torch::Tensor v_nei;
     {
       std::vector<torch::Tensor> k_rows{};  // 定义k_nei
       std::vector<torch::Tensor> v_rows{};  // 定义v_nei
@@ -43,10 +46,16 @@ struct LocalPointTransformerBlockImpl : torch::nn::Module {
         k_rows.push_back(k[b][neigh_idx[b]].unsqueeze(0));  // 高级索引
         v_rows.push_back(v[b][neigh_idx[b]].unsqueeze(0));
       }
+      k_nei = torch::cat(k_rows, 0).to(torch::kFloat32);  // [B, N, K, C]
+      v_nei = torch::cat(v_rows, 0).to(torch::kFloat32);  // [B, N, K, C]
     }
-
-    // 实现前向传播逻辑
-    return x;  // 示例返回输入张量
+    auto l_q_ = q.unsqueeze(2);  // [B, N, 1, C]
+    auto attn = (l_q_ * k_nei).sum(-1) / std::sqrt((double)l_size[2] + 1e-9);
+    attn      = torch::softmax(attn, -1);             // [B, N, K]
+    auto out_ = (attn.unsqueeze(-1) * v_nei).sum(2);  // [B, N, C]
+    out_      = out->forward(out_);
+    out_      = norm->forward(out_ + q);
+    return out_;
   }
 };
 
