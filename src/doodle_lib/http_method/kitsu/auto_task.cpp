@@ -693,7 +693,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
         FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) / "map";
     auto l_light_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
                          fmt::format("ep{:04}", l_episodes) /
-                         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_Light";
+                         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_Lig";
     auto l_light_path3 =
         FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
