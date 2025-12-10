@@ -49,7 +49,7 @@ struct sim_map_anim {
   std::size_t to_abc_idx_{};
 };
 // 检查是否存在多个场景
-auto check_multiple_scene(const auto& in_vector) {
+auto check_multiple_scene(auto& in_vector) {
   auto l_r = std::count_if(in_vector.begin(), in_vector.end(), [](const auto& in_info) -> bool {
     return std::get<0>(in_info).entity_type_id_ == asset_type::get_ground_id();
   });
@@ -57,10 +57,19 @@ auto check_multiple_scene(const auto& in_vector) {
     throw_exception(
         http_request_error{boost::beast::http::status::bad_request, "未找到场景类型资产，无法生成 ue 主工程路径"}
     );
-  if (l_r > 1)
-    throw_exception(
-        http_request_error{boost::beast::http::status::bad_request, "存在多个场景类型资产，无法生成 ue 主工程路径"}
-    );
+
+  // 大于两个场景的情况下, 擦除多余场景, 直到只剩一个场景
+  while (l_r > 1) {
+    if (auto l_it = std::find_if(
+            in_vector.begin(), in_vector.end(),
+            [](const auto& in_pair) { return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id(); }
+        );
+        l_it != in_vector.end()) {
+      in_vector.erase(l_it);
+      --l_r;
+    }
+  }
+
   return std::find_if(in_vector.begin(), in_vector.end(), [](const auto& in_pair) {
     return std::get<0>(in_pair).entity_type_id_ == asset_type::get_ground_id();
   });
@@ -581,7 +590,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
                              )
       ))
   );
-  check_multiple_scene(l_assets);
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};
   auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
