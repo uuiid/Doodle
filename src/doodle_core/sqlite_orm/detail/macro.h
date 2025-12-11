@@ -110,6 +110,10 @@ std::vector<T> string_to_enum_array(const std::string& t) {
   template <>                                                                                         \
   boost::asio::awaitable<void> sqlite_database::install(const std::shared_ptr<class_name>& in_data) { \
     return impl_->install<class_name>(in_data);                                                       \
+  }                                                                                                   \
+  template <>                                                                                         \
+  boost::asio::awaitable<void> sqlite_database::update(const std::shared_ptr<class_name>& in_data) {  \
+    return impl_->update<class_name>(in_data);                                                        \
   }
 
 #define DOODLE_INSTALL_RANGE(class_name)                                                          \
@@ -122,6 +126,16 @@ std::vector<T> string_to_enum_array(const std::string& t) {
   template <>                                                                                     \
   boost::asio::awaitable<void> sqlite_database::install_range(std::vector<class_name>* in_data) { \
     return impl_->install_range<class_name>(in_data);                                             \
+  }                                                                                               \
+  template <>                                                                                     \
+  boost::asio::awaitable<void> sqlite_database::update_range(                                     \
+      const std::shared_ptr<std::vector<class_name>>& in_data                                     \
+  ) {                                                                                             \
+    return impl_->update_range<class_name>(in_data.get());                                        \
+  }                                                                                               \
+  template <>                                                                                     \
+  boost::asio::awaitable<void> sqlite_database::update_range(std::vector<class_name>* in_data) {  \
+    return impl_->update_range<class_name>(in_data);                                              \
   }
 
 #define DOODLE_REMOVE_BY_ID(class_name)                                                                        \
