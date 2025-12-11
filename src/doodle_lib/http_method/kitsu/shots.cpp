@@ -340,9 +340,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
             .assigner_id_    = person_.person_.uuid_id_,
         }
     );
-    l_results.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
   }
   if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
+
+  for (auto&& l_task : *l_tasks)
+    l_results.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
+
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
