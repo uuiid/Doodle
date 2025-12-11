@@ -75,7 +75,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_projects::pos
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
-  l_prj->uuid_id_           = core_set::get_set().get_uuid();
   l_prj->project_status_id_ = l_sql.get_project_status_open();
   co_await g_ctx().get<sqlite_database>().install(l_prj);
   co_return in_handle->make_msg(nlohmann::json{} = *l_prj);
@@ -88,7 +87,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   auto l_prj_task_type_link = std::make_shared<project_task_type_link>();
   l_json.get_to(*l_prj_task_type_link);
   l_prj_task_type_link->project_id_ = id_;
-  if (l_prj_task_type_link->uuid_id_.is_nil()) l_prj_task_type_link->uuid_id_ = core_set::get_set().get_uuid();
 
   if (auto l_t = g_ctx().get<sqlite_database>().get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_);
       !l_t) {
@@ -269,8 +267,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_type_lin
       l_sql.get_project_task_type_link(l_args.project_id_, l_args.task_type_id_).value_or(l_args)
   );
   l_ptr->priority_ = l_args.priority_.value_or(0);
-  if (l_ptr->uuid_id_.is_nil()) l_ptr->uuid_id_ = core_set::get_set().get_uuid();
-  co_await l_sql.install(l_ptr);
+  if (!l_ptr->id_)
+    co_await l_sql.install(l_ptr);
+  else
+    co_await l_sql.update(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_status_automations::post(

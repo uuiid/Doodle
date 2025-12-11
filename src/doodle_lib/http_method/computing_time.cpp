@@ -1,5 +1,6 @@
 #include "computing_time.h"
 
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/time_point_wrap.h"
 #include "doodle_core/platform/win/register_file_type.h"
 #include <doodle_core/metadata/attendance.h>
@@ -300,6 +301,8 @@ void computing_time_run(
     const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const uuid& in_person_id,
     std::vector<computing_time_post_req_data>& in_data, std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
+  DOODLE_CHICK(in_data.size() == in_out_data.size(), "in_data.size() != in_out_data.size()");
+
   auto l_end_time = chrono::local_days{(in_year_month + chrono::months{1}) / chrono::day{1}} - chrono::seconds{1};
   chrono::local_time_pos l_begin_time{chrono::local_days{in_year_month / chrono::day{1}} + chrono::seconds{1}};
   auto l_all_works = in_time_clock(l_begin_time, l_end_time);
@@ -329,33 +332,17 @@ void computing_time_run(
       auto l_end = in_time_clock.next_time(l_begin_time, l_woeks2[i]);
       if (i + 1 == in_data.size()) l_end = l_end_time;
 
-      auto l_info          = in_time_clock.get_time_info(l_begin_time, l_end);
-      std::string l_remark = fmt::format("{}", fmt::join(l_info, ", "));
+      auto l_info                       = in_time_clock.get_time_info(l_begin_time, l_end);
+      std::string l_remark              = fmt::format("{}", fmt::join(l_info, ", "));
 
-      if (i < in_out_data.size()) {
-        in_out_data[i].start_time_        = {chrono::current_zone(), l_begin_time};
-        in_out_data[i].end_time_          = {chrono::current_zone(), l_end};
-        in_out_data[i].duration_          = in_time_clock(l_begin_time, l_end);
-        in_out_data[i].remark_            = l_remark;
-        in_out_data[i].year_month_        = chrono::local_days{in_year_month / 1};
-        in_out_data[i].person_id_         = in_person_id;
-        in_out_data[i].kitsu_task_ref_id_ = in_data[i].task_id;
-      } else {
-        in_out_data.emplace_back(
-            work_xlsx_task_info_helper::database_t{
-                .uuid_id_           = core_set::get_set().get_uuid(),
-                // .task_info_  = std::vector<work_xlsx_task_info>{},
-                .start_time_        = {chrono::current_zone(), l_begin_time},
-                .end_time_          = {chrono::current_zone(), l_end},
-                .duration_          = in_time_clock(l_begin_time, l_end),
-                .remark_            = l_remark,
-                .year_month_        = chrono::local_days{in_year_month / 1},
-                .person_id_         = in_person_id,
-                .kitsu_task_ref_id_ = in_data[i].task_id
-            }
-        );
-      }
-      l_begin_time = l_end;
+      in_out_data[i].start_time_        = {chrono::current_zone(), l_begin_time};
+      in_out_data[i].end_time_          = {chrono::current_zone(), l_end};
+      in_out_data[i].duration_          = in_time_clock(l_begin_time, l_end);
+      in_out_data[i].remark_            = l_remark;
+      in_out_data[i].year_month_        = chrono::local_days{in_year_month / 1};
+      in_out_data[i].person_id_         = in_person_id;
+      in_out_data[i].kitsu_task_ref_id_ = in_data[i].task_id;
+      l_begin_time                      = l_end;
     }
   }
 }
@@ -642,8 +629,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
 
   );
 
-  auto l_block_ptr                           = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr                               = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
+  auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block_ptr     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(
       l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1}
   );
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);

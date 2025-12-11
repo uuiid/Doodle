@@ -63,6 +63,7 @@ struct project_task_type_link {
     j.at("task_type_id").get_to(p.task_type_id_);
     if (j.contains("project_id")) j.at("project_id").get_to(p.project_id_);
     if (j.contains("priority")) j.at("priority").get_to(p.priority_);
+    if (j.contains("id")) j.at("id").get_to(p.uuid_id_);
   }
   // to json
   friend void to_json(nlohmann::json& j, const project_task_type_link& p) {
