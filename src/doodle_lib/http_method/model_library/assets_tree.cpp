@@ -11,7 +11,9 @@
 #include <doodle_lib/core/http/http_session_data.h>
 
 #include "model_library.h"
+#include <memory>
 #include <treehh/tree.hh>
+#include <vector>
 namespace doodle::http::model_library {
 
 void check_data(const assets_helper::database_t& in_data) {
@@ -60,6 +62,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   l_ptr->uuid_id_ = core_set::get_set().get_uuid();
   co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
+}
+boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::patch(
+    http::session_data_ptr in_handle
+) {
+  auto l_values = std::make_shared<std::vector<assets_helper::database_t>>(
+      in_handle->get_json().get<std::vector<assets_helper::database_t>>()
+  );
+
+  for (auto& l_value : *l_values) {
+    check_data(l_value);
+  }
+  co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_values);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_values);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::put(

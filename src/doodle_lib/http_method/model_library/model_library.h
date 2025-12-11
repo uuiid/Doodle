@@ -41,6 +41,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(model_library_assets_tree)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(patch)
 DOODLE_HTTP_FUN_END()
 // "api/doodle/model_library/assets_tree/{id}"
 DOODLE_HTTP_JWT_FUN(model_library_assets_tree_instance)
