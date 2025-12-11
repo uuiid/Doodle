@@ -15,7 +15,6 @@
 #include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
-#include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/http_method/kitsu.h>
 
 #include "boost/beast/http/field.hpp"

@@ -11,7 +11,6 @@
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
-#include <doodle_lib/core/scan_assets.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
@@ -178,12 +177,6 @@ boost::asio::awaitable<create_comment_result> create_comment(
   for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
     co_await i.run(l_task, in_person->person_.uuid_id_);
 
-  // 检查文件
-  try {
-    co_await scan_assets::scan_task_async(*l_task);
-  } catch (const FSys::filesystem_error& l_error) {
-    default_logger_raw()->warn("{}", l_error.what());
-  }
 
   socket_io::broadcast(
       "comment:new",

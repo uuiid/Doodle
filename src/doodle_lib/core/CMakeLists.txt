@@ -10,7 +10,6 @@ target_sources(doodle_lib
         base64.h
         fbx_file.h
         alembic_file.h
-        scan_assets.h
         asyn_task.h
         entity_path.h
 
@@ -21,7 +20,6 @@ target_sources(doodle_lib
         base64.cpp
         fbx_file.cpp
         alembic_file.cpp
-        scan_assets.cpp
         entity_path.cpp
 )
 add_subdirectory(http)
