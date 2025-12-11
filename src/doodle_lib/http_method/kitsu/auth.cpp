@@ -136,7 +136,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_person       = std::make_shared<person>(l_sql.get_person_for_email(l_arg.email));
   l_person->password_ = bcrypt::generateHash(l_arg.password);
-  co_await l_sql.install(l_person);
+  co_await l_sql.update(l_person);
   g_ctx().get<auth_reset_password_cache>().remove(l_arg.email);
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
 }

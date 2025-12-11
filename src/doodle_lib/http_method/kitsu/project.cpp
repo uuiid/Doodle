@@ -65,7 +65,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
   in_handle->get_json().get_to(*l_project);
-  co_await l_sql.install(l_project);
+  co_await l_sql.update(l_project);
   co_return in_handle->make_msg(nlohmann::json{} = *l_project);
 }
 
@@ -112,7 +112,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   person_.check_project_manager(id_);
   auto l_status_id                        = l_json["task_status_id"].get<uuid>();
   auto l_prj_task_status_link             = std::make_shared<project_task_status_link>();
-  l_prj_task_status_link->uuid_id_        = core_set::get_set().get_uuid();
+
   l_prj_task_status_link->project_id_     = id_;
   l_prj_task_status_link->task_status_id_ = l_status_id;
   if (!g_ctx().get<sqlite_database>().get_project_task_status_link(id_, l_status_id))
@@ -169,7 +169,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
 
   if (l_entities.size() == 1) {
     auto l_task             = std::make_shared<task>();
-    l_task->uuid_id_        = core_set::get_set().get_uuid();
     l_task->name_           = "main";
     l_task->project_id_     = project_id_;
     l_task->task_type_id_   = l_task_type.uuid_id_;

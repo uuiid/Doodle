@@ -17,7 +17,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   default_logger_raw()->info("{} data_entities::put {}", person_.person_.email_, l_entt->uuid_id_);
   l_json.get_to(*l_entt);
   nlohmann::json l_res{};
-  if (person_.is_project_supervisor(l_entt->project_id_)) co_await l_sql.install(l_entt);
+  if (person_.is_project_supervisor(l_entt->project_id_)) co_await l_sql.update(l_entt);
   l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
@@ -28,12 +28,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
         !l_list_ext.empty()) {
       *l_ext_ptr = l_list_ext.front();
       l_json.get_to(*l_ext_ptr);
+      co_await l_sql.update(l_ext_ptr);
     } else {
       l_json.get_to(*l_ext_ptr);
       l_ext_ptr->entity_id_ = l_entt->uuid_id_;
-      l_ext_ptr->uuid_id_   = core_set::get_set().get_uuid();
+      co_await l_sql.install(l_ext_ptr);
     }
-    co_await l_sql.impl_->install(l_ext_ptr);
     l_res.update(*l_ext_ptr);
   }
 

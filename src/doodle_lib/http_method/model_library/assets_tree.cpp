@@ -59,7 +59,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
         l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
   }
-  l_ptr->uuid_id_ = core_set::get_set().get_uuid();
   co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }

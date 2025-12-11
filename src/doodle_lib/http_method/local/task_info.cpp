@@ -81,7 +81,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
     boost::asio::co_spawn(
         g_io_context(),
         [l_t = task_info_]() -> boost::asio::awaitable<void> {
-          co_await g_ctx().get<sqlite_database>().install(l_t);
+          co_await g_ctx().get<sqlite_database>().update(l_t);
           socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_t);
           co_return;
         },
@@ -225,7 +225,7 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     }
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     logger_->flush();
-    co_await g_ctx().get<sqlite_database>().install(task_info_);
+    co_await g_ctx().get<sqlite_database>().update(task_info_);
     emit_signal();
   }
   void emit_signal() const {
@@ -275,7 +275,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::post(session
   auto l_ptr  = std::make_shared<server_task_info>();
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_ptr);
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->command_         = l_json["task_data"];
@@ -318,7 +317,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::pat
   if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
   if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
   if (*l_server_task_info != l_server_task_info_org)
-    co_await g_ctx().get<sqlite_database>().install(l_server_task_info);
+    co_await g_ctx().get<sqlite_database>().update(l_server_task_info);
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
@@ -328,7 +327,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   l_ptr->type_ = server_task_info_type::check_maya;
   auto l_json  = in_handle->get_json();
   l_json.get_to(*l_ptr);
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   auto l_arg_t            = std::make_shared<inspect_file_arg>(token_, id_);
@@ -348,7 +346,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
 ) {
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::create_rig_sk;
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
@@ -377,7 +374,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 ) {
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::auto_light;
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
@@ -394,7 +390,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_arg_t->on_run_time_info_.connect([l_ptr](const server_task_info::run_time_info_t& in_info) {
     l_ptr->add_run_time_info(in_info);
     // auto l_v = std::visit(*this, arg_);
-    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(l_ptr), boost::asio::detached);
+    boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().update(l_ptr), boost::asio::detached);
     emit_signal(l_ptr);
   });
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
@@ -412,7 +408,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 ) {
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::export_fbx;
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
@@ -441,7 +436,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 ) {
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::export_sim;
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
@@ -470,7 +464,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
 ) {
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::project_sync;
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
@@ -515,7 +508,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
 ) {
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::export_fbx;
-  l_ptr->uuid_id_         = core_set::get_set().get_uuid();
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   // 在外包的后端中, 会载入数据库, 可以使用  project_id_ 获取项目数据

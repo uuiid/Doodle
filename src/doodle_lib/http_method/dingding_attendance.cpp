@@ -165,7 +165,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     };
     l_attendance_install_list->emplace_back(std::move(l_attendance));
   }
-  if (l_modify_user) co_await l_sqlite.install(std::make_shared<person>(l_user));
+  if (l_modify_user) co_await l_sqlite.update(std::make_shared<person>(l_user));
 
   if (!l_attends.empty()) {
     std::vector<std::int64_t> l_rem{};
@@ -181,8 +181,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_install_list);
   }
 
-  auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list)
-                              | ranges::to<std::vector<attendance_helper::database_t>>();
+  auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list) |
+                           ranges::to<std::vector<attendance_helper::database_t>>();
 
   co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
   std::erase_if(l_attendance_list, [](const auto& l_attendance) {
@@ -218,13 +218,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   );
   if (l_data->type_ == attendance_helper::att_enum::max)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "类型错误"});
-  auto& l_sql          = g_ctx().get<sqlite_database>();
-  auto l_user          = l_sql.get_by_uuid<person>(id_);
-  l_data->person_id_   = l_user.uuid_id_;
-  l_data->uuid_id_     = core_set::get_set().get_uuid();
-  l_data->update_time_ = {
-      chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
-  };
+  auto& l_sql        = g_ctx().get<sqlite_database>();
+  auto l_user        = l_sql.get_by_uuid<person>(id_);
+  l_data->person_id_ = l_user.uuid_id_;
+
   const chrono::year_month_day l_date{l_data->create_date_};
   co_await l_sql.install(l_data);
   co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
@@ -238,12 +235,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       g_ctx().get<sqlite_database>().get_by_uuid<attendance_helper::database_t>(id_)
   );
   in_handle->get_json().get_to(*l_data);
-  l_data->update_time_ = {
-      chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
-  };
+
   const chrono::year_month_day l_date{l_data->create_date_};
   auto& l_sql = g_ctx().get<sqlite_database>();
-  co_await l_sql.install(l_data);
+  co_await l_sql.update(l_data);
   co_await recomputing_time(l_data->person_id_, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
 }

@@ -199,7 +199,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   ));
   auto l_entity_ptr = std::make_shared<entity>();
   if (l_sq_list.empty()) {
-    l_entity_ptr->uuid_id_     = core_set::get_set().get_uuid();
     l_entity_ptr->name_        = l_args.name_;
     l_entity_ptr->description_ = l_args.description_;
     l_entity_ptr->parent_id_   = l_args.episode_id_;
@@ -243,7 +242,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
     if (key == "force" && has) l_force = true;
   if (!l_force) {
     l_sequence->canceled_ = true;
-    co_await l_sql.install(l_sequence);
+    co_await l_sql.update(l_sequence);
     socket_io::broadcast(
         "sequence:update",
         nlohmann::json{{"sequence_id", l_sequence->uuid_id_}, {"project_id", l_sequence->project_id_}}

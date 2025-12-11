@@ -39,7 +39,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
           boost::beast::http::status::not_found, fmt::format("未找到父节点 {}", i)
       );
 
-  l_ptr->uuid_id_ = core_set::get_set().get_uuid();
   co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
   auto l_link = std::make_shared<std::vector<assets_file_helper::link_parent_t>>();
   for (auto&& i : l_ptr->uuid_parents_)

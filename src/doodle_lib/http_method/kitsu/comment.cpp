@@ -51,10 +51,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
 ) {
   if (!in_comment->text_.empty()) in_comment->text_ = boost::locale::conv::to_utf<char>(in_comment->text_, "UTF-8");
 
-  in_comment->uuid_id_    = core_set::get_set().get_uuid();
-  in_comment->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  in_comment->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  in_comment->person_id_  = in_person->person_.uuid_id_;
+  in_comment->person_id_ = in_person->person_.uuid_id_;
 
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
 
@@ -87,7 +84,6 @@ boost::asio::awaitable<create_comment_result> create_comment(
     // 创建附属文件
     for (auto&& i : in_files) {
       auto l_attachment_file         = std::make_shared<attachment_file>();
-      l_attachment_file->uuid_id_    = core_set::get_set().get_uuid();
       l_attachment_file->comment_id_ = in_comment->uuid_id_;
       auto l_ext                     = i.extension();
       l_attachment_file->extension_  = l_ext.empty() ? std::string{} : l_ext.generic_string().substr(1);
@@ -114,7 +110,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
     l_task->task_status_id_    = in_comment->task_status_id_;
     if (l_task_status.is_retake_) ++l_task->retake_count_;
     if (l_task_status.is_feedback_request_) l_task->end_date_ = chrono::system_clock::now();
-    co_await l_sql.install(l_task);
+    co_await l_sql.update(l_task);
 
     socket_io::broadcast(
         "task:update", nlohmann::json{{"task_id", in_comment->object_id_}, {"project_id", l_task->project_id_}},
@@ -174,7 +170,6 @@ boost::asio::awaitable<create_comment_result> create_comment(
   // 运行自动化任务
   for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
     co_await i.run(l_task, in_person->person_.uuid_id_);
-
 
   socket_io::broadcast(
       "comment:new",
@@ -250,7 +245,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
 
   l_task->start_date_ = l_arg.start_date_;
   l_task->due_date_   = l_arg.due_date_;
-  co_await l_sql.install(l_task);
+  co_await l_sql.update(l_task);
   auto l_result = co_await create_comment(l_comment, &person_, id_, {}, l_task);
   default_logger_raw()->info("由 {} 创建评论 {}, 修改任务时间", person_.person_.email_, l_comment->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
@@ -322,7 +317,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment::dele
     l_task->task_status_id_    = l_last_comment->task_status_id_;
     if (l_task_status.is_feedback_request_) l_task->end_date_ = l_last_comment->created_at_;
     if (l_task_status.is_done_) l_task->done_date_ = l_last_comment->created_at_;
-    co_await l_sql.install(l_task);
+    co_await l_sql.update(l_task);
   }
   co_return in_handle->make_msg(nlohmann::json{});
 }
@@ -333,7 +328,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
   l_json.get_to(*l_comment);
   l_comment->updated_at_ = chrono::system_clock::now();
-  co_await l_sql.install(l_comment);
+  co_await l_sql.update(l_comment);
   co_return in_handle->make_msg(nlohmann::json{} = *l_comment);
 }
 

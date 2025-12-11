@@ -195,7 +195,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   auto l_sql   = g_ctx().get<sqlite_database>();
   auto l_not   = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   l_not->read_ = in_handle->get_json().value<bool>("read", false);
-  co_await l_sql.install(l_not);
+  co_await l_sql.update(l_not);
   co_return in_handle->make_msg(nlohmann::json{} = *l_not);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_user_notifications_mark_all_as_read::post(

@@ -59,12 +59,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
 
   if (!bcrypt::validatePassword(l_data.password_, l_p->password_)) {
     ++l_p->login_failed_attemps_;
-    co_await l_sql.install(l_p);
+    co_await l_sql.update(l_p);
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "密码错误"});
   }
   if (l_p->login_failed_attemps_ > 0) {
     l_p->login_failed_attemps_ = 0;
-    co_await l_sql.install(l_p);
+    co_await l_sql.update(l_p);
   }
   default_logger_raw()->info("用户 {} 登录", l_p->email_);
 

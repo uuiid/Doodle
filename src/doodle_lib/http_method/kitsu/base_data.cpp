@@ -41,7 +41,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments_instan
   auto l_sql            = g_ctx().get<sqlite_database>();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
   in_handle->get_json().get_to(*l_department_ptr);
-  co_await l_sql.install(l_department_ptr);
+  co_await l_sql.update(l_department_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_department_ptr);
 }
 
@@ -85,14 +85,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
   }
   co_await l_sql.remove_task_type_asset_type_link_by_asset_type(l_asset_type_ptr->uuid_id_);
   co_await l_sql.install_range(l_task_type_asset_type_link_list);
-  co_await l_sql.install(l_asset_type_ptr);
+  co_await l_sql.update(l_asset_type_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
   person_.check_admin();
   auto l_sql         = g_ctx().get<sqlite_database>();
   auto l_status      = std::make_shared<task_status>();
-  l_status->uuid_id_ = core_set::get_set().get_uuid();
   in_handle->get_json().get_to(*l_status);
   co_await l_sql.install(l_status);
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
@@ -104,7 +103,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_i
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
   in_handle->get_json().get_to(*l_status);
-  co_await l_sql.install(l_status);
+  co_await l_sql.update(l_status);
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::post(session_data_ptr in_handle) {

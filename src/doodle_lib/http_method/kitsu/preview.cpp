@@ -44,7 +44,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   auto l_position                  = l_sql.get_next_position(task_id_, l_revision);
 
   auto l_preview_file              = std::make_shared<preview_file>();
-  l_preview_file->uuid_id_         = core_set::get_set().get_uuid();
   l_preview_file->revision_        = l_revision;
   l_preview_file->task_id_         = task_id_;
   l_preview_file->person_id_       = person_.person_.uuid_id_;
@@ -243,7 +242,7 @@ auto handle_video_file(
   }
   SPDLOG_WARN("生成视频 {} {}, 图片 {}", l_low_file_path, l_high_file_path, l_path);
   in_preview_file->file_size_ = FSys::exists(l_high_file_path) ? FSys::file_size(l_high_file_path) : 0;
-  boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().install(in_preview_file), boost::asio::detached);
+  boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().update(in_preview_file), boost::asio::detached);
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
@@ -309,18 +308,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   l_preview_file->status_     = preview_file_statuses::ready;
   l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
   l_preview_file->updated_at_ = chrono::system_clock::now();
-  co_await l_sql.install(l_preview_file);
+  co_await l_sql.update(l_preview_file);
 
   // 更新task
   if (l_preview_file->position_ == 1) {
     auto l_task                   = std::make_shared<task>(l_sql.get_by_uuid<task>(l_preview_file->task_id_));
     l_task->last_preview_file_id_ = l_preview_file->uuid_id_;
-    co_await l_sql.install(l_task);
+    co_await l_sql.update(l_task);
     if (auto l_prj = l_sql.get_by_uuid<project>(l_task->project_id_); l_prj.is_set_preview_automated_) {
       auto l_entity              = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task->entity_id_));
       l_entity->preview_file_id_ = l_preview_file->uuid_id_;
       // 发送事件 "preview-file:set-main"
-      co_await l_sql.install(l_entity);
+      co_await l_sql.update(l_entity);
     }
   }
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
@@ -343,7 +342,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   auto l_position                  = l_sql.get_next_position(task_id_, l_revision);
 
   auto l_preview_file              = std::make_shared<preview_file>();
-  l_preview_file->uuid_id_         = core_set::get_set().get_uuid();
   l_preview_file->revision_        = l_revision;
   l_preview_file->task_id_         = task_id_;
   l_preview_file->person_id_       = person_.person_.uuid_id_;

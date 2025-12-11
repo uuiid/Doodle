@@ -31,7 +31,6 @@ boost::asio::awaitable<void> status_automation::run(const std::shared_ptr<task>&
         auto l_task_status          = l_sql.get_by_uuid<task_status>(in_task_status_id_);
         auto l_task_out_status      = l_sql.get_by_uuid<task_status>(out_task_status_id_);
         auto l_comment              = std::make_shared<comment>(comment{
-                         .uuid_id_    = core_set::get_set().get_uuid(),
                          .object_id_  = l_task->uuid_id_,
                          .text_       = fmt::format("自动化任务 {}更改触发, 设置状态{} ", l_task_type.name_, l_task_status.name_),
                          .created_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()},
@@ -44,9 +43,9 @@ boost::asio::awaitable<void> status_automation::run(const std::shared_ptr<task>&
         in_task->last_comment_date_ = l_comment->created_at_;
         in_task->updated_at_        = l_comment->updated_at_;
         auto l_tasl_tmp = std::make_shared<task>(*l_task);
-        co_await l_sql.install(l_tasl_tmp);
         co_await l_sql.install(l_comment);
-        co_await l_sql.install(in_task);
+        co_await l_sql.update(l_tasl_tmp);
+        co_await l_sql.update(in_task);
       }
 
       break;
@@ -54,7 +53,7 @@ boost::asio::awaitable<void> status_automation::run(const std::shared_ptr<task>&
       auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_task->entity_id_));
       if (l_entt->ready_for_ == out_task_type_id_) co_return;
       l_entt->ready_for_ = out_task_type_id_;
-      co_await l_sql.install(l_entt);
+      co_await l_sql.update(l_entt);
     } break;
   }
 }

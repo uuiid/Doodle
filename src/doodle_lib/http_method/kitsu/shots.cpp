@@ -275,7 +275,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
     co_return in_handle->make_msg(nlohmann::json{} = l_list.front());
 
   auto l_shot = std::make_shared<entity>(entity{
-      .uuid_id_        = core_set::get_set().get_uuid(),
       .name_           = l_args.name_,
       .description_    = l_args.description_,
       .nb_frames_      = l_args.nb_frames_,
@@ -357,7 +356,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
     if (key == "force" && has) l_force = true;
   if (!l_force) {
     l_shot->canceled_ = true;
-    co_await l_sql.install(l_shot);
+    co_await l_sql.update(l_shot);
     socket_io::broadcast(
         "shot:update", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
     );

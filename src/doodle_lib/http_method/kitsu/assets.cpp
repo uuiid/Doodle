@@ -47,7 +47,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   default_logger_raw()->info("由 {} , {} 项目创建新实体 {}", person_.person_.email_, l_data.project_id, l_data.name);
 
   auto l_entity = std::make_shared<entity>(entity{
-      .uuid_id_        = core_set::get_set().get_uuid(),
       .name_           = l_data.name,
       .description_    = l_data.description,
       .is_shared_      = l_data.is_shared,
@@ -63,7 +62,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   l_json_ret = *l_entity;
   if (entity_asset_extend::has_extend_data(l_json)) {
     auto l_entity_extend = std::make_shared<entity_asset_extend>(entity_asset_extend{
-        .uuid_id_   = core_set::get_set().get_uuid(),
         .entity_id_ = l_entity->uuid_id_,
     });
     l_json.get_to(*l_entity_extend);
@@ -336,7 +334,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::del
   }
   if (!l_force) {
     l_ass->canceled_ = true;
-    co_await l_sql.install(l_ass);
+    co_await l_sql.update(l_ass);
     co_return in_handle->make_msg(nlohmann::json{} = *l_ass);
   }
   auto l_task     = l_sql.get_tasks_for_entity(l_ass->uuid_id_);

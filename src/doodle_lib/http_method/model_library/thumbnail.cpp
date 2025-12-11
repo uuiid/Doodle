@@ -133,7 +133,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
     auto l_entt     = std::make_shared<ai_image_metadata>(l_sql.get_by_uuid<ai_image_metadata>(id_));
     l_entt->width_  = l_size.first;
     l_entt->height_ = l_size.second;
-    co_await l_sql.install(l_entt);
+    co_await l_sql.update(l_entt);
   }
 
   co_return in_handle->make_msg(fmt::format(R"({{"id":"{}"}})", id_));

@@ -75,8 +75,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_ru = l_time_map | ranges::views::values | ranges::to_vector;
   l_ru |= ranges::actions::remove_if([](const auto& j) { return j.objects_.empty(); });
   l_prev->set_annotations(std::move(l_ru));
-  l_prev->updated_at_ = chrono::system_clock::now();
-  co_await l_sql.install(l_prev);
+ 
+  co_await l_sql.update(l_prev);
   socket_io::broadcast(
       "preview-file:annotation-update",
       nlohmann::json{
@@ -426,9 +426,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::po
   in_handle->get_json().get_to(*l_playlist);
   person_.check_project_access(l_playlist->project_id_);
   default_logger_raw()->info("{} 创建播放列表 {}", person_.person_.email_, l_playlist->name_);
-  l_playlist->uuid_id_    = core_set::get_set().get_uuid();
-  l_playlist->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-  l_playlist->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
   co_await l_sql.install(l_playlist);
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist);
 }
@@ -597,11 +594,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
       if (i.contains("preview_file_id")) {
         auto&& t       = l_playlist_shot->emplace_back(i.get<playlist_shot>());
         t.playlist_id_ = id_;
-        t.uuid_id_     = core_set::get_set().get_uuid();
       }
 
   co_await l_sql.remove_playlist_shot_for_playlist(id_);
-  co_await l_sql.install(l_playlist);
+  co_await l_sql.update(l_playlist);
   co_await l_sql.install_range(l_playlist_shot);
   nlohmann::json l_ret{};
   l_ret         = *l_playlist;

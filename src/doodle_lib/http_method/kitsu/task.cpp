@@ -29,9 +29,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
       l_sql.get_project_task_status_link(l_json["project_id"].get<uuid>(), l_json["task_status_id"].get<uuid>())
           .value_or(project_task_status_link{})
   );
-  if (l_task_status_link->uuid_id_.is_nil()) l_task_status_link->uuid_id_ = core_set::get_set().get_uuid();
   l_json.get_to(*l_task_status_link);
-  co_await l_sql.install(l_task_status_link);
+  l_task_status_link->id_ == 0 ? co_await l_sql.install(l_task_status_link) : co_await l_sql.update(l_task_status_link);
   co_return in_handle->make_msg(nlohmann::json{} = *l_task_status_link);
 }
 
@@ -40,7 +39,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
   person_.check_task_action_access(*l_task);
   in_handle->get_json().get_to(*l_task);
-  co_await l_sql.install(l_task);
+  co_await l_sql.update(l_task);
   // l_task->assigner_id_ = l_person->person_.uuid_id_;
   co_return in_handle->make_msg(nlohmann::json{} = *l_task);
 }
@@ -70,7 +69,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
     // 这里需要检查一下, 任务的分配人是否是当前用户
     if (person_.person_.uuid_id_ != l_person_data.uuid_id_) {
       notification l_notification{};
-      l_notification.uuid_id_    = core_set::get_set().get_uuid();
       l_notification.type_       = notification_type::assignation;
       l_notification.task_id_    = l_task.uuid_id_;
       l_notification.author_id_  = person_.person_.uuid_id_;

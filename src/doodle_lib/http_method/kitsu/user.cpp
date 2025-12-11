@@ -53,7 +53,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
   person_.check_admin();
   auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
-  l_person->uuid_id_  = core_set::get_set().get_uuid();
   co_await g_ctx().get<sqlite_database>().install(l_person);
   auto l_person_deps = std::make_shared<std::vector<person_department_link>>();
   for (auto&& l_dep : l_person->departments_) {
@@ -67,7 +66,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(id_));
   in_handle->get_json().get_to(*l_person);
-  co_await l_sql.install(l_person);
+  co_await l_sql.update(l_person);
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 
