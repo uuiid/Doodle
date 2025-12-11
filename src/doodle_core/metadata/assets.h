@@ -59,6 +59,7 @@ struct database_t {
     j.at("label").get_to(v.label_);
     if (j.contains("parent_id") && j["parent_id"].is_string()) j.at("parent_id").get_to(v.uuid_parent_);
     if (j.contains("order")) j.at("order").get_to(v.order_);
+    if (j.contains("id") && j["id"].is_string()) j.at("id").get_to(v.uuid_id_);
   }
 };
 }  // namespace assets_helper
