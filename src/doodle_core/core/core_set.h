@@ -73,7 +73,7 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   core_set();
 
  private:
-  boost::uuids::random_generator p_uuid_gen;
+
   FSys::path program_location_attr{};
 
  private:

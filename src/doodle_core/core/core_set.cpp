@@ -72,7 +72,10 @@ core_set::core_set()
   }
 }
 
-boost::uuids::uuid core_set::get_uuid() { return p_uuid_gen(); }
+boost::uuids::uuid core_set::get_uuid() {
+  static thread_local boost::uuids::random_generator g_uuid_gen{};
+  return g_uuid_gen();
+}
 
 FSys::path core_set::get_doc() const { return p_doc; }
 
