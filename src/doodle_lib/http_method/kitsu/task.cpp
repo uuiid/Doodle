@@ -73,7 +73,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
       l_notification.task_id_    = l_task.uuid_id_;
       l_notification.author_id_  = person_.person_.uuid_id_;
       l_notification.person_id_  = l_person_data.uuid_id_;
-      l_notification.created_at_ = chrono::system_clock::now();
       l_notifications->emplace_back(l_notification);
     }
   }

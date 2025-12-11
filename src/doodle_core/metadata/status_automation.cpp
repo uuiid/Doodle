@@ -27,23 +27,20 @@ boost::asio::awaitable<void> status_automation::run(const std::shared_ptr<task>&
   switch (out_field_type_) {
     case status_automation_change_type::status:
       if (auto l_task = l_sql.get_tasks_for_entity_and_task_type(in_task->entity_id_, out_task_type_id_); l_task) {
-        auto l_task_type            = l_sql.get_by_uuid<task_type>(in_task_type_id_);
-        auto l_task_status          = l_sql.get_by_uuid<task_status>(in_task_status_id_);
-        auto l_task_out_status      = l_sql.get_by_uuid<task_status>(out_task_status_id_);
-        auto l_comment              = std::make_shared<comment>(comment{
-                         .object_id_  = l_task->uuid_id_,
-                         .text_       = fmt::format("自动化任务 {}更改触发, 设置状态{} ", l_task_type.name_, l_task_status.name_),
-                         .created_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()},
-                         .updated_at_ = chrono::system_zoned_time{chrono::current_zone(), std::chrono::system_clock::now()},
-                         .task_status_id_ = l_task_status.uuid_id_,
-                         .person_id_      = in_person_id,
+        auto l_task_type       = l_sql.get_by_uuid<task_type>(in_task_type_id_);
+        auto l_task_status     = l_sql.get_by_uuid<task_status>(in_task_status_id_);
+        auto l_task_out_status = l_sql.get_by_uuid<task_status>(out_task_status_id_);
+        auto l_comment         = std::make_shared<comment>(comment{
+                    .object_id_ = l_task->uuid_id_,
+                    .text_      = fmt::format("自动化任务 {}更改触发, 设置状态{} ", l_task_type.name_, l_task_status.name_),
+                    .task_status_id_ = l_task_status.uuid_id_,
+                    .person_id_      = in_person_id,
         });
+        co_await l_sql.install(l_comment);
         l_task->task_status_id_     = l_task_out_status.uuid_id_;
         in_task->task_status_id_    = l_task_status.uuid_id_;
         in_task->last_comment_date_ = l_comment->created_at_;
-        in_task->updated_at_        = l_comment->updated_at_;
-        auto l_tasl_tmp = std::make_shared<task>(*l_task);
-        co_await l_sql.install(l_comment);
+        auto l_tasl_tmp             = std::make_shared<task>(*l_task);
         co_await l_sql.update(l_tasl_tmp);
         co_await l_sql.update(in_task);
       }

@@ -52,8 +52,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   l_preview_file->status_          = preview_file_statuses::processing;
   l_preview_file->source_          = "webgui";
   l_preview_file->extension_       = "mp4";
-  l_preview_file->created_at_      = chrono::system_clock::now();
-  l_preview_file->updated_at_      = chrono::system_clock::now();
   auto l_preview_link              = std::make_shared<comment_preview_link>();
   l_preview_link->comment_id_      = comment_id_;
   l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;
@@ -350,8 +348,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   l_preview_file->status_          = preview_file_statuses::processing;
   l_preview_file->source_          = "webgui";
   l_preview_file->extension_       = "mp4";
-  l_preview_file->created_at_      = chrono::system_clock::now();
-  l_preview_file->updated_at_      = chrono::system_clock::now();
   auto l_preview_link              = std::make_shared<comment_preview_link>();
   l_preview_link->comment_id_      = comment_id_;
   l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;

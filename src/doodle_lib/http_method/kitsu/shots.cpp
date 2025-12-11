@@ -331,8 +331,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     auto& l_task = l_tasks->emplace_back(
         task{
             .name_           = "main",
-            .created_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
-            .updated_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
             .project_id_     = project_id_,
             .task_type_id_   = task_type_id_,
             .task_status_id_ = l_task_status.uuid_id_,
