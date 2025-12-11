@@ -74,7 +74,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     check_data(l_value);
     l_value.id_ = l_sql.uuid_to_id<assets_helper::database_t>(l_value.uuid_id_);
   }
-  co_await g_ctx().get<sqlite_database>().install_range<assets_helper::database_t>(l_values);
+  co_await g_ctx().get<sqlite_database>().update_range<assets_helper::database_t>(l_values);
   co_return in_handle->make_msg(nlohmann::json{} = *l_values);
 }
 

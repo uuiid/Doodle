@@ -262,7 +262,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
-  std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
+  auto l_entity_links_update = std::make_shared<std::vector<entity_link>>();
+  auto l_entity_links_insert = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
   auto l_seq        = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
 
@@ -276,7 +277,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     if (l_link) {
       l_link->nb_occurences_ = i.nb_occurences_;
       l_link->label_         = i.label_;
-      l_entity_links->emplace_back(*l_link);
+      l_entity_links_update->emplace_back(*l_link);
       l_delay_events.emplace_back([i, this]() {
         socket_io::broadcast(
             "entity-link:update",
@@ -288,9 +289,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     } else {
       auto l_seq_link = find_entity_link(l_seq_links, i.entity_out_id_);
       if (!l_seq_link) {
-        l_entity_links->emplace_back(
+        l_entity_links_insert->emplace_back(
             entity_link{
-                .uuid_id_       = core_set::get_set().get_uuid(),
                 .entity_in_id_  = l_seq.uuid_id_,
                 .entity_out_id_ = i.entity_out_id_,
                 .nb_occurences_ = 1,
@@ -301,9 +301,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
           socket_io::broadcast("asset:update", nlohmann::json{{"asset_id", id}, {"project_id", project_id_}});
         });
       }
-      l_entity_links->emplace_back(
+      l_entity_links_insert->emplace_back(
           entity_link{
-              .uuid_id_       = core_set::get_set().get_uuid(),
               .entity_in_id_  = l_ent->uuid_id_,
               .entity_out_id_ = i.entity_out_id_,
               .nb_occurences_ = i.nb_occurences_,
@@ -331,9 +330,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.install(l_ent);
-  if (!l_entity_links->empty()) {
-    co_await l_sql.install_range(l_entity_links);
-    SPDLOG_LOGGER_WARN(in_handle->logger_, "新增/更新实体链接 {}", l_entity_links->size());
+  if (!l_entity_links_update->empty()) {
+    co_await l_sql.update_range(l_entity_links_update);
+    SPDLOG_LOGGER_WARN(in_handle->logger_, "更新实体链接 {}", l_entity_links_update->size());
+  }
+  if (!l_entity_links_insert->empty()) {
+    co_await l_sql.install_range(l_entity_links_insert);
+    SPDLOG_LOGGER_WARN(in_handle->logger_, "新增实体链接 {}", l_entity_links_insert->size());
   }
   // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(

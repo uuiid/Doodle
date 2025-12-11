@@ -145,7 +145,6 @@ boost::asio::awaitable<create_comment_result> create_comment(
     for (auto&& i : l_notification_person) {
       l_notifications->emplace_back(
           notification{
-              .uuid_id_    = core_set::get_set().get_uuid(),
               .read_       = false,
               .change_     = l_status_changed,
               .type_       = notification_type::comment,
@@ -159,7 +158,6 @@ boost::asio::awaitable<create_comment_result> create_comment(
     for (auto&& i : l_sql.get_mentioned_people(l_task->project_id_, *in_comment)) {
       l_notifications->emplace_back(
           notification{
-              .uuid_id_    = core_set::get_set().get_uuid(),
               .read_       = false,
               .change_     = false,
               .type_       = notification_type::mention,

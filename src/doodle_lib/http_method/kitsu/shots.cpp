@@ -331,7 +331,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
       continue;  // 已经存在任务
     auto& l_task = l_tasks->emplace_back(
         task{
-            .uuid_id_        = core_set::get_set().get_uuid(),
             .name_           = "main",
             .created_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},
             .updated_at_     = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()},

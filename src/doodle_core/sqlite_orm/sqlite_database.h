@@ -103,9 +103,11 @@ class sqlite_database {
   boost::asio::awaitable<void> update_range(const std::shared_ptr<std::vector<T>>& in_data);
   template <typename T>
   boost::asio::awaitable<void> update_range(std::vector<T>* in_data);
-  
+
   template <typename T>
   boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data);
+  template <typename T>
+  boost::asio::awaitable<void> remove(const std::vector<std::int32_t>& in_data);
   template <typename T>
   boost::asio::awaitable<void> remove(const std::int64_t& in_data);
   template <typename T>

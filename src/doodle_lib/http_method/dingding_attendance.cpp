@@ -92,10 +92,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_attend =
       co_await l_dingding_client->get_attendance_updatedata(l_user.dingding_id_, chrono::local_days{l_date});
 
-  auto l_attendance_list = std::make_shared<std::vector<attendance_helper::database_t>>();
+  auto l_attendance_update_list  = std::make_shared<std::vector<attendance_helper::database_t>>();
+  auto l_attendance_install_list = std::make_shared<std::vector<attendance_helper::database_t>>();
 
-  auto l_clock_overtime  = create_clock_overtime(l_date);  // 加班计算时间时钟
-  auto l_clock_leave     = create_clock_leave(l_date);     // 请假计算时间时钟
+  auto l_clock_overtime          = create_clock_overtime(l_date);  // 加班计算时间时钟
+  auto l_clock_leave             = create_clock_leave(l_date);     // 请假计算时间时钟
   for (auto&& l_obj : l_attend) {
     // 重新使用开始时间和时间时间段计算时间
     chrono::hours l_duration{0};
@@ -130,11 +131,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
       l_it->update_time_ = chrono::zoned_time<chrono::microseconds>{
           chrono::current_zone(), chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now())
       };
-      l_attendance_list->emplace_back(std::move(*l_it));
+      l_attendance_update_list->emplace_back(std::move(*l_it));
       l_attends.erase(l_it);
     } else {
       attendance_helper::database_t l_attendance{
-          .uuid_id_     = core_set::get_set().get_uuid(),
           .start_time_  = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.begin_time_},
           .end_time_    = chrono::zoned_time<chrono::microseconds>{chrono::current_zone(), l_obj.end_time_},
           .remark_      = fmt::format("{}-{}", l_obj.tag_name_, l_obj.sub_type_),
@@ -147,13 +147,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
           .dingding_id_ = l_obj.prcoInst_id_,
           .person_id_   = l_user.uuid_id_
       };
-      l_attendance_list->emplace_back(std::move(l_attendance));
+      l_attendance_install_list->emplace_back(std::move(l_attendance));
     }
   }
 
-  if (l_attendance_list->empty()) {
+  if (l_attendance_install_list->empty() && l_attendance_update_list->empty()) {
     attendance_helper::database_t l_attendance{
-        .uuid_id_     = core_set::get_set().get_uuid(),
         .start_time_  = chrono::zoned_time<chrono::microseconds>{},
         .end_time_    = chrono::zoned_time<chrono::microseconds>{},
         .type_        = attendance_helper::att_enum::max,
@@ -164,7 +163,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
             },
         .person_id_ = l_user.uuid_id_
     };
-    l_attendance_list->emplace_back(std::move(l_attendance));
+    l_attendance_install_list->emplace_back(std::move(l_attendance));
   }
   if (l_modify_user) co_await l_sqlite.install(std::make_shared<person>(l_user));
 
@@ -175,16 +174,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     }
     co_await l_sqlite.remove<attendance_helper::database_t>(l_rem);
   }
-  if (!l_attendance_list->empty()) {
-    co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_list);
+  if (!l_attendance_update_list->empty()) {
+    co_await l_sqlite.update_range<attendance_helper::database_t>(l_attendance_update_list);
+  }
+  if (!l_attendance_install_list->empty()) {
+    co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_install_list);
   }
 
+  auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list)
+                              | ranges::to<std::vector<attendance_helper::database_t>>();
+
   co_await recomputing_time(l_user.uuid_id_, chrono::year_month{l_date.year(), l_date.month()});
-  std::erase_if(*l_attendance_list, [](const auto& l_attendance) {
+  std::erase_if(l_attendance_list, [](const auto& l_attendance) {
     return l_attendance.type_ == attendance_helper::att_enum::max;
   });
   nlohmann::json l_json{};
-  l_json = *l_attendance_list;
+  l_json = l_attendance_list;
   co_return in_handle->make_msg(l_json.dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(session_data_ptr in_handle) {

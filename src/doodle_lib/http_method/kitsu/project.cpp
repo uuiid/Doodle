@@ -200,7 +200,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     if (l_sql.is_task_exist(i.uuid_id_, l_task_type.uuid_id_)) continue;
     l_tasks->emplace_back(
         task{
-            .uuid_id_        = core_set::get_set().get_uuid(),
             .name_           = "main",
             .project_id_     = i.project_id_,
             .task_type_id_   = l_task_type.uuid_id_,

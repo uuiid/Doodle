@@ -50,7 +50,6 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <type_traits>
 
-
 namespace sqlite_orm {
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::computer_status)
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::server_task_info_status)
@@ -1131,6 +1130,20 @@ struct sqlite_database_impl {
 
   template <typename T>
   boost::asio::awaitable<void> remove(std::vector<std::int64_t> in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+
+    auto l_g = storage_any_.transaction_guard();
+    for (auto i = 0; i < in_data.size();) {
+      auto l_end = std::min(i + g_step_size, in_data.size());
+      std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
+      storage_any_.remove_all<T>(sqlite_orm::where(sqlite_orm::in(&T::id_, l_v)));
+      i = l_end;
+    }
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
+  template <typename T>
+  boost::asio::awaitable<void> remove(std::vector<std::int32_t> in_data) {
     DOODLE_TO_SQLITE_THREAD();
 
     auto l_g = storage_any_.transaction_guard();
