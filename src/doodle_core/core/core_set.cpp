@@ -13,8 +13,8 @@
 #include <wil/result.h>
 
 namespace doodle {
-
-FSys::path win::get_pwd() {
+namespace {
+FSys::path get_pwd() {
   /// 这里我们手动做一些工作
   /// 获取环境变量 FOLDERID_Documents
   wil::unique_cotaskmem_string pManager_ptr{};
@@ -23,14 +23,14 @@ FSys::path win::get_pwd() {
   auto k_path = FSys::path{pManager_ptr.get()};
   return k_path;
 }
-
+}  // namespace
 core_set& core_set::get_set() {
   static core_set install{};
   return install;
 }
 
 core_set::core_set()
-    : p_doc(win::get_pwd()),
+    : p_doc(get_pwd()),
       p_max_thread(std::thread::hardware_concurrency() - 2),
       p_root(FSys::temp_directory_path() / "Doodle"),
       timeout(3600),
