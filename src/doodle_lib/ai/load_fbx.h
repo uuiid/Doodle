@@ -12,9 +12,13 @@ struct fbx_load_result {
   torch::Tensor vertices_;                  // [num_vertices, 3]
   torch::Tensor normals_;                   // [num_vertices, 3]
   torch::Tensor faces_;                     // [num_faces, 3]
+  torch::Tensor curvature_;                 // [num_vertices]
+  torch::Tensor degree_;                    // [num_vertices]
+  torch::Tensor normal_deviation_;          // [num_vertices]
   torch::Tensor bone_positions_;            // [num_bones, 3]
   torch::Tensor bone_weights_;              // [num_vertices, num_bones]
-  std::vector<std::int64_t> bone_parents_;  // [num_bones]
+  torch::Tensor bone_parents_;  // [num_bones]
+  torch::Tensor bones_dir_len_;             // [num_bones, 4] optional
 };
 
 class fbx_loader {

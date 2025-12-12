@@ -1,15 +1,16 @@
 #include "cross_attention_bone_weight.h"
 
+#include "doodle_core/exception/exception.h"
+
 #include <doodle_lib/ai/load_fbx.h>
 
 #include <ATen/core/TensorBody.h>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <torch/types.h>
 #include <vector>
 
-namespace doodle::ai {  // train_skinning.cpp
-// Build: mkdir build && cd build && cmake .. && make
-// Run: ./skinning_trainer --data_dir ../data --epochs 100 --batch_size 1
+namespace doodle::ai {
 
 #include <filesystem>
 #include <fstream>
@@ -426,41 +427,37 @@ Sample load_sample_from_folder(const fs::path& dir, torch::Device device) {
   return s;
 }
 
-int main(int argc, char** argv) {
+std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
+  std::vector<fbx_load_result> results;
+  for (const auto& fbx_file : in_fbx_files) {
+    fbx_loader l_loader{fbx_file};
+    results.push_back(l_loader.load_fbx());
+  }
+  return results;
+}
+
+std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
+    const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
+) {
+  auto l_ret           = std::make_shared<cross_attention_bone_weight>();
+
   std::string data_dir = "../data";
   int epochs           = 100;
   int batch_size       = 1;
   float lr             = 1e-3;
   int k                = 16;
-  // simple arg parse
-  for (int i = 1; i < argc; i++) {
-    std::string a = argv[i];
-    if (a == "--data_dir") data_dir = argv[++i];
-    if (a == "--epochs") epochs = std::stoi(argv[++i]);
-    if (a == "--batch_size") batch_size = std::stoi(argv[++i]);
-    if (a == "--lr") lr = std::stof(argv[++i]);
-    if (a == "--k") k = std::stoi(argv[++i]);
-  }
 
   torch::manual_seed(42);
   torch::Device device(torch::kCPU);
   if (torch::cuda::is_available()) {
-    std::cout << "CUDA available. Using GPU.\n";
+    SPDLOG_WARN("CUDA available. Using GPU.");
     device = torch::Device(torch::kCUDA);
   } else {
-    std::cout << "Using CPU.\n";
+    SPDLOG_WARN("Using CPU.");
   }
 
-  // Build sample list
-  std::vector<fs::path> sample_dirs;
-  for (auto& p : fs::directory_iterator(data_dir)) {
-    if (fs::is_directory(p.path())) sample_dirs.push_back(p.path());
-  }
-  std::sort(sample_dirs.begin(), sample_dirs.end());
-  if (sample_dirs.empty()) {
-    std::cerr << "No samples found under " << data_dir << "\n";
-    return -1;
-  }
+  DOODLE_CHICK(!in_fbx_files.empty(), "No input FBX files provided for training.");
+  auto l_fbx_data           = load_fbx_files(in_fbx_files);
 
   // Model hyperparams
   int mesh_in_ch            = 3 + 3 + 3;  // we will pack curvature/degree/normal_dev into extra dims; adapt below
@@ -484,21 +481,16 @@ int main(int argc, char** argv) {
     model->train();
     double epoch_loss = 0.0;
     int count         = 0;
-    for (auto& dir : sample_dirs) {
+    for (auto& l_data : l_fbx_data) {
       // load sample
       Sample s;
-      try {
-        s = load_sample_from_folder(dir, device);
-      } catch (const std::exception& e) {
-        std::cerr << "Failed to load " << dir << " : " << e.what() << "\n";
-        continue;
-      }
       // ensure shapes: target_weights [N, B]
       auto N    = s.verts.size(0);
       auto B    = s.bones_pos.size(0);
       // forward
       auto pred = model->forward(
-          s.verts, s.normals, s.curvature, s.degree, s.normal_dev, s.bones_pos, s.bones_parent, s.bones_dir_len
+          l_data.vertices_, l_data.normals_, l_data.curvature_, l_data.degree_, l_data.normal_deviation_,
+          l_data.bone_positions_, l_data.bone_parents_, l_data.bones_dir_len_
       );  // [N,B]
       // ensure numeric stability
       pred             = pred.clamp_min(1e-8);
@@ -519,28 +511,20 @@ int main(int argc, char** argv) {
       epoch_loss += loss.item<double>();
       count++;
     }
-
-    std::cout << "[Epoch " << epoch << "/" << epochs << "] avg loss: " << (epoch_loss / std::max(1, count)) << "\n";
+    SPDLOG_WARN("[epoch {}/{}] avg loss: {}", epoch, epochs, (epoch_loss / std::max(1, count)));
 
     // optional checkpoint
     if (epoch % 10 == 0) {
-      auto fname = "model_epoch_" + std::to_string(epoch) + ".pt";
-      torch::save(model, fname);
-      std::cout << "Saved checkpoint: " << fname << "\n";
+      auto l_file_name = in_output_path / fmt::format("model_epoch_{}.pt", epoch);
+      torch::save(model, l_file_name.generic_string());
+      SPDLOG_WARN("Saved checkpoint: {}", l_file_name);
     }
   }
 
   // final save
-  torch::save(model, "model_final.pt");
-  std::cout << "Training finished. Model saved to model_final.pt\n";
-  return 0;
-}
-
-std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
-    const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
-) {
-  auto l_ret = std::make_shared<cross_attention_bone_weight>();
-
+  auto final_file_name = in_output_path / "model_final.pt";
+  torch::save(model, final_file_name.generic_string());
+  SPDLOG_WARN("Saved final model: {}", final_file_name);
   return l_ret;
 }
 

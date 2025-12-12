@@ -105,7 +105,7 @@ fbx_load_result fbx_loader::load_fbx() {
     l_bone_index_map[l_joint] = i;
   }
 
-  l_result.bone_parents_.resize(l_sk_count, -1);
+  l_result.bone_parents_ = torch::full({l_sk_count}, -1, torch::kInt64);
   for (auto i = 0; i < l_sk_count; i++) {
     auto l_cluster = l_sk->GetCluster(i);
     auto l_joint   = l_cluster->GetLink();
