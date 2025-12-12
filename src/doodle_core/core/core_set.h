@@ -78,10 +78,4 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
 void to_json(nlohmann::json& j, const core_set& p);
 void from_json(const nlohmann::json& j, core_set& p);
 
-namespace win {
-/// FOLDERID_Fonts
-FSys::path DOODLE_CORE_API get_pwd();
-
-}  // namespace win
-
 }  // namespace doodle

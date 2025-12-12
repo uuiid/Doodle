@@ -237,7 +237,7 @@ if 'leukocyte' in globals():
     DOODLE_MAYA_CHICK(k_s);
   }
 
-  auto k_maya_script = doodle::win::get_pwd() / "maya" / "scripts";
+  auto k_maya_script = core_set::get_set().p_doc.parent_path() / "maya" / "scripts";
   if (FSys::exists(k_maya_script)) {
     auto k_user = k_maya_script / "userSetup.py";
     auto k_var  = k_maya_script / "vaccine.py";
@@ -293,7 +293,6 @@ std::tuple<bool, MSelectionList> maya_clear_scenes::multilateral_surface_by_sele
   return std::make_tuple(l_r, l_r_select);
 }
 void maya_clear_scenes::delete_unknown_node() {
-
   std::vector<MObject> l_node{};
   MStatus l_s{};
   for (MItDependencyNodes l_it{}; !l_it.isDone(); l_it.next()) {
