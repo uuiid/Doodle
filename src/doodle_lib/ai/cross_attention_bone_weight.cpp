@@ -291,36 +291,7 @@ struct SkinningModelImpl : torch::nn::Module {
 };
 TORCH_MODULE(SkinningModel);
 
-// ----------------------------- Training loop -----------------------------------
-
-struct Sample {
-  torch::Tensor verts, normals, curvature, degree, normal_dev;
-  torch::Tensor bones_pos, bones_parent, bones_dir_len;
-  torch::Tensor target_weights;
-};
-
-Sample load_sample_from_folder(const fs::path& dir, torch::Device device) {
-  auto load_tensor = [&](const fs::path& p) -> torch::Tensor {
-    torch::Tensor t;
-    torch::load(t, p.string());
-    return t.to(device);
-  };
-  Sample s;
-  s.verts        = load_tensor(dir / "vertices.pt");
-  s.normals      = load_tensor(dir / "normals.pt");
-  s.curvature    = load_tensor(dir / "curvature.pt");
-  s.degree       = load_tensor(dir / "degree.pt");
-  s.normal_dev   = load_tensor(dir / "normal_dev.pt");
-  s.bones_pos    = load_tensor(dir / "bones_pos.pt");
-  s.bones_parent = load_tensor(dir / "bones_parent.pt").to(torch::kLong).to(device);
-  if (fs::exists(dir / "bones_dir_len.pt"))
-    s.bones_dir_len = load_tensor(dir / "bones_dir_len.pt");
-  else
-    s.bones_dir_len = torch::Tensor();
-  s.target_weights = load_tensor(dir / "target_weights.pt");
-  return s;
-}
-
+// ----------------------------- Training function --------------------------------
 std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
   std::vector<fbx_load_result> results;
   for (const auto& fbx_file : in_fbx_files) {
@@ -333,13 +304,11 @@ std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fb
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
-  auto l_ret           = std::make_shared<cross_attention_bone_weight>();
-
-  std::string data_dir = "../data";
-  int epochs           = 100;
-  int batch_size       = 1;
-  float lr             = 1e-3;
-  int k                = 16;
+  auto l_ret     = std::make_shared<cross_attention_bone_weight>();
+  int epochs     = 100;
+  int batch_size = 1;
+  float lr       = 1e-3;
+  int k          = 16;
 
   torch::manual_seed(42);
   torch::Device device(torch::kCPU);
@@ -376,11 +345,9 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     double epoch_loss = 0.0;
     int count         = 0;
     for (auto& l_data : l_fbx_data) {
-      // load sample
-      Sample s;
       // ensure shapes: target_weights [N, B]
-      auto N    = s.verts.size(0);
-      auto B    = s.bones_pos.size(0);
+      auto N    = l_data.vertices_.size(0);
+      auto B    = l_data.bone_positions_.size(0);
       // forward
       auto pred = model->forward(
           l_data.vertices_, l_data.normals_, l_data.curvature_, l_data.degree_, l_data.normal_deviation_,
@@ -389,7 +356,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       // ensure numeric stability
       pred             = pred.clamp_min(1e-8);
       // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred
-      auto target      = s.target_weights;
+      auto target      = l_data.bone_weights_;
       // target may contain zeros, add eps
       auto pred_norm   = pred / pred.sum(1, true);
       auto target_norm = target / target.sum(1, true);
