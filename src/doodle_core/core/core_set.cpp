@@ -35,7 +35,6 @@ core_set::core_set()
       p_root(FSys::temp_directory_path() / "Doodle"),
       timeout(3600),
       maya_version(2020),
-      p_uuid_gen(boost::uuids::random_generator{}),
 #ifdef NDEBUG
       server_ip("http://192.168.0.181")
 #else
