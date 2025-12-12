@@ -3,11 +3,17 @@ $NewSession = New-ServerPSSession
 # winget install --id Microsoft.PowerShell
 Invoke-Command -Session $NewSession -ScriptBlock {
   function Get-NssmLog {
-    (Get-WinEvent -FilterHashtable @{
+    $Logs = Get-WinEvent -FilterHashtable @{
       Logname      = 'Application'
       ProviderName = 'nssm'
       StartTime    = ((Get-Date).AddDays(-1))
-    })[0..10] |  Format-List -Property TimeCreated, Message
+    } -ErrorAction SilentlyContinue
+    if ($Logs) {
+      $Logs[0..10] | Select-Object TimeCreated, Id, LevelDisplayName, Message | Format-List  
+    }
+    else {
+      Write-Output "No NSSM logs found in the last 24 hours."
+    }
   }
 
   function Get-NssmSer {
