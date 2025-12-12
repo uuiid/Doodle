@@ -35,14 +35,11 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
 
   boost::uuids::uuid get_uuid();
   std::string get_uuid_str();
-  std::string get_uuid_str(const std::string& in_add);
 
   std::uint32_t timeout;
   std::uint16_t p_max_thread;
 
   std::locale utf8_locale;
-
-  static std::string get_render_url();
 
   FSys::path p_root;
   FSys::path p_doc;
@@ -50,9 +47,6 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   FSys::path ue4_path;
   std::string ue4_version;
   std::int32_t maya_version;
-  bool maya_replace_save_dialog{false};
-  bool maya_force_resolve_link{false};
-  std::string layout_config;
 
   std::string server_ip{};
 
@@ -73,7 +67,6 @@ class DOODLE_CORE_API core_set : public boost::noncopyable {
   core_set();
 
  private:
-
   FSys::path program_location_attr{};
 
  private:

@@ -43,17 +43,6 @@ core_set::core_set()
 {
   p_doc /= "doodle";
   if (!FSys::exists(p_doc)) FSys::create_directories(p_doc);
-
-  auto l_short_path = FSys::temp_directory_path().generic_wstring();
-  auto k_buff_size  = GetLongPathNameW(l_short_path.c_str(), nullptr, 0);
-  std::unique_ptr<wchar_t[]> const p_buff{new wchar_t[k_buff_size]};
-  auto l_r = GetLongPathNameW(l_short_path.c_str(), p_buff.get(), k_buff_size);
-  if (FAILED(l_r)) {
-    set_root("C:/");
-  } else {
-    set_root(FSys::path{p_buff.get()} / "Doodle");
-  }
-
   if (!FSys::exists(get_cache_root())) {
     FSys::create_directories(get_cache_root());
   }
@@ -78,14 +67,6 @@ boost::uuids::uuid core_set::get_uuid() {
 
 FSys::path core_set::get_doc() const { return p_doc; }
 
-std::string core_set::get_render_url() {
-#ifdef NDEBUG
-  return {"http://192.168.0.181"};
-#else
-  return {"http://192.168.20.89:50023"};
-#endif
-}
-
 void core_set::set_root(const FSys::path& in_root) { p_root = in_root; }
 
 FSys::path core_set::get_cache_root() const { return p_root; }
@@ -109,18 +90,15 @@ void core_set::save() {
 }
 
 void to_json(nlohmann::json& j, const core_set& p) {
-  j["max_thread"]               = p.p_max_thread;
-  j["timeout"]                  = p.timeout;
-  j["ue4_path"]                 = p.ue4_path;
-  j["ue4_version"]              = p.ue4_version;
-  j["maya_replace_save_dialog"] = p.maya_replace_save_dialog;
-  j["maya_force_resolve_link"]  = p.maya_force_resolve_link;
-  j["user_name"]                = p.user_name;
-  j["maya_version"]             = p.maya_version;
-  j["layout_config"]            = p.layout_config;
+  j["max_thread"]     = p.p_max_thread;
+  j["timeout"]        = p.timeout;
+  j["ue4_path"]       = p.ue4_path;
+  j["ue4_version"]    = p.ue4_version;
+  j["user_name"]      = p.user_name;
+  j["maya_version"]   = p.maya_version;
 
-  j["authorize"]                = p.authorize_;
-  j["user_work_root"]           = p.user_work_root_;
+  j["authorize"]      = p.authorize_;
+  j["user_work_root"] = p.user_work_root_;
 }
 
 void from_json(const nlohmann::json& j, core_set& p) {
@@ -132,19 +110,14 @@ void from_json(const nlohmann::json& j, core_set& p) {
   if (j.count("ue4_version")) j["ue4_version"].get_to(p.ue4_version);
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("timeout").get_to(p.timeout);
-  if (j.contains("maya_replace_save_dialog")) j.at("maya_replace_save_dialog").get_to(p.maya_replace_save_dialog);
-  if (j.contains("maya_force_resolve_link")) j.at("maya_force_resolve_link").get_to(p.maya_force_resolve_link);
   /// \brief 兼容旧版本段配置文件
   if (j.contains("user_")) j.at("user_").get_to(p.user_name);
   if (j.contains("user_name")) j.at("user_name").get_to(p.user_name);
 
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);
-  if (j.contains("layout_config")) j.at("layout_config").get_to(p.layout_config);
 
   if (j.contains("authorize")) j.at("authorize").get_to(p.authorize_);
   if (j.contains("user_work_root")) j.at("user_work_root").get_to(p.user_work_root_);
 }
-
-std::string core_set::get_uuid_str(const std::string& in_add) { return get_uuid_str() + in_add; }
 
 }  // namespace doodle
