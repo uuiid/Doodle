@@ -19,7 +19,6 @@
 - 顶点法线
 - 网格拓扑连接性(组成面的顶点id)
 - 曲率
-- 顶点度 (degree)
 - 邻域法线差（normal deviation）
 输出: 
 - 每个顶点一个 feature vector 例如 128~512 维
