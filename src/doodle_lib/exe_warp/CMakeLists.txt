@@ -12,6 +12,7 @@ target_sources(
         export_fbx_arg.h
         qcloth_arg.h
         task_sync.h
+        assets_update.h
         
         PRIVATE
         maya_exe.cpp
@@ -25,5 +26,5 @@ target_sources(
         export_fbx_arg.cpp
         qcloth_arg.cpp
         task_sync.cpp
-
+        assets_update.cpp
 )

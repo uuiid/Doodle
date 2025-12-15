@@ -33,11 +33,12 @@
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
-#include <cstdlib>
-#include <random>
+
 #include <algorithm>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
+#include <random>
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http::local {
@@ -67,7 +68,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
     std::call_once(flag_, [this]() { set_state(); });
     task_info_->progress_ += 0.01;
     if (task_info_->progress_ > 1.0) task_info_->progress_ = std::rand() % 100 / 500.0;
-    
+
     socket_io::broadcast(
         "doodle:task_info:progress", nlohmann::json{{"id", task_info_->uuid_id_}, {"progress", task_info_->progress_}}
     );
@@ -316,8 +317,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::pat
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
   if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
   if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
-  if (*l_server_task_info != l_server_task_info_org)
-    co_await g_ctx().get<sqlite_database>().update(l_server_task_info);
+  if (*l_server_task_info != l_server_task_info_org) co_await g_ctx().get<sqlite_database>().update(l_server_task_info);
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
   co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
@@ -487,6 +487,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
+  co_return in_handle->make_msg(nlohmann::json{});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_image_files, post) {
+  co_return in_handle->make_msg(nlohmann::json{});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) {
+  co_return in_handle->make_msg(nlohmann::json{});
+}
 }  // namespace doodle::http::local
 
 namespace doodle::http {

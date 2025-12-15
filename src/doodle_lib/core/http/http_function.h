@@ -261,6 +261,9 @@ class http_function_template : public Base {
    public:
 // fun_name() = default;
 
+#define DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(class_name, method) \
+  boost::asio::awaitable<boost::beast::http::message_generator> class_name::method(session_data_ptr in_handle)
+
 #define DOODLE_HTTP_FUN(fun_name) DOODLE_HTTP_FUN_C(fun_name, ::doodle::http::http_function)
 #define DOODLE_HTTP_FUN_END() \
   }                           \
