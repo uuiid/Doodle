@@ -8,7 +8,9 @@
 
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <array>
 #include <filesystem>
+#include <string_view>
 
 namespace doodle {
 void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
@@ -41,15 +43,20 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     size_          = l_out_arg_.size_;
   }
   auto l_root_dir = maya_file_.parent_path().parent_path();
-
+  constexpr static std::array<std::string_view, 3> g_movie_ext{".mp4", ".mov", ".avi"};
   if (only_upload_) {
     SPDLOG_LOGGER_INFO(logger_ptr_, "仅上传文件 {}", maya_file_);
     auto l_path = l_root_dir / "mov" / l_out_arg_.movie_file_.filename();
-    if (FSys::exists(l_path)) {
-      l_out_arg_.movie_file_ = l_path;
-    } else {
-      l_out_arg_.movie_file_.clear();
+
+    for (auto& ext : g_movie_ext) {
+      l_path.replace_extension(ext);
+      if (FSys::exists(l_path)) {
+        l_out_arg_.movie_file_ = l_path;
+        break;
+      }
     }
+    if (!FSys::exists(l_out_arg_.movie_file_)) l_out_arg_.movie_file_.clear();
+
     out_arg_.out_file_list = FSys::list_files(l_root_dir / "fbx" / maya_file_.stem(), ".fbx");
   } else {
     co_await arg::async_run_maya();
