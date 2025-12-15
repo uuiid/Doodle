@@ -19,6 +19,7 @@
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/exe_warp/assets_update.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
@@ -40,6 +41,7 @@
 #include <memory>
 #include <random>
 #include <spdlog/sinks/basic_file_sink.h>
+
 
 namespace doodle::http::local {
 namespace {
@@ -488,11 +490,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
-  co_return in_handle->make_msg(nlohmann::json{});
+  auto l_ptr              = std::make_shared<server_task_info>();
+  l_ptr->type_            = server_task_info_type::project_sync;
+  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+
+  auto l_json             = in_handle->get_json();
+  l_json.get_to(*l_ptr);
+
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+
+  std::shared_ptr<update_ue_files> l_arg_t = std::make_shared<update_ue_files>();
+  l_arg_t->kitsu_client_                   = l_client;
+  l_json.get_to(*l_arg_t);
+  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+
+  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
+  l_run_long_task_local->set_arg(l_arg_t);
+  l_run_long_task_local->run();
+  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_image_files, post) {
-  co_return in_handle->make_msg(nlohmann::json{});
-}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) {
   co_return in_handle->make_msg(nlohmann::json{});
 }

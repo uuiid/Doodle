@@ -92,11 +92,11 @@ DOODLE_HTTP_FUN_C(actions_local_task_update_ue_files, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/actions/local/task/{id}/update/image
-DOODLE_HTTP_FUN_C(actions_local_task_update_image_files, local_http_fun)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid id_{};
-DOODLE_HTTP_FUN_END()
+// // /api/actions/local/task/{id}/update/image
+// DOODLE_HTTP_FUN_C(actions_local_task_update_image_files, local_http_fun)
+// DOODLE_HTTP_FUN_OVERRIDE(post)
+// uuid id_{};
+// DOODLE_HTTP_FUN_END()
 // /api/actions/local/task/{id}/update/movie
 DOODLE_HTTP_FUN_C(actions_local_task_update_movie_files, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)

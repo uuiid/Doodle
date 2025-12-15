@@ -21,6 +21,9 @@ class update_ue_files : public async_task {
   FSys::path ue_project_path_{};
 
   boost::asio::awaitable<void> run() override;
+  // from json
+  friend void from_json(const nlohmann::json& in_json, update_ue_files& out_obj);
+  
 };
 
 class update_image_files : public async_task {

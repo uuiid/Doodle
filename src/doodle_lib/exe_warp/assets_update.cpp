@@ -5,6 +5,10 @@
 #include <vector>
 
 namespace doodle {
+void from_json(const nlohmann::json& in_json, update_ue_files& out_obj) {
+  if (in_json.contains("task_id")) in_json.at("task_id").get_to(out_obj.task_id_);
+  if (in_json.contains("ue_project_path")) in_json.at("ue_project_path").get_to(out_obj.ue_project_path_);
+}
 boost::asio::awaitable<void> update_ue_files::run() {
   std::vector<kitsu::kitsu_client::update_file_arg> l_files{};
   auto l_json = co_await kitsu_client_->get_task_assets_update_ue_files(task_id_);
