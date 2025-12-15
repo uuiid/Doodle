@@ -735,4 +735,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_assets_update_ue, get) {
+  std::vector<FSys::path> l_paths;
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_task   = l_sql.get_by_uuid<task>(task_id_);
+  auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  if (l_entity.entity_type_id_ == asset_type::get_prop_id()) {
+    auto l_asset_extend = l_sql.get_entity_asset_extend(l_entity.uuid_id_);
+    DOODLE_CHICK_HTTP(l_asset_extend, bad_request, "实体 {} 缺少资产扩展信息", l_entity.name_);
+    l_paths.emplace_back(get_entity_prop_ue_public_files_path());
+    l_paths.emplace_back(get_entity_prop_ue_files_path(*l_asset_extend));
+  }
+  co_return in_handle->make_msg(nlohmann::json{} = l_paths);
+}
+
 }  // namespace doodle::http
