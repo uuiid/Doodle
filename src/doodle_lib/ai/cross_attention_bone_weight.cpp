@@ -5,6 +5,7 @@
 #include <doodle_lib/ai/load_fbx.h>
 
 #include <ATen/core/TensorBody.h>
+#include <algorithm>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <torch/types.h>
@@ -20,30 +21,79 @@ namespace doodle::ai {
 #include <unordered_map>
 #include <vector>
 
-namespace fs = std::filesystem;
-
 // ----------------------------- Utility functions --------------------------------
 
-// Compute pairwise squared distances, returns [N, M]
-torch::Tensor pairwise_distances(const torch::Tensor& a, const torch::Tensor& b) {
-  // a: [N, D], b: [M, D]
-  // uses (x-y)^2 = x^2 + y^2 - 2xy
-  auto a2    = a.pow(2).sum(1).unsqueeze(1);  // [N,1]
-  auto b2    = b.pow(2).sum(1).unsqueeze(0);  // [1,M]
-  auto prod  = torch::mm(a, b.t());           // [N,M]
-  auto dist2 = a2 + b2 - 2 * prod;
-  return dist2.clamp_min(0);
-}
+struct FaceAdjacency {
+  torch::Tensor neighbor_idx;  // [N, k] int64
+  torch::Tensor topo_degree;   // [N] float32
+};
 
-// kNN brute force: returns indices [N, k]
-torch::Tensor knn_indices(const torch::Tensor& points, int k) {
-  // points: [N, D]
-  auto dist2 = pairwise_distances(points, points);  // [N,N]
-  // set diagonal large so not pick self if desired; but for EdgeConv often include self - here exclude self:
-  auto N     = points.size(0);
-  dist2 += torch::eye(N, dist2.options()) * 1e9;
-  auto topk = std::get<1>(dist2.topk(k, /*dim=*/1, /*largest=*/false));
-  return topk;  // [N, k]
+// Build per-vertex fixed-size neighbor indices from triangle faces.
+// - faces: [F,3] int64 (can be on any device)
+// - neighbor_idx: [N,k] int64 on `device`
+// - topo_degree: [N] float32 on `device` (unique neighbor count)
+FaceAdjacency build_face_adjacency(
+    const torch::Tensor& faces, int64_t num_verts, int64_t k, const torch::Device& device
+) {
+  DOODLE_CHICK(faces.defined(), "faces tensor is undefined");
+  DOODLE_CHICK(faces.dim() == 2, "faces must be 2D [F,3]");
+  DOODLE_CHICK(faces.size(1) >= 3, "faces must have at least 3 columns");
+  DOODLE_CHICK(num_verts > 0, "num_verts must be > 0");
+  DOODLE_CHICK(k > 0, "k must be > 0");
+
+  // Build adjacency on CPU for simplicity/stability.
+  auto faces_cpu = faces.to(torch::kCPU).to(torch::kInt64).contiguous();
+
+  std::vector<std::vector<int64_t>> adj(static_cast<size_t>(num_verts));
+  auto acc        = faces_cpu.accessor<int64_t, 2>();
+  const int64_t F = faces_cpu.size(0);
+  for (int64_t f = 0; f < F; ++f) {
+    const int64_t a = acc[f][0];
+    const int64_t b = acc[f][1];
+    const int64_t c = acc[f][2];
+    if (a < 0 || b < 0 || c < 0) {
+      continue;
+    }
+    if (a >= num_verts || b >= num_verts || c >= num_verts) {
+      continue;
+    }
+    // undirected edges
+    adj[static_cast<size_t>(a)].push_back(b);
+    adj[static_cast<size_t>(a)].push_back(c);
+    adj[static_cast<size_t>(b)].push_back(a);
+    adj[static_cast<size_t>(b)].push_back(c);
+    adj[static_cast<size_t>(c)].push_back(a);
+    adj[static_cast<size_t>(c)].push_back(b);
+  }
+
+  auto idx_cpu = torch::empty({num_verts, k}, torch::TensorOptions().dtype(torch::kInt64).device(torch::kCPU));
+  auto deg_cpu = torch::empty({num_verts}, torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU));
+  auto idx_acc = idx_cpu.accessor<int64_t, 2>();
+  auto deg_acc = deg_cpu.accessor<float, 1>();
+
+  for (int64_t v = 0; v < num_verts; ++v) {
+    auto& n = adj[static_cast<size_t>(v)];
+    if (!n.empty()) {
+      std::sort(n.begin(), n.end());
+      n.erase(std::unique(n.begin(), n.end()), n.end());
+    }
+
+    deg_acc[v] = static_cast<float>(n.size());
+
+    // Fill fixed-size neighbor list. If not enough neighbors, pad with self.
+    for (int64_t j = 0; j < k; ++j) {
+      if (j < static_cast<int64_t>(n.size())) {
+        idx_acc[v][j] = n[static_cast<size_t>(j)];
+      } else {
+        idx_acc[v][j] = v;
+      }
+    }
+  }
+
+  FaceAdjacency out;
+  out.neighbor_idx = idx_cpu.to(device);
+  out.topo_degree  = deg_cpu.to(device);
+  return out;
 }
 
 // Simple function to gather neighbor features: given feat [N, C], idx [N, k] -> [N, k, C]
@@ -68,15 +118,14 @@ struct EdgeConvImpl : torch::nn::Module {
     mlp = register_module("mlp", torch::nn::Linear(in_channels * 2, out_channels));
   }
 
-  // x: [N, C] ; pos: [N, 3]
-  torch::Tensor forward(const torch::Tensor& x, const torch::Tensor& pos) {
-    auto idx   = knn_indices(pos, k);                 // [N,k]
-    auto neigh = gather_neighbors(x, idx);            // [N,k,C]
-    auto xi    = x.unsqueeze(1).expand({-1, k, -1});  // [N,k,C]
-    auto feat  = torch::cat({xi, neigh - xi}, -1);    // [N,k,2C]
-    auto out   = torch::relu(mlp->forward(feat));     // broadcasting linear applies to last dim? Need to flatten
+  // x: [N, C] ; neighbor_idx: [N, k]
+  torch::Tensor forward(const torch::Tensor& x, const torch::Tensor& neighbor_idx) {
+    auto neigh    = gather_neighbors(x, neighbor_idx);  // [N,k,C]
+    auto K        = neighbor_idx.size(1);
+    auto xi       = x.unsqueeze(1).expand({-1, K, -1});  // [N,k,C]
+    auto feat     = torch::cat({xi, neigh - xi}, -1);    // [N,k,2C]
     // linear expects [..., in_features]; apply by reshaping
-    auto N = feat.size(0), K = feat.size(1);
+    auto N        = feat.size(0);
     auto in       = feat.view({N * K, feat.size(2)});
     auto lin      = mlp->forward(in);
     auto lin_view = lin.view({N, K, -1});
@@ -131,10 +180,12 @@ struct MeshEncoderImpl : torch::nn::Module {
   std::vector<EdgeConv> edge_layers;
   torch::nn::Linear proj{nullptr};
   torch::nn::TransformerEncoder transformer{nullptr};
+  int k;
 
   MeshEncoderImpl(
       int in_ch, const std::vector<int>& edge_out_channels, int trans_dim, int nhead = 8, int num_layers = 2, int k = 16
   ) {
+    this->k  = k;
     int prev = in_ch;
     for (size_t i = 0; i < edge_out_channels.size(); ++i) {
       EdgeConv ec(prev, edge_out_channels[i], k);
@@ -148,18 +199,22 @@ struct MeshEncoderImpl : torch::nn::Module {
     transformer = register_module("transformer", torch::nn::TransformerEncoder(encoder_layer, num_layers));
   }
 
-  // verts: [N,3], normals: [N,3], curvature: [N,1], degree:[N,1], normal_dev:[N,1]
+  // verts: [N,3], normals: [N,3], faces: [F,3], curvature: [N], normal_dev:[N]
   torch::Tensor forward(
-      const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& curvature,
-      const torch::Tensor& degree, const torch::Tensor& normal_dev
+      const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
+      const torch::Tensor& curvature, const torch::Tensor& normal_dev
   ) {
+    auto adj         = build_face_adjacency(faces, verts.size(0), k, verts.device());
+    // topo_degree is scalar connectivity feature per-vertex, derived from faces_
+    auto topo_degree = adj.topo_degree;
+
     // build initial feature
-    auto feat = torch::cat(
-        {verts, normals, curvature.unsqueeze(1), degree.unsqueeze(1), normal_dev.unsqueeze(1)}, -1
+    auto feat        = torch::cat(
+        {verts, normals, curvature.unsqueeze(1), topo_degree.unsqueeze(1), normal_dev.unsqueeze(1)}, -1
     );  // [N, F]
     auto x = feat;
     for (size_t i = 0; i < edge_layers.size(); ++i) {
-      x = edge_layers[i]->forward(x, verts);
+      x = edge_layers[i]->forward(x, adj.neighbor_idx);
     }
     // project to transformer dim
     auto x_proj    = proj->forward(x);  // [N, trans_dim]
@@ -270,15 +325,15 @@ struct SkinningModelImpl : torch::nn::Module {
   }
 
   // inputs:
-  // verts [N,3], normals [N,3], curvature [N], degree [N], normal_dev [N]
+  // verts [N,3], normals [N,3], faces [F,3], curvature [N], normal_dev [N]
   // bones_pos [B,3], bones_parent [B], bones_dir_len [B,4] optional
   torch::Tensor forward(
-      const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& curvature,
-      const torch::Tensor& degree, const torch::Tensor& normal_dev, const torch::Tensor& bones_pos,
+      const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
+      const torch::Tensor& curvature, const torch::Tensor& normal_dev, const torch::Tensor& bones_pos,
       const torch::Tensor& bones_parent, const torch::Tensor& bones_dir_len = torch::Tensor()
   ) {
-    auto vfeat = mesh_enc->forward(verts, normals, curvature, degree, normal_dev);  // [N, E]
-    auto bfeat = skel_enc->forward(bones_pos, bones_parent, bones_dir_len);         // [B, E2]
+    auto vfeat = mesh_enc->forward(verts, normals, faces, curvature, normal_dev);  // [N, E]
+    auto bfeat = skel_enc->forward(bones_pos, bones_parent, bones_dir_len);        // [B, E2]
     // if dims mismatch, linear project
     if (bfeat.size(1) != vfeat.size(1)) {
       // add projection
@@ -323,7 +378,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   auto l_fbx_data           = load_fbx_files(in_fbx_files);
 
   // Model hyperparams
-  int mesh_in_ch            = 3 + 3 + 3;  // we will pack curvature/degree/normal_dev into extra dims; adapt below
+  int mesh_in_ch            = 3 + 3 + 1 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_) + normal_dev
   // In our implementation we concatenated many fields; compute actual in channels dynamically when loading first
   // sample. For simplicity set:
   int trans_dim             = 128;
@@ -333,7 +388,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   int nhead                 = 8;
 
   // Create model
-  SkinningModel model{/*mesh_in_ch*/ 8, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
+  SkinningModel model{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
   model->to(device);
 
   torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(lr));
@@ -350,7 +405,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       auto B    = l_data.bone_positions_.size(0);
       // forward
       auto pred = model->forward(
-          l_data.vertices_, l_data.normals_, l_data.curvature_, l_data.degree_, l_data.normal_deviation_,
+          l_data.vertices_, l_data.normals_, l_data.faces_, l_data.curvature_, l_data.normal_deviation_,
           l_data.bone_positions_, l_data.bone_parents_, l_data.bones_dir_len_
       );  // [N,B]
       // ensure numeric stability
