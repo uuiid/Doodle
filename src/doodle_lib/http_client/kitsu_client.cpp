@@ -213,14 +213,9 @@ std::vector<kitsu_client::update_file_arg> kitsu_client::update_file_arg::list_a
 
   std::vector<FSys::path> l_path_list{};
   if (in_extra_path.empty()) {
-    // 如果存在Prop文件夹，则上传Prop文件夹
-    if (FSys::exists(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
-      l_path_list.push_back(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop);
-    } else {
-      l_path_list.push_back(l_uproject_dir / doodle_config::ue4_content);
-      l_path_list.push_back(l_uproject_dir / doodle_config::ue4_config);
-      l_path_list.push_back(l_project_path);
-    }
+    l_path_list.push_back(l_uproject_dir / doodle_config::ue4_content);
+    l_path_list.push_back(l_uproject_dir / doodle_config::ue4_config);
+    l_path_list.push_back(l_project_path);
   } else {
     l_path_list = in_extra_path;
   }
@@ -421,6 +416,21 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_task_sync(uuid in_task_
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
     throw_exception(doodle_error{"kitsu get task sync error {} {}", l_res.result(), l_res.body().dump()});
+
+  co_return l_res.body();
+}
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_task_assets_update_ue_files(uuid in_task_id) const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/api/actions/tasks/{}/assets/update/ue", in_task_id), 11
+  };
+  set_req_headers(l_req);
+
+  boost::beast::http::response<http::basic_json_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(
+        doodle_error{"kitsu get task assets update ue files error {} {}", l_res.result(), l_res.body().dump()}
+    );
 
   co_return l_res.body();
 }

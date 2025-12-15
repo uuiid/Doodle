@@ -107,6 +107,9 @@ class kitsu_client {
   ) const;
   boost::asio::awaitable<nlohmann::json> get_export_anim_fbx(uuid in_task_id) const;
   boost::asio::awaitable<nlohmann::json> get_task_sync(uuid in_task_id) const;
+
+  // /api/actions/tasks/{task_id}/assets/update/ue
+  boost::asio::awaitable<nlohmann::json> get_task_assets_update_ue_files(uuid in_task_id) const;
 };
 
 }  // namespace doodle::kitsu
