@@ -196,72 +196,66 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file_maya(uuid in_task_i
   );
 }
 
-boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
-    uuid in_task_id, std::shared_ptr<std::vector<FSys::path>> in_file_path
-) const {
-  if (!in_file_path) throw_exception(doodle_error{"上传ue资产文件路径不能为空"});
-  if (in_file_path->empty()) throw_exception(doodle_error{"上传ue资产文件路径不能为空"});
+std::vector<kitsu_client::update_file_arg> kitsu_client::update_file_arg::list_all_project_files(
+    const FSys::path& in_project_path, const std::vector<FSys::path>& in_extra_path
+) {
+  std::vector<update_file_arg> l_out_list{};
 
-  auto l_ue_project_file = ue_exe_ns::find_ue_project_file(in_file_path->front());
-
-  if (l_ue_project_file.extension() != doodle_config::ue4_uproject_ext)
-    throw_exception(doodle_error{"上传的文件不是ue工程文件, 或者UE工程内部文件 {}", *in_file_path});
-
-  auto l_uproject_dir = l_ue_project_file.parent_path();
-
-  for (auto&& l_path : *in_file_path) {
-    for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
-      if (p.is_directory()) continue;
-      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
-      co_await upload_asset_file(
-          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
-          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
-      );
-    }
+  FSys::path l_uproject_dir{};
+  FSys::path l_project_path{};
+  if (in_project_path.extension() == doodle_config::ue4_uproject_ext) {
+    l_uproject_dir = in_project_path.parent_path();
+  } else {
+    l_project_path = ue_exe_ns::find_ue_project_file(in_project_path);
+    l_uproject_dir = l_project_path.parent_path();
   }
-  co_return;
-}
+  DOODLE_CHICK(!l_project_path.empty(), "未能找到工程文件");
 
-boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const {
-  if (in_file_path.extension() != doodle_config::ue4_uproject_ext)
-    throw_exception(doodle_error{"上传的文件不是ue工程文件 {}", in_file_path});
-
-  auto l_uproject_dir = in_file_path.parent_path();
-  if (FSys::exists(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
+  std::vector<FSys::path> l_path_list{};
+  if (in_extra_path.empty()) {
     // 如果存在Prop文件夹，则上传Prop文件夹
-    for (auto&& p :
-         FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
-      if (p.is_directory()) continue;
-      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
-      co_await upload_asset_file(
-          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
-          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
-      );
+    if (FSys::exists(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop)) {
+      l_path_list.push_back(l_uproject_dir / doodle_config::ue4_content / doodle_config::ue4_prop);
+    } else {
+      l_path_list.push_back(l_uproject_dir / doodle_config::ue4_content);
+      l_path_list.push_back(l_uproject_dir / doodle_config::ue4_config);
+      l_path_list.push_back(l_project_path);
     }
   } else {
-    // 否则上传工程文件
-    for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_content)) {
-      if (p.is_directory()) continue;
-      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
-      co_await upload_asset_file(
-          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
-          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
-      );
-    }
-    for (auto&& p : FSys::recursive_directory_iterator(l_uproject_dir / doodle_config::ue4_config)) {
-      if (p.is_directory()) continue;
-      SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", p.path());
-      co_await upload_asset_file(
-          fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), p.path(),
-          base64_encode(p.path().lexically_relative(l_uproject_dir).generic_string())
-      );
-    }
+    l_path_list = in_extra_path;
   }
 
-  co_await upload_asset_file(
-      fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), in_file_path,
-      base64_encode(in_file_path.filename().generic_string())
-  );
+  for (auto&& l_path : l_path_list) {
+    if (!FSys::exists(l_path)) continue;
+
+    if (FSys::is_directory(l_path)) {
+      for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
+        if (p.is_directory()) continue;
+        update_file_arg l_arg{};
+        l_arg.local_path_ = p.path();
+        l_arg.field_name_ = p.path().lexically_relative(l_uproject_dir).generic_string();
+        l_out_list.push_back(std::move(l_arg));
+      }
+    } else if (FSys::is_regular_file(l_path)) {
+      update_file_arg l_arg{};
+      l_arg.local_path_ = l_path;
+      l_arg.field_name_ = l_path.lexically_relative(l_uproject_dir).generic_string();
+      l_out_list.push_back(std::move(l_arg));
+    }
+  }
+  return l_out_list;
+}
+
+boost::asio::awaitable<void> kitsu_client::upload_asset_file_ue(
+    uuid in_task_id, std::vector<update_file_arg> in_file_path
+) const {
+  for (auto&& l_path : in_file_path) {
+    SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", l_path.local_path_);
+    co_await upload_asset_file(
+        fmt::format("/api/doodle/data/assets/{}/file/ue", in_task_id), l_path.local_path_,
+        base64_encode(l_path.field_name_)
+    );
+  }
   co_return;
 }
 
@@ -300,13 +294,18 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_other_file(
       base64_encode(in_file_name.generic_string())
   );
 }
+
 boost::asio::awaitable<void> kitsu_client::upload_shot_animation_ue(
-    uuid in_shot_task_id, FSys::path in_file_path, std::string in_file_field_name
-) {
-  SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", in_file_path);
-  return upload_asset_file(
-      fmt::format("/api/doodle/data/shots/{}/file/ue", in_shot_task_id), in_file_path, base64_encode(in_file_field_name)
-  );
+    uuid in_shot_task_id, std::vector<update_file_arg> in_file_path
+) const {
+  for (auto&& l_path : in_file_path) {
+    SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", l_path.local_path_);
+    co_await upload_asset_file(
+        fmt::format("/api/doodle/data/shots/{}/file/ue", in_shot_task_id), l_path.local_path_,
+        base64_encode(l_path.field_name_)
+    );
+  }
+  co_return;
 }
 boost::asio::awaitable<void> kitsu_client::remove_asset_file_maya(const uuid& in_uuid) {
   return remove_asset_file(fmt::format("/api/doodle/data/assets/{}/file/maya", in_uuid));

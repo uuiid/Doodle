@@ -13,6 +13,7 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include "http_client/kitsu_client.h"
 #include <filesystem>
 #include <spdlog/spdlog.h>
 
@@ -86,7 +87,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   logger_ptr_->warn("上传文件 {} ", impl_.update_ue_path_);
   co_await kitsu_client_->upload_asset_file_maya(task_id_, maya_file_);
   co_await kitsu_client_->upload_asset_file_ue(
-      task_id_, std::make_shared<std::vector<FSys::path>>(std::vector<FSys::path>{impl_.update_ue_path_})
+      task_id_, kitsu::kitsu_client::update_file_arg::list_all_project_files(l_ue_project, {impl_.update_ue_path_})
   );
 
   co_return;

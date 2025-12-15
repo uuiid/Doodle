@@ -5,7 +5,9 @@
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 
+#include "http_client/kitsu_client.h"
 #include <filesystem>
+#include <vector>
 
 namespace doodle {
 
@@ -46,6 +48,7 @@ boost::asio::awaitable<void> task_sync::run() {
 
   if (update_) {
     for (auto&& l_info : l_total_args.update_file_list_) {
+      std::vector<kitsu::kitsu_client::update_file_arg> l_ue_upload_list{};
       auto l_ue_project_dir = ue_exe_ns::find_ue_project_file(l_root / l_info.from_path_).parent_path().parent_path();
       DOODLE_CHICK(!l_ue_project_dir.empty(), "未找到本地UE项目 {}", (l_root / l_info.from_path_));
       auto l_local_path = l_root / l_info.from_path_;
@@ -56,17 +59,14 @@ boost::asio::awaitable<void> task_sync::run() {
           auto l_relative_path = p.path().lexically_relative(l_ue_project_dir);
           auto l_remote_path   = l_info.to_path_ / p.path().lexically_relative(l_local_path);
           if (FSys::is_old_file(l_remote_path, p.path()))
-            co_await kitsu_client_->upload_shot_animation_ue(
-                l_info.task_id_, p.path(), l_relative_path.generic_string()
-            );
+            l_ue_upload_list.push_back({p.path(), l_relative_path.generic_string()});
         }
       else {
         auto l_relative_path = l_local_path.lexically_relative(l_ue_project_dir);
         if (FSys::is_old_file(l_info.to_path_, l_local_path))
-          co_await kitsu_client_->upload_shot_animation_ue(
-              l_info.task_id_, l_local_path, l_relative_path.generic_string()
-          );
+          l_ue_upload_list.push_back({l_local_path, l_relative_path.generic_string()});
       };
+      if (!l_ue_upload_list.empty()) co_await kitsu_client_->upload_asset_file_ue(l_info.task_id_, l_ue_upload_list);
     }
   }
 

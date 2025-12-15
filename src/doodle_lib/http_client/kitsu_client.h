@@ -51,7 +51,14 @@ class kitsu_client {
     FSys::path maya_file_;
     details::assets_type_enum type_;
   };
+  struct update_file_arg {
+    FSys::path local_path_;
+    std::string field_name_;
 
+    static std::vector<update_file_arg> list_all_project_files(
+        const FSys::path& in_project_path, const std::vector<FSys::path>& in_extra_path = {}
+    );
+  };
   void set_logger(logger_ptr in_logger) { logger_ = std::move(in_logger); }
 
   // set token
@@ -68,12 +75,8 @@ class kitsu_client {
   boost::asio::awaitable<project> get_project(uuid in_project_id) const;
   boost::asio::awaitable<nlohmann::json> get_generate_uesk_file_arg(uuid in_task_id) const;
   boost::asio::awaitable<void> upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const;
-  /// 上传多个UE文件中部分文件
-  boost::asio::awaitable<void> upload_asset_file_ue(
-      uuid in_task_id, std::shared_ptr<std::vector<FSys::path>> in_file_path
-  ) const;
-  /// 上传整个工程文件
-  boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, FSys::path in_file_path) const;
+  /// 上传UE文件
+  boost::asio::awaitable<void> upload_asset_file_ue(uuid in_task_id, std::vector<update_file_arg> in_file_path) const;
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
   /// 上传镜头maya文件
   boost::asio::awaitable<void> upload_shot_animation_maya(uuid in_shot_task_id, FSys::path in_file_path);
@@ -87,8 +90,8 @@ class kitsu_client {
   );
   /// 上传镜头UE文件
   boost::asio::awaitable<void> upload_shot_animation_ue(
-      uuid in_shot_task_id, FSys::path in_file_path, std::string in_file_field_name
-  );
+      uuid in_shot_task_id, std::vector<update_file_arg> in_file_path
+  ) const;
   boost::asio::awaitable<void> remove_asset_file_maya(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_ue(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_image(const uuid& in_uuid);
