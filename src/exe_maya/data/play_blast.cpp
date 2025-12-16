@@ -67,7 +67,7 @@ void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientD
 play_blast::play_blast() : p_current_time(), p_uuid() {}
 FSys::path play_blast::get_file_dir() const {
   auto k_cache_path = core_set::get_set().get_cache_root("maya_play_blast");
-  k_cache_path /= p_uuid.substr(0, 3);
+  k_cache_path /= p_uuid;
   if (!FSys::exists(k_cache_path)) {
     FSys::create_directories(k_cache_path);
   }
@@ -76,7 +76,7 @@ FSys::path play_blast::get_file_dir() const {
 
 FSys::path play_blast::get_file_path(const MTime& in_time) const {
   auto k_cache_path = get_file_dir();
-  k_cache_path /= fmt::format("{}_{:05d}.png", p_uuid, boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
+  k_cache_path /= fmt::format("image_{:05d}.png", boost::numeric_cast<std::int32_t>(in_time.as(MTime::uiUnit())));
   return k_cache_path;
 }
 
