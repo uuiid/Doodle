@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/task_status.h"
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/long_task/image_to_move.h>
@@ -73,7 +74,7 @@ boost::asio::awaitable<void> update_movie_files::run() {
     l_movie_file = movie_file_;
   }
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());
-
-  co_await kitsu_client_->comment_task(task_id_, "自动上传评论", l_movie_file);
+  co_await kitsu_client_->upload_shot_animation_video_file(task_id_, l_movie_file);
+  co_await kitsu_client_->comment_task(task_id_, "自动上传评论", l_movie_file, task_status::get_completed());
 }
 }  // namespace doodle

@@ -88,6 +88,8 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_shot_animation_other_file(
       uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
   );
+  /// 上传镜头视频文件
+  boost::asio::awaitable<void> upload_shot_animation_video_file(uuid in_shot_task_id, FSys::path in_file_path);
   /// 上传镜头UE文件
   boost::asio::awaitable<void> upload_shot_animation_ue(
       uuid in_shot_task_id, std::vector<update_file_arg> in_file_path
@@ -97,7 +99,7 @@ class kitsu_client {
   boost::asio::awaitable<void> remove_asset_file_image(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_shot_animation_maya(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_shot_animation_export_file(const uuid& in_uuid);
-  boost::asio::awaitable<void> remove_shot_animation_other_file(const uuid& in_uuid);
+
   boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
   /// 对task进行评论(并且附加预览图或者视频)
   boost::asio::awaitable<void> comment_task(

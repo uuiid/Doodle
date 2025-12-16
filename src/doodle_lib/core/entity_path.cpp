@@ -419,7 +419,7 @@ FSys::path get_shots_effect_movie_path(const entity& episode_) {
   return FSys::path{"8_VFX"} / "Vfx_Movie" / episode_.name_;
 }
 FSys::path get_shots_lighting_movie_path(const entity& episode_) {
-  return FSys::path{"9_LIGHT"} / "Light_Movie" / episode_.name_;
+  return FSys::path{"9_LIGHT"} / "Lig_mp4" / episode_.name_ / "Fix";
 }
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();

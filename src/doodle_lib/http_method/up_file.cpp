@@ -223,7 +223,7 @@ FSys::path doodle_data_shots_file_other::gen_file_path() {
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
-FSys::path doodle_data_shots_file_movie::gen_file_path() {
+FSys::path doodle_data_shots_file_video::gen_file_path() {
   if (task_type_id_ == task_type::get_animation_id())
     return get_shots_animation_maya_path(episode_) / "mov";
   else if (task_type_id_ == task_type::get_simulation_task_id())
