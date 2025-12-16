@@ -160,20 +160,6 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
     // in_time = std::chrono::zoned_time<Duration>{std::chrono::current_zone(), l_local_time};
   }
 };
-template <class T>
-struct [[maybe_unused]] adl_serializer<std::optional<T>> {
-  using opt = std::optional<T>;
-  static void to_json(json& j, const opt& in_opt) {
-    if (!in_opt) {
-      j = nlohmann::json::value_t::null;
-    } else {
-      j = *in_opt;
-    }
-  }
-  static void from_json(const json& j, opt& in_opt) {
-    if (!j.is_null()) in_opt.emplace(j.get<T>());
-  }
-};
 template <>
 struct [[maybe_unused]] adl_serializer<boost::uuids::uuid> {
   static void to_json(json& j, const boost::uuids::uuid& in_uuid) {
