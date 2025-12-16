@@ -277,6 +277,12 @@ http_route_ptr create_kitsu_local_route() {
         .reg_t<local::actions_project_sync_local>(
             "/api/actions/project/{}/sync"_url(&local::actions_project_sync_local::project_id_)
         )
+        .reg_t<local::actions_local_task_update_movie_files>(
+            "/api/actions/local/task/{}/update/movie"_url(&local::actions_local_task_update_movie_files::id_)
+        )
+        .reg_t<local::actions_local_task_update_ue_files>(
+            "/api/actions/local/task/{}/update/ue"_url(&local::actions_local_task_update_ue_files::id_)
+        )
         .reg_t<local::tools_add_watermark>("/api/actions/tools/add-watermark"_url)
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
 
