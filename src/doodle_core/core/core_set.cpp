@@ -61,7 +61,7 @@ core_set::core_set()
 }
 
 boost::uuids::uuid core_set::get_uuid() {
-  static thread_local boost::uuids::random_generator g_uuid_gen{};
+  static thread_local boost::uuids::time_generator_v7 g_uuid_gen{};
   return g_uuid_gen();
 }
 
