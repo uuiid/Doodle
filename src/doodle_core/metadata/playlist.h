@@ -56,7 +56,9 @@ struct DOODLE_CORE_API playlist_shot {
 
   // from json
   friend void from_json(const nlohmann::json& j, playlist_shot& p) {
-    j["entity_id"].get_to(p.entity_id_);
+    if (j.contains("entity_id") && j.at("entity_id").is_string()) j["entity_id"].get_to(p.entity_id_);
+    if (j.contains("sequence_id") && j.at("sequence_id").is_string()) j["sequence_id"].get_to(p.entity_id_);
+    
     if (j.contains("preview_file_id") && j.at("preview_file_id").is_string())
       j["preview_file_id"].get_to(p.preview_id_);
   }
