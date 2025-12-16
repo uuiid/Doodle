@@ -11,7 +11,6 @@
 
 #include <string>
 
-
 namespace doodle {
 struct entity_asset_extend;
 struct asset_type;
@@ -30,6 +29,7 @@ class up_file_base : public http_jwt_fun {
   FSys::path received_file_path_{};
   // 获取当前时间的格式化, 精确到小时
   std::string get_current_time_str_hour() const;
+
  public:
   uuid id_{};
   DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -91,6 +91,10 @@ FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/other
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_other, up_file_shots_base)
+FSys::path gen_file_path() override;
+DOODLE_HTTP_FUN_END()
+// /api/doodle/data/shots/{task_id}/file/movie
+DOODLE_HTTP_FUN_C(doodle_data_shots_file_movie, up_file_shots_base)
 FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
 // /api/doodle/data/shots/{task_id}/file/ue

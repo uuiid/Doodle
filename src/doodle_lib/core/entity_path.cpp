@@ -370,12 +370,9 @@ FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend&
   return get_entity_character_rig_maya_name(in_extend_).stem().string() + "_cloth.ma";
 }
 /// 动画镜头maya路径
-FSys::path get_shots_animation_maya_path(const std::string& episode_name_) {
-  return FSys::path{"03_Workflow"} / "Shots" / episode_name_ / "ma";
-  ;
-}
+
 FSys::path get_shots_animation_maya_path(const entity& episode_) {
-  return get_shots_animation_maya_path(episode_.name_);
+  return FSys::path{"03_Workflow"} / "Shots" / episode_.name_ / "ma";
 }
 /// 动画镜头output路径
 FSys::path get_shots_animation_output_path(
@@ -388,11 +385,8 @@ FSys::path get_shots_animation_output_path(const entity& episode_, const entity&
   return get_shots_animation_output_path(episode_.name_, shot_.name_, prj_.code_);
 }
 /// 解算镜头maya路径
-FSys::path get_shots_simulation_maya_path(const std::string& episode_name_) {
-  return FSys::path{"03_Workflow"} / "Shots" / episode_name_ / "sim";
-}
 FSys::path get_shots_simulation_maya_path(const entity& episode_) {
-  return get_shots_simulation_maya_path(episode_.name_);
+  return FSys::path{"03_Workflow"} / "Shots" / episode_.name_ / "sim";
 }
 /// 解算镜头output路径
 FSys::path get_shots_simulation_output_path(
@@ -421,7 +415,12 @@ FSys::path get_shots_effect_ue_path(const entity& episode_) {
 FSys::path get_shots_lighting_ue_path(const entity& episode_) {
   return FSys::path{"9_LIGHT"} / "Light_File" / episode_.name_;
 }
-
+FSys::path get_shots_effect_movie_path(const entity& episode_) {
+  return FSys::path{"8_VFX"} / "Vfx_Movie" / episode_.name_;
+}
+FSys::path get_shots_lighting_movie_path(const entity& episode_) {
+  return FSys::path{"9_LIGHT"} / "Light_Movie" / episode_.name_;
+}
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();
   boost::replace_all(l_str, doodle_config::ue4_content, doodle_config::ue4_game);

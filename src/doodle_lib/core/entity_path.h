@@ -119,7 +119,6 @@ FSys::path get_entity_simulation_asset_path(const project& in_prj_);
 FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend& in_extend_);
 FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend& in_extend_);
 /// 动画镜头maya路径
-FSys::path get_shots_animation_maya_path(const std::string& episode_name_);
 FSys::path get_shots_animation_maya_path(const entity& episode_);
 /// 动画镜头output路径
 FSys::path get_shots_animation_output_path(
@@ -127,7 +126,6 @@ FSys::path get_shots_animation_output_path(
 );
 FSys::path get_shots_animation_output_path(const entity& episode_, const entity& shot_, const project& prj_);
 /// 解算镜头maya路径
-FSys::path get_shots_simulation_maya_path(const std::string& episode_name_);
 FSys::path get_shots_simulation_maya_path(const entity& episode_);
 /// 解算镜头output路径
 FSys::path get_shots_simulation_output_path(
@@ -143,7 +141,8 @@ FSys::path get_shots_animation_file_name(const entity& episode_, const entity& s
 FSys::path get_shots_effect_ue_path(const entity& episode_);
 // 生成灯光 ue路径
 FSys::path get_shots_lighting_ue_path(const entity& episode_);
-
+FSys::path get_shots_effect_movie_path(const entity& episode_);
+FSys::path get_shots_lighting_movie_path(const entity& episode_);
 // 将路径转换为 ue_game 路径
 FSys::path conv_ue_game_path(const FSys::path& in_path);
 // 将 ue_game 路径转换为 正常路径

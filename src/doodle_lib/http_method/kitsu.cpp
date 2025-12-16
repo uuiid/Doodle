@@ -216,6 +216,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<doodle_data_shots_file_maya>("/api/doodle/data/shots/{}/file/maya"_url(&doodle_data_shots_file_maya::id_))
       .reg_t<doodle_data_shots_file_output>("/api/doodle/data/shots/{}/file/output"_url(&doodle_data_shots_file_output::id_))
       .reg_t<doodle_data_shots_file_other>("/api/doodle/data/shots/{}/file/other"_url(&doodle_data_shots_file_other::id_))
+      .reg_t<doodle_data_shots_file_movie>("/api/doodle/data/shots/{}/file/movie"_url(&doodle_data_shots_file_movie::id_))
       .reg_t<doodle_data_shots_file_ue>("/api/doodle/data/shots/{}/file/ue"_url(&doodle_data_shots_file_ue::id_))
       .reg_t<actions_projects_shots_run_ue_assembly>("/api/actions/projects/{}/shots/{}/run-ue-assembly"_url(
         &actions_projects_shots_run_ue_assembly::project_id_,

@@ -67,8 +67,9 @@ std::string up_file_base::get_current_time_str_hour() const {
 
 void up_file_base::move_file(session_data_ptr in_handle) {
   if (file_path_.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失根路径"});
-  auto l_dir  = root_path_ / gen_file_path();
-  auto l_path = l_dir / file_path_;
+  auto l_gen_path = gen_file_path();
+  auto l_dir     = root_path_ / l_gen_path;
+  auto l_path    = l_dir / file_path_;
   auto l_backup_path =
       root_path_ / "backup" / get_current_time_str_hour() / FSys::add_time_stamp(file_path_.filename());
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
@@ -87,7 +88,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::get(
 }
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::delete_(session_data_ptr in_handle) {
   query_task_info(in_handle);
-  auto l_dir         = root_path_ / gen_file_path();
+  auto l_gen_path    = gen_file_path();
+  auto l_dir         = root_path_ / l_gen_path;
   auto l_backup_path = root_path_ / "backup" / get_current_time_str_hour() / FSys::add_time_stamp(l_dir.filename());
   if (auto l_p = l_backup_path.parent_path(); !exists(l_p)) create_directories(l_p);
   if (FSys::exists(l_dir)) {
@@ -199,9 +201,9 @@ FSys::path doodle_data_asset_file_image::gen_file_path() {
 
 FSys::path doodle_data_shots_file_maya::gen_file_path() {
   if (task_type_id_ == task_type::get_animation_id())
-    return get_shots_animation_maya_path(episode_name_);
+    return get_shots_animation_maya_path(episode_);
   else if (task_type_id_ == task_type::get_simulation_task_id())
-    return get_shots_simulation_maya_path(episode_name_);
+    return get_shots_simulation_maya_path(episode_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
@@ -215,11 +217,24 @@ FSys::path doodle_data_shots_file_output::gen_file_path() {
 
 FSys::path doodle_data_shots_file_other::gen_file_path() {
   if (task_type_id_ == task_type::get_animation_id())
-    return get_shots_animation_maya_path(episode_name_).parent_path();
+    return get_shots_animation_maya_path(episode_).parent_path();
   else if (task_type_id_ == task_type::get_simulation_task_id())
-    return get_shots_simulation_maya_path(episode_name_).parent_path();
+    return get_shots_simulation_maya_path(episode_).parent_path();
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
+
+FSys::path doodle_data_shots_file_movie::gen_file_path() {
+  if (task_type_id_ == task_type::get_animation_id())
+    return get_shots_animation_maya_path(episode_) / "mov";
+  else if (task_type_id_ == task_type::get_simulation_task_id())
+    return get_shots_simulation_maya_path(episode_) / "mov";
+  if (task_type_id_ == task_type::get_shot_effect_id())
+    return get_shots_effect_movie_path(episode_);
+  else if (task_type_id_ == task_type::get_lighting_id())
+    return get_shots_lighting_movie_path(episode_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
+}
+
 FSys::path doodle_data_shots_file_ue::gen_file_path() {
   if (task_type_id_ == task_type::get_shot_effect_id())
     return get_shots_effect_ue_path(episode_);
