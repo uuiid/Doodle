@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/task_status.h"
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 
@@ -67,6 +68,7 @@ boost::asio::awaitable<void> task_sync::run() {
           l_ue_upload_list.push_back({l_local_path, l_relative_path.generic_string()});
       };
       if (!l_ue_upload_list.empty()) co_await kitsu_client_->upload_asset_file_ue(l_info.task_id_, l_ue_upload_list);
+      co_await kitsu_client_->comment_task(l_info.task_id_, "上传文件完成", {}, task_status::get_completed());
     }
   }
 

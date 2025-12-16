@@ -75,6 +75,6 @@ boost::asio::awaitable<void> update_movie_files::run() {
   }
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());
   co_await kitsu_client_->upload_shot_animation_video_file(task_id_, l_movie_file);
-  co_await kitsu_client_->comment_task(task_id_, "自动上传评论", l_movie_file, task_status::get_completed());
+  co_await kitsu_client_->comment_task(task_id_, "自动上传评论", l_movie_file, task_status::get_nearly_completed());
 }
 }  // namespace doodle
