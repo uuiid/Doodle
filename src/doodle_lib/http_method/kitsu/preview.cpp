@@ -305,7 +305,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
 
   l_preview_file->status_     = preview_file_statuses::ready;
   l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
-  l_preview_file->updated_at_ = chrono::system_clock::now();
   co_await l_sql.update(l_preview_file);
 
   // 更新task
@@ -344,7 +343,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   l_preview_file->task_id_         = task_id_;
   l_preview_file->person_id_       = person_.person_.uuid_id_;
   l_preview_file->position_        = l_position;
-  l_preview_file->name_            = fmt::to_string(l_preview_file->uuid_id_).substr(0, 13);
+  l_preview_file->name_            = fmt::to_string(l_preview_file->uuid_id_);
   l_preview_file->status_          = preview_file_statuses::processing;
   l_preview_file->source_          = "webgui";
   l_preview_file->extension_       = "mp4";
