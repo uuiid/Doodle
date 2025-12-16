@@ -938,13 +938,13 @@ struct sqlite_database_impl {
     default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
   }
 
-#define DOODLE_TO_SQLITE_THREAD()                                 \
-  if (core_set::get_set().read_only_mode_) co_return;             \
-  auto this_executor = co_await boost::asio::this_coro::executor; \
+#define DOODLE_TO_SQLITE_THREAD()                                     \
+  DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
+  auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::post(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
-#define DOODLE_TO_SQLITE_THREAD_2()                               \
-  if (core_set::get_set().read_only_mode_) co_return;             \
-  auto this_executor = co_await boost::asio::this_coro::executor; \
+#define DOODLE_TO_SQLITE_THREAD_2()                                   \
+  DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
+  auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::post(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));
 
   template <typename T>
