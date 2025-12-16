@@ -339,7 +339,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "preview_file",                                                           //
           make_column("id", &preview_file::id_, primary_key().autoincrement()),     //
           make_column("uuid", &preview_file::uuid_id_, unique(), not_null()),       //
-          make_column("name", &preview_file::name_, unique()),                      //
+          make_column("name", &preview_file::name_),                      //
           make_column("original_name", &preview_file::original_name_),              //
           make_column("revision", &preview_file::revision_),                        //
           make_column("position", &preview_file::position_),                        //
