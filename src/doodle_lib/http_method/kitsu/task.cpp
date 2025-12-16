@@ -76,7 +76,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
       l_notifications->emplace_back(l_notification);
     }
   }
-  co_await l_sql.install_range(l_tasks);
+  co_await l_sql.update_range(l_tasks);
   co_await l_sql.install_range(l_assignees_table);
   co_await l_sql.install_range(l_notifications);
   co_return in_handle->make_msg(nlohmann::json{} = *l_tasks);
