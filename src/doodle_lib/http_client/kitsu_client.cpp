@@ -205,6 +205,7 @@ std::vector<kitsu_client::update_file_arg> kitsu_client::update_file_arg::list_a
   FSys::path l_project_path{};
   if (in_project_path.extension() == doodle_config::ue4_uproject_ext) {
     l_uproject_dir = in_project_path.parent_path();
+    l_project_path = in_project_path;
   } else {
     l_project_path = ue_exe_ns::find_ue_project_file(in_project_path);
     l_uproject_dir = l_project_path.parent_path();
