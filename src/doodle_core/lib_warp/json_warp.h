@@ -152,6 +152,8 @@ struct [[maybe_unused]] adl_serializer<std::chrono::zoned_time<Duration>> {
       in_time = time_point{std::chrono::current_zone(), l_time};
     else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%FT%T%Ez", l_time))
       in_time = time_point{std::chrono::current_zone(), l_time};
+    else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%F %T%Ez", l_time))
+      in_time = time_point{std::chrono::current_zone(), l_time};
     else if (in.clear(), in.str(l_str), in >> std::chrono::parse("%F %T", l_time))
       in_time = time_point{std::chrono::current_zone(), l_time};
     else if (in.clear(), in.exceptions(std::ios::failbit), in.str(l_str), in >> std::chrono::parse("%F", l_time))
