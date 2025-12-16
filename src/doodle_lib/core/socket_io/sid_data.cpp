@@ -54,8 +54,8 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     if (auto l_websocket = socket_io_websocket_core_.lock(); !l_websocket) co_return;
     seed_message_ping();
   }
-  seed_message_ping();
   close();
+  seed_message_ping();
   co_return;
 }
 
@@ -161,7 +161,6 @@ void sid_data::seed_message_ping() {
   write_websocket();
 }
 void sid_data::write_websocket() {
-  if (is_timeout()) return;
   if (auto l_websocket = socket_io_websocket_core_.lock(); l_websocket) l_websocket->write_msg();
 }
 packet_base_ptr sid_data::get_message() {
