@@ -2,6 +2,7 @@
 // Created by TD on 25-3-27.
 //
 
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
@@ -303,8 +304,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});
 
-  l_preview_file->status_     = preview_file_statuses::ready;
-  l_preview_file->file_size_  = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
+  l_preview_file->status_    = preview_file_statuses::ready;
+  l_preview_file->file_size_ = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
   co_await l_sql.update(l_preview_file);
 
   // 更新task
@@ -343,7 +344,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   l_preview_file->task_id_         = task_id_;
   l_preview_file->person_id_       = person_.person_.uuid_id_;
   l_preview_file->position_        = l_position;
-  l_preview_file->name_            = fmt::to_string(l_preview_file->uuid_id_);
+  l_preview_file->name_            = core_set::get_set().get_uuid_str();
   l_preview_file->status_          = preview_file_statuses::processing;
   l_preview_file->source_          = "webgui";
   l_preview_file->extension_       = "mp4";
