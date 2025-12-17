@@ -21,6 +21,67 @@ struct event_timer {
   }
 };
 }  // namespace
+
+void fbx_load_result::build_face_adjacency(std::int64_t k) {
+  auto l_num_verts = vertices_.size(0);
+  DOODLE_CHICK(faces_.defined(), "faces tensor is undefined");
+  DOODLE_CHICK(faces_.dim() == 2, "faces must be 2D [F,3]");
+  DOODLE_CHICK(faces_.size(1) >= 3, "faces must have at least 3 columns");
+  DOODLE_CHICK(l_num_verts > 0, "num_verts must be > 0");
+  DOODLE_CHICK(k > 0, "k must be > 0");
+
+  // Build adjacency on CPU for simplicity/stability.
+  auto faces_cpu = faces_.to(torch::kCPU).to(torch::kInt64).contiguous();
+
+  std::vector<std::vector<int64_t>> adj(static_cast<size_t>(l_num_verts));
+  auto acc        = faces_cpu.accessor<int64_t, 2>();
+  const int64_t F = faces_cpu.size(0);
+  for (int64_t f = 0; f < F; ++f) {
+    const int64_t a = acc[f][0];
+    const int64_t b = acc[f][1];
+    const int64_t c = acc[f][2];
+    if (a < 0 || b < 0 || c < 0) {
+      continue;
+    }
+    if (a >= l_num_verts || b >= l_num_verts || c >= l_num_verts) {
+      continue;
+    }
+    // undirected edges
+    adj[static_cast<size_t>(a)].push_back(b);
+    adj[static_cast<size_t>(a)].push_back(c);
+    adj[static_cast<size_t>(b)].push_back(a);
+    adj[static_cast<size_t>(b)].push_back(c);
+    adj[static_cast<size_t>(c)].push_back(a);
+    adj[static_cast<size_t>(c)].push_back(b);
+  }
+
+  auto idx_cpu = torch::empty({l_num_verts, k}, torch::TensorOptions().dtype(torch::kInt64).device(torch::kCPU));
+  auto deg_cpu = torch::empty({l_num_verts}, torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU));
+  auto idx_acc = idx_cpu.accessor<int64_t, 2>();
+  auto deg_acc = deg_cpu.accessor<float, 1>();
+
+  for (int64_t v = 0; v < l_num_verts; ++v) {
+    auto& n = adj[static_cast<size_t>(v)];
+    if (!n.empty()) {
+      std::sort(n.begin(), n.end());
+      n.erase(std::unique(n.begin(), n.end()), n.end());
+    }
+
+    deg_acc[v] = static_cast<float>(n.size());
+
+    // Fill fixed-size neighbor list. If not enough neighbors, pad with self.
+    for (int64_t j = 0; j < k; ++j) {
+      if (j < static_cast<int64_t>(n.size())) {
+        idx_acc[v][j] = n[static_cast<size_t>(j)];
+      } else {
+        idx_acc[v][j] = v;
+      }
+    }
+  }
+  neighbor_idx_ = idx_cpu;
+  topo_degree_ = deg_cpu;
+}
+
 fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger) {
   if (!in_logger) logger_ = spdlog::default_logger_raw();
   event_timer::duration_type l_load_duration{};
