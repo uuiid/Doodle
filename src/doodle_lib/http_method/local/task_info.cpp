@@ -511,7 +511,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) {
@@ -537,7 +537,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
-  co_return in_handle->make_msg(nlohmann::json{});
+  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 }  // namespace doodle::http::local
 
