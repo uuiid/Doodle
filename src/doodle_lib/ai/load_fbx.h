@@ -22,6 +22,8 @@ struct fbx_load_result {
   torch::Tensor bones_dir_len_;     // [num_bones, 4]
 
   void build_face_adjacency(std::int64_t k);
+  // 归一化
+  void normalize_inputs();
 
   template <typename T>
   inline void to(T in_opt) {

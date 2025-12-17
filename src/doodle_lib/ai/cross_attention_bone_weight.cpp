@@ -6,20 +6,14 @@
 
 #include <ATen/core/TensorBody.h>
 #include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
+#include <torch/torch.h>
 #include <torch/types.h>
 #include <vector>
 
 namespace doodle::ai {
-
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <torch/torch.h>
-#include <unordered_map>
-#include <vector>
 
 // ----------------------------- Utility functions --------------------------------
 

@@ -79,7 +79,14 @@ void fbx_load_result::build_face_adjacency(std::int64_t k) {
     }
   }
   neighbor_idx_ = idx_cpu;
-  topo_degree_ = deg_cpu;
+  topo_degree_  = deg_cpu;
+}
+
+void fbx_load_result::normalize_inputs() {
+  auto max_val = vertices_.abs().max().item<float>();
+  if (max_val < 1e-6) max_val = 1.0;
+  vertices_       = vertices_ / max_val;
+  bone_positions_ = bone_positions_ / max_val;
 }
 
 fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger) {
