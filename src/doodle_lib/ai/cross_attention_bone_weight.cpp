@@ -386,6 +386,10 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
   int bone_embed_dim        = 128;
   int nhead                 = 8;
+  for (auto& l_data : l_fbx_data) {
+    l_data.build_face_adjacency(k);
+    l_data.to(device);
+  }
 
   // Create model
   SkinningModel model{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};

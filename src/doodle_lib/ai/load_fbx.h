@@ -19,7 +19,7 @@ struct fbx_load_result {
   torch::Tensor bone_positions_;    // [num_bones, 3]
   torch::Tensor bone_weights_;      // [num_vertices, num_bones]
   torch::Tensor bone_parents_;      // [num_bones]
-  torch::Tensor bones_dir_len_;     // [num_bones, 4] optional
+  torch::Tensor bones_dir_len_;     // [num_bones, 4]
 
   void build_face_adjacency(std::int64_t k);
 
