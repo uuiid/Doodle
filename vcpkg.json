@@ -103,7 +103,8 @@
       "features": [
         "cuda"
       ]
-    }
+    },
+    "cgal"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
