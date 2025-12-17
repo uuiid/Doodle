@@ -385,7 +385,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
   } else {
     l_ent->preview_file_id_ = l_preview_file.uuid_id_;
-    co_await l_sql.install(l_ent);
+    co_await l_sql.update(l_ent);
     // 发送事件 "preview-file:set-main"
   }
   co_return in_handle->make_msg(nlohmann::json{} = *l_ent);
