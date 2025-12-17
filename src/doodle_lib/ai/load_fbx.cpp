@@ -83,6 +83,7 @@ void fbx_load_result::build_face_adjacency(std::int64_t k) {
 }
 
 void fbx_load_result::normalize_inputs() {
+  // Normalize inputs to avoid large values causing model collapse
   auto max_val = vertices_.abs().max().item<float>();
   if (max_val < 1e-6) max_val = 1.0;
   vertices_       = vertices_ / max_val;
@@ -160,6 +161,16 @@ fbx_load_result fbx_loader::load_fbx() {
       l_result.faces_[j][k] = l_vert_index;
     }
   }
+  // 法线
+  auto l_normals    = mesh_->GetElementNormal();
+  l_result.normals_ = torch::zeros({l_vert_count, 3}, torch::kFloat32);
+  if (l_normals) {
+    auto l_normal_mapping_mode = l_normals->GetMappingMode();
+    auto l_normal_ref_mode     = l_normals->GetReferenceMode();
+    for (auto j = 0; j < l_faces_num; j++) {
+    }
+  }
+
   auto* l_sk = static_cast<FbxSkin*>(mesh_->GetDeformer(0, FbxDeformer::eSkin));
   if (!l_sk) throw_exception(doodle_error{"no skin found"});
   auto l_sk_count          = l_sk->GetClusterCount();
@@ -202,11 +213,6 @@ fbx_load_result fbx_loader::load_fbx() {
   //     l_bone_positions, l_faces, l_bone_weights, l_bone_parents
   // );
 
-  // Normalize inputs to avoid large values causing model collapse
-  auto max_val = l_result.vertices_.abs().max().item<float>();
-  if (max_val < 1e-6) max_val = 1.0;
-  l_result.vertices_       = l_result.vertices_ / max_val;
-  l_result.bone_positions_ = l_result.bone_positions_ / max_val;
   timer.stop();
 
   SPDLOG_LOGGER_WARN(logger_, "读取fbx文件用时 {:%T}", l_load_duration);
