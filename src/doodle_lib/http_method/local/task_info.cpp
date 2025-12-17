@@ -67,12 +67,12 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
   explicit run_post_task_local_impl_sink(std::shared_ptr<server_task_info> in_task_info) : task_info_(in_task_info) {}
   void sink_it_(const spdlog::details::log_msg& msg) override {
     std::call_once(flag_, [this]() { set_state(); });
-    task_info_->progress_ += 0.01;
+    task_info_->progress_ += 0.001;
     if (task_info_->progress_ > 1.0) task_info_->progress_ = std::rand() % 100 / 500.0;
-
-    socket_io::broadcast(
-        "doodle:task_info:progress", nlohmann::json{{"id", task_info_->uuid_id_}, {"progress", task_info_->progress_}}
-    );
+    if (static_cast<int>(task_info_->progress_ * 100) % 2 == 0 || task_info_->progress_ <= 0.1)
+      socket_io::broadcast(
+          "doodle:task_info:progress", nlohmann::json{{"id", task_info_->uuid_id_}, {"progress", task_info_->progress_}}
+      );
   }
   void flush_() override {}
   void set_state() {
