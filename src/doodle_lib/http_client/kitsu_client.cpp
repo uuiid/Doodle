@@ -222,7 +222,7 @@ std::vector<kitsu_client::update_file_arg> kitsu_client::update_file_arg::list_a
   }
 
   for (auto&& l_path : l_path_list) {
-    if (!FSys::exists(l_path)) continue;
+    DOODLE_CHICK(FSys::exists(l_path), "文件不存在, 路径 {}", l_path);
 
     if (FSys::is_directory(l_path)) {
       for (auto&& p : FSys::recursive_directory_iterator(l_path)) {
