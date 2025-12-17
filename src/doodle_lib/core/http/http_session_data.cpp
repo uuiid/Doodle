@@ -35,6 +35,7 @@
 #include <boost/winapi/error_codes.hpp>
 
 #include "cryptopp/hex.h"
+#include "http_content_type.h"
 #include <cryptopp/adler32.h>
 #include <cryptopp/filters.h>
 #include <magic_enum/magic_enum.hpp>
@@ -257,21 +258,13 @@ boost::asio::awaitable<bool> session_data::parse_body() {
             body_ = l_str;
           break;
         }
-        case content_type::image_gif:
-          co_await save_bode_file(".gif");
-          break;
-        case content_type::video_mp4:
-          co_await save_bode_file(".mp4");
-          break;
-        case content_type::application_nuknown:
-          co_await save_bode_file(".tmp");
-          break;
         case content_type::multipart_form_data:
           co_await save_multipart_form_data_file();
           break;
         case content_type::unknown:
           break;
         default:
+          co_await save_bode_file(extension_from_mime_type(content_type_));
           break;
       }
 

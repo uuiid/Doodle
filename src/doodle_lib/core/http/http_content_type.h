@@ -19,10 +19,13 @@ enum class content_type {
   image_png,
   image_gif,
   video_mp4,
+  video_mov,
   form_data,
   multipart_form_data,
   unknown
 };
 
 content_type get_content_type(const std::string_view& in_str);
+std::string extension_from_mime_type(detail::content_type in_mime_type);
+
 }  // namespace doodle::http::detail

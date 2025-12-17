@@ -385,8 +385,10 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (l_ext == "7z") return "application/x-7z-compressed";
   if (l_ext == "tar") return "application/x-tar";
   if (l_ext == "log") return "text/plain";
+  if (l_ext == "mov") return "video/quicktime";
   return "application/octet-stream";
 }
+
 
 }  // namespace kitsu
 
