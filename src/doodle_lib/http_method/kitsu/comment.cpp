@@ -94,10 +94,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
       auto l_attachment_file_path = g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
                                     FSys::split_uuid_path(fmt::to_string(l_attachment_file->uuid_id_));
       if (auto l_p = l_attachment_file_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
-      FSys::rename(
-          i, g_ctx().get<kitsu_ctx_t>().root_ / "files" / "attachments" /
-                 FSys::split_uuid_path(fmt::to_string(l_attachment_file->uuid_id_))
-      );
+      FSys::rename(i, l_attachment_file_path);
       l_attachment_files.emplace_back(*l_attachment_file);
     }
   }
