@@ -287,10 +287,10 @@ struct MeshEncoderImpl : torch::nn::Module {
     transformer = register_module("transformer", torch::nn::TransformerEncoder(encoder_layer, num_layers));
   }
 
-  // verts: [N,3], normals: [N,3], faces: [F,3], curvature: [N], normal_dev:[N]
+  // verts: [N,3], normals: [N,3], faces: [F,3], curvature: [N]
   torch::Tensor forward(
       const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
-      const torch::Tensor& curvature, const torch::Tensor& normal_dev
+      const torch::Tensor& curvature
   ) {
     auto adj         = build_face_adjacency(faces, verts.size(0), k, verts.device());
     // topo_degree is scalar connectivity feature per-vertex, derived from faces_
@@ -298,7 +298,7 @@ struct MeshEncoderImpl : torch::nn::Module {
 
     // build initial feature
     auto feat        = torch::cat(
-        {verts, normals, curvature.unsqueeze(1), topo_degree.unsqueeze(1), normal_dev.unsqueeze(1)}, -1
+        {verts, normals, curvature.unsqueeze(1), topo_degree.unsqueeze(1)}, -1
     );  // [N, F]
     auto x = feat;
     for (size_t i = 0; i < edge_layers.size(); ++i) {
@@ -413,14 +413,14 @@ struct SkinningModelImpl : torch::nn::Module {
   }
 
   // inputs:
-  // verts [N,3], normals [N,3], faces [F,3], curvature [N], normal_dev [N]
+  // verts [N,3], normals [N,3], faces [F,3], curvature [N]
   // bones_pos [B,3], bones_parent [B], bones_dir_len [B,4] optional
   torch::Tensor forward(
       const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
-      const torch::Tensor& curvature, const torch::Tensor& normal_dev, const torch::Tensor& bones_pos,
+      const torch::Tensor& curvature, const torch::Tensor& bones_pos,
       const torch::Tensor& bones_parent, const torch::Tensor& bones_dir_len = torch::Tensor()
   ) {
-    auto vfeat = mesh_enc->forward(verts, normals, faces, curvature, normal_dev);  // [N, E]
+    auto vfeat = mesh_enc->forward(verts, normals, faces, curvature);  // [N, E]
     auto bfeat = skel_enc->forward(bones_pos, bones_parent, bones_dir_len);        // [B, E2]
     // if dims mismatch, linear project
     if (bfeat.size(1) != vfeat.size(1)) {
@@ -466,7 +466,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   auto l_fbx_data           = load_fbx_files(in_fbx_files);
 
   // Model hyperparams
-  int mesh_in_ch            = 3 + 3 + 1 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_) + normal_dev
+  int mesh_in_ch            = 3 + 3 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_)
   // In our implementation we concatenated many fields; compute actual in channels dynamically when loading first
   // sample. For simplicity set:
   int trans_dim             = 128;
@@ -497,7 +497,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       auto B    = l_data.bone_positions_.size(0);
       // forward
       auto pred = model->forward(
-          l_data.vertices_, l_data.normals_, l_data.faces_, l_data.curvature_, l_data.normal_deviation_,
+          l_data.vertices_, l_data.normals_, l_data.faces_, l_data.curvature_,
           l_data.bone_positions_, l_data.bone_parents_, l_data.bones_dir_len_
       );  // [N,B]
       // ensure numeric stability
