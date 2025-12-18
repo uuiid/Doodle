@@ -148,79 +148,6 @@ void fbx_load_result::compute_bones_dir_len() {
 
 // ----------------------------- Utility functions --------------------------------
 
-struct FaceAdjacency {
-  torch::Tensor neighbor_idx;  // [N, k] int64
-  torch::Tensor topo_degree;   // [N] float32
-};
-
-// Build per-vertex fixed-size neighbor indices from triangle faces.
-// - faces: [F,3] int64 (can be on any device)
-// - neighbor_idx: [N,k] int64 on `device`
-// - topo_degree: [N] float32 on `device` (unique neighbor count)
-FaceAdjacency build_face_adjacency(
-    const torch::Tensor& faces, int64_t num_verts, int64_t k, const torch::Device& device
-) {
-  DOODLE_CHICK(faces.defined(), "faces tensor is undefined");
-  DOODLE_CHICK(faces.dim() == 2, "faces must be 2D [F,3]");
-  DOODLE_CHICK(faces.size(1) >= 3, "faces must have at least 3 columns");
-  DOODLE_CHICK(num_verts > 0, "num_verts must be > 0");
-  DOODLE_CHICK(k > 0, "k must be > 0");
-
-  // Build adjacency on CPU for simplicity/stability.
-  auto faces_cpu = faces.to(torch::kCPU).to(torch::kInt64).contiguous();
-
-  std::vector<std::vector<int64_t>> adj(static_cast<size_t>(num_verts));
-  auto acc        = faces_cpu.accessor<int64_t, 2>();
-  const int64_t F = faces_cpu.size(0);
-  for (int64_t f = 0; f < F; ++f) {
-    const int64_t a = acc[f][0];
-    const int64_t b = acc[f][1];
-    const int64_t c = acc[f][2];
-    if (a < 0 || b < 0 || c < 0) {
-      continue;
-    }
-    if (a >= num_verts || b >= num_verts || c >= num_verts) {
-      continue;
-    }
-    // undirected edges
-    adj[static_cast<size_t>(a)].push_back(b);
-    adj[static_cast<size_t>(a)].push_back(c);
-    adj[static_cast<size_t>(b)].push_back(a);
-    adj[static_cast<size_t>(b)].push_back(c);
-    adj[static_cast<size_t>(c)].push_back(a);
-    adj[static_cast<size_t>(c)].push_back(b);
-  }
-
-  auto idx_cpu = torch::empty({num_verts, k}, torch::TensorOptions().dtype(torch::kInt64).device(torch::kCPU));
-  auto deg_cpu = torch::empty({num_verts}, torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU));
-  auto idx_acc = idx_cpu.accessor<int64_t, 2>();
-  auto deg_acc = deg_cpu.accessor<float, 1>();
-
-  for (int64_t v = 0; v < num_verts; ++v) {
-    auto& n = adj[static_cast<size_t>(v)];
-    if (!n.empty()) {
-      std::sort(n.begin(), n.end());
-      n.erase(std::unique(n.begin(), n.end()), n.end());
-    }
-
-    deg_acc[v] = static_cast<float>(n.size());
-
-    // Fill fixed-size neighbor list. If not enough neighbors, pad with self.
-    for (int64_t j = 0; j < k; ++j) {
-      if (j < static_cast<int64_t>(n.size())) {
-        idx_acc[v][j] = n[static_cast<size_t>(j)];
-      } else {
-        idx_acc[v][j] = v;
-      }
-    }
-  }
-
-  FaceAdjacency out;
-  out.neighbor_idx = idx_cpu.to(device);
-  out.topo_degree  = deg_cpu.to(device);
-  return out;
-}
-
 // Simple function to gather neighbor features: given feat [N, C], idx [N, k] -> [N, k, C]
 torch::Tensor gather_neighbors(const torch::Tensor& feat, const torch::Tensor& idx) {
   // idx: LongTensor [N, k]
@@ -325,19 +252,16 @@ struct MeshEncoderImpl : torch::nn::Module {
   }
 
   // verts: [N,3], normals: [N,3], faces: [F,3], curvature: [N]
-  torch::Tensor forward(
-      const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
-      const torch::Tensor& curvature
-  ) {
-    auto adj         = build_face_adjacency(faces, verts.size(0), k, verts.device());
-    // topo_degree is scalar connectivity feature per-vertex, derived from faces_
-    auto topo_degree = adj.topo_degree;
-
+  torch::Tensor forward(const fbx_load_result& in_fbx_data) {
     // build initial feature
-    auto feat        = torch::cat({verts, normals, curvature.unsqueeze(1), topo_degree.unsqueeze(1)}, -1);  // [N, F]
-    auto x           = feat;
+    auto feat = torch::cat(
+        {in_fbx_data.vertices_, in_fbx_data.normals_, in_fbx_data.curvature_.unsqueeze(1),
+         in_fbx_data.topo_degree_.unsqueeze(1)},
+        -1
+    );  // [N, F]
+    auto x = feat;
     for (size_t i = 0; i < edge_layers.size(); ++i) {
-      x = edge_layers[i]->forward(x, adj.neighbor_idx);
+      x = edge_layers[i]->forward(x, in_fbx_data.neighbor_idx_);
     }
     // project to transformer dim
     auto x_proj    = proj->forward(x);  // [N, trans_dim]
@@ -364,30 +288,27 @@ struct SkeletonEncoderImpl : torch::nn::Module {
   }
 
   // bones_pos: [B,3], parent_idx: [B], bones_dir_len optional
-  torch::Tensor forward(
-      const torch::Tensor& bones_pos, const torch::Tensor& parent_idx,
-      const torch::Tensor& bones_dir_len = torch::Tensor()
-  ) {
+  torch::Tensor forward(const fbx_load_result& in_fbx_data) {
     // initial features: pos + (dir,len)
     torch::Tensor feat;
-    if (bones_dir_len.defined()) {
-      feat = torch::cat({bones_pos, bones_dir_len}, -1);
+    if (in_fbx_data.bones_dir_len_.defined()) {
+      feat = torch::cat({in_fbx_data.bone_positions_, in_fbx_data.bones_dir_len_}, -1);
     } else {
       // Use relative to parent vector if parent exists
-      int B    = bones_pos.size(0);
-      auto rel = torch::zeros({B, 3}, bones_pos.options());
+      int B    = in_fbx_data.bone_positions_.size(0);
+      auto rel = torch::zeros({B, 3}, in_fbx_data.bone_positions_.options());
       for (int i = 0; i < B; ++i) {
-        int p = parent_idx[i].item<int>();
+        int p = in_fbx_data.bone_parents_[i].item<int>();
         if (p >= 0)
-          rel[i] = bones_pos[i] - bones_pos[p];
+          rel[i] = in_fbx_data.bone_positions_[i] - in_fbx_data.bone_positions_[p];
         else
-          rel[i] = bones_pos[i];
+          rel[i] = in_fbx_data.bone_positions_[i];
       }
-      feat = torch::cat({bones_pos, rel}, -1);
+      feat = torch::cat({in_fbx_data.bone_positions_, rel}, -1);
     }
     auto h = torch::relu(embed->forward(feat));
     for (auto& l : layers) {
-      h = l->forward(h, parent_idx);
+      h = l->forward(h, in_fbx_data.bone_parents_);
     }
     return h;  // [B, embed_dim]
   }
@@ -450,13 +371,9 @@ struct SkinningModelImpl : torch::nn::Module {
   // inputs:
   // verts [N,3], normals [N,3], faces [F,3], curvature [N]
   // bones_pos [B,3], bones_parent [B], bones_dir_len [B,4] optional
-  torch::Tensor forward(
-      const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
-      const torch::Tensor& curvature, const torch::Tensor& bones_pos, const torch::Tensor& bones_parent,
-      const torch::Tensor& bones_dir_len = torch::Tensor()
-  ) {
-    auto vfeat = mesh_enc->forward(verts, normals, faces, curvature);        // [N, E]
-    auto bfeat = skel_enc->forward(bones_pos, bones_parent, bones_dir_len);  // [B, E2]
+  torch::Tensor forward(const fbx_load_result& in_fbx_data) {
+    auto vfeat = mesh_enc->forward(in_fbx_data);  // [N, E]
+    auto bfeat = skel_enc->forward(in_fbx_data);  // [B, E2]
     // if dims mismatch, linear project
     if (bfeat.size(1) != vfeat.size(1)) {
       // add projection
@@ -528,13 +445,10 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     int count         = 0;
     for (auto& l_data : l_fbx_data) {
       // ensure shapes: target_weights [N, B]
-      auto N    = l_data.vertices_.size(0);
-      auto B    = l_data.bone_positions_.size(0);
+      auto N           = l_data.vertices_.size(0);
+      auto B           = l_data.bone_positions_.size(0);
       // forward
-      auto pred = model->forward(
-          l_data.vertices_, l_data.normals_, l_data.faces_, l_data.curvature_, l_data.bone_positions_,
-          l_data.bone_parents_, l_data.bones_dir_len_
-      );  // [N,B]
+      auto pred        = model->forward(l_data);  // [N,B]
       // ensure numeric stability
       pred             = pred.clamp_min(1e-8);
       // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred

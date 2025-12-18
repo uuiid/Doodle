@@ -20,6 +20,7 @@ struct fbx_load_result {
   torch::Tensor bone_parents_;    // [num_bones]
   torch::Tensor bones_dir_len_;   // [num_bones, 3]
 
+  // topo_degree is scalar connectivity feature per-vertex, derived from faces_
   void build_face_adjacency(std::int64_t k);
   // 归一化
   void normalize_inputs();
