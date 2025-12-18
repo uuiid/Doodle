@@ -396,15 +396,15 @@ std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fb
   return results;
 }
 
+class cross_attention_bone_weight::impl {
+ public:
+  impl() = default;
+  SkinningModel model_{};
+};
+
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
-  auto l_ret     = std::make_shared<cross_attention_bone_weight>();
-  int epochs     = 100;
-  int batch_size = 1;
-  float lr       = 1e-3;
-  int k          = 16;
-
   torch::manual_seed(42);
   torch::Device device(torch::kCPU);
   if (torch::cuda::is_available()) {
@@ -417,6 +417,11 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   DOODLE_CHICK(!in_fbx_files.empty(), "No input FBX files provided for training.");
   auto l_fbx_data           = load_fbx_files(in_fbx_files);
 
+  auto l_ret                = std::make_shared<cross_attention_bone_weight>();
+  int epochs                = 250;
+  int batch_size            = 1;
+  float lr                  = 1e-3;
+  int k                     = 16;
   // Model hyperparams
   int mesh_in_ch            = 3 + 3 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_)
   // In our implementation we concatenated many fields; compute actual in channels dynamically when loading first
@@ -428,6 +433,10 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   int nhead                 = 8;
   for (auto& l_data : l_fbx_data) {
     l_data.build_face_adjacency(k);
+    l_data.compute_curvature();
+    l_data.normalize_inputs();
+    l_data.compute_bones_dir_len();
+    // Move to device
     l_data.to(device);
   }
 
@@ -482,6 +491,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   auto final_file_name = in_output_path / "model_final.pt";
   torch::save(model, final_file_name.generic_string());
   SPDLOG_WARN("Saved final model: {}", final_file_name);
+  l_ret->pimpl_->model_ = model;
   return l_ret;
 }
 
