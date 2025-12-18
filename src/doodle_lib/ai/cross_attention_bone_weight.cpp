@@ -15,6 +15,100 @@
 
 namespace doodle::ai {
 
+void fbx_load_result::build_face_adjacency(std::int64_t k) {
+  auto l_num_verts = vertices_.size(0);
+  DOODLE_CHICK(faces_.defined(), "faces tensor is undefined");
+  DOODLE_CHICK(faces_.dim() == 2, "faces must be 2D [F,3]");
+  DOODLE_CHICK(faces_.size(1) >= 3, "faces must have at least 3 columns");
+  DOODLE_CHICK(l_num_verts > 0, "num_verts must be > 0");
+  DOODLE_CHICK(k > 0, "k must be > 0");
+
+  // Build adjacency on CPU for simplicity/stability.
+  auto faces_cpu = faces_.to(torch::kCPU).to(torch::kInt64).contiguous();
+
+  std::vector<std::vector<int64_t>> adj(static_cast<size_t>(l_num_verts));
+  auto acc        = faces_cpu.accessor<int64_t, 2>();
+  const int64_t F = faces_cpu.size(0);
+  for (int64_t f = 0; f < F; ++f) {
+    const int64_t a = acc[f][0];
+    const int64_t b = acc[f][1];
+    const int64_t c = acc[f][2];
+    if (a < 0 || b < 0 || c < 0) {
+      continue;
+    }
+    if (a >= l_num_verts || b >= l_num_verts || c >= l_num_verts) {
+      continue;
+    }
+    // undirected edges
+    adj[static_cast<size_t>(a)].push_back(b);
+    adj[static_cast<size_t>(a)].push_back(c);
+    adj[static_cast<size_t>(b)].push_back(a);
+    adj[static_cast<size_t>(b)].push_back(c);
+    adj[static_cast<size_t>(c)].push_back(a);
+    adj[static_cast<size_t>(c)].push_back(b);
+  }
+
+  auto idx_cpu = torch::empty({l_num_verts, k}, torch::TensorOptions().dtype(torch::kInt64).device(torch::kCPU));
+  auto deg_cpu = torch::empty({l_num_verts}, torch::TensorOptions().dtype(torch::kFloat32).device(torch::kCPU));
+  auto idx_acc = idx_cpu.accessor<int64_t, 2>();
+  auto deg_acc = deg_cpu.accessor<float, 1>();
+
+  for (int64_t v = 0; v < l_num_verts; ++v) {
+    auto& n = adj[static_cast<size_t>(v)];
+    if (!n.empty()) {
+      std::sort(n.begin(), n.end());
+      n.erase(std::unique(n.begin(), n.end()), n.end());
+    }
+
+    deg_acc[v] = static_cast<float>(n.size());
+
+    // Fill fixed-size neighbor list. If not enough neighbors, pad with self.
+    for (int64_t j = 0; j < k; ++j) {
+      if (j < static_cast<int64_t>(n.size())) {
+        idx_acc[v][j] = n[static_cast<size_t>(j)];
+      } else {
+        idx_acc[v][j] = v;
+      }
+    }
+  }
+  neighbor_idx_ = idx_cpu;
+  topo_degree_  = deg_cpu;
+}
+
+void fbx_load_result::normalize_inputs() {
+  // Normalize inputs to avoid large values causing model collapse
+  auto max_val = vertices_.abs().max().item<float>();
+  if (max_val < 1e-6) max_val = 1.0;
+  vertices_       = vertices_ / max_val;
+  bone_positions_ = bone_positions_ / max_val;
+  // 归中
+  auto centroid   = vertices_.mean(0, true);
+  vertices_       = vertices_ - centroid;
+  bone_positions_ = bone_positions_ - centroid;
+}
+void fbx_load_result::compute_bones_dir_len() {
+  auto num_bones    = bone_positions_.size(0);
+  bones_dir_len_    = torch::zeros({num_bones, 3}, torch::kFloat32);
+  auto bone_pos_acc = bone_positions_.accessor<float, 2>();
+  auto bone_dir_acc = bones_dir_len_.accessor<float, 2>();
+  for (int64_t i = 0; i < num_bones; ++i) {
+    int64_t parent_idx = bone_parents_[i].item<int64_t>();
+    if (parent_idx >= 0 && parent_idx < num_bones) {
+      float dir_x        = bone_pos_acc[i][0] - bone_pos_acc[parent_idx][0];
+      float dir_y        = bone_pos_acc[i][1] - bone_pos_acc[parent_idx][1];
+      float dir_z        = bone_pos_acc[i][2] - bone_pos_acc[parent_idx][2];
+      bone_dir_acc[i][0] = dir_x;
+      bone_dir_acc[i][1] = dir_y;
+      bone_dir_acc[i][2] = dir_z;
+    } else {
+      // Root bone, set direction to zero
+      bone_dir_acc[i][0] = 0.0f;
+      bone_dir_acc[i][1] = 0.0f;
+      bone_dir_acc[i][2] = 0.0f;
+    }
+  }
+}
+
 // ----------------------------- Utility functions --------------------------------
 
 struct FaceAdjacency {
