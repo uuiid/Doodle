@@ -1,7 +1,12 @@
 #include "load_fbx.h"
 
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <array>
 #include <chrono>
+#include <cmath>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 namespace doodle::ai {
 namespace {
@@ -167,7 +172,55 @@ fbx_load_result fbx_loader::load_fbx() {
   if (l_normals) {
     auto l_normal_mapping_mode = l_normals->GetMappingMode();
     auto l_normal_ref_mode     = l_normals->GetReferenceMode();
-    for (auto j = 0; j < l_faces_num; j++) {
+    auto& l_normal_direct_arr  = l_normals->GetDirectArray();
+    auto& l_normal_index_arr   = l_normals->GetIndexArray();
+    FbxVector4 l_normal;
+    if (l_normal_mapping_mode == FbxGeometryElement::eByControlPoint) {
+      for (auto j = 0; j < l_vert_count; j++) {
+        int l_normal_index = j;
+        if (l_normal_ref_mode == FbxGeometryElement::eIndexToDirect) {
+          l_normal_index = l_normal_index_arr.GetAt(j);
+        }
+        l_normal             = l_normal_direct_arr.GetAt(l_normal_index);
+        l_result.normals_[j] = torch::tensor({l_normal[0], l_normal[1], l_normal[2]});
+      }
+
+    } else if (l_normal_mapping_mode == FbxGeometryElement::eByPolygonVertex) {
+      // 每个面的每个顶点都有法线 这里我们取平均面的法线
+      auto l_polygon_count = mesh_->GetPolygonCount();
+      std::vector<std::vector<std::array<std::float_t, 3>>> l_normals_accum(l_vert_count);
+      std::size_t l_index = 0;
+      for (auto k = 0; k < l_polygon_count; k++) {
+        for (auto m = 0; m < mesh_->GetPolygonSize(k); m++, l_index++) {
+          auto l_vert_index  = mesh_->GetPolygonVertex(k, m);
+          int l_normal_index = l_index;
+          if (l_normal_ref_mode == FbxGeometryElement::eIndexToDirect) {
+            l_normal_index = l_normal_index_arr.GetAt(l_normal_index);
+          }
+          l_normal = l_normal_direct_arr.GetAt(l_normal_index);
+          l_normals_accum[static_cast<std::size_t>(l_vert_index)].push_back(
+              {boost::numeric_cast<std::float_t>(l_normal[0]), boost::numeric_cast<std::float_t>(l_normal[1]),
+               boost::numeric_cast<std::float_t>(l_normal[2])}
+          );
+        }
+      }
+      for (auto j = 0; j < l_vert_count; j++) {
+        auto& l_normal_list = l_normals_accum[static_cast<std::size_t>(j)];
+        std::array<std::double_t, 3> l_normal_sum{0.0, 0.0, 0.0};
+        for (auto& n : l_normal_list) {
+          l_normal_sum[0] += n[0];
+          l_normal_sum[1] += n[1];
+          l_normal_sum[2] += n[2];
+        }
+        auto l_count = static_cast<std::double_t>(l_normal_list.size());
+        if (l_count > 0) {
+          l_result.normals_[j] = torch::tensor(
+              {boost::numeric_cast<std::float_t>(l_normal_sum[0] / l_count),
+               boost::numeric_cast<std::float_t>(l_normal_sum[1] / l_count),
+               boost::numeric_cast<std::float_t>(l_normal_sum[2] / l_count)}
+          );
+        }
+      }
     }
   }
 
