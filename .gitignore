@@ -78,7 +78,7 @@ CMakeUserPresets.json
 **/PluginMenu/Intermediate/*
 *.modules
 .run
-
+/.ipynb_checkpoints
 /vcpkg/
 # 外部库
 /lib

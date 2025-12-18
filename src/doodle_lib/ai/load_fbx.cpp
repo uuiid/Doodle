@@ -93,6 +93,10 @@ void fbx_load_result::normalize_inputs() {
   if (max_val < 1e-6) max_val = 1.0;
   vertices_       = vertices_ / max_val;
   bone_positions_ = bone_positions_ / max_val;
+  // 归中
+  auto centroid   = vertices_.mean(0, true);
+  vertices_       = vertices_ - centroid;
+  bone_positions_ = bone_positions_ - centroid;
 }
 
 fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger) {
