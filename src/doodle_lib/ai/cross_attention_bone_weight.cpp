@@ -14,7 +14,44 @@
 #include <vector>
 
 namespace doodle::ai {
+void fbx_load_result::compute_curvature() {
+  // Simple curvature estimation using vertex normals and neighboring vertices
+  DOODLE_CHICK(vertices_.defined(), "vertices tensor is undefined");
+  DOODLE_CHICK(normals_.defined(), "normals tensor is undefined");
+  DOODLE_CHICK(faces_.defined(), "faces tensor is undefined");
 
+  auto num_verts = vertices_.size(0);
+  curvature_     = torch::zeros({num_verts}, torch::kFloat32);
+
+  // Build face adjacency if not already built
+  if (!neighbor_idx_.defined() || !topo_degree_.defined()) {
+    build_face_adjacency(5);  // Using k=5 neighbors for curvature estimation
+  }
+
+  auto vert_acc  = vertices_.accessor<float, 2>();
+  auto norm_acc  = normals_.accessor<float, 2>();
+  auto neigh_acc = neighbor_idx_.accessor<int64_t, 2>();
+  auto curv_acc  = curvature_.accessor<float, 1>();
+
+  for (int64_t i = 0; i < num_verts; ++i) {
+    float curv_sum = 0.0f;
+    int64_t k      = topo_degree_[i].item<int64_t>();
+    for (int64_t j = 0; j < k; ++j) {
+      int64_t nbr_idx   = neigh_acc[i][j];
+      // Compute angle between normals
+      float dot_product = norm_acc[i][0] * norm_acc[nbr_idx][0] + norm_acc[i][1] * norm_acc[nbr_idx][1] +
+                          norm_acc[i][2] * norm_acc[nbr_idx][2];
+      dot_product = std::clamp(dot_product, -1.0f, 1.0f);
+      float angle = std::acos(dot_product);
+      curv_sum += angle;
+    }
+    if (k > 0) {
+      curv_acc[i] = curv_sum / static_cast<float>(k);
+    } else {
+      curv_acc[i] = 0.0f;
+    }
+  }
+}
 void fbx_load_result::build_face_adjacency(std::int64_t k) {
   auto l_num_verts = vertices_.size(0);
   DOODLE_CHICK(faces_.defined(), "faces tensor is undefined");
@@ -297,10 +334,8 @@ struct MeshEncoderImpl : torch::nn::Module {
     auto topo_degree = adj.topo_degree;
 
     // build initial feature
-    auto feat        = torch::cat(
-        {verts, normals, curvature.unsqueeze(1), topo_degree.unsqueeze(1)}, -1
-    );  // [N, F]
-    auto x = feat;
+    auto feat        = torch::cat({verts, normals, curvature.unsqueeze(1), topo_degree.unsqueeze(1)}, -1);  // [N, F]
+    auto x           = feat;
     for (size_t i = 0; i < edge_layers.size(); ++i) {
       x = edge_layers[i]->forward(x, adj.neighbor_idx);
     }
@@ -417,11 +452,11 @@ struct SkinningModelImpl : torch::nn::Module {
   // bones_pos [B,3], bones_parent [B], bones_dir_len [B,4] optional
   torch::Tensor forward(
       const torch::Tensor& verts, const torch::Tensor& normals, const torch::Tensor& faces,
-      const torch::Tensor& curvature, const torch::Tensor& bones_pos,
-      const torch::Tensor& bones_parent, const torch::Tensor& bones_dir_len = torch::Tensor()
+      const torch::Tensor& curvature, const torch::Tensor& bones_pos, const torch::Tensor& bones_parent,
+      const torch::Tensor& bones_dir_len = torch::Tensor()
   ) {
-    auto vfeat = mesh_enc->forward(verts, normals, faces, curvature);  // [N, E]
-    auto bfeat = skel_enc->forward(bones_pos, bones_parent, bones_dir_len);        // [B, E2]
+    auto vfeat = mesh_enc->forward(verts, normals, faces, curvature);        // [N, E]
+    auto bfeat = skel_enc->forward(bones_pos, bones_parent, bones_dir_len);  // [B, E2]
     // if dims mismatch, linear project
     if (bfeat.size(1) != vfeat.size(1)) {
       // add projection
@@ -497,8 +532,8 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       auto B    = l_data.bone_positions_.size(0);
       // forward
       auto pred = model->forward(
-          l_data.vertices_, l_data.normals_, l_data.faces_, l_data.curvature_,
-          l_data.bone_positions_, l_data.bone_parents_, l_data.bones_dir_len_
+          l_data.vertices_, l_data.normals_, l_data.faces_, l_data.curvature_, l_data.bone_positions_,
+          l_data.bone_parents_, l_data.bones_dir_len_
       );  // [N,B]
       // ensure numeric stability
       pred             = pred.clamp_min(1e-8);
