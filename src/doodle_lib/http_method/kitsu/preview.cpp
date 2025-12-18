@@ -24,6 +24,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
@@ -42,17 +43,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
-  auto l_position                  = l_sql.get_next_position(task_id_, l_revision);
+  auto l_position            = l_sql.get_next_position(task_id_, l_revision);
 
-  auto l_preview_file              = std::make_shared<preview_file>();
-  l_preview_file->revision_        = l_revision;
-  l_preview_file->task_id_         = task_id_;
-  l_preview_file->person_id_       = person_.person_.uuid_id_;
-  l_preview_file->position_        = l_position;
-  l_preview_file->name_            = core_set::get_set().get_uuid_str();
-  l_preview_file->status_          = preview_file_statuses::processing;
-  l_preview_file->source_          = "webgui";
-  l_preview_file->extension_       = "mp4";
+  auto l_preview_file        = std::make_shared<preview_file>();
+  l_preview_file->revision_  = l_revision;
+  l_preview_file->task_id_   = task_id_;
+  l_preview_file->person_id_ = person_.person_.uuid_id_;
+  l_preview_file->position_  = l_position;
+  l_preview_file->name_      = core_set::get_set().get_uuid_str();
+  l_preview_file->status_    = preview_file_statuses::processing;
+  l_preview_file->source_    = "webgui";
+  l_preview_file->extension_ = "mp4";
   co_await l_sql.install(l_preview_file);
 
   auto l_preview_link              = std::make_shared<comment_preview_link>();
@@ -337,17 +338,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
-  auto l_position                  = l_sql.get_next_position(task_id_, l_revision);
+  auto l_position            = l_sql.get_next_position(task_id_, l_revision);
 
-  auto l_preview_file              = std::make_shared<preview_file>();
-  l_preview_file->revision_        = l_revision;
-  l_preview_file->task_id_         = task_id_;
-  l_preview_file->person_id_       = person_.person_.uuid_id_;
-  l_preview_file->position_        = l_position;
-  l_preview_file->name_            = core_set::get_set().get_uuid_str();
-  l_preview_file->status_          = preview_file_statuses::processing;
-  l_preview_file->source_          = "webgui";
-  l_preview_file->extension_       = "mp4";
+  auto l_preview_file        = std::make_shared<preview_file>();
+  l_preview_file->revision_  = l_revision;
+  l_preview_file->task_id_   = task_id_;
+  l_preview_file->person_id_ = person_.person_.uuid_id_;
+  l_preview_file->position_  = l_position;
+  l_preview_file->name_      = core_set::get_set().get_uuid_str();
+  l_preview_file->status_    = preview_file_statuses::processing;
+  l_preview_file->source_    = "webgui";
+  l_preview_file->extension_ = "mp4";
   co_await l_sql.install(l_preview_file);
 
   auto l_preview_link              = std::make_shared<comment_preview_link>();
