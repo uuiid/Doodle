@@ -15,7 +15,6 @@ struct fbx_load_result {
   torch::Tensor neighbor_idx_;      // [N, k] int64
   torch::Tensor topo_degree_;       // [N] float32
   torch::Tensor curvature_;         // [num_vertices]
-  torch::Tensor normal_deviation_;  // [num_vertices]
   torch::Tensor bone_positions_;    // [num_bones, 3]
   torch::Tensor bone_weights_;      // [num_vertices, num_bones]
   torch::Tensor bone_parents_;      // [num_bones]
@@ -35,7 +34,6 @@ struct fbx_load_result {
     neighbor_idx_     = neighbor_idx_.to(in_opt);
     topo_degree_      = topo_degree_.to(in_opt);
     curvature_        = curvature_.to(in_opt);
-    normal_deviation_ = normal_deviation_.to(in_opt);
     bone_positions_   = bone_positions_.to(in_opt);
     bone_weights_     = bone_weights_.to(in_opt);
     bone_parents_     = bone_parents_.to(in_opt);
