@@ -2,6 +2,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <ATen/core/TensorBody.h>
 #include <array>
 #include <chrono>
 #include <cmath>
@@ -97,6 +98,28 @@ void fbx_load_result::normalize_inputs() {
   auto centroid   = vertices_.mean(0, true);
   vertices_       = vertices_ - centroid;
   bone_positions_ = bone_positions_ - centroid;
+}
+void fbx_load_result::compute_bones_dir_len() {
+  auto num_bones    = bone_positions_.size(0);
+  bones_dir_len_    = torch::zeros({num_bones, 3}, torch::kFloat32);
+  auto bone_pos_acc = bone_positions_.accessor<float, 2>();
+  auto bone_dir_acc = bones_dir_len_.accessor<float, 2>();
+  for (int64_t i = 0; i < num_bones; ++i) {
+    int64_t parent_idx = bone_parents_[i].item<int64_t>();
+    if (parent_idx >= 0 && parent_idx < num_bones) {
+      float dir_x        = bone_pos_acc[i][0] - bone_pos_acc[parent_idx][0];
+      float dir_y        = bone_pos_acc[i][1] - bone_pos_acc[parent_idx][1];
+      float dir_z        = bone_pos_acc[i][2] - bone_pos_acc[parent_idx][2];
+      bone_dir_acc[i][0] = dir_x;
+      bone_dir_acc[i][1] = dir_y;
+      bone_dir_acc[i][2] = dir_z;
+    } else {
+      // Root bone, set direction to zero
+      bone_dir_acc[i][0] = 0.0f;
+      bone_dir_acc[i][1] = 0.0f;
+      bone_dir_acc[i][2] = 0.0f;
+    }
+  }
 }
 
 fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger) {

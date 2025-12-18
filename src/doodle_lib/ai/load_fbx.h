@@ -19,11 +19,13 @@ struct fbx_load_result {
   torch::Tensor bone_positions_;    // [num_bones, 3]
   torch::Tensor bone_weights_;      // [num_vertices, num_bones]
   torch::Tensor bone_parents_;      // [num_bones]
-  torch::Tensor bones_dir_len_;     // [num_bones, 4]
+  torch::Tensor bones_dir_len_;     // [num_bones, 3]
 
   void build_face_adjacency(std::int64_t k);
   // 归一化
   void normalize_inputs();
+  // 计算骨骼方向
+  void compute_bones_dir_len();
 
   template <typename T>
   inline void to(T in_opt) {
