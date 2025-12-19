@@ -6,26 +6,27 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
+
+#include <filesystem>
+
 namespace doodle {
 // 状态
 enum class preview_file_statuses { processing, ready, broken };
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    preview_file_statuses,
-    {
-        {preview_file_statuses::processing, "processing"},
-        {preview_file_statuses::ready, "ready"},
-        {preview_file_statuses::broken, "broken"},
-    }
+    preview_file_statuses, {
+                               {preview_file_statuses::processing, "processing"},
+                               {preview_file_statuses::ready, "ready"},
+                               {preview_file_statuses::broken, "broken"},
+                           }
 )
 // 验证 状态
 enum class preview_file_validation_statuses { validated, rejected, neutral };
 NLOHMANN_JSON_SERIALIZE_ENUM(
-    preview_file_validation_statuses,
-    {
-        {preview_file_validation_statuses::validated, "validated"},
-        {preview_file_validation_statuses::rejected, "rejected"},
-        {preview_file_validation_statuses::neutral, "neutral"},
-    }
+    preview_file_validation_statuses, {
+                                          {preview_file_validation_statuses::validated, "validated"},
+                                          {preview_file_validation_statuses::rejected, "rejected"},
+                                          {preview_file_validation_statuses::neutral, "neutral"},
+                                      }
 )
 struct preview_file {
   DOODLE_BASE_FIELDS()
@@ -60,6 +61,11 @@ struct preview_file {
   uuid task_id_;
   uuid person_id_;
   uuid source_file_id_;
+
+
+
+  bool is_image();
+  bool is_video();
 
   struct annotations_t {
     struct object_t {

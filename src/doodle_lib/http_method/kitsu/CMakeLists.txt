@@ -5,6 +5,7 @@ target_sources(
         epiboly.h
         kitsu_reg_url.h
         kitsu_result.h
+        preview.h
 
         PRIVATE
         task.cpp

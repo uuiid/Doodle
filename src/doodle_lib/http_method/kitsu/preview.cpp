@@ -24,6 +24,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
+#include <tuple>
 #include <vector>
 
 namespace doodle::http {
@@ -160,7 +161,9 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
   return l_tiles;
 }
 
-auto get_handle_video_file(
+}  // namespace
+namespace preview {
+std::tuple<cv::Size, double, FSys::path> get_handle_video_file(
     const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size
 ) {
   auto l_high_file_path =
@@ -172,7 +175,7 @@ auto get_handle_video_file(
 }
 
 /// 处理上传的视频文件 格式化大小, 生成预览文件
-auto handle_video_file(
+std::tuple<cv::Size, double, FSys::path> handle_video_file(
     const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size,
     const std::shared_ptr<preview_file>& in_preview_file
 ) {
@@ -246,9 +249,7 @@ auto handle_video_file(
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
-
-}  // namespace
-
+}  // namespace preview
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files::post(session_data_ptr in_handle) {
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(id_));
@@ -285,13 +286,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     auto l_prj                               = l_sql.get_by_uuid<project>(l_task.project_id_);
     auto l_prj_size                          = l_prj.get_resolution();
 
-    auto&& [l_size, l_duration, l_high_file] = get_handle_video_file(
+    auto&& [l_size, l_duration, l_high_file] = preview::get_handle_video_file(
         l_new_path, l_preview_file->uuid_id_, l_prj.fps_, cv::Size{l_prj_size.first, l_prj_size.second}
     );
     boost::asio::post(
         g_io_context(), [l_new_path, uuid = l_preview_file->uuid_id_, fps = l_prj.fps_, l_preview_file,
                          size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
-          handle_video_file(l_new_path, uuid, fps, size, l_preview_file);
+          preview::handle_video_file(l_new_path, uuid, fps, size, l_preview_file);
         }
     );
 
