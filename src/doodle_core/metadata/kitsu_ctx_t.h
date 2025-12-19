@@ -42,6 +42,12 @@ struct kitsu_ctx_t {
   FSys::path get_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return get_lowdef_file_path(in_uuid, false, in_ext);
   }
+  FSys::path get_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return get_source_file(in_uuid, true, in_ext);
+  }
+  FSys::path get_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return get_preview_file_path(in_uuid, true, in_ext);
+  }
 
  private:
   FSys::path get_source_file(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
