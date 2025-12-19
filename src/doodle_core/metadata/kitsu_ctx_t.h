@@ -4,6 +4,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/doodle_core_pch.h>
 
+#include <filesystem>
 #include <string>
 
 namespace doodle::http {
@@ -28,32 +29,46 @@ struct kitsu_ctx_t {
   std::string domain_protocol_;
   std::string domain_name_;
 
+  FSys::path get_tiles_file_path(const uuid& in_uuid) {
+    return root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+  }
+
+  FSys::path get_movie_source_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return get_source_file(in_uuid, false, in_ext);
+  }
+  FSys::path get_movie_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return get_preview_file_path(in_uuid, false, in_ext);
+  }
+  FSys::path get_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return get_lowdef_file_path(in_uuid, false, in_ext);
+  }
+
+ private:
   FSys::path get_source_file(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
     if (is_image)
-      return g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" /
+      return root_ / "pictures" / "original" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
     else
-      return g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "source" /
+      return root_ / "movies" / "source" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
   }
+
   FSys::path get_preview_file_path(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
     if (is_image)
-      return g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" /
+      return root_ / "pictures" / "previews" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
     else
-      return g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "previews" /
+      return root_ / "movies" / "previews" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
   }
   FSys::path get_lowdef_file_path(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
     if (is_image)
-      return g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "lowdef" /
+      return root_ / "pictures" / "lowdef" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
     else
-      return g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "lowdef" /
+      return root_ / "movies" / "lowdef" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
   }
-
- private:
   std::string fix_ext(bool is_image, const std::string& in_ext) {
     if (!in_ext.empty()) return in_ext.front() != '.' ? fmt::format(".{}", in_ext) : in_ext;
 
