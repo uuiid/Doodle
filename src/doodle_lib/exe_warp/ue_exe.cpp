@@ -185,6 +185,30 @@ boost::asio::awaitable<void> async_run_ue(
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
 
+  if (FSys::path l_prj = ue_exe_ns::find_ue_project_file(in_arg[1]); !l_prj.empty()) {
+    auto l_log_path = l_prj.parent_path() / "Saved" / "Logs";
+    // 选择最新的日志文件
+    FSys::path l_latest_log;
+    FSys::file_time_type l_latest_time{};
+    if (FSys::exists(l_log_path)) {
+      for (auto&& l_file : FSys::directory_iterator(l_log_path)) {
+        if (l_file.path().extension() != ".log") continue;
+        auto l_time = FSys::last_write_time(l_file.path());
+        if (l_time > l_latest_time) {
+          l_latest_time = l_time;
+          l_latest_log  = l_file.path();
+        }
+      }
+      if (!l_latest_log.empty()) {
+        in_logger->info("UE 日志文件路径: {}", l_latest_log.generic_string());
+        // 按行读取日志文件内容
+        FSys::ifstream l_ifstream{l_latest_log};
+        std::string l_line;
+        while (std::getline(l_ifstream, l_line)) in_logger->info(l_line);
+      }
+    }
+  }
+
   if (in_time) in_time->end_time_ = std::chrono::system_clock::now();
   switch (l_array_completion_order[0]) {
     case 0:
