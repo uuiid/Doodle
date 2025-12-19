@@ -213,6 +213,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &actions_projects_sequences_working_file::project_id_,
         &actions_projects_sequences_working_file::id_
       ))
+      .reg_t<actions_projects_tasks_compose_video>("/api/actions/projects/{}/tasks/{}/compose-video"_url(
+        &actions_projects_tasks_compose_video::project_id_,
+        &actions_projects_tasks_compose_video::task_id_
+      ))
       .reg_t<doodle_data_shots_file_maya>("/api/doodle/data/shots/{}/file/maya"_url(&doodle_data_shots_file_maya::id_))
       .reg_t<doodle_data_shots_file_output>("/api/doodle/data/shots/{}/file/output"_url(&doodle_data_shots_file_output::id_))
       .reg_t<doodle_data_shots_file_other>("/api/doodle/data/shots/{}/file/other"_url(&doodle_data_shots_file_other::id_))
@@ -388,7 +392,6 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (l_ext == "mov") return "video/quicktime";
   return "application/octet-stream";
 }
-
 
 }  // namespace kitsu
 
