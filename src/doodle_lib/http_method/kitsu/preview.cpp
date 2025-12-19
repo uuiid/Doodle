@@ -163,15 +163,10 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
 
 }  // namespace
 namespace preview {
-std::tuple<cv::Size, double, FSys::path> get_handle_video_file(
-    const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size
-) {
-  auto l_high_file_path =
-      g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "previews" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
-  auto l_video         = cv::VideoCapture{in_path.generic_string()};
-  cv::Size l_high_size = in_size;
-  auto l_duration      = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
-  return std::make_tuple(l_high_size, l_duration, l_high_file_path);
+double get_video_duration(const FSys::path& in_path) {
+  auto l_video    = cv::VideoCapture{in_path.generic_string()};
+  auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
+  return l_duration;
 }
 
 /// 处理上传的视频文件 格式化大小, 生成预览文件
@@ -179,11 +174,9 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
     const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size,
     const std::shared_ptr<preview_file>& in_preview_file
 ) {
-  auto l_low_file_path =
-      g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "lowdef" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
-  auto l_low_file_path_backup = FSys::add_time_stamp(l_low_file_path);
-  auto l_high_file_path =
-      g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "previews" / FSys::split_uuid_path(fmt::format("{}.mp4", in_id));
+  auto l_low_file_path         = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(in_id);
+  auto l_high_file_path        = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(in_id);
+  auto l_low_file_path_backup  = FSys::add_time_stamp(l_low_file_path);
   auto l_high_file_path_backup = FSys::add_time_stamp(l_high_file_path);
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -278,17 +271,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     l_preview_file->height_        = l_size.height;
     l_file                         = l_new_path;
   } else if (is_video_extension(l_ext)) {
-    auto l_new_path = g_ctx().get<kitsu_ctx_t>().root_ / "movies" / "source" /
-                      FSys::split_uuid_path(fmt::format("{}.mp4", l_preview_file->uuid_id_));
+    auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(id_);
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
-    auto l_task                              = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
-    auto l_prj                               = l_sql.get_by_uuid<project>(l_task.project_id_);
-    auto l_prj_size                          = l_prj.get_resolution();
+    auto l_task     = l_sql.get_by_uuid<task>(l_preview_file->task_id_);
+    auto l_prj      = l_sql.get_by_uuid<project>(l_task.project_id_);
+    auto l_prj_size = l_prj.get_resolution();
 
-    auto&& [l_size, l_duration, l_high_file] = preview::get_handle_video_file(
-        l_new_path, l_preview_file->uuid_id_, l_prj.fps_, cv::Size{l_prj_size.first, l_prj_size.second}
-    );
+    auto l_duration = preview::get_video_duration(l_new_path);
     boost::asio::post(
         g_io_context(), [l_new_path, uuid = l_preview_file->uuid_id_, fps = l_prj.fps_, l_preview_file,
                          size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
@@ -296,12 +286,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
         }
     );
 
-    l_file                         = l_high_file;
+    l_file                         = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(id_);
 
     l_preview_file->extension_     = "mp4";
     l_preview_file->original_name_ = l_file.stem().generic_string();
-    l_preview_file->width_         = l_size.width;
-    l_preview_file->height_        = l_size.height;
+    l_preview_file->width_         = l_prj_size.first;
+    l_preview_file->height_        = l_prj_size.second;
     l_preview_file->duration_      = l_duration;
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});
