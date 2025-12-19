@@ -370,23 +370,9 @@ bool reference_file::has_node(const MObject& in_node) const {
 
 FSys::path reference_file::get_abs_path() const {
   MStatus k_s{};
-  MFnDependencyNode l_file_info{};
-  if (l_file_info.setObject(file_info_node_)) {
-    FSys::path l_path{};
-    auto l_file_path_plug = l_file_info.findPlug("reference_file_path", false, &k_s);
-    maya_chick(k_s);
-    auto l_file_path = l_file_path_plug.asString(&k_s);
-    maya_chick(k_s);
-    if (l_file_path.length() == 0) return {};
-    l_path = boost::locale::conv::utf_to_utf<wchar_t>(l_file_path.asUTF8());
-    DOODLE_MAYA_CHICK(k_s);
-    return l_path;
-  } else {
-    default_logger_raw()->log(
-        log_loc(), spdlog::level::warn, "引用文件 {} 没有文件信息节点(引用节点空)", get_namespace()
-    );
-    return {};
-  }
+  MFnReference l_ref{};
+  maya_chick(l_ref.setObject(get_ref_node()));
+  return conv::to_s(l_ref.fileName(false, false, false));
 }
 
 MSelectionList reference_file::get_all_object() const {
@@ -487,8 +473,6 @@ std::vector<MDagPath> reference_file::get_all_hair_obj() const {
   }
   return l_export_path;
 }
-
- 
 
 std::vector<reference_file> reference_file_factory::create_ref() const {
   MStatus l_status{};
