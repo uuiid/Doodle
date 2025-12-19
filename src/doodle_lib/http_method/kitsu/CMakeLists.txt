@@ -36,4 +36,5 @@ target_sources(
         working_file.cpp
         casting.cpp
         auto_task.cpp
+        compose_video.cpp
 )
