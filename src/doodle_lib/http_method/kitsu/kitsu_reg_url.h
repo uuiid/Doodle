@@ -605,11 +605,10 @@ DOODLE_HTTP_JWT_FUN(doodle_stop_server)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 
-// /api/actions/projects/{project_id}/tasks/{task_id}/compose-video
-DOODLE_HTTP_JWT_FUN(actions_projects_tasks_compose_video)
+// /api/actions/preview-files/{preview_file_id}/compose-video
+DOODLE_HTTP_JWT_FUN(actions_preview_files_compose_video)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid project_id_{};
-uuid task_id_{};
+uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

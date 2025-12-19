@@ -1,3 +1,4 @@
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
@@ -11,6 +12,16 @@
 
 namespace doodle::http {
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_tasks_compose_video, post) { co_return in_handle->make_msg_204(); }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
+  auto l_file = in_handle->get_file();
+  DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "必须上传视频文件");
+
+
+
+
+
+
+  co_return in_handle->make_msg_204();
+}
 
 }  // namespace doodle::http
