@@ -324,7 +324,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
   l_json.get_to(*l_comment);
-  l_comment->updated_at_ = chrono::system_clock::now();
   co_await l_sql.update(l_comment);
   co_return in_handle->make_msg(nlohmann::json{} = *l_comment);
 }
