@@ -171,11 +171,11 @@ double get_video_duration(const FSys::path& in_path) {
 
 /// 处理上传的视频文件 格式化大小, 生成预览文件
 std::tuple<cv::Size, double, FSys::path> handle_video_file(
-    const FSys::path& in_path, const uuid& in_id, const std::size_t& in_fps, const cv::Size& in_size,
+    const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
     const std::shared_ptr<preview_file>& in_preview_file
 ) {
-  auto l_low_file_path         = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(in_id);
-  auto l_high_file_path        = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(in_id);
+  auto l_low_file_path         = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(in_preview_file->uuid_id_);
+  auto l_high_file_path        = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(in_preview_file->uuid_id_);
   auto l_low_file_path_backup  = FSys::add_time_stamp(l_low_file_path);
   auto l_high_file_path_backup = FSys::add_time_stamp(l_high_file_path);
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -223,10 +223,10 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   l_video.set(cv::CAP_PROP_POS_FRAMES, 0);
   l_video >> l_frame;
   if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
-  save_variants(l_frame, in_id);
+  save_variants(l_frame, in_preview_file->uuid_id_);
   auto l_tiles = create_video_tile_image(l_video, l_high_size);
-  auto l_path =
-      g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}.png", in_id));
+  auto l_path  = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
+                FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
   auto l_path_backup = FSys::add_time_stamp(l_path);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   cv::imwrite(l_path_backup.generic_string(), l_tiles);
@@ -280,14 +280,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
 
     auto l_duration = preview::get_video_duration(l_new_path);
     boost::asio::post(
-        g_io_context(), [l_new_path, uuid = l_preview_file->uuid_id_, fps = l_prj.fps_, l_preview_file,
-                         size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
-          preview::handle_video_file(l_new_path, uuid, fps, size, l_preview_file);
+        g_io_context(),
+        [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
+          preview::handle_video_file(l_new_path, fps, size, l_preview_file);
         }
     );
 
-    l_file                         = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(id_);
-
+    l_file                         = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(l_preview_file->uuid_id_);
     l_preview_file->extension_     = "mp4";
     l_preview_file->original_name_ = l_file.stem().generic_string();
     l_preview_file->width_         = l_prj_size.first;
