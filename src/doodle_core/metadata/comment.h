@@ -91,6 +91,7 @@ struct DOODLE_CORE_API comment {
     }
     if (j.contains("task_status_id")) j.at("task_status_id").get_to(p.task_status_id_);
     if (j.contains("object_id")) j.at("object_id").get_to(p.object_id_);
+    if (j.contains("text")) j.at("text").get_to(p.text_);
   }
 };
 
