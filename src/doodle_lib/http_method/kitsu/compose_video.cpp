@@ -67,7 +67,7 @@ auto compose_video_impl(
     cv::Mat l_result_frame = cv::Mat::zeros(in_size, l_frame.type());
     cv::subtract(l_255_mat, l_frame, l_frame);
     cv::subtract(l_255_mat, l_target_frame, l_target_frame);
-    
+
     cv::multiply(l_frame, l_target_frame, l_result_frame, 1.0 / 255);
     cv::subtract(l_255_mat, l_result_frame, l_result_frame);
 
@@ -75,6 +75,8 @@ auto compose_video_impl(
   }
 
   FSys::rename(l_new_backup_path, l_new_path);
+
+  preview::handle_video_file(l_new_path, in_fps, in_size, in_preview_file);
 }
 
 }  // namespace
