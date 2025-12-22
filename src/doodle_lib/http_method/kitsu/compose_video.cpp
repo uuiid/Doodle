@@ -48,8 +48,9 @@ auto compose_video_impl(
 
     cv::VideoWriter l_video{
         l_new_backup_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
-        boost::numeric_cast<std::double_t>(in_fps), in_size, std::vector<std::int32_t>{cv::VIDEOWRITER_PROP_QUALITY, 90}
+        boost::numeric_cast<std::double_t>(in_fps), in_size
     };
+    l_video.set(cv::VIDEOWRITER_PROP_QUALITY, 90);
 
     DOODLE_CHICK(l_video.isOpened(), "无法创建视频文件: {} ", l_new_path.generic_string());
     cv::Mat l_frame{};
