@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(up_file_ue) {
 }
 BOOST_AUTO_TEST_CASE(create_comment_task) {
   app_base l_app_base{};
-  core_set::get_set().server_ip = "http://192.168.20.89:50025";
+  core_set::get_set().server_ip = "http://192.168.20.91:50025";
   auto l_f                      = boost::asio::co_spawn(
       g_io_context(),
       []() -> boost::asio::awaitable<void> {
