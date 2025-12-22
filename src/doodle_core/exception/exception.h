@@ -41,7 +41,9 @@ enum class maya_error_t : std::int32_t {
   // 缓存路径不存在
   cache_path_error    = 5,
   // 检查错误
-  check_error         = 6
+  check_error         = 6,
+  // 名称空间错误
+  namespace_error     = 7,
 
 };
 }  // namespace maya_enum
@@ -115,9 +117,9 @@ template <typename exception_type>
   boost::throw_exception(std::forward<exception_type>(in_exception_type), in_loc);
 }
 
-#define DOODLE_CHICK(condition, ...) \
-  if (!(condition)) {                \
-    throw_exception(doodle_error{__VA_ARGS__});    \
+#define DOODLE_CHICK(condition, ...)            \
+  if (!(condition)) {                           \
+    throw_exception(doodle_error{__VA_ARGS__}); \
   }
 #define DOODLE_CHICK_HTTP(condition, in_status, ...)                                   \
   if (!(condition)) {                                                                  \

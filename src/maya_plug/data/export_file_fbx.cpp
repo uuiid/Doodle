@@ -5,6 +5,7 @@
 #include "export_file_fbx.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/lib_warp/enum_template_tool.h"
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/scope/scope_exit.hpp>
@@ -118,8 +119,8 @@ FSys::path export_file_fbx::export_anim(
   auto l_ref_path  = in_ref.get_abs_path();
   DOODLE_CHICK(
       m_namespace::get_namespace_from_name(l_full_name).starts_with(l_ref_path.stem().generic_string()),
-      "导出组 {} 名称空间 {} 异常, 不符合引用文件 {}", l_full_name, m_namespace::get_namespace_from_name(l_full_name),
-      l_ref_path
+      enum_to_num(maya_enum::maya_error_t::namespace_error), "导出组 {} 名称空间 {} 异常, 不符合引用文件 {}",
+      l_full_name, m_namespace::get_namespace_from_name(l_full_name), l_ref_path
   );
 
   // log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));

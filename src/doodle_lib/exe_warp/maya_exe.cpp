@@ -115,10 +115,10 @@ void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_jso
 };
 
 void to_json(nlohmann::json& nlohmann_json_j, const maya_out_arg& nlohmann_json_t) {
-  nlohmann_json_j["begin_time"]    = nlohmann_json_t.begin_time;
-  nlohmann_json_j["end_time"]      = nlohmann_json_t.end_time;
-  nlohmann_json_j["out_file_list"] = nlohmann_json_t.out_file_list;
-  nlohmann_json_j["movie_file_dir"]    = nlohmann_json_t.movie_file_dir;
+  nlohmann_json_j["begin_time"]     = nlohmann_json_t.begin_time;
+  nlohmann_json_j["end_time"]       = nlohmann_json_t.end_time;
+  nlohmann_json_j["out_file_list"]  = nlohmann_json_t.out_file_list;
+  nlohmann_json_j["movie_file_dir"] = nlohmann_json_t.movie_file_dir;
 };
 
 // form json
@@ -131,9 +131,6 @@ void to_json(nlohmann::json& in_json, const arg& out_obj) {
   in_json["path"]          = out_obj.file_path;
   in_json["out_path_file"] = out_obj.out_path_file_;
 }
-
-
-
 
 void from_json(const nlohmann::json& in_json, replace_file_arg& out_obj) {
   from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
@@ -232,6 +229,9 @@ boost::asio::awaitable<void> arg::async_run_maya() {
             break;
           case maya_enum::maya_error_t::check_error:
             throw_exception(doodle_error{"maya 文件中有错误, 具体请点击查看日志"});
+          case maya_enum::maya_error_t::namespace_error:
+            throw_exception(doodle_error{"maya 中名称空间错误, 引用文件和名称空间不匹配"});
+            break;
           default:
             throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
         }
