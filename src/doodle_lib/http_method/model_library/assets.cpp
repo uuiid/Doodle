@@ -54,7 +54,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
       g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(id_)
   );
   in_handle->get_json().get_to(*l_ptr);
-  co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
+  co_await g_ctx().get<sqlite_database>().update<assets_file_helper::database_t>(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
