@@ -114,11 +114,12 @@ FSys::path export_file_fbx::export_anim(
     //    }
     l_export_list.push_back(l_path);
   }
-  auto l_full_name = get_node_full_name(*l_export_group);
+  auto l_full_name = get_node_name(*l_export_group);
   auto l_ref_path  = in_ref.get_abs_path();
   DOODLE_CHICK(
-      m_namespace::strip_namespace_from_name(l_full_name).starts_with(l_ref_path.stem().generic_string()),
-      "导出组 {} 名称空间异常, 不符合引用文件 {}", l_full_name, l_ref_path
+      m_namespace::get_namespace_from_name(l_full_name).starts_with(l_ref_path.stem().generic_string()),
+      "导出组 {} 名称空间 {} 异常, 不符合引用文件 {}", l_full_name, m_namespace::get_namespace_from_name(l_full_name),
+      l_ref_path
   );
 
   // log_info(fmt::format("导出选中物体 {} 排除物体 {}", l_export_list, in_exclude));
