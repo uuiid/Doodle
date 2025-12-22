@@ -110,12 +110,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
 
   // 检查文件的存在性, 以及长度
   {
+    auto l_target_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_target_preview_file.uuid_id_);
     cv::VideoCapture l_cap(l_file.generic_string(), cv::CAP_FFMPEG);
-    cv::VideoCapture l_target_cap(
-        g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_target_preview_file.uuid_id_).generic_string(),
-        cv::CAP_FFMPEG
+    cv::VideoCapture l_target_cap(l_target_path.generic_string(), cv::CAP_FFMPEG);
+    DOODLE_CHICK_HTTP(
+        l_cap.isOpened() && l_target_cap.isOpened(), bad_request, "无法打开视频文件 {} {}", l_file, l_target_path
     );
-    DOODLE_CHICK_HTTP(l_cap.isOpened() && l_target_cap.isOpened(), bad_request, "无法打开视频文件 {}", l_file);
     auto l_cap_frame_count    = l_cap.get(cv::CAP_PROP_FRAME_COUNT);
     auto l_target_frame_count = l_target_cap.get(cv::CAP_PROP_FRAME_COUNT);
     DOODLE_CHICK_HTTP(
@@ -133,9 +133,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_preview_file_ptr       = std::make_shared<preview_file>(l_preview_file);
   co_await l_sql.update(l_preview_file_ptr);
 
-  boost::asio::post(g_io_context(), [fps = l_project.fps_, l_prj_size, l_preview_file]() mutable {
-
-  });
+  boost::asio::post(
+      g_io_context(), [fps = l_project.fps_, l_prj_size, l_preview_file_ptr, l_target_preview_file, l_file]() mutable {
+        compose_video_impl(
+            l_file, fps, cv::Size{l_prj_size.first, l_prj_size.second}, l_preview_file_ptr, l_target_preview_file
+        );
+      }
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
 }
