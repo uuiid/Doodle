@@ -162,9 +162,9 @@ boost::asio::awaitable<void> async_run_ue(
   in_logger->info("开始运行 ue_exe: {} {}", l_ue_path, in_arg);
   auto l_timer = std::make_shared<boost::asio::high_resolution_timer>(co_await boost::asio::this_coro::executor);
   std::unordered_map<boost::process::v2::environment::key, boost::process::v2::environment::value> l_env{};
-  // for (auto&& l_it : boost::process::v2::environment::current()) {
-  //   l_env.emplace(l_it.key(), l_it.value());
-  // }
+  for (auto&& l_it : boost::process::v2::environment::current()) {
+    l_env.emplace(l_it.key(), l_it.value());
+  }
   l_env[L"UE-LocalDataCachePath"] = std::wstring{L"%GAMEDIR%DerivedDataCache"};
 
   auto l_out_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
