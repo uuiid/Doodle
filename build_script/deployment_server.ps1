@@ -42,9 +42,17 @@ if ($CopyServer) {
         $Tmp = "D:\tmp"
         $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
         $LogPath = "$env:TEMP\build_$timestamp.log"
+        # 进行数据库升级
+        $sqlite_upgrade_script = "D:/sql.sql"
+        $database_path = "C:\kitsu_new.database"
+
+        if ((Get-Item -Path $sqlite_upgrade_script).Length -gt 0) {
+            Write-Host "进行数据库升级"
+            &"D:\sqlite3.exe" $database_path ".read $sqlite_upgrade_script"
+            Set-Content -Path $sqlite_upgrade_script -Value $null
+        }
         # 找到停止的服务
         $UpdataServers = $false
-        $ScrversName = ""
         # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
         foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
             if ($server.Status -eq "Stopped") {
@@ -60,7 +68,6 @@ if ($CopyServer) {
                 if ($UpdataServers) {
                     Write-Host "服务 $($server.Name) 未停止 将在 $((Get-Date).AddMinutes(20)) 停止，设置为手动启动"
                     Set-Service -Name $server.Name -StartupType Manual 
-                    $ScrversName = $server.Name
                 }
             }
         }
