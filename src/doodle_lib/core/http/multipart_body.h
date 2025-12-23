@@ -145,6 +145,11 @@ struct multipart_body {
       auto const l_extra = boost::beast::buffer_bytes(in_buffers);
       std::size_t l_size = 0;
       ec                 = {};
+      if (l_extra > 4096) {
+        BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::message_size);
+        return 0;
+      }
+
       if (l_extra < boundary_.size() + 4 + 2) {
         // 传入的缓冲区小于分隔符的情况下, 我们直接复制, 不进行解析, 保留到下一次解析
         boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
@@ -164,17 +169,9 @@ struct multipart_body {
       if (l_end_r == l_end) {  // 不是完整的一行
         if (line_state_ == parser_line_state::data) {
           add_data(l_begin, l_end);
-          l_size = l_extra;
-          return l_size;
+          return l_extra;
         }
-        if (l_extra > 4096) {
-          BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::message_size);
-          return 0;
-        }
-        SPDLOG_INFO("复制字节 {}", l_extra);
-        boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
-        buffer_.commit(l_extra);
-        return l_extra;
+        return ec = boost::asio::error::invalid_argument, 0;
       }
       auto l_end_n      = l_end_r != l_end ? l_end_r + 1 : l_end;  // 指向 \r\n 位置中的 \n
       auto l_end_n_next = l_end_n != l_end ? l_end_n + 1 : l_end;  // 指向下一行的开始位置
