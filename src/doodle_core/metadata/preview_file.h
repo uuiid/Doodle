@@ -160,19 +160,19 @@ struct preview_file {
   }
   // from json
   friend void from_json(const nlohmann::json& j, preview_file& p) {
-    j.at("revision").get_to(p.revision_);
-    j.at("position").get_to(p.position_);
-    j.at("extension").get_to(p.extension_);
-    j.at("description").get_to(p.description_);
-    j.at("path").get_to(p.path_);
-    j.at("source").get_to(p.source_);
-    j.at("status").get_to(p.status_);
-    j.at("validation_status").get_to(p.validation_status_);
-    j.at("annotations").get_to(p.annotations_);
-    j.at("is_movie").get_to(p.is_movie_);
-    j.at("url").get_to(p.url_);
-    j.at("uploaded_movie_url").get_to(p.uploaded_movie_url_);
-    j.at("uploaded_movie_name").get_to(p.uploaded_movie_name_);
+    if (j.contains("revision")) j.at("revision").get_to(p.revision_);
+    if (j.contains("position")) j.at("position").get_to(p.position_);
+    if (j.contains("extension")) j.at("extension").get_to(p.extension_);
+    if (j.contains("description")) j.at("description").get_to(p.description_);
+    if (j.contains("path")) j.at("path").get_to(p.path_);
+    if (j.contains("source")) j.at("source").get_to(p.source_);
+    if (j.contains("status")) j.at("status").get_to(p.status_);
+    if (j.contains("validation_status")) j.at("validation_status").get_to(p.validation_status_);
+    if (j.contains("annotations")) j.at("annotations").get_to(p.annotations_);
+    if (j.contains("is_movie")) j.at("is_movie").get_to(p.is_movie_);
+    if (j.contains("url")) j.at("url").get_to(p.url_);
+    if (j.contains("uploaded_movie_url")) j.at("uploaded_movie_url").get_to(p.uploaded_movie_url_);
+    if (j.contains("uploaded_movie_name")) j.at("uploaded_movie_name").get_to(p.uploaded_movie_name_);
   }
 };
 }  // namespace doodle
