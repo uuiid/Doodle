@@ -53,4 +53,19 @@ class update_movie_files : public async_task {
   friend void from_json(const nlohmann::json& in_json, update_movie_files& out_obj);
 };
 
+class update_movie_compose_files : public async_task {
+ public:
+  update_movie_compose_files()          = default;
+  virtual ~update_movie_compose_files() = default;
+
+  uuid task_id_{};
+  std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
+
+  FSys::path movie_compose_file_{};
+
+  boost::asio::awaitable<void> run() override;
+  // from json
+  friend void from_json(const nlohmann::json& in_json, update_movie_compose_files& out_obj);
+};
+
 }  // namespace doodle

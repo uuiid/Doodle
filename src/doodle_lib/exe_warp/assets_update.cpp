@@ -1,7 +1,9 @@
 #include "assets_update.h"
 
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/move_create.h"
 #include "doodle_core/metadata/task_status.h"
 
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -76,5 +78,20 @@ boost::asio::awaitable<void> update_movie_files::run() {
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());
   co_await kitsu_client_->upload_shot_animation_video_file(task_id_, l_movie_file);
   co_await kitsu_client_->comment_task(task_id_, "自动上传评论", l_movie_file, task_status::get_nearly_completed());
+}
+boost::asio::awaitable<void> update_movie_compose_files::run() {
+  if (movie_compose_file_.empty()) co_return;
+  kitsu_client_->set_logger(logger_ptr_);
+  SPDLOG_LOGGER_INFO(logger_ptr_, "发现需要更新的视频合成文件 {}", movie_compose_file_);
+
+  DOODLE_CHICK(FSys::exists(movie_compose_file_), "视频合成文件 {} 不存在", movie_compose_file_.string());
+
+  auto l_movie_path = core_set::get_set().get_cache_root("movie_compose") / movie_compose_file_.filename();
+  l_movie_path.replace_extension(".mp4");
+  detail::create_move(
+      l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(movie_compose_file_, ".png"))
+  );
+
+  co_await kitsu_client_->comment_task_compose_video(task_id_, "送审特效样片", l_movie_path);
 }
 }  // namespace doodle

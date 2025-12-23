@@ -102,6 +102,11 @@ DOODLE_HTTP_FUN_C(actions_local_task_update_movie_files, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/local/task/{id}/update/movie/compose
+DOODLE_HTTP_FUN_C(actions_local_task_update_movie_compose, local_http_fun)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 
 // /api/actions/tools/add-watermark
 DOODLE_HTTP_FUN_C(tools_add_watermark, local_http_fun)
