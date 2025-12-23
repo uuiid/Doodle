@@ -393,6 +393,7 @@ boost::asio::awaitable<void> kitsu_client::comment_task(
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
   uuid l_comment_id = co_await create_comment(in_task_id, in_comment, in_task_status_id, in_checklists, in_links);
   uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id);
+  if (in_attach_files.empty()) co_return;
 
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{
