@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-5-14.
 //
+#include "doodle_core/metadata/preview_file.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/playlist.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -75,7 +76,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_ru = l_time_map | ranges::views::values | ranges::to_vector;
   l_ru |= ranges::actions::remove_if([](const auto& j) { return j.objects_.empty(); });
   l_prev->set_annotations(std::move(l_ru));
- 
+
   co_await l_sql.update(l_prev);
   socket_io::broadcast(
       "preview-file:annotation-update",
@@ -106,6 +107,7 @@ struct base_playlist_t {
       preview_file_duration_      = l_pf.duration_;
       preview_file_revision_      = l_pf.revision_;
       preview_file_status_        = l_pf.status_;
+      preview_file_source_enum_   = l_pf.source_enum_;
       preview_file_annotations_   = l_pf.annotations_;
       preview_file_previews_list_ = l_pf.previews_;
     }
@@ -137,6 +139,7 @@ struct base_playlist_t {
   decltype(preview_file::duration_) preview_file_duration_;
   decltype(preview_file::revision_) preview_file_revision_;
   decltype(preview_file::status_) preview_file_status_;
+  decltype(preview_file::source_enum_) preview_file_source_enum_;
   decltype(preview_file::annotations_) preview_file_annotations_;
   preview_files_for_entity_map_t preview_files_;
   std::vector<preview_files_for_entity_t> preview_file_previews_list_;
@@ -155,6 +158,7 @@ struct base_playlist_t {
     j["preview_file_duration"]    = p.preview_file_duration_;
     j["preview_file_revision"]    = p.preview_file_revision_;
     j["preview_file_status"]      = p.preview_file_status_;
+    j["preview_file_source_enum"] = p.preview_file_source_enum_;
     j["preview_file_annotations"] = p.preview_file_annotations_;
     j["preview_file_previews"]    = p.preview_file_previews_list_;
 
@@ -488,6 +492,7 @@ struct playlist_shot_t : playlist {
       preview_file_height_      = in_preview_file.height_;
       preview_file_duration_    = in_preview_file.duration_;
       preview_file_status_      = in_preview_file.status_;
+      preview_file_source_enum_ = in_preview_file.source_enum_;
       preview_file_annotations_ = in_preview_file.annotations_;
       preview_file_task_id_     = in_preview_file.task_id_;
     }
@@ -502,6 +507,7 @@ struct playlist_shot_t : playlist {
     std::int32_t preview_file_height_;
     std::double_t preview_file_duration_;
     preview_file_statuses preview_file_status_;
+    decltype(preview_file::source_enum_) preview_file_source_enum_;
     nlohmann::json preview_file_annotations_;
     uuid preview_file_task_id_;
     // to json
@@ -519,6 +525,7 @@ struct playlist_shot_t : playlist {
       j["preview_file_height"]      = l_playlist_shot_entity.preview_file_height_;
       j["preview_file_duration"]    = l_playlist_shot_entity.preview_file_duration_;
       j["preview_file_status"]      = l_playlist_shot_entity.preview_file_status_;
+      j["preview_file_source_enum"] = l_playlist_shot_entity.preview_file_source_enum_;
       j["preview_file_annotations"] = l_playlist_shot_entity.preview_file_annotations_;
       j["preview_file_task_id"]     = l_playlist_shot_entity.preview_file_task_id_;
     }
