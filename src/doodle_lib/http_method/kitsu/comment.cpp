@@ -299,7 +299,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(session_data_ptr in_handle) {
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_comment = l_sql.get_by_uuid<comment>(id_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_comment);
+
+  nlohmann::json l_json{};
+  l_json                     = l_comment;
+  l_json["attachment_files"] = l_sql.impl_->storage_any_.get_all<attachment_file>(
+      sqlite_orm::where(sqlite_orm::c(&attachment_file::comment_id_) == id_)
+  );
+
+  co_return in_handle->make_msg(l_json);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment::delete_(session_data_ptr in_handle) {
