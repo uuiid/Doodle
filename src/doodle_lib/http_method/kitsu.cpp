@@ -34,6 +34,7 @@
 
 #include "kitsu/epiboly.h"
 #include "kitsu/kitsu_reg_url.h"
+#include "local/local.h"
 
 namespace doodle::http {
 
@@ -286,6 +287,9 @@ http_route_ptr create_kitsu_local_route() {
         )
         .reg_t<local::actions_local_task_update_ue_files>(
             "/api/actions/local/task/{}/update/ue"_url(&local::actions_local_task_update_ue_files::id_)
+        )
+        .reg_t<local::actions_local_task_update_movie_compose>(
+            "/api/actions/local/task/{}/update/movie/compose"_url(&local::actions_local_task_update_movie_compose::id_)
         )
         .reg_t<local::tools_add_watermark>("/api/actions/tools/add-watermark"_url)
         .reg_t<socket_io::socket_io_http>(R"(/socket.io)"_url, l_sid_ctx)
