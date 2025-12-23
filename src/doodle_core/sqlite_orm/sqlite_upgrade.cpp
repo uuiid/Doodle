@@ -99,7 +99,101 @@ struct upgrade_init_t : sqlite_upgrade {
 
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
-  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {}
+  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    // 升级到版本2
+    if (in_data->storage_any_.pragma.user_version() == 1) {
+      // 运行原始sql
+      sqlite3_exec(static_cast<sqlite3*>(in_data->raw_sqlite_handle_), R"(
+PRAGMA foreign_keys=OFF;
+create table preview_file_dg_tmp
+(
+    id                  INTEGER not null
+        primary key autoincrement,
+    uuid                BLOB    not null
+        unique,
+    name                TEXT
+        unique,
+    original_name       TEXT,
+    revision            INTEGER not null,
+    position            INTEGER not null,
+    extension           TEXT,
+    description         TEXT,
+    path                TEXT,
+    source              TEXT    not null,
+    file_size           INTEGER not null,
+    status              TEXT    not null,
+    validation_status   TEXT    not null,
+    annotations         TEXT,
+    width               INTEGER not null,
+    height              INTEGER not null,
+    duration            INTEGER not null,
+    task_id             BLOB
+        references task (uuid)
+            on delete cascade,
+    shotgun_id          INTEGER not null,
+    person_id           BLOB
+                                references person (uuid)
+                                    on delete set null,
+    source_file_id      BLOB,
+    is_movie            INTEGER not null,
+    url                 TEXT,
+    uploaded_movie_url  TEXT,
+    uploaded_movie_name TEXT,
+    created_at          TEXT    not null,
+    updated_at          TEXT    not null
+);
+
+insert into preview_file_dg_tmp(id, uuid, name, original_name, revision, position, extension, description, path, source,
+                                file_size, status, validation_status, annotations, width, height, duration, task_id,
+                                shotgun_id, person_id, source_file_id, is_movie, url, uploaded_movie_url,
+                                uploaded_movie_name, created_at, updated_at)
+select id,
+       uuid,
+       name,
+       original_name,
+       revision,
+       position,
+       extension,
+       description,
+       path,
+       source,
+       file_size,
+       status,
+       validation_status,
+       annotations,
+       width,
+       height,
+       duration,
+       task_id,
+       shotgun_id,
+       person_id,
+       source_file_id,
+       is_movie,
+       url,
+       uploaded_movie_url,
+       uploaded_movie_name,
+       created_at,
+       updated_at
+from preview_file;
+
+drop table preview_file;
+
+alter table preview_file_dg_tmp
+    rename to preview_file;
+
+create index preview_file_person_id_index
+    on preview_file (person_id);
+
+create index preview_file_task_id_index
+    on preview_file (task_id);
+
+create unique index preview_file_uc
+    on preview_file (name, task_id, revision);
+PRAGMA foreign_keys=ON;
+)", nullptr, nullptr, nullptr);
+      in_data->storage_any_.pragma.user_version(2);
+    }
+  }
   ~upgrade_2_t() override = default;
 };
 
