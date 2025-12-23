@@ -363,7 +363,6 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("url", &preview_file::url_),                                  //
           make_column("uploaded_movie_url", &preview_file::uploaded_movie_url_),    //
           make_column("uploaded_movie_name", &preview_file::uploaded_movie_name_),  //
-          make_column("source_enum", &preview_file::source_enum_),                   // 
           make_column("created_at", &preview_file::created_at_),                    //
           make_column("updated_at", &preview_file::updated_at_),                    //
           foreign_key(&preview_file::task_id_).references(&task::uuid_id_).on_delete.cascade(),         //

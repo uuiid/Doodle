@@ -47,13 +47,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   auto l_position            = l_sql.get_next_position(task_id_, l_revision);
 
   auto l_preview_file        = std::make_shared<preview_file>();
+  in_handle->get_json().get_to(*l_preview_file);
   l_preview_file->revision_  = l_revision;
   l_preview_file->task_id_   = task_id_;
   l_preview_file->person_id_ = person_.person_.uuid_id_;
   l_preview_file->position_  = l_position;
   l_preview_file->name_      = core_set::get_set().get_uuid_str();
   l_preview_file->status_    = preview_file_statuses::processing;
-  l_preview_file->source_    = "webgui";
   l_preview_file->extension_ = "mp4";
   co_await l_sql.install(l_preview_file);
 
@@ -330,13 +330,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   auto l_position            = l_sql.get_next_position(task_id_, l_revision);
 
   auto l_preview_file        = std::make_shared<preview_file>();
+  in_handle->get_json().get_to(*l_preview_file);
   l_preview_file->revision_  = l_revision;
   l_preview_file->task_id_   = task_id_;
   l_preview_file->person_id_ = person_.person_.uuid_id_;
   l_preview_file->position_  = l_position;
   l_preview_file->name_      = core_set::get_set().get_uuid_str();
   l_preview_file->status_    = preview_file_statuses::processing;
-  l_preview_file->source_    = "webgui";
   l_preview_file->extension_ = "mp4";
   co_await l_sql.install(l_preview_file);
 

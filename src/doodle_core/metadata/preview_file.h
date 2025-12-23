@@ -31,7 +31,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 // 预览文件来源枚举
 enum class preview_file_source_enum {
   // 来自用户上传
-  user_upload,
+  webgui,
   // 来自自动灯光生成
   auto_light_generate,
   // 来自渲染输出
@@ -39,7 +39,7 @@ enum class preview_file_source_enum {
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
     preview_file_source_enum, {
-                                  {preview_file_source_enum::user_upload, "user_upload"},
+                                  {preview_file_source_enum::webgui, "webgui"},
                                   {preview_file_source_enum::auto_light_generate, "auto_light_generate"},
                                   {preview_file_source_enum::render_output, "render_output"},
                               }
@@ -56,7 +56,7 @@ struct preview_file {
   std::string extension_;
   std::string description_;
   FSys::path path_;
-  std::string source_;
+  preview_file_source_enum source_{preview_file_source_enum::webgui};
   std::int64_t file_size_;
   preview_file_statuses status_;
   preview_file_validation_statuses validation_status_;
@@ -70,7 +70,6 @@ struct preview_file {
   std::string url_;
   std::string uploaded_movie_url_;
   std::string uploaded_movie_name_;
-  preview_file_source_enum source_enum_;
 
   chrono::system_zoned_time created_at_;
   chrono::system_zoned_time updated_at_;
@@ -151,7 +150,6 @@ struct preview_file {
     j["url"]                 = p.url_;
     j["uploaded_movie_url"]  = p.uploaded_movie_url_;
     j["uploaded_movie_name"] = p.uploaded_movie_name_;
-    j["source_enum"]         = p.source_enum_;
 
     j["created_at"]          = p.created_at_;
     j["updated_at"]          = p.updated_at_;
@@ -175,7 +173,6 @@ struct preview_file {
     j.at("url").get_to(p.url_);
     j.at("uploaded_movie_url").get_to(p.uploaded_movie_url_);
     j.at("uploaded_movie_name").get_to(p.uploaded_movie_name_);
-    j.at("source_enum").get_to(p.source_enum_);
   }
 };
 }  // namespace doodle

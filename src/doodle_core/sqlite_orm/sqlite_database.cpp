@@ -862,7 +862,7 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
       columns(
           &task::uuid_id_, &task_type::uuid_id_, &preview_file::uuid_id_, &preview_file::revision_,
           &preview_file::position_, &preview_file::original_name_, &preview_file::extension_, &preview_file::width_,
-          &preview_file::height_, &preview_file::duration_, &preview_file::status_, &preview_file::source_enum_,
+          &preview_file::height_, &preview_file::duration_, &preview_file::status_, &preview_file::source_,
           &preview_file::annotations_, &preview_file::created_at_
       ),
       // from<task>(),
@@ -875,7 +875,7 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
       )
   );
   std::map<uuid, std::vector<preview_files_for_entity_t>> l_select{};
-  for (auto&& [task_id, task_type_id, preview_id, revision, position, original_name, extension, width, height, duration, status, source_enum, annotations, created_at] :
+  for (auto&& [task_id, task_type_id, preview_id, revision, position, original_name, extension, width, height, duration, status, source_, annotations, created_at] :
        l_t) {
     l_select[task_id].emplace_back(
         preview_files_for_entity_t{
@@ -888,7 +888,7 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
             .height_        = height,
             .duration_      = duration,
             .status_        = status,
-            .source_enum_   = source_enum,
+            .source_        = source_,
             .annotations_   = annotations,
             .created_at_    = created_at,
             .task_id_       = task_id,

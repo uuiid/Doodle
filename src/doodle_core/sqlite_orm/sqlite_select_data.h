@@ -300,7 +300,7 @@ struct preview_files_for_entity_t {
   decltype(preview_file::height_) height_;
   decltype(preview_file::duration_) duration_;
   decltype(preview_file::status_) status_;
-  decltype(preview_file::source_enum_) source_enum_;
+  decltype(preview_file::source_) source_;
   decltype(preview_file::annotations_) annotations_;
   decltype(preview_file::created_at_) created_at_;
   decltype(preview_file::task_id_) task_id_;
