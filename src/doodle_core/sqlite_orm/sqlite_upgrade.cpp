@@ -33,12 +33,16 @@ struct upgrade_init_t : sqlite_upgrade {
   };
   explicit upgrade_init_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    if (in_data->storage_any_.pragma.user_version() == 0) {
+      in_data->sync_schema();
+      in_data->storage_any_.pragma.user_version(1);
+    }
+
     if (in_data->uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
       auto l_label      = std::make_shared<assets_helper::database_t>();
       l_label->uuid_id_ = g_lable_id;
       l_label->label_   = "标签";
       in_data->install_unsafe<assets_helper::database_t>(l_label);
-      in_data->storage_any_.pragma.user_version(1);  // 初次初始化, 设置版本号为1
     }
     if (in_data->uuid_to_id<project_status>(g_open_id) == 0) {
       auto l_s      = std::make_shared<project_status>();
