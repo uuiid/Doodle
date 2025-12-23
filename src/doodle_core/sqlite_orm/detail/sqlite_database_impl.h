@@ -283,15 +283,13 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "attachment_file",  //
           make_column("id", &attachment_file::id_, primary_key().autoincrement()),
           make_column("uuid", &attachment_file::uuid_id_, unique(), not_null()),
-          make_column("name", &attachment_file::name_),//
-          make_column("size", &attachment_file::size_),//
-          make_column("extension", &attachment_file::extension_),//
-          make_column("mimetype", &attachment_file::mimetype_),//
+          make_column("name", &attachment_file::name_),            //
+          make_column("size", &attachment_file::size_),            //
+          make_column("extension", &attachment_file::extension_),  //
+          make_column("mimetype", &attachment_file::mimetype_),    //
           make_column("comment_id", &attachment_file::comment_id_),
           make_column("chat_message_id", &attachment_file::chat_message_id_),
-          foreign_key(&attachment_file::comment_id_)
-              .references(&comment::uuid_id_)
-              .on_delete.cascade()
+          foreign_key(&attachment_file::comment_id_).references(&comment::uuid_id_).on_delete.cascade()
       ),
       make_unique_index(
           "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
@@ -325,12 +323,14 @@ inline auto make_storage_doodle(const std::string& in_path) {
       make_index("comment_preview_link_comment_id_index", &comment_preview_link::comment_id_),
       make_index("comment_preview_link_preview_file_id_index", &comment_preview_link::preview_file_id_),
       make_table<comment_preview_link>(
-          "comment_preview_link",                                                                   //
-          make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),             //
-          make_column("comment_id", &comment_preview_link::comment_id_),                            //
-          make_column("preview_file_id", &comment_preview_link::preview_file_id_),                  //
-          foreign_key(&comment_preview_link::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),           //
-          foreign_key(&comment_preview_link::preview_file_id_).references(&preview_file::uuid_id_).on_delete.cascade()  //
+          "comment_preview_link",                                                                              //
+          make_column("id", &comment_preview_link::id_, primary_key().autoincrement()),                        //
+          make_column("comment_id", &comment_preview_link::comment_id_),                                       //
+          make_column("preview_file_id", &comment_preview_link::preview_file_id_),                             //
+          foreign_key(&comment_preview_link::comment_id_).references(&comment::uuid_id_).on_delete.cascade(),  //
+          foreign_key(&comment_preview_link::preview_file_id_)
+              .references(&preview_file::uuid_id_)
+              .on_delete.cascade()  //
       ),
       make_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_),
       make_index("preview_file_task_id_index", &preview_file::task_id_),
@@ -362,6 +362,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("url", &preview_file::url_),                                  //
           make_column("uploaded_movie_url", &preview_file::uploaded_movie_url_),    //
           make_column("uploaded_movie_name", &preview_file::uploaded_movie_name_),  //
+          make_column("source_enum", &preview_file::source_enum_)                   // 
           make_column("created_at", &preview_file::created_at_),                    //
           make_column("updated_at", &preview_file::updated_at_),                    //
           foreign_key(&preview_file::task_id_).references(&task::uuid_id_).on_delete.cascade(),         //
