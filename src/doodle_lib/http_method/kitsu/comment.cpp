@@ -40,9 +40,9 @@ struct create_comment_result : comment {
   // to json
   friend void to_json(nlohmann::json& j, const create_comment_result& p) {
     to_json(j, static_cast<const comment&>(p));
-    j["task_status"]     = p.task_status_;
-    j["person"]          = p.person_;
-    j["attachment_file"] = p.attachment_file_;
+    j["task_status"]      = p.task_status_;
+    j["person"]           = p.person_;
+    j["attachment_files"] = p.attachment_file_;
   }
 };
 boost::asio::awaitable<create_comment_result> create_comment(
