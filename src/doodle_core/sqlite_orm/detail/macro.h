@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include <magic_enum/magic_enum.hpp>
 
 #define DOODLE_SQLITE_ENUM_TYPE_(enum_type)                                                                          \
   template <>                                                                                                        \

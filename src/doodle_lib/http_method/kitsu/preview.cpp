@@ -21,6 +21,7 @@
 #include "kitsu_reg_url.h"
 #include <algorithm>
 #include <filesystem>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
@@ -44,9 +45,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
-  auto l_position            = l_sql.get_next_position(task_id_, l_revision);
+  auto l_position     = l_sql.get_next_position(task_id_, l_revision);
 
-  auto l_preview_file        = std::make_shared<preview_file>();
+  auto l_preview_file = std::make_shared<preview_file>();
   in_handle->get_json().get_to(*l_preview_file);
   l_preview_file->revision_  = l_revision;
   l_preview_file->task_id_   = task_id_;
