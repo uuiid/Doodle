@@ -145,6 +145,12 @@ struct multipart_body {
       auto const l_extra = boost::beast::buffer_bytes(in_buffers);
       std::size_t l_size = 0;
       ec                 = {};
+      if (l_extra < boundary_.size() + 4 + 2) {
+        // 传入的缓冲区小于分隔符的情况下, 我们直接复制, 不进行解析, 保留到下一次解析
+        boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
+        buffer_.commit(l_extra);
+        return l_extra;
+      }
       const static std::boyer_moore_searcher searcher_new_line_{
           std::begin(newline_),
           std::end(newline_),

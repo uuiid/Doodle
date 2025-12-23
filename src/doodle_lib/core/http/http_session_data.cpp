@@ -124,10 +124,10 @@ boost::asio::awaitable<void> session_data::run() {
     logger_->info("请求 url {} {} t:{}", method_verb_, url_, timeout_);
     // 解析发现是 websocket 后,会直接启动新的携程, 本次携程直接返回
     stream_->expires_after(timeout_);
-    if (co_await parse_body()) co_return;
 
     std::unique_ptr<boost::beast::http::message_generator> l_gen{};
     try {
+      if (co_await parse_body()) co_return;
       stream_->expires_after(timeout_);
       l_gen = std::make_unique<boost::beast::http::message_generator>(co_await callback_->callback(shared_from_this()));
     } catch (const http_request_error& e) {
