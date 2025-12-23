@@ -170,14 +170,14 @@ struct multipart_body {
         buffer_.commit(l_extra);
         return l_extra;
       }
-
-      auto l_end_n = l_end_r + 1;                          // 指向 \r\n 位置中的 \n
-      l_size       = std::distance(l_begin, l_end_n) + 1;  // +1 是为了包含 \n 自身
+      auto l_end_n      = l_end_r != l_end ? l_end_r + 1 : l_end;  // 指向 \r\n 位置中的 \n
+      auto l_end_n_next = l_end_n != l_end ? l_end_n + 1 : l_end;  // 指向下一行的开始位置
+      l_size            = std::distance(l_begin, l_end_n_next);    // 本次处理的字节数
+      SPDLOG_INFO("解析行 字节数 {} l_end_r={:d}, l_end_n={:d}", l_size, *l_end_r, *l_end_n);
       {
-        --l_end_n;
         switch (line_state_) {
           case parser_line_state::boundary:
-            switch (is_boundary(l_begin, l_end_n)) {
+            switch (is_boundary(l_begin, l_end_r)) {
               case not_boundary:;  // 边界错误
                 return ec = boost::asio::error::invalid_argument, 0;
               case boundary:
@@ -189,15 +189,15 @@ struct multipart_body {
             }
             break;
           case parser_line_state::header:
-            if (l_begin == l_end_n)
+            if (l_begin == l_end_r)
               line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
             else
-              parser_headers(l_begin, l_end_n);
+              parser_headers(l_begin, l_end_r);
             break;
           case parser_line_state::data:
-            switch (is_boundary(l_begin, l_end_n)) {
+            switch (is_boundary(l_begin, l_end_r)) {
               case not_boundary:;  // 不是边界, 说明是数据
-                add_data(l_begin, l_end_n == l_end ? l_end : ++l_end_n);
+                add_data(l_begin, l_end_n_next);
                 break;
               case boundary:
                 line_state_ = parser_line_state::header;
