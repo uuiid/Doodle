@@ -101,7 +101,7 @@ struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     // 升级到版本2
-    if (in_data->storage_any_.pragma.user_version() == 1) {
+    if (in_data->storage_any_.pragma.user_version() == 2) {
       // 运行原始sql
       sqlite3_exec(static_cast<sqlite3*>(in_data->raw_sqlite_handle_), R"(
 PRAGMA foreign_keys=OFF;
@@ -191,7 +191,6 @@ create unique index preview_file_uc
     on preview_file (name, task_id, revision);
 PRAGMA foreign_keys=ON;
 )", nullptr, nullptr, nullptr);
-      in_data->storage_any_.pragma.user_version(2);
     }
   }
   ~upgrade_2_t() override = default;
