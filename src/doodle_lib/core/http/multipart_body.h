@@ -149,13 +149,13 @@ struct multipart_body {
           std::begin(newline_),
           std::end(newline_),
       };
-      auto l_my_buffers_size = buffer_.size();
-      auto l_new_buffers     = boost::beast::buffers_cat(buffer_.cdata(), in_buffers);
-      auto l_begin = boost::asio::buffers_begin(l_new_buffers), l_end = boost::asio::buffers_end(l_new_buffers);
-      // l_end_eof 指向 \r\n 位置中的 \r
-      decltype(l_begin) l_end_eof = std::search(l_begin, l_end, searcher_new_line_);
+      const auto l_my_buffers_size = buffer_.size();
+      auto l_new_buffers           = boost::beast::buffers_cat(buffer_.cdata(), in_buffers);
+      const auto l_begin = boost::asio::buffers_begin(l_new_buffers), l_end = boost::asio::buffers_end(l_new_buffers);
+      // l_end_r 指向 \r\n 位置中的 \r
+      auto l_end_r = std::search(l_begin, l_end, searcher_new_line_);
 
-      if (l_end_eof == l_end) {  // 不是完整的一行
+      if (l_end_r == l_end) {  // 不是完整的一行
         if (line_state_ == parser_line_state::data) {
           add_data(l_begin, l_end);
           l_size = l_extra;
@@ -171,16 +171,13 @@ struct multipart_body {
         return l_extra;
       }
 
-      ++l_end_eof;
-      l_size = std::distance(l_begin, l_end_eof) + 1;  // +1 是为了包含 \n 自身
-      buffer_.consume(l_size);                         // 清空缓存
-      l_size = l_size > l_my_buffers_size ? l_size - l_my_buffers_size : 0;
+      auto l_end_n = l_end_r + 1;                          // 指向 \r\n 位置中的 \n
+      l_size       = std::distance(l_begin, l_end_n) + 1;  // +1 是为了包含 \n 自身
       {
-        auto l_end_eof_t = l_end_eof;
-        --l_end_eof_t;
+        --l_end_n;
         switch (line_state_) {
           case parser_line_state::boundary:
-            switch (is_boundary(l_begin, l_end_eof_t)) {
+            switch (is_boundary(l_begin, l_end_n)) {
               case not_boundary:;  // 边界错误
                 return ec = boost::asio::error::invalid_argument, 0;
               case boundary:
@@ -192,15 +189,15 @@ struct multipart_body {
             }
             break;
           case parser_line_state::header:
-            if (l_begin == l_end_eof_t)
+            if (l_begin == l_end_n)
               line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
             else
-              parser_headers(l_begin, l_end_eof_t);
+              parser_headers(l_begin, l_end_n);
             break;
           case parser_line_state::data:
-            switch (is_boundary(l_begin, l_end_eof_t)) {
+            switch (is_boundary(l_begin, l_end_n)) {
               case not_boundary:;  // 不是边界, 说明是数据
-                add_data(l_begin, l_end_eof == l_end ? l_end : ++l_end_eof);
+                add_data(l_begin, l_end_n == l_end ? l_end : ++l_end_n);
                 break;
               case boundary:
                 line_state_ = parser_line_state::header;
@@ -215,6 +212,8 @@ struct multipart_body {
             break;
         }
       }
+      buffer_.consume(l_size);  // 清空缓存
+      l_size = l_size > l_my_buffers_size ? l_size - l_my_buffers_size : 0;
       return l_size;
     }
 
