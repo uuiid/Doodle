@@ -19,16 +19,25 @@ Remove-Item -Path "$DoodleOut/epiboly/Doodle-$DoodleVersion-win64" -Recurse -For
 Remove-Item -Path "$DoodleOut/epiboly" -Include "*.zip" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly/dist" -Include "*.exe" -Recurse -Force
 
-$DataSource = "$DoodleOut/epiboly/epiboly.database"
-Copy-Item "\\192.168.0.181\Dev\kitsu_new.database" $DataSource -Force
-$Tabls = Invoke-SqliteQuery -DataSource $DataSource -Query "SELECT name FROM sqlite_master WHERE type='table';"
+$DataSource_loc = "$DoodleOut/epiboly/epiboly.database"
+$l_list = Get-ChildItem -Path "\\192.168.0.181\Users\Administrator\AppData\Local\Temp\doodle\backup" -Filter "kitsu_*.db" | Sort-Object LastWriteTime -Descending
+if ($l_list.Count -eq 0) {
+  Write-Host "没有找到备份数据库"
+  return;
+}
+$DataSource = $l_list[0].FullName
+Write-Host "使用最新的备份数据库: $DataSource"
+
+
+Copy-Item $DataSource $DataSource_loc -Force
+$Tabls = Invoke-SqliteQuery -DataSource $DataSource_loc -Query "SELECT name FROM sqlite_master WHERE type='table';"
 foreach ($Tab in $Tabls) {
     if ($Tab.name -eq "sqlite_sequence") { continue }
     if ($Tab.name -eq "project") { continue }
     if ($Tab.name -eq "project_status") { continue }
-    Invoke-SqliteQuery -DataSource $DataSource -Query "DROP TABLE $($Tab.name);"
+    Invoke-SqliteQuery -DataSource $DataSource_loc -Query "DROP TABLE $($Tab.name);"
 }
-Invoke-SqliteQuery -DataSource $DataSource -Query "VACUUM;"
+Invoke-SqliteQuery -DataSource $DataSource_loc -Query "VACUUM;"
 
 Compress-Archive -Path "$DoodleOut/epiboly/*" -DestinationPath "$DoodleOut/epiboly.zip" -Force
 
