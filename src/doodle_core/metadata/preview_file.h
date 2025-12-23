@@ -34,6 +34,8 @@ enum class preview_file_source_enum {
   webgui,
   // 来自自动灯光生成
   auto_light_generate,
+  // 来自特效送审
+  vfx_review,
   // 来自渲染输出
   render_output
 };
