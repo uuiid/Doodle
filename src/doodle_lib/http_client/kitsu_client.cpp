@@ -90,9 +90,7 @@ boost::asio::awaitable<uuid> kitsu_client::create_comment(
   co_return l_comment_id;
 }
 
-boost::asio::awaitable<uuid> kitsu_client::create_preview(
-    uuid in_task_id, uuid in_comment_id, const FSys::path& in_attach_files, std::uint32_t in_revision
-) const {
+boost::asio::awaitable<uuid> kitsu_client::create_preview(uuid in_task_id, uuid in_comment_id) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not create preview"});
   uuid l_preview_id{};
   {  // 创建预览
@@ -389,12 +387,12 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
 }
 
 boost::asio::awaitable<void> kitsu_client::comment_task(
-    uuid in_task_id, const std::string& in_comment, const FSys::path& in_attach_files, const uuid& in_task_status_id,
-    const std::vector<std::string>& in_checklists, const std::vector<std::string>& in_links
+    uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id,
+    std::vector<std::string> in_checklists, std::vector<std::string> in_links
 ) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
   uuid l_comment_id = co_await create_comment(in_task_id, in_comment, in_task_status_id, in_checklists, in_links);
-  uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id, in_attach_files, 1);
+  uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id);
 
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{
@@ -418,12 +416,12 @@ boost::asio::awaitable<void> kitsu_client::comment_task(
 }
 
 boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(
-    uuid in_task_id, const std::string& in_comment, const FSys::path& in_attach_files, const uuid& in_task_status_id,
-    const std::vector<std::string>& in_checklists, const std::vector<std::string>& in_links
+    uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id,
+    std::vector<std::string> in_checklists, std::vector<std::string> in_links
 ) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
   uuid l_comment_id = co_await create_comment(in_task_id, in_comment, in_task_status_id, in_checklists, in_links);
-  uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id, in_attach_files, 1);
+  uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id);
 
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{

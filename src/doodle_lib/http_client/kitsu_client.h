@@ -48,9 +48,7 @@ class kitsu_client {
   ) const;
 
   /// 创建预览
-  boost::asio::awaitable<uuid> create_preview(
-      uuid in_task_id, uuid in_comment_id, const FSys::path& in_attach_files, std::uint32_t in_revision = 0
-  ) const;
+  boost::asio::awaitable<uuid> create_preview(uuid in_task_id, uuid in_comment_id) const;
 
  public:
   explicit kitsu_client(const std::string& kitsu_url) : http_client_ptr_{std::make_shared<http_client_t>(kitsu_url)} {}
@@ -114,15 +112,13 @@ class kitsu_client {
   boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
   /// 对task进行评论(并且附加预览图或者视频)
   boost::asio::awaitable<void> comment_task(
-      uuid in_task_id, const std::string& in_comment, const FSys::path& in_attach_files,
-      const uuid& in_task_status_id = uuid{}, const std::vector<std::string>& in_checklists = {},
-      const std::vector<std::string>& in_links = {}
+      uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id = uuid{},
+      std::vector<std::string> in_checklists = {}, std::vector<std::string> in_links = {}
   ) const;
   /// 对task进行评论, 并进行合成视频
   boost::asio::awaitable<void> comment_task_compose_video(
-      uuid in_task_id, const std::string& in_comment, const FSys::path& in_attach_files,
-      const uuid& in_task_status_id = uuid{}, const std::vector<std::string>& in_checklists = {},
-      const std::vector<std::string>& in_links = {}
+      uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id = uuid{},
+      std::vector<std::string> in_checklists = {}, std::vector<std::string> in_links = {}
   ) const;
   boost::asio::awaitable<nlohmann::json> get_export_anim_fbx(uuid in_task_id) const;
   boost::asio::awaitable<nlohmann::json> get_task_sync(uuid in_task_id) const;
