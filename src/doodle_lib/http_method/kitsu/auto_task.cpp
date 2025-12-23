@@ -391,7 +391,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     }
   }
 
-  // #ifdef NDEBUG
+#ifdef NDEBUG
   for (auto&& l_path : l_ret.ue_asset_path_) {
     DOODLE_CHICK_HTTP(!l_path.from_.empty(), bad_request, "UE 场景可能没有启动器等原因");
     DOODLE_CHICK_HTTP(FSys::exists(l_path.from_), bad_request, "UE 资产源路径不存在: {}", l_path.from_.string())
@@ -405,7 +405,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
     )
   }
-  // #endif
+#endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
     DOODLE_CHICK_HTTP(
