@@ -101,7 +101,7 @@ boost::asio::awaitable<uuid> kitsu_client::create_preview(
         fmt::format("/api/actions/tasks/{}/comments/{}/add-preview", in_task_id, in_comment_id), 11
     };
     set_req_headers(l_req, "application/json");
-    l_req.body() = "{}";
+    l_req.body() = nlohmann::json{{"source", in_preview_file_source}}.dump();
     boost::beast::http::response<http::basic_json_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
