@@ -105,7 +105,10 @@ boost::asio::awaitable<void> update_movie_compose_files::run() {
 
   co_await kitsu_client_->comment_task_compose_video(
       kitsu::kitsu_client::comment_task_arg{
-          .task_id_ = task_id_, .comment_ = "送审特效样片", .attach_files_ = l_movie_path
+          .task_id_             = task_id_,
+          .comment_             = "送审特效样片",
+          .attach_files_        = l_movie_path,
+          .preview_file_source_ = preview_file_source_enum::vfx_review,
       }
   );
 }
