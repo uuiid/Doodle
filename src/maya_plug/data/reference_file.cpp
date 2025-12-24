@@ -20,6 +20,7 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/node/files_info.h>
 
+#include "data/maya_tool.h"
 #include "data/reference_file.h"
 #include "exception/exception.h"
 #include "maya_conv_str.h"
@@ -165,8 +166,6 @@ generate_fbx_file_path::~generate_fbx_file_path() = default;
 reference_file::reference_file() = default;
 reference_file::reference_file(const MObject& in_ref_node) : file_info_node_(in_ref_node) {}
 
- 
-
 void reference_file::set_use_sim(bool in_use_sim) { set_attribute(file_info_node_, "is_solve", in_use_sim); }
 
 bool reference_file::get_use_sim() const { return get_attribute<bool>(file_info_node_, "is_solve"); }
@@ -186,7 +185,9 @@ MObject reference_file::get_ref_node() const {
 
     return l_node;
   } else {
-    default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
+    default_logger_raw()->log(
+        log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_node_full_name(file_info_node_)
+    );
   }
   return {};
 }
@@ -244,7 +245,7 @@ MSelectionList reference_file::get_collision_model() const {
 std::string reference_file::get_namespace() const {
   MStatus l_status{};
   auto l_node = get_ref_node();
-  DOODLE_CHICK(!l_node.isNull(), "引用文件没有连接文件");
+  DOODLE_CHICK(!l_node.isNull(), "引用文件 {} 没有连接文件", get_node_full_name(file_info_node_));
   MFnReference l_ref{};
   maya_chick(l_ref.setObject(l_node));
   return conv::to_s(l_ref.associatedNamespace(false));
