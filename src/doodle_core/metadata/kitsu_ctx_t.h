@@ -5,6 +5,7 @@
 #include <doodle_core/doodle_core_pch.h>
 
 #include <filesystem>
+#include <fmt/format.h>
 #include <string>
 
 namespace doodle::http {
@@ -47,6 +48,9 @@ struct kitsu_ctx_t {
   }
   FSys::path get_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return get_preview_file_path(in_uuid, true, in_ext);
+  }
+  FSys::path get_attachment_file(const uuid& in_uuid) {
+    return root_ / "files" / "attachments" / FSys::split_uuid_path(fmt::to_string(in_uuid));
   }
 
  private:
