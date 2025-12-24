@@ -41,7 +41,7 @@ struct multipart_body {
   // };
   using value_type      = multipart_body_impl::value_type_impl;
   using part_value_type = multipart_body_impl::part_value_type;
-  enum class parser_line_state { boundary, header, data, eof_end };
+  enum class parser_line_state { begin_parser, header, data, eof_end };
 
   // 换行符
   static constexpr std::array<char, 2> newline_{'\r', '\n'};
@@ -55,6 +55,11 @@ struct multipart_body {
     std::optional<std::ofstream> out_file_;
     boost::beast::http::fields& fields_;
     boost::beast::static_buffer<4096> buffer_;
+    using boundary_searcher_type = decltype(std::boyer_moore_searcher{
+        std::begin(std::declval<std::string>()), std::end(std::declval<std::string>())
+    });
+    using boundary_searcher_ptr  = std::unique_ptr<boundary_searcher_type>;
+    boundary_searcher_ptr boundary_searcher_{};
 
     enum boundary_state {
       not_boundary,  // 边界错误
@@ -66,7 +71,11 @@ struct multipart_body {
       if (fields_.count(boost::beast::http::field::content_type) > 0) {
         const auto& l_content_type = fields_.at(boost::beast::http::field::content_type);
         if (auto l_pos = l_content_type.find("boundary="); l_pos != std::string::npos) {
-          boundary_ = l_content_type.substr(l_pos + 9, l_content_type.find(l_pos, ';'));
+          boundary_          = l_content_type.substr(l_pos + 9, l_content_type.find(l_pos, ';'));
+          boundary_searcher_ = std::make_unique<boundary_searcher_type>(boundary_searcher_type{
+              std::begin(boundary_),
+              std::end(boundary_),
+          });
         }
       }
     }
@@ -74,11 +83,10 @@ struct multipart_body {
    public:
     template <bool isRequest, class Fields>
     explicit reader(boost::beast::http::header<isRequest, Fields>& in_header, value_type& b)
-        : body_(b), line_state_(parser_line_state::boundary), fields_{in_header} {}
+        : body_(b), line_state_(parser_line_state::begin_parser), fields_{in_header} {}
     void init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec) {
       get_boundary();
-      line_state_ = parser_line_state::boundary;
-      ec          = {};
+      ec = {};
       if (length) length_ = *length;
     }
     template <class InIt>
@@ -143,105 +151,125 @@ struct multipart_body {
     template <class ConstBufferSequence>
     std::size_t put(ConstBufferSequence const& in_buffers, boost::system::error_code& ec) {
       auto const l_extra = boost::beast::buffer_bytes(in_buffers);
-      std::size_t l_size = 0;
       ec                 = {};
       if (l_extra > 4096) {
         BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::message_size);
         return 0;
       }
+      boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
+      buffer_.commit(l_extra);
 
-      if (l_extra < boundary_.size() + 4 + 2) {
-        // 传入的缓冲区小于分隔符的情况下, 我们直接复制, 不进行解析, 保留到下一次解析
-        boost::asio::buffer_copy(buffer_.prepare(l_extra), in_buffers);
-        buffer_.commit(l_extra);
+      // 如果缓存不足以包含五个边界, 则继续等待, 保留现有数据, 继续接收
+      if (buffer_.size() < boundary_.size() * 5) {
         return l_extra;
       }
+      do {
+        auto l_parse_size = paser(ec);
+        if (ec) return 0;
+        if (l_parse_size == 0) break;
+        buffer_.consume(l_parse_size);
+      } while (true);
+
+      return l_extra;
+    }
+
+    inline std::size_t paser(boost::system::error_code& ec) {
+      std::size_t l_size = 0;
       const static std::boyer_moore_searcher searcher_new_line_{
           std::begin(newline_),
           std::end(newline_),
       };
-      const auto l_my_buffers_size = buffer_.size();
-      auto l_new_buffers           = boost::beast::buffers_cat(buffer_.cdata(), in_buffers);
-      const auto l_begin = boost::asio::buffers_begin(l_new_buffers), l_end = boost::asio::buffers_end(l_new_buffers);
-      // l_end_r 指向 \r\n 位置中的 \r
-      auto l_end_r = std::search(l_begin, l_end, searcher_new_line_);
+      /// 使用boyer_moore算法查找边界
+      auto l_begin = boost::asio::buffers_begin(buffer_.data()), l_end = boost::asio::buffers_end(buffer_.data());
+      switch (line_state_) {
+        case parser_line_state::begin_parser: {
+          auto&& [l_b, l_begin_b] = is_boundary(l_begin, l_end);
+          if (l_b == not_boundary) {
+            ec = boost::asio::error::invalid_argument;
+            return 0;
+          }
+          line_state_ = parser_line_state::header;
+          l_size      = boundary_.size() + 2 + 2;  // --边界 + \r\n
+          break;
+        }
+        case parser_line_state::header: {
+          auto l_end_r = std::search(l_begin, l_end, searcher_new_line_);
+          if (l_end_r == l_end) break;  // 不是完整的一行
 
-      if (l_end_r == l_end) {  // 不是完整的一行
-        if (line_state_ == parser_line_state::data) {
-          add_data(l_begin, l_end);
-          return l_extra;
-        }
-        return ec = boost::asio::error::invalid_argument, 0;
+          auto l_end_n      = l_end_r != l_end ? l_end_r + 1 : l_end;  // 指向 \r\n 位置中的 \n
+          auto l_end_n_next = l_end_n != l_end ? l_end_n + 1 : l_end;  // 指向下一行的开始位置
+          l_size            = std::distance(l_begin, l_end_n_next);    // 本次处理的字节数
+          if (l_begin == l_end_r)
+            line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
+          else
+            parser_headers(l_begin, l_end_r);
+        } break;
+        case parser_line_state::data: {
+          auto&& [l_b, l_begin_b] = is_boundary(l_begin, l_end);
+          switch (l_b) {
+            case boundary: {
+              // 找到边界, 说明数据结束
+              add_data(l_begin, l_begin_b - 2);                                            // 去除换行
+              l_size      = std::distance(l_begin, l_begin_b) + boundary_.size() + 2 + 2;  // --边界 + \r\n
+              line_state_ = parser_line_state::header;
+              parser_part_end();
+            } break;
+            case boundary_end: {
+              // 找到最后的边界, 说明数据结束
+              add_data(l_begin, l_begin_b - 2);                                            // 去除换行
+              l_size      = std::distance(l_begin, l_begin_b) + boundary_.size() + 2 + 2;  // --边界--
+              line_state_ = parser_line_state::eof_end;
+              parser_part_end();
+            } break;
+            case not_boundary:;  // 不是边界, 说明是数据
+              add_data(l_begin, l_end);
+              l_size = buffer_.size();
+              break;
+          }
+        } break;
+        case parser_line_state::eof_end:
+          break;
       }
-      auto l_end_n      = l_end_r != l_end ? l_end_r + 1 : l_end;  // 指向 \r\n 位置中的 \n
-      auto l_end_n_next = l_end_n != l_end ? l_end_n + 1 : l_end;  // 指向下一行的开始位置
-      l_size            = std::distance(l_begin, l_end_n_next);    // 本次处理的字节数
-      // SPDLOG_INFO("解析行 字节数 {} l_end_r={:d}, l_end_n={:d}", l_size, *l_end_r, *l_end_n);
-      {
-        switch (line_state_) {
-          case parser_line_state::boundary:
-            switch (is_boundary(l_begin, l_end_r)) {
-              case not_boundary:;  // 边界错误
-                return ec = boost::asio::error::invalid_argument, 0;
-              case boundary:
-                line_state_ = parser_line_state::header;  // 解析到边界, 进入头部解析状态
-                break;
-              case boundary_end:
-                line_state_ = parser_line_state::eof_end;  // 最后一个边界, 进入结束状态
-                break;
-            }
-            break;
-          case parser_line_state::header:
-            if (l_begin == l_end_r)
-              line_state_ = parser_line_state::data;  // 空行, 表示头部已经完成解析
-            else
-              parser_headers(l_begin, l_end_r);
-            break;
-          case parser_line_state::data:
-            switch (is_boundary(l_begin, l_end_r)) {
-              case not_boundary:;  // 不是边界, 说明是数据
-                add_data(l_begin, l_end_n_next);
-                break;
-              case boundary:
-                line_state_ = parser_line_state::header;
-                parser_part_end();
-                break;
-              case boundary_end:
-                line_state_ = parser_line_state::eof_end;
-                parser_part_end();
-            }
-            break;
-          case parser_line_state::eof_end:
-            break;
-        }
-      }
-      buffer_.consume(l_size);  // 清空缓存
-      l_size = l_size > l_my_buffers_size ? l_size - l_my_buffers_size : 0;
       return l_size;
     }
 
     // 比较边界分隔符
     template <typename Iter>
-    boundary_state is_boundary(const Iter& in_begin, const Iter& in_end) const {
-      auto l_len = std::distance(in_begin, in_end);
-      if (l_len == boundary_.size()) {
-        if (std::equal(in_begin, in_end, boundary_.begin())) {
-          return boundary;
-        }
-      } else if (l_len == boundary_.size() + 2) {
-        if (std::equal(in_begin + 2, in_end, boundary_.begin()) && *(in_begin) == '-' && *(in_begin + 1) == '-') {
-          return boundary;
-        }
-      } else if (l_len == boundary_.size() + 4) {
-        if (std::equal(in_begin + 2, in_end - 2, boundary_.begin()) && *(in_begin) == '-' && *(in_begin + 1) == '-' &&
-            *(in_end - 2) == '-' && *(in_end - 1) == '-') {
-          return boundary_end;
-        }
+    std::tuple<boundary_state, Iter> is_boundary(const Iter& in_begin, const Iter& in_end) const {
+      auto l_find_ = std::search(in_begin, in_end, *boundary_searcher_);
+      if (l_find_ == in_end) {
+        // 没有找到边界, 说明数据有问题
+        return {not_boundary, in_begin};
       }
-      return not_boundary;
+      if (*(l_find_ - 1) != '-' || *(l_find_ - 2) != '-') {
+        // 边界前面不是 --
+        return {not_boundary, in_begin};
+      }
+
+      auto l_boundary_end = l_find_ + boundary_.size();
+      if (*(l_boundary_end) == '-' && *(l_boundary_end + 1) == '-') {
+        return {boundary_end, l_find_ - 2};
+      }
+
+      if (*(l_boundary_end) != '\r' || *(l_boundary_end + 1) != '\n') {
+        // 边界后面不是换行符, 说明数据有问题
+        return {not_boundary, in_begin};
+      }
+
+      return {boundary, l_find_ - 2};
     }
 
-    void finish(boost::system::error_code& ec) { ec = {}; }
+    void finish(boost::system::error_code& ec) {
+      ec = {};
+      if (buffer_.size() > 0) {
+        do {
+          auto l_parse_size = paser(ec);
+          if (ec) return;
+          if (l_parse_size == 0) break;
+          buffer_.consume(l_parse_size);
+        } while (true);
+      }
+    }
   };
 };
 
