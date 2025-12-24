@@ -90,7 +90,9 @@ boost::asio::awaitable<uuid> kitsu_client::create_comment(
   co_return l_comment_id;
 }
 
-boost::asio::awaitable<uuid> kitsu_client::create_preview(uuid in_task_id, uuid in_comment_id) const {
+boost::asio::awaitable<uuid> kitsu_client::create_preview(
+    uuid in_task_id, uuid in_comment_id, preview_file_source_enum in_preview_file_source
+) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not create preview"});
   uuid l_preview_id{};
   {  // 创建预览
@@ -393,7 +395,7 @@ boost::asio::awaitable<void> kitsu_client::comment_task(comment_task_arg in_arg)
   );
   if (in_arg.attach_files_.empty()) co_return;
 
-  uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id);
+  uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id, in_arg.preview_file_source_);
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/pictures/preview-files/{}", l_preview_id), 11
@@ -422,8 +424,8 @@ boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(comment_ta
   uuid l_comment_id = co_await create_comment(
       in_arg.task_id_, in_arg.comment_, in_arg.task_status_id_, in_arg.checklists_, in_arg.links_
   );
-  uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id);
-
+  if (in_arg.attach_files_.empty()) co_return;
+  uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id, in_arg.preview_file_source_);
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/actions/preview-files/{}/compose-video", l_preview_id), 11

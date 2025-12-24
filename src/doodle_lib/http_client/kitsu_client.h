@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/preview_file.h"
 #include "doodle_core/metadata/project.h"
 #include <doodle_core/core/http_client_core.h>
 #include <doodle_core/metadata/assets.h>
@@ -48,7 +49,9 @@ class kitsu_client {
   ) const;
 
   /// 创建预览
-  boost::asio::awaitable<uuid> create_preview(uuid in_task_id, uuid in_comment_id) const;
+  boost::asio::awaitable<uuid> create_preview(
+      uuid in_task_id, uuid in_comment_id, preview_file_source_enum in_preview_file_source
+  ) const;
 
  public:
   explicit kitsu_client(const std::string& kitsu_url) : http_client_ptr_{std::make_shared<http_client_t>(kitsu_url)} {}
@@ -118,6 +121,7 @@ class kitsu_client {
     uuid task_status_id_{};
     std::vector<std::string> checklists_{};
     std::vector<std::string> links_{};
+    preview_file_source_enum preview_file_source_{preview_file_source_enum::webgui};
   };
 
   /// 对task进行评论(并且附加预览图或者视频)

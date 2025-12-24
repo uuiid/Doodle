@@ -253,10 +253,11 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
   }
   co_await kitsu_client_->comment_task(
       kitsu::kitsu_client::comment_task_arg{
-          .task_id_        = shot_task_id_,
-          .comment_        = "UE组装和渲染完成，已上传合成视频",
-          .attach_files_   = arg_.create_move_path_,
-          .task_status_id_ = task_status::get_completed(),
+          .task_id_             = shot_task_id_,
+          .comment_             = "UE组装和渲染完成, 已上传合成视频",
+          .attach_files_        = arg_.create_move_path_,
+          .task_status_id_      = task_status::get_completed(),
+          .preview_file_source_ = preview_file_source_enum::auto_light_generate,
       }
   );
 }
