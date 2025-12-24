@@ -145,4 +145,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_task_create_review, post) {
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_task = l_sql.get_by_uuid<task>(sequence_id_);
+  using namespace sqlite_orm;
+  auto l_attachment_files =
+      l_sql.impl_->storage_any_.get_all<attachment_file>(where(c(&attachment_file::comment_id_) == sequence_id_));
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_attachment_files);
+}
+
 }  // namespace doodle::http
