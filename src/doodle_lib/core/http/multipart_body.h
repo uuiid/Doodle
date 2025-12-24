@@ -129,7 +129,7 @@ struct multipart_body {
           if (!std::holds_alternative<std::string>(part_.body_)) {
             part_.body_ = std::string{in_begin, in_end};
           } else
-            std::get<std::string>(part_.body_) += std::string{in_begin, in_end - 2};  // 去掉 \r\n
+            std::get<std::string>(part_.body_) += std::string{in_begin, in_end};
           break;
         default:
           if (!std::holds_alternative<FSys::path>(part_.body_)) {
