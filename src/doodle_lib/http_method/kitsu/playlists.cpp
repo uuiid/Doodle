@@ -445,7 +445,9 @@ struct playlist_shot_t : playlist {
           duration_{in_preview_file.duration_},
           status_{in_preview_file.status_},
           annotations_{in_preview_file.annotations_},
-          task_id_{in_preview_file.task_id_} {}
+          task_id_{in_preview_file.task_id_},
+          preview_file_source_{in_preview_file.source_} {}
+    
     uuid id_;
     std::int32_t revision_;
     std::string extension_;
@@ -455,6 +457,8 @@ struct playlist_shot_t : playlist {
     preview_file_statuses status_;
     nlohmann::json annotations_;
     uuid task_id_;
+    decltype(preview_file::source_) preview_file_source_;
+
     // to json
     friend void to_json(nlohmann::json& j, const preview_file_mini_t& l_preview_file_mini) {
       j["id"]          = l_preview_file_mini.id_;
