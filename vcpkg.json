@@ -104,7 +104,8 @@
         "cuda"
       ]
     },
-    "cgal"
+    "cgal",
+    "avcpp"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
