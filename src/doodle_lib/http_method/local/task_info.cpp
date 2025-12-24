@@ -284,8 +284,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::post(session
 
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
-  l_run_long_task_local->load_form_json(l_ptr->command_);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
+  l_run_long_task_local->load_form_json(l_ptr->command_);
   l_run_long_task_local->run();
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
