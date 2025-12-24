@@ -161,7 +161,7 @@ class reference_file : public boost::totally_ordered<reference_file> {
     return lhs.file_info_node_ == rhs.file_info_node_;
   }
   friend bool operator<(const reference_file& lhs, const reference_file& rhs) {
-    return lhs.get_file_namespace() < rhs.get_file_namespace();
+    return lhs.get_namespace() < rhs.get_namespace();
   }
 };
 
