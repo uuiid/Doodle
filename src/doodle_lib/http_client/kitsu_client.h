@@ -110,16 +110,20 @@ class kitsu_client {
   boost::asio::awaitable<void> remove_shot_animation_export_file(const uuid& in_uuid);
 
   boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
+
+  struct comment_task_arg {
+    uuid task_id_;
+    std::string comment_;
+    FSys::path attach_files_;
+    uuid task_status_id_{};
+    std::vector<std::string> checklists_{};
+    std::vector<std::string> links_{};
+  };
+
   /// 对task进行评论(并且附加预览图或者视频)
-  boost::asio::awaitable<void> comment_task(
-      uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id = uuid{},
-      std::vector<std::string> in_checklists = {}, std::vector<std::string> in_links = {}
-  ) const;
+  boost::asio::awaitable<void> comment_task(comment_task_arg in_arg) const;
   /// 对task进行评论, 并进行合成视频
-  boost::asio::awaitable<void> comment_task_compose_video(
-      uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id = uuid{},
-      std::vector<std::string> in_checklists = {}, std::vector<std::string> in_links = {}
-  ) const;
+  boost::asio::awaitable<void> comment_task_compose_video(comment_task_arg in_arg) const;
   boost::asio::awaitable<nlohmann::json> get_export_anim_fbx(uuid in_task_id) const;
   boost::asio::awaitable<nlohmann::json> get_task_sync(uuid in_task_id) const;
 

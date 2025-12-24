@@ -83,7 +83,12 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, l_p.parent_path(), l_p.filename());
   }
   co_await kitsu_client_->comment_task(
-      task_id_, "自动导出和上传文件", l_out_arg_.movie_file_, task_status::get_nearly_completed()
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_        = task_id_,
+          .comment_        = "自动导出和上传文件",
+          .attach_files_   = l_out_arg_.movie_file_,
+          .task_status_id_ = task_status::get_nearly_completed(),
+      }
   );
   if (!l_out_arg_.movie_file_.empty()) {
     co_await kitsu_client_->upload_shot_animation_other_file(

@@ -60,8 +60,10 @@ BOOST_AUTO_TEST_CASE(create_comment_task) {
                                  "NjVkMDNiIn0.6gA3BdCxhuhYPzyBp_my0yHR7gJmIercSyjGBDexqtw"
         );
         co_await l_c->comment_task(
-            from_uuid_str("d7210472-de23-4b76-8332-3470e0442190"), "测试通过客户端创建评论",
-            "C:/Users/TD/Downloads/test_mp4.mp4"
+            doodle::kitsu::kitsu_client::comment_task_arg{
+                from_uuid_str("d7210472-de23-4b76-8332-3470e0442190"), "测试通过客户端创建评论",
+                "C:/Users/TD/Downloads/test_mp4.mp4"
+            }
         );
         app_base::Get().on_cancel.emit();
       }(),

@@ -81,7 +81,14 @@ boost::asio::awaitable<void> update_movie_files::run() {
   }
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());
   co_await kitsu_client_->upload_shot_animation_video_file(task_id_, l_movie_file);
-  co_await kitsu_client_->comment_task(task_id_, "自动上传评论", l_movie_file, task_status::get_nearly_completed());
+  co_await kitsu_client_->comment_task(
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_        = task_id_,
+          .comment_        = "更新视频文件",
+          .attach_files_   = l_movie_file,
+          .task_status_id_ = task_status::get_completed(),
+      }
+  );
 }
 boost::asio::awaitable<void> update_movie_compose_files::run() {
   if (movie_compose_file_.empty()) co_return;
@@ -96,6 +103,10 @@ boost::asio::awaitable<void> update_movie_compose_files::run() {
       l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(movie_compose_file_, ".png"))
   );
 
-  co_await kitsu_client_->comment_task_compose_video(task_id_, "送审特效样片", l_movie_path);
+  co_await kitsu_client_->comment_task_compose_video(
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_ = task_id_, .comment_ = "送审特效样片", .attach_files_ = l_movie_path
+      }
+  );
 }
 }  // namespace doodle

@@ -67,8 +67,15 @@ boost::asio::awaitable<void> task_sync::run() {
         if (FSys::is_old_file(l_info.to_path_, l_local_path))
           l_ue_upload_list.push_back({l_local_path, l_relative_path.generic_string()});
       };
-      if (!l_ue_upload_list.empty()) co_await kitsu_client_->upload_shot_animation_ue(l_info.task_id_, l_ue_upload_list);
-      co_await kitsu_client_->comment_task(l_info.task_id_, "上传文件完成", {}, task_status::get_completed());
+      if (!l_ue_upload_list.empty())
+        co_await kitsu_client_->upload_shot_animation_ue(l_info.task_id_, l_ue_upload_list);
+      co_await kitsu_client_->comment_task(
+          kitsu::kitsu_client::comment_task_arg{
+              .task_id_        = l_info.task_id_,
+              .comment_        = "自动同步文件",
+              .task_status_id_ = task_status::get_completed(),
+          }
+      );
     }
   }
 

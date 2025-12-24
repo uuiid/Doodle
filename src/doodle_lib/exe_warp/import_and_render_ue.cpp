@@ -115,9 +115,9 @@ r.CustomDepth=3
     l_set_data("r.Lumen.TranslucencyReflections.FrontLayer.EnableForProject", "False");
     l_set_data("r.Lumen.HardwareRayTracing", "False");
     l_set_data("r.Nanite.ProjectEnabled", "True");
-    l_set_data("r.AllowOcclusionQueries", "False");        // 遮蔽剔除
-    l_set_data("r.DefaultFeature.MotionBlur", "False");    // 移动模糊
-    l_set_data("r.CustomDepth", "3");                      // 自定义深度 3(启用模板)
+    l_set_data("r.AllowOcclusionQueries", "False");      // 遮蔽剔除
+    l_set_data("r.DefaultFeature.MotionBlur", "False");  // 移动模糊
+    l_set_data("r.CustomDepth", "3");                    // 自定义深度 3(启用模板)
   }
 
   if (auto l_find_engine = l_str.find("[/Script/Engine.Engine]"); l_find_engine == std::string::npos) {
@@ -252,7 +252,12 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
     FSys::copy_diff(p.from_, p.to_, logger_ptr_);
   }
   co_await kitsu_client_->comment_task(
-      shot_task_id_, "ue自动运行生成视频", arg_.create_move_path_, task_status::get_completed()
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_        = shot_task_id_,
+          .comment_        = "UE组装和渲染完成，已上传合成视频",
+          .attach_files_   = arg_.create_move_path_,
+          .task_status_id_ = task_status::get_completed(),
+      }
   );
 }
 

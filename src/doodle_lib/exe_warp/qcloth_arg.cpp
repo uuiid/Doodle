@@ -77,7 +77,13 @@ boost::asio::awaitable<void> qcloth_update_arg::run() {
   for (auto& p : l_fbx) {
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, alembic_file_dir_, p.filename());
   }
-  co_await kitsu_client_->comment_task(task_id_, "自动导出和上传文件", {}, task_status::get_nearly_completed());
+  co_await kitsu_client_->comment_task(
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_        = task_id_,
+          .comment_        = "上传qcloth模拟文件",
+          .task_status_id_ = task_status::get_nearly_completed(),
+      }
+  );
 
   co_return;
 }

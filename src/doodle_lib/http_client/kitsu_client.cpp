@@ -386,53 +386,53 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
   co_return l_res.body();
 }
 
-boost::asio::awaitable<void> kitsu_client::comment_task(
-    uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id,
-    std::vector<std::string> in_checklists, std::vector<std::string> in_links
-) const {
+boost::asio::awaitable<void> kitsu_client::comment_task(comment_task_arg in_arg) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
-  uuid l_comment_id = co_await create_comment(in_task_id, in_comment, in_task_status_id, in_checklists, in_links);
-  uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id);
-  if (in_attach_files.empty()) co_return;
+  uuid l_comment_id = co_await create_comment(
+      in_arg.task_id_, in_arg.comment_, in_arg.task_status_id_, in_arg.checklists_, in_arg.links_
+  );
+  if (in_arg.attach_files_.empty()) co_return;
 
+  uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id);
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/pictures/preview-files/{}", l_preview_id), 11
     };
-    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_attach_files.extension())});
+    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_arg.attach_files_.extension())});
     boost::system::error_code l_ec{};
-    l_req.body().open(in_attach_files.string().c_str(), boost::beast::file_mode::read, l_ec);
+    l_req.body().open(in_arg.attach_files_.string().c_str(), boost::beast::file_mode::read, l_ec);
     if (l_ec)
       throw_exception(
-          doodle_error{"kitsu upload comment preview open file error {} {}", in_attach_files, l_ec.message()}
+          doodle_error{"kitsu upload comment preview open file error {} {}", in_arg.attach_files_, l_ec.message()}
       );
     boost::beast::http::response<boost::beast::http::string_body> l_res{};
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
       throw_exception(
-          doodle_error{"kitsu upload comment preview error {} {} {}", in_attach_files, l_res.result(), l_res.body()}
+          doodle_error{
+              "kitsu upload comment preview error {} {} {}", in_arg.attach_files_, l_res.result(), l_res.body()
+          }
       );
   }
   co_return;
 }
 
-boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(
-    uuid in_task_id, std::string in_comment, FSys::path in_attach_files, uuid in_task_status_id,
-    std::vector<std::string> in_checklists, std::vector<std::string> in_links
-) const {
+boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(comment_task_arg in_arg) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
-  uuid l_comment_id = co_await create_comment(in_task_id, in_comment, in_task_status_id, in_checklists, in_links);
-  uuid l_preview_id = co_await create_preview(in_task_id, l_comment_id);
+  uuid l_comment_id = co_await create_comment(
+      in_arg.task_id_, in_arg.comment_, in_arg.task_status_id_, in_arg.checklists_, in_arg.links_
+  );
+  uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id);
 
   {  // 上传附件
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/actions/preview-files/{}/compose-video", l_preview_id), 11
     };
-    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_attach_files.extension())});
+    set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_arg.attach_files_.extension())});
     boost::system::error_code l_ec{};
-    l_req.body().open(in_attach_files.string().c_str(), boost::beast::file_mode::read, l_ec);
+    l_req.body().open(in_arg.attach_files_.string().c_str(), boost::beast::file_mode::read, l_ec);
     DOODLE_CHICK(
-        !l_ec, "comment_task_compose_video :kitsu upload comment preview open file error {} {}", in_attach_files,
+        !l_ec, "comment_task_compose_video :kitsu upload comment preview open file error {} {}", in_arg.attach_files_,
         l_ec.message()
     );
 
@@ -440,7 +440,9 @@ boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(
     co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
     if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
       throw_exception(
-          doodle_error{"kitsu upload comment preview error {} {} {}", in_attach_files, l_res.result(), l_res.body()}
+          doodle_error{
+              "kitsu upload comment preview error {} {} {}", in_arg.attach_files_, l_res.result(), l_res.body()
+          }
       );
   }
   co_return;
