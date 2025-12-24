@@ -51,30 +51,12 @@ std::string get_file_deflate(const FSys::path& in_path) {
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
   auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
 
-  if (l_path.filename() == "index.html") {
-    co_return in_handle->make_msg(
-        l_path, http_header_ctrl{
-                    .mine_type_         = kitsu::mime_type(l_path.extension()),
-                    .has_cache_control_ = false,
-                    .is_deflate_        = false,
-                }
-    );
-  }
-  static std::set<FSys::path> l_binary_exts{".png", ".jpg", ".jpeg", ".gif",  ".ico", ".svgz",
-                                            ".map", ".exe", ".mp4",  ".webm", ".zip"};
-  if (l_binary_exts.contains(l_path.extension()))
-    co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
-
-  std::string l_value{};
-  if (!cache_->Cached(l_path)) cache_->Put(l_path, get_file_deflate(l_path));
-  l_value = *cache_->Get(l_path);
-
   co_return in_handle->make_msg(
-      std::move(l_value), http_header_ctrl{
-                              .mine_type_         = kitsu::mime_type(l_path.extension()),
-                              .has_cache_control_ = false,
-                              .is_deflate_        = true,
-                          }
+      l_path, http_header_ctrl{
+                  .mine_type_         = kitsu::mime_type(l_path.extension()),
+                  .has_cache_control_ = false,
+                  .is_deflate_        = false,
+              }
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
