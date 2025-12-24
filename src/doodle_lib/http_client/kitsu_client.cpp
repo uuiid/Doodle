@@ -73,9 +73,9 @@ boost::asio::awaitable<uuid> kitsu_client::create_comment(
   uuid l_comment_id{};
   {
     nlohmann::json l_json{};
-    l_json["comment"]        = in_comment;
-    l_json["task_status_id"] = in_task_status_id;
-    l_json["checklists"]     = in_checklists;
+    l_json["comment"] = in_comment;
+    if (!in_task_status_id.is_nil()) l_json["task_status_id"] = in_task_status_id;
+    l_json["checklists"] = in_checklists;
     boost::beast::http::request<boost::beast::http::string_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/actions/tasks/{}/comment", in_task_id), 11
     };

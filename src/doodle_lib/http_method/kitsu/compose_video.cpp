@@ -95,13 +95,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   {
     using namespace sqlite_orm;
     auto l_preview_files = l_sql.impl_->storage_any_.get_all<preview_file>(
-        join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_)))
-
-            ,
+        join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
         where(
             c(&task::entity_id_) == l_task.entity_id_ &&
             in(&task::task_type_id_,
-               {task_type::get_simulation_task_id(), task_type::get_lighting_id(), task_type::get_animation_id()})
+               {task_type::get_simulation_task_id(), task_type::get_lighting_id(), task_type::get_animation_id()}) &&
+            c(&preview_file::source_) == preview_file_source_enum::auto_light_generate
         ),
         order_by(&preview_file::created_at_).desc(), limit(1)
     );
