@@ -37,6 +37,8 @@ std::string extension_from_mime_type(detail::content_type in_mime_type) {
       return ".txt";
     case content_type::application_nuknown:
       return ".tmp";
+    case content_type::multipart_form_data:
+      return ".multipart";
     default:
       return "";
   }
