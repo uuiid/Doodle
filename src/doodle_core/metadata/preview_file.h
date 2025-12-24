@@ -43,6 +43,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     preview_file_source_enum, {
                                   {preview_file_source_enum::webgui, "webgui"},
                                   {preview_file_source_enum::auto_light_generate, "auto_light_generate"},
+                                  {preview_file_source_enum::vfx_review, "vfx_review"},
                                   {preview_file_source_enum::render_output, "render_output"},
                               }
 )
