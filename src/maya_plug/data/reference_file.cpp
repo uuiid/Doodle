@@ -243,6 +243,7 @@ MSelectionList reference_file::get_collision_model() const {
 }
 
 std::string reference_file::get_namespace() const {
+  if(file_info_node_.isNull()) return "";
   MStatus l_status{};
   auto l_node = get_ref_node();
   DOODLE_CHICK(!l_node.isNull(), "引用文件 {} 没有连接文件", get_node_full_name(file_info_node_));
