@@ -4,6 +4,7 @@
 
 #include "reference_file.h"
 
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
@@ -164,10 +165,7 @@ generate_fbx_file_path::~generate_fbx_file_path() = default;
 reference_file::reference_file() = default;
 reference_file::reference_file(const MObject& in_ref_node) : file_info_node_(in_ref_node) {}
 
-std::string reference_file::get_file_namespace() const {
-  return file_info_node_.isNull() ? std::string{}
-                                  : conv::to_s(get_plug(file_info_node_, "reference_file_namespace").asString());
-}
+ 
 
 void reference_file::set_use_sim(bool in_use_sim) { set_attribute(file_info_node_, "is_solve", in_use_sim); }
 
@@ -244,8 +242,12 @@ MSelectionList reference_file::get_collision_model() const {
 }
 
 std::string reference_file::get_namespace() const {
-  auto l_n = get_file_namespace();
-  return l_n;
+  MStatus l_status{};
+  auto l_node = get_ref_node();
+  DOODLE_CHICK(!l_node.isNull(), "引用文件没有连接文件");
+  MFnReference l_ref{};
+  maya_chick(l_ref.setObject(l_node));
+  return conv::to_s(l_ref.associatedNamespace(false));
 }
 
 bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path>& in_sim_file_map) const {
@@ -387,8 +389,6 @@ MSelectionList reference_file::get_all_object() const {
   return l_select;
 }
 std::optional<MDagPath> reference_file::export_group_attr() const {
-  // if (get_file_namespace().empty()) return {};
-
   MStatus k_s{};
 
   DOODLE_MAYA_CHICK(k_s);

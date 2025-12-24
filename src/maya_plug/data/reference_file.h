@@ -100,10 +100,7 @@ class generate_abc_file_path : boost::less_than_comparable<generate_abc_file_pat
 class reference_file : public boost::totally_ordered<reference_file> {
  public:
  private:
-  std::string get_file_namespace() const;
-
   MObject file_info_node_;
-
   MObject get_ref_node() const;
 
  public:
