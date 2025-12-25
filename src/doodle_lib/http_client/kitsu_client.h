@@ -44,8 +44,8 @@ class kitsu_client {
 
   /// 创建评论
   boost::asio::awaitable<uuid> create_comment(
-      uuid in_task_id, const std::string& in_comment, const uuid& in_task_status_id = uuid{},
-      const std::vector<std::string>& in_checklists = {}, const std::vector<std::string>& in_links = {}
+      uuid in_task_id, std::string in_comment, uuid in_task_status_id = uuid{},
+      std::vector<std::string> in_checklists = {}, std::vector<std::string> in_links = {}
   ) const;
 
   /// 创建预览

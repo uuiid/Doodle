@@ -86,7 +86,7 @@ boost::asio::awaitable<void> update_movie_files::run() {
           .task_id_        = task_id_,
           .comment_        = "更新视频文件",
           .attach_files_   = l_movie_file,
-          .task_status_id_ = task_status::get_completed(),
+          .task_status_id_ = task_status::get_nearly_completed(),
       }
   );
 }

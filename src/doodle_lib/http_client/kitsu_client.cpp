@@ -66,8 +66,8 @@ boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_as
 }
 
 boost::asio::awaitable<uuid> kitsu_client::create_comment(
-    uuid in_task_id, const std::string& in_comment, const uuid& in_task_status_id,
-    const std::vector<std::string>& in_checklists, const std::vector<std::string>& in_links
+    uuid in_task_id, std::string in_comment, uuid in_task_status_id, std::vector<std::string> in_checklists,
+    std::vector<std::string> in_links
 ) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
   uuid l_comment_id{};
