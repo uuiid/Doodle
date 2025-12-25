@@ -177,7 +177,7 @@ struct shot_for_playlist_t : base_playlist_t {
     parent_name_ = in_seq_ent.name_;
   }
   friend bool operator<(const shot_for_playlist_t& lhs, const shot_for_playlist_t& rhs) {
-    return lhs.sequence_name_ < rhs.sequence_name_;
+    return lhs.name_ < rhs.name_;
   }
   friend bool operator<=(const shot_for_playlist_t& lhs, const shot_for_playlist_t& rhs) { return !(rhs < lhs); }
   friend bool operator>(const shot_for_playlist_t& lhs, const shot_for_playlist_t& rhs) { return rhs < lhs; }
@@ -447,7 +447,7 @@ struct playlist_shot_t : playlist {
           annotations_{in_preview_file.annotations_},
           task_id_{in_preview_file.task_id_},
           preview_file_source_{in_preview_file.source_} {}
-    
+
     uuid id_;
     std::int32_t revision_;
     std::string extension_;
