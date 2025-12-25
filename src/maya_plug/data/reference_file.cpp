@@ -42,6 +42,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
+#include <spdlog/common.h>
 #include <vector>
 
 namespace doodle::maya_plug {
@@ -243,7 +244,8 @@ MSelectionList reference_file::get_collision_model() const {
 }
 
 std::string reference_file::get_namespace() const {
-  if(file_info_node_.isNull()) return "";
+  if (file_info_node_.isNull())
+    return SPDLOG_LOGGER_WARN(default_logger_raw(), "引用文件节点为空, 无法获取名称空间"), "";
   MStatus l_status{};
   auto l_node = get_ref_node();
   DOODLE_CHICK(!l_node.isNull(), "引用文件 {} 没有连接文件", get_node_full_name(file_info_node_));

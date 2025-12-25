@@ -38,23 +38,28 @@ namespace doodle::maya_plug {
 void cloth_sim::create_ref_file() {
   DOODLE_LOG_INFO("开始扫瞄引用");
   all_ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
-  ref_files_ =
-      all_ref_files_ | ranges::views::filter([this](const reference_file& in_handle) -> bool {
-        if (in_handle.export_group_attr() && in_handle.get_use_sim() && in_handle.has_sim_assets_file(sim_file_map_)) {
-          return true;
-        } else {
-          default_logger_raw()->log(log_loc(), level::info, "引用文件{}不解算", in_handle.get_abs_path());
-        }
-        return false;
-      }) |
-      ranges::to<decltype(ref_files_)>;
+
+  for (auto&& l_ref : all_ref_files_) {
+    if (l_ref.export_group_attr() && l_ref.get_use_sim() && l_ref.has_sim_assets_file(sim_file_map_)) {
+      default_logger_raw()->log(log_loc(), level::info, "引用文件{}准备解算", l_ref.get_abs_path());
+      ref_files_.emplace_back(l_ref);
+    } else {
+      default_logger_raw()->log(log_loc(), level::info, "引用文件{}不解算", l_ref.get_abs_path());
+    }
+  }
 }
 void cloth_sim::replace_ref_file() {
   DOODLE_LOG_INFO("开始替换引用");
-  ref_files_ = ref_files_ | ranges::views::filter([this](reference_file& in_handle) -> bool {
-                 return in_handle.replace_sim_assets_file(sim_file_map_);
-               }) |
-               ranges::to<decltype(ref_files_)>;
+  decltype(ref_files_) l_new_ref_files;
+  for (auto&& l_ref : ref_files_) {
+    if (l_ref.replace_sim_assets_file(sim_file_map_)) {
+      SPDLOG_LOGGER_WARN(default_logger_raw(), "引用文件 {} 替换引用成功", l_ref.get_abs_path());
+      l_new_ref_files.emplace_back(l_ref);
+    } else {
+      SPDLOG_LOGGER_WARN(default_logger_raw(), "引用文件 {} 替换引用失败, 不解算", l_ref.get_abs_path());
+    }
+  }
+  ref_files_ = std::move(l_new_ref_files);
 }
 void cloth_sim::create_cloth() {
   DOODLE_LOG_INFO("开始解锁节点 initialShadingGroup");
@@ -68,32 +73,28 @@ void cloth_sim::create_cloth() {
 
   if (!l_cf) return;
 
-  cloth_lists_ = l_cf->create_cloth();
+  auto l_cloth_list_ = l_cf->create_cloth();
   std::map<std::string, reference_file> l_ref_map{};
-  l_ref_map = ref_files_ |
-              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
-                return {in_handle.get_namespace(), in_handle};
-              }) |
-              ranges::to<decltype(l_ref_map)>;
+  for (auto&& in_handle : ref_files_) {
+    l_ref_map[in_handle.get_namespace()] = in_handle;
+  }
 
-  cloth_lists_ |= ranges::actions::remove_if([&](const cloth_interface& in_handle) -> bool {
-    if (l_ref_map.contains(in_handle->get_namespace())) {
-      return false;
+  cloth_lists_.reserve(l_cloth_list_.size());
+  for (auto&& in_handle : l_cloth_list_) {
+    if (!l_ref_map.contains(in_handle->get_namespace())) {
+      default_logger_raw()->log(
+          log_loc(), level::info, "布料{}未找到对应的引用文件, 无法解算, 请查找对应的引用", in_handle->get_shape()
+      );
     }
-    default_logger_raw()->log(
-        log_loc(), level::info, "布料{}未找到对应的引用文件, 无法导出, 不进行解算, 请查找对应的引用",
-        in_handle->get_shape()
-    );
-    return true;
-  });
+    cloth_lists_.emplace_back(in_handle);
+  }
 }
 void cloth_sim::set_cloth_attr() {
   std::map<std::string, reference_file> l_ref_map{};
-  l_ref_map = ref_files_ |
-              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
-                return {in_handle.get_namespace(), in_handle};
-              }) |
-              ranges::to<decltype(l_ref_map)>;
+
+  for (auto&& in_handle : ref_files_) {
+    l_ref_map[in_handle.get_namespace()] = in_handle;
+  }
 
   ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) {
     auto l_ref_h = l_ref_map[in_handle->get_namespace()];
@@ -107,11 +108,10 @@ void cloth_sim::sim() {
   DOODLE_LOG_INFO("开始解算");
 
   std::map<std::string, reference_file> l_ref_map{};
-  l_ref_map = ref_files_ |
-              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
-                return {in_handle.get_namespace(), in_handle};
-              }) |
-              ranges::to<decltype(l_ref_map)>;
+
+  for (auto&& in_handle : ref_files_) {
+    l_ref_map[in_handle.get_namespace()] = in_handle;
+  }
 
   ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) {
     auto l_ref_h = l_ref_map[in_handle->get_namespace()];
@@ -143,11 +143,10 @@ void cloth_sim::touch_sim() {
   DOODLE_LOG_INFO("开始触摸解算");
 
   std::map<std::string, reference_file> l_ref_map{};
-  l_ref_map = ref_files_ |
-              ranges::views::transform([](const reference_file& in_handle) -> std::pair<std::string, reference_file> {
-                return {in_handle.get_namespace(), in_handle};
-              }) |
-              ranges::to<decltype(l_ref_map)>;
+
+  for (auto&& in_handle : ref_files_) {
+    l_ref_map[in_handle.get_namespace()] = in_handle;
+  }
 
   ranges::for_each(cloth_lists_, [&](cloth_interface& in_handle) {
     auto l_ref_h = l_ref_map[in_handle->get_namespace()];
