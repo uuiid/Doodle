@@ -145,12 +145,40 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
 }
 
+struct actions_sequences_task_create_review_arg {
+  // 添加字幕, 混音
+  bool add_subtitle_  = false;
+  bool add_dubbing_   = false;
+  // 添加名称
+  bool add_name_      = false;
+  // 添加片头片尾
+  bool add_head_tail_ = false;
+  // 添加水印
+  bool add_watermark_ = false;
+  // 添加时间码
+  bool add_time_code_ = false;
+
+  friend void from_json(const nlohmann::json& in_json, actions_sequences_task_create_review_arg& out_arg) {
+    if (in_json.contains("add_subtitle")) in_json.at("add_subtitle").get_to(out_arg.add_subtitle_);
+    if (in_json.contains("add_dubbing")) in_json.at("add_dubbing").get_to(out_arg.add_dubbing_);
+    if (in_json.contains("add_name")) in_json.at("add_name").get_to(out_arg.add_name_);
+    if (in_json.contains("add_head_tail")) in_json.at("add_head_tail").get_to(out_arg.add_head_tail_);
+    if (in_json.contains("add_watermark")) in_json.at("add_watermark").get_to(out_arg.add_watermark_);
+    if (in_json.contains("add_time_code")) in_json.at("add_time_code").get_to(out_arg.add_time_code_);
+  }
+};
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_task_create_review, post) {
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_task = l_sql.get_by_uuid<task>(sequence_id_);
+  auto l_arg  = in_handle->get_json().get<actions_sequences_task_create_review_arg>();
   using namespace sqlite_orm;
   auto l_attachment_files =
       l_sql.impl_->storage_any_.get_all<attachment_file>(where(c(&attachment_file::comment_id_) == sequence_id_));
+
+  
+  
+  
 
   co_return in_handle->make_msg(nlohmann::json{} = l_attachment_files);
 }
