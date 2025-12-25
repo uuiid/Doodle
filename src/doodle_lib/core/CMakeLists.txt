@@ -12,7 +12,8 @@ target_sources(doodle_lib
         alembic_file.h
         asyn_task.h
         entity_path.h
-
+        ffmpeg_video.h
+        
         PRIVATE
         filesystem_extend.cpp
         holidaycn_time.cpp
@@ -21,6 +22,8 @@ target_sources(doodle_lib
         fbx_file.cpp
         alembic_file.cpp
         entity_path.cpp
+        ffmpeg_video.cpp
+
 )
 add_subdirectory(http)
 add_subdirectory(socket_io)
