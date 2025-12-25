@@ -390,6 +390,7 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
 
 boost::asio::awaitable<void> kitsu_client::comment_task(comment_task_arg in_arg) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
+  SPDLOG_LOGGER_ERROR(logger_, "创建评论 {} {}", in_arg.task_id_, in_arg.comment_);
   uuid l_comment_id = co_await create_comment(
       in_arg.task_id_, in_arg.comment_, in_arg.task_status_id_, in_arg.checklists_, in_arg.links_
   );
