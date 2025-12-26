@@ -21,50 +21,20 @@ extern "C" {
 #include <libavutil/error.h>
 }
 
+namespace doodle {
+
 namespace {
-
-auto is_eof_error(const std::error_code& ec) -> bool {
-  return ec.category() == av::ffmpeg_category() && ec.value() == AVERROR_EOF;
-}
-
-auto pick_first_video_stream_index(av::FormatContext& ctx) -> av::Stream {
-  for (size_t i = 0; i < ctx.streamsCount(); ++i) {
-    auto st = ctx.stream(i);
-    if (st.isVideo()) {
-      return st;
-    }
-  }
-  return av::Stream{};
-}
-
-auto pick_first_audio_stream_index(av::FormatContext& ctx) -> av::Stream {
-  for (size_t i = 0; i < ctx.streamsCount(); ++i) {
-    auto st = ctx.stream(i);
-    if (st.isAudio()) {
-      return st;
-    }
-  }
-  return av::Stream{};
-}
 
 auto read_next_packet_for_stream(av::FormatContext& ctx, int desired_stream_index) -> std::optional<av::Packet> {
   std::error_code ec{};
-  av::OptionalErrorCode oec{ec};
 
   while (true) {
-    auto pkt = ctx.readPacket(oec);
-    if (ec) {
-      if (is_eof_error(ec)) {
-        return std::nullopt;
-      }
-      throw std::system_error(ec);
-    }
-    if (!pkt || pkt.isNull()) {
-      continue;
-    }
-    if (pkt.streamIndex() != desired_stream_index) {
-      continue;
-    }
+    auto pkt = ctx.readPacket();
+    if (pkt.isNull()) return std::nullopt;
+
+    if (!pkt) continue;
+    if (pkt.streamIndex() != desired_stream_index) continue;
+
     return pkt;
   }
 }
@@ -98,10 +68,34 @@ auto pick_channel_layout(uint64_t preferred, const av::Codec& codec) -> uint64_t
   return layouts.front();
 }
 
+std::uint64_t av_get_default_channel_layout(int nb_channels) {
+  AVChannelLayout ch_layout{};
+  av_channel_layout_default(&ch_layout, nb_channels);
+  if (ch_layout.order == AV_CHANNEL_ORDER_NATIVE) {
+    return ch_layout.u.mask;
+  } else {
+    switch (nb_channels) {
+      case 1:
+        return AV_CH_LAYOUT_MONO;
+      case 2:
+        return AV_CH_LAYOUT_STEREO;
+      case 3:
+        return AV_CH_LAYOUT_SURROUND;
+      case 4:
+        return AV_CH_LAYOUT_4POINT0;
+      case 5:
+        return AV_CH_LAYOUT_5POINT0;
+      case 6:
+        return AV_CH_LAYOUT_5POINT1;
+      case 8:
+        return AV_CH_LAYOUT_7POINT1;
+      default:
+        return AV_CH_LAYOUT_MONO;
+    }
+  }
+}
+
 }  // namespace
-
-namespace doodle {
-
 class ffmpeg_video::impl {
  public:
   impl()  = default;
@@ -224,8 +218,11 @@ class ffmpeg_video::impl {
     audio_handle_.enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
 
     const int l_dst_sample_rate = audio_handle_.dec_ctx_.sampleRate() > 0 ? audio_handle_.dec_ctx_.sampleRate() : 48000;
-    const uint64_t l_dst_layout =
-        pick_channel_layout(audio_handle_.dec_ctx_.channelLayout(), audio_handle_.enc_ctx_.codec());
+    const std::uint64_t l_src_channel_layout = audio_handle_.dec_ctx_.channelLayout() != 0
+                                                   ? audio_handle_.dec_ctx_.channelLayout()
+                                                   : av_get_default_channel_layout(audio_handle_.dec_ctx_.channels());
+
+    const uint64_t l_dst_layout = pick_channel_layout(l_src_channel_layout, audio_handle_.enc_ctx_.codec());
     const av::SampleFormat l_dst_sample_fmt =
         pick_first_supported_sample_fmt(audio_handle_.enc_ctx_.codec(), av::SampleFormat{AV_SAMPLE_FMT_FLTP});
 
@@ -244,7 +241,7 @@ class ffmpeg_video::impl {
         audio_handle_.dec_ctx_.sampleFormat() != audio_handle_.enc_ctx_.sampleFormat()) {
       audio_handle_.resampler_ =
           av::AudioResampler{audio_handle_.enc_ctx_.channelLayout(), audio_handle_.enc_ctx_.sampleRate(),
-                             audio_handle_.enc_ctx_.sampleFormat(),  audio_handle_.dec_ctx_.channelLayout(),
+                             audio_handle_.enc_ctx_.sampleFormat(),  l_src_channel_layout,
                              audio_handle_.dec_ctx_.sampleRate(),    audio_handle_.dec_ctx_.sampleFormat()};
     }
   }
@@ -383,6 +380,7 @@ void ffmpeg_video::process() {
 
   impl_->open(video_path_, out_path_);
   impl_->add_audio(audio_path_);
+  impl_->process();
 }
 
 }  // namespace doodle
