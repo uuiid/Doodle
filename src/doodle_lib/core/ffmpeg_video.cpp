@@ -247,6 +247,11 @@ class ffmpeg_video::impl {
     }
   }
 
+
+  void add_subtitle(const FSys::path& in_subtitle_path) {
+    DOODLE_CHICK(in_subtitle_path.extension() == ".srt", "文件格式不支持, 仅支持 .srt 字幕文件");
+  }
+
   void process_out_video() {
     const int l_out_video_index = out_video_stream_.index();
 
@@ -371,6 +376,9 @@ class ffmpeg_video::impl {
       output_format_context_.writePacket(out_pkt);
     }
   }
+
+  // 处理字幕
+  void process_subtitle() {}
 
   void process() {
     output_format_context_.writeHeader();
