@@ -353,7 +353,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   person_.check_project_access(project_id_);
   if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(sequence_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, sequence_id_));
+  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, sequence_id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset_types_casting::get(
     session_data_ptr in_handle
