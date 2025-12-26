@@ -393,7 +393,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
       );
     });
   }
-  co_await l_sql.install_range(l_entity_links);
+  co_await l_sql.update_range(l_entity_links);
   for (auto&& i : l_delay_events) i();
   data_project_sequences_casting_result_map l_result{};
   std::vector<uuid> l_shot_ids{};
