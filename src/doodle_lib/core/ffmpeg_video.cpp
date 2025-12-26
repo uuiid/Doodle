@@ -17,6 +17,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavutil/channel_layout.h>
 #include <libavutil/error.h>
 }
 
@@ -87,7 +88,7 @@ auto pick_first_supported_sample_fmt(const av::Codec& codec, av::SampleFormat fa
 auto pick_channel_layout(uint64_t preferred, const av::Codec& codec) -> uint64_t {
   auto layouts = codec.supportedChannelLayouts();
   if (layouts.empty()) {
-    return preferred;
+    return preferred != 0 ? preferred : static_cast<uint64_t>(AV_CH_LAYOUT_STEREO);
   }
   for (auto v : layouts) {
     if (v == preferred) {
