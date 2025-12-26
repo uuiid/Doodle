@@ -8,7 +8,6 @@
 #include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/shot.h"
 
-#include "doodle_lib/doodle_lib_fwd.h"
 
 #include <maya_plug/main/maya_plug_fwd.h>
 

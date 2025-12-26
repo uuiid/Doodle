@@ -10,7 +10,6 @@
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/user.h>
 
-#include <doodle_lib/long_task/image_to_move.h>
 
 #include "boost/numeric/conversion/cast.hpp"
 
