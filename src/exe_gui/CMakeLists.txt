@@ -100,6 +100,7 @@ find_file(vcomp140_dll
 install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll 
         ${libomp140_x86_64_dll}
         ${vcomp140_dll}
+        ${PROJECT_BINARY_DIR}/bin/libmp3lame.dll
         $<TARGET_FILE:7zip::7zip>
         DESTINATION bin
 )
