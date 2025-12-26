@@ -19,7 +19,6 @@
 #ifdef fsin
 #undef fsin
 #endif
-#include <doodle_lib/long_task/image_to_move.h>
 
 #include "boost/asio/post.hpp"
 #include "boost/asio/strand.hpp"

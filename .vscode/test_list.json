@@ -17,6 +17,7 @@
     "kitsu/up_file",
     "kitsu/up_file_ue",
     "kitsu/create_comment_task",
-    "auto_light_test/utf16_test"
+    "auto_light_test/utf16_test",
+    "move_test/add_audio"
   ]
 }
