@@ -2,13 +2,20 @@
 
 #include "doodle_core/exception/exception.h"
 
+#include <avcpp/audioresampler.h>
+#include <avcpp/codec.h>
 #include <avcpp/codeccontext.h>
 #include <avcpp/formatcontext.h>
+#include <avcpp/frame.h>
 #include <avcpp/stream.h>
+#include <avcpp/videorescaler.h>
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include <system_error>
 
 extern "C" {
+#include <libavcodec/avcodec.h>
 #include <libavutil/error.h>
 }
 
@@ -60,109 +67,303 @@ auto read_next_packet_for_stream(av::FormatContext& ctx, int desired_stream_inde
   }
 }
 
-auto packet_ts(const av::Packet& pkt) -> av::Timestamp {
-  // Prefer DTS for muxing order; fallback to PTS.
-  auto dts = pkt.dts();
-  if (dts.isValid() && !dts.isNoPts()) {
-    return dts;
+auto pick_first_supported_pix_fmt(const av::Codec& codec, av::PixelFormat fallback) -> av::PixelFormat {
+  auto fmts = codec.supportedPixelFormats();
+  if (!fmts.empty() && fmts.front() != av::PixelFormat{AV_PIX_FMT_NONE}) {
+    return fmts.front();
   }
-  return pkt.pts();
+  return fallback;
 }
 
-auto rewrite_packet_timestamps(av::Packet& pkt, const av::Rational& out_tb) -> void {
-  auto pts = pkt.pts();
-  if (pts.isValid() && !pts.isNoPts()) {
-    pkt.setPts(av::Timestamp{pts.timestamp(out_tb), out_tb});
+auto pick_first_supported_sample_fmt(const av::Codec& codec, av::SampleFormat fallback) -> av::SampleFormat {
+  auto fmts = codec.supportedSampleFormats();
+  if (!fmts.empty() && fmts.front() != av::SampleFormat{AV_SAMPLE_FMT_NONE}) {
+    return fmts.front();
   }
-  auto dts = pkt.dts();
-  if (dts.isValid() && !dts.isNoPts()) {
-    pkt.setDts(av::Timestamp{dts.timestamp(out_tb), out_tb});
+  return fallback;
+}
+
+auto pick_channel_layout(uint64_t preferred, const av::Codec& codec) -> uint64_t {
+  auto layouts = codec.supportedChannelLayouts();
+  if (layouts.empty()) {
+    return preferred;
   }
-  pkt.setTimeBase(out_tb);
+  for (auto v : layouts) {
+    if (v == preferred) {
+      return preferred;
+    }
+  }
+  return layouts.front();
 }
 
 }  // namespace
 
 namespace doodle {
-void ffmpeg_video::process() {
-  //   ffmpeg处理视频
 
-  // 打开视频文件
-  av::FormatContext l_format_context{};
-  l_format_context.openInput(video_path_.string());
-  l_format_context.findStreamInfo();
+class ffmpeg_video::impl {
+ public:
+  impl()  = default;
+  ~impl() = default;
 
-  av::Stream l_in_video_stream = pick_first_video_stream_index(l_format_context);
-  DOODLE_CHICK(l_in_video_stream.isValid(), "ffmpeg_video: input has no video stream");
+  av::FormatContext input_format_context_;
+  av::FormatContext output_format_context_;
+  av::Stream in_video_stream_;
+  av::Stream out_video_stream_;
 
-  // 打开输出文件
-  av::FormatContext l_output_format_context{};
-  l_output_format_context.openOutput(out_path_.string());
+  //
+  av::Codec in_video_codec_;
+  av::Codec h264_codec_;
 
-  // 仅拷贝输入视频的第一个视频流
-  auto l_out_video_stream = l_output_format_context.addStream();
-  l_out_video_stream.setCodecParameters(l_in_video_stream.codecParameters());
-  l_out_video_stream.setTimeBase(l_in_video_stream.timeBase());
-  l_out_video_stream.setFrameRate(l_in_video_stream.frameRate());
-  l_out_video_stream.setAverageFrameRate(l_in_video_stream.averageFrameRate());
-  l_out_video_stream.setSampleAspectRatio(l_in_video_stream.sampleAspectRatio());
-  const int l_out_video_index = l_out_video_stream.index();
+  av::VideoDecoderContext in_video_dec_ctx_;
+  av::VideoEncoderContext out_video_enc_ctx_;
 
-  // 添加音频流
-  std::optional<av::FormatContext> l_audio_format_context{};
-  av::Stream l_audio_stream{};
-  int l_out_audio_index = -1;
+  // 转换器
+  av::VideoRescaler video_rescaler_;
 
-  if (!audio_path_.empty()) {
-    l_audio_format_context.emplace();
-    l_audio_format_context->openInput(audio_path_.string());
-    l_audio_format_context->findStreamInfo();
+  // 音频组件
+  struct {
+    av::FormatContext format_context_;
+    av::Stream stream_;
+    av::Codec codec_;
+    av::AudioEncoderContext enc_ctx_;
+    av::AudioDecoderContext dec_ctx_;
+    av::AudioResampler resampler_;
+    av::Stream out_stream_;
+  } audio_handle_;
+  constexpr static int g_fps = 25;
 
-    l_audio_stream = pick_first_audio_stream_index(*l_audio_format_context);
-    DOODLE_CHICK(l_audio_stream.isValid(), "ffmpeg_video: audio input has no audio stream");
-
-    auto l_in_audio_stream  = l_audio_format_context->stream(static_cast<size_t>(l_audio_stream.index()));
-    auto l_out_audio_stream = l_output_format_context.addStream();
-    l_out_audio_stream.setCodecParameters(l_in_audio_stream.codecParameters());
-    l_out_audio_stream.setTimeBase(l_in_audio_stream.timeBase());
-    const int l_tmp_out_audio_index = l_out_audio_stream.index();
-    l_out_audio_index               = l_tmp_out_audio_index;
+  const av::Rational& get_video_time_base() const {
+    static const av::Rational l_video_tb{1, g_fps};
+    return l_video_tb;
   }
 
-  l_output_format_context.writeHeader();
+  void open(const FSys::path& in_path, const FSys::path& out_path) {
+    input_format_context_.openInput(in_path.string());
+    input_format_context_.findStreamInfo();
 
-  std::optional<av::Packet> l_next_video = read_next_packet_for_stream(l_format_context, l_in_video_stream.index());
-  std::optional<av::Packet> l_next_audio{};
-  if (l_audio_format_context && l_audio_stream.isValid()) {
-    l_next_audio = read_next_packet_for_stream(*l_audio_format_context, l_audio_stream.index());
-  }
+    output_format_context_.openOutput(out_path.string());
 
-  while (l_next_video || l_next_audio) {
-    const bool take_video = [&]() {
-      if (l_next_video && l_next_audio) {
-        return packet_ts(*l_next_video) <= packet_ts(*l_next_audio);
+    for (size_t i = 0; i < input_format_context_.streamsCount(); ++i) {
+      auto st = input_format_context_.stream(i);
+      if (st.isVideo()) {
+        in_video_stream_ = st;
       }
-      return static_cast<bool>(l_next_video);
-    }();
+    }
+    DOODLE_CHICK(in_video_stream_.isValid(), "ffmpeg_video: input has no video stream");
 
-    if (take_video) {
-      auto pkt    = std::move(*l_next_video);
-      auto out_st = l_output_format_context.stream(static_cast<size_t>(l_out_video_index));
-      rewrite_packet_timestamps(pkt, out_st.timeBase());
-      pkt.setStreamIndex(l_out_video_index);
-      l_output_format_context.writePacket(pkt);
-      l_next_video = read_next_packet_for_stream(l_format_context, l_in_video_stream.index());
-    } else {
-      auto pkt    = std::move(*l_next_audio);
-      auto out_st = l_output_format_context.stream(static_cast<size_t>(l_out_audio_index));
-      rewrite_packet_timestamps(pkt, out_st.timeBase());
-      pkt.setStreamIndex(l_out_audio_index);
-      l_output_format_context.writePacket(pkt);
-      l_next_audio = read_next_packet_for_stream(*l_audio_format_context, l_audio_stream.index());
+    in_video_codec_ = in_video_stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!in_video_codec_.isNull(), "ffmpeg_video: cannot find video decoder");
+    DOODLE_CHICK(in_video_codec_.isDecoder(), "ffmpeg_video: video decoder is not decoder");
+    h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
+    DOODLE_CHICK(h264_codec_.canEncode(), "ffmpeg_video: cannot find H264 encoder");
+
+    in_video_dec_ctx_ = av::VideoDecoderContext{in_video_stream_, in_video_codec_};
+    in_video_dec_ctx_.open();
+
+    constexpr static int k_fps = 25;
+    const static av::Rational l_video_tb{1, k_fps};
+    out_video_enc_ctx_ = av::VideoEncoderContext{h264_codec_};
+    out_video_enc_ctx_.setWidth(in_video_dec_ctx_.width());
+    out_video_enc_ctx_.setHeight(in_video_dec_ctx_.height());
+    out_video_enc_ctx_.setTimeBase(l_video_tb);
+    out_video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(h264_codec_, in_video_dec_ctx_.pixelFormat()));
+    out_video_enc_ctx_.open();
+
+    out_video_stream_ = output_format_context_.addStream(out_video_enc_ctx_);
+    out_video_stream_.setTimeBase(l_video_tb);
+    out_video_stream_.setFrameRate(av::Rational{k_fps, 1});
+    out_video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+
+    if (in_video_dec_ctx_.width() != out_video_enc_ctx_.width() ||
+        in_video_dec_ctx_.height() != out_video_enc_ctx_.height() ||
+        in_video_dec_ctx_.pixelFormat() != out_video_enc_ctx_.pixelFormat()) {
+      video_rescaler_ =
+          av::VideoRescaler{out_video_enc_ctx_.width(), out_video_enc_ctx_.height(), out_video_enc_ctx_.pixelFormat(),
+                            in_video_dec_ctx_.width(),  in_video_dec_ctx_.height(),  in_video_dec_ctx_.pixelFormat()};
     }
   }
 
-  l_output_format_context.writeTrailer();
+  void add_audio(const FSys::path& in_audio_path) {
+    audio_handle_.format_context_.openInput(in_audio_path.string());
+    audio_handle_.format_context_.findStreamInfo();
+
+    for (size_t i = 0; i < audio_handle_.format_context_.streamsCount(); ++i) {
+      auto st = audio_handle_.format_context_.stream(i);
+      if (st.isAudio()) {
+        audio_handle_.stream_ = st;
+      }
+    }
+    DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio input has no audio stream");
+
+    audio_handle_.codec_ = audio_handle_.stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!audio_handle_.codec_.isNull(), "ffmpeg_video: cannot find audio decoder");
+    DOODLE_CHICK(audio_handle_.codec_.canDecode(), "ffmpeg_video: cannot find audio decoder");
+
+    audio_handle_.dec_ctx_ = av::AudioDecoderContext{audio_handle_.stream_, audio_handle_.codec_};
+    audio_handle_.dec_ctx_.open();
+
+    audio_handle_.enc_ctx_      = av::AudioEncoderContext{av::findEncodingCodec(AV_CODEC_ID_AAC)};
+
+    const int l_dst_sample_rate = audio_handle_.dec_ctx_.sampleRate() > 0 ? audio_handle_.dec_ctx_.sampleRate() : 48000;
+    const uint64_t l_dst_layout =
+        pick_channel_layout(audio_handle_.dec_ctx_.channelLayout(), audio_handle_.enc_ctx_.codec());
+    const av::SampleFormat l_dst_sample_fmt =
+        pick_first_supported_sample_fmt(audio_handle_.enc_ctx_.codec(), av::SampleFormat{AV_SAMPLE_FMT_FLTP});
+
+    audio_handle_.enc_ctx_.setSampleRate(l_dst_sample_rate);
+    audio_handle_.enc_ctx_.setChannelLayout(l_dst_layout);
+    audio_handle_.enc_ctx_.setSampleFormat(l_dst_sample_fmt);
+    const av::Rational l_audio_tb{1, audio_handle_.enc_ctx_.sampleRate()};
+    audio_handle_.enc_ctx_.setTimeBase(l_audio_tb);
+    audio_handle_.enc_ctx_.open();
+
+    audio_handle_.out_stream_ = output_format_context_.addStream(audio_handle_.enc_ctx_);
+    audio_handle_.out_stream_.setTimeBase(l_audio_tb);
+
+    if (audio_handle_.dec_ctx_.sampleRate() != audio_handle_.enc_ctx_.sampleRate() ||
+        audio_handle_.dec_ctx_.channelLayout() != audio_handle_.enc_ctx_.channelLayout() ||
+        audio_handle_.dec_ctx_.sampleFormat() != audio_handle_.enc_ctx_.sampleFormat()) {
+      audio_handle_.resampler_ =
+          av::AudioResampler{audio_handle_.enc_ctx_.channelLayout(), audio_handle_.enc_ctx_.sampleRate(),
+                             audio_handle_.enc_ctx_.sampleFormat(),  audio_handle_.dec_ctx_.channelLayout(),
+                             audio_handle_.dec_ctx_.sampleRate(),    audio_handle_.dec_ctx_.sampleFormat()};
+    }
+  }
+
+  void process_out_video() {
+    const int l_out_video_index = out_video_stream_.index();
+
+    // -----------------
+    // Encode video packets
+    // -----------------
+    int64_t l_video_frame_index = 0;
+    while (auto pkt_opt = read_next_packet_for_stream(input_format_context_, in_video_stream_.index())) {
+      auto frame = in_video_dec_ctx_.decode(*pkt_opt);
+      if (!frame) {
+        continue;
+      }
+      if (video_rescaler_.isValid()) {
+        auto dst = video_rescaler_.rescale(frame);
+        dst.setTimeBase(get_video_time_base());
+        dst.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
+        // out_video_enc_ctx_
+        auto out_pkt = out_video_enc_ctx_.encode(dst);
+        if (out_pkt && !out_pkt.isNull()) {
+          out_pkt.setTimeBase(get_video_time_base());
+          out_pkt.setStreamIndex(l_out_video_index);
+          output_format_context_.writePacket(out_pkt);
+        }
+      } else {
+        frame.setTimeBase(get_video_time_base());
+        frame.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
+        auto out_pkt = out_video_enc_ctx_.encode(frame);
+        if (out_pkt && !out_pkt.isNull()) {
+          out_pkt.setTimeBase(get_video_time_base());
+          out_pkt.setStreamIndex(l_out_video_index);
+          output_format_context_.writePacket(out_pkt);
+        }
+      }
+    }
+
+    // Flush video encoder
+    while (true) {
+      auto out_pkt = out_video_enc_ctx_.encode();
+      if (!out_pkt || out_pkt.isNull()) {
+        break;
+      }
+      out_pkt.setTimeBase(get_video_time_base());
+      out_pkt.setStreamIndex(l_out_video_index);
+      output_format_context_.writePacket(out_pkt);
+    }
+  }
+
+  void process_audio() {
+    // -----------------
+    // Encode audio packets
+    // -----------------
+    const av::Rational l_audio_tb{1, audio_handle_.enc_ctx_.sampleRate()};
+    const int l_out_audio_index  = audio_handle_.out_stream_.index();
+
+    const int l_audio_frame_size = audio_handle_.enc_ctx_.frameSize() > 0 ? audio_handle_.enc_ctx_.frameSize() : 1024;
+    int64_t l_audio_samples_written = 0;
+
+    auto encode_audio_samples       = [&](av::AudioSamples& samples) {
+      samples.setTimeBase(l_audio_tb);
+      samples.setPts(av::Timestamp{l_audio_samples_written, l_audio_tb});
+      l_audio_samples_written += samples.samplesCount();
+      auto out_pkt = audio_handle_.enc_ctx_.encode(samples);
+      if (out_pkt && !out_pkt.isNull()) {
+        out_pkt.setTimeBase(l_audio_tb);
+        out_pkt.setStreamIndex(l_out_audio_index);
+        output_format_context_.writePacket(out_pkt);
+      }
+    };
+
+    while (auto pkt_opt = read_next_packet_for_stream(audio_handle_.format_context_, audio_handle_.stream_.index())) {
+      auto samples = audio_handle_.dec_ctx_.decode(*pkt_opt);
+      if (!samples) {
+        continue;
+      }
+
+      if (audio_handle_.resampler_.isValid()) {
+        audio_handle_.resampler_.push(samples);
+        while (true) {
+          auto out = audio_handle_.resampler_.pop(static_cast<size_t>(l_audio_frame_size));
+          if (!out) {
+            break;
+          }
+          encode_audio_samples(out);
+        }
+      } else {
+        encode_audio_samples(samples);
+      }
+    }
+
+    // Flush resampler delayed samples
+    if (audio_handle_.resampler_.isValid()) {
+      while (true) {
+        auto out = audio_handle_.resampler_.pop(0);
+        if (!out) {
+          break;
+        }
+        encode_audio_samples(out);
+      }
+    }
+
+    // Flush audio encoder
+    while (true) {
+      auto out_pkt = audio_handle_.enc_ctx_.encode();
+      if (!out_pkt || out_pkt.isNull()) {
+        break;
+      }
+      out_pkt.setTimeBase(l_audio_tb);
+      out_pkt.setStreamIndex(l_out_audio_index);
+      output_format_context_.writePacket(out_pkt);
+    }
+  }
+
+  void process() {
+    output_format_context_.writeHeader();
+    process_out_video();
+    if (!audio_handle_.format_context_.isNull()) {
+      process_audio();
+    }
+
+    output_format_context_.writeTrailer();
+  }
+};
+
+ffmpeg_video::ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path)
+    : impl_(std::make_unique<impl>()), video_path_(in_video_path), out_path_(in_out_path) {}
+
+ffmpeg_video::~ffmpeg_video() = default;
+
+void ffmpeg_video::process() {
+  out_path_.replace_extension(".mp4");
+  DOODLE_CHICK(!video_path_.empty() && FSys::exists(video_path_), "ffmpeg_video: video path is empty or not exists");
+
+  impl_->open(video_path_, out_path_);
+  impl_->add_audio(audio_path_);
 }
 
 }  // namespace doodle

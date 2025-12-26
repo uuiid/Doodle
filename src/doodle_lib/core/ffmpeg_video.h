@@ -6,6 +6,9 @@
 
 namespace doodle {
 class ffmpeg_video {
+  class impl;
+  std::unique_ptr<impl> impl_;
+
   // 主要处理的视频
   FSys::path video_path_;
   // 输出文件
@@ -24,9 +27,8 @@ class ffmpeg_video {
   bool time_code_{false};
 
  public:
-  explicit ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path)
-      : video_path_(in_video_path), out_path_(in_out_path) {}
-
+  explicit ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path);
+  ~ffmpeg_video();
   void set_subtitle(const FSys::path& in_subtitle_path) { subtitle_path_ = in_subtitle_path; }
   void set_audio(const FSys::path& in_audio_path) { audio_path_ = in_audio_path; }
   void set_intro(const FSys::path& in_intro_path) { intro_path_ = in_intro_path; }
