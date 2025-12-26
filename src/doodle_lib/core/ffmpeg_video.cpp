@@ -322,6 +322,23 @@ class ffmpeg_video::impl {
         continue;
       }
 
+      // avcpp may report channelsLayout() as 0 with FFmpeg new channel layout API
+      // (e.g. when ch_layout.order is not AV_CHANNEL_ORDER_NATIVE). AudioResampler
+      // requires a stable, non-zero layout mask, so we synthesize a default one.
+      if (samples.channelsLayout() == 0) {
+        int channels = samples.channelsCount();
+        if (channels <= 0) {
+          channels = audio_handle_.dec_ctx_.channels();
+        }
+        if (channels <= 0) {
+          channels = 2;
+        }
+        av::frame::set_channel_layout(samples.raw(), av_get_default_channel_layout(channels));
+      }
+      if (samples.sampleRate() <= 0) {
+        av::frame::set_sample_rate(samples.raw(), audio_handle_.dec_ctx_.sampleRate());
+      }
+
       if (audio_handle_.resampler_.isValid()) {
         audio_handle_.resampler_.push(samples);
         while (true) {
@@ -338,13 +355,9 @@ class ffmpeg_video::impl {
 
     // Flush resampler delayed samples
     if (audio_handle_.resampler_.isValid()) {
-      while (true) {
-        auto out = audio_handle_.resampler_.pop(0);
-        if (!out) {
-          break;
-        }
-        encode_audio_samples(out);
-      }
+      // 为 0 时会一次提取所有样本, 不需要循环
+      auto out = audio_handle_.resampler_.pop(0);
+      if (out) encode_audio_samples(out);
     }
 
     // Flush audio encoder
