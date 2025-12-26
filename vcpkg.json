@@ -105,7 +105,14 @@
       ]
     },
     "cgal",
-    "avcpp"
+    "avcpp",
+    {
+      "name": "ffmpeg",
+      "default-features": true,
+      "features": [
+        "all-gpl"
+      ]
+    }
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
