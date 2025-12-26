@@ -84,8 +84,10 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   }
   co_await kitsu_client_->comment_task(
       kitsu::kitsu_client::comment_task_arg{
-          .task_id_        = task_id_,
-          .comment_        = "自动导出和上传文件",
+          .task_id_ = task_id_,
+          .comment_ = fmt::format(
+              "自动导出和上传文件 拍屏 {}, 只上传 {}", create_play_blast_ ? "是" : "否", only_upload_ ? "是" : "否"
+          ),
           .attach_files_   = l_out_arg_.movie_file_,
           .task_status_id_ = task_status::get_nearly_completed(),
       }
