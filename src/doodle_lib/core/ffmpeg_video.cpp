@@ -8,6 +8,7 @@
 #include <avcpp/formatcontext.h>
 #include <avcpp/frame.h>
 #include <avcpp/stream.h>
+#include <avcpp/timestamp.h>
 #include <avcpp/videorescaler.h>
 #include <cstdint>
 #include <memory>
@@ -119,6 +120,8 @@ class ffmpeg_video::impl {
 
   // 转换器
   av::VideoRescaler video_rescaler_;
+  // 视频长度
+  av::Timestamp video_duration_{};
 
   // 音频组件
   struct {
@@ -140,6 +143,9 @@ class ffmpeg_video::impl {
   void open(const FSys::path& in_path, const FSys::path& out_path) {
     input_format_context_.openInput(in_path.string());
     input_format_context_.findStreamInfo();
+
+    // 获取视频长度
+    video_duration_ = input_format_context_.duration();
 
     output_format_context_.openOutput(out_path.string());
 
@@ -186,6 +192,15 @@ class ffmpeg_video::impl {
   void add_audio(const FSys::path& in_audio_path) {
     audio_handle_.format_context_.openInput(in_audio_path.string());
     audio_handle_.format_context_.findStreamInfo();
+
+    // 获取音频长度并进行检查
+    auto l_audio_duration = audio_handle_.format_context_.duration();
+    DOODLE_CHICK(
+        l_audio_duration == video_duration_,
+        std::format(
+            "ffmpeg_video: audio duration {} does not match video duration {}", l_audio_duration, video_duration_
+        )
+    );
 
     for (size_t i = 0; i < audio_handle_.format_context_.streamsCount(); ++i) {
       auto st = audio_handle_.format_context_.stream(i);
