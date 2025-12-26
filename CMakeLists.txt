@@ -105,6 +105,8 @@ find_package(unofficial-bit7z CONFIG REQUIRED)
 find_package(Torch CONFIG REQUIRED)
 # 寻找 mimalloc
 find_package(mimalloc CONFIG REQUIRED)
+# 寻找 ffmpeg和包装
+find_package(avcpp CONFIG REQUIRED)
 
 # 启用测试
 enable_testing()

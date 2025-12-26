@@ -5,12 +5,14 @@
 #include "doodle_core/core/app_base.h"
 #include <doodle_core/doodle_core.h>
 
+#include <doodle_lib/core/ffmpeg_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/test/unit_test.hpp>
 
 #include <crtdbg.h>
 #include <stdlib.h>
+
 BOOST_AUTO_TEST_SUITE(move_test)
 using namespace doodle;
 BOOST_AUTO_TEST_CASE(create) {
@@ -25,6 +27,15 @@ BOOST_AUTO_TEST_CASE(create) {
   movie::image_attr::extract_num(l_image_list);
 
   detail::create_move(l_out_file, spdlog::default_logger(), l_image_list, {1920, 1080});
+}
+BOOST_AUTO_TEST_CASE(add_audio) {
+  app_base l_app{};
+  auto l_in_file  = "E:/Doodle/build/EXR_24_12_13.mp4";
+  auto l_out_file = "E:/Doodle/build/EXR_24_12_13_audio.mp4";
+  auto l_audio    = "E:/Doodle/build/audio.wav";
+  ffmpeg_video l_video{l_in_file, l_out_file};
+  l_video.set_audio(l_audio);
+  l_video.process();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

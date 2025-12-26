@@ -78,6 +78,9 @@ target_link_libraries(doodle_lib
         unofficial::bit7z::bit7z64
         torch
         Fbx::Fbx-static
+        avcpp::avcpp
+        avcpp::FFmpeg
+
         #        OpenSSL::applink
 )
 
