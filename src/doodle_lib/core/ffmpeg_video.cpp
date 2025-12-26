@@ -249,7 +249,15 @@ class ffmpeg_video::impl {
 
 
   void add_subtitle(const FSys::path& in_subtitle_path) {
-    DOODLE_CHICK(in_subtitle_path.extension() == ".srt", "文件格式不支持, 仅支持 .srt 字幕文件");
+    DOODLE_CHICK(!in_subtitle_path.empty(), "字幕路径为空");
+    DOODLE_CHICK(FSys::exists(in_subtitle_path), std::format("字幕文件不存在: {}", in_subtitle_path.string()));
+    DOODLE_CHICK(
+        FSys::is_regular_file(in_subtitle_path), std::format("字幕路径不是文件: {}", in_subtitle_path.string())
+    );
+
+    auto ext = in_subtitle_path.extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    DOODLE_CHICK(ext == ".srt", "文件格式不支持, 仅支持 .srt 字幕文件");
   }
 
   void process_out_video() {
