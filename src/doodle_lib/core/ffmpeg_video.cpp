@@ -239,10 +239,11 @@ class ffmpeg_video::impl {
     if (audio_handle_.dec_ctx_.sampleRate() != audio_handle_.enc_ctx_.sampleRate() ||
         audio_handle_.dec_ctx_.channelLayout() != audio_handle_.enc_ctx_.channelLayout() ||
         audio_handle_.dec_ctx_.sampleFormat() != audio_handle_.enc_ctx_.sampleFormat()) {
-      audio_handle_.resampler_ =
-          av::AudioResampler{audio_handle_.enc_ctx_.channelLayout(), audio_handle_.enc_ctx_.sampleRate(),
-                             audio_handle_.enc_ctx_.sampleFormat(),  l_src_channel_layout,
-                             audio_handle_.dec_ctx_.sampleRate(),    audio_handle_.dec_ctx_.sampleFormat()};
+      audio_handle_.resampler_.init(
+          audio_handle_.enc_ctx_.channelLayout(), audio_handle_.enc_ctx_.sampleRate(),
+          audio_handle_.enc_ctx_.sampleFormat(), l_src_channel_layout, audio_handle_.dec_ctx_.sampleRate(),
+          audio_handle_.dec_ctx_.sampleFormat()
+      );
     }
   }
 
