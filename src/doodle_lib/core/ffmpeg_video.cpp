@@ -153,6 +153,7 @@ class ffmpeg_video::impl {
       auto st = input_format_context_.stream(i);
       if (st.isVideo()) {
         in_video_stream_ = st;
+        break;
       }
     }
     DOODLE_CHICK(in_video_stream_.isValid(), "ffmpeg_video: input has no video stream");
@@ -206,6 +207,7 @@ class ffmpeg_video::impl {
       auto st = audio_handle_.format_context_.stream(i);
       if (st.isAudio()) {
         audio_handle_.stream_ = st;
+        break;
       }
     }
     DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio input has no audio stream");
@@ -217,7 +219,8 @@ class ffmpeg_video::impl {
     audio_handle_.dec_ctx_ = av::AudioDecoderContext{audio_handle_.stream_, audio_handle_.codec_};
     audio_handle_.dec_ctx_.open();
 
-    audio_handle_.enc_ctx_      = av::AudioEncoderContext{av::findEncodingCodec(AV_CODEC_ID_AAC)};
+    audio_handle_.enc_ctx_ = av::AudioEncoderContext{};
+    audio_handle_.enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
 
     const int l_dst_sample_rate = audio_handle_.dec_ctx_.sampleRate() > 0 ? audio_handle_.dec_ctx_.sampleRate() : 48000;
     const uint64_t l_dst_layout =

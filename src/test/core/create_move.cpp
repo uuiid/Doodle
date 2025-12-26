@@ -30,9 +30,9 @@ BOOST_AUTO_TEST_CASE(create) {
 }
 BOOST_AUTO_TEST_CASE(add_audio) {
   app_base l_app{};
-  auto l_in_file  = "E:/Doodle/build/EXR_24_12_13.mp4";
-  auto l_out_file = "E:/Doodle/build/EXR_24_12_13_audio.mp4";
-  auto l_audio    = "E:/Doodle/build/audio.wav";
+  auto l_in_file  = "D:/test_files/calp_test/v2.mp4";
+  auto l_out_file = "D:/test_files/calp_test/v2_audio.mp4";
+  auto l_audio    = "D:/test_files/calp_test/v1.wav";
   ffmpeg_video l_video{l_in_file, l_out_file};
   l_video.set_audio(l_audio);
   l_video.process();
