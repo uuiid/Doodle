@@ -977,7 +977,7 @@ struct sqlite_database_impl {
   T get_by_uuid(const uuid& in_uuid) {
     using namespace sqlite_orm;
     auto l_vec = storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_id_) == in_uuid));
-    if (l_vec.empty()) throw_exception(doodle_error{"id对应的实体不存在"});
+    if (l_vec.empty()) throw_exception(doodle_error{" {} id {}对应的实体不存在", typeid(T).name(), in_uuid});
     return l_vec[0];
   }
 
