@@ -59,6 +59,9 @@ boost::asio::awaitable<create_comment_result> create_comment(
   auto l_task = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
 
   if (in_comment->task_status_id_.is_nil()) in_comment->task_status_id_ = l_task->task_status_id_;
+
+  in_person->check_task_status_access(in_comment->task_status_id_);
+
   auto l_task_status = l_sql.get_by_uuid<task_status>(in_comment->task_status_id_);
   l_task_status.check_retake_capping(*l_task);
   std::vector<attachment_file> l_attachment_files{};
@@ -188,8 +191,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
-  person_.check_task_status_access(l_comment->task_status_id_);
-
   auto l_result = co_await create_comment(l_comment, &person_, id_, l_files);
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
@@ -202,7 +203,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   std::vector<create_comment_result> l_result{};
   for (auto&& i : in_handle->get_json()) {
     auto l_comm = std::make_shared<comment>(i.get<comment>());
-    person_.check_task_status_access(l_comm->task_status_id_);
     default_logger_raw()->info("{} 创建评论", person_.person_.email_);
     l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
   }
