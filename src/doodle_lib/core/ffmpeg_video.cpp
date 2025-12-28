@@ -577,6 +577,80 @@ void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FS
         l_dec_ctx.sampleRate(), l_dec_ctx.sampleFormat()
     );
   }
+
+  l_output_ctx.writeHeader();
+
+  const int l_audio_frame_size    = l_enc_ctx.frameSize() > 0 ? l_enc_ctx.frameSize() : 1024;
+  int64_t l_audio_samples_written = 0;
+
+  auto encode_audio_samples       = [&](av::AudioSamples& samples) {
+    samples.setTimeBase(l_audio_tb);
+    samples.setPts(av::Timestamp{l_audio_samples_written, l_audio_tb});
+    l_audio_samples_written += samples.samplesCount();
+    auto out_pkt = l_enc_ctx.encode(samples);
+    if (out_pkt && !out_pkt.isNull()) {
+      out_pkt.setTimeBase(l_audio_tb);
+      out_pkt.setStreamIndex(l_out_stream.index());
+      l_output_ctx.writePacket(out_pkt);
+    }
+  };
+
+  while (auto pkt_opt = read_next_packet_for_stream(l_input_ctx, l_in_audio_stream.index())) {
+    auto samples = l_dec_ctx.decode(*pkt_opt);
+    if (!samples) {
+      continue;
+    }
+
+    // avcpp may report channelsLayout() as 0 with FFmpeg new channel layout API
+    // (e.g. when ch_layout.order is not AV_CHANNEL_ORDER_NATIVE). AudioResampler
+    // requires a stable, non-zero layout mask, so we synthesize a default one.
+    if (samples.channelsLayout() == 0) {
+      int channels = samples.channelsCount();
+      if (channels <= 0) {
+        channels = l_dec_ctx.channels();
+      }
+      if (channels <= 0) {
+        channels = 2;
+      }
+      av::frame::set_channel_layout(samples.raw(), av_get_default_channel_layout(channels));
+    }
+    if (samples.sampleRate() <= 0) {
+      av::frame::set_sample_rate(samples.raw(), l_dec_ctx.sampleRate());
+    }
+
+    if (l_resampler.isValid()) {
+      l_resampler.push(samples);
+      while (true) {
+        auto out = l_resampler.pop(static_cast<size_t>(l_audio_frame_size));
+        if (!out) {
+          break;
+        }
+        encode_audio_samples(out);
+      }
+    } else {
+      encode_audio_samples(samples);
+    }
+  }
+
+  // Flush resampler delayed samples
+  if (l_resampler.isValid()) {
+    // 为 0 时会一次提取所有样本, 不需要循环
+    auto out = l_resampler.pop(0);
+    if (out) encode_audio_samples(out);
+  }
+
+  // Flush audio encoder
+  while (true) {
+    auto out_pkt = l_enc_ctx.encode();
+    if (!out_pkt || out_pkt.isNull()) {
+      break;
+    }
+    out_pkt.setTimeBase(l_audio_tb);
+    out_pkt.setStreamIndex(l_out_stream.index());
+    l_output_ctx.writePacket(out_pkt);
+  }
+
+  l_output_ctx.writeTrailer();
 }
 
 }  // namespace doodle
