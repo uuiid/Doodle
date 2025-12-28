@@ -1,6 +1,11 @@
+//
+// Created by TD on 25-2-28.
+//
+
 #pragma once
 
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/core/file_sys.h>
 
 #include <string>
 
@@ -37,5 +42,8 @@ class ffmpeg_video {
   void set_time_code(bool in_time_code) { time_code_ = in_time_code; }
   // 开始处理
   void process();
+
+  /// 预处理 .wav 音频文件，转换为 AAC 编码, 立体声
+  static void preprocess_wav_to_aac(const FSys::path& in_wav_path, const FSys::path& in_out_path);
 };
 }  // namespace doodle

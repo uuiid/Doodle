@@ -5,8 +5,8 @@
 #include <avcpp/audioresampler.h>
 #include <avcpp/codec.h>
 #include <avcpp/codeccontext.h>
-#include <avcpp/formatcontext.h>
 #include <avcpp/filtergraph.h>
+#include <avcpp/formatcontext.h>
 #include <avcpp/frame.h>
 #include <avcpp/stream.h>
 #include <avcpp/timestamp.h>
@@ -262,7 +262,6 @@ class ffmpeg_video::impl {
     }
   }
 
-
   void add_subtitle(const FSys::path& in_subtitle_path) {
     DOODLE_CHICK(!in_subtitle_path.empty(), "字幕路径为空");
     DOODLE_CHICK(FSys::exists(in_subtitle_path), std::format("字幕文件不存在: {}", in_subtitle_path.string()));
@@ -271,7 +270,9 @@ class ffmpeg_video::impl {
     );
 
     auto ext = in_subtitle_path.extension().string();
-    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) {
+      return static_cast<char>(std::tolower(c));
+    });
     DOODLE_CHICK(ext == ".srt", "文件格式不支持, 仅支持 .srt 字幕文件");
 
     // 使用 avfilter 的 subtitles 滤镜渲染 .srt (依赖 FFmpeg 编译启用 libass)
@@ -287,14 +288,8 @@ class ffmpeg_video::impl {
     if (sar == av::Rational{}) sar = av::Rational{1, 1};
 
     const std::string buffer_args = std::format(
-      "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}",
-      w,
-      h,
-      pix_fmt,
-      tb.getNumerator(),
-      tb.getDenominator(),
-      sar.getNumerator(),
-      sar.getDenominator()
+        "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}", w, h, pix_fmt, tb.getNumerator(),
+        tb.getDenominator(), sar.getNumerator(), sar.getDenominator()
     );
 
     subtitle_handle_ = std::make_unique<subtitle_handle_t>();
@@ -307,13 +302,13 @@ class ffmpeg_video::impl {
     DOODLE_CHICK(buffersink_filter, "ffmpeg_video: cannot find filter 'buffersink'");
     DOODLE_CHICK(subtitles_filter, "ffmpeg_video: cannot find filter 'subtitles' (FFmpeg needs libass)");
 
-    subtitle_handle_->buffersrc_ctx_ = subtitle_handle_->graph_.createFilter(buffer_filter, "in", buffer_args);
+    subtitle_handle_->buffersrc_ctx_  = subtitle_handle_->graph_.createFilter(buffer_filter, "in", buffer_args);
     subtitle_handle_->buffersink_ctx_ = subtitle_handle_->graph_.createFilter(buffersink_filter, "out", "");
 
     // subtitles 的 filename 在 Windows 上包含 ':'，直接走 args 字符串容易被 ':' 分隔符影响。
     // 这里用 av_opt_set 设置 option，再 init。
-    subtitle_handle_->subtitles_ctx_ = subtitle_handle_->graph_.allocFilter(subtitles_filter, "sub");
-    const std::string subtitle_file = in_subtitle_path.generic_string();
+    subtitle_handle_->subtitles_ctx_  = subtitle_handle_->graph_.allocFilter(subtitles_filter, "sub");
+    const std::string subtitle_file   = in_subtitle_path.generic_string();
     {
       const int ret =
           av_opt_set(subtitle_handle_->subtitles_ctx_.raw(), "filename", subtitle_file.c_str(), AV_OPT_SEARCH_CHILDREN);
@@ -326,7 +321,7 @@ class ffmpeg_video::impl {
 
     subtitle_handle_->graph_.config();
 
-    subtitle_handle_->buffersrc_ = av::BufferSrcFilterContext{subtitle_handle_->buffersrc_ctx_};
+    subtitle_handle_->buffersrc_  = av::BufferSrcFilterContext{subtitle_handle_->buffersrc_ctx_};
     subtitle_handle_->buffersink_ = av::BufferSinkFilterContext{subtitle_handle_->buffersink_ctx_};
     subtitle_handle_->configured_ = true;
   }
@@ -524,6 +519,64 @@ void ffmpeg_video::process() {
     impl_->add_audio(audio_path_);
   }
   impl_->process();
+}
+
+void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FSys::path& in_out_path) {
+  DOODLE_CHICK(!in_wav_path.empty() && FSys::exists(in_wav_path), "ffmpeg_video: audio path is empty or not exists");
+  DOODLE_CHICK(!in_out_path.empty(), "ffmpeg_video: output path is empty");
+
+  av::FormatContext l_input_ctx{};
+  l_input_ctx.openInput(in_wav_path.string());
+  l_input_ctx.findStreamInfo();
+
+  av::FormatContext l_output_ctx{};
+  l_output_ctx.openOutput(in_out_path.string());
+
+  av::Stream l_in_audio_stream{};
+  for (size_t i = 0; i < l_input_ctx.streamsCount(); ++i) {
+    auto st = l_input_ctx.stream(i);
+    if (st.isAudio()) {
+      l_in_audio_stream = st;
+      break;
+    }
+  }
+  DOODLE_CHICK(l_in_audio_stream.isValid(), "ffmpeg_video: audio input has no audio stream");
+
+  av::Codec l_in_codec = l_in_audio_stream.codecParameters().decodingCodec();
+  DOODLE_CHICK(!l_in_codec.isNull(), "ffmpeg_video: cannot find audio decoder");
+  DOODLE_CHICK(l_in_codec.canDecode(), "ffmpeg_video: cannot find audio decoder");
+
+  av::AudioDecoderContext l_dec_ctx{l_in_audio_stream, l_in_codec};
+  l_dec_ctx.open();
+
+  av::AudioEncoderContext l_enc_ctx{};
+  l_enc_ctx.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
+
+  const int l_dst_sample_rate = l_dec_ctx.sampleRate() > 0 ? l_dec_ctx.sampleRate() : 48000;
+  const std::uint64_t l_src_channel_layout =
+      l_dec_ctx.channelLayout() != 0 ? l_dec_ctx.channelLayout() : av_get_default_channel_layout(l_dec_ctx.channels());
+  const uint64_t l_dst_layout = pick_channel_layout(l_src_channel_layout, l_enc_ctx.codec());
+  const av::SampleFormat l_dst_sample_fmt =
+      pick_first_supported_sample_fmt(l_enc_ctx.codec(), av::SampleFormat{AV_SAMPLE_FMT_FLTP});
+
+  l_enc_ctx.setSampleRate(l_dst_sample_rate);
+  l_enc_ctx.setChannelLayout(l_dst_layout);
+  l_enc_ctx.setSampleFormat(l_dst_sample_fmt);
+  const av::Rational l_audio_tb{1, l_enc_ctx.sampleRate()};
+  l_enc_ctx.setTimeBase(l_audio_tb);
+  l_enc_ctx.open();
+
+  av::Stream l_out_stream = l_output_ctx.addStream(l_enc_ctx);
+  l_out_stream.setTimeBase(l_audio_tb);
+
+  av::AudioResampler l_resampler{};
+  if (l_dec_ctx.sampleRate() != l_enc_ctx.sampleRate() || l_dec_ctx.channelLayout() != l_enc_ctx.channelLayout() ||
+      l_dec_ctx.sampleFormat() != l_enc_ctx.sampleFormat()) {
+    l_resampler.init(
+        l_enc_ctx.channelLayout(), l_enc_ctx.sampleRate(), l_enc_ctx.sampleFormat(), l_src_channel_layout,
+        l_dec_ctx.sampleRate(), l_dec_ctx.sampleFormat()
+    );
+  }
 }
 
 }  // namespace doodle
