@@ -116,8 +116,6 @@ class ffmpeg_video::impl {
   av::VideoDecoderContext in_video_dec_ctx_;
   av::VideoEncoderContext out_video_enc_ctx_;
 
-  // 转换器
-  av::VideoRescaler video_rescaler_;
   // 视频长度
   av::Timestamp video_duration_{};
 
@@ -190,14 +188,6 @@ class ffmpeg_video::impl {
     out_video_stream_.setTimeBase(l_video_tb);
     out_video_stream_.setFrameRate(av::Rational{k_fps, 1});
     out_video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
-
-    if (in_video_dec_ctx_.width() != out_video_enc_ctx_.width() ||
-        in_video_dec_ctx_.height() != out_video_enc_ctx_.height() ||
-        in_video_dec_ctx_.pixelFormat() != out_video_enc_ctx_.pixelFormat()) {
-      video_rescaler_ =
-          av::VideoRescaler{out_video_enc_ctx_.width(), out_video_enc_ctx_.height(), out_video_enc_ctx_.pixelFormat(),
-                            in_video_dec_ctx_.width(),  in_video_dec_ctx_.height(),  in_video_dec_ctx_.pixelFormat()};
-    }
   }
 
   void add_audio(const FSys::path& in_audio_path) {
@@ -348,37 +338,19 @@ class ffmpeg_video::impl {
         }
       };
 
-      if (video_rescaler_.isValid()) {
-        auto dst = video_rescaler_.rescale(frame);
-        dst.setTimeBase(get_video_time_base());
-        dst.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
+      frame.setTimeBase(get_video_time_base());
+      frame.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
 
-        if (subtitle_handle_ && subtitle_handle_->configured_) {
-          subtitle_handle_->buffersrc_.writeVideoFrame(dst);
-          while (true) {
-            av::VideoFrame filtered;
-            if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
-            filtered.setTimeBase(get_video_time_base());
-            encode_and_write(filtered);
-          }
-        } else {
-          encode_and_write(dst);
+      if (subtitle_handle_ && subtitle_handle_->configured_) {
+        subtitle_handle_->buffersrc_.writeVideoFrame(frame);
+        while (true) {
+          av::VideoFrame filtered;
+          if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
+          filtered.setTimeBase(get_video_time_base());
+          encode_and_write(filtered);
         }
       } else {
-        frame.setTimeBase(get_video_time_base());
-        frame.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
-
-        if (subtitle_handle_ && subtitle_handle_->configured_) {
-          subtitle_handle_->buffersrc_.writeVideoFrame(frame);
-          while (true) {
-            av::VideoFrame filtered;
-            if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
-            filtered.setTimeBase(get_video_time_base());
-            encode_and_write(filtered);
-          }
-        } else {
-          encode_and_write(frame);
-        }
+        encode_and_write(frame);
       }
     }
 
@@ -524,13 +496,15 @@ void ffmpeg_video::process() {
 void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FSys::path& in_out_path) {
   DOODLE_CHICK(!in_wav_path.empty() && FSys::exists(in_wav_path), "ffmpeg_video: audio path is empty or not exists");
   DOODLE_CHICK(!in_out_path.empty(), "ffmpeg_video: output path is empty");
+  auto out_path = in_out_path;;
+  out_path.replace_extension(".mp4");
 
   av::FormatContext l_input_ctx{};
   l_input_ctx.openInput(in_wav_path.string());
   l_input_ctx.findStreamInfo();
 
   av::FormatContext l_output_ctx{};
-  l_output_ctx.openOutput(in_out_path.string());
+  l_output_ctx.openOutput(out_path.string());
 
   av::Stream l_in_audio_stream{};
   for (size_t i = 0; i < l_input_ctx.streamsCount(); ++i) {
