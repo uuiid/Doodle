@@ -40,6 +40,8 @@ class kitsu_client {
       boost::beast::http::request<T>& req, const std::string& in_content_type = "application/json"
   ) const;
 
+  void set_timeout_based_on_file_size(const FSys::path& in_file_path) const;
+
   logger_ptr logger_{spdlog::default_logger()};
 
   /// 创建评论

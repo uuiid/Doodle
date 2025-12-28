@@ -53,6 +53,17 @@ void kitsu_client::set_req_headers(boost::beast::http::request<T>& req, const st
     req.set(boost::beast::http::field::content_type, in_content_type);
 }
 
+void kitsu_client::set_timeout_based_on_file_size(const FSys::path& in_file_path) const {
+  try {
+    auto l_file_size = FSys::file_size(in_file_path);
+    auto l_timeout =
+        std::chrono::seconds{static_cast<std::int64_t>(l_file_size / (100 * 1024)) + 30};  // 100KB/s + 30s buffer
+    http_client_ptr_->set_timeout(l_timeout);
+    logger_->debug("设置请求超时为 {} 秒, 文件大小 {} 字节", l_timeout.count(), l_file_size);
+  } catch (const FSys::filesystem_error& e) {
+    logger_->error("无法获取文件大小 {},  {} 使用默认超时: 30s", in_file_path.generic_string(), e.what());
+  }
+}
 boost::asio::awaitable<kitsu_client::file_association> kitsu_client::get_file_association(uuid in_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/doodle/file_association/{}", in_task_id), 11
@@ -197,8 +208,7 @@ boost::asio::awaitable<void> kitsu_client::upload_asset_file(
     http_client_ptr_->set_timeout(30s);
   }};
   http_client_ptr_->body_limit_ = 100ll * 1024 * 1024 * 1024;  // 100G
-  if (auto l_size = FSys::file_size(in_file_path); l_size > 1024 * 1024)
-    http_client_ptr_->set_timeout(chrono::seconds(l_size / (1 * 1024)) + 30s);  // 50KB/s 上传速度估算
+  set_timeout_based_on_file_size(in_file_path);
   boost::beast::http::request<boost::beast::http::file_body> l_req{boost::beast::http::verb::post, in_upload_url, 11};
   set_req_headers(l_req, "application/octet-stream");
   auto l_last_mod_time = chrono::clock_cast<chrono::system_clock>(FSys::last_write_time(in_file_path));
@@ -398,10 +408,12 @@ boost::asio::awaitable<void> kitsu_client::comment_task(comment_task_arg in_arg)
 
   uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id, in_arg.preview_file_source_);
   {  // 上传附件
+    set_timeout_based_on_file_size(in_arg.attach_files_);
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/pictures/preview-files/{}", l_preview_id), 11
     };
     set_req_headers(l_req, std::string{::doodle::http::kitsu::mime_type(in_arg.attach_files_.extension())});
+
     boost::system::error_code l_ec{};
     l_req.body().open(in_arg.attach_files_.string().c_str(), boost::beast::file_mode::read, l_ec);
     if (l_ec)
@@ -428,6 +440,8 @@ boost::asio::awaitable<void> kitsu_client::comment_task_compose_video(comment_ta
   if (in_arg.attach_files_.empty()) co_return;
   uuid l_preview_id = co_await create_preview(in_arg.task_id_, l_comment_id, in_arg.preview_file_source_);
   {  // 上传附件
+    set_timeout_based_on_file_size(in_arg.attach_files_);
+
     boost::beast::http::request<boost::beast::http::file_body> l_req{
         boost::beast::http::verb::post, fmt::format("/api/actions/preview-files/{}/compose-video", l_preview_id), 11
     };
