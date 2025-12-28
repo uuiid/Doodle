@@ -1,10 +1,126 @@
+// =======================
+// server.js  (Node.js + Express)
+// =======================
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = 3000;
+
+// 用于保存 markdown 文件的目录（服务器根目录下）
+const SAVE_DIR = path.join(__dirname, 'markdown_files');
+if (!fs.existsSync(SAVE_DIR)) {
+  fs.mkdirSync(SAVE_DIR);
+}
+
+app.use(express.json({ limit: '2mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.post('/save', (req, res) => {
+  const { content } = req.body;
+  if (!content) {
+    return res.status(400).json({ message: '内容为空' });
+  }
+
+  const filename = `doc_${Date.now()}.md`;
+  const filepath = path.join(SAVE_DIR, filename);
+
+  fs.writeFile(filepath, content, 'utf8', err => {
+    if (err) {
+      return res.status(500).json({ message: '保存失败' });
+    }
+    res.json({ message: '保存成功', filename });
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+
+// =======================
+// public/index.html  (前端页面)
+// =======================
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
-    <meta charset="UTF-8" http-equiv="refresh" content="0; url=./html/index.html"/>
-    <title></title>
+  <meta charset="UTF-8" />
+  <title>Markdown 编辑器（实时预览）</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.2.0/github-markdown.min.css">
+<style>
+    body { font-family: sans-serif; margin: 0; padding: 0; height: 100vh; }
+    header { padding: 10px 20px; border-bottom: 1px solid #ddd; }
+    main { display: flex; height: calc(100vh - 60px); }
+    textarea {
+      width: 50%;
+      padding: 16px;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    #preview {
+      width: 50%;
+      padding: 16px;
+      overflow-y: auto;
+      border-left: 1px solid #ddd;
+      background: #fafafa;
+    }
+    .markdown-body {
+      box-sizing: border-box;
+      min-width: 200px;
+      max-width: 100%;
+    }
+    button { padding: 6px 14px; }
+    #status { margin-left: 12px; color: #555; }
+  </style>
 </head>
 <body>
-<p>Please follow <a href="./html/index.html">this link</a>.</p>
+  <header>
+    <button onclick="saveMarkdown()">保存到服务器</button>
+    <span id="status"></span>
+  </header>
+
+  <main>
+    <textarea id="editor" placeholder="在这里输入 Markdown 文本..." oninput="updatePreview()"></textarea>
+    <div id="preview"><article class="markdown-body"></article></div>
+  </main>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const preview = document.getElementById('preview');
+
+    function updatePreview() {
+      const html = marked.parse(editor.value);
+      preview.querySelector('.markdown-body').innerHTML = html;
+    }
+
+    async function saveMarkdown() {
+      const content = editor.value;
+      const res = await fetch('/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content })
+      });
+      const data = await res.json();
+      document.getElementById('status').innerText = data.message + (data.filename ? '：' + data.filename : '');
+    }
+
+    // 同步滚动
+    function syncScroll() {
+      const ratio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+      preview.scrollTop = ratio * (preview.scrollHeight - preview.clientHeight);
+    }
+
+    editor.addEventListener('scroll', syncScroll);
+
+    // 初始化示例
+    editor.value = '';
+    updatePreview();
+  </script>
 </body>
 </html>
+ 
