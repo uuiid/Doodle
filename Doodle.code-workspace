@@ -39,7 +39,6 @@
 		"todo-tree.regex.regexCaseSensitive": false,
 		"git.fetchOnPull": true,
 		"C_Cpp.autocompleteAddParentheses": true,
-		"C_Cpp.intelliSenseEngine": "disabled",
 		"cmake.configureOnEdit": false,
 		"cmake.configureOnOpen": false,
 		"cmake.automaticReconfigure": false,
