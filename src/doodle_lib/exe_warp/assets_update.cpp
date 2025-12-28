@@ -26,7 +26,7 @@ void from_json(const nlohmann::json& in_json, update_movie_files& out_obj) {
   if (in_json.contains("path")) in_json.at("path").get_to(out_obj.movie_file_);
 }
 void from_json(const nlohmann::json& in_json, update_movie_compose_files& out_obj) {
-  if (in_json.contains("task_id")) in_json.at("task_id").get_to(out_obj.task_id_);
+  // if (in_json.contains("task_id")) in_json.at("task_id").get_to(out_obj.task_id_);
   if (in_json.contains("path")) in_json.at("path").get_to(out_obj.movie_compose_file_);
 }
 
