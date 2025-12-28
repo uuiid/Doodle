@@ -212,6 +212,12 @@ class ffmpeg_video::impl {
       }
     }
     DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio input has no audio stream");
+
+    audio_handle_.out_stream_ =
+        output_format_context_.addStream(audio_handle_.stream_.codecParameters().encodingCodec());
+    audio_handle_.out_stream_.setTimeBase(audio_handle_.stream_.timeBase());
+    audio_handle_.out_stream_.setFrameRate(audio_handle_.stream_.frameRate());
+    audio_handle_.out_stream_.codecParameters().copyFrom(audio_handle_.stream_.codecParameters());
   }
 
   void add_subtitle(const FSys::path& in_subtitle_path) {
@@ -344,81 +350,12 @@ class ffmpeg_video::impl {
     }
   }
 
+  /// 读取流后直接将流复制到输出音频流
   void process_audio() {
-    // -----------------
-    // Encode audio packets
-    // -----------------
-    const av::Rational l_audio_tb{1, audio_handle_.enc_ctx_.sampleRate()};
-    const int l_out_audio_index  = audio_handle_.out_stream_.index();
-
-    const int l_audio_frame_size = audio_handle_.enc_ctx_.frameSize() > 0 ? audio_handle_.enc_ctx_.frameSize() : 1024;
-    int64_t l_audio_samples_written = 0;
-
-    auto encode_audio_samples       = [&](av::AudioSamples& samples) {
-      samples.setTimeBase(l_audio_tb);
-      samples.setPts(av::Timestamp{l_audio_samples_written, l_audio_tb});
-      l_audio_samples_written += samples.samplesCount();
-      auto out_pkt = audio_handle_.enc_ctx_.encode(samples);
-      if (out_pkt && !out_pkt.isNull()) {
-        out_pkt.setTimeBase(l_audio_tb);
-        out_pkt.setStreamIndex(l_out_audio_index);
-        output_format_context_.writePacket(out_pkt);
-      }
-    };
-
     while (auto pkt_opt = read_next_packet_for_stream(audio_handle_.format_context_, audio_handle_.stream_.index())) {
-      auto samples = audio_handle_.dec_ctx_.decode(*pkt_opt);
-      if (!samples) {
-        continue;
-      }
-
-      // avcpp may report channelsLayout() as 0 with FFmpeg new channel layout API
-      // (e.g. when ch_layout.order is not AV_CHANNEL_ORDER_NATIVE). AudioResampler
-      // requires a stable, non-zero layout mask, so we synthesize a default one.
-      if (samples.channelsLayout() == 0) {
-        int channels = samples.channelsCount();
-        if (channels <= 0) {
-          channels = audio_handle_.dec_ctx_.channels();
-        }
-        if (channels <= 0) {
-          channels = 2;
-        }
-        av::frame::set_channel_layout(samples.raw(), av_get_default_channel_layout(channels));
-      }
-      if (samples.sampleRate() <= 0) {
-        av::frame::set_sample_rate(samples.raw(), audio_handle_.dec_ctx_.sampleRate());
-      }
-
-      if (audio_handle_.resampler_.isValid()) {
-        audio_handle_.resampler_.push(samples);
-        while (true) {
-          auto out = audio_handle_.resampler_.pop(static_cast<size_t>(l_audio_frame_size));
-          if (!out) {
-            break;
-          }
-          encode_audio_samples(out);
-        }
-      } else {
-        encode_audio_samples(samples);
-      }
-    }
-
-    // Flush resampler delayed samples
-    if (audio_handle_.resampler_.isValid()) {
-      // 为 0 时会一次提取所有样本, 不需要循环
-      auto out = audio_handle_.resampler_.pop(0);
-      if (out) encode_audio_samples(out);
-    }
-
-    // Flush audio encoder
-    while (true) {
-      auto out_pkt = audio_handle_.enc_ctx_.encode();
-      if (!out_pkt || out_pkt.isNull()) {
-        break;
-      }
-      out_pkt.setTimeBase(l_audio_tb);
-      out_pkt.setStreamIndex(l_out_audio_index);
-      output_format_context_.writePacket(out_pkt);
+      auto& pkt = *pkt_opt;
+      pkt.setStreamIndex(audio_handle_.out_stream_.index());
+      output_format_context_.writePacket(pkt);
     }
   }
 
