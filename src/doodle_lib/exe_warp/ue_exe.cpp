@@ -185,7 +185,7 @@ boost::asio::awaitable<void> async_run_ue(
       )
           .async_wait(boost::asio::experimental::wait_for_one(), boost::asio::as_tuple(boost::asio::use_awaitable));
 
-  if (FSys::path l_prj = ue_exe_ns::find_ue_project_file(in_arg[1]); !l_prj.empty()) {
+  if (FSys::path l_prj = ue_exe_ns::find_ue_project_file(in_arg.front()); !l_prj.empty()) {
     auto l_log_path = l_prj.parent_path() / "Saved" / "Logs";
     // 选择最新的日志文件
     FSys::path l_latest_log;
