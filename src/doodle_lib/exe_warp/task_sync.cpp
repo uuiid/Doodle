@@ -72,7 +72,7 @@ boost::asio::awaitable<void> task_sync::run() {
       co_await kitsu_client_->comment_task(
           kitsu::kitsu_client::comment_task_arg{
               .task_id_        = l_info.task_id_,
-              .comment_        = "自动同步文件",
+              .comment_        = fmt::format("自动同步文件 {}", l_info.from_path_),
               .task_status_id_ = task_status::get_completed(),
           }
       );
