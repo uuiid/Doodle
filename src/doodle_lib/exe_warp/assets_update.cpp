@@ -59,7 +59,9 @@ boost::asio::awaitable<void> update_image_files::run() {
   }
 }
 boost::asio::awaitable<void> update_movie_files::run() {
-  if (movie_file_.empty()) co_return;
+  DOODLE_CHICK(!movie_file_.empty(), "视频文件路径不能为空");
+  DOODLE_CHICK(!task_id_.is_nil(), "任务ID不能为空");
+  
   kitsu_client_->set_logger(logger_ptr_);
   SPDLOG_LOGGER_INFO(logger_ptr_, "发现需要更新的视频文件 {}", movie_file_);
 
@@ -91,7 +93,9 @@ boost::asio::awaitable<void> update_movie_files::run() {
   );
 }
 boost::asio::awaitable<void> update_movie_compose_files::run() {
-  if (movie_compose_file_.empty()) co_return;
+  DOODLE_CHICK(!movie_compose_file_.empty(), "视频合成文件路径不能为空");
+  DOODLE_CHICK(!task_id_.is_nil(), "任务ID不能为空");
+
   kitsu_client_->set_logger(logger_ptr_);
   SPDLOG_LOGGER_INFO(logger_ptr_, "发现需要更新的视频合成文件 {}", movie_compose_file_);
 

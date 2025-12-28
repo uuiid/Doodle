@@ -81,6 +81,9 @@ boost::asio::awaitable<uuid> kitsu_client::create_comment(
     std::vector<std::string> in_links
 ) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
+  SPDLOG_LOGGER_INFO(
+      logger_, "创建任务评论, 任务ID: {}, 评论内容: {}, 任务状态ID: {}", in_task_id, in_comment, in_task_status_id
+  );
   uuid l_comment_id{};
   {
     nlohmann::json l_json{};

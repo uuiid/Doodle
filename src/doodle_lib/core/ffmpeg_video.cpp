@@ -190,6 +190,7 @@ class ffmpeg_video::impl {
     out_video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
   }
 
+  // 添加音频轨道, 传入 MP4 文件路径, 提取音频轨道, 检查必须为 AAC 编码, 并将流直接复制到输出文件
   void add_audio(const FSys::path& in_audio_path) {
     audio_handle_.format_context_.openInput(in_audio_path.string());
     audio_handle_.format_context_.findStreamInfo();
@@ -211,45 +212,6 @@ class ffmpeg_video::impl {
       }
     }
     DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio input has no audio stream");
-
-    audio_handle_.codec_ = audio_handle_.stream_.codecParameters().decodingCodec();
-    DOODLE_CHICK(!audio_handle_.codec_.isNull(), "ffmpeg_video: cannot find audio decoder");
-    DOODLE_CHICK(audio_handle_.codec_.canDecode(), "ffmpeg_video: cannot find audio decoder");
-
-    audio_handle_.dec_ctx_ = av::AudioDecoderContext{audio_handle_.stream_, audio_handle_.codec_};
-    audio_handle_.dec_ctx_.open();
-
-    audio_handle_.enc_ctx_ = av::AudioEncoderContext{};
-    audio_handle_.enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
-
-    const int l_dst_sample_rate = audio_handle_.dec_ctx_.sampleRate() > 0 ? audio_handle_.dec_ctx_.sampleRate() : 48000;
-    const std::uint64_t l_src_channel_layout = audio_handle_.dec_ctx_.channelLayout() != 0
-                                                   ? audio_handle_.dec_ctx_.channelLayout()
-                                                   : av_get_default_channel_layout(audio_handle_.dec_ctx_.channels());
-
-    const uint64_t l_dst_layout = pick_channel_layout(l_src_channel_layout, audio_handle_.enc_ctx_.codec());
-    const av::SampleFormat l_dst_sample_fmt =
-        pick_first_supported_sample_fmt(audio_handle_.enc_ctx_.codec(), av::SampleFormat{AV_SAMPLE_FMT_FLTP});
-
-    audio_handle_.enc_ctx_.setSampleRate(l_dst_sample_rate);
-    audio_handle_.enc_ctx_.setChannelLayout(l_dst_layout);
-    audio_handle_.enc_ctx_.setSampleFormat(l_dst_sample_fmt);
-    const av::Rational l_audio_tb{1, audio_handle_.enc_ctx_.sampleRate()};
-    audio_handle_.enc_ctx_.setTimeBase(l_audio_tb);
-    audio_handle_.enc_ctx_.open();
-
-    audio_handle_.out_stream_ = output_format_context_.addStream(audio_handle_.enc_ctx_);
-    audio_handle_.out_stream_.setTimeBase(l_audio_tb);
-
-    if (audio_handle_.dec_ctx_.sampleRate() != audio_handle_.enc_ctx_.sampleRate() ||
-        audio_handle_.dec_ctx_.channelLayout() != audio_handle_.enc_ctx_.channelLayout() ||
-        audio_handle_.dec_ctx_.sampleFormat() != audio_handle_.enc_ctx_.sampleFormat()) {
-      audio_handle_.resampler_.init(
-          audio_handle_.enc_ctx_.channelLayout(), audio_handle_.enc_ctx_.sampleRate(),
-          audio_handle_.enc_ctx_.sampleFormat(), l_src_channel_layout, audio_handle_.dec_ctx_.sampleRate(),
-          audio_handle_.dec_ctx_.sampleFormat()
-      );
-    }
   }
 
   void add_subtitle(const FSys::path& in_subtitle_path) {
@@ -496,7 +458,8 @@ void ffmpeg_video::process() {
 void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FSys::path& in_out_path) {
   DOODLE_CHICK(!in_wav_path.empty() && FSys::exists(in_wav_path), "ffmpeg_video: audio path is empty or not exists");
   DOODLE_CHICK(!in_out_path.empty(), "ffmpeg_video: output path is empty");
-  auto out_path = in_out_path;;
+  auto out_path = in_out_path;
+  ;
   out_path.replace_extension(".mp4");
 
   av::FormatContext l_input_ctx{};
