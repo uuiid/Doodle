@@ -6,6 +6,7 @@
 #include <avcpp/codec.h>
 #include <avcpp/codeccontext.h>
 #include <avcpp/formatcontext.h>
+#include <avcpp/filtergraph.h>
 #include <avcpp/frame.h>
 #include <avcpp/stream.h>
 #include <avcpp/timestamp.h>
@@ -17,8 +18,10 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavfilter/buffersrc.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/error.h>
+#include <libavutil/opt.h>
 }
 
 namespace doodle {
@@ -117,6 +120,18 @@ class ffmpeg_video::impl {
   av::VideoRescaler video_rescaler_;
   // 视频长度
   av::Timestamp video_duration_{};
+
+  struct subtitle_handle_t {
+    av::FilterGraph graph_{};
+    av::FilterContext buffersrc_ctx_{};
+    av::BufferSrcFilterContext buffersrc_{};
+    av::FilterContext subtitles_ctx_{};
+    av::FilterContext buffersink_ctx_{};
+    av::BufferSinkFilterContext buffersink_{};
+    bool configured_{false};
+  };
+
+  std::unique_ptr<subtitle_handle_t> subtitle_handle_;
 
   // 音频组件
   struct {
@@ -258,6 +273,62 @@ class ffmpeg_video::impl {
     auto ext = in_subtitle_path.extension().string();
     std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     DOODLE_CHICK(ext == ".srt", "文件格式不支持, 仅支持 .srt 字幕文件");
+
+    // 使用 avfilter 的 subtitles 滤镜渲染 .srt (依赖 FFmpeg 编译启用 libass)
+    // 滤镜图: buffer -> subtitles -> buffersink
+
+    const auto w = out_video_enc_ctx_.width();
+    const auto h = out_video_enc_ctx_.height();
+    DOODLE_CHICK(w > 0 && h > 0, "ffmpeg_video: invalid video size for subtitle graph");
+
+    const int pix_fmt = static_cast<int>(out_video_enc_ctx_.pixelFormat());
+    const auto tb     = get_video_time_base();
+    auto sar          = in_video_stream_.sampleAspectRatio();
+    if (sar == av::Rational{}) sar = av::Rational{1, 1};
+
+    const std::string buffer_args = std::format(
+      "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}",
+      w,
+      h,
+      pix_fmt,
+      tb.getNumerator(),
+      tb.getDenominator(),
+      sar.getNumerator(),
+      sar.getDenominator()
+    );
+
+    subtitle_handle_ = std::make_unique<subtitle_handle_t>();
+    subtitle_handle_->graph_.setAutoConvert(0);
+
+    const av::Filter buffer_filter{"buffer"};
+    const av::Filter buffersink_filter{"buffersink"};
+    const av::Filter subtitles_filter{"subtitles"};
+    DOODLE_CHICK(buffer_filter, "ffmpeg_video: cannot find filter 'buffer'");
+    DOODLE_CHICK(buffersink_filter, "ffmpeg_video: cannot find filter 'buffersink'");
+    DOODLE_CHICK(subtitles_filter, "ffmpeg_video: cannot find filter 'subtitles' (FFmpeg needs libass)");
+
+    subtitle_handle_->buffersrc_ctx_ = subtitle_handle_->graph_.createFilter(buffer_filter, "in", buffer_args);
+    subtitle_handle_->buffersink_ctx_ = subtitle_handle_->graph_.createFilter(buffersink_filter, "out", "");
+
+    // subtitles 的 filename 在 Windows 上包含 ':'，直接走 args 字符串容易被 ':' 分隔符影响。
+    // 这里用 av_opt_set 设置 option，再 init。
+    subtitle_handle_->subtitles_ctx_ = subtitle_handle_->graph_.allocFilter(subtitles_filter, "sub");
+    const std::string subtitle_file = in_subtitle_path.generic_string();
+    {
+      const int ret =
+          av_opt_set(subtitle_handle_->subtitles_ctx_.raw(), "filename", subtitle_file.c_str(), AV_OPT_SEARCH_CHILDREN);
+      DOODLE_CHICK(ret >= 0, std::format("ffmpeg_video: set subtitles filename failed: {}", subtitle_file));
+    }
+    subtitle_handle_->subtitles_ctx_.init("");
+
+    subtitle_handle_->buffersrc_ctx_.link(0, subtitle_handle_->subtitles_ctx_, 0);
+    subtitle_handle_->subtitles_ctx_.link(0, subtitle_handle_->buffersink_ctx_, 0);
+
+    subtitle_handle_->graph_.config();
+
+    subtitle_handle_->buffersrc_ = av::BufferSrcFilterContext{subtitle_handle_->buffersrc_ctx_};
+    subtitle_handle_->buffersink_ = av::BufferSinkFilterContext{subtitle_handle_->buffersink_ctx_};
+    subtitle_handle_->configured_ = true;
   }
 
   void process_out_video() {
@@ -272,21 +343,58 @@ class ffmpeg_video::impl {
       if (!frame) {
         continue;
       }
-      if (video_rescaler_.isValid()) {
-        auto dst = video_rescaler_.rescale(frame);
-        dst.setTimeBase(get_video_time_base());
-        dst.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
-        // out_video_enc_ctx_
-        auto out_pkt = out_video_enc_ctx_.encode(dst);
+
+      auto encode_and_write = [&](av::VideoFrame& in_frame) {
+        auto out_pkt = out_video_enc_ctx_.encode(in_frame);
         if (out_pkt && !out_pkt.isNull()) {
           out_pkt.setTimeBase(get_video_time_base());
           out_pkt.setStreamIndex(l_out_video_index);
           output_format_context_.writePacket(out_pkt);
         }
+      };
+
+      if (video_rescaler_.isValid()) {
+        auto dst = video_rescaler_.rescale(frame);
+        dst.setTimeBase(get_video_time_base());
+        dst.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
+
+        if (subtitle_handle_ && subtitle_handle_->configured_) {
+          subtitle_handle_->buffersrc_.writeVideoFrame(dst);
+          while (true) {
+            av::VideoFrame filtered;
+            if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
+            filtered.setTimeBase(get_video_time_base());
+            encode_and_write(filtered);
+          }
+        } else {
+          encode_and_write(dst);
+        }
       } else {
         frame.setTimeBase(get_video_time_base());
         frame.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
-        auto out_pkt = out_video_enc_ctx_.encode(frame);
+
+        if (subtitle_handle_ && subtitle_handle_->configured_) {
+          subtitle_handle_->buffersrc_.writeVideoFrame(frame);
+          while (true) {
+            av::VideoFrame filtered;
+            if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
+            filtered.setTimeBase(get_video_time_base());
+            encode_and_write(filtered);
+          }
+        } else {
+          encode_and_write(frame);
+        }
+      }
+    }
+
+    // Flush subtitle filter
+    if (subtitle_handle_ && subtitle_handle_->configured_) {
+      (void)av_buffersrc_add_frame_flags(subtitle_handle_->buffersrc_ctx_.raw(), nullptr, 0);
+      while (true) {
+        av::VideoFrame filtered;
+        if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
+        filtered.setTimeBase(get_video_time_base());
+        auto out_pkt = out_video_enc_ctx_.encode(filtered);
         if (out_pkt && !out_pkt.isNull()) {
           out_pkt.setTimeBase(get_video_time_base());
           out_pkt.setStreamIndex(l_out_video_index);
@@ -409,7 +517,12 @@ void ffmpeg_video::process() {
   DOODLE_CHICK(!video_path_.empty() && FSys::exists(video_path_), "ffmpeg_video: video path is empty or not exists");
 
   impl_->open(video_path_, out_path_);
-  impl_->add_audio(audio_path_);
+  if (!subtitle_path_.empty()) {
+    impl_->add_subtitle(subtitle_path_);
+  }
+  if (!audio_path_.empty()) {
+    impl_->add_audio(audio_path_);
+  }
   impl_->process();
 }
 
