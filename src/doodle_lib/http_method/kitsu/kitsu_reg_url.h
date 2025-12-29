@@ -610,10 +610,10 @@ DOODLE_HTTP_JWT_FUN(actions_preview_files_compose_video)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/actions/sequences/task/{sequence_id}/create-review
-DOODLE_HTTP_JWT_FUN(actions_sequences_task_create_review)
+// /api/actions/preview-files/{preview_file_id}/create-review
+DOODLE_HTTP_JWT_FUN(actions_preview_files_create_review)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid sequence_id_{};
+uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http
