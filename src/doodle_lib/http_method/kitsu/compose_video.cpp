@@ -1,5 +1,6 @@
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -15,6 +16,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seed_email.h>
+#include <doodle_lib/long_task/connect_video.h>
 
 #include <memory>
 #include <opencv2/core/mat.hpp>
@@ -170,6 +172,19 @@ struct actions_preview_files_create_review_arg {
 };
 
 namespace {
+struct get_sequence_shots_preview_t : boost::less_than_comparable<get_sequence_shots_preview_t> {
+  uuid shot_id_;
+  preview_file preview_;
+  std::string name_;
+  explicit get_sequence_shots_preview_t(
+      const uuid& in_shot_id, const preview_file& in_preview, const std::string& in_name
+  )
+      : shot_id_(in_shot_id), preview_(in_preview), name_(in_name) {}
+
+  bool operator<(const get_sequence_shots_preview_t& other) const { return name_ < other.name_; }
+  bool operator==(const get_sequence_shots_preview_t& other) const { return name_ == other.name_; }
+};
+
 auto get_sequence_shots_preview(const uuid& in_sequence_id) {
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
@@ -177,7 +192,7 @@ auto get_sequence_shots_preview(const uuid& in_sequence_id) {
   constexpr auto sequence = "sequence"_alias.for_<entity>();
   constexpr auto episode  = "episode"_alias.for_<entity>();
   auto l_shots            = l_sql.impl_->storage_any_.select(
-      columns(object<preview_file>(true), &entity::uuid_id_), from<preview_file>(),
+      columns(object<preview_file>(true), &entity::uuid_id_, &entity::name_), from<preview_file>(),
       join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
       join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
@@ -189,7 +204,60 @@ auto get_sequence_shots_preview(const uuid& in_sequence_id) {
       ),
       order_by(&preview_file::created_at_).desc()
   );
+
+  std::set<uuid> l_set;
+  std::vector<get_sequence_shots_preview_t> l_result;
+
+  for (auto&& [l_preview_file, l_entity_id, l_entity_name] : l_shots) {
+    if (!l_set.contains(l_entity_id)) {
+      l_set.emplace(l_entity_id);
+      l_result.push_back(get_sequence_shots_preview_t{l_entity_id, l_preview_file, l_entity_name});
+    }
+  }
+
+  std::sort(l_result.begin(), l_result.end());
+  std::vector<preview_file> l_preview_files{l_result.size()};
+  for (const auto& l_item : l_result) l_preview_files.push_back(l_item.preview_);
+
+  return l_preview_files;
 }
+
+struct run_actions_preview_files_create_review {
+  struct data {
+    ffmpeg_video ffmpeg_video_;
+
+    std::vector<FSys::path> shot_preview_paths_{};
+    image_size size_{};
+    logger_ptr logger_{};
+
+    std::shared_ptr<preview_file> review_preview_file_{};
+  };
+  std::shared_ptr<data> data_ptr_;
+
+  run_actions_preview_files_create_review() : data_ptr_(std::make_shared<data>()) {}
+
+  void operator()() {
+    if (data_ptr_->shot_preview_paths_.empty()) {
+      SPDLOG_LOGGER_WARN(data_ptr_->logger_, "没有找到任何镜头预览视频, 无法生成评审视频");
+      return;
+    }
+    // 先连接视频
+    auto l_tmp = core_set::get_set().get_cache_root("compose_review_tmp") /
+                 fmt::format("{}.mp4", core_set::get_set().get_uuid());
+    doodle::detail::connect_video(l_tmp, data_ptr_->logger_, l_paths, data_ptr_->size_);
+
+    // 再处理视频
+    auto l_out_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(data_ptr_->review_preview_file_->uuid_id_);
+    auto l_out_backup_path = FSys::add_time_stamp(l_out_path);
+    if (auto l_p = l_out_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
+    data_ptr_->ffmpeg_video_.set_input_video(l_tmp);
+    data_ptr_->ffmpeg_video_.set_output_video(l_out_backup_path);
+    data_ptr_->ffmpeg_video_.process();
+    FSys::rename(l_out_backup_path, l_out_path);
+    SPDLOG_LOGGER_INFO(data_ptr_->logger_, "生成评审视频完成 {} ", l_out_path);
+  }
+};
+
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
@@ -202,16 +270,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
       c(&attachment_file::comment_id_) ==
       select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_))
   ));
-
-  auto l_ffmpeg_video     = std::make_shared<ffmpeg_video>();
-
+  auto l_prj              = l_sql.get_by_uuid<project>(l_task.project_id_);
+  run_actions_preview_files_create_review l_run{};
+  l_run.data_ptr_->size_                = l_prj.get_resolution();
+  l_run.data_ptr_->logger_              = in_handle->logger_;
+  l_run.data_ptr_->review_preview_file_ = std::make_shared<preview_file>(l_preview_file);
+  // 配置 ffmpeg_video
   if (l_arg.add_subtitle_) {
     auto l_subtitle_file =
         std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
           return in_file.name_.ends_with(".srt");
         });
     DOODLE_CHICK_HTTP(l_subtitle_file != l_attachment_files.end(), bad_request, "没有找到字幕文件");
-    l_ffmpeg_video->set_subtitle(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_subtitle_file->uuid_id_));
+    l_run.data_ptr_->ffmpeg_video_.set_subtitle(
+        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_subtitle_file->uuid_id_)
+    );
   }
   if (l_arg.add_dubbing_) {
     auto l_dubbing_file =
@@ -219,10 +292,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
           return in_file.name_.starts_with("audio");
         });
     DOODLE_CHICK_HTTP(l_dubbing_file != l_attachment_files.end(), bad_request, "没有找到配音文件");
-    l_ffmpeg_video->set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
+    l_run.data_ptr_->ffmpeg_video_.set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
   }
+  auto l_shot_previews = get_sequence_shots_preview(l_task.entity_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_attachment_files);
+  std::vector<FSys::path> l_paths{};
+  for (const auto& l_shot_preview : l_shot_previews) {
+    auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.uuid_id_);
+    if (FSys::exists(l_path)) l_paths.push_back(l_path);
+  }
+  DOODLE_CHICK_HTTP(!l_paths.empty(), bad_request, "没有找到任何镜头预览视频, 无法生成评审视频");
+
+  l_run.data_ptr_->shot_preview_paths_ = l_paths;
+  boost::asio::post(g_strand(), l_run);
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
 }
 
 }  // namespace doodle::http
