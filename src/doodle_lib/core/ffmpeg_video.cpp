@@ -136,9 +136,6 @@ class ffmpeg_video::impl {
     av::FormatContext format_context_;
     av::Stream stream_;
     av::Codec codec_;
-    av::AudioEncoderContext enc_ctx_;
-    av::AudioDecoderContext dec_ctx_;
-    av::AudioResampler resampler_;
     av::Stream out_stream_;
   } audio_handle_;
   constexpr static int g_fps = 25;

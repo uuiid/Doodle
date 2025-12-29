@@ -40,9 +40,11 @@ BOOST_AUTO_TEST_CASE(add_audio) {
   app_base l_app{};
   auto l_in_file  = "D:/test_files/calp_test/v2.mp4";
   auto l_out_file = "D:/test_files/calp_test/v2_audio.mp4";
-  auto l_audio    = "D:/test_files/calp_test/v1.wav";
+  auto l_audio    = "D:/test_files/calp_test/v2_audio.wav.mp4";
+  auto l_subtitle = "D:/test_files/calp_test/v2.srt";
   ffmpeg_video l_video{l_in_file, l_out_file};
   l_video.set_audio(l_audio);
+  l_video.set_subtitle(l_subtitle);
   l_video.process();
 }
 
