@@ -244,7 +244,7 @@ struct run_actions_preview_files_create_review {
     // 先连接视频
     auto l_tmp = core_set::get_set().get_cache_root("compose_review_tmp") /
                  fmt::format("{}.mp4", core_set::get_set().get_uuid());
-    doodle::detail::connect_video(l_tmp, data_ptr_->logger_, l_paths, data_ptr_->size_);
+    doodle::detail::connect_video(l_tmp, data_ptr_->logger_, data_ptr_->shot_preview_paths_, data_ptr_->size_);
 
     // 再处理视频
     auto l_out_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(data_ptr_->review_preview_file_->uuid_id_);
