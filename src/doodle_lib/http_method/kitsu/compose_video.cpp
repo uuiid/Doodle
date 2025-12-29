@@ -6,6 +6,7 @@
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_lib/core/ffmpeg_video.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
@@ -145,7 +146,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
 }
 
-struct actions_sequences_task_create_review_arg {
+struct actions_preview_files_create_review_arg {
   // 添加字幕, 混音
   bool add_subtitle_  = false;
   bool add_dubbing_   = false;
@@ -158,7 +159,7 @@ struct actions_sequences_task_create_review_arg {
   // 添加时间码
   bool add_time_code_ = false;
 
-  friend void from_json(const nlohmann::json& in_json, actions_sequences_task_create_review_arg& out_arg) {
+  friend void from_json(const nlohmann::json& in_json, actions_preview_files_create_review_arg& out_arg) {
     if (in_json.contains("add_subtitle")) in_json.at("add_subtitle").get_to(out_arg.add_subtitle_);
     if (in_json.contains("add_dubbing")) in_json.at("add_dubbing").get_to(out_arg.add_dubbing_);
     if (in_json.contains("add_name")) in_json.at("add_name").get_to(out_arg.add_name_);
@@ -168,17 +169,58 @@ struct actions_sequences_task_create_review_arg {
   }
 };
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_task_create_review, post) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
-  auto l_task = l_sql.get_by_uuid<task>(sequence_id_);
-  auto l_arg  = in_handle->get_json().get<actions_sequences_task_create_review_arg>();
+namespace {
+auto get_sequence_shots_preview(const uuid& in_sequence_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
-  auto l_attachment_files =
-      l_sql.impl_->storage_any_.get_all<attachment_file>(where(c(&attachment_file::comment_id_) == sequence_id_));
 
-  
-  
-  
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  constexpr auto episode  = "episode"_alias.for_<entity>();
+  auto l_shots            = l_sql.impl_->storage_any_.select(
+      columns(object<preview_file>(true), &entity::uuid_id_), from<preview_file>(),
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
+      where(
+          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
+          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
+           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
+      ),
+      order_by(&preview_file::created_at_).desc()
+  );
+}
+}  // namespace
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
+  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
+  auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
+  auto l_arg          = in_handle->get_json().get<actions_preview_files_create_review_arg>();
+  using namespace sqlite_orm;
+  auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
+      c(&attachment_file::comment_id_) ==
+      select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_))
+  ));
+
+  auto l_ffmpeg_video     = std::make_shared<ffmpeg_video>();
+
+  if (l_arg.add_subtitle_) {
+    auto l_subtitle_file =
+        std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
+          return in_file.name_.ends_with(".srt");
+        });
+    DOODLE_CHICK_HTTP(l_subtitle_file != l_attachment_files.end(), bad_request, "没有找到字幕文件");
+    l_ffmpeg_video->set_subtitle(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_subtitle_file->uuid_id_));
+  }
+  if (l_arg.add_dubbing_) {
+    auto l_dubbing_file =
+        std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
+          return in_file.name_.starts_with("audio");
+        });
+    DOODLE_CHICK_HTTP(l_dubbing_file != l_attachment_files.end(), bad_request, "没有找到配音文件");
+    l_ffmpeg_video->set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
+  }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_attachment_files);
 }
