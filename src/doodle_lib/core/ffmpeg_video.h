@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/core/file_sys.h>
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <string>
 
@@ -33,6 +33,8 @@ class ffmpeg_video {
 
  public:
   explicit ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path);
+  ffmpeg_video();
+
   ~ffmpeg_video();
   void set_subtitle(const FSys::path& in_subtitle_path) { subtitle_path_ = in_subtitle_path; }
   void set_audio(const FSys::path& in_audio_path) { audio_path_ = in_audio_path; }
@@ -40,6 +42,9 @@ class ffmpeg_video {
   void set_outro(const FSys::path& in_outro_path) { outro_path_ = in_outro_path; }
   void set_watermark(const std::string& in_watermark_text) { watermark_text_ = in_watermark_text; }
   void set_time_code(bool in_time_code) { time_code_ = in_time_code; }
+  
+  void set_input_video(const FSys::path& in_video_path) { video_path_ = in_video_path; }
+  void set_output_video(const FSys::path& in_out_path) { out_path_ = in_out_path; }
   // 开始处理
   void process();
 

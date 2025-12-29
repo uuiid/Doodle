@@ -373,6 +373,8 @@ class ffmpeg_video::impl {
 ffmpeg_video::ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path)
     : impl_(std::make_unique<impl>()), video_path_(in_video_path), out_path_(in_out_path) {}
 
+ffmpeg_video::ffmpeg_video() : impl_(std::make_unique<impl>()) {}
+
 ffmpeg_video::~ffmpeg_video() = default;
 
 void ffmpeg_video::process() {
