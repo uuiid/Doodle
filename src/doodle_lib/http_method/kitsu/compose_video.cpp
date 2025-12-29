@@ -135,7 +135,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   co_await l_sql.update(l_preview_file_ptr);
 
   boost::asio::post(
-      g_io_context(), [fps = l_project.fps_, l_prj_size, l_preview_file_ptr, l_target_preview_file, l_file]() mutable {
+      g_strand(), [fps = l_project.fps_, l_prj_size, l_preview_file_ptr, l_target_preview_file, l_file]() mutable {
         compose_video_impl(
             l_file, fps, cv::Size{l_prj_size.first, l_prj_size.second}, l_preview_file_ptr, l_target_preview_file
         );
