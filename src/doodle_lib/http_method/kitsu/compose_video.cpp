@@ -216,7 +216,8 @@ auto get_sequence_shots_preview(const uuid& in_sequence_id) {
   }
 
   std::sort(l_result.begin(), l_result.end());
-  std::vector<preview_file> l_preview_files{l_result.size()};
+  std::vector<preview_file> l_preview_files{};
+  l_preview_files.reserve(l_result.size());
   for (const auto& l_item : l_result) l_preview_files.push_back(l_item.preview_);
 
   return l_preview_files;
@@ -267,8 +268,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
   auto l_arg          = in_handle->get_json().get<actions_preview_files_create_review_arg>();
   using namespace sqlite_orm;
   auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
-      c(&attachment_file::comment_id_) ==
-      select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_))
+      in(&attachment_file::comment_id_,
+         select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_)))
   ));
   auto l_prj              = l_sql.get_by_uuid<project>(l_task.project_id_);
   run_actions_preview_files_create_review l_run{};
@@ -297,14 +298,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
   auto l_shot_previews = get_sequence_shots_preview(l_task.entity_id_);
 
   std::vector<FSys::path> l_paths{};
+#ifdef NDEBUG
   for (const auto& l_shot_preview : l_shot_previews) {
     auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.uuid_id_);
     if (FSys::exists(l_path)) l_paths.push_back(l_path);
   }
   DOODLE_CHICK_HTTP(!l_paths.empty(), bad_request, "没有找到任何镜头预览视频, 无法生成评审视频");
-
   l_run.data_ptr_->shot_preview_paths_ = l_paths;
   boost::asio::post(g_strand(), l_run);
+#endif
 
   co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
 }
