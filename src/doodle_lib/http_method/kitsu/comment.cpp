@@ -1,6 +1,8 @@
 //
 // Created by TD on 25-4-29.
 //
+#include "comment.h"
+
 #include "doodle_core/core/chrono_.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/attachment_file.h>
@@ -21,33 +23,9 @@
 #include <memory>
 
 namespace doodle::http {
-namespace {
-struct create_comment_result : comment {
-  task_status task_status_;
-  person person_;
-  std::vector<attachment_file> attachment_file_;
-  explicit create_comment_result(
-      const comment& in_comment, const task_status& in_task_status, const person& in_person,
-      const std::vector<attachment_file>& in_attachment_file
-  )
-      : comment(in_comment),
-        task_status_(in_task_status),
-        person_(in_person),
-        attachment_file_(in_attachment_file)
-
-  {}
-
-  // to json
-  friend void to_json(nlohmann::json& j, const create_comment_result& p) {
-    to_json(j, static_cast<const comment&>(p));
-    j["task_status"]      = p.task_status_;
-    j["person"]           = p.person_;
-    j["attachment_files"] = p.attachment_file_;
-  }
-};
 boost::asio::awaitable<create_comment_result> create_comment(
     std::shared_ptr<comment> in_comment, const http_jwt_fun::http_jwt_t* in_person, uuid in_task_id,
-    std::vector<FSys::path> in_files, std::shared_ptr<task> in_task = nullptr
+    std::vector<FSys::path> in_files, std::shared_ptr<task> in_task
 ) {
   if (!in_comment->text_.empty()) in_comment->text_ = boost::locale::conv::to_utf<char>(in_comment->text_, "UTF-8");
 
@@ -183,7 +161,6 @@ boost::asio::awaitable<create_comment_result> create_comment(
 
   co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
 }
-}  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment::post(session_data_ptr in_handle) {
   person_.check_task_action_access(id_);
 

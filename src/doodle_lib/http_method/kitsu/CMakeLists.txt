@@ -1,11 +1,13 @@
 target_sources(
         doodle_lib
+        
         PUBLIC
         kitsu_front_end.h
         epiboly.h
         kitsu_reg_url.h
         kitsu_result.h
         preview.h
+        comment.h
 
         PRIVATE
         task.cpp

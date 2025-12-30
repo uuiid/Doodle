@@ -615,5 +615,10 @@ DOODLE_HTTP_JWT_FUN(actions_preview_files_create_review)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/tasks/{task_id}/create-review/comment
+DOODLE_HTTP_JWT_FUN(actions_tasks_create_review_comment)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid task_id_{};
+DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http
