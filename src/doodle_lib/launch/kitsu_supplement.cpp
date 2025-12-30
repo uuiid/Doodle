@@ -124,11 +124,11 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
         l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY).Failed())
       return default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/MainConfig");
     else {
-      auto l_value_w = l_key.GetMultiStringValue(L"Deepseek");
-      in_args.deepseek_keys_ =
-          l_value_w |
-          ranges::views::transform([](const std::wstring& in) -> std::string { return conv::utf_to_utf<char>(in); }) |
-          ranges::to_vector;
+      auto l_value_w         = l_key.GetMultiStringValue(L"Deepseek");
+      in_args.deepseek_keys_ = l_value_w | std::ranges::views::transform([](const std::wstring& in) -> std::string {
+                                 return conv::utf_to_utf<char>(in);
+                               }) |
+                               std::ranges::to<std::vector<std::string>>();
 
       if (auto l_value = l_key.TryGetStringValue(L"ji_meng_access_key_id"); l_value.IsValid())
         in_args.ji_meng_access_key_id_ = conv::utf_to_utf<char>(l_value.GetValue());
