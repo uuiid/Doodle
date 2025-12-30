@@ -8,6 +8,5 @@ Hover:
   ShowAKA: Yes
 CompileFlags:
   Add: 
-    - "-std=c++20" # 使用C++20标准
     - "-ferror-limit=0"
   CompilationDatabase: "./build/Ninja_debug"
