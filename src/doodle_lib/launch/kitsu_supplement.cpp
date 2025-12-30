@@ -21,7 +21,6 @@
 namespace doodle {
 
 struct kitsu_supplement_args_t {
-  std::string kitsu_url_;
   std::uint16_t port_;
   FSys::path db_path_{};
 
@@ -77,12 +76,6 @@ struct kitsu_supplement_args_t {
 
   // form json
   friend void from_json(const nlohmann::json& in_json, kitsu_supplement_args_t& out_obj) {
-    if (in_json.contains("kitsu_ip") && in_json.contains("kitsu_port")) {
-      out_obj.kitsu_url_ = fmt::format(
-          "http://{}:{}", in_json.at("kitsu_ip").get<std::string>(), in_json.at("kitsu_port").get<std::string>()
-      );
-    }
-    if (in_json.contains("kitsu_url")) in_json.at("kitsu_url").get_to(out_obj.kitsu_url_);
     in_json.at("kitsu_token").get_to(out_obj.kitsu_token_);
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
@@ -170,9 +163,8 @@ bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
   g_ctx().emplace<detail::crash_reporting_thread>();
   kitsu_supplement_args_t l_args{
-      .kitsu_url_ = "http://192.168.40.182",
-      .port_      = 80,
-      .db_path_   = "C:/kitsu_new.database",
+      .port_    = 80,
+      .db_path_ = "C:/kitsu_new.database",
       .kitsu_token_ =
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
           "eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTcxNzU1MDUxMywianRpIjoiOTU0MDg1NjctMzE1OS00Y2MzLTljM2ItZmNiMzQ4MTIwNjU5IiwidHlw"
@@ -182,7 +174,7 @@ bool kitsu_supplement_main::init() {
       .kitsu_thumbnails_path_ = "D:/kitsu_data",
       .secret_                = "22T0iwSHK7qkhdI6",
       .domain_protocol_       = "http",
-      .domain_name_           = "192.168.0.181",
+      .domain_name_           = "192.168.40.188",
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
@@ -222,7 +214,7 @@ bool kitsu_supplement_main::init() {
     l_args.kitsu_thumbnails_path_ = register_file_type::program_location().parent_path() / "thumbnails";
     // 初始化上下文
     g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
+        l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
     );
     g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
     // 初始化授权上下文
@@ -244,9 +236,9 @@ bool kitsu_supplement_main::init() {
 
   {
     g_ctx().emplace<http::kitsu_ctx_t>(
-        l_args.kitsu_url_, l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_,
-        l_args.deepseek_keys_, l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_,
-        l_args.domain_protocol_, l_args.domain_name_
+        l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_,
+        l_args.ji_meng_access_key_id_, l_args.ji_meng_secret_access_key_, l_args.secret_, l_args.domain_protocol_,
+        l_args.domain_name_
     );
     if (!l_args.mail_config_.username_.empty() && !l_args.mail_config_.password_.empty())
       g_ctx().emplace<email::seed_email>(
