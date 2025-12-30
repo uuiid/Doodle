@@ -189,6 +189,7 @@
 			}
 		],
 		"sqliteViewer.maxFileSize": 500,
-		"powershell.cwd": "doodleMain"
+		"powershell.cwd": "doodleMain",
+		"C_Cpp.intelliSenseEngine": "disabled"
 	}
 }
