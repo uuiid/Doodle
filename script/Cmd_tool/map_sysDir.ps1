@@ -37,7 +37,7 @@ $map_item = @(
     [map_dir]@{ link = "C:\sy\ShouQianZX"; source = "\\192.168.10.250\public\ShouQianZX"; name = "ShouQianZX" },
     [map_dir]@{ link = "C:\sy\LQSWN_JCB"; source = "\\192.168.10.253\public\LQSWN_JCB"; name = "LQSWN_JCB" },
     [map_dir]@{ link = "C:\sy\DYX"; source = "\\192.168.10.253\public\DYX"; name = "DYX" },
-    [map_dir]@{ link = "C:\sy\DXSMR"; source = "\\ 192.168.10.253 \public\DXSMR"; name = "DXSMR" }
+    [map_dir]@{ link = "C:\sy\DXSMR"; source = "\\192.168.10.253\public\DXSMR"; name = "DXSMR" }
 )
 function Add-SyDir {
     $main_ini = @"
