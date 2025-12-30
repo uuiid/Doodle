@@ -97,6 +97,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<projects_assets_new>("/api/data/projects/{}/asset-types/{}/assets/new"_url(&projects_assets_new::project_id_, &projects_assets_new::asset_type_id_))
       .reg_t<actions_tasks_comment>("/api/actions/tasks/{}/comment"_url(&actions_tasks_comment::id_))
       .reg_t<actions_tasks_comments_add_preview>("/api/actions/tasks/{}/comments/{}/add-preview"_url(&actions_tasks_comments_add_preview::task_id_, &actions_tasks_comments_add_preview::comment_id_))
+      .reg_t<actions_tasks_create_review>("/api/actions/tasks/{}/create-review"_url(&actions_tasks_create_review::task_id_))
       .reg_t<pictures_preview_files>("/api/pictures/preview-files/{}"_url(&pictures_preview_files::id_))
       .reg_t<data_task_status_links>("/api/data/task-status-links"_url)
       .reg_t<auth_reset_password>("/api/auth/reset-password"_url)

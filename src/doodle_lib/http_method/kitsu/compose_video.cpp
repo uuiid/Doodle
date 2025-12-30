@@ -316,7 +316,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
 
   co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
 }
-struct actions_tasks_create_review_comment_args {
+struct actions_tasks_create_review_args {
   FSys::path subtitle_path_;
   FSys::path audio_path_;
   FSys::path intro_path_;
@@ -325,7 +325,7 @@ struct actions_tasks_create_review_comment_args {
   std::string episodes_name_;
   FSys::path episodes_name_path_;
 
-  friend void from_json(const nlohmann::json& in_json, actions_tasks_create_review_comment_args& out_arg) {
+  friend void from_json(const nlohmann::json& in_json, actions_tasks_create_review_args& out_arg) {
     if (in_json.contains("subtitle_path")) in_json.at("subtitle_path").get_to(out_arg.subtitle_path_);
     if (in_json.contains("audio_path")) in_json.at("audio_path").get_to(out_arg.audio_path_);
     if (in_json.contains("intro_path")) in_json.at("intro_path").get_to(out_arg.intro_path_);
@@ -334,14 +334,14 @@ struct actions_tasks_create_review_comment_args {
   }
 };
 
-struct actions_tasks_create_review_comment_run {
+struct actions_tasks_create_review_run {
   struct data {
     logger_ptr logger_{};
-    actions_tasks_create_review_comment_args args_{};
+    actions_tasks_create_review_args args_{};
   };
   std::shared_ptr<data> data_ptr_;
 
-  actions_tasks_create_review_comment_run() : data_ptr_(std::make_shared<data>()) {}
+  actions_tasks_create_review_run() : data_ptr_(std::make_shared<data>()) {}
 
   void operator()() {
     if (!data_ptr_->args_.audio_path_.empty() && FSys::exists(data_ptr_->args_.audio_path_)) {
@@ -362,10 +362,10 @@ struct actions_tasks_create_review_comment_run {
   }
 };
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review_comment, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
   auto l_json                        = in_handle->get_json();
-  actions_tasks_create_review_comment_run l_run;
+  actions_tasks_create_review_run l_run;
   l_json.get_to(l_run.data_ptr_->args_);
   l_json.get_to(*l_comment);
 
