@@ -1,5 +1,6 @@
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/attachment_file.h"
 #include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
@@ -13,11 +14,16 @@
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/comment.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seed_email.h>
 #include <doodle_lib/long_task/connect_video.h>
 
+#include <boost/asio/post.hpp>
+
+#include <algorithm>
+#include <filesystem>
 #include <memory>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/videoio.hpp>
@@ -290,7 +296,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
   if (l_arg.add_dubbing_) {
     auto l_dubbing_file =
         std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
-          return in_file.name_.starts_with("audio");
+          return in_file.name_.ends_with(".wav.mp4");
         });
     DOODLE_CHICK_HTTP(l_dubbing_file != l_attachment_files.end(), bad_request, "没有找到配音文件");
     l_run.data_ptr_->ffmpeg_video_.set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
@@ -310,5 +316,118 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
 
   co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
 }
+struct actions_tasks_create_review_comment_args {
+  FSys::path subtitle_path_;
+  FSys::path audio_path_;
+  FSys::path intro_path_;
+  FSys::path outro_path_;
+  // 集数名称
+  std::string episodes_name_;
+  FSys::path episodes_name_path_;
 
+  friend void from_json(const nlohmann::json& in_json, actions_tasks_create_review_comment_args& out_arg) {
+    if (in_json.contains("subtitle_path")) in_json.at("subtitle_path").get_to(out_arg.subtitle_path_);
+    if (in_json.contains("audio_path")) in_json.at("audio_path").get_to(out_arg.audio_path_);
+    if (in_json.contains("intro_path")) in_json.at("intro_path").get_to(out_arg.intro_path_);
+    if (in_json.contains("outro_path")) in_json.at("outro_path").get_to(out_arg.outro_path_);
+    if (in_json.contains("episodes_name")) in_json.at("episodes_name").get_to(out_arg.episodes_name_);
+  }
+};
+
+struct actions_tasks_create_review_comment_run {
+  struct data {
+    logger_ptr logger_{};
+    actions_tasks_create_review_comment_args args_{};
+  };
+  std::shared_ptr<data> data_ptr_;
+
+  actions_tasks_create_review_comment_run() : data_ptr_(std::make_shared<data>()) {}
+
+  void operator()() {
+    if (!data_ptr_->args_.audio_path_.empty() && FSys::exists(data_ptr_->args_.audio_path_)) {
+      auto l_old_file = data_ptr_->args_.audio_path_;
+      l_old_file.replace_extension();
+      FSys::rename(data_ptr_->args_.audio_path_, l_old_file);
+      data_ptr_->logger_->info("开始修正音频");
+      auto l_backup_path = FSys::add_time_stamp(data_ptr_->args_.audio_path_);
+      ffmpeg_video::preprocess_wav_to_aac(l_old_file, l_backup_path);
+      FSys::rename(l_backup_path, data_ptr_->args_.audio_path_);
+      data_ptr_->logger_->info("音频修正完成 {}", data_ptr_->args_.audio_path_);
+    }
+    if (!data_ptr_->args_.episodes_name_path_.empty() && FSys::exists(data_ptr_->args_.episodes_name_path_)) {
+      // todo: 修正集数名称
+      data_ptr_->logger_->info("开始修正集数名称");
+      data_ptr_->logger_->info("集数名称修正完成 {}", data_ptr_->args_.episodes_name_path_);
+    }
+  }
+};
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review_comment, post) {
+  std::shared_ptr<comment> l_comment = std::make_shared<comment>();
+  auto l_json                        = in_handle->get_json();
+  actions_tasks_create_review_comment_run l_run;
+  l_json.get_to(l_run.data_ptr_->args_);
+  l_json.get_to(*l_comment);
+
+  if (!l_run.data_ptr_->args_.subtitle_path_.empty() && FSys::exists(l_run.data_ptr_->args_.subtitle_path_) &&
+      l_run.data_ptr_->args_.subtitle_path_.extension() != ".srt") {
+    auto l_new_path = l_run.data_ptr_->args_.subtitle_path_;
+    l_new_path.replace_extension(".srt");
+    FSys::rename(l_run.data_ptr_->args_.subtitle_path_, l_new_path);
+    l_run.data_ptr_->args_.subtitle_path_ = l_new_path;
+  }
+  if (!l_run.data_ptr_->args_.audio_path_.empty() && FSys::exists(l_run.data_ptr_->args_.audio_path_)) {
+    auto l_new_path = l_run.data_ptr_->args_.audio_path_;
+    l_new_path.replace_extension(".wav") += ".mp4";
+    // ffmpeg_video::preprocess_wav_to_aac(l_run.data_ptr_->args_.audio_path_, l_new_path);
+    FSys::rename(l_run.data_ptr_->args_.audio_path_, l_new_path);
+    l_run.data_ptr_->args_.audio_path_ = l_new_path;
+  }
+  std::vector<FSys::path> l_files{};
+  // 生成集数临时文件(真正生成会推后到)
+  if (!l_run.data_ptr_->args_.episodes_name_.empty()) {
+    auto l_tmp_path =
+        core_set::get_set().get_cache_root("episode_name_tmp") / fmt::format("{}.mp4", core_set::get_set().get_uuid());
+    FSys::create_directories(l_tmp_path.parent_path());
+    FSys::ofstream{l_tmp_path} << l_run.data_ptr_->args_.episodes_name_;
+    l_files.push_back(l_tmp_path);
+    l_run.data_ptr_->args_.episodes_name_path_ = l_tmp_path;
+  }
+  if (l_comment->text_.empty()) l_comment->text_ = "创建评审附件";
+
+  if (!l_run.data_ptr_->args_.subtitle_path_.empty() && FSys::exists(l_run.data_ptr_->args_.subtitle_path_))
+    l_files.push_back(l_run.data_ptr_->args_.subtitle_path_);
+  if (!l_run.data_ptr_->args_.audio_path_.empty() && FSys::exists(l_run.data_ptr_->args_.audio_path_))
+    l_files.push_back(l_run.data_ptr_->args_.audio_path_);
+  if (!l_run.data_ptr_->args_.intro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.intro_path_))
+    l_files.push_back(l_run.data_ptr_->args_.intro_path_);
+  if (!l_run.data_ptr_->args_.outro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.outro_path_))
+    l_files.push_back(l_run.data_ptr_->args_.outro_path_);
+
+  auto l_result   = co_await create_comment(l_comment, &person_, task_id_, l_files);
+
+  // 重新定向文件
+  auto l_fix_path = [&](const FSys::path& in_path) {
+    if (in_path.empty()) return FSys::path{};
+    auto l_it = std::find_if(
+        l_result.attachment_file_.begin(), l_result.attachment_file_.end(),
+        [&](const attachment_file& in_attachment_file) {
+          return in_path.filename().generic_string() == in_attachment_file.name_;
+        }
+    );
+    DOODLE_CHICK(l_it != l_result.attachment_file_.end(), "无法找到附件文件 {}", in_path);
+
+    return g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_it->uuid_id_);
+  };
+  l_run.data_ptr_->logger_                   = in_handle->logger_;
+  l_run.data_ptr_->args_.audio_path_         = l_fix_path(l_run.data_ptr_->args_.audio_path_);
+  l_run.data_ptr_->args_.subtitle_path_      = l_fix_path(l_run.data_ptr_->args_.subtitle_path_);
+  l_run.data_ptr_->args_.intro_path_         = l_fix_path(l_run.data_ptr_->args_.intro_path_);
+  l_run.data_ptr_->args_.outro_path_         = l_fix_path(l_run.data_ptr_->args_.outro_path_);
+  l_run.data_ptr_->args_.episodes_name_path_ = l_fix_path(l_run.data_ptr_->args_.episodes_name_path_);
+
+  boost::asio::post(g_strand(), l_run);
+  default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
 }  // namespace doodle::http

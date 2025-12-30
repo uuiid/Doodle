@@ -22,7 +22,7 @@ struct value_type_impl {
     for (auto&& i : parts_) {
       std::visit(
           overloaded{
-              [&](const FSys::path&) {},
+              [&](const FSys::path& in_path) { l_json[i.name] = in_path; },
               [&](const std::string& in_body) {
                 if (nlohmann::json::accept(in_body)) {
                   l_json[i.name] = nlohmann::json::parse(in_body);
