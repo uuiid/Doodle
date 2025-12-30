@@ -201,11 +201,11 @@ function Initialize-Doodle {
 
 
 function New-ServerPSSession {
-    $RootPassword = ConvertTo-SecureString "sywh.123" -AsPlainText -Force
+    $RootPassword = ConvertTo-SecureString "sywh.888" -AsPlainText -Force
     $Credential = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList administrator, $RootPassword
-    $NewSession = Get-PSSession -ComputerName 192.168.0.181 -ErrorAction SilentlyContinue
+    $NewSession = Get-PSSession -ComputerName 192.168.40.188 -ErrorAction SilentlyContinue
     if (-not $NewSession) {
-        $NewSession = New-PSSession -ComputerName 192.168.0.181 -Credential $Credential -Authentication Basic
+        $NewSession = New-PSSession -ComputerName 192.168.40.188 -Credential $Credential -Authentication Basic
     }
     return $NewSession;
 }
