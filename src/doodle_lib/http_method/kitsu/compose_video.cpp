@@ -301,6 +301,41 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
     DOODLE_CHICK_HTTP(l_dubbing_file != l_attachment_files.end(), bad_request, "没有找到配音文件");
     l_run.data_ptr_->ffmpeg_video_.set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
   }
+  if (l_arg.add_name_) {
+    auto l_name_file =
+        std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
+          return in_file.name_.ends_with("_episode.mp4");
+        });
+    DOODLE_CHICK_HTTP(l_name_file != l_attachment_files.end(), bad_request, "没有找到名称视频文件");
+    l_run.data_ptr_->ffmpeg_video_.set_episodes_name(
+        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_name_file->uuid_id_)
+    );
+  }
+  if (l_arg.add_head_tail_) {
+    auto l_head_file =
+        std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
+          return in_file.name_.ends_with("_intro.mp4");
+        });
+    DOODLE_CHICK_HTTP(l_head_file != l_attachment_files.end(), bad_request, "没有找到片头视频文件");
+    l_run.data_ptr_->ffmpeg_video_.set_intro(
+        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_head_file->uuid_id_)
+    );
+    auto l_tail_file =
+        std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
+          return in_file.name_.ends_with("_outro.mp4");
+        });
+    DOODLE_CHICK_HTTP(l_tail_file != l_attachment_files.end(), bad_request, "没有找到片尾视频文件");
+    l_run.data_ptr_->ffmpeg_video_.set_outro(
+        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_tail_file->uuid_id_)
+    );
+  }
+  if (l_arg.add_watermark_) {
+    l_run.data_ptr_->ffmpeg_video_.set_watermark("送审水印");
+  }
+  if (l_arg.add_time_code_) {
+    l_run.data_ptr_->ffmpeg_video_.set_time_code(true);
+  }
+
   auto l_shot_previews = get_sequence_shots_preview(l_task.entity_id_);
 
   std::vector<FSys::path> l_paths{};
@@ -383,11 +418,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     FSys::rename(l_run.data_ptr_->args_.audio_path_, l_new_path);
     l_run.data_ptr_->args_.audio_path_ = l_new_path;
   }
+  if (!l_run.data_ptr_->args_.intro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.intro_path_)) {
+    auto l_new_path = l_run.data_ptr_->args_.intro_path_.parent_path() /
+                      fmt::format("{}_intro.mp4", l_run.data_ptr_->args_.intro_path_.stem().generic_string());
+    l_new_path.replace_extension(".mp4");
+    FSys::rename(l_run.data_ptr_->args_.intro_path_, l_new_path);
+    l_run.data_ptr_->args_.intro_path_ = l_new_path;
+  }
+  if (!l_run.data_ptr_->args_.outro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.outro_path_)) {
+    auto l_new_path = l_run.data_ptr_->args_.outro_path_.parent_path() /
+                      fmt::format("{}_outro.mp4", l_run.data_ptr_->args_.outro_path_.stem().generic_string());
+    l_new_path.replace_extension(".mp4");
+    FSys::rename(l_run.data_ptr_->args_.outro_path_, l_new_path);
+    l_run.data_ptr_->args_.outro_path_ = l_new_path;
+  }
+
   std::vector<FSys::path> l_files{};
   // 生成集数临时文件(真正生成会推后到)
   if (!l_run.data_ptr_->args_.episodes_name_.empty()) {
-    auto l_tmp_path =
-        core_set::get_set().get_cache_root("episode_name_tmp") / fmt::format("{}.mp4", core_set::get_set().get_uuid());
+    auto l_tmp_path = core_set::get_set().get_cache_root("episode_name_tmp") /
+                      fmt::format("{}_episode.mp4", core_set::get_set().get_uuid());
     FSys::create_directories(l_tmp_path.parent_path());
     FSys::ofstream{l_tmp_path} << l_run.data_ptr_->args_.episodes_name_;
     l_files.push_back(l_tmp_path);

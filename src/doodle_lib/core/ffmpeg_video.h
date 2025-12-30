@@ -24,6 +24,8 @@ class ffmpeg_video {
   FSys::path audio_path_;
   // 片头
   FSys::path intro_path_;
+  // 集数文件 
+  FSys::path episodes_name_path_;
   // 片尾
   FSys::path outro_path_;
   // 水印
@@ -42,6 +44,9 @@ class ffmpeg_video {
   void set_outro(const FSys::path& in_outro_path) { outro_path_ = in_outro_path; }
   void set_watermark(const std::string& in_watermark_text) { watermark_text_ = in_watermark_text; }
   void set_time_code(bool in_time_code) { time_code_ = in_time_code; }
+  void set_episodes_name(const FSys::path& in_episodes_name_path) {
+    episodes_name_path_ = in_episodes_name_path;
+  }
   
   void set_input_video(const FSys::path& in_video_path) { video_path_ = in_video_path; }
   void set_output_video(const FSys::path& in_out_path) { out_path_ = in_out_path; }
