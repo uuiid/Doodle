@@ -138,7 +138,7 @@ function Initialize-Doodle {
     }
     Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
-    Copy-Item $DoodleExePath -Destination "$OutPath\dist"
+    Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
 
     # 从github 下载网络资源
     # 先查看标签, 再组合下载url
