@@ -138,6 +138,12 @@ class ffmpeg_video::impl {
     av::Codec codec_;
     av::Stream out_stream_;
   } audio_handle_;
+
+  // 集数文件(这是一个mp4文件，里面有视频轨道, 无音频轨道)
+
+
+
+
   constexpr static int g_fps = 25;
 
   const av::Rational& get_video_time_base() const {
@@ -570,5 +576,7 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
     DOODLE_CHICK(l_dec_ctx.channels() == 2, "ffmpeg_video: audio channel is not stereo");
   }
 }
+
+
 
 }  // namespace doodle
