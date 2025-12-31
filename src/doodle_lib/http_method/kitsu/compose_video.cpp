@@ -481,6 +481,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     l_new_path.replace_extension(".mp4");
     FSys::rename(l_run.data_ptr_->args_.intro_path_, l_new_path);
     l_run.data_ptr_->args_.intro_path_ = l_new_path;
+    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.intro_path_);
   }
   if (!l_run.data_ptr_->args_.outro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.outro_path_)) {
     auto l_new_path = l_run.data_ptr_->args_.outro_path_.parent_path() /
@@ -488,6 +489,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     l_new_path.replace_extension(".mp4");
     FSys::rename(l_run.data_ptr_->args_.outro_path_, l_new_path);
     l_run.data_ptr_->args_.outro_path_ = l_new_path;
+    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.outro_path_);
   }
 
   std::vector<FSys::path> l_files{};
