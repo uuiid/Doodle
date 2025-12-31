@@ -36,8 +36,13 @@ if ($CopyServer) {
         $headers = @{
             "Authorization" = "Bearer $KitsuCookies"
         }
-
-        Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers 
+        # 兼容5.1版本 需要加 -UseBasicParsing
+        if ($PSVersionTable.PSVersion.Major -lt 6) {
+            Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers -UseBasicParsing
+        }
+        else {
+            Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers
+        }
         $Target = "D:"
         $Tmp = "D:\tmp"
         $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
