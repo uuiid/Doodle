@@ -174,7 +174,7 @@ bool kitsu_supplement_main::init() {
       .kitsu_thumbnails_path_ = "D:/kitsu_data",
       .secret_                = "22T0iwSHK7qkhdI6",
       .domain_protocol_       = "http",
-      .domain_name_           = "192.168.0.181",
+      .domain_name_           = "192.168.40.188",
   };
 
   if (auto l_file_path = arg_({"config"}); l_file_path) {
