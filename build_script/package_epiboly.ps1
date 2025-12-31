@@ -20,7 +20,7 @@ Remove-Item -Path "$DoodleOut/epiboly" -Include "*.zip" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly/dist" -Include "*.exe" -Recurse -Force
 
 $DataSource_loc = "$DoodleOut/epiboly/epiboly.database"
-$l_list = Get-ChildItem -Path "\\192.168.0.181\Users\Administrator\AppData\Local\Temp\doodle\backup" -Filter "kitsu_*.db" | Sort-Object LastWriteTime -Descending
+$l_list = Get-ChildItem -Path "\\192.168.40.188\Users\Administrator\AppData\Local\Temp\doodle\backup" -Filter "kitsu_*.db" | Sort-Object LastWriteTime -Descending
 if ($l_list.Count -eq 0) {
   Write-Host "没有找到备份数据库"
   return;
