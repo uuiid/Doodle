@@ -284,7 +284,7 @@ get_sequence_shots_preview_map_result get_sequence_shots_preview_map(const uuid&
   );
 
   for (auto&& [l_preview_file, l_entity_id] : l_preview_files) {
-    l_result[l_entity_id] = l_preview_file;
+    if (l_result[l_entity_id].uuid_id_.is_nil()) l_result[l_entity_id] = l_preview_file;
   }
 
   return get_sequence_shots_preview_map_result{l_result};
