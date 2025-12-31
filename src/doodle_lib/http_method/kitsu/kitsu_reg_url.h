@@ -618,6 +618,7 @@ DOODLE_HTTP_FUN_END()
 // /api/actions/tasks/{task_id}/create-review
 DOODLE_HTTP_JWT_FUN(actions_tasks_create_review)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 

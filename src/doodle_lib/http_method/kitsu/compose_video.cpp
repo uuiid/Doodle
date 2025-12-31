@@ -229,6 +229,65 @@ auto get_sequence_shots_preview(const uuid& in_sequence_id) {
   return l_preview_files;
 }
 
+struct get_sequence_shots_preview_map_result {
+  std::map<uuid, preview_file> map_;
+  // 都准备好了
+  bool all_ready() const {
+    for (const auto& [key, value] : map_) {
+      if (value.uuid_id_.is_nil()) return false;
+    }
+    return true;
+  }
+
+  // to json
+  friend void to_json(nlohmann::json& j, const get_sequence_shots_preview_map_result& p) {
+    for (const auto& [key, value] : p.map_) {
+      j[fmt::to_string(key)] = value;
+    }
+    j["all_ready"] = p.all_ready();
+  }
+};
+
+get_sequence_shots_preview_map_result get_sequence_shots_preview_map(const uuid& in_sequence_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  constexpr auto episode  = "episode"_alias.for_<entity>();
+
+  std::map<uuid, preview_file> l_result;
+  {
+    auto l_shots = l_sql.impl_->storage_any_.select(
+        &entity::uuid_id_, from<entity>(),
+        join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+        where(c(sequence->*&entity::uuid_id_) == in_sequence_id), order_by(&entity::name_)
+    );
+    for (auto&& [l_entity_id] : l_shots) {
+      l_result.emplace(l_entity_id, preview_file{});
+    }
+  }
+
+  auto l_preview_files = l_sql.impl_->storage_any_.select(
+      columns(object<preview_file>(true), &entity::uuid_id_), from<preview_file>(),
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
+      where(
+          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
+          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
+           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
+      ),
+      order_by(&preview_file::created_at_).desc()
+  );
+
+
+  for (auto&& [l_preview_file, l_entity_id] : l_preview_files) {
+    l_result[l_entity_id] = l_preview_file;
+  }
+
+  return get_sequence_shots_preview_map_result{l_result};
+}
+
 struct run_actions_preview_files_create_review {
   struct data {
     ffmpeg_video ffmpeg_video_;
@@ -317,17 +376,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
           return in_file.name_.ends_with("_intro.mp4");
         });
     DOODLE_CHICK_HTTP(l_head_file != l_attachment_files.end(), bad_request, "没有找到片头视频文件");
-    l_run.data_ptr_->ffmpeg_video_.set_intro(
-        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_head_file->uuid_id_)
-    );
+    l_run.data_ptr_->ffmpeg_video_.set_intro(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_head_file->uuid_id_));
     auto l_tail_file =
         std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
           return in_file.name_.ends_with("_outro.mp4");
         });
     DOODLE_CHICK_HTTP(l_tail_file != l_attachment_files.end(), bad_request, "没有找到片尾视频文件");
-    l_run.data_ptr_->ffmpeg_video_.set_outro(
-        g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_tail_file->uuid_id_)
-    );
+    l_run.data_ptr_->ffmpeg_video_.set_outro(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_tail_file->uuid_id_));
   }
   if (l_arg.add_watermark_) {
     l_run.data_ptr_->ffmpeg_video_.set_watermark("送审水印");
@@ -479,5 +534,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   boost::asio::post(g_strand(), l_run);
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, get) {
+  auto l_sql           = g_ctx().get<sqlite_database>();
+  auto l_task          = l_sql.get_by_uuid<task>(task_id_);
+  auto l_shot_previews = get_sequence_shots_preview_map(l_task.entity_id_);
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
 }
 }  // namespace doodle::http

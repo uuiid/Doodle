@@ -356,9 +356,6 @@ class ffmpeg_video::impl {
     }
   }
 
-  // 处理字幕
-  void process_subtitle() {}
-
   void process() {
     output_format_context_.writeHeader();
     process_out_video();
