@@ -281,7 +281,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
 
     auto l_duration = preview::get_video_duration(l_new_path);
     boost::asio::post(
-        g_strand(),
+        g_pool_strand(),
         [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
           preview::handle_video_file(l_new_path, fps, size, l_preview_file);
         }

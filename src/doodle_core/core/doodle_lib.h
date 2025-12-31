@@ -22,6 +22,7 @@ class DOODLE_CORE_API doodle_lib : public boost::noncopyable, boost::equality_co
   friend entt::registry::context& g_ctx();
   friend details::logger_ctrl& g_logger_ctrl();
   friend boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
+  friend boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
 
  private:
   class impl;

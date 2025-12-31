@@ -31,6 +31,7 @@ DOODLE_CORE_API boost::asio::io_context &g_io_context();
 DOODLE_CORE_API details::logger_ctrl &g_logger_ctrl();
 
 DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
+DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
 template <class... Ts>
 struct overloaded : Ts... {
   using Ts::operator()...;

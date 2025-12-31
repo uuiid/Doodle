@@ -24,8 +24,15 @@ class doodle_lib::impl {
   boost::asio::io_context io_context_{};
   boost::asio::thread_pool thread_pool_attr{std::thread::hardware_concurrency() * 2};
   entt::registry::context ctx_p{std::allocator<entt::entity>{}};
-  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(io_context_)};
-
+  using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
+  strand_type strand_{boost::asio::make_strand(io_context_)};
+  std::array<strand_type, 4> strands_{
+      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(io_context_),
+  };
+  std::atomic_size_t strand_index_{0};
   logger_ctr_ptr p_log{std::make_shared<logger_ctr_ptr::element_type>()};
   inline static doodle_lib* self;
 };
@@ -57,4 +64,9 @@ boost::asio::io_context& g_io_context() { return doodle_lib::Get().ptr->io_conte
 details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }
 entt::registry::context& g_ctx() { return doodle_lib::Get().ptr->ctx_p; }
 boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() { return doodle_lib::Get().ptr->strand_; }
+boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand() {
+  return doodle_lib::Get()
+      .ptr->strands_[doodle_lib::Get().ptr->strand_index_++ % doodle_lib::Get().ptr->strands_.size()];
+}
+
 }  // namespace doodle
