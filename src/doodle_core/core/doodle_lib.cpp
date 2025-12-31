@@ -26,7 +26,11 @@ class doodle_lib::impl {
   entt::registry::context ctx_p{std::allocator<entt::entity>{}};
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
   strand_type strand_{boost::asio::make_strand(io_context_)};
-  std::array<strand_type, 4> strands_{
+  std::array<strand_type, 8> strands_{
+      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(io_context_),
+      boost::asio::make_strand(io_context_),
       boost::asio::make_strand(io_context_),
       boost::asio::make_strand(io_context_),
       boost::asio::make_strand(io_context_),
