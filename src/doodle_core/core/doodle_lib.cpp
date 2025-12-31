@@ -8,6 +8,7 @@
 #include <doodle_core/logger/crash_reporting_thread.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
+#include <doodle_core/logger/logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
@@ -22,20 +23,10 @@ namespace doodle {
 class doodle_lib::impl {
  public:
   boost::asio::io_context io_context_{};
-  boost::asio::thread_pool thread_pool_attr{std::thread::hardware_concurrency() * 2};
   entt::registry::context ctx_p{std::allocator<entt::entity>{}};
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
   strand_type strand_{boost::asio::make_strand(io_context_)};
-  std::array<strand_type, 8> strands_{
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-      boost::asio::make_strand(io_context_),
-  };
+  std::vector<strand_type> strands_{};
   std::atomic_size_t strand_index_{0};
   logger_ctr_ptr p_log{std::make_shared<logger_ctr_ptr::element_type>()};
   inline static doodle_lib* self;
@@ -44,6 +35,13 @@ class doodle_lib::impl {
 doodle_lib::doodle_lib() : ptr() {
   impl::self = this;
   ptr        = std::move(std::make_unique<impl>());
+  SODLOG_INFO("Doodle Lib 初始化完成 使用处理器 {}", get_hardware_concurrency());
+  // 初始化多个 strand 用于线程池
+  auto l_max = get_hardware_concurrency() / 8;
+  for (std::size_t i = 0; i < l_max; ++i) {
+    ptr->strands_.emplace_back(boost::asio::make_strand(ptr->io_context_));
+  }
+
   init();
 }
 
@@ -71,6 +69,12 @@ boost::asio::strand<boost::asio::io_context::executor_type>& g_strand() { return
 boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand() {
   return doodle_lib::Get()
       .ptr->strands_[doodle_lib::Get().ptr->strand_index_++ % doodle_lib::Get().ptr->strands_.size()];
+}
+std::size_t get_hardware_concurrency() {
+  return std::max(
+      boost::numeric_cast<std::size_t>(GetActiveProcessorCount(ALL_PROCESSOR_GROUPS)),
+      boost::numeric_cast<std::size_t>(std::thread::hardware_concurrency())
+  );
 }
 
 }  // namespace doodle

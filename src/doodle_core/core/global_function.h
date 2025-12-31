@@ -32,6 +32,7 @@ DOODLE_CORE_API details::logger_ctrl &g_logger_ctrl();
 
 DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
 DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
+DOODLE_CORE_API std::size_t get_hardware_concurrency();
 template <class... Ts>
 struct overloaded : Ts... {
   using Ts::operator()...;

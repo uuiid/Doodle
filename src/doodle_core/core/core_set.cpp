@@ -31,7 +31,7 @@ core_set& core_set::get_set() {
 
 core_set::core_set()
     : p_doc(get_pwd()),
-      p_max_thread(std::thread::hardware_concurrency() - 2),
+      p_max_thread(3),
       p_root(FSys::temp_directory_path() / "Doodle"),
       timeout(3600),
       maya_version(2020),

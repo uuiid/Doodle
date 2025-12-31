@@ -74,7 +74,7 @@ std::int32_t app_base::run() {
     }
   } else {
     std::vector<std::thread> l_threads{
-        std::thread::hardware_concurrency() == 0 ? 8 : std::thread::hardware_concurrency() - 1
+        get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1
     };
     for (auto& l_thread : l_threads) {
       l_thread = std::thread([this] {
