@@ -6,9 +6,9 @@
 
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/logger/crash_reporting_thread.h>
+#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
-#include <doodle_core/logger/logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
@@ -35,7 +35,7 @@ class doodle_lib::impl {
 doodle_lib::doodle_lib() : ptr() {
   impl::self = this;
   ptr        = std::move(std::make_unique<impl>());
-  SODLOG_INFO("Doodle Lib 初始化完成 使用处理器 {}", get_hardware_concurrency());
+  SPDLOG_WARN("Doodle Lib 初始化完成 使用处理器 {}", get_hardware_concurrency());
   // 初始化多个 strand 用于线程池
   auto l_max = get_hardware_concurrency() / 8;
   for (std::size_t i = 0; i < l_max; ++i) {
