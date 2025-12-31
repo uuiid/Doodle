@@ -523,4 +523,52 @@ void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FS
   l_output_ctx.writeTrailer();
 }
 
+void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
+
+  DOODLE_CHICK(!in_video_path.empty(), "ffmpeg_video: video path is empty");
+  DOODLE_CHICK(FSys::exists(in_video_path), std::format("ffmpeg_video: video file not exists: {}", in_video_path.string()));
+  DOODLE_CHICK(
+      FSys::is_regular_file(in_video_path), std::format("ffmpeg_video: video path is not a file: {}", in_video_path.string())
+  );
+
+  av::FormatContext l_input_ctx{};
+  l_input_ctx.openInput(in_video_path.string());
+  l_input_ctx.findStreamInfo();
+
+  av::Stream l_in_video_stream{};
+  av::Stream l_in_audio_stream{};
+  for (size_t i = 0; i < l_input_ctx.streamsCount(); ++i) {
+    auto st = l_input_ctx.stream(i);
+    if (st.isVideo() && !l_in_video_stream.isValid()) {
+      l_in_video_stream = st;
+      continue;
+    }
+    if (st.isAudio() && !l_in_audio_stream.isValid()) {
+      l_in_audio_stream = st;
+      continue;
+    }
+  }
+  DOODLE_CHICK(l_in_video_stream.isValid(), "ffmpeg_video: input has no video stream");
+
+  // video decoder must exist
+  av::Codec l_in_video_codec = l_in_video_stream.codecParameters().decodingCodec();
+  DOODLE_CHICK(!l_in_video_codec.isNull(), "ffmpeg_video: cannot find video decoder");
+  DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: video decoder cannot decode");
+
+  // audio stream is optional, but if present it must be AAC + stereo (2 channels)
+  if (l_in_audio_stream.isValid()) {
+    av::Codec l_in_audio_codec = l_in_audio_stream.codecParameters().decodingCodec();
+    DOODLE_CHICK(!l_in_audio_codec.isNull(), "ffmpeg_video: cannot find audio decoder");
+    DOODLE_CHICK(l_in_audio_codec.canDecode(), "ffmpeg_video: audio decoder cannot decode");
+
+    const AVCodec* raw_codec = l_in_audio_codec.raw();
+    DOODLE_CHICK(raw_codec != nullptr, "ffmpeg_video: audio decoder raw codec is null");
+    DOODLE_CHICK(raw_codec->id == AV_CODEC_ID_AAC, "ffmpeg_video: audio codec is not AAC");
+
+    av::AudioDecoderContext l_dec_ctx{l_in_audio_stream, l_in_audio_codec};
+    l_dec_ctx.open();
+    DOODLE_CHICK(l_dec_ctx.channels() == 2, "ffmpeg_video: audio channel is not stereo");
+  }
+}
+
 }  // namespace doodle

@@ -55,5 +55,7 @@ class ffmpeg_video {
 
   /// 预处理 .wav 音频文件，转换为 AAC 编码, 立体声
   static void preprocess_wav_to_aac(const FSys::path& in_wav_path, const FSys::path& in_out_path);
+  /// 检查视频文件是否有效
+  static void check_video_valid(const FSys::path& in_video_path);
 };
 }  // namespace doodle
