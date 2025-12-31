@@ -299,7 +299,8 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 // 计算时间
 void computing_time_run(
     const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const uuid& in_person_id,
-    std::vector<computing_time_post_req_data>& in_data, std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
+    std::vector<computing_time_post_req_data>& in_data,
+    std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
   DOODLE_CHICK(in_data.size() == in_out_data.size(), "in_data.size() != in_out_data.size()");
 
@@ -521,7 +522,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
         );
     }
   }
-
+  l_block_ptr->resize(l_data.size());
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   computing_time_run(year_month_, l_time_clock, l_user.uuid_id_, l_data, *l_block_ptr);
 
