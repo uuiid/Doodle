@@ -36,7 +36,7 @@ core_set::core_set()
       timeout(3600),
       maya_version(2020),
 #ifdef NDEBUG
-      server_ip("http://192.168.40.188")
+      server_ip("http://192.168.0.181")
 #else
       server_ip("http://192.168.20.89:50025")
 #endif
