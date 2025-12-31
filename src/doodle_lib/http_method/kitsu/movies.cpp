@@ -18,7 +18,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_low_preview
   person_.check_project_access(l_entt.project_id_);
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(id_);
 
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  co_return in_handle->make_msg(l_path, http_header_ctrl{
+      .mine_type_ = kitsu::mime_type(l_path.extension()),
+      .has_cache_control_ = true
+  });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> movies_originals_preview_files::get(
     session_data_ptr in_handle
@@ -28,7 +31,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_originals_p
   person_.check_project_access(l_entt.project_id_);
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(id_);
 
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  co_return in_handle->make_msg(l_path, http_header_ctrl{
+      .mine_type_ = kitsu::mime_type(l_path.extension()),
+      .has_cache_control_ = true
+  });
 }
 boost::asio::awaitable<boost::beast::http::message_generator> movies_tiles_preview_files::get(
     session_data_ptr in_handle
@@ -38,7 +44,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> movies_tiles_previ
   person_.check_project_access(l_entt.project_id_);
   auto l_path = g_ctx().get<kitsu_ctx_t>().get_tiles_file_path(id_);
 
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+  co_return in_handle->make_msg(l_path, http_header_ctrl{
+      .mine_type_ = kitsu::mime_type(l_path.extension()),
+      .has_cache_control_ = true
+  });
 }
 
 }  // namespace doodle::http
