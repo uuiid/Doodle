@@ -4,11 +4,21 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+
+#include <boost/numeric/conversion/cast.hpp>
 namespace doodle {
 class DOODLE_CORE_API image_size {
  public:
   std::int32_t width{0};
   std::int32_t height{0};
+
+  explicit image_size(const std::int32_t in_width = 0, const std::int32_t in_height = 0)
+      : width(in_width), height(in_height) {}
+  template <typename T>
+    requires std::is_integral_v<T>
+  explicit image_size(const std::pair<T, T>& in_pair)
+      : width(boost::numeric_cast<std::int32_t>(in_pair.first)),
+        height(boost::numeric_cast<std::int32_t>(in_pair.second)) {}
 
   // std::pair<std::int32_t, std::int32_t> 转换函数
   template <typename T>

@@ -6,6 +6,7 @@
 
 #include <doodle_core/core/file_sys.h>
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/image_size.h>
 
 #include <string>
 
@@ -57,6 +58,9 @@ class ffmpeg_video {
   static void check_video_valid(const FSys::path& in_video_path);
 
   // 生成集数视频文件
-  static void generate_episodes_name_video(std::string_view in_episodes_name, const FSys::path& in_out_path);
+  static void generate_episodes_name_video(
+      std::string_view in_episodes_name, const FSys::path& in_out_path,
+      const image_size& in_size = image_size{1280, 720}
+  );
 };
 }  // namespace doodle

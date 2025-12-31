@@ -8,5 +8,9 @@ Hover:
   ShowAKA: Yes
 CompileFlags:
   Add: 
-    - "-ferror-limit=0"
+    - -ferror-limit=0
+    - -D_HAS_CXX17=1
+    - -D_HAS_CXX20=1
+    - -D_HAS_CXX23=1
+    - /std:c++latest
   CompilationDatabase: "./build/Ninja_debug"
