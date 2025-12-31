@@ -2,19 +2,10 @@
 # 这个是外部使用的脚本
 
 $map_item = @(
-    @( "C:\sy\WuDiJianHun_8", "", "无敌剑魂_8" ),
-    @( "C:\sy\WuDiJianHun", "", "无敌剑魂" ),
-    @( "C:\sy\RenJianZuiDeYi_8", "", "人间最得意_8" ),
-    @( "C:\sy\RenJianZuiDeYi", "", "人间最得意" ),
-    @( "C:\sy\LianQiShiWanNian_8", "", "炼气十万年_8" ),
     @( "C:\sy\LianQiShiWanNian", "", "炼气十万年" ),
-    @( "C:\sy\WGXD", "", "独步万古" ),
     @( "C:\sy\ZMLCLWDSWD", "", "宗门里除了我都是卧底" ),
-    @( "C:\sy\WDSXTQL", "", "我的师兄太强了" ),
-    @( "C:\sy\WSMSHWDL", "", "我什么时候无敌了"),
-    @( "C:\sy\SSWH", "", "双生武魂"),
     @( "C:\sy\DYX", "", "盗妖行"),
-    @( "C:\sy\LQSWN_JCB", "", "炼气十万年_特别篇" )
+    @( "C:\sy\LQSWN_JCB", "", "炼气十万年_特别篇" ) 
 )
 
 function Add-SyDir {
