@@ -242,7 +242,10 @@ struct get_sequence_shots_preview_map_result {
   // to json
   friend void to_json(nlohmann::json& j, const get_sequence_shots_preview_map_result& p) {
     for (const auto& [key, value] : p.map_) {
-      j[fmt::to_string(key)] = value;
+      if (value.uuid_id_.is_nil())
+        j[fmt::to_string(key)] = nullptr;
+      else
+        j[fmt::to_string(key)] = value;
     }
     j["all_ready"] = p.all_ready();
   }
@@ -279,7 +282,6 @@ get_sequence_shots_preview_map_result get_sequence_shots_preview_map(const uuid&
       ),
       order_by(&preview_file::created_at_).desc()
   );
-
 
   for (auto&& [l_preview_file, l_entity_id] : l_preview_files) {
     l_result[l_entity_id] = l_preview_file;
