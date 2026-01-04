@@ -1,2 +1,47 @@
 #include "generate_text_video.hpp"
-namespace doodle {}
+
+#include "doodle_core/core/file_sys.h"
+
+#include <filesystem>
+#include <opencv2/freetype.hpp>
+#include <opencv2/opencv.hpp>
+
+namespace doodle {
+
+void generate_text_video::run() {
+  DOODLE_CHICK(!out_path_.empty(), "ffmpeg_video: output path is empty");
+  auto out_path = out_path_;
+  out_path.replace_extension(".mp4");
+  auto l_backup = FSys::add_time_stamp(out_path_);
+
+  if (auto l_p = out_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+
+  {
+    cv::Mat l_image{size_.height, size_.width, CV_8UC3, cv::Scalar(0, 0, 0)};
+
+    cv::VideoWriter l_writer{
+        l_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25.0,
+        cv::Size(size_.width, size_.height)
+    };
+
+    const cv::Size k_size{size_.width, size_.height};
+    auto k_image            = cv::Mat{};
+    const auto total_frames = duration_.count() * 25;
+    auto const l_ft2{cv::freetype::createFreeType2()};
+    for (const auto& font_attr : font_attrs_) {
+      l_ft2->loadFontData(font_attr.font_path_.generic_string(), 0);
+      const auto l_font_size = l_ft2->getTextSize(font_attr.text_, font_attr.font_size_, -1, nullptr);
+      cv::Point l_textOrg((k_size.width - l_font_size.width) / 2, (k_size.height + l_font_size.height) / 2);
+      if (font_attr.font_point_.y != 0) l_textOrg.y = font_attr.font_point_.y;
+      if (font_attr.font_point_.x != 0) l_textOrg.x = font_attr.font_point_.x;
+
+      l_ft2->putText(
+          k_image, font_attr.text_, l_textOrg, font_attr.font_size_, font_attr.font_color_, -1, cv::LINE_AA, false
+      );
+    }
+    for (std::int32_t frame_idx = 0; frame_idx < total_frames; ++frame_idx) l_writer << k_image;
+  }
+  FSys::rename(l_backup, out_path);
+}
+
+}  // namespace doodle

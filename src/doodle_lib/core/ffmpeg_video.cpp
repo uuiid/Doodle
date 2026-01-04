@@ -581,29 +581,6 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
   }
 }
 
-void ffmpeg_video::generate_episodes_name_video(
-    std::string_view in_episodes_name, const FSys::path& in_out_path, const FSys::path& in_font_path,
-    const image_size& in_size, const chrono::seconds in_duration
-) {
-  DOODLE_CHICK(!in_episodes_name.empty(), "ffmpeg_video: episodes name is empty");
-  DOODLE_CHICK(!in_out_path.empty(), "ffmpeg_video: output path is empty");
-  auto out_path = in_out_path;
-  out_path.replace_extension(".mp4");
-  if (auto l_p = out_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-
-  auto l_ft = cv::freetype::createFreeType2();
-  DOODLE_CHICK(
-      FSys::exists(in_font_path), std::format("ffmpeg_video: font file not exists: {}", in_font_path.string())
-  );
-  l_ft->loadFontData(in_font_path.string(), 0);
-
-  cv::Mat l_image{in_size.height, in_size.width, CV_8UC3, cv::Scalar(0, 0, 0)};
-
-
-  cv::VideoWriter l_writer{
-      in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25.0,
-      cv::Size(in_size.width, in_size.height)
-  };
-}
+ 
 
 }  // namespace doodle

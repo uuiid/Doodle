@@ -4,6 +4,7 @@
 #include <doodle_core/metadata/image_size.h>
 
 #include <opencv2/core.hpp>
+#include <opencv2/core/types.hpp>
 
 namespace doodle {
 
@@ -11,8 +12,9 @@ class generate_text_video {
  public:
   struct font_attr_t {
     FSys::path font_path_{doodle_config::font_default};
-    std::string font_name_{"Arial"};
     int font_size_{48};
+    // (0,0) 为左上角, 为(0,0)时,居中而不是左上角
+    cv::Point font_point_{0, 0};
     cv::Scalar font_color_{255, 255, 255, 255};
     std::string text_{};
   };
