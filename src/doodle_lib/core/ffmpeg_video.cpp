@@ -20,6 +20,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
 #include <optional>
+#include <rational.h>
 #include <system_error>
 
 extern "C" {
@@ -454,6 +455,17 @@ class ffmpeg_video::impl {
       output_handle_.format_context_.writePacket(out_pkt);
     }
   }
+  void encode_audio_frame(av::AudioSamples& in_frame) {
+    in_frame.setTimeBase(av::Rational{1, output_handle_.audio_enc_ctx_.sampleRate()});
+    in_frame.setPts(av::Timestamp{output_handle_.audio_frame_index, in_frame.timeBase()});
+    output_handle_.audio_frame_index += in_frame.samplesCount();
+    auto out_pkt = output_handle_.audio_enc_ctx_.encode(in_frame);
+    if (out_pkt && !out_pkt.isNull()) {
+      out_pkt.setTimeBase(output_handle_.audio_stream_.timeBase());
+      out_pkt.setStreamIndex(output_handle_.audio_stream_.index());
+      output_handle_.format_context_.writePacket(out_pkt);
+    }
+  }
   void flush_video_encoder() {
     const int l_out_video_index = output_handle_.video_stream_.index();
     // Flush video encoder
@@ -561,13 +573,22 @@ class ffmpeg_video::impl {
     }
   }
 
-  /// 读取流后直接将流复制到输出音频流
   void process_audio() {
+    const auto l_autio_frame_size = audio_handle_.dec_ctx_.frameSize();
     while (auto pkt_opt = read_next_packet_for_stream(audio_handle_.format_context_, audio_handle_.stream_.index())) {
-      auto& pkt = *pkt_opt;
-      pkt.setStreamIndex(audio_handle_.out_stream_.index());
-      output_handle_.format_context_.writePacket(pkt);
+      auto frame = audio_handle_.dec_ctx_.decode(*pkt_opt);
+      if (!frame) {
+        continue;
+      }
+      audio_handle_.audio_resampler_.push(frame);
+      while (true) {
+        auto l_out = audio_handle_.audio_resampler_.pop(l_autio_frame_size);
+        if (!l_out) break;
+        encode_audio_frame(l_out);
+      }
     }
+    auto l_out = audio_handle_.audio_resampler_.pop(0);
+    if (l_out) encode_audio_frame(l_out);
   }
 
   void process() {
