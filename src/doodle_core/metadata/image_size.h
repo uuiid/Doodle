@@ -11,6 +11,7 @@ class DOODLE_CORE_API image_size {
  public:
   std::int32_t width{0};
   std::int32_t height{0};
+  image_size() = default;
 
   explicit image_size(const std::int32_t in_width = 0, const std::int32_t in_height = 0)
       : width(in_width), height(in_height) {}

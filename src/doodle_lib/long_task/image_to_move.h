@@ -17,7 +17,7 @@ FSys::path create_out_path(
 );
 void create_move(
     const FSys::path& in_out_path, logger_ptr in_msg, const std::vector<movie::image_attr>& in_vector,
-    const image_size& in_image_size = {}
+    const image_size& in_image_size = image_size{}
 );
 
 class image_to_move : public async_task {
