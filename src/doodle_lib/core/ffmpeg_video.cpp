@@ -114,15 +114,14 @@ class ffmpeg_video::impl {
   av::Stream in_video_stream_;
   av::Stream out_video_stream_;
 
+  std::int64_t out_video_frame_index{0};
+
   //
   av::Codec in_video_codec_;
   av::Codec h264_codec_;
 
   av::VideoDecoderContext in_video_dec_ctx_;
   av::VideoEncoderContext out_video_enc_ctx_;
-
-  // 视频长度
-  av::Timestamp video_duration_{};
 
   struct subtitle_handle_t {
     av::FilterGraph graph_{};
@@ -145,6 +144,30 @@ class ffmpeg_video::impl {
   } audio_handle_;
 
   // 集数文件(这是一个mp4文件，里面有视频轨道, 无音频轨道)
+  struct {
+    av::FormatContext format_context_;
+    av::VideoDecoderContext video_dec_ctx_;
+    av::Stream stream_;
+    av::Codec codec_;
+  } episodes_name_handle_;
+  // 片头 包含一个视频流和一个音频流
+  struct {
+    av::FormatContext format_context_;
+    av::VideoDecoderContext video_dec_ctx_;
+    av::Stream video_stream_;
+    av::Codec video_codec_;
+    av::Stream audio_stream_;
+    av::Codec audio_codec_;
+  } intro_handle_;
+  // 片尾 包含一个视频流和一个音频流
+  struct {
+    av::FormatContext format_context_;
+    av::VideoDecoderContext video_dec_ctx_;
+    av::Stream video_stream_;
+    av::Codec video_codec_;
+    av::Stream audio_stream_;
+    av::Codec audio_codec_;
+  } outro_handle_;
 
   constexpr static int g_fps = 25;
 
@@ -156,10 +179,6 @@ class ffmpeg_video::impl {
   void open(const FSys::path& in_path, const FSys::path& out_path) {
     input_format_context_.openInput(in_path.string());
     input_format_context_.findStreamInfo();
-
-    // 获取视频长度
-    video_duration_ = input_format_context_.duration();
-
     output_format_context_.openOutput(out_path.string());
 
     for (size_t i = 0; i < input_format_context_.streamsCount(); ++i) {
@@ -201,11 +220,12 @@ class ffmpeg_video::impl {
     audio_handle_.format_context_.findStreamInfo();
 
     // 获取音频长度并进行检查
+    auto l_video_duration = input_format_context_.duration();
     auto l_audio_duration = audio_handle_.format_context_.duration();
     DOODLE_CHICK(
-        l_audio_duration == video_duration_,
+        l_audio_duration == l_video_duration,
         std::format(
-            "ffmpeg_video: audio duration {} does not match video duration {}", l_audio_duration, video_duration_
+            "ffmpeg_video: audio duration {} does not match video duration {}", l_audio_duration, l_video_duration
         )
     );
 
@@ -218,8 +238,7 @@ class ffmpeg_video::impl {
     }
     DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio input has no audio stream");
 
-    audio_handle_.out_stream_ =
-        output_format_context_.addStream(audio_handle_.stream_.codecParameters().encodingCodec());
+    audio_handle_.out_stream_ = output_format_context_.addStream();
     audio_handle_.out_stream_.setTimeBase(audio_handle_.stream_.timeBase());
     audio_handle_.out_stream_.setFrameRate(audio_handle_.stream_.frameRate());
     audio_handle_.out_stream_.codecParameters().copyFrom(audio_handle_.stream_.codecParameters());
@@ -289,30 +308,171 @@ class ffmpeg_video::impl {
     subtitle_handle_->configured_ = true;
   }
 
+  void add_episodes_name(const FSys::path& in_episodes_name_path) {
+    DOODLE_CHICK(!in_episodes_name_path.empty(), "集数名称路径为空");
+    DOODLE_CHICK(
+        FSys::exists(in_episodes_name_path), std::format("集数名称文件不存在: {}", in_episodes_name_path.string())
+    );
+    DOODLE_CHICK(
+        FSys::is_regular_file(in_episodes_name_path),
+        std::format("集数名称路径不是文件: {}", in_episodes_name_path.string())
+    );
+
+    episodes_name_handle_.format_context_.openInput(in_episodes_name_path.string());
+    episodes_name_handle_.format_context_.findStreamInfo();
+
+    for (size_t i = 0; i < episodes_name_handle_.format_context_.streamsCount(); ++i) {
+      auto st = episodes_name_handle_.format_context_.stream(i);
+      if (st.isVideo()) {
+        episodes_name_handle_.stream_ = st;
+        break;
+      }
+    }
+    DOODLE_CHICK(episodes_name_handle_.stream_.isValid(), "ffmpeg_video: episodes name input has no video stream");
+
+    episodes_name_handle_.codec_ = episodes_name_handle_.stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!episodes_name_handle_.codec_.isNull(), "ffmpeg_video: cannot find video decoder for episodes name");
+    DOODLE_CHICK(
+        episodes_name_handle_.codec_.isDecoder(), "ffmpeg_video: video decoder for episodes name is not decoder"
+    );
+    episodes_name_handle_.video_dec_ctx_ =
+        av::VideoDecoderContext{episodes_name_handle_.stream_, episodes_name_handle_.codec_};
+    episodes_name_handle_.video_dec_ctx_.open();
+  }
+  void add_intro(const FSys::path& in_intro_path) {
+    DOODLE_CHICK(!in_intro_path.empty(), "片头路径为空");
+    DOODLE_CHICK(FSys::exists(in_intro_path), std::format("片头文件不存在: {}", in_intro_path.string()));
+    DOODLE_CHICK(FSys::is_regular_file(in_intro_path), std::format("片头路径不是文件: {}", in_intro_path.string()));
+
+    intro_handle_.format_context_.openInput(in_intro_path.string());
+    intro_handle_.format_context_.findStreamInfo();
+
+    for (size_t i = 0; i < intro_handle_.format_context_.streamsCount(); ++i) {
+      auto st = intro_handle_.format_context_.stream(i);
+      if (st.isVideo()) {
+        intro_handle_.video_stream_ = st;
+      } else if (st.isAudio()) {
+        intro_handle_.audio_stream_ = st;
+      }
+    }
+    DOODLE_CHICK(intro_handle_.video_stream_.isValid(), "ffmpeg_video: intro input has no video stream");
+    DOODLE_CHICK(intro_handle_.audio_stream_.isValid(), "ffmpeg_video: intro input has no audio stream");
+    intro_handle_.video_codec_ = intro_handle_.video_stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!intro_handle_.video_codec_.isNull(), "ffmpeg_video: cannot find video decoder for intro");
+    DOODLE_CHICK(intro_handle_.video_codec_.isDecoder(), "ffmpeg_video: video decoder for intro is not decoder");
+
+    intro_handle_.video_dec_ctx_ = av::VideoDecoderContext{intro_handle_.video_stream_, intro_handle_.video_codec_};
+    intro_handle_.video_dec_ctx_.open();
+  }
+  void add_outro(const FSys::path& in_outro_path) {
+    DOODLE_CHICK(!in_outro_path.empty(), "片尾路径为空");
+    DOODLE_CHICK(FSys::exists(in_outro_path), std::format("片尾文件不存在: {}", in_outro_path.string()));
+    DOODLE_CHICK(FSys::is_regular_file(in_outro_path), std::format("片尾路径不是文件: {}", in_outro_path.string()));
+
+    outro_handle_.format_context_.openInput(in_outro_path.string());
+    outro_handle_.format_context_.findStreamInfo();
+
+    for (size_t i = 0; i < outro_handle_.format_context_.streamsCount(); ++i) {
+      auto st = outro_handle_.format_context_.stream(i);
+      if (st.isVideo()) {
+        outro_handle_.video_stream_ = st;
+      } else if (st.isAudio()) {
+        outro_handle_.audio_stream_ = st;
+      }
+    }
+    DOODLE_CHICK(outro_handle_.video_stream_.isValid(), "ffmpeg_video: outro input has no video stream");
+    DOODLE_CHICK(outro_handle_.audio_stream_.isValid(), "ffmpeg_video: outro input has no audio stream");
+
+    outro_handle_.video_codec_ = outro_handle_.video_stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!outro_handle_.video_codec_.isNull(), "ffmpeg_video: cannot find video decoder for outro");
+    DOODLE_CHICK(outro_handle_.video_codec_.isDecoder(), "ffmpeg_video: video decoder for outro is not decoder");
+
+    outro_handle_.video_dec_ctx_ = av::VideoDecoderContext{outro_handle_.video_stream_, outro_handle_.video_codec_};
+    outro_handle_.video_dec_ctx_.open();
+  }
+
+  void encode_frame(const av::VideoFrame& in_frame) {
+    auto out_pkt = out_video_enc_ctx_.encode(in_frame);
+    if (out_pkt && !out_pkt.isNull()) {
+      out_pkt.setTimeBase(get_video_time_base());
+      out_pkt.setStreamIndex(out_video_stream_.index());
+      output_format_context_.writePacket(out_pkt);
+    }
+  }
+  void flush_video_encoder() {
+    const int l_out_video_index = out_video_stream_.index();
+    // Flush video encoder
+    while (true) {
+      auto out_pkt = out_video_enc_ctx_.encode();
+      if (!out_pkt || out_pkt.isNull()) {
+        break;
+      }
+      out_pkt.setTimeBase(get_video_time_base());
+      out_pkt.setStreamIndex(l_out_video_index);
+      output_format_context_.writePacket(out_pkt);
+    }
+  }
+
+  void process_episodes() {
+    // -----------------
+    // Encode video packets
+    // -----------------
+    while (auto pkt_opt = read_next_packet_for_stream(
+               episodes_name_handle_.format_context_, episodes_name_handle_.stream_.index()
+           )) {
+      auto frame = episodes_name_handle_.video_dec_ctx_.decode(*pkt_opt);
+      if (!frame) {
+        continue;
+      }
+      frame.setTimeBase(get_video_time_base());
+      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      encode_frame(frame);
+    }
+  }
+  void process_intro() {
+    // -----------------
+    // Encode video packets
+    // -----------------
+    while (auto pkt_opt =
+               read_next_packet_for_stream(intro_handle_.format_context_, intro_handle_.video_stream_.index())) {
+      auto frame = intro_handle_.video_dec_ctx_.decode(*pkt_opt);
+      if (!frame) {
+        continue;
+      }
+      frame.setTimeBase(get_video_time_base());
+      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      encode_frame(frame);
+    }
+  }
+  void process_outro() {
+    // -----------------
+    // Encode video packets
+    // -----------------
+    while (auto pkt_opt =
+               read_next_packet_for_stream(outro_handle_.format_context_, outro_handle_.video_stream_.index())) {
+      auto frame = outro_handle_.video_dec_ctx_.decode(*pkt_opt);
+      if (!frame) {
+        continue;
+      }
+      frame.setTimeBase(get_video_time_base());
+      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      encode_frame(frame);
+    }
+  }
+
   void process_out_video() {
     const int l_out_video_index = out_video_stream_.index();
 
     // -----------------
     // Encode video packets
     // -----------------
-    int64_t l_video_frame_index = 0;
     while (auto pkt_opt = read_next_packet_for_stream(input_format_context_, in_video_stream_.index())) {
       auto frame = in_video_dec_ctx_.decode(*pkt_opt);
       if (!frame) {
         continue;
       }
-
-      auto encode_and_write = [&](av::VideoFrame& in_frame) {
-        auto out_pkt = out_video_enc_ctx_.encode(in_frame);
-        if (out_pkt && !out_pkt.isNull()) {
-          out_pkt.setTimeBase(get_video_time_base());
-          out_pkt.setStreamIndex(l_out_video_index);
-          output_format_context_.writePacket(out_pkt);
-        }
-      };
-
       frame.setTimeBase(get_video_time_base());
-      frame.setPts(av::Timestamp{l_video_frame_index++, get_video_time_base()});
+      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
 
       if (subtitle_handle_ && subtitle_handle_->configured_) {
         subtitle_handle_->buffersrc_.writeVideoFrame(frame);
@@ -320,10 +480,10 @@ class ffmpeg_video::impl {
           av::VideoFrame filtered;
           if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
           filtered.setTimeBase(get_video_time_base());
-          encode_and_write(filtered);
+          encode_frame(filtered);
         }
       } else {
-        encode_and_write(frame);
+        encode_frame(frame);
       }
     }
 
@@ -342,17 +502,6 @@ class ffmpeg_video::impl {
         }
       }
     }
-
-    // Flush video encoder
-    while (true) {
-      auto out_pkt = out_video_enc_ctx_.encode();
-      if (!out_pkt || out_pkt.isNull()) {
-        break;
-      }
-      out_pkt.setTimeBase(get_video_time_base());
-      out_pkt.setStreamIndex(l_out_video_index);
-      output_format_context_.writePacket(out_pkt);
-    }
   }
 
   /// 读取流后直接将流复制到输出音频流
@@ -366,10 +515,23 @@ class ffmpeg_video::impl {
 
   void process() {
     output_format_context_.writeHeader();
+    if (intro_handle_.video_stream_.isValid()) {
+      process_intro();
+    }
+    if (episodes_name_handle_.stream_.isValid()) {
+      process_episodes();
+    }
+    // 处理主视频流
     process_out_video();
+    if (outro_handle_.video_stream_.isValid()) {
+      process_outro();
+    }
+
     if (!audio_handle_.format_context_.isNull()) {
       process_audio();
     }
+
+    flush_video_encoder();
 
     output_format_context_.writeTrailer();
   }
@@ -387,12 +549,20 @@ void ffmpeg_video::process() {
   DOODLE_CHICK(!video_path_.empty() && FSys::exists(video_path_), "ffmpeg_video: video path is empty or not exists");
 
   impl_->open(video_path_, out_path_);
-  if (!subtitle_path_.empty()) {
+  if (!subtitle_path_.empty() && FSys::exists(subtitle_path_)) {
     impl_->add_subtitle(subtitle_path_);
   }
-  if (!audio_path_.empty()) {
+  if (!audio_path_.empty() && FSys::exists(audio_path_)) {
     impl_->add_audio(audio_path_);
   }
+  if (!episodes_name_path_.empty() && FSys::exists(episodes_name_path_)) {
+    impl_->add_episodes_name(episodes_name_path_);
+  }
+  if (!intro_path_.empty() && FSys::exists(intro_path_) && !outro_path_.empty() && FSys::exists(outro_path_)) {
+    impl_->add_intro(intro_path_);
+    impl_->add_outro(outro_path_);
+  }
+
   impl_->process();
 }
 
@@ -580,7 +750,5 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
     DOODLE_CHICK(l_dec_ctx.channels() == 2, "ffmpeg_video: audio channel is not stereo");
   }
 }
-
- 
 
 }  // namespace doodle
