@@ -13,6 +13,7 @@ target_sources(doodle_lib
         asyn_task.h
         entity_path.h
         ffmpeg_video.h
+        generate_text_video.hpp
         
         PRIVATE
         filesystem_extend.cpp
@@ -23,6 +24,7 @@ target_sources(doodle_lib
         alembic_file.cpp
         entity_path.cpp
         ffmpeg_video.cpp
+        generate_text_video.cpp
 
 )
 add_subdirectory(http)

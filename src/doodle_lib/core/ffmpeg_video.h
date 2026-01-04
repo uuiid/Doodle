@@ -60,7 +60,10 @@ class ffmpeg_video {
   // 生成集数视频文件
   static void generate_episodes_name_video(
       std::string_view in_episodes_name, const FSys::path& in_out_path,
-      const image_size& in_size = image_size{1280, 720}
+      const FSys::path& in_font_path = {doodle_config::font_default}, const image_size& in_size = image_size{1280, 720},
+      const chrono::seconds in_duration = chrono::seconds{3}
   );
 };
+
+
 }  // namespace doodle

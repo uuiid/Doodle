@@ -12,7 +12,12 @@
 #include <avcpp/timestamp.h>
 #include <avcpp/videorescaler.h>
 #include <cstdint>
+#include <filesystem>
 #include <memory>
+#include <opencv2/core/utility.hpp>
+#include <opencv2/freetype.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
 #include <optional>
 #include <system_error>
 
@@ -140,9 +145,6 @@ class ffmpeg_video::impl {
   } audio_handle_;
 
   // 集数文件(这是一个mp4文件，里面有视频轨道, 无音频轨道)
-
-
-
 
   constexpr static int g_fps = 25;
 
@@ -530,11 +532,13 @@ void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FS
 }
 
 void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
-
   DOODLE_CHICK(!in_video_path.empty(), "ffmpeg_video: video path is empty");
-  DOODLE_CHICK(FSys::exists(in_video_path), std::format("ffmpeg_video: video file not exists: {}", in_video_path.string()));
   DOODLE_CHICK(
-      FSys::is_regular_file(in_video_path), std::format("ffmpeg_video: video path is not a file: {}", in_video_path.string())
+      FSys::exists(in_video_path), std::format("ffmpeg_video: video file not exists: {}", in_video_path.string())
+  );
+  DOODLE_CHICK(
+      FSys::is_regular_file(in_video_path),
+      std::format("ffmpeg_video: video path is not a file: {}", in_video_path.string())
   );
 
   av::FormatContext l_input_ctx{};
@@ -577,6 +581,29 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
   }
 }
 
+void ffmpeg_video::generate_episodes_name_video(
+    std::string_view in_episodes_name, const FSys::path& in_out_path, const FSys::path& in_font_path,
+    const image_size& in_size, const chrono::seconds in_duration
+) {
+  DOODLE_CHICK(!in_episodes_name.empty(), "ffmpeg_video: episodes name is empty");
+  DOODLE_CHICK(!in_out_path.empty(), "ffmpeg_video: output path is empty");
+  auto out_path = in_out_path;
+  out_path.replace_extension(".mp4");
+  if (auto l_p = out_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
+  auto l_ft = cv::freetype::createFreeType2();
+  DOODLE_CHICK(
+      FSys::exists(in_font_path), std::format("ffmpeg_video: font file not exists: {}", in_font_path.string())
+  );
+  l_ft->loadFontData(in_font_path.string(), 0);
+
+  cv::Mat l_image{in_size.height, in_size.width, CV_8UC3, cv::Scalar(0, 0, 0)};
+
+
+  cv::VideoWriter l_writer{
+      in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25.0,
+      cv::Size(in_size.width, in_size.height)
+  };
+}
 
 }  // namespace doodle
