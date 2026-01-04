@@ -109,6 +109,7 @@ class ffmpeg_video::impl {
   impl()  = default;
   ~impl() = default;
 
+ private:
   // 输出视频
   struct {
     av::FormatContext format_context_;
@@ -179,10 +180,9 @@ class ffmpeg_video::impl {
     return l_video_tb;
   }
 
-  void open(const FSys::path& in_path, const FSys::path& out_path) {
+  void open_input_video(const FSys::path& in_path) {
     input_video_handle_.format_context_.openInput(in_path.string());
     input_video_handle_.format_context_.findStreamInfo();
-    output_handle_.format_context_.openOutput(out_path.string());
 
     for (size_t i = 0; i < input_video_handle_.format_context_.streamsCount(); ++i) {
       auto st = input_video_handle_.format_context_.stream(i);
@@ -195,12 +195,14 @@ class ffmpeg_video::impl {
     input_video_handle_.video_codec_ = input_video_handle_.video_stream_.codecParameters().decodingCodec();
     DOODLE_CHICK(!input_video_handle_.video_codec_.isNull(), "ffmpeg_video: cannot find video decoder");
     DOODLE_CHICK(input_video_handle_.video_codec_.isDecoder(), "ffmpeg_video: video decoder is not decoder");
-    output_handle_.h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
-    DOODLE_CHICK(output_handle_.h264_codec_.canEncode(), "ffmpeg_video: cannot find H264 encoder");
 
     input_video_handle_.video_dec_ctx_ =
         av::VideoDecoderContext{input_video_handle_.video_stream_, input_video_handle_.video_codec_};
     input_video_handle_.video_dec_ctx_.open();
+  }
+
+  void open_output_video(const FSys::path& out_path) {
+    output_handle_.format_context_.openOutput(out_path.string());
 
     constexpr static int k_fps = 25;
     const static av::Rational l_video_tb{1, k_fps};
@@ -208,16 +210,27 @@ class ffmpeg_video::impl {
     output_handle_.video_enc_ctx_.setWidth(input_video_handle_.video_dec_ctx_.width());
     output_handle_.video_enc_ctx_.setHeight(input_video_handle_.video_dec_ctx_.height());
     output_handle_.video_enc_ctx_.setTimeBase(l_video_tb);
-    output_handle_.video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(
-        output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat()
-    ));
+    output_handle_.video_enc_ctx_.setPixelFormat(
+        pick_first_supported_pix_fmt(output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat())
+    );
     output_handle_.video_enc_ctx_.open();
 
-    output_handle_.video_stream_ =
-        output_handle_.format_context_.addStream(output_handle_.video_enc_ctx_);
+    output_handle_.video_stream_ = output_handle_.format_context_.addStream(output_handle_.video_enc_ctx_);
     output_handle_.video_stream_.setTimeBase(l_video_tb);
     output_handle_.video_stream_.setFrameRate(av::Rational{k_fps, 1});
     output_handle_.video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+  }
+
+  void open_output_audio() {
+    DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio stream is not set");
+    
+
+    }
+
+ public:
+  void open(const FSys::path& in_path, const FSys::path& out_path) {
+    open_input_video(in_path);
+    open_output_video(out_path);
   }
 
   // 添加音频轨道, 传入 MP4 文件路径, 提取音频轨道, 检查必须为 AAC 编码, 并将流直接复制到输出文件
@@ -248,6 +261,8 @@ class ffmpeg_video::impl {
     audio_handle_.out_stream_.setTimeBase(audio_handle_.stream_.timeBase());
     audio_handle_.out_stream_.setFrameRate(audio_handle_.stream_.frameRate());
     audio_handle_.out_stream_.codecParameters().copyFrom(audio_handle_.stream_.codecParameters());
+
+    open_output_audio();
   }
 
   void add_subtitle(const FSys::path& in_subtitle_path) {
