@@ -12,7 +12,7 @@ class generate_text_video {
  public:
   struct font_attr_t {
     FSys::path font_path_{doodle_config::font_default};
-    int font_size_{48};
+    int font_height_{48};
     // (0,0) 为左上角, 为(0,0)时,居中而不是左上角
     cv::Point font_point_{0, 0};
     cv::Scalar font_color_{255, 255, 255, 255};
@@ -27,6 +27,6 @@ class generate_text_video {
   void set_size(const image_size& in_size) { size_ = in_size; }
   void set_duration(const chrono::seconds& in_duration) { duration_ = in_duration; }
 
-  void run();
+  void run() const;
 };
 }  // namespace doodle
