@@ -13,6 +13,7 @@
 #include <avcpp/videorescaler.h>
 #include <cstdint>
 #include <filesystem>
+#include <libavcodec/codec_id.h>
 #include <memory>
 #include <opencv2/core/utility.hpp>
 #include <opencv2/freetype.hpp>
@@ -113,10 +114,17 @@ class ffmpeg_video::impl {
   // 输出视频
   struct {
     av::FormatContext format_context_;
+
     av::Stream video_stream_;
     av::Codec h264_codec_;
     av::VideoEncoderContext video_enc_ctx_;
+
     std::int64_t video_frame_index{0};
+    // 音频流
+    av::Stream audio_stream_;
+    av::Codec audio_codec_;
+    av::AudioEncoderContext audio_enc_ctx_;
+    std::int64_t audio_frame_index{0};
   } output_handle_;
 
   // 输入视频
@@ -145,6 +153,8 @@ class ffmpeg_video::impl {
     av::Stream stream_;
     av::Codec codec_;
     av::Stream out_stream_;
+    av::AudioDecoderContext dec_ctx_;
+    av::AudioResampler audio_resampler_;
   } audio_handle_;
 
   // 集数文件(这是一个mp4文件，里面有视频轨道, 无音频轨道)
@@ -223,9 +233,28 @@ class ffmpeg_video::impl {
 
   void open_output_audio() {
     DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio stream is not set");
-    
 
-    }
+    output_handle_.audio_enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
+    output_handle_.audio_enc_ctx_.setSampleRate(audio_handle_.dec_ctx_.sampleRate());
+    output_handle_.audio_enc_ctx_.setChannelLayout(
+        pick_channel_layout(audio_handle_.dec_ctx_.channelLayout(), audio_handle_.dec_ctx_.codec())
+    );
+    output_handle_.audio_enc_ctx_.setChannels(audio_handle_.dec_ctx_.channelLayout());
+    output_handle_.audio_enc_ctx_.setSampleFormat(
+        pick_first_supported_sample_fmt(audio_handle_.dec_ctx_.codec(), audio_handle_.dec_ctx_.sampleFormat())
+    );
+    output_handle_.audio_enc_ctx_.setTimeBase(av::Rational{1, audio_handle_.dec_ctx_.sampleRate()});
+    output_handle_.audio_enc_ctx_.open();
+
+    output_handle_.audio_stream_ = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
+    output_handle_.audio_stream_.setTimeBase(av::Rational{1, audio_handle_.dec_ctx_.sampleRate()});
+
+    audio_handle_.audio_resampler_.init(
+        output_handle_.audio_enc_ctx_.channelLayout(), output_handle_.audio_enc_ctx_.sampleRate(),
+        output_handle_.audio_enc_ctx_.sampleFormat(), audio_handle_.dec_ctx_.channelLayout(),
+        audio_handle_.dec_ctx_.sampleRate(), audio_handle_.dec_ctx_.sampleFormat()
+    );
+  }
 
  public:
   void open(const FSys::path& in_path, const FSys::path& out_path) {
@@ -261,6 +290,11 @@ class ffmpeg_video::impl {
     audio_handle_.out_stream_.setTimeBase(audio_handle_.stream_.timeBase());
     audio_handle_.out_stream_.setFrameRate(audio_handle_.stream_.frameRate());
     audio_handle_.out_stream_.codecParameters().copyFrom(audio_handle_.stream_.codecParameters());
+
+    audio_handle_.codec_ = audio_handle_.stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!audio_handle_.codec_.isNull(), "ffmpeg_video: cannot find audio decoder");
+    audio_handle_.dec_ctx_ = av::AudioDecoderContext{audio_handle_.stream_, audio_handle_.codec_};
+    audio_handle_.dec_ctx_.open();
 
     open_output_audio();
   }
@@ -412,7 +446,7 @@ class ffmpeg_video::impl {
     outro_handle_.video_dec_ctx_.open();
   }
 
-  void encode_frame(const av::VideoFrame& in_frame) {
+  void encode_video_frame(const av::VideoFrame& in_frame) {
     auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame);
     if (out_pkt && !out_pkt.isNull()) {
       out_pkt.setTimeBase(get_video_time_base());
@@ -447,7 +481,7 @@ class ffmpeg_video::impl {
       }
       frame.setTimeBase(get_video_time_base());
       frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
-      encode_frame(frame);
+      encode_video_frame(frame);
     }
   }
   void process_intro() {
@@ -462,7 +496,7 @@ class ffmpeg_video::impl {
       }
       frame.setTimeBase(get_video_time_base());
       frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
-      encode_frame(frame);
+      encode_video_frame(frame);
     }
   }
   void process_outro() {
@@ -477,7 +511,7 @@ class ffmpeg_video::impl {
       }
       frame.setTimeBase(get_video_time_base());
       frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
-      encode_frame(frame);
+      encode_video_frame(frame);
     }
   }
 
@@ -503,10 +537,10 @@ class ffmpeg_video::impl {
           av::VideoFrame filtered;
           if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
           filtered.setTimeBase(get_video_time_base());
-          encode_frame(filtered);
+          encode_video_frame(filtered);
         }
       } else {
-        encode_frame(frame);
+        encode_video_frame(frame);
       }
     }
 
