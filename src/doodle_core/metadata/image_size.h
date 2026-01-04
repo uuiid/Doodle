@@ -11,10 +11,11 @@ class DOODLE_CORE_API image_size {
  public:
   std::int32_t width{0};
   std::int32_t height{0};
+
+  // 默认构造函数
   image_size() = default;
 
-  explicit image_size(const std::int32_t in_width = 0, const std::int32_t in_height = 0)
-      : width(in_width), height(in_height) {}
+  explicit image_size(const std::int32_t in_width, const std::int32_t in_height) : width(in_width), height(in_height) {}
   template <typename T>
     requires std::is_integral_v<T>
   explicit image_size(const std::pair<T, T>& in_pair)
