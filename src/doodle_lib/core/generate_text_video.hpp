@@ -5,6 +5,7 @@
 
 #include <opencv2/core.hpp>
 #include <opencv2/core/types.hpp>
+#include <utility>
 
 namespace doodle {
 
@@ -22,7 +23,7 @@ class generate_text_video {
   FSys::path out_path_{};
   image_size size_{1920, 1080};
   chrono::seconds duration_{chrono::seconds{3}};
-  void add_font_attr(const font_attr_t& in_attr) { font_attrs_.emplace_back(in_attr); }
+  void add_font_attr(font_attr_t&& in_attr) { font_attrs_.emplace_back(std::move(in_attr)); }
   void set_out_path(const FSys::path& in_out_path) { out_path_ = in_out_path; }
   void set_size(const image_size& in_size) { size_ = in_size; }
   void set_duration(const chrono::seconds& in_duration) { duration_ = in_duration; }

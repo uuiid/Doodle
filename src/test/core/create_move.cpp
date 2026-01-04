@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>
+#include <doodle_lib/core/generate_text_video.hpp>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/test/unit_test.hpp>
@@ -47,6 +48,30 @@ BOOST_AUTO_TEST_CASE(add_audio) {
   l_video.set_audio(l_audio);
   l_video.set_subtitle(l_subtitle);
   l_video.process();
+}
+
+BOOST_AUTO_TEST_CASE(text_video) {
+  app_base l_app{};
+  auto l_out_file = "D:/test_files/calp_test/v2_text.mp4";
+  generate_text_video l_video{};
+  l_video.add_font_attr(
+      generate_text_video::font_attr_t{
+          .font_path_   = "D:/test/No.21-上首传奇书法体.ttf",
+          .font_height_ = 80,
+          .font_point_  = cv::Point{0, 395},
+          .text_        = "第一百二十三集"
+      }
+  );
+  l_video.add_font_attr(
+      generate_text_video::font_attr_t{
+          .font_path_   = "D:/test/No.21-上首传奇书法体.ttf",
+          .font_height_ = 110,
+          .font_point_  = cv::Point{0, 395 + 80 + 100},
+          .text_        = "风起云涌"
+      }
+  );
+  l_video.set_out_path(l_out_file);
+  l_video.run();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
