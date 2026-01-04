@@ -27,6 +27,7 @@ namespace doodle {
 class DOODLE_CORE_API app_base {
  public:
  protected:
+  void bind_thread_to_group(int group_id);
   static app_base* self;
   doodle_lib_ptr lib_ptr;
 

@@ -12,8 +12,11 @@
 #include <boost/locale.hpp>
 
 #include <memory>
+#include <processthreadsapi.h>
+#include <processtopologyapi.h>
 #include <thread>
 #include <wil/result.h>
+#include <winnt.h>
 
 namespace doodle {
 
@@ -55,6 +58,15 @@ app_base::~app_base() = default;
 
 app_base& app_base::Get() { return *self; }
 app_base* app_base::GetPtr() { return self; }
+
+void app_base::bind_thread_to_group(int group_id) {
+  wil::unique_handle process_handle{GetCurrentProcess()};
+  GROUP_AFFINITY group_affinity{};
+  group_affinity.Group = static_cast<WORD>(group_id);
+  group_affinity.Mask  = MAXIMUM_PROCESSORS;
+  SetThreadGroupAffinity(GetCurrentThread(), &group_affinity, nullptr);
+}
+
 std::int32_t app_base::run() {
   stop_ = !init();
   if (stop_) return 0;
@@ -73,11 +85,12 @@ std::int32_t app_base::run() {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
-    std::vector<std::thread> l_threads{
-        get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1
-    };
-    for (auto& l_thread : l_threads) {
-      l_thread = std::thread([this] {
+    std::vector<std::thread> l_threads{};
+    auto l_thread_count = get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1;
+    l_threads.reserve(l_thread_count);
+    for (std::size_t i = 0; i < l_thread_count; ++i) {
+      l_threads.emplace_back([this, i]() {
+        bind_thread_to_group(static_cast<int>(i % static_cast<std::size_t>(GetActiveProcessorGroupCount())));
         try {
           g_io_context().run();
         } catch (const doodle_error& in_err) {
