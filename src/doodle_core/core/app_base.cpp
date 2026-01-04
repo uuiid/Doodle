@@ -63,7 +63,7 @@ void app_base::bind_thread_to_group(int group_id) {
   wil::unique_handle process_handle{GetCurrentProcess()};
   GROUP_AFFINITY group_affinity{};
   group_affinity.Group = static_cast<WORD>(group_id);
-  group_affinity.Mask  = MAXIMUM_PROCESSORS;
+  group_affinity.Mask  = KAFFINITY(-1);
   SetThreadGroupAffinity(GetCurrentThread(), &group_affinity, nullptr);
 }
 
