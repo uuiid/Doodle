@@ -109,19 +109,22 @@ class ffmpeg_video::impl {
   impl()  = default;
   ~impl() = default;
 
-  av::FormatContext input_format_context_;
-  av::FormatContext output_format_context_;
-  av::Stream in_video_stream_;
-  av::Stream out_video_stream_;
+  // 输出视频
+  struct {
+    av::FormatContext format_context_;
+    av::Stream video_stream_;
+    av::Codec h264_codec_;
+    av::VideoEncoderContext video_enc_ctx_;
+    std::int64_t video_frame_index{0};
+  } output_handle_;
 
-  std::int64_t out_video_frame_index{0};
-
-  //
-  av::Codec in_video_codec_;
-  av::Codec h264_codec_;
-
-  av::VideoDecoderContext in_video_dec_ctx_;
-  av::VideoEncoderContext out_video_enc_ctx_;
+  // 输入视频
+  struct {
+    av::FormatContext format_context_;
+    av::Stream video_stream_;
+    av::Codec video_codec_;
+    av::VideoDecoderContext video_dec_ctx_;
+  } input_video_handle_;
 
   struct subtitle_handle_t {
     av::FilterGraph graph_{};
@@ -177,41 +180,44 @@ class ffmpeg_video::impl {
   }
 
   void open(const FSys::path& in_path, const FSys::path& out_path) {
-    input_format_context_.openInput(in_path.string());
-    input_format_context_.findStreamInfo();
-    output_format_context_.openOutput(out_path.string());
+    input_video_handle_.format_context_.openInput(in_path.string());
+    input_video_handle_.format_context_.findStreamInfo();
+    output_handle_.format_context_.openOutput(out_path.string());
 
-    for (size_t i = 0; i < input_format_context_.streamsCount(); ++i) {
-      auto st = input_format_context_.stream(i);
+    for (size_t i = 0; i < input_video_handle_.format_context_.streamsCount(); ++i) {
+      auto st = input_video_handle_.format_context_.stream(i);
       if (st.isVideo()) {
-        in_video_stream_ = st;
+        input_video_handle_.video_stream_ = st;
         break;
       }
     }
-    DOODLE_CHICK(in_video_stream_.isValid(), "ffmpeg_video: input has no video stream");
+    DOODLE_CHICK(input_video_handle_.video_stream_.isValid(), "ffmpeg_video: input has no video stream");
+    input_video_handle_.video_codec_ = input_video_handle_.video_stream_.codecParameters().decodingCodec();
+    DOODLE_CHICK(!input_video_handle_.video_codec_.isNull(), "ffmpeg_video: cannot find video decoder");
+    DOODLE_CHICK(input_video_handle_.video_codec_.isDecoder(), "ffmpeg_video: video decoder is not decoder");
+    output_handle_.h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
+    DOODLE_CHICK(output_handle_.h264_codec_.canEncode(), "ffmpeg_video: cannot find H264 encoder");
 
-    in_video_codec_ = in_video_stream_.codecParameters().decodingCodec();
-    DOODLE_CHICK(!in_video_codec_.isNull(), "ffmpeg_video: cannot find video decoder");
-    DOODLE_CHICK(in_video_codec_.isDecoder(), "ffmpeg_video: video decoder is not decoder");
-    h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
-    DOODLE_CHICK(h264_codec_.canEncode(), "ffmpeg_video: cannot find H264 encoder");
-
-    in_video_dec_ctx_ = av::VideoDecoderContext{in_video_stream_, in_video_codec_};
-    in_video_dec_ctx_.open();
+    input_video_handle_.video_dec_ctx_ =
+        av::VideoDecoderContext{input_video_handle_.video_stream_, input_video_handle_.video_codec_};
+    input_video_handle_.video_dec_ctx_.open();
 
     constexpr static int k_fps = 25;
     const static av::Rational l_video_tb{1, k_fps};
-    out_video_enc_ctx_ = av::VideoEncoderContext{h264_codec_};
-    out_video_enc_ctx_.setWidth(in_video_dec_ctx_.width());
-    out_video_enc_ctx_.setHeight(in_video_dec_ctx_.height());
-    out_video_enc_ctx_.setTimeBase(l_video_tb);
-    out_video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(h264_codec_, in_video_dec_ctx_.pixelFormat()));
-    out_video_enc_ctx_.open();
+    output_handle_.video_enc_ctx_ = av::VideoEncoderContext{output_handle_.h264_codec_};
+    output_handle_.video_enc_ctx_.setWidth(input_video_handle_.video_dec_ctx_.width());
+    output_handle_.video_enc_ctx_.setHeight(input_video_handle_.video_dec_ctx_.height());
+    output_handle_.video_enc_ctx_.setTimeBase(l_video_tb);
+    output_handle_.video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(
+        output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat()
+    ));
+    output_handle_.video_enc_ctx_.open();
 
-    out_video_stream_ = output_format_context_.addStream(out_video_enc_ctx_);
-    out_video_stream_.setTimeBase(l_video_tb);
-    out_video_stream_.setFrameRate(av::Rational{k_fps, 1});
-    out_video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+    output_handle_.video_stream_ =
+        output_handle_.format_context_.addStream(output_handle_.video_enc_ctx_);
+    output_handle_.video_stream_.setTimeBase(l_video_tb);
+    output_handle_.video_stream_.setFrameRate(av::Rational{k_fps, 1});
+    output_handle_.video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
   }
 
   // 添加音频轨道, 传入 MP4 文件路径, 提取音频轨道, 检查必须为 AAC 编码, 并将流直接复制到输出文件
@@ -220,7 +226,7 @@ class ffmpeg_video::impl {
     audio_handle_.format_context_.findStreamInfo();
 
     // 获取音频长度并进行检查
-    auto l_video_duration = input_format_context_.duration();
+    auto l_video_duration = input_video_handle_.format_context_.duration();
     auto l_audio_duration = audio_handle_.format_context_.duration();
     DOODLE_CHICK(
         l_audio_duration == l_video_duration,
@@ -238,7 +244,7 @@ class ffmpeg_video::impl {
     }
     DOODLE_CHICK(audio_handle_.stream_.isValid(), "ffmpeg_video: audio input has no audio stream");
 
-    audio_handle_.out_stream_ = output_format_context_.addStream();
+    audio_handle_.out_stream_ = output_handle_.format_context_.addStream();
     audio_handle_.out_stream_.setTimeBase(audio_handle_.stream_.timeBase());
     audio_handle_.out_stream_.setFrameRate(audio_handle_.stream_.frameRate());
     audio_handle_.out_stream_.codecParameters().copyFrom(audio_handle_.stream_.codecParameters());
@@ -260,13 +266,13 @@ class ffmpeg_video::impl {
     // 使用 avfilter 的 subtitles 滤镜渲染 .srt (依赖 FFmpeg 编译启用 libass)
     // 滤镜图: buffer -> subtitles -> buffersink
 
-    const auto w = out_video_enc_ctx_.width();
-    const auto h = out_video_enc_ctx_.height();
+    const auto w = output_handle_.video_enc_ctx_.width();
+    const auto h = output_handle_.video_enc_ctx_.height();
     DOODLE_CHICK(w > 0 && h > 0, "ffmpeg_video: invalid video size for subtitle graph");
 
-    const int pix_fmt = static_cast<int>(out_video_enc_ctx_.pixelFormat());
+    const int pix_fmt = static_cast<int>(output_handle_.video_enc_ctx_.pixelFormat());
     const auto tb     = get_video_time_base();
-    auto sar          = in_video_stream_.sampleAspectRatio();
+    auto sar          = input_video_handle_.video_stream_.sampleAspectRatio();
     if (sar == av::Rational{}) sar = av::Rational{1, 1};
 
     const std::string buffer_args = std::format(
@@ -392,24 +398,24 @@ class ffmpeg_video::impl {
   }
 
   void encode_frame(const av::VideoFrame& in_frame) {
-    auto out_pkt = out_video_enc_ctx_.encode(in_frame);
+    auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame);
     if (out_pkt && !out_pkt.isNull()) {
       out_pkt.setTimeBase(get_video_time_base());
-      out_pkt.setStreamIndex(out_video_stream_.index());
-      output_format_context_.writePacket(out_pkt);
+      out_pkt.setStreamIndex(output_handle_.video_stream_.index());
+      output_handle_.format_context_.writePacket(out_pkt);
     }
   }
   void flush_video_encoder() {
-    const int l_out_video_index = out_video_stream_.index();
+    const int l_out_video_index = output_handle_.video_stream_.index();
     // Flush video encoder
     while (true) {
-      auto out_pkt = out_video_enc_ctx_.encode();
+      auto out_pkt = output_handle_.video_enc_ctx_.encode();
       if (!out_pkt || out_pkt.isNull()) {
         break;
       }
       out_pkt.setTimeBase(get_video_time_base());
       out_pkt.setStreamIndex(l_out_video_index);
-      output_format_context_.writePacket(out_pkt);
+      output_handle_.format_context_.writePacket(out_pkt);
     }
   }
 
@@ -425,7 +431,7 @@ class ffmpeg_video::impl {
         continue;
       }
       frame.setTimeBase(get_video_time_base());
-      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
       encode_frame(frame);
     }
   }
@@ -440,7 +446,7 @@ class ffmpeg_video::impl {
         continue;
       }
       frame.setTimeBase(get_video_time_base());
-      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
       encode_frame(frame);
     }
   }
@@ -455,24 +461,26 @@ class ffmpeg_video::impl {
         continue;
       }
       frame.setTimeBase(get_video_time_base());
-      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
       encode_frame(frame);
     }
   }
 
   void process_out_video() {
-    const int l_out_video_index = out_video_stream_.index();
+    const int l_out_video_index = output_handle_.video_stream_.index();
 
     // -----------------
     // Encode video packets
     // -----------------
-    while (auto pkt_opt = read_next_packet_for_stream(input_format_context_, in_video_stream_.index())) {
-      auto frame = in_video_dec_ctx_.decode(*pkt_opt);
+    while (auto pkt_opt = read_next_packet_for_stream(
+               input_video_handle_.format_context_, input_video_handle_.video_stream_.index()
+           )) {
+      auto frame = input_video_handle_.video_dec_ctx_.decode(*pkt_opt);
       if (!frame) {
         continue;
       }
       frame.setTimeBase(get_video_time_base());
-      frame.setPts(av::Timestamp{out_video_frame_index++, get_video_time_base()});
+      frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
 
       if (subtitle_handle_ && subtitle_handle_->configured_) {
         subtitle_handle_->buffersrc_.writeVideoFrame(frame);
@@ -494,11 +502,11 @@ class ffmpeg_video::impl {
         av::VideoFrame filtered;
         if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
         filtered.setTimeBase(get_video_time_base());
-        auto out_pkt = out_video_enc_ctx_.encode(filtered);
+        auto out_pkt = output_handle_.video_enc_ctx_.encode(filtered);
         if (out_pkt && !out_pkt.isNull()) {
           out_pkt.setTimeBase(get_video_time_base());
           out_pkt.setStreamIndex(l_out_video_index);
-          output_format_context_.writePacket(out_pkt);
+          output_handle_.format_context_.writePacket(out_pkt);
         }
       }
     }
@@ -509,12 +517,12 @@ class ffmpeg_video::impl {
     while (auto pkt_opt = read_next_packet_for_stream(audio_handle_.format_context_, audio_handle_.stream_.index())) {
       auto& pkt = *pkt_opt;
       pkt.setStreamIndex(audio_handle_.out_stream_.index());
-      output_format_context_.writePacket(pkt);
+      output_handle_.format_context_.writePacket(pkt);
     }
   }
 
   void process() {
-    output_format_context_.writeHeader();
+    output_handle_.format_context_.writeHeader();
     if (intro_handle_.video_stream_.isValid()) {
       process_intro();
     }
@@ -533,7 +541,7 @@ class ffmpeg_video::impl {
 
     flush_video_encoder();
 
-    output_format_context_.writeTrailer();
+    output_handle_.format_context_.writeTrailer();
   }
 };
 
