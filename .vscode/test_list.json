@@ -19,6 +19,7 @@
     "kitsu/create_comment_task",
     "auto_light_test/utf16_test",
     "move_test/add_audio",
-    "move_test/conv_audio"
+    "move_test/conv_audio",
+    "move_test/text_video"
   ]
 }

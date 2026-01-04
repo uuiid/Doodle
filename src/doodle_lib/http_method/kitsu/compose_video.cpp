@@ -9,6 +9,7 @@
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>
+#include <doodle_lib/core/generate_text_video.hpp>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
@@ -446,9 +447,37 @@ struct actions_tasks_create_review_run {
       FSys::rename(l_backup_path, data_ptr_->args_.audio_path_);
       data_ptr_->logger_->info("音频修正完成 {}", data_ptr_->args_.audio_path_);
     }
-    if (!data_ptr_->args_.episodes_name_path_.empty() && FSys::exists(data_ptr_->args_.episodes_name_path_)) {
+    if (!data_ptr_->args_.episodes_name_path_.empty()) {
       // todo: 修正集数名称
       data_ptr_->logger_->info("开始修正集数名称");
+      generate_text_video l_generator{};
+      l_generator.set_out_path(data_ptr_->args_.episodes_name_path_);
+      auto l_it =
+          std::find_if(data_ptr_->args_.episodes_name_.begin(), data_ptr_->args_.episodes_name_.end(), [](char in_c) {
+            return in_c == '\n';
+          });
+      std::string l_title =
+          data_ptr_->args_.episodes_name_.substr(0, std::distance(data_ptr_->args_.episodes_name_.begin(), l_it));
+      std::string l_subtitle =
+          data_ptr_->args_.episodes_name_.substr(std::distance(data_ptr_->args_.episodes_name_.begin(), l_it) + 1);
+      l_generator.add_font_attr(
+          generate_text_video::font_attr_t{
+              .font_path_   = "D:/No.21-上首传奇书法体.ttf",
+              .font_height_ = 80,
+              .font_point_  = cv::Point{0, 395},
+              .text_        = l_title
+          }
+      );
+      l_generator.add_font_attr(
+          generate_text_video::font_attr_t{
+              .font_path_   = "D:/No.21-上首传奇书法体.ttf",
+              .font_height_ = 110,
+              .font_point_  = cv::Point{0, 395 + 80 + 100},
+              .text_        = l_subtitle
+          }
+      );
+      l_generator.run();
+
       data_ptr_->logger_->info("集数名称修正完成 {}", data_ptr_->args_.episodes_name_path_);
     }
   }
@@ -490,6 +519,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     FSys::rename(l_run.data_ptr_->args_.outro_path_, l_new_path);
     l_run.data_ptr_->args_.outro_path_ = l_new_path;
     ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.outro_path_);
+  }
+  if (!l_run.data_ptr_->args_.episodes_name_.empty()) {
+    // 检查名称合法性, 必须是带 \n换行符的两行文本
+    auto l_it = std::find_if(
+        l_run.data_ptr_->args_.episodes_name_.begin(), l_run.data_ptr_->args_.episodes_name_.end(),
+        [](char in_c) { return in_c == '\n'; }
+    );
+    DOODLE_CHICK_HTTP(l_it != l_run.data_ptr_->args_.episodes_name_.end(), bad_request, "集数名称必须包含换行符");
   }
 
   std::vector<FSys::path> l_files{};
@@ -534,6 +571,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   l_run.data_ptr_->args_.intro_path_         = l_fix_path(l_run.data_ptr_->args_.intro_path_);
   l_run.data_ptr_->args_.outro_path_         = l_fix_path(l_run.data_ptr_->args_.outro_path_);
   l_run.data_ptr_->args_.episodes_name_path_ = l_fix_path(l_run.data_ptr_->args_.episodes_name_path_);
+  // 删除临时文件
+  if (!l_run.data_ptr_->args_.episodes_name_path_.empty() && FSys::exists(l_run.data_ptr_->args_.episodes_name_path_))
+    FSys::remove(l_run.data_ptr_->args_.episodes_name_path_);
 
   boost::asio::post(g_strand(), l_run);
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
