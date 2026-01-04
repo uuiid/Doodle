@@ -1,4 +1,4 @@
-$tmp_files = Get-ChildItem -Path "$env:TEMP/doodle" -Recurse | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) }
+$tmp_files = Get-ChildItem -Path "$env:TEMP/doodle/http" -Recurse | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) }
 
 foreach ($file in $tmp_files) {
   try {
