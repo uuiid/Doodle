@@ -20,7 +20,7 @@ class generate_text_video {
   };
   std::vector<font_attr_t> font_attrs_{};
   FSys::path out_path_{};
-  image_size size_{1280, 720};
+  image_size size_{1920, 1080};
   chrono::seconds duration_{chrono::seconds{3}};
   void add_font_attr(const font_attr_t& in_attr) { font_attrs_.emplace_back(in_attr); }
   void set_out_path(const FSys::path& in_out_path) { out_path_ = in_out_path; }
