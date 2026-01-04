@@ -478,7 +478,7 @@ struct actions_tasks_create_review_run {
       );
       l_generator.run();
 
-      data_ptr_->logger_->info("集数名称修正完成 {}", data_ptr_->args_.episodes_name_path_);
+      data_ptr_->logger_->info("集数名称生成完成 {}", data_ptr_->args_.episodes_name_path_);
     }
   }
 };
