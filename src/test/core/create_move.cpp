@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/core/app_base.h"
+#include "doodle_core/metadata/image_size.h"
 #include <doodle_core/doodle_core.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>
@@ -26,7 +27,7 @@ BOOST_AUTO_TEST_CASE(create) {
   }
   movie::image_attr::extract_num(l_image_list);
 
-  detail::create_move(l_out_file, spdlog::default_logger(), l_image_list, {1920, 1080});
+  detail::create_move(l_out_file, spdlog::default_logger(), l_image_list, image_size{1920, 1080});
 }
 
 BOOST_AUTO_TEST_CASE(conv_audio) {

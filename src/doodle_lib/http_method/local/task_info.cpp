@@ -600,7 +600,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
 
   l_arg_t->create_play_blast_ = true;
   l_arg_t->film_aperture_     = l_project.get_film_aperture();
-  l_arg_t->size_              = image_size{l_project.get_resolution().first, l_project.get_resolution().second};
+  l_arg_t->size_              = l_project.get_resolution();
   l_ptr->command_             = (nlohmann::json{} = *l_arg_t);
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 

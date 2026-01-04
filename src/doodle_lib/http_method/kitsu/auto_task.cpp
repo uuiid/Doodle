@@ -98,7 +98,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_ret.episodes_ = l_episodes;
   l_ret.shot_     = l_shot;
 
-  l_ret.size_     = image_size{.width = l_prj.get_resolution().first, .height = l_prj.get_resolution().second};
+  l_ret.size_     = l_prj.get_resolution();
   FSys::path l_shot_path_dir{};
   FSys::path l_sim_shot_path_dir{};
   std::set<std::string> l_sim_output_key{};
@@ -562,7 +562,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   l_arg.movie_file_ = get_shots_animation_file_name(l_episode_entity.name_, l_entity.name_, l_proj.code_);
   l_arg.movie_file_.replace_extension(".mp4");
   l_arg.film_aperture_ = l_proj.get_film_aperture();
-  l_arg.size_          = image_size{.width = l_proj.get_resolution().first, .height = l_proj.get_resolution().second};
+  l_arg.size_          = l_proj.get_resolution();
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
