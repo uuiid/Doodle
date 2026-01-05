@@ -15,6 +15,8 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle::http {
@@ -284,9 +286,9 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   //          columns(
   //              object<working_file>(true), &working_file_task_link::task_id_, &working_file_entity_link::entity_id_
   //          ),
-  //          join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) == c(&working_file::uuid_id_))),
-  //          join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
-  //          where(in(&working_file_task_link::task_id_, l_task_ids))
+  //          join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) ==
+  //          c(&working_file::uuid_id_))), join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_)
+  //          == c(&working_file::uuid_id_))), where(in(&working_file_task_link::task_id_, l_task_ids))
   //      )) {
   //   if (l_entities_and_tasks_map.contains(l_entity_id)) {
   //     auto& l_task = l_entities_and_tasks_map[l_entity_id].tasks_;
@@ -332,6 +334,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::del
   for (auto&& l_i : in_handle->url_.params()) {
     if (l_i.key == "force") l_force = true;
   }
+  SPDLOG_LOGGER_WARN(in_handle->logger_, "用户 {} 删除实体 {}", person_.person_.email_, l_ass->uuid_id_);
   if (!l_force) {
     l_ass->canceled_ = true;
     co_await l_sql.update(l_ass);
