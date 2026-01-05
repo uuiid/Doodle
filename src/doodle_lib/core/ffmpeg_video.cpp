@@ -185,7 +185,14 @@ class ffmpeg_video::impl {
       while (auto pkt_opt = read_next_packet_for_stream(format_context_, video_stream_.index())) {
         auto frame = video_dec_ctx_.decode(*pkt_opt);
         if (!frame) continue;
-        parent.encode_video_frame(frame);
+
+        if (parent.subtitle_handle_ && parent.subtitle_handle_->configured_) {
+          parent.subtitle_handle_->buffersrc_.writeVideoFrame(frame);
+          av::VideoFrame filtered_frame{};
+          while (parent.subtitle_handle_->buffersink_.getVideoFrame(filtered_frame))
+            parent.encode_video_frame(filtered_frame);
+        } else
+          parent.encode_video_frame(frame);
       }
     }
 
@@ -216,7 +223,7 @@ class ffmpeg_video::impl {
     }
   };
   // 输出视频
-  struct {
+  struct out_video : base_t {
     av::FormatContext format_context_;
 
     av::Stream video_stream_;
@@ -230,7 +237,8 @@ class ffmpeg_video::impl {
     av::AudioEncoderContext audio_enc_ctx_;
 
     av::Timestamp audio_next_pts_{};
-  } output_handle_;
+  };
+  out_video output_handle_;
 
   // 输入视频
   base_t input_video_handle_;
@@ -277,6 +285,8 @@ class ffmpeg_video::impl {
 
   void open_output_video(const FSys::path& out_path) {
     output_handle_.format_context_.openOutput(out_path.string());
+    output_handle_.h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
+    DOODLE_CHICK(output_handle_.h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
 
     constexpr static int k_fps = 25;
     const static av::Rational l_video_tb{1, k_fps};
@@ -297,8 +307,6 @@ class ffmpeg_video::impl {
   }
 
   void open_output_audio() {
-    DOODLE_CHICK(audio_handle_.audio_stream_.isValid(), "ffmpeg_video: audio stream is not set");
-
     output_handle_.audio_enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
     output_handle_.audio_enc_ctx_.setSampleRate(48000);
     output_handle_.audio_enc_ctx_.setChannels(2);
@@ -482,48 +490,11 @@ class ffmpeg_video::impl {
       output_handle_.format_context_.writePacket(out_pkt);
     }
   }
-
-  void process_out_video() {
-    const int l_out_video_index = output_handle_.video_stream_.index();
-
-    // -----------------
-    // Encode video packets
-    // -----------------
-    while (auto pkt_opt = read_next_packet_for_stream(
-               input_video_handle_.format_context_, input_video_handle_.video_stream_.index()
-           )) {
-      auto frame = input_video_handle_.video_dec_ctx_.decode(*pkt_opt);
-      if (!frame) {
-        continue;
-      }
-
-      if (subtitle_handle_ && subtitle_handle_->configured_) {
-        subtitle_handle_->buffersrc_.writeVideoFrame(frame);
-        while (true) {
-          av::VideoFrame filtered;
-          if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
-          filtered.setTimeBase(get_video_time_base());
-          encode_video_frame(filtered);
-        }
-      } else {
-        encode_video_frame(frame);
-      }
-    }
-
-    // Flush subtitle filter
+  void flush_subtitle_filter() {
     if (subtitle_handle_ && subtitle_handle_->configured_) {
       (void)av_buffersrc_add_frame_flags(subtitle_handle_->buffersrc_ctx_.raw(), nullptr, 0);
-      while (true) {
-        av::VideoFrame filtered;
-        if (!subtitle_handle_->buffersink_.getVideoFrame(filtered)) break;
-        filtered.setTimeBase(get_video_time_base());
-        auto out_pkt = output_handle_.video_enc_ctx_.encode(filtered);
-        if (out_pkt && !out_pkt.isNull()) {
-          out_pkt.setTimeBase(get_video_time_base());
-          out_pkt.setStreamIndex(l_out_video_index);
-          output_handle_.format_context_.writePacket(out_pkt);
-        }
-      }
+      av::VideoFrame filtered;
+      while (subtitle_handle_->buffersink_.getVideoFrame(filtered)) encode_video_frame(filtered);
     }
   }
 
@@ -536,12 +507,12 @@ class ffmpeg_video::impl {
       episodes_name_handle_.process_output_video(*this);
     }
     // 处理主视频流
-    process_out_video();
+    output_handle_.process_output_video(*this);
     if (outro_handle_.video_stream_.isValid()) {
       outro_handle_.process_output_video(*this);
     }
-
     flush_video_encoder();
+    flush_subtitle_filter();
     if (output_handle_.audio_stream_.isValid()) {
       if (intro_handle_.audio_stream_.isValid()) {
         intro_handle_.process_output_audio(*this);
