@@ -53,16 +53,16 @@ auto read_next_packet_for_stream(av::FormatContext& ctx, int desired_stream_inde
 
 auto pick_first_supported_pix_fmt(const av::Codec& codec, av::PixelFormat fallback) -> av::PixelFormat {
   auto fmts = codec.supportedPixelFormats();
-  if (!fmts.empty() && fmts.front() != av::PixelFormat{AV_PIX_FMT_NONE}) {
-    return fmts.front();
+  for (auto&& fmt : fmts) {
+    if (fmt != av::PixelFormat{AV_PIX_FMT_NONE}) return fmt;
   }
   return fallback;
 }
 
 auto pick_first_supported_sample_fmt(const av::Codec& codec, av::SampleFormat fallback) -> av::SampleFormat {
   auto fmts = codec.supportedSampleFormats();
-  if (!fmts.empty() && fmts.front() != av::SampleFormat{AV_SAMPLE_FMT_NONE}) {
-    return fmts.front();
+  for (auto&& fmt : fmts) {
+    if (fmt != av::SampleFormat{AV_SAMPLE_FMT_NONE}) return fmt;
   }
   return fallback;
 }
@@ -165,6 +165,16 @@ class ffmpeg_video::impl {
       audio_dec_ctx_.open();
     }
 
+    void add_audio_resampler(const av::AudioEncoderContext& out_codec) {
+      if (out_codec.channelLayout() != audio_dec_ctx_.channelLayout() ||
+          out_codec.sampleRate() != audio_dec_ctx_.sampleRate() ||
+          out_codec.sampleFormat() != audio_dec_ctx_.sampleFormat())
+        audio_resampler_.init(
+            out_codec.channelLayout(), out_codec.sampleRate(), out_codec.sampleFormat(), audio_dec_ctx_.channelLayout(),
+            audio_dec_ctx_.sampleRate(), audio_dec_ctx_.sampleFormat()
+        );
+    }
+
     void process_output_video(ffmpeg_video::impl& parent) {
       while (auto pkt_opt = read_next_packet_for_stream(format_context_, video_stream_.index())) {
         auto frame = video_dec_ctx_.decode(*pkt_opt);
@@ -258,25 +268,18 @@ class ffmpeg_video::impl {
     DOODLE_CHICK(audio_handle_.audio_stream_.isValid(), "ffmpeg_video: audio stream is not set");
 
     output_handle_.audio_enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
-    output_handle_.audio_enc_ctx_.setSampleRate(audio_handle_.audio_dec_ctx_.sampleRate());
-    output_handle_.audio_enc_ctx_.setChannelLayout(
-        pick_channel_layout(audio_handle_.audio_dec_ctx_.channelLayout(), audio_handle_.audio_dec_ctx_.codec())
-    );
-    output_handle_.audio_enc_ctx_.setChannels(audio_handle_.audio_dec_ctx_.channelLayout());
+    output_handle_.audio_enc_ctx_.setSampleRate(48000);
+    output_handle_.audio_enc_ctx_.setChannels(2);
+    // aac 编解码器必然支持立体声
+    output_handle_.audio_enc_ctx_.setChannelLayout(av_get_default_channel_layout(2));
+
     output_handle_.audio_enc_ctx_.setSampleFormat(pick_first_supported_sample_fmt(
-        audio_handle_.audio_dec_ctx_.codec(), audio_handle_.audio_dec_ctx_.sampleFormat()
+        output_handle_.audio_enc_ctx_.codec(), output_handle_.audio_enc_ctx_.sampleFormat()
     ));
-    output_handle_.audio_enc_ctx_.setTimeBase(av::Rational{1, audio_handle_.audio_dec_ctx_.sampleRate()});
+    output_handle_.audio_enc_ctx_.setTimeBase(av::Rational{1, output_handle_.audio_enc_ctx_.sampleRate()});
     output_handle_.audio_enc_ctx_.open();
 
     output_handle_.audio_stream_ = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
-    output_handle_.audio_stream_.setTimeBase(av::Rational{1, audio_handle_.audio_dec_ctx_.sampleRate()});
-
-    audio_handle_.audio_resampler_.init(
-        output_handle_.audio_enc_ctx_.channelLayout(), output_handle_.audio_enc_ctx_.sampleRate(),
-        output_handle_.audio_enc_ctx_.sampleFormat(), audio_handle_.audio_dec_ctx_.channelLayout(),
-        audio_handle_.audio_dec_ctx_.sampleRate(), audio_handle_.audio_dec_ctx_.sampleFormat()
-    );
   }
 
  public:
@@ -287,8 +290,11 @@ class ffmpeg_video::impl {
 
   // 添加音频轨道, 传入 MP4 文件路径, 提取音频轨道, 检查必须为 AAC 编码, 并将流直接复制到输出文件
   void add_audio(const FSys::path& in_audio_path) {
+    open_output_audio();
+
     audio_handle_.open_format_context(in_audio_path);
     audio_handle_.open_audio_context();
+    audio_handle_.add_audio_resampler(output_handle_.audio_enc_ctx_);
   }
 
   /// @warning 仅支持 .srt 字幕文件, 并且必须在添加片头, 集数名称, 片尾 之后调用, 因为字幕需要知道最终的视频尺寸,
