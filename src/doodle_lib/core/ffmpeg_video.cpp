@@ -239,7 +239,13 @@ class ffmpeg_video::impl {
     av::FilterGraph graph_{};
     av::FilterContext buffersrc_ctx_{};
     av::BufferSrcFilterContext buffersrc_{};
+    // 渲染字幕过滤器
     av::FilterContext subtitles_ctx_{};
+    // 时间码过滤器
+    av::FilterContext timecode_ctx_{};
+    // 水印过滤器
+    av::FilterContext watermark_ctx_{};
+
     av::FilterContext buffersink_ctx_{};
     av::BufferSinkFilterContext buffersink_{};
     bool configured_{false};
@@ -326,7 +332,7 @@ class ffmpeg_video::impl {
 
   /// @warning 仅支持 .srt 字幕文件, 并且必须在添加片头, 集数名称, 片尾 之后调用, 因为字幕需要知道最终的视频尺寸,
   /// 和时间偏移计算
-  void add_subtitle(const FSys::path& in_subtitle_path) {
+  void add_subtitle(const FSys::path& in_subtitle_path, bool add_time_code, const std::string add_watermark) {
     DOODLE_CHICK(!in_subtitle_path.empty(), "字幕路径为空");
     DOODLE_CHICK(FSys::exists(in_subtitle_path), std::format("字幕文件不存在: {}", in_subtitle_path.string()));
     DOODLE_CHICK(
@@ -347,12 +353,12 @@ class ffmpeg_video::impl {
     DOODLE_CHICK(w > 0 && h > 0, "ffmpeg_video: invalid video size for subtitle graph");
 
     const int pix_fmt = static_cast<int>(output_handle_.video_enc_ctx_.pixelFormat());
-    const auto tb     = get_video_time_base();
+    const auto tb     = output_handle_.video_next_pts_.timebase();
     auto sar          = input_video_handle_.video_stream_.sampleAspectRatio();
     if (sar == av::Rational{}) sar = av::Rational{1, 1};
 
     // 计算时间偏移
-    av::Timestamp total_offset_frames{0, get_video_time_base()};
+    av::Timestamp total_offset_frames{0, output_handle_.video_next_pts_.timebase()};
     if (intro_handle_.video_stream_.isValid()) total_offset_frames += intro_handle_.video_stream_.duration();
 
     if (episodes_name_handle_.video_stream_.isValid())
@@ -364,7 +370,7 @@ class ffmpeg_video::impl {
     );
 
     subtitle_handle_ = std::make_unique<subtitle_handle_t>();
-    subtitle_handle_->graph_.setAutoConvert(0);
+    subtitle_handle_->graph_.setAutoConvert(AVFILTER_AUTO_CONVERT_ALL);
 
     const av::Filter buffer_filter{"buffer"};
     const av::Filter buffersink_filter{"buffersink"};
@@ -376,19 +382,40 @@ class ffmpeg_video::impl {
     subtitle_handle_->buffersrc_ctx_  = subtitle_handle_->graph_.createFilter(buffer_filter, "in", buffer_args);
     subtitle_handle_->buffersink_ctx_ = subtitle_handle_->graph_.createFilter(buffersink_filter, "out", "");
 
-    // subtitles 的 filename 在 Windows 上包含 ':'，直接走 args 字符串容易被 ':' 分隔符影响。
-    // 这里用 av_opt_set 设置 option，再 init。
-    subtitle_handle_->subtitles_ctx_  = subtitle_handle_->graph_.allocFilter(subtitles_filter, "sub");
-    const std::string subtitle_file   = in_subtitle_path.generic_string();
-    {
-      const int ret =
-          av_opt_set(subtitle_handle_->subtitles_ctx_.raw(), "filename", subtitle_file.c_str(), AV_OPT_SEARCH_CHILDREN);
-      DOODLE_CHICK(ret >= 0, std::format("ffmpeg_video: set subtitles filename failed: {}", subtitle_file));
+    {  // subtitles 的 filename 在 Windows 上包含 ':'，直接走 args 字符串容易被 ':' 分隔符影响。
+      // 这里用 av_opt_set 设置 option，再 init。
+      subtitle_handle_->subtitles_ctx_ = subtitle_handle_->graph_.allocFilter(subtitles_filter, "sub");
+      const std::string subtitle_file  = in_subtitle_path.generic_string();
+      {
+        const int ret = av_opt_set(
+            subtitle_handle_->subtitles_ctx_.raw(), "filename", subtitle_file.c_str(), AV_OPT_SEARCH_CHILDREN
+        );
+        DOODLE_CHICK(ret >= 0, std::format("ffmpeg_video: set subtitles filename failed: {}", subtitle_file));
+      }
+      // 额外添加可选的位移参数
+      subtitle_handle_->subtitles_ctx_.init(
+          total_offset_frames.timestamp() == 0 ? "" : std::format("sub_shift={}", total_offset_frames.seconds())
+      );
     }
-    // 额外添加可选的位移参数
-    subtitle_handle_->subtitles_ctx_.init(
-        total_offset_frames.timestamp() == 0 ? "" : std::format("sub_shift={}", total_offset_frames.seconds())
-    );
+    if (add_time_code) {
+      // 时间码 使用 drawtext 烧录, 格式 HH:MM:SS:FF, 文字位于右上角 
+      const av::Filter timecode_filter{"drawtext"};
+      DOODLE_CHICK(timecode_filter, "ffmpeg_video: cannot find filter 'drawtext'");
+      const std::string timecode_args = std::format(
+          R"(timecode='00\:00\:00\:00':r={}:x=1585:y=107:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)",
+          g_fps
+      );
+      subtitle_handle_->timecode_ctx_ = subtitle_handle_->graph_.createFilter(timecode_filter, "tc", timecode_args);
+    }
+    {
+      // 水印过滤器 使用 drawtext 烧录, 文字位于左上角
+      const av::Filter watermark_filter{"drawtext"};
+      DOODLE_CHICK(watermark_filter, "ffmpeg_video: cannot find filter 'drawtext'");
+      const std::string watermark_args = std::format(
+          R"(text='{}':x=105:y=136:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)", add_watermark
+      );
+      subtitle_handle_->watermark_ctx_ = subtitle_handle_->graph_.createFilter(watermark_filter, "wm", watermark_args);
+    }
 
     subtitle_handle_->buffersrc_ctx_.link(0, subtitle_handle_->subtitles_ctx_, 0);
     subtitle_handle_->subtitles_ctx_.link(0, subtitle_handle_->buffersink_ctx_, 0);
@@ -558,7 +585,7 @@ void ffmpeg_video::process() {
     impl_->add_intro_outro(intro_path_, outro_path_);
   }
   if (!subtitle_path_.empty() && FSys::exists(subtitle_path_)) {
-    impl_->add_subtitle(subtitle_path_);
+    impl_->add_subtitle(subtitle_path_, time_code_, watermark_text_);
   }
 
   impl_->process();
