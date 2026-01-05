@@ -224,15 +224,11 @@ class ffmpeg_video::impl {
   };
   // 输出视频
   struct out_video : base_t {
-    av::FormatContext format_context_;
-
-    av::Stream video_stream_;
     av::Codec h264_codec_;
     av::VideoEncoderContext video_enc_ctx_;
 
     av::Timestamp video_next_pts_{};
     // 音频流
-    av::Stream audio_stream_;
     av::Codec audio_codec_;
     av::AudioEncoderContext audio_enc_ctx_;
 
