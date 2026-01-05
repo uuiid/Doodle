@@ -398,7 +398,7 @@ class ffmpeg_video::impl {
       );
     }
     if (add_time_code) {
-      // 时间码 使用 drawtext 烧录, 格式 HH:MM:SS:FF, 文字位于右上角 
+      // 时间码 使用 drawtext 烧录, 格式 HH:MM:SS:FF, 文字位于右上角
       const av::Filter timecode_filter{"drawtext"};
       DOODLE_CHICK(timecode_filter, "ffmpeg_video: cannot find filter 'drawtext'");
       const std::string timecode_args = std::format(
@@ -407,7 +407,7 @@ class ffmpeg_video::impl {
       );
       subtitle_handle_->timecode_ctx_ = subtitle_handle_->graph_.createFilter(timecode_filter, "tc", timecode_args);
     }
-    {
+    if (!add_watermark.empty()) {
       // 水印过滤器 使用 drawtext 烧录, 文字位于左上角
       const av::Filter watermark_filter{"drawtext"};
       DOODLE_CHICK(watermark_filter, "ffmpeg_video: cannot find filter 'drawtext'");
