@@ -31,13 +31,6 @@ BOOST_AUTO_TEST_CASE(create) {
   detail::create_move(l_out_file, spdlog::default_logger(), l_image_list, image_size{1920, 1080});
 }
 
-BOOST_AUTO_TEST_CASE(conv_audio) {
-  app_base l_app{};
-  auto l_out_file = "D:/test_files/calp_test/v2_audio.wav.mp4";
-  auto l_audio    = "D:/test_files/calp_test/v2.wav";
-  ffmpeg_video::preprocess_wav_to_aac(l_audio, l_out_file);
-}
-
 BOOST_AUTO_TEST_CASE(add_audio) {
   app_base l_app{};
   auto l_in_file  = "D:/test_files/calp_test/v2.mp4";
