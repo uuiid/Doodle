@@ -11,6 +11,7 @@
 #include <avcpp/stream.h>
 #include <avcpp/timestamp.h>
 #include <avcpp/videorescaler.h>
+#include <channellayout.h>
 #include <cstdint>
 #include <filesystem>
 #include <fmt/format.h>
@@ -125,6 +126,8 @@ class ffmpeg_video::impl {
     av::AudioResampler audio_resampler_;
     av::Stream audio_stream_;
     av::Codec audio_codec_;
+    // 这里储存一下音频的 channel layout, 因为有些音频流没有 channel layout 信息, 需要我们手动指定
+    av::ChannelLayout audio_channel_layout_{0};
 
     void open_format_context(const FSys::path& in_path) {
       format_context_.openInput(in_path.string());
@@ -163,15 +166,18 @@ class ffmpeg_video::impl {
 
       audio_dec_ctx_ = av::AudioDecoderContext{audio_stream_, audio_codec_};
       audio_dec_ctx_.open();
+      audio_channel_layout_ = audio_dec_ctx_.channelLayout2().layout() == 0
+                                  ? av::ChannelLayout{audio_dec_ctx_.channelLayout2().channels()}
+                                  : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
     }
 
     void add_audio_resampler(const av::AudioEncoderContext& out_codec) {
-      if (out_codec.channelLayout() != audio_dec_ctx_.channelLayout() ||
+      if (out_codec.channelLayout2() != audio_channel_layout_ ||
           out_codec.sampleRate() != audio_dec_ctx_.sampleRate() ||
           out_codec.sampleFormat() != audio_dec_ctx_.sampleFormat())
         audio_resampler_.init(
-            out_codec.channelLayout(), out_codec.sampleRate(), out_codec.sampleFormat(), audio_dec_ctx_.channelLayout(),
-            audio_dec_ctx_.sampleRate(), audio_dec_ctx_.sampleFormat()
+            out_codec.channelLayout2().layout(), out_codec.sampleRate(), out_codec.sampleFormat(),
+            audio_channel_layout_.layout(), audio_dec_ctx_.sampleRate(), audio_dec_ctx_.sampleFormat()
         );
     }
 
@@ -184,10 +190,28 @@ class ffmpeg_video::impl {
     }
 
     void process_output_audio(ffmpeg_video::impl& parent) {
+      bool channel_layout_fixed = audio_dec_ctx_.channelLayout2() == audio_channel_layout_;
+
       while (auto pkt_opt = read_next_packet_for_stream(format_context_, audio_stream_.index())) {
         auto frame = audio_dec_ctx_.decode(*pkt_opt);
         if (!frame) continue;
-        parent.encode_audio_frame(frame);
+
+        if (!channel_layout_fixed) {
+          av::frame::set_channel_layout(frame.raw(), audio_channel_layout_.layout());
+        }
+        if (frame.sampleRate() <= 0) av::frame::set_sample_rate(frame.raw(), audio_dec_ctx_.sampleRate());
+
+        if (audio_resampler_.isValid()) {
+          audio_resampler_.push(frame);
+          while (auto resampled_frame = audio_resampler_.pop(parent.output_handle_.audio_enc_ctx_.frameSize()))
+            parent.encode_audio_frame(resampled_frame);
+        } else
+          parent.encode_audio_frame(frame);
+      }
+
+      if (audio_resampler_.isValid()) {
+        auto l_pkt = audio_resampler_.pop(0);
+        if (l_pkt) parent.encode_audio_frame(l_pkt);
       }
     }
   };
@@ -271,7 +295,7 @@ class ffmpeg_video::impl {
     output_handle_.audio_enc_ctx_.setSampleRate(48000);
     output_handle_.audio_enc_ctx_.setChannels(2);
     // aac 编解码器必然支持立体声
-    output_handle_.audio_enc_ctx_.setChannelLayout(av_get_default_channel_layout(2));
+    output_handle_.audio_enc_ctx_.setChannelLayout(av::ChannelLayout{AV_CH_LAYOUT_STEREO});
 
     output_handle_.audio_enc_ctx_.setSampleFormat(pick_first_supported_sample_fmt(
         output_handle_.audio_enc_ctx_.codec(), output_handle_.audio_enc_ctx_.sampleFormat()
@@ -413,13 +437,18 @@ class ffmpeg_video::impl {
   void flush_video_encoder() {
     const int l_out_video_index = output_handle_.video_stream_.index();
     // Flush video encoder
-    while (true) {
-      auto out_pkt = output_handle_.video_enc_ctx_.encode();
-      if (!out_pkt || out_pkt.isNull()) {
-        break;
-      }
+    while (auto out_pkt = output_handle_.video_enc_ctx_.encode()) {
       out_pkt.setTimeBase(get_video_time_base());
       out_pkt.setStreamIndex(l_out_video_index);
+      output_handle_.format_context_.writePacket(out_pkt);
+    }
+  }
+  void flush_audio_encoder() {
+    const int l_out_audio_index = output_handle_.audio_stream_.index();
+    // Flush audio encoder
+    while (auto out_pkt = output_handle_.audio_enc_ctx_.encode()) {
+      out_pkt.setTimeBase(output_handle_.audio_stream_.timeBase());
+      out_pkt.setStreamIndex(l_out_audio_index);
       output_handle_.format_context_.writePacket(out_pkt);
     }
   }
