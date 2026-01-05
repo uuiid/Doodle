@@ -223,12 +223,13 @@ class ffmpeg_video::impl {
     av::Codec h264_codec_;
     av::VideoEncoderContext video_enc_ctx_;
 
-    std::int64_t video_frame_index{0};
+    av::Timestamp video_next_pts_{};
     // 音频流
     av::Stream audio_stream_;
     av::Codec audio_codec_;
     av::AudioEncoderContext audio_enc_ctx_;
-    std::int64_t audio_frame_index{0};
+
+    av::Timestamp audio_next_pts_{};
   } output_handle_;
 
   // 输入视频
@@ -286,6 +287,7 @@ class ffmpeg_video::impl {
     output_handle_.video_stream_.setTimeBase(l_video_tb);
     output_handle_.video_stream_.setFrameRate(av::Rational{k_fps, 1});
     output_handle_.video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+    output_handle_.video_next_pts_ = av::Timestamp{0, l_video_tb};
   }
 
   void open_output_audio() {
@@ -303,7 +305,8 @@ class ffmpeg_video::impl {
     output_handle_.audio_enc_ctx_.setTimeBase(av::Rational{1, output_handle_.audio_enc_ctx_.sampleRate()});
     output_handle_.audio_enc_ctx_.open();
 
-    output_handle_.audio_stream_ = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
+    output_handle_.audio_stream_   = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
+    output_handle_.audio_next_pts_ = av::Timestamp{0, output_handle_.audio_stream_.timeBase()};
   }
 
  public:
@@ -414,21 +417,21 @@ class ffmpeg_video::impl {
   }
 
   void encode_video_frame(av::VideoFrame& in_frame) {
-    in_frame.setTimeBase(get_video_time_base());
-    in_frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
-    auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame);
-    if (out_pkt && !out_pkt.isNull()) {
-      out_pkt.setTimeBase(get_video_time_base());
+    in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
+    in_frame.setPts(output_handle_.video_next_pts_);
+    output_handle_.video_next_pts_ += av::Timestamp{1, output_handle_.video_next_pts_.timebase()};
+    if (auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame); out_pkt) {
+      out_pkt.setTimeBase(output_handle_.video_next_pts_.timebase());
       out_pkt.setStreamIndex(output_handle_.video_stream_.index());
       output_handle_.format_context_.writePacket(out_pkt);
     }
   }
   void encode_audio_frame(av::AudioSamples& in_frame) {
-    in_frame.setTimeBase(av::Rational{1, output_handle_.audio_enc_ctx_.sampleRate()});
-    in_frame.setPts(av::Timestamp{output_handle_.audio_frame_index, in_frame.timeBase()});
-    output_handle_.audio_frame_index += in_frame.samplesCount();
-    auto out_pkt = output_handle_.audio_enc_ctx_.encode(in_frame);
-    if (out_pkt && !out_pkt.isNull()) {
+    in_frame.setTimeBase(output_handle_.audio_next_pts_.timebase());
+    in_frame.setPts(output_handle_.audio_next_pts_);
+    output_handle_.audio_next_pts_ += av::Timestamp{in_frame.samplesCount(), in_frame.timeBase()};
+
+    if (auto out_pkt = output_handle_.audio_enc_ctx_.encode(in_frame); out_pkt) {
       out_pkt.setTimeBase(output_handle_.audio_stream_.timeBase());
       out_pkt.setStreamIndex(output_handle_.audio_stream_.index());
       output_handle_.format_context_.writePacket(out_pkt);
@@ -438,7 +441,7 @@ class ffmpeg_video::impl {
     const int l_out_video_index = output_handle_.video_stream_.index();
     // Flush video encoder
     while (auto out_pkt = output_handle_.video_enc_ctx_.encode()) {
-      out_pkt.setTimeBase(get_video_time_base());
+      out_pkt.setTimeBase(output_handle_.video_next_pts_.timebase());
       out_pkt.setStreamIndex(l_out_video_index);
       output_handle_.format_context_.writePacket(out_pkt);
     }
@@ -447,7 +450,7 @@ class ffmpeg_video::impl {
     const int l_out_audio_index = output_handle_.audio_stream_.index();
     // Flush audio encoder
     while (auto out_pkt = output_handle_.audio_enc_ctx_.encode()) {
-      out_pkt.setTimeBase(output_handle_.audio_stream_.timeBase());
+      out_pkt.setTimeBase(output_handle_.audio_next_pts_.timebase());
       out_pkt.setStreamIndex(l_out_audio_index);
       output_handle_.format_context_.writePacket(out_pkt);
     }
@@ -466,8 +469,6 @@ class ffmpeg_video::impl {
       if (!frame) {
         continue;
       }
-      frame.setTimeBase(get_video_time_base());
-      frame.setPts(av::Timestamp{output_handle_.video_frame_index++, get_video_time_base()});
 
       if (subtitle_handle_ && subtitle_handle_->configured_) {
         subtitle_handle_->buffersrc_.writeVideoFrame(frame);
@@ -513,10 +514,23 @@ class ffmpeg_video::impl {
       outro_handle_.process_output_video(*this);
     }
 
-    if (!audio_handle_.format_context_.isNull()) {
-    }
-
     flush_video_encoder();
+    if (output_handle_.audio_stream_.isValid()) {
+      if (intro_handle_.audio_stream_.isValid()) {
+        intro_handle_.process_output_audio(*this);
+      }
+      if (episodes_name_handle_.video_stream_.isValid()) {
+        // 这个 mp4 文件没有音频流, 不处理, 但是要偏移音频流的 时间戳
+        output_handle_.audio_next_pts_ += episodes_name_handle_.video_stream_.duration();
+      }
+      if (!audio_handle_.format_context_.isNull()) {
+        audio_handle_.process_output_audio(*this);
+      }
+      if (outro_handle_.audio_stream_.isValid()) {
+        outro_handle_.process_output_audio(*this);
+      }
+      flush_audio_encoder();
+    }
 
     output_handle_.format_context_.writeTrailer();
   }
