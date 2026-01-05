@@ -375,6 +375,10 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Original Map Asset File Not Found!"));
 	}
+	if (EditorAssetSubsystem->DoesDirectoryExist(ImportPath))
+	{
+		EditorAssetSubsystem->DeleteDirectory(ImportPath);
+	}
 	//--------------------
 	DeleteAsseet(RenderMapPath);
 	DeleteAsseet(CreateMapPath);
