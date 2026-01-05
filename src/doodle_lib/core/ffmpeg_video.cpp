@@ -558,142 +558,7 @@ void ffmpeg_video::process() {
   impl_->process();
 }
 
-void ffmpeg_video::preprocess_wav_to_aac(const FSys::path& in_wav_path, const FSys::path& in_out_path) {
-  DOODLE_CHICK(!in_wav_path.empty() && FSys::exists(in_wav_path), "ffmpeg_video: audio path is empty or not exists");
-  DOODLE_CHICK(!in_out_path.empty(), "ffmpeg_video: output path is empty");
-  auto out_path = in_out_path;
-  ;
-  out_path.replace_extension(".mp4");
-
-  av::FormatContext l_input_ctx{};
-  l_input_ctx.openInput(in_wav_path.string());
-  l_input_ctx.findStreamInfo();
-
-  av::FormatContext l_output_ctx{};
-  l_output_ctx.openOutput(out_path.string());
-
-  av::Stream l_in_audio_stream{};
-  for (size_t i = 0; i < l_input_ctx.streamsCount(); ++i) {
-    auto st = l_input_ctx.stream(i);
-    if (st.isAudio()) {
-      l_in_audio_stream = st;
-      break;
-    }
-  }
-  DOODLE_CHICK(l_in_audio_stream.isValid(), "ffmpeg_video: audio input has no audio stream");
-
-  av::Codec l_in_codec = l_in_audio_stream.codecParameters().decodingCodec();
-  DOODLE_CHICK(!l_in_codec.isNull(), "ffmpeg_video: cannot find audio decoder");
-  DOODLE_CHICK(l_in_codec.canDecode(), "ffmpeg_video: cannot find audio decoder");
-
-  av::AudioDecoderContext l_dec_ctx{l_in_audio_stream, l_in_codec};
-  l_dec_ctx.open();
-
-  av::AudioEncoderContext l_enc_ctx{};
-  l_enc_ctx.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
-
-  const int l_dst_sample_rate = l_dec_ctx.sampleRate() > 0 ? l_dec_ctx.sampleRate() : 48000;
-  const std::uint64_t l_src_channel_layout =
-      l_dec_ctx.channelLayout() != 0 ? l_dec_ctx.channelLayout() : av_get_default_channel_layout(l_dec_ctx.channels());
-  const uint64_t l_dst_layout = pick_channel_layout(l_src_channel_layout, l_enc_ctx.codec());
-  const av::SampleFormat l_dst_sample_fmt =
-      pick_first_supported_sample_fmt(l_enc_ctx.codec(), av::SampleFormat{AV_SAMPLE_FMT_FLTP});
-
-  l_enc_ctx.setSampleRate(l_dst_sample_rate);
-  l_enc_ctx.setChannelLayout(l_dst_layout);
-  l_enc_ctx.setSampleFormat(l_dst_sample_fmt);
-  const av::Rational l_audio_tb{1, l_enc_ctx.sampleRate()};
-  l_enc_ctx.setTimeBase(l_audio_tb);
-  l_enc_ctx.open();
-
-  av::Stream l_out_stream = l_output_ctx.addStream(l_enc_ctx);
-  l_out_stream.setTimeBase(l_audio_tb);
-
-  av::AudioResampler l_resampler{};
-  if (l_dec_ctx.sampleRate() != l_enc_ctx.sampleRate() || l_dec_ctx.channelLayout() != l_enc_ctx.channelLayout() ||
-      l_dec_ctx.sampleFormat() != l_enc_ctx.sampleFormat()) {
-    l_resampler.init(
-        l_enc_ctx.channelLayout(), l_enc_ctx.sampleRate(), l_enc_ctx.sampleFormat(), l_src_channel_layout,
-        l_dec_ctx.sampleRate(), l_dec_ctx.sampleFormat()
-    );
-  }
-
-  l_output_ctx.writeHeader();
-
-  const int l_audio_frame_size    = l_enc_ctx.frameSize() > 0 ? l_enc_ctx.frameSize() : 1024;
-  int64_t l_audio_samples_written = 0;
-
-  auto encode_audio_samples       = [&](av::AudioSamples& samples) {
-    samples.setTimeBase(l_audio_tb);
-    samples.setPts(av::Timestamp{l_audio_samples_written, l_audio_tb});
-    l_audio_samples_written += samples.samplesCount();
-    auto out_pkt = l_enc_ctx.encode(samples);
-    if (out_pkt && !out_pkt.isNull()) {
-      out_pkt.setTimeBase(l_audio_tb);
-      out_pkt.setStreamIndex(l_out_stream.index());
-      l_output_ctx.writePacket(out_pkt);
-    }
-  };
-
-  while (auto pkt_opt = read_next_packet_for_stream(l_input_ctx, l_in_audio_stream.index())) {
-    auto samples = l_dec_ctx.decode(*pkt_opt);
-    if (!samples) {
-      continue;
-    }
-
-    // avcpp may report channelsLayout() as 0 with FFmpeg new channel layout API
-    // (e.g. when ch_layout.order is not AV_CHANNEL_ORDER_NATIVE). AudioResampler
-    // requires a stable, non-zero layout mask, so we synthesize a default one.
-    if (samples.channelsLayout() == 0) {
-      int channels = samples.channelsCount();
-      if (channels <= 0) {
-        channels = l_dec_ctx.channels();
-      }
-      if (channels <= 0) {
-        channels = 2;
-      }
-      av::frame::set_channel_layout(samples.raw(), av_get_default_channel_layout(channels));
-    }
-    if (samples.sampleRate() <= 0) {
-      av::frame::set_sample_rate(samples.raw(), l_dec_ctx.sampleRate());
-    }
-
-    if (l_resampler.isValid()) {
-      l_resampler.push(samples);
-      while (true) {
-        auto out = l_resampler.pop(static_cast<size_t>(l_audio_frame_size));
-        if (!out) {
-          break;
-        }
-        encode_audio_samples(out);
-      }
-    } else {
-      encode_audio_samples(samples);
-    }
-  }
-
-  // Flush resampler delayed samples
-  if (l_resampler.isValid()) {
-    // 为 0 时会一次提取所有样本, 不需要循环
-    auto out = l_resampler.pop(0);
-    if (out) encode_audio_samples(out);
-  }
-
-  // Flush audio encoder
-  while (true) {
-    auto out_pkt = l_enc_ctx.encode();
-    if (!out_pkt || out_pkt.isNull()) {
-      break;
-    }
-    out_pkt.setTimeBase(l_audio_tb);
-    out_pkt.setStreamIndex(l_out_stream.index());
-    l_output_ctx.writePacket(out_pkt);
-  }
-
-  l_output_ctx.writeTrailer();
-}
-
-void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
+void ffmpeg_video::check_video_valid(const FSys::path& in_video_path, bool has_video_stream) {
   DOODLE_CHICK(!in_video_path.empty(), "ffmpeg_video: video path is empty");
   DOODLE_CHICK(
       FSys::exists(in_video_path), std::format("ffmpeg_video: video file not exists: {}", in_video_path.string())
@@ -720,12 +585,14 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path) {
       continue;
     }
   }
-  DOODLE_CHICK(l_in_video_stream.isValid(), "ffmpeg_video: input has no video stream");
+  if (has_video_stream) {
+    DOODLE_CHICK(l_in_video_stream.isValid(), "ffmpeg_video: input has no video stream");
 
-  // video decoder must exist
-  av::Codec l_in_video_codec = l_in_video_stream.codecParameters().decodingCodec();
-  DOODLE_CHICK(!l_in_video_codec.isNull(), "ffmpeg_video: cannot find video decoder");
-  DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: video decoder cannot decode");
+    // video decoder must exist
+    av::Codec l_in_video_codec = l_in_video_stream.codecParameters().decodingCodec();
+    DOODLE_CHICK(!l_in_video_codec.isNull(), "ffmpeg_video: cannot find video decoder");
+    DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: video decoder cannot decode");
+  }
 
   // audio stream is optional, but if present it must be AAC + stereo (2 channels)
   if (l_in_audio_stream.isValid()) {

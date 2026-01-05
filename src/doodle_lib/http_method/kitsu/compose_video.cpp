@@ -437,16 +437,6 @@ struct actions_tasks_create_review_run {
   actions_tasks_create_review_run() : data_ptr_(std::make_shared<data>()) {}
 
   void operator()() {
-    if (!data_ptr_->args_.audio_path_.empty() && FSys::exists(data_ptr_->args_.audio_path_)) {
-      auto l_old_file = data_ptr_->args_.audio_path_;
-      l_old_file.replace_extension();
-      FSys::rename(data_ptr_->args_.audio_path_, l_old_file);
-      data_ptr_->logger_->info("开始修正音频");
-      auto l_backup_path = FSys::add_time_stamp(data_ptr_->args_.audio_path_);
-      ffmpeg_video::preprocess_wav_to_aac(l_old_file, l_backup_path);
-      FSys::rename(l_backup_path, data_ptr_->args_.audio_path_);
-      data_ptr_->logger_->info("音频修正完成 {}", data_ptr_->args_.audio_path_);
-    }
     if (!data_ptr_->args_.episodes_name_path_.empty()) {
       // todo: 修正集数名称
       data_ptr_->logger_->info("开始修正集数名称");
@@ -498,11 +488,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     l_run.data_ptr_->args_.subtitle_path_ = l_new_path;
   }
   if (!l_run.data_ptr_->args_.audio_path_.empty() && FSys::exists(l_run.data_ptr_->args_.audio_path_)) {
-    auto l_new_path = l_run.data_ptr_->args_.audio_path_;
-    l_new_path.replace_extension(".wav") += ".mp4";
-    // ffmpeg_video::preprocess_wav_to_aac(l_run.data_ptr_->args_.audio_path_, l_new_path);
-    FSys::rename(l_run.data_ptr_->args_.audio_path_, l_new_path);
-    l_run.data_ptr_->args_.audio_path_ = l_new_path;
+    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.audio_path_, false);
+    if (l_run.data_ptr_->args_.audio_path_.extension() != ".wav") {
+      auto l_new_path = l_run.data_ptr_->args_.audio_path_;
+      l_new_path.replace_extension(".wav");
+      FSys::rename(l_run.data_ptr_->args_.audio_path_, l_new_path);
+      l_run.data_ptr_->args_.audio_path_ = l_new_path;
+    }
   }
   if (!l_run.data_ptr_->args_.intro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.intro_path_)) {
     auto l_new_path = l_run.data_ptr_->args_.intro_path_.parent_path() /
