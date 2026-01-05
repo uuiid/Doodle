@@ -381,10 +381,12 @@ class ffmpeg_video::impl {
     intro_handle_.open_format_context(in_intro_path);
     intro_handle_.open_video_context();
     intro_handle_.open_audio_context();
+    intro_handle_.add_audio_resampler(output_handle_.audio_enc_ctx_);
 
     outro_handle_.open_format_context(in_outro_path);
     outro_handle_.open_video_context();
     outro_handle_.open_audio_context();
+    outro_handle_.add_audio_resampler(output_handle_.audio_enc_ctx_);
   }
 
   void encode_video_frame(av::VideoFrame& in_frame) {
