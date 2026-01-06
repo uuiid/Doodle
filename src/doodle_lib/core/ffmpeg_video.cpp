@@ -1,5 +1,6 @@
 #include "ffmpeg_video.h"
 
+#include "doodle_core/configure/static_value.h"
 #include "doodle_core/exception/exception.h"
 
 #include <avcpp/audioresampler.h>
@@ -417,10 +418,19 @@ class ffmpeg_video::impl {
       const av::Filter timecode_filter{"drawtext"};
       DOODLE_CHICK(timecode_filter, "ffmpeg_video: cannot find filter 'drawtext'");
       const std::string timecode_args = std::format(
-          R"(timecode='00\:00\:00\:00':r={}:x=1585:y=107:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)",
+          R"(timecode='00:00:00:00':rate={}:x=1485:y=107:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)",
           g_fps
       );
-      subtitle_handle_->timecode_ctx_ = subtitle_handle_->graph_.createFilter(timecode_filter, "tc", timecode_args);
+      subtitle_handle_->timecode_ctx_ = subtitle_handle_->graph_.allocFilter(timecode_filter, "tc");
+      // 添加字体路径
+
+      const int ret                   = av_opt_set(
+          subtitle_handle_->timecode_ctx_.raw(), "fontfile", doodle_config::font_default.data(), AV_OPT_SEARCH_CHILDREN
+      );
+      DOODLE_CHICK(
+          ret >= 0, std::format("ffmpeg_video: set timecode fontfile failed: {}", doodle_config::font_default)
+      );
+      subtitle_handle_->timecode_ctx_.init(timecode_args);
     }
     if (!add_watermark.empty()) {
       // 水印过滤器 使用 drawtext 烧录, 文字位于左上角
@@ -429,7 +439,15 @@ class ffmpeg_video::impl {
       const std::string watermark_args = std::format(
           R"(text='{}':x=105:y=136:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)", add_watermark
       );
-      subtitle_handle_->watermark_ctx_ = subtitle_handle_->graph_.createFilter(watermark_filter, "wm", watermark_args);
+      subtitle_handle_->watermark_ctx_ = subtitle_handle_->graph_.allocFilter(watermark_filter, "wm");
+      // 添加字体路径
+      const int ret                    = av_opt_set(
+          subtitle_handle_->watermark_ctx_.raw(), "fontfile", doodle_config::font_default.data(), AV_OPT_SEARCH_CHILDREN
+      );
+      DOODLE_CHICK(
+          ret >= 0, std::format("ffmpeg_video: set watermark fontfile failed: {}", doodle_config::font_default)
+      );
+      subtitle_handle_->watermark_ctx_.init(watermark_args);
     }
     subtitle_handle_->buffersrc_ctx_.link(0, subtitle_handle_->subtitles_ctx_, 0);
     av::FilterContext* last_ctx = &subtitle_handle_->subtitles_ctx_;
