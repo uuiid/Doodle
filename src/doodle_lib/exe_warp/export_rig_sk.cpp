@@ -50,7 +50,7 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
       FSys::rename(p, l_new_p);
       p = l_new_p;
     } else
-      throw_exception(doodle_error{"文件名无法找到重命名配置 {}", p});
+      throw_exception(doodle_error{"文件名无法找到重命名配置 {} {}", p, impl_.rename_map_});
   }
 
   for (auto& p : l_maya_file.out_file_list) {
