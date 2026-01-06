@@ -16,6 +16,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/seed_email.h>
 
+#include <opencv2/core/utility.hpp>
 #include <winreg/WinReg.hpp>
 
 namespace doodle {
@@ -226,6 +227,8 @@ bool kitsu_supplement_main::init() {
     return true;
   }
   get_register_info(l_args);
+  // 初始化cv线程
+  cv::setNumThreads(get_hardware_concurrency() - 1);
 
   // 初始化数据库
   g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
