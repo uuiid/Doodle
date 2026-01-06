@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(add_audio) {
   ffmpeg_video l_video{l_in_file, l_out_file};
   l_video.set_audio(l_audio);
   l_video.set_subtitle(l_subtitle);
-  l_video.set_input_video(l_intro);
+  l_video.set_intro(l_intro);
   l_video.set_outro(l_outro);
   l_video.set_time_code(true);
   l_video.set_watermark("测试水印");
