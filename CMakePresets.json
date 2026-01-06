@@ -52,6 +52,7 @@
       "inherits": "Ninja_build",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "ADD_VERSION_LABEL": true,
         "Maya_Version": "2020"
       }
     },
