@@ -229,7 +229,6 @@ class ffmpeg_video::impl {
 
     av::Timestamp video_next_pts_{};
     // 音频流
-    av::Codec audio_codec_;
     av::AudioEncoderContext audio_enc_ctx_;
 
     av::Timestamp audio_next_pts_{};
@@ -303,7 +302,11 @@ class ffmpeg_video::impl {
   }
 
   void open_output_audio() {
-    output_handle_.audio_enc_ctx_.setCodec(av::findEncodingCodec(AV_CODEC_ID_AAC));
+    output_handle_.audio_codec_ = av::findEncodingCodec(AV_CODEC_ID_AAC);
+    DOODLE_CHICK(output_handle_.audio_codec_.isEncoder(), "ffmpeg_video: cannot find aac encoder");
+    output_handle_.audio_enc_ctx_ = av::AudioEncoderContext{output_handle_.audio_codec_};
+    DOODLE_CHICK(output_handle_.audio_enc_ctx_.isValid(), "ffmpeg_video: cannot create aac encoder context");
+    output_handle_.audio_enc_ctx_.setCodec(output_handle_.audio_codec_);
     output_handle_.audio_enc_ctx_.setSampleRate(48000);
     output_handle_.audio_enc_ctx_.setChannels(2);
     // aac 编解码器必然支持立体声
