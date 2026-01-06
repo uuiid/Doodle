@@ -503,7 +503,7 @@ class ffmpeg_video::impl {
       episodes_name_handle_.process_output_video(*this);
     }
     // 处理主视频流
-    output_handle_.process_output_video(*this);
+    input_video_handle_.process_output_video(*this);
     if (outro_handle_.video_stream_.isValid()) {
       outro_handle_.process_output_video(*this);
     }
