@@ -1,6 +1,5 @@
 ﻿param (
     [switch]$CopyServer,
-    [switch]$BuildKitsu,
     [switch]$CreateUEPlugins
 )
 
@@ -8,7 +7,7 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
-Initialize-Doodle -OutPath $DoodleOut -BuildKitsu:$BuildKitsu -CreateUEPlugins:$CreateUEPlugins
+Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
 &Robocopy "$DoodleOut" "\\192.168.40.188\Dev\tmp" /MIR /xf "*.zip" /w:1 
 &Robocopy "$DoodleOut" "\\192.168.40.188\Dev\tmp" /s  /w:1 

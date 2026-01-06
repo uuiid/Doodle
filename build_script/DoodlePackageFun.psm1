@@ -77,7 +77,8 @@ function Get-GitKitsuCommendID() {
 function Initialize-Doodle {
     param(
         [string]$OutPath,
-        [switch]$OnlyOne
+        [switch]$OnlyOne,
+        [switch]$BackupPdb
     )
     if (-not (Test-Path $OutPath)) {
         New-Item $OutPath -ItemType Directory
@@ -113,12 +114,13 @@ function Initialize-Doodle {
             throw "构建失败"
         }
     }
-    Write-Host "开始备份pdb文件"
-    if (-not (Test-Path "$DoodleBuildRoot\pdb\$DoodleVersion\")) {
-        New-Item -Path "$DoodleBuildRoot\pdb\$DoodleVersion\" -ItemType Directory
+    if ($BackupPdb) {
+        Write-Host "开始备份 PDB 文件"
+        if (-not (Test-Path "$DoodleBuildRoot\pdb\$DoodleVersion\")) {
+            New-Item -Path "$DoodleBuildRoot\pdb\$DoodleVersion\" -ItemType Directory
+        }
+        Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.pdb" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
     }
-    Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.pdb" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
-
     Write-Host "开始复制文件"
     Write-Host "robocopy 日志 $DoodleLogPath"
     &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
