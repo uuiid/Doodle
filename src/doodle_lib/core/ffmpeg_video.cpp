@@ -177,6 +177,7 @@ class ffmpeg_video::impl {
         if (l_pkt.streamIndex() == video_stream_.index()) process_output_video(parent, l_pkt);
         if (l_pkt.streamIndex() == audio_stream_.index()) process_output_audio(parent, l_channel_layout_fixed, l_pkt);
       }
+      flush_audio_resampler(parent);
     }
 
    private:
@@ -203,10 +204,11 @@ class ffmpeg_video::impl {
           parent.encode_audio_frame(resampled_frame);
       } else
         parent.encode_audio_frame(frame);
-
+    }
+    // 将 av::AudioResampler 剩余的帧编码输出清空
+    void flush_audio_resampler(ffmpeg_video::impl& parent) {
       if (audio_resampler_.isValid()) {
-        auto l_pkt = audio_resampler_.pop(0);
-        if (l_pkt) parent.encode_audio_frame(l_pkt);
+        while (auto l_pkt = audio_resampler_.pop(0)) parent.encode_audio_frame(l_pkt);
       }
     }
   };
