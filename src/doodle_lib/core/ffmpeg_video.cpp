@@ -371,7 +371,7 @@ class ffmpeg_video::impl {
     if (intro_handle_.video_stream_.isValid()) total_offset_frames += intro_handle_.video_stream_.duration();
 
     if (episodes_name_handle_.video_stream_.isValid())
-      total_offset_frames += input_video_handle_.video_stream_.duration();
+      total_offset_frames += episodes_name_handle_.video_stream_.duration();
 
     const std::string buffer_args = std::format(
         "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}", w, h, pix_fmt, tb.getNumerator(),
