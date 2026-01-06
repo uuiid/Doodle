@@ -33,6 +33,7 @@
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavfilter/buffersrc.h>
+#include <libavutil/audio_fifo.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/error.h>
 #include <libavutil/opt.h>
@@ -101,8 +102,13 @@ std::uint64_t av_get_default_channel_layout(int nb_channels) {
 }  // namespace
 class ffmpeg_video::impl {
  public:
-  impl()  = default;
-  ~impl() = default;
+  impl() = default;
+  ~impl() {
+    if (audio_fifo_) {
+      av_audio_fifo_free(audio_fifo_);
+      audio_fifo_ = nullptr;
+    }
+  }
 
  private:
   struct base_t {
@@ -201,14 +207,14 @@ class ffmpeg_video::impl {
         frame.setPts(parent.output_handle_.audio_next_pts_);
         audio_resampler_.push(frame);
         while (auto resampled_frame = audio_resampler_.pop(parent.output_handle_.audio_enc_ctx_.frameSize()))
-          parent.encode_audio_frame(resampled_frame);
+          parent.submit_audio_frame(resampled_frame);
       } else
-        parent.encode_audio_frame(frame);
+        parent.submit_audio_frame(frame);
     }
     // 将 av::AudioResampler 剩余的帧编码输出清空
     void flush_audio_resampler(ffmpeg_video::impl& parent) {
       if (audio_resampler_.isValid()) {
-        while (auto l_pkt = audio_resampler_.pop(0)) parent.encode_audio_frame(l_pkt);
+        while (auto l_pkt = audio_resampler_.pop(0)) parent.submit_audio_frame(l_pkt);
       }
     }
   };
@@ -225,6 +231,9 @@ class ffmpeg_video::impl {
     av::Timestamp audio_next_pts_{};
   };
   out_video output_handle_;
+
+  // 全局音频 FIFO：跨片头/正片/片尾拼接时，保证 AAC 始终按 frame_size(通常1024) 喂数据。
+  AVAudioFifo* audio_fifo_{nullptr};
 
   // 输入视频
   base_t input_video_handle_;
@@ -346,6 +355,37 @@ class ffmpeg_video::impl {
     output_handle_.audio_stream_ = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
     output_handle_.audio_stream_.setTimeBase(output_handle_.audio_enc_ctx_.timeBase());
     output_handle_.audio_next_pts_ = av::Timestamp{0, output_handle_.audio_stream_.timeBase()};
+
+    if (audio_fifo_) {
+      av_audio_fifo_free(audio_fifo_);
+      audio_fifo_ = nullptr;
+    }
+    audio_fifo_ = av_audio_fifo_alloc(
+        output_handle_.audio_enc_ctx_.sampleFormat().get(), output_handle_.audio_enc_ctx_.channels(), 1
+    );
+    DOODLE_CHICK(audio_fifo_ != nullptr, "ffmpeg_video: cannot allocate audio fifo");
+  }
+
+  void submit_audio_frame(av::AudioSamples& in_frame) {
+    if (!output_handle_.audio_stream_.isValid() || audio_fifo_ == nullptr) return;
+    if (!in_frame.isValid() || in_frame.samplesCount() <= 0) return;
+
+    const int written = av_audio_fifo_write(
+        audio_fifo_, reinterpret_cast<void**>(in_frame.raw()->extended_data), in_frame.samplesCount()
+    );
+    DOODLE_CHICK(written == in_frame.samplesCount(), "ffmpeg_video: audio fifo write failed");
+
+    const int frame_size = output_handle_.audio_enc_ctx_.frameSize();
+    DOODLE_CHICK(frame_size > 0, "ffmpeg_video: invalid audio encoder frame size");
+    while (av_audio_fifo_size(audio_fifo_) >= frame_size) {
+      av::AudioSamples out(
+          output_handle_.audio_enc_ctx_.sampleFormat(), frame_size,
+          output_handle_.audio_enc_ctx_.channelLayout2().layout(), output_handle_.audio_enc_ctx_.sampleRate()
+      );
+      const int read = av_audio_fifo_read(audio_fifo_, reinterpret_cast<void**>(out.raw()->extended_data), frame_size);
+      DOODLE_CHICK(read == frame_size, "ffmpeg_video: audio fifo read failed");
+      encode_audio_frame(out);
+    }
   }
 
  public:
@@ -544,6 +584,35 @@ class ffmpeg_video::impl {
   }
   void flush_audio_encoder() {
     const int l_out_audio_index = output_handle_.audio_stream_.index();
+
+    if (audio_fifo_) {
+      const int frame_size = output_handle_.audio_enc_ctx_.frameSize();
+      DOODLE_CHICK(frame_size > 0, "ffmpeg_video: invalid audio encoder frame size");
+
+      while (av_audio_fifo_size(audio_fifo_) >= frame_size) {
+        av::AudioSamples out(
+            output_handle_.audio_enc_ctx_.sampleFormat(), frame_size,
+            output_handle_.audio_enc_ctx_.channelLayout2().layout(), output_handle_.audio_enc_ctx_.sampleRate()
+        );
+        const int read =
+            av_audio_fifo_read(audio_fifo_, reinterpret_cast<void**>(out.raw()->extended_data), frame_size);
+        DOODLE_CHICK(read == frame_size, "ffmpeg_video: audio fifo read failed");
+        encode_audio_frame(out);
+      }
+
+      const int remain = av_audio_fifo_size(audio_fifo_);
+      if (remain > 0) {
+        av::AudioSamples out(
+            output_handle_.audio_enc_ctx_.sampleFormat(), remain,
+            output_handle_.audio_enc_ctx_.channelLayout2().layout(), output_handle_.audio_enc_ctx_.sampleRate()
+        );
+        const int read = av_audio_fifo_read(audio_fifo_, reinterpret_cast<void**>(out.raw()->extended_data), remain);
+        DOODLE_CHICK(read == remain, "ffmpeg_video: audio fifo read failed");
+        // 最后一帧允许不足 frame_size
+        encode_audio_frame(out);
+      }
+    }
+
     // Flush audio encoder
     while (auto out_pkt = output_handle_.audio_enc_ctx_.encode()) {
       out_pkt.setTimeBase(output_handle_.audio_next_pts_.timebase());
