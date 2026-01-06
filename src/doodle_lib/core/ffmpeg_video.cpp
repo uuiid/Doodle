@@ -18,12 +18,14 @@
 #include <filtercontext.h>
 #include <fmt/format.h>
 #include <libavcodec/codec_id.h>
+#include <libavformat/avformat.h>
 #include <memory>
 #include <opencv2/core/utility.hpp>
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
 #include <opencv2/videoio.hpp>
 #include <optional>
+#include <packet.h>
 #include <rational.h>
 #include <string>
 #include <system_error>
@@ -39,20 +41,6 @@ extern "C" {
 namespace doodle {
 
 namespace {
-
-auto read_next_packet_for_stream(av::FormatContext& ctx, int desired_stream_index) -> std::optional<av::Packet> {
-  std::error_code ec{};
-
-  while (true) {
-    auto pkt = ctx.readPacket();
-    if (pkt.isNull()) return std::nullopt;
-
-    if (!pkt) continue;
-    if (pkt.streamIndex() != desired_stream_index) continue;
-
-    return pkt;
-  }
-}
 
 auto pick_first_supported_pix_fmt(const av::Codec& codec, av::PixelFormat fallback) -> av::PixelFormat {
   auto fmts = codec.supportedPixelFormats();
@@ -183,36 +171,38 @@ class ffmpeg_video::impl {
         );
     }
 
-    void process_output_video(ffmpeg_video::impl& parent) {
-      while (auto pkt_opt = read_next_packet_for_stream(format_context_, video_stream_.index())) {
-        auto frame = video_dec_ctx_.decode(*pkt_opt);
-        if (!frame) continue;
-
-        parent.process_filter(frame);
+    void process(ffmpeg_video::impl& parent) {
+      auto l_channel_layout_fixed = audio_channel_layout_ == audio_dec_ctx_.channelLayout2();
+      while (auto l_pkt = format_context_.readPacket()) {
+        if (l_pkt.streamIndex() == video_stream_.index()) process_output_video(parent, l_pkt);
+        if (l_pkt.streamIndex() == audio_stream_.index()) process_output_audio(parent, l_channel_layout_fixed, l_pkt);
       }
     }
 
-    void process_output_audio(ffmpeg_video::impl& parent) {
-      bool channel_layout_fixed = audio_dec_ctx_.channelLayout2() == audio_channel_layout_;
+   private:
+    void process_output_video(ffmpeg_video::impl& in_parent, av::Packet& in_pkt) {
+      auto frame = video_dec_ctx_.decode(in_pkt);
+      if (!frame) return;
 
-      while (auto pkt_opt = read_next_packet_for_stream(format_context_, audio_stream_.index())) {
-        auto frame = audio_dec_ctx_.decode(*pkt_opt);
-        if (!frame) continue;
+      in_parent.process_filter(frame);
+    }
+    void process_output_audio(ffmpeg_video::impl& parent, bool in_channel_layout_fixed, av::Packet& in_pkt) {
+      auto frame = audio_dec_ctx_.decode(in_pkt);
+      if (!frame) return;
 
-        if (!channel_layout_fixed) {
-          av::frame::set_channel_layout(frame.raw(), audio_channel_layout_.layout());
-        }
-        if (frame.sampleRate() <= 0) av::frame::set_sample_rate(frame.raw(), audio_dec_ctx_.sampleRate());
-
-        if (audio_resampler_.isValid()) {
-          frame.setTimeBase(audio_dec_ctx_.timeBase());
-          frame.setPts(parent.output_handle_.audio_next_pts_);
-          audio_resampler_.push(frame);
-          while (auto resampled_frame = audio_resampler_.pop(parent.output_handle_.audio_enc_ctx_.frameSize()))
-            parent.encode_audio_frame(resampled_frame);
-        } else
-          parent.encode_audio_frame(frame);
+      if (!in_channel_layout_fixed) {
+        av::frame::set_channel_layout(frame.raw(), audio_channel_layout_.layout());
       }
+      if (frame.sampleRate() <= 0) av::frame::set_sample_rate(frame.raw(), audio_dec_ctx_.sampleRate());
+
+      if (audio_resampler_.isValid()) {
+        frame.setTimeBase(audio_dec_ctx_.timeBase());
+        frame.setPts(parent.output_handle_.audio_next_pts_);
+        audio_resampler_.push(frame);
+        while (auto resampled_frame = audio_resampler_.pop(parent.output_handle_.audio_enc_ctx_.frameSize()))
+          parent.encode_audio_frame(resampled_frame);
+      } else
+        parent.encode_audio_frame(frame);
 
       if (audio_resampler_.isValid()) {
         auto l_pkt = audio_resampler_.pop(0);
@@ -567,35 +557,27 @@ class ffmpeg_video::impl {
     }
   }
 
+  void start_audio() {}
+
   void process() {
     output_handle_.format_context_.writeHeader();
     if (intro_handle_.video_stream_.isValid()) {
-      intro_handle_.process_output_video(*this);
+      intro_handle_.process(*this);
     }
     if (episodes_name_handle_.video_stream_.isValid()) {
-      episodes_name_handle_.process_output_video(*this);
+      episodes_name_handle_.process(*this);
+      // 这个 mp4 文件没有音频流, 不处理, 但是要偏移音频流的 时间戳
+      output_handle_.audio_next_pts_ += episodes_name_handle_.video_stream_.duration();
     }
     // 处理主视频流
-    input_video_handle_.process_output_video(*this);
+    input_video_handle_.process(*this);
     if (outro_handle_.video_stream_.isValid()) {
-      outro_handle_.process_output_video(*this);
+      outro_handle_.process(*this);
     }
     flush_video_encoder();
     flush_subtitle_filter();
+
     if (output_handle_.audio_stream_.isValid()) {
-      if (intro_handle_.audio_stream_.isValid()) {
-        intro_handle_.process_output_audio(*this);
-      }
-      if (episodes_name_handle_.video_stream_.isValid()) {
-        // 这个 mp4 文件没有音频流, 不处理, 但是要偏移音频流的 时间戳
-        output_handle_.audio_next_pts_ += episodes_name_handle_.video_stream_.duration();
-      }
-      if (!audio_handle_.format_context_.isNull()) {
-        audio_handle_.process_output_audio(*this);
-      }
-      if (outro_handle_.audio_stream_.isValid()) {
-        outro_handle_.process_output_audio(*this);
-      }
       flush_audio_encoder();
     }
 
