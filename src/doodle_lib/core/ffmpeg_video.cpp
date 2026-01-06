@@ -162,7 +162,7 @@ class ffmpeg_video::impl {
     }
 
     void add_audio_resampler(const av::AudioEncoderContext& out_codec) {
-      if (out_codec.channelLayout2() != audio_channel_layout_ ||
+      if (out_codec.channelLayout2().layout() != audio_channel_layout_.layout() ||
           out_codec.sampleRate() != audio_dec_ctx_.sampleRate() ||
           out_codec.sampleFormat() != audio_dec_ctx_.sampleFormat())
         audio_resampler_.init(
