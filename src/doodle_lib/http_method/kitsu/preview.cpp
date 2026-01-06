@@ -270,6 +270,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     l_preview_file->original_name_ = l_file.stem().generic_string();
     l_preview_file->width_         = l_size.width;
     l_preview_file->height_        = l_size.height;
+    l_preview_file->status_        = preview_file_statuses::ready;
     l_file                         = l_new_path;
   } else if (is_video_extension(l_ext)) {
     auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(id_);
@@ -293,10 +294,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     l_preview_file->width_         = l_prj_size.first;
     l_preview_file->height_        = l_prj_size.second;
     l_preview_file->duration_      = l_duration;
+    l_preview_file->status_        = preview_file_statuses::processing;
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});
 
-  l_preview_file->status_    = preview_file_statuses::processing;
   l_preview_file->file_size_ = FSys::exists(l_file) ? FSys::file_size(l_file) : 0;
   co_await l_sql.update(l_preview_file);
 
@@ -329,9 +330,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
-  auto l_position            = l_sql.get_next_position(task_id_, l_revision);
+  auto l_position     = l_sql.get_next_position(task_id_, l_revision);
 
-  auto l_preview_file        = std::make_shared<preview_file>();
+  auto l_preview_file = std::make_shared<preview_file>();
   in_handle->get_json().get_to(*l_preview_file);
   l_preview_file->revision_  = l_revision;
   l_preview_file->task_id_   = task_id_;
