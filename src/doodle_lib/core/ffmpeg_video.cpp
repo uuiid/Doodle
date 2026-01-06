@@ -188,6 +188,10 @@ class ffmpeg_video::impl {
         if (!frame) continue;
 
         if (parent.subtitle_handle_ && parent.subtitle_handle_->configured_) {
+          // subtitles 滤镜严格依赖输入帧的 PTS/time_base。
+          // 这里将其对齐到输出视频时间线（与 buffer filter 的 time_base 一致），否则字幕可能不会被渲染。
+          frame.setTimeBase(parent.output_handle_.video_next_pts_.timebase());
+          frame.setPts(parent.output_handle_.video_next_pts_);
           parent.subtitle_handle_->buffersrc_.writeVideoFrame(frame);
           av::VideoFrame filtered_frame{};
           while (parent.subtitle_handle_->buffersink_.getVideoFrame(filtered_frame))
@@ -210,6 +214,8 @@ class ffmpeg_video::impl {
         if (frame.sampleRate() <= 0) av::frame::set_sample_rate(frame.raw(), audio_dec_ctx_.sampleRate());
 
         if (audio_resampler_.isValid()) {
+          frame.setTimeBase(audio_dec_ctx_.timeBase());
+          frame.setPts(parent.output_handle_.audio_next_pts_);
           audio_resampler_.push(frame);
           while (auto resampled_frame = audio_resampler_.pop(parent.output_handle_.audio_enc_ctx_.frameSize()))
             parent.encode_audio_frame(resampled_frame);
