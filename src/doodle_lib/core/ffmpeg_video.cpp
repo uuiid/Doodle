@@ -220,7 +220,7 @@ class ffmpeg_video::impl {
       }
     }
   };
-  
+
   // 输出视频
   struct out_video : base_t {
     av::Codec h264_codec_;
@@ -246,7 +246,7 @@ class ffmpeg_video::impl {
     av::BufferSinkFilterContext buffersink_{};
     bool configured_{false};
 
-    void init_buffersrc(const av::VideoDecoderContext& dec_ctx) {
+    void init_buffersrc(const av::VideoEncoderContext& dec_ctx) {
       auto l_time_base     = dec_ctx.timeBase();
       auto l_sample_aspect = dec_ctx.sampleAspectRatio();
       DOODLE_CHICK(l_sample_aspect != av::Rational{}, "ffmpeg_video: invalid sample aspect ratio");
@@ -373,7 +373,7 @@ class ffmpeg_video::impl {
 
   /// @warning 仅支持 .srt 字幕文件, 并且必须在添加片头, 集数名称, 片尾 之后调用, 因为字幕需要知道最终的视频尺寸,
   /// 和时间偏移计算
-  void add_subtitle(const FSys::path& in_subtitle_path, bool add_time_code, const std::string add_watermark) {
+  void add_subtitle(const FSys::path& in_subtitle_path) {
     DOODLE_CHICK(!in_subtitle_path.empty(), "字幕路径为空");
     DOODLE_CHICK(FSys::exists(in_subtitle_path), std::format("字幕文件不存在: {}", in_subtitle_path.string()));
     DOODLE_CHICK(
@@ -397,7 +397,7 @@ class ffmpeg_video::impl {
     if (episodes_name_handle_.video_stream_.isValid())
       subtitle_handle_->time_offset_ += episodes_name_handle_.video_stream_.duration();
 
-    subtitle_handle_->init_buffersrc(output_handle_.video_dec_ctx_);
+    subtitle_handle_->init_buffersrc(output_handle_.video_enc_ctx_);
 
     const av::Filter subtitles_filter{"subtitles"};
     DOODLE_CHICK(subtitles_filter, "ffmpeg_video: cannot find filter 'subtitles' (FFmpeg needs libass)");
@@ -425,7 +425,7 @@ class ffmpeg_video::impl {
   void add_time_code_watermark(bool add_time_code, const std::string add_watermark) {
     DOODLE_CHICK(add_time_code || !add_watermark.empty(), "ffmpeg_video: either time code or watermark must be added");
     watermark_timecode_handle_ = std::make_unique<watermark_timecode_handle_t>();
-    watermark_timecode_handle_->init_buffersrc(output_handle_.video_dec_ctx_);
+    watermark_timecode_handle_->init_buffersrc(output_handle_.video_enc_ctx_);
     if (add_time_code) {
       // 时间码 使用 drawtext 烧录, 格式 HH:MM:SS:FF, 文字位于右上角
       const av::Filter timecode_filter{"drawtext"};
@@ -625,8 +625,9 @@ void ffmpeg_video::process() {
     impl_->add_intro_outro(intro_path_, outro_path_);
   }
   if (!subtitle_path_.empty() && FSys::exists(subtitle_path_)) {
-    impl_->add_subtitle(subtitle_path_, time_code_, watermark_text_);
+    impl_->add_subtitle(subtitle_path_);
   }
+  impl_->add_time_code_watermark(time_code_, watermark_text_);
 
   impl_->process();
 }
