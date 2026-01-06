@@ -14,6 +14,7 @@
 #include <channellayout.h>
 #include <cstdint>
 #include <filesystem>
+#include <filtercontext.h>
 #include <fmt/format.h>
 #include <libavcodec/codec_id.h>
 #include <memory>
@@ -318,7 +319,8 @@ class ffmpeg_video::impl {
     output_handle_.audio_enc_ctx_.setTimeBase(av::Rational{1, output_handle_.audio_enc_ctx_.sampleRate()});
     output_handle_.audio_enc_ctx_.open();
 
-    output_handle_.audio_stream_   = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
+    output_handle_.audio_stream_ = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
+    output_handle_.audio_stream_.setTimeBase(output_handle_.audio_enc_ctx_.timeBase());
     output_handle_.audio_next_pts_ = av::Timestamp{0, output_handle_.audio_stream_.timeBase()};
   }
 
@@ -423,12 +425,22 @@ class ffmpeg_video::impl {
       );
       subtitle_handle_->watermark_ctx_ = subtitle_handle_->graph_.createFilter(watermark_filter, "wm", watermark_args);
     }
-
     subtitle_handle_->buffersrc_ctx_.link(0, subtitle_handle_->subtitles_ctx_, 0);
-    subtitle_handle_->subtitles_ctx_.link(0, subtitle_handle_->buffersink_ctx_, 0);
+    av::FilterContext* last_ctx = &subtitle_handle_->subtitles_ctx_;
+
+    if (add_time_code) {
+      // 连接时间码过滤器
+      last_ctx->link(0, subtitle_handle_->timecode_ctx_, 0);
+      last_ctx = &subtitle_handle_->timecode_ctx_;
+    }
+    if (!add_watermark.empty()) {
+      // 连接水印过滤器
+      last_ctx->link(0, subtitle_handle_->watermark_ctx_, 0);
+      last_ctx = &subtitle_handle_->watermark_ctx_;
+    }
+    last_ctx->link(0, subtitle_handle_->buffersink_ctx_, 0);
 
     subtitle_handle_->graph_.config();
-
     subtitle_handle_->buffersrc_  = av::BufferSrcFilterContext{subtitle_handle_->buffersrc_ctx_};
     subtitle_handle_->buffersink_ = av::BufferSinkFilterContext{subtitle_handle_->buffersink_ctx_};
     subtitle_handle_->configured_ = true;
