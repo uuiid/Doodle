@@ -110,7 +110,8 @@
       "name": "ffmpeg",
       "default-features": true,
       "features": [
-        "all-gpl"
+        "all-gpl",
+        "drawtext"
       ]
     }
   ],
