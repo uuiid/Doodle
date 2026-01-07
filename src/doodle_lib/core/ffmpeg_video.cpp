@@ -321,7 +321,28 @@ class ffmpeg_video::impl {
     // 将 av::AudioResampler 剩余的帧编码输出清空
     void flush_audio_resampler(ffmpeg_video::impl& parent) {
       if (audio_resampler_.isValid()) {
-        while (auto l_pkt = audio_resampler_.pop(0)) parent.submit_audio_frame(l_pkt);
+        // avcpp 的 AudioResampler::pop(0) 会按 swr_get_delay() 一次性分配所有剩余 samples。
+        // 如果 swr_get_delay() 异常返回负数（转成 size_t 变成超大），会触发 CantAllocateFrame。
+        // 这里改为：直接用 pop(dst, /*getall=*/true) 触发 flush，并用固定 frame_size 分块 drain，避免巨分配。
+        const int frame_size = parent.output_handle_.audio_enc_ctx_.frameSize();
+        DOODLE_CHICK(frame_size > 0, "ffmpeg_video: invalid audio encoder frame size");
+
+        av::AudioSamples drained{};
+        drained.init(
+            parent.output_handle_.audio_enc_ctx_.sampleFormat(), frame_size,
+            parent.output_handle_.audio_enc_ctx_.channelLayout2().layout(),
+            parent.output_handle_.audio_enc_ctx_.sampleRate()
+        );
+        while (audio_resampler_.pop(drained, true)) {
+          parent.submit_audio_frame(drained);
+          // pop() 可能会把 nb_samples 改小；这里重置为期望的 frame_size，确保下一轮仍以固定块大小读取。
+          drained = av::AudioSamples{};
+          drained.init(
+              parent.output_handle_.audio_enc_ctx_.sampleFormat(), frame_size,
+              parent.output_handle_.audio_enc_ctx_.channelLayout2().layout(),
+              parent.output_handle_.audio_enc_ctx_.sampleRate()
+          );
+        }
       }
     }
   };
