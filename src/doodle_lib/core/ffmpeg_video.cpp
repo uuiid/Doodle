@@ -42,6 +42,7 @@ extern "C" {
 #include <libavutil/channel_layout.h>
 #include <libavutil/error.h>
 #include <libavutil/opt.h>
+#include <libavutil/samplefmt.h>
 }
 
 namespace doodle {
@@ -264,15 +265,10 @@ class ffmpeg_video::impl {
     }
     // 由于音频的特殊性质, 需要将视频中没有音频的部分补全静音音频
     void process_until_video_pts(ffmpeg_video::impl& parent) {
-      // 首先计算需要补全多少音频采样
-      auto l_dur             = video_stream_.duration();
-      auto l_audio_time_base = av::Rational{
-          boost::numeric_cast<std::int32_t>(
-              video_stream_.duration().timestamp() * parent.output_handle_.audio_enc_ctx_.sampleRate()
-          ),
-          video_stream_.timeBase().getDenominator()
-      };
-      std::int64_t l_nb_samples_needed = l_audio_time_base.getDouble();
+      // 首先计算需要补全多少音频采样（用 int64 rescale，避免长视频时的 32-bit 溢出）
+      const auto l_dur                 = video_stream_.duration();
+      const int l_sample_rate          = parent.output_handle_.audio_enc_ctx_.sampleRate();
+      std::int64_t l_nb_samples_needed = l_dur.timebase().rescale(l_dur.timestamp(), av::Rational{1, l_sample_rate});
       const std::int64_t l_frame_size_ = parent.output_handle_.audio_enc_ctx_.frameSize();
       while (l_nb_samples_needed > 0) {
         auto l_framesize = l_nb_samples_needed > l_frame_size_ ? l_frame_size_ : l_nb_samples_needed;
@@ -283,6 +279,14 @@ class ffmpeg_video::impl {
             parent.output_handle_.audio_enc_ctx_.channelLayout2().layout(),
             parent.output_handle_.audio_enc_ctx_.sampleRate()
         );
+
+        // AudioSamples::init() 只分配 buffer，不保证清零。
+        // 对于 flt/fltp 等浮点采样格式，未初始化数据可能包含 NaN/Inf，AAC 编码器会直接返回 EINVAL。
+        (void)av_samples_set_silence(
+            l_frame.raw()->extended_data, 0, static_cast<int>(l_framesize),
+            parent.output_handle_.audio_enc_ctx_.channels(), static_cast<AVSampleFormat>(l_frame.raw()->format)
+        );
+
         l_frame.setTimeBase(parent.output_handle_.audio_enc_ctx_.timeBase());
         parent.submit_audio_frame(l_frame);  // 编码静音音频帧
         l_nb_samples_needed -= l_framesize;
