@@ -379,10 +379,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	DeleteAsseet(RenderMapPath);
 	DeleteAsseet(CreateMapPath);
 	DeleteAsseet(SequencePath);
-	if (EditorAssetSubsystem->DoesDirectoryExist(ImportPath))
-	{
-		EditorAssetSubsystem->DeleteDirectory(ImportPath);
-	}
+
 	FrameTick = TickRate.Numerator / Rate.Numerator;
 
 	// 创建主要的关卡和关卡序列
