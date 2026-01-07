@@ -374,10 +374,13 @@ class ffmpeg_video::impl {
     av::VideoEncoderContext video_enc_ctx_;
 
     av::Timestamp video_next_pts_{};
+    // 视频流包时间
+    av::Timestamp video_packet_time_{};
     // 音频流
     av::AudioEncoderContext audio_enc_ctx_;
 
     av::Timestamp audio_next_pts_{};
+    av::Timestamp audio_packet_time_{};
   };
   out_video output_handle_;
 
@@ -479,7 +482,8 @@ class ffmpeg_video::impl {
     output_handle_.video_stream_.setTimeBase(l_video_tb);
     output_handle_.video_stream_.setFrameRate(av::Rational{k_fps, 1});
     output_handle_.video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
-    output_handle_.video_next_pts_ = av::Timestamp{0, l_video_tb};
+    output_handle_.video_next_pts_    = av::Timestamp{0, l_video_tb};
+    output_handle_.video_packet_time_ = av::Timestamp{0, l_video_tb};
   }
 
   void open_output_audio() {
@@ -500,7 +504,8 @@ class ffmpeg_video::impl {
 
     output_handle_.audio_stream_ = output_handle_.format_context_.addStream(output_handle_.audio_enc_ctx_);
     output_handle_.audio_stream_.setTimeBase(output_handle_.audio_enc_ctx_.timeBase());
-    output_handle_.audio_next_pts_ = av::Timestamp{0, output_handle_.audio_stream_.timeBase()};
+    output_handle_.audio_next_pts_    = av::Timestamp{0, output_handle_.audio_stream_.timeBase()};
+    output_handle_.audio_packet_time_ = av::Timestamp{0, output_handle_.audio_stream_.timeBase()};
 
     audio_fifo_.init(output_handle_.audio_enc_ctx_.sampleFormat().get(), output_handle_.audio_enc_ctx_.channels(), 1);
   }
@@ -689,12 +694,15 @@ class ffmpeg_video::impl {
   }
 
   void encode_video_frame(av::VideoFrame& in_frame) {
+    // SPDLOG_WARN("帧时间 {}", output_handle_.video_next_pts_.seconds());
     in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
     in_frame.setPts(output_handle_.video_next_pts_);
     output_handle_.video_next_pts_ += av::Timestamp{1, output_handle_.video_next_pts_.timebase()};
     if (auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame); out_pkt) {
       out_pkt.setTimeBase(output_handle_.video_next_pts_.timebase());
-      out_pkt.setPts(in_frame.pts());
+      out_pkt.setPts(output_handle_.video_packet_time_);
+      output_handle_.video_packet_time_ +=
+          av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
       out_pkt.setStreamIndex(output_handle_.video_stream_.index());
       output_handle_.format_context_.writePacket(out_pkt);
     }
@@ -706,7 +714,10 @@ class ffmpeg_video::impl {
 
     if (auto out_pkt = output_handle_.audio_enc_ctx_.encode(in_frame); out_pkt) {
       out_pkt.setTimeBase(output_handle_.audio_stream_.timeBase());
-      out_pkt.setPts(in_frame.pts());
+      out_pkt.setPts(output_handle_.audio_packet_time_);
+      output_handle_.audio_packet_time_ += av::Timestamp{
+          out_pkt.duration() == 0 ? output_handle_.audio_enc_ctx_.frameSize() : out_pkt.duration(), out_pkt.timeBase()
+      };
       out_pkt.setStreamIndex(output_handle_.audio_stream_.index());
       output_handle_.format_context_.writePacket(out_pkt);
     }
