@@ -716,6 +716,10 @@ class ffmpeg_video::impl {
     }
     // 处理主视频流
     input_video_handle_.process(*this);
+    // 处理音频流
+    if (audio_handle_.audio_stream_.isValid()) {
+      audio_handle_.process(*this);
+    }
     if (outro_handle_.video_stream_.isValid()) {
       outro_handle_.process(*this);
     }
