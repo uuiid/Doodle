@@ -3,6 +3,8 @@
 #include "doodle_core/configure/static_value.h"
 #include "doodle_core/exception/exception.h"
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <algorithm>
 #include <avcpp/audioresampler.h>
 #include <avcpp/codec.h>
@@ -258,6 +260,33 @@ class ffmpeg_video::impl {
         if (l_pkt.streamIndex() == audio_stream_.index()) process_output_audio(parent, l_channel_layout_fixed, l_pkt);
       }
       flush_audio_resampler(parent);
+      if (!audio_stream_.isValid()) process_until_video_pts(parent);
+    }
+    // 由于音频的特殊性质, 需要将视频中没有音频的部分补全静音音频
+    void process_until_video_pts(ffmpeg_video::impl& parent) {
+      // 首先计算需要补全多少音频采样
+      auto l_dur             = video_stream_.duration();
+      auto l_audio_time_base = av::Rational{
+          boost::numeric_cast<std::int32_t>(
+              video_stream_.duration().timestamp() * parent.output_handle_.audio_enc_ctx_.sampleRate()
+          ),
+          video_stream_.timeBase().getDenominator()
+      };
+      std::int64_t l_nb_samples_needed = l_audio_time_base.getDouble();
+      const std::int64_t l_frame_size_ = parent.output_handle_.audio_enc_ctx_.frameSize();
+      while (l_nb_samples_needed > 0) {
+        auto l_framesize = l_nb_samples_needed > l_frame_size_ ? l_frame_size_ : l_nb_samples_needed;
+
+        av::AudioSamples l_frame{};
+        l_frame.init(
+            parent.output_handle_.audio_enc_ctx_.sampleFormat(), l_framesize,
+            parent.output_handle_.audio_enc_ctx_.channelLayout2().layout(),
+            parent.output_handle_.audio_enc_ctx_.sampleRate()
+        );
+        l_frame.setTimeBase(parent.output_handle_.audio_enc_ctx_.timeBase());
+        parent.submit_audio_frame(l_frame);  // 编码静音音频帧
+        l_nb_samples_needed -= l_framesize;
+      }
     }
 
    private:
@@ -678,9 +707,8 @@ class ffmpeg_video::impl {
       intro_handle_.process(*this);
     }
     if (episodes_name_handle_.video_stream_.isValid()) {
+      // 这个 mp4 文件没有音频流, 会产生静音的音频流
       episodes_name_handle_.process(*this);
-      // 这个 mp4 文件没有音频流, 不处理, 但是要偏移音频流的 时间戳
-      output_handle_.audio_next_pts_ += episodes_name_handle_.video_stream_.duration();
     }
     // 处理主视频流
     input_video_handle_.process(*this);
