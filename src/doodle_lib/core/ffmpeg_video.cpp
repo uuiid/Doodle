@@ -447,9 +447,8 @@ class ffmpeg_video::impl {
     DOODLE_CHICK(output_handle_.audio_enc_ctx_.isValid(), "ffmpeg_video: cannot create aac encoder context");
     output_handle_.audio_enc_ctx_.setCodec(output_handle_.audio_codec_);
     output_handle_.audio_enc_ctx_.setSampleRate(48000);
-    output_handle_.audio_enc_ctx_.setChannels(2);
     // aac 编解码器必然支持立体声
-    output_handle_.audio_enc_ctx_.setChannelLayout(av::ChannelLayout{AV_CH_LAYOUT_STEREO});
+    output_handle_.audio_enc_ctx_.setChannelLayout(av::ChannelLayout{2});
 
     output_handle_.audio_enc_ctx_.setSampleFormat(pick_first_supported_sample_fmt(
         output_handle_.audio_enc_ctx_.codec(), output_handle_.audio_enc_ctx_.sampleFormat()
