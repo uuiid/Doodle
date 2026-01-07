@@ -180,8 +180,9 @@ class AVAudioFifoWarp : FFWrapperPtr<AVAudioFifo> {
 }  // namespace
 class ffmpeg_video::impl {
  public:
-  impl()  = default;
-  ~impl() = default;
+  impl()                     = default;
+  ~impl()                    = default;
+  constexpr static int g_fps = 25;
 
  private:
   struct base_t {
@@ -372,8 +373,6 @@ class ffmpeg_video::impl {
   base_t intro_handle_;
   // 片尾 包含一个视频流和一个音频流
   base_t outro_handle_;
-
-  constexpr static int g_fps = 25;
 
   const av::Rational& get_video_time_base() const {
     static const av::Rational l_video_tb{1, g_fps};
@@ -755,6 +754,9 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path, bool has_v
     av::Codec l_in_video_codec = l_in_video_stream.codecParameters().decodingCodec();
     DOODLE_CHICK(!l_in_video_codec.isNull(), "ffmpeg_video: cannot find video decoder");
     DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: video decoder cannot decode");
+    // 检查帧率
+    av::Rational l_in_fps = l_in_video_stream.averageFrameRate();
+    DOODLE_CHICK(l_in_fps.getNumerator() != impl::g_fps, "ffmpeg_video: cannot get input video fps");
   }
 
   // audio stream is optional, but if present it must be AAC + stereo (2 channels)
