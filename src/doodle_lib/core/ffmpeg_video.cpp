@@ -25,16 +25,12 @@
 #include <libavcodec/codec_id.h>
 #include <libavformat/avformat.h>
 #include <memory>
-#include <opencv2/core/utility.hpp>
-#include <opencv2/freetype.hpp>
-#include <opencv2/opencv.hpp>
-#include <opencv2/videoio.hpp>
-#include <optional>
 #include <packet.h>
 #include <rational.h>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <system_error>
+
 
 extern "C" {
 #include <libavcodec/avcodec.h>
