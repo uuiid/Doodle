@@ -29,8 +29,8 @@
 #include <rational.h>
 #include <spdlog/spdlog.h>
 #include <string>
+#include <string_view>
 #include <system_error>
-
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -589,6 +589,7 @@ class ffmpeg_video::impl {
     DOODLE_CHICK(add_time_code || !add_watermark.empty(), "ffmpeg_video: either time code or watermark must be added");
     watermark_timecode_handle_ = std::make_unique<watermark_timecode_handle_t>();
     watermark_timecode_handle_->init_buffersrc(output_handle_.video_enc_ctx_);
+    static const std::string_view l_font_path{"C:/Windows/Fonts/simhei.ttf"};
     if (add_time_code) {
       // 时间码 使用 drawtext 烧录, 格式 HH:MM:SS:FF, 文字位于右上角
       const av::Filter timecode_filter{"drawtext"};
@@ -599,14 +600,10 @@ class ffmpeg_video::impl {
       );
       watermark_timecode_handle_->timecode_ctx_ = watermark_timecode_handle_->graph_.allocFilter(timecode_filter, "tc");
       // 添加字体路径
-
       const int ret                             = av_opt_set(
-          watermark_timecode_handle_->timecode_ctx_.raw(), "fontfile", doodle_config::font_default.data(),
-          AV_OPT_SEARCH_CHILDREN
+          watermark_timecode_handle_->timecode_ctx_.raw(), "fontfile", l_font_path.data(), AV_OPT_SEARCH_CHILDREN
       );
-      DOODLE_CHICK(
-          ret >= 0, std::format("ffmpeg_video: set timecode fontfile failed: {}", doodle_config::font_default)
-      );
+      DOODLE_CHICK(ret >= 0, std::format("ffmpeg_video: set timecode fontfile failed: {}", l_font_path));
       watermark_timecode_handle_->timecode_ctx_.init(timecode_args);
     }
     if (!add_watermark.empty()) {
@@ -620,12 +617,9 @@ class ffmpeg_video::impl {
           watermark_timecode_handle_->graph_.allocFilter(watermark_filter, "wm");
       // 添加字体路径
       const int ret = av_opt_set(
-          watermark_timecode_handle_->watermark_ctx_.raw(), "fontfile", doodle_config::font_default.data(),
-          AV_OPT_SEARCH_CHILDREN
+          watermark_timecode_handle_->watermark_ctx_.raw(), "fontfile", l_font_path.data(), AV_OPT_SEARCH_CHILDREN
       );
-      DOODLE_CHICK(
-          ret >= 0, std::format("ffmpeg_video: set watermark fontfile failed: {}", doodle_config::font_default)
-      );
+      DOODLE_CHICK(ret >= 0, std::format("ffmpeg_video: set watermark fontfile failed: {}", l_font_path));
       watermark_timecode_handle_->watermark_ctx_.init(watermark_args);
     }
     av::FilterContext* last_ctx = &watermark_timecode_handle_->buffersrc_ctx_;
