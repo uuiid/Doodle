@@ -595,7 +595,7 @@ class ffmpeg_video::impl {
       const av::Filter timecode_filter{"drawtext"};
       DOODLE_CHICK(timecode_filter, "ffmpeg_video: cannot find filter 'drawtext'");
       const std::string timecode_args = std::format(
-          R"(timecode='00:00:00:00':rate={}:x=1485:y=107:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)",
+          R"(timecode='00:00:00:00':rate={}:x=1285:y=107:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)",
           g_fps
       );
       watermark_timecode_handle_->timecode_ctx_ = watermark_timecode_handle_->graph_.allocFilter(timecode_filter, "tc");
