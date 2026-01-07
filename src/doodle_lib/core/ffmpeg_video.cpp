@@ -612,7 +612,7 @@ class ffmpeg_video::impl {
       const av::Filter watermark_filter{"drawtext"};
       DOODLE_CHICK(watermark_filter, "ffmpeg_video: cannot find filter 'drawtext'");
       const std::string watermark_args = std::format(
-          R"(text='{}':x=105:y=136:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)", add_watermark
+          R"(text='{}':x=105:y=107:fontcolor=white:fontsize=80:borderw=5:bordercolor=black)", add_watermark
       );
       watermark_timecode_handle_->watermark_ctx_ =
           watermark_timecode_handle_->graph_.allocFilter(watermark_filter, "wm");
