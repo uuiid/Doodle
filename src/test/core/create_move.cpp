@@ -33,18 +33,19 @@ BOOST_AUTO_TEST_CASE(create) {
 
 BOOST_AUTO_TEST_CASE(add_audio) {
   app_base l_app{};
-  auto l_in_file  = "D:/test_files/calp_test/v2.mp4";
-  auto l_out_file = "D:/test_files/calp_test/v2_out.mp4";
-  auto l_audio    = "D:/test_files/calp_test/v2.wav";
-  auto l_subtitle = "D:/test_files/calp_test/v2.srt";
-  auto l_intro    = "D:/test_files/calp_test/intro.mp4";
-  auto l_outro    = "D:/test_files/calp_test/outro.mp4";
-
+  auto l_in_file       = "D:/test_files/calp_test/v2.mp4";
+  auto l_out_file      = "D:/test_files/calp_test/v2_out.mp4";
+  auto l_audio         = "D:/test_files/calp_test/v2.wav";
+  auto l_subtitle      = "D:/test_files/calp_test/v2.srt";
+  auto l_intro         = "D:/test_files/calp_test/intro.mp4";
+  auto l_outro         = "D:/test_files/calp_test/outro.mp4";
+  auto l_episodes_name = "D:/test_files/calp_test/v2_text.mp4";
   ffmpeg_video l_video{l_in_file, l_out_file};
   l_video.set_audio(l_audio);
   l_video.set_subtitle(l_subtitle);
   l_video.set_intro(l_intro);
   l_video.set_outro(l_outro);
+  l_video.set_episodes_name(l_episodes_name);
   l_video.set_time_code(true);
   l_video.set_watermark("测试水印");
   l_video.process();
