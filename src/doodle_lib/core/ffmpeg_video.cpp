@@ -589,8 +589,8 @@ class ffmpeg_video::impl {
     DOODLE_CHICK(add_time_code || !add_watermark.empty(), "ffmpeg_video: either time code or watermark must be added");
     watermark_timecode_handle_ = std::make_unique<watermark_timecode_handle_t>();
     watermark_timecode_handle_->init_buffersrc(output_handle_.video_enc_ctx_);
-    static const std::string_view l_font_path{"C:/Windows/Fonts/simhei.ttf"};
     if (add_time_code) {
+      static const std::string_view l_font_path{"C:/Windows/Fonts/consola.ttf"};
       // 时间码 使用 drawtext 烧录, 格式 HH:MM:SS:FF, 文字位于右上角
       const av::Filter timecode_filter{"drawtext"};
       DOODLE_CHICK(timecode_filter, "ffmpeg_video: cannot find filter 'drawtext'");
@@ -607,6 +607,7 @@ class ffmpeg_video::impl {
       watermark_timecode_handle_->timecode_ctx_.init(timecode_args);
     }
     if (!add_watermark.empty()) {
+      static const std::string_view l_font_path{"C:/Windows/Fonts/simhei.ttf"};
       // 水印过滤器 使用 drawtext 烧录, 文字位于左上角
       const av::Filter watermark_filter{"drawtext"};
       DOODLE_CHICK(watermark_filter, "ffmpeg_video: cannot find filter 'drawtext'");
