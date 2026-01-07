@@ -254,14 +254,14 @@ class ffmpeg_video::impl {
         );
     }
 
-    void process(ffmpeg_video::impl& parent) {
+    void process(ffmpeg_video::impl& parent, bool add_audio_silence) {
       auto l_channel_layout_fixed = audio_channel_layout_ == audio_dec_ctx_.channelLayout2();
       while (auto l_pkt = format_context_.readPacket()) {
         if (l_pkt.streamIndex() == video_stream_.index()) process_output_video(parent, l_pkt);
         if (l_pkt.streamIndex() == audio_stream_.index()) process_output_audio(parent, l_channel_layout_fixed, l_pkt);
       }
       flush_audio_resampler(parent);
-      if (!audio_stream_.isValid()) process_until_video_pts(parent);
+      if (!audio_stream_.isValid() && add_audio_silence) process_until_video_pts(parent);
     }
     // 由于音频的特殊性质, 需要将视频中没有音频的部分补全静音音频
     void process_until_video_pts(ffmpeg_video::impl& parent) {
@@ -707,20 +707,20 @@ class ffmpeg_video::impl {
   void process() {
     output_handle_.format_context_.writeHeader();
     if (intro_handle_.video_stream_.isValid()) {
-      intro_handle_.process(*this);
+      intro_handle_.process(*this, false);
     }
     if (episodes_name_handle_.video_stream_.isValid()) {
       // 这个 mp4 文件没有音频流, 会产生静音的音频流
-      episodes_name_handle_.process(*this);
+      episodes_name_handle_.process(*this, true);
     }
     // 处理主视频流
-    input_video_handle_.process(*this);
+    input_video_handle_.process(*this, false);
     // 处理音频流
     if (audio_handle_.audio_stream_.isValid()) {
-      audio_handle_.process(*this);
+      audio_handle_.process(*this, false);
     }
     if (outro_handle_.video_stream_.isValid()) {
-      outro_handle_.process(*this);
+      outro_handle_.process(*this, false);
     }
     flush_video_encoder();
     flush_subtitle_filter();
