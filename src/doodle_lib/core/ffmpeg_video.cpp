@@ -32,6 +32,7 @@
 #include <optional>
 #include <packet.h>
 #include <rational.h>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <system_error>
 
@@ -260,6 +261,8 @@ class ffmpeg_video::impl {
         if (l_pkt.streamIndex() == video_stream_.index()) process_output_video(parent, l_pkt);
         if (l_pkt.streamIndex() == audio_stream_.index()) process_output_audio(parent, l_channel_layout_fixed, l_pkt);
       }
+      flush_audio_decoder(parent, l_channel_layout_fixed);
+      flush_video_decoder(parent);
       flush_audio_resampler(parent);
       if (!audio_stream_.isValid() && add_audio_silence) process_until_video_pts(parent);
     }
@@ -304,20 +307,38 @@ class ffmpeg_video::impl {
       auto frame = audio_dec_ctx_.decode(in_pkt);
       if (!frame) return;
 
+      process_audio_frame(parent, in_channel_layout_fixed, frame);
+    }
+    // 处理音频帧
+    void process_audio_frame(ffmpeg_video::impl& parent, bool in_channel_layout_fixed, av::AudioSamples& in_frame) {
       if (!in_channel_layout_fixed) {
-        av::frame::set_channel_layout(frame.raw(), audio_channel_layout_.layout());
+        av::frame::set_channel_layout(in_frame.raw(), audio_channel_layout_.layout());
       }
-      if (frame.sampleRate() <= 0) av::frame::set_sample_rate(frame.raw(), audio_dec_ctx_.sampleRate());
+      if (in_frame.sampleRate() <= 0) av::frame::set_sample_rate(in_frame.raw(), audio_dec_ctx_.sampleRate());
 
       if (audio_resampler_.isValid()) {
-        frame.setTimeBase(audio_dec_ctx_.timeBase());
-        frame.setPts(parent.output_handle_.audio_next_pts_);
-        audio_resampler_.push(frame);
+        in_frame.setTimeBase(audio_dec_ctx_.timeBase());
+        in_frame.setPts(parent.output_handle_.audio_next_pts_);
+        audio_resampler_.push(in_frame);
         while (auto resampled_frame = audio_resampler_.pop(parent.output_handle_.audio_enc_ctx_.frameSize()))
           parent.submit_audio_frame(resampled_frame);
       } else
-        parent.submit_audio_frame(frame);
+        parent.submit_audio_frame(in_frame);
     }
+
+    void flush_audio_decoder(ffmpeg_video::impl& parent, bool in_channel_layout_fixed) {
+      if (!audio_dec_ctx_.isValid()) return;
+      while (auto l_frame = audio_dec_ctx_.decode({})) {
+        process_audio_frame(parent, in_channel_layout_fixed, l_frame);
+      }
+    }
+    void flush_video_decoder(ffmpeg_video::impl& parent) {
+      if (!video_dec_ctx_.isValid()) return;
+      while (auto l_frame = video_dec_ctx_.decode({})) {
+        parent.process_filter(l_frame);
+      }
+    }
+
     // 将 av::AudioResampler 剩余的帧编码输出清空
     void flush_audio_resampler(ffmpeg_video::impl& parent) {
       if (audio_resampler_.isValid()) {
