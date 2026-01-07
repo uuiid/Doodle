@@ -375,14 +375,14 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Original Map Asset File Not Found!"));
 	}
-	if (EditorAssetSubsystem->DoesDirectoryExist(ImportPath))
-	{
-		EditorAssetSubsystem->DeleteDirectory(ImportPath);
-	}
 	//--------------------
 	DeleteAsseet(RenderMapPath);
 	DeleteAsseet(CreateMapPath);
 	DeleteAsseet(SequencePath);
+	if (EditorAssetSubsystem->DoesDirectoryExist(ImportPath))
+	{
+		EditorAssetSubsystem->DeleteDirectory(ImportPath);
+	}
 	FrameTick = TickRate.Numerator / Rate.Numerator;
 
 	// 创建主要的关卡和关卡序列
