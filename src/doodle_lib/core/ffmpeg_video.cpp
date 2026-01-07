@@ -501,7 +501,6 @@ class ffmpeg_video::impl {
         );
         DOODLE_CHICK(ret >= 0, std::format("ffmpeg_video: set subtitles filename failed: {}", subtitle_file));
       }
-      // 额外添加可选的位移参数
       subtitle_handle_->subtitles_ctx_.init({});
     }
 
@@ -570,27 +569,32 @@ class ffmpeg_video::impl {
     watermark_timecode_handle_->configure();
   }
 
-  void process_filter(av::VideoFrame& in_frame) {
-    av::VideoFrame l_temp_frame = in_frame;
+  void process_filter(av::VideoFrame& in_frame) { process_subtitle_filter(in_frame); }
+
+  void process_subtitle_filter(av::VideoFrame& in_frame) {
     if (subtitle_handle_ && subtitle_handle_->configured_) {
       // subtitles 滤镜严格依赖输入帧的 PTS/time_base。
       // 这里将其对齐到输出视频时间线（与 buffer filter 的 time_base 一致），否则字幕可能不会被渲染。
       // 再添加上时间偏移
-      l_temp_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
-      l_temp_frame.setPts(output_handle_.video_next_pts_ + subtitle_handle_->time_offset_);
-      subtitle_handle_->buffersrc_.writeVideoFrame(l_temp_frame);
+      in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
+      in_frame.setPts(output_handle_.video_next_pts_ - subtitle_handle_->time_offset_);
+      subtitle_handle_->buffersrc_.writeVideoFrame(in_frame);
       av::VideoFrame filtered_frame{};
-      while (subtitle_handle_->buffersink_.getVideoFrame(filtered_frame)) l_temp_frame = filtered_frame;
-    }
+      while (subtitle_handle_->buffersink_.getVideoFrame(filtered_frame)) process_watermark_timecode_filter(filtered_frame);
+    } else
+      process_watermark_timecode_filter(in_frame);
+  }
+
+  void process_watermark_timecode_filter(av::VideoFrame& in_frame) {
     if (watermark_timecode_handle_ && watermark_timecode_handle_->configured_) {
       // 时间码和水印滤镜同样依赖 PTS/time_base
-      l_temp_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
-      l_temp_frame.setPts(output_handle_.video_next_pts_);
-      watermark_timecode_handle_->buffersrc_.writeVideoFrame(l_temp_frame);
+      in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
+      in_frame.setPts(output_handle_.video_next_pts_);
+      watermark_timecode_handle_->buffersrc_.writeVideoFrame(in_frame);
       av::VideoFrame filtered_frame{};
-      while (watermark_timecode_handle_->buffersink_.getVideoFrame(filtered_frame)) l_temp_frame = filtered_frame;
-    }
-    encode_video_frame(l_temp_frame);
+      while (watermark_timecode_handle_->buffersink_.getVideoFrame(filtered_frame)) encode_video_frame(filtered_frame);
+    } else
+      encode_video_frame(in_frame);
   }
 
   void add_episodes_name(const FSys::path& in_episodes_name_path) {
