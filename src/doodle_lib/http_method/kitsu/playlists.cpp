@@ -1,7 +1,10 @@
 //
 // Created by TD on 25-5-14.
 //
+#include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/preview_file.h"
+#include "doodle_core/metadata/task.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/playlist.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -12,6 +15,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include "core/http/http_function.h"
+#include <spdlog/spdlog.h>
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities_preview_files::get(
@@ -602,29 +606,66 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   person_.check_project_access(l_playlist->project_id_);
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_playlist);
-  std::shared_ptr<std::vector<playlist_shot>> l_playlist_shot = std::make_shared<std::vector<playlist_shot>>();
-  if (l_json.contains("shots"))
-    for (auto&& i : l_json.at("shots"))
-      if (i.contains("preview_file_id")) {
-        auto&& t       = l_playlist_shot->emplace_back(i.get<playlist_shot>());
-        t.playlist_id_ = id_;
-      }
-
-  co_await l_sql.remove_playlist_shot_for_playlist(id_);
+  SPDLOG_LOGGER_WARN(in_handle->logger_, "{} 修改播放列表 {}", person_.person_.email_, l_playlist->name_);
   co_await l_sql.update(l_playlist);
-  co_await l_sql.install_range(l_playlist_shot);
   nlohmann::json l_ret{};
   l_ret         = *l_playlist;
-  l_ret["shot"] = *l_playlist_shot;
+  l_ret["shot"] = l_sql.get_playlist_shot_entity(l_playlist->uuid_id_);
   co_return in_handle->make_msg(l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = l_sql.get_by_uuid<playlist>(id_);
   person_.check_project_access(l_playlist.project_id_);
-  default_logger_raw()->info("{} 删除播放列表 {}", person_.person_.email_, l_playlist.name_);
+  SPDLOG_LOGGER_WARN(in_handle->logger_, "{} 删除播放列表 {}", person_.person_.email_, l_playlist.name_);
   co_await l_sql.remove<playlist>(l_playlist.id_);
   co_return in_handle->make_msg_204();
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_preview_files, post) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
+  auto l_prev     = l_sql.get_by_uuid<preview_file>(preview_file_id_);
+  person_.check_project_access(l_playlist->project_id_);
+  auto l_json = in_handle->get_json();
+  SPDLOG_LOGGER_WARN(
+      in_handle->logger_, "{} 在播放列表 {} 中添加预览文件 {}", person_.person_.email_, l_playlist->name_,
+      l_prev.uuid_id_
+  );
+  std::shared_ptr<playlist_shot> l_playlist_shot = std::make_shared<playlist_shot>();
+  l_json.get_to(*l_playlist_shot);
+  l_playlist_shot->playlist_id_ = id_;
+  l_playlist_shot->preview_id_  = preview_file_id_;
+  l_playlist_shot->entity_id_   = l_sql.get_by_uuid<task>(l_prev.task_id_).entity_id_;
+  using namespace sqlite_orm;
+  l_playlist_shot->order_index_ =
+      l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == id_));
+  co_await l_sql.install(l_playlist_shot);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
+  person_.check_project_access(l_playlist.project_id_);
+  SPDLOG_LOGGER_WARN(
+      in_handle->logger_, "{} 修改播放列表 {} 中的镜头 {}", person_.person_.email_, l_playlist.name_, shot_id_
+  );
+  auto l_json          = in_handle->get_json();
+  auto l_playlist_shot = std::make_shared<playlist_shot>(l_sql.get_by_uuid<playlist_shot>(shot_id_));
+  DOODLE_CHICK(*l_playlist_shot, "Preview file is not in playlist");
+  l_json.get_to(*l_playlist_shot);
+  l_playlist_shot->playlist_id_ = playlist_id_;
+  co_await l_sql.update(l_playlist_shot);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
+  person_.check_project_access(l_playlist.project_id_);
+  SPDLOG_LOGGER_WARN(
+      in_handle->logger_, "{} 删除播放列表 {} 中的镜头 {}", person_.person_.email_, l_playlist.name_, shot_id_
+  );
+  co_await l_sql.remove<playlist_shot>(shot_id_);
+  co_return in_handle->make_msg_204();
+}
 }  // namespace doodle::http

@@ -23,6 +23,7 @@
 
 #include "metadata/ai_image_metadata.h"
 #include "metadata/entity_type.h"
+#include "metadata/playlist.h"
 #include "metadata/preview_file.h"
 #include "metadata/working_file.h"
 #include <optional>
@@ -1129,6 +1130,7 @@ DOODLE_GET_BY_UUID_SQL(playlist)
 DOODLE_GET_BY_UUID_SQL(working_file)
 DOODLE_GET_BY_UUID_SQL(ai_image_metadata)
 DOODLE_GET_BY_UUID_SQL(organisation)
+DOODLE_GET_BY_UUID_SQL(playlist_shot)
 template <>
 task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {
   using namespace sqlite_orm;
@@ -1258,6 +1260,7 @@ DOODLE_INSTALL_SQL(comment_preview_link)
 DOODLE_INSTALL_SQL(task)
 DOODLE_INSTALL_SQL(comment)
 DOODLE_INSTALL_SQL(project_asset_type_link)
+DOODLE_INSTALL_SQL(playlist_shot)
 DOODLE_INSTALL_SQL(entity)
 DOODLE_INSTALL_SQL(project_person_link)
 DOODLE_INSTALL_SQL(comment_acknoledgments)
@@ -1302,6 +1305,7 @@ DOODLE_REMOVE_BY_ID(working_file_task_link)
 DOODLE_REMOVE_BY_ID(working_file)
 DOODLE_REMOVE_BY_ID(entity_link)
 DOODLE_REMOVE_BY_ID(playlist)
+DOODLE_REMOVE_BY_ID(playlist_shot)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
@@ -1311,6 +1315,7 @@ DOODLE_REMOVE_BY_UUID(working_file)
 DOODLE_REMOVE_BY_UUID(playlist)
 DOODLE_REMOVE_BY_UUID(entity_link)
 DOODLE_REMOVE_BY_UUID(ai_image_metadata)
+DOODLE_REMOVE_BY_UUID(playlist_shot)
 
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uuid>& in_data) {

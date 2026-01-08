@@ -53,19 +53,22 @@ struct DOODLE_CORE_API playlist_shot {
   uuid playlist_id_;
   uuid entity_id_;
   uuid preview_id_;
+  std::int32_t order_index_;
 
   // from json
   friend void from_json(const nlohmann::json& j, playlist_shot& p) {
     if (j.contains("entity_id") && j.at("entity_id").is_string()) j["entity_id"].get_to(p.entity_id_);
     if (j.contains("sequence_id") && j.at("sequence_id").is_string()) j["sequence_id"].get_to(p.entity_id_);
-    
+
     if (j.contains("preview_file_id") && j.at("preview_file_id").is_string())
       j["preview_file_id"].get_to(p.preview_id_);
+    if (j.contains("order_index") && j.at("order_index").is_number_integer()) j["order_index"].get_to(p.order_index_);
   }
   // to json
   friend void to_json(nlohmann::json& j, const playlist_shot& p) {
     j["entity_id"]       = p.entity_id_;
     j["preview_file_id"] = p.preview_id_;
+    j["order_index"]     = p.order_index_;
   }
 };
 }  // namespace doodle

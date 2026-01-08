@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
@@ -578,6 +579,20 @@ DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/playlists/{playlist_id}/preview-files/{preview_file_id}
+DOODLE_HTTP_JWT_FUN(data_playlists_instance_preview_files)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid id_{};
+uuid preview_file_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/data/playlists/{playlist_id}/shots/{shots_id}
+DOODLE_HTTP_JWT_FUN(data_playlists_instance_shots)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid playlist_id_{};
+uuid shot_id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/data/entity-types/{id}
 DOODLE_HTTP_JWT_FUN(data_entity_types_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
