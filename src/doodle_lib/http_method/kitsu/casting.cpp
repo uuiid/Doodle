@@ -265,7 +265,7 @@ struct get_casting_t {
   bool is_shared_;
   uuid project_id_;
 
-  static get_casting_t get(const uuid& in_entity_id) {
+  static std::vector<get_casting_t> get(const uuid& in_entity_id) {
     auto l_sql = g_ctx().get<sqlite_database>();
     using namespace sqlite_orm;
     auto l_r = l_sql.impl_->storage_any_.select(
@@ -278,21 +278,17 @@ struct get_casting_t {
         where(c(&entity_link::entity_in_id_) == in_entity_id && c(&entity::canceled_) != true),
         multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
     );
+    std::vector<get_casting_t> l_ret{};
     for (auto&& [ent_link, entity_name_, asset_type_name_, ready_for_, episode_id_, preview_file_id_, project_id_] :
          l_r) {
-      return get_casting_t{
-          ent_link.entity_out_id_,
-          entity_name_,
-          asset_type_name_,
-          ready_for_,
-          episode_id_,
-          preview_file_id_,
-          ent_link.nb_occurences_,
-          ent_link.label_,
-          false,
-          project_id_
-      };
+      l_ret.emplace_back(
+          get_casting_t{
+              ent_link.entity_out_id_, entity_name_, asset_type_name_, ready_for_, episode_id_, preview_file_id_,
+              ent_link.nb_occurences_, ent_link.label_, false, project_id_
+          }
+      );
     }
+    return l_ret;
   }
   // to json
   friend void to_json(nlohmann::json& j, const get_casting_t& in_data) {
