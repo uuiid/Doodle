@@ -212,4 +212,25 @@ function New-ServerPSSession {
     return $NewSession;
 }
 
-Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession
+function Compare-GitArchive {
+    param (
+        [string]$KitsuPath = "E:\source\kitsu"
+    )
+    $Tmp = [System.IO.Path]::GetTempPath()
+    $dodolefile = "$Tmp/doodle_git_archive.zip"
+    $Kitsufile = "$Tmp/kitsu_git_archive.zip"
+    &git archive --format=zip --output $dodolefile master
+    Push-Location $KitsuPath
+    &git archive --format=zip --output $Kitsufile master_sy_new3
+    Pop-Location
+    # 将两个压缩包合并为一个压缩包
+    $CombinedFile = "E:/doodle.zip"
+    if (Test-Path $CombinedFile) {
+        Remove-Item $CombinedFile -Force
+    }
+    Compress-Archive -Path $dodolefile, $Kitsufile -DestinationPath $CombinedFile -Force
+
+    return $CombinedFile;
+}
+
+Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive
