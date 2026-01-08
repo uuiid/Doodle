@@ -4,8 +4,10 @@
 
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
+
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+
 
 namespace doodle::http {
 // /api/auth/login
@@ -592,6 +594,12 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid playlist_id_{};
 uuid shot_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/playlists/{playlist_id}/preview-files/{preview_file_id}/create-review
+DOODLE_HTTP_JWT_FUN(actions_playlists_preview_files_create_review)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid playlist_id_{};
+uuid preview_file_id_{};
+DOODLE_HTTP_FUN_END()
 
 // /api/data/entity-types/{id}
 DOODLE_HTTP_JWT_FUN(data_entity_types_instance)
@@ -626,15 +634,10 @@ DOODLE_HTTP_JWT_FUN(actions_preview_files_compose_video)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid preview_file_id_{};
 DOODLE_HTTP_FUN_END()
-// /api/actions/preview-files/{preview_file_id}/create-review
-DOODLE_HTTP_JWT_FUN(actions_preview_files_create_review)
-DOODLE_HTTP_FUN_OVERRIDE(post)
-uuid preview_file_id_{};
-DOODLE_HTTP_FUN_END()
+
 // /api/actions/tasks/{task_id}/create-review
 DOODLE_HTTP_JWT_FUN(actions_tasks_create_review)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 

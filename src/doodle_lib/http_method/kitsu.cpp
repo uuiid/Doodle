@@ -226,8 +226,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_preview_files_compose_video>("/api/actions/preview-files/{}/compose-video"_url(
         &actions_preview_files_compose_video::preview_file_id_
       ))
-      .reg_t<actions_preview_files_create_review>("/api/actions/preview-files/{}/create-review"_url(
-        &actions_preview_files_create_review::preview_file_id_
+      .reg_t<actions_playlists_preview_files_create_review>("/api/actions/playlists/{}/preview-files/{}/create-review"_url(
+        &actions_playlists_preview_files_create_review::playlist_id_,
+        &actions_playlists_preview_files_create_review::preview_file_id_
       ))
       .reg_t<doodle_data_shots_file_maya>("/api/doodle/data/shots/{}/file/maya"_url(&doodle_data_shots_file_maya::id_))
       .reg_t<doodle_data_shots_file_output>("/api/doodle/data/shots/{}/file/output"_url(&doodle_data_shots_file_output::id_))

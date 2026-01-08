@@ -155,7 +155,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
 }
 
-struct actions_preview_files_create_review_arg {
+struct actions_playlists_preview_files_create_review_arg {
   // 添加字幕, 混音
   bool add_subtitle_  = false;
   bool add_dubbing_   = false;
@@ -168,7 +168,7 @@ struct actions_preview_files_create_review_arg {
   // 添加时间码
   bool add_time_code_ = false;
 
-  friend void from_json(const nlohmann::json& in_json, actions_preview_files_create_review_arg& out_arg) {
+  friend void from_json(const nlohmann::json& in_json, actions_playlists_preview_files_create_review_arg& out_arg) {
     if (in_json.contains("add_subtitle")) in_json.at("add_subtitle").get_to(out_arg.add_subtitle_);
     if (in_json.contains("add_dubbing")) in_json.at("add_dubbing").get_to(out_arg.add_dubbing_);
     if (in_json.contains("add_name")) in_json.at("add_name").get_to(out_arg.add_name_);
@@ -179,119 +179,8 @@ struct actions_preview_files_create_review_arg {
 };
 
 namespace {
-struct get_sequence_shots_preview_t : boost::less_than_comparable<get_sequence_shots_preview_t> {
-  uuid shot_id_;
-  preview_file preview_;
-  std::string name_;
-  explicit get_sequence_shots_preview_t(
-      const uuid& in_shot_id, const preview_file& in_preview, const std::string& in_name
-  )
-      : shot_id_(in_shot_id), preview_(in_preview), name_(in_name) {}
 
-  bool operator<(const get_sequence_shots_preview_t& other) const { return name_ < other.name_; }
-  bool operator==(const get_sequence_shots_preview_t& other) const { return name_ == other.name_; }
-};
-
-auto get_sequence_shots_preview(const uuid& in_sequence_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
-  using namespace sqlite_orm;
-
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  constexpr auto episode  = "episode"_alias.for_<entity>();
-  auto l_shots            = l_sql.impl_->storage_any_.select(
-      columns(object<preview_file>(true), &entity::uuid_id_, &entity::name_), from<preview_file>(),
-      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
-      where(
-          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
-          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
-           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
-      ),
-      order_by(&preview_file::created_at_).desc()
-  );
-
-  std::set<uuid> l_set;
-  std::vector<get_sequence_shots_preview_t> l_result;
-
-  for (auto&& [l_preview_file, l_entity_id, l_entity_name] : l_shots) {
-    if (!l_set.contains(l_entity_id)) {
-      l_set.emplace(l_entity_id);
-      l_result.push_back(get_sequence_shots_preview_t{l_entity_id, l_preview_file, l_entity_name});
-    }
-  }
-
-  std::sort(l_result.begin(), l_result.end());
-  std::vector<preview_file> l_preview_files{};
-  l_preview_files.reserve(l_result.size());
-  for (const auto& l_item : l_result) l_preview_files.push_back(l_item.preview_);
-
-  return l_preview_files;
-}
-
-struct get_sequence_shots_preview_map_result {
-  std::map<uuid, preview_file> map_;
-  // 都准备好了
-  bool all_ready() const {
-    for (const auto& [key, value] : map_) {
-      if (value.uuid_id_.is_nil()) return false;
-    }
-    return true;
-  }
-
-  // to json
-  friend void to_json(nlohmann::json& j, const get_sequence_shots_preview_map_result& p) {
-    for (const auto& [key, value] : p.map_) {
-      if (value.uuid_id_.is_nil())
-        j[fmt::to_string(key)] = nullptr;
-      else
-        j[fmt::to_string(key)] = value;
-    }
-    j["all_ready"] = p.all_ready();
-  }
-};
-
-get_sequence_shots_preview_map_result get_sequence_shots_preview_map(const uuid& in_sequence_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
-  using namespace sqlite_orm;
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  constexpr auto episode  = "episode"_alias.for_<entity>();
-
-  std::map<uuid, preview_file> l_result;
-  {
-    auto l_shots = l_sql.impl_->storage_any_.select(
-        &entity::uuid_id_, from<entity>(),
-        join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-        where(c(sequence->*&entity::uuid_id_) == in_sequence_id), order_by(&entity::name_)
-    );
-    for (auto&& [l_entity_id] : l_shots) {
-      l_result.emplace(l_entity_id, preview_file{});
-    }
-  }
-
-  auto l_preview_files = l_sql.impl_->storage_any_.select(
-      columns(object<preview_file>(true), &entity::uuid_id_), from<preview_file>(),
-      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
-      where(
-          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
-          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
-           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
-      ),
-      order_by(&preview_file::created_at_).desc()
-  );
-
-  for (auto&& [l_preview_file, l_entity_id] : l_preview_files) {
-    if (l_result[l_entity_id].uuid_id_.is_nil()) l_result[l_entity_id] = l_preview_file;
-  }
-
-  return get_sequence_shots_preview_map_result{l_result};
-}
-
-struct run_actions_preview_files_create_review {
+struct run_actions_playlists_preview_files_create_review {
   struct data {
     ffmpeg_video ffmpeg_video_;
 
@@ -303,7 +192,7 @@ struct run_actions_preview_files_create_review {
   };
   std::shared_ptr<data> data_ptr_;
 
-  run_actions_preview_files_create_review() : data_ptr_(std::make_shared<data>()) {}
+  run_actions_playlists_preview_files_create_review() : data_ptr_(std::make_shared<data>()) {}
 
   void operator()() {
     if (data_ptr_->shot_preview_paths_.empty()) {
@@ -329,18 +218,23 @@ struct run_actions_preview_files_create_review {
 
 }  // namespace
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
-  auto l_sql          = g_ctx().get<sqlite_database>();
-  auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
-  auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
-  auto l_arg          = in_handle->get_json().get<actions_preview_files_create_review_arg>();
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review, post) {
+  auto l_sql           = g_ctx().get<sqlite_database>();
+  auto l_playlist      = l_sql.get_by_uuid<playlist>(playlist_id_);
+  auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
+  auto l_preview_file  = l_sql.get_by_uuid<preview_file>(preview_file_id_);
+  person_.check_project_access(l_playlist.project_id_);
+  DOODLE_CHICK_HTTP(!l_playlist_shot.empty(), bad_request, "播放列表中没有任何镜头, 无法生成评审视频");
+
+  auto l_task = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
+  auto l_arg  = in_handle->get_json().get<actions_playlists_preview_files_create_review_arg>();
   using namespace sqlite_orm;
   auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
       in(&attachment_file::comment_id_,
          select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_)))
   ));
   auto l_prj              = l_sql.get_by_uuid<project>(l_task.project_id_);
-  run_actions_preview_files_create_review l_run{};
+  run_actions_playlists_preview_files_create_review l_run{};
   l_run.data_ptr_->size_                = l_prj.get_resolution();
   l_run.data_ptr_->logger_              = in_handle->logger_;
   l_run.data_ptr_->review_preview_file_ = std::make_shared<preview_file>(l_preview_file);
@@ -394,12 +288,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
     l_run.data_ptr_->ffmpeg_video_.set_time_code(true);
   }
 
-  auto l_shot_previews = get_sequence_shots_preview(l_task.entity_id_);
-
   std::vector<FSys::path> l_paths{};
 #ifdef NDEBUG
-  for (const auto& l_shot_preview : l_shot_previews) {
-    auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.uuid_id_);
+  for (const auto& l_shot_preview : l_playlist_shot) {
+    auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.preview_id_);
     if (FSys::exists(l_path)) l_paths.push_back(l_path);
   }
   DOODLE_CHICK_HTTP(!l_paths.empty(), bad_request, "没有找到任何镜头预览视频, 无法生成评审视频");
@@ -407,7 +299,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_create_review, post) {
   boost::asio::post(g_strand(), l_run);
 #endif
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
+  co_return in_handle->make_msg(nlohmann::json{} = l_playlist_shot);
 }
 struct actions_tasks_create_review_args {
   FSys::path subtitle_path_;
@@ -572,11 +464,4 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, get) {
-  auto l_sql           = g_ctx().get<sqlite_database>();
-  auto l_task          = l_sql.get_by_uuid<task>(task_id_);
-  auto l_shot_previews = get_sequence_shots_preview_map(l_task.entity_id_);
-
-  co_return in_handle->make_msg(nlohmann::json{} = l_shot_previews);
-}
 }  // namespace doodle::http
