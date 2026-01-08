@@ -495,7 +495,7 @@ struct playlist_shot_t : playlist {
           preview_file_annotations_(),
           preview_file_task_id_() {}
 
-    void update(const preview_file& in_preview_file) {
+    playlist_shot_entity_t& update(const preview_file& in_preview_file) {
       preview_file_id_          = in_preview_file.uuid_id_;
       preview_file_extension_   = in_preview_file.extension_;
       preview_file_revision_    = in_preview_file.revision_;
@@ -506,6 +506,7 @@ struct playlist_shot_t : playlist {
       preview_file_source_      = in_preview_file.source_;
       preview_file_annotations_ = in_preview_file.annotations_;
       preview_file_task_id_     = in_preview_file.task_id_;
+      return *this;
     }
 
     uuid entity_id_;
@@ -521,6 +522,7 @@ struct playlist_shot_t : playlist {
     decltype(preview_file::source_) preview_file_source_;
     nlohmann::json preview_file_annotations_;
     uuid preview_file_task_id_;
+    std::int32_t order_index_;
     // to json
     friend void to_json(nlohmann::json& j, const playlist_shot_entity_t& l_playlist_shot_entity) {
       j["entity_id"] = l_playlist_shot_entity.entity_id_;
@@ -539,6 +541,7 @@ struct playlist_shot_t : playlist {
       j["preview_file_source"]      = l_playlist_shot_entity.preview_file_source_;
       j["preview_file_annotations"] = l_playlist_shot_entity.preview_file_annotations_;
       j["preview_file_task_id"]     = l_playlist_shot_entity.preview_file_task_id_;
+      j["order_index"]              = l_playlist_shot_entity.order_index_;
     }
   };
 
@@ -557,15 +560,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
     session_data_ptr in_handle
 ) {
   person_.check_project_access(project_id_);
-  auto l_sql           = g_ctx().get<sqlite_database>();
-  auto l_playlist      = l_sql.get_by_uuid<playlist>(playlist_id_);
-  auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
+  auto l_sql                 = g_ctx().get<sqlite_database>();
+  auto l_playlist            = l_sql.get_by_uuid<playlist>(playlist_id_);
+  const auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
   std::vector<uuid> l_enity_ids{};
+  std::map<uuid, const playlist_shot*> l_playlist_shot_map{};
   std::map<uuid, uuid> l_entity_preview_file_map{};
   l_enity_ids.reserve(l_playlist_shot.size());
   for (auto&& i : l_playlist_shot) {
     l_enity_ids.emplace_back(i.entity_id_);
     l_entity_preview_file_map.emplace(i.entity_id_, i.preview_id_);
+    l_playlist_shot_map.emplace(i.entity_id_, &i);
   }
   playlist_shot_t l_ret{l_playlist};
   std::map<uuid, std::size_t> l_entity_id_to_index{};
@@ -594,8 +599,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
       l_ret.shot_.emplace_back(l_playlist_shot_entity);
       l_entity_id_to_index.emplace(l_entity_id, l_ret.shot_.size() - 1);
     }
-    if (l_entity_preview_file_map.at(l_entity_id) == l_preview_file.uuid_id_)
-      l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id)).update(l_preview_file);
+    if (l_playlist_shot_map.at(l_entity_id)->preview_id_ == l_preview_file.uuid_id_)
+      l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id)).update(l_preview_file).order_index_ =
+          l_playlist_shot_map.at(l_entity_id)->order_index_;
   }
 
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
