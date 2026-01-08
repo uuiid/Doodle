@@ -252,7 +252,71 @@ std::optional<entity_link> find_entity_link(std::vector<entity_link>& in_entity_
   return std::nullopt;
 }
 
+struct get_casting_t {
+ public:
+  uuid asset_id_;
+  std::string asset_name_;
+  std::string asset_type_name_;
+  uuid ready_for_;
+  uuid episode_id_;
+  uuid preview_file_id_;
+  std::int32_t nb_occurences_;
+  std::string label_;
+  bool is_shared_;
+  uuid project_id_;
+
+  static get_casting_t get(const uuid& in_entity_id) {
+    auto l_sql = g_ctx().get<sqlite_database>();
+    using namespace sqlite_orm;
+    auto l_r = l_sql.impl_->storage_any_.select(
+        columns(
+            object<entity_link>(true), &entity::name_, &asset_type::name_, &entity::ready_for_, &entity::source_id_,
+            &entity::preview_file_id_, &entity::project_id_
+        ),
+        from<entity_link>(), join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
+        join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+        where(c(&entity_link::entity_in_id_) == in_entity_id && c(&entity::canceled_) != true),
+        multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
+    );
+    for (auto&& [ent_link, entity_name_, asset_type_name_, ready_for_, episode_id_, preview_file_id_, project_id_] :
+         l_r) {
+      return get_casting_t{
+          ent_link.entity_out_id_,
+          entity_name_,
+          asset_type_name_,
+          ready_for_,
+          episode_id_,
+          preview_file_id_,
+          ent_link.nb_occurences_,
+          ent_link.label_,
+          false,
+          project_id_
+      };
+    }
+  }
+  // to json
+  friend void to_json(nlohmann::json& j, const get_casting_t& in_data) {
+    j["asset_id"]        = in_data.asset_id_;
+    j["asset_name"]      = in_data.asset_name_;
+    j["asset_type_name"] = in_data.asset_type_name_;
+    j["ready_for"]       = in_data.ready_for_;
+    j["episode_id"]      = in_data.episode_id_;
+    j["preview_file_id"] = in_data.preview_file_id_;
+    j["nb_occurences"]   = in_data.nb_occurences_;
+    j["label"]           = in_data.label_;
+    j["is_shared"]       = in_data.is_shared_;
+    j["project_id"]      = in_data.project_id_;
+  }
+};
+
 }  // namespace
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
+  person_.check_project_access(project_id_);
+  if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(entity_id_) == 0)
+    throw_exception(doodle_error{"实体不存在或已被删除"});
+  co_return in_handle->make_msg(nlohmann::json{} = get_casting_t::get(entity_id_));
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_entities_casting::put(
     session_data_ptr in_handle

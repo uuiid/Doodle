@@ -7,6 +7,7 @@
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
+#include "core/http/http_function.h"
 
 
 namespace doodle::http {
@@ -539,6 +540,7 @@ uuid project_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/entities/{entity_id}/casting
 DOODLE_HTTP_JWT_FUN(data_project_entities_casting)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid project_id_{};
 uuid entity_id_{};
