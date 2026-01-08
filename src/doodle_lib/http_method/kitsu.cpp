@@ -201,9 +201,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
                                           &data_project_playlists_instance::project_id_,
                                           &data_project_playlists_instance::playlist_id_))
       .reg_t<data_playlists_instance>("/api/data/playlists/{}"_url(&data_playlists_instance::id_))
-      .reg_t<data_playlists_instance_preview_files>("/api/data/playlists/{}/preview-files/{}"_url(
-        &data_playlists_instance_preview_files::playlist_id_,
-        &data_playlists_instance_preview_files::preview_file_id_
+      .reg_t<data_playlists_instance_entity_instance>("/api/data/playlists/{}/entities/{}"_url(
+        &data_playlists_instance_entity_instance::playlist_id_,
+        &data_playlists_instance_entity_instance::entity_id_
       ))
       .reg_t<data_playlists_instance_shots>("/api/data/playlists/{}/shots/{}"_url(
         &data_playlists_instance_shots::playlist_id_,

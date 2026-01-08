@@ -588,11 +588,11 @@ DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/data/playlists/{playlist_id}/preview-files/{preview_file_id}
-DOODLE_HTTP_JWT_FUN(data_playlists_instance_preview_files)
+// /api/data/playlists/{playlist_id}/entities/{entity_id}
+DOODLE_HTTP_JWT_FUN(data_playlists_instance_entity_instance)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid playlist_id_{};
-uuid preview_file_id_{};
+uuid entity_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/playlists/{playlist_id}/shots/{shots_id}
 DOODLE_HTTP_JWT_FUN(data_playlists_instance_shots)

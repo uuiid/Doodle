@@ -630,21 +630,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
   co_return in_handle->make_msg_204();
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_preview_files, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(playlist_id_));
-  auto l_prev     = l_sql.get_by_uuid<preview_file>(preview_file_id_);
+  auto l_entity   = l_sql.get_by_uuid<entity>(entity_id_);
   person_.check_project_access(l_playlist->project_id_);
   auto l_json = in_handle->get_json();
   SPDLOG_LOGGER_WARN(
       in_handle->logger_, "{} 在播放列表 {} 中添加预览文件 {}", person_.person_.email_, l_playlist->name_,
-      l_prev.uuid_id_
+      l_entity.uuid_id_
   );
   std::shared_ptr<playlist_shot> l_playlist_shot = std::make_shared<playlist_shot>();
   l_json.get_to(*l_playlist_shot);
-  l_playlist_shot->playlist_id_ = playlist_id_;
-  l_playlist_shot->preview_id_  = preview_file_id_;
-  l_playlist_shot->entity_id_   = l_sql.get_by_uuid<task>(l_prev.task_id_).entity_id_;
+  l_playlist_shot->playlist_id_ = playlist_id_; 
+  l_playlist_shot->entity_id_   = l_entity.uuid_id_;
   using namespace sqlite_orm;
   l_playlist_shot->order_index_ =
       l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == playlist_id_)) * 100;
