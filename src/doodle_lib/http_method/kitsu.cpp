@@ -199,6 +199,14 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
                                           &data_project_playlists_instance::project_id_,
                                           &data_project_playlists_instance::playlist_id_))
       .reg_t<data_playlists_instance>("/api/data/playlists/{}"_url(&data_playlists_instance::id_))
+      .reg_t<data_playlists_instance_preview_files>("/api/data/playlists/{}/preview-files/{}"_url(
+        &data_playlists_instance_preview_files::playlist_id_,
+        &data_playlists_instance_preview_files::preview_file_id_
+      ))
+      .reg_t<data_playlists_instance_shots>("/api/data/playlists/{}/shots/{}"_url(
+        &data_playlists_instance_shots::playlist_id_,
+        &data_playlists_instance_shots::shot_id_
+      ))
       .reg_t<actions_projects_casting_replace>("/api/actions/projects/{}/casting/replace"_url(&actions_projects_casting_replace::project_id_))
       .reg_t<data_entity_types_instance>("/api/data/entity-types/{}"_url(&data_entity_types_instance::id_))
       .reg_t<model_library::ai_image>("/api/doodle/ai_image"_url)
