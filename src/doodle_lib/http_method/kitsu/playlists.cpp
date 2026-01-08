@@ -565,11 +565,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   const auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
   std::vector<uuid> l_enity_ids{};
   std::map<uuid, const playlist_shot*> l_playlist_shot_map{};
-  std::map<uuid, uuid> l_entity_preview_file_map{};
   l_enity_ids.reserve(l_playlist_shot.size());
   for (auto&& i : l_playlist_shot) {
     l_enity_ids.emplace_back(i.entity_id_);
-    l_entity_preview_file_map.emplace(i.entity_id_, i.preview_id_);
     l_playlist_shot_map.emplace(i.entity_id_, &i);
   }
   playlist_shot_t l_ret{l_playlist};

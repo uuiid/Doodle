@@ -99,7 +99,12 @@ struct upgrade_init_t : sqlite_upgrade {
 
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
-  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {}
+  void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    if (in_data->storage_any_.pragma.user_version() == 2) {
+      in_data->sync_schema();
+      in_data->storage_any_.pragma.user_version(3);
+    }
+  }
   ~upgrade_2_t() override = default;
 };
 
