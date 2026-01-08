@@ -130,6 +130,11 @@ DOODLE_HTTP_JWT_FUN(pictures_preview_files)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/entities/{entity_id}/preview-files
+DOODLE_HTTP_JWT_FUN(data_entities_preview_files)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid entity_id_{};
+DOODLE_HTTP_FUN_END() 
 // /api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks
 DOODLE_HTTP_JWT_FUN(actions_create_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(post)

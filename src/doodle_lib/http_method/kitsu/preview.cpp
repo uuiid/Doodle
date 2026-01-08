@@ -10,8 +10,11 @@
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/preview_file.h"
 #include "doodle_core/metadata/task.h"
+#include "doodle_core/metadata/task_type.h"
+#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 
+#include "doodle_lib/core/http/http_function.h"
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 
@@ -25,6 +28,7 @@
 #include <memory>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
+#include <sqlite_orm/sqlite_orm.h>
 #include <tuple>
 #include <vector>
 
@@ -382,6 +386,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     // 发送事件 "preview-file:set-main"
   }
   co_return in_handle->make_msg(nlohmann::json{} = *l_ent);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_ent = l_sql.get_by_uuid<entity>(entity_id_);
+  person_.check_project_access(l_ent.project_id_);
+  std::vector<preview_file> l_ret;
+  using namespace sqlite_orm;
+  l_ret = l_sql.impl_->storage_any_.get_all<preview_file>(
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))), where(c(&task::entity_id_) == entity_id_),
+      multi_order_by(
+          order_by(&task_type::name_), order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_)
+      )
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 
 }  // namespace doodle::http
