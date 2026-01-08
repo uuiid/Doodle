@@ -10,6 +10,9 @@
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include "core/http/http_function.h"
+
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities_preview_files::get(
     session_data_ptr in_handle
@@ -614,6 +617,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   l_ret         = *l_playlist;
   l_ret["shot"] = *l_playlist_shot;
   co_return in_handle->make_msg(l_ret);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = l_sql.get_by_uuid<playlist>(id_);
+  person_.check_project_access(l_playlist.project_id_);
+  default_logger_raw()->info("{} 删除播放列表 {}", person_.person_.email_, l_playlist.name_);
+  co_await l_sql.remove<playlist>(l_playlist.id_);
+  co_return in_handle->make_msg_204();
 }
 
 }  // namespace doodle::http
