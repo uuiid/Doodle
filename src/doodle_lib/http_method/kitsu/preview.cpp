@@ -395,7 +395,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   std::vector<preview_file> l_ret;
   using namespace sqlite_orm;
   l_ret = l_sql.impl_->storage_any_.get_all<preview_file>(
-      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))), where(c(&task::entity_id_) == entity_id_),
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+      where(c(&task::entity_id_) == entity_id_),
       multi_order_by(
           order_by(&task_type::name_), order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_)
       )
