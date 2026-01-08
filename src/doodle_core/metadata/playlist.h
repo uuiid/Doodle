@@ -66,6 +66,8 @@ struct DOODLE_CORE_API playlist_shot {
   }
   // to json
   friend void to_json(nlohmann::json& j, const playlist_shot& p) {
+    j["id"]              = p.uuid_id_;
+    j["shot_id"]         = p.uuid_id_;
     j["entity_id"]       = p.entity_id_;
     j["preview_file_id"] = p.preview_id_;
     j["order_index"]     = p.order_index_;
