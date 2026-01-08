@@ -2,6 +2,7 @@
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/attachment_file.h"
 #include "doodle_core/metadata/image_size.h"
+#include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -27,6 +28,7 @@
 #include <filesystem>
 #include <memory>
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/videoio.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
@@ -212,6 +214,13 @@ struct run_actions_playlists_preview_files_create_review {
     data_ptr_->ffmpeg_video_.set_output_video(l_out_backup_path);
     data_ptr_->ffmpeg_video_.process();
     FSys::rename(l_out_backup_path, l_out_path);
+    auto l_sql = g_ctx().get<sqlite_database>();
+    // 更新预览文件信息
+    cv::Size size_{data_ptr_->size_.width, data_ptr_->size_.height};
+    auto l_prj =
+        l_sql.get_by_uuid<project>(l_sql.get_by_uuid<task>(data_ptr_->review_preview_file_->task_id_).project_id_);
+    preview::handle_video_file(l_out_path, l_prj.fps_, size_, data_ptr_->review_preview_file_);
+
     SPDLOG_LOGGER_INFO(data_ptr_->logger_, "生成评审视频完成 {} ", l_out_path);
   }
 };
