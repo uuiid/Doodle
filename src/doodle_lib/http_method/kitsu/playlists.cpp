@@ -528,6 +528,8 @@ struct playlist_shot_t : playlist {
     friend void to_json(nlohmann::json& j, const playlist_shot_entity_t& l_playlist_shot_entity) {
       j["entity_id"] = l_playlist_shot_entity.entity_id_;
       j["id"]        = l_playlist_shot_entity.id_;
+      j["shot_id"]   = l_playlist_shot_entity.shot_id_;
+
       for (auto&& [preview_file_id, preview_files] : l_playlist_shot_entity.preview_files_) {
         j["preview_files"][fmt::to_string(preview_file_id)] = preview_files;
       }
@@ -543,7 +545,6 @@ struct playlist_shot_t : playlist {
       j["preview_file_annotations"] = l_playlist_shot_entity.preview_file_annotations_;
       j["preview_file_task_id"]     = l_playlist_shot_entity.preview_file_task_id_;
       j["order_index"]              = l_playlist_shot_entity.order_index_;
-      j["shot_id"]                  = l_playlist_shot_entity.shot_id_;
     }
   };
 
@@ -565,22 +566,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   auto l_sql                 = g_ctx().get<sqlite_database>();
   auto l_playlist            = l_sql.get_by_uuid<playlist>(playlist_id_);
   const auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
-  std::vector<uuid> l_enity_ids{};
+  std::vector<uuid> l_entity_ids{};
   std::map<uuid, const playlist_shot*> l_playlist_shot_map{};
-  l_enity_ids.reserve(l_playlist_shot.size());
+  l_entity_ids.reserve(l_playlist_shot.size());
   for (auto&& i : l_playlist_shot) {
-    l_enity_ids.emplace_back(i.entity_id_);
+    l_entity_ids.emplace_back(i.entity_id_);
     l_playlist_shot_map.emplace(i.entity_id_, &i);
   }
   playlist_shot_t l_ret{l_playlist};
   std::map<uuid, std::size_t> l_entity_id_to_index{};
+
+  for (std::size_t i = 0; i < l_playlist_shot.size(); ++i) {
+    if (!l_entity_id_to_index.contains(l_playlist_shot.at(i).entity_id_)) {
+      l_entity_id_to_index.emplace(l_playlist_shot.at(i).entity_id_, i);
+      l_ret.shot_.emplace_back(playlist_shot_t::playlist_shot_entity_t{l_playlist_shot.at(i).entity_id_}).shot_id_ =
+          l_playlist_shot.at(i).uuid_id_;
+    }
+  };
 
   using namespace sqlite_orm;
   for (auto&& [l_preview_file, l_task_type_id, l_entity_id] : l_sql.impl_->storage_any_.select(
            columns(object<preview_file>(true), &task::task_type_id_, &task::entity_id_),
            join<task>(on(c(&task::uuid_id_) == c(&preview_file::task_id_))),
            join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-           where(in(&task::entity_id_, l_enity_ids)),
+           where(in(&task::entity_id_, l_entity_ids)),
            multi_order_by(
                order_by(&task_type::priority_).desc(), order_by(&task_type::name_),
                order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_),
@@ -642,7 +651,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   );
   std::shared_ptr<playlist_shot> l_playlist_shot = std::make_shared<playlist_shot>();
   l_json.get_to(*l_playlist_shot);
-  l_playlist_shot->playlist_id_ = playlist_id_; 
+  l_playlist_shot->playlist_id_ = playlist_id_;
   l_playlist_shot->entity_id_   = l_entity.uuid_id_;
   using namespace sqlite_orm;
   l_playlist_shot->order_index_ =
