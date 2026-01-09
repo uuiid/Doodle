@@ -407,8 +407,8 @@ class cross_attention_bone_weight::impl {
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
-  if (auto l_parent = in_output_path.parent_path(); !FSys::exists(l_parent)) {
-    FSys::create_directories(l_parent);
+  if (!FSys::exists(in_output_path)) {
+    FSys::create_directories(in_output_path);
   }
   torch::manual_seed(42);
   torch::Device device(torch::kCPU);
