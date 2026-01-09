@@ -407,8 +407,8 @@ class cross_attention_bone_weight::impl {
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
-  if (!FSys::exists(in_output_path)) {
-    FSys::create_directories(in_output_path);
+  if (auto l_parent = in_output_path.parent_path(); !FSys::exists(l_parent)) {
+    FSys::create_directories(l_parent);
   }
   torch::manual_seed(42);
   torch::Device device(torch::kCPU);
@@ -486,16 +486,15 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
 
     // optional checkpoint
     if (epoch % 10 == 0) {
-      auto l_file_name = in_output_path / fmt::format("model_epoch_{}.pt", epoch);
+      auto l_file_name = in_output_path.parent_path() / fmt::format("{}_epoch_{}.pt", in_output_path.stem(), epoch);
       torch::save(model, l_file_name.generic_string());
       SPDLOG_WARN("Saved checkpoint: {}", l_file_name);
     }
   }
 
   // final save
-  auto final_file_name = in_output_path / "model_final.pt";
-  torch::save(model, final_file_name.generic_string());
-  SPDLOG_WARN("Saved final model: {}", final_file_name);
+  torch::save(model, in_output_path.generic_string());
+  SPDLOG_WARN("Saved final model: {}", in_output_path);
   l_ret->pimpl_->model_ = model;
   return l_ret;
 }
