@@ -603,9 +603,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 
   for (std::size_t i = 0; i < l_playlist_shot.size(); ++i) {
     if (!l_entity_id_to_index.contains(l_playlist_shot.at(i).entity_id_)) {
-      l_entity_id_to_index.emplace(l_playlist_shot.at(i).entity_id_, i);
       l_ret.shot_.emplace_back(playlist_shot_t::playlist_shot_entity_t{l_playlist_shot.at(i).entity_id_})
           .update(l_playlist_shot.at(i));
+      l_entity_id_to_index.emplace(l_playlist_shot.at(i).entity_id_, l_ret.shot_.size() - 1);
     }
   };
 
@@ -621,22 +621,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
                order_by(&preview_file::created_at_)
            )
        )) {
-    if (l_entity_id_to_index.contains(l_entity_id)) {
-      l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id))
-          .preview_files_[l_task_type_id]
-          .emplace_back(playlist_shot_t::preview_file_mini_t{l_preview_file});
-    } else {
-      playlist_shot_t::playlist_shot_entity_t l_playlist_shot_entity{l_entity_id};
-      l_playlist_shot_entity.preview_files_[l_task_type_id].emplace_back(
-          playlist_shot_t::preview_file_mini_t{l_preview_file}
-      );
-      l_ret.shot_.emplace_back(l_playlist_shot_entity);
-      l_entity_id_to_index.emplace(l_entity_id, l_ret.shot_.size() - 1);
-    }
+    l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id))
+        .preview_files_[l_task_type_id]
+        .emplace_back(playlist_shot_t::preview_file_mini_t{l_preview_file});
     if (l_playlist_shot_map.at(l_entity_id)->preview_id_ == l_preview_file.uuid_id_) {
-      l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id))
-          .update(l_preview_file)
-          .update(*l_playlist_shot_map.at(l_entity_id));
+      l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id)).update(l_preview_file);
     }
   }
 
