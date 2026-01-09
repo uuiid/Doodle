@@ -7,6 +7,7 @@
 #include <ATen/core/TensorBody.h>
 #include <algorithm>
 #include <c10/util/Load.h>
+#include <cstddef>
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -400,12 +401,15 @@ std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fb
 class cross_attention_bone_weight::impl {
  public:
   impl() = default;
-  SkinningModel model_{};
+  SkinningModel model_{nullptr};
 };
 
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
 ) {
+  if (auto l_parent = in_output_path.parent_path(); !FSys::exists(l_parent)) {
+    FSys::create_directories(l_parent);
+  }
   torch::manual_seed(42);
   torch::Device device(torch::kCPU);
   if (torch::cuda::is_available()) {
