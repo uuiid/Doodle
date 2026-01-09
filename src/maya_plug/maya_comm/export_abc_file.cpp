@@ -80,6 +80,7 @@ MStatus export_abc_file::doIt(const MArgList &in_arg) {
     }
   } catch (std::exception const &e) {
     default_logger_raw()->error("export_abc_file::doIt: {}", e.what());
+    if (FSys::exists(file_name)) FSys::remove(file_name);
     return MS::kFailure;
   }
   return MS::kSuccess;

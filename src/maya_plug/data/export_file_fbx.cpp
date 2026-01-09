@@ -9,6 +9,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/scope/scope_exit.hpp>
+#include <boost/scope/scope_fail.hpp>
 
 #include "maya_plug_fwd.h"
 #include <maya_plug/abc/alembic_archive_out.h>
@@ -285,6 +286,12 @@ std::vector<FSys::path> export_file_fbx::export_sim(
   }
 
   boost::scope::scope_exit l_ex{[&]() { in_gen_file->add_external_string = {}; }};
+  boost::scope::scope_fail l_fail{[&]() {
+    default_logger_raw()->error("导出abc 文件 {} 失败", l_ret);
+    for (auto&& i : l_ret)
+      if (FSys::exists(i)) FSys::remove(i);
+  }};
+  
   if (!l_export_sim_cloth.empty()) {
     in_gen_file->add_external_string = "cloth";
     auto l_file_path                 = (*in_gen_file)(in_ref);
