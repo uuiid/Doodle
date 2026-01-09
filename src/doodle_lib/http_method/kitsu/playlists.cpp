@@ -672,8 +672,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   l_playlist_shot->playlist_id_ = playlist_id_;
   l_playlist_shot->entity_id_   = l_entity.uuid_id_;
   using namespace sqlite_orm;
-  l_playlist_shot->order_index_ =
-      l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == playlist_id_)) * 100;
+  if (l_playlist_shot->order_index_ <= 0)  // 如果没有指定顺序，则放在最后
+    l_playlist_shot->order_index_ =
+        l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == playlist_id_)) * 100;
   co_await l_sql.install(l_playlist_shot);
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
 }
