@@ -494,6 +494,26 @@ struct playlist_shot_t : playlist {
           preview_file_status_(),
           preview_file_annotations_(),
           preview_file_task_id_() {}
+    explicit playlist_shot_entity_t(
+        const uuid& in_entity_id, const preview_file& in_preview_file, const playlist_shot& in_playlist_shot
+    )
+        : entity_id_{in_entity_id},
+          preview_file_id_{in_preview_file.uuid_id_},
+          id_{in_playlist_shot.uuid_id_},
+          preview_files_{},
+          preview_file_extension_{in_preview_file.extension_},
+          preview_file_revision_{in_preview_file.revision_},
+          preview_file_width_{in_preview_file.width_},
+          preview_file_height_{in_preview_file.height_},
+          preview_file_duration_{in_preview_file.duration_},
+          preview_file_status_{in_preview_file.status_},
+          preview_file_source_{in_preview_file.source_},
+          preview_file_annotations_{in_preview_file.annotations_},
+          preview_file_task_id_{in_preview_file.task_id_},
+          order_index_{in_playlist_shot.order_index_},
+          shot_id_{in_playlist_shot.uuid_id_}
+
+    {}
 
     playlist_shot_entity_t& update(const preview_file& in_preview_file) {
       preview_file_id_          = in_preview_file.uuid_id_;
@@ -508,6 +528,11 @@ struct playlist_shot_t : playlist {
       preview_file_task_id_     = in_preview_file.task_id_;
       return *this;
     }
+    playlist_shot_entity_t& update(const playlist_shot& in_playlist_shot) {
+      order_index_ = in_playlist_shot.order_index_;
+      shot_id_     = in_playlist_shot.uuid_id_;
+      return *this;
+    }
 
     uuid entity_id_;
     uuid preview_file_id_;
@@ -517,7 +542,7 @@ struct playlist_shot_t : playlist {
     std::int32_t preview_file_revision_;
     std::int32_t preview_file_width_;
     std::int32_t preview_file_height_;
-    std::double_t preview_file_duration_;
+    decltype(preview_file::duration_) preview_file_duration_;
     preview_file_statuses preview_file_status_;
     decltype(preview_file::source_) preview_file_source_;
     nlohmann::json preview_file_annotations_;
@@ -526,9 +551,10 @@ struct playlist_shot_t : playlist {
     uuid shot_id_;
     // to json
     friend void to_json(nlohmann::json& j, const playlist_shot_entity_t& l_playlist_shot_entity) {
-      j["entity_id"] = l_playlist_shot_entity.entity_id_;
-      j["id"]        = l_playlist_shot_entity.id_;
-      j["shot_id"]   = l_playlist_shot_entity.shot_id_;
+      j["entity_id"]   = l_playlist_shot_entity.entity_id_;
+      j["id"]          = l_playlist_shot_entity.id_;
+      j["shot_id"]     = l_playlist_shot_entity.shot_id_;
+      j["order_index"] = l_playlist_shot_entity.order_index_;
 
       for (auto&& [preview_file_id, preview_files] : l_playlist_shot_entity.preview_files_) {
         j["preview_files"][fmt::to_string(preview_file_id)] = preview_files;
@@ -544,7 +570,6 @@ struct playlist_shot_t : playlist {
       j["preview_file_source"]      = l_playlist_shot_entity.preview_file_source_;
       j["preview_file_annotations"] = l_playlist_shot_entity.preview_file_annotations_;
       j["preview_file_task_id"]     = l_playlist_shot_entity.preview_file_task_id_;
-      j["order_index"]              = l_playlist_shot_entity.order_index_;
     }
   };
 
@@ -579,8 +604,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   for (std::size_t i = 0; i < l_playlist_shot.size(); ++i) {
     if (!l_entity_id_to_index.contains(l_playlist_shot.at(i).entity_id_)) {
       l_entity_id_to_index.emplace(l_playlist_shot.at(i).entity_id_, i);
-      l_ret.shot_.emplace_back(playlist_shot_t::playlist_shot_entity_t{l_playlist_shot.at(i).entity_id_}).shot_id_ =
-          l_playlist_shot.at(i).uuid_id_;
+      l_ret.shot_.emplace_back(playlist_shot_t::playlist_shot_entity_t{l_playlist_shot.at(i).entity_id_})
+          .update(l_playlist_shot.at(i));
     }
   };
 
@@ -609,9 +634,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
       l_entity_id_to_index.emplace(l_entity_id, l_ret.shot_.size() - 1);
     }
     if (l_playlist_shot_map.at(l_entity_id)->preview_id_ == l_preview_file.uuid_id_) {
-      auto&& l_s       = l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id)).update(l_preview_file);
-      l_s.order_index_ = l_playlist_shot_map.at(l_entity_id)->order_index_;
-      l_s.shot_id_     = l_playlist_shot_map.at(l_entity_id)->uuid_id_;
+      l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id))
+          .update(l_preview_file)
+          .update(*l_playlist_shot_map.at(l_entity_id));
     }
   }
 
