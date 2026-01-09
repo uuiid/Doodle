@@ -4,6 +4,7 @@
 
 #include "doodle_core/metadata/task.h"
 
+#include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/notification.h"
 #include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/project.h>
@@ -18,9 +19,72 @@
 
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <range/v3/view/unique.hpp>
+#include <sqlite_orm/sqlite_orm.h>
+#include <tuple>
 #include <vector>
 
 namespace doodle::http {
+
+namespace {
+template <typename Where, typename OrderBy>
+auto get_todo_fun(Where&& in_where, OrderBy&& in_order_by) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  auto l_task = l_sql.impl_->storage_any_.select(
+      columns(
+          object<task>(true), &project::name_, &project::has_avatar_, object<entity>(true), &asset_type::name_,
+          &task_type::name_, &task_type::for_entity_, &task_type::color_, &task_status::name_, &task_status::color_,
+          &task_status::short_name_,
+          object<entity_asset_extend>(true)
+      ),  //
+      join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
+      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+      join<task_status>(on(c(&task::task_status_id_) == c(&task_status::uuid_id_))),
+      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<assignees_table>(on(c(&task::uuid_id_) == c(&assignees_table::task_id_))),
+      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(in_where), in_order_by
+  );
+  std::vector<todo_t> l_ret;
+  l_ret.reserve(l_task.size());
+  for (auto&& l_tub : l_task) {
+    l_ret.emplace_back(std::make_from_tuple<todo_t>(l_tub));
+  }
+
+  auto l_task_ids = l_ret | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
+
+  {
+    std::map<uuid, const comment*> l_map_comm;
+    auto l_comms = l_sql.impl_->storage_any_.get_all<comment>(
+        sqlite_orm::where(sqlite_orm::in(&comment::object_id_, l_task_ids)), sqlite_orm::order_by(&comment::created_at_)
+    );
+    for (auto&& i : l_comms) {
+      if (!l_map_comm.contains(i.object_id_)) l_map_comm[i.object_id_] = &i;
+    }
+
+    for (auto& i : l_ret) {
+      if (l_map_comm.contains(i.uuid_id_)) {
+        auto&& l_c = l_map_comm.at(i.uuid_id_);
+        i.last_comment_ =
+            todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->created_at_, .person_id_ = l_c->person_id_};
+      }
+    }
+  }
+  std::map<uuid, todo_t*> l_map_task;
+  for (auto&& i : l_ret) l_map_task[i.uuid_id_] = &i;
+
+  for (auto l_ass = l_sql.impl_->storage_any_.get_all<assignees_table>(
+           sqlite_orm::where(sqlite_orm::in(&assignees_table::task_id_, l_task_ids))
+       );
+       auto&& i : l_ass) {
+    if (l_map_task.contains(i.task_id_)) l_map_task.at(i.task_id_)->assignees_.emplace_back(i.person_id_);
+  }
+  return l_ret;
+}
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links::post(session_data_ptr in_handle) {
   person_.check_manager();
   auto l_sql              = g_ctx().get<sqlite_database>();
@@ -69,10 +133,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
     // 这里需要检查一下, 任务的分配人是否是当前用户
     if (person_.person_.uuid_id_ != l_person_data.uuid_id_) {
       notification l_notification{};
-      l_notification.type_       = notification_type::assignation;
-      l_notification.task_id_    = l_task.uuid_id_;
-      l_notification.author_id_  = person_.person_.uuid_id_;
-      l_notification.person_id_  = l_person_data.uuid_id_;
+      l_notification.type_      = notification_type::assignation;
+      l_notification.task_id_   = l_task.uuid_id_;
+      l_notification.author_id_ = person_.person_.uuid_id_;
+      l_notification.person_id_ = l_person_data.uuid_id_;
       l_notifications->emplace_back(l_notification);
     }
   }
@@ -84,14 +148,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks::get(session_data_ptr in_handle) {
   auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_person_tasks(person_.person_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_p1);
+  using namespace sqlite_orm;
+  auto l_prjs    = sql.get_person_projects(person_.person_);
+  auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
+
+  auto l_todo    = get_todo_fun(
+      in(&task::project_id_, l_pej_ids) && c(&assignees_table::person_id_) == person_.person_.uuid_id_ &&
+          c(&task_status::is_done_) == false,
+      order_by(&entity::name_)
+  );
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_todo);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks::get(session_data_ptr in_handle) {
   auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_person_tasks(person_.person_, true);
-  co_return in_handle->make_msg(nlohmann::json{} = l_p1);
+  using namespace sqlite_orm;
+  auto l_prjs    = sql.get_person_projects(person_.person_);
+  auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
+
+  auto l_todo    = get_todo_fun(
+      in(&task::project_id_, l_pej_ids) && c(&assignees_table::person_id_) == person_.person_.uuid_id_ &&
+          c(&task_status::is_done_) == true,
+      multi_order_by(order_by(&task::end_date_).desc(), order_by(&task_type::name_), order_by(&entity::name_))
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_todo);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::get(session_data_ptr in_handle) {
   switch (person_.person_.role_) {
@@ -106,10 +187,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::ge
       co_return in_handle->make_msg("[]"s);
       break;
   }
-
   auto& sql = g_ctx().get<sqlite_database>();
-  auto l_p1 = sql.get_preson_tasks_to_check(person_.person_);
-  co_return in_handle->make_msg(nlohmann::json{} = l_p1);
+  using namespace sqlite_orm;
+  auto l_prjs    = sql.get_person_projects(person_.person_);
+  auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
+
+  auto l_todo    = get_todo_fun(
+      c(&task_status::is_feedback_request_) && in(&task::project_id_, l_pej_ids) &&
+          ((person_.person_.role_ == person_role_type::supervisor &&
+            in(&task_type::department_id_, person_.person_.departments_)) ||
+           person_.person_.role_ != person_role_type::supervisor),
+      order_by(&entity::name_)
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_todo);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> tasks_comments::get(session_data_ptr in_handle) {
   auto& sql = g_ctx().get<sqlite_database>();

@@ -3,6 +3,10 @@
 //
 
 #include "sqlite_select_data.h"
+
+#include "doodle_core_fwd.h"
+
+#include <array>
 namespace doodle {
 
 void to_json(nlohmann::json& j, const todo_t::comment_t& p) {
@@ -71,13 +75,15 @@ void to_json(nlohmann::json& j, const todo_t& p) {
   else
     j["last_comment"] = nlohmann::json::value_t::object;
 
-  j["ji_shu_lie"]         = p.ji_shu_lie_;
-  j["deng_ji"]            = p.deng_ji_;
-  j["gui_dang"]           = p.gui_dang_;
-  j["bian_hao"]           = p.bian_hao_;
-  j["pin_yin_ming_cheng"] = p.pin_yin_ming_cheng_;
-  j["ban_ben"]            = p.ban_ben_;
-  j["ji_du"]              = p.ji_du_;
+  if (!p.entity_asset_extend_id_.is_nil()) {
+    j["ji_shu_lie"]         = p.ji_shu_lie_;
+    j["deng_ji"]            = p.deng_ji_;
+    j["gui_dang"]           = p.gui_dang_;
+    j["bian_hao"]           = p.bian_hao_;
+    j["pin_yin_ming_cheng"] = p.pin_yin_ming_cheng_;
+    j["ban_ben"]            = p.ban_ben_;
+    j["ji_du"]              = p.ji_du_;
+  }
 }
 
 void to_json(nlohmann::json& j, const project_and_status_t& p) {

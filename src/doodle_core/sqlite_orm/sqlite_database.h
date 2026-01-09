@@ -57,7 +57,6 @@ class sqlite_database {
   std::shared_ptr<sqlite_database_impl> impl_;
 
   std::vector<uuid> get_temporal_type_ids();
-  void todo_post_processing(std::vector<todo_t>& in);
 
  public:
   sqlite_database()  = default;
@@ -137,9 +136,7 @@ class sqlite_database {
   person get_person_for_email(const std::string& in_email);
   /// 获取用户所在的团队对应的项目
   std::vector<project> get_person_projects(const person& in_user);
-  /// 获取用户需要做的任务
-  std::vector<todo_t> get_person_tasks(const person& in_user, bool is_done = false);
-  std::vector<todo_t> get_preson_tasks_to_check(const person& in_user);
+
   /// 获取项目和对应的项目状态
   std::vector<project_and_status_t> get_project_and_status(const person& in_user);
 

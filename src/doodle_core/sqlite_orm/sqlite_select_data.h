@@ -16,11 +16,77 @@
 #include <doodle_core/metadata/task_type.h>
 
 #include <sqlite_orm/sqlite_orm.h>
+#include <string>
 namespace doodle {
 
 struct todo_t {
   // std::shared_ptr<project> project_;
   // std::shared_ptr<entity> entity_;
+
+  explicit todo_t(
+      const task& in_task, const std::string& in_prj_name, bool in_has_avatar, const entity& in_entity,
+      const decltype(asset_type::name_)& in_asset_type, const decltype(task_type::name_)& in_task_type_name,
+      const decltype(task_type::for_entity_)& in_task_type_for_entity,
+      const decltype(task_type::color_)& in_task_type_color, const decltype(task_status::name_)& in_task_status_name,
+      const decltype(task_status::color_)& in_task_status_color,
+      const decltype(task_status::short_name_)& in_task_status_short_name,
+      const entity_asset_extend& in_entity_asset_extend
+  )
+      : uuid_id_(in_task.uuid_id_),
+        name_(in_task.name_),
+        description_(in_task.description_),
+        priority_(in_task.priority_),
+        difficulty_(in_task.difficulty_),
+        duration_(in_task.duration_),
+        estimation_(in_task.estimation_),
+        completion_rate_(in_task.completion_rate_),
+        retake_count_(in_task.retake_count_),
+        sort_order_(in_task.sort_order_),
+        start_date_(in_task.start_date_),
+        due_date_(in_task.due_date_),
+        real_start_date_(in_task.real_start_date_),
+        end_date_(in_task.end_date_),
+        done_date_(in_task.done_date_),
+        last_comment_date_(in_task.last_comment_date_),
+        nb_assets_ready_(in_task.nb_assets_ready_),
+        data_(in_task.data_),
+        shotgun_id_(in_task.shotgun_id_),
+        last_preview_file_id_(in_task.last_preview_file_id_),
+        project_id_(in_task.project_id_),
+        task_type_id_(in_task.task_type_id_),
+        task_status_id_(in_task.task_status_id_),
+        assigner_id_(in_task.assigner_id_),
+        created_at_(in_task.created_at_),
+        updated_at_(in_task.updated_at_),
+        project_name_(in_prj_name),
+        project_has_avatar_(in_has_avatar),
+        entity_uuid_id_(in_entity.uuid_id_),
+        entity_name_(in_entity.name_),
+        entity_description_(in_entity.description_),
+        entity_preview_file_id_(in_entity.preview_file_id_),
+        asset_type_name_(in_asset_type),
+        entity_canceled_(in_entity.canceled_),
+        entity_parent_id_(in_entity.parent_id_),
+        entity_source_id_(in_entity.source_id_),
+        task_type_name_(in_task_type_name),
+        task_type_for_entity_(in_task_type_for_entity),
+        task_type_color_(in_task_type_color),
+        task_status_name_(in_task_status_name),
+        task_status_color_(in_task_status_color),
+        task_status_short_name_(in_task_status_short_name),
+        entity_asset_extend_id_(in_entity_asset_extend.uuid_id_),
+        ji_shu_lie_(in_entity_asset_extend.ji_shu_lie_),
+        deng_ji_(in_entity_asset_extend.deng_ji_),
+        gui_dang_(in_entity_asset_extend.gui_dang_),
+        bian_hao_(in_entity_asset_extend.bian_hao_),
+        pin_yin_ming_cheng_(in_entity_asset_extend.pin_yin_ming_cheng_),
+        ban_ben_(in_entity_asset_extend.ban_ben_),
+        ji_du_(in_entity_asset_extend.ji_du_),
+        assignees_(),
+        last_comment_(std::nullopt)
+
+  {}
+
   decltype(task::uuid_id_) uuid_id_;
   decltype(task::name_) name_;
   decltype(task::description_) description_;
@@ -69,6 +135,7 @@ struct todo_t {
   decltype(task_status::short_name_) task_status_short_name_;
 
   // 额外的资产数据
+  decltype(entity_asset_extend::uuid_id_) entity_asset_extend_id_;
   decltype(entity_asset_extend::ji_shu_lie_) ji_shu_lie_;
   decltype(entity_asset_extend::deng_ji_) deng_ji_;
   decltype(entity_asset_extend::gui_dang_) gui_dang_;
