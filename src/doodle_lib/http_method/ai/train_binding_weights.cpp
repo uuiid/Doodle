@@ -1,6 +1,7 @@
 #include "doodle_core/core/global_function.h"
 
 #include <doodle_lib/ai/bone_weight_inference.h>
+#include <doodle_lib/ai/cross_attention_bone_weight.h>
 
 #include <boost/asio/post.hpp>
 
@@ -37,9 +38,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_train_binding_w
 ) {
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
   boost::asio::post(g_io_context(), [l_args]() {
-    doodle::ai::bone_weight_inference_model::train(l_args.input_path_, l_args.output_path_);
+    doodle::ai::cross_attention_bone_weight::train(l_args.input_path_, l_args.output_path_);
 #ifndef NDEBUG
-    doodle::ai::bone_weight_inference_model l_model{l_args.output_path_};
+    doodle::ai::cross_attention_bone_weight l_model{l_args.output_path_};
     for (auto i = 0; i < l_args.input_path_.size() && i < 4; i++) {
       auto l_out_path = l_args.input_path_[i].parent_path() / (l_args.input_path_[i].stem().string() + "_bound.fbx");
       SPDLOG_WARN("开始推理模型 {} {} {}", l_args.output_path_, l_args.input_path_[i], l_out_path);
@@ -57,7 +58,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_train_binding_w
   auto l_args     = in_handle->get_json().get<ai_train_binding_weights_put_args>();
   auto l_out_path = l_args.fbx_path_.parent_path() / (l_args.fbx_path_.stem().string() + "_bound.fbx");
   boost::asio::post(g_io_context(), [l_args, l_out_path]() {
-    doodle::ai::bone_weight_inference_model l_model{l_args.model_path_};
+    doodle::ai::cross_attention_bone_weight l_model{l_args.model_path_};
     SPDLOG_WARN("开始推理模型 {} {} {}", l_args.model_path_, l_args.fbx_path_, l_out_path);
     l_model.predict_by_fbx(l_args.fbx_path_, l_out_path);
   });

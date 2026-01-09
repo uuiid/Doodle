@@ -6,6 +6,7 @@
 
 #include <ATen/core/TensorBody.h>
 #include <algorithm>
+#include <c10/util/Load.h>
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -495,4 +496,36 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   return l_ret;
 }
 
+void cross_attention_bone_weight::load_model(const FSys::path& in_model_path) {
+  pimpl_ = std::make_shared<impl>();
+  torch::load(pimpl_->model_, in_model_path.generic_string());
+}
+
+void cross_attention_bone_weight::predict_by_fbx(
+    const FSys::path& in_fbx_path, const FSys::path& out_fbx_path, logger_ptr_raw in_logger
+) {
+  DOODLE_CHICK(pimpl_->model_, "Model not loaded. Cannot predict.");
+
+  fbx_loader l_loader{in_fbx_path};
+  auto l_data = l_loader.load_fbx();
+  l_data.build_face_adjacency(16);
+  l_data.compute_curvature();
+  l_data.normalize_inputs();
+  l_data.compute_bones_dir_len();
+
+  // Move to device
+  torch::Device device(torch::kCPU);
+  if (torch::cuda::is_available()) {
+    device = torch::Device(torch::kCUDA);
+  }
+  l_data.to(device);
+  pimpl_->model_->to(device);
+  pimpl_->model_->eval();
+
+  // Forward
+  auto pred_weights = pimpl_->model_->forward(l_data);  // [N,B]
+  pred_weights      = pred_weights.clamp_min(1e-8);
+  // Normalize
+  pred_weights      = pred_weights / pred_weights.sum(1, true);
+}
 }  // namespace doodle::ai
