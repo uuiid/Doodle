@@ -22,6 +22,7 @@
 #include "core/http/multipart_body_value.h"
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstdint>
 #include <functional>
 #include <iterator>
@@ -62,22 +63,50 @@ struct multipart_body {
     boundary_searcher_ptr boundary_searcher_{};
 
     enum boundary_state {
-      not_boundary,  // 边界错误
-      boundary,      // 正常的边界
-      boundary_end,  // 最后的边界
+      not_boundary,   // 边界错误
+      boundary,       // 正常的边界
+      boundary_end,   // 最后的边界
+      need_more_data  // 缓冲区不足, 需要更多数据
     };
 
     void get_boundary() {
-      if (fields_.count(boost::beast::http::field::content_type) > 0) {
-        const auto& l_content_type = fields_.at(boost::beast::http::field::content_type);
-        if (auto l_pos = l_content_type.find("boundary="); l_pos != std::string::npos) {
-          boundary_          = l_content_type.substr(l_pos + 9, l_content_type.find(l_pos, ';'));
-          boundary_searcher_ = std::make_unique<boundary_searcher_type>(boundary_searcher_type{
-              std::begin(boundary_),
-              std::end(boundary_),
-          });
-        }
+      boundary_.clear();
+      boundary_searcher_.reset();
+
+      if (fields_.count(boost::beast::http::field::content_type) == 0) return;
+
+      // e.g. multipart/form-data; boundary=----WebKitFormBoundaryxxx
+      //      multipart/form-data; boundary="----WebKitFormBoundaryxxx"
+      const auto l_content_type_sv = fields_.at(boost::beast::http::field::content_type);
+      const std::string l_content_type{l_content_type_sv.data(), l_content_type_sv.size()};
+      std::string l_lower = l_content_type;
+      boost::to_lower(l_lower);
+      static constexpr std::string_view boundary_key = "boundary=";
+      const auto l_pos                               = l_lower.find(boundary_key);
+      if (l_pos == std::string::npos) return;
+
+      std::size_t l_begin = l_pos + boundary_key.size();
+      // while (l_begin < l_content_type.size() && std::isspace(static_cast<unsigned char>(l_content_type[l_begin]))) {
+      //   ++l_begin;
+      // }
+      // if (l_begin >= l_content_type.size()) return;
+
+      std::size_t l_end   = std::string::npos;
+      if (l_content_type[l_begin] == '"') {
+        ++l_begin;
+        l_end = l_content_type.find('"', l_begin);
+        if (l_end == std::string::npos) return;
+      } else {
+        l_end = l_content_type.find(';', l_begin);
+        if (l_end == std::string::npos) l_end = l_content_type.size();
       }
+      if (l_end <= l_begin) return;
+      boundary_ = l_content_type.substr(l_begin, l_end - l_begin);
+      if (boundary_.empty()) return;
+      boundary_searcher_ = std::make_unique<boundary_searcher_type>(boundary_searcher_type{
+          std::begin(boundary_),
+          std::end(boundary_),
+      });
     }
 
    public:
@@ -87,6 +116,10 @@ struct multipart_body {
     void init(boost::optional<std::uint64_t> const& length, boost::system::error_code& ec) {
       get_boundary();
       ec = {};
+      if (!boundary_searcher_ || boundary_.empty()) {
+        BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
+        return;
+      }
       if (length) length_ = *length;
     }
     template <class InIt>
@@ -188,6 +221,7 @@ struct multipart_body {
       switch (line_state_) {
         case parser_line_state::begin_parser: {
           auto&& [l_b, l_begin_b] = is_boundary(l_begin, l_end);
+          if (l_b == need_more_data) break;
           if (l_b == not_boundary) {
             ec = boost::asio::error::invalid_argument;
             return 0;
@@ -225,6 +259,10 @@ struct multipart_body {
               line_state_ = parser_line_state::eof_end;
               parser_part_end();
             } break;
+            case need_more_data:
+              // 边界可能跨 buffer, 等待更多数据
+              l_size = 0;
+              break;
             case not_boundary:;  // 不是边界, 说明是数据
               add_data(l_begin, l_end);
               l_size = buffer_.size();
@@ -240,17 +278,27 @@ struct multipart_body {
     // 比较边界分隔符
     template <typename Iter>
     std::tuple<boundary_state, Iter> is_boundary(const Iter& in_begin, const Iter& in_end) const {
+      BOOST_ASSERT(boundary_searcher_ && !boundary_.empty());
+
       auto l_find_ = std::search(in_begin, in_end, *boundary_searcher_);
       if (l_find_ == in_end) {
         // 没有找到边界, 说明数据有问题
         return {not_boundary, in_begin};
       }
+
+      // 需要读取 l_find_[-1], l_find_[-2]
+      if (std::distance(in_begin, l_find_) < 2) return {not_boundary, in_begin};
+
       if (*(l_find_ - 1) != '-' || *(l_find_ - 2) != '-') {
         // 边界前面不是 --
         return {not_boundary, in_begin};
       }
 
       auto l_boundary_end = l_find_ + boundary_.size();
+
+      // 需要读取 l_boundary_end[0], l_boundary_end[1]
+      if (std::distance(l_boundary_end, in_end) < 2) return {boundary, l_find_ - 2};
+
       if (*(l_boundary_end) == '-' && *(l_boundary_end + 1) == '-') {
         return {boundary_end, l_find_ - 2};
       }
