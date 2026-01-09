@@ -150,6 +150,10 @@ struct multipart_body {
     }
     template <class ConstBufferSequence>
     std::size_t put(ConstBufferSequence const& in_buffers, boost::system::error_code& ec) {
+      if (!boundary_searcher_) {
+        BOOST_BEAST_ASSIGN_EC(ec, boost::asio::error::invalid_argument);
+        return 0;
+      }
       auto const l_extra = boost::beast::buffer_bytes(in_buffers);
       ec                 = {};
       if (l_extra > 4096) {
