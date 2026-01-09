@@ -621,6 +621,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
                order_by(&preview_file::created_at_)
            )
        )) {
+    DOODLE_CHICK(
+        l_playlist_shot_map.contains(l_entity_id),
+        fmt::format("Preview file's entity {} is not in playlist {}", l_entity_id, playlist_id_)
+    );
     l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id))
         .preview_files_[l_task_type_id]
         .emplace_back(playlist_shot_t::preview_file_mini_t{l_preview_file});
