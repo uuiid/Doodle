@@ -37,6 +37,7 @@ foreach ($Tab in $Tabls) {
     if ($Tab.name -eq "project_status") { continue }
     Invoke-SqliteQuery -DataSource $DataSource_loc -Query "DROP TABLE $($Tab.name);"
 }
+INVOKE-SqliteQuery -DataSource $DataSource_loc -Query "PRAGMA user_version = 0;"
 Invoke-SqliteQuery -DataSource $DataSource_loc -Query "VACUUM;"
 
 Compress-Archive -Path "$DoodleOut/epiboly/*" -DestinationPath "$DoodleOut/epiboly.zip" -Force
