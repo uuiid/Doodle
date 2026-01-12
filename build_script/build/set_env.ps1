@@ -4,7 +4,7 @@
 # Retrieved 2025-11-11, License - CC BY-SA 4.0
 
 Push-Location 'C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\'
-cmd /c "vcvars64.bat 10.0.19041.0&set" |
+cmd /c "vcvars64.bat&set" |
 ForEach-Object {
   if ($_ -match "=") {
     $v = $_.split("="); set-item -force -path "ENV:\$($v[0])"  -value "$($v[1])"
