@@ -22,6 +22,7 @@
 #include <doodle_core/sqlite_orm/sqlite_upgrade.h>
 
 #include "metadata/ai_image_metadata.h"
+#include "metadata/entity.h"
 #include "metadata/entity_type.h"
 #include "metadata/playlist.h"
 #include "metadata/preview_file.h"
@@ -867,6 +868,13 @@ std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(cons
   using namespace sqlite_orm;
   auto l_t =
       impl_->storage_any_.get_all<entity_asset_extend>(where(c(&entity_asset_extend::entity_id_) == in_entity_id));
+  if (l_t.empty()) return std::nullopt;
+  return l_t.front();
+}
+
+std::optional<entity_shot_extend> sqlite_database::get_entity_shot_extend(const uuid& in_entity_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<entity_shot_extend>(where(c(&entity_shot_extend::entity_id_) == in_entity_id));
   if (l_t.empty()) return std::nullopt;
   return l_t.front();
 }

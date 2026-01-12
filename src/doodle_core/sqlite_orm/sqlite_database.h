@@ -34,6 +34,7 @@ struct entity_link;
 struct project_task_status_link;
 struct entity_asset_extend;
 struct playlist_shot;
+struct entity_shot_extend;
 struct task_type_asset_type_link;
 struct working_file;
 namespace attendance_helper {
@@ -206,6 +207,8 @@ class sqlite_database {
   std::optional<entity_link> get_entity_link(const uuid& in_entity_in_id, const uuid& in_asset_id);
   /// 获取任务额外数据
   std::optional<entity_asset_extend> get_entity_asset_extend(const uuid& in_entity_id);
+  /// 获取镜头扩展数据
+  std::optional<entity_shot_extend> get_entity_shot_extend(const uuid& in_entity_id);
   /// 获取播放序列对应的实体
   std::vector<playlist_shot> get_playlist_shot_entity(const uuid& in_playlist_id);
 
