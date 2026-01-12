@@ -424,6 +424,16 @@ sqlite_orm_type make_storage_doodle_impl(const std::string& in_path) {
           foreign_key(&entity_concept_link::entity_id_).references(&entity::uuid_id_).on_delete.cascade(),     //
           foreign_key(&entity_concept_link::entity_out_id_).references(&entity::uuid_id_).on_delete.cascade()  //
       ),
+      make_index("entity_shot_extend_entity_id_idx", &entity_shot_extend::entity_id_),
+      make_table<entity_shot_extend>(
+          "entity_shot_extend",
+          make_column("id", &entity_shot_extend::id_, primary_key().autoincrement()),     //
+          make_column("uuid", &entity_shot_extend::uuid_id_, unique(), not_null()),     //
+          make_column("entity_id", &entity_shot_extend::entity_id_),                      //
+          make_column("frame_in", &entity_shot_extend::frame_in_),                        //
+          make_column("frame_out", &entity_shot_extend::frame_out_),                      //
+          foreign_key(&entity_shot_extend::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
+      ),
       make_index("entity_asset_extend_entity_id_idx", &entity_asset_extend::entity_id_),
       make_table<entity_asset_extend>(
           "entity_asset_extend",                                                           //

@@ -70,10 +70,22 @@ struct DOODLE_CORE_API entity_concept_link {
 struct DOODLE_CORE_API entity_shot_extend {
   DOODLE_BASE_FIELDS();
   uuid entity_id_;
+
+  std::optional<std::int32_t> frame_in_;
+  std::optional<std::int32_t> frame_out_;
+
+  static bool has_extend_data(const nlohmann::json& j) { return j.contains("frame_in") || j.contains("frame_out"); }
+
   // to json
-  friend void to_json(nlohmann::json& j, const entity_shot_extend& p) {}
+  friend void to_json(nlohmann::json& j, const entity_shot_extend& p) {
+    j["frame_in"]  = p.frame_in_;
+    j["frame_out"] = p.frame_out_;
+  }
   // from json
-  friend void from_json(const nlohmann::json& j, entity_shot_extend& p) {}
+  friend void from_json(const nlohmann::json& j, entity_shot_extend& p) {
+    if (j.contains("frame_in")) j.at("frame_in").get_to(p.frame_in_);
+    if (j.contains("frame_out")) j.at("frame_out").get_to(p.frame_out_);
+  }
 };
 struct DOODLE_CORE_API entity_asset_extend {
   DOODLE_BASE_FIELDS();
