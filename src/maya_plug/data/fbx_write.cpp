@@ -16,6 +16,8 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
+#include "data/maya_tool.h"
+#include "exception/exception.h"
 #include <fbxsdk.h>
 #include <fmt/std.h>
 #include <maya/MAnimControl.h>
@@ -115,64 +117,52 @@ FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
   }
 }
 
-void fbx_node::set_node_transform_matrix(const MTransformationMatrix& in_matrix) const {
-  MStatus l_status{};
-  auto l_loc = in_matrix.getTranslation(MSpace::kWorld, &l_status);
-  maya_chick(l_status);
-  node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
-  auto l_rot = in_matrix.eulerRotation();
-
-  MAngle l_angle_x{};
-  l_angle_x.setUnit(MAngle::kRadians);
-  l_angle_x.setValue(l_rot.x);
-  MAngle l_angle_y{};
-  l_angle_y.setUnit(MAngle::kRadians);
-  l_angle_y.setValue(l_rot.y);
-  MAngle l_angle_z{};
-  l_angle_z.setUnit(MAngle::kRadians);
-  l_angle_z.setValue(l_rot.z);
-
-  node->LclRotation.Set({l_angle_x.asDegrees(), l_angle_y.asDegrees(), l_angle_z.asDegrees()});
-  std::double_t l_scale[3]{};
-  in_matrix.getScale(l_scale, MSpace::kWorld);
-
-  node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
-  node->ScalingMax.Set({});
-}
-
 void fbx_node::build_node_transform(MDagPath in_path) const {
   MStatus l_status{};
   node->SetRotationActive(true);
   MFnTransform const l_transform{in_path};
-  auto l_rotate_order = l_transform.rotationOrder(&l_status);
+  MTransformationMatrix::RotationOrder l_rotate_order =
+      static_cast<MTransformationMatrix::RotationOrder>(get_plug(in_path.node(), "rotateOrder").asInt(&l_status) + 1);
   maya_chick(l_status);
   switch (l_rotate_order) {
     case MTransformationMatrix::kXYZ:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderXYZ);
+      node->RotationOrder.Set(FbxEuler::eOrderXYZ);
       break;
     case MTransformationMatrix::kYZX:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderYZX);
+      node->RotationOrder.Set(FbxEuler::eOrderYZX);
       break;
     case MTransformationMatrix::kZXY:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderZXY);
+      node->RotationOrder.Set(FbxEuler::eOrderZXY);
       break;
     case MTransformationMatrix::kXZY:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderXZY);
+      node->RotationOrder.Set(FbxEuler::eOrderXZY);
       break;
     case MTransformationMatrix::kYXZ:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderYXZ);
+      node->RotationOrder.Set(FbxEuler::eOrderYXZ);
       break;
     case MTransformationMatrix::kZYX:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderZYX);
+      node->RotationOrder.Set(FbxEuler::eOrderZYX);
       break;
 
     default:
-      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderXYZ);
+      node->RotationOrder.Set(FbxEuler::eOrderXYZ);
       break;
   }
   node->UpdatePivotsAndLimitsFromProperties();
+  auto l_matrix = l_transform.transformation(&l_status);
+  maya_chick(l_status);
+  auto l_loc = l_matrix.getTranslation(MSpace::kWorld, &l_status);
+  maya_chick(l_status);
+  node->LclTranslation.Set({l_loc.x, l_loc.y, l_loc.z});
 
-  set_node_transform_matrix(l_transform.transformation());
+  std::double_t l_rot[3]{};
+  maya_chick(l_matrix.getRotation(l_rot, l_rotate_order));
+  node->LclRotation.Set({radians_to_degrees(l_rot[0]), radians_to_degrees(l_rot[1]), radians_to_degrees(l_rot[2])});
+  std::double_t l_scale[3]{};
+  l_matrix.getScale(l_scale, MSpace::kWorld);
+
+  node->LclScaling.Set({l_scale[0], l_scale[1], l_scale[2]});
+  node->ScalingMax.Set({});
 }
 
 ///
@@ -243,84 +233,13 @@ void fbx_node_cam::build_data() {
 }
 
 void fbx_node_cam::build_animation(const MTime& in_time) {
+  fbx_node_transform::build_animation(in_time);
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
   auto* l_layer = node->GetScene()->GetCurrentAnimationStack()->GetMember<FbxAnimLayer>();
-  MStatus l_status{};
   MFnCamera l_fn_cam{dag_path};
-
-  MFnTransform const l_transform{dag_path};
-  // tran x
-  {
-    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
-    l_anim_curve->KeyModifyBegin();
-    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    auto l_tran_x    = l_transform.getTranslation(MSpace::kWorld).x;
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_x);
-    l_anim_curve->KeyModifyEnd();
-  }
-  // tran y
-  {
-    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
-    l_anim_curve->KeyModifyBegin();
-    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    auto l_tran_y    = l_transform.getTranslation(MSpace::kWorld).y;
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_y);
-    l_anim_curve->KeyModifyEnd();
-  }
-  // tran z
-  {
-    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-    l_anim_curve->KeyModifyBegin();
-    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-    auto l_tran_z    = l_transform.getTranslation(MSpace::kWorld).z;
-    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_z);
-    l_anim_curve->KeyModifyEnd();
-  }
-
-  {
-    MQuaternion l_rot{};
-
-    l_transform.getRotation(l_rot, MSpace::kWorld);
-    auto l_rot_tmp = l_rot.asEulerRotation();
-    MAngle l_ang{};
-    // rot x
-    {
-      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
-      l_anim_curve->KeyModifyBegin();
-      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-      maya_chick(l_status);
-      l_ang.setUnit(MAngle::kRadians);
-      l_ang.setValue(l_rot_tmp.x);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
-      l_anim_curve->KeyModifyEnd();
-    }
-
-    // rot y
-    {
-      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
-      l_anim_curve->KeyModifyBegin();
-      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-      maya_chick(l_status);
-      l_ang.setUnit(MAngle::kRadians);
-      l_ang.setValue(l_rot_tmp.y);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
-      l_anim_curve->KeyModifyEnd();
-    }
-
-    // rot z
-    {
-      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
-      l_anim_curve->KeyModifyBegin();
-      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
-      maya_chick(l_status);
-      l_ang.setUnit(MAngle::kRadians);
-      l_ang.setValue(l_rot_tmp.z);
-      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
-      l_anim_curve->KeyModifyEnd();
-    }
-  }
+  MStatus l_status{};
 
   {
     auto* l_cureve = camera_->FocalLength.GetCurve(l_layer, true);
@@ -1526,7 +1445,7 @@ void fbx_write::write_end() {
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_ANIMATION, true);
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
   manager_->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, true);
-
+  ascii_fbx_ = true;
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
           ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")

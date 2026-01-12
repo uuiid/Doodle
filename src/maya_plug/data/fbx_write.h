@@ -49,7 +49,6 @@ struct fbx_node {
   virtual void build_animation(const MTime& in_time) = 0;
 
   void build_node_transform(MDagPath in_path) const;
-  void set_node_transform_matrix(const MTransformationMatrix& in_matrix) const;
 
   static FbxTime::EMode maya_to_fbx_time(MTime::Unit in_value);
 
