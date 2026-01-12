@@ -148,26 +148,26 @@ void fbx_node::build_node_transform(MDagPath in_path) const {
   maya_chick(l_status);
   switch (l_rotate_order) {
     case MTransformationMatrix::kXYZ:
-      node->RotationOrder.Set(FbxEuler::eOrderXYZ);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderXYZ);
       break;
     case MTransformationMatrix::kYZX:
-      node->RotationOrder.Set(FbxEuler::eOrderYZX);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderYZX);
       break;
     case MTransformationMatrix::kZXY:
-      node->RotationOrder.Set(FbxEuler::eOrderZXY);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderZXY);
       break;
     case MTransformationMatrix::kXZY:
-      node->RotationOrder.Set(FbxEuler::eOrderXZY);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderXZY);
       break;
     case MTransformationMatrix::kYXZ:
-      node->RotationOrder.Set(FbxEuler::eOrderYXZ);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderYXZ);
       break;
     case MTransformationMatrix::kZYX:
-      node->RotationOrder.Set(FbxEuler::eOrderZYX);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderZYX);
       break;
 
     default:
-      node->RotationOrder.Set(FbxEuler::eOrderXYZ);
+      node->SetRotationOrder(fbxsdk::FbxNode::EPivotSet::eSourcePivot, FbxEuler::eOrderXYZ);
       break;
   }
   node->UpdatePivotsAndLimitsFromProperties();
