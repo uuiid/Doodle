@@ -292,23 +292,8 @@ struct SkeletonEncoderImpl : torch::nn::Module {
   // bones_pos: [B,3], parent_idx: [B], bones_dir_len optional
   torch::Tensor forward(const fbx_load_result& in_fbx_data) {
     // initial features: pos + (dir,len)
-    torch::Tensor feat;
-    if (in_fbx_data.bones_dir_len_.defined()) {
-      feat = torch::cat({in_fbx_data.bone_positions_, in_fbx_data.bones_dir_len_}, -1);
-    } else {
-      // Use relative to parent vector if parent exists
-      int B    = in_fbx_data.bone_positions_.size(0);
-      auto rel = torch::zeros({B, 3}, in_fbx_data.bone_positions_.options());
-      for (int i = 0; i < B; ++i) {
-        int p = in_fbx_data.bone_parents_[i].item<int>();
-        if (p >= 0)
-          rel[i] = in_fbx_data.bone_positions_[i] - in_fbx_data.bone_positions_[p];
-        else
-          rel[i] = in_fbx_data.bone_positions_[i];
-      }
-      feat = torch::cat({in_fbx_data.bone_positions_, rel}, -1);
-    }
-    auto h = torch::relu(embed->forward(feat));
+    torch::Tensor feat = torch::cat({in_fbx_data.bone_positions_, in_fbx_data.bones_dir_len_}, -1);
+    auto h             = torch::relu(embed->forward(feat));
     for (auto& l : layers) {
       h = l->forward(h, in_fbx_data.bone_parents_);
     }
