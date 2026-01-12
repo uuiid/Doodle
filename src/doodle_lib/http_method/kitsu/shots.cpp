@@ -22,7 +22,8 @@ struct shots_with_tasks_result {
 
   explicit shots_with_tasks_result(
       const entity& in_shot, const uuid& in_episode_id, const std::string& in_episode_name, const uuid& in_project_id,
-      const std::string& in_project_name, const uuid& in_sequence_id, const std::string& in_sequence_name
+      const std::string& in_project_name, const uuid& in_sequence_id, const std::string& in_sequence_name,
+      const entity_shot_extend& in_shot_extend
   )
       : uuid_id_(in_shot.uuid_id_),
         description_(in_shot.description_),
@@ -41,8 +42,8 @@ struct shots_with_tasks_result {
         nb_entities_out_(in_shot.nb_entities_out_),
         is_casting_standby_(in_shot.is_casting_standby_),
         entity_type_id_(in_shot.entity_type_id_),
-        frame_in_(0),
-        frame_out_(0),
+        frame_in_(in_shot_extend.frame_in_),
+        frame_out_(in_shot_extend.frame_out_),
         fps_(0) {}
 
   decltype(entity::uuid_id_) uuid_id_;
@@ -63,8 +64,8 @@ struct shots_with_tasks_result {
   decltype(entity::is_casting_standby_) is_casting_standby_;
   decltype(entity::entity_type_id_) entity_type_id_;
 
-  std::int32_t frame_in_;
-  std::int32_t frame_out_;
+  decltype(entity_shot_extend::frame_in_) frame_in_;
+  decltype(entity_shot_extend::frame_out_) frame_out_;
   std::int32_t fps_;
 
   struct task_t {
@@ -181,9 +182,10 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
       columns(
           object<entity>(true), object<task>(true), episode->*&entity::uuid_id_, episode->*&entity::name_,
           sequence->*&entity::uuid_id_, sequence->*&entity::name_, &assignees_table::person_id_, &project::uuid_id_,
-          &project::name_
+          &project::name_, object<entity_shot_extend>(true)
       ),
       from<entity>(), join<project>(on(c(&entity::project_id_) == c(&project::uuid_id_))),
+      left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
       join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
       join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
       left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
@@ -198,13 +200,14 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
 
            l_entity, l_task, l_episode_id, l_episode_name, l_sequence_id, l_sequence_name,
 
-           l_assignee_id, l_project_id, l_project_name
+           l_assignee_id, l_project_id, l_project_name, l_shot_extend
 
   ] : l_list) {
     if (!l_shots_ids.contains(l_entity.uuid_id_)) {
       l_ret.emplace_back(
           shots_with_tasks_result{
-              l_entity, l_episode_id, l_episode_name, l_project_id, l_project_name, l_sequence_id, l_sequence_name
+              l_entity, l_episode_id, l_episode_name, l_project_id, l_project_name, l_sequence_id, l_sequence_name,
+              l_shot_extend
           }
       );
       l_shots_ids.emplace(l_entity.uuid_id_, l_ret.size() - 1);

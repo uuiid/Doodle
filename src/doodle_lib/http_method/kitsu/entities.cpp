@@ -36,6 +36,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
     }
     l_res.update(*l_ext_ptr);
   }
+  if (entity_shot_extend::has_extend_data(l_json)) {
+    using namespace sqlite_orm;
+    auto l_ext_ptr = std::make_shared<entity_shot_extend>();
+    if (auto l_list_ext = l_sql.impl_->storage_any_.get_all<entity_shot_extend>(
+            where(c(&entity_shot_extend::entity_id_) == l_entt->uuid_id_)
+        );
+        !l_list_ext.empty()) {
+      *l_ext_ptr = l_list_ext.front();
+      l_json.get_to(*l_ext_ptr);
+      co_await l_sql.update(l_ext_ptr);
+    } else {
+      l_json.get_to(*l_ext_ptr);
+      l_ext_ptr->entity_id_ = l_entt->uuid_id_;
+      co_await l_sql.install(l_ext_ptr);
+    }
+    l_res.update(*l_ext_ptr);
+  }
 
   co_return in_handle->make_msg(l_res);
 }
