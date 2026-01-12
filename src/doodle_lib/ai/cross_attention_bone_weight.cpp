@@ -340,11 +340,10 @@ struct CrossAttentionImpl : torch::nn::Module {
     auto attn_out = mha->forward(q2, k2, v2);
     // attn_out is tuple (output, attn_weights)
     auto output   = std::get<0>(attn_out);  // [N,1,E]
-    auto attn_weights =
-        std::get<1>(attn_out);  // [N, B] ? shape: [batch*num_heads, tgt_len, src_len]?  C++ API may return [N, B]
-    // To get per-vertex weight distribution over bones, compute similarity Q.K^T normalized by softmax:
-    auto logits  = torch::mm(vertex_feats, bone_feats.t());  // [N, B]
-    auto weights = torch::softmax(logits, /*dim=*/1);        // sum over bones =1 for each vertex
+    // Use MHA output to compute logits (scheme 1): fuse vertex features with bone context first.
+    auto fused_v  = head_proj->forward(output.squeeze(1));  // [N,E]
+    auto logits   = torch::mm(fused_v, bone_feats.t());     // [N,B]
+    auto weights  = torch::softmax(logits, /*dim=*/1);      // per-vertex distribution over bones
     return weights;
   }
 };
@@ -355,6 +354,7 @@ struct SkinningModelImpl : torch::nn::Module {
   MeshEncoder mesh_enc{nullptr};
   SkeletonEncoder skel_enc{nullptr};
   CrossAttention cross_attn{nullptr};
+  torch::nn::Linear bone_proj{nullptr};
 
   SkinningModelImpl(
       int mesh_in_ch, const std::vector<int>& edge_out_channels, int trans_dim, int bone_in_dim, int bone_embed_dim,
@@ -363,9 +363,9 @@ struct SkinningModelImpl : torch::nn::Module {
     mesh_enc =
         register_module("mesh_enc", MeshEncoder(mesh_in_ch, edge_out_channels, trans_dim, nhead, /*num_layers*/ 2, k));
     skel_enc = register_module("skel_enc", SkeletonEncoder(bone_in_dim, bone_embed_dim, /*num_layers*/ 2));
-    // Ensure bone_embed_dim == trans_dim or project accordingly; we'll create a linear projection if needed
+    // Ensure bone_embed_dim == trans_dim; if not, add a learnable projection registered on the module.
     if (bone_embed_dim != trans_dim) {
-      // For simplicity we assume same; otherwise add linear projection in cross-attn flow
+      bone_proj = register_module("bone_proj", torch::nn::Linear(bone_embed_dim, trans_dim));
     }
     cross_attn = register_module("cross_attn", CrossAttention(trans_dim, nhead));
   }
@@ -376,12 +376,12 @@ struct SkinningModelImpl : torch::nn::Module {
   torch::Tensor forward(const fbx_load_result& in_fbx_data) {
     auto vfeat = mesh_enc->forward(in_fbx_data);  // [N, E]
     auto bfeat = skel_enc->forward(in_fbx_data);  // [B, E2]
-    // if dims mismatch, linear project
-    if (bfeat.size(1) != vfeat.size(1)) {
-      // add projection
-      auto proj = torch::nn::Linear(bfeat.size(1), vfeat.size(1));
-      bfeat     = proj->forward(bfeat);
+    // If dims mismatch, apply registered projection so parameters are trainable.
+    if (bone_proj) {
+      bfeat = bone_proj->forward(bfeat);
     }
+    // Safety: if still mismatched, fail fast (avoids silent wrong results).
+    DOODLE_CHICK(bfeat.size(1) == vfeat.size(1), "bone feature dim must match vertex feature dim");
     auto weights = cross_attn->forward(vfeat, bfeat);  // [N, B]
     return weights;
   }
