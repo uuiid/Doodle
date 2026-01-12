@@ -21,6 +21,9 @@ void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
   if (in_json.contains("image_size")) in_json.at("image_size").get_to(out_obj.size_);
   if (in_json.contains("only_upload")) in_json.at("only_upload").get_to(out_obj.only_upload_);
   if (in_json.contains("path")) in_json.at("path").get_to(out_obj.maya_file_);
+
+  if (in_json.contains("frame_in")) in_json.at("frame_in").get_to(out_obj.frame_in_);
+  if (in_json.contains("frame_out")) in_json.at("frame_out").get_to(out_obj.frame_out_);
 }
 // to json
 void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
@@ -30,6 +33,8 @@ void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
   in_json["camera_film_aperture"] = out_obj.film_aperture_;
   in_json["image_size"]           = out_obj.size_;
   in_json["only_upload"]          = out_obj.only_upload_;
+  in_json["frame_in"]             = out_obj.frame_in_;
+  in_json["frame_out"]            = out_obj.frame_out_;
 }
 
 boost::asio::awaitable<void> export_fbx_arg::run() {
@@ -41,7 +46,10 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     l_args.get_to(l_out_arg_);
     film_aperture_ = l_out_arg_.film_aperture_;
     size_          = l_out_arg_.size_;
+    frame_in_      = l_out_arg_.frame_in_;
+    frame_out_     = l_out_arg_.frame_out_;
   }
+  auto l_name_end = fmt::format("_{}-{}", frame_in_, frame_out_);
   auto l_root_dir = maya_file_.parent_path().parent_path();
   constexpr static std::array<std::string_view, 3> g_movie_ext{".mp4", ".mov", ".avi"};
   if (only_upload_) {
@@ -74,6 +82,14 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     } else {
       l_out_arg_.movie_file_.clear();
     }
+  }
+
+  for (auto& l_p : out_arg_.out_file_list) {
+    SPDLOG_LOGGER_INFO(logger_ptr_, "导出文件 {}", l_p);
+    DOODLE_CHICK(
+        l_p.stem().string().ends_with(l_name_end), "导出文件 {} 命名不符合规范，无法上传, 名称应以 {} 结尾", l_p,
+        l_name_end
+    );
   }
 
   co_await kitsu_client_->upload_shot_animation_maya(task_id_, maya_file_);

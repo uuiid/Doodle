@@ -2,6 +2,7 @@
 
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/core/global_function.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/logger/logger.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/core/doodle_lib.h>
@@ -16,6 +17,7 @@
 
 #include <filesystem>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 #include <memory>
 
 #ifdef fsin
@@ -95,8 +97,15 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
   film_aperture_     = l_arg.film_aperture_;
   size_              = l_arg.size_;
   create_play_blast_ = l_arg.create_play_blast_;
+  DOODLE_CHICK(MTime::uiUnit() == MTime::k25FPS, maya_enum::maya_error_t::fps_error, "帧率配置错误")
+  DOODLE_CHICK(
+      MAnimControl::minTime().value() != l_arg.frame_in_, maya_enum::maya_error_t::frame_in_out_error, "开始帧配置错误"
+  );
+  DOODLE_CHICK(
+      MAnimControl::maxTime().value() != l_arg.frame_out_, maya_enum::maya_error_t::frame_in_out_error, "结束帧配置错误"
+  );
 
-  l_ret              = true;
+  l_ret = true;
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
 
   maya_file_io::set_workspace(l_arg.get_file_path());

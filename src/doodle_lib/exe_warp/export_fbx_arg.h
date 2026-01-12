@@ -6,6 +6,7 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 
+#include <cstdint>
 #include <filesystem>
 
 namespace doodle {
@@ -21,6 +22,9 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   image_size size_{};
   FSys::path maya_file_{};
   uuid task_id_{};
+  std::int32_t frame_in_{};
+  std::int32_t frame_out_{};
+  
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 
   constexpr static std::string_view k_name{"export_fbx"};
@@ -29,18 +33,24 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
     std::double_t film_aperture_{};
     image_size size_{};
     FSys::path movie_file_{};
+    std::int32_t frame_in_{};
+    std::int32_t frame_out_{};
 
     // to json
     friend void to_json(nlohmann::json& j, const get_export_fbx_arg& p) {
       j["film_aperture"] = p.film_aperture_;
       j["image_size"]    = p.size_;
       j["movie_file"]    = p.movie_file_;
+      j["frame_in"]     = p.frame_in_;
+      j["frame_out"]    = p.frame_out_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, get_export_fbx_arg& p) {
       j.at("film_aperture").get_to(p.film_aperture_);
       j.at("image_size").get_to(p.size_);
       j.at("movie_file").get_to(p.movie_file_);
+      j.at("frame_in").get_to(p.frame_in_);
+      j.at("frame_out").get_to(p.frame_out_);
     }
   };
 
