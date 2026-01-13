@@ -39,5 +39,63 @@
 2. 运行受影响模块的测试（`build/Ninja_debug/bin/test_main.exe` 或对应 test preset）。
 3. 对于依赖变更，确保 `vcpkg.json` 与 overlays 一致，并在 CI/同事机器上复现一次 configure。 
 
+
+### 包含的AI模型
+
+#### cross_attention_bone_weight
+在3D动画的制作环节中, 绑定人物头部的模型权重基本上是非常一致的, 
+这时候我们可以训练一个ai模型, 用 头部的数据去推理最终的模型权重, 使用以下模型架构
+
+读取的清洗好的数据包含
+- 顶点位置
+- 顶点法线
+- 组成面的顶点id
+- 骨骼位置
+- 骨骼父子关系
+- 骨骼长度
+- 骨骼方向
+
+模型架构 整个模型使用 torch 作为基本库
+- Step 1: Mesh Encoder 
+使用 Mesh Topology Graph + KNN Graph 混合构图，用 EdgeConv/GAT 抽取局部拓扑特征，然后送入 Transformer
+
+输入特征: 
+- 顶点位置 (x,y,z)
+- 顶点法线
+- 网格拓扑连接性(面邻接)
+- 曲率
+- 邻域法线差（normal deviation）
+输出: 
+- 每个顶点一个 feature vector 例如 128~512 维
+
+优点: 
+点云模型不要求拓扑一致
+无论面数不同、拓扑不同、顺序不同都能处理
+
+- Step 2: Skeleton Encoder GNN  (使用 Tree-GNN 图模型结构)
+
+输入特征: 
+- 每个关节的位置 + 父子结构
+- 骨骼方向、长度
+- 层级 embedding  
+
+输出:   
+- 每根骨骼的 feature vector 例如 64~256 维
+
+优点: 
+能自适应骨骼数量不同
+
+能捕捉骨骼的父子关系 这是权重的核心
+
+- Step 3: Cross-attention 骨骼 weight 预测的关键
+典型做法: 
+- 每个顶点特征 attend to 每个骨骼特征: 
+- Attention(Q = vertex_feat, K/V = bone_feat)
+
+得到: 
+一个 N_verts x N_bones的 attention matrix
+通过 softmax 非常自然 → 就是 skin weight distribution  
+骨骼数量多少都不影响模型结构。
+
 ---
 如果这些说明中有任何不清楚或缺失的点（比如你想补充某个常用的调试命令或特定模块的开发流程），告诉我你想要增强的部分，我会把文档进一步收紧并合并到仓库。 
