@@ -289,4 +289,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_instance, delete_) {
+  person_.check_project_manager(project_id_);
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+  if (auto l_id = l_sql.impl_->storage_any_.select(
+          &project_status_automation_link::id_,
+          where(
+              c(&project_status_automation_link::project_id_) == project_id_ &&
+              c(&project_status_automation_link::status_automation_id_) == status_automation_id_
+          )
+      );
+      !l_id.empty()) {
+    co_await l_sql.remove<project_status_automation_link>(l_id.front());
+  }
+  auto l_prj = l_sql.get_by_uuid<project>(project_id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+}
 }  // namespace doodle::http
