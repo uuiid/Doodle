@@ -458,7 +458,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       // forward
       auto pred        = model->forward(l_data);  // [N,B]
       // ensure numeric stability
-      pred             = pred.clamp_min(1e-8);
+      // pred             = pred.clamp_min(1e-8);
       // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred
       auto target      = l_data.bone_weights_;
       // Safe normalization: some vertices may have all-zero weights; clamp denom to avoid NaNs.
