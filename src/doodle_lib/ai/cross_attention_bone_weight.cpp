@@ -6,6 +6,7 @@
 
 #include <ATen/core/TensorBody.h>
 #include <algorithm>
+#include <cmath>
 #include <c10/util/Load.h>
 #include <cstddef>
 #include <filesystem>
@@ -35,9 +36,12 @@ void fbx_load_result::compute_curvature() {
   auto neigh_acc = neighbor_idx_.accessor<int64_t, 2>();
   auto curv_acc  = curvature_.accessor<float, 1>();
 
+  const int64_t K = neighbor_idx_.size(1);
+
   for (int64_t i = 0; i < num_verts; ++i) {
     float curv_sum = 0.0f;
-    int64_t k      = topo_degree_[i].item<int64_t>();
+    const int64_t deg = static_cast<int64_t>(topo_degree_[i].item<float>());
+    const int64_t k   = std::min<int64_t>(deg, K);
     for (int64_t j = 0; j < k; ++j) {
       int64_t nbr_idx   = neigh_acc[i][j];
       // Compute angle between normals
@@ -452,14 +456,46 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       pred             = pred.clamp_min(1e-8);
       // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred
       auto target      = l_data.bone_weights_;
-      // target may contain zeros, add eps
-      auto pred_norm   = pred / pred.sum(1, true);
-      auto target_norm = target / target.sum(1, true);
+      // Safe normalization: some vertices may have all-zero weights; clamp denom to avoid NaNs.
       auto eps         = 1e-8;
+      auto pred_norm   = pred / pred.sum(1, true).clamp_min(eps);
+      auto target_norm = target / target.sum(1, true).clamp_min(eps);
       auto kl          = (target_norm * ((target_norm + eps).log() - (pred_norm + eps).log())).sum(1).mean();
       // also add L2 between pred and target
       auto mse         = torch::mse_loss(pred_norm, target_norm);
       auto loss        = kl + 0.5 * mse;
+
+      // Diagnostics (print occasionally to avoid spam)
+      if (epoch == 1 || epoch == 2 || epoch == 3 || (epoch % 10 == 0)) {
+        const auto pred_finite    = torch::isfinite(pred_norm).all().item<bool>();
+        const auto target_finite  = torch::isfinite(target_norm).all().item<bool>();
+        const auto target_min     = target.min().item<float>();
+        const auto target_max     = target.max().item<float>();
+        const auto target_row_sum = target.sum(1);
+        const auto tsum_min       = target_row_sum.min().item<float>();
+        const auto tsum_max       = target_row_sum.max().item<float>();
+        const auto tsum_mean      = target_row_sum.mean().item<float>();
+
+        const auto pred_max_mean  = std::get<0>(pred_norm.max(1)).mean().item<float>();
+        const auto pred_entropy   = (-(pred_norm * (pred_norm + eps).log()).sum(1)).mean().item<float>();
+
+        const auto v_abs_max      = l_data.vertices_.abs().max().item<float>();
+        const auto n_abs_max      = l_data.normals_.abs().max().item<float>();
+        const auto curv_min       = l_data.curvature_.min().item<float>();
+        const auto curv_max       = l_data.curvature_.max().item<float>();
+        const auto deg_min        = l_data.topo_degree_.min().item<float>();
+        const auto deg_max        = l_data.topo_degree_.max().item<float>();
+
+        SPDLOG_WARN(
+            "[epoch {}/{}] N={} B={} loss={} (kl={}, mse={}) finite(pred/target)={}/{} | target[min,max]=[{:.3g},{:.3g}] "
+            "target_row_sum[min,max,mean]=[{:.3g},{:.3g},{:.3g}] | pred[max_mean]={:.3g} pred[entropy]={:.3g} | "
+            "in: |v|_max={:.3g} |n|_max={:.3g} curv[min,max]=[{:.3g},{:.3g}] deg[min,max]=[{:.3g},{:.3g}]",
+            epoch, epochs, N, B, loss.item<double>(), kl.item<double>(), mse.item<double>(), pred_finite, target_finite,
+            target_min, target_max, tsum_min, tsum_max, tsum_mean, pred_max_mean, pred_entropy, v_abs_max, n_abs_max,
+            curv_min, curv_max, deg_min, deg_max
+        );
+      }
+
       optimizer.zero_grad();
       loss.backward();
       optimizer.step();
