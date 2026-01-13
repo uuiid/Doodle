@@ -7,8 +7,8 @@
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
-#include "core/http/http_function.h"
 
+#include "core/http/http_function.h"
 
 namespace doodle::http {
 // /api/auth/login
@@ -134,7 +134,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_entities_preview_files)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid entity_id_{};
-DOODLE_HTTP_FUN_END() 
+DOODLE_HTTP_FUN_END()
 // /api/actions/projects/{project_id}/task-types/{task_type_id}/assets/create-tasks
 DOODLE_HTTP_JWT_FUN(actions_create_tasks)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -646,6 +646,12 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(actions_tasks_create_review)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid task_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/data/projects/{project_id}/settings/status-automations/{status_automation_id}
+DOODLE_HTTP_JWT_FUN(data_project_settings_status_automations_instance)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid project_id_{};
+uuid status_automation_id_{};
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

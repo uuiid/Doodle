@@ -1173,6 +1173,7 @@ DOODLE_REMOVE_BY_ID(entity_link)
 DOODLE_REMOVE_BY_ID(playlist)
 DOODLE_REMOVE_BY_ID(playlist_shot)
 DOODLE_REMOVE_BY_ID(entity_shot_extend)
+DOODLE_REMOVE_BY_ID(project_status_automation_link)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
