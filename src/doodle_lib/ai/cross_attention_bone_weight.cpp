@@ -6,8 +6,8 @@
 
 #include <ATen/core/TensorBody.h>
 #include <algorithm>
-#include <cmath>
 #include <c10/util/Load.h>
+#include <cmath>
 #include <cstddef>
 #include <filesystem>
 #include <memory>
@@ -15,6 +15,7 @@
 #include <torch/torch.h>
 #include <torch/types.h>
 #include <vector>
+
 
 namespace doodle::ai {
 void fbx_load_result::compute_curvature() {
@@ -31,15 +32,15 @@ void fbx_load_result::compute_curvature() {
     build_face_adjacency(5);  // Using k=5 neighbors for curvature estimation
   }
 
-  auto vert_acc  = vertices_.accessor<float, 2>();
-  auto norm_acc  = normals_.accessor<float, 2>();
-  auto neigh_acc = neighbor_idx_.accessor<int64_t, 2>();
-  auto curv_acc  = curvature_.accessor<float, 1>();
+  auto vert_acc   = vertices_.accessor<float, 2>();
+  auto norm_acc   = normals_.accessor<float, 2>();
+  auto neigh_acc  = neighbor_idx_.accessor<int64_t, 2>();
+  auto curv_acc   = curvature_.accessor<float, 1>();
 
   const int64_t K = neighbor_idx_.size(1);
 
   for (int64_t i = 0; i < num_verts; ++i) {
-    float curv_sum = 0.0f;
+    float curv_sum    = 0.0f;
     const int64_t deg = static_cast<int64_t>(topo_degree_[i].item<float>());
     const int64_t k   = std::min<int64_t>(deg, K);
     for (int64_t j = 0; j < k; ++j) {
@@ -381,6 +382,10 @@ TORCH_MODULE(SkinningModel);
 std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
   std::vector<fbx_load_result> results;
   for (const auto& fbx_file : in_fbx_files) {
+    if (!FSys::exists(fbx_file)) {
+      DOODLE_LOG_ERROR("FBX file does not exist: {}", fbx_file.string());
+      continue;
+    }
     fbx_loader l_loader{fbx_file};
     results.push_back(l_loader.load_fbx());
   }
@@ -487,7 +492,8 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
         const auto deg_max        = l_data.topo_degree_.max().item<float>();
 
         SPDLOG_WARN(
-            "[epoch {}/{}] N={} B={} loss={} (kl={}, mse={}) finite(pred/target)={}/{} | target[min,max]=[{:.3g},{:.3g}] "
+            "[epoch {}/{}] N={} B={} loss={} (kl={}, mse={}) finite(pred/target)={}/{} | "
+            "target[min,max]=[{:.3g},{:.3g}] "
             "target_row_sum[min,max,mean]=[{:.3g},{:.3g},{:.3g}] | pred[max_mean]={:.3g} pred[entropy]={:.3g} | "
             "in: |v|_max={:.3g} |n|_max={:.3g} curv[min,max]=[{:.3g},{:.3g}] deg[min,max]=[{:.3g},{:.3g}]",
             epoch, epochs, N, B, loss.item<double>(), kl.item<double>(), mse.item<double>(), pred_finite, target_finite,
