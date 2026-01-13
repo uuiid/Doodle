@@ -1,11 +1,15 @@
 #include "load_fbx.h"
 
+#include "doodle_core/logger/logger.h"
+
 #include <boost/numeric/conversion/cast.hpp>
 
 #include <ATen/core/TensorBody.h>
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <fbxsdk/core/fbxmanager.h>
+#include <memory>
 #include <spdlog/spdlog.h>
 #include <vector>
 
@@ -28,7 +32,8 @@ struct event_timer {
 };
 }  // namespace
 
-fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger) {
+fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger)
+    : fbx_path_(in_fbx_path), logger_(in_logger) {
   if (!in_logger) logger_ = spdlog::default_logger_raw();
   event_timer::duration_type l_load_duration{};
   event_timer timer(&l_load_duration);
@@ -76,6 +81,56 @@ void fbx_loader::preprocessing() {
   if (!mesh_node_) throw_exception(doodle_error{"merge mesh err"});
   for (auto i = 0; i < l_mesh_nodes.Size(); i++) scene_->RemoveNode(l_mesh_nodes[i]);
   l_converter.Triangulate(mesh_node_->GetMesh(), true);
+}
+
+void write_test_fbx(
+    const std::shared_ptr<fbxsdk::FbxManager>& in_manager, const FSys::path& in_fbx_path, const fbx_load_result& in_data
+) {
+  auto l_path = in_fbx_path.parent_path() / fmt::format("{}_test.fbx", in_fbx_path.stem().string());
+  DOODLE_LOG_WARN("写出测试文件 {}", l_path);
+  // 创建新场景, 并将骨骼数据写入
+  auto l_scene = fbxsdk::FbxScene::Create(in_manager.get(), "testScene");
+  auto l_root  = l_scene->GetRootNode();
+  // 创建骨骼节点
+  std::vector<fbxsdk::FbxNode*> l_bone_nodes;
+  auto l_bone_count = in_data.bone_positions_.size(0);
+  for (auto i = 0; i < l_bone_count; i++) {
+    auto l_bone_node = fbxsdk::FbxNode::Create(l_scene, fmt::format("bone_{}", i).c_str());
+    auto l_bone_pos  = in_data.bone_positions_[i];
+    l_bone_node->LclTranslation.Set(
+        fbxsdk::FbxVector4(
+            boost::numeric_cast<double>(l_bone_pos[0].item<float>()),
+            boost::numeric_cast<double>(l_bone_pos[1].item<float>()),
+            boost::numeric_cast<double>(l_bone_pos[2].item<float>())
+        )
+    );
+    l_bone_nodes.push_back(l_bone_node);
+
+    auto l_sk_attr = fbxsdk::FbxSkeleton::Create(l_scene, fmt::format("skeleton_{}", i).c_str());
+    l_sk_attr->SetSkeletonType(fbxsdk::FbxSkeleton::eLimbNode);
+    l_bone_node->SetNodeAttribute(l_sk_attr);
+
+    l_root->AddChild(l_bone_node);
+  }
+  // 创建骨骼层级关系
+  for (auto i = 0; i < l_bone_count; i++) {
+    auto l_parent_index = in_data.bone_parents_[i].item<std::int64_t>();
+    if (l_parent_index >= 0 && l_parent_index < l_bone_count) {
+      l_bone_nodes[boost::numeric_cast<std::size_t>(l_parent_index)]->AddChild(
+          l_bone_nodes[boost::numeric_cast<std::size_t>(i)]
+      );
+    }
+  }
+  //  导出节点
+  auto l_exporter = std::shared_ptr<fbxsdk::FbxExporter>(
+      fbxsdk::FbxExporter::Create(in_manager.get(), ""), [](fbxsdk::FbxExporter* in_ptr) { in_ptr->Destroy(); }
+  );
+  if (!l_exporter->Initialize(
+          l_path.generic_string().c_str(),
+          in_manager->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)"), in_manager->GetIOSettings()
+      ))
+    throw_exception(doodle_error{"fbx export err {}", l_exporter->GetStatus().GetErrorString()});
+  l_exporter->Export(l_scene);
 }
 
 fbx_load_result fbx_loader::load_fbx() {
@@ -200,8 +255,8 @@ fbx_load_result fbx_loader::load_fbx() {
   // );
 
   timer.stop();
-
   SPDLOG_LOGGER_WARN(logger_, "读取fbx文件用时 {:%T}", l_load_duration);
+  // write_test_fbx(manager_, fbx_path_, l_result);
   return l_result;
 }
 
