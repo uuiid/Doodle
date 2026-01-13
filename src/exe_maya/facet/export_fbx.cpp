@@ -98,12 +98,17 @@ bool export_fbx_facet::post(const nlohmann::json& in_argh) {
   size_              = l_arg.size_;
   create_play_blast_ = l_arg.create_play_blast_;
   DOODLE_CHICK(MTime::uiUnit() == MTime::k25FPS, maya_enum::maya_error_t::fps_error, "帧率配置错误")
-  DOODLE_CHICK(
-      MAnimControl::minTime().value() != l_arg.frame_in_, maya_enum::maya_error_t::frame_in_out_error, "开始帧配置错误"
-  );
-  DOODLE_CHICK(
-      MAnimControl::maxTime().value() != l_arg.frame_out_, maya_enum::maya_error_t::frame_in_out_error, "结束帧配置错误"
-  );
+  // 注意. 这个是外包的临时解决方案. 以后要改成必须检查
+  if (l_arg.frame_in_)
+    DOODLE_CHICK(
+        MAnimControl::minTime().value() != l_arg.frame_in_, maya_enum::maya_error_t::frame_in_out_error,
+        "开始帧配置错误"
+    );
+  if (l_arg.frame_out_)
+    DOODLE_CHICK(
+        MAnimControl::maxTime().value() != l_arg.frame_out_, maya_enum::maya_error_t::frame_in_out_error,
+        "结束帧配置错误"
+    );
 
   l_ret = true;
   maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
