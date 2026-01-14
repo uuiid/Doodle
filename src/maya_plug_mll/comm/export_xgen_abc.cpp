@@ -108,7 +108,6 @@ class xgen_alembic_out {
     std::vector<Alembic::Abc::V3f> points_{};
     std::vector<std::float_t> widths_{};
     std::vector<std::float_t> knots_{};
-    bool use_const_width_{true};
   };
 
   curve_data curve_data_{};
@@ -210,9 +209,6 @@ class xgen_alembic_out {
     bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
     if (!bIsSpline) return;
     if (!init_) {
-      // curve_data_.use_const_width_ |= in_cache->get(PrimitiveCache::ConstWidth);
-      if (curve_data_.use_const_width_) curve_data_.widths_.front() = in_cache->get(PrimitiveCache::ConstantWidth);
-
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
       for (auto i = 0; i < l_num_samples; i++) {
@@ -227,6 +223,15 @@ class xgen_alembic_out {
             in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + curve_data_.knots_.size()
         );
         curve_data_.vertices_.reserve(l_num_size + curve_data_.vertices_.size());
+        // 获取宽度 width
+        curve_data_.widths_.reserve(l_num_size + curve_data_.widths_.size());
+        if (auto l_width_size = in_cache->getSize(PrimitiveCache::Widths); l_width_size > 0) {
+          auto l_width = in_cache->get(PrimitiveCache::Widths);
+          for (auto z = 0; z < l_num_size; ++z) curve_data_.widths_.emplace_back(l_width[z]);
+        } else {
+          auto l_width = in_cache->get(PrimitiveCache::ConstantWidth);
+          for (auto z = 0; z < l_num_size; ++z) curve_data_.widths_.emplace_back(l_width);
+        }
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
@@ -267,10 +272,7 @@ class xgen_alembic_out {
       l_curve_sample.setCurvesNumVertices(curve_data_.vertices_);
       l_curve_sample.setPositions(curve_data_.points_);
       l_curve_sample.setWidths(
-          Alembic::AbcGeom::OFloatGeomParam::Sample{
-              curve_data_.widths_,
-              curve_data_.use_const_width_ ? Alembic::AbcGeom::kConstantScope : Alembic::AbcGeom::kVertexScope
-          }
+          Alembic::AbcGeom::OFloatGeomParam::Sample{curve_data_.widths_, Alembic::AbcGeom::kVertexScope}
       );
       l_curve_sample.setKnots(curve_data_.knots_);
       init_ = true;
