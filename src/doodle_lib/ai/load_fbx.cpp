@@ -135,8 +135,6 @@ void write_test_fbx(
 
 fbx_load_result fbx_loader::load_fbx() {
   fbx_load_result l_result{};
-  event_timer::duration_type l_load_duration{};
-  event_timer timer(&l_load_duration);
 
   auto* l_vert       = mesh_->GetControlPoints();
   auto l_vert_count  = mesh_->GetControlPointsCount();
@@ -254,8 +252,6 @@ fbx_load_result fbx_loader::load_fbx() {
   //     l_bone_positions, l_faces, l_bone_weights, l_bone_parents
   // );
 
-  timer.stop();
-  SPDLOG_LOGGER_WARN(logger_, "读取fbx文件用时 {:%T}", l_load_duration);
   // write_test_fbx(manager_, fbx_path_, l_result);
   return l_result;
 }
