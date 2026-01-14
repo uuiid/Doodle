@@ -655,8 +655,11 @@ void cross_attention_bone_weight::predict_by_fbx(
 
   // Forward
   auto pred_weights = pimpl_->model_->forward(l_data);  // [N,B]
-  pred_weights      = pred_weights.clamp_min(1e-8);
+  // pred_weights      = pred_weights.clamp_min(1e-8);
   // Normalize
-  pred_weights      = pred_weights / pred_weights.sum(1, true);
+  // pred_weights      = pred_weights / pred_weights.sum(1, true);
+  // Move back to CPU
+  pred_weights      = pred_weights.to(torch::kCPU);
+  l_loader.write_weights_to_fbx(pred_weights, out_fbx_path);
 }
 }  // namespace doodle::ai
