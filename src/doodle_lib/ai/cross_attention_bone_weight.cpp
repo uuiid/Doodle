@@ -15,6 +15,7 @@
 #include <spdlog/spdlog.h>
 #include <torch/nn/modules/container/sequential.h>
 #include <torch/nn/modules/linear.h>
+#include <torch/optim/schedulers/step_lr.h>
 #include <torch/torch.h>
 #include <torch/types.h>
 #include <tuple>
@@ -569,6 +570,8 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
 
   torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(lr));
   // scheduler optional
+  // 在15轮是学习律降到原先的0.5倍
+  torch::optim::StepLR scheduler(optimizer, /*step_size=*/15, /*gamma=*/0.5);
 
   // Training loop: simple epoch over samples (batch_size=1)
   for (int epoch = 1; epoch <= epochs; ++epoch) {
@@ -608,7 +611,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       count++;
     }
     SPDLOG_WARN("[epoch {}/{}] avg loss: {}", epoch, epochs, (epoch_loss / std::max(1, count)));
-
+    scheduler.step();
     // optional checkpoint
     if (epoch % 10 == 0) {
       auto l_file_name = in_output_path.parent_path() / fmt::format("{}_epoch_{}.pt", in_output_path.stem(), epoch);
