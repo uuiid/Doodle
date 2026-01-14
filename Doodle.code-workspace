@@ -190,6 +190,16 @@
 		],
 		"sqliteViewer.maxFileSize": 500,
 		"powershell.cwd": "doodleMain",
-		"C_Cpp.intelliSenseEngine": "disabled"
+		"C_Cpp.intelliSenseEngine": "disabled",
+		"[python]": {
+			"diffEditor.ignoreTrimWhitespace": false,
+			"editor.defaultColorDecorators": "never",
+			"gitlens.codeLens.symbolScopes": [
+				"!Module"
+			],
+			"editor.formatOnType": true,
+			"editor.wordBasedSuggestions": "off",
+			"editor.defaultFormatter": "ms-python.black-formatter"
+		}
 	}
 }
