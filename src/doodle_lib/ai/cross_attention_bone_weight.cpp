@@ -5,6 +5,7 @@
 #include <doodle_lib/ai/load_fbx.h>
 
 #include <ATen/core/TensorBody.h>
+#include <ATen/ops/leaky_relu.h>
 #include <algorithm>
 #include <c10/util/Load.h>
 #include <cmath>
@@ -12,10 +13,11 @@
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
+#include <torch/nn/modules/container/sequential.h>
+#include <torch/nn/modules/linear.h>
 #include <torch/torch.h>
 #include <torch/types.h>
 #include <vector>
-
 
 namespace doodle::ai {
 void fbx_load_result::compute_curvature() {
@@ -196,39 +198,92 @@ TORCH_MODULE(EdgeConv);
 
 // Simple Tree-GNN layer: propagate messages parent->child and child->parent (two directions)
 struct TreeGNNLayerImpl : torch::nn::Module {
-  torch::nn::Linear msg_mlp{nullptr};
-  TreeGNNLayerImpl(int in_features, int out_features) {
-    msg_mlp = register_module("msg_mlp", torch::nn::Linear(in_features * 2, out_features));
+  // 子->父 消息mlp
+  torch::nn::Sequential msg_mlp_child_to_parent{nullptr};
+  // 父->子 消息mlp
+  torch::nn::Sequential msg_mlp_parent_to_child{nullptr};
+  // 注意力层
+  torch::nn::Linear attention{nullptr};
+  // 归一化层
+  torch::nn::LayerNorm layer_norm{nullptr};
+  // 残差投影层
+  torch::nn::Linear residual_proj{nullptr};
+
+  std::int64_t out_features;
+
+  TreeGNNLayerImpl(int in_features, int out_features, std::int64_t hidden_features = 64) {
+    this->out_features = out_features;
+    msg_mlp_child_to_parent = register_module(
+        "msg_mlp_child_to_parent",  //
+        torch::nn::Sequential(//
+            torch::nn::Linear(in_features * 2, hidden_features),//
+            torch::nn::ReLU(),//
+            torch::nn::Dropout(0.1),//
+            torch::nn::Linear(hidden_features, out_features)//
+        )
+    );
+    msg_mlp_parent_to_child = register_module(
+        "msg_mlp_parent_to_child",  //
+        torch::nn::Sequential(//
+            torch::nn::Linear(in_features * 2, hidden_features),//
+            torch::nn::ReLU(),//
+            torch::nn::Dropout(0.1),//
+            torch::nn::Linear(hidden_features, out_features)//
+        )
+    );
+    attention  = register_module("attention", torch::nn::Linear(in_features * 2, 1));
+    layer_norm = register_module(
+        "layer_norm",
+        torch::nn::LayerNorm(
+            torch::nn::LayerNormOptions(std::vector<std::ptrdiff_t>{static_cast<std::ptrdiff_t>(out_features)})
+        )
+    );
+    if (in_features != out_features) {
+      residual_proj = register_module("residual_proj", torch::nn::Linear(in_features, out_features));
+    }
   }
 
   // bone_feats: [B, C]; parent_idx: [B] (-1 for root)
   torch::Tensor forward(const torch::Tensor& bone_feats, const torch::Tensor& parent_idx) {
-    int B       = bone_feats.size(0);
-    int C       = bone_feats.size(1);
-    auto device = bone_feats.device();
+    int B                    = bone_feats.size(0);
+    int C                    = bone_feats.size(1);
 
-    auto out    = bone_feats.clone();
-    // child->parent aggregation
-    for (int i = 0; i < B; ++i) {
-      int p = parent_idx[i].item<int>();
-      if (p >= 0) {
-        auto child_feat  = bone_feats[i];
-        auto parent_feat = bone_feats[p];
-        auto msg         = torch::relu(msg_mlp->forward(torch::cat({child_feat, parent_feat})));
-        out[p] += msg;
-      }
+    auto out                 = torch::zeros({B, out_features}, bone_feats.options());
+
+    auto l_child_indices     = (parent_idx >= 0).nonzero().squeeze(1);
+    auto l_parent_indices    = parent_idx.index_select(0, l_child_indices);
+    auto l_child_feats       = bone_feats.index_select(0, l_child_indices);
+    auto l_parent_feats      = bone_feats.index_select(0, l_parent_indices);
+    // 计算注意力权重
+    auto l_attention_scores  = torch::leaky_relu(attention->forward(torch::cat({l_child_feats, l_parent_feats}, 1)));
+    // 注意：这里不能用对所有边的全局 softmax；那会把不同 parent 的边混在一起归一化。
+    // 先用 sigmoid 做 gating（后面再按 parent 的度数做均值归一），可显著抑制数值爆炸。
+    auto l_attention_weights = torch::sigmoid(l_attention_scores);
+    // 批量消息计算与聚合
+    auto l_messages_child_to_parent = msg_mlp_child_to_parent->forward(torch::cat({l_child_feats, l_parent_feats}, 1));
+    out.scatter_add_(
+        0, l_parent_indices.unsqueeze(1).expand({-1, out_features}), (l_messages_child_to_parent * l_attention_weights)
+    );
+
+    auto l_messages_parent_to_child = msg_mlp_parent_to_child->forward(torch::cat({l_parent_feats, l_child_feats}, 1));
+    out.scatter_add_(0, l_child_indices.unsqueeze(1).expand({-1, out_features}), l_messages_parent_to_child);
+    // 归一化
+
+    // 关键修复：原实现用 unique_consecutive(parent_idx) 统计度数是错误的（parent_idx 未排序，且会遗漏）。
+    // 更严重的是：很多节点 degree=0 时除以 1e-6，相当于把 out 放大 1e6，直接导致 bone_feats 出现 1e3~1e4 范数 outlier。
+    auto l_degree_map = torch::zeros({B}, bone_feats.options());
+    auto ones         = torch::ones({l_parent_indices.size(0)}, bone_feats.options());
+    l_degree_map.scatter_add_(0, l_parent_indices, ones);
+    auto denom = l_degree_map.clamp_min(1.0).unsqueeze(1);  // [B,1]
+    out        = out / denom;
+
+    out        = layer_norm->forward(out);
+    // 残差连接
+    if (residual_proj) {
+      out = out + residual_proj->forward(bone_feats);
+    } else {
+      out = out + bone_feats;
     }
-    // parent->child propagation
-    for (int i = 0; i < B; ++i) {
-      int p = parent_idx[i].item<int>();
-      if (p >= 0) {
-        auto child_feat  = bone_feats[i];
-        auto parent_feat = bone_feats[p];
-        auto msg         = torch::relu(msg_mlp->forward(torch::cat({parent_feat, child_feat})));
-        out[i] += msg;
-      }
-    }
-    // optional normalization
     return torch::relu(out);
   }
 };
