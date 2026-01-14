@@ -7,6 +7,7 @@
 #include <ATen/core/TensorBody.h>
 #include <ATen/ops/leaky_relu.h>
 #include <algorithm>
+#include <c10/core/Device.h>
 #include <c10/util/Load.h>
 #include <cmath>
 #include <cstddef>
@@ -521,27 +522,7 @@ class cross_attention_bone_weight::impl {
  public:
   impl() = default;
   SkinningModel model_{nullptr};
-};
 
-std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
-    const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
-) {
-  if (auto l_parent = in_output_path.parent_path(); !FSys::exists(l_parent)) {
-    FSys::create_directories(l_parent);
-  }
-  torch::manual_seed(42);
-  torch::Device device(torch::kCPU);
-  if (torch::cuda::is_available()) {
-    SPDLOG_WARN("CUDA available. Using GPU.");
-    device = torch::Device(torch::kCUDA);
-  } else {
-    SPDLOG_WARN("Using CPU.");
-  }
-
-  DOODLE_CHICK(!in_fbx_files.empty(), "No input FBX files provided for training.");
-  auto l_fbx_data           = load_fbx_files(in_fbx_files);
-
-  auto l_ret                = std::make_shared<cross_attention_bone_weight>();
   int epochs                = 250;
   int batch_size            = 1;
   float lr                  = 1e-3;
@@ -555,27 +536,58 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
   int bone_embed_dim        = 128;
   int nhead                 = 8;
+  torch::Device device_{torch::kCPU};
+  void create_model(const torch::Device& device) {
+    model_  = SkinningModel{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
+    device_ = device;
+    model_->to(device_);
+  }
+  void create_model() {
+    model_ = SkinningModel{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
+
+    if (torch::cuda::is_available()) {
+      SPDLOG_WARN("CUDA available. Using GPU.");
+      device_ = torch::Device(torch::kCUDA);
+    } else {
+      SPDLOG_WARN("Using CPU.");
+    }
+    model_->to(device_);
+  }
+};
+
+std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
+    const std::vector<FSys::path>& in_fbx_files, const FSys::path& in_output_path
+) {
+  if (auto l_parent = in_output_path.parent_path(); !FSys::exists(l_parent)) {
+    FSys::create_directories(l_parent);
+  }
+  torch::manual_seed(42);
+
+  DOODLE_CHICK(!in_fbx_files.empty(), "No input FBX files provided for training.");
+  auto l_fbx_data = load_fbx_files(in_fbx_files);
+
+  auto l_ret      = std::make_shared<cross_attention_bone_weight>();
+  l_ret->pimpl_   = std::make_shared<impl>();
+
   for (auto& l_data : l_fbx_data) {
-    l_data.build_face_adjacency(k);
+    l_data.build_face_adjacency(l_ret->pimpl_->k);
     l_data.compute_curvature();
     l_data.normalize_inputs();
     l_data.compute_bones_dir_len();
     // Move to device
-    l_data.to(device);
+    l_data.to(l_ret->pimpl_->device_);
   }
-
   // Create model
-  SkinningModel model{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
-  model->to(device);
+  l_ret->pimpl_->create_model();
 
-  torch::optim::Adam optimizer(model->parameters(), torch::optim::AdamOptions(lr));
+  torch::optim::Adam optimizer(l_ret->pimpl_->model_->parameters(), torch::optim::AdamOptions(l_ret->pimpl_->lr));
   // scheduler optional
   // 在15轮是学习律降到原先的0.5倍
   torch::optim::StepLR scheduler(optimizer, /*step_size=*/15, /*gamma=*/0.5);
 
   // Training loop: simple epoch over samples (batch_size=1)
-  for (int epoch = 1; epoch <= epochs; ++epoch) {
-    model->train();
+  for (int epoch = 1; epoch <= l_ret->pimpl_->epochs; ++epoch) {
+    l_ret->pimpl_->model_->train();
     double epoch_loss = 0.0;
     int count         = 0;
     for (auto& l_data : l_fbx_data) {
@@ -583,7 +595,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       auto N           = l_data.vertices_.size(0);
       auto B           = l_data.bone_positions_.size(0);
       // forward
-      auto pred        = model->forward(l_data);  // [N,B]
+      auto pred        = l_ret->pimpl_->model_->forward(l_data);  // [N,B]
       // ensure numeric stability
       // pred             = pred.clamp_min(1e-8);
       // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred
@@ -602,7 +614,10 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
 
       // Diagnostics (print occasionally to avoid spam)
       if (epoch <= 3 || (epoch % 10 == 0)) {
-        print_log(model, l_data, pred, target, loss, kl, mse, pred_norm, target_norm, eps, N, B, epoch, epochs);
+        print_log(
+            l_ret->pimpl_->model_, l_data, pred, target, loss, kl, mse, pred_norm, target_norm, eps, N, B, epoch,
+            l_ret->pimpl_->epochs
+        );
       }
 
       optimizer.step();
@@ -610,25 +625,24 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       epoch_loss += loss.item<double>();
       count++;
     }
-    SPDLOG_WARN("[epoch {}/{}] avg loss: {}", epoch, epochs, (epoch_loss / std::max(1, count)));
+    SPDLOG_WARN("[epoch {}/{}] avg loss: {}", epoch, l_ret->pimpl_->epochs, (epoch_loss / std::max(1, count)));
     scheduler.step();
     // optional checkpoint
     if (epoch % 10 == 0) {
       auto l_file_name = in_output_path.parent_path() / fmt::format("{}_epoch_{}.pt", in_output_path.stem(), epoch);
-      torch::save(model, l_file_name.generic_string());
+      torch::save(l_ret->pimpl_->model_, l_file_name.generic_string());
       SPDLOG_WARN("Saved checkpoint: {}", l_file_name);
     }
   }
 
   // final save
-  torch::save(model, in_output_path.generic_string());
-  SPDLOG_WARN("Saved final model: {}", in_output_path);
-  l_ret->pimpl_->model_ = model;
+  torch::save(l_ret->pimpl_->model_, in_output_path.generic_string());
   return l_ret;
 }
 
 void cross_attention_bone_weight::load_model(const FSys::path& in_model_path) {
   pimpl_ = std::make_shared<impl>();
+  pimpl_->create_model();
   torch::load(pimpl_->model_, in_model_path.generic_string());
 }
 
@@ -644,13 +658,7 @@ void cross_attention_bone_weight::predict_by_fbx(
   l_data.normalize_inputs();
   l_data.compute_bones_dir_len();
 
-  // Move to device
-  torch::Device device(torch::kCPU);
-  if (torch::cuda::is_available()) {
-    device = torch::Device(torch::kCUDA);
-  }
-  l_data.to(device);
-  pimpl_->model_->to(device);
+  l_data.to(pimpl_->device_);
   pimpl_->model_->eval();
 
   // Forward
