@@ -287,6 +287,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       .created_by_     = person_.person_.uuid_id_
   });
   co_await l_sql.install(l_shot);
+  auto l_shot_extend =
+      std::make_shared<entity_shot_extend>(entity_shot_extend{.entity_id_ = l_shot->uuid_id_, .frame_in_ = 1001});
+  co_await l_sql.install(l_shot_extend);
   socket_io::broadcast(
       "shot:new",
       nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"episode_id", l_args.sequence_id_}, {"project_id", project_id_}}
