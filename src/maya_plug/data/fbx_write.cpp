@@ -118,6 +118,8 @@ FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
 }
 
 void fbx_node::build_node_transform(MDagPath in_path) const {
+  DOODLE_CHICK(!get_node_name(in_path).ends_with("rig1"), "不支持导出rig1根节点");
+  
   MStatus l_status{};
   node->SetRotationActive(true);
   MFnTransform const l_transform{in_path};
