@@ -16,6 +16,7 @@
 
 #include "core/http/http_function.h"
 #include <spdlog/spdlog.h>
+#include <vector>
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities_preview_files::get(
@@ -584,13 +585,9 @@ struct playlist_shot_t : playlist {
   }
 };
 
-boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_instance::get(
-    session_data_ptr in_handle
-) {
-  person_.check_project_access(project_id_);
+auto get_playlist_shot_entity(const playlist& in_playlist) {
   auto l_sql                 = g_ctx().get<sqlite_database>();
-  auto l_playlist            = l_sql.get_by_uuid<playlist>(playlist_id_);
-  const auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
+  const auto l_playlist_shot = l_sql.get_playlist_shot_entity(in_playlist.uuid_id_);
   std::vector<uuid> l_entity_ids{};
   std::map<uuid, const playlist_shot*> l_playlist_shot_map{};
   l_entity_ids.reserve(l_playlist_shot.size());
@@ -598,7 +595,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
     l_entity_ids.emplace_back(i.entity_id_);
     l_playlist_shot_map.emplace(i.entity_id_, &i);
   }
-  playlist_shot_t l_ret{l_playlist};
+  playlist_shot_t l_ret{in_playlist};
   std::map<uuid, std::size_t> l_entity_id_to_index{};
 
   for (std::size_t i = 0; i < l_playlist_shot.size(); ++i) {
@@ -623,7 +620,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
        )) {
     DOODLE_CHICK(
         l_playlist_shot_map.contains(l_entity_id),
-        fmt::format("Preview file's entity {} is not in playlist {}", l_entity_id, playlist_id_)
+        fmt::format("Preview file's entity {} is not in playlist {}", l_entity_id, in_playlist.uuid_id_)
     );
     l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id))
         .preview_files_[l_task_type_id]
@@ -632,8 +629,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
       l_ret.shot_.at(l_entity_id_to_index.at(l_entity_id)).update(l_preview_file);
     }
   }
+  return l_ret;
+}
 
-  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
+boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_instance::get(
+    session_data_ptr in_handle
+) {
+  person_.check_project_access(project_id_);
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
+  co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(l_playlist));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_instance::put(session_data_ptr in_handle) {
   auto l_sql      = g_ctx().get<sqlite_database>();
@@ -702,5 +707,76 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
   );
   co_await l_sql.remove<playlist_shot>(shot_id_);
   co_return in_handle->make_msg_204();
+}
+namespace {
+struct get_sequence_shots_preview_t : boost::less_than_comparable<get_sequence_shots_preview_t> {
+  uuid shot_id_;
+  preview_file preview_;
+  std::string name_;
+  explicit get_sequence_shots_preview_t(
+      const uuid& in_shot_id, const preview_file& in_preview, const std::string& in_name
+  )
+      : shot_id_(in_shot_id), preview_(in_preview), name_(in_name) {}
+
+  bool operator<(const get_sequence_shots_preview_t& other) const { return name_ < other.name_; }
+  bool operator==(const get_sequence_shots_preview_t& other) const { return name_ == other.name_; }
+};
+auto get_sequence_shots_preview(const uuid& in_sequence_id) {
+  auto l_sql = g_ctx().get<sqlite_database>();
+  using namespace sqlite_orm;
+
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  constexpr auto episode  = "episode"_alias.for_<entity>();
+  auto l_shots            = l_sql.impl_->storage_any_.select(
+      columns(object<preview_file>(true), &entity::uuid_id_, &entity::name_), from<preview_file>(),
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
+      where(
+          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
+          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
+           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
+      ),
+      order_by(&preview_file::created_at_).desc()
+  );
+
+  std::set<uuid> l_set;
+  std::vector<get_sequence_shots_preview_t> l_result;
+
+  for (auto&& [l_preview_file, l_entity_id, l_entity_name] : l_shots) {
+    if (!l_set.contains(l_entity_id)) {
+      l_set.emplace(l_entity_id);
+      l_result.push_back(get_sequence_shots_preview_t{l_entity_id, l_preview_file, l_entity_name});
+    }
+  }
+
+  std::sort(l_result.begin(), l_result.end());
+
+  return l_result;
+}
+}  // namespace
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, post) {
+  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_sequence = l_sql.get_by_uuid<entity>(sequence_id_);
+  person_.check_project_access(l_sequence.project_id_);
+  auto l_playlist         = std::make_shared<playlist>();
+  l_playlist->name_       = fmt::format("Review Playlist - {}", l_sequence.name_);
+  l_playlist->project_id_ = l_sequence.project_id_;
+  l_playlist->for_entity_ = "shot";
+  co_await l_sql.install(l_playlist);
+  auto l_playlist_shots = std::make_shared<std::vector<playlist_shot>>();
+  for (auto&& l_preview_file : get_sequence_shots_preview(sequence_id_)) {
+    l_playlist_shots->push_back(
+        playlist_shot{
+            .playlist_id_ = l_playlist->uuid_id_,
+            .entity_id_   = l_preview_file.shot_id_,
+            .preview_id_  = l_preview_file.preview_.uuid_id_,
+            .order_index_ = static_cast<std::int32_t>(l_playlist_shots->size() * 100)
+        }
+    );
+  }
+  co_await l_sql.install_range(l_playlist_shots);
+  co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(*l_playlist));
 }
 }  // namespace doodle::http

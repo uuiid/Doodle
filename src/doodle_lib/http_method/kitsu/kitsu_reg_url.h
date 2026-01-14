@@ -601,6 +601,12 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid playlist_id_{};
 uuid shot_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/sequences/{sequence_id}/create-review/playlists
+DOODLE_HTTP_JWT_FUN(actions_sequences_create_review_playlists)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid sequence_id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/actions/playlists/{playlist_id}/preview-files/{preview_file_id}/create-review
 DOODLE_HTTP_JWT_FUN(actions_playlists_preview_files_create_review)
 DOODLE_HTTP_FUN_OVERRIDE(post)

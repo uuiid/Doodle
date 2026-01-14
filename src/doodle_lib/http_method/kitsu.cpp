@@ -249,7 +249,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_tasks_assets_update_ue>("/api/actions/tasks/{}/assets/update/ue"_url(&actions_tasks_assets_update_ue::task_id_))
       .reg_t<data_project_settings_status_automations_instance>("/api/data/projects/{}/settings/status-automations/{}"_url(
         &data_project_settings_status_automations_instance::project_id_, &data_project_settings_status_automations_instance::status_automation_id_
-    ))
+      ))
+      .reg_t<actions_sequences_create_review_playlists>("/api/actions/sequences/{}/create-review/playlists"_url(
+        &actions_sequences_create_review_playlists::sequence_id_
+      ))
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
