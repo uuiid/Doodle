@@ -2,6 +2,7 @@
 // Created by TD on 25-7-1.
 //
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/bcrypt/bcrypt.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -15,39 +16,17 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/seed_email.h>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
+
 #include <cache.hpp>
 #include <cache_policy.hpp>
 #include <lru_cache_policy.hpp>
+#include <map>
 #include <string>
+
 namespace doodle::http {
-struct auth_reset_password_cache {
-  template <typename Key, typename Value>
-  using lru_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::LRUCachePolicy>;
-
-  struct cache_value {
-    std::string token_;
-    chrono::sys_time_pos create_time_{};
-  };
-
-  using cache_type = lru_cache_t<std::string, cache_value>;
-  cache_type cache_;
-
- public:
-  auth_reset_password_cache() : cache_(1024) {}
-
-  void set(const std::string& id, const std::string& in_token) {
-    cache_.Put(id, cache_value{in_token, std::chrono::system_clock::now()});
-  }
-
-  std::optional<std::string> get(const std::string& id) {
-    if (auto l_value = cache_.TryGet(id);
-        l_value.second && l_value.first->create_time_ + 2h > std::chrono::system_clock::now()) {
-      return l_value.first->token_;
-    }
-    return std::nullopt;
-  }
-  void remove(const std::string& id) { cache_.Remove(id); }
-};
 
 namespace {
 std::string generate_reset_token() {
@@ -93,9 +72,37 @@ struct auth_reset_password_put_arg {
   }
 };
 }  // namespace
+class auth_reset_password::impl {
+  struct cache_value {
+    std::string token_;
+    chrono::sys_time_pos create_time_{};
+  };
+
+ public:
+  impl() = default;
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
+
+  std::map<std::string, cache_value> reset_tokens_;
+  boost::asio::awaitable<std::string> get_reset_token(const std::string& in_email) {
+    DOODLE_TO_EXECUTOR(strand_);
+    std::string l_str{};
+    if (reset_tokens_.contains(in_email)) {
+      if (reset_tokens_.at(in_email).create_time_ + std::chrono::hours(2) > std::chrono::system_clock::now())
+        l_str = reset_tokens_.at(in_email).token_;
+      reset_tokens_.erase(in_email);
+    }
+    DOODLE_TO_SELF()
+    co_return l_str;
+  }
+  boost::asio::awaitable<void> set_reset_token(const std::string& in_email, const std::string& in_token) {
+    DOODLE_TO_EXECUTOR(strand_);
+    reset_tokens_[in_email] = cache_value{in_token, std::chrono::system_clock::now()};
+    DOODLE_TO_SELF()
+    co_return;
+  }
+};
 void auth_reset_password::init() {
-  static std::once_flag l_flag;
-  std::call_once(l_flag, []() { g_ctx().emplace<auth_reset_password_cache>(); });
+  if (!pimpl_) pimpl_ = std::make_shared<impl>();
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::post(session_data_ptr in_handle) {
@@ -114,7 +121,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
     );
   }
   auto l_token = generate_reset_token();
-  g_ctx().get<auth_reset_password_cache>().set(l_email, l_token);
+  co_await pimpl_->set_reset_token(l_email, l_token);
   auto& l_kitsu_ctx = g_ctx().get<http::kitsu_ctx_t>();
   auto l_rest_url   = fmt::format(
       "{}://{}/reset-change-password?email={}&token={}", l_kitsu_ctx.domain_protocol_, l_kitsu_ctx.domain_name_,
@@ -129,15 +136,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
 }
 boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::put(session_data_ptr in_handle) {
   auto l_arg   = in_handle->get_json().get<auth_reset_password_put_arg>();
-  auto l_token = g_ctx().get<auth_reset_password_cache>().get(l_arg.email);
-  if (!l_token) throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的重置令牌。"});
+  auto l_token = co_await pimpl_->get_reset_token(l_arg.email);
+  if (l_token.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的重置令牌。"});
   if (l_arg.password != l_arg.password2)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "Passwords do not match."});
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_person       = std::make_shared<person>(l_sql.get_person_for_email(l_arg.email));
   l_person->password_ = bcrypt::generateHash(l_arg.password);
   co_await l_sql.update(l_person);
-  g_ctx().get<auth_reset_password_cache>().remove(l_arg.email);
   co_return in_handle->make_msg(nlohmann::json{{"success", "Password changed"}});
 }
 boost::asio::awaitable<boost::beast::http::message_generator> auth_logout::get(session_data_ptr in_handle) {

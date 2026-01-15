@@ -160,6 +160,8 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN(auth_reset_password)
 void init();
 auth_reset_password() { init(); }
+class impl;
+std::shared_ptr<impl> pimpl_{nullptr};
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_END()
