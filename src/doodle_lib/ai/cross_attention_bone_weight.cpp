@@ -536,7 +536,7 @@ class cross_attention_bone_weight::impl {
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
   int bone_embed_dim        = 128;
   int nhead                 = 8;
-  std::float_t lambda_      = 1.0;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+  std::float_t lambda_      = 0.1;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
   torch::Device device_{torch::kCPU};
   void create_model(const torch::Device& device) {
     model_  = SkinningModel{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
@@ -605,12 +605,12 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       auto eps         = 1e-8;
       auto pred_norm   = pred / pred.sum(1, true).clamp_min(eps);
       auto target_norm = target / target.sum(1, true).clamp_min(eps);
-      auto kl          = (pred_norm * ((pred_norm + eps).log() - (target_norm + eps).log())).sum(1).mean();
+      auto kl = (pred_norm * (pred_norm.log().clamp_min(eps) - target_norm.log().clamp_min(eps))).sum(1).mean();
       // 浓度损失（Concentration Loss）
-      auto conc_loss   = l_ret->pimpl_->lambda_ * (1 - pred_norm.pow(2).sum(1)).mean();
+      auto conc_loss = l_ret->pimpl_->lambda_ * (1 - pred_norm.pow(2).sum(1)).mean();
       // also add L2 between pred and target
-      auto mse         = torch::mse_loss(pred_norm, target_norm);
-      auto loss        = kl + conc_loss + 0.5 * mse;
+      auto mse       = torch::mse_loss(pred_norm, target_norm);
+      auto loss      = kl + conc_loss + 0.5 * mse;
 
       optimizer.zero_grad();
       loss.backward();
