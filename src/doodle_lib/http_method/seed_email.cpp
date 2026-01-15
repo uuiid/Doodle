@@ -18,8 +18,8 @@ seed_email::seed_email(std::string in_address, std::uint32_t in_port, std::strin
 void seed_email::operator()(
     const std::string& in_subject, const std::string& in_recipient, const std::string& in_body
 ) {
-  auto l_smtp_ = std::make_shared<mailio::smtp>(address_, port_);
-  l_smtp_->authenticate(username_, password_, mailio::smtp::auth_method_t::LOGIN);
+  auto l_smtp_ = std::make_shared<mailio::smtps>(address_, port_);
+  l_smtp_->authenticate(username_, password_, mailio::smtps::auth_method_t::START_TLS);
   mailio::message l_msg{};
   l_msg.from(mailio::mail_address{"", username_});
   l_msg.add_recipient(mailio::mail_address{"", in_recipient});
