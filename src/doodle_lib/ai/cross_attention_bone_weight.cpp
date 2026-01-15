@@ -569,6 +569,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
 
   auto l_ret      = std::make_shared<cross_attention_bone_weight>();
   l_ret->pimpl_   = std::make_shared<impl>();
+  l_ret->pimpl_->create_model();
 
   for (auto& l_data : l_fbx_data) {
     l_data.build_face_adjacency(l_ret->pimpl_->k);
@@ -579,7 +580,6 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     l_data.to(l_ret->pimpl_->device_);
   }
   // Create model
-  l_ret->pimpl_->create_model();
 
   torch::optim::Adam optimizer(l_ret->pimpl_->model_->parameters(), torch::optim::AdamOptions(l_ret->pimpl_->lr));
   // scheduler optional
