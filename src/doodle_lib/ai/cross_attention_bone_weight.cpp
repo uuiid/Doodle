@@ -607,7 +607,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       auto target_norm = target / target.sum(1, true).clamp_min(eps);
       // reverse KL 惩罚强度过大时会导致数值不稳定
       // auto kl          = (pred_norm * ((pred_norm.clamp_min(eps)).log() - (target_norm + eps).log())).sum(1).mean();
-      auto kl          = (target_norm * ((target_norm + eps).log() - pred_norm.clamp_min(eps)).log()).sum(1).mean();
+      auto kl          = (target_norm * ((target_norm + eps).log() - (pred_norm + eps).log())).sum(1).mean();
 
       // 浓度损失（Concentration Loss）
       auto conc_loss   = l_ret->pimpl_->lambda_ * (1 - pred_norm.pow(2).sum(1)).mean();
