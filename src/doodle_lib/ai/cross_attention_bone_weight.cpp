@@ -487,34 +487,14 @@ void print_log(
   }
   const auto grad_norm = static_cast<float>(std::sqrt(std::max(0.0, grad_sq_sum)));
 
-  // Feature norms + logits stats to catch saturation / scale issues
-  auto vfeat_dbg       = model->mesh_enc->forward(l_data);
-  auto bfeat_dbg       = model->skel_enc->forward(l_data);
-  if (model->bone_proj) {
-    bfeat_dbg = model->bone_proj->forward(bfeat_dbg);
-  }
-  auto [logits_dbg, fused_v_dbg] = model->cross_attn->logits_and_fused(vfeat_dbg, bfeat_dbg);
-  const auto fused_norm_mean     = fused_v_dbg.norm(2, 1).mean().item<float>();
-  const auto fused_norm_max      = fused_v_dbg.norm(2, 1).max().item<float>();
-  const auto bone_norm_mean      = bfeat_dbg.norm(2, 1).mean().item<float>();
-  const auto bone_norm_max       = bfeat_dbg.norm(2, 1).max().item<float>();
-  const auto logits_min          = logits_dbg.min().item<float>();
-  const auto logits_max          = logits_dbg.max().item<float>();
-  const auto logits_std          = logits_dbg.std().item<float>();
-  const auto top2                = std::get<0>(logits_dbg.topk(2, 1, /*largest=*/true, /*sorted=*/true));
-  const auto gap_mean            = (top2.select(1, 0) - top2.select(1, 1)).mean().item<float>();
-
   SPDLOG_WARN(
       "[epoch {}/{}] N={} B={} loss={} (kl={}, mse={}) grad_norm={:.3g} finite(pred/target)={}/{} | "
       "target[min,max]=[{:.3g},{:.3g}] target_row_sum[min,max,mean]=[{:.3g},{:.3g},{:.3g}] | "
       "pred[max_mean]={:.3g} pred[entropy]={:.3g} target[max_mean]={:.3g} target[entropy]={:.3g} | "
-      "in: |v|_max={:.3g} |n|_max={:.3g} curv[min,max]=[{:.3g},{:.3g}] deg[min,max]=[{:.3g},{:.3g}] | "
-      "feat_norm: ||fused_v||[mean,max]=[{:.3g},{:.3g}] ||bone||[mean,max]=[{:.3g},{:.3g}] | "
-      "logits[min,max,std]=[{:.3g},{:.3g},{:.3g}] gap(top1-top2)_mean={:.3g}",
+      "in: |v|_max={:.3g} |n|_max={:.3g} curv[min,max]=[{:.3g},{:.3g}] deg[min,max]=[{:.3g},{:.3g}] ",
       epoch, epochs, N, B, loss.item<double>(), kl.item<double>(), mse.item<double>(), grad_norm, pred_finite,
       target_finite, target_min, target_max, tsum_min, tsum_max, tsum_mean, pred_max_mean, pred_entropy, targ_max_mean,
-      targ_entropy, v_abs_max, n_abs_max, curv_min, curv_max, deg_min, deg_max, fused_norm_mean, fused_norm_max,
-      bone_norm_mean, bone_norm_max, logits_min, logits_max, logits_std, gap_mean
+      targ_entropy, v_abs_max, n_abs_max, curv_min, curv_max, deg_min, deg_max
   );
 }
 
