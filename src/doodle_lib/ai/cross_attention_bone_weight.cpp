@@ -3,6 +3,7 @@
 #include "doodle_core/exception/exception.h"
 
 #include <doodle_lib/ai/load_fbx.h>
+#include <doodle_lib/ai/sparsemax.h>
 
 #include <ATen/core/TensorBody.h>
 #include <ATen/ops/leaky_relu.h>
@@ -21,6 +22,7 @@
 #include <torch/types.h>
 #include <tuple>
 #include <vector>
+
 
 namespace doodle::ai {
 void fbx_load_result::compute_curvature() {
@@ -393,7 +395,7 @@ struct CrossAttentionImpl : torch::nn::Module {
   // vertex_feats: [N, E]; bone_feats: [B, E]
   torch::Tensor forward(const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats) {
     auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats);
-    auto weights           = torch::softmax(logits, /*dim=*/1);  // per-vertex distribution over bones
+    auto weights           = sparsemax::apply(logits, /*dim=*/1);  // per-vertex distribution over bones
     return weights;
   }
 };

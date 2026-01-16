@@ -4,7 +4,7 @@
 
 namespace doodle::ai {
 
-torch::Tensor sparsemax::forward(torch::autograd::AutogradContext* ctx, const torch::Tensor& input) {
+torch::Tensor sparsemax::forward(torch::autograd::AutogradContext* ctx, const torch::Tensor& input, int dim) {
   auto l_input_sizes             = input.sizes().vec();
   ctx->saved_data["input_sizes"] = l_input_sizes;
 
