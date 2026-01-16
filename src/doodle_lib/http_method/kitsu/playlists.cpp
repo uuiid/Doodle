@@ -461,7 +461,7 @@ struct playlist_shot_t : playlist {
     std::string extension_;
     std::int32_t width_;
     std::int32_t height_;
-    std::int32_t duration_;
+    std::double_t duration_;
     preview_file_statuses status_;
     nlohmann::json annotations_;
     uuid task_id_;

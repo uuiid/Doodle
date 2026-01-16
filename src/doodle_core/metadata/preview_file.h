@@ -7,6 +7,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/base.h>
 
+#include <cmath>
 #include <filesystem>
 
 namespace doodle {
@@ -66,7 +67,7 @@ struct preview_file {
   nlohmann::json annotations_;
   std::int32_t width_;
   std::int32_t height_;
-  std::int32_t duration_;
+  std::double_t duration_;
 
   std::int32_t shotgun_id_;
   bool is_movie_;
