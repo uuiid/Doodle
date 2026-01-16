@@ -4,6 +4,16 @@
 #include <filesystem>
 #include <memory>
 #include <torch/csrc/api/include/torch/torch.h>
+#include <torch/csrc/autograd/custom_function.h>
+#include <torch/csrc/autograd/function.h>
+#include <torch/serialize/input-archive.h>
 #include <vector>
 
-namespace doodle::ai {}
+namespace doodle::ai {
+struct sparsemax : torch::autograd::Function<sparsemax> {
+  struct torch::Tensor forward(torch::autograd::AutogradContext* ctx, const torch::Tensor& input);
+  static torch::autograd::variable_list backward(
+      torch::autograd::AutogradContext* ctx, torch::autograd::variable_list&& grad_outputs
+  );
+};
+}  // namespace doodle::ai
