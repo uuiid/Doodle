@@ -13,7 +13,7 @@ namespace doodle::ai {
 struct sparsemax : torch::autograd::Function<sparsemax> {
   static torch::Tensor forward(torch::autograd::AutogradContext* ctx, const torch::Tensor& input, int dim = -1);
   static torch::autograd::variable_list backward(
-      torch::autograd::AutogradContext* ctx, torch::autograd::variable_list&& grad_outputs
+      torch::autograd::AutogradContext* ctx, torch::autograd::variable_list grad_outputs
   );
 };
 }  // namespace doodle::ai
