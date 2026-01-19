@@ -4,6 +4,7 @@
 
 #include "http_session_data.h"
 
+#include "doodle_core/configure/static_value.h"
 #include "doodle_core/core/app_base.h"
 #include "doodle_core/core/core_set.h"
 // ReSharper disable once CppUnusedIncludeDirective
@@ -73,6 +74,11 @@ auto session_data::set_response_header(T& in_res, std::string_view in_mine_type)
   );
   in_res.set(boost::beast::http::field::date, fmt::format("{:%a, %d %b %Y %T} GMT", l_time));
   in_res.set(boost::beast::http::field::vary, "Cookie");
+  if (timeout_ != doodle_config::g_timeout)
+    in_res.set(
+        boost::beast::http::field::keep_alive,
+        fmt::format("timeout={}, max={}", timeout_.count(), doodle_config::g_max_keep_alive)
+    );
 }
 template <typename T>
 auto session_data::set_response_file_header(
@@ -345,16 +351,13 @@ boost::beast::http::message_generator session_data::make_msg(
       );
     }
 
-  set_response_file_header(l_res, in_http_header_ctrl.mine_type_, in_path, in_http_header_ctrl.has_cache_control_);
+  if (auto l_size = FSys::file_size(in_path); l_size > 10 * 1024 * 1024)  // 10MB
+    timeout_ += chrono::seconds(l_size / (10 * 1024));
 
+  set_response_file_header(l_res, in_http_header_ctrl.mine_type_, in_path, in_http_header_ctrl.has_cache_control_);
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
 
-  if (auto l_size = FSys::file_size(in_path); l_size > 10 * 1024 * 1024)  // 10MB
-  {
-    timeout_ += chrono::seconds(l_size / (10 * 1024));
-    l_res.set(boost::beast::http::field::keep_alive, fmt::format("timeout={}", timeout_.count()));
-  }
   return l_res;
 }
 template <>
