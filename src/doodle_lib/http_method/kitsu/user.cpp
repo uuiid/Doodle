@@ -21,13 +21,10 @@
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
-  auto& l_sql             = g_ctx().get<sqlite_database>();
-  l_ret["asset_types"]    = l_sql.get_asset_types_not_temporal_type();
-  l_ret["custom_actions"] = nlohmann::json::value_t::array;
-  l_ret["departments"]    = l_sql.get_all<department>();
-  for (auto& l_v : g_ctx().get<dingding::dingding_company>().company_info_map_ | std::views::values) {
-    l_ret["dingding_companys"].emplace_back(l_v);
-  }
+  auto& l_sql                       = g_ctx().get<sqlite_database>();
+  l_ret["asset_types"]              = l_sql.get_asset_types_not_temporal_type();
+  l_ret["custom_actions"]           = nlohmann::json::value_t::array;
+  l_ret["departments"]              = l_sql.get_all<department>();
   l_ret["notification_count"]       = l_sql.get_notification_count(person_.person_.uuid_id_);
   l_ret["persons"]                  = l_sql.get_all<person>();
   l_ret["project_status"]           = l_sql.get_all<project_status>();

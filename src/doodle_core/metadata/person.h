@@ -12,6 +12,8 @@ enum class person_role_type {
   admin,       // 超级管理员
   supervisor,  // 项目人
   manager,     // 组长
+  outsource,   // 外包
+  production,  // 制片
   client,
   vendor,
 };
@@ -21,6 +23,8 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                        {person_role_type::supervisor, "supervisor"},
                        {person_role_type::manager, "manager"},
                        {person_role_type::client, "client"},
+                       {person_role_type::outsource, "outsource"},
+                       {person_role_type::production, "production"},
                        {person_role_type::vendor, "vendor"}}
 )
 enum class contract_types {
@@ -106,8 +110,6 @@ struct DOODLE_CORE_API person {
   // 自定义属性
   // 钉钉id
   std::string dingding_id_;
-  // 钉钉对应公司的 uuid
-  uuid dingding_company_id_;
 
   std::string get_full_name() const {
     return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;
@@ -162,8 +164,7 @@ struct DOODLE_CORE_API person {
     if (j.contains("is_generated_from_ldap")) j.at("is_generated_from_ldap").get_to(p.is_generated_from_ldap_);
     if (j.contains("ldap_uid")) j.at("ldap_uid").get_to(p.ldap_uid_);
     if (j.contains("departments")) j.at("departments").get_to(p.departments_);
-
-    if (j.contains("dingding_company_id")) j.at("dingding_company_id").get_to(p.dingding_company_id_);
+    if (j.contains("studio_id")) j.at("studio_id").get_to(p.studio_id_);
   }
   // from json
   friend void to_json(nlohmann::json& j, const person& p) {
@@ -201,7 +202,6 @@ struct DOODLE_CORE_API person {
     j["is_generated_from_ldap"]              = p.is_generated_from_ldap_;
     j["ldap_uid"]                            = p.ldap_uid_;
     j["departments"]                         = p.departments_;
-    j["dingding_company_id"]                 = p.dingding_company_id_;
     j["fido_devices"]                        = nlohmann::json::array();
     j["full_name"]                           = p.first_name_ + " " + p.last_name_;
     j["id"]                                  = p.uuid_id_;

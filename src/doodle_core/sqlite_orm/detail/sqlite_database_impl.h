@@ -788,7 +788,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           make_column("is_generated_from_ldap", &person::is_generated_from_ldap_),                            //
           make_column("ldap_uid", &person::ldap_uid_, unique(), null()),
           make_column("dingding_id", &person::dingding_id_),
-          make_column("dingding_company_id", &person::dingding_company_id_)
+          foreign_key(&person::studio_id_).references(&studio::uuid_id_).on_delete.set_null()
       ),
       make_index("preview_background_file_uuid_id_index", &preview_background_file::uuid_id_),
       make_index("preview_background_file_is_default_index", &preview_background_file::is_default_),
@@ -889,8 +889,10 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "studio",                                                                     //
           make_column("id", &studio::id_, primary_key().autoincrement()),               //
           make_column("uuid", &studio::uuid_id_, not_null(), unique()),                 //
-          make_column("color", &studio::color_, not_null()),                                        //
           make_column("name", &studio::name_, not_null()),                                          //
+          make_column("color", &studio::color_, not_null()),                                        //
+          make_column("app_key", &studio::app_key_),                                    //
+          make_column("app_secret", &studio::app_secret_),                              //
           make_column("archived", &studio::archived_)                           //
       ),
       make_index("organisation_tab_uuid_id_index", &organisation::uuid_id_),

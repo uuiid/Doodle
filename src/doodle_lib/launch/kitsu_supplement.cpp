@@ -39,22 +39,6 @@ struct kitsu_supplement_args_t {
 
   std::string domain_protocol_;
   std::string domain_name_;
-  // 公司
-  struct dingding_company_t {
-    boost::uuids::uuid id_;
-    std::string app_key_;
-    std::string app_secret_;
-
-    std::string name_;
-    // form json
-    friend void from_json(const nlohmann::json& in_json, dingding_company_t& out_obj) {
-      std::string l_id_str = in_json.at("id").get<std::string>();
-      out_obj.id_          = boost::uuids::string_generator{}(l_id_str);
-      in_json.at("app_key").get_to(out_obj.app_key_);
-      in_json.at("app_secret").get_to(out_obj.app_secret_);
-      in_json.at("name").get_to(out_obj.name_);
-    }
-  };
 
   struct mail_config_t {
     std::string address_;
@@ -71,8 +55,6 @@ struct kitsu_supplement_args_t {
     }
   };
 
-  std::vector<dingding_company_t> dingding_company_list_{};
-
   mail_config_t mail_config_;
 
   // form json
@@ -81,7 +63,6 @@ struct kitsu_supplement_args_t {
     in_json.at("port").get_to(out_obj.port_);
     in_json.at("db_path").get_to(out_obj.db_path_);
     in_json.at("kitsu_front_end_path").get_to(out_obj.kitsu_front_end_path_);
-    in_json.at("dingding_company_list").get_to(out_obj.dingding_company_list_);
     in_json.at("kitsu_thumbnails_path").get_to(out_obj.kitsu_thumbnails_path_);
     in_json.at("deepseek_keys").get_to(out_obj.deepseek_keys_);
     if (in_json.contains("ji_meng_access_key_id"))
@@ -97,30 +78,6 @@ struct kitsu_supplement_args_t {
 
 void get_register_info(kitsu_supplement_args_t& in_args) {
   try {
-    if (winreg::RegKey l_key{}; l_key.TryOpen(
-            HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)",
-            KEY_QUERY_VALUE | KEY_WOW64_64KEY | KEY_ENUMERATE_SUB_KEYS
-        ))
-      for (auto&& l_sub : l_key.EnumSubKeys()) {
-        winreg::RegKey l_sub_key{};
-        l_sub_key.Open(
-            HKEY_LOCAL_MACHINE, fmt::format(LR"(SOFTWARE\Doodle\MainConfig\{})", l_sub),
-            KEY_QUERY_VALUE | KEY_WOW64_64KEY
-        );
-        auto l_id         = boost::lexical_cast<uuid>(conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"id")));
-        auto l_app_key    = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_key"));
-        auto l_app_secret = conv::utf_to_utf<char>(l_sub_key.GetStringValue(L"app_secret"));
-        auto l_name       = conv::utf_to_utf<char>(l_sub);
-
-        in_args.dingding_company_list_.emplace_back(
-            kitsu_supplement_args_t::dingding_company_t{
-                .id_ = l_id, .app_key_ = l_app_key, .app_secret_ = l_app_secret, .name_ = l_name
-            }
-        );
-      }
-    else
-      default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/MainConfig");
-
     if (winreg::RegKey l_key{};
         l_key.TryOpen(HKEY_LOCAL_MACHINE, LR"(SOFTWARE\Doodle\MainConfig)", KEY_QUERY_VALUE | KEY_WOW64_64KEY).Failed())
       return default_logger_raw()->error("无法打开键 SOFTWARE/Doodle/MainConfig");
@@ -250,19 +207,7 @@ bool kitsu_supplement_main::init() {
       );
 
     // 初始化钉钉客户端
-    auto& l_d = g_ctx().emplace<dingding::dingding_company>();
-
-    for (auto&& l_c : l_args.dingding_company_list_) {
-      l_d.company_info_map_.emplace(
-          l_c.id_, dingding::dingding_company::company_info{
-                       .corp_id    = l_c.id_,
-                       .app_key    = l_c.app_key_,
-                       .app_secret = l_c.app_secret_,
-                       .name       = l_c.name_,
-                       .ctx_ptr    = l_ssl_ctx
-                   }
-      );
-    }
+    g_ctx().emplace<dingding::dingding_company>().ctx_ptr = l_ssl_ctx;
   }
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route_2(l_args.kitsu_front_end_path_);

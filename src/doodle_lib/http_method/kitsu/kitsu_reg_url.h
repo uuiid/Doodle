@@ -662,4 +662,5 @@ uuid project_id_{};
 uuid status_automation_id_{};
 DOODLE_HTTP_FUN_END()
 
+// /api/data/projects/{project_id}/authorization
 }  // namespace doodle::http

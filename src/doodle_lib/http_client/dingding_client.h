@@ -1,9 +1,14 @@
 #pragma once
+#include <doodle_core/core/global_function.h>
 #include <doodle_core/core/http_client_core.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 
 #include <memory>
 
@@ -85,32 +90,16 @@ class client : public std::enable_shared_from_this<client> {
 using client_ptr = std::shared_ptr<client>;
 
 class dingding_company {
+  std::map<uuid, client_ptr> client_map_;
+  boost::asio::strand<boost::asio::io_context::executor_type> executor_{};
+
  public:
-  explicit dingding_company() {}
+  explicit dingding_company() : executor_(boost::asio::make_strand(doodle::g_io_context())) {}
 
   ~dingding_company() = default;
+  std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
 
-  struct company_info {
-    boost::uuids::uuid corp_id;
-    std::string app_key;
-    std::string app_secret;
-    std::string name;
-    std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
-    client_ptr client_ptr;
-
-    auto make_client() const {
-      auto l_client_ptr = std::make_shared<client>(*ctx_ptr);
-      l_client_ptr->access_token(app_key, app_secret);
-      return l_client_ptr;
-    }
-
-    friend void to_json(nlohmann::json& j, const company_info& p) {
-      j["id"]   = fmt::to_string(p.corp_id);
-      j["name"] = p.name;
-    }
-  };
-
-  std::map<boost::uuids::uuid, company_info> company_info_map_;
+  boost::asio::awaitable<client_ptr> make_client(const studio& in_studio) const;
 
  private:
 };

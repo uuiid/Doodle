@@ -1,7 +1,12 @@
 #include "dingding_client.h"
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/core/app_base.h>
 #include <doodle_core/lib_warp/boost_fmt_beast.h>
+
+#include <boost/asio/io_context.hpp>
+
+#include <memory>
 
 namespace doodle::dingding {
 
@@ -81,4 +86,21 @@ boost::asio::awaitable<std::vector<client::attendance_update>> client::get_atten
   co_return l_ret;
 }
 
+boost::asio::awaitable<client_ptr> dingding_company::make_client(const studio& in_studio) const {
+  DOODLE_CHICK(
+      !in_studio.app_key_.empty() && !in_studio.app_secret_.empty(), "钉钉工作空间 {} 未配置 app_key 或 app_secret",
+      in_studio.name_
+  );
+
+  DOODLE_TO_EXECUTOR(executor_)
+  client_ptr l_client_ptr;
+  if (client_map_.contains(in_studio.uuid_id_)) {
+    l_client_ptr = client_map_.at(in_studio.uuid_id_);
+  } else {
+    l_client_ptr = std::make_shared<client>(*ctx_ptr);
+    l_client_ptr->access_token(in_studio.app_key_, in_studio.app_secret_);
+  }
+  DOODLE_TO_SELF()
+  co_return l_client_ptr;
+}
 }  // namespace doodle::dingding
