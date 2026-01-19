@@ -62,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 
   auto& l_sqlite                = g_ctx().get<sqlite_database>();
   auto l_user                   = l_sqlite.get_by_uuid<person>(id_);
-  auto& l_d                     = g_ctx().get<const dingding::dingding_company>();
+  auto& l_d                     = g_ctx().get<dingding::dingding_company>();
   auto l_studio                 = l_sqlite.get_by_uuid<studio>(l_user.studio_id_);
 
   // 查询缓存
@@ -81,7 +81,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     co_return in_handle->logger_->error("/api/dingding/attendance {} {}", l_user.id_, "没有手机号"),
         in_handle->make_error_code_msg(boost::beast::http::status::not_found, "没有手机号");
 
-  auto l_dingding_client = co_await g_ctx().get<const dingding::dingding_company>().make_client(l_studio);
+  auto l_dingding_client = co_await l_d.make_client(l_studio);
   if (l_user.dingding_id_.empty()) {
     l_user.dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_user.phone_);
     l_modify_user       = true;
