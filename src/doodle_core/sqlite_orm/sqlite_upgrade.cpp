@@ -33,8 +33,8 @@ struct upgrade_init_t : sqlite_upgrade {
   };
   explicit upgrade_init_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    in_data->sync_schema();
     if (in_data->storage_any_.pragma.user_version() == 0) {
-      in_data->sync_schema();
       in_data->storage_any_.pragma.user_version(1);
     }
 
