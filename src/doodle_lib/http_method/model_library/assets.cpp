@@ -20,6 +20,7 @@ namespace doodle::http::model_library {
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets::get(
     http::session_data_ptr in_handle
 ) {
+  person_.check_user();
   auto l_list = g_ctx().get<sqlite_database>().get_all<assets_file_helper::database_t>();
   nlohmann::json l_json{};
   l_json = l_list;
@@ -28,6 +29,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets::post(
     http::session_data_ptr in_handle
 ) {
+  person_.check_manager();
   auto l_json                                           = in_handle->get_json();
   std::shared_ptr<assets_file_helper::database_t> l_ptr = std::make_shared<assets_file_helper::database_t>();
   l_json.get_to(*l_ptr);
@@ -50,6 +52,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_instance::put(
     http::session_data_ptr in_handle
 ) {
+  person_.check_manager();
   std::shared_ptr<assets_file_helper::database_t> const l_ptr = std::make_shared<assets_file_helper::database_t>(
       g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(id_)
   );
@@ -61,6 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_instance::delete_(
     http::session_data_ptr in_handle
 ) {
+  person_.check_manager();
   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(id_);
   co_return in_handle->make_msg(nlohmann::json{});
 }

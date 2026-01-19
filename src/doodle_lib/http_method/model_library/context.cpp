@@ -8,6 +8,7 @@
 #include "model_library.h"
 namespace doodle::http::model_library {
 boost::asio::awaitable<boost::beast::http::message_generator> context::get(http::session_data_ptr in_handle) {
+  person_.check_user();
   nlohmann::json l_json{};
   l_json["tree_nodes"] = g_ctx().get<sqlite_database>().get_all<assets_helper::database_t>();
   co_return in_handle->make_msg(l_json);

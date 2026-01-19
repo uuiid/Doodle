@@ -34,7 +34,10 @@ class http_jwt_fun : public http_function {
     void check_admin() const;
     // 检查是否是项目经理
     void check_manager() const;
+    // 检查是否是项目人
     void check_supervisor() const;
+    // 是否是组员
+    void check_user() const;
     // 确认是否是在项目中的 supervisor
     void check_project_supervisor(const uuid& in_project_id) const;
     bool is_project_supervisor(const uuid& in_project_id) const;

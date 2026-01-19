@@ -186,15 +186,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::post(session_data_ptr in_handle) {
+  person_.check_user();
   return thumbnail_post(in_handle, *root_);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::get(session_data_ptr in_handle) {
+  person_.check_user();
   return thumbnail_get(in_handle, *root_ / "previews", ".png");
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance_mp4::get(session_data_ptr in_handle) {
+  person_.check_user();
   return thumbnail_get(in_handle, *root_ / "previews", ".mp4");
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails::get(session_data_ptr in_handle) {
+  person_.check_user();
   return thumbnail_get(in_handle, *root_ / "thumbnails");
 }
 
