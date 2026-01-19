@@ -37,6 +37,13 @@ boost::asio::awaitable<void> update_ue_files::run() {
   auto l_ue_project_dir = ue_exe_ns::find_ue_project_file(ue_project_path_).parent_path();
   std::vector<FSys::path> l_file_paths{};
   for (auto&& l_path : l_json.get<std::vector<FSys::path>>()) {
+    if (l_path.stem() == "a_PropPublicFiles" && !FSys::exists(l_ue_project_dir / l_path)) {
+      SPDLOG_LOGGER_WARN(
+          logger_ptr_, "公共资源文件 {} 不存在，可能是因为当前项目没有关联公共资源库，直接跳过上传",
+          (l_ue_project_dir / l_path).string()
+      );
+      continue;
+    }
     SPDLOG_LOGGER_INFO(logger_ptr_, "需要更新的UE文件路径 {}", l_path.string());
     l_file_paths.push_back(l_ue_project_dir / l_path);
   }
@@ -61,7 +68,7 @@ boost::asio::awaitable<void> update_image_files::run() {
 boost::asio::awaitable<void> update_movie_files::run() {
   DOODLE_CHICK(!movie_file_.empty(), "视频文件路径不能为空");
   DOODLE_CHICK(!task_id_.is_nil(), "任务ID不能为空");
-  
+
   kitsu_client_->set_logger(logger_ptr_);
   SPDLOG_LOGGER_INFO(logger_ptr_, "发现需要更新的视频文件 {}", movie_file_);
 
