@@ -14,6 +14,7 @@
 #include <memory>
 #include <processthreadsapi.h>
 #include <processtopologyapi.h>
+#include <spdlog/spdlog.h>
 #include <thread>
 #include <wil/result.h>
 #include <winnt.h>
@@ -67,6 +68,14 @@ void app_base::bind_thread_to_group(int group_id) {
   SetThreadGroupAffinity(GetCurrentThread(), &group_affinity, nullptr);
 }
 
+void set_process_affinity_mask() {
+  auto l_r = ::SetProcessAffinityMask(GetCurrentProcess(), KAFFINITY(-1));
+  USHORT l_group_count;
+  USHORT l_group_array;
+  ::GetProcessGroupAffinity(GetCurrentProcess(), &l_group_count, &l_group_array);
+  SPDLOG_WARN("SetProcessAffinityMask result: {}, group count: {:b}, group array: {:b}", l_r, l_group_count, l_group_array);
+}  // namespace doodle
+
 std::int32_t app_base::run() {
   stop_ = !init();
   if (stop_) return 0;
@@ -85,7 +94,8 @@ std::int32_t app_base::run() {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
-    ::SetProcessAffinityMask(GetCurrentProcess(), KAFFINITY(-1));
+    auto l_r = ::SetProcessAffinityMask(GetCurrentProcess(), KAFFINITY(-1));
+
     std::vector<std::thread> l_threads{};
     auto l_thread_count = get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1;
     l_threads.reserve(l_thread_count);
