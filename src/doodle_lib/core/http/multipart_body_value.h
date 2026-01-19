@@ -11,7 +11,7 @@ namespace doodle::http::multipart_body_impl {
 struct part_value_type {
   std::string name{};
   std::string file_name{};
-  detail::content_type content_type{detail::content_type::unknown};
+  detail::content_type content_type{detail::content_type::application_json};
   std::variant<std::string, FSys::path> body_{};
 };
 struct value_type_impl {
