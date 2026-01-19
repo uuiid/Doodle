@@ -85,6 +85,7 @@ std::int32_t app_base::run() {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
+    ::SetProcessAffinityMask(GetCurrentProcess(), KAFFINITY(-1));
     std::vector<std::thread> l_threads{};
     auto l_thread_count = get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1;
     l_threads.reserve(l_thread_count);
