@@ -11,8 +11,9 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/http_method/kitsu/computing_time.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/computing_time.h>
+
 
 namespace doodle::http {
 namespace {
@@ -191,6 +192,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   co_return in_handle->make_msg(l_json.dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_get::get(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   std::vector<chrono::local_days> l_date_list{};
   auto l_end = chrono::local_days{chrono::year_month_day{year_month_ / chrono::last}};
   for (auto l_day = chrono::local_days{chrono::year_month_day{year_month_ / 1}}; l_day <= l_end;
@@ -211,6 +213,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_id_custom::post(
     session_data_ptr in_handle
 ) {
+  if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
+
   auto l_data = std::make_shared<attendance_helper::database_t>(
       std::move(in_handle->get_json().get<attendance_helper::database_t>())
   );
@@ -229,6 +233,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::put(
     session_data_ptr in_handle
 ) {
+  if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
+
   auto l_data = std::make_shared<attendance_helper::database_t>(
       g_ctx().get<sqlite_database>().get_by_uuid<attendance_helper::database_t>(id_)
   );
@@ -243,6 +249,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::delete_(
     session_data_ptr in_handle
 ) {
+  if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto& l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.remove<attendance_helper::database_t>(id_);
   co_return in_handle->make_msg((nlohmann::json{} = id_).dump());
