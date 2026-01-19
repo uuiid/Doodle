@@ -52,8 +52,6 @@ class http_jwt_fun : public http_function {
     bool is_task_department_access(const task& in_task_id, const person& in_person_id) const;
     // 检查是否可以删除任务
     void check_delete_access(const uuid& in_project_id) const;
-    // 检查任务的分配权限
-    void check_task_assign_access(const uuid& in_project_id) const;
   };
   using http_function::http_function;
 
