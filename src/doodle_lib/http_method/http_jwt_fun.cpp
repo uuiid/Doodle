@@ -109,7 +109,14 @@ void http_jwt_fun::http_jwt_t::check_manager() const {
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+void http_jwt_fun::http_jwt_t::check_supervisor() const {
+  if (!person_.uuid_id_.is_nil() &&
+      (person_.role_ == person_role_type::supervisor || person_.role_ == person_role_type::manager ||
+       person_.role_ == person_role_type::admin))
+    return;
 
+  throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
 void http_jwt_fun::http_jwt_t::check_project_supervisor(const uuid& in_project_id) const {
   if (is_project_supervisor(in_project_id)) return;
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});

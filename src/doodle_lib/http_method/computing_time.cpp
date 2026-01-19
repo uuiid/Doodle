@@ -299,8 +299,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
 // 计算时间
 void computing_time_run(
     const chrono::year_month& in_year_month, const business::work_clock2& in_time_clock, const uuid& in_person_id,
-    std::vector<computing_time_post_req_data>& in_data,
-    std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
+    std::vector<computing_time_post_req_data>& in_data, std::vector<work_xlsx_task_info_helper::database_t>& in_out_data
 ) {
   DOODLE_CHICK(in_data.size() == in_out_data.size(), "in_data.size() != in_out_data.size()");
 
@@ -488,6 +487,8 @@ std::string patch_time(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time::post(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
+
   auto l_json      = in_handle->get_json();
 
   auto l_data      = l_json.get<std::vector<computing_time_post_req_data>>();
@@ -531,8 +532,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time::get(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_logger    = in_handle->logger_;
-
   auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
 
