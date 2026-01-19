@@ -173,6 +173,12 @@ void session_data::set_session() {
       };
     }
     // SPDLOG_LOGGER_WARN(logger_, "超时设置 {}", timeout_);
+  } else if ((method_verb_ == boost::beast::http::verb::post || method_verb_ == boost::beast::http::verb::put ||
+              method_verb_ == boost::beast::http::verb::patch) &&
+             req_header_.find(boost::beast::http::field::content_length) != req_header_.end()) {
+    auto l_size = std::stoull(req_header_.at(boost::beast::http::field::content_length));
+    timeout_    = l_size > 10 * 1024 * 1024 ? std::chrono::seconds{l_size / (10 * 1024)} + doodle_config::g_timeout
+                                            : doodle_config::g_timeout;
   } else {
     timeout_ = doodle_config::g_timeout;
   }
