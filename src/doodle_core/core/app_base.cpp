@@ -62,10 +62,16 @@ app_base& app_base::Get() { return *self; }
 app_base* app_base::GetPtr() { return self; }
 
 void app_base::bind_thread_to_group(int group_id) {
+  // 获取组中处理器数量
+  auto l_a = GetActiveProcessorCount(group_id);
+
   wil::unique_handle process_handle{GetCurrentProcess()};
   GROUP_AFFINITY group_affinity{};
   group_affinity.Group = static_cast<WORD>(group_id);
-  group_affinity.Mask  = KAFFINITY(-1);
+  // 设置掩码, 选择组内的所有处理器
+  for (decltype(l_a) i = 0; i < l_a; ++i) {
+    group_affinity.Mask |= (1ULL << i);
+  }
   LOG_IF_WIN32_BOOL_FALSE(::SetThreadGroupAffinity(GetCurrentThread(), &group_affinity, nullptr));
 }
 
