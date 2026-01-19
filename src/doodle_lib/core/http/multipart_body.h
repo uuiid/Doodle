@@ -158,12 +158,12 @@ struct multipart_body {
     void add_data(InIt const& in_begin, InIt const& in_end) {
       switch (part_.content_type) {
         case detail::content_type::application_json:
-        case detail::content_type::unknown:
           if (!std::holds_alternative<std::string>(part_.body_)) {
             part_.body_ = std::string{in_begin, in_end};
           } else
             std::get<std::string>(part_.body_) += std::string{in_begin, in_end};
           break;
+        case detail::content_type::unknown:
         default:
           if (!std::holds_alternative<FSys::path>(part_.body_)) {
             auto l_path =
