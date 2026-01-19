@@ -86,19 +86,20 @@ boost::asio::awaitable<std::vector<client::attendance_update>> client::get_atten
   co_return l_ret;
 }
 
-boost::asio::awaitable<client_ptr> dingding_company::make_client(const studio& in_studio) const {
+boost::asio::awaitable<client_ptr> dingding_company::make_client(std::reference_wrapper<const studio> in_studio) const {
+  auto& l_studio = in_studio.get();
   DOODLE_CHICK(
-      !in_studio.app_key_.empty() && !in_studio.app_secret_.empty(), "钉钉工作空间 {} 未配置 app_key 或 app_secret",
-      in_studio.name_
+      !l_studio.app_key_.empty() && !l_studio.app_secret_.empty(), "钉钉工作空间 {} 未配置 app_key 或 app_secret",
+      l_studio.name_
   );
 
   DOODLE_TO_EXECUTOR(executor_)
   client_ptr l_client_ptr;
-  if (client_map_.contains(in_studio.uuid_id_)) {
-    l_client_ptr = client_map_.at(in_studio.uuid_id_);
+  if (client_map_.contains(l_studio.uuid_id_)) {
+    l_client_ptr = client_map_.at(l_studio.uuid_id_);
   } else {
     l_client_ptr = std::make_shared<client>(*ctx_ptr);
-    l_client_ptr->access_token(in_studio.app_key_, in_studio.app_secret_);
+    l_client_ptr->access_token(l_studio.app_key_, l_studio.app_secret_);
   }
   DOODLE_TO_SELF()
   co_return l_client_ptr;
