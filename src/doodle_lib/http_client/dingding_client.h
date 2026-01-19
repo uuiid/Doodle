@@ -100,7 +100,7 @@ class dingding_company {
   ~dingding_company() = default;
   std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
 
-  boost::asio::awaitable<client_ptr> make_client(std::reference_wrapper<const studio> in_studio) const;
+  boost::asio::awaitable<client_ptr> make_client(std::reference_wrapper<const studio> in_studio);
 
  private:
 };
