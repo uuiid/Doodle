@@ -543,6 +543,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::ge
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add::post(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
+
   auto l_json                         = in_handle->get_json();
   computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
 
@@ -592,6 +594,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_custom::post(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json                                = in_handle->get_json();
   computing_time_post_req_custom_data l_data = l_json.get<computing_time_post_req_custom_data>();
 
@@ -643,6 +646,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sort::post(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json = in_handle->get_json();
   auto l_data = l_json.get<std::vector<uuid>>();
   auto l_user = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
@@ -684,6 +688,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_average::post(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_block = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   *l_block     = g_ctx().get<sqlite_database>().get_work_xlsx_task_info(user_id_, chrono::local_days{year_month_ / 1});
 
@@ -695,6 +700,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time_patch::patch(session_data_ptr in_handle) {
+  if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto l_json = in_handle->get_json();
 
   std::optional<chrono::microseconds> l_duration =
@@ -766,6 +772,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_del
 ) {
   work_xlsx_task_info_helper::database_t l_task =
       g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(id_);
+  if (l_task.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
+
+  
   co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
   chrono::year_month_day l_year_month_day{l_task.year_month_};
   chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};
