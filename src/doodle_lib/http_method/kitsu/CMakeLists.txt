@@ -8,6 +8,8 @@ target_sources(
         kitsu_result.h
         preview.h
         comment.h
+        computing_time.h
+
 
         PRIVATE
         task.cpp
@@ -41,4 +43,6 @@ target_sources(
         auto_task.cpp
         compose_video.cpp
         auth_outsource.cpp
+        computing_time.cpp
+
 )

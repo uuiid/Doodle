@@ -11,7 +11,6 @@
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/http_method/computing_time.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/seed_email.h>

@@ -2,7 +2,6 @@ target_sources(
         doodle_lib
         PUBLIC
         computer.h
-        computing_time.h
         dingding_attendance.h
         tool_version.h
         up_file.h
@@ -12,7 +11,6 @@ target_sources(
 
         PRIVATE
         computer.cpp
-        computing_time.cpp
         dingding_attendance.cpp
         computer_reg_data.cpp
         tool_version.cpp

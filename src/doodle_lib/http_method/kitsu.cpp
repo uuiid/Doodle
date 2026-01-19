@@ -14,8 +14,8 @@
 #include <doodle_core/platform/win/register_file_type.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 
-#include "doodle_lib/http_method/computing_time.h"
 #include "doodle_lib/http_method/dingding_attendance.h"
+#include "doodle_lib/http_method/kitsu/computing_time.h"
 #include "doodle_lib/http_method/model_library/model_library.h"
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
@@ -35,6 +35,7 @@
 #include "kitsu/epiboly.h"
 #include "kitsu/kitsu_reg_url.h"
 #include "local/local.h"
+
 
 namespace doodle::http {
 
