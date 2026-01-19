@@ -73,7 +73,9 @@ void set_process_affinity_mask() {
   USHORT l_group_count;
   USHORT l_group_array;
   ::GetProcessGroupAffinity(GetCurrentProcess(), &l_group_count, &l_group_array);
-  SPDLOG_WARN("SetProcessAffinityMask result: {}, group count: {:b}, group array: {:b}", l_r, l_group_count, l_group_array);
+  SPDLOG_WARN(
+      "SetProcessAffinityMask result: {}, group count: {:b}, group array: {:b}", l_r, l_group_count, l_group_array
+  );
 }  // namespace doodle
 
 std::int32_t app_base::run() {
@@ -94,8 +96,7 @@ std::int32_t app_base::run() {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
   } else {
-    auto l_r = ::SetProcessAffinityMask(GetCurrentProcess(), KAFFINITY(-1));
-
+    set_process_affinity_mask();
     std::vector<std::thread> l_threads{};
     auto l_thread_count = get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1;
     l_threads.reserve(l_thread_count);
