@@ -268,29 +268,28 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
       ),
       multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
   ));
-  std::map<uuid, with_tasks_get_result_t> l_entities_and_tasks_map{};
+  std::map<uuid, std::size_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
   for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_entities_and_tasks_map.emplace(
-          l_entity.uuid_id_, with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type}
-      );
+      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
+      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
     }
     if (!l_task.uuid_id_.is_nil()) {
       if (!l_task_id_set.contains(l_task.uuid_id_)) {
-        l_entities_and_tasks_map[l_entity.uuid_id_].tasks_.emplace_back(
+        l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.emplace_back(
             with_tasks_get_result_t::task_t{
                 l_entity,
                 l_task,
                 l_subscriptions_for_user.contains(l_task.uuid_id_),
             }
         );
-        l_task_id_set.emplace(l_task.uuid_id_, l_entities_and_tasks_map[l_entity.uuid_id_].tasks_.size() - 1);
+        l_task_id_set.emplace(l_task.uuid_id_, l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.size() - 1);
       }
       if (!l_person_id.is_nil())
-        l_entities_and_tasks_map[l_entity.uuid_id_].tasks_[l_task_id_set.at(l_task.uuid_id_)].assigners_.emplace_back(
-            l_person_id
-        );
+        l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]]
+            .tasks_[l_task_id_set.at(l_task.uuid_id_)]
+            .assigners_.emplace_back(l_person_id);
     }
   }
 
@@ -307,12 +306,11 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   //          == c(&working_file::uuid_id_))), where(in(&working_file_task_link::task_id_, l_task_ids))
   //      )) {
   //   if (l_entities_and_tasks_map.contains(l_entity_id)) {
-  //     auto& l_task = l_entities_and_tasks_map[l_entity_id].tasks_;
+  //     auto& l_task = l_ret[l_entities_and_tasks_map[l_entity_id]].tasks_;
   //     if (l_task.size() > l_task_id_set.at(l_task_id))
   //       l_task.at(l_task_id_set.at(l_task_id)).working_files_.emplace_back(l_work_file);
   //   }
   // }
-  for (auto&& [key, value] : l_entities_and_tasks_map) l_ret.emplace_back(std::move(value));
   return l_ret;
 }
 
