@@ -253,6 +253,11 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_sequences_create_review_playlists>("/api/actions/sequences/{}/create-review/playlists"_url(
         &actions_sequences_create_review_playlists::sequence_id_
       ))
+      .reg_t<data_project_authorization>("/api/data/projects/{}/authorization"_url(&data_project_authorization::project_id_))
+      .reg_t<data_project_authorization_instance>("/api/data/projects/{}/authorization/{}"_url(
+        &data_project_authorization_instance::project_id_,
+        &data_project_authorization_instance::authorization_id_
+      ))
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)

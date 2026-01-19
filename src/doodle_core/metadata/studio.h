@@ -35,5 +35,10 @@ struct DOODLE_CORE_API outsource_studio_authorization {
     j["studio_id"] = p.studio_id_;
     j["entity_id"] = p.enity_id_;
   }
+  // from json
+  friend void from_json(const nlohmann::json& j, outsource_studio_authorization& p) {
+    if (j.contains("studio_id")) j.at("studio_id").get_to(p.studio_id_);
+    if (j.contains("entity_id")) j.at("entity_id").get_to(p.enity_id_);
+  }
 };
 }  // namespace doodle

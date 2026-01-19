@@ -40,4 +40,5 @@ target_sources(
         casting.cpp
         auto_task.cpp
         compose_video.cpp
+        auth_outsource.cpp
 )

@@ -663,4 +663,16 @@ uuid status_automation_id_{};
 DOODLE_HTTP_FUN_END()
 
 // /api/data/projects/{project_id}/authorization
+DOODLE_HTTP_JWT_FUN(data_project_authorization)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/data/projects/{project_id}/authorization/{authorization_id}
+DOODLE_HTTP_JWT_FUN(data_project_authorization_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid project_id_{};
+uuid authorization_id_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
