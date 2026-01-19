@@ -1047,6 +1047,7 @@ project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
   return l_prj;
 }
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
+DOODLE_GET_BY_UUID_SQL(outsource_studio_authorization)
 
 template <>
 std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
@@ -1076,6 +1077,7 @@ DOODLE_GET_ALL_SQL(status_automation)
 DOODLE_GET_ALL_SQL(organisation)
 DOODLE_GET_ALL_SQL(ai_image_metadata)
 DOODLE_GET_ALL_SQL(project)
+DOODLE_GET_ALL_SQL(outsource_studio_authorization)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
   auto l_list = impl_->get_all<asset_type>();
@@ -1137,6 +1139,7 @@ DOODLE_INSTALL_SQL(playlist)
 DOODLE_INSTALL_SQL(ai_image_metadata)
 DOODLE_INSTALL_SQL(project_status_automation_link)
 DOODLE_INSTALL_SQL(entity_shot_extend)
+DOODLE_INSTALL_SQL(outsource_studio_authorization)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
@@ -1176,6 +1179,7 @@ DOODLE_REMOVE_BY_ID(playlist)
 DOODLE_REMOVE_BY_ID(playlist_shot)
 DOODLE_REMOVE_BY_ID(entity_shot_extend)
 DOODLE_REMOVE_BY_ID(project_status_automation_link)
+DOODLE_REMOVE_BY_ID(outsource_studio_authorization)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
@@ -1186,6 +1190,7 @@ DOODLE_REMOVE_BY_UUID(playlist)
 DOODLE_REMOVE_BY_UUID(entity_link)
 DOODLE_REMOVE_BY_UUID(ai_image_metadata)
 DOODLE_REMOVE_BY_UUID(playlist_shot)
+DOODLE_REMOVE_BY_UUID(outsource_studio_authorization)
 
 template <>
 boost::asio::awaitable<void> sqlite_database::remove<task>(const std::vector<uuid>& in_data) {
