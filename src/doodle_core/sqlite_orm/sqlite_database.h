@@ -220,6 +220,9 @@ class sqlite_database {
   uuid get_project_status_open() const;
   uuid get_project_status_closed() const;
 
+  // 获取 项目中实体数量
+  std::size_t get_project_entity_count(const uuid& in_project_id);
+
   // 删除孤立的, 没有和其他连接的工作文件
   boost::asio::awaitable<void> delete_working_file_orphaned();
 };

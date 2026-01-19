@@ -2,6 +2,8 @@
 // Created by TD on 24-12-30.
 //
 
+#include "doodle_core/metadata/person.h"
+#include "doodle_core/metadata/studio.h"
 #include "doodle_core/metadata/working_file.h"
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -234,9 +236,19 @@ struct with_tasks_get_result_t {
 auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_id) {
   auto l_sql = g_ctx().get<sqlite_database>();
   std::vector<with_tasks_get_result_t> l_ret{};
+
   using namespace sqlite_orm;
+
+  l_ret.reserve(l_sql.get_project_entity_count(in_project_id));
+
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, {});
-  auto l_rows                   = l_sql.impl_->storage_any_.iterate(select(
+
+  auto l_outsource_select       = select(
+      &outsource_studio_authorization::uuid_id_,
+      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
+  );
+
+  auto l_rows = l_sql.impl_->storage_any_.iterate(select(
       columns(
           object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
           &assignees_table::person_id_
@@ -246,8 +258,12 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
       where(
-          ((!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
-           (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id)) &&
+          (
+              (!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
+              (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) ||
+              (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select))
+
+          ) &&
           not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
       ),
       multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
@@ -296,8 +312,7 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   //       l_task.at(l_task_id_set.at(l_task_id)).working_files_.emplace_back(l_work_file);
   //   }
   // }
-
-  l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
+  for (auto&& [key, value] : l_entities_and_tasks_map) l_ret.emplace_back(std::move(value));
   return l_ret;
 }
 

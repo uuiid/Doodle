@@ -929,6 +929,11 @@ uuid sqlite_database::get_project_status_closed() const {
   return l_list.front().uuid_id_;
 }
 
+std::size_t sqlite_database::get_project_entity_count(const uuid& in_project_id) {
+  using namespace sqlite_orm;
+  return impl_->storage_any_.count<entity>(where(in_project_id.is_nil() || c(&entity::project_id_) == in_project_id));
+}
+
 boost::asio::awaitable<void> sqlite_database::delete_working_file_orphaned() {
   DOODLE_TO_SQLITE_THREAD_2();
   using namespace sqlite_orm;
