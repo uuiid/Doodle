@@ -42,5 +42,16 @@ struct status_automation {
     j["import_last_revision"] = p.import_last_revision_;
     j["archived"]             = p.archived_;
   }
+  // from json
+  friend void from_json(const nlohmann::json& j, status_automation& p) {
+    if (j.contains("entity_type")) j.at("entity_type").get_to(p.entity_type_);
+    if (j.contains("in_task_type_id")) j.at("in_task_type_id").get_to(p.in_task_type_id_);
+    if (j.contains("in_task_status_id")) j.at("in_task_status_id").get_to(p.in_task_status_id_);
+    if (j.contains("out_field_type")) j.at("out_field_type").get_to(p.out_field_type_);
+    if (j.contains("out_task_type_id")) j.at("out_task_type_id").get_to(p.out_task_type_id_);
+    if (j.contains("out_task_status_id")) j.at("out_task_status_id").get_to(p.out_task_status_id_);
+    if (j.contains("import_last_revision")) j.at("import_last_revision").get_to(p.import_last_revision_);
+    if (j.contains("archived")) j.at("archived").get_to(p.archived_);
+  }
 };
 }  // namespace doodle

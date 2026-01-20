@@ -65,6 +65,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> status_automations
   auto l_list = g_ctx().get<sqlite_database>().get_all<status_automation>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
+  person_.check_admin();
+  auto l_sql            = g_ctx().get<sqlite_database>();
+  auto l_status_automation = std::make_shared<status_automation>();
+  in_handle->get_json().get_to(*l_status_automation);
+  co_await l_sql.install(l_status_automation);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_status_automation);
+}
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_instance::put(
     session_data_ptr in_handle

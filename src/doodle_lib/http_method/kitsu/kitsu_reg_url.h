@@ -277,6 +277,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/status-automations
 DOODLE_HTTP_JWT_FUN(status_automations)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 // /api/data/tasks/{task_id}/comments
 DOODLE_HTTP_JWT_FUN(tasks_comments)
