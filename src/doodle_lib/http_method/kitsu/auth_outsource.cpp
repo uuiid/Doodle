@@ -35,10 +35,10 @@ struct entity_outsource_studio_authorization : entity {
     using namespace sqlite_orm;
     std::vector<entity_outsource_studio_authorization> l_ret{};
     l_ret.reserve(l_sql.get_project_entity_count(in_project_id));
-    
+
     auto l_rows = l_sql.impl_->storage_any_.iterate(select(
         columns(object<entity>(true), object<outsource_studio_authorization>(true)), from<entity>(),
-        join<outsource_studio_authorization>(on(c(&outsource_studio_authorization::enity_id_) == c(&entity::uuid_id_))),
+        left_outer_join<outsource_studio_authorization>(on(c(&outsource_studio_authorization::enity_id_) == c(&entity::uuid_id_))),
         where(c(&entity::project_id_) == in_project_id), order_by(&entity::name_)
     ));
     std::map<uuid, std::size_t> l_entity_map{};
