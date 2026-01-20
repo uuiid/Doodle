@@ -28,10 +28,15 @@ class http_jwt_fun : public http_function {
     // 检查人员是否有修改项目属性的权限
     void check_project_manager(const uuid& in_project_id) const;
     bool is_project_manager(const uuid& in_project_id) const;
+    // 是否是外包
+    bool is_outsourcer() const;
+
     // 检查人员是否有访问项目的权限
     void check_project_access(const uuid& in_project_id) const;
     // 检查是否是 admin
     void check_admin() const;
+    // 检查是否是制片
+    void check_producer() const;
     // 检查是否是项目经理
     void check_manager() const;
     // 检查是否是项目人

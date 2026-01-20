@@ -15,13 +15,13 @@
 
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, get) {
-  person_.check_manager();
+  person_.check_producer();
   auto l_sql       = g_ctx().get<sqlite_database>();
   auto l_auth_list = l_sql.get_all<outsource_studio_authorization>();
   co_return in_handle->make_msg(nlohmann::json{} = l_auth_list);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
-  person_.check_manager();
+  person_.check_producer();
 
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_auth = std::make_shared<outsource_studio_authorization>();
@@ -30,14 +30,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_auth);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, get) {
-  person_.check_manager();
+  person_.check_producer();
 
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_auth = l_sql.get_by_uuid<outsource_studio_authorization>(authorization_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_auth);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, delete_) {
-  person_.check_manager();
+  person_.check_producer();
 
   auto l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.remove<outsource_studio_authorization>(authorization_id_);

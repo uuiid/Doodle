@@ -13,7 +13,7 @@ enum class person_role_type {
   supervisor,  // 项目人
   manager,     // 组长
   outsource,   // 外包
-  production,  // 制片
+  producer,    // 制片
   client,
   vendor,
 };
@@ -24,7 +24,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                        {person_role_type::manager, "manager"},
                        {person_role_type::client, "client"},
                        {person_role_type::outsource, "outsource"},
-                       {person_role_type::production, "production"},
+                       {person_role_type::producer, "producer"},
                        {person_role_type::vendor, "vendor"}}
 )
 enum class contract_types {
