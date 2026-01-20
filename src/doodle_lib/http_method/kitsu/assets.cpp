@@ -261,7 +261,7 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
           (
               (!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
               (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) ||
-              (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select))
+              (in_person.role_ == person_role_type::outsource && in(&entity::uuid_id_, l_outsource_select))
 
           ) &&
           not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
