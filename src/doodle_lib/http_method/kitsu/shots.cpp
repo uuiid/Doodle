@@ -178,7 +178,12 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
   constexpr auto sequence       = "sequence"_alias.for_<entity>();
   constexpr auto episode        = "episode"_alias.for_<entity>();
 
-  auto l_list                   = l_sql.impl_->storage_any_.select(
+  auto l_outsource_select       = select(
+      &outsource_studio_authorization::uuid_id_,
+      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
+  );
+
+  auto l_list = l_sql.impl_->storage_any_.select(
       columns(
           object<entity>(true), object<task>(true), episode->*&entity::uuid_id_, episode->*&entity::name_,
           sequence->*&entity::uuid_id_, sequence->*&entity::name_, &assignees_table::person_id_, &project::uuid_id_,
@@ -192,7 +197,13 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(
           c(&entity::entity_type_id_) == in_entity_type_id &&  //
-          (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id)
+          ((in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) ||
+           (in_person.role_ == person_role_type::outsource &&
+            (                                                            //
+                in(&entity::uuid_id_, l_outsource_select) ||             //
+                in(sequence->*&entity::uuid_id_, l_outsource_select) ||  //
+                in(episode->*&entity::uuid_id_, l_outsource_select)
+            )))
       )
 
   );

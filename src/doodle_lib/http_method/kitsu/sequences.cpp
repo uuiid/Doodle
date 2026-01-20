@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-4-28.
 //
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/working_file.h"
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -121,17 +122,26 @@ struct sequences_with_tasks_result {
 };
 
 auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
+  DOODLE_CHICK(!in_entity_type_id.is_nil(), "实体类型id不可为空");
+
   std::vector<sequences_with_tasks_result> l_ret{};
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
+  auto l_outsource_select = select(
+      &outsource_studio_authorization::uuid_id_,
+      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
+  );
+
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
   auto l_rows                   = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<task>(true), &assignees_table::person_id_),
       left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(
-          (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-          (in_entity_type_id.is_nil() || c(&entity::entity_type_id_) == in_entity_type_id)
+          c(&entity::entity_type_id_) == in_entity_type_id &&
+          ((in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) ||
+           (in_person.role_ == person_role_type::outsource && in(&entity::uuid_id_, l_outsource_select)))
+
       )
   );
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
