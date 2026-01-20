@@ -62,7 +62,7 @@ struct entity_outsource_studio_authorization : entity {
         l_ret.emplace_back(entity_outsource_studio_authorization{l_entity});
         l_entity_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
       }
-      l_ret[l_entity_map[l_entity.uuid_id_]].authorizations_.emplace_back(l_authorization);
+      if (l_authorization) l_ret[l_entity_map[l_entity.uuid_id_]].authorizations_.emplace_back(l_authorization);
       if (l_entity_asset_extend) l_ret[l_entity_map[l_entity.uuid_id_]].entity_asset_extend_ = l_entity_asset_extend;
       if (l_entity_shot_extend) l_ret[l_entity_map[l_entity.uuid_id_]].entity_shot_extend_ = l_entity_shot_extend;
     }
