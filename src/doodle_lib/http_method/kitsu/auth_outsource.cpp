@@ -1,3 +1,4 @@
+#include "doodle_core/core/core_set.h"
 #include "doodle_core/metadata/computer.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/studio.h"
@@ -14,6 +15,7 @@
 
 #include "core/http/http_function.h"
 #include <nlohmann/json_fwd.hpp>
+#include <optional>
 #include <vector>
 
 namespace doodle::http {
@@ -22,12 +24,17 @@ namespace {
 struct entity_outsource_studio_authorization : entity {
   std::vector<outsource_studio_authorization> authorizations_;
 
+  std::optional<entity_asset_extend> entity_asset_extend_;
+  std::optional<entity_shot_extend> entity_shot_extend_;
+
   explicit entity_outsource_studio_authorization(const entity& in_entity) : entity(in_entity) {}
 
   // to json
   friend void to_json(nlohmann::json& j, const entity_outsource_studio_authorization& p) {
     to_json(j, static_cast<const entity&>(p));
     j["authorizations"] = p.authorizations_;
+    if (p.entity_asset_extend_) to_json(j, *p.entity_asset_extend_);
+    if (p.entity_shot_extend_) to_json(j, *p.entity_shot_extend_);
   }
 
   static std::vector<entity_outsource_studio_authorization> get(const uuid& in_project_id) {
@@ -37,17 +44,27 @@ struct entity_outsource_studio_authorization : entity {
     l_ret.reserve(l_sql.get_project_entity_count(in_project_id));
 
     auto l_rows = l_sql.impl_->storage_any_.iterate(select(
-        columns(object<entity>(true), object<outsource_studio_authorization>(true)), from<entity>(),
-        left_outer_join<outsource_studio_authorization>(on(c(&outsource_studio_authorization::enity_id_) == c(&entity::uuid_id_))),
+        columns(
+            object<entity>(true), object<outsource_studio_authorization>(true), object<entity_asset_extend>(true),
+            object<entity_shot_extend>(true)
+        ),
+        from<entity>(),
+        left_outer_join<outsource_studio_authorization>(
+            on(c(&outsource_studio_authorization::enity_id_) == c(&entity::uuid_id_))
+        ),
+        left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+        left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
         where(c(&entity::project_id_) == in_project_id), order_by(&entity::name_)
     ));
     std::map<uuid, std::size_t> l_entity_map{};
-    for (auto&& [l_entity, l_authorization] : l_rows) {
+    for (auto&& [l_entity, l_authorization, l_entity_asset_extend, l_entity_shot_extend] : l_rows) {
       if (!l_entity_map.contains(l_entity.uuid_id_)) {
         l_ret.emplace_back(entity_outsource_studio_authorization{l_entity});
         l_entity_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
       }
       l_ret[l_entity_map[l_entity.uuid_id_]].authorizations_.emplace_back(l_authorization);
+      if (l_entity_asset_extend) l_ret[l_entity_map[l_entity.uuid_id_]].entity_asset_extend_ = l_entity_asset_extend;
+      if (l_entity_shot_extend) l_ret[l_entity_map[l_entity.uuid_id_]].entity_shot_extend_ = l_entity_shot_extend;
     }
     return l_ret;
   }
