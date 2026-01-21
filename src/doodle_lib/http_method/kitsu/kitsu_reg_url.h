@@ -676,4 +676,8 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid project_id_{};
 uuid authorization_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/data/fix-preview-files-thumbnails
+DOODLE_HTTP_JWT_FUN(data_fix_preview_files_thumbnails)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
