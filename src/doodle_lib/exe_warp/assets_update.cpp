@@ -15,6 +15,7 @@
 #include "http_client/kitsu_client.h"
 #include <array>
 #include <filesystem>
+#include <opencv2/core/types.hpp>
 #include <string_view>
 #include <vector>
 
@@ -68,6 +69,26 @@ boost::asio::awaitable<void> update_image_files::run() {
     co_await kitsu_client_->upload_asset_file_image(task_id_, p);
   }
 }
+// 检查比例是否正确
+void check_image_aperture(const image_size& in_image_size, const std::pair<int, int>& in_project_resolution) {
+  double l_image_aperture = static_cast<double>(in_image_size.width) / static_cast<double>(in_image_size.height);
+  double l_project_aperture =
+      static_cast<double>(in_project_resolution.first) / static_cast<double>(in_project_resolution.second);
+  DOODLE_CHICK(
+      std::abs(l_image_aperture - l_project_aperture) < 0.01,
+      "图片比例与项目分辨率不符 图片比例 {:.4f} 项目比例 {:.4f}", l_image_aperture, l_project_aperture
+  );
+}
+void check_video_aperture(const cv::Size& in_video_size, const std::pair<int, int>& in_project_resolution) {
+  double l_video_aperture = static_cast<double>(in_video_size.width) / static_cast<double>(in_video_size.height);
+  double l_project_aperture =
+      static_cast<double>(in_project_resolution.first) / static_cast<double>(in_project_resolution.second);
+  DOODLE_CHICK(
+      std::abs(l_video_aperture - l_project_aperture) < 0.01,
+      "视频比例与项目分辨率不符 视频比例 {:.4f} 项目比例 {:.4f}", l_video_aperture, l_project_aperture
+  );
+}
+
 boost::asio::awaitable<void> update_movie_files::run() {
   DOODLE_CHICK(!movie_file_.empty(), "视频文件路径不能为空");
   DOODLE_CHICK(!task_id_.is_nil(), "任务ID不能为空");
@@ -89,24 +110,15 @@ boost::asio::awaitable<void> update_movie_files::run() {
         break;
       }
     DOODLE_CHICK(!l_files.empty(), "无法找到目录下 {} 中的图片文件(扩展名 .png, .jpg, .jpeg)", movie_file_);
-    DOODLE_CHICK(
-        detail::get_image_size(l_files.front()) == l_prj.get_resolution(),
-        "图片尺寸与项目分辨率不符 图片尺寸 {}x{} 项目分辨率 {}x{}", detail::get_image_size(l_files.front()).width,
-        detail::get_image_size(l_files.front()).height, l_prj.get_resolution().first, l_prj.get_resolution().second
-    );
+    check_image_aperture(detail::get_image_size(l_files.front()), l_prj.get_resolution());
+
     detail::create_move(
         l_movie_file, logger_ptr_, movie::image_attr::make_default_attr(l_files), image_size{l_prj.get_resolution()}
     );
   } else if (FSys::is_regular_file(movie_file_)) {
-    l_movie_file       = movie_file_;
-    auto l_video_info  = http::preview::get_video_duration(l_movie_file);
-    auto l_tag_size    = l_prj.get_resolution();
-    auto l_tag_size_cv = cv::Size{l_tag_size.first, l_tag_size.second};
-
-    DOODLE_CHICK(
-        l_video_info.size_ == l_tag_size_cv, "视频尺寸与项目分辨率不符 视频尺寸 {}x{} 项目分辨率 {}x{}",
-        l_video_info.size_.width, l_video_info.size_.height, l_tag_size.first, l_tag_size.second
-    );
+    l_movie_file      = movie_file_;
+    auto l_video_info = http::preview::get_video_duration(l_movie_file);
+    check_video_aperture(l_video_info.size_, l_prj.get_resolution());
   }
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());
   co_await kitsu_client_->upload_shot_animation_video_file(task_id_, l_movie_file);
@@ -131,11 +143,7 @@ boost::asio::awaitable<void> update_movie_compose_files::run() {
 
   auto l_list_file = FSys::list_files(movie_compose_file_, ".png");
   DOODLE_CHICK(!l_list_file.empty(), "视频合成路径 {} 下没有找到图片文件", movie_compose_file_.string());
-  DOODLE_CHICK(
-      detail::get_image_size(l_list_file.front()) == l_prj.get_resolution(),
-      "图片尺寸与项目分辨率不符 图片尺寸 {}x{} 项目分辨率 {}x{}", detail::get_image_size(l_list_file.front()).width,
-      detail::get_image_size(l_list_file.front()).height, l_prj.get_resolution().first, l_prj.get_resolution().second
-  );
+  check_image_aperture(detail::get_image_size(l_list_file.front()), l_prj.get_resolution());
 
   auto l_movie_path = core_set::get_set().get_cache_root("movie_compose") / movie_compose_file_.filename();
   l_movie_path.replace_extension(".mp4");
