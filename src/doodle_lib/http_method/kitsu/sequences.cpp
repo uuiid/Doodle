@@ -133,8 +133,9 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
   );
 
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
+
   auto l_rows                   = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<task>(true), &assignees_table::person_id_),
+      columns(object<entity>(true), object<task>(true), &assignees_table::person_id_), from<entity>(),
       left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(
