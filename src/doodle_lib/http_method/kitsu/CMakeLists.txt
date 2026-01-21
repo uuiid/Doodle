@@ -12,6 +12,7 @@ target_sources(
 
 
         PRIVATE
+        kitsu_reg_url.cpp
         task.cpp
         user.cpp
         kitsu_front_end.cpp

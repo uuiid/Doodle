@@ -32,7 +32,15 @@ struct kitsu_ctx_t {
   FSys::path get_tiles_file_path(const uuid& in_uuid) {
     return root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
   }
-
+  FSys::path get_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "pictures" / "thumbnails" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+  FSys::path get_pictures_thumbnails_square_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "pictures" / "thumbnails_square" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+  
   FSys::path get_movie_source_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return get_source_file(in_uuid, false, in_ext);
   }

@@ -16,9 +16,8 @@ namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_organisations_png::get(
     session_data_ptr in_handle
 ) {
-  FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / FSys::split_uuid_path(l_filename);
-  auto l_ext  = l_filename.extension();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  auto l_ext  = l_path.extension();
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
@@ -44,8 +43,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
     co_return in_handle->make_msg(nlohmann::json{});
   else
     l_file = l_fs.front();
-  FSys::path l_save_path =
-      g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / FSys::split_uuid_path(fmt::format("{}.png", id_));
+  FSys::path l_save_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   handle_organisation_thumbnail(l_file, l_save_path);
   socket_io::broadcast("organisation:set-thumbnail", nlohmann::json{{"organisation_id", id_}});
   co_return in_handle->make_msg(
@@ -57,7 +55,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 ) {
   FSys::path l_filename = fmt::format("{}.png", id_);
   /// 先选择新的路径, 不存在时, 在旧的路径中查找
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails_square" / FSys::split_uuid_path(l_filename);
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_square_file(id_);
   if (!exists(l_path))
     l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / "squ" / "are" /
              (std::string{"square-"} + l_filename.stem().generic_string());
@@ -69,18 +67,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_preview_files::get(
     session_data_ptr in_handle
 ) {
-  FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / FSys::split_uuid_path(l_filename);
-  auto l_ext  = l_filename.extension();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  auto l_ext  = l_path.extension();
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_persons::get(
     session_data_ptr in_handle
 ) {
-  FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / FSys::split_uuid_path(l_filename);
-  auto l_ext  = l_filename.extension();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
+  auto l_ext  = l_path.extension();
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
@@ -88,40 +84,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files_download::get(
     session_data_ptr in_handle
 ) {
-  auto l_sql            = g_ctx().get<sqlite_database>();
-  FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_pre_file       = l_sql.get_by_uuid<preview_file>(id_);
-  FSys::path l_path{};
-  if (l_pre_file.extension_ == ".png" || l_pre_file.extension_ == "png") {
-    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
-    l_path.replace_extension(".png");
-  } else if (l_pre_file.extension_ == ".pdf" || l_pre_file.extension_ == "pdf") {
-    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
-  } else if (l_pre_file.extension_ == ".mp4" || l_pre_file.extension_ == "mp4") {
-    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
-    l_path.replace_extension(".png");
-  } else {
-    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
-    l_path.replace_extension(".png");
-  }
+  auto l_sql        = g_ctx().get<sqlite_database>();
+  auto l_pre_file   = l_sql.get_by_uuid<preview_file>(id_);
+  FSys::path l_path = g_ctx().get<kitsu_ctx_t>().get_picture_original_file(id_);
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_pre_file.extension_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_preview_files::get(
     session_data_ptr in_handle
 ) {
-  FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "previews" / FSys::split_uuid_path(l_filename);
-  auto l_ext  = l_filename.extension();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_picture_preview_file(id_);
+  auto l_ext  = l_path.extension();
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files::get(
     session_data_ptr in_handle
 ) {
-  FSys::path l_filename = fmt::format("{}.png", id_);
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "original" / FSys::split_uuid_path(l_filename);
-  auto l_ext  = l_filename.extension();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_picture_original_file(id_);
+  auto l_ext  = l_path.extension();
   if (exists(l_path)) co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
   co_return in_handle->make_msg(l_path.replace_extension(), kitsu::mime_type(l_ext));
 }
