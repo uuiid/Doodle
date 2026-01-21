@@ -192,7 +192,7 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
       from<entity>(), join<project>(on(c(&entity::project_id_) == c(&project::uuid_id_))),
       left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
       join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
+      join<episode>(on(c(sequence->*&entity::uuid_id_) == c(episode->*&entity::uuid_id_))),
       left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
       left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
       where(

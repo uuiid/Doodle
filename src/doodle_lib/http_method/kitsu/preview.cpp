@@ -414,8 +414,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_fix_preview_files_thumbnails, post) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_previews = l_sql.impl_->storage_any_.get_all<preview_file>();
-
-
-  }
+  co_return in_handle->make_msg_204();
+}
 
 }  // namespace doodle::http

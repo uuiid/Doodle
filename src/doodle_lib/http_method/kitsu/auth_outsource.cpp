@@ -16,6 +16,7 @@
 #include "core/http/http_function.h"
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace doodle::http {
@@ -26,6 +27,8 @@ struct entity_outsource_studio_authorization : entity {
 
   std::optional<entity_asset_extend> entity_asset_extend_;
   std::optional<entity_shot_extend> entity_shot_extend_;
+  std::string episode_name_;
+  std::string sequence_name_;
 
   explicit entity_outsource_studio_authorization(const entity& in_entity) : entity(in_entity) {}
 
@@ -35,6 +38,8 @@ struct entity_outsource_studio_authorization : entity {
     j["authorizations"] = p.authorizations_;
     if (p.entity_asset_extend_) to_json(j, *p.entity_asset_extend_);
     if (p.entity_shot_extend_) to_json(j, *p.entity_shot_extend_);
+    j["episode_name"]  = p.episode_name_;
+    j["sequence_name"] = p.sequence_name_;
   }
 
   static std::vector<entity_outsource_studio_authorization> get(const uuid& in_project_id) {
@@ -66,6 +71,17 @@ struct entity_outsource_studio_authorization : entity {
       if (l_entity_asset_extend) l_ret[l_entity_map[l_entity.uuid_id_]].entity_asset_extend_ = l_entity_asset_extend;
       if (l_entity_shot_extend) l_ret[l_entity_map[l_entity.uuid_id_]].entity_shot_extend_ = l_entity_shot_extend;
     }
+    auto l_sequence_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_;
+    for (auto&& l_r : l_ret) {
+      if (!l_r.parent_id_.is_nil()) {
+        if (l_ret[l_entity_map[l_r.parent_id_]].entity_type_id_ == l_sequence_type_id) {
+          l_ret[l_entity_map[l_r.uuid_id_]].episode_name_ = l_ret[l_entity_map[l_r.parent_id_]].name_;
+        } else {
+          l_ret[l_entity_map[l_r.uuid_id_]].sequence_name_ = l_ret[l_entity_map[l_r.parent_id_]].name_;
+        }
+      }
+    }
+
     return l_ret;
   }
 };
