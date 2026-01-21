@@ -1145,6 +1145,7 @@ DOODLE_INSTALL_SQL(ai_image_metadata)
 DOODLE_INSTALL_SQL(project_status_automation_link)
 DOODLE_INSTALL_SQL(entity_shot_extend)
 DOODLE_INSTALL_SQL(status_automation)
+DOODLE_INSTALL_SQL(studio)
 DOODLE_INSTALL_SQL(outsource_studio_authorization)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
