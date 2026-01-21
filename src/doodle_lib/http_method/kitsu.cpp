@@ -131,6 +131,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<departments>("/api/data/departments"_url)
       .reg_t<departments_instance>("/api/data/departments/{}"_url(&departments_instance::id_))
       .reg_t<studios>("/api/data/studios"_url)
+      .reg_t<studios_instance>("/api/data/studios/{}"_url(&studios_instance::id_))
       .reg_t<task_types>("/api/data/task-types"_url)
       .reg_t<custom_actions>("/api/data/custom-actions"_url)
       .reg_t<status_automations>("/api/data/status-automations"_url)
