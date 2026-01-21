@@ -267,6 +267,14 @@ DOODLE_HTTP_JWT_FUN(studios)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+// /api/data/studios/{id}
+DOODLE_HTTP_JWT_FUN(studios_instance)
+
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+
+uuid id_{};
+DOODLE_HTTP_FUN_END()
 // /api/data/task-types
 DOODLE_HTTP_JWT_FUN(task_types)
 DOODLE_HTTP_FUN_OVERRIDE(get)

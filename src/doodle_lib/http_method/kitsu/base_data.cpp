@@ -60,6 +60,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   co_await l_sql.install(l_studio);
   co_return in_handle->make_msg(nlohmann::json{} = *l_studio);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
+  person_.check_admin();
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_studio = l_sql.get_by_uuid<studio>(id_);
+  co_await l_sql.remove<studio>(l_studio.uuid_id_);
+  co_return in_handle->make_msg_204();
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
+  person_.check_admin();
+  auto l_sql        = g_ctx().get<sqlite_database>();
+  auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
+  in_handle->get_json().get_to(*l_studio_ptr);
+  DOODLE_CHICK(!l_studio_ptr->name_.empty(), "工作室名称不可为空");
+  co_await l_sql.update(l_studio_ptr);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_studio_ptr);
+}
 boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(session_data_ptr in_handle) {
   person_.check_admin();
   auto l_list = g_ctx().get<sqlite_database>().get_all<task_type>();

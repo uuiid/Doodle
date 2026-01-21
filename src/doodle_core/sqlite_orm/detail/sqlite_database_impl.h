@@ -907,7 +907,7 @@ inline auto make_storage_doodle(const std::string& in_path) {
           "studio",                                                                     //
           make_column("id", &studio::id_, primary_key().autoincrement()),               //
           make_column("uuid", &studio::uuid_id_, not_null(), unique()),                 //
-          make_column("name", &studio::name_, not_null()),                                          //
+          make_column("name", &studio::name_, not_null(), unique()),                                          //
           make_column("color", &studio::color_, not_null()),                                        //
           make_column("app_key", &studio::app_key_),                                    //
           make_column("app_secret", &studio::app_secret_),                              //

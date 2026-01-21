@@ -26,6 +26,7 @@
 #include "metadata/entity_type.h"
 #include "metadata/playlist.h"
 #include "metadata/preview_file.h"
+#include "metadata/shot.h"
 #include "metadata/studio.h"
 #include "metadata/working_file.h"
 #include <optional>
@@ -1187,6 +1188,7 @@ DOODLE_REMOVE_BY_ID(playlist_shot)
 DOODLE_REMOVE_BY_ID(entity_shot_extend)
 DOODLE_REMOVE_BY_ID(project_status_automation_link)
 DOODLE_REMOVE_BY_ID(outsource_studio_authorization)
+DOODLE_REMOVE_BY_ID(studio)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
@@ -1197,6 +1199,7 @@ DOODLE_REMOVE_BY_UUID(playlist)
 DOODLE_REMOVE_BY_UUID(entity_link)
 DOODLE_REMOVE_BY_UUID(ai_image_metadata)
 DOODLE_REMOVE_BY_UUID(playlist_shot)
+DOODLE_REMOVE_BY_UUID(studio)
 DOODLE_REMOVE_BY_UUID(outsource_studio_authorization)
 
 template <>
