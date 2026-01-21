@@ -1,6 +1,7 @@
 //
 // Created by TD on 25-5-12.
 //
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/organisation.h"
 #include "doodle_core/metadata/preview_file.h"
 #include <doodle_core/sqlite_orm/sqlite_database.h>
@@ -11,6 +12,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
+#include "core/http/http_function.h"
 #include <opencv2/opencv.hpp>
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_organisations_png::get(
@@ -108,5 +110,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get) {
+  DOODLE_CHICK_HTTP(!person_.is_outsourcer(), unauthorized, "无权限下载");
 
+
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(preview_file_id_);
+  auto l_ext  = l_path.extension();
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+}
 }  // namespace doodle::http
