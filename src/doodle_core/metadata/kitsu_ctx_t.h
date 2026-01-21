@@ -29,9 +29,6 @@ struct kitsu_ctx_t {
   std::string domain_protocol_;
   std::string domain_name_;
 
-
-
-
   FSys::path get_tiles_file_path(const uuid& in_uuid) { return root_ / get_tiles_file_path_(in_uuid); }
   FSys::path get_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / get_pictures_thumbnails_file_(in_uuid, in_ext);
@@ -58,33 +55,14 @@ struct kitsu_ctx_t {
   FSys::path get_attachment_file(const uuid& in_uuid) { return root_ / get_attachment_file_(in_uuid); }
 
   // 外包获取
-  FSys::path get_outsource_tiles_file_path(const uuid& in_uuid) {
-    return root_ / "outsource" / get_tiles_file_path_(in_uuid);
-  }
-  FSys::path get_outsource_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "outsource" / get_pictures_thumbnails_file_(in_uuid, in_ext);
-  }
-  FSys::path get_outsource_pictures_thumbnails_square_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "outsource" / get_pictures_thumbnails_square_file_(in_uuid, in_ext);
-  }
-  FSys::path get_outsource_movie_source_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "outsource" / get_source_file(in_uuid, false, in_ext);
-  }
-  FSys::path get_outsource_movie_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "outsource" / get_preview_file_path(in_uuid, false, in_ext);
-  }
-  FSys::path get_outsource_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "outsource" / get_lowdef_file_path(in_uuid, false, in_ext);
-  }
+
   FSys::path get_outsource_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "outsource" / get_source_file(in_uuid, true, in_ext);
   }
   FSys::path get_outsource_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "outsource" / get_preview_file_path(in_uuid, true, in_ext);
   }
-  FSys::path get_outsource_attachment_file(const uuid& in_uuid) {
-    return root_ / "outsource" / get_attachment_file_(in_uuid);
-  }
+
  private:
   FSys::path get_attachment_file_(const uuid& in_uuid) {
     return FSys::path{"files"} / "attachments" / FSys::split_uuid_path(fmt::to_string(in_uuid));
