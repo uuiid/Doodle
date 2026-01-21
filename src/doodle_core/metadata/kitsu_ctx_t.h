@@ -29,61 +29,100 @@ struct kitsu_ctx_t {
   std::string domain_protocol_;
   std::string domain_name_;
 
-  FSys::path get_tiles_file_path(const uuid& in_uuid) {
-    return root_ / "pictures" / "tiles" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
-  }
+
+
+
+  FSys::path get_tiles_file_path(const uuid& in_uuid) { return root_ / get_tiles_file_path_(in_uuid); }
   FSys::path get_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "pictures" / "thumbnails" /
-           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+    return root_ / get_pictures_thumbnails_file_(in_uuid, in_ext);
   }
   FSys::path get_pictures_thumbnails_square_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "pictures" / "thumbnails_square" /
-           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
-  }
-  
-  FSys::path get_movie_source_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return get_source_file(in_uuid, false, in_ext);
-  }
-  FSys::path get_movie_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return get_preview_file_path(in_uuid, false, in_ext);
-  }
-  FSys::path get_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return get_lowdef_file_path(in_uuid, false, in_ext);
-  }
-  FSys::path get_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return get_source_file(in_uuid, true, in_ext);
-  }
-  FSys::path get_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return get_preview_file_path(in_uuid, true, in_ext);
-  }
-  FSys::path get_attachment_file(const uuid& in_uuid) {
-    return root_ / "files" / "attachments" / FSys::split_uuid_path(fmt::to_string(in_uuid));
+    return root_ / get_pictures_thumbnails_square_file_(in_uuid, in_ext);
   }
 
+  FSys::path get_movie_source_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / get_source_file(in_uuid, false, in_ext);
+  }
+  FSys::path get_movie_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / get_preview_file_path(in_uuid, false, in_ext);
+  }
+  FSys::path get_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / get_lowdef_file_path(in_uuid, false, in_ext);
+  }
+  FSys::path get_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / get_source_file(in_uuid, true, in_ext);
+  }
+  FSys::path get_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / get_preview_file_path(in_uuid, true, in_ext);
+  }
+  FSys::path get_attachment_file(const uuid& in_uuid) { return root_ / get_attachment_file_(in_uuid); }
+
+  // 外包获取
+  FSys::path get_outsource_tiles_file_path(const uuid& in_uuid) {
+    return root_ / "outsource" / get_tiles_file_path_(in_uuid);
+  }
+  FSys::path get_outsource_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_pictures_thumbnails_file_(in_uuid, in_ext);
+  }
+  FSys::path get_outsource_pictures_thumbnails_square_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_pictures_thumbnails_square_file_(in_uuid, in_ext);
+  }
+  FSys::path get_outsource_movie_source_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_source_file(in_uuid, false, in_ext);
+  }
+  FSys::path get_outsource_movie_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_preview_file_path(in_uuid, false, in_ext);
+  }
+  FSys::path get_outsource_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_lowdef_file_path(in_uuid, false, in_ext);
+  }
+  FSys::path get_outsource_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_source_file(in_uuid, true, in_ext);
+  }
+  FSys::path get_outsource_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "outsource" / get_preview_file_path(in_uuid, true, in_ext);
+  }
+  FSys::path get_outsource_attachment_file(const uuid& in_uuid) {
+    return root_ / "outsource" / get_attachment_file_(in_uuid);
+  }
  private:
+  FSys::path get_attachment_file_(const uuid& in_uuid) {
+    return FSys::path{"files"} / "attachments" / FSys::split_uuid_path(fmt::to_string(in_uuid));
+  }
+  FSys::path get_tiles_file_path_(const uuid& in_uuid) {
+    return FSys::path{"pictures"} / "tiles" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+  }
+  FSys::path get_pictures_thumbnails_file_(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return FSys::path{"pictures"} / "thumbnails" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+  FSys::path get_pictures_thumbnails_square_file_(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return FSys::path{"pictures"} / "thumbnails_square" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
   FSys::path get_source_file(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
     if (is_image)
-      return root_ / "pictures" / "original" /
+      return FSys::path{"pictures"} / "original" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
     else
-      return root_ / "movies" / "source" /
+      return FSys::path{"movies"} / "source" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
   }
 
   FSys::path get_preview_file_path(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
     if (is_image)
-      return root_ / "pictures" / "previews" /
+      return FSys::path{"pictures"} / "previews" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
     else
-      return root_ / "movies" / "previews" /
+      return FSys::path{"movies"} / "previews" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
   }
   FSys::path get_lowdef_file_path(const uuid& in_uuid, bool is_image, const std::string& in_ext = {}) {
     if (is_image)
-      return root_ / "pictures" / "lowdef" /
+      return FSys::path{"pictures"} / "lowdef" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
     else
-      return root_ / "movies" / "lowdef" /
+      return FSys::path{"movies"} / "lowdef" /
              FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(is_image, in_ext)));
   }
   std::string fix_ext(bool is_image, const std::string& in_ext) {
