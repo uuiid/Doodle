@@ -410,10 +410,36 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
-
+struct data_fix_preview_files_thumbnails_run_t {
+  std::string watermark_text_;
+  void operator()(const std::shared_ptr<preview_file>& in_preview_file) {
+    auto l_sql            = g_ctx().get<sqlite_database>();
+    auto l_previews       = l_sql.impl_->storage_any_.get_all<preview_file>();
+    this->watermark_text_ = l_sql.get_all<doodle::organisation>().front().name_;
+    for (auto&& l_preview : l_previews) {
+      if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_picture_original_file(l_preview.uuid_id_);
+          FSys::exists(l_path)) {
+      }
+    }
+  }
+  // 添加水印
+  void add_watermark(const FSys::path& in_path) {
+    auto l_cv = cv::imread(in_path.generic_string());
+    if (l_cv.empty()) {
+      DOODLE_LOG_ERROR("无法读取图片文件: {}", in_path.generic_string());
+      return;
+    }
+    cv::putText(
+        l_cv, "Doodle Preview", cv::Point{10, l_cv.rows - 10}, cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar{255, 255, 255},
+        2
+    );
+    cv::imwrite(in_path.generic_string(), l_cv);
+  }
+};
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_fix_preview_files_thumbnails, post) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_previews = l_sql.impl_->storage_any_.get_all<preview_file>();
+
   co_return in_handle->make_msg_204();
 }
 

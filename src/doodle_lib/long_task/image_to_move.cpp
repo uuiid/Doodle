@@ -13,6 +13,7 @@
 
 #include "opencv2/core.hpp"
 #include <opencv2/core/mat.hpp>
+#include <opencv2/core/types.hpp>
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
@@ -202,6 +203,78 @@ void image_to_move::set_image_attr_from_dir(const FSys::path& in_path) {
   }
   set_image_attr(l_images);
 }
+add_watermark_t::add_watermark_t(
 
+    const std::string& in_watermark_text, const std::int32_t in_watermark_height,
+    const std::pair<std::int32_t, std::int32_t>& in_watermark_size, const cv::Scalar& in_watermark_color,
+    std::double_t in_opacity, const std::string& in_font_path
+) {
+  ft2_ = cv::freetype::createFreeType2();
+  if (in_font_path.empty())
+    ft2_->loadFontData(std::string{doodle_config::font_default}, 0);
+  else
+    ft2_->loadFontData(in_font_path, 0);
+
+  text_size_        = ft2_->getTextSize(in_watermark_text, in_watermark_height, g_thickness, &baseline_);
+  color_            = in_watermark_color;
+  opacity_          = in_opacity;
+  watermark_text_   = in_watermark_text;
+  watermark_height_ = in_watermark_height;
+  watermark_size_   = in_watermark_size;
+}
+
+cv::Mat add_watermark_t::add_watermark_to_image(const cv::Mat& in_mat) {
+  if (in_mat.empty()) throw_exception(doodle_error{"图片解码失败"});
+  // 添加水印
+  auto l_cv_old = in_mat.clone();
+  /// 循环图片宽高, 添加水印
+  for (std::int32_t y = 0; y < in_mat.rows; y += (text_size_.height + watermark_size_.first)) {
+    for (std::int32_t x = 0; x < in_mat.cols; x += (text_size_.width + watermark_size_.second)) {
+      cv::Point l_textOrg(x, y + text_size_.height);
+      ft2_->putText(
+          in_mat, watermark_text_, l_textOrg, watermark_height_, color_, g_thickness, cv::LineTypes::LINE_AA, true
+      );
+    }
+  }
+  /// 混合图片
+  cv::addWeighted(in_mat, opacity_, l_cv_old, 1 - opacity_, 0, in_mat);
+  return in_mat;
+}
+void add_watermark_t::operator()(
+    FSys::path const& in_image_path, FSys::path const& in_out_path, const cv::Size& in_size
+) {
+  if (!exists(in_image_path))
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::bad_request, fmt::format("图片文件不存在: {}", in_image_path.generic_string())
+        }
+    );
+  auto l_image = cv::imread(in_image_path.generic_string(), cv::IMREAD_UNCHANGED);
+  DOODLE_CHICK(!l_image.empty(), "图片解码失败 {}", in_image_path.generic_string());
+
+  auto l_old_size = l_image.size();
+  // 计算像素 等比缩放
+  auto l_aspect_ratio =
+      boost::numeric_cast<std::double_t>(l_image.cols) / boost::numeric_cast<std::double_t>(l_image.rows);
+  cv::Size l_size = l_image.size();
+  if (in_size.width != 0) {
+    l_size.width = in_size.width;
+    l_size.height =
+        boost::numeric_cast<std::int32_t>(boost::numeric_cast<std::double_t>(in_size.width) / l_aspect_ratio);
+  } else if (in_size.height != 0) {
+    l_size.width =
+        boost::numeric_cast<std::int32_t>(boost::numeric_cast<std::double_t>(in_size.height) * l_aspect_ratio);
+    l_size.height = in_size.height;
+  }
+
+  if (l_size != l_image.size()) {
+    cv::resize(l_image, l_image, l_size);
+  }
+  auto l_out = add_watermark_to_image(l_image);
+  // 重新缩放回去
+  if (l_old_size != l_out.size()) cv::resize(l_out, l_out, l_old_size);
+
+  cv::imwrite((in_out_path / in_image_path.filename().replace_extension(".png")).generic_string(), l_out);
+}
 }  // namespace detail
 }  // namespace doodle

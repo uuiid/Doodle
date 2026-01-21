@@ -10,8 +10,9 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <filesystem>
-
-
+#include <opencv2/core/types.hpp>
+#include <opencv2/freetype.hpp>
+#include <string>
 namespace doodle {
 namespace detail {
 FSys::path create_out_path(
@@ -23,6 +24,36 @@ void create_move(
     const image_size& in_image_size = image_size{}
 );
 image_size get_image_size(const FSys::path& in_path);
+
+class add_watermark_t {
+  cv::Ptr<cv::freetype::FreeType2> ft2_;
+  static constexpr std::int32_t g_thickness = -1;
+  std::int32_t baseline_                    = 0;
+  cv::Size text_size_{0, 0};
+  cv::Scalar color_{255, 255, 255};
+  std::double_t opacity_{0.5};
+  std::string watermark_text_;
+  std::int32_t watermark_height_{30};
+  // 水印间距
+  std::pair<std::int32_t, std::int32_t> watermark_size_{100, 100};
+  cv::Mat add_watermark_to_image(const cv::Mat& in_mat);
+
+ public:
+  explicit add_watermark_t(
+      const std::string& in_watermark_text, const std::int32_t in_watermark_height,
+      const std::pair<std::int32_t, std::int32_t>& in_watermark_size = {100, 100},
+      const cv::Scalar& in_watermark_color = {255, 255, 255}, std::double_t in_opacity = 0.5,
+      const std::string& in_font_path = {}
+  );
+  /**
+    * @brief 给图片添加水印
+    * @param in_image_path 输入图片路径
+    * @param in_out_path 输出图片路径
+    * @param in_size 重新缩放大小后添加水印, 保持水印比例
+   */
+  void operator()(FSys::path const& in_image_path, FSys::path const& in_out_path, const cv::Size& in_size = {0, 0});
+};
+
 class image_to_move : public async_task {
  public:
   FSys::path out_path_;
