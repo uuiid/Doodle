@@ -19,8 +19,13 @@ struct DOODLE_CORE_API studio {
     j["id"]       = p.uuid_id_;
     j["name"]     = p.name_;
     j["color"]    = p.color_;
-
     j["archived"] = p.archived_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, studio& p) {
+    if (j.contains("name")) j.at("name").get_to(p.name_);
+    if (j.contains("color")) j.at("color").get_to(p.color_);
+    if (j.contains("archived")) j.at("archived").get_to(p.archived_);
   }
 };
 

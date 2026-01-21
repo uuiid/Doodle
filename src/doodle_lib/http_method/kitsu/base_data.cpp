@@ -5,6 +5,7 @@
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/sqlite_orm/sqlite_database.h"
@@ -50,6 +51,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> studios::get(sessi
   auto l_list = g_ctx().get<sqlite_database>().get_all<studio>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
+  person_.check_admin();
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_studio = std::make_shared<studio>();
+  in_handle->get_json().get_to(*l_studio);
+  DOODLE_CHICK(!l_studio->name_.empty(), "工作室名称不可为空");
+  co_await l_sql.install(l_studio);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_studio);
+}
 boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(session_data_ptr in_handle) {
   person_.check_admin();
   auto l_list = g_ctx().get<sqlite_database>().get_all<task_type>();
@@ -67,7 +77,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> status_automations
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   person_.check_admin();
-  auto l_sql            = g_ctx().get<sqlite_database>();
+  auto l_sql               = g_ctx().get<sqlite_database>();
   auto l_status_automation = std::make_shared<status_automation>();
   in_handle->get_json().get_to(*l_status_automation);
   co_await l_sql.install(l_status_automation);
@@ -98,8 +108,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_status      = std::make_shared<task_status>();
+  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_status = std::make_shared<task_status>();
   in_handle->get_json().get_to(*l_status);
   co_await l_sql.install(l_status);
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
