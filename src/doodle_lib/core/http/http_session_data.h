@@ -17,7 +17,6 @@
 #include <string>
 #include <tl/expected.hpp>
 
-
 namespace doodle::http {
 struct multipart_body;
 class http_websocket_client;
@@ -39,6 +38,8 @@ struct http_header_ctrl {
   std::string_view mine_type_{"application/json; charset=utf-8"};
   bool has_cache_control_{false};
   bool is_deflate_{false};
+  bool is_attachment_{false};
+  std::string attachment_filename_{};
 };
 namespace detail {
 
@@ -76,9 +77,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   auto set_response_header(T& in_res, std::string_view in_mine_type);
 
   template <typename T>
-  auto set_response_file_header(
-      T& in_res, std::string_view in_mine_type, const FSys::path& in_path, bool has_cache_control
-  );
+  auto set_response_file_header(T& in_res, const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl);
 
  public:
   session_data() = default;

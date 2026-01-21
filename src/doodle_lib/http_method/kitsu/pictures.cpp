@@ -113,9 +113,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get) {
   DOODLE_CHICK_HTTP(!person_.is_outsourcer(), unauthorized, "无权限下载");
 
-
-  auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(preview_file_id_);
-  auto l_ext  = l_path.extension();
-  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
+  auto l_path     = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(preview_file_id_);
+  auto l_pre_file = g_ctx().get<sqlite_database>().get_by_uuid<preview_file>(preview_file_id_);
+  auto l_ext      = l_path.extension();
+  co_return in_handle->make_msg(
+      l_path, http_header_ctrl{
+                  .mine_type_     = kitsu::mime_type(l_ext),
+                  .is_attachment_ = true,
+                  .attachment_filename_ =
+                      fmt::format("movie_preview_{}.{}", l_pre_file.original_name_, l_ext.string().substr(1))
+              }
+  );
 }
 }  // namespace doodle::http

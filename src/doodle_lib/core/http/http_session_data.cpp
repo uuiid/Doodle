@@ -82,11 +82,11 @@ auto session_data::set_response_header(T& in_res, std::string_view in_mine_type)
 }
 template <typename T>
 auto session_data::set_response_file_header(
-    T& in_res, std::string_view in_mine_type, const FSys::path& in_path, bool has_cache_control
+    T& in_res, const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl
 ) {
-  set_response_header(in_res, in_mine_type);
+  set_response_header(in_res, in_http_header_ctrl.mine_type_);
   auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
-  if (has_cache_control) {
+  if (in_http_header_ctrl.has_cache_control_) {
     in_res.set(boost::beast::http::field::cache_control, "public,max-age=300");
     in_res.set(
         boost::beast::http::field::expires, fmt::format("{:%a, %d %b %Y %T} GMT", l_time + chrono::seconds{300})
@@ -96,6 +96,16 @@ auto session_data::set_response_file_header(
       chrono::floor<chrono::seconds>(FSys::file_time_type::clock::to_utc(FSys::last_write_time(in_path)));
   in_res.set(boost::beast::http::field::last_modified, fmt::format("{:%a, %d %b %Y %T} GMT", l_last_time));
   in_res.set(boost::beast::http::field::etag, generate_etag(in_path));
+  if (in_http_header_ctrl.is_attachment_) {
+    in_res.set(
+        boost::beast::http::field::content_disposition,
+        fmt::format(
+            "attachment; filename=\"{}\"", in_http_header_ctrl.attachment_filename_.empty()
+                                               ? in_path.filename().string()
+                                               : in_http_header_ctrl.attachment_filename_
+        )
+    );
+  }
 }
 
 session_data::session_data(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr)
@@ -354,7 +364,7 @@ boost::beast::http::message_generator session_data::make_msg(
   if (auto l_size = FSys::file_size(in_path); l_size > 10 * 1024 * 1024)  // 10MB
     timeout_ += chrono::seconds(l_size / (10 * 1024));
 
-  set_response_file_header(l_res, in_http_header_ctrl.mine_type_, in_path, in_http_header_ctrl.has_cache_control_);
+  set_response_file_header(l_res, in_path, in_http_header_ctrl);
   l_res.keep_alive(keep_alive_);
   l_res.prepare_payload();
 
