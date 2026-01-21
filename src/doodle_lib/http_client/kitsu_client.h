@@ -87,6 +87,7 @@ class kitsu_client {
   boost::asio::awaitable<FSys::path> get_task_maya_file(uuid in_task_id) const;
 
   boost::asio::awaitable<project> get_project(uuid in_project_id) const;
+  boost::asio::awaitable<nlohmann::json> get_tasks_full(const uuid& in_task_id) const;
   boost::asio::awaitable<nlohmann::json> get_generate_uesk_file_arg(uuid in_task_id) const;
   boost::asio::awaitable<void> upload_asset_file_maya(uuid in_task_id, FSys::path in_file_path) const;
   /// 上传UE文件

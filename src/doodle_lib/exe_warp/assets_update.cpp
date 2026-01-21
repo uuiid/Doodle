@@ -3,10 +3,13 @@
 #include "doodle_core/core/core_set.h"
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/move_create.h"
+#include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task_status.h"
 
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include "http_client/kitsu_client.h"
@@ -72,6 +75,8 @@ boost::asio::awaitable<void> update_movie_files::run() {
   kitsu_client_->set_logger(logger_ptr_);
   SPDLOG_LOGGER_INFO(logger_ptr_, "发现需要更新的视频文件 {}", movie_file_);
 
+  auto l_prj = (co_await kitsu_client_->get_tasks_full(this->task_id_)).at("project").get<project>();
+
   FSys::path l_movie_file{};
 
   static constexpr std::array<std::string_view, 3> k_image_exts{".png", ".jpg", ".jpeg"};
@@ -84,9 +89,24 @@ boost::asio::awaitable<void> update_movie_files::run() {
         break;
       }
     DOODLE_CHICK(!l_files.empty(), "无法找到目录下 {} 中的图片文件(扩展名 .png, .jpg, .jpeg)", movie_file_);
-    detail::create_move(l_movie_file, logger_ptr_, movie::image_attr::make_default_attr(l_files));
+    DOODLE_CHICK(
+        detail::get_image_size(l_files.front()) == l_prj.get_resolution(),
+        "图片尺寸与项目分辨率不符 图片尺寸 {}x{} 项目分辨率 {}x{}", detail::get_image_size(l_files.front()).width,
+        detail::get_image_size(l_files.front()).height, l_prj.get_resolution().first, l_prj.get_resolution().second
+    );
+    detail::create_move(
+        l_movie_file, logger_ptr_, movie::image_attr::make_default_attr(l_files), image_size{l_prj.get_resolution()}
+    );
   } else if (FSys::is_regular_file(movie_file_)) {
-    l_movie_file = movie_file_;
+    l_movie_file       = movie_file_;
+    auto l_video_info  = http::preview::get_video_duration(l_movie_file);
+    auto l_tag_size    = l_prj.get_resolution();
+    auto l_tag_size_cv = cv::Size{l_tag_size.first, l_tag_size.second};
+
+    DOODLE_CHICK(
+        l_video_info.size_ == l_tag_size_cv, "视频尺寸与项目分辨率不符 视频尺寸 {}x{} 项目分辨率 {}x{}",
+        l_video_info.size_.width, l_video_info.size_.height, l_tag_size.first, l_tag_size.second
+    );
   }
   DOODLE_CHICK(FSys::exists(l_movie_file), "视频文件 {} 不存在", l_movie_file.string());
   co_await kitsu_client_->upload_shot_animation_video_file(task_id_, l_movie_file);
@@ -105,13 +125,23 @@ boost::asio::awaitable<void> update_movie_compose_files::run() {
 
   kitsu_client_->set_logger(logger_ptr_);
   SPDLOG_LOGGER_INFO(logger_ptr_, "发现需要更新的视频合成文件 {}", movie_compose_file_);
+  auto l_prj = (co_await kitsu_client_->get_tasks_full(this->task_id_)).at("project").get<project>();
 
   DOODLE_CHICK(FSys::exists(movie_compose_file_), "视频合成文件 {} 不存在", movie_compose_file_.string());
+
+  auto l_list_file = FSys::list_files(movie_compose_file_, ".png");
+  DOODLE_CHICK(!l_list_file.empty(), "视频合成路径 {} 下没有找到图片文件", movie_compose_file_.string());
+  DOODLE_CHICK(
+      detail::get_image_size(l_list_file.front()) == l_prj.get_resolution(),
+      "图片尺寸与项目分辨率不符 图片尺寸 {}x{} 项目分辨率 {}x{}", detail::get_image_size(l_list_file.front()).width,
+      detail::get_image_size(l_list_file.front()).height, l_prj.get_resolution().first, l_prj.get_resolution().second
+  );
 
   auto l_movie_path = core_set::get_set().get_cache_root("movie_compose") / movie_compose_file_.filename();
   l_movie_path.replace_extension(".mp4");
   detail::create_move(
-      l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(movie_compose_file_, ".png"))
+      l_movie_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(movie_compose_file_, ".png")),
+      image_size{l_prj.get_resolution()}
   );
 
   co_await kitsu_client_->comment_task_compose_video(

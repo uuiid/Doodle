@@ -9,6 +9,9 @@
 #include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <filesystem>
+
+
 namespace doodle {
 namespace detail {
 FSys::path create_out_path(
@@ -19,7 +22,7 @@ void create_move(
     const FSys::path& in_out_path, logger_ptr in_msg, const std::vector<movie::image_attr>& in_vector,
     const image_size& in_image_size = image_size{}
 );
-
+image_size get_image_size(const FSys::path& in_path);
 class image_to_move : public async_task {
  public:
   FSys::path out_path_;
@@ -48,13 +51,12 @@ class image_to_move : public async_task {
     nlohmann_json_j["shot"].get_to(nlohmann_json_t.shot_);
     nlohmann_json_j["episodes"].get_to(nlohmann_json_t.eps_);
     nlohmann_json_j["user_name"].get_to(nlohmann_json_t.user_name_);
-    
+
     nlohmann_json_t.set_image_attr_from_dir(path_);
   }
 
  private:
   std::vector<movie::image_attr> vector_;
-  
 };
 
 }  // namespace detail

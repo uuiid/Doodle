@@ -30,6 +30,19 @@ class DOODLE_CORE_API image_size {
     height = in_pair.second;
     return *this;
   }
+  // 比较函数
+  bool operator==(const image_size& other) const { return width == other.width && height == other.height; }
+  bool operator!=(const image_size& other) const { return !(*this == other); }
+  template <typename T>
+    requires std::is_integral_v<T>
+  bool operator==(const std::pair<T, T>& other) const {
+    return width == other.first && height == other.second;
+  }
+  template <typename T>
+    requires std::is_integral_v<T>
+  bool operator!=(const std::pair<T, T>& other) const {
+    return !(*this == other);
+  }
 
   friend void to_json(nlohmann::json& j, const image_size& p) {
     j["width"]  = p.width;

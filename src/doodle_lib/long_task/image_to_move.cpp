@@ -5,12 +5,14 @@
 #include "image_to_move.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/image_size.h"
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
 #include "opencv2/core.hpp"
+#include <opencv2/core/mat.hpp>
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
 #include <spdlog/spdlog.h>
@@ -103,7 +105,8 @@ FSys::path create_out_path(
   if (exists(l_out.parent_path())) create_directories(l_out.parent_path());
   return l_out;
 }
-
+image_size get_image_size(const cv::Mat& in_cv) { return image_size{in_cv.cols, in_cv.rows}; }
+image_size get_image_size(const FSys::path& in_path) { return get_image_size(cv::imread(in_path.generic_string())); }
 void create_move(
     const FSys::path& in_out_path, logger_ptr in_logger, const std::vector<movie::image_attr>& in_vector,
     const image_size& in_image_size
@@ -126,8 +129,7 @@ void create_move(
     if (l_image.empty())
       throw_exception(doodle_error{fmt::format("{} 图片读取失败 无法获取图片尺寸", l_vector.front().path_attr)});
     SPDLOG_LOGGER_INFO(in_logger, "未指定输出尺寸，使用第一张图片尺寸 {}x{}", l_image.cols, l_image.rows);
-    l_size.width  = l_image.cols;
-    l_size.height = l_image.rows;
+    l_size = get_image_size(l_image);
   }
   const cv::Size k_size{l_size.width, l_size.height};
   auto video   = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};

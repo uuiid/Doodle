@@ -17,6 +17,7 @@
 #include "doodle_lib/core/http/http_function.h"
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/preview.h>
 
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/post.hpp>
@@ -168,10 +169,15 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
 
 }  // namespace
 namespace preview {
-double get_video_duration(const FSys::path& in_path) {
+video_info_t get_video_duration(const FSys::path& in_path) {
   auto l_video    = cv::VideoCapture{in_path.generic_string()};
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
-  return l_duration;
+  return video_info_t{
+      l_duration, cv::Size{
+                      static_cast<int>(l_video.get(cv::CAP_PROP_FRAME_WIDTH)),
+                      static_cast<int>(l_video.get(cv::CAP_PROP_FRAME_HEIGHT))
+                  }
+  };
 }
 
 /// 处理上传的视频文件 格式化大小, 生成预览文件
@@ -297,7 +303,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     l_preview_file->original_name_ = l_file.stem().generic_string();
     l_preview_file->width_         = l_prj_size.first;
     l_preview_file->height_        = l_prj_size.second;
-    l_preview_file->duration_      = l_duration;
+    l_preview_file->duration_      = l_duration.duration_;
     l_preview_file->status_        = preview_file_statuses::processing;
   } else
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的预览文件格式"});

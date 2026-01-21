@@ -162,24 +162,27 @@ boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(std::string in_ve
   co_return l_temp_path;
 }
 
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_tasks_full(const uuid& in_task_id) const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_task_id), 11
+  };
+  set_req_headers(l_req);
+  boost::beast::http::response<http::basic_json_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"kitsu get task error {} {}", l_res.result(), l_res.body().dump()});
+  auto l_json = l_res.body();
+  co_return l_json;
+}
+
 boost::asio::awaitable<FSys::path> kitsu_client::get_task_maya_file(uuid in_task_id) const {
   project l_prj{};
   std::vector<working_file> l_list{};
   {
-    nlohmann::json l_json_task_full{};
-    boost::beast::http::request<boost::beast::http::empty_body> l_req{
-        boost::beast::http::verb::get, fmt::format("/api/data/tasks/{}/full", in_task_id), 11
-    };
-    set_req_headers(l_req);
-
-    boost::beast::http::response<http::basic_json_body> l_res{};
-    co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
-    if (l_res.result() != boost::beast::http::status::ok)
-      throw_exception(doodle_error{"kitsu get task error {} {}", l_res.result(), l_res.body().dump()});
-    l_json_task_full          = l_res.body().get<nlohmann::json>();
-    const auto l_task_type_id = l_json_task_full.at("task_type_id").get<uuid>();
-    l_prj                     = l_json_task_full.at("project").get<project>();
-    l_list                    = l_json_task_full.at("working_files").get<std::vector<working_file>>();
+    nlohmann::json l_json_task_full = co_await get_tasks_full(in_task_id);
+    const auto l_task_type_id       = l_json_task_full.at("task_type_id").get<uuid>();
+    l_prj                           = l_json_task_full.at("project").get<project>();
+    l_list                          = l_json_task_full.at("working_files").get<std::vector<working_file>>();
   }
 
   auto l_it = ranges::find_if(l_list, [&](const working_file& i) { return i.software_type_ == software_enum::maya; });
