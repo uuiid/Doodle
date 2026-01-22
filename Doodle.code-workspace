@@ -180,14 +180,6 @@
 		],
 		"ai-commit.AI_COMMIT_LANGUAGE": "Simplified Chinese",
 		"ai-commit.AI_PROVIDER": "gemini",
-		"sqltools.connections": [
-			{
-				"previewLimit": 50,
-				"driver": "SQLite",
-				"database": "build/kitsu_new.database",
-				"name": "kitsu"
-			}
-		],
 		"sqliteViewer.maxFileSize": 500,
 		"powershell.cwd": "doodleMain",
 		"C_Cpp.intelliSenseEngine": "disabled",
