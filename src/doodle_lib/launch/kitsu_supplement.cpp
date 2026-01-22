@@ -184,7 +184,7 @@ bool kitsu_supplement_main::init() {
   }
   get_register_info(l_args);
   // 初始化cv线程
-  cv::setNumThreads(get_hardware_concurrency() - 1);
+  cv::setNumThreads(::GetActiveProcessorCount(0));
 
   // 初始化数据库
   g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
