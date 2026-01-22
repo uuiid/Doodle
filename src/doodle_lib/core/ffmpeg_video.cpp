@@ -874,7 +874,7 @@ void ffmpeg_video::check_video_valid(
     DOODLE_CHICK(!l_in_audio_codec.isNull(), "ffmpeg_video: {} cannot find audio decoder", in_video_name);
     DOODLE_CHICK(l_in_audio_codec.canDecode(), "ffmpeg_video: {} audio decoder cannot decode", in_video_name);
 
-    DOODLE_CHICK(l_in_audio_codec.id() == AV_CODEC_ID_AAC, "ffmpeg_video: {} audio codec is not AAC", in_video_name);
+    // DOODLE_CHICK(l_in_audio_codec.id() == AV_CODEC_ID_AAC, "ffmpeg_video: {} audio codec is not AAC", in_video_name);
 
     av::AudioDecoderContext l_dec_ctx{l_in_audio_stream, l_in_audio_codec};
     l_dec_ctx.open();
