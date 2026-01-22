@@ -118,7 +118,7 @@ std::tuple<std::size_t, std::size_t> get_image_size(const FSys::path& in_path) {
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-
+  auto l_now  = std::chrono::steady_clock::now();
   auto l_sql  = g_ctx().get<sqlite_database>();
   doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
   auto l_watermarked_image = l_add_watermark(in_image, {1920, 1080});
@@ -143,6 +143,7 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
     cv::resize(l_new_cv, l_new_cv, l_size_, 0, 0);
     cv::imwrite(l_path.generic_string(), l_new_cv);
   }
+  SPDLOG_WARN("保存图片变体完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now);
   return l_size;
 }
 
@@ -161,6 +162,7 @@ cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
 
 /// 创建视频平铺图像
 auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_size) {
+  auto l_now = std::chrono::steady_clock::now();
   spdlog::warn("创建视频平铺图像, 目标尺寸 {}x{}", in_size.width, in_size.height);
   std::double_t l_frame_count = in_capture.get(cv::CAP_PROP_FRAME_COUNT);
   auto l_rows                 = std::min(480, boost::numeric_cast<std::int32_t>(std::ceil(l_frame_count / 8)));
@@ -181,7 +183,10 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
     }
   }
 
-  SPDLOG_WARN("生成视频平铺图像完成, 行数 {}, 列数 {}", l_rows, l_cols);
+  SPDLOG_WARN(
+      "生成视频平铺图像完成, 行数 {}, 列数 {}, 时间 {:%H:%M:%S}", l_rows, l_cols,
+      std::chrono::steady_clock::now() - l_now
+  );
   return l_tiles;
 }
 
@@ -222,6 +227,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
   cv::Mat l_frame{};
   {
+    auto l_now    = std::chrono::steady_clock::now();
     auto l_low_vc = cv::VideoWriter{
         l_low_file_path_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
         boost::numeric_cast<std::double_t>(in_fps), l_low_size
@@ -246,6 +252,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
       cv::resize(l_frame, l_frame, l_low_size);
       l_low_vc << l_frame;
     }
+    SPDLOG_WARN("处理视频文件完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now);
   }
 
   // 读取第一帧生成预览文件
