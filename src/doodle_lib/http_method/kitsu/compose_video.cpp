@@ -320,11 +320,16 @@ struct actions_tasks_create_review_args {
   FSys::path episodes_name_path_;
 
   friend void from_json(const nlohmann::json& in_json, actions_tasks_create_review_args& out_arg) {
-    if (in_json.contains("subtitle_path")) in_json.at("subtitle_path").get_to(out_arg.subtitle_path_);
-    if (in_json.contains("audio_path")) in_json.at("audio_path").get_to(out_arg.audio_path_);
-    if (in_json.contains("intro_path")) in_json.at("intro_path").get_to(out_arg.intro_path_);
-    if (in_json.contains("outro_path")) in_json.at("outro_path").get_to(out_arg.outro_path_);
-    if (in_json.contains("episodes_name")) in_json.at("episodes_name").get_to(out_arg.episodes_name_);
+    if (in_json.contains("subtitle_path") && in_json.at("subtitle_path").is_string())
+      in_json.at("subtitle_path").get_to(out_arg.subtitle_path_);
+    if (in_json.contains("audio_path") && in_json.at("audio_path").is_string())
+      in_json.at("audio_path").get_to(out_arg.audio_path_);
+    if (in_json.contains("intro_path") && in_json.at("intro_path").is_string())
+      in_json.at("intro_path").get_to(out_arg.intro_path_);
+    if (in_json.contains("outro_path") && in_json.at("outro_path").is_string())
+      in_json.at("outro_path").get_to(out_arg.outro_path_);
+    if (in_json.contains("episodes_name") && in_json.at("episodes_name").is_string())
+      in_json.at("episodes_name").get_to(out_arg.episodes_name_);
   }
 };
 
