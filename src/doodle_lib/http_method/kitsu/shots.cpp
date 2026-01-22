@@ -305,15 +305,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       "shot:new",
       nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"episode_id", l_args.sequence_id_}, {"project_id", project_id_}}
   );
-  co_return in_handle->make_msg((nlohmann::json{} = *l_shot) = *l_shot_extend);
+  nlohmann::json l_result;
+  l_result = *l_shot;
+  l_result.update(*l_shot_extend);
+  co_return in_handle->make_msg(l_result);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(session_data_ptr in_handle) {
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ent = l_sql.get_by_uuid<entity>(id_);
   auto l_ext = l_sql.get_entity_shot_extend(id_);
+  nlohmann::json l_result;
+  l_result = l_ent;
+  l_result.update(l_ext);
 
-  co_return in_handle->make_msg((nlohmann::json{} = l_ext) = l_ent);
+  co_return in_handle->make_msg(l_result);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
     session_data_ptr in_handle
