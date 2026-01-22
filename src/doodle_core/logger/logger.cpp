@@ -174,12 +174,13 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path& in_path, c
 void logger_ctrl::init_temp_log() {
   auto l_logger = make_log(p_log_path, "doodle_lib");
   spdlog::set_default_logger(l_logger);
-  spdlog::initialize_logger(
-      std::make_shared<spdlog::async_logger>(
-          "doodle_long_task", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_long_task")},
-          spdlog::thread_pool(), spdlog::async_overflow_policy::block
-      )
-  );
+  if (!spdlog::get("doodle_long_task"))
+    spdlog::initialize_logger(
+        std::make_shared<spdlog::async_logger>(
+            "doodle_long_task", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_long_task")},
+            spdlog::thread_pool(), spdlog::async_overflow_policy::block
+        )
+    );
 
   spdlog::flush_every(3s);
   spdlog::flush_on(spdlog::level::warn);
