@@ -12,6 +12,7 @@
 
 class ASkeletalMeshActor;
 
+UENUM()
 enum class EImportFilesType2
 {
 	Camera,
@@ -30,11 +31,17 @@ USTRUCT()
 struct FImportFiles2
 {
 	GENERATED_BODY()
-
+	
+	UPROPERTY()
 	EImportFilesType2 Type;
+	
+	UPROPERTY()
 	FString Path;
+	
 	UPROPERTY()
 	TObjectPtr<USkeleton> Skeleton;
+	
+	UPROPERTY()
 	TArray<FString> HideMaterials;
 };
 
@@ -140,6 +147,7 @@ private:
 	FFrameNumber L_End{1200};
 	int32 FrameTick{};
 	//-----------
+	UPROPERTY()
 	TArray<FImportFiles2> ImportFiles;
 
 	// 主光源
