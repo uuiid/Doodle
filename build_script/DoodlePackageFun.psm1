@@ -131,7 +131,7 @@ function Initialize-Doodle {
         # 添加UE插件安装
         Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
         Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
-        &Robocopy "$DoodleBuildRelease\" "$OutPath\dist" "*.zip" /unilog+:$DoodleLogPath | Out-Null
+        Copy-Item -Path "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip" -Destination "$OutPath\dist/Doodle-$DoodleVersion-win64.zip" -Force
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)
         #         寻找版本号 3.6.678 并放在最后
