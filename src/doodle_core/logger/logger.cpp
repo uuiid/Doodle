@@ -9,12 +9,15 @@
 #include <Windows.h>
 #include <chrono>
 #include <fmt/core.h>
+#include <memory>
 #include <spdlog/async.h>
+#include <spdlog/async_logger.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/stdout_sinks.h>
+#include <spdlog/spdlog.h>
 
 namespace doodle::details {
 template <class Mutex>
@@ -127,7 +130,6 @@ void rotating_file_sink<Mutex>::rotate_() {
   //  auto l_target = base_filename_;
   base_filename_.replace_filename(fmt::format("{}.{}.{}.txt", file_stem_, pid, ++index_));
   file_helper_.open(base_filename_, std::ios_base::app | std::ios_base::out | std::ios_base::binary);
-
 }
 
 using rotating_file_sink_mt = rotating_file_sink<std::mutex>;
@@ -172,7 +174,12 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path& in_path, c
 void logger_ctrl::init_temp_log() {
   auto l_logger = make_log(p_log_path, "doodle_lib");
   spdlog::set_default_logger(l_logger);
-  make_log(p_log_path, "doodle_long_task");
+  spdlog::initialize_logger(
+      std::make_shared<spdlog::async_logger>(
+          "doodle_long_task", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_long_task")},
+          spdlog::thread_pool(), spdlog::async_overflow_policy::block
+      )
+  );
 
   spdlog::flush_every(3s);
   spdlog::flush_on(spdlog::level::warn);
