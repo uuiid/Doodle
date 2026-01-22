@@ -863,7 +863,7 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path, bool has_v
     DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: video decoder cannot decode");
     // 检查帧率
     av::Rational l_in_fps = l_in_video_stream.averageFrameRate();
-    DOODLE_CHICK(l_in_fps.getNumerator() != impl::g_fps, "ffmpeg_video: cannot get input video fps");
+    DOODLE_CHICK(l_in_fps.getNumerator() == impl::g_fps, "ffmpeg_video: cannot get input video fps");
   }
 
   // audio stream is optional, but if present it must be AAC + stereo (2 channels)
@@ -872,9 +872,7 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path, bool has_v
     DOODLE_CHICK(!l_in_audio_codec.isNull(), "ffmpeg_video: cannot find audio decoder");
     DOODLE_CHICK(l_in_audio_codec.canDecode(), "ffmpeg_video: audio decoder cannot decode");
 
-    const AVCodec* raw_codec = l_in_audio_codec.raw();
-    DOODLE_CHICK(raw_codec != nullptr, "ffmpeg_video: audio decoder raw codec is null");
-    DOODLE_CHICK(raw_codec->id == AV_CODEC_ID_AAC, "ffmpeg_video: audio codec is not AAC");
+    DOODLE_CHICK(l_in_audio_codec.id() == AV_CODEC_ID_AAC, "ffmpeg_video: audio codec is not AAC");
 
     av::AudioDecoderContext l_dec_ctx{l_in_audio_stream, l_in_audio_codec};
     l_dec_ctx.open();
