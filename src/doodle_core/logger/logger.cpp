@@ -172,6 +172,7 @@ logger_ctrl::async_logger_ptr logger_ctrl::make_log(const FSys::path& in_path, c
 void logger_ctrl::init_temp_log() {
   auto l_logger = make_log(p_log_path, "doodle_lib");
   spdlog::set_default_logger(l_logger);
+  make_log(p_log_path, "doodle_long_task");
 
   spdlog::flush_every(3s);
   spdlog::flush_on(spdlog::level::warn);

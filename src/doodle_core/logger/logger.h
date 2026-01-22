@@ -14,6 +14,7 @@
 #include <doodle_core/doodle_core_pch.h>
 
 #include <spdlog/async.h>
+#include <spdlog/logger.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
 namespace doodle {
@@ -44,6 +45,8 @@ class DOODLE_CORE_API logger_ctrl {
 
   file_sink_mt_ptr make_file_sink_mt(const std::string& in_name);
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
+
+  logger_ptr get_long_task() { return spdlog::get("doodle_long_task"); }
 };
 }  // namespace details
 inline ::spdlog::source_loc log_loc(

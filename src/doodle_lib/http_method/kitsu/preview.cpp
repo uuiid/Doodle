@@ -29,6 +29,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <opencv2/opencv.hpp>
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <tuple>
@@ -143,7 +144,9 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
     cv::resize(l_new_cv, l_new_cv, l_size_, 0, 0);
     cv::imwrite(l_path.generic_string(), l_new_cv);
   }
-  SPDLOG_WARN("保存图片变体完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_long_task(), "保存图片变体完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now
+  );
   return l_size;
 }
 
@@ -183,8 +186,8 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
     }
   }
 
-  SPDLOG_WARN(
-      "生成视频平铺图像完成, 行数 {}, 列数 {}, 时间 {:%H:%M:%S}", l_rows, l_cols,
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_long_task(), "生成视频平铺图像完成, 行数 {}, 列数 {}, 时间 {:%H:%M:%S}", l_rows, l_cols,
       std::chrono::steady_clock::now() - l_now
   );
   return l_tiles;
@@ -238,9 +241,9 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
     };
     if (!l_high_vc.isOpened() || !l_low_vc.isOpened())
       throw_exception(doodle_error{"无法创建视频文件: {} ", in_path.generic_string()});
-    spdlog::warn(
-        "处理视频文件 {}, 目标高分辨率 {}x{}, 低分辨率 {}x{}", in_path.generic_string(), l_high_size.width,
-        l_high_size.height, l_low_size.width, l_low_size.height
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_long_task(), "处理视频文件 {}, 目标高分辨率 {}x{}, 低分辨率 {}x{}", in_path,
+        l_high_size.width, l_high_size.height, l_low_size.width, l_low_size.height
     );
     while (l_video.read(l_frame)) {
       if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
@@ -252,7 +255,9 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
       cv::resize(l_frame, l_frame, l_low_size);
       l_low_vc << l_frame;
     }
-    SPDLOG_WARN("处理视频文件完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now);
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_long_task(), "处理视频文件完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now
+    );
   }
 
   // 读取第一帧生成预览文件
@@ -272,7 +277,9 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
     FSys::rename(l_high_file_path_backup, l_high_file_path);
     FSys::rename(l_path_backup, l_path);
   }
-  SPDLOG_WARN("生成视频 {} {}, 图片 {}", l_low_file_path, l_high_file_path, l_path);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_long_task(), "生成视频 {} {}, 图片 {}", l_low_file_path, l_high_file_path, l_path
+  );
   in_preview_file->file_size_ = FSys::exists(l_high_file_path) ? FSys::file_size(l_high_file_path) : 0;
   in_preview_file->status_    = preview_file_statuses::ready;
   boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().update(in_preview_file), boost::asio::detached);
