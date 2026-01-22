@@ -53,7 +53,9 @@ class ffmpeg_video {
   void process();
 
   /// 检查视频文件是否有效
-  static void check_video_valid(const FSys::path& in_video_path, bool has_video_stream = true);
+  static void check_video_valid(
+      const FSys::path& in_video_path, const std::string& in_video_name, bool has_video_stream = true
+  );
 };
 
 }  // namespace doodle

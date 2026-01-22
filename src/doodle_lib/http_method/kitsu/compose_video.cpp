@@ -394,7 +394,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     l_run.data_ptr_->args_.subtitle_path_ = l_new_path;
   }
   if (!l_run.data_ptr_->args_.audio_path_.empty() && FSys::exists(l_run.data_ptr_->args_.audio_path_)) {
-    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.audio_path_, false);
+    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.audio_path_, "配音轨道", false);
     if (l_run.data_ptr_->args_.audio_path_.extension() != ".wav") {
       auto l_new_path = l_run.data_ptr_->args_.audio_path_;
       l_new_path.replace_extension(".wav");
@@ -408,7 +408,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     l_new_path.replace_extension(".mp4");
     FSys::rename(l_run.data_ptr_->args_.intro_path_, l_new_path);
     l_run.data_ptr_->args_.intro_path_ = l_new_path;
-    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.intro_path_);
+    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.intro_path_, "片头视频");
   }
   if (!l_run.data_ptr_->args_.outro_path_.empty() && FSys::exists(l_run.data_ptr_->args_.outro_path_)) {
     auto l_new_path = l_run.data_ptr_->args_.outro_path_.parent_path() /
@@ -416,7 +416,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     l_new_path.replace_extension(".mp4");
     FSys::rename(l_run.data_ptr_->args_.outro_path_, l_new_path);
     l_run.data_ptr_->args_.outro_path_ = l_new_path;
-    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.outro_path_);
+    ffmpeg_video::check_video_valid(l_run.data_ptr_->args_.outro_path_, "片尾视频");
   }
   if (!l_run.data_ptr_->args_.episodes_name_.empty()) {
     // 检查名称合法性, 必须是带 \n换行符的两行文本

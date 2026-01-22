@@ -827,14 +827,16 @@ void ffmpeg_video::process() {
   impl_->process();
 }
 
-void ffmpeg_video::check_video_valid(const FSys::path& in_video_path, bool has_video_stream) {
-  DOODLE_CHICK(!in_video_path.empty(), "ffmpeg_video: video path is empty");
+void ffmpeg_video::check_video_valid(
+    const FSys::path& in_video_path, const std::string& in_video_name, bool has_video_stream
+) {
+  DOODLE_CHICK(!in_video_path.empty(), "ffmpeg_video: {} video path is empty", in_video_name);
   DOODLE_CHICK(
-      FSys::exists(in_video_path), std::format("ffmpeg_video: video file not exists: {}", in_video_path.string())
+      FSys::exists(in_video_path), "ffmpeg_video: {} video file not exists: {} ", in_video_name, in_video_path
   );
   DOODLE_CHICK(
-      FSys::is_regular_file(in_video_path),
-      std::format("ffmpeg_video: video path is not a file: {}", in_video_path.string())
+      FSys::is_regular_file(in_video_path), "ffmpeg_video: {} video path is not a file: {}", in_video_name,
+      in_video_path
   );
 
   av::FormatContext l_input_ctx{};
@@ -855,28 +857,28 @@ void ffmpeg_video::check_video_valid(const FSys::path& in_video_path, bool has_v
     }
   }
   if (has_video_stream) {
-    DOODLE_CHICK(l_in_video_stream.isValid(), "ffmpeg_video: input has no video stream");
+    DOODLE_CHICK(l_in_video_stream.isValid(), "ffmpeg_video: {} input has no video stream", in_video_name);
 
     // video decoder must exist
     av::Codec l_in_video_codec = l_in_video_stream.codecParameters().decodingCodec();
-    DOODLE_CHICK(!l_in_video_codec.isNull(), "ffmpeg_video: cannot find video decoder");
-    DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: video decoder cannot decode");
+    DOODLE_CHICK(!l_in_video_codec.isNull(), "ffmpeg_video: {} cannot find video decoder", in_video_name);
+    DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: {} video decoder cannot decode", in_video_name);
     // 检查帧率
     av::Rational l_in_fps = l_in_video_stream.averageFrameRate();
-    DOODLE_CHICK(l_in_fps.getNumerator() == impl::g_fps, "ffmpeg_video: cannot get input video fps");
+    DOODLE_CHICK(l_in_fps.getNumerator() == impl::g_fps, "ffmpeg_video: {} cannot get input video fps", in_video_name);
   }
 
   // audio stream is optional, but if present it must be AAC + stereo (2 channels)
   if (l_in_audio_stream.isValid()) {
     av::Codec l_in_audio_codec = l_in_audio_stream.codecParameters().decodingCodec();
-    DOODLE_CHICK(!l_in_audio_codec.isNull(), "ffmpeg_video: cannot find audio decoder");
-    DOODLE_CHICK(l_in_audio_codec.canDecode(), "ffmpeg_video: audio decoder cannot decode");
+    DOODLE_CHICK(!l_in_audio_codec.isNull(), "ffmpeg_video: {} cannot find audio decoder", in_video_name);
+    DOODLE_CHICK(l_in_audio_codec.canDecode(), "ffmpeg_video: {} audio decoder cannot decode", in_video_name);
 
-    DOODLE_CHICK(l_in_audio_codec.id() == AV_CODEC_ID_AAC, "ffmpeg_video: audio codec is not AAC");
+    DOODLE_CHICK(l_in_audio_codec.id() == AV_CODEC_ID_AAC, "ffmpeg_video: {} audio codec is not AAC", in_video_name);
 
     av::AudioDecoderContext l_dec_ctx{l_in_audio_stream, l_in_audio_codec};
     l_dec_ctx.open();
-    DOODLE_CHICK(l_dec_ctx.channels() == 2, "ffmpeg_video: audio channel is not stereo");
+    DOODLE_CHICK(l_dec_ctx.channels() == 2, "ffmpeg_video: {} audio channel is not stereo", in_video_name);
   }
 }
 
