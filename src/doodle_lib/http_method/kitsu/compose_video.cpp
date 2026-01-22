@@ -25,6 +25,7 @@
 #include <boost/asio/post.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <opencv2/core/mat.hpp>
@@ -42,6 +43,7 @@ auto compose_video_impl(
     const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
     const std::shared_ptr<preview_file>& in_preview_file, const preview_file& in_target_preview_file
 ) {
+  auto l_now             = std::chrono::steady_clock::now();
   auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
   auto l_target_path     = l_ctx.get_movie_source_file(in_target_preview_file.uuid_id_);
 
@@ -89,6 +91,10 @@ auto compose_video_impl(
   }
   FSys::rename(l_new_backup_path, l_new_path);
   SPDLOG_INFO("合成视频完成 {} ", l_new_path);
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_long_task(), "合成视频完成 {} {:%H:%M:%S}", l_new_path,
+      std::chrono::steady_clock::now() - l_now
+  );
 
   preview::handle_video_file(l_new_path, in_fps, in_size, in_preview_file);
 }
@@ -204,15 +210,25 @@ struct run_actions_playlists_preview_files_create_review {
     // 先连接视频
     auto l_tmp = core_set::get_set().get_cache_root("compose_review_tmp") /
                  fmt::format("{}.mp4", core_set::get_set().get_uuid());
+    auto l_now = std::chrono::steady_clock::now();
     doodle::detail::connect_video(l_tmp, data_ptr_->logger_, data_ptr_->shot_preview_paths_, data_ptr_->size_);
-
+    SPDLOG_LOGGER_INFO(
+        data_ptr_->logger_, "连接视频完成 {} {:%H:%M:%S}", l_tmp, std::chrono::steady_clock::now() - l_now
+    );
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_long_task(), "连接视频完成 {} {:%H:%M:%S}", l_tmp, std::chrono::steady_clock::now() - l_now
+    );
     // 再处理视频
     auto l_out_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(data_ptr_->review_preview_file_->uuid_id_);
     auto l_out_backup_path = FSys::add_time_stamp(l_out_path);
     if (auto l_p = l_out_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     data_ptr_->ffmpeg_video_.set_input_video(l_tmp);
     data_ptr_->ffmpeg_video_.set_output_video(l_out_backup_path);
+    l_now = std::chrono::steady_clock::now();
     data_ptr_->ffmpeg_video_.process();
+    SPDLOG_LOGGER_INFO(
+        data_ptr_->logger_, "生成评审视频完成 {} {:%H:%M:%S}", l_out_path, std::chrono::steady_clock::now() - l_now
+    );
     FSys::rename(l_out_backup_path, l_out_path);
     auto l_sql = g_ctx().get<sqlite_database>();
     // 更新预览文件信息
@@ -221,7 +237,7 @@ struct run_actions_playlists_preview_files_create_review {
         l_sql.get_by_uuid<project>(l_sql.get_by_uuid<task>(data_ptr_->review_preview_file_->task_id_).project_id_);
     preview::handle_video_file(l_out_path, l_prj.fps_, size_, data_ptr_->review_preview_file_);
 
-    SPDLOG_LOGGER_INFO(data_ptr_->logger_, "生成评审视频完成 {} ", l_out_path);
+    SPDLOG_LOGGER_INFO(data_ptr_->logger_, "生成评审视频完成 {}", l_out_path);
   }
 };
 
@@ -345,6 +361,7 @@ struct actions_tasks_create_review_run {
   void operator()() {
     if (!data_ptr_->args_.episodes_name_path_.empty()) {
       // todo: 修正集数名称
+      auto l_now = std::chrono::steady_clock::now();
       data_ptr_->logger_->info("开始修正集数名称");
       generate_text_video l_generator{};
       l_generator.set_out_path(data_ptr_->args_.episodes_name_path_);
@@ -374,7 +391,14 @@ struct actions_tasks_create_review_run {
       );
       l_generator.run();
 
-      data_ptr_->logger_->info("集数名称生成完成 {}", data_ptr_->args_.episodes_name_path_);
+      data_ptr_->logger_->info(
+          "集数名称生成完成 {} {:%H:%M:%S}", data_ptr_->args_.episodes_name_path_,
+          std::chrono::steady_clock::now() - l_now
+      );
+      SPDLOG_LOGGER_WARN(
+          g_logger_ctrl().get_long_task(), "集数名称生成完成 {} {:%H:%M:%S}", data_ptr_->args_.episodes_name_path_,
+          std::chrono::steady_clock::now() - l_now
+      );
     }
   }
 };
