@@ -441,11 +441,11 @@ struct data_fix_preview_files_thumbnails_run_t {
     for (auto&& l_preview : l_previews) {
       if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview.uuid_id_);
           FSys::exists(l_path)) {
-        (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_original_file(l_preview.uuid_id_));
+        (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_original_file(l_preview.uuid_id_), {1920, 1080});
       }
       if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_preview.uuid_id_);
           FSys::exists(l_path)) {
-        (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_preview_file(l_preview.uuid_id_));
+        (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_preview_file(l_preview.uuid_id_), {1920, 1080});
       }
     }
   }
