@@ -79,4 +79,5 @@ if ($CopyServer) {
 }
  
 
-
+# 清除 zip文件
+Remove-Item -Path "$DoodleOut" -Include "*.zip" -Recurse -Force
