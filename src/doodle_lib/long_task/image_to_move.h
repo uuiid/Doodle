@@ -10,6 +10,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <filesystem>
+#include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/freetype.hpp>
 #include <string>
@@ -36,7 +37,7 @@ class add_watermark_t {
   std::int32_t watermark_height_{30};
   // 水印间距
   std::pair<std::int32_t, std::int32_t> watermark_size_{100, 100};
-  cv::Mat add_watermark_to_image(const cv::Mat& in_mat);
+  cv::Mat add_watermark_to_image(const cv::Mat& in_mat) const;
 
  public:
   explicit add_watermark_t(
@@ -46,12 +47,15 @@ class add_watermark_t {
       const std::string& in_font_path = {}
   );
   /**
-    * @brief 给图片添加水印
-    * @param in_image_path 输入图片路径
-    * @param in_out_path 输出图片路径
-    * @param in_size 重新缩放大小后添加水印, 保持水印比例
+   * @brief 给图片添加水印
+   * @param in_image_path 输入图片路径
+   * @param in_out_path 输出图片路径
+   * @param in_size 重新缩放大小后添加水印, 保持水印比例
    */
-  void operator()(FSys::path const& in_image_path, FSys::path const& in_out_path, const cv::Size& in_size = {0, 0});
+  void operator()(
+      const FSys::path& in_image_path, const FSys::path& in_out_path, const cv::Size& in_size = {0, 0}
+  ) const;
+  cv::Mat operator()(const cv::Mat& in_image, const cv::Size& in_size = {0, 0}) const;
 };
 
 class image_to_move : public async_task {

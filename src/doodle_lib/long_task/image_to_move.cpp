@@ -223,7 +223,7 @@ add_watermark_t::add_watermark_t(
   watermark_size_   = in_watermark_size;
 }
 
-cv::Mat add_watermark_t::add_watermark_to_image(const cv::Mat& in_mat) {
+cv::Mat add_watermark_t::add_watermark_to_image(const cv::Mat& in_mat) const {
   if (in_mat.empty()) throw_exception(doodle_error{"图片解码失败"});
   // 添加水印
   auto l_cv_old = in_mat.clone();
@@ -242,7 +242,7 @@ cv::Mat add_watermark_t::add_watermark_to_image(const cv::Mat& in_mat) {
 }
 void add_watermark_t::operator()(
     FSys::path const& in_image_path, FSys::path const& in_out_path, const cv::Size& in_size
-) {
+) const {
   if (!exists(in_image_path))
     throw_exception(
         http_request_error{
@@ -274,7 +274,34 @@ void add_watermark_t::operator()(
   // 重新缩放回去
   if (l_old_size != l_out.size()) cv::resize(l_out, l_out, l_old_size);
 
-  cv::imwrite((in_out_path / in_image_path.filename().replace_extension(".png")).generic_string(), l_out);
+  cv::imwrite(in_out_path.generic_string(), l_out);
+}
+cv::Mat add_watermark_t::operator()(const cv::Mat& in_image, const cv::Size& in_size) const {
+  if (in_image.empty()) throw_exception(doodle_error{"图片解码失败"});
+
+  auto l_image    = in_image.clone();
+  auto l_old_size = l_image.size();
+  // 计算像素 等比缩放
+  auto l_aspect_ratio =
+      boost::numeric_cast<std::double_t>(l_image.cols) / boost::numeric_cast<std::double_t>(l_image.rows);
+  cv::Size l_size = l_image.size();
+  if (in_size.width != 0) {
+    l_size.width = in_size.width;
+    l_size.height =
+        boost::numeric_cast<std::int32_t>(boost::numeric_cast<std::double_t>(in_size.width) / l_aspect_ratio);
+  } else if (in_size.height != 0) {
+    l_size.width =
+        boost::numeric_cast<std::int32_t>(boost::numeric_cast<std::double_t>(in_size.height) * l_aspect_ratio);
+    l_size.height = in_size.height;
+  }
+
+  if (l_size != l_image.size()) {
+    cv::resize(l_image, l_image, l_size);
+  }
+  auto l_out = add_watermark_to_image(l_image);
+  // 重新缩放回去
+  if (l_old_size != l_out.size()) cv::resize(l_out, l_out, l_old_size);
+  return l_out;
 }
 }  // namespace detail
 }  // namespace doodle
