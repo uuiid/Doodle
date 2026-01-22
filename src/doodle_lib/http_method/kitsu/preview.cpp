@@ -23,6 +23,7 @@
 #include <boost/asio/post.hpp>
 
 #include "kitsu_reg_url.h"
+#include "long_task/image_to_move.h"
 #include <algorithm>
 #include <filesystem>
 #include <magic_enum/magic_enum.hpp>
@@ -113,34 +114,51 @@ std::tuple<std::size_t, std::size_t> get_image_size(const FSys::path& in_path) {
   }
   return {l_cv.cols, l_cv.rows};
 }
-cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id);
-cv::Size save_variants(const FSys::path& in_path, const uuid& in_id) {
-  return save_variants(cv::imread(in_path.generic_string()), in_id);
-}
+
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
-  static std::array g_variants{
-      std::tuple{"thumbnails", std::make_pair(150, 100)}, std::tuple{"thumbnails_square", std::make_pair(100, 100)},
-      std::tuple{"previews", std::make_pair(1200, 0)}
+  DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
+  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
+  auto l_watermarked_image = l_add_watermark(in_image, {1920, 1080});
+  std::array g_variants{
+      std::tuple{l_ctx.get_pictures_thumbnails_file(in_id), std::make_pair(150, 100), in_image},
+      std::tuple{l_ctx.get_pictures_thumbnails_square_file(in_id), std::make_pair(100, 100), in_image},
+      std::tuple{l_ctx.get_pictures_preview_file(in_id), std::make_pair(1200, 0), in_image},
+      std::tuple{l_ctx.get_outsource_pictures_preview_file(in_id), std::make_pair(1200, 0), l_watermarked_image}
   };
   cv::Size l_size = in_image.size();
-  for (auto&& [key, size] : g_variants) {
-    auto l_new_path =
-        g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / key / FSys::split_uuid_path(fmt::format("{}.png", in_id));
-    if (auto l_p = l_new_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-    auto l_new_cv = in_image.clone();
+  for (auto&& [l_path, size, l_image] : g_variants) {
+    if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    auto l_new_cv = l_image.clone();
     auto l_size_  = cv::Size{
         size.first, size.second == 0
                          ? boost::numeric_cast<std::int32_t>(
-                              boost::numeric_cast<double>(in_image.rows) / boost::numeric_cast<double>(in_image.cols) *
+                              boost::numeric_cast<double>(l_image.rows) / boost::numeric_cast<double>(l_image.cols) *
                               boost::numeric_cast<double>(size.first)
                           )
                          : std::int32_t{size.second}
     };
     cv::resize(l_new_cv, l_new_cv, l_size_, 0, 0);
-    cv::imwrite(l_new_path.generic_string(), l_new_cv);
+    cv::imwrite(l_path.generic_string(), l_new_cv);
   }
   return l_size;
 }
+
+cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
+  DOODLE_CHICK(!in_image.empty(), "保存加水印图片时输入图片为空");
+
+  auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_path = l_ctx.get_outsource_pictures_original_file(in_id);
+  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
+  auto l_cv = l_add_watermark(in_image, {1920, 1080});
+  cv::imwrite(l_path.generic_string(), l_cv);
+  return l_cv.size();
+}
+
 /// 创建视频平铺图像
 auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_size) {
   spdlog::warn("创建视频平铺图像, 目标尺寸 {}x{}", in_size.width, in_size.height);
@@ -271,9 +289,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
   else
     l_file = l_fs;
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
-    auto l_size     = save_variants(l_file, l_preview_file->uuid_id_);
+    auto l_file_image = cv::imread(l_file.generic_string());
+    auto l_size       = save_variants(l_file_image, l_preview_file->uuid_id_);
+    save_watermarked_image(l_file_image, l_preview_file->uuid_id_);
     /// 将原始文件添加到相应的位置中
-    auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_picture_original_file(l_preview_file->uuid_id_);
+    auto l_new_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview_file->uuid_id_);
     if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
     FSys::rename(l_file, l_new_path);
     l_preview_file->extension_     = "png";
@@ -417,7 +437,7 @@ struct data_fix_preview_files_thumbnails_run_t {
     auto l_previews       = l_sql.impl_->storage_any_.get_all<preview_file>();
     this->watermark_text_ = l_sql.get_all<doodle::organisation>().front().name_;
     for (auto&& l_preview : l_previews) {
-      if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_picture_original_file(l_preview.uuid_id_);
+      if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview.uuid_id_);
           FSys::exists(l_path)) {
       }
     }

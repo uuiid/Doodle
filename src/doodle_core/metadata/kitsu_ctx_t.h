@@ -46,20 +46,20 @@ struct kitsu_ctx_t {
   FSys::path get_movie_lowdef_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / get_lowdef_file_path(in_uuid, false, in_ext);
   }
-  FSys::path get_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+  FSys::path get_pictures_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / get_source_file(in_uuid, true, in_ext);
   }
-  FSys::path get_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+  FSys::path get_pictures_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / get_preview_file_path(in_uuid, true, in_ext);
   }
   FSys::path get_attachment_file(const uuid& in_uuid) { return root_ / get_attachment_file_(in_uuid); }
 
   // 外包获取
 
-  FSys::path get_outsource_picture_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+  FSys::path get_outsource_pictures_original_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "outsource" / get_source_file(in_uuid, true, in_ext);
   }
-  FSys::path get_outsource_picture_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+  FSys::path get_outsource_pictures_preview_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / "outsource" / get_preview_file_path(in_uuid, true, in_ext);
   }
 

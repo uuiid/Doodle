@@ -34,15 +34,15 @@ class add_watermark_t {
   cv::Scalar color_{255, 255, 255};
   std::double_t opacity_{0.5};
   std::string watermark_text_;
-  std::int32_t watermark_height_{30};
+  std::int32_t watermark_height_{150};
   // 水印间距
-  std::pair<std::int32_t, std::int32_t> watermark_size_{100, 100};
+  std::pair<std::int32_t, std::int32_t> watermark_size_{120, 210};
   cv::Mat add_watermark_to_image(const cv::Mat& in_mat) const;
 
  public:
   explicit add_watermark_t(
-      const std::string& in_watermark_text, const std::int32_t in_watermark_height,
-      const std::pair<std::int32_t, std::int32_t>& in_watermark_size = {100, 100},
+      const std::string& in_watermark_text, const std::int32_t in_watermark_height = 150,
+      const std::pair<std::int32_t, std::int32_t>& in_watermark_size = {120, 210},
       const cv::Scalar& in_watermark_color = {255, 255, 255}, std::double_t in_opacity = 0.5,
       const std::string& in_font_path = {}
   );

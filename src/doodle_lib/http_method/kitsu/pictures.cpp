@@ -87,16 +87,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals
 ) {
   auto l_sql        = g_ctx().get<sqlite_database>();
   auto l_pre_file   = l_sql.get_by_uuid<preview_file>(id_);
-  FSys::path l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_picture_original_file(id_)
-                                              : g_ctx().get<kitsu_ctx_t>().get_picture_original_file(id_);
+  FSys::path l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
+                                              : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_pre_file.extension_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_preview_files::get(
     session_data_ptr in_handle
 ) {
-  auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_picture_preview_file(id_)
-                                        : g_ctx().get<kitsu_ctx_t>().get_picture_preview_file(id_);
+  auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_preview_file(id_)
+                                        : g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
@@ -104,8 +104,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_previews_
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files::get(
     session_data_ptr in_handle
 ) {
-  auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_picture_original_file(id_)
-                                        : g_ctx().get<kitsu_ctx_t>().get_picture_original_file(id_);
+  auto l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
+                                        : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);
   auto l_ext  = l_path.extension();
   DOODLE_CHICK(FSys::exists(l_path), "原始图片不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
