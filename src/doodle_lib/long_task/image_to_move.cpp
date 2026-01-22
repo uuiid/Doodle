@@ -273,7 +273,7 @@ void add_watermark_t::operator()(
   auto l_out = add_watermark_to_image(l_image);
   // 重新缩放回去
   if (l_old_size != l_out.size()) cv::resize(l_out, l_out, l_old_size);
-
+  if (auto l_p = in_out_path.parent_path(); !exists(l_p)) create_directories(l_p);
   cv::imwrite(in_out_path.generic_string(), l_out);
 }
 cv::Mat add_watermark_t::operator()(const cv::Mat& in_image, const cv::Size& in_size) const {
