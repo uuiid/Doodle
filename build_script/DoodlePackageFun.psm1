@@ -131,7 +131,23 @@ function Initialize-Doodle {
         # 添加UE插件安装
         Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
         Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
-        Copy-Item -Path "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip" -Destination "$OutPath\dist/Doodle-$DoodleVersion-win64.zip" -Force
+        # 比较大小和修改日期复制
+        if (Test-Path "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip") {
+            $sourceInfo = Get-Item "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip"
+            $destPath = "$OutPath\dist/Doodle-$DoodleVersion-win64.zip"
+            $copyFile = $true
+            if (Test-Path $destPath) {
+                $destInfo = Get-Item $destPath
+                if ($sourceInfo.Length -eq $destInfo.Length -and $sourceInfo.LastWriteTime -le $destInfo.LastWriteTime) {
+                    $copyFile = $false
+                    Write-Host "安装包已是最新，无需复制: $destPath"
+                }
+            }
+            if ($copyFile) {
+                Write-Host "复制安装包到: $destPath"
+                Copy-Item -Path "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip" -Destination $destPath -Force
+            }
+        }
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)
         #         寻找版本号 3.6.678 并放在最后
