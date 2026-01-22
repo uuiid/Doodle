@@ -37,7 +37,7 @@ doodle_lib::doodle_lib() : ptr() {
   ptr        = std::move(std::make_unique<impl>());
   SPDLOG_WARN("Doodle Lib 初始化完成 使用处理器 {}", get_hardware_concurrency());
   // 初始化多个 strand 用于线程池
-  auto l_max = 3;
+  auto l_max = 4;
   for (std::size_t i = 0; i < l_max; ++i) {
     ptr->strands_.emplace_back(boost::asio::make_strand(ptr->io_context_));
   }
