@@ -352,11 +352,11 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 			const FString Skin = Obj->GetStringField(TEXT("skin_path"));
 			if (!Skin.IsEmpty())
 			{
-				UE_LOG(LogTemp, Log, TEXT("加载骨骼网格体 "), *Skin);
+				UE_LOG(LogTemp, Log, TEXT("加载骨骼网格体 %s"), *Skin);
 				if (auto SkinMesh = LoadObject<USkeletalMesh>(nullptr, *Skin); SkinMesh)
 				{
 					L_Skeleton = SkinMesh->GetSkeleton();
-					UE_LOG(LogTemp, Log, TEXT("获取骨骼 "), *L_Skeleton->GetFullName());
+					UE_LOG(LogTemp, Log, TEXT("获取骨骼 %s"), *L_Skeleton->GetFullName());
 				}
 			}
 		}
