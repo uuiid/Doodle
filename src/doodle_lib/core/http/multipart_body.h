@@ -205,6 +205,7 @@ struct multipart_body {
         if (ec) return 0;
         if (l_parse_size == 0) break;
         buffer_.consume(l_parse_size);
+        if (buffer_.size() < boundary_.size() * 5) break;
       } while (true);
 
       return l_extra;
