@@ -176,17 +176,19 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
   cv::Mat l_tiles = cv::Mat::zeros(l_rows * l_height, l_cols * l_width, CV_8UC3);
   cv::Mat l_frame{};
   const auto l_total_tiles = static_cast<std::int32_t>(l_rows * l_cols);
-  for (std::int32_t l_i = 0; l_i < l_frame_count || l_i < l_total_tiles; ++l_i) {
-    const std::double_t l_frame_index = l_i * l_step;
-    in_capture.set(cv::CAP_PROP_POS_FRAMES, std::floor(l_frame_index));
-    std::int32_t l_row{l_i / l_cols}, l_col{l_i % l_cols};
-
-    if (in_capture.read(l_frame)) {
+  // 生成瓦片数需要的帧
+  std::set<std::int32_t> l_needed_frames{};
+  for (std::int32_t l_i = 0; l_i < l_frame_count && l_i < l_total_tiles; ++l_i)
+    l_needed_frames.insert(boost::numeric_cast<std::int32_t>(std::floor(l_i * l_step)));
+  in_capture.set(cv::CAP_PROP_POS_FRAMES, 0);
+  for (std::int32_t l_i = 0; l_i < l_frame_count && l_i < l_total_tiles; ++l_i) {
+    DOODLE_CHICK(in_capture.read(l_frame), "读取视频帧失败");
+    if (l_needed_frames.contains(l_i)) {
+      std::int32_t l_row{l_i / l_cols}, l_col{l_i % l_cols};
       cv::resize(l_frame, l_frame, cv::Size{l_width, l_height}, 0, 0);
       l_frame.copyTo(l_tiles(cv::Rect{l_col * l_width, l_row * l_height, l_width, l_height}));
     }
   }
-
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_long_task(), "生成视频平铺图像完成, 行数 {}, 列数 {}, 时间 {:%H:%M:%S}", l_rows, l_cols,
       std::chrono::steady_clock::now() - l_now
