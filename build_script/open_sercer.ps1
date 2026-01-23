@@ -61,11 +61,17 @@ Invoke-Command -Session $NewSession -ScriptBlock {
     Set-Service -Name "doodle_kitsu_supplement" -StartupType Automatic
   }
 
+  function Get-ComputerInfo {
+    $LoadPercentage = Get-WmiObject win32_processor | select -exp LoadPercentage
+    $freemem = Get-WmiObject -Class Win32_OperatingSystem
 
-
-
-
-
+    ""
+    "System Name      : {0}" -f $freemem.csname
+    "Total Memory (GB): {0}" -f ([math]::round($freemem.TotalVisibleMemorySize / 1mb))
+    "Free Memory  (MB): {0}" -f ([math]::round($freemem.FreePhysicalMemory / 1024, 2))
+    "CPU Load %       : {0}" -f $LoadPercentage
+    ""    
+  }
 
   Get-NssmLog
   Get-NssmSer
