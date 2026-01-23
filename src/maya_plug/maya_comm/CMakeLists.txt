@@ -14,6 +14,7 @@ target_sources(doodle_maya_lib
         file_info_edit.h
         export_abc_file.h
         head_weight.h
+        doodle_batch_run.h
 
         PRIVATE
         afterimage_comm.cpp
@@ -30,4 +31,5 @@ target_sources(doodle_maya_lib
         file_info_edit.cpp
         export_abc_file.cpp
         head_weight.cpp
+        doodle_batch_run.cpp
 )
