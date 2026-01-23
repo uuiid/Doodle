@@ -104,18 +104,18 @@ inline auto make_storage_doodle(const std::string& in_path) {
 
       make_unique_index(
           "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
-          &outsource_studio_authorization::enity_id_
+          &outsource_studio_authorization::entity_id_
       ),
       make_index("outsource_studio_authorization_studio_id_index", &outsource_studio_authorization::studio_id_),
-      make_index("outsource_studio_authorization_entity_id_index", &outsource_studio_authorization::enity_id_),
+      make_index("outsource_studio_authorization_entity_id_index", &outsource_studio_authorization::entity_id_),
       make_table<outsource_studio_authorization>(
           "outsource_studio_authorization",
           make_column("id", &outsource_studio_authorization::id_, primary_key().autoincrement()),
           make_column("uuid_id", &outsource_studio_authorization::uuid_id_, unique(), not_null()),
           make_column("studio_id", &outsource_studio_authorization::studio_id_, not_null()),
-          make_column("entity_id", &outsource_studio_authorization::enity_id_, not_null()),
+          make_column("entity_id", &outsource_studio_authorization::entity_id_, not_null()),
           foreign_key(&outsource_studio_authorization::studio_id_).references(&studio::uuid_id_).on_delete.cascade(),
-          foreign_key(&outsource_studio_authorization::enity_id_).references(&entity::uuid_id_).on_delete.cascade()
+          foreign_key(&outsource_studio_authorization::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
       
       make_table<ai_image_metadata>(

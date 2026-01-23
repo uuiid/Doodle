@@ -128,7 +128,7 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
   auto l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
   auto l_outsource_select = select(
-      &outsource_studio_authorization::uuid_id_,
+      &outsource_studio_authorization::entity_id_,
       where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
   );
 

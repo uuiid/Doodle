@@ -179,7 +179,7 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
   constexpr auto episode        = "episode"_alias.for_<entity>();
 
   auto l_outsource_select       = select(
-      &outsource_studio_authorization::uuid_id_,
+      &outsource_studio_authorization::entity_id_,
       where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
   );
 

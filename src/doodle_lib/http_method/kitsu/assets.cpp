@@ -244,10 +244,30 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, {});
 
   auto l_outsource_select       = select(
-      &outsource_studio_authorization::uuid_id_,
+      &outsource_studio_authorization::entity_id_,
       where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
   );
+  auto l_sql_str = l_sql.impl_->storage_any_.prepare(select(
+      columns(
+          object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
+          &assignees_table::person_id_
+      ),
+      from<entity>(), join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+      left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
+      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(
+          (
+              (!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
+              (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) &&
+                  (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select))
 
+          ) &&
+          not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
+      ),
+      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
+  ));
+  SPDLOG_WARN("执行带任务的资源查询 SQL: {}", l_sql_str.sql());
   auto l_rows = l_sql.impl_->storage_any_.iterate(select(
       columns(
           object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),

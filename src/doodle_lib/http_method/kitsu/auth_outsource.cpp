@@ -55,7 +55,7 @@ struct entity_outsource_studio_authorization : entity {
         ),
         from<entity>(),
         left_outer_join<outsource_studio_authorization>(
-            on(c(&outsource_studio_authorization::enity_id_) == c(&entity::uuid_id_))
+            on(c(&outsource_studio_authorization::entity_id_) == c(&entity::uuid_id_))
         ),
         left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
         left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
