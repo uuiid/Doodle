@@ -119,7 +119,7 @@ FbxTime::EMode fbx_node::maya_to_fbx_time(MTime::Unit in_value) {
 
 void fbx_node::build_node_transform(MDagPath in_path) const {
   DOODLE_CHICK(!get_node_name(in_path).ends_with("rig1"), "不支持导出rig1根节点");
-  
+
   MStatus l_status{};
   node->SetRotationActive(true);
   MFnTransform const l_transform{in_path};
@@ -1072,13 +1072,7 @@ void fbx_write::write(
     const MTime& in_end
 ) {
   if (!logger_) {
-    if (!g_ctx().contains<fbx_logger>())
-      logger_ =
-          g_ctx()
-              .emplace<fbx_logger>(g_logger_ctrl().make_log_file(path_.parent_path() / "fbx_log.txt", "fbx_logger"))
-              .logger_;
-    else
-      logger_ = g_ctx().get<fbx_logger>().logger_;
+    logger_ = spdlog::default_logger();
   }
 
   log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
@@ -1155,13 +1149,7 @@ void fbx_write::write(
     MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture
 ) {
   if (!logger_) {
-    if (!g_ctx().contains<fbx_logger>())
-      logger_ =
-          g_ctx()
-              .emplace<fbx_logger>(g_logger_ctrl().make_log_file(path_.parent_path() / "fbx_log.txt", "fbx_logger"))
-              .logger_;
-    else
-      logger_ = g_ctx().get<fbx_logger>().logger_;
+    logger_ = spdlog::default_logger();
   }
 
   log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
