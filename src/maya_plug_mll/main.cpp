@@ -46,7 +46,6 @@ MStatus initializePlugin(MObject obj) {
   };
 
   maya_reg     = std::make_shared<::doodle::maya_plug::maya_register>();
-  p_doodle_app = std::make_shared<app_base>();
 
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
 

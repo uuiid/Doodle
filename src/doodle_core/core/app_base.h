@@ -14,7 +14,6 @@
 #include <argh.h>
 #include <thread>
 
-
 namespace doodle {
 /**
  * @brief 基础的事件循环类,  只有事件循环可以使用
@@ -46,6 +45,7 @@ class DOODLE_CORE_API app_base {
   /// 初始化函数, 返回true继续运行, 返回false退出
   virtual bool init();
   void set_exit_code(std::int32_t in_exit_code);
+
  public:
   explicit app_base(int argc, const char* const argv[]);
   explicit app_base(std::int32_t argc, const wchar_t* const argv[]);
@@ -77,36 +77,5 @@ class DOODLE_CORE_API app_base {
 
   static void write_current_error_tmp_dir();
 };
-
-/**
- * @brief 基本的命令行类
- */
-template <typename... Facet_>
-class app_command : public app_base {
- public:
-  app_command() : app_base() { run_facet(); };
-
-  app_command(int argc, const char* const argv[]) : app_base(argc, argv) { run_facet(); }
-  explicit app_command(std::int32_t argc, const wchar_t* const argv[]) : app_base(argc, argv) { run_facet(); }
-  virtual ~app_command() override = default;
-
-  void run_facet() {
-    try {
-      std::array<bool, sizeof...(Facet_)> l_r{
-          Facet_{}(arg_, facets_)...,
-      };
-      stop_ = std::any_of(l_r.begin(), l_r.end(), [](bool i) { return i; });
-    } catch (...) {
-      default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-      default_logger_raw()->flush();
-      stop_ = true;
-    }
-  }
-
- protected:
-};
-
-template <typename... Facet_>
-using app_plug = app_command<Facet_...>;
 
 }  // namespace doodle
