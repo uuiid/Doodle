@@ -22,6 +22,7 @@
 
 #include <boost/system.hpp>
 
+#include "core/entity_path.h"
 #include "http_client/kitsu_client.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
@@ -196,6 +197,15 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
   l_json          = arg_;
   auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
   logger_ptr_->warn("排队导入文件 {} ", arg_.ue_main_project_path_);
+
+  {  // 删除导入的文件
+    auto l_import_dir = arg_.import_dir_;
+    l_import_dir      = arg_.ue_main_project_path_.parent_path() / conv_normal_path(l_import_dir);
+    if (FSys::exists((l_import_dir))) {
+      logger_ptr_->warn("删除导入目录 {}", l_import_dir);
+      FSys::remove_all(l_import_dir);
+    }
+  }
 
   auto l_time_info = std::make_shared<server_task_info::run_time_info_t>();
   co_await async_run_ue(
