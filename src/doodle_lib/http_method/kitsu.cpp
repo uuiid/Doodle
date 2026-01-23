@@ -261,7 +261,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
       .reg_t<movies_originals_preview_files_download>("/api/movies/originals/preview-files/{}/download"_url(
         &movies_originals_preview_files_download::preview_file_id_
-  ))
+      ))
+      .reg_t<data_fix_preview_files_thumbnails>("/api/data/fix-preview-files-thumbnails"_url)
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)

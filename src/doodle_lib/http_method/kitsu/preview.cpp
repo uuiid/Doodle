@@ -459,10 +459,16 @@ struct data_fix_preview_files_thumbnails_run_t {
       if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview.uuid_id_);
           FSys::exists(l_path)) {
         (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_original_file(l_preview.uuid_id_), {1920, 1080});
+        SPDLOG_LOGGER_INFO(
+            g_logger_ctrl().get_long_task(), "修复预览文件原始图片水印, preview_file_id {}", l_preview.uuid_id_
+        );
       }
       if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_preview.uuid_id_);
           FSys::exists(l_path)) {
         (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_preview_file(l_preview.uuid_id_), {1920, 1080});
+        SPDLOG_LOGGER_INFO(
+            g_logger_ctrl().get_long_task(), "修复预览文件预览图片水印, preview_file_id {}", l_preview.uuid_id_
+        );
       }
     }
   }
