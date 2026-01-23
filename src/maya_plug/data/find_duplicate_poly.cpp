@@ -15,6 +15,7 @@
 #include "reference_file.h"
 #include <data/maya_poly_info.h>
 #include <fmt/format.h>
+#include <maya/MGlobal.h>
 #include <maya/MItDependencyGraph.h>
 #include <maya/MNamespace.h>
 #include <maya/MObjectArray.h>
@@ -106,7 +107,7 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const s
   //               return std::make_pair(l_m_1->maya_obj, l_m_2->maya_obj);
   //             }) |
   //             ranges::to_vector;
-  DOODLE_LOG_INFO(
+  auto l_msg = fmt::format(
       "找到重复 {}",
       fmt::join(
           duplicate_objs_ | ranges::views::transform(
@@ -117,6 +118,7 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const s
           " "
       )
   );
+  MGlobal::displayInfo(conv::to_ms(l_msg));
   return duplicate_objs_;
 }
 MObject find_duplicate_poly::operator[](const MObject& in_obj) {
