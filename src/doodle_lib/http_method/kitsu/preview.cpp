@@ -454,21 +454,25 @@ struct data_fix_preview_files_thumbnails_run_t {
     auto l_previews = l_sql.impl_->storage_any_.get_all<preview_file>();
     watermark_adder_ =
         std::make_shared<doodle::detail::add_watermark_t>(l_sql.get_all<doodle::organisation>().front().name_, 150);
-    auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
+    auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
+    const auto l_size = cv::Size{100, 100};
     for (auto&& l_preview : l_previews) {
       if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview.uuid_id_);
           FSys::exists(l_path)) {
-        (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_original_file(l_preview.uuid_id_), {1920, 1080});
-        SPDLOG_LOGGER_INFO(
-            g_logger_ctrl().get_long_task(), "修复预览文件原始图片水印, preview_file_id {}", l_preview.uuid_id_
-        );
-      }
-      if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_preview.uuid_id_);
-          FSys::exists(l_path)) {
-        (*watermark_adder_)(l_path, l_ctx.get_outsource_pictures_preview_file(l_preview.uuid_id_), {1920, 1080});
-        SPDLOG_LOGGER_INFO(
-            g_logger_ctrl().get_long_task(), "修复预览文件预览图片水印, preview_file_id {}", l_preview.uuid_id_
-        );
+        auto l_target_path = l_ctx.get_pictures_thumbnails_square_file(l_preview.uuid_id_);
+        if (!FSys::exists(l_target_path)) {
+          auto l_image = cv::imread(l_path.generic_string());
+          if (l_image.empty()) {
+            SPDLOG_ERROR("无法读取图片文件: {}", l_path.generic_string());
+            continue;
+          }
+          cv::resize(l_image, l_image, l_size, 0, 0);
+          if (auto l_p = l_target_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+          cv::imwrite(l_target_path.generic_string(), l_image);
+          SPDLOG_LOGGER_WARN(
+              g_logger_ctrl().get_long_task(), "已修复预览文件缩略图: {}", l_target_path.generic_string()
+          );
+        }
       }
     }
   }
