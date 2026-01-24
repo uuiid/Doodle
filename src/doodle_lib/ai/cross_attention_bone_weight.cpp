@@ -396,7 +396,7 @@ struct CrossAttentionImpl : torch::nn::Module {
   torch::nn::Sequential pre_mlp{nullptr};
   int embed_dim;
   float dist_bias_scale = 1.0f;  // 距离偏置缩放
-  float logit_scale     = 2.0f;  // 放大 logits，增强可分辨性
+  float logit_scale     = 1.0f;  // 放大 logits，增强可分辨性
 
   CrossAttentionImpl(int embed_dim_, int nhead = 8) : embed_dim(embed_dim_) {
     mha = register_module("mha", torch::nn::MultiheadAttention(torch::nn::MultiheadAttentionOptions(embed_dim, nhead)));
@@ -433,8 +433,8 @@ struct CrossAttentionImpl : torch::nn::Module {
       const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats, const torch::Tensor& bone_to_point_dist
   ) {
     auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats, bone_to_point_dist);
-    // auto weights           = torch::softmax(logits, 1);
-    auto weights           = sparsemax::apply(logits, 1);
+    auto weights           = this->is_training() ?  torch::softmax(logits, 1) : sparsemax::apply(logits, 1);
+    // auto weights           = sparsemax::apply(logits, 1);
     return weights;
   }
 };
