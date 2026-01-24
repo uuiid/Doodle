@@ -57,9 +57,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 ) {
   FSys::path l_filename = fmt::format("{}.png", id_);
   auto l_path           = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_square_file(id_);
-  if (!exists(l_path))
-    l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "thumbnails" / "squ" / "are" /
-             (std::string{"square-"} + l_filename.stem().generic_string());
   auto l_ext = l_filename.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));

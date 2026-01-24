@@ -1,4 +1,4 @@
-$root = "D:\kitsu_data"
+$root = "D:\kitsu\images\pictures\thumbnails\squ\are"
 
 $files = "D:\old_files.txt"
 if (-not (Test-Path $files)) {
@@ -16,9 +16,10 @@ foreach ($line in $lines) {
   if ($line -like "*square-*") {
     $newPath = $line.Replace("squ\are\square-", "")
 
-    $filename = "$($newPath.Substring(34,3))\$($newPath.Substring(37,3))\$($newPath.Substring(34)).png"
-    $newPath = "$($newPath.Substring(0,$newPath.Length-37))"
-    if (-not (Test-Path $newPath)) {
+    $l_file_tem_str = $newPath.Split("\")[-1]
+    $filename = "$l_file_tem_str.png"
+    $newPath = "$($newPath.Substring(0,$l_file_tem_str.Length - 1 ))\$($l_file_tem_str.Substring(0,3))\$($l_file_tem_str.Substring(3,3))"
+    if (-not (Test-Path -Path $newPath)) {
       # 创建目录
       New-Item -ItemType Directory -Path $newPath -Force
     }
@@ -27,10 +28,10 @@ foreach ($line in $lines) {
   else {
     $newPath = "$line.png"
   }
-  if ( Test-Path $newPath) {
+  if ( Test-Path -Path $newPath) {
     Write-Host "File $newPath already exists, skipping..."
     continue
   }
-  Write-Host "Renaming $line to $newPath"
-  # Rename-Item -Path $line -NewName $newPath
+  # Write-Host "Renaming $line to $newPath"
+  Move-Item -Path $line -Destination $newPath
 }
