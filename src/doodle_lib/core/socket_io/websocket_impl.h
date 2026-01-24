@@ -30,10 +30,10 @@ using socket_io_core_ptr = std::shared_ptr<socket_io_core>;
 class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_websocket_core> {
   logger_ptr logger_;
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
+  boost::urls::url url_{};
   std::shared_ptr<sid_ctx> sid_ctx_{};
   std::shared_ptr<sid_data> sid_data_{};
   std::shared_ptr<void> sid_lock_{};
-  boost::urls::url url_{};
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   std::atomic_bool writing_{false};
