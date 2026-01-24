@@ -48,6 +48,7 @@ class DOODLE_CORE_API logger_ctrl {
 
   logger_ptr get_long_task() { return spdlog::get("doodle_long_task"); }
   logger_ptr get_socket_io() { return spdlog::get("socket_io"); }
+  logger_ptr get_http() { return spdlog::get("http"); }
 };
 }  // namespace details
 inline ::spdlog::source_loc log_loc(

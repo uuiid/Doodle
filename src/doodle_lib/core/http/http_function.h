@@ -223,7 +223,7 @@ class http_function {
   virtual void parse_header(const session_data_ptr& in_handle);
 
  public:
-  virtual ~http_function() = default;
+  virtual ~http_function();
   [[nodiscard]] virtual bool has_websocket() const;
   boost::asio::awaitable<boost::beast::http::message_generator> callback(session_data_ptr in_handle);
 

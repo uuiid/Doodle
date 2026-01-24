@@ -184,8 +184,14 @@ void logger_ctrl::init_temp_log() {
   if (!spdlog::get("socket_io"))
     spdlog::initialize_logger(
         std::make_shared<spdlog::async_logger>(
-            "socket_io",
-            spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("socket_io")},
+            "socket_io", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("socket_io")},
+            spdlog::thread_pool(), spdlog::async_overflow_policy::block
+        )
+    );
+  if (!spdlog::get("http"))
+    spdlog::initialize_logger(
+        std::make_shared<spdlog::async_logger>(
+            "http", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("http")},
             spdlog::thread_pool(), spdlog::async_overflow_policy::block
         )
     );

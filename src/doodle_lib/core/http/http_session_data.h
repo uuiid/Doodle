@@ -82,7 +82,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
  public:
   session_data() = default;
   explicit session_data(boost::asio::ip::tcp::socket in_socket, http_route_ptr in_route_ptr);
-  ~session_data() = default;
+  ~session_data();
   http_route_ptr route_ptr_;
   logger_ptr logger_;
   std::shared_ptr<void> capture_;

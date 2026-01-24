@@ -446,5 +446,8 @@ FSys::path session_data::get_file() const {
     return std::get<multipart_body::value_type>(body_).get_files().front();
   return {};
 }
+session_data::~session_data() {
+  SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "http session_data {} 销毁", url_);
+}
 
 }  // namespace doodle::http::detail

@@ -25,7 +25,6 @@ void url_route_component_t::initializer_t::parse_url_path() {
   boost::replace_all(url_path_, "/", R"(\/)");
   boost::replace_all(url_path_, ".", R"(\.)");
   boost::replace_all(url_path_, "?", R"(\?)");
-
 }
 url_route_component_t::component_vector_t url_route_component_t::initializer_t::get_component_vector() const {
   return component_;
@@ -149,5 +148,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> http_function::hea
 }
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::patch(session_data_ptr in_handle) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
+}
+http_function::~http_function() {
+  SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "http_function {} 销毁", typeid(*this).name());
 }
 }  // namespace doodle::http
