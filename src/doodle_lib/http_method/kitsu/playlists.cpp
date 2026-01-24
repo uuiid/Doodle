@@ -24,7 +24,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities
 ) {
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_entt_id = l_sql.get_by_uuid<entity>(id_);
-  person_.check_project_access(l_entt_id.project_id_);
+  person_.check_not_outsourcer();
   nlohmann::json l_json{nlohmann::json::object()};
   for (auto&& [key, value] : l_sql.get_preview_files_for_entity(l_entt_id.uuid_id_))
     l_json[fmt::to_string(key)] = value;

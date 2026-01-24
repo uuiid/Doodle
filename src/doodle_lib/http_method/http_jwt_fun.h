@@ -30,6 +30,8 @@ class http_jwt_fun : public http_function {
     bool is_project_manager(const uuid& in_project_id) const;
     // 是否是外包
     bool is_outsourcer() const;
+    // 检查不是外包
+    void check_not_outsourcer() const;
 
     // 检查人员是否有访问项目的权限
     void check_project_access(const uuid& in_project_id) const;

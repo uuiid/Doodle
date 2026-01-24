@@ -87,7 +87,11 @@ bool http_jwt_fun::http_jwt_t::is_admin() const {
 bool http_jwt_fun::http_jwt_t::is_outsourcer() const {
   return !person_.uuid_id_.is_nil() && person_.role_ == person_role_type::outsource;
 }
-
+void http_jwt_fun::http_jwt_t::check_not_outsourcer() const {
+  if (is_outsourcer()) {
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  }
+}
 void http_jwt_fun::http_jwt_t::check_admin() const {
   if (is_admin()) return;
 
