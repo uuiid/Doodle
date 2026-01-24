@@ -393,12 +393,21 @@ TORCH_MODULE(SkeletonEncoder);
 struct CrossAttentionImpl : torch::nn::Module {
   torch::nn::MultiheadAttention mha{nullptr};
   torch::nn::Linear head_proj{nullptr};
+  torch::nn::Sequential pre_mlp{nullptr};
   int embed_dim;
   float dist_bias_scale = 1.0f;  // 距离偏置缩放
+  float logit_scale     = 2.0f;  // 放大 logits，增强可分辨性
 
   CrossAttentionImpl(int embed_dim_, int nhead = 8) : embed_dim(embed_dim_) {
     mha = register_module("mha", torch::nn::MultiheadAttention(torch::nn::MultiheadAttentionOptions(embed_dim, nhead)));
     head_proj = register_module("head_proj", torch::nn::Linear(embed_dim, embed_dim));
+    pre_mlp   = register_module(
+        "pre_mlp", torch::nn::Sequential(
+                       torch::nn::Linear(embed_dim, embed_dim),
+                       torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.1)),
+                       torch::nn::Linear(embed_dim, embed_dim)
+                   )
+    );
   }
 
   // Returns (logits [N,B], fused_v [N,E]) for debugging / logging.
@@ -411,9 +420,10 @@ struct CrossAttentionImpl : torch::nn::Module {
     auto attn_out = mha->forward(q, k, v);
     auto output   = std::get<0>(attn_out);                  // [N,1,E]
     auto fused_v  = head_proj->forward(output.squeeze(1));  // [N,E]
+    fused_v       = pre_mlp->forward(fused_v);              // [N,E]  增强可分辨性
     auto logits   = torch::mm(fused_v, bone_feats.t());     // [N,B]
 
-    // 距离偏置：越近越大（负距离）, 提前做好 归一化到 [0,1]，避免数值尺度问题
+    logits        = logits * logit_scale;
     logits        = logits - bone_to_point_dist * dist_bias_scale;
     return {logits, fused_v};
   }
@@ -542,12 +552,14 @@ class cross_attention_bone_weight::impl {
   int mesh_in_ch            = 3 + 3 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_)
   // In our implementation we concatenated many fields; compute actual in channels dynamically when loading first
   // sample. For simplicity set:
-  int trans_dim             = 128;
-  std::vector<int> edge_out = {64, 128};  // EdgeConv outputs
+// #ifndef 
+  int trans_dim             = 128;        // or 256
+  std::vector<int> edge_out = {64, 128};  // or {128, 256} EdgeConv outputs
+  int bone_embed_dim        = 128;        // or 256
+  int nhead                 = 8;          // or 16
+
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
-  int bone_embed_dim        = 128;
-  int nhead                 = 8;
-  std::float_t lambda_      = 1;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+  std::float_t lambda_      = 1;          // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
 
   std::size_t step_count    = 0;
   torch::Device device_{torch::kCPU};
