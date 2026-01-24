@@ -19,6 +19,8 @@ struct fbx_load_result {
   torch::Tensor bone_weights_;    // [num_vertices, num_bones]
   torch::Tensor bone_parents_;    // [num_bones]
   torch::Tensor bones_dir_len_;   // [num_bones, 3]
+  // 骨骼到点的距离
+  torch::Tensor bone_to_point_dist_;  // [num_vertices, num_bones]
 
   // topo_degree is scalar connectivity feature per-vertex, derived from faces_
   void build_face_adjacency(std::int64_t k);
@@ -29,19 +31,22 @@ struct fbx_load_result {
 
   // 计算 curvature
   void compute_curvature();
+  // 计算骨骼到点的距离
+  void compute_bone_to_point_dist();
 
   template <typename T>
   inline void to(T in_opt) {
-    vertices_       = vertices_.to(in_opt);
-    normals_        = normals_.to(in_opt);
-    faces_          = faces_.to(in_opt);
-    neighbor_idx_   = neighbor_idx_.to(in_opt);
-    topo_degree_    = topo_degree_.to(in_opt);
-    curvature_      = curvature_.to(in_opt);
-    bone_positions_ = bone_positions_.to(in_opt);
-    bone_weights_   = bone_weights_.to(in_opt);
-    bone_parents_   = bone_parents_.to(in_opt);
-    bones_dir_len_  = bones_dir_len_.to(in_opt);
+    vertices_           = vertices_.to(in_opt);
+    normals_            = normals_.to(in_opt);
+    faces_              = faces_.to(in_opt);
+    neighbor_idx_       = neighbor_idx_.to(in_opt);
+    topo_degree_        = topo_degree_.to(in_opt);
+    curvature_          = curvature_.to(in_opt);
+    bone_positions_     = bone_positions_.to(in_opt);
+    bone_weights_       = bone_weights_.to(in_opt);
+    bone_parents_       = bone_parents_.to(in_opt);
+    bones_dir_len_      = bones_dir_len_.to(in_opt);
+    bone_to_point_dist_ = bone_to_point_dist_.to(in_opt);
   }
 };
 

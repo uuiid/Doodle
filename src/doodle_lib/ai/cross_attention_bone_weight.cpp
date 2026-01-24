@@ -23,7 +23,6 @@
 #include <tuple>
 #include <vector>
 
-
 namespace doodle::ai {
 void fbx_load_result::compute_curvature() {
   // Simple curvature estimation using vertex normals and neighboring vertices
@@ -158,6 +157,29 @@ void fbx_load_result::compute_bones_dir_len() {
       bone_dir_acc[i][2] = 0.0f;
     }
   }
+}
+
+void fbx_load_result::compute_bone_to_point_dist() {
+  auto num_verts      = vertices_.size(0);
+  auto num_bones      = bone_positions_.size(0);
+  bone_to_point_dist_ = torch::zeros({num_verts, num_bones}, torch::kFloat32);
+
+  auto vert_acc       = vertices_.accessor<float, 2>();
+  auto bone_pos_acc   = bone_positions_.accessor<float, 2>();
+  auto dist_acc       = bone_to_point_dist_.accessor<float, 2>();
+
+  for (int64_t i = 0; i < num_verts; ++i) {
+    for (int64_t j = 0; j < num_bones; ++j) {
+      float dx       = vert_acc[i][0] - bone_pos_acc[j][0];
+      float dy       = vert_acc[i][1] - bone_pos_acc[j][1];
+      float dz       = vert_acc[i][2] - bone_pos_acc[j][2];
+      dist_acc[i][j] = std::sqrt(dx * dx + dy * dy + dz * dz);
+    }
+  }
+  // Normalize distances
+  auto max_dist = bone_to_point_dist_.max().item<float>();
+  if (max_dist < 1e-6) max_dist = 1.0;
+  bone_to_point_dist_ = bone_to_point_dist_ / max_dist;
 }
 
 // ----------------------------- Utility functions --------------------------------
@@ -372,6 +394,8 @@ struct CrossAttentionImpl : torch::nn::Module {
   torch::nn::MultiheadAttention mha{nullptr};
   torch::nn::Linear head_proj{nullptr};
   int embed_dim;
+  float dist_bias_scale = 1.0f;  // 距离偏置缩放
+
   CrossAttentionImpl(int embed_dim_, int nhead = 8) : embed_dim(embed_dim_) {
     mha = register_module("mha", torch::nn::MultiheadAttention(torch::nn::MultiheadAttentionOptions(embed_dim, nhead)));
     head_proj = register_module("head_proj", torch::nn::Linear(embed_dim, embed_dim));
@@ -379,9 +403,8 @@ struct CrossAttentionImpl : torch::nn::Module {
 
   // Returns (logits [N,B], fused_v [N,E]) for debugging / logging.
   std::tuple<torch::Tensor, torch::Tensor> logits_and_fused(
-      const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats
+      const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats, const torch::Tensor& bone_to_point_dist
   ) {
-    // convert to seq_len x batch x embed
     auto q        = vertex_feats.unsqueeze(1);  // [N,1,E]
     auto k        = bone_feats.unsqueeze(1);    // [B,1,E]
     auto v        = bone_feats.unsqueeze(1);    // [B,1,E]
@@ -389,13 +412,18 @@ struct CrossAttentionImpl : torch::nn::Module {
     auto output   = std::get<0>(attn_out);                  // [N,1,E]
     auto fused_v  = head_proj->forward(output.squeeze(1));  // [N,E]
     auto logits   = torch::mm(fused_v, bone_feats.t());     // [N,B]
+
+    // 距离偏置：越近越大（负距离）, 提前做好 归一化到 [0,1]，避免数值尺度问题
+    logits        = logits - bone_to_point_dist * dist_bias_scale;
     return {logits, fused_v};
   }
 
   // vertex_feats: [N, E]; bone_feats: [B, E]
-  torch::Tensor forward(const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats) {
-    auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats);
-    auto weights           = sparsemax::apply(logits, /*dim=*/1);  // per-vertex distribution over bones
+  torch::Tensor forward(
+      const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats, const torch::Tensor& bone_to_point_dist
+  ) {
+    auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats, bone_to_point_dist);
+    auto weights           = sparsemax::apply(logits, 1);
     return weights;
   }
 };
@@ -434,7 +462,7 @@ struct SkinningModelImpl : torch::nn::Module {
     }
     // Safety: if still mismatched, fail fast (avoids silent wrong results).
     DOODLE_CHICK(bfeat.size(1) == vfeat.size(1), "bone feature dim must match vertex feature dim");
-    auto weights = cross_attn->forward(vfeat, bfeat);  // [N, B]
+    auto weights = cross_attn->forward(vfeat, bfeat, in_fbx_data.bone_to_point_dist_);  // [N, B]
     return weights;
   }
 };
@@ -558,6 +586,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     l_data.compute_curvature();
     l_data.normalize_inputs();
     l_data.compute_bones_dir_len();
+    l_data.compute_bone_to_point_dist();
     // Move to device
     l_data.to(l_ret->pimpl_->device_);
   }
