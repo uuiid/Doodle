@@ -149,7 +149,5 @@ boost::asio::awaitable<boost::beast::http::message_generator> http_function::hea
 boost::asio::awaitable<boost::beast::http::message_generator> http_function::patch(session_data_ptr in_handle) {
   co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "服务器端未实现 api");
 }
-http_function::~http_function() {
-  SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_http(), "http_function {} 销毁", typeid(*this).name());
-}
+http_function::~http_function() = default;
 }  // namespace doodle::http
