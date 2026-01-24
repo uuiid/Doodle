@@ -198,7 +198,8 @@ struct data_project_sequences_args {
 };
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::post(session_data_ptr in_handle) {
-  person_.check_project_access(id_);
+  person_.check_in_project(id_);
+  person_.check_not_outsourcer();
   auto& l_sql = g_ctx().get<sqlite_database>();
   auto l_args = in_handle->get_json().get<data_project_sequences_args>();
   using namespace sqlite_orm;
@@ -274,7 +275,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_create_tasks::post(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_task_type    = l_sql.get_by_uuid<task_type>(task_type_id_);
   auto l_type_name    = std::string{magic_enum::enum_name(entity_type_)};

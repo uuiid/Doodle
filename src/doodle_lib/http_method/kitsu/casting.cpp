@@ -215,7 +215,8 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_all_casting::get(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_));
 }
 
@@ -308,7 +309,8 @@ struct get_casting_t {
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(entity_id_) == 0)
     throw_exception(doodle_error{"实体不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_casting_t::get(entity_id_));
@@ -317,7 +319,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_entities_casting::put(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
@@ -410,7 +413,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_casting::get(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(sequence_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, sequence_id_));
@@ -418,7 +422,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset_types_casting::get(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   if (g_ctx().get<sqlite_database>().uuid_to_id<asset_type>(asset_type_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
@@ -427,7 +432,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_casting_replace::post(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   auto l_list = in_handle->get_json().get<std::vector<actions_projects_casting_replace_arg>>();
   default_logger_raw()->info(
       "由 {} , {} 项目替换资产 {}", person_.person_.email_, project_id_, fmt::join(l_list, ", ")

@@ -434,7 +434,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ent = l_sql.get_by_uuid<entity>(entity_id_);
-  person_.check_project_access(l_ent.project_id_);
+  person_.check_in_project(l_ent.project_id_);
+  person_.check_not_outsourcer();
   std::vector<preview_file> l_ret;
   using namespace sqlite_orm;
   l_ret = l_sql.impl_->storage_any_.get_all<preview_file>(
