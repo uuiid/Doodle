@@ -3,6 +3,7 @@
 //
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/preview_file.h"
 #include "doodle_core/metadata/task.h"
 #include <doodle_core/metadata/entity.h>
@@ -48,10 +49,12 @@ struct actions_preview_files_update_annotations_args {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_update_annotations::put(
     session_data_ptr in_handle
 ) {
+  person_.check_not_outsourcer();
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_prev = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(preview_file_id_));
   auto l_task = l_sql.get_by_uuid<task>(l_prev->task_id_);
-  person_.check_project_access(l_task.project_id_);
+  person_.check_in_project(l_task.project_id_);
+
   auto l_args = in_handle->get_json().get<actions_preview_files_update_annotations_args>();
   std::map<std::double_t, preview_file::annotations_t> l_time_map{};
   for (auto&& i : l_prev->get_annotations()) l_time_map[i.time_] = std::move(i);
@@ -331,7 +334,8 @@ struct temp_playlist_t {
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_temp::post(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_not_outsourcer();
+  person_.check_in_project(project_id_);
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_task_ids = in_handle->get_json().value("task_ids", std::vector<uuid>{});
   std::vector<task> l_tasks{};
@@ -403,7 +407,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   auto l_sql = g_ctx().get<sqlite_database>();
   std::int32_t l_page{1};
   uuid l_task_type_id{};
@@ -438,7 +443,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::po
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>();
   in_handle->get_json().get_to(*l_playlist);
-  person_.check_project_access(l_playlist->project_id_);
+  person_.check_in_project(l_playlist->project_id_);
+  person_.check_not_outsourcer();
   default_logger_raw()->info("{} 创建播放列表 {}", person_.person_.email_, l_playlist->name_);
   co_await l_sql.install(l_playlist);
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist);
@@ -637,7 +643,8 @@ auto get_playlist_shot_entity(const playlist& in_playlist) {
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists_instance::get(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
   co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(l_playlist));
@@ -645,7 +652,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_instance::put(session_data_ptr in_handle) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
-  person_.check_project_access(l_playlist->project_id_);
+  person_.check_in_project(l_playlist.project_id_);
+  person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_playlist);
   SPDLOG_LOGGER_WARN(in_handle->logger_, "{} 修改播放列表 {}", person_.person_.email_, l_playlist->name_);
@@ -658,7 +666,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = l_sql.get_by_uuid<playlist>(id_);
-  person_.check_project_access(l_playlist.project_id_);
+  person_.check_in_project(l_playlist.project_id_);
+  person_.check_not_outsourcer();
   SPDLOG_LOGGER_WARN(in_handle->logger_, "{} 删除播放列表 {}", person_.person_.email_, l_playlist.name_);
   co_await l_sql.remove<playlist>(l_playlist.id_);
   co_return in_handle->make_msg_204();
@@ -668,7 +677,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(playlist_id_));
   auto l_entity   = l_sql.get_by_uuid<entity>(entity_id_);
-  person_.check_project_access(l_playlist->project_id_);
+  person_.check_in_project(l_playlist.project_id_);
+  person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   SPDLOG_LOGGER_WARN(
       in_handle->logger_, "{} 在播放列表 {} 中添加预览文件 {}", person_.person_.email_, l_playlist->name_,
@@ -688,7 +698,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
-  person_.check_project_access(l_playlist.project_id_);
+  person_.check_in_project(l_playlist.project_id_);
+  person_.check_not_outsourcer();
   SPDLOG_LOGGER_WARN(
       in_handle->logger_, "{} 修改播放列表 {} 中的镜头 {}", person_.person_.email_, l_playlist.name_, shot_id_
   );
@@ -703,7 +714,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
-  person_.check_project_access(l_playlist.project_id_);
+  person_.check_in_project(l_playlist.project_id_);
+  person_.check_not_outsourcer();
   SPDLOG_LOGGER_WARN(
       in_handle->logger_, "{} 删除播放列表 {} 中的镜头 {}", person_.person_.email_, l_playlist.name_, shot_id_
   );
@@ -761,7 +773,8 @@ auto get_sequence_shots_preview(const uuid& in_sequence_id) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, post) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_sequence = l_sql.get_by_uuid<entity>(sequence_id_);
-  person_.check_project_access(l_sequence.project_id_);
+  person_.check_in_project(l_sequence.project_id_);
+  person_.check_not_outsourcer();
   auto l_playlist         = std::make_shared<playlist>();
   l_playlist->name_       = fmt::format("Review Playlist - {}", l_sequence.name_);
   l_playlist->project_id_ = l_sequence.project_id_;
