@@ -225,7 +225,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::get(session_data_ptr in_handle) {
-  person_.check_project_access(id_);
   auto& l_sql = g_ctx().get<sqlite_database>();
   using namespace sqlite_orm;
   auto l_sq_list = l_sql.impl_->storage_any_.get_all<entity>(where(
