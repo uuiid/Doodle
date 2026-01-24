@@ -547,7 +547,7 @@ class cross_attention_bone_weight::impl {
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
   int bone_embed_dim        = 128;
   int nhead                 = 8;
-  std::float_t lambda_      = 5;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+  std::float_t lambda_      = 7;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
 
   std::size_t step_count    = 0;
   torch::Device device_{torch::kCPU};
@@ -571,8 +571,8 @@ class cross_attention_bone_weight::impl {
   void step() {
     step_count++;
     if (step_count == 10) lambda_ = 10;
-    if (step_count == 20) lambda_ = 5;
-    if (step_count == 50) lambda_ = 1;
+    if (step_count == 50) lambda_ = 5;
+    if (step_count == 100) lambda_ = 1;
   }
 };
 
