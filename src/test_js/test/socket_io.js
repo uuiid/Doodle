@@ -4,7 +4,7 @@ const URL = "http://localhost:50025";
 
 const l_list = [];
 
-for (let index = 0; index < 3; index++) {
+for (let index = 0; index < 30; index++) {
   const socket = io(`${URL}/events`, {
     transports: ["websocket"]
   });
