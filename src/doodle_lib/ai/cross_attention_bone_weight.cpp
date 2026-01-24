@@ -423,8 +423,8 @@ struct CrossAttentionImpl : torch::nn::Module {
       const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats, const torch::Tensor& bone_to_point_dist
   ) {
     auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats, bone_to_point_dist);
-    auto weights           = torch::softmax(logits, 1);
-    // auto weights           = sparsemax::apply(logits, 1);
+    // auto weights           = torch::softmax(logits, 1);
+    auto weights           = sparsemax::apply(logits, 1);
     return weights;
   }
 };
@@ -547,7 +547,7 @@ class cross_attention_bone_weight::impl {
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
   int bone_embed_dim        = 128;
   int nhead                 = 8;
-  std::float_t lambda_      = 10;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+  std::float_t lambda_      = 1;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
 
   std::size_t step_count    = 0;
   torch::Device device_{torch::kCPU};
@@ -570,9 +570,9 @@ class cross_attention_bone_weight::impl {
 
   void step() {
     step_count++;
-    if (step_count == 10) lambda_ = 10;
-    if (step_count == 50) lambda_ = 5;
-    if (step_count == 100) lambda_ = 1;
+    // if (step_count == 10) lambda_ = 50;
+    // if (step_count == 50) lambda_ = 15;
+    // if (step_count == 100) lambda_ = 1;
   }
 };
 
@@ -685,6 +685,7 @@ void cross_attention_bone_weight::predict_by_fbx(
   l_data.compute_curvature();
   l_data.normalize_inputs();
   l_data.compute_bones_dir_len();
+  l_data.compute_bone_to_point_dist();
 
   l_data.to(pimpl_->device_);
   pimpl_->model_->eval();
