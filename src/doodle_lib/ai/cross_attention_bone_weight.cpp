@@ -546,7 +546,7 @@ class cross_attention_bone_weight::impl {
 
   int epochs                = 250;
   int batch_size            = 1;
-  float lr                  = 1e-3;
+  float lr                  = 1e-4;
   int k                     = 16;
   // Model hyperparams
   int mesh_in_ch            = 3 + 3 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_)
@@ -617,7 +617,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   torch::optim::Adam optimizer(l_ret->pimpl_->model_->parameters(), torch::optim::AdamOptions(l_ret->pimpl_->lr));
   // scheduler optional
   // 在15轮是学习律降到原先的0.5倍
-  torch::optim::StepLR scheduler(optimizer, /*step_size=*/15, /*gamma=*/0.5);
+  torch::optim::StepLR scheduler(optimizer, /*step_size=*/30, /*gamma=*/0.5);
 
   // Training loop: simple epoch over samples (batch_size=1)
   for (int epoch = 1; epoch <= l_ret->pimpl_->epochs; ++epoch) {
