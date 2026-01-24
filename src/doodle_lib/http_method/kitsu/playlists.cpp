@@ -652,7 +652,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_instance::put(session_data_ptr in_handle) {
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
-  person_.check_in_project(l_playlist.project_id_);
+  person_.check_in_project(l_playlist->project_id_);
   person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_playlist);
@@ -677,7 +677,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(playlist_id_));
   auto l_entity   = l_sql.get_by_uuid<entity>(entity_id_);
-  person_.check_in_project(l_playlist.project_id_);
+  person_.check_in_project(l_playlist->project_id_);
   person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   SPDLOG_LOGGER_WARN(
