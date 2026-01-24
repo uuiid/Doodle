@@ -423,7 +423,8 @@ struct CrossAttentionImpl : torch::nn::Module {
       const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats, const torch::Tensor& bone_to_point_dist
   ) {
     auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats, bone_to_point_dist);
-    auto weights           = sparsemax::apply(logits, 1);
+    auto weights           = torch::softmax(logits, 1);
+    // auto weights           = sparsemax::apply(logits, 1);
     return weights;
   }
 };
@@ -546,7 +547,9 @@ class cross_attention_bone_weight::impl {
   int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
   int bone_embed_dim        = 128;
   int nhead                 = 8;
-  std::float_t lambda_      = 1;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+  std::float_t lambda_      = 5;  // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+
+  std::size_t step_count    = 0;
   torch::Device device_{torch::kCPU};
   void create_model(const torch::Device& device) {
     model_  = SkinningModel{mesh_in_ch, edge_out, trans_dim, bone_in_dim, bone_embed_dim, nhead, k};
@@ -563,6 +566,13 @@ class cross_attention_bone_weight::impl {
       SPDLOG_WARN("Using CPU.");
     }
     model_->to(device_);
+  }
+
+  void step() {
+    step_count++;
+    if (step_count == 10) lambda_ = 10;
+    if (step_count == 20) lambda_ = 5;
+    if (step_count == 50) lambda_ = 1;
   }
 };
 
@@ -638,6 +648,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
       }
 
       optimizer.step();
+      l_ret->pimpl_->step();
 
       epoch_loss += loss.item<double>();
       count++;
