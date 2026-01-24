@@ -47,6 +47,7 @@ class DOODLE_CORE_API logger_ctrl {
   bool add_log_sink(const std::shared_ptr<spdlog::sinks::sink>& in_ptr, const std::string& in_name);
 
   logger_ptr get_long_task() { return spdlog::get("doodle_long_task"); }
+  logger_ptr get_socket_io() { return spdlog::get("socket_io"); }
 };
 }  // namespace details
 inline ::spdlog::source_loc log_loc(

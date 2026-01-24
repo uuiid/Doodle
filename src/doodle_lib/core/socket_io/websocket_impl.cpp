@@ -29,6 +29,7 @@
 #include "core/socket_io/socket_io_packet.h"
 #include <memory>
 #include <spdlog/spdlog.h>
+#include <utility>
 
 namespace doodle::socket_io {
 
@@ -38,9 +39,8 @@ socket_io_websocket_core::socket_io_websocket_core(
 )
     : logger_(in_handle->logger_),
       web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))),
+      url_(std::move(in_handle->url_)),
       sid_ctx_(in_sid_ctx),
-      handle_(std::move(in_handle)),
-      queue_(std::make_shared<awaitable_queue_limitation>()),
       strand_(boost::asio::make_strand(g_io_context()))
 
 {}
@@ -75,7 +75,7 @@ void socket_io_websocket_core::write_msg() {
 
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // 注册
-  if (const auto l_p = parse_query_data(handle_->url_); l_p.sid_.is_nil()) {
+  if (const auto l_p = parse_query_data(url_); l_p.sid_.is_nil()) {
     sid_data_ = co_await sid_ctx_->generate();
     co_await async_write_websocket(generate_register_reply(sid_data_));
   } else

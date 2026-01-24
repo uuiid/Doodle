@@ -13,6 +13,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/signals2.hpp>
+#include <boost/url/url.hpp>
 
 #include <atomic>
 
@@ -31,12 +32,11 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<sid_ctx> sid_ctx_{};
   std::shared_ptr<sid_data> sid_data_{};
-  http::session_data_ptr handle_;
   std::shared_ptr<void> sid_lock_{};
+  boost::urls::url url_{};
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   std::atomic_bool writing_{false};
-  std::shared_ptr<awaitable_queue_limitation> queue_;
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{};
 
   // template <typename Handle>

@@ -4,7 +4,9 @@
 
 #include "socket_io_ctx.h"
 
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/logger/logger.h"
 
 #include <doodle_lib/core/socket_io/sid_data.h>
 #include <doodle_lib/core/socket_io/socket_io_core.h>
@@ -12,6 +14,7 @@
 
 #include <boost/asio/post.hpp>
 
+#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace doodle {
@@ -33,13 +36,16 @@ sid_ctx::sid_ctx()
       } {}
 
 void sid_ctx::clear_timeout_sid() {
+  std::size_t l_clear_count = 0;
   for (auto it = sid_map_.begin(); it != sid_map_.end();) {
     if (it->second->is_timeout()) {
       it = sid_map_.erase(it);
+      l_clear_count++;
     } else {
       ++it;
     }
   }
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "清理超时sid数量 {}", l_clear_count);
 }
 
 boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::generate() {
