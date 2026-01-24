@@ -6,8 +6,8 @@
 #include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <doodle_lib/core/socket_io/socket_io_packet.h>
 #include <doodle_lib/core/socket_io/engine_io.h>
+#include <doodle_lib/core/socket_io/socket_io_packet.h>
 
 #include <boost/asio/experimental/concurrent_channel.hpp>
 #include <boost/asio/io_context.hpp>
@@ -18,7 +18,6 @@
 
 #include <atomic>
 #include <memory>
-
 
 namespace doodle::socket_io {
 struct packet_base;
@@ -46,6 +45,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
         strand_(boost::asio::make_strand(g_io_context())),
         write_strand_(boost::asio::make_strand(g_io_context())),
         message_queue_() {}
+  ~sid_data();
 
   bool is_upgrade_to_websocket() const;
   bool is_timeout() const;

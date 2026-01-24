@@ -22,9 +22,16 @@
 #include <boost/lockfree/detail/uses_optional.hpp>
 
 #include "websocket_impl.h"
+#include <spdlog/spdlog.h>
 
 namespace doodle::socket_io {
 using namespace boost::asio::experimental::awaitable_operators;
+
+sid_data::~sid_data() {
+  SPDLOG_LOGGER_DEBUG(g_logger_ctrl().get_socket_io(), "sid_data {} 销毁", sid_);
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "sid_data {} 销毁", sid_);
+}
+
 bool sid_data::is_upgrade_to_websocket() const { return is_upgrade_to_websocket_; }
 bool sid_data::is_timeout() const {
   auto l_now = std::chrono::system_clock::now();
