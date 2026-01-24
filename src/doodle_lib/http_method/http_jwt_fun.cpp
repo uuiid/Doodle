@@ -92,6 +92,17 @@ void http_jwt_fun::http_jwt_t::check_not_outsourcer() const {
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   }
 }
+
+bool http_jwt_fun::http_jwt_t::is_in_project(const uuid& in_project_id) const {
+  if (person_.uuid_id_.is_nil()) return false;
+  return g_ctx().get<sqlite_database>().is_person_in_project(person_, in_project_id);
+}
+void http_jwt_fun::http_jwt_t::check_in_project(const uuid& in_project_id) const {
+  if (!is_in_project(in_project_id)) {
+    throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+  }
+}
+
 void http_jwt_fun::http_jwt_t::check_admin() const {
   if (is_admin()) return;
 
