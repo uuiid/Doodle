@@ -490,14 +490,14 @@ struct DiscriminatorImpl : torch::nn::Module {
     edge_layers.push_back(register_module("edgeconv_disc2", EdgeConv(hidden_dim, hidden_dim, k)));
 
     fc_layers = register_module(
-        "fc_layers", torch::nn::Sequential(
-                         torch::nn::Linear(input_dim, hidden_dim),
-                         torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
-                         torch::nn::Linear(hidden_dim, hidden_dim),
-                         torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
-                         torch::nn::Linear(hidden_dim, 1)
-                        //  , torch::nn::Sigmoid()
-                     )
+        "fc_layers",
+        torch::nn::Sequential(
+            torch::nn::Linear(input_dim, hidden_dim),
+            torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
+            torch::nn::Linear(hidden_dim, hidden_dim),
+            torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)), torch::nn::Linear(hidden_dim, 1)
+            //  , torch::nn::Sigmoid()
+        )
     );
   }
 
@@ -508,22 +508,30 @@ struct DiscriminatorImpl : torch::nn::Module {
     // 构建网格特征
     auto mesh_feat = torch::cat(
         {in_fbx_data.vertices_, in_fbx_data.normals_, in_fbx_data.curvature_.unsqueeze(1),
-         in_fbx_data.topo_degree_.unsqueeze(1)},
+         in_fbx_data.topo_degree_.unsqueeze(1), weights},
         -1
     );  // [N, F]
     auto x = mesh_feat;
+    // 图卷积提取特征
     for (size_t i = 0; i < edge_layers.size(); ++i) {
       x = edge_layers[i]->forward(x, in_fbx_data.neighbor_idx_);
     }
     // 融合骨骼特征（简单重复骨骼位置作为示例）
-    auto bone_pos_expanded = weights.matmul(in_fbx_data.bone_positions_);  // [N,3]
-    // 融合所有特征
-    auto fused_feat        = torch::cat({x, bone_pos_expanded, weights}, -1);  // [N, C]
-    // 全连接层判别
-    auto out               = fc_layers->forward(fused_feat);  // [N,1]
+    //    auto bone_pos_expanded = weights.matmul(in_fbx_data.bone_positions_);  // [N,3]
+
+    // 融合所有特征, 全局均值池化（顶点维度）
+    // auto fused_feat        = torch::cat({x, bone_pos_expanded, weights}, -1).mean(0, false);  // [N, C] -> [C]
+    auto fused_feat = x.mean(0, false);  // [N, C] -> [C]
+    // 全连接层判别, 全连接层输出判别值（WGAN-GP无Sigmoid）
+    auto out        = fc_layers->forward(fused_feat);  // [1]
     return out;
   }
 };
+TORCH_MODULE(Discriminator);
+// 监督判别器（D_s）：判别标注数据的「网格-骨骼-权重」是否为真实配对
+using SupervisedDiscriminator   = Discriminator;
+// 无监督判别器（D_u）：判别无标注数据的生成权重是否符合物理规则（结构与D_s一致，参数不共享）
+using UnsupervisedDiscriminator = Discriminator;
 
 // ----------------------------- Training function --------------------------------
 std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
