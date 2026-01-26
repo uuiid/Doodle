@@ -45,7 +45,8 @@ void sid_ctx::clear_timeout_sid() {
       ++it;
     }
   }
-  if (l_clear_count > 0) SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "清理超时sid数量 {}", l_clear_count);
+  if (l_clear_count > 0)
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "清理超时sid数量 {} / {}", l_clear_count, sid_map_.size());
 }
 
 boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::generate() {
