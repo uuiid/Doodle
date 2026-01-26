@@ -433,7 +433,7 @@ struct CrossAttentionImpl : torch::nn::Module {
       const torch::Tensor& vertex_feats, const torch::Tensor& bone_feats, const torch::Tensor& bone_to_point_dist
   ) {
     auto [logits, fused_v] = logits_and_fused(vertex_feats, bone_feats, bone_to_point_dist);
-    auto weights           = this->is_training() ?  torch::softmax(logits, 1) : sparsemax::apply(logits, 1);
+    auto weights           = this->is_training() ? torch::softmax(logits, 1) : sparsemax::apply(logits, 1);
     // auto weights           = sparsemax::apply(logits, 1);
     return weights;
   }
@@ -478,6 +478,51 @@ struct SkinningModelImpl : torch::nn::Module {
   }
 };
 TORCH_MODULE(SkinningModel);
+
+// 判别器
+struct DiscriminatorImpl : torch::nn::Module {
+  // 全连接层（WGAN-GP：无Sigmoid输出）
+  torch::nn::Sequential fc_layers{nullptr};
+  // 图卷积层（2层，用于网格特征提取）
+  std::vector<EdgeConv> edge_layers{nullptr};
+  DiscriminatorImpl(int input_dim, int hidden_dim = 128, int k = 16) {
+    edge_layers.push_back(register_module("edgeconv_disc1", EdgeConv(input_dim, hidden_dim, k)));
+    edge_layers.push_back(register_module("edgeconv_disc2", EdgeConv(hidden_dim, hidden_dim, k)));
+
+    fc_layers = register_module(
+        "fc_layers", torch::nn::Sequential(
+                         torch::nn::Linear(input_dim, hidden_dim),
+                         torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
+                         torch::nn::Linear(hidden_dim, hidden_dim),
+                         torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
+                         torch::nn::Linear(hidden_dim, 1), torch::nn::Sigmoid()
+                     )
+    );
+  }
+
+  // weights: [N, B]
+  // 融合特征构建：网格特征 + 骨骼特征 + 蒙皮权重
+  //
+  torch::Tensor forward(const fbx_load_result& in_fbx_data, const torch::Tensor& weights) {
+    // 构建网格特征
+    auto mesh_feat = torch::cat(
+        {in_fbx_data.vertices_, in_fbx_data.normals_, in_fbx_data.curvature_.unsqueeze(1),
+         in_fbx_data.topo_degree_.unsqueeze(1)},
+        -1
+    );  // [N, F]
+    auto x = mesh_feat;
+    for (size_t i = 0; i < edge_layers.size(); ++i) {
+      x = edge_layers[i]->forward(x, in_fbx_data.neighbor_idx_);
+    }
+    // 融合骨骼特征（简单重复骨骼位置作为示例）
+    auto bone_pos_expanded = weights.matmul(in_fbx_data.bone_positions_);  // [N,3]
+    // 融合所有特征
+    auto fused_feat        = torch::cat({x, bone_pos_expanded, weights}, -1);  // [N, C]
+    // 全连接层判别
+    auto out               = fc_layers->forward(fused_feat);  // [N,1]
+    return out;
+  }
+};
 
 // ----------------------------- Training function --------------------------------
 std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
@@ -552,14 +597,14 @@ class cross_attention_bone_weight::impl {
   int mesh_in_ch            = 3 + 3 + 1 + 1;  // verts + normals + curvature + topo_degree(from faces_)
   // In our implementation we concatenated many fields; compute actual in channels dynamically when loading first
   // sample. For simplicity set:
-// #ifndef 
+  // #ifndef
   int trans_dim             = 128;        // or 256
   std::vector<int> edge_out = {64, 128};  // or {128, 256} EdgeConv outputs
   int bone_embed_dim        = 128;        // or 256
   int nhead                 = 8;          // or 16
 
-  int bone_in_dim           = 3 + 3;      // pos + rel -> may be larger if bones_dir_len used
-  std::float_t lambda_      = 1;          // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
+  int bone_in_dim           = 3 + 3;  // pos + rel -> may be larger if bones_dir_len used
+  std::float_t lambda_      = 1;      // 损失函数中 $L_{conc}=\lambda\,(1-\sum_i p_i^2)$ 中权重
 
   std::size_t step_count    = 0;
   torch::Device device_{torch::kCPU};
