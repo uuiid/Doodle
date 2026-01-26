@@ -495,7 +495,8 @@ struct DiscriminatorImpl : torch::nn::Module {
                          torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
                          torch::nn::Linear(hidden_dim, hidden_dim),
                          torch::nn::LeakyReLU(torch::nn::LeakyReLUOptions().negative_slope(0.2)),
-                         torch::nn::Linear(hidden_dim, 1), torch::nn::Sigmoid()
+                         torch::nn::Linear(hidden_dim, 1)
+                        //  , torch::nn::Sigmoid()
                      )
     );
   }
