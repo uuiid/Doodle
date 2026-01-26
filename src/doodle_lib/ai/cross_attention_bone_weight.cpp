@@ -640,6 +640,71 @@ class cross_attention_bone_weight::impl {
     // if (step_count == 50) lambda_ = 15;
     // if (step_count == 100) lambda_ = 1;
   }
+
+  // 训练循环
+  void train_loop(const std::vector<fbx_load_result>& in_fbx_data, const FSys::path& in_output_path) {
+    torch::optim::Adam optimizer(model_->parameters(), torch::optim::AdamOptions(lr));
+    // scheduler optional
+    // 在15轮是学习律降到原先的0.5倍
+    torch::optim::StepLR scheduler(optimizer, /*step_size=*/30, /*gamma=*/0.5);
+
+    // Training loop: simple epoch over samples (batch_size=1)
+    for (int epoch = 1; epoch <= epochs; ++epoch) {
+      model_->train();
+      double epoch_loss = 0.0;
+      int count         = 0;
+      for (const auto& l_data : in_fbx_data) {
+        // ensure shapes: target_weights [N, B]
+        auto N           = l_data.vertices_.size(0);
+        auto B           = l_data.bone_positions_.size(0);
+        // forward
+        auto pred        = model_->forward(l_data);  // [N,B]
+        // ensure numeric stability
+        // pred             = pred.clamp_min(1e-8);
+        // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred
+        auto target      = l_data.bone_weights_;
+        // Safe normalization: some vertices may have all-zero weights; clamp denom to avoid NaNs.
+        auto eps         = 1e-8;
+        auto pred_norm   = pred / pred.sum(1, true).clamp_min(eps);
+        auto target_norm = target / target.sum(1, true).clamp_min(eps);
+        // reverse KL 惩罚强度过大时会导致数值不稳定
+        // auto kl          = (pred_norm * ((pred_norm.clamp_min(eps)).log() - (target_norm +
+        // eps).log())).sum(1).mean();
+        auto kl          = (target_norm * ((target_norm + eps).log() - (pred_norm + eps).log())).sum(1).mean();
+
+        // 浓度损失（Concentration Loss）
+        auto conc_loss   = lambda_ * (1 - pred_norm.pow(2).sum(1)).mean();
+        // also add L2 between pred and target
+        auto mse         = torch::mse_loss(pred_norm, target_norm);
+        auto loss        = kl + conc_loss + 0.5 * mse;
+
+        optimizer.zero_grad();
+        loss.backward();
+
+        // Diagnostics (print occasionally to avoid spam)
+        if (epoch <= 3 || (epoch % 10 == 0)) {
+          print_log(model_, l_data, pred, target, loss, kl, mse, pred_norm, target_norm, eps, N, B, epoch, epochs);
+        }
+
+        optimizer.step();
+        step();
+
+        epoch_loss += loss.item<double>();
+        count++;
+      }
+      SPDLOG_WARN("[epoch {}/{}] avg loss: {}", epoch, epochs, (epoch_loss / std::max(1, count)));
+      scheduler.step();
+      // optional checkpoint
+      if (epoch % 10 == 0) {
+        auto l_file_name = in_output_path.parent_path() / fmt::format("{}_epoch_{}.pt", in_output_path.stem(), epoch);
+        torch::save(model_, l_file_name.generic_string());
+        SPDLOG_WARN("Saved checkpoint: {}", l_file_name);
+      }
+    }
+
+    // final save
+    torch::save(model_, in_output_path.generic_string());
+  }
 };
 
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
@@ -666,71 +731,7 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
     // Move to device
     l_data.to(l_ret->pimpl_->device_);
   }
-  // Create model
-
-  torch::optim::Adam optimizer(l_ret->pimpl_->model_->parameters(), torch::optim::AdamOptions(l_ret->pimpl_->lr));
-  // scheduler optional
-  // 在15轮是学习律降到原先的0.5倍
-  torch::optim::StepLR scheduler(optimizer, /*step_size=*/30, /*gamma=*/0.5);
-
-  // Training loop: simple epoch over samples (batch_size=1)
-  for (int epoch = 1; epoch <= l_ret->pimpl_->epochs; ++epoch) {
-    l_ret->pimpl_->model_->train();
-    double epoch_loss = 0.0;
-    int count         = 0;
-    for (auto& l_data : l_fbx_data) {
-      // ensure shapes: target_weights [N, B]
-      auto N           = l_data.vertices_.size(0);
-      auto B           = l_data.bone_positions_.size(0);
-      // forward
-      auto pred        = l_ret->pimpl_->model_->forward(l_data);  // [N,B]
-      // ensure numeric stability
-      // pred             = pred.clamp_min(1e-8);
-      // compute loss: KL divergence per-vertex: sum p*log(p/q) where p=target, q=pred
-      auto target      = l_data.bone_weights_;
-      // Safe normalization: some vertices may have all-zero weights; clamp denom to avoid NaNs.
-      auto eps         = 1e-8;
-      auto pred_norm   = pred / pred.sum(1, true).clamp_min(eps);
-      auto target_norm = target / target.sum(1, true).clamp_min(eps);
-      // reverse KL 惩罚强度过大时会导致数值不稳定
-      // auto kl          = (pred_norm * ((pred_norm.clamp_min(eps)).log() - (target_norm + eps).log())).sum(1).mean();
-      auto kl          = (target_norm * ((target_norm + eps).log() - (pred_norm + eps).log())).sum(1).mean();
-
-      // 浓度损失（Concentration Loss）
-      auto conc_loss   = l_ret->pimpl_->lambda_ * (1 - pred_norm.pow(2).sum(1)).mean();
-      // also add L2 between pred and target
-      auto mse         = torch::mse_loss(pred_norm, target_norm);
-      auto loss        = kl + conc_loss + 0.5 * mse;
-
-      optimizer.zero_grad();
-      loss.backward();
-
-      // Diagnostics (print occasionally to avoid spam)
-      if (epoch <= 3 || (epoch % 10 == 0)) {
-        print_log(
-            l_ret->pimpl_->model_, l_data, pred, target, loss, kl, mse, pred_norm, target_norm, eps, N, B, epoch,
-            l_ret->pimpl_->epochs
-        );
-      }
-
-      optimizer.step();
-      l_ret->pimpl_->step();
-
-      epoch_loss += loss.item<double>();
-      count++;
-    }
-    SPDLOG_WARN("[epoch {}/{}] avg loss: {}", epoch, l_ret->pimpl_->epochs, (epoch_loss / std::max(1, count)));
-    scheduler.step();
-    // optional checkpoint
-    if (epoch % 10 == 0) {
-      auto l_file_name = in_output_path.parent_path() / fmt::format("{}_epoch_{}.pt", in_output_path.stem(), epoch);
-      torch::save(l_ret->pimpl_->model_, l_file_name.generic_string());
-      SPDLOG_WARN("Saved checkpoint: {}", l_file_name);
-    }
-  }
-
-  // final save
-  torch::save(l_ret->pimpl_->model_, in_output_path.generic_string());
+  l_ret->pimpl_->train_loop(l_fbx_data, in_output_path);
   return l_ret;
 }
 
