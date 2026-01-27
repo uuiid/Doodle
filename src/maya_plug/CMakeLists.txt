@@ -35,6 +35,7 @@ target_link_libraries(doodle_maya_lib
         OpenMP::OpenMP_CXX
         Alembic::Alembic
         Fbx::Fbx-static
+        CGAL::CGAL
 )
 
 target_compile_options(

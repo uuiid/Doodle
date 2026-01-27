@@ -6,7 +6,6 @@
 #include <maya_plug/data/maya_register_main.h>
 #include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
-#include <maya_plug/maya_comm/afterimage_comm.h>
 #include <maya_plug/maya_comm/chick_export_fbx.h>
 #include <maya_plug/maya_comm/clear_scene_comm.h>
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
@@ -56,10 +55,6 @@ MStatus initializePlugin(MObject obj) {
   status = maya_reg->register_command<::doodle::maya_plug::file_info_edit>(k_plugin);
   CHECK_MSTATUS(status);
 
-  CHECK_MSTATUS(status);
-  /// 添加残像命令
-  status = maya_reg->register_command<::doodle::maya_plug::afterimage_comm>(k_plugin);
-  CHECK_MSTATUS(status);
   /// 添加清除maya场景命令
   status = maya_reg->register_command<::doodle::maya_plug::clear_scene_comm>(k_plugin);
   CHECK_MSTATUS(status);

@@ -66,8 +66,6 @@ class DlsShelf(shelfBase._shelf):
 
         self.addButon("hud", "icons/create_hud.png",
                       command="")
-        self.addButon("af", "icons/doodle_afterimage.png",
-                      command=cmds.doodle_afterimage)
         self.addButon("ql_rest", "icons/ql_rest.png",
                       command=cmds.doodle_duplicate_poly)
         self.addButon("set cache", "icons/set_cache.png",
