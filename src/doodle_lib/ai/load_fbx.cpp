@@ -51,7 +51,7 @@ fbx_loader::fbx_loader(const FSys::path& in_fbx_path, logger_ptr_raw in_logger)
   preprocessing();
   mesh_ = mesh_node_->GetMesh();
   timer.stop();
-  SPDLOG_LOGGER_WARN(logger_, "加载fbx文件用时 {:%T}", l_load_duration);
+  SPDLOG_LOGGER_WARN(logger_, "加载 {} 文件用时 {:%T}", fbx_path_, l_load_duration);
 }
 
 void fbx_loader::preprocessing() {
