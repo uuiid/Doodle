@@ -677,10 +677,7 @@ std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fb
       continue;
     }
     fbx_loader l_loader{fbx_file};
-    auto l_now = std::chrono::high_resolution_clock::now();
     results.push_back(l_loader.load_fbx());
-    auto l_after = std::chrono::high_resolution_clock::now();
-    SPDLOG_WARN("收集 {} 用时 {:%T}", fbx_file, l_after - l_now);
   }
   return results;
 }
