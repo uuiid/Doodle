@@ -6,8 +6,10 @@
 
 namespace doodle::maya_plug {
 constexpr char name_doodle_head_weight[] = "doodle_head_weight";
-class head_weight : public TemplateAction<head_weight, name_doodle_head_weight, null_syntax_t> {
-public:
+MSyntax head_weight_syntax();
+
+class head_weight : public TemplateAction<head_weight, name_doodle_head_weight, head_weight_syntax> {
+ public:
   MStatus doIt(const MArgList& args) override;
 };
 }  // namespace doodle::maya_plug
