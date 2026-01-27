@@ -60,7 +60,8 @@
       "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE": true
       }
     },
     {
