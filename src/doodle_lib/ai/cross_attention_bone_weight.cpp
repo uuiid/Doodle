@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstddef>
 #include <filesystem>
+#include <fmt/format.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <torch/nn/modules/container/sequential.h>
@@ -533,12 +534,146 @@ using SupervisedDiscriminator   = Discriminator;
 // 无监督判别器（D_u）：判别无标注数据的生成权重是否符合物理规则（结构与D_s一致，参数不共享）
 using UnsupervisedDiscriminator = Discriminator;
 
+// 半监督训练流程
+struct SemiSupervisedTrainer {
+  // 模型组件
+  SkinningModel model{nullptr};
+  SupervisedDiscriminator D_s{nullptr};
+  UnsupervisedDiscriminator D_u{nullptr};
+
+  torch::optim::Adam model_optimizer;
+  torch::optim::Adam D_s_optimizer;
+  torch::optim::Adam D_u_optimizer;
+  // 优化器
+
+  SemiSupervisedTrainer(
+      SkinningModel model_, SupervisedDiscriminator D_s_, UnsupervisedDiscriminator D_u_, float lr_model, float lr_Ds,
+      float lr_Du
+  )
+      : model(std::move(model_)),
+        D_s(std::move(D_s_)),
+        D_u(std::move(D_u_)),
+        model_optimizer(model->parameters(), torch::optim::AdamOptions(lr_model)),
+        D_s_optimizer(D_s->parameters(), torch::optim::AdamOptions(lr_Ds)),
+        D_u_optimizer(D_u->parameters(), torch::optim::AdamOptions(lr_Du)) {}
+  // 3.2 WGAN-GP 梯度惩罚（通用函数，用于D_s/D_u）
+  torch::Tensor compute_gradient_penalty(
+      Discriminator disc, const fbx_load_result& in_fbx_data, const torch::Tensor& real_weights,
+      const torch::Tensor& fake_weights, float lambda_gp = 10.0f
+  ) {
+    auto alpha          = torch::rand({real_weights.size(0), 1}, real_weights.options());
+    auto interp_weights = alpha * real_weights + (1 - alpha) * fake_weights;
+    interp_weights.set_requires_grad(true);
+
+    auto disc_out  = disc->forward(in_fbx_data, interp_weights);
+    auto gradients = torch::autograd::grad(
+        {disc_out}, {interp_weights}, /*grad_outputs=*/{torch::ones_like(disc_out)},
+        /*create_graph=*/true, /*retain_graph=*/true, /*allow_unused=*/true
+    )[0];
+
+    auto grad_norm    = gradients.view({gradients.size(0), -1}).norm(2, 1);
+    auto grad_penalty = lambda_gp * ((grad_norm - 1).pow(2)).mean();
+    return grad_penalty;
+  }
+
+  // 单步训练
+  void train_step(const fbx_load_result& in_fbx_labeled_data, const fbx_load_result& in_fbx_unlabeled_data) {
+    // -------------------------- 阶段1：训练监督判别器 D_s --------------------------
+    D_s_optimizer.zero_grad();
+    D_s->train();
+    // 标注数据的预测权重
+    auto l_pred_weights = model->forward(in_fbx_labeled_data);  // [N, B]
+    // 判别器输出
+    auto l_D_real       = D_s->forward(in_fbx_labeled_data, in_fbx_labeled_data.bone_weights_);  // 真实
+    auto l_D_fake       = D_s->forward(in_fbx_labeled_data, l_pred_weights.detach());            // 生成
+    // 计算判别器损失（WGAN-GP）
+    auto l_D_loss       = -(l_D_real.mean() - l_D_fake.mean());
+    // 梯度惩罚略（可选）
+    auto l_grad_penalty =
+        compute_gradient_penalty(D_s, in_fbx_labeled_data, in_fbx_labeled_data.bone_weights_, l_pred_weights.detach());
+    auto l_D_total_loss = l_D_loss + l_grad_penalty;
+    l_D_total_loss.backward();
+    D_s_optimizer.step();
+
+    // -------------------------- 阶段2：训练无监督判别器 D_u --------------------------
+
+    D_u_optimizer.zero_grad();
+    D_u->train();
+    // 无标注数据的预测权重
+    auto u_pred_weights = model->forward(in_fbx_unlabeled_data);  // [N, B]
+    // 判别器输出
+    auto u_D_fake       = D_u->forward(in_fbx_unlabeled_data, u_pred_weights.detach());  // 生成
+    auto u_D_loss       = -u_D_fake.mean();
+    // 梯度惩罚略（可选）
+    auto u_grad_penalty =
+        compute_gradient_penalty(D_u, in_fbx_unlabeled_data, u_pred_weights.detach(), u_pred_weights.detach());
+    auto u_D_total_loss = u_D_loss + u_grad_penalty;
+    u_D_total_loss.backward();
+    D_u_optimizer.step();
+
+    // -------------------------- 阶段3：训练生成器 G --------------------------
+    model_optimizer.zero_grad();
+    model->train();
+    // 标注数据的预测权重
+    auto l_gen_pred_weights    = model->forward(in_fbx_labeled_data);  //
+    // 无标注数据的预测权重
+    auto u_gen_pred_weights    = model->forward(in_fbx_unlabeled_data);
+    // 判别器输出
+    auto l_gen_D_fake          = D_s->forward(in_fbx_labeled_data, l_gen_pred_weights);    // 生成
+    auto u_gen_D_fake          = D_u->forward(in_fbx_unlabeled_data, u_gen_pred_weights);  // 生成
+    // 计算生成器损失（WGAN-GP）
+    const auto l_physical_loss = physical_constraint_loss(l_gen_pred_weights, in_fbx_labeled_data);
+    const auto u_physical_loss = physical_constraint_loss(u_gen_pred_weights, in_fbx_unlabeled_data);
+    auto l_gen_loss            = -l_gen_D_fake.mean() + l_physical_loss;
+    auto u_gen_loss            = -u_gen_D_fake.mean() + u_physical_loss;
+    auto gen_total_loss        = l_gen_loss + u_gen_loss;
+    gen_total_loss.backward();
+    model_optimizer.step();
+  }
+  // 添加物理约束损失等
+  torch::Tensor physical_constraint_loss(const torch::Tensor& weights, const fbx_load_result& in_fbx_data) {
+    // 关节权重集中损失 L_joint：距离越远，权重越大损失越高
+    auto bone_to_point_dist = in_fbx_data.bone_to_point_dist_;  // [N, B]
+    auto L_joint            = (weights * bone_to_point_dist).mean();
+    return L_joint;
+  }
+
+  void save_model(const FSys::path& path) {
+    torch::save(model, fmt::format("{}/{}.pt", path.parent_path(), path.stem()));
+    torch::save(D_s, fmt::format("{}/{}_supervised_discriminator.pt", path.parent_path(), path.stem()));
+    torch::save(D_u, fmt::format("{}/{}_unsupervised_discriminator.pt", path.parent_path(), path.stem()));
+  }
+
+  // 多轮训练
+  void train(
+      const std::vector<fbx_load_result>& labeled_data, const std::vector<fbx_load_result>& unlabeled_data, int epochs,
+      const FSys::path& save_path
+  ) {
+    if (auto l_p = save_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+
+    int num_labeled   = labeled_data.size();
+    int num_unlabeled = unlabeled_data.size();
+    for (int epoch = 1; epoch <= epochs; ++epoch) {
+      for (int i = 0; i < std::max(num_labeled, num_unlabeled); ++i) {
+        const auto& l_data = labeled_data[i % num_labeled];
+        const auto& u_data = unlabeled_data[i % num_unlabeled];
+        train_step(l_data, u_data);
+      }
+      if (epoch % 10 == 0) {
+        save_model(save_path.parent_path() / fmt::format("{}_epoch{}", save_path.stem(), epoch));
+      }
+      DOODLE_LOG_INFO("Completed epoch {}/{}", epoch, epochs);
+    }
+    save_model(save_path);
+  }
+};
+
 // ----------------------------- Training function --------------------------------
 std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
   std::vector<fbx_load_result> results;
   for (const auto& fbx_file : in_fbx_files) {
     if (!FSys::exists(fbx_file)) {
-      DOODLE_LOG_ERROR("FBX file does not exist: {}", fbx_file.string());
+      DOODLE_LOG_ERROR("FBX file does not exist: {}", fbx_file);
       continue;
     }
     fbx_loader l_loader{fbx_file};
