@@ -301,4 +301,28 @@ void fbx_loader::write_fbx(const FSys::path& out_path) {
   exporter->Export(scene_);
 }
 
+void fbx_load_result::save(const FSys::path& out_path) const {
+  torch::save(
+      {vertices_, normals_, faces_, neighbor_idx_, topo_degree_, curvature_, bone_positions_, bone_weights_,
+       bone_parents_, bones_dir_len_, bone_to_point_dist_},
+      out_path.generic_string()
+  );
+}
+void fbx_load_result::load(const FSys::path& in_path) {
+  std::vector<torch::Tensor> temp_tensors;
+  torch::load(temp_tensors, in_path.generic_string());
+  if (temp_tensors.size() != 11)
+    throw_exception(doodle_error{"fbx_load_result::load expected 11 tensors, got {}", temp_tensors.size()});
+  vertices_           = temp_tensors[0];
+  normals_            = temp_tensors[1];
+  faces_              = temp_tensors[2];
+  neighbor_idx_       = temp_tensors[3];
+  topo_degree_        = temp_tensors[4];
+  curvature_          = temp_tensors[5];
+  bone_positions_     = temp_tensors[6];
+  bone_weights_       = temp_tensors[7];
+  bone_parents_       = temp_tensors[8];
+  bones_dir_len_      = temp_tensors[9];
+  bone_to_point_dist_ = temp_tensors[10];
+}
 }  // namespace doodle::ai

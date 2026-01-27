@@ -668,20 +668,6 @@ struct SemiSupervisedTrainer {
   }
 };
 
-// ----------------------------- Training function --------------------------------
-std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
-  std::vector<fbx_load_result> results;
-  for (const auto& fbx_file : in_fbx_files) {
-    if (!FSys::exists(fbx_file)) {
-      DOODLE_LOG_ERROR("FBX file does not exist: {}", fbx_file);
-      continue;
-    }
-    fbx_loader l_loader{fbx_file};
-    results.push_back(l_loader.load_fbx());
-  }
-  return results;
-}
-
 void print_log(
     SkinningModel model, const fbx_load_result& l_data, const torch::Tensor& pred, const torch::Tensor& target,
     const torch::Tensor& loss, const torch::Tensor& kl, const torch::Tensor& mse, const torch::Tensor& pred_norm,
@@ -840,6 +826,37 @@ class cross_attention_bone_weight::impl {
     // final save
     torch::save(model_, in_output_path.generic_string());
   }
+
+  std::vector<fbx_load_result> load_fbx_files(const std::vector<FSys::path>& in_fbx_files) {
+    std::vector<fbx_load_result> results;
+    for (const auto& fbx_file : in_fbx_files) {
+      if (!FSys::exists(fbx_file)) {
+        DOODLE_LOG_ERROR("FBX file does not exist: {}", fbx_file);
+        continue;
+      }
+      auto l_fbx_pt = fbx_file;
+      l_fbx_pt.replace_extension(".pt");
+      if (FSys::exists(l_fbx_pt)) {
+        // 优先加载预处理的pt文件
+        fbx_load_result l_data{};
+        l_data.load(l_fbx_pt);
+        results.push_back(l_data);
+        continue;
+      }
+      fbx_loader l_loader{fbx_file};
+      results.push_back(l_loader.load_fbx());
+      auto&& l_data = results.back();
+      // 保存预处理结果以加速下次加载
+      l_data.build_face_adjacency(k);
+      l_data.compute_curvature();
+      l_data.normalize_inputs();
+      l_data.compute_bones_dir_len();
+      l_data.compute_bone_to_point_dist();
+      l_data.save(l_fbx_pt);
+      l_data.to(device_);
+    }
+    return results;
+  }
 };
 
 std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
@@ -851,21 +868,11 @@ std::shared_ptr<cross_attention_bone_weight> cross_attention_bone_weight::train(
   torch::manual_seed(42);
 
   DOODLE_CHICK(!in_fbx_files.empty(), "No input FBX files provided for training.");
-  auto l_fbx_data = load_fbx_files(in_fbx_files);
-
-  auto l_ret      = std::make_shared<cross_attention_bone_weight>();
-  l_ret->pimpl_   = std::make_shared<impl>();
+  auto l_ret    = std::make_shared<cross_attention_bone_weight>();
+  l_ret->pimpl_ = std::make_shared<impl>();
   l_ret->pimpl_->create_model();
+  auto l_fbx_data = l_ret->pimpl_->load_fbx_files(in_fbx_files);
 
-  for (auto& l_data : l_fbx_data) {
-    l_data.build_face_adjacency(l_ret->pimpl_->k);
-    l_data.compute_curvature();
-    l_data.normalize_inputs();
-    l_data.compute_bones_dir_len();
-    l_data.compute_bone_to_point_dist();
-    // Move to device
-    l_data.to(l_ret->pimpl_->device_);
-  }
   l_ret->pimpl_->train_loop(l_fbx_data, in_output_path);
   return l_ret;
 }

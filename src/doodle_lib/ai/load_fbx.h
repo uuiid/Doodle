@@ -3,8 +3,10 @@
 
 #include <fbxsdk.h>
 #include <filesystem>
+#include <torch/csrc/api/include/torch/data.h>
 #include <torch/csrc/api/include/torch/torch.h>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -33,6 +35,9 @@ struct fbx_load_result {
   void compute_curvature();
   // 计算骨骼到点的距离
   void compute_bone_to_point_dist();
+
+  void save(const FSys::path& out_path) const;
+  void load(const FSys::path& in_path);
 
   template <typename T>
   inline void to(T in_opt) {
