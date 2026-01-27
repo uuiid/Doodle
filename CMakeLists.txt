@@ -102,7 +102,7 @@ find_package(mailio CONFIG REQUIRED)
 # 寻找bit7z
 find_package(unofficial-bit7z CONFIG REQUIRED)
 # 寻找 libtorch
-find_package(Torch CONFIG REQUIRED)
+# find_package(Torch CONFIG REQUIRED)
 # 寻找 mimalloc
 find_package(mimalloc CONFIG REQUIRED)
 # 寻找 ffmpeg和包装
