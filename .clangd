@@ -12,7 +12,7 @@ CompileFlags:
     - -ferror-limit=0
     - -D_HAS_CXX17=1
     - -D_HAS_CXX20=1
-    - -D_HAS_CXX23=1
+    - -D_HAS_CXX23=0
     - -D_MSVC_LANG=202002L
   Remove:
     - /std:c++20
