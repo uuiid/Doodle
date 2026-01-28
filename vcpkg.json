@@ -8,7 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
-  "builtin-baseline": "12c7955c3cf970113a920480c4006c2f944dab63",
+  "builtin-baseline": "66c0373dc7fca549e5803087b9487edfe3aca0a1",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
@@ -97,13 +97,6 @@
     },
     "dem-bones",
     "winreg",
-    {
-      "name": "libtorch",
-      "default-features": true,
-      "features": [
-        "cuda"
-      ]
-    },
     "cgal",
     "avcpp",
     {
