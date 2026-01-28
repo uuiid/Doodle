@@ -5,6 +5,7 @@
 #include "doodle_core/core/bcrypt/bcrypt.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/department.h"
+#include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/project_status.h"
 #include "doodle_core/metadata/status_automation.h"
 #include "doodle_core/metadata/task_status.h"
@@ -72,6 +73,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
+  person_.check_admin();
   auto l_sql               = g_ctx().get<sqlite_database>();
   auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
   auto l_json              = in_handle->get_json();
