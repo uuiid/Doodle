@@ -19,9 +19,9 @@ class awaitable_queue_limitation {
  private:
   struct awaitable_queue_impl;
 
-  template <typename CompletionToken>
+  template <typename CompletionToken, typename Executor>
   struct call_fun_t {
-    boost::asio::any_io_executor executor_{};
+    std::decay_t<Executor> executor_{};
     std::shared_ptr<std::decay_t<CompletionToken>> handler_;
     awaitable_queue_limitation* queue_{};
 
@@ -47,9 +47,7 @@ class awaitable_queue_limitation {
     std::shared_ptr<awaitable_queue_impl> impl_;
 
    public:
-    explicit queue_guard(awaitable_queue_limitation& in_queue) : impl_{in_queue.impl_} {
-      ++impl_->run_task_;
-    }
+    explicit queue_guard(awaitable_queue_limitation& in_queue) : impl_{in_queue.impl_} { ++impl_->run_task_; }
 
     ~queue_guard() {
       --impl_->run_task_;
@@ -59,9 +57,9 @@ class awaitable_queue_limitation {
 
   template <typename CompletionToken>
   auto queue(CompletionToken&& in_token = boost::asio::use_awaitable) {
-    boost::asio::any_io_executor l_exe = boost::asio::get_associated_executor(in_token);
     return boost::asio::async_initiate<CompletionToken, void(queue_guard_ptr)>(
-        [](auto&& in_compl, awaitable_queue_limitation* in_self, const boost::asio::any_io_executor& in_exe) {
+        [](auto&& in_compl, awaitable_queue_limitation* in_self) {
+          auto in_exe = boost::asio::get_associated_executor(in_compl);
           // if (in_self->impl_->run_task_ == 0) {
           //   ++in_self->impl_->run_task_;
           //   boost::asio::dispatch(boost::asio::bind_executor(
@@ -70,14 +68,14 @@ class awaitable_queue_limitation {
           //   return;
           // }
 
-          call_fun_t<std::decay_t<decltype(in_compl)>> l_fun{
+          call_fun_t<std::decay_t<decltype(in_compl)>, std::decay_t<decltype(in_exe)>> l_fun{
               in_exe, std::make_shared<std::decay_t<decltype(in_compl)>>(std::forward<decltype(in_compl)>(in_compl)),
               in_self
           };
           in_self->impl_->await_suspend(l_fun);
           in_self->impl_->maybe_invoke();
         },
-        in_token, this, l_exe
+        in_token, this
     );
   }
 
