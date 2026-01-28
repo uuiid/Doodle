@@ -209,6 +209,8 @@ MStatus head_weight::doIt(const MArgList& args) {
     if (!l_found_right)
       return MGlobal::displayError(fmt::format("未找到头部对称骨骼 右侧 {}", "R_" + l_name).c_str()), MStatus::kFailure;
   }
+  // 加载对应的辅助线
+  
 
   return MStatus::kSuccess;
 }
