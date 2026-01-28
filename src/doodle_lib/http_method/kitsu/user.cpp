@@ -2,6 +2,8 @@
 // Created by TD on 24-8-21.
 //
 
+#include "doodle_core/core/bcrypt/bcrypt.h"
+#include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/department.h"
 #include "doodle_core/metadata/project_status.h"
 #include "doodle_core/metadata/status_automation.h"
@@ -17,6 +19,9 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+
+#include "core/http/http_function.h"
+#include <string>
 
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
@@ -66,5 +71,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
   co_await l_sql.update(l_person);
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
-
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
+  auto l_sql               = g_ctx().get<sqlite_database>();
+  auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
+  auto l_json              = in_handle->get_json();
+  const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
+  const auto& l_password_2 = l_json.at("password_2").get_ref<const std::string&>();
+  DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
+  l_person->password_ = bcrypt::generateHash(l_password);
+  co_await l_sql.update(l_person);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+}
 }  // namespace doodle::http
