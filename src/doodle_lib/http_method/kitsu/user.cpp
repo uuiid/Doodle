@@ -22,6 +22,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include "core/http/http_function.h"
+#include "kitsu_reg_url.h"
 #include <string>
 
 namespace doodle::http {
@@ -79,6 +80,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   auto l_json              = in_handle->get_json();
   const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
   const auto& l_password_2 = l_json.at("password_2").get_ref<const std::string&>();
+  DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
+  l_person->password_ = bcrypt::generateHash(l_password);
+  co_await l_sql.update(l_person);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
+  auto l_sql                 = g_ctx().get<sqlite_database>();
+  auto l_person              = std::make_shared<person>(l_sql.get_by_uuid<person>(person_.person_.uuid_id_));
+  auto l_json                = in_handle->get_json();
+  const auto& l_old_password = l_json.at("old_password").get_ref<const std::string&>();
+  const auto& l_password     = l_json.at("password").get_ref<const std::string&>();
+  const auto& l_password_2   = l_json.at("password_2").get_ref<const std::string&>();
+  DOODLE_CHICK(bcrypt::validatePassword(l_old_password, l_person->password_), "旧密码错误");
   DOODLE_CHICK(l_password == l_password_2, "两次输入密码不一致");
   l_person->password_ = bcrypt::generateHash(l_password);
   co_await l_sql.update(l_person);

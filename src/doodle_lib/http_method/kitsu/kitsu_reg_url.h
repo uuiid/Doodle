@@ -690,6 +690,10 @@ DOODLE_HTTP_JWT_FUN(actions_persons_change_password)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid person_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/auth/change-password
+DOODLE_HTTP_JWT_FUN(auth_change_password)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
 // /api/movies/originals/preview-files/{preview_file_id}/download
 DOODLE_HTTP_JWT_FUN(movies_originals_preview_files_download)
 DOODLE_HTTP_FUN_OVERRIDE(get)

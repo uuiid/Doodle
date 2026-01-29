@@ -264,6 +264,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
       .reg_t<data_fix_preview_files_thumbnails>("/api/data/fix-preview-files-thumbnails"_url)
       .reg_t<actions_persons_change_password>("/api/actions/persons/{}/change-password"_url(&actions_persons_change_password::person_id_))
+      .reg_t<auth_change_password>("/api/auth/change-password"_url())
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
