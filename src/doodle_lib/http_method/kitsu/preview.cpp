@@ -457,6 +457,7 @@ struct data_fix_preview_files_thumbnails_run_t {
         std::make_shared<doodle::detail::add_watermark_t>(l_sql.get_all<doodle::organisation>().front().name_, 150);
     auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
     const auto l_size = cv::Size{100, 100};
+    SPDLOG_LOGGER_INFO(g_logger_ctrl().get_long_task(), "开始修正");
     for (auto&& l_preview : l_previews) {
       if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview.uuid_id_),
           l_path2     = g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(l_preview.uuid_id_);
@@ -491,6 +492,7 @@ struct data_fix_preview_files_thumbnails_run_t {
         }
       }
     }
+    SPDLOG_LOGGER_INFO(g_logger_ctrl().get_long_task(), "修正完成");
   }
 };
 
