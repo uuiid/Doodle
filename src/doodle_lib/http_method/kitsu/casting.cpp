@@ -320,7 +320,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     session_data_ptr in_handle
 ) {
   person_.check_in_project(project_id_);
-  person_.check_not_outsourcer();
   auto l_sql = g_ctx().get<sqlite_database>();
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
