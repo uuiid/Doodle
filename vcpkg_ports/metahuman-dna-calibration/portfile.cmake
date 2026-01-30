@@ -6,6 +6,7 @@ vcpkg_from_github(
         HEAD_REF main
         PATCHES
         0001-python.patch
+        0002-fix-install-dir.patch
 )
 vcpkg_cmake_configure(
         SOURCE_PATH ${SOURCE_PATH}/dnacalib
