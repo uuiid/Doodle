@@ -106,7 +106,8 @@
         "all-gpl",
         "drawtext"
       ]
-    }
+    },
+    "metahuman-dna-calibration"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
