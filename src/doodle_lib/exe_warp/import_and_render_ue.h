@@ -89,6 +89,7 @@ class run_ue_assembly_local : public async_task {
     FSys::path ue_main_project_path_;             // 主项目路径
     std::vector<file_copy_info> ue_asset_path_;   // 需要复制的UE路径
     std::vector<file_copy_info> update_ue_path_;  // 上传的UE路径
+    FSys::path clear_path_;                       // 需要清理的路径
 
     std::int32_t begin_time_;
     std::int32_t end_time_;
@@ -110,6 +111,8 @@ class run_ue_assembly_local : public async_task {
       j["camera_file_path"]      = p.camera_file_path_;
       j["ue_main_project_path"]  = p.ue_main_project_path_;
       j["ue_asset_path"]         = p.ue_asset_path_;
+      j["update_ue_path"]        = p.update_ue_path_;
+      j["clear_path"]            = p.clear_path_;
 
       j["begin_time"]            = p.begin_time_;
       j["end_time"]              = p.end_time_;
@@ -125,7 +128,6 @@ class run_ue_assembly_local : public async_task {
       j["create_move_path"]      = p.create_move_path_;
       j["shot"]                  = p.shot_;
       j["episodes"]              = p.episodes_;
-      j["update_ue_path"]        = p.update_ue_path_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
@@ -133,7 +135,9 @@ class run_ue_assembly_local : public async_task {
       j.at("camera_file_path").get_to(p.camera_file_path_);
       j.at("ue_main_project_path").get_to(p.ue_main_project_path_);
       j.at("ue_asset_path").get_to(p.ue_asset_path_);
-
+      j.at("update_ue_path").get_to(p.update_ue_path_);
+      j.at("clear_path").get_to(p.clear_path_);
+      
       j.at("begin_time").get_to(p.begin_time_);
       j.at("end_time").get_to(p.end_time_);
       j.at("out_file_dir").get_to(p.out_file_dir_);
@@ -148,7 +152,6 @@ class run_ue_assembly_local : public async_task {
       j.at("create_move_path").get_to(p.create_move_path_);
       j.at("shot").get_to(p.shot_);
       j.at("episodes").get_to(p.episodes_);
-      j.at("update_ue_path").get_to(p.update_ue_path_);
     }
   };
   uuid shot_task_id_{};

@@ -199,11 +199,10 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
   logger_ptr_->warn("排队导入文件 {} ", arg_.ue_main_project_path_);
 
   {  // 删除导入的文件
-    auto l_import_dir = arg_.import_dir_;
-    l_import_dir      = arg_.ue_main_project_path_.parent_path() / conv_normal_path(l_import_dir);
-    if (FSys::exists((l_import_dir))) {
-      logger_ptr_->warn("删除导入目录 {}", l_import_dir);
-      FSys::remove_all(l_import_dir);
+    auto l_clear_path = arg_.ue_main_project_path_.parent_path() / arg_.clear_path_;
+    if (FSys::exists((l_clear_path))) {
+      logger_ptr_->warn("删除导入目录 {}", l_clear_path);
+      FSys::remove_all(l_clear_path);
     }
   }
 

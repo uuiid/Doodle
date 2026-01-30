@@ -237,7 +237,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   const auto l_suffix = l_is_simulation_task ? "_JS" : "_DH";
   auto l_ue_main_map  = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
                        get_entity_ground_ue_map_name(l_scene_asset_extend);
-  l_ret.original_map_          = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
+  l_ret.original_map_ = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
+  l_ret.clear_path_ =
+      fmt::format("{3}/Shot/ep{1:04}/{0}{1:03}_sc{2:03}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_content);
   l_ret.movie_pipeline_config_ = fmt::format(
       "/Game/Shot/ep{1:04}/{0}{1:03}_sc{2:03}/{0}_EP{1:03}_SC{2:03}_Config", l_prj.code_, l_episodes, l_shot
   );
