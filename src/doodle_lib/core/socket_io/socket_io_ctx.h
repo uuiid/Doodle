@@ -100,6 +100,7 @@ class sid_ctx {
   void emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_sid) const;
 
   boost::asio::awaitable<bool> has_register(std::string in_namespace) const;
+  void clear();
 
   cancellation_signals on_cancel;
 };

@@ -137,5 +137,10 @@ void sid_ctx::register_namespace(const std::string& in_namespace) {
     if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
   });
 }
+void sid_ctx::clear() {
+  boost::asio::post(strand_, [this]() {
+    clear_timeout_sid();
+  });
+}
 }  // namespace socket_io
 }  // namespace doodle

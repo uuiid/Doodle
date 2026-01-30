@@ -167,6 +167,7 @@ void socket_io_websocket_core::async_close_websocket() {
         if (in_ec) logger_->error(in_ec.what());
       }
   );
+  if (sid_data_) sid_ctx_->clear();
 }
 
 }  // namespace doodle::socket_io
