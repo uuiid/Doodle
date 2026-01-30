@@ -1,0 +1,32 @@
+From 041cabb312740ba53cad1bae916106cd627050e9 Mon Sep 17 00:00:00 2001
+From: uuiid <957714080@qq.com>
+Date: Fri, 30 Jan 2026 16:57:17 +0800
+Subject: [PATCH] =?UTF-8?q?=E5=8E=BB=E9=99=A4python=E7=BB=91=E5=AE=9A?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ dnacalib/CMakeLists.txt | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/dnacalib/CMakeLists.txt b/dnacalib/CMakeLists.txt
+index 4ae91f0..9a45d49 100644
+--- a/dnacalib/CMakeLists.txt
++++ b/dnacalib/CMakeLists.txt
+@@ -6,9 +6,9 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMakeModulesExtra")
+ enable_testing()
+ 
+ add_subdirectory(DNACalib)
+-add_subdirectory(SPyUS)
+-add_subdirectory(PyDNA)
+-add_subdirectory(PyDNACalib)
++# add_subdirectory(SPyUS)
++# add_subdirectory(PyDNA)
++# add_subdirectory(PyDNACalib)
+ 
+ ################################################
+ # Package build artifacts
+-- 
+2.51.1.windows.1
+
