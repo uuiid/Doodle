@@ -203,6 +203,7 @@ struct run_actions_playlists_preview_files_create_review {
   run_actions_playlists_preview_files_create_review() : data_ptr_(std::make_shared<data>()) {}
 
   void operator()() {
+    data_ptr_->logger_ = g_logger_ctrl().get_long_task();
     if (data_ptr_->shot_preview_paths_.empty()) {
       SPDLOG_LOGGER_WARN(data_ptr_->logger_, "没有找到任何镜头预览视频, 无法生成评审视频");
       return;
@@ -277,7 +278,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   if (l_arg.add_dubbing_) {
     auto l_dubbing_file =
         std::find_if(l_attachment_files.begin(), l_attachment_files.end(), [](const attachment_file& in_file) {
-          return in_file.name_.ends_with(".wav.mp4");
+          return in_file.name_.ends_with(".wav");
         });
     DOODLE_CHICK_HTTP(l_dubbing_file != l_attachment_files.end(), bad_request, "没有找到配音文件");
     l_run.data_ptr_->ffmpeg_video_.set_audio(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_dubbing_file->uuid_id_));
@@ -314,7 +315,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   }
 
   std::vector<FSys::path> l_paths{};
-#ifdef NDEBUG
   for (const auto& l_shot_preview : l_playlist_shot) {
     auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.preview_id_);
     if (FSys::exists(l_path)) l_paths.push_back(l_path);
@@ -322,7 +322,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   DOODLE_CHICK_HTTP(!l_paths.empty(), bad_request, "没有找到任何镜头预览视频, 无法生成评审视频");
   l_run.data_ptr_->shot_preview_paths_ = l_paths;
   boost::asio::post(g_strand(), l_run);
-#endif
 
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist_shot);
 }
