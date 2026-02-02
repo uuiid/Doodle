@@ -102,10 +102,7 @@ std::int32_t app_base::run() {
         bind_thread_to_group(static_cast<int>(i % static_cast<std::size_t>(GetActiveProcessorGroupCount())));
         for (;;) try {
             g_io_context().run();
-          } catch (const doodle_error& in_err) {
-            default_logger_raw()->error(in_err.what());
-          } catch (const std::system_error& in_err) {
-            default_logger_raw()->error(in_err.what());
+            break;
           } catch (...) {
             default_logger_raw()->error(boost::current_exception_diagnostic_information());
           }
