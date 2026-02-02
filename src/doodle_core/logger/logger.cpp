@@ -52,8 +52,10 @@ using msvc_doodle_sink_mt = msvc_doodle_sink<std::mutex>;
 
 #if !defined(NDEBUG)
 #define DOODLE_ADD_DEBUG_SINK(logger) logger->sinks().push_back(debug_sink_);
+#define DOODLE_DEBUG_SINK() debug_sink_
 #else
 #define DOODLE_ADD_DEBUG_SINK(logger)
+#define DOODLE_DEBUG_SINK()
 #endif
 //
 // 我们自己的旋转日志, spd的那个有时候会无法重命名
@@ -177,28 +179,31 @@ void logger_ctrl::init_temp_log() {
   if (!spdlog::get("doodle_long_task"))
     spdlog::initialize_logger(
         std::make_shared<spdlog::async_logger>(
-            "doodle_long_task", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_long_task")},
+            "doodle_long_task",
+            spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_long_task"), DOODLE_DEBUG_SINK()},
             spdlog::thread_pool(), spdlog::async_overflow_policy::block
         )
     );
   if (!spdlog::get("socket_io"))
     spdlog::initialize_logger(
         std::make_shared<spdlog::async_logger>(
-            "socket_io", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("socket_io")},
+            "socket_io",
+            spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("socket_io"), DOODLE_DEBUG_SINK()},
             spdlog::thread_pool(), spdlog::async_overflow_policy::block
         )
     );
   if (!spdlog::get("http"))
     spdlog::initialize_logger(
         std::make_shared<spdlog::async_logger>(
-            "http", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("http")}, spdlog::thread_pool(),
-            spdlog::async_overflow_policy::block
+            "http", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("http"), DOODLE_DEBUG_SINK()},
+            spdlog::thread_pool(), spdlog::async_overflow_policy::block
         )
     );
   if (!spdlog::get("doodle_main_error"))
     spdlog::initialize_logger(
         std::make_shared<spdlog::async_logger>(
-            "doodle_main_error", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_main_error")},
+            "doodle_main_error",
+            spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_main_error"), DOODLE_DEBUG_SINK()},
             spdlog::thread_pool(), spdlog::async_overflow_policy::block
         )
     );
