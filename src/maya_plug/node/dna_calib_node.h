@@ -17,8 +17,8 @@ class dna_calib_node : public MPxNode {
 
   const static constexpr std::string_view node_name{"doodle_dna_calib_node"};
 
- private:
   // DNA文件路径
   static MObject dna_file_path;
+ private:
 };
 }  // namespace doodle::maya_plug
