@@ -15,6 +15,7 @@
 #include "doodle_core/sqlite_orm/sqlite_database.h"
 
 #include "doodle_lib/core/http/http_function.h"
+#include <doodle_lib/core/ffmpeg_video.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
@@ -222,6 +223,11 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
+  {
+    ffmpeg_video_resize l_resizer{in_path, l_high_file_path_backup, l_low_file_path_backup, in_size};
+    l_resizer.process();
+  }
+
   auto l_video         = cv::VideoCapture{in_path.generic_string()};
   cv::Size l_high_size = in_size;
   cv::Size l_low_size{
@@ -233,37 +239,6 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   // 获取持续时间(秒)
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
   cv::Mat l_frame{};
-  {
-    auto l_now    = std::chrono::steady_clock::now();
-    auto l_low_vc = cv::VideoWriter{
-        l_low_file_path_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
-        boost::numeric_cast<std::double_t>(in_fps), l_low_size
-    };
-    auto l_high_vc = cv::VideoWriter{
-        l_high_file_path_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
-        boost::numeric_cast<std::double_t>(in_fps), l_high_size
-    };
-    if (!l_high_vc.isOpened() || !l_low_vc.isOpened())
-      throw_exception(doodle_error{"无法创建视频文件: {} ", in_path.generic_string()});
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_long_task(), "处理视频文件 {}, 目标高分辨率 {}x{}, 低分辨率 {}x{}", in_path,
-        l_high_size.width, l_high_size.height, l_low_size.width, l_low_size.height
-    );
-    while (l_video.read(l_frame)) {
-      if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
-      if (l_frame.cols != l_high_size.width || l_frame.rows != l_high_size.height) {
-        cv::resize(l_frame, l_frame, l_high_size);
-      }
-      l_high_vc << l_frame;
-
-      cv::resize(l_frame, l_frame, l_low_size);
-      l_low_vc << l_frame;
-    }
-    SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_long_task(), "处理视频文件完成, 时间 {:%H:%M:%S}", std::chrono::steady_clock::now() - l_now
-    );
-  }
-
   // 读取第一帧生成预览文件
   l_video.set(cv::CAP_PROP_POS_FRAMES, 0);
   l_video >> l_frame;

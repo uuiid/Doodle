@@ -1,7 +1,9 @@
 #include "ffmpeg_video.h"
 
 #include "doodle_core/configure/static_value.h"
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/logger/logger.h"
 
 #include <boost/numeric/conversion/cast.hpp>
 
@@ -880,7 +882,13 @@ class ffmpeg_video_resize::impl {
  public:
   struct base_t {
     av::FormatContext format_context_;
+    av::Stream video_stream_;
+    av::Codec video_codec_;
+    av::Stream audio_stream_;
+    av::Codec audio_codec_;
+  };
 
+  struct input_video : base_t {
     av::VideoDecoderContext video_dec_ctx_;
     av::Stream video_stream_;
     av::Codec video_codec_;
@@ -968,7 +976,7 @@ class ffmpeg_video_resize::impl {
       }
     }
   };
-  base_t input_video_handle_;
+  input_video input_video_handle_;
   // 输出视频
   struct out_video : base_t {
     av::Codec h264_codec_;
@@ -1155,10 +1163,14 @@ class ffmpeg_video_resize::impl {
 };
 void ffmpeg_video_resize::process() {
   impl l_impl{};
-
+  auto l_now = chrono::system_clock::now();
   l_impl.open(video_path_);
   l_impl.open_out(out_high_path_, high_size_, out_low_path_, low_size_);
   l_impl.process();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_long_task(), "ffmpeg_video_resize: {} resize video used {} seconds", video_path_,
+      chrono::system_clock::now() - l_now
+  );
 }
 
 }  // namespace doodle
