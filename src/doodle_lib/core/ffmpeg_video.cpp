@@ -890,12 +890,9 @@ class ffmpeg_video_resize::impl {
 
   struct input_video : base_t {
     av::VideoDecoderContext video_dec_ctx_;
-    av::Stream video_stream_;
-    av::Codec video_codec_;
 
     av::AudioDecoderContext audio_dec_ctx_;
-    av::Stream audio_stream_;
-    av::Codec audio_codec_;
+    av::ChannelLayout audio_channel_layout_;
 
     void open_format_context(const FSys::path& in_path) {
       format_context_.openInput(in_path.string());
@@ -939,6 +936,10 @@ class ffmpeg_video_resize::impl {
 
       audio_dec_ctx_ = av::AudioDecoderContext{audio_stream_, audio_codec_};
       audio_dec_ctx_.open();
+
+      audio_channel_layout_ = audio_dec_ctx_.channelLayout2().layout() == 0
+                                  ? av::ChannelLayout{audio_dec_ctx_.channels()}
+                                  : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
     }
 
     void process(ffmpeg_video_resize::impl& parent) {
@@ -985,14 +986,19 @@ class ffmpeg_video_resize::impl {
     av::Timestamp video_next_pts_{};
     // 视频流包时间
     av::Timestamp video_packet_time_{};
+
     // 音频流
     av::AudioEncoderContext audio_enc_ctx_;
-
     av::Timestamp audio_next_pts_{};
     av::Timestamp audio_packet_time_{};
 
     // 重新调整大小组件
     av::VideoRescaler rescaler_;
+    // 音频重采样组件
+    av::AudioResampler resampler_;
+    av::ChannelLayout audio_channel_layout_;
+    bool fixed_audio_channels_{false};
+    std::int32_t source_audio_sample_rate_{0};
 
     void open_output_video(const FSys::path& out_path, int width, int height) {
       format_context_.openOutput(out_path.string());
@@ -1021,15 +1027,68 @@ class ffmpeg_video_resize::impl {
       video_next_pts_    = av::Timestamp{0, l_video_tb};
       video_packet_time_ = av::Timestamp{0, l_video_tb};
     }
+    void open_output_audio() {
+      audio_codec_ = av::findEncodingCodec(AV_CODEC_ID_AAC);
+      DOODLE_CHICK(audio_codec_.isEncoder(), "ffmpeg_video: cannot find aac encoder");
+      audio_enc_ctx_ = av::AudioEncoderContext{audio_codec_};
+      DOODLE_CHICK(audio_enc_ctx_.isValid(), "ffmpeg_video: cannot create aac encoder context");
+      audio_enc_ctx_.setCodec(audio_codec_);
+      audio_enc_ctx_.setSampleRate(48000);
+      // aac 编解码器必然支持立体声
+      audio_enc_ctx_.setChannelLayout(av::ChannelLayout{2});
 
+      audio_enc_ctx_.setSampleFormat(
+          pick_first_supported_sample_fmt(audio_enc_ctx_.codec(), audio_enc_ctx_.sampleFormat())
+      );
+      audio_enc_ctx_.setTimeBase(av::Rational{1, audio_enc_ctx_.sampleRate()});
+      audio_enc_ctx_.open();
+
+      audio_stream_ = format_context_.addStream(audio_enc_ctx_);
+      audio_stream_.setTimeBase(audio_enc_ctx_.timeBase());
+      audio_next_pts_       = av::Timestamp{0, audio_stream_.timeBase()};
+      audio_packet_time_    = av::Timestamp{0, audio_stream_.timeBase()};
+      audio_channel_layout_ = audio_enc_ctx_.channelLayout2().layout() == 0
+                                  ? av::ChannelLayout{audio_enc_ctx_.channels()}
+                                  : av::ChannelLayout{audio_enc_ctx_.channelLayout2()};
+    }
     void add_rescaler(
         int in_width, int in_height, AVPixelFormat in_pix_fmt, std::int32_t in_src_width, std::int32_t in_src_height,
         AVPixelFormat in_src_pix_fmt
     ) {
       rescaler_ = av::VideoRescaler{in_width, in_height, in_pix_fmt, in_src_width, in_src_height, in_src_pix_fmt};
     }
+    void add_resampler(
+        const av::AudioEncoderContext& in_audio_enc_ctx, av::ChannelLayout in_audio_channel_layout, bool fixed_channels
+    ) {
+      if (audio_enc_ctx_.sampleRate() == in_audio_enc_ctx.sampleRate() &&
+          audio_channel_layout_.layout() == in_audio_channel_layout.layout() &&
+          audio_enc_ctx_.sampleFormat().get() == in_audio_enc_ctx.sampleFormat().get())
+        return;
+      fixed_audio_channels_     = fixed_channels;
+      source_audio_sample_rate_ = in_audio_enc_ctx.sampleRate();
+      resampler_.init(
+          audio_enc_ctx_.sampleRate(), audio_channel_layout_.layout(), audio_enc_ctx_.sampleFormat().get(),
+          in_audio_enc_ctx.sampleRate(), in_audio_channel_layout.layout(), in_audio_enc_ctx.sampleFormat().get()
+      );
+    }
 
     void flush() {
+      // flush audio resampler
+      if (resampler_.isValid()) {
+        const auto l_frame_size = audio_enc_ctx_.frameSize();
+        DOODLE_CHICK(l_frame_size > 0, "ffmpeg_video: invalid audio encoder frame size");
+        av::AudioSamples l_resampled_frame{};
+        l_resampled_frame.init(
+            audio_enc_ctx_.sampleFormat(), l_frame_size, audio_channel_layout_.layout(), audio_enc_ctx_.sampleRate()
+        );
+        while (resampler_.pop(l_resampled_frame, true)) {
+          encode_audio_frame(l_resampled_frame);
+          l_resampled_frame.init(
+              audio_enc_ctx_.sampleFormat(), l_frame_size, audio_channel_layout_.layout(), audio_enc_ctx_.sampleRate()
+          );
+        }
+      }
+
       // Flush video encoder
       const int l_out_video_index = video_stream_.index();
       while (auto out_pkt = video_enc_ctx_.encode()) {
@@ -1052,26 +1111,21 @@ class ffmpeg_video_resize::impl {
       }
     }
 
-    void open_output_audio() {
-      audio_codec_ = av::findEncodingCodec(AV_CODEC_ID_AAC);
-      DOODLE_CHICK(audio_codec_.isEncoder(), "ffmpeg_video: cannot find aac encoder");
-      audio_enc_ctx_ = av::AudioEncoderContext{audio_codec_};
-      DOODLE_CHICK(audio_enc_ctx_.isValid(), "ffmpeg_video: cannot create aac encoder context");
-      audio_enc_ctx_.setCodec(audio_codec_);
-      audio_enc_ctx_.setSampleRate(48000);
-      // aac 编解码器必然支持立体声
-      audio_enc_ctx_.setChannelLayout(av::ChannelLayout{2});
+    void resample_audio_frame(av::AudioSamples& in_frame) {
+      auto l_time_base = in_frame.timeBase();
+      auto l_time_pts  = in_frame.pts();
+      if (!fixed_audio_channels_) {
+        av::frame::set_channel_layout(in_frame.raw(), audio_channel_layout_.layout());
+      }
+      if (in_frame.sampleRate() <= 0) av::frame::set_sample_rate(in_frame.raw(), source_audio_sample_rate_);
 
-      audio_enc_ctx_.setSampleFormat(
-          pick_first_supported_sample_fmt(audio_enc_ctx_.codec(), audio_enc_ctx_.sampleFormat())
-      );
-      audio_enc_ctx_.setTimeBase(av::Rational{1, audio_enc_ctx_.sampleRate()});
-      audio_enc_ctx_.open();
-
-      audio_stream_ = format_context_.addStream(audio_enc_ctx_);
-      audio_stream_.setTimeBase(audio_enc_ctx_.timeBase());
-      audio_next_pts_    = av::Timestamp{0, audio_stream_.timeBase()};
-      audio_packet_time_ = av::Timestamp{0, audio_stream_.timeBase()};
+      if (resampler_.isValid()) {
+        // in_frame.setTimeBase(l_time_base);
+        // in_frame.setPts(l_time_pts);
+        resampler_.push(in_frame);
+        while (auto resampled_frame = resampler_.pop(audio_enc_ctx_.frameSize())) encode_audio_frame(resampled_frame);
+      } else
+        encode_audio_frame(in_frame);
     }
 
     void encode_audio_frame(av::AudioSamples& in_frame) {
@@ -1107,8 +1161,8 @@ class ffmpeg_video_resize::impl {
   out_video output_low_handle_;
 
   void encode_audio_frame(av::AudioSamples& in_frame) {
-    output_handle_.encode_audio_frame(in_frame);
-    output_low_handle_.encode_audio_frame(in_frame);
+    output_handle_.resample_audio_frame(in_frame);
+    output_low_handle_.resample_audio_frame(in_frame);
   }
   void encode_video_frame(av::VideoFrame& in_frame) {
     auto l_f = output_handle_.rescaler_.isValid() ? output_handle_.rescaler_.rescale(in_frame) : in_frame;
@@ -1168,7 +1222,7 @@ void ffmpeg_video_resize::process() {
   l_impl.open_out(out_high_path_, high_size_, out_low_path_, low_size_);
   l_impl.process();
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_long_task(), "ffmpeg_video_resize: {} resize video used {} seconds", video_path_,
+      g_logger_ctrl().get_long_task(), "ffmpeg_video_resize: {} resize video used {:%H:%M:%S} seconds", video_path_,
       chrono::system_clock::now() - l_now
   );
 }
