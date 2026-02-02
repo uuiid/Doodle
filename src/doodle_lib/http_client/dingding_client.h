@@ -91,16 +91,13 @@ class client : public std::enable_shared_from_this<client> {
 using client_ptr = std::shared_ptr<client>;
 
 class dingding_company {
-  std::map<uuid, client_ptr> client_map_;
-  boost::asio::strand<boost::asio::io_context::executor_type> executor_{};
-
  public:
-  explicit dingding_company() : executor_(boost::asio::make_strand(doodle::g_io_context())) {}
+  dingding_company()  = default;
 
   ~dingding_company() = default;
   std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
 
-  boost::asio::awaitable<client_ptr> make_client(std::reference_wrapper<const studio> in_studio);
+  client_ptr make_client(std::reference_wrapper<const studio> in_studio);
 
  private:
 };
