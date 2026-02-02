@@ -12,6 +12,7 @@
 #include <boost/locale.hpp>
 #include <boost/system/detail/error_code.hpp>
 
+#include "core/global_function.h"
 #include <memory>
 #include <processthreadsapi.h>
 #include <processtopologyapi.h>
@@ -79,32 +80,32 @@ void app_base::bind_thread_to_group(int group_id) {
 std::int32_t app_base::run() {
   stop_ = !init();
   if (stop_) return 0;
-
+  auto l_logger = g_logger_ctrl().get_main_error();
   if (!use_multithread_) {
     try {
       g_io_context().run();
     } catch (const doodle_error& in_err) {
       set_exit_code(in_err.error_code_ == 0 ? -1 : in_err.error_code_);
-      default_logger_raw()->error(in_err.what());
+      l_logger->error(in_err.what());
     } catch (const std::system_error& in_err) {
       set_exit_code(in_err.code().value());
-      default_logger_raw()->error(in_err.what());
+      l_logger->error(in_err.what());
     } catch (...) {
       set_exit_code(1);
-      default_logger_raw()->error(boost::current_exception_diagnostic_information());
+      l_logger->error(boost::current_exception_diagnostic_information());
     }
   } else {
     std::vector<std::thread> l_threads{};
     auto l_thread_count = get_hardware_concurrency() == 0 ? 8 : get_hardware_concurrency() - 1;
     l_threads.reserve(l_thread_count);
     for (std::size_t i = 0; i < l_thread_count; ++i) {
-      l_threads.emplace_back([this, i]() {
+      l_threads.emplace_back([this, i, l_logger]() {
         bind_thread_to_group(static_cast<int>(i % static_cast<std::size_t>(GetActiveProcessorGroupCount())));
         for (;;) try {
             g_io_context().run();
             break;
           } catch (...) {
-            default_logger_raw()->error(boost::current_exception_diagnostic_information());
+            l_logger->error(boost::current_exception_diagnostic_information());
           }
       });
     }

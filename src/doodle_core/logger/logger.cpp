@@ -139,7 +139,7 @@ logger_ctrl::file_sink_mt_ptr logger_ctrl::make_file_sink_mt(const std::string& 
   if (FSys::exists(l_path)) {
     l_path.replace_filename(fmt::format("{}_{}.txt", in_name, core_set::get_set().get_uuid()));
   }
-  auto l_rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull * 512ull);
+  auto l_rotating_file_sink_ = std::make_shared<rotating_file_sink_mt>(l_path, 1024ull * 1024ull);
   return l_rotating_file_sink_;
 }
 
@@ -191,7 +191,14 @@ void logger_ctrl::init_temp_log() {
   if (!spdlog::get("http"))
     spdlog::initialize_logger(
         std::make_shared<spdlog::async_logger>(
-            "http", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("http")},
+            "http", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("http")}, spdlog::thread_pool(),
+            spdlog::async_overflow_policy::block
+        )
+    );
+  if (!spdlog::get("doodle_main_error"))
+    spdlog::initialize_logger(
+        std::make_shared<spdlog::async_logger>(
+            "doodle_main_error", spdlog::sinks_init_list{rotating_file_sink_, make_file_sink_mt("doodle_main_error")},
             spdlog::thread_pool(), spdlog::async_overflow_policy::block
         )
     );
