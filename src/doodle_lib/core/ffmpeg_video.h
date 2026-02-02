@@ -13,7 +13,6 @@
 namespace doodle {
 class ffmpeg_video {
   class impl;
-  std::unique_ptr<impl> impl_;
 
   // 主要处理的视频
   FSys::path video_path_;

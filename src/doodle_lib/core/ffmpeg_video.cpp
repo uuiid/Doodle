@@ -799,33 +799,32 @@ class ffmpeg_video::impl {
 };
 
 ffmpeg_video::ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path)
-    : impl_(std::make_unique<impl>()), video_path_(in_video_path), out_path_(in_out_path) {}
+    : video_path_(in_video_path), out_path_(in_out_path) {}
 
-ffmpeg_video::ffmpeg_video() : impl_(std::make_unique<impl>()) {}
+ffmpeg_video::ffmpeg_video()  = default;
 
 ffmpeg_video::~ffmpeg_video() = default;
 
 void ffmpeg_video::process() {
   out_path_.replace_extension(".mp4");
   DOODLE_CHICK(!video_path_.empty() && FSys::exists(video_path_), "ffmpeg_video: video path is empty or not exists");
-
-  impl_->open(video_path_, out_path_);
+  impl l_impl{};
+  l_impl.open(video_path_, out_path_);
   if (!audio_path_.empty() && FSys::exists(audio_path_)) {
-    impl_->add_audio(audio_path_);
+    l_impl.add_audio(audio_path_);
   }
   if (!episodes_name_path_.empty() && FSys::exists(episodes_name_path_)) {
-    impl_->add_episodes_name(episodes_name_path_);
+    l_impl.add_episodes_name(episodes_name_path_);
   }
   if (!intro_path_.empty() && FSys::exists(intro_path_) && !outro_path_.empty() && FSys::exists(outro_path_)) {
-    impl_->add_intro_outro(intro_path_, outro_path_);
+    l_impl.add_intro_outro(intro_path_, outro_path_);
   }
   if (!subtitle_path_.empty() && FSys::exists(subtitle_path_)) {
-    impl_->add_subtitle(subtitle_path_);
+    l_impl.add_subtitle(subtitle_path_);
   }
-  if (time_code_ || !watermark_text_.empty()) impl_->add_time_code_watermark(time_code_, watermark_text_);
+  if (time_code_ || !watermark_text_.empty()) l_impl.add_time_code_watermark(time_code_, watermark_text_);
 
-  impl_->process();
-  impl_ = std::make_unique<impl>();
+  l_impl.process();
 }
 
 void ffmpeg_video::check_video_valid(
