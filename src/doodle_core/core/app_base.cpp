@@ -10,6 +10,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
+#include <boost/system/detail/error_code.hpp>
 
 #include <memory>
 #include <processthreadsapi.h>
@@ -99,18 +100,15 @@ std::int32_t app_base::run() {
     for (std::size_t i = 0; i < l_thread_count; ++i) {
       l_threads.emplace_back([this, i]() {
         bind_thread_to_group(static_cast<int>(i % static_cast<std::size_t>(GetActiveProcessorGroupCount())));
-        try {
-          g_io_context().run();
-        } catch (const doodle_error& in_err) {
-          set_exit_code(in_err.error_code_ == 0 ? -1 : in_err.error_code_);
-          default_logger_raw()->error(in_err.what());
-        } catch (const std::system_error& in_err) {
-          set_exit_code(in_err.code().value());
-          default_logger_raw()->error(in_err.what());
-        } catch (...) {
-          set_exit_code(1);
-          default_logger_raw()->error(boost::current_exception_diagnostic_information());
-        }
+        for (;;) try {
+            g_io_context().run();
+          } catch (const doodle_error& in_err) {
+            default_logger_raw()->error(in_err.what());
+          } catch (const std::system_error& in_err) {
+            default_logger_raw()->error(in_err.what());
+          } catch (...) {
+            default_logger_raw()->error(boost::current_exception_diagnostic_information());
+          }
       });
     }
     for (auto& l_thread : l_threads) {
@@ -123,15 +121,6 @@ std::int32_t app_base::run() {
   return exit_code;
 }
 
-std::int32_t app_base::poll_one() {
-  if (stop_) return 0;
-  try {
-    g_io_context().poll_one();
-  } catch (...) {
-    default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
-  }
-  return 0;
-}
 void app_base::stop_app(std::int32_t in_exit_code) {
   stop_     = true;
   exit_code = in_exit_code;
@@ -150,14 +139,5 @@ void app_base::add_signal() {
     if (ec) return;
     stop_app(0);
   });
-}
-
-void app_base::write_current_error_tmp_dir() {
-  auto l_tmp = FSys::temp_directory_path() / "doodle" / "log";
-  if (!FSys::exists(l_tmp)) FSys::create_directories(l_tmp);
-  auto l_path = l_tmp / fmt::format("doodle_error_{}.txt", boost::process::v2::current_pid());
-  FSys::ofstream l_ofstream{l_path};
-  l_ofstream << boost::current_exception_diagnostic_information() << std::endl;
-  default_logger_raw()->log(log_loc(), level::err, boost::current_exception_diagnostic_information());
 }
 }  // namespace doodle

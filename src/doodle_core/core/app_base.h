@@ -63,7 +63,6 @@ class DOODLE_CORE_API app_base {
   bool is_main_thread() const;
   void use_multithread(bool in_use = true);
 
-  virtual std::int32_t poll_one();
   // get argh
   inline const argh::parser& arg() const { return arg_; }
 
@@ -75,7 +74,6 @@ class DOODLE_CORE_API app_base {
   static app_base& Get();
   static app_base* GetPtr();
 
-  static void write_current_error_tmp_dir();
 };
 
 }  // namespace doodle
