@@ -822,9 +822,10 @@ void ffmpeg_video::process() {
   if (!subtitle_path_.empty() && FSys::exists(subtitle_path_)) {
     impl_->add_subtitle(subtitle_path_);
   }
-  impl_->add_time_code_watermark(time_code_, watermark_text_);
+  if (time_code_ || !watermark_text_.empty()) impl_->add_time_code_watermark(time_code_, watermark_text_);
 
   impl_->process();
+  impl_ = std::make_unique<impl>();
 }
 
 void ffmpeg_video::check_video_valid(

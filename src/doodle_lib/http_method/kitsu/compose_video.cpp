@@ -230,6 +230,7 @@ struct run_actions_playlists_preview_files_create_review {
     SPDLOG_LOGGER_INFO(
         data_ptr_->logger_, "生成评审视频完成 {} {:%H:%M:%S}", l_out_path, std::chrono::steady_clock::now() - l_now
     );
+    // 替换文件
     FSys::rename(l_out_backup_path, l_out_path);
     auto l_sql = g_ctx().get<sqlite_database>();
     // 更新预览文件信息
