@@ -16,6 +16,7 @@ target_sources(doodle_maya_lib
         head_weight.h
         doodle_batch_run.h
         bone_weight.h
+        dna_calib_import.h
 
         PRIVATE
         afterimage_comm.cpp
@@ -34,4 +35,5 @@ target_sources(doodle_maya_lib
         head_weight.cpp
         doodle_batch_run.cpp
         bone_weight.cpp
+        dna_calib_import.cpp
 )
