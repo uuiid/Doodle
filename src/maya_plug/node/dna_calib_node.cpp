@@ -6,6 +6,7 @@
 
 namespace doodle::maya_plug {
 MObject dna_calib_node::dna_file_path{};
+MTypeId dna_calib_node::doodle_id = MTypeId{0x00000002};
 void* dna_calib_node::creator() { return new dna_calib_node{}; }
 MStatus dna_calib_node::initialize() {
   MStatus l_status{};
