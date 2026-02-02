@@ -63,10 +63,10 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   FSys::path l_path{};
   MStatus l_status{};
   if (l_arg_data.isFlagSet(file_path, &l_status)) {
-    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     MString l_file_path{};
     l_status = l_arg_data.getFlagArgument(file_path, 0, l_file_path);
-    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     l_path = conv::to_s(l_file_path);
   } else {
     displayError(conv::to_ms(fmt::format("no file path")));
@@ -74,29 +74,29 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   }
 
   if (l_arg_data.isFlagSet(export_anim, &l_status)) {
-    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     l_fbx_write.not_export_anim();
   }
   if (l_arg_data.isFlagSet(ascii_fbx, &l_status)) {
-    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     l_fbx_write.ascii_fbx();
   }
 
   MSelectionList l_sim_list{};
 
   if (l_arg_data.isFlagSet(sim_mesh, &l_status)) {
-    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
 
     auto l_count = l_arg_data.numberOfFlagUses(sim_mesh);
     for (auto i = 0; i < l_count; ++i) {
       MArgList l_arg_list{};
       l_status = l_arg_data.getFlagArgumentList(sim_mesh, i, l_arg_list);
-      CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       MString l_sim_mesh = l_arg_list.asString(0, &l_status);
-      CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
 
       l_status = l_sim_list.add(l_sim_mesh);
-      CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     }
   }
   MAnimControl::setCurrentTime(l_begin_time);
@@ -104,7 +104,7 @@ MStatus doodle_to_ue_fbx::doIt(const MArgList& in_list) {
   if (l_list.length() == 1) {
     MDagPath l_cam_dag_path{};
     l_status = l_list.getDagPath(0, l_cam_dag_path);
-    CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     if(l_cam_dag_path.hasFn(MFn::kCamera)) {
       l_fbx_write.set_path(l_path);
       l_fbx_write.write(l_cam_dag_path, l_begin_time, l_end_time, 1.78);

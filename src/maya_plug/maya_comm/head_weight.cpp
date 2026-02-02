@@ -151,30 +151,30 @@ MStatus head_weight::doIt(const MArgList& args) {
   MStatus l_s{};
   MArgDatabase l_arg_db(syntax(), args);
   MSelectionList l_sel_list{};
-  CHECK_MSTATUS_AND_RETURN_IT(l_arg_db.getObjects(l_sel_list));
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_db.getObjects(l_sel_list));
   if (l_sel_list.length() == 0) return MGlobal::displayError("请至少选择一个头部模型"), MStatus::kFailure;
 
-  CHECK_MSTATUS_AND_RETURN_IT(l_sel_list.getDagPath(0, p_impl->head_mesh_path_));
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_sel_list.getDagPath(0, p_impl->head_mesh_path_));
   if (!p_impl->head_mesh_path_.hasFn(MFn::kMesh))
     return MGlobal::displayError("请选择一个头部网格模型"), MStatus::kFailure;
 
   auto l_mesh_shape = p_impl->head_mesh_path_;
-  CHECK_MSTATUS_AND_RETURN_IT(l_mesh_shape.extendToShape());
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_mesh_shape.extendToShape());
   auto l_mesh_shape_node = l_mesh_shape.node(&l_s);
-  CHECK_MSTATUS_AND_RETURN_IT(l_s);
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_s);
   MObject l_skin_cluster{};
   /// 寻找皮肤簇
   for (MItDependencyGraph i{l_mesh_shape_node, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream};
        !i.isDone(); i.next()) {
     l_skin_cluster = i.currentItem(&l_s);
-    CHECK_MSTATUS_AND_RETURN_IT(l_s);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_s);
   }
   if (l_skin_cluster.isNull()) return MGlobal::displayError("头部网格没有绑定皮肤"), MStatus::kFailure;
   MFnSkinCluster l_skin_cluster_fn{l_skin_cluster, &l_s};
-  CHECK_MSTATUS_AND_RETURN_IT(l_s);
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_s);
   MDagPathArray l_influence_objects{};
   auto l_joint_count = l_skin_cluster_fn.influenceObjects(l_influence_objects, &l_s);
-  CHECK_MSTATUS_AND_RETURN_IT(l_s);
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_s);
   if (l_joint_count == 0) return MGlobal::displayError("头部网格绑定的皮肤没有影响骨骼"), MStatus::kFailure;
   p_impl->all_joint_list_.reserve(l_joint_count);
   for (auto i = 0; i < l_joint_count; ++i) p_impl->all_joint_list_.emplace_back(l_influence_objects[i]);

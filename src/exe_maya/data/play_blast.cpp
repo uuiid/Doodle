@@ -93,9 +93,9 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
   k_cam.set_play_attr();
   //  k_s = MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled true -outputTarget "renderer";
   //  colorManagementPrefs -e -outputUseViewTransform -outputTarget "renderer";)");
-  //  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  //  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(k_s);
   //
-  //  CHECK_MSTATUS_AND_RETURN_IT(k_s);
+  //  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(k_s);
   //  MGlobal::executeCommand(R"(colorManagementPrefs -e -outputTransformEnabled false -outputTarget "renderer";)");
   std::vector<movie::image_attr> l_handle_list{};
 
