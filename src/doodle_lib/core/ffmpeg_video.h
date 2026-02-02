@@ -62,7 +62,7 @@ class ffmpeg_video {
 
 // 重新调整大小
 class ffmpeg_video_resize {
-  cv::Size target_size_;
+  cv::Size high_size_;
   // 低分辨率
   cv::Size low_size_;
   FSys::path video_path_;
@@ -74,12 +74,12 @@ class ffmpeg_video_resize {
   explicit ffmpeg_video_resize(
       FSys::path in_video_path, FSys::path in_out_high_path, FSys::path in_out_low_path, const cv::Size& in_size
   )
-      : target_size_(std::move(in_size)),
+      : high_size_(std::move(in_size)),
         video_path_(std::move(in_video_path)),
         out_high_path_(std::move(in_out_high_path)),
         out_low_path_(std::move(in_out_low_path)) {
     // 低分辨率定义为宽度小于等于 1280
-    low_size_ = cv::Size{1280, static_cast<int>(1280.0 / target_size_.width * target_size_.height)};
+    low_size_ = cv::Size{1280, static_cast<int>(1280.0 / high_size_.width * high_size_.height)};
   }
   ~ffmpeg_video_resize() = default;
   // 调整视频大小

@@ -982,38 +982,131 @@ class ffmpeg_video_resize::impl {
 
     av::Timestamp audio_next_pts_{};
     av::Timestamp audio_packet_time_{};
+
+    // 重新调整大小组件
+    av::VideoRescaler rescaler_;
+
+    void open_output_video(const FSys::path& out_path, int width, int height) {
+      format_context_.openOutput(out_path.string());
+      h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
+      DOODLE_CHICK(h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
+
+      constexpr static int k_fps = 25;
+      const static av::Rational l_video_tb{1, k_fps};
+      video_enc_ctx_ = av::VideoEncoderContext{h264_codec_};
+      video_enc_ctx_.setWidth(width);
+      video_enc_ctx_.setHeight(height);
+      video_enc_ctx_.setTimeBase(l_video_tb);
+      video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(h264_codec_, AV_PIX_FMT_YUV420P));
+      // 设置码率 vbr 目标 9.9 mpbs
+      constexpr static int k_bitrate = 9'900'000;
+      video_enc_ctx_.setBitRate(k_bitrate);
+      video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 3 / 2});
+
+      video_enc_ctx_.open();
+
+      video_stream_ = format_context_.addStream(video_enc_ctx_);
+      video_stream_.setTimeBase(l_video_tb);
+      video_stream_.setFrameRate(av::Rational{k_fps, 1});
+      video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+
+      video_next_pts_    = av::Timestamp{0, l_video_tb};
+      video_packet_time_ = av::Timestamp{0, l_video_tb};
+    }
+
+    void add_rescaler(
+        int in_width, int in_height, AVPixelFormat in_pix_fmt, std::int32_t in_src_width, std::int32_t in_src_height,
+        AVPixelFormat in_src_pix_fmt
+    ) {
+      rescaler_ = av::VideoRescaler{in_width, in_height, in_pix_fmt, in_src_width, in_src_height, in_src_pix_fmt};
+    }
+
+    void flush() {
+      // Flush video encoder
+      const int l_out_video_index = video_stream_.index();
+      while (auto out_pkt = video_enc_ctx_.encode()) {
+        out_pkt.setTimeBase(video_next_pts_.timebase());
+        out_pkt.setPts(video_packet_time_);
+        video_packet_time_ += av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
+        out_pkt.setStreamIndex(l_out_video_index);
+        format_context_.writePacket(out_pkt);
+      }
+      const int l_out_audio_index = audio_stream_.index();
+      // Flush audio encoder
+      while (auto out_pkt = audio_enc_ctx_.encode()) {
+        out_pkt.setTimeBase(audio_next_pts_.timebase());
+        out_pkt.setPts(audio_packet_time_);
+        audio_packet_time_ += av::Timestamp{
+            out_pkt.duration() == 0 ? audio_enc_ctx_.frameSize() : out_pkt.duration(), out_pkt.timeBase()
+        };
+        out_pkt.setStreamIndex(l_out_audio_index);
+        format_context_.writePacket(out_pkt);
+      }
+    }
+
+    void open_output_audio() {
+      audio_codec_ = av::findEncodingCodec(AV_CODEC_ID_AAC);
+      DOODLE_CHICK(audio_codec_.isEncoder(), "ffmpeg_video: cannot find aac encoder");
+      audio_enc_ctx_ = av::AudioEncoderContext{audio_codec_};
+      DOODLE_CHICK(audio_enc_ctx_.isValid(), "ffmpeg_video: cannot create aac encoder context");
+      audio_enc_ctx_.setCodec(audio_codec_);
+      audio_enc_ctx_.setSampleRate(48000);
+      // aac 编解码器必然支持立体声
+      audio_enc_ctx_.setChannelLayout(av::ChannelLayout{2});
+
+      audio_enc_ctx_.setSampleFormat(
+          pick_first_supported_sample_fmt(audio_enc_ctx_.codec(), audio_enc_ctx_.sampleFormat())
+      );
+      audio_enc_ctx_.setTimeBase(av::Rational{1, audio_enc_ctx_.sampleRate()});
+      audio_enc_ctx_.open();
+
+      audio_stream_ = format_context_.addStream(audio_enc_ctx_);
+      audio_stream_.setTimeBase(audio_enc_ctx_.timeBase());
+      audio_next_pts_    = av::Timestamp{0, audio_stream_.timeBase()};
+      audio_packet_time_ = av::Timestamp{0, audio_stream_.timeBase()};
+    }
+
+    void encode_audio_frame(av::AudioSamples& in_frame) {
+      in_frame.setTimeBase(audio_next_pts_.timebase());
+      in_frame.setPts(audio_next_pts_);
+      audio_next_pts_ += av::Timestamp{in_frame.samplesCount(), in_frame.timeBase()};
+
+      if (auto out_pkt = audio_enc_ctx_.encode(in_frame); out_pkt) {
+        out_pkt.setTimeBase(audio_stream_.timeBase());
+        out_pkt.setPts(audio_packet_time_);
+        audio_packet_time_ += av::Timestamp{
+            out_pkt.duration() == 0 ? audio_enc_ctx_.frameSize() : out_pkt.duration(), out_pkt.timeBase()
+        };
+        out_pkt.setStreamIndex(audio_stream_.index());
+        format_context_.writePacket(out_pkt);
+      }
+    }
+    void encode_video_frame(av::VideoFrame& in_frame) {
+      // SPDLOG_WARN("帧时间 {}", video_next_pts_.seconds());
+      in_frame.setTimeBase(video_next_pts_.timebase());
+      in_frame.setPts(video_next_pts_);
+      video_next_pts_ += av::Timestamp{1, video_next_pts_.timebase()};
+      if (auto out_pkt = video_enc_ctx_.encode(in_frame); out_pkt) {
+        out_pkt.setTimeBase(video_next_pts_.timebase());
+        out_pkt.setPts(video_packet_time_);
+        video_packet_time_ += av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
+        out_pkt.setStreamIndex(video_stream_.index());
+        format_context_.writePacket(out_pkt);
+      }
+    }
   };
   out_video output_handle_;
   out_video output_low_handle_;
 
   void encode_audio_frame(av::AudioSamples& in_frame) {
-    in_frame.setTimeBase(output_handle_.audio_next_pts_.timebase());
-    in_frame.setPts(output_handle_.audio_next_pts_);
-    output_handle_.audio_next_pts_ += av::Timestamp{in_frame.samplesCount(), in_frame.timeBase()};
-
-    if (auto out_pkt = output_handle_.audio_enc_ctx_.encode(in_frame); out_pkt) {
-      out_pkt.setTimeBase(output_handle_.audio_stream_.timeBase());
-      out_pkt.setPts(output_handle_.audio_packet_time_);
-      output_handle_.audio_packet_time_ += av::Timestamp{
-          out_pkt.duration() == 0 ? output_handle_.audio_enc_ctx_.frameSize() : out_pkt.duration(), out_pkt.timeBase()
-      };
-      out_pkt.setStreamIndex(output_handle_.audio_stream_.index());
-      output_handle_.format_context_.writePacket(out_pkt);
-    }
+    output_handle_.encode_audio_frame(in_frame);
+    output_low_handle_.encode_audio_frame(in_frame);
   }
   void encode_video_frame(av::VideoFrame& in_frame) {
-    // SPDLOG_WARN("帧时间 {}", output_handle_.video_next_pts_.seconds());
-    in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
-    in_frame.setPts(output_handle_.video_next_pts_);
-    output_handle_.video_next_pts_ += av::Timestamp{1, output_handle_.video_next_pts_.timebase()};
-    if (auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame); out_pkt) {
-      out_pkt.setTimeBase(output_handle_.video_next_pts_.timebase());
-      out_pkt.setPts(output_handle_.video_packet_time_);
-      output_handle_.video_packet_time_ +=
-          av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
-      out_pkt.setStreamIndex(output_handle_.video_stream_.index());
-      output_handle_.format_context_.writePacket(out_pkt);
-    }
+    auto l_f = output_handle_.rescaler_.isValid() ? output_handle_.rescaler_.rescale(in_frame) : in_frame;
+    output_handle_.encode_video_frame(l_f);
+    l_f = output_low_handle_.rescaler_.isValid() ? output_low_handle_.rescaler_.rescale(in_frame) : in_frame;
+    output_low_handle_.encode_video_frame(l_f);
   }
 
  public:
@@ -1025,10 +1118,47 @@ class ffmpeg_video_resize::impl {
     input_video_handle_.open_video_context();
     input_video_handle_.open_audio_context();
   }
-  void open_out(const FSys::path& in_path) {
-    
+  void open_out(
+      const FSys::path& in_high_path, const cv::Size& in_high_size, const FSys::path& in_low_path,
+      const cv::Size& in_low_size
+  ) {
+    const int l_src_width  = input_video_handle_.video_dec_ctx_.width();
+    const int l_src_height = input_video_handle_.video_dec_ctx_.height();
+    const auto l_pix_fmt   = input_video_handle_.video_dec_ctx_.pixelFormat().get();
+    output_handle_.open_output_video(in_high_path.string(), l_src_width, l_src_height);
+    if (in_high_size.width != l_src_width || in_high_size.height != l_src_height)
+      output_handle_.add_rescaler(
+          in_high_size.width, in_high_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
+      );
+    output_handle_.open_output_audio();
+
+    // 低码率输出
+    output_low_handle_.open_output_video(in_low_path.string(), in_low_size.width, in_low_size.height);
+    if (in_low_size.width != l_src_width || in_low_size.height != l_src_height)
+      output_low_handle_.add_rescaler(
+          in_low_size.width, in_low_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
+      );
+    output_low_handle_.open_output_audio();
+  }
+
+  void process() {
+    output_handle_.format_context_.writeHeader();
+    output_low_handle_.format_context_.writeHeader();
+
+    input_video_handle_.process(*this);
+    output_handle_.flush();
+    output_low_handle_.flush();
+
+    output_handle_.format_context_.writeTrailer();
+    output_low_handle_.format_context_.writeTrailer();
   }
 };
-void ffmpeg_video_resize::process() { impl l_impl{}; }
+void ffmpeg_video_resize::process() {
+  impl l_impl{};
+
+  l_impl.open(video_path_);
+  l_impl.open_out(out_high_path_, high_size_, out_low_path_, low_size_);
+  l_impl.process();
+}
 
 }  // namespace doodle
