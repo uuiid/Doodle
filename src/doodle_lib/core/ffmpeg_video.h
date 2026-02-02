@@ -8,7 +8,10 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/image_size.h>
 
+#include <filesystem>
+#include <opencv2/core/types.hpp>
 #include <string>
+#include <utility>
 
 namespace doodle {
 class ffmpeg_video {
@@ -55,6 +58,32 @@ class ffmpeg_video {
   static void check_video_valid(
       const FSys::path& in_video_path, const std::string& in_video_name, bool has_video_stream = true
   );
+};
+
+// 重新调整大小
+class ffmpeg_video_resize {
+  cv::Size target_size_;
+  // 低分辨率
+  cv::Size low_size_;
+  FSys::path video_path_;
+  FSys::path out_high_path_;
+  FSys::path out_low_path_;
+  class impl;
+
+ public:
+  explicit ffmpeg_video_resize(
+      FSys::path in_video_path, FSys::path in_out_high_path, FSys::path in_out_low_path, const cv::Size& in_size
+  )
+      : video_path_(std::move(in_video_path)),
+        out_high_path_(std::move(in_out_high_path)),
+        out_low_path_(std::move(in_out_low_path)),
+        target_size_(std::move(in_size)) {
+    // 低分辨率定义为宽度小于等于 1280
+    low_size_ = cv::Size{1280, static_cast<int>(1280.0 / target_size_.width * target_size_.height)};
+  }
+  ~ffmpeg_video_resize() = default;
+  // 调整视频大小
+  void process();
 };
 
 }  // namespace doodle
