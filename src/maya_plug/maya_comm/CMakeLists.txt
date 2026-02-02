@@ -13,9 +13,7 @@ target_sources(doodle_maya_lib
         chick_export_fbx.h
         file_info_edit.h
         export_abc_file.h
-        head_weight.h
         doodle_batch_run.h
-        bone_weight.h
         dna_calib_import.h
 
         PRIVATE
@@ -32,8 +30,6 @@ target_sources(doodle_maya_lib
         chick_export_fbx.cpp
         file_info_edit.cpp
         export_abc_file.cpp
-        head_weight.cpp
         doodle_batch_run.cpp
-        bone_weight.cpp
         dna_calib_import.cpp
 )
