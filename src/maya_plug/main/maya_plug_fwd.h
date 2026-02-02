@@ -10,6 +10,7 @@
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_warp.h>
+#include <maya_plug/maya_plug_fwd.h>
 
 #include <maya/MGlobal.h>
 #include <maya/MPxCommand.h>
@@ -17,6 +18,7 @@
 #include <maya/MString.h>
 #include <maya/MSyntax.h>
 #include <utility>
+
 namespace doodle {
 
 inline MSyntax null_syntax_t() { return {}; };
@@ -47,4 +49,3 @@ class TemplateAction : public MPxCommand {
 };
 
 }  // namespace doodle
-
