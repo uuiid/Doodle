@@ -50,7 +50,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::post(
     http::session_data_ptr in_handle
 ) {
-  person_.check_manager();
+  person_.check_supervisor();
   auto l_json                                      = in_handle->get_json();
   std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>(
       std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>()
@@ -67,7 +67,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::patch(
     http::session_data_ptr in_handle
 ) {
-  person_.check_manager();
+  person_.check_supervisor();
   auto l_values = std::make_shared<std::vector<assets_helper::database_t>>(
       in_handle->get_json().get<std::vector<assets_helper::database_t>>()
   );
@@ -83,7 +83,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::put(
     http::session_data_ptr in_handle
 ) {
-  person_.check_manager();
+  person_.check_supervisor();
   auto l_value = std::make_shared<assets_helper::database_t>(
       g_ctx().get<sqlite_database>().get_by_uuid<assets_helper::database_t>(id_)
   );
@@ -96,7 +96,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree_instance::delete_(
     http::session_data_ptr in_handle
 ) {
-  person_.check_manager();
+  person_.check_supervisor();
   auto l_uuid = boost::lexical_cast<uuid>(id_);
   auto l_sql  = g_ctx().get<sqlite_database>();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
