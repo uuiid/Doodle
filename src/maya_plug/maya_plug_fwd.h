@@ -6,7 +6,7 @@
 namespace doodle::maya_plug {
 
 namespace reference_file_ns {
-class generate_fbx_file_path;
+class generate_file_path_base;
 }
 
 using generate_file_path_ptr = std::shared_ptr<reference_file_ns::generate_file_path_base>;

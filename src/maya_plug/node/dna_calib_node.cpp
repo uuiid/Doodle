@@ -5,6 +5,7 @@
 #include <maya/MStatus.h>
 
 namespace doodle::maya_plug {
+MObject dna_calib_node::dna_file_path{};
 void* dna_calib_node::creator() { return new dna_calib_node{}; }
 MStatus dna_calib_node::initialize() {
   MStatus l_status{};
