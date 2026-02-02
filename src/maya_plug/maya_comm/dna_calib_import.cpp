@@ -1,5 +1,7 @@
 #include "dna_calib_import.h"
 
+#include <maya_plug/node/dna_calib_node.h>
+
 #include <maya/MArgDatabase.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MStatus.h>
