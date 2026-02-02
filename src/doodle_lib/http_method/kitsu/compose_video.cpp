@@ -213,9 +213,6 @@ struct run_actions_playlists_preview_files_create_review {
                  fmt::format("{}.mp4", core_set::get_set().get_uuid());
     auto l_now = std::chrono::steady_clock::now();
     doodle::detail::connect_video(l_tmp, data_ptr_->logger_, data_ptr_->shot_preview_paths_, data_ptr_->size_);
-    SPDLOG_LOGGER_INFO(
-        data_ptr_->logger_, "连接视频完成 {} {:%H:%M:%S}", l_tmp, std::chrono::steady_clock::now() - l_now
-    );
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_long_task(), "连接视频完成 {} {:%H:%M:%S}", l_tmp, std::chrono::steady_clock::now() - l_now
     );
