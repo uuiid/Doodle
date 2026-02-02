@@ -95,6 +95,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 
   auto l_clock_overtime          = create_clock_overtime(l_date);  // 加班计算时间时钟
   auto l_clock_leave             = create_clock_leave(l_date);     // 请假计算时间时钟
+  // 重新查询, 以调整协程期间可能变化的数据
+  l_attends                      = l_sqlite.get_attendance(l_user.uuid_id_, chrono::local_days{l_date});
   for (auto&& l_obj : l_attend) {
     // 重新使用开始时间和时间时间段计算时间
     chrono::hours l_duration{0};
