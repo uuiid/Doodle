@@ -19,6 +19,7 @@
 #include <maya_plug/maya_comm/open_doodle_main.h>
 #include <maya_plug/maya_comm/ref_file_export.h>
 #include <maya_plug/maya_comm/reference_comm.h>
+#include <maya_plug/node/dna_calib_node.h>
 #include <maya_plug/node/files_info.h>
 #include <maya_plug_mll/comm/export_xgen_abc.h>
 
@@ -50,6 +51,8 @@ MStatus initializePlugin(MObject obj) {
   doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
 
   status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
+  CHECK_MSTATUS(status);
+  status = maya_reg->register_node<doodle::maya_plug::dna_calib_node>(k_plugin);
   CHECK_MSTATUS(status);
   /// 添加文件编辑命令
   status = maya_reg->register_command<::doodle::maya_plug::file_info_edit>(k_plugin);

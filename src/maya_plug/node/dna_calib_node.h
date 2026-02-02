@@ -20,19 +20,5 @@ class dna_calib_node : public MPxNode {
  private:
   // DNA文件路径
   static MObject dna_file_path;
-  // 校准结果输出路径
-  static MObject output_file_path;
-  // 校准结果输出路径
-  static MObject output_image_path;
-
-  // 起始帧
-  static MObject start_frame;
-  // 结束帧
-  static MObject end_frame;
-  // 步长
-  static MObject frame_step;
-
-  // 校准结果
-  static MObject calib_result;
 };
 }  // namespace doodle::maya_plug
