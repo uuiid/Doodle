@@ -250,8 +250,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::delete_(
     session_data_ptr in_handle
 ) {
-  if (id_ != person_.person_.uuid_id_) person_.check_supervisor();
   auto& l_sql = g_ctx().get<sqlite_database>();
+  auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
+  if (l_data.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
   co_await l_sql.remove<attendance_helper::database_t>(id_);
   co_return in_handle->make_msg((nlohmann::json{} = id_).dump());
 }
