@@ -39,6 +39,10 @@ class dna_calib_import::impl {
     DOODLE_CHICK(dnac::Status::isOk(), "读取dna文件失败: {}", file_path);
 
     auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
+    for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
+      auto l_name = l_dna_render->getMeshName(i);
+      DOODLE_LOG_INFO("Mesh {}: 名称: {} ", i, l_name);
+    }
   }
 };
 dna_calib_import::dna_calib_import() : p_i(std::make_unique<impl>()) {}
