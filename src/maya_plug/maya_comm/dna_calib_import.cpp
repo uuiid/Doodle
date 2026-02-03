@@ -11,6 +11,7 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MFn.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MGlobal.h>
 #include <maya/MObject.h>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
@@ -30,19 +31,22 @@ class dna_calib_import::impl {
   FSys::path file_path;
   MObject dna_node_obj{};
 
-  void import_dna_calib() {
+  MStatus import_dna_calib() {
     auto l_dna_file = dnac::makeScoped<dnac::FileStream>(
         file_path.generic_string().data(), dnac::FileStream::AccessMode::ReadWrite, dnac::FileStream::OpenMode::Binary
     );
     auto l_render = dnac::makeScoped<dnac::BinaryStreamReader>(l_dna_file.get());
     l_render->read();
-    DOODLE_CHICK(dnac::Status::isOk(), "读取dna文件失败: {}", file_path);
+    if (!dnac::Status::isOk())
+      return MGlobal::displayError(conv::to_ms(fmt::format("读取dna文件失败: {} ", dnac::Status::get().message))),
+             MS::kFailure;
 
     auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
     for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
       auto l_name = l_dna_render->getMeshName(i);
-      DOODLE_LOG_INFO("Mesh {}: 名称: {} ", i, l_name);
+      MGlobal::displayInfo(conv::to_ms(fmt::format("Mesh {}: 名称: {} ", i, l_name)));
     }
+    return MS::kSuccess;
   }
 };
 dna_calib_import::dna_calib_import() : p_i(std::make_unique<impl>()) {}
@@ -85,7 +89,7 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   if (p_i->file_path.empty() || !FSys::exists(p_i->file_path))
     return displayError(conv::to_ms(fmt::format("dna文件不存在: {}", p_i->file_path.generic_string()))), MS::kFailure;
   // 读取文件
-
+  p_i->import_dna_calib();
   return MS::kSuccess;
 }
 
