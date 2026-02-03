@@ -257,6 +257,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
       in(&attachment_file::comment_id_,
          select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_)))
   ));
+  // 反转 l_attachment_files
+  std::reverse(l_attachment_files.begin(), l_attachment_files.end());
   auto l_prj              = l_sql.get_by_uuid<project>(l_task.project_id_);
   run_actions_playlists_preview_files_create_review l_run{};
   l_run.data_ptr_->size_                = l_prj.get_resolution();
