@@ -357,10 +357,14 @@ struct actions_tasks_create_review_run {
 
   void operator()() {
     if (!data_ptr_->args_.episodes_name_path_.empty()) {
+      if (auto l_p = data_ptr_->args_.episodes_name_path_.parent_path(); !FSys::exists(l_p))
+        FSys::create_directories(l_p);
+      if (FSys::exists(data_ptr_->args_.episodes_name_path_)) FSys::remove(data_ptr_->args_.episodes_name_path_);
       // todo: 修正集数名称
       auto l_now = std::chrono::steady_clock::now();
       data_ptr_->logger_->info("开始修正集数名称");
       generate_text_video l_generator{};
+
       l_generator.set_out_path(data_ptr_->args_.episodes_name_path_);
       auto l_it =
           std::find_if(data_ptr_->args_.episodes_name_.begin(), data_ptr_->args_.episodes_name_.end(), [](char in_c) {

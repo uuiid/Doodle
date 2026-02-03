@@ -11,19 +11,18 @@ namespace doodle {
 void generate_text_video::run() const {
   DOODLE_CHICK(!out_path_.empty(), "ffmpeg_video: output path is empty");
   auto out_path = out_path_;
-  out_path.replace_extension(".mp4");
-  auto l_backup = FSys::add_time_stamp(out_path_);
+  out_path      = out_path.replace_extension(".mp4");
+  auto l_backup = FSys::add_time_stamp(out_path);
 
   if (auto l_p = out_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
   {
-    cv::Mat l_image{size_.height, size_.width, CV_8UC3, cv::Scalar(0, 0, 0)};
-
     cv::VideoWriter l_writer{
         l_backup.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25.0,
         cv::Size(size_.width, size_.height)
     };
-
+    // l_writer.open()
+    DOODLE_CHICK(l_writer.isOpened(), "无法创建视频文件: {} ", l_backup);
     auto k_image            = cv::Mat{size_.height, size_.width, CV_8UC3, cv::Scalar(0, 0, 0)};
     const auto total_frames = duration_.count() * 25;
     auto const l_ft2{cv::freetype::createFreeType2()};
