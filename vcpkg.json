@@ -107,7 +107,7 @@
         "drawtext"
       ]
     },
-    "metahuman-dna-calibration"
+    "dnacalib"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [

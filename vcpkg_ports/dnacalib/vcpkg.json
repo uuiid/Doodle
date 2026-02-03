@@ -1,5 +1,5 @@
 {
-  "name": "metahuman-dna-calibration",
+  "name": "dnacalib",
   "version-string": "0.1.0",
   "port-version": 1,
   "description": "MetaHuman DNA Calibration is a set of tools used for working with MetaHuman DNA files",
