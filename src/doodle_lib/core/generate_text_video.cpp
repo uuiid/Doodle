@@ -39,7 +39,7 @@ void generate_text_video::run() const {
     }
     for (std::int32_t frame_idx = 0; frame_idx < total_frames; ++frame_idx) l_writer << k_image;
   }
-  FSys::rename(l_backup, out_path);
+  FSys::rename(l_backup, out_path_);
 }
 
 }  // namespace doodle
