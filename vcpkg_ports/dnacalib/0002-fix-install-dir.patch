@@ -1,4 +1,4 @@
-From db6ec5f05440460a5c8f7b8116e508a57e0a16a5 Mon Sep 17 00:00:00 2001
+From fce158375f82739003c7674629df206049086fc9 Mon Sep 17 00:00:00 2001
 From: uuiid <957714080@qq.com>
 Date: Tue, 3 Feb 2026 15:08:07 +0800
 Subject: [PATCH 2/2] fix install dir
@@ -8,7 +8,7 @@ Subject: [PATCH 2/2] fix install dir
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/dnacalib/CMakeModulesExtra/install/InstallLibrary.cmake b/dnacalib/CMakeModulesExtra/install/InstallLibrary.cmake
-index d0659f8..bd96945 100644
+index d0659f8..9a39250 100644
 --- a/dnacalib/CMakeModulesExtra/install/InstallLibrary.cmake
 +++ b/dnacalib/CMakeModulesExtra/install/InstallLibrary.cmake
 @@ -24,17 +24,17 @@ macro(install_library target_name)
@@ -16,7 +16,7 @@ index d0659f8..bd96945 100644
      include(GNUInstallDirs)
      set(REPRESENTATIVE_TARGET_NAME ${target_name})
 -    set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
-+    set(INSTALL_CONFIGDIR share)
++    set(INSTALL_CONFIGDIR share/${PROJECT_NAME})
  
      # Set install destinations and associate installed target files with an export
      install(TARGETS ${REPRESENTATIVE_TARGET_NAME}

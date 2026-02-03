@@ -11,6 +11,7 @@
 #include <maya_plug/maya_comm/create_qcloth_assets.h>
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
+#include <maya_plug/maya_comm/dna_calib_import.h>
 #include <maya_plug/maya_comm/doodle_to_ue_fbx.h>
 #include <maya_plug/maya_comm/export_abc_file.h>
 #include <maya_plug/maya_comm/file_info_edit.h>
@@ -26,6 +27,7 @@
 #include <maya/MQtUtil.h>
 #include <stack>
 #include <wil/result.h>
+
 
 namespace {
 
@@ -53,6 +55,9 @@ MStatus initializePlugin(MObject obj) {
   CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::dna_calib_node>(k_plugin);
   CHECK_MSTATUS(status);
+  status = maya_reg->register_command<::doodle::maya_plug::dna_calib_import>(k_plugin);
+  CHECK_MSTATUS(status);
+
   /// 添加文件编辑命令
   status = maya_reg->register_command<::doodle::maya_plug::file_info_edit>(k_plugin);
   CHECK_MSTATUS(status);
