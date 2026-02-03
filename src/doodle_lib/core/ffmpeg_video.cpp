@@ -886,12 +886,68 @@ class ffmpeg_video_resize::impl {
     av::Stream audio_stream_;
     av::Codec audio_codec_;
   };
+  // 过滤器处理
+  struct filter_handle_t {
+    av::FilterGraph graph_{};
+    av::FilterContext buffersrc_ctx_{};
+    av::BufferSrcFilterContext buffersrc_{};
+
+    av::FilterContext buffersink_ctx_{};
+    av::BufferSinkFilterContext buffersink_{};
+    bool configured_{false};
+
+    void init_buffersrc(const av::VideoDecoderContext& dec_ctx) {
+      auto l_time_base     = dec_ctx.timeBase();
+      auto l_sample_aspect = dec_ctx.sampleAspectRatio();
+      DOODLE_CHICK(l_sample_aspect != av::Rational{}, "ffmpeg_video: invalid sample aspect ratio");
+
+      const std::string l_buffer_args = std::format(
+          "video_size={}x{}:pix_fmt={}:time_base={}/{}:pixel_aspect={}/{}", dec_ctx.width(), dec_ctx.height(),
+          static_cast<int>(dec_ctx.pixelFormat()), l_time_base.getNumerator(), l_time_base.getDenominator(),
+          l_sample_aspect.getNumerator(), l_sample_aspect.getDenominator()
+      );
+      graph_.setAutoConvert(AVFILTER_AUTO_CONVERT_ALL);
+
+      const av::Filter buffer_filter{"buffer"};
+      const av::Filter buffersink_filter{"buffersink"};
+
+      buffersrc_ctx_  = graph_.createFilter(buffer_filter, "in", l_buffer_args);
+      buffersink_ctx_ = graph_.createFilter(buffersink_filter, "out", "");
+    }
+
+    void configure() {
+      graph_.config();
+      buffersrc_  = av::BufferSrcFilterContext{buffersrc_ctx_};
+      buffersink_ = av::BufferSinkFilterContext{buffersink_ctx_};
+      configured_ = true;
+    }
+  };
+
+  struct fps_filter_handle_t : filter_handle_t {
+    void init_fps_filter(const av::VideoDecoderContext& dec_ctx, int fps) {
+      init_buffersrc(dec_ctx);
+
+      const av::Filter fps_filter{"fps"};
+      DOODLE_CHICK(fps_filter, "ffmpeg_video: cannot find filter 'fps'");
+
+      const std::string fps_args = std::format("fps={}", fps);
+      auto fps_ctx               = graph_.allocFilter(fps_filter, "fps");
+      fps_ctx.init(fps_args);
+
+      buffersrc_ctx_.link(0, fps_ctx, 0);
+      fps_ctx.link(0, buffersink_ctx_, 0);
+
+      configure();
+    }
+  };
 
   struct input_video : base_t {
     av::VideoDecoderContext video_dec_ctx_;
 
     av::AudioDecoderContext audio_dec_ctx_;
     av::ChannelLayout audio_channel_layout_;
+
+    fps_filter_handle_t fps_filter_;
 
     void open_format_context(const FSys::path& in_path) {
       format_context_.openInput(in_path.string());
@@ -915,6 +971,10 @@ class ffmpeg_video_resize::impl {
       DOODLE_CHICK(video_codec_.isDecoder(), "ffmpeg_video: video decoder is not decoder");
       video_dec_ctx_ = av::VideoDecoderContext{video_stream_, video_codec_};
       video_dec_ctx_.open();
+
+      if (video_stream_.averageFrameRate().getNumerator() != av::Rational{g_fps, 1}) {
+        fps_filter_.init_fps_filter(video_dec_ctx_, g_fps);
+      }
     }
 
     void open_audio_context() {
@@ -946,6 +1006,7 @@ class ffmpeg_video_resize::impl {
         if (l_pkt.streamIndex() == video_stream_.index()) process_output_video(parent, l_pkt);
         if (l_pkt.streamIndex() == audio_stream_.index()) process_output_audio(parent, l_pkt);
       }
+      flush_fps_filter(parent);
       flush_video_decoder(parent);
       flush_audio_decoder(parent);
     }
@@ -955,7 +1016,12 @@ class ffmpeg_video_resize::impl {
       auto frame = video_dec_ctx_.decode(in_pkt);
       if (!frame) return;
 
-      in_parent.encode_video_frame(frame);
+      if (fps_filter_.configured_) {
+        fps_filter_.buffersrc_.writeVideoFrame(frame);
+        av::VideoFrame filtered_frame{};
+        while (fps_filter_.buffersink_.getVideoFrame(filtered_frame)) in_parent.encode_video_frame(filtered_frame);
+      } else
+        in_parent.encode_video_frame(frame);
     }
     void process_output_audio(ffmpeg_video_resize::impl& parent, av::Packet& in_pkt) {
       auto frame = audio_dec_ctx_.decode(in_pkt);
@@ -963,11 +1029,18 @@ class ffmpeg_video_resize::impl {
 
       parent.encode_audio_frame(frame);
     }
+
     void flush_audio_decoder(ffmpeg_video_resize::impl& parent) {
       if (!audio_dec_ctx_.isValid()) return;
       while (auto l_frame = audio_dec_ctx_.decode({})) {
         parent.encode_audio_frame(l_frame);
       }
+    }
+    void flush_fps_filter(ffmpeg_video_resize::impl& parent) {
+      if (!fps_filter_.configured_) return;
+      (void)av_buffersrc_add_frame_flags(fps_filter_.buffersrc_ctx_.raw(), nullptr, 0);
+      av::VideoFrame filtered;
+      while (fps_filter_.buffersink_.getVideoFrame(filtered)) parent.encode_video_frame(filtered);
     }
     void flush_video_decoder(ffmpeg_video_resize::impl& parent) {
       if (!video_dec_ctx_.isValid()) return;
@@ -1004,8 +1077,7 @@ class ffmpeg_video_resize::impl {
       h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
       DOODLE_CHICK(h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
 
-      constexpr static int k_fps = 25;
-      const static av::Rational l_video_tb{1, k_fps};
+      const static av::Rational l_video_tb{1, g_fps};
       video_enc_ctx_ = av::VideoEncoderContext{h264_codec_};
       video_enc_ctx_.setWidth(width);
       video_enc_ctx_.setHeight(height);
@@ -1020,8 +1092,8 @@ class ffmpeg_video_resize::impl {
 
       video_stream_ = format_context_.addStream(video_enc_ctx_);
       video_stream_.setTimeBase(l_video_tb);
-      video_stream_.setFrameRate(av::Rational{k_fps, 1});
-      video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+      video_stream_.setFrameRate(av::Rational{g_fps, 1});
+      video_stream_.setAverageFrameRate(av::Rational{g_fps, 1});
 
       video_next_pts_    = av::Timestamp{0, l_video_tb};
       video_packet_time_ = av::Timestamp{0, l_video_tb};
@@ -1056,18 +1128,16 @@ class ffmpeg_video_resize::impl {
     ) {
       rescaler_ = av::VideoRescaler{in_width, in_height, in_pix_fmt, in_src_width, in_src_height, in_src_pix_fmt};
     }
-    void add_resampler(
-        const av::AudioEncoderContext& in_audio_enc_ctx, av::ChannelLayout in_audio_channel_layout, bool fixed_channels
-    ) {
+    void add_resampler(const av::AudioDecoderContext& in_audio_enc_ctx, av::ChannelLayout in_audio_channel_layout) {
       if (audio_enc_ctx_.sampleRate() == in_audio_enc_ctx.sampleRate() &&
           audio_channel_layout_.layout() == in_audio_channel_layout.layout() &&
           audio_enc_ctx_.sampleFormat().get() == in_audio_enc_ctx.sampleFormat().get())
         return;
-      fixed_audio_channels_     = fixed_channels;
+      fixed_audio_channels_     = audio_channel_layout_.layout() == in_audio_channel_layout.layout();
       source_audio_sample_rate_ = in_audio_enc_ctx.sampleRate();
       resampler_.init(
-          audio_enc_ctx_.sampleRate(), audio_channel_layout_.layout(), audio_enc_ctx_.sampleFormat().get(),
-          in_audio_enc_ctx.sampleRate(), in_audio_channel_layout.layout(), in_audio_enc_ctx.sampleFormat().get()
+          audio_channel_layout_.layout(), audio_enc_ctx_.sampleRate(), audio_enc_ctx_.sampleFormat().get(),
+          in_audio_channel_layout.layout(), in_audio_enc_ctx.sampleRate(), in_audio_enc_ctx.sampleFormat().get()
       );
     }
 
@@ -1082,6 +1152,7 @@ class ffmpeg_video_resize::impl {
         );
         while (resampler_.pop(l_resampled_frame, true)) {
           encode_audio_frame(l_resampled_frame);
+          l_resampled_frame = av::AudioSamples{};
           l_resampled_frame.init(
               audio_enc_ctx_.sampleFormat(), l_frame_size, audio_channel_layout_.layout(), audio_enc_ctx_.sampleRate()
           );
@@ -1192,6 +1263,7 @@ class ffmpeg_video_resize::impl {
           in_high_size.width, in_high_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
       );
     output_handle_.open_output_audio();
+    output_handle_.add_resampler(input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_);
 
     // 低码率输出
     output_low_handle_.open_output_video(in_low_path.string(), in_low_size.width, in_low_size.height);
@@ -1200,6 +1272,7 @@ class ffmpeg_video_resize::impl {
           in_low_size.width, in_low_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
       );
     output_low_handle_.open_output_audio();
+    output_low_handle_.add_resampler(input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_);
   }
 
   void process() {
