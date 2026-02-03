@@ -475,8 +475,13 @@ class ffmpeg_video::impl {
     );
     // 设置码率 vbr 目标 9.9 mpbs
     constexpr static int k_bitrate = 9'900'000;
-    output_handle_.video_enc_ctx_.setBitRate(k_bitrate);
-    output_handle_.video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 3 / 2});
+    // output_handle_.video_enc_ctx_.setBitRate(k_bitrate);
+    // output_handle_.video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 3 / 2});
+    output_handle_.video_enc_ctx_.setOption("crf", "23");
+    output_handle_.video_enc_ctx_.setOption("preset", "medium");
+    // 可选：VBV 约束（用于限制瞬时码率/缓冲，便于对接带宽或播放器要求）。
+    // output_handle_.video_enc_ctx_.setOption("maxrate", std::to_string(k_bitrate * 3 / 2));
+    // output_handle_.video_enc_ctx_.setOption("bufsize", std::to_string(k_bitrate));
     // // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
     // output_handle_.video_enc_ctx_.setBitRate(0);
     // output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
