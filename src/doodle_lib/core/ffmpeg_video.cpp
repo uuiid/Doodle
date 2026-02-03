@@ -179,12 +179,12 @@ class AVAudioFifoWarp : FFWrapperPtr<AVAudioFifo> {
   operator bool() const noexcept { return isValid(); }
 };
 
+constexpr static int g_fps = 25;
 }  // namespace
 class ffmpeg_video::impl {
  public:
-  impl()                     = default;
-  ~impl()                    = default;
-  constexpr static int g_fps = 25;
+  impl()  = default;
+  ~impl() = default;
 
  private:
   struct base_t {
@@ -465,8 +465,7 @@ class ffmpeg_video::impl {
     output_handle_.h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
     DOODLE_CHICK(output_handle_.h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
 
-    constexpr static int k_fps = 25;
-    const static av::Rational l_video_tb{1, k_fps};
+    const static av::Rational l_video_tb{1, g_fps};
     output_handle_.video_enc_ctx_ = av::VideoEncoderContext{output_handle_.h264_codec_};
     output_handle_.video_enc_ctx_.setWidth(input_video_handle_.video_dec_ctx_.width());
     output_handle_.video_enc_ctx_.setHeight(input_video_handle_.video_dec_ctx_.height());
@@ -498,8 +497,8 @@ class ffmpeg_video::impl {
 
     output_handle_.video_stream_ = output_handle_.format_context_.addStream(output_handle_.video_enc_ctx_);
     output_handle_.video_stream_.setTimeBase(l_video_tb);
-    output_handle_.video_stream_.setFrameRate(av::Rational{k_fps, 1});
-    output_handle_.video_stream_.setAverageFrameRate(av::Rational{k_fps, 1});
+    output_handle_.video_stream_.setFrameRate(av::Rational{g_fps, 1});
+    output_handle_.video_stream_.setAverageFrameRate(av::Rational{g_fps, 1});
 
     output_handle_.video_next_pts_    = av::Timestamp{0, l_video_tb};
     output_handle_.video_packet_time_ = av::Timestamp{0, l_video_tb};
@@ -861,7 +860,7 @@ void ffmpeg_video::check_video_valid(
     DOODLE_CHICK(l_in_video_codec.canDecode(), "ffmpeg_video: {} video decoder cannot decode", in_video_name);
     // 检查帧率
     av::Rational l_in_fps = l_in_video_stream.averageFrameRate();
-    DOODLE_CHICK(l_in_fps.getNumerator() == impl::g_fps, "ffmpeg_video: {} cannot get input video fps", in_video_name);
+    DOODLE_CHICK(l_in_fps.getNumerator() == g_fps, "ffmpeg_video: {} cannot get input video fps", in_video_name);
   }
 
   // audio stream is optional, but if present it must be AAC + stereo (2 channels)
