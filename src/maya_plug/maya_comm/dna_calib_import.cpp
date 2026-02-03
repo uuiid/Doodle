@@ -46,6 +46,7 @@ class dna_calib_import::impl {
   }
 };
 dna_calib_import::dna_calib_import() : p_i(std::make_unique<impl>()) {}
+dna_calib_import::~dna_calib_import() = default;
 
 MStatus dna_calib_import::get_arg(const MArgList& in_arg) {
   MStatus l_status{};
