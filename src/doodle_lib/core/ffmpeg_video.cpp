@@ -1074,6 +1074,10 @@ class ffmpeg_video_resize::impl {
 
     void open_output_video(const FSys::path& out_path, int width, int height) {
       format_context_.openOutput(out_path.string());
+      open_output_video(width, height);
+    }
+
+    void open_output_video(int width, int height) {
       h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
       DOODLE_CHICK(h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
 
@@ -1098,6 +1102,7 @@ class ffmpeg_video_resize::impl {
       video_next_pts_    = av::Timestamp{0, l_video_tb};
       video_packet_time_ = av::Timestamp{0, l_video_tb};
     }
+
     void open_output_audio() {
       audio_codec_ = av::findEncodingCodec(AV_CODEC_ID_AAC);
       DOODLE_CHICK(audio_codec_.isEncoder(), "ffmpeg_video: cannot find aac encoder");
@@ -1257,7 +1262,7 @@ class ffmpeg_video_resize::impl {
     const int l_src_width  = input_video_handle_.video_dec_ctx_.width();
     const int l_src_height = input_video_handle_.video_dec_ctx_.height();
     const auto l_pix_fmt   = input_video_handle_.video_dec_ctx_.pixelFormat().get();
-    output_handle_.open_output_video(in_high_path.string(), l_src_width, l_src_height);
+    output_handle_.open_output_video(in_high_path.string(), in_high_size.width, in_high_size.height);
     if (in_high_size.width != l_src_width || in_high_size.height != l_src_height)
       output_handle_.add_rescaler(
           in_high_size.width, in_high_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
