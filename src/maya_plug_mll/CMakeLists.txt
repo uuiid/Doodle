@@ -19,8 +19,6 @@ target_link_libraries(doodle_maya
         DemBones::dem-bones
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
-        Qt5::Core
-        Qt5::Widgets
         TBB::tbb
         Eigen3::Eigen
         OpenMP::OpenMP_CXX
