@@ -306,7 +306,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
     l_run.data_ptr_->ffmpeg_video_.set_outro(g_ctx().get<kitsu_ctx_t>().get_attachment_file(l_tail_file->uuid_id_));
   }
   if (l_arg.add_watermark_) {
-    l_run.data_ptr_->ffmpeg_video_.set_watermark("送审水印");
+    l_run.data_ptr_->ffmpeg_video_.set_watermark("送审样片");
   }
   if (l_arg.add_time_code_) {
     l_run.data_ptr_->ffmpeg_video_.set_time_code(true);
