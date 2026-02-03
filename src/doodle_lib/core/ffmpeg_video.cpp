@@ -1089,8 +1089,8 @@ class ffmpeg_video_resize::impl {
       video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(h264_codec_, AV_PIX_FMT_YUV420P));
       // 设置码率 vbr 目标 9.9 mpbs
       constexpr static int k_bitrate = 9'900'000;
-      video_enc_ctx_.setBitRate(k_bitrate);
-      video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate});
+      // video_enc_ctx_.setBitRate(k_bitrate);
+      video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 2});
 
       video_enc_ctx_.open();
 
