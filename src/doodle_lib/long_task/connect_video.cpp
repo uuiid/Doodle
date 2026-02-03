@@ -27,7 +27,10 @@ void connect_video(
 
   const cv::Size k_size{in_size.width, in_size.height};
   auto video = cv::VideoWriter{in_out_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 25, k_size};
-  auto l_video_cap       = cv::VideoCapture{};
+  // 设置质量为 100
+  video.set(cv::VIDEOWRITER_PROP_QUALITY, 100);
+  DOODLE_CHICK(video.isOpened(), "无法创建视频文件: {} ", in_out_path.generic_string());
+  auto l_video_cap = cv::VideoCapture{};
   cv::Mat l_image{};
   for (auto& l_video : in_vector) {
     in_logger->log(log_loc(), level::info, "开始读取视屏 {}", l_video);
