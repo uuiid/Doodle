@@ -951,6 +951,7 @@ class ffmpeg_video_resize::impl {
 
     av::AudioDecoderContext audio_dec_ctx_;
     av::ChannelLayout audio_channel_layout_;
+    bool fixed_audio_channels_{false};
 
     fps_filter_handle_t fps_filter_;
 
@@ -1004,6 +1005,7 @@ class ffmpeg_video_resize::impl {
       audio_channel_layout_ = audio_dec_ctx_.channelLayout2().layout() == 0
                                   ? av::ChannelLayout{audio_dec_ctx_.channels()}
                                   : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
+      fixed_audio_channels_ = audio_dec_ctx_.channelLayout2().layout() == 0;
     }
 
     void process(ffmpeg_video_resize::impl& parent) {
@@ -1138,13 +1140,16 @@ class ffmpeg_video_resize::impl {
     ) {
       rescaler_ = av::VideoRescaler{in_width, in_height, in_pix_fmt, in_src_width, in_src_height, in_src_pix_fmt};
     }
-    void add_resampler(const av::AudioDecoderContext& in_audio_enc_ctx, av::ChannelLayout in_audio_channel_layout) {
+    void add_resampler(
+        const av::AudioDecoderContext& in_audio_enc_ctx, av::ChannelLayout in_audio_channel_layout, bool fixed_channels
+    ) {
       if (!in_audio_enc_ctx.isValid()) return;
+
       if (audio_enc_ctx_.sampleRate() == in_audio_enc_ctx.sampleRate() &&
           audio_channel_layout_.layout() == in_audio_channel_layout.layout() &&
           audio_enc_ctx_.sampleFormat().get() == in_audio_enc_ctx.sampleFormat().get())
         return;
-      fixed_audio_channels_     = audio_channel_layout_.layout() == in_audio_channel_layout.layout();
+      fixed_audio_channels_     = fixed_channels;
       source_audio_sample_rate_ = in_audio_enc_ctx.sampleRate();
       resampler_.init(
           audio_channel_layout_.layout(), audio_enc_ctx_.sampleRate(), audio_enc_ctx_.sampleFormat().get(),
@@ -1274,7 +1279,10 @@ class ffmpeg_video_resize::impl {
           in_high_size.width, in_high_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
       );
     output_handle_.open_output_audio();
-    output_handle_.add_resampler(input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_);
+    output_handle_.add_resampler(
+        input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_,
+        input_video_handle_.fixed_audio_channels_
+    );
 
     // 低码率输出
     output_low_handle_.open_output_video(in_low_path.string(), in_low_size.width, in_low_size.height);
@@ -1283,7 +1291,10 @@ class ffmpeg_video_resize::impl {
           in_low_size.width, in_low_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
       );
     output_low_handle_.open_output_audio();
-    output_low_handle_.add_resampler(input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_);
+    output_low_handle_.add_resampler(
+        input_video_handle_.audio_dec_ctx_, input_video_handle_.audio_channel_layout_,
+        input_video_handle_.fixed_audio_channels_
+    );
   }
 
   void process() {
