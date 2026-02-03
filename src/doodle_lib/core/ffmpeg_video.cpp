@@ -1003,9 +1003,10 @@ class ffmpeg_video_resize::impl {
       audio_dec_ctx_.open();
 
       audio_channel_layout_ = audio_dec_ctx_.channelLayout2().layout() == 0
-                                  ? av::ChannelLayout{audio_dec_ctx_.channels()}
-                                  : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
-      fixed_audio_channels_ = audio_dec_ctx_.channelLayout2().layout() == 0;
+                  ? av::ChannelLayout{audio_dec_ctx_.channels()}
+                  : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
+      // 如果输入流没有提供 channel layout，就需要在每帧上补全 layout，避免重采样参数不匹配
+      fixed_audio_channels_ = audio_dec_ctx_.channelLayout2().layout() != 0;
     }
 
     void process(ffmpeg_video_resize::impl& parent) {
