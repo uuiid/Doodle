@@ -883,7 +883,9 @@ std::optional<entity_shot_extend> sqlite_database::get_entity_shot_extend(const 
 
 std::vector<playlist_shot> sqlite_database::get_playlist_shot_entity(const uuid& in_playlist_id) {
   using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<playlist_shot>(where(c(&playlist_shot::playlist_id_) == in_playlist_id));
+  auto l_t = impl_->storage_any_.get_all<playlist_shot>(
+      where(c(&playlist_shot::playlist_id_) == in_playlist_id), order_by(&playlist_shot::order_index_)
+  );
   return l_t;
 }
 boost::asio::awaitable<void> sqlite_database::remove_playlist_shot_for_playlist(const uuid& in_playlist_id) {

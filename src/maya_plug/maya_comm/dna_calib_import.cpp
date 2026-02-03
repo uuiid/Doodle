@@ -17,7 +17,6 @@
 #include <maya/MSyntax.h>
 #include <pma/ScopedPtr.h>
 
-
 namespace doodle::maya_plug {
 MSyntax dna_calib_import_syntax() {
   MSyntax l_syntax{};
@@ -39,8 +38,8 @@ class dna_calib_import::impl {
     l_render->read();
     DOODLE_CHICK(dnac::Status::isOk(), "读取dna文件失败: {}", file_path);
 
-
-    }
+    auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
+  }
 };
 dna_calib_import::dna_calib_import() : p_i(std::make_unique<impl>()) {}
 

@@ -1134,6 +1134,7 @@ class ffmpeg_video_resize::impl {
       rescaler_ = av::VideoRescaler{in_width, in_height, in_pix_fmt, in_src_width, in_src_height, in_src_pix_fmt};
     }
     void add_resampler(const av::AudioDecoderContext& in_audio_enc_ctx, av::ChannelLayout in_audio_channel_layout) {
+      if (!in_audio_enc_ctx.isValid()) return;
       if (audio_enc_ctx_.sampleRate() == in_audio_enc_ctx.sampleRate() &&
           audio_channel_layout_.layout() == in_audio_channel_layout.layout() &&
           audio_enc_ctx_.sampleFormat().get() == in_audio_enc_ctx.sampleFormat().get())
