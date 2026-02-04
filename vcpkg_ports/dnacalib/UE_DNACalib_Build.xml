@@ -1,0 +1,16 @@
+<?xml version='1.0' ?>
+<BuildGraph xmlns="http://www.epicgames.com/BuildGraph" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.epicgames.com/BuildGraph ../../../../../Engine/Build/Graph/Schema.xsd" >
+
+	<Option Name="BuildTarget" Restrict="Debug|Development" DefaultValue="Development" Description="Select the build target"/>
+	<Option Name="Platform" Restrict="Win64|Linux" DefaultValue="Win64" Description="Select the platform"/>
+
+	<Agent Name="DNACalibLibModule" Type="Win64">
+		<Property Name="LocalSourceDir" Value="$(RootDir)\Engine\Plugins\Animation\DNACalib\Source"/>
+		<Node Name="Compile DNACalib">
+			<Compile Target="DNACalibLibExt" Platform="$(Platform)" Configuration="$(BuildTarget)" Arguments="-noxge"/>
+		</Node>
+	</Agent>
+
+</BuildGraph>
+
+
