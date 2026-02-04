@@ -235,7 +235,7 @@ void fbx_node_cam::build_data() {
 }
 
 void fbx_node_cam::build_animation(const MTime& in_time) {
-  fbx_node_transform::build_animation(in_time);
+  // fbx_node_transform::build_animation(in_time);
   FbxTime l_fbx_time{};
   l_fbx_time.SetFrame(in_time.value(), maya_to_fbx_time(in_time.unit()));
 
@@ -269,6 +269,81 @@ void fbx_node_cam::build_animation(const MTime& in_time) {
   //   l_cureve->KeySetValue(l_index, camera_->EvaluatePosition());
   //   l_cureve->KeyModifyEnd();
   // }
+
+  MFnTransform const l_transform{dag_path};
+  // tran x
+  {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_x    = l_transform.getTranslation(MSpace::kWorld).x;
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_x);
+    l_anim_curve->KeyModifyEnd();
+  }
+  // tran y
+  {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_y    = l_transform.getTranslation(MSpace::kWorld).y;
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_y);
+    l_anim_curve->KeyModifyEnd();
+  }
+  // tran z
+  {
+    auto* l_anim_curve = node->LclTranslation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+    l_anim_curve->KeyModifyBegin();
+    auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+    auto l_tran_z    = l_transform.getTranslation(MSpace::kWorld).z;
+    l_anim_curve->KeySet(l_key_index, l_fbx_time, l_tran_z);
+    l_anim_curve->KeyModifyEnd();
+  }
+
+  {
+    MEulerRotation::RotationOrder l_rotate_order =
+        static_cast<MEulerRotation::RotationOrder>(get_plug(dag_path.node(), "rotateOrder").asInt(&l_status));
+    MQuaternion l_rot{};
+
+    l_transform.getRotation(l_rot, MSpace::kWorld);
+    auto l_rot_tmp = l_rot.asEulerRotation();
+    if (l_rotate_order != l_rot_tmp.order) l_rot_tmp.reorderIt(l_rotate_order);
+    MAngle l_ang{};
+    // rot x
+    {
+      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_X, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      maya_chick(l_status);
+      l_ang.setUnit(MAngle::kRadians);
+      l_ang.setValue(l_rot_tmp.x);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
+      l_anim_curve->KeyModifyEnd();
+    }
+
+    // rot y
+    {
+      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Y, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      maya_chick(l_status);
+      l_ang.setUnit(MAngle::kRadians);
+      l_ang.setValue(l_rot_tmp.y);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
+      l_anim_curve->KeyModifyEnd();
+    }
+
+    // rot z
+    {
+      auto* l_anim_curve = node->LclRotation.GetCurve(l_layer, FBXSDK_CURVENODE_COMPONENT_Z, true);
+      l_anim_curve->KeyModifyBegin();
+      auto l_key_index = l_anim_curve->KeyAdd(l_fbx_time);
+      maya_chick(l_status);
+      l_ang.setUnit(MAngle::kRadians);
+      l_ang.setValue(l_rot_tmp.z);
+      l_anim_curve->KeySet(l_key_index, l_fbx_time, l_ang.asDegrees());
+      l_anim_curve->KeyModifyEnd();
+    }
+  }
 }
 
 ///
@@ -1435,7 +1510,6 @@ void fbx_write::write_end() {
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_ANIMATION, true);
   manager_->GetIOSettings()->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
   manager_->GetIOSettings()->SetBoolProp(EXP_ASCIIFBX, true);
-  ascii_fbx_ = true;
   if (!l_exporter->Initialize(
           path_.generic_string().c_str(),
           ascii_fbx_ ? manager_->GetIOPluginRegistry()->FindWriterIDByDescription("FBX ascii (*.fbx)")
