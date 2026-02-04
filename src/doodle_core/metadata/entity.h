@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/base.h>
 
 #include <bitset>
+#include <string>
 
 namespace doodle {
 
@@ -126,9 +127,23 @@ struct DOODLE_CORE_API entity_asset_extend {
   }
   // from json
   friend void from_json(const nlohmann::json& j, entity_asset_extend& p) {
-    if (j.contains("ji_shu_lie")) j.at("ji_shu_lie").get_to(p.ji_shu_lie_);
+    if (j.contains("ji_shu_lie")) {
+      if (!j.at("ji_shu_lie").is_string()) {
+        std::string l_temp;
+        j.at("ji_shu_lie").get_to(l_temp);
+        p.ji_shu_lie_ = std::stoi(l_temp);
+      } else
+        j.at("ji_shu_lie").get_to(p.ji_shu_lie_);
+    }
     if (j.contains("deng_ji")) j.at("deng_ji").get_to(p.deng_ji_);
-    if (j.contains("gui_dang")) j.at("gui_dang").get_to(p.gui_dang_);
+    if (j.contains("gui_dang")) {
+      if (!j.at("gui_dang").is_string()) {
+        std::string l_temp;
+        j.at("gui_dang").get_to(l_temp);
+        p.gui_dang_ = std::stoi(l_temp);
+      } else
+        j.at("gui_dang").get_to(p.gui_dang_);
+    }
     if (j.contains("bian_hao")) j.at("bian_hao").get_to(p.bian_hao_);
     if (j.contains("pin_yin_ming_cheng")) j.at("pin_yin_ming_cheng").get_to(p.pin_yin_ming_cheng_);
     if (j.contains("ban_ben")) j.at("ban_ben").get_to(p.ban_ben_);
