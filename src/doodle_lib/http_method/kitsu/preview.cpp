@@ -118,6 +118,13 @@ std::tuple<std::size_t, std::size_t> get_image_size(const FSys::path& in_path) {
   return {l_cv.cols, l_cv.rows};
 }
 
+struct handle_video_file_t {
+  FSys::path video_path_;
+  std::size_t fps_{0};
+  cv::Size size_{0, 0};
+  std::shared_ptr<preview_file> preview_file_;
+};
+
 cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
@@ -166,15 +173,15 @@ cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
 }
 
 /// 创建视频平铺图像
-auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_size) {
+auto create_video_tile_image(cv::VideoCapture& in_capture, const handle_video_file_t& in_files) {
   auto l_now = std::chrono::steady_clock::now();
-  spdlog::warn("创建视频平铺图像, 目标尺寸 {}x{}", in_size.width, in_size.height);
+  spdlog::warn("创建视频平铺图像, 目标尺寸 {}x{}", in_files.size_.width, in_files.size_.height);
   const std::double_t l_frame_count = in_capture.get(cv::CAP_PROP_FRAME_COUNT);
   const std::int32_t l_rows         = std::min(480, boost::numeric_cast<std::int32_t>(std::ceil(l_frame_count / 8)));
   const std::int32_t l_cols{8};
   // 确认步进大小
   const std::double_t l_step = l_frame_count > (l_rows * l_cols) ? l_frame_count / l_rows / l_cols : 1.0;
-  const std::int32_t l_height{100}, l_width{boost::numeric_cast<std::int32_t>(in_size.aspectRatio() * 100)};
+  const std::int32_t l_height{100}, l_width{boost::numeric_cast<std::int32_t>(in_files.size_.aspectRatio() * 100)};
   cv::Mat l_tiles = cv::Mat::zeros(l_rows * l_height, l_cols * l_width, CV_8UC3);
   cv::Mat l_frame{};
   const auto l_total_tiles = static_cast<std::int32_t>(l_rows * l_cols);
@@ -184,7 +191,13 @@ auto create_video_tile_image(cv::VideoCapture& in_capture, const cv::Size& in_si
     l_needed_frames.insert(boost::numeric_cast<std::int32_t>(std::floor(l_i * l_step)));
   in_capture.set(cv::CAP_PROP_POS_FRAMES, 0);
   for (std::int32_t l_i = 0; l_i < l_frame_count && l_i < l_total_tiles; ++l_i) {
-    DOODLE_CHICK(in_capture.read(l_frame), "读取视频帧失败");
+    if (in_capture.read(l_frame) == false || l_frame.empty()) {
+      SPDLOG_LOGGER_WARN(
+          g_logger_ctrl().get_long_task(), "读取视频 {} 帧失败, 当前帧 {}, 总帧数 {}", in_files.video_path_, l_i,
+          l_frame_count
+      );
+      continue;
+    }
     if (l_needed_frames.contains(l_i)) {
       std::int32_t l_row{l_i / l_cols}, l_col{l_i % l_cols};
       cv::resize(l_frame, l_frame, cv::Size{l_width, l_height}, 0, 0);
@@ -216,6 +229,8 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
     const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
     const std::shared_ptr<preview_file>& in_preview_file
 ) {
+  handle_video_file_t l_files{in_path, in_fps, in_size, in_preview_file};
+
   auto l_low_file_path         = g_ctx().get<kitsu_ctx_t>().get_movie_lowdef_file(in_preview_file->uuid_id_);
   auto l_high_file_path        = g_ctx().get<kitsu_ctx_t>().get_movie_preview_file(in_preview_file->uuid_id_);
   auto l_low_file_path_backup  = FSys::add_time_stamp(l_low_file_path);
@@ -244,7 +259,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   l_video >> l_frame;
   if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
   save_variants(l_frame, in_preview_file->uuid_id_);
-  auto l_tiles = create_video_tile_image(l_video, l_high_size);
+  auto l_tiles = create_video_tile_image(l_video, l_files);
   auto l_path  = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
                 FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
   auto l_path_backup = FSys::add_time_stamp(l_path);
