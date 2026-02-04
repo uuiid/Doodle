@@ -437,9 +437,11 @@ void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime
 }
 
 void archive_out::open(const std::vector<MDagPath>& in_out_path) {
-  o_archive_ = std::make_shared<Alembic::Abc::OArchive>(std::move(
+  static auto l_version_str = fmt::format("doodle {}", version::build_info::get().version_str);
+
+  o_archive_                = std::make_shared<Alembic::Abc::OArchive>(std::move(
       Alembic::Abc::v12::CreateArchiveWithInfo(
-          Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), "doodle alembic"s,
+          Alembic::AbcCoreOgawa::WriteArchive{}, out_path_.generic_string(), l_version_str,
           maya_plug::maya_file_io::get_current_path().generic_string(), Alembic::Abc::ErrorHandler::kThrowPolicy
       )
   ));

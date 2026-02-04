@@ -4,6 +4,7 @@
 
 #include "fbx_write.h"
 
+#include "doodle_core/configure/config.h"
 #include <doodle_core/exception/exception.h>
 
 #include <boost/lambda2.hpp>
@@ -19,6 +20,7 @@
 #include "data/maya_tool.h"
 #include "exception/exception.h"
 #include <fbxsdk.h>
+#include <fmt/format.h>
 #include <fmt/std.h>
 #include <maya/MAnimControl.h>
 #include <maya/MDagPathArray.h>
@@ -1118,17 +1120,18 @@ fbx_write::fbx_write() {
   manager_ = std::shared_ptr<FbxManager>{FbxManager::Create(), [](FbxManager* in_ptr) { in_ptr->Destroy(); }};
   scene_   = FbxScene::Create(manager_.get(), "doodle_to_ue_fbx");
   manager_->SetIOSettings(FbxIOSettings::Create(manager_.get(), IOSROOT));
-  auto l_doc_info      = FbxDocumentInfo::Create(manager_.get(), "DocInfo");
-  l_doc_info->mTitle   = "doodle fbx";
-  l_doc_info->mSubject = "doodle fbx";
-  l_doc_info->mAuthor  = "doodle";
+  auto l_doc_info           = FbxDocumentInfo::Create(manager_.get(), "DocInfo");
+  static auto l_version_str = fmt::format("doodle {}", version::build_info::get().version_str);
+  l_doc_info->mTitle        = l_version_str.data();
+  l_doc_info->mSubject      = l_version_str.data();
+  l_doc_info->mAuthor       = l_version_str.data();
   l_doc_info->Original_ApplicationVendor.Set("doodle");
   l_doc_info->Original_ApplicationName.Set("doodle");
-  l_doc_info->Original_ApplicationVersion.Set("1.0.0");
+  l_doc_info->Original_ApplicationVersion.Set(version::build_info::get().version_str.data());
 
   l_doc_info->LastSaved_ApplicationVendor.Set("doodle");
   l_doc_info->LastSaved_ApplicationName.Set("doodle");
-  l_doc_info->LastSaved_ApplicationVersion.Set("1.0.0");
+  l_doc_info->LastSaved_ApplicationVersion.Set(version::build_info::get().version_str.data());
 
   scene_->SetSceneInfo(l_doc_info);
   scene_->GetGlobalSettings().SetSystemUnit(FbxSystemUnit::cm);
