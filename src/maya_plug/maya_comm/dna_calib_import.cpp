@@ -9,14 +9,20 @@
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
 #include <maya/MArgDatabase.h>
+#include <maya/MFloatArray.h>
 #include <maya/MFn.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MFnMesh.h>
 #include <maya/MGlobal.h>
+#include <maya/MIntArray.h>
 #include <maya/MObject.h>
+#include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MSyntax.h>
+#include <numeric>
 #include <pma/ScopedPtr.h>
+#include <vector>
 
 namespace fmt {
 // fmt dna StringView
@@ -57,8 +63,74 @@ class dna_calib_import::impl {
 
     auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
     for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
-      auto l_name = l_dna_render->getMeshName(i);
-      MGlobal::displayInfo(conv::to_ms(fmt::format("Mesh {}: 名称: {} ", i, l_name)));
+      auto l_name         = l_dna_render->getMeshName(i);
+
+      auto l_vertex_count = l_dna_render->getVertexPositionCount(i);
+      if (l_vertex_count == 0) continue;
+      auto l_uv_count     = l_dna_render->getVertexTextureCoordinateCount(i);
+      auto l_layout_count = l_dna_render->getVertexLayoutCount(i);
+      auto l_face_count   = l_dna_render->getFaceCount(i);
+      MGlobal::displayInfo(
+          conv::to_ms(
+              fmt::format(
+                  "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", i, l_name, l_vertex_count,
+                  l_uv_count, l_layout_count, l_face_count
+              )
+          )
+      );
+      MPointArray l_vertices{};
+      l_vertices.setLength(static_cast<unsigned int>(l_vertex_count));
+      for (auto j = 0; j < l_vertex_count; ++j) {
+        auto l_pos = l_dna_render->getVertexPosition(i, j);
+        l_vertices.set(static_cast<unsigned int>(j), l_pos.x, l_pos.y, l_pos.z);
+      }
+      std::vector<dna::VertexLayout> l_layouts{};
+      l_layouts.reserve(static_cast<size_t>(l_layout_count));
+      for (auto j = 0; j < l_layout_count; ++j) {
+        auto l_layout = l_dna_render->getVertexLayout(i, j);
+        l_layouts.push_back(l_layout);
+      }
+
+      MFloatArray l_u_array{}, l_v_array{};
+      l_u_array.setLength(static_cast<unsigned int>(l_uv_count));
+      l_v_array.setLength(static_cast<unsigned int>(l_uv_count));
+      for (auto j = 0; j < l_uv_count; ++j) {
+        auto l_uv = l_dna_render->getVertexTextureCoordinate(i, j);
+        l_u_array.set(l_uv.u, static_cast<unsigned int>(j));
+        l_v_array.set(l_uv.v, static_cast<unsigned int>(j));
+      }
+
+      MIntArray l_face_vertex_counts{};
+      MIntArray l_face_vertex_indices{};
+      l_face_vertex_indices.setSizeIncrement(l_face_count);
+      l_face_vertex_counts.setLength(static_cast<unsigned int>(l_face_count));
+      for (auto j = 0; j < l_face_count; ++j) {
+        auto l_indices = l_dna_render->getFaceVertexLayoutIndices(i, j);
+        l_face_vertex_counts.set(static_cast<int>(l_indices.size()), static_cast<unsigned int>(j));
+        for (auto k = 0; k < l_indices.size(); ++k) {
+          l_face_vertex_indices.append(static_cast<int>(l_layouts[l_indices[k]].position));
+        }
+      }
+
+      MFnMesh l_fn_mesh{};
+      MStatus l_status{};
+      if (auto l_sum = std::reduce(l_face_vertex_counts.begin(), l_face_vertex_counts.end());
+          l_sum != static_cast<int>(l_face_vertex_indices.length()))
+        return MGlobal::displayError(
+                   conv::to_ms(
+                       fmt::format(
+                           "面顶点数量与顶点索引数量不匹配, 面顶点数量总和: {}, 顶点索引数量: {}", l_sum,
+                           l_face_vertex_indices.length()
+                       )
+                   )
+               ),
+               MS::kFailure;
+      // l_u_array, l_v_array,
+      l_fn_mesh.create(
+          static_cast<unsigned int>(l_vertex_count), static_cast<unsigned int>(l_face_count), l_vertices,
+          l_face_vertex_counts, l_face_vertex_indices, MObject::kNullObj, &l_status
+      );
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     }
     return MS::kSuccess;
   }
@@ -103,8 +175,7 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   if (p_i->file_path.empty() || !FSys::exists(p_i->file_path))
     return displayError(conv::to_ms(fmt::format("dna文件不存在: {}", p_i->file_path.generic_string()))), MS::kFailure;
   // 读取文件
-  p_i->import_dna_calib();
-  return MS::kSuccess;
+  return p_i->import_dna_calib();
 }
 
 }  // namespace doodle::maya_plug
