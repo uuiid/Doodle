@@ -11,3 +11,9 @@ target_sources(
         sqlite_upgrade.cpp
 )
 add_subdirectory(detail)
+
+set_source_files_properties(
+        sqlite_database.cpp
+        TARGET_DIRECTORY doodle_core
+        PROPERTIES JOB_POOL_COMPILE sql_query_pool
+)
