@@ -18,6 +18,20 @@
 #include <maya/MSyntax.h>
 #include <pma/ScopedPtr.h>
 
+namespace fmt {
+// fmt dna StringView
+template <>
+struct formatter<dna::StringView> : formatter<string_view> {
+  constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) { return ctx.end(); }
+
+  template <typename FormatContext>
+  auto format(const dna::StringView& sv, FormatContext& ctx) const -> decltype(ctx.out()) {
+    return formatter<string_view>::format(std::string_view{sv.data(), sv.size()}, ctx);
+  }
+};
+
+}  // namespace fmt
+
 namespace doodle::maya_plug {
 MSyntax dna_calib_import_syntax() {
   MSyntax l_syntax{};
