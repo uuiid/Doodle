@@ -63,6 +63,8 @@ set_source_files_properties(
         casting.cpp
         auth_outsource.cpp
         computing_time.cpp
+        action.cpp
+        auto_task.cpp
         
         TARGET_DIRECTORY doodle_lib
         PROPERTIES JOB_POOL_COMPILE sql_query_pool

@@ -5,7 +5,7 @@
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
+#include "doodle_core/metadata/playlist.h"
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 

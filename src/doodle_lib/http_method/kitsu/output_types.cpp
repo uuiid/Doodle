@@ -1,7 +1,6 @@
 //
 // Created by TD on 25-8-12.
 //
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 

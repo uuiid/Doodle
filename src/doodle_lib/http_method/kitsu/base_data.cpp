@@ -14,7 +14,6 @@
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
