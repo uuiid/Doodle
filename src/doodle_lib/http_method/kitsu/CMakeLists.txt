@@ -47,3 +47,9 @@ target_sources(
         computing_time.cpp
 
 )
+
+# 这个文件夹中所有的源文件都要使用限制池构建
+set_source_files_properties(
+        DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+        PROPERTIES JOB_POOL sql_query_pool
+)
