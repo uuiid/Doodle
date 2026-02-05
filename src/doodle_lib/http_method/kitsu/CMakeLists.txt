@@ -65,7 +65,8 @@ set_source_files_properties(
         computing_time.cpp
         action.cpp
         auto_task.cpp
-        
+        compose_video.cpp
+
         TARGET_DIRECTORY doodle_lib
         PROPERTIES JOB_POOL_COMPILE sql_query_pool
 )
