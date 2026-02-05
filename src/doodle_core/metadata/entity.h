@@ -128,7 +128,7 @@ struct DOODLE_CORE_API entity_asset_extend {
   // from json
   friend void from_json(const nlohmann::json& j, entity_asset_extend& p) {
     if (j.contains("ji_shu_lie")) {
-      if (!j.at("ji_shu_lie").is_string()) {
+      if (j.at("ji_shu_lie").is_string()) {
         std::string l_temp;
         j.at("ji_shu_lie").get_to(l_temp);
         p.ji_shu_lie_ = std::stoi(l_temp);
@@ -137,7 +137,7 @@ struct DOODLE_CORE_API entity_asset_extend {
     }
     if (j.contains("deng_ji")) j.at("deng_ji").get_to(p.deng_ji_);
     if (j.contains("gui_dang")) {
-      if (!j.at("gui_dang").is_string()) {
+      if (j.at("gui_dang").is_string()) {
         std::string l_temp;
         j.at("gui_dang").get_to(l_temp);
         p.gui_dang_ = std::stoi(l_temp);
