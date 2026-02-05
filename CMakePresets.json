@@ -77,7 +77,6 @@
     {
       "name": "debug",
       "configurePreset": "Ninja_debug",
-      "jobs": 5,
       "hidden": true
     },
     {
