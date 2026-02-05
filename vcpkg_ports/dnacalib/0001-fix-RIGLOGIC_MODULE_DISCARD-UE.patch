@@ -1,0 +1,47 @@
+From f64112b15e65c1c9fc7030bb28e67eaf13ce42b9 Mon Sep 17 00:00:00 2001
+From: uuiid <957714080@qq.com>
+Date: Thu, 5 Feb 2026 09:27:29 +0800
+Subject: [PATCH] fix RIGLOGIC_MODULE_DISCARD UE
+
+---
+ .../RigLogicLib/Public/FMemoryResource.h       | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Public/FMemoryResource.h b/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Public/FMemoryResource.h
+index 75fced72a1a9..94819227b617 100644
+--- a/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Public/FMemoryResource.h
++++ b/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Public/FMemoryResource.h
+@@ -1,6 +1,7 @@
+ // Copyright Epic Games, Inc. All Rights Reserved.
+ 
+ #pragma once
++#ifndef RIGLOGIC_MODULE_DISCARD
+ 
+ #include "CoreMinimal.h"
+ #include "HAL/UnrealMemory.h"
+@@ -30,5 +31,22 @@ public:
+ 	{
+ 		return SharedInstance().Get();
+ 	}
++};
++
++#else
++
++class FMemoryResource : public pma::DefaultMemoryResource
++{
++public:
++	static TSharedPtr<FMemoryResource> SharedInstance()
++	{
++		static TSharedPtr<FMemoryResource> MemoryResource = MakeShared<FMemoryResource>();
++		return MemoryResource;
++	}
+ 
++	static MemoryResource* Instance()
++	{
++		return SharedInstance().Get();
++	}
+ };
++#endif  // RIGLOGIC_MODULE_DISCARD
+-- 
+2.51.1.windows.1
+
