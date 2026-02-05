@@ -6,7 +6,7 @@
 
 #include "data/maya_conv_str.h"
 #include "data/maya_tool.h"
-// #include <dnacalib/DNACalib.h>
+#include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MFn.h>
@@ -16,7 +16,7 @@
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MSyntax.h>
-// #include <pma/ScopedPtr.h>
+#include <pma/ScopedPtr.h>
 
 namespace doodle::maya_plug {
 MSyntax dna_calib_import_syntax() {
@@ -32,20 +32,20 @@ class dna_calib_import::impl {
   MObject dna_node_obj{};
 
   MStatus import_dna_calib() {
-    // auto l_dna_file = dnac::makeScoped<dnac::FileStream>(
-    //     file_path.generic_string().data(), dnac::FileStream::AccessMode::ReadWrite, dnac::FileStream::OpenMode::Binary
-    // );
-    // auto l_render = dnac::makeScoped<dnac::BinaryStreamReader>(l_dna_file.get());
-    // l_render->read();
-    // if (!dnac::Status::isOk())
-    //   return MGlobal::displayError(conv::to_ms(fmt::format("读取dna文件失败: {} ", dnac::Status::get().message))),
-    //          MS::kFailure;
+    auto l_dna_file = dnac::makeScoped<dnac::FileStream>(
+        file_path.generic_string().data(), dnac::FileStream::AccessMode::ReadWrite, dnac::FileStream::OpenMode::Binary
+    );
+    auto l_render = dnac::makeScoped<dnac::BinaryStreamReader>(l_dna_file.get());
+    l_render->read();
+    if (!dnac::Status::isOk())
+      return MGlobal::displayError(conv::to_ms(fmt::format("读取dna文件失败: {} ", dnac::Status::get().message))),
+             MS::kFailure;
 
-    // auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
-    // for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
-    //   auto l_name = l_dna_render->getMeshName(i);
-    //   MGlobal::displayInfo(conv::to_ms(fmt::format("Mesh {}: 名称: {} ", i, l_name)));
-    // }
+    auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
+    for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
+      auto l_name = l_dna_render->getMeshName(i);
+      MGlobal::displayInfo(conv::to_ms(fmt::format("Mesh {}: 名称: {} ", i, l_name)));
+    }
     return MS::kSuccess;
   }
 };

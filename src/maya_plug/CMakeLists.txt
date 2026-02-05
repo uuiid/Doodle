@@ -36,7 +36,7 @@ target_link_libraries(doodle_maya_lib
         Alembic::Alembic
         Fbx::Fbx-static
         CGAL::CGAL
-        # DNACalib::dnacalib
+        dnacalib::dnacalib
 )
 
 target_compile_options(

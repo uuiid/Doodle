@@ -106,7 +106,8 @@
         "all-gpl",
         "drawtext"
       ]
-    }
+    },
+    "dnacalib"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
