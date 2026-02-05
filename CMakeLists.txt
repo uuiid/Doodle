@@ -50,8 +50,11 @@ option(BUILD_LIMITED_1 "受限构建" OFF)
 option(BUILD_USD "构建usd相关" OFF)
 
 # 设置 Ninja 线程池, 这个池是用来限制生成查询数据库模板时占用过高的内存, 默认是 3
-set_property(GLOBAL PROPERTY JOB_POOLS sql_query_pool=3) 
-
+include(ProcessorCount)
+ProcessorCount(DOODLE_CORES)
+set_property(GLOBAL PROPERTY JOB_POOLS sql_query_pool=3 sql_query_pool_compile=${DOODLE_CORES}) 
+set(CMAKE_JOB_POOL_COMPILE sql_query_pool_compile)
+set(CMAKE_JOB_POOL_LINK sql_query_pool_compile)
 # 首先搜索我们的自定义函数
 list(APPEND CMAKE_PREFIX_PATH ${PROJECT_SOURCE_DIR}/CMake)
 
