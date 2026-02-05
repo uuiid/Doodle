@@ -73,7 +73,7 @@ target_include_directories(${PROJECT_NAME}
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Plugins/Animation/DNACalib/Source/DNACalibLib/Private
         ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Plugins/Animation/RigLogic/Source/RigLogicLib/Private
-        ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Source/Runtime/Core/Public
+        # ${CMAKE_CURRENT_SOURCE_DIR}/Engine/Source/Runtime/Core/Public
 )
 
 target_sources(
