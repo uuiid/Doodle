@@ -6,6 +6,7 @@
 
 #include "data/maya_conv_str.h"
 #include "data/maya_tool.h"
+#include <arrayview/ArrayView.h>
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
 #include <maya/MArgDatabase.h>
@@ -57,9 +58,7 @@ class dna_calib_import::impl {
     );
     auto l_render = dnac::makeScoped<dnac::BinaryStreamReader>(l_dna_file.get());
     l_render->read();
-    if (!dnac::Status::isOk())
-      return MGlobal::displayError(conv::to_ms(fmt::format("读取dna文件失败: {} ", dnac::Status::get().message))),
-             MS::kFailure;
+    if (!dnac::Status::isOk()) return display_error("读取dna文件失败: {} ", dnac::Status::get().message), MS::kFailure;
 
     auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
     for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
@@ -70,13 +69,9 @@ class dna_calib_import::impl {
       auto l_uv_count     = l_dna_render->getVertexTextureCoordinateCount(i);
       auto l_layout_count = l_dna_render->getVertexLayoutCount(i);
       auto l_face_count   = l_dna_render->getFaceCount(i);
-      MGlobal::displayInfo(
-          conv::to_ms(
-              fmt::format(
-                  "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", i, l_name, l_vertex_count,
-                  l_uv_count, l_layout_count, l_face_count
-              )
-          )
+      display_info(
+          "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", i, l_name, l_vertex_count, l_uv_count,
+          l_layout_count, l_face_count
       );
       MPointArray l_vertices{};
       l_vertices.setLength(static_cast<unsigned int>(l_vertex_count));
@@ -91,24 +86,43 @@ class dna_calib_import::impl {
         l_layouts.push_back(l_layout);
       }
 
-      MFloatArray l_u_array{}, l_v_array{};
-      l_u_array.setLength(static_cast<unsigned int>(l_uv_count));
-      l_v_array.setLength(static_cast<unsigned int>(l_uv_count));
-      for (auto j = 0; j < l_uv_count; ++j) {
-        auto l_uv = l_dna_render->getVertexTextureCoordinate(i, j);
-        l_u_array.set(l_uv.u, static_cast<unsigned int>(j));
-        l_v_array.set(l_uv.v, static_cast<unsigned int>(j));
-      }
-
       MIntArray l_face_vertex_counts{};
       MIntArray l_face_vertex_indices{};
+      std::vector<dna::ConstArrayView<std::uint32_t>> l_face_layout_indices{};
+      l_face_layout_indices.reserve(static_cast<size_t>(l_face_count));
       l_face_vertex_indices.setSizeIncrement(l_face_count);
       l_face_vertex_counts.setLength(static_cast<unsigned int>(l_face_count));
       for (auto j = 0; j < l_face_count; ++j) {
         auto l_indices = l_dna_render->getFaceVertexLayoutIndices(i, j);
+        l_face_layout_indices.push_back(l_indices);
         l_face_vertex_counts.set(static_cast<int>(l_indices.size()), static_cast<unsigned int>(j));
         for (auto k = 0; k < l_indices.size(); ++k) {
           l_face_vertex_indices.append(static_cast<int>(l_layouts[l_indices[k]].position));
+        }
+      }
+
+      std::vector<dna::TextureCoordinate> l_uvs{};
+      l_uvs.reserve(static_cast<size_t>(l_uv_count));
+      for (auto j = 0; j < l_uv_count; ++j) {
+        auto l_uv = l_dna_render->getVertexTextureCoordinate(i, j);
+        l_uvs.push_back(l_uv);
+      }
+      MFloatArray l_u_array{}, l_v_array{};
+      l_u_array.setLength(static_cast<unsigned int>(l_uv_count));
+      l_v_array.setLength(static_cast<unsigned int>(l_uv_count));
+      for (auto&& l_face : l_face_layout_indices) {
+        for (auto&& l_idx : l_face) {
+          // l_face_vertex_indices.append(static_cast<int>(l_layouts[l_idx].position));
+          auto l_uv_idx = l_layouts[l_idx].textureCoordinate;
+          if (l_uv_idx < l_uv_count) {
+            l_u_array.set(static_cast<float>(l_uvs[l_uv_idx].u), static_cast<unsigned int>(l_uv_idx));
+            l_v_array.set(static_cast<float>(l_uvs[l_uv_idx].v), static_cast<unsigned int>(l_uv_idx));
+          } else {
+            return display_warning(
+                       "Mesh {} 面的顶点使用了不存在的uv索引: {}, 总uv数量: {}", l_name, l_uv_idx, l_uv_count
+                   ),
+                   MS::kFailure;
+          }
         }
       }
 
@@ -116,13 +130,9 @@ class dna_calib_import::impl {
       MStatus l_status{};
       if (auto l_sum = std::reduce(l_face_vertex_counts.begin(), l_face_vertex_counts.end());
           l_sum != static_cast<int>(l_face_vertex_indices.length()))
-        return MGlobal::displayError(
-                   conv::to_ms(
-                       fmt::format(
-                           "面顶点数量与顶点索引数量不匹配, 面顶点数量总和: {}, 顶点索引数量: {}", l_sum,
-                           l_face_vertex_indices.length()
-                       )
-                   )
+        return display_error(
+                   "面顶点数量与顶点索引数量不匹配, 面顶点数量总和: {}, 顶点索引数量: {}", l_sum,
+                   l_face_vertex_indices.length()
                ),
                MS::kFailure;
       // l_u_array, l_v_array,
@@ -160,8 +170,7 @@ MStatus dna_calib_import::get_arg(const MArgList& in_arg) {
 MStatus dna_calib_import::doIt(const MArgList& in_list) {
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(get_arg(in_list));
 
-  if (p_i->dna_node_obj.isNull())
-    return displayError(conv::to_ms(fmt::format("未选择dna_calib_node节点"))), MS::kFailure;
+  if (p_i->dna_node_obj.isNull()) return display_error("未选择dna_calib_node节点"), MS::kFailure;
 
   // 找到属性
   MStatus l_status{};
@@ -173,7 +182,7 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_plug_file_path.getValue(l_file_path_ms));
   p_i->file_path = conv::to_s(l_file_path_ms);
   if (p_i->file_path.empty() || !FSys::exists(p_i->file_path))
-    return displayError(conv::to_ms(fmt::format("dna文件不存在: {}", p_i->file_path.generic_string()))), MS::kFailure;
+    return display_error("dna文件不存在: {}", p_i->file_path.generic_string()), MS::kFailure;
   // 读取文件
   return p_i->import_dna_calib();
 }

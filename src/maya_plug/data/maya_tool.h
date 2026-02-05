@@ -10,6 +10,7 @@
 
 #include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
+#include <maya/MGlobal.h>
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <type_traits>
@@ -83,6 +84,25 @@ std::double_t fps();
 
 namespace comm_warp {
 MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_marge_name);
+}
+
+template <typename... Args>
+void display_warning(fmt::format_string<Args...> fmt_str, Args&&... in_args) {
+  MGlobal::displayWarning(
+      conv::to_ms(fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...))
+  );
+}
+template <typename... Args>
+void display_info(fmt::format_string<Args...> fmt_str, Args&&... in_args) {
+  MGlobal::displayInfo(
+      conv::to_ms(fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...))
+  );
+}
+template <typename... Args>
+void display_error(fmt::format_string<Args...> fmt_str, Args&&... in_args) {
+  MGlobal::displayError(
+      conv::to_ms(fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...))
+  );
 }
 
 }  // namespace doodle::maya_plug
