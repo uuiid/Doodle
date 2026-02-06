@@ -11,10 +11,12 @@
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
 #include <maya/MArgDatabase.h>
+#include <maya/MDagModifier.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MIntArray.h>
 #include <maya/MObject.h>
@@ -56,6 +58,18 @@ class dna_calib_import::impl {
   dnac::ScopedPtr<dnac::FileStream> dna_file_stream_;
   dnac::ScopedPtr<dnac::BinaryStreamReader> binary_stream_reader_;
   dnac::ScopedPtr<dnac::DNACalibDNAReader> dna_calib_dna_reader_;
+  MDagModifier dag_modifier_{};
+
+  MObject head_grp_obj_{};
+  MObject geometry_grp_obj_{};
+  MObject rig_grp_obj_{};
+
+  struct lod_group_info {
+    MObject lod_grp_obj_;
+    dnac::ConstArrayView<std::uint16_t> mesh_indices_;
+  };
+
+  std::vector<lod_group_info> lod_grp_objs_{};
 
   MStatus open_dna_file(const FSys::path& in_path) {
     file_path        = in_path;
@@ -70,13 +84,99 @@ class dna_calib_import::impl {
     return MS::kSuccess;
   }
 
+  void conv_units() {
+    auto l_translation_unit = dna_calib_dna_reader_->getTranslationUnit();
+    switch (l_translation_unit) {
+      case dna::TranslationUnit::cm:
+        display_warning("当前 dna 文件使用厘米单位, Maya 默认使用厘米单位, 无需转换");
+        break;
+      case dna::TranslationUnit::m:
+        display_info("当前 dna 文件使用米单位, 需要转换为厘米单位");
+        break;
+      default:
+        break;
+    }
+    auto l_rotation_unit = dna_calib_dna_reader_->getRotationUnit();
+    switch (l_rotation_unit) {
+      case dna::RotationUnit::degrees:
+        display_warning("当前 dna 文件使用角度单位, Maya 默认使用角度单位, 无需转换");
+        break;
+      case dna::RotationUnit::radians:
+        display_info("当前 dna 文件使用弧度单位, 需要转换为角度单位");
+        break;
+      default:
+        break;
+    }
+  }
+
   MStatus import_dna_calib() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(open_dna_file(file_path));
+
+    conv_units();
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
     for (auto i = 0; i < dna_calib_dna_reader_->getMeshCount(); ++i) {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     }
     return MS::kSuccess;
   }
+
+  MObject get_group_obj(const char* in_group_name) {
+    MSelectionList l_sel_list{};
+    MGlobal::getSelectionListByName(in_group_name, l_sel_list);
+    MObject l_obj{};
+    CHECK_MSTATUS_AND_RETURN(l_sel_list.getDependNode(0, l_obj), MObject::kNullObj);
+    return l_obj;
+  }
+
+  MStatus create_groups() {
+    constexpr auto g_top_level_group{"head_grp"};
+    constexpr auto g_geometry_group{"geometry_grp"};
+    constexpr auto g_rig_group{"head_rig_grp"};
+    MStatus l_status{};
+
+    MObject l_top_level_group = get_group_obj(g_top_level_group);
+    if (l_top_level_group.isNull()) {
+      dag_modifier_.createNode("transform", MObject::kNullObj, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_top_level_group, g_top_level_group));
+    }
+
+    MObject l_geometry_group = get_group_obj(g_geometry_group);
+    if (l_geometry_group.isNull()) {
+      l_geometry_group = dag_modifier_.createNode("transform", l_top_level_group, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_geometry_group, g_geometry_group));
+    }
+    MObject l_rig_group = get_group_obj(g_rig_group);
+    if (l_rig_group.isNull()) {
+      l_rig_group = dag_modifier_.createNode("transform", l_top_level_group, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_rig_group, g_rig_group));
+    }
+
+    for (auto i = 0; i < dna_calib_dna_reader_->getLODCount(); ++i) {
+      auto l_lod_mesh_index = dna_calib_dna_reader_->getMeshIndicesForLOD(i);
+      auto l_lod_group_name = fmt::format("lod_{}_grp", i);
+      MObject l_lod_group   = get_group_obj(l_lod_group_name.data());
+      if (l_lod_group.isNull()) {
+        l_lod_group = dag_modifier_.createNode("transform", l_geometry_group, &l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_lod_group, l_lod_group_name.data()));
+        lod_grp_objs_.push_back({l_lod_group, l_lod_mesh_index});
+      }
+    }
+
+    return dag_modifier_.doIt();
+  }
+  MObject get_mesh_lod_group(std::size_t in_mesh_idx) {
+    for (auto&& l_lod_info : lod_grp_objs_) {
+      for (auto&& l_mesh_idx : l_lod_info.mesh_indices_) {
+        if (l_mesh_idx == in_mesh_idx) return l_lod_info.lod_grp_obj_;
+      }
+    }
+    return MObject::kNullObj;
+  }
+
   MStatus create_mesh_from_dna_mesh(std::size_t in_mesh_idx, const MObject& in_parent = MObject::kNullObj) {
     auto l_name         = dna_calib_dna_reader_->getMeshName(in_mesh_idx);
 
