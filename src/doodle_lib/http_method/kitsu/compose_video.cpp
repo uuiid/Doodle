@@ -249,6 +249,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
   auto l_preview_file  = l_sql.get_by_uuid<preview_file>(preview_file_id_);
   person_.check_in_project(l_playlist.project_id_);
+  person_.check_not_outsourcer();
   DOODLE_CHICK_HTTP(!l_playlist_shot.empty(), bad_request, "播放列表中没有任何镜头, 无法生成评审视频");
 
   auto l_task = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
