@@ -62,7 +62,7 @@ set_source_files_properties(
         working_file.cpp
         casting.cpp
         auth_outsource.cpp
-        computing_time.cpp
+        # computing_time.cpp
         action.cpp
         auto_task.cpp
         compose_video.cpp
