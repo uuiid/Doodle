@@ -12,6 +12,7 @@
 #include <fmt/format.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagModifier.h>
+#include <maya/MDagPath.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
 #include <maya/MFnDependencyNode.h>
@@ -123,9 +124,9 @@ class dna_calib_import::impl {
   MObject get_group_obj(const char* in_group_name) {
     MSelectionList l_sel_list{};
     MGlobal::getSelectionListByName(in_group_name, l_sel_list);
-    MObject l_obj{};
-    CHECK_MSTATUS_AND_RETURN(l_sel_list.getDependNode(0, l_obj), MObject::kNullObj);
-    return l_obj;
+    MDagPath l_obj{};
+    CHECK_MSTATUS_AND_RETURN(l_sel_list.getDagPath(0, l_obj), MObject::kNullObj);
+    return l_obj.node();
   }
 
   MStatus create_groups() {
@@ -134,9 +135,11 @@ class dna_calib_import::impl {
     constexpr auto g_rig_group{"head_rig_grp"};
     MStatus l_status{};
 
+    MFnTransform l_transform{};
     MObject l_top_level_group = get_group_obj(g_top_level_group);
     if (l_top_level_group.isNull()) {
-      dag_modifier_.createNode("transform", MObject::kNullObj, &l_status);
+      //  l_transform.create(MObject::kNullObj, &l_status);
+      l_top_level_group = dag_modifier_.createNode("transform", MObject::kNullObj, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_top_level_group, g_top_level_group));
     }
@@ -246,9 +249,16 @@ class dna_calib_import::impl {
         }
       }
     }
+    MStatus l_status{};
+    MObject l_mesh_parent = in_parent;
+    if (!l_mesh_parent.isNull()) {
+      l_mesh_parent = dag_modifier_.createNode("transform", in_parent, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_mesh_parent, l_name.data()));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    }
 
     MFnMesh l_fn_mesh{};
-    MStatus l_status{};
     if (auto l_sum = std::reduce(l_face_vertex_counts.begin(), l_face_vertex_counts.end());
         l_sum != static_cast<int>(l_face_vertex_indices.length()))
       return display_error(
@@ -259,7 +269,7 @@ class dna_calib_import::impl {
     // l_u_array, l_v_array,
     l_fn_mesh.create(
         static_cast<unsigned int>(l_vertex_count), static_cast<unsigned int>(l_face_count), l_vertices,
-        l_face_vertex_counts, l_face_vertex_indices, in_parent, &l_status
+        l_face_vertex_counts, l_face_vertex_indices, l_mesh_parent, &l_status
     );
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.setUVs(l_u_array, l_v_array));
