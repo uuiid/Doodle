@@ -77,7 +77,7 @@ class dna_calib_import::impl {
     }
     return MS::kSuccess;
   }
-  MStatus create_mesh_from_dna_mesh(std::size_t in_mesh_idx) {
+  MStatus create_mesh_from_dna_mesh(std::size_t in_mesh_idx, const MObject& in_parent = MObject::kNullObj) {
     auto l_name         = dna_calib_dna_reader_->getMeshName(in_mesh_idx);
 
     auto l_vertex_count = dna_calib_dna_reader_->getVertexPositionCount(in_mesh_idx);
@@ -159,7 +159,7 @@ class dna_calib_import::impl {
     // l_u_array, l_v_array,
     l_fn_mesh.create(
         static_cast<unsigned int>(l_vertex_count), static_cast<unsigned int>(l_face_count), l_vertices,
-        l_face_vertex_counts, l_face_vertex_indices, MObject::kNullObj, &l_status
+        l_face_vertex_counts, l_face_vertex_indices, in_parent, &l_status
     );
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.setUVs(l_u_array, l_v_array));
