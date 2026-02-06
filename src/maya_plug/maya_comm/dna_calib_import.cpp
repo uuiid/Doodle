@@ -2,6 +2,7 @@
 
 #include "doodle_core/exception/exception.h"
 
+#include "maya_plug_fwd.h"
 #include <maya_plug/node/dna_calib_node.h>
 
 #include "data/maya_conv_str.h"
@@ -52,96 +53,117 @@ class dna_calib_import::impl {
   FSys::path file_path;
   MObject dna_node_obj{};
 
-  MStatus import_dna_calib() {
-    auto l_dna_file = dnac::makeScoped<dnac::FileStream>(
+  dnac::ScopedPtr<dnac::FileStream> dna_file_stream_;
+  dnac::ScopedPtr<dnac::BinaryStreamReader> binary_stream_reader_;
+  dnac::ScopedPtr<dnac::DNACalibDNAReader> dna_calib_dna_reader_;
+
+  MStatus open_dna_file(const FSys::path& in_path) {
+    file_path        = in_path;
+    dna_file_stream_ = dnac::makeScoped<dnac::FileStream>(
         file_path.generic_string().data(), dnac::FileStream::AccessMode::ReadWrite, dnac::FileStream::OpenMode::Binary
     );
-    auto l_render = dnac::makeScoped<dnac::BinaryStreamReader>(l_dna_file.get());
-    l_render->read();
+    binary_stream_reader_ = dnac::makeScoped<dnac::BinaryStreamReader>(dna_file_stream_.get());
+    binary_stream_reader_->read();
     if (!dnac::Status::isOk()) return display_error("读取dna文件失败: {} ", dnac::Status::get().message), MS::kFailure;
 
-    auto l_dna_render = dnac::makeScoped<dnac::DNACalibDNAReader>(l_render.get());
-    for (auto i = 0; i < l_dna_render->getMeshCount(); ++i) {
-      auto l_name         = l_dna_render->getMeshName(i);
+    dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
+    return MS::kSuccess;
+  }
 
-      auto l_vertex_count = l_dna_render->getVertexPositionCount(i);
-      if (l_vertex_count == 0) continue;
-      auto l_uv_count     = l_dna_render->getVertexTextureCoordinateCount(i);
-      auto l_layout_count = l_dna_render->getVertexLayoutCount(i);
-      auto l_face_count   = l_dna_render->getFaceCount(i);
-      display_info(
-          "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", i, l_name, l_vertex_count, l_uv_count,
-          l_layout_count, l_face_count
-      );
-      MPointArray l_vertices{};
-      l_vertices.setLength(static_cast<unsigned int>(l_vertex_count));
-      for (auto j = 0; j < l_vertex_count; ++j) {
-        auto l_pos = l_dna_render->getVertexPosition(i, j);
-        l_vertices.set(static_cast<unsigned int>(j), l_pos.x, l_pos.y, l_pos.z);
-      }
-      std::vector<dna::VertexLayout> l_layouts{};
-      l_layouts.reserve(static_cast<size_t>(l_layout_count));
-      for (auto j = 0; j < l_layout_count; ++j) {
-        auto l_layout = l_dna_render->getVertexLayout(i, j);
-        l_layouts.push_back(l_layout);
-      }
-
-      MIntArray l_face_vertex_counts{};
-      MIntArray l_face_vertex_indices{};
-      std::vector<dna::ConstArrayView<std::uint32_t>> l_face_layout_indices{};
-      l_face_layout_indices.reserve(static_cast<size_t>(l_face_count));
-      l_face_vertex_indices.setSizeIncrement(l_face_count);
-      l_face_vertex_counts.setLength(static_cast<unsigned int>(l_face_count));
-      for (auto j = 0; j < l_face_count; ++j) {
-        auto l_indices = l_dna_render->getFaceVertexLayoutIndices(i, j);
-        l_face_layout_indices.push_back(l_indices);
-        l_face_vertex_counts.set(static_cast<int>(l_indices.size()), static_cast<unsigned int>(j));
-        for (auto k = 0; k < l_indices.size(); ++k) {
-          l_face_vertex_indices.append(static_cast<int>(l_layouts[l_indices[k]].position));
-        }
-      }
-
-      std::vector<dna::TextureCoordinate> l_uvs{};
-      l_uvs.reserve(static_cast<size_t>(l_uv_count));
-      for (auto j = 0; j < l_uv_count; ++j) {
-        auto l_uv = l_dna_render->getVertexTextureCoordinate(i, j);
-        l_uvs.push_back(l_uv);
-      }
-      MFloatArray l_u_array{}, l_v_array{};
-      l_u_array.setLength(static_cast<unsigned int>(l_uv_count));
-      l_v_array.setLength(static_cast<unsigned int>(l_uv_count));
-      for (auto&& l_face : l_face_layout_indices) {
-        for (auto&& l_idx : l_face) {
-          // l_face_vertex_indices.append(static_cast<int>(l_layouts[l_idx].position));
-          auto l_uv_idx = l_layouts[l_idx].textureCoordinate;
-          if (l_uv_idx < l_uv_count) {
-            l_u_array.set(static_cast<float>(l_uvs[l_uv_idx].u), static_cast<unsigned int>(l_uv_idx));
-            l_v_array.set(static_cast<float>(l_uvs[l_uv_idx].v), static_cast<unsigned int>(l_uv_idx));
-          } else {
-            return display_warning(
-                       "Mesh {} 面的顶点使用了不存在的uv索引: {}, 总uv数量: {}", l_name, l_uv_idx, l_uv_count
-                   ),
-                   MS::kFailure;
-          }
-        }
-      }
-
-      MFnMesh l_fn_mesh{};
-      MStatus l_status{};
-      if (auto l_sum = std::reduce(l_face_vertex_counts.begin(), l_face_vertex_counts.end());
-          l_sum != static_cast<int>(l_face_vertex_indices.length()))
-        return display_error(
-                   "面顶点数量与顶点索引数量不匹配, 面顶点数量总和: {}, 顶点索引数量: {}", l_sum,
-                   l_face_vertex_indices.length()
-               ),
-               MS::kFailure;
-      // l_u_array, l_v_array,
-      l_fn_mesh.create(
-          static_cast<unsigned int>(l_vertex_count), static_cast<unsigned int>(l_face_count), l_vertices,
-          l_face_vertex_counts, l_face_vertex_indices, MObject::kNullObj, &l_status
-      );
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  MStatus import_dna_calib() {
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(open_dna_file(file_path));
+    for (auto i = 0; i < dna_calib_dna_reader_->getMeshCount(); ++i) {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i));
     }
+    return MS::kSuccess;
+  }
+  MStatus create_mesh_from_dna_mesh(std::size_t in_mesh_idx) {
+    auto l_name         = dna_calib_dna_reader_->getMeshName(in_mesh_idx);
+
+    auto l_vertex_count = dna_calib_dna_reader_->getVertexPositionCount(in_mesh_idx);
+    if (l_vertex_count == 0) return display_warning("Mesh {} 没有顶点, 跳过创建", l_name), MS::kSuccess;
+    auto l_uv_count     = dna_calib_dna_reader_->getVertexTextureCoordinateCount(in_mesh_idx);
+    auto l_layout_count = dna_calib_dna_reader_->getVertexLayoutCount(in_mesh_idx);
+    auto l_face_count   = dna_calib_dna_reader_->getFaceCount(in_mesh_idx);
+    display_info(
+        "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", in_mesh_idx, l_name, l_vertex_count,
+        l_uv_count, l_layout_count, l_face_count
+    );
+    MPointArray l_vertices{};
+    l_vertices.setLength(static_cast<unsigned int>(l_vertex_count));
+    for (auto j = 0; j < l_vertex_count; ++j) {
+      auto l_pos = dna_calib_dna_reader_->getVertexPosition(in_mesh_idx, j);
+      l_vertices.set(static_cast<unsigned int>(j), l_pos.x, l_pos.y, l_pos.z);
+    }
+    std::vector<dna::VertexLayout> l_layouts{};
+    l_layouts.reserve(static_cast<size_t>(l_layout_count));
+    for (auto j = 0; j < l_layout_count; ++j) {
+      auto l_layout = dna_calib_dna_reader_->getVertexLayout(in_mesh_idx, j);
+      l_layouts.push_back(l_layout);
+    }
+
+    MIntArray l_face_vertex_counts{};
+    MIntArray l_face_vertex_indices{};
+    std::vector<dna::ConstArrayView<std::uint32_t>> l_face_layout_indices{};
+    l_face_layout_indices.reserve(static_cast<size_t>(l_face_count));
+    l_face_vertex_indices.setSizeIncrement(l_face_count);
+    l_face_vertex_counts.setLength(static_cast<unsigned int>(l_face_count));
+    for (auto j = 0; j < l_face_count; ++j) {
+      auto l_indices = dna_calib_dna_reader_->getFaceVertexLayoutIndices(in_mesh_idx, j);
+      l_face_layout_indices.push_back(l_indices);
+      l_face_vertex_counts.set(static_cast<int>(l_indices.size()), static_cast<unsigned int>(j));
+      for (auto k = 0; k < l_indices.size(); ++k) {
+        l_face_vertex_indices.append(static_cast<int>(l_layouts[l_indices[k]].position));
+      }
+    }
+
+    std::vector<dna::TextureCoordinate> l_uvs{};
+    l_uvs.reserve(static_cast<size_t>(l_uv_count));
+    for (auto j = 0; j < l_uv_count; ++j) {
+      auto l_uv = dna_calib_dna_reader_->getVertexTextureCoordinate(in_mesh_idx, j);
+      l_uvs.push_back(l_uv);
+    }
+    MFloatArray l_u_array{}, l_v_array{};
+    MIntArray l_uv_indices{};
+    l_u_array.setSizeIncrement(static_cast<unsigned int>(l_uv_count));
+    l_v_array.setSizeIncrement(static_cast<unsigned int>(l_uv_count));
+    l_uv_indices.setSizeIncrement(static_cast<unsigned int>(l_uv_count));
+    std::size_t l_uv_idx_counter = 0;
+    for (auto&& l_face : l_face_layout_indices) {
+      for (auto&& l_idx : l_face) {
+        // l_face_vertex_indices.append(static_cast<int>(l_layouts[l_idx].position));
+        auto l_uv_idx = l_layouts[l_idx].textureCoordinate;
+        if (l_uv_idx < l_uv_count) {
+          l_u_array.append(l_uvs[l_uv_idx].u);
+          l_v_array.append(l_uvs[l_uv_idx].v);
+          l_uv_indices.append(static_cast<int>(l_uv_idx_counter));
+          ++l_uv_idx_counter;
+        } else {
+          return display_warning(
+                     "Mesh {} 面的顶点使用了不存在的uv索引: {}, 总uv数量: {}", l_name, l_uv_idx, l_uv_count
+                 ),
+                 MS::kFailure;
+        }
+      }
+    }
+
+    MFnMesh l_fn_mesh{};
+    MStatus l_status{};
+    if (auto l_sum = std::reduce(l_face_vertex_counts.begin(), l_face_vertex_counts.end());
+        l_sum != static_cast<int>(l_face_vertex_indices.length()))
+      return display_error(
+                 "面顶点数量与顶点索引数量不匹配, 面顶点数量总和: {}, 顶点索引数量: {}", l_sum,
+                 l_face_vertex_indices.length()
+             ),
+             MS::kFailure;
+    // l_u_array, l_v_array,
+    l_fn_mesh.create(
+        static_cast<unsigned int>(l_vertex_count), static_cast<unsigned int>(l_face_count), l_vertices,
+        l_face_vertex_counts, l_face_vertex_indices, MObject::kNullObj, &l_status
+    );
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.setUVs(l_u_array, l_v_array));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.assignUVs(l_face_vertex_counts, l_uv_indices));
     return MS::kSuccess;
   }
 };
