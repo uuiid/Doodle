@@ -29,3 +29,10 @@ target_sources(doodle_lib
 )
 add_subdirectory(http)
 add_subdirectory(socket_io)
+
+set_source_files_properties(
+        entity_path.cpp
+
+        TARGET_DIRECTORY doodle_lib
+        PROPERTIES JOB_POOL_COMPILE sql_query_pool
+)

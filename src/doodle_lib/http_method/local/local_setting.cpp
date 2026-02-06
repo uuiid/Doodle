@@ -3,7 +3,6 @@
 //
 
 #include "doodle_core/core/core_set.h"
-#include "doodle_core/sqlite_orm/sqlite_database.h"
 #include <doodle_core/core/authorization.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
