@@ -26,6 +26,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(dna_file_path));
   }
   {
@@ -35,6 +36,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(gui_control_list));
   }
   return l_status;

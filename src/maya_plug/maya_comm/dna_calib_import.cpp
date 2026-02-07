@@ -21,12 +21,14 @@
 #include <maya/MGlobal.h>
 #include <maya/MIntArray.h>
 #include <maya/MObject.h>
+#include <maya/MPlug.h>
 #include <maya/MPointArray.h>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MSyntax.h>
 #include <numeric>
 #include <pma/ScopedPtr.h>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -120,25 +122,67 @@ class dna_calib_import::impl {
 
     conv_units();
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_gui_controls());
     // for (auto i = 0; i < dna_calib_dna_reader_->getMeshCount(); ++i) {
     //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     // }
 
+    return MS::kSuccess;
+  }
+  MStatus connect_gui_controls() {
+    MStatus l_status{};
+    MPlug l_dna_file_path_plug{dna_node_obj, dna_calib_node::gui_control_list};
+    auto l_gui_control_count = dna_calib_dna_reader_->getGUIControlCount();
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dna_file_path_plug.setNumElements(static_cast<unsigned int>(l_gui_control_count)));
+
     for (auto i = 0; i < dna_calib_dna_reader_->getGUIControlCount(); ++i) {
       auto l_gui_control_name = dna_calib_dna_reader_->getGUIControlName(i);
       display_info("GUI Control {} 名称: {} 类型: {}", i, l_gui_control_name, i);
+      auto l_plug = get_name_obj_attr_for_str(std::string_view{l_gui_control_name});
+      if (l_plug.isNull()) {
+        display_warning("未找到对应的节点属性: {}", l_gui_control_name);
+        continue;
+      }
+      auto l_target = l_dna_file_path_plug.elementByPhysicalIndex(i, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_plug, l_target));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     }
-
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
     return MS::kSuccess;
   }
 
-  MObject get_group_obj(const char* in_group_name) {
+  MObject get_name_obj(const char* in_group_name) { return get_name_obj(std::string_view{in_group_name}); }
+  MObject get_name_obj(std::string_view in_node_name) {
     MSelectionList l_sel_list{};
-    MGlobal::getSelectionListByName(in_group_name, l_sel_list);
+    MGlobal::getSelectionListByName(conv::to_ms(std::string{in_node_name}), l_sel_list);
     MDagPath l_obj{};
     if (l_sel_list.length() == 0) return MObject::kNullObj;
     CHECK_MSTATUS_AND_RETURN(l_sel_list.getDagPath(0, l_obj), MObject::kNullObj);
     return l_obj.node();
+  }
+  MObject get_name_obj_attr(const char* in_attr_name, const MObject& in_node_obj) {
+    return get_name_obj_attr(std::string_view{in_attr_name}, in_node_obj);
+  }
+  MObject get_name_obj_attr(std::string_view in_attr_name, const MObject& in_node_obj) {
+    MFnDependencyNode l_dep_node_fn{};
+    MStatus l_status = l_dep_node_fn.setObject(in_node_obj);
+    CHECK_MSTATUS_AND_RETURN(l_status, MObject::kNullObj);
+    MObject l_attr_obj = l_dep_node_fn.attribute(conv::to_ms(std::string{in_attr_name}), &l_status);
+    CHECK_MSTATUS_AND_RETURN(l_status, MObject::kNullObj);
+    return l_attr_obj;
+  }
+  MPlug get_name_obj_attr_for_str(std::string_view in_node_attr_name) {
+    auto l_pos = in_node_attr_name.find('.');
+    if (l_pos == std::string_view::npos) return MPlug{};
+    auto l_node_name = in_node_attr_name.substr(0, l_pos);
+    auto l_attr_name = in_node_attr_name.substr(l_pos + 1);
+
+    MObject l_obj    = get_name_obj(l_node_name);
+    if (l_obj.isNull()) return MPlug{};
+    MObject l_attr = get_name_obj_attr(l_attr_name, l_obj);
+    if (l_attr.isNull()) return MPlug{};
+    return MPlug{l_obj, l_attr};
   }
 
   MStatus create_groups() {
@@ -148,7 +192,7 @@ class dna_calib_import::impl {
     MStatus l_status{};
 
     MFnTransform l_transform{};
-    MObject l_top_level_group = get_group_obj(g_top_level_group);
+    MObject l_top_level_group = get_name_obj(g_top_level_group);
     if (l_top_level_group.isNull()) {
       //  l_transform.create(MObject::kNullObj, &l_status);
       l_top_level_group = dag_modifier_.createNode("transform", MObject::kNullObj, &l_status);
@@ -156,13 +200,13 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_top_level_group, g_top_level_group));
     }
 
-    MObject l_geometry_group = get_group_obj(g_geometry_group);
+    MObject l_geometry_group = get_name_obj(g_geometry_group);
     if (l_geometry_group.isNull()) {
       l_geometry_group = dag_modifier_.createNode("transform", l_top_level_group, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_geometry_group, g_geometry_group));
     }
-    MObject l_rig_group = get_group_obj(g_rig_group);
+    MObject l_rig_group = get_name_obj(g_rig_group);
     if (l_rig_group.isNull()) {
       l_rig_group = dag_modifier_.createNode("transform", l_top_level_group, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
@@ -172,7 +216,7 @@ class dna_calib_import::impl {
     for (auto i = 0; i < dna_calib_dna_reader_->getLODCount(); ++i) {
       auto l_lod_mesh_index = dna_calib_dna_reader_->getMeshIndicesForLOD(i);
       auto l_lod_group_name = fmt::format("lod_{}_grp", i);
-      MObject l_lod_group   = get_group_obj(l_lod_group_name.data());
+      MObject l_lod_group   = get_name_obj(l_lod_group_name.data());
       if (l_lod_group.isNull()) {
         l_lod_group = dag_modifier_.createNode("transform", l_geometry_group, &l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
