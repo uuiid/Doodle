@@ -2,6 +2,7 @@
 // Created by TD on 25-8-21.
 //
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -99,13 +100,18 @@ struct data_project_sequences_casting_result_map {
 };
 
 data_project_sequences_casting_result_map get_sequence_casting(
-    const uuid& in_project_id, const uuid& in_sequence_id = {}, const std::vector<uuid>& in_shot_ids = {}
+    const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id = {},
+    const std::vector<uuid>& in_shot_ids = {}
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   data_project_sequences_casting_result_map l_result{};
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
+  auto l_outsource_select = select(
+      &outsource_studio_authorization::entity_id_,
+      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
+  );
 
   for (auto&& [ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_] :
        l_sql.impl_->storage_any_.select(
@@ -120,7 +126,12 @@ data_project_sequences_casting_result_map get_sequence_casting(
            where(
                c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
                (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id) &&
-               (in_shot_ids.empty() || in(shot->*&entity::uuid_id_, in_shot_ids))
+               (in_shot_ids.empty() || in(shot->*&entity::uuid_id_, in_shot_ids)) &&  //
+               (in_person.role_ != person_role_type::outsource ||
+                (                                                 //
+                    in(&entity::uuid_id_, l_outsource_select) ||  //
+                    in(sequence->*&entity::uuid_id_, l_outsource_select)
+                ))
            ),
            multi_order_by(
                order_by(sequence->*&entity::name_), order_by(shot->*&entity::name_), order_by(&asset_type::name_),
@@ -216,8 +227,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
     session_data_ptr in_handle
 ) {
   person_.check_in_project(project_id_);
-  person_.check_not_outsourcer();
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_));
+  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_));
 }
 
 namespace {
@@ -416,7 +426,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   person_.check_not_outsourcer();
   if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(sequence_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, sequence_id_));
+  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset_types_casting::get(
     session_data_ptr in_handle
@@ -464,7 +474,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   std::vector<uuid> l_shot_ids{};
   for (auto&& i : l_list) l_shot_ids.push_back(i.entity_id_);
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, {}, l_shot_ids));
+  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, person_.person_, {}, l_shot_ids));
 }
 
 }  // namespace doodle::http
