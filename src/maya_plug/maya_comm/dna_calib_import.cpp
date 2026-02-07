@@ -27,6 +27,7 @@
 #include <maya/MSyntax.h>
 #include <numeric>
 #include <pma/ScopedPtr.h>
+#include <utility>
 #include <vector>
 
 namespace fmt {
@@ -69,8 +70,12 @@ class dna_calib_import::impl {
     MObject lod_grp_obj_;
     dnac::ConstArrayView<std::uint16_t> mesh_indices_;
   };
-
+  struct mesh_info {
+    MObject mesh_obj_;
+    std::string name_;
+  };
   std::vector<lod_group_info> lod_grp_objs_{};
+  std::vector<mesh_info> imported_meshes_{};
 
   MStatus open_dna_file(const FSys::path& in_path) {
     file_path        = in_path;
@@ -274,6 +279,25 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.setUVs(l_u_array, l_v_array));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.assignUVs(l_face_vertex_counts, l_uv_indices));
+    mesh_info l_mesh_info{l_fn_mesh.object(), l_name.data()};
+    imported_meshes_.push_back(l_mesh_info);
+    return MS::kSuccess;
+  }
+
+  MStatus mesh_blend_shapes(std::size_t in_mesh_idx) {
+    auto l_count = dna_calib_dna_reader_->getBlendShapeTargetCount(in_mesh_idx);
+    for (auto i = 0; i < l_count; ++i) {
+      auto l_bl_name_index = dna_calib_dna_reader_->getBlendShapeChannelIndex(in_mesh_idx, i);
+      auto l_bl_name       = dna_calib_dna_reader_->getBlendShapeChannelName(l_bl_name_index);
+      std::vector<std::pair<std::size_t, dnac::Vector3>> l_delta_positions{};
+      auto l_vertex_indices = dna_calib_dna_reader_->getBlendShapeTargetVertexIndices(in_mesh_idx, i);
+      auto l_delta_count    = dna_calib_dna_reader_->getBlendShapeTargetDeltaCount(in_mesh_idx, i);
+      for (auto j = 0; j < l_delta_count; ++j) {
+        auto l_vertex_idx = l_vertex_indices[j];
+        auto l_pos        = dna_calib_dna_reader_->getBlendShapeTargetDelta(in_mesh_idx, i, j);
+        l_delta_positions.push_back({l_vertex_idx, l_pos});
+      }
+    }
     return MS::kSuccess;
   }
 };
