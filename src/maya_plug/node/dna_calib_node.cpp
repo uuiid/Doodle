@@ -1,12 +1,21 @@
 #include "dna_calib_node.h"
 
+#include <maya_plug/node/dna_calib_node_impl.h>
+
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MStatus.h>
 
 namespace doodle::maya_plug {
 MObject dna_calib_node::dna_file_path{};
+MObject dna_calib_node::gui_control_list{};
 MTypeId dna_calib_node::doodle_id = MTypeId{0x00000002};
+
+
+dna_calib_node::dna_calib_node() : p_i(std::make_unique<impl>()) {}
+dna_calib_node::~dna_calib_node() = default;
+
+
 void* dna_calib_node::creator() { return new dna_calib_node{}; }
 MStatus dna_calib_node::initialize() {
   MStatus l_status{};

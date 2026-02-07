@@ -120,9 +120,15 @@ class dna_calib_import::impl {
 
     conv_units();
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
-    for (auto i = 0; i < dna_calib_dna_reader_->getMeshCount(); ++i) {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
+    // for (auto i = 0; i < dna_calib_dna_reader_->getMeshCount(); ++i) {
+    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
+    // }
+
+    for (auto i = 0; i < dna_calib_dna_reader_->getGUIControlCount(); ++i) {
+      auto l_gui_control_name = dna_calib_dna_reader_->getGUIControlName(i);
+      display_info("GUI Control {} 名称: {} 类型: {}", i, l_gui_control_name, i);
     }
+
     return MS::kSuccess;
   }
 
@@ -130,6 +136,7 @@ class dna_calib_import::impl {
     MSelectionList l_sel_list{};
     MGlobal::getSelectionListByName(in_group_name, l_sel_list);
     MDagPath l_obj{};
+    if (l_sel_list.length() == 0) return MObject::kNullObj;
     CHECK_MSTATUS_AND_RETURN(l_sel_list.getDagPath(0, l_obj), MObject::kNullObj);
     return l_obj.node();
   }

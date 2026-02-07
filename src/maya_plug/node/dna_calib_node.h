@@ -10,6 +10,8 @@
 namespace doodle::maya_plug {
 class dna_calib_node : public MPxNode {
  public:
+  dna_calib_node();
+  ~dna_calib_node() override;
   static MTypeId doodle_id;
   const static constexpr auto node_type = MPxNode::Type::kDependNode;
   static void* creator();
@@ -21,6 +23,9 @@ class dna_calib_node : public MPxNode {
   static MObject dna_file_path;
   // 控制Gui输入
   static MObject gui_control_list;
+
+  class impl;
+  std::unique_ptr<impl> p_i;
 
  private:
 };
