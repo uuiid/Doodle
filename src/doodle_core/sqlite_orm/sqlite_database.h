@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "doodle_core_fwd.h"
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/scan_data_t.h>
 
