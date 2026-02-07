@@ -143,7 +143,7 @@ class dna_calib_import::impl {
         display_warning("未找到对应的节点属性: {}", l_gui_control_name);
         continue;
       }
-      auto l_target = l_dna_file_path_plug.elementByPhysicalIndex(i, &l_status);
+      auto l_target = l_dna_file_path_plug.elementByLogicalIndex(i, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_plug, l_target));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
