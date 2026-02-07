@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core_fwd.h"
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/scan_data_t.h>
 
@@ -226,6 +227,6 @@ class sqlite_database {
   // 删除孤立的, 没有和其他连接的工作文件
   boost::asio::awaitable<void> delete_working_file_orphaned();
   // 是给外包授权的实体
-  bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id);
+  bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id = uuid{});
 };
 }  // namespace doodle

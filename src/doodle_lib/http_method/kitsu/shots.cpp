@@ -376,7 +376,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
   if (!(
           (l_shot->created_by_ == person_.person_.uuid_id_ &&
            l_sql.is_person_in_project(person_.person_.uuid_id_, l_shot->project_id_)) ||
-          l_sql.is_entity_outsourced(id_, person_.person_.studio_id_)
+          l_sql.is_entity_outsourced(id_, person_.person_.studio_id_, l_shot->parent_id_)
 
       ))
     person_.check_project_manager(l_shot->project_id_);
