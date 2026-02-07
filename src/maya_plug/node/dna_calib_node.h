@@ -19,6 +19,9 @@ class dna_calib_node : public MPxNode {
 
   // DNA文件路径
   static MObject dna_file_path;
+  // 控制Gui输入
+  static MObject gui_control_list;
+
  private:
 };
 }  // namespace doodle::maya_plug

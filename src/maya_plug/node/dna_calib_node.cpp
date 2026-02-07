@@ -19,6 +19,15 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(dna_file_path));
   }
+  {
+    MFnNumericAttribute l_numeric_attr{};
+    gui_control_list = l_numeric_attr.create("gui_control_list", "gui_cl", MFnNumericData::kDouble, 0, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(gui_control_list));
+  }
   return l_status;
 }
 }  // namespace doodle::maya_plug
