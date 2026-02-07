@@ -948,6 +948,14 @@ boost::asio::awaitable<void> sqlite_database::delete_working_file_orphaned() {
   DOODLE_TO_SELF();
   co_return;
 }
+bool sqlite_database::is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id) {
+  using namespace sqlite_orm;
+  auto l_r = impl_->storage_any_.count<outsource_studio_authorization>(where(where(
+      c(&outsource_studio_authorization::studio_id_) == in_studio_id &&
+      c(&outsource_studio_authorization::entity_id_) == in_entity_id
+  )));
+  return l_r > 0;
+}
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 

@@ -225,5 +225,7 @@ class sqlite_database {
 
   // 删除孤立的, 没有和其他连接的工作文件
   boost::asio::awaitable<void> delete_working_file_orphaned();
+  // 是给外包授权的实体
+  bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id);
 };
 }  // namespace doodle
