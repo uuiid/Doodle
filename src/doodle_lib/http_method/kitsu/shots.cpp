@@ -324,7 +324,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(ses
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
     session_data_ptr in_handle
 ) {
-  person_.check_project_access(project_id_);
   auto l_sql       = g_ctx().get<sqlite_database>();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
@@ -374,8 +373,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_shot = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
-  if (!(l_shot->created_by_ == person_.person_.uuid_id_ &&
-        l_sql.is_person_in_project(person_.person_.uuid_id_, l_shot->project_id_)))
+  if (!(
+          (l_shot->created_by_ == person_.person_.uuid_id_ &&
+           l_sql.is_person_in_project(person_.person_.uuid_id_, l_shot->project_id_)) ||
+          l_sql.is_entity_outsourced(id_, person_.person_.studio_id_)
+
+      ))
     person_.check_project_manager(l_shot->project_id_);
   bool l_force{};
   for (auto&& [key, value, has] : in_handle->url_.params())
