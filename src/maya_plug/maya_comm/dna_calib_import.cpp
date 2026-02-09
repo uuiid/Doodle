@@ -1,7 +1,5 @@
 #include "dna_calib_import.h"
 
-#include "doodle_core/exception/exception.h"
-
 #include "maya_plug_fwd.h"
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/data/maya_tool.h>
@@ -14,6 +12,7 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
+#include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
 #include <maya/MFnDependencyNode.h>
@@ -27,6 +26,7 @@
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MSyntax.h>
+#include <maya/MVector.h>
 #include <numeric>
 #include <pma/ScopedPtr.h>
 #include <string>
@@ -108,14 +108,60 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->open_dna_file());
 
     conv_units();
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_gui_controls());
-    // for (auto i = 0; i < dna_calib_dna_reader_->getMeshCount(); ++i) {
-    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
-    // }
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
+
+    for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
+    }
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
 
     return MS::kSuccess;
   }
+
+  // 创建 骨骼
+  MStatus create_joints() {
+    MStatus l_status{};
+    std::vector<MObject> joint_objs{};
+    auto l_joint_count = get_dna_reader()->getJointCount();
+    joint_objs.reserve(l_joint_count);
+    for (auto i = 0; i < l_joint_count; ++i) {
+      auto l_joint_name = get_dna_reader()->getJointName(i);
+      display_info("创建骨骼: {} {}", i, l_joint_name);
+      MObject l_joint_obj = dag_modifier_.createNode("joint", MObject::kNullObj, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_joint_obj, conv::to_ms(std::string{l_joint_name})));
+      joint_objs.push_back(l_joint_obj);
+    }
+    for (auto i = 0; i < l_joint_count; ++i) {
+      auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
+      if (l_parent_index == i == 0) continue;
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          dag_modifier_.reparentNode(joint_objs[i], joint_objs[static_cast<std::size_t>(l_parent_index)])
+      );
+    }
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    MFnTransform l_transform_fn{};
+    for (auto i = 0; i < l_joint_count; ++i) {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_transform_fn.setObject(joint_objs[i]));
+      auto l_rotation_value    = get_dna_reader()->getNeutralJointRotation(i);
+      auto l_translation_value = get_dna_reader()->getNeutralJointTranslation(i);
+      l_transform_fn.setRotation(MEulerRotation{l_rotation_value.x, l_rotation_value.y, l_rotation_value.z});
+      l_transform_fn.setTranslation(
+          MVector{l_translation_value.x, l_translation_value.y, l_translation_value.z}, MSpace::kTransform
+      );
+    }
+    // 将根骨骼绑定到 rig组下
+    for (auto i = 0; i < l_joint_count; ++i) {
+      auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
+      if (l_parent_index == i == 0) {
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.reparentNode(joint_objs[i], rig_grp_obj_));
+      }
+    }
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    return MS::kSuccess;
+  }
+
   MStatus connect_gui_controls() {
     MStatus l_status{};
     MPlug l_dna_file_path_plug{dna_node_obj, dna_calib_node::gui_control_list};
@@ -126,8 +172,7 @@ class dna_calib_import::impl {
 
     for (auto i = 0; i < get_dna_reader()->getGUIControlCount(); ++i) {
       auto l_gui_control_name = get_dna_reader()->getGUIControlName(i);
-      display_info("GUI Control {} 名称: {} 类型: {}", i, l_gui_control_name, i);
-      auto l_plug = get_name_obj_attr_for_str(std::string_view{l_gui_control_name});
+      auto l_plug             = get_name_obj_attr_for_str(std::string_view{l_gui_control_name});
       if (l_plug.isNull()) {
         display_warning("未找到对应的节点属性: {}", l_gui_control_name);
         continue;
