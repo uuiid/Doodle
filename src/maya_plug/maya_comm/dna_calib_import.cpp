@@ -132,7 +132,7 @@ class dna_calib_import::impl {
     joint_objs.reserve(l_joint_count);
     for (auto i = 0; i < l_joint_count; ++i) {
       auto l_joint_name = get_dna_reader()->getJointName(i);
-      display_info("创建骨骼: {} {}", i, l_joint_name);
+      // display_info("创建骨骼: {} {}", i, l_joint_name);
       MObject l_joint_obj = dag_modifier_.createNode("joint", MObject::kNullObj, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_joint_obj, conv::to_ms(std::string{l_joint_name})));
@@ -313,10 +313,10 @@ class dna_calib_import::impl {
     auto l_uv_count     = get_dna_reader()->getVertexTextureCoordinateCount(in_mesh_idx);
     auto l_layout_count = get_dna_reader()->getVertexLayoutCount(in_mesh_idx);
     auto l_face_count   = get_dna_reader()->getFaceCount(in_mesh_idx);
-    display_info(
-        "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", in_mesh_idx, l_name, l_vertex_count,
-        l_uv_count, l_layout_count, l_face_count
-    );
+    // display_info(
+    //     "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", in_mesh_idx, l_name, l_vertex_count,
+    //     l_uv_count, l_layout_count, l_face_count
+    // );
     MPointArray l_vertices{};
     l_vertices.setLength(static_cast<unsigned int>(l_vertex_count));
     for (auto j = 0; j < l_vertex_count; ++j) {
