@@ -61,9 +61,6 @@ class dna_calib_import::impl {
   MObject dna_node_obj{};
   dna_calib_node* dna_node_data{};
 
-  dnac::ScopedPtr<dnac::FileStream> dna_file_stream_;
-  dnac::ScopedPtr<dnac::BinaryStreamReader> binary_stream_reader_;
-  dnac::ScopedPtr<dnac::DNACalibDNAReader> dna_calib_dna_reader_;
   MDagModifier dag_modifier_{};
 
   MObject head_grp_obj_{};
@@ -81,21 +78,9 @@ class dna_calib_import::impl {
   std::vector<lod_group_info> lod_grp_objs_{};
   std::vector<mesh_info> imported_meshes_{};
 
-  MStatus open_dna_file(const FSys::path& in_path) {
-    file_path        = in_path;
-    dna_file_stream_ = dnac::makeScoped<dnac::FileStream>(
-        file_path.generic_string().data(), dnac::FileStream::AccessMode::ReadWrite, dnac::FileStream::OpenMode::Binary
-    );
-    binary_stream_reader_ = dnac::makeScoped<dnac::BinaryStreamReader>(dna_file_stream_.get());
-    binary_stream_reader_->read();
-    if (!dnac::Status::isOk()) return display_error("读取dna文件失败: {} ", dnac::Status::get().message), MS::kFailure;
-
-    dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
-    return MS::kSuccess;
-  }
-
+  dnac::ScopedPtr<dnac::DNACalibDNAReader>& get_dna_reader() { return dna_node_data->impl()->dna_calib_dna_reader_; }
   void conv_units() {
-    auto l_translation_unit = dna_calib_dna_reader_->getTranslationUnit();
+    auto l_translation_unit = get_dna_reader()->getTranslationUnit();
     switch (l_translation_unit) {
       case dna::TranslationUnit::cm:
         display_warning("当前 dna 文件使用厘米单位, Maya 默认使用厘米单位, 无需转换");
@@ -106,7 +91,7 @@ class dna_calib_import::impl {
       default:
         break;
     }
-    auto l_rotation_unit = dna_calib_dna_reader_->getRotationUnit();
+    auto l_rotation_unit = get_dna_reader()->getRotationUnit();
     switch (l_rotation_unit) {
       case dna::RotationUnit::degrees:
         display_warning("当前 dna 文件使用角度单位, Maya 默认使用角度单位, 无需转换");
@@ -120,7 +105,7 @@ class dna_calib_import::impl {
   }
 
   MStatus import_dna_calib() {
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(open_dna_file(file_path));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->open_dna_file());
 
     conv_units();
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
@@ -134,13 +119,13 @@ class dna_calib_import::impl {
   MStatus connect_gui_controls() {
     MStatus l_status{};
     MPlug l_dna_file_path_plug{dna_node_obj, dna_calib_node::gui_control_list};
-    auto l_gui_control_count = dna_calib_dna_reader_->getGUIControlCount();
+    auto l_gui_control_count = get_dna_reader()->getGUIControlCount();
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
         l_dna_file_path_plug.setNumElements(static_cast<unsigned int>(l_gui_control_count))
     );
 
-    for (auto i = 0; i < dna_calib_dna_reader_->getGUIControlCount(); ++i) {
-      auto l_gui_control_name = dna_calib_dna_reader_->getGUIControlName(i);
+    for (auto i = 0; i < get_dna_reader()->getGUIControlCount(); ++i) {
+      auto l_gui_control_name = get_dna_reader()->getGUIControlName(i);
       display_info("GUI Control {} 名称: {} 类型: {}", i, l_gui_control_name, i);
       auto l_plug = get_name_obj_attr_for_str(std::string_view{l_gui_control_name});
       if (l_plug.isNull()) {
@@ -217,8 +202,8 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_rig_group, g_rig_group));
     }
 
-    for (auto i = 0; i < dna_calib_dna_reader_->getLODCount(); ++i) {
-      auto l_lod_mesh_index = dna_calib_dna_reader_->getMeshIndicesForLOD(i);
+    for (auto i = 0; i < get_dna_reader()->getLODCount(); ++i) {
+      auto l_lod_mesh_index = get_dna_reader()->getMeshIndicesForLOD(i);
       auto l_lod_group_name = fmt::format("lod_{}_grp", i);
       MObject l_lod_group   = get_name_obj(l_lod_group_name.data());
       if (l_lod_group.isNull()) {
@@ -241,13 +226,13 @@ class dna_calib_import::impl {
   }
 
   MStatus create_mesh_from_dna_mesh(std::size_t in_mesh_idx, const MObject& in_parent = MObject::kNullObj) {
-    auto l_name         = dna_calib_dna_reader_->getMeshName(in_mesh_idx);
+    auto l_name         = get_dna_reader()->getMeshName(in_mesh_idx);
 
-    auto l_vertex_count = dna_calib_dna_reader_->getVertexPositionCount(in_mesh_idx);
+    auto l_vertex_count = get_dna_reader()->getVertexPositionCount(in_mesh_idx);
     if (l_vertex_count == 0) return display_warning("Mesh {} 没有顶点, 跳过创建", l_name), MS::kSuccess;
-    auto l_uv_count     = dna_calib_dna_reader_->getVertexTextureCoordinateCount(in_mesh_idx);
-    auto l_layout_count = dna_calib_dna_reader_->getVertexLayoutCount(in_mesh_idx);
-    auto l_face_count   = dna_calib_dna_reader_->getFaceCount(in_mesh_idx);
+    auto l_uv_count     = get_dna_reader()->getVertexTextureCoordinateCount(in_mesh_idx);
+    auto l_layout_count = get_dna_reader()->getVertexLayoutCount(in_mesh_idx);
+    auto l_face_count   = get_dna_reader()->getFaceCount(in_mesh_idx);
     display_info(
         "Mesh {}: 名称: {} 顶点数量: {} uv数量: {} layout数量: {}, 面数量: {}", in_mesh_idx, l_name, l_vertex_count,
         l_uv_count, l_layout_count, l_face_count
@@ -255,13 +240,13 @@ class dna_calib_import::impl {
     MPointArray l_vertices{};
     l_vertices.setLength(static_cast<unsigned int>(l_vertex_count));
     for (auto j = 0; j < l_vertex_count; ++j) {
-      auto l_pos = dna_calib_dna_reader_->getVertexPosition(in_mesh_idx, j);
+      auto l_pos = get_dna_reader()->getVertexPosition(in_mesh_idx, j);
       l_vertices.set(static_cast<unsigned int>(j), l_pos.x, l_pos.y, l_pos.z);
     }
     std::vector<dna::VertexLayout> l_layouts{};
     l_layouts.reserve(static_cast<size_t>(l_layout_count));
     for (auto j = 0; j < l_layout_count; ++j) {
-      auto l_layout = dna_calib_dna_reader_->getVertexLayout(in_mesh_idx, j);
+      auto l_layout = get_dna_reader()->getVertexLayout(in_mesh_idx, j);
       l_layouts.push_back(l_layout);
     }
 
@@ -272,7 +257,7 @@ class dna_calib_import::impl {
     l_face_vertex_indices.setSizeIncrement(l_face_count);
     l_face_vertex_counts.setLength(static_cast<unsigned int>(l_face_count));
     for (auto j = 0; j < l_face_count; ++j) {
-      auto l_indices = dna_calib_dna_reader_->getFaceVertexLayoutIndices(in_mesh_idx, j);
+      auto l_indices = get_dna_reader()->getFaceVertexLayoutIndices(in_mesh_idx, j);
       l_face_layout_indices.push_back(l_indices);
       l_face_vertex_counts.set(static_cast<int>(l_indices.size()), static_cast<unsigned int>(j));
       for (auto k = 0; k < l_indices.size(); ++k) {
@@ -283,7 +268,7 @@ class dna_calib_import::impl {
     std::vector<dna::TextureCoordinate> l_uvs{};
     l_uvs.reserve(static_cast<size_t>(l_uv_count));
     for (auto j = 0; j < l_uv_count; ++j) {
-      auto l_uv = dna_calib_dna_reader_->getVertexTextureCoordinate(in_mesh_idx, j);
+      auto l_uv = get_dna_reader()->getVertexTextureCoordinate(in_mesh_idx, j);
       l_uvs.push_back(l_uv);
     }
     MFloatArray l_u_array{}, l_v_array{};
@@ -340,16 +325,16 @@ class dna_calib_import::impl {
   }
 
   MStatus mesh_blend_shapes(std::size_t in_mesh_idx) {
-    auto l_count = dna_calib_dna_reader_->getBlendShapeTargetCount(in_mesh_idx);
+    auto l_count = get_dna_reader()->getBlendShapeTargetCount(in_mesh_idx);
     for (auto i = 0; i < l_count; ++i) {
-      auto l_bl_name_index = dna_calib_dna_reader_->getBlendShapeChannelIndex(in_mesh_idx, i);
-      auto l_bl_name       = dna_calib_dna_reader_->getBlendShapeChannelName(l_bl_name_index);
+      auto l_bl_name_index = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_idx, i);
+      auto l_bl_name       = get_dna_reader()->getBlendShapeChannelName(l_bl_name_index);
       std::vector<std::pair<std::size_t, dnac::Vector3>> l_delta_positions{};
-      auto l_vertex_indices = dna_calib_dna_reader_->getBlendShapeTargetVertexIndices(in_mesh_idx, i);
-      auto l_delta_count    = dna_calib_dna_reader_->getBlendShapeTargetDeltaCount(in_mesh_idx, i);
+      auto l_vertex_indices = get_dna_reader()->getBlendShapeTargetVertexIndices(in_mesh_idx, i);
+      auto l_delta_count    = get_dna_reader()->getBlendShapeTargetDeltaCount(in_mesh_idx, i);
       for (auto j = 0; j < l_delta_count; ++j) {
         auto l_vertex_idx = l_vertex_indices[j];
-        auto l_pos        = dna_calib_dna_reader_->getBlendShapeTargetDelta(in_mesh_idx, i, j);
+        auto l_pos        = get_dna_reader()->getBlendShapeTargetDelta(in_mesh_idx, i, j);
         l_delta_positions.push_back({l_vertex_idx, l_pos});
       }
     }
@@ -384,9 +369,6 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
 
   if (p_i->dna_node_obj.isNull() || p_i->dna_node_data == nullptr)
     return display_error("未选择dna_calib_node节点"), MS::kFailure;
-  p_i->file_path = p_i->dna_node_data->impl()->file_path_;
-  if (p_i->file_path.empty() || !FSys::exists(p_i->file_path))
-    return display_error("dna文件不存在: {}", p_i->file_path.generic_string()), MS::kFailure;
   // 读取文件
   return p_i->import_dna_calib();
 }

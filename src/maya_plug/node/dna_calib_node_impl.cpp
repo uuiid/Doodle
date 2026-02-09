@@ -1,6 +1,8 @@
 #include "dna_calib_node_impl.h"
 namespace doodle::maya_plug {
 MStatus dna_calib_node::impl_t::open_dna_file() {
+  if (file_path_.empty() || !FSys::exists(file_path_))
+    return display_error("dna文件不存在: {}", file_path_.generic_string()), MS::kFailure;
   dna_file_stream_ = dnac::makeScoped<dnac::FileStream>(
       file_path_.generic_string().data(), dnac::FileStream::AccessMode::ReadWrite, dnac::FileStream::OpenMode::Binary
   );
