@@ -23,6 +23,14 @@ class dna_calib_node : public MPxNode {
   static MObject dna_file_path;
   // 控制Gui输入
   static MObject gui_control_list;
+  // 骨骼位移输出
+  static MObject output_join_transforms;
+  // 骨骼旋转输出
+  static MObject output_join_rotations;
+  // 骨骼缩放输出
+  static MObject output_join_scales;
+  // 混合变形输出
+  static MObject output_blendshape_weights;
 
   class impl;
   std::unique_ptr<impl> p_i;
