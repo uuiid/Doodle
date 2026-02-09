@@ -383,6 +383,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
   bool l_force{};
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "force" && has) l_force = true;
+  l_force = l_force || person_.is_outsourcer();  // 这里比较特殊, 外包商可以直接删除, 不需要先标记为取消
   if (!l_force) {
     l_shot->canceled_ = true;
     co_await l_sql.update(l_shot);
