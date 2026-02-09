@@ -13,6 +13,7 @@
 #include <maya/MArgDatabase.h>
 #include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
+#include <maya/MDagPathArray.h>
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
@@ -21,6 +22,7 @@
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnSet.h>
+#include <maya/MFnSkinCluster.h>
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MIntArray.h>
@@ -82,6 +84,7 @@ class dna_calib_import::impl {
   };
   std::vector<lod_group_info> lod_grp_objs_{};
   std::vector<mesh_info> imported_meshes_{};
+  std::vector<MObject> joint_objs_{};
 
   dnac::ScopedPtr<dnac::DNACalibDNAReader>& get_dna_reader() { return dna_node_data->impl()->dna_calib_dna_reader_; }
   void conv_units() {
@@ -120,6 +123,30 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
+
+    return MS::kSuccess;
+  }
+
+  // 创建绑定
+  MStatus create_bind() {
+    if (imported_meshes_.empty()) return display_warning("没有可绑定的网格, 跳过绑定"), MS::kSuccess;
+    if (joint_objs_.empty()) return display_warning("没有可绑定的骨骼, 跳过绑定"), MS::kSuccess;
+
+    std::vector<std::string> l_joint_names{};
+    for (auto&& j : joint_objs_) {
+      MFnDagNode l_dag_node_fn{};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.setObject(j));
+      l_joint_names.push_back(conv::to_s(l_dag_node_fn.name()));
+    }
+
+    for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
+      auto l_bind_mel = fmt::format(
+          "skinCluster -toSelectedBones -bindMethod 0 -skinMethod 0 -normalizeWeights 2 {} {}",
+          imported_meshes_[i].name_, fmt::join(l_joint_names, " ")
+      );
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_bind_mel)));
+    }
 
     return MS::kSuccess;
   }
@@ -127,26 +154,26 @@ class dna_calib_import::impl {
   // 创建 骨骼
   MStatus create_joints() {
     MStatus l_status{};
-    std::vector<MObject> joint_objs{};
     auto l_joint_count = get_dna_reader()->getJointCount();
-    joint_objs.reserve(l_joint_count);
+    joint_objs_.clear();
+    joint_objs_.reserve(l_joint_count);
     for (auto i = 0; i < l_joint_count; ++i) {
-      auto l_joint_name = get_dna_reader()->getJointName(i);
+      auto l_joint_name   = get_dna_reader()->getJointName(i);
       // display_info("创建骨骼: {} {}", i, l_joint_name);
       MObject l_joint_obj = dag_modifier_.createNode("joint", MObject::kNullObj, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_joint_obj, conv::to_ms(std::string{l_joint_name})));
-      joint_objs.push_back(l_joint_obj);
+      joint_objs_.push_back(l_joint_obj);
     }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
     for (auto i = 0; i < l_joint_count; ++i) {
       auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
       if (l_parent_index == i) {
         // 将根骨骼绑定到 rig组下
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.reparentNode(joint_objs[i], head_grp_obj_));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.reparentNode(joint_objs_[i], head_grp_obj_));
       } else {
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-            dag_modifier_.reparentNode(joint_objs[i], joint_objs[static_cast<std::size_t>(l_parent_index)])
+            dag_modifier_.reparentNode(joint_objs_[i], joint_objs_[static_cast<std::size_t>(l_parent_index)])
         );
       }
     }
@@ -158,7 +185,7 @@ class dna_calib_import::impl {
     for (auto i = 0; i < l_joint_count; ++i) {
       auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
 
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.setObject(joint_objs[i]));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.setObject(joint_objs_[i]));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.getPath(l_dag_path));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_ik_joint_fn.setObject(l_dag_path));
 
