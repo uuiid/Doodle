@@ -33,8 +33,10 @@ class dna_calib_node : public MPxNode {
   static MObject output_blendshape_weights;
 
   class impl;
-  std::unique_ptr<impl> p_i;
+
+  impl* operator->() { return p_i.get(); }
 
  private:
+  std::unique_ptr<impl> p_i;
 };
 }  // namespace doodle::maya_plug
