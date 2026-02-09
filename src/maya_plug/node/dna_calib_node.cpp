@@ -20,6 +20,7 @@ dna_calib_node::dna_calib_node() : p_i(std::make_unique<impl_t>()) {}
 dna_calib_node::~dna_calib_node() = default;
 
 void* dna_calib_node::creator() { return new dna_calib_node{}; }
+dna_calib_node::impl_t* dna_calib_node::impl() { return p_i.get(); }
 MStatus dna_calib_node::initialize() {
   MStatus l_status{};
 
@@ -90,7 +91,7 @@ MStatus dna_calib_node::initialize() {
 }
 MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) {
   if (in_plug == dna_file_path) return set_file_path(in_data_block);
-  
+
   return MS::kUnknownParameter;
 }
 MStatus dna_calib_node::set_file_path(MDataBlock& in_file_path) {
