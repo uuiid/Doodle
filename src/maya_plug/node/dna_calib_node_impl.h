@@ -11,6 +11,7 @@ class dna_calib_node::impl_t {
   ~impl_t() = default;
 
   FSys::path file_path_;
+  dna_calib_node* self_;
 
   dnac::ScopedPtr<dnac::FileStream> dna_file_stream_;
   dnac::ScopedPtr<dnac::BinaryStreamReader> binary_stream_reader_;

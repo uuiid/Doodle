@@ -16,7 +16,7 @@ MObject dna_calib_node::output_blendshape_weights{};
 
 MTypeId dna_calib_node::doodle_id = MTypeId{0x00000002};
 
-dna_calib_node::dna_calib_node() : p_i(std::make_unique<impl_t>()) {}
+dna_calib_node::dna_calib_node() : p_i(std::make_unique<impl_t>()) { p_i->self_ = this; }
 dna_calib_node::~dna_calib_node() = default;
 
 void* dna_calib_node::creator() { return new dna_calib_node{}; }
@@ -86,7 +86,18 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_blendshape_weights));
   }
-
+#define DOODLE_ATTRAFF(attr)                                                          \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join_transforms)); \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join_rotations));  \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join_scales));     \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_blendshape_weights));
+  DOODLE_ATTRAFF(dna_file_path);
+  DOODLE_ATTRAFF(gui_control_list);
+  DOODLE_ATTRAFF(output_join_transforms);
+  DOODLE_ATTRAFF(output_join_rotations);
+  DOODLE_ATTRAFF(output_join_scales);
+  DOODLE_ATTRAFF(output_blendshape_weights);
+#undef DOODLE_ATTRAFF
   return l_status;
 }
 MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) {
