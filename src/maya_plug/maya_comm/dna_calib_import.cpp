@@ -16,9 +16,11 @@
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
+#include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnSet.h>
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MIntArray.h>
@@ -282,6 +284,14 @@ class dna_calib_import::impl {
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_lod_group, l_lod_group_name.data()));
         lod_grp_objs_.push_back({l_lod_group, l_lod_mesh_index});
       }
+      if (i != 0) {
+        // 需要隐藏其他lod组
+        MFnDagNode l_dag_node_fn{};
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.setObject(l_lod_group));
+        MPlug l_vis_plug = l_dag_node_fn.findPlug("visibility", true, &l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_vis_plug.setValue(false));
+      }
     }
 
     return dag_modifier_.doIt();
@@ -391,6 +401,17 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.assignUVs(l_face_vertex_counts, l_uv_indices));
     mesh_info l_mesh_info{l_fn_mesh.object(), l_name.data()};
     imported_meshes_.push_back(l_mesh_info);
+
+    // 添加材质
+    MFnSet l_fn_set{};
+    MSelectionList l_selection;
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.add("initialShadingGroup"));
+    if (l_selection.length() == 0) return display_warning("未找到初始着色组"), MS::kSuccess;
+    MObject l_init_shading_group_obj{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDependNode(0, l_init_shading_group_obj));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_set.setObject(l_init_shading_group_obj));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_set.addMember(l_fn_mesh.object()));
+
     return MS::kSuccess;
   }
 
