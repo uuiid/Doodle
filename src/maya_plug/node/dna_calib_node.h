@@ -32,11 +32,14 @@ class dna_calib_node : public MPxNode {
   // 混合变形输出
   static MObject output_blendshape_weights;
 
-  class impl;
+  MStatus compute(const MPlug& in_plug, MDataBlock& in_data_block) override;
+  class impl_t;
 
-  impl* operator->() { return p_i.get(); }
+  impl_t* impl();
 
  private:
-  std::unique_ptr<impl> p_i;
+  std::unique_ptr<impl_t> p_i;
+
+  MStatus set_file_path(MDataBlock& in_file_path);
 };
 }  // namespace doodle::maya_plug

@@ -16,7 +16,7 @@ MObject dna_calib_node::output_blendshape_weights{};
 
 MTypeId dna_calib_node::doodle_id = MTypeId{0x00000002};
 
-dna_calib_node::dna_calib_node() : p_i(std::make_unique<impl>()) {}
+dna_calib_node::dna_calib_node() : p_i(std::make_unique<impl_t>()) {}
 dna_calib_node::~dna_calib_node() = default;
 
 void* dna_calib_node::creator() { return new dna_calib_node{}; }
@@ -87,5 +87,18 @@ MStatus dna_calib_node::initialize() {
   }
 
   return l_status;
+}
+MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) {
+  if (in_plug == dna_file_path) return set_file_path(in_data_block);
+  
+  return MS::kUnknownParameter;
+}
+MStatus dna_calib_node::set_file_path(MDataBlock& in_file_path) {
+  MStatus l_status{};
+  auto l_file_path_data_handle = in_file_path.outputValue(dna_file_path, &l_status);
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+  auto l_file_path_ms = l_file_path_data_handle.asString();
+  impl()->file_path_  = conv::to_s(l_file_path_ms);
+  return MS::kSuccess;
 }
 }  // namespace doodle::maya_plug
