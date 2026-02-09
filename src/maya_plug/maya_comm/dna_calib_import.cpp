@@ -9,6 +9,7 @@
 #include <arrayview/ArrayView.h>
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
+#include <maya/MAngle.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
@@ -16,6 +17,7 @@
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MFnIkJoint.h>
 #include <maya/MFnMesh.h>
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
@@ -26,6 +28,7 @@
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MSyntax.h>
+#include <maya/MTypes.h>
 #include <maya/MVector.h>
 #include <numeric>
 #include <pma/ScopedPtr.h>
@@ -133,32 +136,53 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_joint_obj, conv::to_ms(std::string{l_joint_name})));
       joint_objs.push_back(l_joint_obj);
     }
-    for (auto i = 0; i < l_joint_count; ++i) {
-      auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
-      if (l_parent_index == i == 0) continue;
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-          dag_modifier_.reparentNode(joint_objs[i], joint_objs[static_cast<std::size_t>(l_parent_index)])
-      );
-    }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
-    MFnTransform l_transform_fn{};
-    for (auto i = 0; i < l_joint_count; ++i) {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_transform_fn.setObject(joint_objs[i]));
-      auto l_rotation_value    = get_dna_reader()->getNeutralJointRotation(i);
-      auto l_translation_value = get_dna_reader()->getNeutralJointTranslation(i);
-      l_transform_fn.setRotation(MEulerRotation{l_rotation_value.x, l_rotation_value.y, l_rotation_value.z});
-      l_transform_fn.setTranslation(
-          MVector{l_translation_value.x, l_translation_value.y, l_translation_value.z}, MSpace::kTransform
-      );
-    }
-    // 将根骨骼绑定到 rig组下
     for (auto i = 0; i < l_joint_count; ++i) {
       auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
-      if (l_parent_index == i == 0) {
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.reparentNode(joint_objs[i], rig_grp_obj_));
+      if (l_parent_index == i) {
+        // 将根骨骼绑定到 rig组下
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.reparentNode(joint_objs[i], head_grp_obj_));
+      } else {
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+            dag_modifier_.reparentNode(joint_objs[i], joint_objs[static_cast<std::size_t>(l_parent_index)])
+        );
       }
     }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+
+    MFnDagNode l_dag_node_fn{};
+    MFnIkJoint l_ik_joint_fn{};
+    MDagPath l_dag_path{};
+    for (auto i = 0; i < l_joint_count; ++i) {
+      auto l_parent_index = get_dna_reader()->getJointParentIndex(i);
+
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.setObject(joint_objs[i]));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.getPath(l_dag_path));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_ik_joint_fn.setObject(l_dag_path));
+
+      auto l_rotation_value    = get_dna_reader()->getNeutralJointRotation(i);
+      auto l_translation_value = get_dna_reader()->getNeutralJointTranslation(i);
+      // 需要将分量从角度转为弧度
+      // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_transform_fn.setRotation(
+      //     MEulerRotation{
+      //         MAngle{l_rotation_value.x, MAngle::kDegrees}.asRadians(),
+      //         MAngle{l_rotation_value.y, MAngle::kDegrees}.asRadians(),
+      //         MAngle{l_rotation_value.z, MAngle::kDegrees}.asRadians(),
+      //     }
+      // ));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_ik_joint_fn.setOrientation(
+          MEulerRotation{
+              MAngle{l_rotation_value.x, MAngle::kDegrees}.asRadians(),
+              MAngle{l_rotation_value.y, MAngle::kDegrees}.asRadians(),
+              MAngle{l_rotation_value.z, MAngle::kDegrees}.asRadians(),
+          }
+      ));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_ik_joint_fn.setTranslation(
+          MVector{l_translation_value.x, l_translation_value.y, l_translation_value.z},
+          l_parent_index == i ? MSpace::kWorld : MSpace::kTransform
+      ));
+    }
+
     return MS::kSuccess;
   }
 
@@ -233,20 +257,21 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_top_level_group, g_top_level_group));
     }
-
+    head_grp_obj_            = l_top_level_group;
     MObject l_geometry_group = get_name_obj(g_geometry_group);
     if (l_geometry_group.isNull()) {
       l_geometry_group = dag_modifier_.createNode("transform", l_top_level_group, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_geometry_group, g_geometry_group));
     }
+    geometry_grp_obj_   = l_geometry_group;
     MObject l_rig_group = get_name_obj(g_rig_group);
     if (l_rig_group.isNull()) {
       l_rig_group = dag_modifier_.createNode("transform", l_top_level_group, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_rig_group, g_rig_group));
     }
-
+    rig_grp_obj_ = l_rig_group;
     for (auto i = 0; i < get_dna_reader()->getLODCount(); ++i) {
       auto l_lod_mesh_index = get_dna_reader()->getMeshIndicesForLOD(i);
       auto l_lod_group_name = fmt::format("lod_{}_grp", i);
