@@ -225,8 +225,8 @@ class dna_calib_import::impl {
       }
     }
     display_info(
-        "网格 {} 的骨骼数量 {}, Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_,
-        joint_objs_.size(), l_joint_cout, l_dna_joint_index_to_maya_influence_index
+        "网格 {} Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_, l_joint_cout,
+        l_dna_joint_index_to_maya_influence_index
     );
 
     MFnSingleIndexedComponent l_skin_component_fn{};
@@ -250,8 +250,7 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
-    l_weights_array.clear();
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_weights_array.setLength(l_joint_cout * l_vertex_count));
+    l_weights_array = MDoubleArray{l_joint_cout * l_vertex_count, 0};
     //
     for (auto i = 0; i < l_vertex_count; ++i) {
       auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(in_mesh_index, i);
