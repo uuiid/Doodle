@@ -1,6 +1,7 @@
 #include "dna_calib_import.h"
 
 #include "maya_plug_fwd.h"
+#include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/node/dna_calib_node.h>
@@ -26,6 +27,8 @@
 #include <maya/MFnTransform.h>
 #include <maya/MGlobal.h>
 #include <maya/MIntArray.h>
+#include <maya/MItDependencyGraph.h>
+#include <maya/MItGeometry.h>
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <maya/MPointArray.h>
@@ -82,6 +85,7 @@ class dna_calib_import::impl {
     MObject mesh_obj_;
     std::string name_;
   };
+
   std::vector<lod_group_info> lod_grp_objs_{};
   std::vector<mesh_info> imported_meshes_{};
   std::vector<MObject> joint_objs_{};
@@ -146,9 +150,79 @@ class dna_calib_import::impl {
           imported_meshes_[i].name_, fmt::join(l_joint_names, " ")
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_bind_mel)));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(set_skin_cluster_weights(i));
     }
 
     return MS::kSuccess;
+  }
+
+  MStatus set_skin_cluster_weights(std::size_t in_mesh_index) {
+    MObject l_skin_cluster_obj{};
+    MStatus l_status{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(get_skin_cluster(in_mesh_index, l_skin_cluster_obj));
+    MFnSkinCluster l_skin_node_fn{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setObject(l_skin_cluster_obj));
+    MDagPathArray l_joint_paths{};
+    const auto l_joint_cout = l_skin_node_fn.influenceObjects(l_joint_paths, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    MDagPath l_mesh_dag_path{};
+    l_mesh_dag_path     = get_dag_path(imported_meshes_[in_mesh_index].mesh_obj_);
+    auto l_vertex_count = get_dna_reader()->getVertexPositionCount(in_mesh_index);
+
+    std::map<std::size_t, std::size_t> l_dna_joint_index_to_maya_influence_index{};
+    {
+      std::map<MObject, std::size_t, details::cmp_dag> l_dag_path_to_maya_influence_index{};
+      for (auto i = 0; i < l_joint_cout; ++i) l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i].node(), i);
+      for (auto i = 0; i < joint_objs_.size(); ++i) {
+        if (l_dag_path_to_maya_influence_index.contains(joint_objs_[i])) {
+          l_dna_joint_index_to_maya_influence_index.emplace(i, l_dag_path_to_maya_influence_index[joint_objs_[i]]);
+        } else {
+          display_warning("未找到骨骼 {} 的 Maya 影响对象, 可能导致权重丢失", get_node_name(joint_objs_[i]));
+        }
+      }
+    }
+
+    for (MItGeometry l_it_geo{l_mesh_dag_path}; !l_it_geo.isDone(); l_it_geo.next()) {
+      auto l_com          = l_it_geo.currentItem();
+      auto l_vector_index = l_it_geo.index();
+      if (l_vector_index >= l_vertex_count) return display_warning("顶点索引超出范围"), MS::kInvalidParameter;
+      auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(in_mesh_index, l_vector_index);
+      auto l_weights       = get_dna_reader()->getSkinWeightsValues(in_mesh_index, l_vector_index);
+      MIntArray l_joint_indices_array{};
+      MDoubleArray l_weights_array{};
+      for (auto i = 0; i < l_joint_indices.size(); ++i) {
+        auto l_dna_joint_index = l_joint_indices[i];
+        if (!l_dna_joint_index_to_maya_influence_index.contains(l_dna_joint_index)) {
+          display_warning("未找到骨骼索引 {} 对应的 Maya 影响对象, 跳过该权重", l_dna_joint_index);
+          continue;
+        }
+        auto l_maya_influence_index = l_dna_joint_index_to_maya_influence_index[l_dna_joint_index];
+        l_joint_indices_array.append(l_maya_influence_index);
+        l_weights_array.append(l_weights[i]);
+      }
+
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          l_skin_node_fn.setWeights(l_mesh_dag_path, l_com, l_joint_indices_array, l_weights_array, false)
+      );
+    }
+
+    return MS::kSuccess;
+  }
+
+  MStatus get_skin_cluster(std::size_t in_mesh_index, MObject& out_skin_cluster_obj) {
+    MStatus l_status{};
+    MObject l_skin_cluster_obj{};
+    MObject in_mesh_obj = imported_meshes_[in_mesh_index].mesh_obj_;
+    for (MItDependencyGraph i{in_mesh_obj, MFn::kSkinClusterFilter, MItDependencyGraph::Direction::kUpstream};
+         !i.isDone(); i.next()) {
+      l_skin_cluster_obj = i.currentItem(&l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      if (!l_skin_cluster_obj.isNull()) {
+        out_skin_cluster_obj = l_skin_cluster_obj;
+        return MS::kSuccess;
+      }
+    }
+    return display_warning("未找到网格 {} 的皮肤簇", imported_meshes_[in_mesh_index].name_), MS::kSuccess;
   }
 
   // 创建 骨骼
@@ -438,6 +512,14 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_selection.getDependNode(0, l_init_shading_group_obj));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_set.setObject(l_init_shading_group_obj));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_set.addMember(l_fn_mesh.object()));
+    // 合并 uv
+    MGlobal::executeCommand(
+        conv::to_ms(
+            fmt::format(
+                "polyMergeVertex -distance 0.01 -constructionHistory false {}", l_fn_mesh.fullPathName().asChar()
+            )
+        )
+    );
 
     return MS::kSuccess;
   }
