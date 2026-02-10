@@ -624,7 +624,7 @@ class dna_calib_import::impl {
     MGlobal::executeCommand(
         conv::to_ms(
             fmt::format(
-                "polyMergeVertex -distance 0.01 -constructionHistory false {}", l_fn_mesh.fullPathName().asChar()
+                "assignUVs -distance 0.01 -constructionHistory false {}", l_fn_mesh.fullPathName().asChar()
             )
         )
     );
