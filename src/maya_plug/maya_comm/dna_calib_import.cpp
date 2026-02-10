@@ -92,6 +92,11 @@ class dna_calib_import::impl {
   std::vector<lod_group_info> lod_grp_objs_{};
   std::vector<mesh_info> imported_meshes_{};
   std::vector<MObject> joint_objs_{};
+  struct joint_to_mesh {
+    std::vector<MObject> joint_objs_;
+    std::vector<std::string> joint_names_;
+  };
+  std::vector<joint_to_mesh> joint_to_mesh_links_{};
 
   dnac::ScopedPtr<dnac::DNACalibDNAReader>& get_dna_reader() { return dna_node_data->impl()->dna_calib_dna_reader_; }
   void conv_units() {
@@ -145,17 +150,41 @@ class dna_calib_import::impl {
       MFnDagNode l_dag_node_fn{};
       l_joint_names.push_back(get_node_full_name(j));
     }
-
+    get_mesh_for_joint(0);
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
       auto l_bind_mel = fmt::format(
           "skinCluster -toSelectedBones -bindMethod 0 -skinMethod 0 -normalizeWeights 2 {} {}",
-          imported_meshes_[i].name_, fmt::join(l_joint_names, " ")
+          imported_meshes_[i].name_, fmt::join(joint_to_mesh_links_[i].joint_names_, " ")
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_bind_mel)));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(set_skin_cluster_weights(i));
     }
 
     return MS::kSuccess;
+  }
+
+  void get_mesh_for_joint(std::size_t in_lod_index) {
+    joint_to_mesh_links_.resize(get_dna_reader()->getMeshCount());
+    for (auto&& l_mesh_index : get_dna_reader()->getMeshIndicesForLOD(0)) {
+      auto l_vertex_count = get_dna_reader()->getVertexPositionCount(l_mesh_index);
+      for (auto i = 0; i < l_vertex_count; ++i) {
+        auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(l_mesh_index, i);
+        for (auto j = 0; j < l_joint_indices.size(); ++j) {
+          auto l_dna_joint_index = l_joint_indices[j];
+          if (l_dna_joint_index >= joint_objs_.size()) {
+            display_warning("顶点 {} 的骨骼索引 {} 超出范围, 跳过该权重", i, l_dna_joint_index);
+            continue;
+          }
+          auto l_joint_obj = joint_objs_[l_dna_joint_index];
+          if (!l_joint_obj.isNull()) {
+            joint_to_mesh_links_[l_mesh_index].joint_objs_.push_back(l_joint_obj);
+            joint_to_mesh_links_[l_mesh_index].joint_names_.push_back(get_node_full_name(l_joint_obj));
+          } else {
+            display_warning("顶点 {} 的骨骼索引 {} 对应的骨骼对象为空, 跳过该权重", i, l_dna_joint_index);
+          }
+        }
+      }
+    }
   }
 
   MStatus set_skin_cluster_weights(std::size_t in_mesh_index) {
