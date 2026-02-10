@@ -224,10 +224,10 @@ class dna_calib_import::impl {
         }
       }
     }
-    // display_info(
-    //     "网格 {} 的骨骼数量 {}, Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_,
-    //     joint_objs_.size(), l_joint_cout, l_dna_joint_index_to_maya_influence_index
-    // );
+    display_info(
+        "网格 {} 的骨骼数量 {}, Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_,
+        joint_objs_.size(), l_joint_cout, l_dna_joint_index_to_maya_influence_index
+    );
 
     MFnSingleIndexedComponent l_skin_component_fn{};
     l_skin_component_fn.create(MFn::kMeshVertComponent, &l_status);
@@ -266,8 +266,12 @@ class dna_calib_import::impl {
         l_weights_array[i * l_joint_cout + l_maya_influence_index] = l_weights[j];
       }
     }
+    display_info("影响列表 {}", l_joint_indices_array);
     // display_info("权重列表 {}", l_weights_array);
-    // display_info("影响列表 {}", l_joint_indices_array);
+    for (auto i = 0; i < l_weights_array.length(); i += l_joint_cout) {
+      display_info("顶点 {} 权重 {}", i / l_joint_cout, MDoubleArray(&l_weights_array[i], l_joint_cout));
+      break;
+    }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
