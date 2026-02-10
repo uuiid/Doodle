@@ -4,9 +4,11 @@
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/data/maya_tool.h>
+#include <maya_plug/fmt/fmt_warp.h>
 #include <maya_plug/node/dna_calib_node.h>
 #include <maya_plug/node/dna_calib_node_impl.h>
 
+#include <algorithm>
 #include <arrayview/ArrayView.h>
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
@@ -141,8 +143,7 @@ class dna_calib_import::impl {
     std::vector<std::string> l_joint_names{};
     for (auto&& j : joint_objs_) {
       MFnDagNode l_dag_node_fn{};
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_node_fn.setObject(j));
-      l_joint_names.push_back(conv::to_s(l_dag_node_fn.name()));
+      l_joint_names.push_back(get_node_full_name(j));
     }
 
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
@@ -166,6 +167,7 @@ class dna_calib_import::impl {
     MDagPathArray l_joint_paths{};
     const auto l_joint_cout = l_skin_node_fn.influenceObjects(l_joint_paths, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
     MDagPath l_mesh_dag_path{};
     l_mesh_dag_path     = get_dag_path(imported_meshes_[in_mesh_index].mesh_obj_);
     auto l_vertex_count = get_dna_reader()->getVertexPositionCount(in_mesh_index);
@@ -173,7 +175,11 @@ class dna_calib_import::impl {
     std::map<std::size_t, std::size_t> l_dna_joint_index_to_maya_influence_index{};
     {
       std::map<MDagPath, std::size_t, details::cmp_dag> l_dag_path_to_maya_influence_index{};
-      for (auto i = 0; i < l_joint_cout; ++i) l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i], i);
+      for (auto i = 0; i < l_joint_cout; ++i) {
+        auto l_index = l_skin_node_fn.indexForInfluenceObject(l_joint_paths[i], &l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i], l_index);
+      }
       for (auto i = 0; i < joint_objs_.size(); ++i) {
         auto l_dag_path = get_dag_path(joint_objs_[i]);
         if (l_dag_path_to_maya_influence_index.contains(l_dag_path)) {
@@ -187,8 +193,13 @@ class dna_calib_import::impl {
     MFnSingleIndexedComponent l_skin_component_fn{};
     l_skin_component_fn.create(MFn::kMeshVertComponent, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    for (auto i = 0; i < l_vertex_count; ++i) {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_component_fn.addElement(i));
+    {
+      MIntArray l_vertex_indices_array{};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_vertex_indices_array.setLength(l_vertex_count));
+      for (auto i = 0; i < l_vertex_count; ++i) {
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_vertex_indices_array.set(i, i));
+      }
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_component_fn.addElements(l_vertex_indices_array));
     }
     MIntArray l_joint_indices_array{};
     MDoubleArray l_weights_array{};
@@ -200,8 +211,14 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
+    {  // 重新创建索引数组
+      l_joint_indices_array.clear();
+      for (auto&& [_, maya_influence_index] : l_dna_joint_index_to_maya_influence_index) {
+        l_joint_indices_array.append(maya_influence_index);
+      }
+    }
     l_weights_array.clear();
-    l_weights_array.setLength(l_joint_cout * l_vertex_count);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_weights_array.setLength(l_joint_cout * l_vertex_count));
     //
     for (auto i = 0; i < l_vertex_count; ++i) {
       auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(in_mesh_index, i);
