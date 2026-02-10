@@ -12,6 +12,7 @@
 #include <arrayview/ArrayView.h>
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
+#include <map>
 #include <maya/MAngle.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagModifier.h>
@@ -40,12 +41,12 @@
 #include <maya/MSyntax.h>
 #include <maya/MTypes.h>
 #include <maya/MVector.h>
-#include <map>
 #include <numeric>
 #include <pma/ScopedPtr.h>
 #include <string>
 #include <utility>
 #include <vector>
+
 
 namespace fmt {
 // fmt dna StringView
@@ -225,10 +226,10 @@ class dna_calib_import::impl {
         }
       }
     }
-    display_info(
-        "网格 {} Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_, l_joint_cout,
-        l_dna_joint_index_to_maya_influence_index
-    );
+    // display_info(
+    //     "网格 {} Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_, l_joint_cout,
+    //     l_dna_joint_index_to_maya_influence_index
+    // );
 
     MFnSingleIndexedComponent l_skin_component_fn{};
     l_skin_component_fn.create(MFn::kMeshVertComponent, &l_status);
@@ -281,38 +282,14 @@ class dna_calib_import::impl {
         l_weights_array[i * l_joint_cout + l_column_index] = l_weights[j];
       }
     }
-    display_info("影响列表 {}", l_joint_indices_array);
-    // display_info("权重列表 {}", l_weights_array);
-    for (auto i = 0; i < l_weights_array.length(); i += l_joint_cout) {
-      display_info("顶点 {} 权重 {}", i / l_joint_cout, MDoubleArray(&l_weights_array[i], l_joint_cout));
-      break;
-    }
+    // display_info("影响列表 {}", l_joint_indices_array);
+    // for (auto i = 0; i < l_weights_array.length(); i += l_joint_cout) {
+    //   display_info("顶点 {} 权重 {}", i / l_joint_cout, MDoubleArray(&l_weights_array[i], l_joint_cout));
+    //   break;
+    // }
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
-
-    // for (MItGeometry l_it_geo{l_mesh_dag_path}; !l_it_geo.isDone(); l_it_geo.next()) {
-    //   auto l_com          = l_it_geo.currentItem();
-    //   auto l_vector_index = l_it_geo.index();
-    //   if (l_vector_index >= l_vertex_count) return display_warning("顶点索引超出范围"), MS::kInvalidParameter;
-    //   auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(in_mesh_index, l_vector_index);
-    //   auto l_weights       = get_dna_reader()->getSkinWeightsValues(in_mesh_index, l_vector_index);
-    //   MIntArray l_joint_indices_array{};
-    //   MDoubleArray l_weights_array{};
-    //   for (auto i = 0; i < l_joint_indices.size(); ++i) {
-    //     auto l_dna_joint_index = l_joint_indices[i];
-    //     if (!l_dna_joint_index_to_maya_influence_index.contains(l_dna_joint_index)) {
-    //       display_warning("未找到骨骼索引 {} 对应的 Maya 影响对象, 跳过该权重", l_dna_joint_index);
-    //       continue;
-    //     }
-    //     auto l_maya_influence_index = l_dna_joint_index_to_maya_influence_index[l_dna_joint_index];
-    //     l_joint_indices_array.append(l_maya_influence_index);
-    //     l_weights_array.append(l_weights[i]);
-    //   }
-    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-    //       l_skin_node_fn.setWeights(l_mesh_dag_path, l_com, l_joint_indices_array, l_weights_array, false)
-    //   );
-    // }
 
     return MS::kSuccess;
   }
@@ -623,9 +600,7 @@ class dna_calib_import::impl {
     // 合并 uv
     MGlobal::executeCommand(
         conv::to_ms(
-            fmt::format(
-                "assignUVs -distance 0.01 -constructionHistory false {}", l_fn_mesh.fullPathName().asChar()
-            )
+            fmt::format("polyMergeUV -distance 0.01 -constructionHistory false {}", l_fn_mesh.fullPathName().asChar())
         )
     );
 
