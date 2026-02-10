@@ -40,6 +40,7 @@
 #include <maya/MSyntax.h>
 #include <maya/MTypes.h>
 #include <maya/MVector.h>
+#include <map>
 #include <numeric>
 #include <pma/ScopedPtr.h>
 #include <string>
@@ -241,16 +242,24 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_component_fn.addElements(l_vertex_indices_array));
     }
     MIntArray l_joint_indices_array{};
-    MDoubleArray l_weights_array{};
-    for (auto i = 0; i < l_joint_cout; ++i) {
-      l_joint_indices_array.append(i);
-      l_weights_array.append(0);
+    std::map<std::size_t, std::size_t> l_maya_logical_influence_index_to_column{};
+    {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.setLength(l_joint_cout));
+      for (auto i = 0; i < l_joint_cout; ++i) {
+        const auto l_logical_index = l_skin_node_fn.indexForInfluenceObject(l_joint_paths[i], &l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.set(static_cast<int>(l_logical_index), i));
+        l_maya_logical_influence_index_to_column.emplace(
+            static_cast<std::size_t>(l_logical_index), static_cast<std::size_t>(i)
+        );
+      }
     }
     // 清空所有权重
+    MDoubleArray l_weights_array{l_joint_cout, 0.0};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
-    l_weights_array = MDoubleArray{l_joint_cout * l_vertex_count, 0};
+    l_weights_array = MDoubleArray{l_joint_cout * l_vertex_count, 0.0};
     //
     for (auto i = 0; i < l_vertex_count; ++i) {
       auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(in_mesh_index, i);
@@ -261,8 +270,15 @@ class dna_calib_import::impl {
           display_warning("未找到骨骼索引 {} 对应的 Maya 影响对象, 跳过该权重", l_dna_joint_index);
           continue;
         }
-        auto l_maya_influence_index = l_dna_joint_index_to_maya_influence_index[l_dna_joint_index];
-        l_weights_array[i * l_joint_cout + l_maya_influence_index] = l_weights[j];
+        const auto l_maya_logical_influence_index = l_dna_joint_index_to_maya_influence_index[l_dna_joint_index];
+        if (!l_maya_logical_influence_index_to_column.contains(l_maya_logical_influence_index)) {
+          display_warning(
+              "未找到 Maya influence logicalIndex {} 对应的列索引, 跳过该权重", l_maya_logical_influence_index
+          );
+          continue;
+        }
+        const auto l_column_index = l_maya_logical_influence_index_to_column[l_maya_logical_influence_index];
+        l_weights_array[i * l_joint_cout + l_column_index] = l_weights[j];
       }
     }
     display_info("影响列表 {}", l_joint_indices_array);
