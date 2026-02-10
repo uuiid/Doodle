@@ -95,6 +95,7 @@ class dna_calib_import::impl {
   struct joint_to_mesh {
     std::vector<MObject> joint_objs_;
     std::vector<std::string> joint_names_;
+    std::vector<std::size_t> joint_index_;
   };
   std::vector<joint_to_mesh> joint_to_mesh_links_{};
 
@@ -179,6 +180,7 @@ class dna_calib_import::impl {
           if (!l_joint_obj.isNull()) {
             joint_to_mesh_links_[l_mesh_index].joint_objs_.push_back(l_joint_obj);
             joint_to_mesh_links_[l_mesh_index].joint_names_.push_back(get_node_full_name(l_joint_obj));
+            joint_to_mesh_links_[l_mesh_index].joint_index_.push_back(l_dna_joint_index);
           } else {
             display_warning("顶点 {} 的骨骼索引 {} 对应的骨骼对象为空, 跳过该权重", i, l_dna_joint_index);
           }
@@ -209,15 +211,23 @@ class dna_calib_import::impl {
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
         l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i], l_index);
       }
-      for (auto i = 0; i < joint_objs_.size(); ++i) {
-        auto l_dag_path = get_dag_path(joint_objs_[i]);
+      for (auto&& l_joint_index : joint_to_mesh_links_[in_mesh_index].joint_index_) {
+        auto l_dag_path = get_dag_path(joint_objs_[l_joint_index]);
         if (l_dag_path_to_maya_influence_index.contains(l_dag_path)) {
-          l_dna_joint_index_to_maya_influence_index.emplace(i, l_dag_path_to_maya_influence_index[l_dag_path]);
+          l_dna_joint_index_to_maya_influence_index.emplace(
+              l_joint_index, l_dag_path_to_maya_influence_index[l_dag_path]
+          );
         } else {
-          display_warning("未找到骨骼 {} 的 Maya 影响对象, 可能导致权重丢失", get_node_name(joint_objs_[i]));
+          display_warning(
+              "未找到骨骼 {} 的 Maya 影响对象, 可能导致权重丢失", get_node_name(joint_objs_[l_joint_index])
+          );
         }
       }
     }
+    display_info(
+        "网格 {} 的骨骼数量 {}, Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_,
+        joint_objs_.size(), l_joint_cout, l_dna_joint_index_to_maya_influence_index
+    );
 
     MFnSingleIndexedComponent l_skin_component_fn{};
     l_skin_component_fn.create(MFn::kMeshVertComponent, &l_status);
@@ -240,12 +250,6 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
-    {  // 重新创建索引数组
-      l_joint_indices_array.clear();
-      for (auto&& [_, maya_influence_index] : l_dna_joint_index_to_maya_influence_index) {
-        l_joint_indices_array.append(maya_influence_index);
-      }
-    }
     l_weights_array.clear();
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_weights_array.setLength(l_joint_cout * l_vertex_count));
     //
