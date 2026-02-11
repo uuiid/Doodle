@@ -321,8 +321,8 @@ class dna_calib_import::impl {
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
       MProgressWindow::advanceProgress(1);
       auto l_bind_mel = fmt::format(
-        "skinCluster -toSelectedBones -bindMethod 0 -skinMethod 0 -normalizeWeights 2 {} {}",
-        imported_meshes_[i].name_, fmt::join(joint_to_mesh_links_[i].joint_names_, " ")
+          "skinCluster -toSelectedBones -bindMethod 0 -skinMethod 0 -normalizeWeights 2 {} {}",
+          imported_meshes_[i].name_, fmt::join(joint_to_mesh_links_[i].joint_names_, " ")
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_bind_mel)));
       MProgressWindow::advanceProgress(1);
@@ -453,7 +453,6 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
-
     return MS::kSuccess;
   }
 
@@ -802,7 +801,7 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   MProgressWindow::reserve();
   MProgressWindow::setTitle("Import DNA Calib");
   MProgressWindow::setInterruptable(false);
-  MProgressWindow::setProgressRange(0, 100);
+  MProgressWindow::setProgressRange(0, 500);
   MProgressWindow::setProgressStatus("Importing...");
   MProgressWindow::startProgress();
   boost::scope::scope_exit l_progress_end_scope([]() { MProgressWindow::endProgress(); });
