@@ -115,6 +115,8 @@ find_package(mimalloc CONFIG REQUIRED)
 find_package(avcpp CONFIG REQUIRED)
 # 寻找 cgal 库
 find_package(cgal CONFIG REQUIRED)
+# 异常捕获库
+find_package(crashpad CONFIG REQUIRED)
 
 # 启用测试
 enable_testing()

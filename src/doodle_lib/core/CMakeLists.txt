@@ -14,6 +14,7 @@ target_sources(doodle_lib
         entity_path.h
         ffmpeg_video.h
         generate_text_video.hpp
+        crashpad.h
         
         PRIVATE
         filesystem_extend.cpp
@@ -25,7 +26,7 @@ target_sources(doodle_lib
         entity_path.cpp
         ffmpeg_video.cpp
         generate_text_video.cpp
-
+        crashpad.cpp
 )
 add_subdirectory(http)
 add_subdirectory(socket_io)

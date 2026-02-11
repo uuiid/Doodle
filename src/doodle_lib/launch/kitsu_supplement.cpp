@@ -14,6 +14,7 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/seed_email.h>
+#include <doodle_lib/core/crashpad.h>
 
 #include <opencv2/core/utility.hpp>
 #include <winreg/WinReg.hpp>
@@ -118,7 +119,8 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
 
 bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
-  g_ctx().emplace<detail::crash_reporting_thread>();
+  // g_ctx().emplace<detail::crash_reporting_thread>();
+  crashpad_init::get();
   kitsu_supplement_args_t l_args{
       .port_    = 80,
       .db_path_ = "C:/kitsu_new.database",

@@ -80,7 +80,7 @@ target_link_libraries(doodle_lib
         Fbx::Fbx-static
         avcpp::avcpp
         avcpp::FFmpeg
-
+        crashpad::crashpad
         #        OpenSSL::applink
 )
 
