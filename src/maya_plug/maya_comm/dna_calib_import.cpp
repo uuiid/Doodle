@@ -801,7 +801,7 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   MProgressWindow::reserve();
   MProgressWindow::setTitle("Import DNA Calib");
   MProgressWindow::setInterruptable(false);
-  MProgressWindow::setProgressRange(0, 500);
+  MProgressWindow::setProgressRange(0, 1000);
   MProgressWindow::setProgressStatus("Importing...");
   MProgressWindow::startProgress();
   boost::scope::scope_exit l_progress_end_scope([]() { MProgressWindow::endProgress(); });
