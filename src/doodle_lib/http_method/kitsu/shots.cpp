@@ -2,6 +2,7 @@
 // Created by TD on 25-7-28.
 //
 
+#include "doodle_core/core/global_function.h"
 #include "doodle_core/metadata/working_file.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
@@ -13,6 +14,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
 
+#include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle::http {
@@ -380,6 +382,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
 
       ))
     person_.check_project_manager(l_shot->project_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 {}({}) 镜头", person_.person_.email_,
+      person_.person_.get_full_name(), l_shot->name_, l_shot->uuid_id_
+  );
+
   bool l_force{};
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "force" && has) l_force = true;

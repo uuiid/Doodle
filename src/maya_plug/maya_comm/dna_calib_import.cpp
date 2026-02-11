@@ -12,6 +12,7 @@
 #include <maya_plug/node/dna_calib_node_impl.h>
 
 #include <algorithm>
+#include <array>
 #include <arrayview/ArrayView.h>
 #include <dnacalib/DNACalib.h>
 #include <fmt/format.h>
@@ -149,17 +150,66 @@ class dna_calib_import::impl {
           conv::to_ms(fmt::format("Creating mesh {}/{}...", i + 1, get_dna_reader()->getMeshCount()))
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
+      MProgressWindow::advanceProgress(1);
     }
     MProgressWindow::setProgressStatus("Creating joints...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
-    MProgressWindow::setProgress(10);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
-    MProgressWindow::setProgress(50);
     MProgressWindow::setProgressStatus("Creating blend shapes...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
+    MProgressWindow::setProgressStatus("Connecting joints...");
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_joint());
 
     return MS::kSuccess;
   }
+
+  // 将核心计算节点和骨骼以及混合变形权重联系起来
+  MStatus connect_joint() {
+    MStatus l_status{};
+    auto l_joint_count = get_dna_reader()->getJointCount();
+    if (l_joint_count != joint_objs_.size()) {
+      return display_warning(
+                 "DNA 文件中的关节数量 {} 与导入的关节数量 {} 不匹配, 跳过连接", l_joint_count, joint_objs_.size()
+             ),
+             MS::kFailure;
+    }
+    struct node_attr {
+      MObject dna_node_attr_;
+      std::array<const char*, 3> tran_attrs_;
+    };
+
+    std::array<node_attr, 3> g_node_attrs{{
+        {dna_calib_node::output_join_transforms, {"tx", "ty", "tz"}},
+        {dna_calib_node::output_join_rotations, {"rx", "ry", "rz"}},
+        {dna_calib_node::output_join_scales, {"sx", "sy", "sz"}},
+    }};
+
+    for (auto& l_node_attr : g_node_attrs) {
+      MPlug l_dna_plug{dna_node_obj, l_node_attr.dna_node_attr_};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dna_plug.setNumElements(static_cast<unsigned int>(l_joint_count)));
+      for (auto i = 0; i < l_joint_count; ++i) {
+        auto l_joint = joint_objs_[i];
+        MFnDependencyNode l_joint_fn{l_joint, &l_status};
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        for (auto j = 0; j < l_node_attr.tran_attrs_.size(); ++j) {
+          MPlug l_plug = l_joint_fn.findPlug(l_node_attr.tran_attrs_[j], /* wantNetworked = */ false, &l_status);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          if (l_plug.isNull()) {
+            display_warning("未找到对应的节点属性: {}", get_node_name(l_joint));
+            continue;
+          }
+          auto l_target = l_dna_plug.elementByLogicalIndex(i * l_node_attr.tran_attrs_.size() + j, &l_status);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_target, l_plug));
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        }
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+      }
+    }
+
+    return MS::kSuccess;
+  }
+  MStatus connect_blend_shape() { return MS::kSuccess; }
 
   // 创建混合变形
   MStatus create_blend_shape() {
