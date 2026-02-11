@@ -98,6 +98,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
     session_data_ptr in_handle
 ) {
   person_.check_project_manager(project_id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 项目 {} 的任务类型 {} ", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, task_type_id_
+  );
   if (auto l_t = g_ctx().get<sqlite_database>().get_project_task_type_link(project_id_, task_type_id_); l_t)
     co_await g_ctx().get<sqlite_database>().remove<project_task_status_link>(l_t->uuid_id_);
   co_return in_handle->make_msg_204();
@@ -245,6 +249,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
 ) {
   person_.check_project_manager(project_id_);
   auto l_sql = g_ctx().get<sqlite_database>();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 从项目 {} 移除成员 {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, person_id_
+  );
 
   using namespace sqlite_orm;
   if (auto l_id = l_sql.impl_->storage_any_.select(
@@ -293,6 +301,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_instance, delete_) {
   person_.check_project_manager(project_id_);
   auto l_sql = g_ctx().get<sqlite_database>();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 从项目 {} 移除状态自动化 {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, status_automation_id_
+  );
   using namespace sqlite_orm;
   if (auto l_id = l_sql.impl_->storage_any_.select(
           &project_status_automation_link::id_,

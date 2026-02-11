@@ -347,7 +347,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::del
   for (auto&& l_i : in_handle->url_.params()) {
     if (l_i.key == "force") l_force = true;
   }
-  SPDLOG_LOGGER_WARN(in_handle->logger_, "用户 {} 删除实体 {}", person_.person_.email_, l_ass->uuid_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除实体 {}", person_.person_.email_, person_.person_.get_full_name(),
+      l_ass->uuid_id_
+  );
   if (!l_force) {
     l_ass->canceled_ = true;
     co_await l_sql.update(l_ass);

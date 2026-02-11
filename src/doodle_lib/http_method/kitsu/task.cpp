@@ -396,6 +396,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_ta
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::delete_(session_data_ptr in_handle) {
   auto l_task = g_ctx().get<sqlite_database>().get_by_uuid<task>(id_);
   person_.check_delete_access(l_task.project_id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除任务 {} ", person_.person_.email_, person_.person_.get_full_name(),
+      l_task.uuid_id_
+  );
   co_await g_ctx().get<sqlite_database>().remove<task>(id_);
   co_return in_handle->make_msg_204();
 }

@@ -112,7 +112,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, delete_) {
   person_.check_producer();
-
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 实体外包授权 {}", person_.person_.email_,
+      person_.person_.get_full_name(), authorization_id_
+  );
   auto l_sql = g_ctx().get<sqlite_database>();
   co_await l_sql.remove<outsource_studio_authorization>(authorization_id_);
   co_return in_handle->make_msg_204();

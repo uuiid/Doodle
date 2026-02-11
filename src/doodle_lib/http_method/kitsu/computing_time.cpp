@@ -774,7 +774,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_del
       g_ctx().get<sqlite_database>().get_by_uuid<work_xlsx_task_info_helper::database_t>(id_);
   if (l_task.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
-  
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "delete task id {} user id {}", l_task.uuid_id_, l_task.person_id_);
   co_await g_ctx().get<sqlite_database>().remove<work_xlsx_task_info_helper::database_t>(l_task.id_);
   chrono::year_month_day l_year_month_day{l_task.year_month_};
   chrono::year_month l_year_month{l_year_month_day.year(), l_year_month_day.month()};

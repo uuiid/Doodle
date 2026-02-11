@@ -250,6 +250,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
         l_sql.is_person_in_project(person_.person_.uuid_id_, l_sequence->project_id_)))
     person_.check_project_manager(l_sequence->project_id_);
   bool l_force{};
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 序列 {} ", person_.person_.email_, person_.person_.get_full_name(),
+      l_sequence->name_
+  );
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "force" && has) l_force = true;
   if (!l_force) {

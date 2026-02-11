@@ -65,6 +65,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     http::session_data_ptr in_handle
 ) {
   person_.check_supervisor();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 资产库文件 {} ", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
   co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(id_);
   co_return in_handle->make_msg(nlohmann::json{});
 }

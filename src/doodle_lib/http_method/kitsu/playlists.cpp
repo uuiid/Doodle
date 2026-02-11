@@ -656,7 +656,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_playlist);
-  SPDLOG_LOGGER_WARN(in_handle->logger_, "{} 修改播放列表 {}", person_.person_.email_, l_playlist->name_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "{}({}) 修改播放列表 {}", person_.person_.email_, person_.person_.get_full_name(),
+      l_playlist->name_
+  );
   co_await l_sql.update(l_playlist);
   nlohmann::json l_ret{};
   l_ret         = *l_playlist;
@@ -668,7 +671,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
   auto l_playlist = l_sql.get_by_uuid<playlist>(id_);
   person_.check_in_project(l_playlist.project_id_);
   person_.check_not_outsourcer();
-  SPDLOG_LOGGER_WARN(in_handle->logger_, "{} 删除播放列表 {}", person_.person_.email_, l_playlist.name_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "{}({}) 删除播放列表 {}", person_.person_.email_, person_.person_.get_full_name(),
+      l_playlist.name_
+  );
   co_await l_sql.remove<playlist>(l_playlist.id_);
   co_return in_handle->make_msg_204();
 }
@@ -717,7 +724,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
   person_.check_in_project(l_playlist.project_id_);
   person_.check_not_outsourcer();
   SPDLOG_LOGGER_WARN(
-      in_handle->logger_, "{} 删除播放列表 {} 中的镜头 {}", person_.person_.email_, l_playlist.name_, shot_id_
+      g_logger_ctrl().get_http(), "{}({}) 删除播放列表 {} 中的镜头 {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_playlist.name_, shot_id_
   );
   co_await l_sql.remove<playlist_shot>(shot_id_);
   co_return in_handle->make_msg_204();

@@ -289,6 +289,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment::dele
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_delete_access(l_task->project_id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 任务 {} 的评论 {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_task->uuid_id_, comment_id_
+  );
   co_await l_sql.remove<comment>(comment_id_);
   auto l_last_comment = l_sql.get_last_comment(l_task->uuid_id_);
   if (l_last_comment) {

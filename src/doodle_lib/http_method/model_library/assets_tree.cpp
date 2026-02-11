@@ -101,6 +101,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   auto l_sql  = g_ctx().get<sqlite_database>();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 资产库节点 {} ", person_.person_.email_,
+      person_.person_.get_full_name(), l_uuid
+  );
   // else if (!l_r.empty()) {
   //   auto l_rem = std::make_shared<std::vector<std::int64_t>>();
   //   l_rem->reserve(l_r.size());

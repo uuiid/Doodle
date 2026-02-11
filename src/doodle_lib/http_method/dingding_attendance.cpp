@@ -253,6 +253,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto& l_sql = g_ctx().get<sqlite_database>();
   auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
   if (l_data.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 考勤记录 {} ", person_.person_.email_,
+      person_.person_.get_full_name(), l_data.uuid_id_
+  );
+
   co_await l_sql.remove<attendance_helper::database_t>(id_);
   co_return in_handle->make_msg((nlohmann::json{} = id_).dump());
 }

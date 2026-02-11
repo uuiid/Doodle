@@ -63,6 +63,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   person_.check_admin();
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_studio = l_sql.get_by_uuid<studio>(id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_studio.name_
+  );
   co_await l_sql.remove<studio>(l_studio.uuid_id_);
   co_return in_handle->make_msg_204();
 }

@@ -68,8 +68,8 @@ std::string up_file_base::get_current_time_str_hour() const {
 void up_file_base::move_file(session_data_ptr in_handle) {
   if (file_path_.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失根路径"});
   auto l_gen_path = gen_file_path();
-  auto l_dir     = root_path_ / l_gen_path;
-  auto l_path    = l_dir / file_path_;
+  auto l_dir      = root_path_ / l_gen_path;
+  auto l_path     = l_dir / file_path_;
   auto l_backup_path =
       root_path_ / "backup" / get_current_time_str_hour() / FSys::add_time_stamp(file_path_.filename());
   auto l_tmp_path = std::get<FSys::path>(in_handle->body_);
@@ -94,7 +94,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::dele
   if (auto l_p = l_backup_path.parent_path(); !exists(l_p)) create_directories(l_p);
   if (FSys::exists(l_dir)) {
     FSys::rename(l_dir, l_backup_path);
-    SPDLOG_LOGGER_INFO(in_handle->logger_, "转移文件 {} {}", l_dir, l_backup_path);
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "用户 {}({}) 删除 文件夹 {}", person_.person_.email_,
+        person_.person_.get_full_name(), l_dir.string()
+    );
   }
   co_return in_handle->make_msg_204();
 }
