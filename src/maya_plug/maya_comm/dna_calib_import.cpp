@@ -189,20 +189,14 @@ class dna_calib_import::impl {
     MPointArray l_base_points{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.getPoints(l_base_points, MSpace::kObject));
 
-    // batch add targets via one MEL command for stability and performance
-    struct blend_target_info {
-      int weight_index{};
-      std::string channel_name;
-      MObject target_mesh_obj;
-      MDagPath target_path;
-    };
-    std::vector<blend_target_info> l_targets_to_add{};
-    l_targets_to_add.reserve(static_cast<std::size_t>(l_target_count));
-
     MDagPath l_base_path{};
     {
       MFnDagNode l_dag_fn{l_mesh_info.mesh_obj_, &l_status};
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_base_path));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.setObject(l_base_path.transform(&l_status)));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_base_path));
     }
 
@@ -211,7 +205,8 @@ class dna_calib_import::impl {
 
     std::int32_t l_next_weight_index{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-
+    std::vector<MDagPath> l_target_paths{};
+    l_target_paths.reserve(static_cast<std::size_t>(l_target_count));
     // for each target, build a target mesh in meshData and add it
     for (std::uint16_t i = 0; i < l_target_count; ++i) {
       const auto l_channel_index  = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_index, i);
@@ -244,7 +239,7 @@ class dna_calib_import::impl {
         l_points[l_vertex_idx].z += l_delta.z;
       }
 
-      auto l_bs_tran = dag_modifier_.createNode("transform", l_mesh_info.mesh_obj_, &l_status);
+      auto l_bs_tran = dag_modifier_.createNode(MFnTransform{}.typeId(), l_mesh_info.mesh_obj_, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
 
@@ -257,7 +252,7 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_target_mesh_fn.setPoints(l_points, MSpace::kObject));
       // 重命名网格体为目标混变名称
       {
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_target_mesh_obj, l_channel_name.c_str()));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_bs_tran, l_channel_name.c_str()));
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
       }
 
@@ -265,26 +260,20 @@ class dna_calib_import::impl {
       {
         MDagPath l_target_path{};
         {
-          MFnDagNode l_dag_fn{l_target_mesh_obj, &l_status};
+          MFnDagNode l_dag_fn{l_bs_tran, &l_status};
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_target_path));
         }
-        l_targets_to_add.push_back(
-            blend_target_info{l_next_weight_index++, std::string{l_channel_name}, l_target_mesh_obj, l_target_path}
-        );
+        l_target_paths.push_back(l_target_path);
       }
     }
 
-    if (!l_targets_to_add.empty()) {
-      std::vector<MDagPath> l_target_paths{};
-      for (const auto& t : l_targets_to_add) {
-        l_target_paths.push_back(t.target_path);
-      }
-      auto l_mel = fmt::format(R"(blendShape {} {})", fmt::join(l_target_paths, " "), l_mesh_info.name_);
+    if (!l_target_paths.empty()) {
+      auto l_mel = fmt::format(R"(blendShape {} {})", fmt::join(l_target_paths, " "), l_base_path);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_mel)));
 
       // alias weight[weightIndex] with channel name
-      // for (const auto& t : l_targets_to_add) {
+      // for (const auto& t : l_target_paths) {
       //   const auto l_alias_mel = fmt::format(
       //       R"(catchQuiet(`aliasAttr -rm \"{}\"`); aliasAttr -add \"{}\" \"{}.weight[{}]\";)", t.channel_name,
       //       t.channel_name, l_blend_dep_fn.name().asChar(), t.weight_index
@@ -293,8 +282,8 @@ class dna_calib_import::impl {
       // }
 
       // delete all temporary target meshes
-      for (const auto& t : l_targets_to_add) {
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.deleteNode(t.target_mesh_obj, true));
+      for (const auto& t : l_target_paths) {
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.deleteNode(t.node()));
       }
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
     }
