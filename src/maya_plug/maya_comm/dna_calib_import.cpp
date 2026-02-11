@@ -148,11 +148,6 @@ class dna_calib_import::impl {
     if (imported_meshes_.empty()) return display_warning("没有可绑定的网格, 跳过绑定"), MS::kSuccess;
     if (joint_objs_.empty()) return display_warning("没有可绑定的骨骼, 跳过绑定"), MS::kSuccess;
 
-    std::vector<std::string> l_joint_names{};
-    for (auto&& j : joint_objs_) {
-      MFnDagNode l_dag_node_fn{};
-      l_joint_names.push_back(get_node_full_name(j));
-    }
     get_mesh_for_joint(0);
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
       auto l_bind_mel = fmt::format(
@@ -206,12 +201,20 @@ class dna_calib_import::impl {
     auto l_vertex_count = get_dna_reader()->getVertexPositionCount(in_mesh_index);
 
     std::map<std::size_t, std::size_t> l_dna_joint_index_to_maya_influence_index{};
+    MIntArray l_joint_indices_array{};
+    std::map<std::size_t, std::size_t> l_maya_logical_influence_index_to_column{};
     {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.setLength(l_joint_cout));
       std::map<MDagPath, std::size_t, details::cmp_dag> l_dag_path_to_maya_influence_index{};
       for (auto i = 0; i < l_joint_cout; ++i) {
-        auto l_index = l_skin_node_fn.indexForInfluenceObject(l_joint_paths[i], &l_status);
+        const auto l_logical_index = l_skin_node_fn.indexForInfluenceObject(l_joint_paths[i], &l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i], l_index);
+        l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i], l_logical_index);
+        
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.set(static_cast<int>(l_logical_index), i));
+        l_maya_logical_influence_index_to_column.emplace(
+            static_cast<std::size_t>(l_logical_index), static_cast<std::size_t>(i)
+        );
       }
       for (auto&& l_joint_index : joint_to_mesh_links_[in_mesh_index].joint_index_) {
         auto l_dag_path = get_dag_path(joint_objs_[l_joint_index]);
@@ -226,6 +229,11 @@ class dna_calib_import::impl {
         }
       }
     }
+    {
+      for (auto i = 0; i < l_joint_cout; ++i) {
+      }
+    }
+
     // display_info(
     //     "网格 {} Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_, l_joint_cout,
     //     l_dna_joint_index_to_maya_influence_index
@@ -242,19 +250,7 @@ class dna_calib_import::impl {
       }
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_component_fn.addElements(l_vertex_indices_array));
     }
-    MIntArray l_joint_indices_array{};
-    std::map<std::size_t, std::size_t> l_maya_logical_influence_index_to_column{};
-    {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.setLength(l_joint_cout));
-      for (auto i = 0; i < l_joint_cout; ++i) {
-        const auto l_logical_index = l_skin_node_fn.indexForInfluenceObject(l_joint_paths[i], &l_status);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.set(static_cast<int>(l_logical_index), i));
-        l_maya_logical_influence_index_to_column.emplace(
-            static_cast<std::size_t>(l_logical_index), static_cast<std::size_t>(i)
-        );
-      }
-    }
+
     // 清空所有权重
     MDoubleArray l_weights_array{l_joint_cout, 0.0};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
