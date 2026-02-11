@@ -4,6 +4,7 @@
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/data/maya_tool.h>
+#include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_warp.h>
 #include <maya_plug/node/dna_calib_node.h>
 #include <maya_plug/node/dna_calib_node_impl.h>
@@ -46,7 +47,6 @@
 #include <numeric>
 #include <pma/ScopedPtr.h>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace fmt {
@@ -138,9 +138,9 @@ class dna_calib_import::impl {
     for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     }
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
 
     return MS::kSuccess;
   }
@@ -171,23 +171,46 @@ class dna_calib_import::impl {
     MFnMesh l_base_mesh_fn{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.setObject(l_mesh_info.mesh_obj_));
 
-    // create blendShape deformer
-    MFnBlendShapeDeformer l_blend_fn{};
-    // Maya API: create a blendShape for the given base object
-    MObject l_blend_obj = l_blend_fn.create(l_mesh_info.mesh_obj_, MFnBlendShapeDeformer::kLocalOrigin, &l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(l_blend_obj));
+    // // create blendShape deformer
+    // MFnBlendShapeDeformer l_blend_fn{};
+    // // Maya API: create a blendShape for the given base object
+    // MObject l_blend_obj = l_blend_fn.create(l_mesh_info.mesh_obj_, MFnBlendShapeDeformer::kLocalOrigin, &l_status);
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(l_blend_obj));
 
-    {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-          dag_modifier_.renameNode(l_blend_obj, conv::to_ms(fmt::format("{}_blendShape", l_mesh_info.name_)))
-      );
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
-    }
+    // {
+    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+    //       dag_modifier_.renameNode(l_blend_obj, conv::to_ms(fmt::format("{}_blendShape", l_mesh_info.name_)))
+    //   );
+    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    // }
 
     // read base points once
     MPointArray l_base_points{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.getPoints(l_base_points, MSpace::kObject));
+
+    // batch add targets via one MEL command for stability and performance
+    struct blend_target_info {
+      int weight_index{};
+      std::string channel_name;
+      MObject target_mesh_obj;
+      MDagPath target_path;
+    };
+    std::vector<blend_target_info> l_targets_to_add{};
+    l_targets_to_add.reserve(static_cast<std::size_t>(l_target_count));
+
+    MDagPath l_base_path{};
+    {
+      MFnDagNode l_dag_fn{l_mesh_info.mesh_obj_, &l_status};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_base_path));
+    }
+
+    // MFnDependencyNode l_blend_dep_fn{l_blend_obj, &l_status};
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
+    std::int32_t l_next_weight_index{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
 
     // for each target, build a target mesh in meshData and add it
     for (std::uint16_t i = 0; i < l_target_count; ++i) {
@@ -221,61 +244,58 @@ class dna_calib_import::impl {
         l_points[l_vertex_idx].z += l_delta.z;
       }
 
+      auto l_bs_tran = dag_modifier_.createNode("transform", l_mesh_info.mesh_obj_, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+
       // 这里不要直接使用 MFnBlendShapeDeformer::addTarget(...)。
       // 在不同 Maya 版本/对象类型组合下，该 API 很容易报 (kInvalidParameter): 对象与此方法不兼容。
       // 使用等价的 MEL 命令更稳定：blendShape -e -t base index target weight blendShapeNode
       MFnMesh l_target_mesh_fn{};
-      MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, MObject::kNullObj, &l_status);
+      MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, l_bs_tran, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_target_mesh_fn.setPoints(l_points, MSpace::kObject));
       // 重命名网格体为目标混变名称
       {
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(
-            l_target_mesh_obj, conv::to_ms(fmt::format("{}_target_{}", l_mesh_info.name_, l_channel_name))
-        ));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_target_mesh_obj, l_channel_name.c_str()));
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
       }
 
       // add target (each target uses a unique weight index)
-      const auto l_weight_index = static_cast<int>(l_blend_fn.numWeights(&l_status));
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       {
-        MDagPath l_base_path{};
         MDagPath l_target_path{};
-        {
-          MFnDagNode l_dag_fn{l_mesh_info.mesh_obj_, &l_status};
-          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_base_path));
-        }
         {
           MFnDagNode l_dag_fn{l_target_mesh_obj, &l_status};
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_target_path));
         }
-        MFnDependencyNode l_blend_dep_fn{l_blend_obj, &l_status};
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-
-        const auto l_mel = fmt::format(
-            R"(blendShape -e -t "{}" {} "{}" 1.0 "{}")", l_base_path.fullPathName().asChar(), l_weight_index,
-            l_target_path.fullPathName().asChar(), l_blend_dep_fn.name().asChar()
+        l_targets_to_add.push_back(
+            blend_target_info{l_next_weight_index++, std::string{l_channel_name}, l_target_mesh_obj, l_target_path}
         );
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_mel)));
       }
+    }
+
+    if (!l_targets_to_add.empty()) {
+      std::vector<MDagPath> l_target_paths{};
+      for (const auto& t : l_targets_to_add) {
+        l_target_paths.push_back(t.target_path);
+      }
+      auto l_mel = fmt::format(R"(blendShape {} {})", fmt::join(l_target_paths, " "), l_mesh_info.name_);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_mel)));
 
       // alias weight[weightIndex] with channel name
-      MFnDependencyNode l_dep_fn{l_blend_obj, &l_status};
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-      MPlug l_weight_plug = l_dep_fn.findPlug("weight", true, &l_status);
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-      auto l_w = l_weight_plug.elementByLogicalIndex(static_cast<unsigned int>(l_weight_index), &l_status);
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-      (void)l_dep_fn.setAlias(
-          conv::to_ms(std::string{l_channel_name}), conv::to_ms(fmt::format("weight[{}]", l_weight_index)), l_w, true,
-          &l_status
-      );
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      // for (const auto& t : l_targets_to_add) {
+      //   const auto l_alias_mel = fmt::format(
+      //       R"(catchQuiet(`aliasAttr -rm \"{}\"`); aliasAttr -add \"{}\" \"{}.weight[{}]\";)", t.channel_name,
+      //       t.channel_name, l_blend_dep_fn.name().asChar(), t.weight_index
+      //   );
+      //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_alias_mel)));
+      // }
 
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.deleteNode(l_target_mesh_obj, true));
+      // delete all temporary target meshes
+      for (const auto& t : l_targets_to_add) {
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.deleteNode(t.target_mesh_obj, true));
+      }
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
     }
 
