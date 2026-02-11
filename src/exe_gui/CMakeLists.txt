@@ -59,6 +59,15 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crashpad_handler_exe} $<TARGET_FILE_DIR:doodle_kitsu_supplement>
 
 )
+# 如果是debug, 需要将 zlibd1.dll 复制一份, 命名为 zlib1.dll
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        add_custom_command(
+                TARGET doodle_kitsu_supplement
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different  $<TARGET_FILE_DIR:doodle_kitsu_supplement>/zlibd1.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement>/zlib1.dll
+        )
+endif()
+
 # 添加生成 PDB 文件
 target_compile_options(
         doodle_kitsu_supplement

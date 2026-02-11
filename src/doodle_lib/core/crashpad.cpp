@@ -19,7 +19,7 @@ crashpad_init::crashpad_init() {
   g_initialized = true;
 
   crashpad::CrashpadClient l_client{};
-  FSys::path l_db_path = core_set::get_set().get_cache_root() / "crashpad_db";
+  FSys::path l_db_path = core_set::get_set().get_cache_root("crashpad_db");
   FSys::create_directories(l_db_path);
   FSys::path l_handler_path = boost::dll::program_location().parent_path() / "crashpad_handler.exe";
 
@@ -30,8 +30,8 @@ crashpad_init::crashpad_init() {
   l_arguments.push_back("--no-rate-limit");
 
   bool l_success = l_client.StartHandler(
-      base::FilePath{l_handler_path.wstring()}, base::FilePath{l_db_path.wstring()}, base::FilePath{}, std::string{},
-      l_annotations, l_arguments, true, false
+      base::FilePath{l_handler_path.wstring()}, base::FilePath{l_db_path.wstring()},
+      base::FilePath{l_db_path.wstring()}, std::string{}, l_annotations, l_arguments, true, false
   );
   if (!l_success) {
     SPDLOG_ERROR(fmt::format("crashpad 初始化失败, handler: {}, db: {}", l_handler_path.string(), l_db_path.string()));
