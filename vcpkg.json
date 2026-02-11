@@ -8,7 +8,7 @@
   "$default-features-explanation": "Users using this library transitively will get all backends automatically",
   "default-features": [],
   "features": {},
-  "builtin-baseline": "66c0373dc7fca549e5803087b9487edfe3aca0a1",
+  "builtin-baseline": "36fb57eb3878cc3422351a91d3e87c328388dabd",
   "dependencies": [
     "boost-locale",
     "boost-iostreams",
@@ -59,11 +59,7 @@
     },
     "vpetrigo-caches",
     "mailio",
-    {
-      "name": "fmt",
-      "default-features": true,
-      "version>=": "10.1.1"
-    },
+    "fmt",
     {
       "name": "opencv",
       "default-features": false,
@@ -78,11 +74,7 @@
     "magic-enum",
     "nlohmann-json",
     "spdlog",
-    {
-      "name": "entt",
-      "default-features": true,
-      "version>=": "3.12.2"
-    },
+    "entt",
     "eigen3",
     "range-v3",
     "wil",
