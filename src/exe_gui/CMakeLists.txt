@@ -39,6 +39,16 @@ dow_minject()
 # add_custom_target(genexdebug2
 #         COMMAND ${CMAKE_COMMAND} -E echo "${MIMALLOC_EXE} --force --inplace $<TARGET_FILE:doodle_kitsu_supplement>")
 
+# 寻找 crashpad_handler.exe 本身
+# debug  build\Ninja_debug\vcpkg_installed\x64-windows\debug\tools\
+# release  build\Ninja_debug\vcpkg_installed\x64-windows\tools\
+find_program(
+        crashpad_handler_exe
+        NAMES crashpad_handler.exe
+        HINTS
+        $<$<CONFIG:Debug>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/debug/tools>
+        $<$<CONFIG:Release>:${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools>
+)
 
 # 复制动态加载库 E:\Doodle\vcpkg\buildtrees\libtorch\x64-windows-dbg\bin\
 add_custom_command(
@@ -46,6 +56,7 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement>
         # COMMAND ${CMAKE_COMMAND} -E echo "${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll" 
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crashpad_handler_exe} $<TARGET_FILE_DIR:doodle_kitsu_supplement>
 
 )
 # 添加生成 PDB 文件
@@ -76,6 +87,8 @@ install(TARGETS doodle_kitsu_supplement
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 )
 
+
+
 find_file(libomp140_x86_64_dll
         NAMES
         libomp140.x86_64.dll
@@ -104,7 +117,9 @@ install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$
         $<TARGET_FILE:7zip::7zip>
         DESTINATION bin
 )
-
+install(FILES ${crashpad_handler_exe}
+        DESTINATION bin
+)
 set(DOODLE_INSTALL_IGNORE_ITEM
         doodle_maya_exe_2018.exe
         doodle_maya_exe_2019.exe
