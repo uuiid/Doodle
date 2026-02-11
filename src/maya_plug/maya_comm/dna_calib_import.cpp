@@ -221,25 +221,39 @@ class dna_calib_import::impl {
         l_points[l_vertex_idx].z += l_delta.z;
       }
 
-      // NOTE:
-      // MFnBlendShapeDeformer::addTarget(...) 这一路通常期望的是“几何数据”(kMeshData)
-      // 而不是 DAG 上的 mesh 节点对象；传 DAG mesh 往往会触发 (kInvalidParameter): 对象与此方法不兼容。
-      // 因此这里使用 MFnMeshData 承载 target mesh (非 DAG)。
-      MFnMeshData l_mesh_data_fn{};
-      MObject l_mesh_data_obj = l_mesh_data_fn.create(&l_status);
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-
+      // 这里不要直接使用 MFnBlendShapeDeformer::addTarget(...)。
+      // 在不同 Maya 版本/对象类型组合下，该 API 很容易报 (kInvalidParameter): 对象与此方法不兼容。
+      // 使用等价的 MEL 命令更稳定：blendShape -e -t base index target weight blendShapeNode
       MFnMesh l_target_mesh_fn{};
-      MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, l_mesh_data_obj, &l_status);
+      MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, MObject::kNullObj, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_target_mesh_fn.setPoints(l_points, MSpace::kObject));
 
       // add target (each target uses a unique weight index)
       const auto l_weight_index = static_cast<int>(l_blend_fn.numWeights(&l_status));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-          l_blend_fn.addTarget(l_mesh_info.mesh_obj_, l_weight_index, l_target_mesh_obj, 1.0)
-      );
+      {
+        MDagPath l_base_path{};
+        MDagPath l_target_path{};
+        {
+          MFnDagNode l_dag_fn{l_mesh_info.mesh_obj_, &l_status};
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_base_path));
+        }
+        {
+          MFnDagNode l_dag_fn{l_target_mesh_obj, &l_status};
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_target_path));
+        }
+        MFnDependencyNode l_blend_dep_fn{l_blend_obj, &l_status};
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
+        const auto l_mel = fmt::format(
+            R"(blendShape -e -t "{}" {} "{}" 1.0 "{}")", l_base_path.fullPathName().asChar(), l_weight_index,
+            l_target_path.fullPathName().asChar(), l_blend_dep_fn.name().asChar()
+        );
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_mel)));
+      }
 
       // alias weight[weightIndex] with channel name
       MFnDependencyNode l_dep_fn{l_blend_obj, &l_status};
@@ -253,6 +267,9 @@ class dna_calib_import::impl {
           &l_status
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.deleteNode(l_target_mesh_obj, true));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
     }
 
     return MS::kSuccess;
