@@ -47,7 +47,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace fmt {
 // fmt dna StringView
 template <>
@@ -143,6 +142,19 @@ class dna_calib_import::impl {
     return MS::kSuccess;
   }
 
+  // 创建混合变形
+  MStatus create_blend_shape() {
+    if (imported_meshes_.empty()) return display_warning("没有可绑定的网格, 跳过绑定"), MS::kSuccess;
+    for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape_for_mesh(i));
+    }
+    return MS::kSuccess;
+  }
+  MStatus create_blend_shape_for_mesh(std::size_t in_mesh_index) {
+
+    
+    return MS::kSuccess; }
+
   // 创建绑定
   MStatus create_bind() {
     if (imported_meshes_.empty()) return display_warning("没有可绑定的网格, 跳过绑定"), MS::kSuccess;
@@ -210,7 +222,7 @@ class dna_calib_import::impl {
         const auto l_logical_index = l_skin_node_fn.indexForInfluenceObject(l_joint_paths[i], &l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
         l_dag_path_to_maya_influence_index.emplace(l_joint_paths[i], l_logical_index);
-        
+
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_joint_indices_array.set(static_cast<int>(l_logical_index), i));
         l_maya_logical_influence_index_to_column.emplace(
             static_cast<std::size_t>(l_logical_index), static_cast<std::size_t>(i)
