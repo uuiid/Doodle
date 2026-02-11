@@ -21,10 +21,12 @@
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
+#include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnIkJoint.h>
 #include <maya/MFnMesh.h>
+#include <maya/MFnMeshData.h>
 #include <maya/MFnSet.h>
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnSkinCluster.h>
@@ -136,6 +138,7 @@ class dna_calib_import::impl {
     for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     }
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
 
@@ -144,16 +147,116 @@ class dna_calib_import::impl {
 
   // 创建混合变形
   MStatus create_blend_shape() {
-    if (imported_meshes_.empty()) return display_warning("没有可绑定的网格, 跳过绑定"), MS::kSuccess;
+    if (imported_meshes_.empty()) return display_warning("没有可创建 blendShape 的网格, 跳过"), MS::kSuccess;
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape_for_mesh(i));
     }
     return MS::kSuccess;
   }
   MStatus create_blend_shape_for_mesh(std::size_t in_mesh_index) {
+    if (in_mesh_index >= imported_meshes_.size()) {
+      return display_warning("mesh index {} 超出 imported_meshes_ 范围, 跳过 blendShape", in_mesh_index), MS::kSuccess;
+    }
+    auto& l_mesh_info = imported_meshes_[in_mesh_index];
+    if (l_mesh_info.mesh_obj_.isNull()) {
+      return display_warning("mesh {} 对象为空, 跳过 blendShape", l_mesh_info.name_), MS::kSuccess;
+    }
 
-    
-    return MS::kSuccess; }
+    const auto l_target_count = get_dna_reader()->getBlendShapeTargetCount(in_mesh_index);
+    if (l_target_count == 0) return MS::kSuccess;
+
+    MStatus l_status{};
+
+    // base mesh
+    MFnMesh l_base_mesh_fn{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.setObject(l_mesh_info.mesh_obj_));
+
+    // create blendShape deformer
+    MFnBlendShapeDeformer l_blend_fn{};
+    // Maya API: create a blendShape for the given base object
+    MObject l_blend_obj = l_blend_fn.create(l_mesh_info.mesh_obj_, MFnBlendShapeDeformer::kLocalOrigin, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(l_blend_obj));
+
+    {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          dag_modifier_.renameNode(l_blend_obj, conv::to_ms(fmt::format("{}_blendShape", l_mesh_info.name_)))
+      );
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    }
+
+    // read base points once
+    MPointArray l_base_points{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.getPoints(l_base_points, MSpace::kObject));
+
+    // for each target, build a target mesh in meshData and add it
+    for (std::uint16_t i = 0; i < l_target_count; ++i) {
+      const auto l_channel_index  = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_index, i);
+      const auto l_channel_name   = get_dna_reader()->getBlendShapeChannelName(l_channel_index);
+
+      auto l_points               = l_base_points;
+      const auto l_vertex_indices = get_dna_reader()->getBlendShapeTargetVertexIndices(in_mesh_index, i);
+      const auto l_delta_count    = get_dna_reader()->getBlendShapeTargetDeltaCount(in_mesh_index, i);
+
+      if (l_vertex_indices.size() != l_delta_count) {
+        display_warning(
+            "mesh {} blendShape {} 的 vertexIndices({}) 与 deltaCount({}) 不一致", l_mesh_info.name_,
+            std::string_view{l_channel_name}, l_vertex_indices.size(), l_delta_count
+        );
+      }
+
+      const auto l_apply_count = std::min<std::size_t>(l_vertex_indices.size(), l_delta_count);
+      for (std::size_t j = 0; j < l_apply_count; ++j) {
+        const auto l_vertex_idx = static_cast<unsigned int>(l_vertex_indices[j]);
+        if (l_vertex_idx >= l_points.length()) {
+          display_warning(
+              "mesh {} blendShape {} 的顶点索引 {} 超出范围(0..{}), 跳过", l_mesh_info.name_,
+              std::string_view{l_channel_name}, l_vertex_idx, l_points.length() == 0 ? 0 : (l_points.length() - 1)
+          );
+          continue;
+        }
+        const auto l_delta = get_dna_reader()->getBlendShapeTargetDelta(in_mesh_index, i, j);
+        l_points[l_vertex_idx].x += l_delta.x;
+        l_points[l_vertex_idx].y += l_delta.y;
+        l_points[l_vertex_idx].z += l_delta.z;
+      }
+
+      // NOTE:
+      // MFnBlendShapeDeformer::addTarget(...) 这一路通常期望的是“几何数据”(kMeshData)
+      // 而不是 DAG 上的 mesh 节点对象；传 DAG mesh 往往会触发 (kInvalidParameter): 对象与此方法不兼容。
+      // 因此这里使用 MFnMeshData 承载 target mesh (非 DAG)。
+      MFnMeshData l_mesh_data_fn{};
+      MObject l_mesh_data_obj = l_mesh_data_fn.create(&l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
+      MFnMesh l_target_mesh_fn{};
+      MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, l_mesh_data_obj, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_target_mesh_fn.setPoints(l_points, MSpace::kObject));
+
+      // add target (each target uses a unique weight index)
+      const auto l_weight_index = static_cast<int>(l_blend_fn.numWeights(&l_status));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          l_blend_fn.addTarget(l_mesh_info.mesh_obj_, l_weight_index, l_target_mesh_obj, 1.0)
+      );
+
+      // alias weight[weightIndex] with channel name
+      MFnDependencyNode l_dep_fn{l_blend_obj, &l_status};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      MPlug l_weight_plug = l_dep_fn.findPlug("weight", true, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      auto l_w = l_weight_plug.elementByLogicalIndex(static_cast<unsigned int>(l_weight_index), &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      (void)l_dep_fn.setAlias(
+          conv::to_ms(std::string{l_channel_name}), conv::to_ms(fmt::format("weight[{}]", l_weight_index)), l_w, true,
+          &l_status
+      );
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    }
+
+    return MS::kSuccess;
+  }
 
   // 创建绑定
   MStatus create_bind() {
@@ -612,23 +715,6 @@ class dna_calib_import::impl {
         )
     );
 
-    return MS::kSuccess;
-  }
-
-  MStatus mesh_blend_shapes(std::size_t in_mesh_idx) {
-    auto l_count = get_dna_reader()->getBlendShapeTargetCount(in_mesh_idx);
-    for (auto i = 0; i < l_count; ++i) {
-      auto l_bl_name_index = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_idx, i);
-      auto l_bl_name       = get_dna_reader()->getBlendShapeChannelName(l_bl_name_index);
-      std::vector<std::pair<std::size_t, dnac::Vector3>> l_delta_positions{};
-      auto l_vertex_indices = get_dna_reader()->getBlendShapeTargetVertexIndices(in_mesh_idx, i);
-      auto l_delta_count    = get_dna_reader()->getBlendShapeTargetDeltaCount(in_mesh_idx, i);
-      for (auto j = 0; j < l_delta_count; ++j) {
-        auto l_vertex_idx = l_vertex_indices[j];
-        auto l_pos        = get_dna_reader()->getBlendShapeTargetDelta(in_mesh_idx, i, j);
-        l_delta_positions.push_back({l_vertex_idx, l_pos});
-      }
-    }
     return MS::kSuccess;
   }
 };
