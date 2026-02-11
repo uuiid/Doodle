@@ -1,5 +1,7 @@
 #include "dna_calib_import.h"
 
+#include <boost/scope/scope_exit.hpp>
+
 #include "maya_plug_fwd.h"
 #include <maya_plug/data/dagpath_cmp.h>
 #include <maya_plug/data/maya_conv_str.h>
@@ -39,6 +41,7 @@
 #include <maya/MObject.h>
 #include <maya/MPlug.h>
 #include <maya/MPointArray.h>
+#include <maya/MProgressWindow.h>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
 #include <maya/MSyntax.h>
@@ -129,17 +132,33 @@ class dna_calib_import::impl {
   }
 
   MStatus import_dna_calib() {
+    MProgressWindow::setProgressStatus("Opening DNA file...");
+
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->open_dna_file());
 
     conv_units();
+    MProgressWindow::setProgress(10);
+
+    MProgressWindow::setProgressStatus("Creating scene...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_gui_controls());
+    MProgressWindow::setProgress(20);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
+    MProgressWindow::setProgressStatus("Creating meshes..");
+    MProgressWindow::setProgress(30);
 
     for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
+      MProgressWindow::setProgressStatus(
+          conv::to_ms(fmt::format("Creating mesh {}/{}...", i + 1, get_dna_reader()->getMeshCount()))
+      );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     }
+    MProgressWindow::setProgress(70);
+    MProgressWindow::setProgressStatus("Creating joints...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
+    MProgressWindow::setProgress(90);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
+    MProgressWindow::setProgress(100);
+    MProgressWindow::setProgressStatus("Creating blend shapes...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
 
     return MS::kSuccess;
@@ -780,6 +799,12 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   if (p_i->dna_node_obj.isNull() || p_i->dna_node_data == nullptr)
     return display_error("未选择dna_calib_node节点"), MS::kFailure;
   // 读取文件
+  MProgressWindow::setTitle("Import DNA Calib");
+  MProgressWindow::setInterruptable(false);
+  MProgressWindow::setProgressRange(0, 100);
+  MProgressWindow::setProgressStatus("Importing...");
+  MProgressWindow::startProgress();
+  boost::scope::scope_exit l_progress_end_scope([]() { MProgressWindow::endProgress(); });
   return p_i->import_dna_calib();
 }
 
