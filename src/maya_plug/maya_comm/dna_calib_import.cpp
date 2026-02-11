@@ -141,10 +141,8 @@ class dna_calib_import::impl {
 
     MProgressWindow::setProgressStatus("Creating scene...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_gui_controls());
-    MProgressWindow::setProgress(20);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
     MProgressWindow::setProgressStatus("Creating meshes..");
-    MProgressWindow::setProgress(30);
 
     for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
       MProgressWindow::setProgressStatus(
@@ -152,12 +150,11 @@ class dna_calib_import::impl {
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
     }
-    MProgressWindow::setProgress(70);
     MProgressWindow::setProgressStatus("Creating joints...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
-    MProgressWindow::setProgress(90);
+    MProgressWindow::setProgress(10);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
-    MProgressWindow::setProgress(100);
+    MProgressWindow::setProgress(50);
     MProgressWindow::setProgressStatus("Creating blend shapes...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
 
@@ -168,6 +165,7 @@ class dna_calib_import::impl {
   MStatus create_blend_shape() {
     if (imported_meshes_.empty()) return display_warning("没有可创建 blendShape 的网格, 跳过"), MS::kSuccess;
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
+      MProgressWindow::advanceProgress(1);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape_for_mesh(i));
     }
     return MS::kSuccess;
@@ -209,7 +207,7 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.getPoints(l_base_points, MSpace::kObject));
 
     MDagPath l_base_path{};
-    {
+    {  // 寻找网格的transform路径
       MFnDagNode l_dag_fn{l_mesh_info.mesh_obj_, &l_status};
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dag_fn.getPath(l_base_path));
@@ -258,7 +256,7 @@ class dna_calib_import::impl {
         l_points[l_vertex_idx].z += l_delta.z;
       }
 
-      auto l_bs_tran = dag_modifier_.createNode(MFnTransform{}.typeId(), l_mesh_info.mesh_obj_, &l_status);
+      auto l_bs_tran = dag_modifier_.createNode("transform", l_base_path.node(), &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
 
@@ -285,6 +283,7 @@ class dna_calib_import::impl {
         }
         l_target_paths.push_back(l_target_path);
       }
+      MProgressWindow::advanceProgress(1);
     }
 
     if (!l_target_paths.empty()) {
@@ -299,6 +298,8 @@ class dna_calib_import::impl {
       //   );
       //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_alias_mel)));
       // }
+
+      MProgressWindow::advanceProgress(1);
 
       // delete all temporary target meshes
       for (const auto& t : l_target_paths) {
@@ -316,12 +317,15 @@ class dna_calib_import::impl {
     if (joint_objs_.empty()) return display_warning("没有可绑定的骨骼, 跳过绑定"), MS::kSuccess;
 
     get_mesh_for_joint(0);
+    auto l_view = get_dna_reader()->getMeshIndicesForLOD(0);
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
+      MProgressWindow::advanceProgress(1);
       auto l_bind_mel = fmt::format(
-          "skinCluster -toSelectedBones -bindMethod 0 -skinMethod 0 -normalizeWeights 2 {} {}",
-          imported_meshes_[i].name_, fmt::join(joint_to_mesh_links_[i].joint_names_, " ")
+        "skinCluster -toSelectedBones -bindMethod 0 -skinMethod 0 -normalizeWeights 2 {} {}",
+        imported_meshes_[i].name_, fmt::join(joint_to_mesh_links_[i].joint_names_, " ")
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_bind_mel)));
+      MProgressWindow::advanceProgress(1);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(set_skin_cluster_weights(i));
     }
 
@@ -394,10 +398,6 @@ class dna_calib_import::impl {
               "未找到骨骼 {} 的 Maya 影响对象, 可能导致权重丢失", get_node_name(joint_objs_[l_joint_index])
           );
         }
-      }
-    }
-    {
-      for (auto i = 0; i < l_joint_cout; ++i) {
       }
     }
 
@@ -799,6 +799,7 @@ MStatus dna_calib_import::doIt(const MArgList& in_list) {
   if (p_i->dna_node_obj.isNull() || p_i->dna_node_data == nullptr)
     return display_error("未选择dna_calib_node节点"), MS::kFailure;
   // 读取文件
+  MProgressWindow::reserve();
   MProgressWindow::setTitle("Import DNA Calib");
   MProgressWindow::setInterruptable(false);
   MProgressWindow::setProgressRange(0, 100);
