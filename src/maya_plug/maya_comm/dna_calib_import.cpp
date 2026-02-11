@@ -228,6 +228,13 @@ class dna_calib_import::impl {
       MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, MObject::kNullObj, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_target_mesh_fn.setPoints(l_points, MSpace::kObject));
+      // 重命名网格体为目标混变名称
+      {
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(
+            l_target_mesh_obj, conv::to_ms(fmt::format("{}_target_{}", l_mesh_info.name_, l_channel_name))
+        ));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+      }
 
       // add target (each target uses a unique weight index)
       const auto l_weight_index = static_cast<int>(l_blend_fn.numWeights(&l_status));
