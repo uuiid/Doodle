@@ -99,7 +99,8 @@
         "drawtext"
       ]
     },
-    "dnacalib"
+    "dnacalib",
+    "crashpad"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
