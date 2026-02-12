@@ -27,8 +27,8 @@ class dna_calib_node::impl_t {
   std::vector<std::uint16_t> arrt_to_gui_control_;
 
   MStatus open_dna_file();
-  void create_rig_data();
+  MStatus create_rig_data();
   // 执行计算
-  void compute();
+  MStatus compute();
 };
 }  // namespace doodle::maya_plug

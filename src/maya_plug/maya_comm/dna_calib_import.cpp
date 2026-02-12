@@ -136,7 +136,7 @@ class dna_calib_import::impl {
     MProgressWindow::setProgressStatus("Opening DNA file...");
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->open_dna_file());
-    dna_node_data->impl()->create_rig_data();
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->create_rig_data());
 
     conv_units();
     MProgressWindow::setProgress(10);
@@ -145,6 +145,7 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_gui_controls());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
     MProgressWindow::setProgressStatus("Creating meshes..");
+    return MS::kSuccess;
 
     for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
       MProgressWindow::setProgressStatus(

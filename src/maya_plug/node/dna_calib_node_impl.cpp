@@ -3,7 +3,12 @@
 #include <maya/MFnDependencyNode.h>
 #include <pma/ScopedPtr.h>
 #include <riglogic/RigLogic.h>
+
+#if defined(_WIN32)
+#include <Windows.h>
+#endif
 namespace doodle::maya_plug {
+
 MStatus dna_calib_node::impl_t::open_dna_file() {
   MFnDependencyNode l_fn_dep{self_->thisMObject()};
   MStatus l_status{};
@@ -25,12 +30,48 @@ MStatus dna_calib_node::impl_t::open_dna_file() {
   dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
   return MS::kSuccess;
 }
-void dna_calib_node::impl_t::create_rig_data() {
-  if (!dna_calib_dna_reader_) return display_error("请先打开dna文件");
+MStatus dna_calib_node::impl_t::create_rig_data() {
+  if (!dna_calib_dna_reader_) return display_error("请先打开dna文件"), MS::kFailure;
 
-  rig_logic_ptr_    = dnac::makeScoped<rl4::RigLogic>(dna_calib_dna_reader_.get());
+  rig_logic_ptr_.reset();
+  rig_instance_ptr_.reset();
+
+  // 重要：dnacalib 的 vcpkg 构建目前只启用了部分欧拉旋转顺序宏。
+  // 若 rotationType==EulerAngles 且 rotationOrder 未启用，会导致 QuaternionJointsEvaluator 的 strategy 为空而崩溃。
+  rl4::Configuration rig_cfg{};
+  rig_cfg.rotationType  = rl4::RotationType::EulerAngles;
+  rig_cfg.rotationOrder = rl4::RotationOrder::ZYX;
+
+  rig_logic_ptr_        = dnac::makeScoped<rl4::RigLogic>(dna_calib_dna_reader_.get(), rig_cfg, nullptr);
+  if (!rig_logic_ptr_ || !dnac::Status::isOk()) {
+    const char* msg = dnac::Status::isOk() ? "unknown" : dnac::Status::get().message;
+    return display_error("创建 RigLogic 失败: {}", msg), MS::kFailure;
+  }
+
   rig_instance_ptr_ = dnac::makeScoped<rl4::RigInstance>(rig_logic_ptr_.get());
+  if (!rig_instance_ptr_ || !dnac::Status::isOk()) {
+    const char* msg = dnac::Status::isOk() ? "unknown" : dnac::Status::get().message;
+    return display_error("创建 RigInstance 失败: {}", msg), MS::kFailure;
+  }
+
   rig_instance_ptr_->setLOD(0);
+  if (!dnac::Status::isOk()) {
+    const char* msg = dnac::Status::get().message;
+    return display_error("RigInstance::setLOD(0) 失败: {}", msg), MS::kFailure;
+  }
+
+  return MS::kSuccess;
 }
-void dna_calib_node::impl_t::compute() { rig_logic_ptr_->calculate(rig_instance_ptr_.get()); }
+MStatus dna_calib_node::impl_t::compute() {
+  if (!rig_logic_ptr_ || !rig_instance_ptr_) return display_error("Rig 数据未初始化"), MS::kFailure;
+  if (!dnac::Status::isOk()) {
+    return display_error("RigLogic 处于错误状态，拒绝计算: {}", dnac::Status::get().message), MS::kFailure;
+  }
+
+  rig_logic_ptr_->calculate(rig_instance_ptr_.get());
+  if (!dnac::Status::isOk()) {
+    return display_error("RigLogic::calculate 失败: {}", dnac::Status::get().message), MS::kFailure;
+  }
+  return MS::kSuccess;
+}
 }  // namespace doodle::maya_plug
