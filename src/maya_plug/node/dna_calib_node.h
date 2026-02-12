@@ -39,7 +39,5 @@ class dna_calib_node : public MPxNode {
 
  private:
   std::unique_ptr<impl_t> p_i;
-
-  MStatus set_file_path(MDataBlock& in_file_path);
 };
 }  // namespace doodle::maya_plug
