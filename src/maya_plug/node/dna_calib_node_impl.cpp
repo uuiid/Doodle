@@ -1,7 +1,8 @@
 #include "dna_calib_node_impl.h"
 
 #include <maya/MFnDependencyNode.h>
-
+#include <pma/ScopedPtr.h>
+#include <riglogic/RigLogic.h>
 namespace doodle::maya_plug {
 MStatus dna_calib_node::impl_t::open_dna_file() {
   MFnDependencyNode l_fn_dep{self_->thisMObject()};
@@ -22,6 +23,14 @@ MStatus dna_calib_node::impl_t::open_dna_file() {
   if (!dnac::Status::isOk()) return display_error("读取dna文件失败: {} ", dnac::Status::get().message), MS::kFailure;
 
   dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
+  return MS::kSuccess;
+}
+MStatus dna_calib_node::impl_t::create_rig_data() {
+  if (!dna_calib_dna_reader_) return display_error("请先打开dna文件"), MS::kFailure;
+
+  rig_logic_ptr_    = dnac::makeScoped<rl4::RigLogic>(dna_calib_dna_reader_.get());
+  rig_instance_ptr_ = dnac::makeScoped<rl4::RigInstance>(rig_logic_ptr_.get());
+  dna_calib_dna_reader_->getJointVariableAttributeIndices(0);
   return MS::kSuccess;
 }
 }  // namespace doodle::maya_plug
