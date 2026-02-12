@@ -6,8 +6,8 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnUnitAttribute.h>
+#include <maya/MPlug.h>
 #include <maya/MStatus.h>
-
 
 namespace doodle::maya_plug {
 MObject dna_calib_node::dna_file_path{};
@@ -98,6 +98,53 @@ MStatus dna_calib_node::initialize() {
 #undef DOODLE_ATTRAFF
   return l_status;
 }
-MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) { return MS::kUnknownParameter; }
+MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) {
+  if (in_plug == output_join_transforms || in_plug == output_join_rotations || in_plug == output_join_scales ||
+      in_plug == output_blendshape_weights) {
+    if (!impl()->rig_instance_ptr_) {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->open_dna_file());
+      impl()->create_rig_data();
+    }
+    impl()->compute();
+    MPlug l_out_j_t{thisMObject(), output_join_transforms};
+    MPlug l_out_j_r{thisMObject(), output_join_rotations};
+    MPlug l_out_j_s{thisMObject(), output_join_scales};
+    MPlug l_out_bsw{thisMObject(), output_blendshape_weights};
+
+    // 关节输出数据 [tx, ty, tz, rx, ry, rz, sx, sy, sz] * joint_count
+    auto l_raw_j = impl()->rig_instance_ptr_->getJointOutputs();
+    MStatus l_status{};
+    for (auto g = 0; g < impl()->dna_calib_dna_reader_->getJointGroupCount(); ++g) {
+      auto l_group_out   = impl()->dna_calib_dna_reader_->getJointGroupOutputIndices(g);
+      auto l_joint_index = impl()->dna_calib_dna_reader_->getJointGroupJointIndices(g);
+      for (auto j = 0; j < l_joint_index.size(); ++j) {
+        auto l_j_index      = l_joint_index[j];
+        auto l_base_index   = l_group_out[j] * 9;
+        auto l_j_base_index = l_j_index * 3;
+        // clang-format off
+        l_out_j_t.elementByLogicalIndex(l_j_base_index + 0, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_t.elementByLogicalIndex(l_j_base_index + 1, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_t.elementByLogicalIndex(l_j_base_index + 2, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_r.elementByLogicalIndex(l_j_base_index + 0, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_r.elementByLogicalIndex(l_j_base_index + 1, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_r.elementByLogicalIndex(l_j_base_index + 2, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_s.elementByLogicalIndex(l_j_base_index + 0, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_s.elementByLogicalIndex(l_j_base_index + 1, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_s.elementByLogicalIndex(l_j_base_index + 2, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        // clang-format on
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setValue(l_raw_j[l_base_index + 0]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setValue(l_raw_j[l_base_index + 1]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setValue(l_raw_j[l_base_index + 2]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setValue(l_raw_j[l_base_index + 3]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setValue(l_raw_j[l_base_index + 4]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setValue(l_raw_j[l_base_index + 5]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 6]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 7]));
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 8]));
+      }
+    }
+  }
+  return MS::kUnknownParameter;
+}
 
 }  // namespace doodle::maya_plug

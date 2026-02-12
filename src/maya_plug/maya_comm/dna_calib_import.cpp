@@ -186,7 +186,6 @@ class dna_calib_import::impl {
 
     {
       for (auto g = 0; g < get_dna_reader()->getJointGroupCount(); ++g) {
-        auto l_group_out   = get_dna_reader()->getJointGroupOutputIndices(g);
         auto l_joint_index = get_dna_reader()->getJointGroupJointIndices(g);
         for (auto j = 0; j < l_joint_index.size(); ++j) {
           auto l_j_index = l_joint_index[j];
@@ -212,9 +211,6 @@ class dna_calib_import::impl {
         }
       }
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
-
-      for (auto i = 0; i < l_joint_count; ++i) {
-      }
     }
 
     return MS::kSuccess;

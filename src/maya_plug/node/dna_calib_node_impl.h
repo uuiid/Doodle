@@ -3,6 +3,7 @@
 
 #include <dnacalib/dna/DNACalibDNAReader.h>
 #include <maya/MPxNode.h>
+#include <maya/MStatus.h>
 #include <riglogic/RigLogic.h>
 #include <riglogic/riglogic/RigInstance.h>
 
@@ -22,6 +23,8 @@ class dna_calib_node::impl_t {
   dnac::ScopedPtr<rl4::RigLogic> rig_logic_ptr_;
   dnac::ScopedPtr<rl4::RigInstance> rig_instance_ptr_;
   MStatus open_dna_file();
-  MStatus create_rig_data();
+  void create_rig_data();
+  // 执行计算
+  void compute();
 };
 }  // namespace doodle::maya_plug

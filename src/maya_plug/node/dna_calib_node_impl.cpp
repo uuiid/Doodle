@@ -25,12 +25,12 @@ MStatus dna_calib_node::impl_t::open_dna_file() {
   dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
   return MS::kSuccess;
 }
-MStatus dna_calib_node::impl_t::create_rig_data() {
-  if (!dna_calib_dna_reader_) return display_error("请先打开dna文件"), MS::kFailure;
+void dna_calib_node::impl_t::create_rig_data() {
+  if (!dna_calib_dna_reader_) return display_error("请先打开dna文件");
 
   rig_logic_ptr_    = dnac::makeScoped<rl4::RigLogic>(dna_calib_dna_reader_.get());
   rig_instance_ptr_ = dnac::makeScoped<rl4::RigInstance>(rig_logic_ptr_.get());
   dna_calib_dna_reader_->getJointVariableAttributeIndices(0);
-  return MS::kSuccess;
 }
+void dna_calib_node::impl_t::compute() { rig_logic_ptr_->calculate(rig_instance_ptr_.get()); }
 }  // namespace doodle::maya_plug
