@@ -136,6 +136,7 @@ class dna_calib_import::impl {
     MProgressWindow::setProgressStatus("Opening DNA file...");
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->open_dna_file());
+    dna_node_data->impl()->create_rig_data();
 
     conv_units();
     MProgressWindow::setProgress(10);
