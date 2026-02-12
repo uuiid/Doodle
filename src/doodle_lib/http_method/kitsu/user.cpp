@@ -81,8 +81,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新用户 person_id {} email {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_person->email_
+  );
   in_handle->get_json().get_to(*l_person);
   co_await l_sql.update(l_person);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新用户 person_id {} email {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_person->email_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {

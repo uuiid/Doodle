@@ -14,10 +14,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
-  default_logger_raw()->info("{} data_entities::put {}", person_.person_.email_, l_entt->uuid_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新实体 entity_id {} project_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_entt->uuid_id_, l_entt->project_id_
+  );
   l_json.get_to(*l_entt);
   nlohmann::json l_res{};
-  if (person_.is_project_supervisor(l_entt->project_id_)) co_await l_sql.update(l_entt);
+  const bool l_can_update = person_.is_project_supervisor(l_entt->project_id_);
+  if (l_can_update) co_await l_sql.update(l_entt);
   l_res = *l_entt;
   if (entity_asset_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
@@ -53,6 +58,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
     }
     l_res.update(*l_ext_ptr);
   }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新实体 entity_id {} project_id {} updated {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_entt->uuid_id_, l_entt->project_id_, l_can_update
+  );
 
   co_return in_handle->make_msg(l_res);
 }

@@ -56,6 +56,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   person_.check_in_project(l_task.project_id_);
 
   auto l_args = in_handle->get_json().get<actions_preview_files_update_annotations_args>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始更新预览批注 preview_file_id {} task_id {} project_id {} add {} update {} delete {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_prev->uuid_id_, l_prev->task_id_, l_task.project_id_,
+      l_args.additions_.size(), l_args.updates_.size(), l_args.deletions_.size()
+  );
   std::map<std::double_t, preview_file::annotations_t> l_time_map{};
   for (auto&& i : l_prev->get_annotations()) l_time_map[i.time_] = std::move(i);
 
@@ -101,6 +108,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
       },
       "/events"
   );
+
+    SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成更新预览批注 preview_file_id {} task_id {} project_id {} updated_at {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_prev->uuid_id_, l_prev->task_id_, l_task.project_id_,
+      l_prev->updated_at_
+    );
   co_return in_handle->make_msg(nlohmann::json{} = *l_prev);
 }
 namespace {
@@ -674,10 +688,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_playlist);
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "{}({}) 修改播放列表 {}", person_.person_.email_, person_.person_.get_full_name(),
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始修改播放列表 playlist_id {} project_id {} name {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_playlist->uuid_id_, l_playlist->project_id_,
       l_playlist->name_
   );
   co_await l_sql.update(l_playlist);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成修改播放列表 playlist_id {} project_id {} name {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_playlist->uuid_id_, l_playlist->project_id_,
+      l_playlist->name_
+  );
   nlohmann::json l_ret{};
   l_ret         = *l_playlist;
   l_ret["shot"] = l_sql.get_playlist_shot_entity(l_playlist->uuid_id_);
@@ -732,7 +753,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
   person_.check_in_project(l_playlist.project_id_);
   person_.check_not_outsourcer();
   SPDLOG_LOGGER_WARN(
-      in_handle->logger_, "{} 修改播放列表 {} 中的镜头 {}", person_.person_.email_, l_playlist.name_, shot_id_
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始修改播放列表镜头 playlist_id {} shot_id {} playlist_name {}",
+      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist.name_
   );
   auto l_json          = in_handle->get_json();
   auto l_playlist_shot = std::make_shared<playlist_shot>(l_sql.get_by_uuid<playlist_shot>(shot_id_));
@@ -740,6 +762,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
   l_json.get_to(*l_playlist_shot);
   l_playlist_shot->playlist_id_ = playlist_id_;
   co_await l_sql.update(l_playlist_shot);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成修改播放列表镜头 playlist_id {} shot_id {} preview_id {} order_index {}",
+      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist_shot->preview_id_,
+      l_playlist_shot->order_index_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {

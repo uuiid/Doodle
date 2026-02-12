@@ -40,8 +40,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments_instan
   person_.check_admin();
   auto l_sql            = g_ctx().get<sqlite_database>();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新部门 department_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_department_ptr->name_
+  );
   in_handle->get_json().get_to(*l_department_ptr);
   co_await l_sql.update(l_department_ptr);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新部门 department_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_department_ptr->name_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_department_ptr);
 }
 
@@ -82,9 +92,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
   auto l_sql        = g_ctx().get<sqlite_database>();
   auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新工作室 studio_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_studio_ptr->name_
+  );
   in_handle->get_json().get_to(*l_studio_ptr);
   DOODLE_CHICK(!l_studio_ptr->name_.empty(), "工作室名称不可为空");
   co_await l_sql.update(l_studio_ptr);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新工作室 studio_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_studio_ptr->name_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_studio_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(session_data_ptr in_handle) {
@@ -125,6 +145,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
   person_.check_admin();
   auto l_sql            = g_ctx().get<sqlite_database>();
   auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新资产类型 asset_type_id {} name {} task_type_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type_ptr->name_,
+      l_asset_type_ptr->task_types_.size()
+  );
   in_handle->get_json().get_to(*l_asset_type_ptr);
 
   auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
@@ -139,6 +165,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
   co_await l_sql.remove_task_type_asset_type_link_by_asset_type(l_asset_type_ptr->uuid_id_);
   co_await l_sql.install_range(l_task_type_asset_type_link_list);
   co_await l_sql.update(l_asset_type_ptr);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新资产类型 asset_type_id {} name {} task_type_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_asset_type_ptr->name_,
+      l_asset_type_ptr->task_types_.size()
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
@@ -163,8 +195,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_i
   person_.check_admin();
   auto l_sql    = g_ctx().get<sqlite_database>();
   auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新任务状态 task_status_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_status->name_
+  );
   in_handle->get_json().get_to(*l_status);
   co_await l_sql.update(l_status);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务状态 task_status_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_status->name_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_status);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::post(session_data_ptr in_handle) {

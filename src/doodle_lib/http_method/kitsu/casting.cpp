@@ -334,6 +334,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新 Casting 关联 project_id {} entity_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_ent->uuid_id_
+  );
   auto l_entity_links_update = std::make_shared<std::vector<entity_link>>();
   auto l_entity_links_insert = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
@@ -397,18 +402,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   if (auto l_id_list = l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector;
       !l_id_list.empty()) {
     co_await l_sql.remove<entity_link>(l_id_list);
-    SPDLOG_LOGGER_WARN(in_handle->logger_, "移除实体链接 {}", fmt::join(l_id_list, ", "));
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "用户 {}({}) 移除实体链接 count {}", person_.person_.email_,
+                      person_.person_.get_full_name(), l_id_list.size());
   }
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.update(l_ent);
   if (!l_entity_links_update->empty()) {
     co_await l_sql.update_range(l_entity_links_update);
-    SPDLOG_LOGGER_WARN(in_handle->logger_, "更新实体链接 {}", l_entity_links_update->size());
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "用户 {}({}) 更新实体链接 count {}", person_.person_.email_,
+                      person_.person_.get_full_name(), l_entity_links_update->size());
   }
   if (!l_entity_links_insert->empty()) {
     co_await l_sql.install_range(l_entity_links_insert);
-    SPDLOG_LOGGER_WARN(in_handle->logger_, "新增实体链接 {}", l_entity_links_insert->size());
+    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "用户 {}({}) 新增实体链接 count {}", person_.person_.email_,
+                      person_.person_.get_full_name(), l_entity_links_insert->size());
   }
   // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
@@ -417,6 +425,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
           {"shot_id", l_ent->uuid_id_}, {"project_id", project_id_}, {"nb_entities_out", l_ent->nb_entities_out_}
       }
   );
+
+    SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成更新 Casting 关联 project_id {} entity_id {} nb_entities_out {} updated_link_count {} inserted_link_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_ent->uuid_id_, l_ent->nb_entities_out_,
+      l_entity_links_update->size(), l_entity_links_insert->size()
+    );
   co_return in_handle->make_msg(in_handle->get_json());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_casting::get(

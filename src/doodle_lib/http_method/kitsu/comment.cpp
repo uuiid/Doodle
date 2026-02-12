@@ -355,8 +355,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(
   auto l_json    = in_handle->get_json();
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新评论 comment_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
   l_json.get_to(*l_comment);
   co_await l_sql.update(l_comment);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新评论 comment_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_comment);
 }
 

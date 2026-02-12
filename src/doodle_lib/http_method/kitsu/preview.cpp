@@ -444,12 +444,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   auto l_sql          = g_ctx().get<sqlite_database>();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(id_);
 
-  std::int32_t l_frame_number;
+  std::int32_t l_frame_number{-1};
   if (auto l_json = in_handle->get_json(); l_json.contains("frame_number") && l_json["frame_number"].is_number()) {
     l_frame_number = l_json["frame_number"].get<std::int32_t>();
   }
   auto l_task = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_ent  = std::make_shared<entity>(l_sql.get_by_uuid<entity>(l_task.entity_id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始设置主预览 entity_id {} task_id {} preview_file_id {} frame_number {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_ent->uuid_id_, l_task.uuid_id_, l_preview_file.uuid_id_,
+      l_frame_number
+  );
   if (l_preview_file.extension_ == "mp4") {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
   } else {
@@ -457,6 +464,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     co_await l_sql.update(l_ent);
     // 发送事件 "preview-file:set-main"
   }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成设置主预览 entity_id {} task_id {} preview_file_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_ent->uuid_id_, l_task.uuid_id_, l_preview_file.uuid_id_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_ent);
 }
 

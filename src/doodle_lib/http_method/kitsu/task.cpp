@@ -116,9 +116,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
   person_.check_task_action_access(*l_task);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新任务 task_id {} project_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_task->uuid_id_, l_task->project_id_
+  );
   in_handle->get_json().get_to(*l_task);
   co_await l_sql.update(l_task);
   // l_task->assigner_id_ = l_person->person_.uuid_id_;
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新任务 task_id {} project_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_task->uuid_id_, l_task->project_id_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_task);
 }
 
@@ -126,6 +136,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   auto l_sql                                 = g_ctx().get<sqlite_database>();
   auto l_person_data                         = l_sql.get_by_uuid<person>(id_);
   auto l_task_ids                            = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始批量分配任务 to_person_id {} task_count {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_person_data.uuid_id_, l_task_ids.size()
+  );
   std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
   std::shared_ptr<std::vector<assignees_table>> l_assignees_table = std::make_shared<std::vector<assignees_table>>();
   std::shared_ptr<std::vector<notification>> l_notifications      = std::make_shared<std::vector<notification>>();
@@ -157,6 +172,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   co_await l_sql.update_range(l_tasks);
   co_await l_sql.install_range(l_assignees_table);
   co_await l_sql.install_range(l_notifications);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成批量分配任务 to_person_id {} requested_task_count {} assigned_task_count {} notify_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_person_data.uuid_id_, l_task_ids.size(), l_tasks->size(),
+      l_notifications->size()
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_tasks);
 }
 

@@ -194,8 +194,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
   auto l_sql   = g_ctx().get<sqlite_database>();
   auto l_not   = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
-  l_not->read_ = in_handle->get_json().value<bool>("read", false);
+  const bool l_read = in_handle->get_json().value<bool>("read", false);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新通知 notification_id {} read {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_read
+  );
+  l_not->read_ = l_read;
   co_await l_sql.update(l_not);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新通知 notification_id {} read {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_not->read_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_not);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_user_notifications_mark_all_as_read::post(

@@ -50,7 +50,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
   person_.check_project_supervisor(l_task.project_id_);
-  default_logger_raw()->info("actions_tasks_clear_assignation {}  {}", person_.person_.email_, l_args.task_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始清空/移除任务指派 project_id {} task_count {} person_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_task.project_id_, l_args.task_id_.size(),
+      l_args.person_id_
+  );
   for (auto&& l_i : l_args.task_id_)
     if (!l_args.person_id_.is_nil()) {
       if (auto l_assign = get_task_assignees(l_i, l_args.person_id_); l_assign)
@@ -58,6 +64,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
     } else {
       co_await g_ctx().get<sqlite_database>().remove<assignees_table>(get_task_assignees_ids(l_i));
     }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成清空/移除任务指派 project_id {} task_count {} person_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_task.project_id_, l_args.task_id_.size(),
+      l_args.person_id_
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_args.task_id_);
 }

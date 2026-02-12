@@ -64,8 +64,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::put(session_data_ptr in_handle) {
   auto l_sql     = g_ctx().get<sqlite_database>();
   auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新项目 project_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_project->name_
+  );
   in_handle->get_json().get_to(*l_project);
   co_await l_sql.update(l_project);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新项目 project_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_project->name_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_project);
 }
 
