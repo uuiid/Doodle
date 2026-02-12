@@ -202,6 +202,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   person_.check_not_outsourcer();
   auto& l_sql = g_ctx().get<sqlite_database>();
   auto l_args = in_handle->get_json().get<data_project_sequences_args>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取序列 name {} episode_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_args.name_, l_args.episode_id_
+  );
+
   using namespace sqlite_orm;
   auto l_sq_list    = l_sql.impl_->storage_any_.get_all<entity>(where(
       c(&entity::entity_type_id_) ==
@@ -222,6 +228,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
     socket_io::broadcast("sequence:new", nlohmann::json{{"sequence_id", l_entity_ptr->uuid_id_}, {"project_id", id_}});
   } else
     *l_entity_ptr = l_sq_list.front();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建/获取序列 sequence_id {} name {}",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_entity_ptr->uuid_id_, l_entity_ptr->name_
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity_ptr);
 }
@@ -287,6 +298,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   l_type_name.front() = std::toupper(l_type_name.front());
   auto l_entity_type  = l_sql.get_entity_type_by_name(l_type_name);
   std::vector<entity> l_entities{};
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 批量创建任务 task_type_id {} entity_type {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_type_name
+  );
+
   if (auto l_json = in_handle->get_json(); l_json.is_array()) {
     l_entities.reserve(l_json.size());
     for (auto&& l_id : l_json.get<std::vector<uuid>>())
@@ -325,6 +342,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     l_result.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
   }
   if (!l_tasks->empty()) co_await l_sql.install_range(l_tasks);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建任务 task_type_id {} 数量 {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 

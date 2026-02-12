@@ -100,7 +100,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_auth = std::make_shared<outsource_studio_authorization>();
   in_handle->get_json().get_to(*l_auth);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建外包授权 project_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_
+  );
   co_await l_sql.install(l_auth);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建外包授权 project_id {} authorization_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_auth->uuid_id_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_auth);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, get) {

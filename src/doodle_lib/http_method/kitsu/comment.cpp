@@ -164,12 +164,23 @@ boost::asio::awaitable<create_comment_result> create_comment(
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comment::post(session_data_ptr in_handle) {
   person_.check_task_action_access(id_);
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建任务 {} 评论", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
+
   std::shared_ptr<comment> l_comment = std::make_shared<comment>();
   auto l_json                        = in_handle->get_json();
   auto l_files                       = in_handle->get_files();
   l_json.get_to(*l_comment);
   auto l_result = co_await create_comment(l_comment, &person_, id_, l_files);
   default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建任务 {} 评论 {} 附件数量 {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_comment->uuid_id_, l_files.size()
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
@@ -177,12 +188,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     session_data_ptr in_handle
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始批量创建评论", person_.person_.email_,
+      person_.person_.get_full_name()
+  );
+
   std::vector<create_comment_result> l_result{};
   for (auto&& i : in_handle->get_json()) {
     auto l_comm = std::make_shared<comment>(i.get<comment>());
     default_logger_raw()->info("{} 创建评论", person_.person_.email_);
     l_result.emplace_back(co_await create_comment(l_comm, &person_, {}, {}));
   }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成批量创建评论 数量 {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_result.size()
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
@@ -203,6 +226,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
   auto l_sql  = g_ctx().get<sqlite_database>();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始修改任务 {} 时间并创建评论", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
+
   if (!(l_task->start_date_ && l_task->due_date_))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "任务没有设置时间");
 
@@ -221,6 +249,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
   co_await l_sql.update(l_task);
   auto l_result = co_await create_comment(l_comment, &person_, id_, {}, l_task);
   default_logger_raw()->info("由 {} 创建评论 {}, 修改任务时间", person_.person_.email_, l_comment->uuid_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成修改任务 {} 时间并创建评论 {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_comment->uuid_id_
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
@@ -229,6 +263,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
   std::string l_event_name{};
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始评论 {} 点赞/取消点赞", person_.person_.email_,
+      person_.person_.get_full_name(), comment_id_
+  );
+
   using namespace sqlite_orm;
   auto l_task_id = l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == comment_id_));
 
@@ -268,6 +308,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
       "/events"
   );
   auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成评论 {} 点赞操作 event {}", person_.person_.email_,
+      person_.person_.get_full_name(), comment_id_, l_event_name
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_comment);
 }

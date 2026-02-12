@@ -351,6 +351,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_prj        = l_sql.get_by_uuid<project>(id_);
   auto l_entity_ids = in_handle->get_json().get<std::vector<uuid>>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始获取项目 {} 工作文件 entity_count {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_entity_ids.size()
+  );
+
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
@@ -378,6 +384,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   for (auto&& i : l_working_files) {
     l_entity_working_file_map[i.entity_id_].push_back(i);
   }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成获取项目 {} 工作文件 entity_map_count {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_entity_working_file_map.size()
+  );
 
   co_return in_handle->make_msg(
       nlohmann::json{} = map_to_json<uuid, std::vector<working_file_and_link>>{l_entity_working_file_map}

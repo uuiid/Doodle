@@ -202,7 +202,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_user_notif
     session_data_ptr in_handle
 ) {
   auto l_sql = g_ctx().get<sqlite_database>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始将所有通知标记已读", person_.person_.email_,
+      person_.person_.get_full_name()
+  );
+
   co_await l_sql.mark_all_notifications_as_read(person_.person_.uuid_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成将所有通知标记已读", person_.person_.email_,
+      person_.person_.get_full_name()
+  );
+
   co_return in_handle->make_msg(nlohmann::json{{"success", true}});
 }
 

@@ -57,12 +57,24 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
   person_.check_admin();
   auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建用户 email {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_person->email_
+  );
+
   co_await g_ctx().get<sqlite_database>().install(l_person);
   auto l_person_deps = std::make_shared<std::vector<person_department_link>>();
   for (auto&& l_dep : l_person->departments_) {
     l_person_deps->emplace_back(person_department_link{.person_id_ = l_person->uuid_id_, .department_id_ = l_dep});
   }
   co_await g_ctx().get<sqlite_database>().install_range(l_person_deps);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建用户 person_id {} email {} 部门数量 {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_person->uuid_id_, l_person->email_, l_person->departments_.size()
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 

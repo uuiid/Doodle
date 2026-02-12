@@ -50,6 +50,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   l_json.get_to(l_data);
   default_logger_raw()->info("由 {} , {} 项目创建新实体 {}", person_.person_.email_, l_data.project_id, l_data.name);
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建资产 name {} asset_type_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_data.project_id, l_data.name, l_data.asset_type_id
+  );
+
   auto l_entity = std::make_shared<entity>(entity{
       .name_           = l_data.name,
       .description_    = l_data.description,
@@ -83,6 +88,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       },
       "/events"
   );
+
+    SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建资产 asset_id {} asset_type_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_entity->project_id_, l_entity->uuid_id_, l_entity->entity_type_id_
+    );
+
   co_return in_handle->make_msg(l_json_ret);
 }
 

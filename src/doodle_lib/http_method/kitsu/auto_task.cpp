@@ -87,6 +87,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
   auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
 
+  bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {} shot_entity_id {} episode_entity_id {} is_simulation {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_, l_shot_entity.uuid_id_,
+      l_episode_entity.uuid_id_, l_is_simulation_task
+  );
+
   episodes l_episodes{l_episode_entity};
   shot l_shot{l_shot_entity};
 
@@ -102,7 +110,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   FSys::path l_shot_path_dir{};
   FSys::path l_sim_shot_path_dir{};
   std::set<std::string> l_sim_output_key{};
-  bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   /// tag: 格式化路径
   l_shot_path_dir           = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
   if (l_is_simulation_task)
@@ -417,6 +424,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
   }
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_, l_ret.asset_infos_.size(),
+      l_ret.camera_file_path_.filename().generic_string()
+  );
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 

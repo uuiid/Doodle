@@ -40,6 +40,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 ) {
   person_.check_admin();
   auto l_org = g_ctx().get<sqlite_database>().get_by_uuid<organisation>(id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始设置组织 {} 缩略图", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
+
   FSys::path l_file{};
   if (auto l_fs = in_handle->get_files(); l_fs.empty())
     co_return in_handle->make_msg(nlohmann::json{});
@@ -48,6 +54,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
   FSys::path l_save_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   handle_organisation_thumbnail(l_file, l_save_path);
   socket_io::broadcast("organisation:set-thumbnail", nlohmann::json{{"organisation_id", id_}});
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成设置组织 {} 缩略图 file {}", person_.person_.email_,
+      person_.person_.get_full_name(), id_, l_file.filename().generic_string()
+  );
+
   co_return in_handle->make_msg(
       nlohmann::json{{"thumbnail_path", fmt::format("pictures/thumbnails/organisations/{}.png", id_)}}
   );

@@ -338,15 +338,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   person_.check_in_project(project_id_);
   auto l_sql      = g_ctx().get<sqlite_database>();
   auto l_task_ids = in_handle->get_json().value("task_ids", std::vector<uuid>{});
+  bool l_is_sort{};
+  for (auto&& [key, value, has] : in_handle->url_.params())
+    if (key == "sort") l_is_sort = true;
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始生成临时播放列表 project_id {} task_count {} sort {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_task_ids.size(), l_is_sort
+  );
   std::vector<task> l_tasks{};
   l_tasks.reserve(l_task_ids.size());
   for (auto&& i : l_task_ids) l_tasks.emplace_back(l_sql.get_by_uuid<task>(i));
   std::vector<entity> l_entts{};
   l_entts.reserve(l_tasks.size());
   for (auto&& i : l_tasks) l_entts.emplace_back(l_sql.get_by_uuid<entity>(i.entity_id_));
-  bool l_is_sort{};
-  for (auto&& [key, value, has] : in_handle->url_.params())
-    if (key == "sort") l_is_sort = true;
 
   temp_playlist_t l_playlist{};
   for (auto&& i : l_entts) {
@@ -404,6 +409,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
         }
     );
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成生成临时播放列表 project_id {} item_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_playlist.playlist_.size()
+  );
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
@@ -445,8 +454,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::po
   in_handle->get_json().get_to(*l_playlist);
   person_.check_in_project(l_playlist->project_id_);
   person_.check_not_outsourcer();
-  default_logger_raw()->info("{} 创建播放列表 {}", person_.person_.email_, l_playlist->name_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建播放列表 project_id {} name {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_playlist->project_id_, l_playlist->name_
+  );
   co_await l_sql.install(l_playlist);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建播放列表 project_id {} playlist_id {} name {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_playlist->project_id_, l_playlist->uuid_id_,
+      l_playlist->name_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist);
 }
 
@@ -688,8 +705,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   SPDLOG_LOGGER_WARN(
-      in_handle->logger_, "{} 在播放列表 {} 中添加预览文件 {}", person_.person_.email_, l_playlist->name_,
-      l_entity.uuid_id_
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始在播放列表中添加镜头 playlist_id {} entity_id {} playlist_name {}", person_.person_.email_,
+      person_.person_.get_full_name(), playlist_id_, l_entity.uuid_id_, l_playlist->name_
   );
   std::shared_ptr<playlist_shot> l_playlist_shot = std::make_shared<playlist_shot>();
   l_json.get_to(*l_playlist_shot);
@@ -700,6 +718,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
     l_playlist_shot->order_index_ =
         l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == playlist_id_)) * 100;
   co_await l_sql.install(l_playlist_shot);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成在播放列表中添加镜头 playlist_id {} entity_id {} playlist_shot_id {} order_index {}",
+      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, l_entity.uuid_id_,
+      l_playlist_shot->uuid_id_, l_playlist_shot->order_index_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
@@ -783,6 +807,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, po
   auto l_sequence = l_sql.get_by_uuid<entity>(sequence_id_);
   person_.check_in_project(l_sequence.project_id_);
   person_.check_not_outsourcer();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始创建 Review 播放列表 sequence_id {} project_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), sequence_id_, l_sequence.project_id_
+  );
   auto l_playlist         = std::make_shared<playlist>();
   l_playlist->name_       = fmt::format("Review Playlist - {}", l_sequence.name_);
   l_playlist->project_id_ = l_sequence.project_id_;
@@ -800,6 +828,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, po
     );
   }
   co_await l_sql.install_range(l_playlist_shots);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成创建 Review 播放列表 sequence_id {} playlist_id {} shot_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), sequence_id_, l_playlist->uuid_id_,
+      l_playlist_shots->size()
+  );
   co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(*l_playlist));
 }
 }  // namespace doodle::http

@@ -270,6 +270,12 @@ struct data_project_shots_args {
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::post(session_data_ptr in_handle) {
   auto l_args = in_handle->get_json().get<data_project_shots_args>();
   auto l_sql  = g_ctx().get<sqlite_database>();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取镜头 name {} sequence_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, l_args.name_, l_args.sequence_id_
+  );
+
   using namespace sqlite_orm;
   if (!l_args.sequence_id_.is_nil() &&
       l_sql.impl_->storage_any_.count<entity>(where(
@@ -307,6 +313,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       "shot:new",
       nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"episode_id", l_args.sequence_id_}, {"project_id", project_id_}}
   );
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建镜头 shot_id {} name {} sequence_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot->uuid_id_, l_shot->name_,
+      l_args.sequence_id_
+  );
+
   nlohmann::json l_result;
   l_result = *l_shot;
   l_result.update(*l_shot_extend);
@@ -329,6 +342,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   auto l_sql       = g_ctx().get<sqlite_database>();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 批量创建镜头任务 task_type_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, task_type_id_
+  );
+
   if (auto l_json = in_handle->get_json(); l_json.is_array()) {
     for (auto&& i : l_json.get<std::vector<uuid>>())
       if (auto l_shot = l_sql.get_by_uuid<entity>(i); l_shot.project_id_ == project_id_)
@@ -369,6 +388,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 
   for (auto&& l_task : *l_tasks)
     l_results.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建镜头任务 task_type_id {} 数量 {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }

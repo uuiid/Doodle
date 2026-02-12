@@ -46,15 +46,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 
   auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
   auto l_task    = l_sql.get_by_uuid<task>(task_id_);
-  default_logger_raw()->info(
-      "person {} actions_tasks_comments_add_preview {} {}", person_.person_.uuid_id_, task_id_, comment_id_
-  );
   auto l_revision = in_handle->get_json().value("revision", 0);
   if (l_revision == 0 && !l_sql.has_preview_file(comment_id_))
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
   auto l_position     = l_sql.get_next_position(task_id_, l_revision);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始创建预览文件(评论关联) task_id {} comment_id {} revision {} position {}",
+      person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_revision, l_position
+  );
 
   auto l_preview_file = std::make_shared<preview_file>();
   in_handle->get_json().get_to(*l_preview_file);
@@ -83,6 +86,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
       "comment:update", nlohmann::json{{"comment_id", comment_id_}, {"project_id", l_task.project_id_}}, "/events"
   );
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成创建预览文件(评论关联) task_id {} comment_id {} preview_file_id {} revision {} position {}",
+      person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_preview_file->uuid_id_,
+      l_revision, l_position
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 
@@ -296,6 +305,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "请上传预览文件"});
   else
     l_file = l_fs;
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始上传预览文件 preview_file_id {} task_id {} filename {} ext {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_preview_file->uuid_id_, l_preview_file->task_id_,
+      l_file.filename().generic_string(), l_file.extension().generic_string()
+  );
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     auto l_file_image = cv::imread(l_file.generic_string());
     auto l_size       = save_variants(l_file_image, l_preview_file->uuid_id_);
@@ -351,6 +367,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
       co_await l_sql.update(l_entity);
     }
   }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成上传预览文件 preview_file_id {} task_id {} status {} ext {} size {} width {} height {} duration {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_preview_file->uuid_id_, l_preview_file->task_id_,
+      magic_enum::enum_name(l_preview_file->status_), l_preview_file->extension_, l_preview_file->file_size_,
+      l_preview_file->width_, l_preview_file->height_, l_preview_file->duration_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
 
@@ -369,6 +393,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
   auto l_position     = l_sql.get_next_position(task_id_, l_revision);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始创建预览文件(从已有预览复制) task_id {} comment_id {} from_preview_file_id {} revision {} position {}",
+      person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, preview_file_id_, l_revision,
+      l_position
+  );
 
   auto l_preview_file = std::make_shared<preview_file>();
   in_handle->get_json().get_to(*l_preview_file);
@@ -396,6 +427,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   );
   socket_io::broadcast(
       "comment:update", nlohmann::json{{"comment_id", comment_id_}, {"project_id", l_task->project_id_}}, "/events"
+  );
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成创建预览文件(从已有预览复制) task_id {} comment_id {} preview_file_id {} revision {} position {}",
+      person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_preview_file->uuid_id_,
+      l_revision, l_position
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file);
 }
@@ -496,8 +534,16 @@ struct data_fix_preview_files_thumbnails_run_t {
 };
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_fix_preview_files_thumbnails, post) {
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始投递修复预览缩略图任务", person_.person_.email_,
+      person_.person_.get_full_name()
+  );
   boost::asio::post(g_pool_strand(), data_fix_preview_files_thumbnails_run_t{});
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 已投递修复预览缩略图任务", person_.person_.email_,
+      person_.person_.get_full_name()
+  );
   co_return in_handle->make_msg_204();
 }
 

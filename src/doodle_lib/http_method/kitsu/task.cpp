@@ -89,12 +89,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
   person_.check_manager();
   auto l_sql              = g_ctx().get<sqlite_database>();
   auto l_json             = in_handle->get_json();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始设置任务状态关联 project_id {} task_status_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_json["project_id"].get<uuid>(),
+      l_json["task_status_id"].get<uuid>()
+  );
+
   auto l_task_status_link = std::make_shared<project_task_status_link>(
       l_sql.get_project_task_status_link(l_json["project_id"].get<uuid>(), l_json["task_status_id"].get<uuid>())
           .value_or(project_task_status_link{})
   );
   l_json.get_to(*l_task_status_link);
   l_task_status_link->id_ == 0 ? co_await l_sql.install(l_task_status_link) : co_await l_sql.update(l_task_status_link);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成设置任务状态关联 id {} project_id {} task_status_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_task_status_link->id_, l_task_status_link->project_id_,
+      l_task_status_link->task_status_id_
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = *l_task_status_link);
 }
 

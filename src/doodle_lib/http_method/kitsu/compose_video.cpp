@@ -110,6 +110,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_project      = l_sql.get_by_uuid<project>(l_task.project_id_);
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始合成视频 preview_file_id {} task_id {} project_id {} filename {} ext {}",
+      person_.person_.email_, person_.person_.get_full_name(), preview_file_id_, l_preview_file.task_id_,
+      l_task.project_id_, l_file.filename().generic_string(), l_file.extension().generic_string()
+  );
+
   preview_file l_target_preview_file{};
   {
     using namespace sqlite_orm;
@@ -159,6 +166,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
             l_file, fps, cv::Size{l_prj_size.first, l_prj_size.second}, l_preview_file_ptr, l_target_preview_file
         );
       }
+  );
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 已投递合成视频任务 preview_file_id {} target_preview_file_id {} width {} height {}",
+      person_.person_.email_, person_.person_.get_full_name(), preview_file_id_, l_target_preview_file.uuid_id_,
+      l_preview_file_ptr->width_, l_preview_file_ptr->height_
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_preview_file_ptr);
@@ -256,6 +270,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
 
   auto l_task = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_arg  = in_handle->get_json().get<actions_playlists_preview_files_create_review_arg>();
+    SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始生成播放列表评审视频 playlist_id {} preview_file_id {} project_id {} shot_count {} subtitle {} dubbing {} name {} head_tail {} watermark {} time_code {}",
+      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, preview_file_id_, l_task.project_id_,
+      l_playlist_shot.size(), l_arg.add_subtitle_, l_arg.add_dubbing_, l_arg.add_name_, l_arg.add_head_tail_,
+      l_arg.add_watermark_, l_arg.add_time_code_
+    );
   using namespace sqlite_orm;
   auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
       in(&attachment_file::comment_id_,
@@ -326,6 +347,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   DOODLE_CHICK_HTTP(!l_paths.empty(), bad_request, "没有找到任何镜头预览视频, 无法生成评审视频");
   l_run.data_ptr_->shot_preview_paths_ = l_paths;
   boost::asio::post(g_strand(), l_run);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 已投递生成播放列表评审视频任务 playlist_id {} preview_file_id {} shot_count {} attachment_count {} video_input_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, preview_file_id_, l_playlist_shot.size(),
+      l_attachment_files.size(), l_paths.size()
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_playlist_shot);
 }
@@ -417,6 +445,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   l_json.get_to(l_run.data_ptr_->args_);
   l_json.get_to(*l_comment);
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 开始创建评审任务评论 task_id {} subtitle {} audio {} intro {} outro {} episodes_name {}",
+      person_.person_.email_, person_.person_.get_full_name(), task_id_, !l_run.data_ptr_->args_.subtitle_path_.empty(),
+      !l_run.data_ptr_->args_.audio_path_.empty(), !l_run.data_ptr_->args_.intro_path_.empty(),
+      !l_run.data_ptr_->args_.outro_path_.empty(), !l_run.data_ptr_->args_.episodes_name_.empty()
+  );
+
   if (!l_run.data_ptr_->args_.subtitle_path_.empty() && FSys::exists(l_run.data_ptr_->args_.subtitle_path_) &&
       l_run.data_ptr_->args_.subtitle_path_.extension() != ".srt") {
     auto l_new_path = l_run.data_ptr_->args_.subtitle_path_;
@@ -505,7 +541,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
     FSys::remove(l_run.data_ptr_->args_.episodes_name_path_);
 
   boost::asio::post(g_strand(), l_run);
-  default_logger_raw()->info("由 {} 创建评论 {}", person_.person_.email_, l_comment->uuid_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成创建评审任务评论 task_id {} comment_id {} attachment_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), task_id_, l_comment->uuid_id_,
+      l_result.attachment_file_.size()
+  );
   co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 

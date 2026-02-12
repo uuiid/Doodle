@@ -444,8 +444,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
   auto l_list = in_handle->get_json().get<std::vector<actions_projects_casting_replace_arg>>();
-  default_logger_raw()->info(
-      "由 {} , {} 项目替换资产 {}", person_.person_.email_, project_id_, fmt::join(l_list, ", ")
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始替换 Casting project_id {} item_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_list.size()
   );
   auto l_sql                                               = g_ctx().get<sqlite_database>();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
@@ -473,6 +474,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   data_project_sequences_casting_result_map l_result{};
   std::vector<uuid> l_shot_ids{};
   for (auto&& i : l_list) l_shot_ids.push_back(i.entity_id_);
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成替换 Casting project_id {} item_count {} updated_link_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_list.size(), l_entity_links->size()
+  );
 
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, person_.person_, {}, l_shot_ids));
 }
