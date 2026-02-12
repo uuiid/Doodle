@@ -1,8 +1,11 @@
 #include "dna_calib_node.h"
 
+#include "maya_plug_fwd.h"
 #include <maya_plug/node/dna_calib_node_impl.h>
 
 #include <maya/MApiNamespace.h>
+#include <maya/MArrayDataBuilder.h>
+#include <maya/MArrayDataHandle.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnUnitAttribute.h>
@@ -55,6 +58,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setUsesArrayDataBuilder(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join_transforms));
   }
   {
@@ -66,6 +70,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setUsesArrayDataBuilder(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join_rotations));
   }
   {
@@ -76,6 +81,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setUsesArrayDataBuilder(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join_scales));
   }
   {
@@ -87,6 +93,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setUsesArrayDataBuilder(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_blendshape_weights));
   }
 #define DOODLE_ATTRAFF(attr)                                                          \
@@ -101,24 +108,56 @@ MStatus dna_calib_node::initialize() {
 MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) {
   if (in_plug == output_join_transforms || in_plug == output_join_rotations || in_plug == output_join_scales ||
       in_plug == output_blendshape_weights) {
-    if (!impl()->rig_instance_ptr_) {
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->open_dna_file());
-      impl()->create_rig_data();
-    }
+    if (!impl()->rig_instance_ptr_) return display_error("请先创建rig数据"), MS::kFailure;
     MStatus l_status{};
     // 确保 gui_control_list 的数据被正确读取到内存中, 以便在 rig 计算中使用
     auto l_gui_control = in_data_block.inputArrayValue(gui_control_list, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    if (l_gui_control.elementCount() != impl()->dna_calib_dna_reader_->getGUIControlCount()) {
+      return display_warning(
+                 "DNA 文件中的 GUI 控制数量 {} 与输入的 GUI 控制数量 {} 不匹配, 可能导致计算错误",
+                 impl()->dna_calib_dna_reader_->getGUIControlCount(), l_gui_control.elementCount()
+             ),
+             MS::kFailure;
+    }
+    for (auto i = 0; i < l_gui_control.elementCount(); ++i) {
+      auto l_gui_control_plug = l_gui_control.inputValue(&l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      auto l_gui_control_value = l_gui_control_plug.asDouble();
+      impl()->rig_instance_ptr_->setGUIControl(i, l_gui_control_value);
+    }
 
     impl()->compute();
-    MPlug l_out_j_t{thisMObject(), output_join_transforms};
-    MPlug l_out_j_r{thisMObject(), output_join_rotations};
-    MPlug l_out_j_s{thisMObject(), output_join_scales};
-    MPlug l_out_bsw{thisMObject(), output_blendshape_weights};
+    auto l_out_j_t = in_data_block.outputArrayValue(output_join_transforms, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_j_r = in_data_block.outputArrayValue(output_join_rotations, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_j_s = in_data_block.outputArrayValue(output_join_scales, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_bsw = in_data_block.outputArrayValue(output_blendshape_weights, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_j_t_bl = l_out_j_t.builder(&l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_j_r_bl = l_out_j_r.builder(&l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_j_s_bl = l_out_j_s.builder(&l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_out_bsw_bl = l_out_bsw.builder(&l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    // 清空原有数据
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(0));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(0));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(0));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_bsw_bl.growArray(0));
 
     // 关节输出数据 [tx, ty, tz, rx, ry, rz, sx, sy, sz] * joint_count
-    auto l_raw_j = impl()->rig_instance_ptr_->getJointOutputs();
-    for (auto g = 0; g < impl()->dna_calib_dna_reader_->getJointGroupCount(); ++g) {
+    auto l_raw_j             = impl()->rig_instance_ptr_->getJointOutputs();
+    auto l_joint_count       = impl()->dna_calib_dna_reader_->getJointCount();
+    auto l_joint_group_count = impl()->dna_calib_dna_reader_->getJointGroupCount();
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
+    for (auto g = 0; g < l_joint_group_count; ++g) {
       auto l_group_out   = impl()->dna_calib_dna_reader_->getJointGroupOutputIndices(g);
       auto l_joint_index = impl()->dna_calib_dna_reader_->getJointGroupJointIndices(g);
       for (auto j = 0; j < l_joint_index.size(); ++j) {
@@ -126,29 +165,22 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
         auto l_base_index   = l_group_out[j] * 9;
         auto l_j_base_index = l_j_index * 3;
         // clang-format off
-        l_out_j_t.elementByLogicalIndex(l_j_base_index + 0, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_t.elementByLogicalIndex(l_j_base_index + 1, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_t.elementByLogicalIndex(l_j_base_index + 2, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_r.elementByLogicalIndex(l_j_base_index + 0, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_r.elementByLogicalIndex(l_j_base_index + 1, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_r.elementByLogicalIndex(l_j_base_index + 2, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_s.elementByLogicalIndex(l_j_base_index + 0, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_s.elementByLogicalIndex(l_j_base_index + 1, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_s.elementByLogicalIndex(l_j_base_index + 2, &l_status); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_t_bl.addElement(l_j_base_index + 0, &l_status).set(l_raw_j[l_base_index + 0]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_t_bl.addElement(l_j_base_index + 1, &l_status).set(l_raw_j[l_base_index + 1]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_t_bl.addElement(l_j_base_index + 2, &l_status).set(l_raw_j[l_base_index + 2]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_r_bl.addElement(l_j_base_index + 0, &l_status).set(l_raw_j[l_base_index + 3]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_r_bl.addElement(l_j_base_index + 1, &l_status).set(l_raw_j[l_base_index + 4]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_r_bl.addElement(l_j_base_index + 2, &l_status).set(l_raw_j[l_base_index + 5]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_s_bl.addElement(l_j_base_index + 0, &l_status).set(l_raw_j[l_base_index + 6]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_s_bl.addElement(l_j_base_index + 1, &l_status).set(l_raw_j[l_base_index + 7]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        l_out_j_s_bl.addElement(l_j_base_index + 2, &l_status).set(l_raw_j[l_base_index + 8]); DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
         // clang-format on
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setValue(l_raw_j[l_base_index + 0]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setValue(l_raw_j[l_base_index + 1]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setValue(l_raw_j[l_base_index + 2]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setValue(l_raw_j[l_base_index + 3]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setValue(l_raw_j[l_base_index + 4]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setValue(l_raw_j[l_base_index + 5]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 6]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 7]));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 8]));
-
-        in_data_block.setClean(in_plug);
       }
     }
+    l_out_j_t.setAllClean();
+    l_out_j_r.setAllClean();
+    l_out_j_s.setAllClean();
+    l_out_bsw.setAllClean();
   }
   return MS::kUnknownParameter;
 }
