@@ -105,6 +105,11 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->open_dna_file());
       impl()->create_rig_data();
     }
+    MStatus l_status{};
+    // 确保 gui_control_list 的数据被正确读取到内存中, 以便在 rig 计算中使用
+    auto l_gui_control = in_data_block.inputArrayValue(gui_control_list, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
     impl()->compute();
     MPlug l_out_j_t{thisMObject(), output_join_transforms};
     MPlug l_out_j_r{thisMObject(), output_join_rotations};
@@ -113,7 +118,6 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
 
     // 关节输出数据 [tx, ty, tz, rx, ry, rz, sx, sy, sz] * joint_count
     auto l_raw_j = impl()->rig_instance_ptr_->getJointOutputs();
-    MStatus l_status{};
     for (auto g = 0; g < impl()->dna_calib_dna_reader_->getJointGroupCount(); ++g) {
       auto l_group_out   = impl()->dna_calib_dna_reader_->getJointGroupOutputIndices(g);
       auto l_joint_index = impl()->dna_calib_dna_reader_->getJointGroupJointIndices(g);
@@ -141,6 +145,8 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 6]));
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 7]));
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setValue(l_raw_j[l_base_index + 8]));
+
+        in_data_block.setClean(in_plug);
       }
     }
   }
