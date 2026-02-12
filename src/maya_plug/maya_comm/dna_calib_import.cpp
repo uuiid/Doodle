@@ -174,27 +174,14 @@ class dna_calib_import::impl {
              MS::kFailure;
     }
     struct node_attr {
-      MObject dna_node_attr_;
       MPlug dna_node_plug_;
-      std::array<const char*, 9> attrs_;
+      std::array<const char*, 3> attrs_;
     };
 
     std::array<node_attr, 3> g_node_attrs_list{
-        node_attr{
-            dna_calib_node::output_join_transforms,
-            MPlug{dna_node_obj, dna_calib_node::output_join_transforms},
-            {"tx", "ty", "tz"}
-        },
-        node_attr{
-            dna_calib_node::output_join_rotations,
-            MPlug{dna_node_obj, dna_calib_node::output_join_rotations},
-            {"rx", "ry", "rz"}
-        },
-        node_attr{
-            dna_calib_node::output_join_scales,
-            MPlug{dna_node_obj, dna_calib_node::output_join_scales},
-            {"sx", "sy", "sz"}
-        },
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_transforms}, {"tx", "ty", "tz"}},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_rotations}, {"rx", "ry", "rz"}},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_scales}, {"sx", "sy", "sz"}},
     };
 
     {
