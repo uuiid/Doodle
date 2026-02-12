@@ -603,12 +603,12 @@ class dna_calib_import::impl {
 
     for (auto i = 0; i < get_dna_reader()->getGUIControlCount(); ++i) {
       auto l_gui_control_name = get_dna_reader()->getGUIControlName(i);
+      auto l_target           = l_dna_file_path_plug.elementByLogicalIndex(i, &l_status);
       auto l_plug             = get_name_obj_attr_for_str(std::string_view{l_gui_control_name});
       if (l_plug.isNull()) {
-        display_warning("未找到对应的节点属性: {}", l_gui_control_name);
+        display_warning("未找到对应的节点属性: {}, 不进行连接", l_gui_control_name);
         continue;
       }
-      auto l_target = l_dna_file_path_plug.elementByLogicalIndex(i, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_plug, l_target));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);

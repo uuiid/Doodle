@@ -30,7 +30,7 @@ void dna_calib_node::impl_t::create_rig_data() {
 
   rig_logic_ptr_    = dnac::makeScoped<rl4::RigLogic>(dna_calib_dna_reader_.get());
   rig_instance_ptr_ = dnac::makeScoped<rl4::RigInstance>(rig_logic_ptr_.get());
-  dna_calib_dna_reader_->getJointVariableAttributeIndices(0);
+  rig_instance_ptr_->setLOD(0);
 }
 void dna_calib_node::impl_t::compute() { rig_logic_ptr_->calculate(rig_instance_ptr_.get()); }
 }  // namespace doodle::maya_plug

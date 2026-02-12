@@ -113,18 +113,21 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     // 确保 gui_control_list 的数据被正确读取到内存中, 以便在 rig 计算中使用
     auto l_gui_control = in_data_block.inputArrayValue(gui_control_list, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    if (l_gui_control.elementCount() != impl()->dna_calib_dna_reader_->getGUIControlCount()) {
-      return display_warning(
-                 "DNA 文件中的 GUI 控制数量 {} 与输入的 GUI 控制数量 {} 不匹配, 可能导致计算错误",
-                 impl()->dna_calib_dna_reader_->getGUIControlCount(), l_gui_control.elementCount()
-             ),
-             MS::kFailure;
-    }
-    for (auto i = 0; i < l_gui_control.elementCount(); ++i) {
+    auto l_gui_control_count = impl()->dna_calib_dna_reader_->getGUIControlCount();
+    for (auto i = 0; i < l_gui_control.elementCount(); ++i, l_gui_control.next()) {
       auto l_gui_control_plug = l_gui_control.inputValue(&l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       auto l_gui_control_value = l_gui_control_plug.asDouble();
-      impl()->rig_instance_ptr_->setGUIControl(i, l_gui_control_value);
+      auto l_index             = l_gui_control.elementIndex(&l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      if (l_index >= l_gui_control_count) {
+        display_warning(
+            "gui_control_list 中的元素数量 {} 超过了 dna 文件中 GUI Control 的数量 {}, 跳过剩余元素", l_index + 1,
+            l_gui_control_count
+        );
+        break;
+      }
+      impl()->rig_instance_ptr_->setGUIControl(l_index, l_gui_control_value);
     }
 
     impl()->compute();
