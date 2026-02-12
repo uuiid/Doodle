@@ -33,21 +33,27 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         SOVERSION ${PROJECT_VERSION_MAJOR}
         VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
 
+target_compile_definitions(${PROJECT_NAME}
+        PUBLIC
+        RIGLOGIC_MODULE_DISCARD
+        DNACALIB_MODULE_DISCARD
+
+        PRIVATE
+        RL_BUILD_WITH_ZYX_ROTATION_ORDER
+        TRIO_WINDOWS_FILE_MAPPING_AVAILABLE
+        RL_AUTODETECT_SSE
+        RL_AUTODETECT_HALF_FLOATS
+)
+
 if (DNAC_LIBRARY_TYPE STREQUAL SHARED)
     target_compile_definitions(${PROJECT_NAME}
             PUBLIC
             RL_SHARED
             DNAC_SHARED
-            RIGLOGIC_MODULE_DISCARD
-            DNACALIB_MODULE_DISCARD
 
             PRIVATE
             DNAC_BUILD_SHARED
             RL_BUILD_SHARED
-            RL_BUILD_WITH_ZYX_ROTATION_ORDER
-            TRIO_WINDOWS_FILE_MAPPING_AVAILABLE
-            RL_AUTODETECT_SSE
-            RL_AUTODETECT_HALF_FLOATS
             # UE宏
             #            TRIMD_CUSTOM_WINDOWS_H="WindowsPlatformUE.h"
             #            TRIO_CUSTOM_WINDOWS_H="WindowsPlatformUE.h"
