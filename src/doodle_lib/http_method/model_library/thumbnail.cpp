@@ -9,9 +9,12 @@
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 
+#include <doodle_core/core/global_function.h>
+
 #include "model_library.h"
 #include <memory>
 #include <opencv2/opencv.hpp>
+#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace doodle::http::model_library {
@@ -187,6 +190,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
 
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::post(session_data_ptr in_handle) {
   person_.check_user();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 上传缩略图/预览文件 {} ", person_.person_.email_,
+      person_.person_.get_full_name(), id_
+  );
   return thumbnail_post(in_handle, *root_);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_instance::get(session_data_ptr in_handle) {

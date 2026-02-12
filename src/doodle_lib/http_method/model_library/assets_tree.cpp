@@ -62,6 +62,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
   }
   co_await g_ctx().get<sqlite_database>().install<assets_helper::database_t>(l_ptr);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库节点 {} (父节点 {}) ", person_.person_.email_,
+      person_.person_.get_full_name(), l_ptr->uuid_id_, l_ptr->uuid_parent_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_tree::patch(

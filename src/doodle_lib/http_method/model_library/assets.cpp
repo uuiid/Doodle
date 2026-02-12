@@ -47,6 +47,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     l_link->emplace_back(assets_file_helper::link_parent_t{.assets_type_uuid_ = i, .assets_uuid_ = l_ptr->uuid_id_});
   co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::link_parent_t>(l_link);
 
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库文件 {} ", person_.person_.email_,
+      person_.person_.get_full_name(), l_ptr->uuid_id_
+  );
+
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets_instance::put(
