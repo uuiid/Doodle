@@ -2,12 +2,12 @@
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/attachment_file.h"
 #include "doodle_core/metadata/image_size.h"
+#include "doodle_core/metadata/playlist.h"
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
-#include "doodle_core/metadata/playlist.h"
-#include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_core/sqlite_orm/sqlite_database.h>
 #include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>
@@ -34,6 +34,7 @@
 #include <opencv2/videoio.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
+
 
 namespace doodle::http {
 
@@ -112,9 +113,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始合成视频 preview_file_id {} task_id {} project_id {} filename {} ext {}",
-      person_.person_.email_, person_.person_.get_full_name(), preview_file_id_, l_preview_file.task_id_,
-      l_task.project_id_, l_file.filename().generic_string(), l_file.extension().generic_string()
+      "用户 {}({}) 开始合成视频 preview_file_id {} task_id {} project_id {} filename {} ext {}", person_.person_.email_,
+      person_.person_.get_full_name(), preview_file_id_, l_preview_file.task_id_, l_task.project_id_,
+      l_file.filename().generic_string(), l_file.extension().generic_string()
   );
 
   preview_file l_target_preview_file{};
@@ -270,13 +271,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
 
   auto l_task = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_arg  = in_handle->get_json().get<actions_playlists_preview_files_create_review_arg>();
-    SPDLOG_LOGGER_WARN(
+  SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始生成播放列表评审视频 playlist_id {} preview_file_id {} project_id {} shot_count {} subtitle {} dubbing {} name {} head_tail {} watermark {} time_code {}",
+      "用户 {}({}) 开始生成播放列表评审视频 playlist_id {} preview_file_id {} project_id {} shot_count {} subtitle {} "
+      "dubbing {} name {} head_tail {} watermark {} time_code {}",
       person_.person_.email_, person_.person_.get_full_name(), playlist_id_, preview_file_id_, l_task.project_id_,
       l_playlist_shot.size(), l_arg.add_subtitle_, l_arg.add_dubbing_, l_arg.add_name_, l_arg.add_head_tail_,
       l_arg.add_watermark_, l_arg.add_time_code_
-    );
+  );
   using namespace sqlite_orm;
   auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
       in(&attachment_file::comment_id_,
@@ -284,7 +286,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   ));
   // 反转 l_attachment_files
   std::reverse(l_attachment_files.begin(), l_attachment_files.end());
-  auto l_prj              = l_sql.get_by_uuid<project>(l_task.project_id_);
+  auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_);
   run_actions_playlists_preview_files_create_review l_run{};
   l_run.data_ptr_->size_                = l_prj.get_resolution();
   l_run.data_ptr_->logger_              = in_handle->logger_;
@@ -350,7 +352,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 已投递生成播放列表评审视频任务 playlist_id {} preview_file_id {} shot_count {} attachment_count {} video_input_count {}",
+      "用户 {}({}) 已投递生成播放列表评审视频任务 playlist_id {} preview_file_id {} shot_count {} attachment_count {} "
+      "video_input_count {}",
       person_.person_.email_, person_.person_.get_full_name(), playlist_id_, preview_file_id_, l_playlist_shot.size(),
       l_attachment_files.size(), l_paths.size()
   );
@@ -543,8 +546,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_create_review, post) {
   boost::asio::post(g_strand(), l_run);
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成创建评审任务评论 task_id {} comment_id {} attachment_count {}",
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建评审任务评论 task_id {} comment_id {} attachment_count {}",
       person_.person_.email_, person_.person_.get_full_name(), task_id_, l_comment->uuid_id_,
       l_result.attachment_file_.size()
   );
