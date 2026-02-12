@@ -84,15 +84,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
   if (l_shot_entity.parent_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
-  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
-  auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
+  auto l_episode_entity     = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
+  auto l_prj                = l_sql.get_by_uuid<project>(project_id_);
 
   bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {} shot_entity_id {} episode_entity_id {} is_simulation {}",
-      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_, l_shot_entity.uuid_id_,
-      l_episode_entity.uuid_id_, l_is_simulation_task
+      "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {} shot_entity_id {} episode_entity_id {} is_simulation "
+      "{}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_,
+      l_shot_entity.uuid_id_, l_episode_entity.uuid_id_, l_is_simulation_task
   );
 
   episodes l_episodes{l_episode_entity};
@@ -111,7 +112,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   FSys::path l_sim_shot_path_dir{};
   std::set<std::string> l_sim_output_key{};
   /// tag: 格式化路径
-  l_shot_path_dir           = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+  l_shot_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
   if (l_is_simulation_task)
     l_sim_shot_path_dir = get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
 
@@ -389,14 +390,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
           l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend);
         }
       }
-
-    } else {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request, "不支持的资产类型: {}",
-              l_sql.get_by_uuid<asset_type>(l_asset.entity_type_id_).name_
-          }
-      );
     }
   }
 
@@ -426,8 +419,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}",
-      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_, l_ret.asset_infos_.size(),
+      "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_, l_ret.asset_infos_.size(),
       l_ret.camera_file_path_.filename().generic_string()
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
