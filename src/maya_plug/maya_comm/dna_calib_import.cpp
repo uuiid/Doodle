@@ -175,35 +175,44 @@ class dna_calib_import::impl {
     }
     struct node_attr {
       MObject dna_node_attr_;
-      std::array<const char*, 3> tran_attrs_;
+      std::array<const char*, 9> attrs_;
     };
 
-    std::array<node_attr, 3> g_node_attrs{{
-        {dna_calib_node::output_join_transforms, {"tx", "ty", "tz"}},
-        {dna_calib_node::output_join_rotations, {"rx", "ry", "rz"}},
-        {dna_calib_node::output_join_scales, {"sx", "sy", "sz"}},
-    }};
+    const static node_attr g_node_attrs{
+        dna_calib_node::output_join, {"tx", "ty", "tz", "rx", "ry", "rz", "sx", "sy", "sz"}
+    };
 
-    for (auto& l_node_attr : g_node_attrs) {
-      MPlug l_dna_plug{dna_node_obj, l_node_attr.dna_node_attr_};
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dna_plug.setNumElements(static_cast<unsigned int>(l_joint_count)));
-      for (auto i = 0; i < l_joint_count; ++i) {
-        auto l_joint = joint_objs_[i];
-        MFnDependencyNode l_joint_fn{l_joint, &l_status};
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        for (auto j = 0; j < l_node_attr.tran_attrs_.size(); ++j) {
-          MPlug l_plug = l_joint_fn.findPlug(l_node_attr.tran_attrs_[j], /* wantNetworked = */ false, &l_status);
+    {
+      MPlug l_dna_plug{dna_node_obj, g_node_attrs.dna_node_attr_};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          l_dna_plug.setNumElements(static_cast<unsigned int>(l_joint_count * g_node_attrs.attrs_.size()))
+      );
+
+      for (auto g = 0; g < get_dna_reader()->getJointGroupCount(); ++g) {
+        auto l_group_out   = get_dna_reader()->getJointGroupOutputIndices(g);
+        auto l_joint_index = get_dna_reader()->getJointGroupJointIndices(g);
+        for (auto j = 0; j < l_joint_index.size(); ++j) {
+          auto l_j_index = l_joint_index[j];
+          auto l_joint   = joint_objs_[l_j_index];
+          MFnDependencyNode l_joint_fn{l_joint, &l_status};
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-          if (l_plug.isNull()) {
-            display_warning("未找到对应的节点属性: {}", get_node_name(l_joint));
-            continue;
+          for (auto j = 0; j < g_node_attrs.attrs_.size(); ++j) {
+            MPlug l_plug = l_joint_fn.findPlug(g_node_attrs.attrs_[j], /* wantNetworked = */ false, &l_status);
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+            if (l_plug.isNull()) {
+              display_warning("未找到对应的节点属性: {}", get_node_name(l_joint));
+              continue;
+            }
+            auto l_target = l_dna_plug.elementByLogicalIndex(l_j_index * g_node_attrs.attrs_.size() + j, &l_status);
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_target, l_plug));
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
           }
-          auto l_target = l_dna_plug.elementByLogicalIndex(i * l_node_attr.tran_attrs_.size() + j, &l_status);
-          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_target, l_plug));
-          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
         }
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+      }
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+
+      for (auto i = 0; i < l_joint_count; ++i) {
       }
     }
 
