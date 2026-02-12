@@ -24,7 +24,9 @@ class dna_calib_node : public MPxNode {
   // 控制Gui输入
   static MObject gui_control_list;
   // 骨骼输出
-  static MObject output_join;
+  static MObject output_join_transforms;
+  static MObject output_join_rotations;
+  static MObject output_join_scales;
   // 混合变形输出
   static MObject output_blendshape_weights;
 

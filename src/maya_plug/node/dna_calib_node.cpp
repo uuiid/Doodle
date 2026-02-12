@@ -2,14 +2,19 @@
 
 #include <maya_plug/node/dna_calib_node_impl.h>
 
+#include <maya/MApiNamespace.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MFnUnitAttribute.h>
 #include <maya/MStatus.h>
+
 
 namespace doodle::maya_plug {
 MObject dna_calib_node::dna_file_path{};
 MObject dna_calib_node::gui_control_list{};
-MObject dna_calib_node::output_join{};
+MObject dna_calib_node::output_join_transforms{};
+MObject dna_calib_node::output_join_rotations{};
+MObject dna_calib_node::output_join_scales{};
 MObject dna_calib_node::output_blendshape_weights{};
 
 MTypeId dna_calib_node::doodle_id = MTypeId{0x00000002};
@@ -43,13 +48,35 @@ MStatus dna_calib_node::initialize() {
   }
   {
     MFnNumericAttribute l_numeric_attr{};
-    output_join = l_numeric_attr.create("output_join", "out_jt", MFnNumericData::kDouble, 0, &l_status);
+    output_join_transforms =
+        l_numeric_attr.create("output_join_transforms", "out_jt", MFnNumericData::kDouble, 0, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join_transforms));
+  }
+  {
+    MFnUnitAttribute l_numeric_attr{};
+    output_join_rotations =
+        l_numeric_attr.create("output_join_rotations", "out_jr", MFnUnitAttribute::kAngle, 0, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join_rotations));
+  }
+  {
+    MFnNumericAttribute l_numeric_attr{};
+    output_join_scales = l_numeric_attr.create("output_join_scales", "out_js", MFnNumericData::kDouble, 0, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setArray(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_join_scales));
   }
   {
     MFnNumericAttribute l_numeric_attr{};
@@ -62,8 +89,10 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setReadable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(output_blendshape_weights));
   }
-#define DOODLE_ATTRAFF(attr)                                               \
-  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join)); \
+#define DOODLE_ATTRAFF(attr)                                                          \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join_transforms)); \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join_rotations));  \
+  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_join_scales));     \
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(attributeAffects(attr, output_blendshape_weights));
   DOODLE_ATTRAFF(gui_control_list);
 #undef DOODLE_ATTRAFF
