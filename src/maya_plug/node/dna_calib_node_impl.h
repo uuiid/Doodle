@@ -1,6 +1,7 @@
 #include <maya_plug/maya_plug_fwd.h>
 #include <maya_plug/node/dna_calib_node.h>
 
+#include <array>
 #include <dnacalib/dna/DNACalibDNAReader.h>
 #include <maya/MPxNode.h>
 #include <maya/MStatus.h>
@@ -44,7 +45,7 @@ class dna_calib_node::impl_t {
   struct JointAttrOutputMap {
     // [0]=tx, [1]=ty, [2]=tz, [3]=rx, [4]=ry, [5]=rz, [6]=sx, [7]=sy, [8]=sz
     // -1 表示该属性在当前 DNA 中不存在
-    std::int32_t output_indices[9]{-1, -1, -1, -1, -1, -1, -1, -1, -1};
+    std::array<std::int32_t, 9> output_indices{-1, -1, -1, -1, -1, -1, -1, -1, -1};
   };
 
   // 通过 output_row_index 快速查找 joint_index + attribute_index

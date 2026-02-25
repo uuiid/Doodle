@@ -132,6 +132,8 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     }
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->compute());
+    return MS::kSuccess;
+    
     auto l_out_j_t = in_data_block.outputArrayValue(output_join_transforms, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_out_j_r = in_data_block.outputArrayValue(output_join_rotations, &l_status);

@@ -45,6 +45,7 @@
 #include <maya/MProgressWindow.h>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>
+#include <maya/MString.h>
 #include <maya/MSyntax.h>
 #include <maya/MTypes.h>
 #include <maya/MVector.h>
@@ -107,6 +108,7 @@ class dna_calib_import::impl {
   std::vector<joint_to_mesh> joint_to_mesh_links_{};
 
   dnac::ScopedPtr<dnac::DNACalibDNAReader>& get_dna_reader() { return dna_node_data->impl()->dna_calib_dna_reader_; }
+  dnac::ScopedPtr<rl4::RigInstance>& get_rig_instance() { return dna_node_data->impl()->rig_instance_ptr_; }
   void conv_units() {
     auto l_translation_unit = get_dna_reader()->getTranslationUnit();
     switch (l_translation_unit) {
@@ -175,15 +177,26 @@ class dna_calib_import::impl {
              ),
              MS::kFailure;
     }
+
+    auto l_lod       = get_rig_instance()->getLOD();
+
+    auto l_joint_map = dna_node_data->impl()->joint_attr_output_map(l_lod);
+
     struct node_attr {
       MPlug dna_node_plug_;
-      std::array<const char*, 3> attrs_;
+      MString attrs_;
     };
 
-    std::array<node_attr, 3> g_node_attrs_list{
-        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_transforms}, {"tx", "ty", "tz"}},
-        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_rotations}, {"rx", "ry", "rz"}},
-        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_scales}, {"sx", "sy", "sz"}},
+    std::array<node_attr, 9> g_node_attrs_list{
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_transforms}, "tx"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_transforms}, "ty"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_transforms}, "tz"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_rotations}, "rx"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_rotations}, "ry"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_rotations}, "rz"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_scales}, "sx"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_scales}, "sy"},
+        node_attr{MPlug{dna_node_obj, dna_calib_node::output_join_scales}, "sz"},
     };
 
     {
@@ -194,21 +207,20 @@ class dna_calib_import::impl {
           auto l_joint   = joint_objs_[l_j_index];
           MFnDependencyNode l_joint_fn{l_joint, &l_status};
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-          for (auto&& l_node_attrs : g_node_attrs_list) {
-            for (auto j = 0; j < l_node_attrs.attrs_.size(); ++j) {
-              MPlug l_plug = l_joint_fn.findPlug(l_node_attrs.attrs_[j], /* wantNetworked = */ false, &l_status);
-              DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-              if (l_plug.isNull()) {
-                display_warning("未找到对应的节点属性: {}", get_node_name(l_joint));
-                continue;
-              }
-              auto l_target = l_node_attrs.dna_node_plug_.elementByLogicalIndex(
-                  l_j_index * l_node_attrs.attrs_.size() + j, &l_status
-              );
-              DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-              DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_target, l_plug));
-              DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
+          auto& l_joint_attr = l_joint_map[l_j_index];
+          for (auto&& l_attr_idx : l_joint_attr.output_indices) {
+            if (l_attr_idx == -1) continue;  // 该属性在当前 DNA 中不存在
+            MPlug l_plug = l_joint_fn.findPlug(g_node_attrs_list[j].attrs_, /* wantNetworked = */ false, &l_status);
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+            if (l_plug.isNull()) {
+              display_warning("未找到对应的节点属性: {}", get_node_name(l_joint));
+              continue;
             }
+            auto l_target = g_node_attrs_list[j].dna_node_plug_.elementByLogicalIndex(l_attr_idx, &l_status);
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_target, l_plug));
+            DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
           }
         }
       }
