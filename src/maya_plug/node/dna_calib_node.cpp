@@ -160,7 +160,8 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     auto l_raw_j             = impl()->rig_instance_ptr_->getJointOutputs();
     auto l_joint_count       = impl()->dna_calib_dna_reader_->getJointCount();
     auto l_joint_group_count = impl()->dna_calib_dna_reader_->getJointGroupCount();
-    auto l_joint_map = impl()->dna_calib_dna_reader_->getJointVariableAttributeIndices(impl()->get_current_lod());
+    auto l_joint_map =
+        impl()->dna_calib_dna_reader_->getJointVariableAttributeIndices(impl()->rig_instance_ptr_->getLOD());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));

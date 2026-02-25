@@ -28,7 +28,16 @@ class dna_calib_node::impl_t {
 
   MStatus open_dna_file();
   MStatus create_rig_data(std::int16_t in_lod = 0);
+  // 构建输出joint decode 输出表
+  void build_joint_output_map();
   // 执行计算
   MStatus compute();
+
+ private:
+  struct JointDecodeEntry {
+    std::uint16_t joint_index_;
+    // 0-8 分别对应 tx, ty, tz, rx, ry, rz, sx, sy, sz
+    std::uint16_t attribute_index_;
+  };
 };
 }  // namespace doodle::maya_plug

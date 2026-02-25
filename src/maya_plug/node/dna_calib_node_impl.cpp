@@ -74,4 +74,7 @@ MStatus dna_calib_node::impl_t::compute() {
   }
   return MS::kSuccess;
 }
+
+void dna_calib_node::impl_t::build_joint_output_map() {}
+
 }  // namespace doodle::maya_plug
