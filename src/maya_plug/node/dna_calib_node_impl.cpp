@@ -59,6 +59,7 @@ MStatus dna_calib_node::impl_t::create_rig_data(std::int16_t in_lod) {
     const char* msg = dnac::Status::get().message;
     return display_error("RigInstance::setLOD({}) 失败: {}", in_lod, msg), MS::kFailure;
   }
+  build_joint_output_map();
 
   return MS::kSuccess;
 }
@@ -75,6 +76,48 @@ MStatus dna_calib_node::impl_t::compute() {
   return MS::kSuccess;
 }
 
-void dna_calib_node::impl_t::build_joint_output_map() {}
+void dna_calib_node::impl_t::build_joint_output_map() {
+  if (!dna_calib_dna_reader_) return;
+
+  const auto l_joint_count = dna_calib_dna_reader_->getJointCount();
+  const auto l_row_count   = dna_calib_dna_reader_->getJointRowCount();
+  const auto l_lod_count   = dna_calib_dna_reader_->getLODCount();
+
+  // ---- 1. 初始化 ----
+  joint_decode_cache_.clear();
+  joint_decode_cache_.resize(l_lod_count);
+  for (auto& lod_cache : joint_decode_cache_) {
+    lod_cache.resize(l_row_count);
+  }
+  joint_attr_output_map_.clear();
+  joint_attr_output_map_.resize(l_lod_count);
+  for (auto& lod_map : joint_attr_output_map_) {
+    lod_map.resize(l_joint_count);
+  }
+
+  // ---- 2. 使用 getJointVariableAttributeIndices 构建映射 ----
+  // 遍历所有 LOD，从最高细节 (LOD 0) 到最低，收集参与计算的属性索引。
+  // 每个属性索引即 output row，编码方式: joint_index = row / 9, attribute_index = row % 9
+  // （项目配置为 EulerAngles，每关节 9 个属性: tx,ty,tz,rx,ry,rz,sx,sy,sz）
+  for (std::uint16_t lod = 0; lod < l_lod_count; ++lod) {
+    auto l_var_attr_indices = dna_calib_dna_reader_->getJointVariableAttributeIndices(lod);
+    for (std::size_t i = 0; i < l_var_attr_indices.size(); ++i) {
+      const auto l_out_row   = l_var_attr_indices[i];
+      const auto l_joint_idx = static_cast<std::uint16_t>(l_out_row / 9);
+      const auto l_attr_idx  = static_cast<std::uint16_t>(l_out_row % 9);
+
+      // 填写 decode cache（output row → joint + attribute）
+      if (l_out_row < l_row_count) {
+        joint_decode_cache_[lod][l_out_row].joint_index_     = l_joint_idx;
+        joint_decode_cache_[lod][l_out_row].attribute_index_ = l_attr_idx;
+      }
+
+      // 填写 per-joint 反向映射（joint → output row[]）
+      if (l_joint_idx < l_joint_count && l_attr_idx < 9) {
+        joint_attr_output_map_[lod][l_joint_idx].output_indices[l_attr_idx] = static_cast<std::int32_t>(l_out_row);
+      }
+    }
+  }
+}
 
 }  // namespace doodle::maya_plug

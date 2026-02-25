@@ -33,11 +33,34 @@ class dna_calib_node::impl_t {
   // 执行计算
   MStatus compute();
 
- private:
+  // ----------- 骨骼 Decode Cache 类型 -----------
   struct JointDecodeEntry {
     std::uint16_t joint_index_;
     // 0-8 分别对应 tx, ty, tz, rx, ry, rz, sx, sy, sz
     std::uint16_t attribute_index_;
   };
+
+  // 每个关节的 9 个属性在 getJointOutputs() 中的行索引
+  struct JointAttrOutputMap {
+    // [0]=tx, [1]=ty, [2]=tz, [3]=rx, [4]=ry, [5]=rz, [6]=sx, [7]=sy, [8]=sz
+    // -1 表示该属性在当前 DNA 中不存在
+    std::int32_t output_indices[9]{-1, -1, -1, -1, -1, -1, -1, -1, -1};
+  };
+
+  // 通过 output_row_index 快速查找 joint_index + attribute_index
+  // 大小 = getJointRowCount()，索引 = 输出数组下标
+  const std::vector<JointDecodeEntry>& joint_decode_cache(std::int16_t in_lod) const {
+    return joint_decode_cache_[in_lod];
+  }
+
+  // 通过 joint_index 快速查找其 9 个属性在输出数组中的行号
+  // 大小 = getJointCount()，索引 = joint_index
+  const std::vector<JointAttrOutputMap>& joint_attr_output_map(std::int16_t in_lod) const {
+    return joint_attr_output_map_[in_lod];
+  }
+
+ private:
+  std::vector<std::vector<JointDecodeEntry>> joint_decode_cache_;
+  std::vector<std::vector<JointAttrOutputMap>> joint_attr_output_map_;
 };
 }  // namespace doodle::maya_plug
