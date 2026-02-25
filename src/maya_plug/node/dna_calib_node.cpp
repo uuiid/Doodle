@@ -155,10 +155,12 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_bsw_bl.growArray(0));
 
     // 关节输出数据 [tx, ty, tz, rx, ry, rz, sx, sy, sz] * joint_count
-    // todo: 查找文档后, 发现每个关节不是 9 个属性都会计算, 需要对属性进行筛选, 目前先假设每个关节都有完整的 9 个输出属性
+    // todo: 查找文档后, 发现每个关节不是 9 个属性都会计算, 需要对属性进行筛选, 目前先假设每个关节都有完整的 9
+    // 个输出属性
     auto l_raw_j             = impl()->rig_instance_ptr_->getJointOutputs();
     auto l_joint_count       = impl()->dna_calib_dna_reader_->getJointCount();
     auto l_joint_group_count = impl()->dna_calib_dna_reader_->getJointGroupCount();
+    auto l_joint_map = impl()->dna_calib_dna_reader_->getJointVariableAttributeIndices(impl()->get_current_lod());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
