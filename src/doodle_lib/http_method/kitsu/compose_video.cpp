@@ -1,8 +1,10 @@
 #include "doodle_core/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/attachment_file.h"
+#include "doodle_core/metadata/comment.h"
 #include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/playlist.h"
+#include "doodle_core/metadata/preview_file.h"
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
@@ -34,7 +36,6 @@
 #include <opencv2/videoio.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
-
 
 namespace doodle::http {
 
@@ -131,6 +132,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
         ),
         order_by(&preview_file::created_at_).desc(), limit(1)
     );
+    if (l_preview_files.empty()) {
+      auto l_preview_file_ptr     = std::make_shared<preview_file>();
+      *l_preview_file_ptr         = std::move(l_preview_file);
+      l_preview_file_ptr->status_ = preview_file_statuses::broken;
+      co_await l_sql.update(l_preview_file_ptr);
+      if (auto l_comm = l_sql.get_last_comment(l_task.uuid_id_); l_comm) {
+        auto l_comm_ptr = std::make_shared<comment>(l_comm.value());
+        l_comm_ptr->text_ += fmt::format(
+            "没有找到相关的预览文件(自动灯光文件), 无法合成视频. preview_file_id {} task_id {} project_id {} filename "
+            "{} ext {}",
+            preview_file_id_, l_preview_file.task_id_, l_task.project_id_, l_file.filename().generic_string(),
+            l_file.extension().generic_string()
+        );
+        co_await l_sql.update(l_comm_ptr);
+      }
+    }
     DOODLE_CHICK_HTTP(!l_preview_files.empty(), bad_request, "没有找到相关的预览文件");
     // 选择最新的预览文件
     l_target_preview_file = l_preview_files.front();
