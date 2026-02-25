@@ -30,7 +30,7 @@ MStatus dna_calib_node::impl_t::open_dna_file() {
   dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
   return MS::kSuccess;
 }
-MStatus dna_calib_node::impl_t::create_rig_data() {
+MStatus dna_calib_node::impl_t::create_rig_data(std::int16_t in_lod) {
   if (!dna_calib_dna_reader_) return display_error("请先打开dna文件"), MS::kFailure;
 
   rig_logic_ptr_.reset();
@@ -54,10 +54,10 @@ MStatus dna_calib_node::impl_t::create_rig_data() {
     return display_error("创建 RigInstance 失败: {}", msg), MS::kFailure;
   }
 
-  rig_instance_ptr_->setLOD(0);
+  rig_instance_ptr_->setLOD(in_lod);
   if (!dnac::Status::isOk()) {
     const char* msg = dnac::Status::get().message;
-    return display_error("RigInstance::setLOD(0) 失败: {}", msg), MS::kFailure;
+    return display_error("RigInstance::setLOD({}) 失败: {}", in_lod, msg), MS::kFailure;
   }
 
   return MS::kSuccess;
