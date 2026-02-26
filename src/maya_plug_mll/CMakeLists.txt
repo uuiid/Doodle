@@ -39,12 +39,6 @@ set_target_properties(
 
 configure_file(doodle.mod.in ${PROJECT_BINARY_DIR}/plug/maya/doodle.mod)
 
-
-add_custom_command(
-        TARGET doodle_maya
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/script/maya ${PROJECT_BINARY_DIR}/plug/maya
-)
 # 添加fbx动态库复制
 add_custom_command(
         TARGET doodle_maya
@@ -66,8 +60,4 @@ install(TARGETS doodle_maya
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "openmaya" "qt" "foundation" "metadata" "AdskXGen"
         POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "Maya${Maya_Version}"
         DESTINATION maya/plug-ins
-)
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/script/maya/
-        DESTINATION maya
 )
