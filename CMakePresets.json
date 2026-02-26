@@ -114,6 +114,13 @@
         "doodle_maya",
         "doodle_maya_exe"
       ]
+    },
+    {
+      "name": "Release_install",
+      "configurePreset": "Ninja_release",
+      "targets": [
+        "install"
+      ]
     }
   ],
   "testPresets": [
@@ -177,8 +184,8 @@
           "name": "Release_Maya"
         },
         {
-          "type": "package",
-          "name": "package_release"
+          "type": "build",
+          "name": "Release_install"
         }
       ]
     },

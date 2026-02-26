@@ -54,7 +54,6 @@ create_test_sourcelist(main_test
         CommonCxxTests.cxx
         core/abc.cpp
         core/sod_log.cpp
-        core/error_enum.cpp
         core/folder_is_save.cpp
         core/process_message.cpp
         core/merge_assets_tree.cpp

@@ -118,8 +118,11 @@ find_package(cgal CONFIG REQUIRED)
 # 异常捕获库
 find_package(crashpad CONFIG REQUIRED)
 
-# 启用测试
-enable_testing()
+# Debug 模式下启用测试
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    enable_testing()
+    add_subdirectory(src/test)
+endif ()
 set(DOODLE_PACKAGE_NAME ${CMAKE_PROJECT_NAME}-${CMAKE_PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR})
 
 # =====================安装打包过程===============================
