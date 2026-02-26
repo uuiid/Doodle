@@ -198,11 +198,13 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
           break;  // sx, sy, sz
       }
     }
-
-    l_out_j_t.setAllClean();
-    l_out_j_r.setAllClean();
-    l_out_j_s.setAllClean();
-    l_out_bsw.setAllClean();
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.set(l_out_j_t_bl));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.set(l_out_j_r_bl));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.set(l_out_j_s_bl));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.setAllClean());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setAllClean());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setAllClean());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_bsw.setAllClean());
   }
   return MS::kUnknownParameter;
 }
