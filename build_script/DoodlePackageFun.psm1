@@ -86,7 +86,7 @@ function Initialize-Doodle {
     $DoodleTMPDir = [System.IO.Path]::GetTempPath()
     $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
     $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build"
-    $DoodleInstallRoot = Convert-Path "$DoodleBuildRoot/build/install" 
+    $DoodleInstallRoot = Convert-Path "$DoodleBuildRoot/install" 
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $DoodleLogPath = $DoodleTMPDir + "\build_$timestamp.log"
     $Tags = git tag --sort=-v:refname;
@@ -133,7 +133,7 @@ function Initialize-Doodle {
         # 比较大小和修改日期复制
         if (-not (Test-Path "$OutPath\dist\Doodle-$DoodleVersion-win64.zip")) {
             # 复制一些脚本文件
-            &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot" /unilog+:$DoodleLogPath | Out-Null
+            &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot/maya" /s /unilog+:$DoodleLogPath | Out-Null
             Compress-Archive -Path $DoodleInstallRoot -DestinationPath "$OutPath\dist\Doodle-$DoodleVersion-win64.zip" -Force
         }
         $Tags = $Tags[0..100]
