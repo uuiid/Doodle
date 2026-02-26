@@ -40,7 +40,7 @@ MStatus dna_calib_node::impl_t::create_rig_data(std::int16_t in_lod) {
   // 若 rotationType==EulerAngles 且 rotationOrder 未启用，会导致 QuaternionJointsEvaluator 的 strategy 为空而崩溃。
   rl4::Configuration rig_cfg{};
   rig_cfg.rotationType  = rl4::RotationType::EulerAngles;
-  rig_cfg.rotationOrder = rl4::RotationOrder::ZYX;
+  rig_cfg.rotationOrder = rl4::RotationOrder::XYZ;  // 目前 vcpkg 构建启用了 RL_BUILD_WITH_XYZ_ROTATION_ORDER
 
   rig_logic_ptr_        = dnac::makeScoped<rl4::RigLogic>(dna_calib_dna_reader_.get(), rig_cfg, nullptr);
   if (!rig_logic_ptr_ || !dnac::Status::isOk()) {
