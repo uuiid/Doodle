@@ -4,11 +4,11 @@ import maya.cmds as cmds
 from maya import mel
 import scripts.Doodle_PolyRemesh as Doodle_PolyRemesh
 import scripts.Doodle_clear as Doodle_clear
-import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
+# import scripts.dem_cloth_to_fbx as dem_cloth_to_fbx
 # import scripts.Doodle_deleteSurplusWeight as deleteWeight
 import scripts.Doodle_deleteAttr as deleteAttr
 import scripts.Doodle_blend_keyframe
-import scripts.create_hair_uv as hair_uv
+# import scripts.create_hair_uv as hair_uv
 from PySide2 import QtCore
 from PySide2 import QtGui
 from PySide2 import QtWidgets
@@ -76,8 +76,6 @@ class DlsShelf(shelfBase._shelf):
 
         self.addButon("delect Mixed deformation attr", icon="icons/doodle_delete_attr",
                       command=self.deleteAttr)
-        self.addButon("mesh to hair uv", icon="icons/hair_to_uv.png",
-                      command=lambda: hair_uv.main())
         self.addButon("blend", icon="icons/blend.png",
                       command=self.blendkeyframe)
         self.addButon("chick_export_fbx", command=self.chick_export_fbx)
