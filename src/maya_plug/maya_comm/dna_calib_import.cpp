@@ -147,7 +147,6 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_gui_controls());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_groups());
     MProgressWindow::setProgressStatus("Creating meshes..");
-    return MS::kSuccess;
 
     for (auto i = 0; i < get_dna_reader()->getMeshCount(); ++i) {
       MProgressWindow::setProgressStatus(
@@ -178,9 +177,9 @@ class dna_calib_import::impl {
              MS::kFailure;
     }
 
-    auto l_lod       = get_rig_instance()->getLOD();
+    auto l_lod        = get_rig_instance()->getLOD();
 
-    auto l_joint_map = dna_node_data->impl()->joint_attr_output_map(l_lod);
+    auto& l_joint_map = dna_node_data->impl()->joint_attr_output_map(l_lod);
 
     struct node_attr {
       MPlug dna_node_plug_;
@@ -209,15 +208,18 @@ class dna_calib_import::impl {
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
 
           auto& l_joint_attr = l_joint_map[l_j_index];
-          for (auto&& l_attr_idx : l_joint_attr.output_indices) {
+          for (auto attr_idx = 0; attr_idx < 9; ++attr_idx) {
+            auto& l_attr_idx = l_joint_attr.output_indices[attr_idx];
             if (l_attr_idx == -1) continue;  // 该属性在当前 DNA 中不存在
-            MPlug l_plug = l_joint_fn.findPlug(g_node_attrs_list[j].attrs_, /* wantNetworked = */ false, &l_status);
+
+            MPlug l_plug =
+                l_joint_fn.findPlug(g_node_attrs_list[attr_idx].attrs_, /* wantNetworked = */ false, &l_status);
             DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
             if (l_plug.isNull()) {
               display_warning("未找到对应的节点属性: {}", get_node_name(l_joint));
               continue;
             }
-            auto l_target = g_node_attrs_list[j].dna_node_plug_.elementByLogicalIndex(l_attr_idx, &l_status);
+            auto l_target = g_node_attrs_list[attr_idx].dna_node_plug_.elementByLogicalIndex(l_attr_idx, &l_status);
             DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
             DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_target, l_plug));
             DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
