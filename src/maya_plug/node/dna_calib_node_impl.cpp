@@ -70,10 +70,31 @@ MStatus dna_calib_node::impl_t::compute() {
     return display_error("RigLogic 处于错误状态，拒绝计算: {}", dnac::Status::get().message), MS::kFailure;
   }
 
+  // RigLogic 的计算输入以 raw controls(+PSD) 为核心；若上层只设置了 GUI controls，
+  // 需要显式做一次 GUI->Raw 映射，否则 raw controls 保持为 0，会导致 joints 等输出全 0。
+  {
+    rig_logic_ptr_->mapGUIToRawControls(rig_instance_ptr_.get());
+    if (!dnac::Status::isOk()) {
+      return display_error("RigLogic::mapGUIToRawControls 失败: {}", dnac::Status::get().message), MS::kFailure;
+    }
+  }
+
   rig_logic_ptr_->calculate(rig_instance_ptr_.get());
   if (!dnac::Status::isOk()) {
     return display_error("RigLogic::calculate 失败: {}", dnac::Status::get().message), MS::kFailure;
   }
+
+  // {
+  //   rl4::Stats l_stats{};
+  //   rig_logic_ptr_->collectCalculationStats(rig_instance_ptr_.get(), &l_stats);
+  //   display_info(
+  //       "RigLogic stats (after calculate): lod={}, joints={}, jointDeltaValueCount={}, blendShapeChannels={}, "
+  //       "animatedMaps={}, psd={}, neuralNets={}, rbfSolvers={} ",
+  //       rig_instance_ptr_->getLOD(), l_stats.jointCount, l_stats.jointDeltaValueCount,
+  //       l_stats.blendShapeChannelCount, l_stats.animatedMapCount, l_stats.psdCount, l_stats.neuralNetworkCount,
+  //       l_stats.rbfSolverCount
+  //   );
+  // }
   return MS::kSuccess;
 }
 

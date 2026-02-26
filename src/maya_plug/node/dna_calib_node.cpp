@@ -13,6 +13,7 @@
 #include <maya/MFnUnitAttribute.h>
 #include <maya/MPlug.h>
 #include <maya/MStatus.h>
+#include <ranges>
 
 namespace doodle::maya_plug {
 MObject dna_calib_node::dna_file_path{};
@@ -131,13 +132,13 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
       }
       impl()->rig_instance_ptr_->setGUIControl(l_index, l_gui_control_value);
     }
-    {
-      auto l_gui_control_info = impl()->rig_instance_ptr_->getGUIControlValues();
-      for (auto i = 0; i < l_gui_control_info.size(); i += 100)
-        display_info(
-            "GUI Control Values: {}", fmt::join(l_gui_control_info | std::views::drop(i) | std::views::take(100), ", ")
-        );
-    }
+    // {
+    //   auto l_gui_control_info = impl()->rig_instance_ptr_->getGUIControlValues();
+    //   for (auto i = 0; i < l_gui_control_info.size(); i += 100)
+    //     display_info(
+    //         "GUI Control Values: {}", fmt::join(l_gui_control_info | std::views::drop(i) | std::views::take(100), ", ")
+    //     );
+    // }
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->compute());
 
@@ -168,9 +169,9 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     // 个输出属性
     auto l_raw_j      = impl()->rig_instance_ptr_->getJointOutputs();
     auto& l_joint_map = impl()->joint_decode_cache(impl()->rig_instance_ptr_->getLOD());
-    // 打印 l_raw_j, 步进为 100
-    for (auto i = 0; i < l_raw_j.size(); i += 100)
-      display_info("output row {}", fmt::join(l_raw_j | std::views::drop(i) | std::views::take(100), ", "));
+
+    if (std::ranges::all_of(l_raw_j, [](auto& v) { return v == 0; }))
+      display_error("RigLogic 输出的关节属性全为 0 计算失败");
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
