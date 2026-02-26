@@ -164,6 +164,11 @@ void dna_calib_node::impl_t::build_joint_output_map() {
       // 填写 per-joint 反向映射（joint → output row[]）
       if (l_joint_idx < l_joint_count && l_attr_idx < 9) {
         joint_attr_output_map_[lod][l_joint_idx].output_indices[l_attr_idx] = static_cast<std::int32_t>(l_out_row);
+      } else {
+        display_warning(
+            "LOD {} 的 output row {} 对应的 joint index {} 或 attribute index {} 超出范围，跳过", lod, l_out_row,
+            l_joint_idx, l_attr_idx
+        );
       }
     }
   }
