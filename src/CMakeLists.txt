@@ -27,4 +27,4 @@ if (DEFINED Maya_Version)
 endif ()
 
 add_subdirectory(exe_authorization)
-add_subdirectory(usd)
+# add_subdirectory(usd)

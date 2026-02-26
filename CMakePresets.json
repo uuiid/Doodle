@@ -43,7 +43,7 @@
       "displayName": "config maya plug",
       "description": "构建maya插件 默认版本是2020",
       "cacheVariables": {
-        "Maya_Version": "2020",
+        "Maya_Version": "2024",
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
       }
     },
@@ -53,7 +53,7 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "ADD_VERSION_LABEL": true,
-        "Maya_Version": "2020"
+        "Maya_Version": "2024"
       }
     },
     {
