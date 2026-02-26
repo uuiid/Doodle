@@ -5,6 +5,7 @@
 
 #include "data/maya_tool.h"
 #include <fmt/xchar.h>
+#include <maya/MAngle.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MArrayDataHandle.h>
@@ -136,7 +137,8 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     //   auto l_gui_control_info = impl()->rig_instance_ptr_->getGUIControlValues();
     //   for (auto i = 0; i < l_gui_control_info.size(); i += 100)
     //     display_info(
-    //         "GUI Control Values: {}", fmt::join(l_gui_control_info | std::views::drop(i) | std::views::take(100), ", ")
+    //         "GUI Control Values: {}", fmt::join(l_gui_control_info | std::views::drop(i) | std::views::take(100), ",
+    //         ")
     //     );
     // }
 
@@ -183,20 +185,25 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
              ),
              MS::kFailure;
 
+    const auto& l_trans_scale = impl()->trans_scale_;
+
+    const auto& l_to_mangle   = impl()->to_mangle_func_;
+
     for (auto i = 0; i < l_raw_j.size(); ++i) {
       switch (l_joint_map[i].attribute_index_) {
         case 0:
         case 1:
         case 2:
-          l_out_j_t_bl.addElement(i, &l_status).set(l_raw_j[i] + l_joint_map[i].neutral_value_);
+          l_out_j_t_bl.addElement(i, &l_status).set((l_raw_j[i] + l_joint_map[i].neutral_value_) * l_trans_scale);
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
           break;  // tx, ty, tz
         case 3:
         case 4:
-        case 5:
-          l_out_j_r_bl.addElement(i, &l_status).set(l_raw_j[i] + l_joint_map[i].neutral_value_);
+        case 5: {
+          auto l_h = l_out_j_r_bl.addElement(i, &l_status);
           DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-          break;  // rx, ry, rz
+          l_h.setMAngle(l_to_mangle(l_raw_j[i] + l_joint_map[i].neutral_value_));
+        } break;  // rx, ry, rz
         case 6:
         case 7:
         case 8:

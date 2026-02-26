@@ -547,7 +547,11 @@ class dna_calib_import::impl {
   // 创建 骨骼
   MStatus create_joints() {
     MStatus l_status{};
-    auto l_joint_count = get_dna_reader()->getJointCount();
+    auto l_joint_count       = get_dna_reader()->getJointCount();
+
+    const auto l_to_radians  = dna_node_data->impl()->to_mangle_func_;
+    const auto l_trans_scale = dna_node_data->impl()->trans_scale_;
+
     joint_objs_.clear();
     joint_objs_.reserve(l_joint_count);
     for (auto i = 0; i < l_joint_count; ++i) {
@@ -594,13 +598,17 @@ class dna_calib_import::impl {
       // ));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_ik_joint_fn.setOrientation(
           MEulerRotation{
-              MAngle{l_rotation_value.x, MAngle::kDegrees}.asRadians(),
-              MAngle{l_rotation_value.y, MAngle::kDegrees}.asRadians(),
-              MAngle{l_rotation_value.z, MAngle::kDegrees}.asRadians(),
+              l_to_radians(l_rotation_value.x).asRadians(),
+              l_to_radians(l_rotation_value.y).asRadians(),
+              l_to_radians(l_rotation_value.z).asRadians(),
           }
       ));
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_ik_joint_fn.setTranslation(
-          MVector{l_translation_value.x, l_translation_value.y, l_translation_value.z},
+          MVector{
+              l_translation_value.x * l_trans_scale,
+              l_translation_value.y * l_trans_scale,
+              l_translation_value.z * l_trans_scale,
+          },
           l_parent_index == i ? MSpace::kWorld : MSpace::kTransform
       ));
     }

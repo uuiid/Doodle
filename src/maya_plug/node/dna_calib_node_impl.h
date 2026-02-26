@@ -3,6 +3,8 @@
 
 #include <array>
 #include <dnacalib/dna/DNACalibDNAReader.h>
+#include <functional>
+#include <maya/MAngle.h>
 #include <maya/MPxNode.h>
 #include <maya/MStatus.h>
 #include <riglogic/RigLogic.h>
@@ -26,6 +28,9 @@ class dna_calib_node::impl_t {
   dnac::ScopedPtr<rl4::RigInstance> rig_instance_ptr_;
 
   std::vector<std::uint16_t> arrt_to_gui_control_;
+
+  std::double_t trans_scale_{1.0};
+  std::function<MAngle(std::double_t)> to_mangle_func_;
 
   MStatus open_dna_file();
   MStatus create_rig_data(std::int16_t in_lod = 0);

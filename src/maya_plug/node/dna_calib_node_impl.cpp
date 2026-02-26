@@ -29,6 +29,30 @@ MStatus dna_calib_node::impl_t::open_dna_file() {
   if (!dnac::Status::isOk()) return display_error("读取dna文件失败: {} ", dnac::Status::get().message), MS::kFailure;
 
   dna_calib_dna_reader_ = dnac::makeScoped<dnac::DNACalibDNAReader>(binary_stream_reader_.get());
+
+  switch (dna_calib_dna_reader_->getRotationUnit()) {
+    case dna::RotationUnit::degrees:
+      to_mangle_func_ = [](std::double_t v) { return MAngle{v, MAngle::kDegrees}; };
+      break;
+    case dna::RotationUnit::radians:
+      to_mangle_func_ = [](std::double_t v) { return MAngle{v, MAngle::kRadians}; };
+      break;
+    default:
+      to_mangle_func_ = [](std::double_t v) { return MAngle(v); };
+      break;
+  }
+  switch (dna_calib_dna_reader_->getTranslationUnit()) {
+    case dna::TranslationUnit::cm:
+      trans_scale_ = 1.0;
+      break;
+    case dna::TranslationUnit::m:
+      trans_scale_ = 100.0;
+      break;
+    default:
+      trans_scale_ = 1.0;
+      break;
+  }
+
   return MS::kSuccess;
 }
 MStatus dna_calib_node::impl_t::create_rig_data(std::int16_t in_lod) {
