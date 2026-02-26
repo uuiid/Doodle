@@ -4,6 +4,7 @@
 #include <maya_plug/node/dna_calib_node_impl.h>
 
 #include "data/maya_tool.h"
+#include <fmt/xchar.h>
 #include <maya/MApiNamespace.h>
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MArrayDataHandle.h>
@@ -130,10 +131,16 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
       }
       impl()->rig_instance_ptr_->setGUIControl(l_index, l_gui_control_value);
     }
+    {
+      auto l_gui_control_info = impl()->rig_instance_ptr_->getGUIControlValues();
+      for (auto i = 0; i < l_gui_control_info.size(); i += 100)
+        display_info(
+            "GUI Control Values: {}", fmt::join(l_gui_control_info | std::views::drop(i) | std::views::take(100), ", ")
+        );
+    }
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->compute());
-    return MS::kSuccess;
-    
+
     auto l_out_j_t = in_data_block.outputArrayValue(output_join_transforms, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_out_j_r = in_data_block.outputArrayValue(output_join_rotations, &l_status);
@@ -151,62 +158,47 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     auto l_out_bsw_bl = l_out_bsw.builder(&l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     // 清空原有数据
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(0));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(0));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(0));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_bsw_bl.growArray(0));
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(0));
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(0));
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(0));
+    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_bsw_bl.growArray(0));
 
     // 关节输出数据 [tx, ty, tz, rx, ry, rz, sx, sy, sz] * joint_count
     // todo: 查找文档后, 发现每个关节不是 9 个属性都会计算, 需要对属性进行筛选, 目前先假设每个关节都有完整的 9
     // 个输出属性
-    auto l_raw_j             = impl()->rig_instance_ptr_->getJointOutputs();
-    auto l_joint_count       = impl()->dna_calib_dna_reader_->getJointCount();
-    auto l_joint_group_count = impl()->dna_calib_dna_reader_->getJointGroupCount();
-    auto l_joint_map =
-        impl()->dna_calib_dna_reader_->getJointVariableAttributeIndices(impl()->rig_instance_ptr_->getLOD());
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(static_cast<unsigned int>(l_joint_count * 3)));
-    for (auto g = 0; g < l_joint_group_count; ++g) {
-      auto l_group_out   = impl()->dna_calib_dna_reader_->getJointGroupOutputIndices(g);
-      auto l_joint_index = impl()->dna_calib_dna_reader_->getJointGroupJointIndices(g);
-      display_info("l_group_out = {},l_joint_index={} ", l_group_out.size(), l_joint_index.size());
-      if (l_group_out.size() == 0) {
-        display_warning("Joint Group {} 的输出索引数量为0, 跳过连接", g);
-        continue;
-      }
+    auto l_raw_j      = impl()->rig_instance_ptr_->getJointOutputs();
+    auto& l_joint_map = impl()->joint_decode_cache(impl()->rig_instance_ptr_->getLOD());
+    // 打印 l_raw_j, 步进为 100
+    for (auto i = 0; i < l_raw_j.size(); i += 100)
+      display_info("output row {}", fmt::join(l_raw_j | std::views::drop(i) | std::views::take(100), ", "));
 
-      for (auto j = 0; j < l_joint_index.size(); ++j) {
-        auto l_j_index         = l_joint_index[j];
-        auto l_group_out_index = j * 9;  // 每个关节有9个输出数据: tx, ty, tz, rx, ry, rz, sx, sy, sz
-        if (l_group_out_index >= l_group_out.size()) {
-          display_warning(
-              "Joint Group {} 中 Joint {} 的输出索引超出范围, 跳过连接", g, l_j_index
-          );  // 输出索引应该至少有9个连续的元素
-          continue;
-        }
-        auto l_base_index   = l_group_out[l_group_out_index];
-        auto l_j_base_index = l_j_index * 3;
-        l_out_j_t_bl.addElement(l_j_base_index + 0, &l_status).set(l_raw_j[l_base_index + 0]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_t_bl.addElement(l_j_base_index + 1, &l_status).set(l_raw_j[l_base_index + 1]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_t_bl.addElement(l_j_base_index + 2, &l_status).set(l_raw_j[l_base_index + 2]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_r_bl.addElement(l_j_base_index + 0, &l_status).set(l_raw_j[l_base_index + 3]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_r_bl.addElement(l_j_base_index + 1, &l_status).set(l_raw_j[l_base_index + 4]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_r_bl.addElement(l_j_base_index + 2, &l_status).set(l_raw_j[l_base_index + 5]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_s_bl.addElement(l_j_base_index + 0, &l_status).set(l_raw_j[l_base_index + 6]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_s_bl.addElement(l_j_base_index + 1, &l_status).set(l_raw_j[l_base_index + 7]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        l_out_j_s_bl.addElement(l_j_base_index + 2, &l_status).set(l_raw_j[l_base_index + 8]);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
+
+    for (auto i = 0; i < l_raw_j.size(); ++i) {
+      switch (l_joint_map[i].attribute_index_) {
+        case 0:
+        case 1:
+        case 2:
+          l_out_j_t_bl.addElement(i, &l_status).set(l_raw_j[i] + l_joint_map[i].neutral_value_);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          break;  // tx, ty, tz
+        case 3:
+        case 4:
+        case 5:
+          l_out_j_r_bl.addElement(i, &l_status).set(l_raw_j[i] + l_joint_map[i].neutral_value_);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          break;  // rx, ry, rz
+        case 6:
+        case 7:
+        case 8:
+          l_out_j_s_bl.addElement(i, &l_status).set(l_raw_j[i] + l_joint_map[i].neutral_value_);
+          DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+          break;  // sx, sy, sz
       }
     }
+
     l_out_j_t.setAllClean();
     l_out_j_r.setAllClean();
     l_out_j_s.setAllClean();

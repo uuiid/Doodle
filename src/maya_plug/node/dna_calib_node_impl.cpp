@@ -1,5 +1,6 @@
 #include "dna_calib_node_impl.h"
 
+#include <maya/MAngle.h>
 #include <maya/MFnDependencyNode.h>
 #include <pma/ScopedPtr.h>
 #include <riglogic/RigLogic.h>
@@ -110,6 +111,39 @@ void dna_calib_node::impl_t::build_joint_output_map() {
       if (l_out_row < l_row_count) {
         joint_decode_cache_[lod][l_out_row].joint_index_     = l_joint_idx;
         joint_decode_cache_[lod][l_out_row].attribute_index_ = l_attr_idx;
+
+        // 获取静止位姿数据
+        switch (l_attr_idx) {
+          case 0:  // tx
+            joint_decode_cache_[lod][l_out_row].neutral_value_ =
+                dna_calib_dna_reader_->getNeutralJointTranslation(l_joint_idx).x;
+            break;
+          case 1:  // ty
+            joint_decode_cache_[lod][l_out_row].neutral_value_ =
+                dna_calib_dna_reader_->getNeutralJointTranslation(l_joint_idx).y;
+            break;
+          case 2:  // tz
+            joint_decode_cache_[lod][l_out_row].neutral_value_ =
+                dna_calib_dna_reader_->getNeutralJointTranslation(l_joint_idx).z;
+            break;
+          case 3:  // rx
+            joint_decode_cache_[lod][l_out_row].neutral_value_ =
+                MAngle{dna_calib_dna_reader_->getNeutralJointRotation(l_joint_idx).x, MAngle::kRadians}.asDegrees();
+            break;
+          case 4:  // ry
+            joint_decode_cache_[lod][l_out_row].neutral_value_ =
+                MAngle{dna_calib_dna_reader_->getNeutralJointRotation(l_joint_idx).y, MAngle::kRadians}.asDegrees();
+            break;
+          case 5:  // rz
+            joint_decode_cache_[lod][l_out_row].neutral_value_ =
+                MAngle{dna_calib_dna_reader_->getNeutralJointRotation(l_joint_idx).z, MAngle::kRadians}.asDegrees();
+            break;
+          case 6:  // sx
+          case 7:  // sy
+          case 8:  // sz
+            joint_decode_cache_[lod][l_out_row].neutral_value_ = 1;
+            break;
+        }
       }
 
       // 填写 per-joint 反向映射（joint → output row[]）
