@@ -39,7 +39,7 @@ class dna_calib_node::impl_t {
     std::uint16_t joint_index_;
     // 0-8 分别对应 tx, ty, tz, rx, ry, rz, sx, sy, sz
     std::uint16_t attribute_index_;
-    // 对应的静止位姿数据, 只有属性对应的单独分量, 位置, 旋转 (弧度, 3v), 缩放分量
+    // 对应的静止位姿数据, 只有属性对应的单独分量, 位置, 旋转 (度, 3v), 缩放分量
     std::double_t neutral_value_;
   };
 

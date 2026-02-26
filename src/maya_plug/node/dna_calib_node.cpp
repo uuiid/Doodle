@@ -175,6 +175,12 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s_bl.growArray(static_cast<unsigned int>(l_raw_j.size())));
+    if (l_joint_map.size() != l_raw_j.size())
+      return display_error(
+                 "Joint Decode Cache 的大小 {} 与 RigInstance 输出的关节属性数量 {} 不匹配", l_joint_map.size(),
+                 l_raw_j.size()
+             ),
+             MS::kFailure;
 
     for (auto i = 0; i < l_raw_j.size(); ++i) {
       switch (l_joint_map[i].attribute_index_) {

@@ -127,16 +127,10 @@ void dna_calib_node::impl_t::build_joint_output_map() {
                 dna_calib_dna_reader_->getNeutralJointTranslation(l_joint_idx).z;
             break;
           case 3:  // rx
-            joint_decode_cache_[lod][l_out_row].neutral_value_ =
-                dna_calib_dna_reader_->getNeutralJointRotation(l_joint_idx).x;
-            break;
           case 4:  // ry
-            joint_decode_cache_[lod][l_out_row].neutral_value_ =
-                dna_calib_dna_reader_->getNeutralJointRotation(l_joint_idx).y;
-            break;
           case 5:  // rz
-            joint_decode_cache_[lod][l_out_row].neutral_value_ =
-                dna_calib_dna_reader_->getNeutralJointRotation(l_joint_idx).z;
+            // maya骨骼的旋转值必须是 0
+            joint_decode_cache_[lod][l_out_row].neutral_value_ = 0;
             break;
           case 6:  // sx
           case 7:  // sy
