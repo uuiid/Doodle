@@ -86,15 +86,14 @@ function Initialize-Doodle {
     $DoodleTMPDir = [System.IO.Path]::GetTempPath()
     $DoodleGitRoot = Convert-Path "$PSScriptRoot/../"
     $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build"
-    $DoodleBuildRelease = Convert-Path "$DoodleBuildRoot/Ninja_release"
+    $DoodleInstallRoot = Convert-Path "$DoodleBuildRoot/build/install" 
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $DoodleLogPath = $DoodleTMPDir + "\build_$timestamp.log"
     $Tags = git tag --sort=-v:refname;
     # 去除 前缀 v
     $Tags = $Tags | ForEach-Object { $_ -replace "v", "" }
     $DoodleVersion = $Tags[0]
-    Write-Host "当前最新版本号: $DoodleVersion"
-    $DoodleSource = Convert-Path "$DoodleBuildRoot/Ninja_release/_CPack_Packages/win64/ZIP/Doodle-$DoodleVersion-win64"
+    Write-Host "当前最新版本号: $DoodleVersion" 
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
@@ -123,7 +122,7 @@ function Initialize-Doodle {
     }
     Write-Host "开始复制文件"
     Write-Host "robocopy 日志 $DoodleLogPath"
-    &robocopy "$DoodleSource\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
+    &robocopy "$DoodleInstallRoot\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
     # 复制安装包
     if ( -not $OnlyOne) {
@@ -132,21 +131,10 @@ function Initialize-Doodle {
         Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
         Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
         # 比较大小和修改日期复制
-        if (Test-Path "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip") {
-            $sourceInfo = Get-Item "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip"
-            $destPath = "$OutPath\dist/Doodle-$DoodleVersion-win64.zip"
-            $copyFile = $true
-            if (Test-Path $destPath) {
-                $destInfo = Get-Item $destPath
-                if ($sourceInfo.Length -eq $destInfo.Length -and $sourceInfo.LastWriteTime -le $destInfo.LastWriteTime) {
-                    $copyFile = $false
-                    Write-Host "安装包已是最新，无需复制: $destPath"
-                }
-            }
-            if ($copyFile) {
-                Write-Host "复制安装包到: $destPath"
-                Copy-Item -Path "$DoodleBuildRelease/Doodle-$DoodleVersion-win64.zip" -Destination $destPath -Force
-            }
+        if (-not (Test-Path "$OutPath\dist\Doodle-$DoodleVersion-win64.zip")) {
+            # 复制一些脚本文件
+            &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot" /unilog+:$DoodleLogPath | Out-Null
+            Compress-Archive -Path $DoodleInstallRoot -DestinationPath "$OutPath\dist\Doodle-$DoodleVersion-win64.zip" -Force
         }
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)
