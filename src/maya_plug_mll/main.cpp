@@ -24,7 +24,6 @@
 #include <maya_plug_mll/comm/export_xgen_abc.h>
 
 #include <maya/MFnPlugin.h>
-#include <maya/MQtUtil.h>
 #include <stack>
 #include <wil/result.h>
 
