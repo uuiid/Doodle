@@ -62,43 +62,10 @@
             }
         },
         {
-            "name": "Doodle_maya_debug",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin/doodle_maya_exe_2020.exe",
-            "args": [
-                "--config=${workspaceFolder}/build/test_4.json",
-                // "--inspect_file",
-                "--export_fbx"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/build/Ninja_RelWithDebInfo/bin",
-            "environment": [
-                {
-                    "name": "MAYA_LOCATION",
-                    "value": "C:/Program Files/Autodesk/Maya2020"
-                },
-                {
-                    "name": "PATH",
-                    "value": "%PATH%;C:/Program Files/Autodesk/Maya2020/bin"
-                },
-                {
-                    "name": "MAYA_MODULE_PATH",
-                    "value": "${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya"
-                }
-            ],
-            "visualizerFile": "${workspaceFolder}/stl.natvis",
-            "presentation": {
-                "hidden": false,
-                "group": "maya",
-                "order": 1
-            }
-        },
-        {
             "name": "maya",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "C:/Program Files/Autodesk/Maya2020/bin/maya.exe",
+            "program": "C:/Program Files/Autodesk/Maya2024/bin/maya.exe",
             "args": [
                 "-script",
                 "${workspaceFolder}/build/test_sim_fbx.mel"
