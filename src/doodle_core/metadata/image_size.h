@@ -60,7 +60,7 @@ template <>
 struct formatter<doodle::image_size> {
   constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
   template <typename FormatContext>
-  auto format(const doodle::image_size& p, FormatContext& ctx) {
+  auto format(const doodle::image_size& p, FormatContext& ctx) const -> decltype(ctx.out()) {
     return format_to(ctx.out(), "{}x{}", p.width, p.height);
   }
 };
