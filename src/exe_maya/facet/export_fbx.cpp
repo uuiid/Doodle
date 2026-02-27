@@ -50,7 +50,7 @@ void export_fbx_facet::export_fbx() {
   DOODLE_LOG_INFO("开始扫瞄引用");
   ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
   export_file_fbx l_ex{};
-  maya_exe_ns::maya_out_arg l_out_arg{};
+  maya_out_arg l_out_arg{};
   auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
   l_out_arg.begin_time  = anim_begin_time_.value();

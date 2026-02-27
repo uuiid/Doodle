@@ -55,7 +55,7 @@ bool export_rig_facet::post(const nlohmann::json& in_argh) {
   anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
 
   export_file_fbx l_ex{};
-  maya_exe_ns::maya_out_arg l_out_arg{};
+  maya_out_arg l_out_arg{};
   auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
   l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
   l_out_arg.begin_time  = anim_begin_time_.value();
