@@ -154,9 +154,9 @@ int $doodle_batch_run_1 = doodle_batch_run -config "{}" -{};
 quit -abort -force $doodle_batch_run_1;
 )";
 
-  auto l_arg_path          = FSys::write_tmp_file("maya/arg", l_args, ".json");
+  auto l_arg_path          = FSys::write_tmp_file("maya/json", l_args, ".json");
   auto l_com_path =
-      FSys::write_tmp_file("maya", fmt::format(l_fmt_str, core_set::get_set().maya_version, l_arg_path, l_key), ".mel");
+      FSys::write_tmp_file("maya/mel", fmt::format(l_fmt_str, core_set::get_set().maya_version, l_arg_path.generic_string(), l_key), ".mel");
 
   logger_ptr_->warn("配置命令行 {}", l_arg_path);
 
