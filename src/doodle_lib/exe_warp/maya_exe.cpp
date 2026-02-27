@@ -139,14 +139,8 @@ boost::asio::awaitable<void> arg::async_run_maya() {
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
   logger_ptr_->warn("开始运行maya");
   if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
-  auto l_maya_path = find_maya_path_impl();
-
-  auto l_this_exe  = co_await boost::asio::this_coro::executor;
-  co_await boost::asio::post(boost::asio::bind_executor(g_strand(), boost::asio::use_awaitable));
-  auto l_run_path = install_maya_exe(l_maya_path);
-  co_await boost::asio::post(boost::asio::bind_executor(l_this_exe, boost::asio::use_awaitable));
-
-  out_path_file_ = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
+  auto l_maya_path = find_maya_path_impl() / "bin" / "maya.exe";
+  out_path_file_   = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
                    fmt::format("{}.json", core_set::get_set().get_uuid());
 
   auto [l_key, l_args] = get_json_str();
@@ -154,6 +148,8 @@ boost::asio::awaitable<void> arg::async_run_maya() {
 
   constexpr auto l_fmt_str = R"(file -f -new;
 loadPlugin doodle_maya_{};
+loadPlugin fbxmaya;
+loadPlugin abcExport;
 int $doodle_batch_run_1 = doodle_batch_run -config "{}" -{};
 quit -abort -force $doodle_batch_run_1;
 )";
@@ -171,9 +167,6 @@ quit -abort -force $doodle_batch_run_1;
     if (l_it.key() != L"PYTHONHOME" && l_it.key() != L"PYTHONPATH") l_env.emplace(l_it.key(), l_it.value());
   }
 
-  l_env[L"MAYA_LOCATION"] = l_maya_path.generic_wstring();
-  l_env[L"Path"].push_back((l_maya_path / "bin").generic_wstring());
-  l_env[L"Path"].push_back(l_run_path.parent_path().generic_wstring());
   l_env[L"MAYA_MODULE_PATH"] = (register_file_type::program_location().parent_path() / "maya").generic_wstring();
   add_maya_module();
   auto l_out_pipe     = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
@@ -181,11 +174,11 @@ quit -abort -force $doodle_batch_run_1;
 
   auto l_process_maya = boost::process::v2::process{
       g_io_context(),
-      l_run_path,
-      {fmt::format("--{}", l_key), fmt::format("--config={}", l_arg_path)},
+      l_maya_path,
+      {"-prompt", "-hideConsole", "-script", l_com_path.generic_string()},
       boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe},
       boost::process::v2::process_environment{l_env},
-      boost::process::v2::process_start_dir{l_maya_path / "bin"},
+      boost::process::v2::process_start_dir{l_maya_path.parent_path()},
       details::hide_and_not_create_windows
   };
 

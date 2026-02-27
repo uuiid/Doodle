@@ -129,23 +129,13 @@ install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$
 install(FILES ${crashpad_handler_exe}
         DESTINATION bin
 )
-set(DOODLE_INSTALL_IGNORE_ITEM
-        doodle_maya_exe_2018.exe
-        doodle_maya_exe_2019.exe
-        doodle_maya_exe_2020.exe
-        doodle_maya_exe_2024.exe
-)
 
-list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复
 install(CODE
         "
 # # 修复dll
 # include(BundleUtilities)
-# fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:doodle_kitsu_supplement>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\"
-#         IGNORE_ITEM
-#         ${DOODLE_INSTALL_IGNORE_ITEM}
-# )
+# fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:doodle_kitsu_supplement>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\")
 
 # 生成授权文件
 execute_process(
