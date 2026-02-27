@@ -66,9 +66,10 @@
     },
     {
       "name": "vs2022",
-      "inherits": "Ninja_debug",
+      "inherits": "Ninja_build",
       "generator": "Visual Studio 17 2022",
       "cacheVariables": {
+        "Maya_Version": "2024",
         "CMAKE_SUPPRESS_REGENERATION": "ON"
       }
     }

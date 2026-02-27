@@ -101,9 +101,9 @@ MStatus initializePlugin(MObject obj) {
 
   CHECK_MSTATUS(status);
   /// 等所有命令完成后加载工具架
-  status = MGlobal::executePythonCommandOnIdle(R"(import scripts.Doodle_shelf
-scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
-scripts.Doodle_shelf.DoodleUIManage.creation()
+  status = MGlobal::executePythonCommandOnIdle(R"(import Doodle_shelf
+Doodle_shelf.DoodleUIManage.deleteSelf()
+Doodle_shelf.DoodleUIManage.creation()
 
 import doodle.main
 doodle.main.main.add_menu()
@@ -111,8 +111,8 @@ doodle.main.main.add_menu()
   CHECK_MSTATUS(status);
 
   maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
-    return MGlobal::executePythonCommand(R"(import scripts.Doodle_shelf
-scripts.Doodle_shelf.DoodleUIManage.deleteSelf()
+    return MGlobal::executePythonCommand(R"(import Doodle_shelf
+Doodle_shelf.DoodleUIManage.deleteSelf()
 
 import doodle.main
 doodle.main.main.remove_menu()

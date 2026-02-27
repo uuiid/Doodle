@@ -150,7 +150,7 @@ boost::asio::awaitable<void> arg::async_run_maya() {
 loadPlugin doodle_maya_{};
 loadPlugin fbxmaya;
 loadPlugin abcExport;
-int $doodle_batch_run_1 = doodle_batch_run -config "{}" -{};
+int $doodle_batch_run_1 = `doodle_batch_run -config "{}" -{}`;
 quit -abort -force $doodle_batch_run_1;
 )";
 
