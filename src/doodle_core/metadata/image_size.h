@@ -54,3 +54,14 @@ class DOODLE_CORE_API image_size {
   }
 };
 }  // namespace doodle
+
+namespace fmt {
+template <>
+struct formatter<doodle::image_size> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+  template <typename FormatContext>
+  auto format(const doodle::image_size& p, FormatContext& ctx) {
+    return format_to(ctx.out(), "{}x{}", p.width, p.height);
+  }
+};
+}  // namespace fmt
