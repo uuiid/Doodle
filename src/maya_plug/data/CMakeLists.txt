@@ -21,6 +21,7 @@ target_sources(doodle_maya_lib
         maya_conv_str.h
         dagpath_cmp.h
         fbx_write.h
+        play_blast.h
 
         PRIVATE
         dem_bones_ex.cpp
@@ -41,4 +42,6 @@ target_sources(doodle_maya_lib
         export_file_fbx.cpp
         dagpath_cmp.cpp
         fbx_write.cpp
-        )
+        play_blast.cpp
+
+)
