@@ -5,6 +5,7 @@
 #pragma once
 
 #include <doodle_core/core/co_queue.h>
+#include <doodle_core/lib_warp/maya_exe_out.h>
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/server_task_info.h>
 
@@ -20,21 +21,11 @@
 #include <string_view>
 #include <utility>
 
+
 namespace doodle {
 class maya_exe;
 
 namespace maya_exe_ns {
-
-struct maya_out_arg {
-  std::uint32_t begin_time{};
-  std::uint32_t end_time{};
-  std::vector<FSys::path> out_file_list{};
-  FSys::path movie_file_dir{};
-
-  friend void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_json_t);
-
-  friend void to_json(nlohmann::json& nlohmann_json_j, const maya_out_arg& nlohmann_json_t);
-};
 
 class arg : public async_task {
   FSys::path out_path_file_{};
@@ -66,9 +57,6 @@ class arg : public async_task {
 
   boost::asio::awaitable<void> async_run_maya();
 };
-
-
-
 
 class DOODLELIB_API replace_file_arg : public maya_exe_ns::arg {
  public:

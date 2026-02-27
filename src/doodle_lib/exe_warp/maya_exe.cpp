@@ -96,32 +96,17 @@ PYTHONPATH+:= scripts
   }
 }
 
-maya_exe_ns::maya_out_arg get_out_arg_impl(const FSys::path& in_path) {
+maya_out_arg get_out_arg_impl(const FSys::path& in_path) {
   if (!FSys::exists(in_path)) return {};
 
   std::ifstream l_file{in_path};
   auto l_str  = std::string{std::istreambuf_iterator<char>(l_file), std::istreambuf_iterator<char>()};
   auto l_json = nlohmann::json::parse(l_str);
-  return l_json.get<maya_exe_ns::maya_out_arg>();
+  return l_json.get<maya_out_arg>();
 }
 }  // namespace
 
 namespace maya_exe_ns {
-
-void from_json(const nlohmann::json& nlohmann_json_j, maya_out_arg& nlohmann_json_t) {
-  nlohmann_json_j["begin_time"].get_to(nlohmann_json_t.begin_time);
-  nlohmann_json_j["end_time"].get_to(nlohmann_json_t.end_time);
-  nlohmann_json_j["out_file_list"].get_to(nlohmann_json_t.out_file_list);
-  nlohmann_json_j["movie_file_dir"].get_to(nlohmann_json_t.movie_file_dir);
-};
-
-void to_json(nlohmann::json& nlohmann_json_j, const maya_out_arg& nlohmann_json_t) {
-  nlohmann_json_j["begin_time"]     = nlohmann_json_t.begin_time;
-  nlohmann_json_j["end_time"]       = nlohmann_json_t.end_time;
-  nlohmann_json_j["out_file_list"]  = nlohmann_json_t.out_file_list;
-  nlohmann_json_j["movie_file_dir"] = nlohmann_json_t.movie_file_dir;
-};
-
 // form json
 void from_json(const nlohmann::json& in_json, arg& out_obj) {
   if (in_json.contains("path")) in_json.at("path").get_to(out_obj.file_path);
