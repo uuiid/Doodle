@@ -93,7 +93,7 @@ install(TARGETS doodle_kitsu_supplement
         $<TARGET_FILE_DIR:Fbx::Fbx>
         $ENV{CUDA_PATH}/bin
         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities"
-        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+        POST_EXCLUDE_REGEXES ".*system32/.*\\.dll" "api-ms-"
 )
 
 
@@ -133,18 +133,19 @@ set(DOODLE_INSTALL_IGNORE_ITEM
         doodle_maya_exe_2018.exe
         doodle_maya_exe_2019.exe
         doodle_maya_exe_2020.exe
+        doodle_maya_exe_2024.exe
 )
 
 list(JOIN DOODLE_INSTALL_IGNORE_ITEM " " DOODLE_INSTALL_IGNORE_ITEM)
 # 最后实现camke修复
 install(CODE
         "
-# 修复dll
-include(BundleUtilities)
-fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:doodle_kitsu_supplement>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\"
-        IGNORE_ITEM
-        ${DOODLE_INSTALL_IGNORE_ITEM}
-)
+# # 修复dll
+# include(BundleUtilities)
+# fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/$<TARGET_NAME:doodle_kitsu_supplement>.exe\" \"\" \"\${CMAKE_INSTALL_PREFIX}/bin\"
+#         IGNORE_ITEM
+#         ${DOODLE_INSTALL_IGNORE_ITEM}
+# )
 
 # 生成授权文件
 execute_process(
