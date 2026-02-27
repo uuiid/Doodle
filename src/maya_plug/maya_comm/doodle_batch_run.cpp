@@ -69,7 +69,7 @@ class cloth_sim_run {
   MTime t_post_time_{};
   std::double_t film_aperture_{};
   image_size size_{};
-
+  FSys::path file_{};
   bool replace_ref_file_{};
   bool sim_file_{};
   bool export_file_{};  // 导出abc文件
@@ -97,6 +97,7 @@ class cloth_sim_run {
     export_anim_file_  = in_json.at("export_anim_file").get<bool>();
     create_play_blast_ = in_json.at("create_play_blast").get<bool>();
     out_path_file_     = in_json.at("out_path_file").get<FSys::path>();
+    file_              = in_json.at("path").get<FSys::path>();
     display_info(
         "配置布料解算完成 开始时间 {}(强制为950) 结束时间 {} 画幅 {}", anim_begin_time_.as(MTime::uiUnit()),
         MAnimControl::maxTime().as(MTime::uiUnit()), size_
@@ -105,6 +106,10 @@ class cloth_sim_run {
   }
 
   void run() {
+    maya_file_io::set_workspace(file_);
+    maya_file_io::open_file(file_, MFileIO::kLoadDefault);
+    maya_chick(file_info_edit::delete_node_static());
+    maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
     display_warning("开始扫瞄引用");
     all_ref_files_ = reference_file_factory{}.create_ref();
 
@@ -323,18 +328,24 @@ class export_fbx_run {
   export_fbx_run()  = default;
   ~export_fbx_run() = default;
   maya_out_arg out_arg_{};
-
+  FSys::path file_{};
   void config_export_fbx(const nlohmann::json& in_json) {
     film_aperture_     = in_json.at("camera_film_aperture").get<std::double_t>();
     size_              = in_json.at("image_size").get<image_size>();
     create_play_blast_ = in_json.at("create_play_blast").get<bool>();
     out_path_file_     = in_json.at("out_path_file").get<FSys::path>();
+    file_              = in_json.at("path").get<FSys::path>();
+
     anim_begin_time_   = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
     display_info("配置导出完成 画幅 {} 创建排屏 {}", size_, create_play_blast_);
     out_arg_.begin_time = anim_begin_time_.value();
     out_arg_.end_time   = MAnimControl::maxTime().value();
   }
   void run() {
+    maya_file_io::set_workspace(file_);
+    maya_file_io::open_file(file_, MFileIO::kLoadDefault);
+    maya_chick(file_info_edit::delete_node_static());
+    maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
     display_warning("开始扫瞄引用");
     ref_files_ = reference_file_factory{}.create_ref();
     export_file_fbx l_ex{};
@@ -488,6 +499,8 @@ class inspect_file_run {
   bool too_many_point_check_{};
   /// 多 UV 检查
   bool multi_uv_inspection_{};
+
+  FSys::path file_{};
   void config_inspect_file(const nlohmann::json& in_json) {
     surface_5_                 = in_json.at("surface_5").get<bool>();
     rename_check_              = in_json.at("rename_check").get<bool>();
@@ -500,7 +513,7 @@ class inspect_file_run {
     only_default_camera_check_ = in_json.at("only_default_camera_check").get<bool>();
     too_many_point_check_      = in_json.at("too_many_point_check").get<bool>();
     multi_uv_inspection_       = in_json.at("multi_uv_inspection").get<bool>();
-
+    file_                      = in_json.at("path").get<FSys::path>();
     display_info(
         "配置检查完成 是否检测5边面 {} 重命名检查 {} 名称长度检查 {} 模型历史数值检查 {} 特殊复制检查 {} uv正反面检查 "
         "{} 模型k帧检查 {} 空间名称检查 {} 只有默认相机检查 {} 多余点数检查 {} 多UV检查 {}",
@@ -510,6 +523,8 @@ class inspect_file_run {
   }
 
   void run() {
+    maya_file_io::set_workspace(file_);
+    maya_file_io::open_file(file_, MFileIO::kLoadDefault);
     display_info("开始检查文件");
 
     MStatus l_s{};
@@ -752,6 +767,59 @@ class inspect_file_run {
   }
 };
 
+class export_rig_run {
+ public:
+  export_rig_run()  = default;
+  ~export_rig_run() = default;
+
+  FSys::path file_{};
+  FSys::path out_path_file_{};
+  MTime anim_begin_time_{};
+
+  void config_export_rig(const nlohmann::json& in_json) {
+    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
+    file_            = in_json.at("path").get<FSys::path>();
+    out_path_file_   = in_json.at("out_path_file").get<FSys::path>();
+    display_info("配置导出完成");
+  }
+  void run() {
+    if (file_.empty()) return;
+
+    maya_chick(MGlobal::executeCommand(R"(loadPlugin "fbxmaya";)"));
+
+    maya_file_io::set_workspace(file_);
+    maya_file_io::open_file(file_, MFileIO::kLoadDefault);
+
+    DOODLE_LOG_INFO("开始导出 rig fbx");
+    auto l_s = boost::asio::make_strand(g_io_context());
+    maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
+    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
+
+    export_file_fbx l_ex{};
+    maya_out_arg l_out_arg{};
+    auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
+    l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
+    l_out_arg.begin_time  = anim_begin_time_.value();
+    l_out_arg.end_time    = MAnimControl::maxTime().value();
+    reference_file l_ref{};
+    cloth_factory_interface l_cf{};
+    std::vector<cloth_interface> l_cloth_interfaces{};
+    if (qcloth_factory::has_cloth()) {
+      l_cf               = std::make_shared<qcloth_factory>();
+      l_cloth_interfaces = l_cf->create_cloth();
+    }
+    auto l_out_path = l_ex.export_rig(l_ref);
+    for (auto&& p : l_out_path) l_out_arg.out_file_list.emplace_back(p);
+    nlohmann::json l_json = l_out_arg;
+    if (!out_path_file_.empty()) {
+      if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
+      default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
+      FSys::ofstream{out_path_file_} << l_json.dump(4);
+    } else
+      log_info(fmt::format("导出文件 {}", l_json.dump(4)));
+  }
+};
+
 MStatus doodle_batch_run::doIt(const MArgList& in_list) {
   try {
     MArgDatabase arg_data(syntax(), in_list);
@@ -772,7 +840,13 @@ MStatus doodle_batch_run::doIt(const MArgList& in_list) {
       l_replace_file.config_replace_file(l_json);
       l_replace_file.run();
     } else if (arg_data.isFlagSet(inspect_file_config)) {
+      inspect_file_run l_inspect_file{};
+      l_inspect_file.config_inspect_file(l_json);
+      l_inspect_file.run();
     } else if (arg_data.isFlagSet(export_rig_config)) {
+      export_rig_run l_export_rig{};
+      l_export_rig.config_export_rig(l_json);
+      l_export_rig.run();
     } else {
       display_error("没有传入正确的配置文件路径");
       return MStatus::kFailure;

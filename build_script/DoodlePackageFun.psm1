@@ -198,6 +198,21 @@ function Initialize-Doodle {
             date     = "2026-02-07"
             isOffDay = $false
         }
+        [System.Management.Automation.PSObject]@{
+            name     = "公司放假"
+            date     = "2026-02-13"
+            isOffDay = $true
+        },
+        [System.Management.Automation.PSObject]@{
+            name     = "公司放假"
+            date     = "2026-02-14"
+            isOffDay = $true
+        },
+        [System.Management.Automation.PSObject]@{
+            name     = "公司放假"
+            date     = "2026-02-24"
+            isOffDay = $true
+        }
     )
     &robocopy $DoodleTimePath "$OutPath\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy $DoodleTimePath "$DoodleKitsuRoot\dist\time" /MIR /unilog+:$DoodleLogPath | Out-Null
