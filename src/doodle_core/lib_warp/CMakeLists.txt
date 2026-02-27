@@ -11,6 +11,9 @@ target_sources(doodle_core
         boost_fmt_string.h
         boost_fmt_beast.h
         boost_locale_warp.h
-
+        maya_exe_out.h
+        
+        PRIVATE
+        maya_exe_out.cpp
 )
 add_subdirectory(detail)
