@@ -95,8 +95,7 @@
       "configurePreset": "Ninja_RelWithDebInfo",
       "inherits": "debug",
       "targets": [
-        "doodle_maya",
-        "doodle_maya_exe"
+        "doodle_maya"
       ]
     },
     {
@@ -111,8 +110,7 @@
       "name": "Release_Maya",
       "configurePreset": "Ninja_release",
       "targets": [
-        "doodle_maya",
-        "doodle_maya_exe"
+        "doodle_maya"
       ]
     },
     {
