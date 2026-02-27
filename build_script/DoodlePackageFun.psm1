@@ -134,7 +134,7 @@ function Initialize-Doodle {
         if (-not (Test-Path "$OutPath\dist\Doodle-$DoodleVersion-win64.zip")) {
             # 复制一些脚本文件
             &robocopy "$DoodleKitsuRoot\mayaPlugins" "$DoodleInstallRoot/maya" /s /unilog+:$DoodleLogPath | Out-Null
-            Compress-Archive -Path $DoodleInstallRoot -DestinationPath "$OutPath\dist\Doodle-$DoodleVersion-win64.zip" -Force
+            Compress-Archive -Path "$DoodleInstallRoot\*" -DestinationPath "$OutPath\dist\Doodle-$DoodleVersion-win64.zip" -Force
         }
         $Tags = $Tags[0..100]
         [array]::Reverse($Tags)
