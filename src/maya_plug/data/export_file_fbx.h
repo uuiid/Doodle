@@ -3,8 +3,6 @@
 //
 #pragma once
 
-#include <doodle_lib/core/file_sys.h>
-
 #include <maya_plug/maya_plug_fwd.h>
 
 #include <entt/entity/fwd.hpp>

@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <doodle_lib/core/co_queue.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/lib_warp/maya_exe_out.h>
+#include <doodle_core/lib_warp/maya_exe_out.h>
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/asyn_task.h>
+#include <doodle_lib/core/co_queue.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio.hpp>
@@ -21,7 +21,6 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string_view>
 #include <utility>
-
 
 namespace doodle {
 class maya_exe;

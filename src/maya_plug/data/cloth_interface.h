@@ -4,13 +4,12 @@
 
 #pragma once
 
-#include <doodle_lib/core/file_sys.h>
-
 #include <entt/entity/fwd.hpp>
-#include <maya/MApiNamespace.h>
 #include <entt/entt.hpp>
+#include <maya/MApiNamespace.h>
 #include <memory>
 #include <vector>
+
 
 namespace doodle::maya_plug {
 class reference_file;

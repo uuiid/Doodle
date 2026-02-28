@@ -5,21 +5,15 @@
 #include "play_blast.h"
 
 #include <doodle_core/exception/exception.h>
-#include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/core_set.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/user.h>
 
-
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <maya_plug/data/maya_camera.h>
 #include <maya_plug/data/maya_conv_str.h>
 #include <maya_plug/exception/exception.h>
-#include <maya_plug/data/maya_camera.h>
 
-#include <maya/MRenderTargetManager.h>
-#include <maya/MString.h>
-#include <maya/MTextureManager.h>
 #include <cstdint>
 #include <filesystem>
 #include <fmt/chrono.h>
@@ -28,7 +22,13 @@
 #include <maya/MDrawContext.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
+#include <maya/MRenderTargetManager.h>
+#include <maya/MString.h>
+#include <maya/MTextureManager.h>
+#include <maya/MUuid.h>
 #include <wil/registry.h>
+
+
 namespace doodle::maya_plug {
 
 MString play_blast::p_post_render_notification_name{"doodle_maya_notification"};
@@ -63,7 +63,7 @@ void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientD
 
 play_blast::play_blast() : p_current_time(), p_uuid() {}
 FSys::path play_blast::get_file_dir() const {
-  auto k_cache_path = core_set::get_set().get_cache_root("maya_play_blast");
+  auto k_cache_path = FSys::temp_directory_path() / "doodle" / "maya_play_blast";
   k_cache_path /= p_uuid;
   if (!FSys::exists(k_cache_path)) {
     FSys::create_directories(k_cache_path);
@@ -78,7 +78,9 @@ FSys::path play_blast::get_file_path(const MTime& in_time) const {
 }
 
 FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, const image_size& in_size) {
-  p_uuid = core_set::get_set().get_uuid_str();
+  MUuid l_uuid{};
+  l_uuid.generate();
+  p_uuid = conv::to_s(l_uuid.asString());
   MGlobal::executeCommand("hwRenderLoad;");
   MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.floatingPointRTEnable" 0;)");
   MGlobal::executeCommand(R"(setAttr "hardwareRenderingGlobals.multiSampleEnable" 0;)");
@@ -161,7 +163,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
               if (in_texture) l_tex_manager->releaseTexture(in_texture);
             }
         };
-        auto k_p = get_file_path(i);
+        auto k_p             = get_file_path(i);
         MString const k_path = conv::to_ms(k_p.generic_string());
         maya_chick(l_tex_manager->saveTexture(l_tex.get(), k_path));
       }
