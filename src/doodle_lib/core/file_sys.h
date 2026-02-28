@@ -6,7 +6,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/configure/doodle_lib_export.h>
-#include <doodle_lib/core/chrono_.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
