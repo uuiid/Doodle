@@ -3,10 +3,10 @@
 //
 
 #pragma once
-#include <doodle_core/core/cancellation_signals.h>
-#include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/logger/logger.h>
-#include <doodle_core/platform/win/windows_alias.h>
+#include <doodle_lib/core/cancellation_signals.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/logger/logger.h>
+#include <doodle_lib/platform/win/windows_alias.h>
 
 #include <boost/asio/signal_set.hpp>
 #include <boost/signals2.hpp>
@@ -73,7 +73,6 @@ class DOODLELIB_API app_base {
   DOODLE_DIS_COPY(app_base);
   static app_base& Get();
   static app_base* GetPtr();
-
 };
 
 }  // namespace doodle

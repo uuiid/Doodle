@@ -40,8 +40,7 @@ struct DOODLE_CORE_API comment {
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  void set_comment_mentions(const uuid& in_project_id);
-  void set_comment_department_mentions();
+
 
   // 外键
   uuid task_status_id_;

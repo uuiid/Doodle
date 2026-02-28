@@ -4,15 +4,15 @@
 
 #include "app_base.h"
 
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/core/global_function.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
 #include <boost/system/detail/error_code.hpp>
 
-#include "core/global_function.h"
 #include <memory>
 #include <processthreadsapi.h>
 #include <processtopologyapi.h>

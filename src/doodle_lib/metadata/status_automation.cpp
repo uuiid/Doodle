@@ -1,0 +1,52 @@
+#include "status_automation.h"
+
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+
+namespace doodle::status_automation_ns {
+
+boost::asio::awaitable<void> run(
+    const status_automation& in_status_automation, const std::shared_ptr<task>& in_task, const uuid& in_person_id
+) {
+  if (in_status_automation.archived_ || in_task->task_type_id_ != in_status_automation.in_task_type_id_ ||
+      in_task->task_status_id_ != in_status_automation.in_task_status_id_)
+    co_return;
+  auto l_sql = g_ctx().get<sqlite_database>();
+  if (auto l_map = l_sql.get_task_type_priority_map(in_task->project_id_, in_status_automation.entity_type_);
+      !l_map.empty() && in_status_automation.out_field_type_ != status_automation_change_type::ready_for &&
+      ((l_map.contains(in_status_automation.in_task_type_id_) ? l_map.at(in_status_automation.in_task_type_id_) : 0) >
+       (l_map.contains(in_status_automation.out_task_type_id_) ? l_map.at(in_status_automation.out_task_type_id_) : 0)))
+    co_return;
+  switch (in_status_automation.out_field_type_) {
+    case status_automation_change_type::status:
+      if (auto l_task =
+              l_sql.get_tasks_for_entity_and_task_type(in_task->entity_id_, in_status_automation.out_task_type_id_);
+          l_task) {
+        auto l_task_type       = l_sql.get_by_uuid<task_type>(in_status_automation.in_task_type_id_);
+        auto l_task_status     = l_sql.get_by_uuid<task_status>(in_status_automation.in_task_status_id_);
+        auto l_task_out_status = l_sql.get_by_uuid<task_status>(in_status_automation.out_task_status_id_);
+        auto l_comment         = std::make_shared<comment>(comment{
+                    .object_id_ = l_task->uuid_id_,
+                    .text_ = fmt::format("自动化任务 {} 更改触发, 设置状态 {} ", l_task_type.name_, l_task_out_status.name_),
+                    .task_status_id_ = l_task_status.uuid_id_,
+                    .person_id_      = in_person_id,
+        });
+        co_await l_sql.install(l_comment);
+        l_task->task_status_id_     = l_task_out_status.uuid_id_;
+        in_task->task_status_id_    = l_task_status.uuid_id_;
+        in_task->last_comment_date_ = l_comment->created_at_;
+        auto l_tasl_tmp             = std::make_shared<task>(*l_task);
+        co_await l_sql.update(l_tasl_tmp);
+        co_await l_sql.update(in_task);
+      }
+
+      break;
+    case status_automation_change_type::ready_for: {
+      auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_task->entity_id_));
+      if (l_entt->ready_for_ == out_task_type_id_) co_return;
+      l_entt->ready_for_ = out_task_type_id_;
+      co_await l_sql.update(l_entt);
+    } break;
+  }
+}
+
+}  // namespace doodle::status_automation_ns

@@ -10,13 +10,15 @@
 
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/doodle_core_export.h>
-#include <doodle_core/core/file_sys.h>
 #include <doodle_core/doodle_core_pch.h>
+
+#include <doodle_lib/core/file_sys.h>
 
 #include <spdlog/async.h>
 #include <spdlog/logger.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/spdlog.h>
+
 namespace doodle {
 
 namespace details { /**

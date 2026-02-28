@@ -1,7 +1,5 @@
 target_sources(doodle_lib
         PUBLIC
-        boost_uuid_warp.h
-        enum_template_tool.h
         boost_icl_warp.h
         boost_fmt_icl.h
         boost_fmt_rational.h

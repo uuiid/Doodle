@@ -28,7 +28,6 @@ struct status_automation {
   bool import_last_revision_;
   bool archived_;
 
-  boost::asio::awaitable<void> run(const std::shared_ptr<task>& in_task, const uuid& in_person_id);
 
   // to json
   friend void to_json(nlohmann::json& j, const status_automation& p) {

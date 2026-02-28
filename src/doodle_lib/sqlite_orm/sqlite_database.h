@@ -9,10 +9,12 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/asio/awaitable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
 #include <optional>
 #include <vector>
+
 
 namespace doodle {
 struct preview_file;
