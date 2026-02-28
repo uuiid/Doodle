@@ -3,7 +3,7 @@
 //
 #include "task_type.h"
 
-#include "doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 
 namespace doodle {
 uuid task_type::get_binding_id() {

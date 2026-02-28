@@ -4,7 +4,7 @@
 
 #include "sqlite_select_data.h"
 
-#include "doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <array>
 namespace doodle {

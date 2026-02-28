@@ -3,7 +3,7 @@
 //
 #include "task_status.h"
 
-#include "doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
 namespace doodle {
