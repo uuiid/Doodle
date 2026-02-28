@@ -12,6 +12,7 @@
 #include <maya_plug/maya_comm/dem_bones_add_weight.h>
 #include <maya_plug/maya_comm/dem_bones_comm.h>
 #include <maya_plug/maya_comm/dna_calib_import.h>
+#include <maya_plug/maya_comm/doodle_batch_run.h>
 #include <maya_plug/maya_comm/doodle_to_ue_fbx.h>
 #include <maya_plug/maya_comm/export_abc_file.h>
 #include <maya_plug/maya_comm/file_info_edit.h>
@@ -26,7 +27,6 @@
 #include <maya/MFnPlugin.h>
 #include <stack>
 #include <wil/result.h>
-
 
 namespace {
 
@@ -98,8 +98,10 @@ MStatus initializePlugin(MObject obj) {
   /// 添加xgen abc导出命令
   status = maya_reg->register_command<::doodle::maya_plug::xgen_abc_export>(k_plugin);
   CHECK_MSTATUS(status);
-
+  /// 添加批量运行命令
+  status = maya_reg->register_command<::doodle::maya_plug::doodle_batch_run>(k_plugin);
   CHECK_MSTATUS(status);
+
   /// 等所有命令完成后加载工具架
   status = MGlobal::executePythonCommandOnIdle(R"(import Doodle_shelf
 Doodle_shelf.DoodleUIManage.deleteSelf()

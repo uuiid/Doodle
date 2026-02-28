@@ -149,7 +149,7 @@ boost::asio::awaitable<void> arg::async_run_maya() {
   constexpr auto l_fmt_str = R"(file -f -new;
 loadPlugin doodle_maya_{};
 loadPlugin fbxmaya;
-loadPlugin abcExport;
+loadPlugin "AbcExport";
 int $doodle_batch_run_1 = `doodle_batch_run -config "{}" -{}`;
 quit -abort -force $doodle_batch_run_1;
 )";
