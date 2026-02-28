@@ -5,7 +5,7 @@
 #include "http_client_core.h"
 
 #include "app_base.h"
-#include "exception/exception.h"
+#include "doodle_core/exception/exception.h"
 
 namespace doodle::http {
 

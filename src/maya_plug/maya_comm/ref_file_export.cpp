@@ -8,7 +8,7 @@
 #include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/reference_file.h>
 
-#include "exception/exception.h"
+#include "doodle_core/exception/exception.h"
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MArgParser.h>

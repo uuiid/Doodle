@@ -8,7 +8,6 @@
 #include <doodle_core/metadata/rules.h>
 
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/logger/crash_reporting_thread.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/asio.hpp>

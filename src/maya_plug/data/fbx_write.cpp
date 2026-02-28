@@ -18,7 +18,7 @@
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include "data/maya_tool.h"
-#include "exception/exception.h"
+#include "doodle_core/exception/exception.h"
 #include <fbxsdk.h>
 #include <fmt/format.h>
 #include <fmt/std.h>

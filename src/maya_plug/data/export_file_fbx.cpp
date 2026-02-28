@@ -23,7 +23,7 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 
 #include "data/maya_tool.h"
-#include "exception/exception.h"
+#include "doodle_core/exception/exception.h"
 #include "fmt/core.h"
 #include "maya_conv_str.h"
 #include <filesystem>
