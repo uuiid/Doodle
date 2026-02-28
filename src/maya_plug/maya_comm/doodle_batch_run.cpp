@@ -820,6 +820,9 @@ class export_rig_run {
   }
 };
 
+doodle_batch_run::doodle_batch_run()  = default;
+doodle_batch_run::~doodle_batch_run() = default;
+
 MStatus doodle_batch_run::doIt(const MArgList& in_list) {
   try {
     MArgDatabase arg_data(syntax(), in_list);
