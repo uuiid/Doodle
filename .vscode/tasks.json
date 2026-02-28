@@ -94,7 +94,10 @@
       "problemMatcher": [
         "$msCompile"
       ],
-      "group": "build"
+      "group": "build",
+      "dependsOn": [
+        "copy maya script"
+      ]
     },
     {
       "label": "cmake clean",
@@ -199,6 +202,13 @@
           }
         }
       ]
+    },
+    {
+      "label": "copy maya script",
+      "type": "shell",
+      "command": "Copy-Item -Path E:/source/kitsu/mayaPlugins/* -Destination ${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya -Recurse -Force",
+      "problemMatcher": [],
+      "hide": false
     }
   ],
   "inputs": [
