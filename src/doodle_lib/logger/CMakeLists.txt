@@ -1,4 +1,4 @@
-target_sources(doodle_core
+target_sources(doodle_lib
         PUBLIC
         logger.h
         crash_reporting_thread.h

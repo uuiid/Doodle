@@ -1,4 +1,5 @@
-target_sources(doodle_lib
+target_sources(
+        doodle_lib
         PUBLIC
         tree_node.h
         ContainerDevice.h
@@ -15,7 +16,19 @@ target_sources(doodle_lib
         ffmpeg_video.h
         generate_text_video.hpp
         crashpad.h
-        
+        core_set.h
+        doodle_lib.h
+        template_util.h
+        file_sys.h
+        chrono_.h
+        app_base.h
+        global_function.h
+        app_service.h
+        http_client_core.h
+        co_queue.h
+        authorization.h
+        cancellation_signals.h
+
         PRIVATE
         filesystem_extend.cpp
         holidaycn_time.cpp
@@ -27,9 +40,21 @@ target_sources(doodle_lib
         ffmpeg_video.cpp
         generate_text_video.cpp
         crashpad.cpp
+        core_set.cpp
+        doodle_lib.cpp
+        file_sys.cpp
+        app_base.cpp
+        app_service.cpp
+        http_client_core.cpp
+        co_queue.cpp
+        authorization.cpp
+        global_function.cpp
+        cancellation_signals.cpp
+
 )
 add_subdirectory(http)
 add_subdirectory(socket_io)
+add_subdirectory(bcrypt)
 
 set_source_files_properties(
         entity_path.cpp

@@ -1,4 +1,4 @@
-target_sources(doodle_core
+target_sources(doodle_lib
         PUBLIC
         list_drive.h
         register_file_type.h

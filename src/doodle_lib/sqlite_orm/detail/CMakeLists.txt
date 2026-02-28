@@ -1,5 +1,5 @@
 target_sources(
-        doodle_core
+        doodle_lib
         PUBLIC
         std_chrono_duration.h
         std_chrono_time_point.h

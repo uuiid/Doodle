@@ -1,5 +1,5 @@
 target_sources(
-        doodle_core
+        doodle_lib
 
         PUBLIC
         bcrypt.h

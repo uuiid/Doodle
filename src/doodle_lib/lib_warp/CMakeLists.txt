@@ -1,4 +1,4 @@
-target_sources(doodle_core
+target_sources(doodle_lib
         PUBLIC
         boost_uuid_warp.h
         json_warp.h

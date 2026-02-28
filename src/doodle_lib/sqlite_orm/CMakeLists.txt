@@ -1,5 +1,5 @@
 target_sources(
-        doodle_core
+        doodle_lib
         PUBLIC
         sqlite_database.h
         sqlite_select_data.h
@@ -14,6 +14,6 @@ add_subdirectory(detail)
 
 set_source_files_properties(
         sqlite_database.cpp
-        TARGET_DIRECTORY doodle_core
+        TARGET_DIRECTORY doodle_lib
         PROPERTIES JOB_POOL_COMPILE sql_query_pool
 )

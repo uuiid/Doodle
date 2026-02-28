@@ -36,14 +36,8 @@ target_compile_definitions(doodle_core PUBLIC BOOST_FILESYSTEM_VERSION=4)
 
 # 添加子目录
 add_subdirectory(configure)
-add_subdirectory(core)
 add_subdirectory(exception)
-add_subdirectory(lib_warp)
-add_subdirectory(logger)
 add_subdirectory(metadata)
-add_subdirectory(platform)
-add_subdirectory(time_tool)
-add_subdirectory(sqlite_orm)
 
 # 连接库
 target_link_libraries(
