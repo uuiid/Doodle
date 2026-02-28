@@ -1,10 +1,11 @@
 #include "core_set.h"
 
 #include <doodle_core/configure/static_value.h>
-#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
-#include <doodle_lib/logger/logger.h>
 #include <doodle_core/metadata/user.h>
+
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/locale.hpp>
@@ -30,10 +31,11 @@ core_set& core_set::get_set() {
 }
 
 core_set::core_set()
-    : p_doc(get_pwd()),
+    : timeout(3600),
       p_max_thread(3),
+      utf8_locale(boost::locale::generator().generate("zh_CN.UTF-8")),
       p_root(FSys::temp_directory_path() / "Doodle"),
-      timeout(3600),
+      p_doc(get_pwd() / "doodle"),
       maya_version(2020),
 #ifdef NDEBUG
       server_ip("http://192.168.40.188")
@@ -41,12 +43,10 @@ core_set::core_set()
       server_ip("http://192.168.20.89:50025")
 #endif
 {
-  p_doc /= "doodle";
   if (!FSys::exists(p_doc)) FSys::create_directories(p_doc);
   if (!FSys::exists(get_cache_root())) {
     FSys::create_directories(get_cache_root());
   }
-  utf8_locale = boost::locale::generator().generate("zh_CN.UTF-8");
 
   if (FSys::path l_k_setting_file_name = get_doc() / doodle_config::config_name; FSys::exists(l_k_setting_file_name)) {
     default_logger_raw()->log(log_loc(), level::warn, "读取配置文件 {}", l_k_setting_file_name);

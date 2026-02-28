@@ -7,6 +7,7 @@
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/metadata/entity.h>
 
 
 namespace doodle::http {
@@ -62,7 +63,7 @@ struct data_user_notifications_get_result {
         episode_id_(),
         entity_preview_file_id_(in_entity.preview_file_id_),
         subscription_id_(subscription_id) {
-    auto&& [l_full_name, l_epsode_id] = in_entity.get_full_name();
+    auto&& [l_full_name, l_epsode_id] = entity_ns::get_full_name(in_entity);
     full_entity_name_                 = l_full_name;
     episode_id_                       = l_epsode_id;
     if (in_notification.type_ == notification_type::reply ||
