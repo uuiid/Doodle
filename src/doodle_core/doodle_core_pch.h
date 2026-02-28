@@ -24,6 +24,7 @@
 #include <variant>
 #include <vector>
 
+
 #pragma warning(disable : 4251)
 #pragma warning(disable : 4275)
 
@@ -49,3 +50,5 @@
 #include <range/v3/range.hpp>
 #include <range/v3/utility.hpp>
 #include <range/v3/view.hpp>
+
+#include <nlohmann/json.hpp>

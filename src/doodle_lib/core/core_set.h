@@ -19,7 +19,7 @@ class doodle_lib;
  * @warning 这个类本身的初始化极为基本和简单
  */
 
-class DOODLE_CORE_API core_set : public boost::noncopyable {
+class DOODLELIB_API core_set : public boost::noncopyable {
   friend class user;
   friend class doodle_lib;
 

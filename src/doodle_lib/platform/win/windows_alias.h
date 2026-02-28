@@ -22,8 +22,8 @@ using wnd_instance = ::HINSTANCE;
 class d3d_device;
 using string_type = PWSTR;
 
-void DOODLE_CORE_API open_console_window();
+void DOODLELIB_API open_console_window();
 
-std::string DOODLE_CORE_API get_clipboard_data_str();
+std::string DOODLELIB_API get_clipboard_data_str();
 
 }  // namespace doodle::win

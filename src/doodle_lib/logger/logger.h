@@ -22,7 +22,7 @@ namespace doodle {
 namespace details { /**
                      * @brief 在程序初始化时log就最先运行, 但是输出在了临时文件位置中,
                      */
-class DOODLE_CORE_API logger_ctrl {
+class DOODLELIB_API logger_ctrl {
   FSys::path p_log_path;
   using file_sink_mt_ptr = std::shared_ptr<spdlog::sinks::sink>;
   using async_logger_ptr = std::shared_ptr<spdlog::async_logger>;

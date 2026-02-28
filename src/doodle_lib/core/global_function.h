@@ -27,12 +27,12 @@ namespace details {
 class logger_ctrl;
 }  // namespace details
 
-DOODLE_CORE_API boost::asio::io_context &g_io_context();
-DOODLE_CORE_API details::logger_ctrl &g_logger_ctrl();
+DOODLELIB_API boost::asio::io_context &g_io_context();
+DOODLELIB_API details::logger_ctrl &g_logger_ctrl();
 
-DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
-DOODLE_CORE_API boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
-DOODLE_CORE_API std::size_t get_hardware_concurrency();
+DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
+DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
+DOODLELIB_API std::size_t get_hardware_concurrency();
 template <class... Ts>
 struct overloaded : Ts... {
   using Ts::operator()...;
@@ -49,10 +49,10 @@ overloaded(Ts...) -> overloaded<Ts...>;
  * @note This function does not throw exceptions and uses noexcept.
  */
 
-DOODLE_CORE_API boost::uuids::uuid from_uuid_str(const std::string &uuid_str);
+DOODLELIB_API boost::uuids::uuid from_uuid_str(const std::string &uuid_str);
 
 template <typename Duration = std::chrono::system_clock::duration>
-DOODLE_CORE_API std::chrono::zoned_time<std::chrono::system_clock::duration> from_chrono_time_zone_str(
+DOODLELIB_API std::chrono::zoned_time<std::chrono::system_clock::duration> from_chrono_time_zone_str(
     const std::string &in_time_zone_str
 ) {
   using time_point     = std::chrono::zoned_time<Duration>;

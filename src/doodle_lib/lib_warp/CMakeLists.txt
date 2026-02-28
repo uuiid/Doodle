@@ -1,7 +1,6 @@
 target_sources(doodle_lib
         PUBLIC
         boost_uuid_warp.h
-        json_warp.h
         enum_template_tool.h
         boost_icl_warp.h
         boost_fmt_icl.h
@@ -16,4 +15,3 @@ target_sources(doodle_lib
         PRIVATE
         maya_exe_out.cpp
 )
-add_subdirectory(detail)

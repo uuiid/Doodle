@@ -3,9 +3,11 @@
 //
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/base.h>
 
 #include <magic_enum/magic_enum_all.hpp>
+
 namespace doodle {
 enum class person_role_type {
   user,        // 组员

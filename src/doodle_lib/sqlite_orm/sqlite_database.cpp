@@ -4,33 +4,35 @@
 
 #include "sqlite_database.h"
 
-#include "doodle_core_fwd.h"
-#include <doodle_core/core/app_base.h>
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/entity.h>
+#include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/playlist.h>
+#include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/server_task_info.h>
+#include <doodle_core/metadata/shot.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/sqlite_orm/sqlite_select_data.h>
-#include <doodle_core/sqlite_orm/sqlite_upgrade.h>
+#include <doodle_core/metadata/working_file.h>
 
-#include "metadata/ai_image_metadata.h"
-#include "metadata/entity.h"
-#include "metadata/entity_type.h"
-#include "metadata/playlist.h"
-#include "metadata/preview_file.h"
-#include "metadata/shot.h"
-#include "metadata/studio.h"
-#include "metadata/working_file.h"
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
+
 #include <optional>
 #include <sqlite_orm/sqlite_orm.h>
+
 
 namespace doodle {
 

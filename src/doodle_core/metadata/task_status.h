@@ -26,7 +26,6 @@ struct DOODLE_CORE_API task_status {
   std::optional<std::int32_t> shotgun_id_;
   bool for_concept_;
 
-  void check_retake_capping(const task& in_task);
   static const uuid& get_completed();
   // nearly completed
   static const uuid& get_nearly_completed();

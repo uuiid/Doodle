@@ -23,7 +23,7 @@ namespace doodle {
  * @brief app 的基类
  *
  */
-class DOODLE_CORE_API app_base {
+class DOODLELIB_API app_base {
  public:
  protected:
   void bind_thread_to_group(int group_id);

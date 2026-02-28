@@ -38,6 +38,7 @@ target_compile_definitions(doodle_core PUBLIC BOOST_FILESYSTEM_VERSION=4)
 add_subdirectory(configure)
 add_subdirectory(exception)
 add_subdirectory(metadata)
+add_subdirectory(lib_warp)
 
 # 连接库
 target_link_libraries(

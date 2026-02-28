@@ -6,7 +6,10 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/doodle_lib_fwd.h>
+
 #include <memory>
+
 
 namespace boost::asio {
 class io_context;
@@ -15,14 +18,14 @@ class thread_pool;
 
 namespace doodle {
 
-class DOODLE_CORE_API doodle_lib : public boost::noncopyable, boost::equality_comparable<doodle_lib> {
+class DOODLELIB_API doodle_lib : public boost::noncopyable, boost::equality_comparable<doodle_lib> {
  public:
   using logger_ctr_ptr = std::shared_ptr<details::logger_ctrl>;
   friend boost::asio::io_context& g_io_context();
   friend entt::registry::context& g_ctx();
   friend details::logger_ctrl& g_logger_ctrl();
-  friend boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
-  friend boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
+  friend boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
+  friend boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
 
  private:
   class impl;

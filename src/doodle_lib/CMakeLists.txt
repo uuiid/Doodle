@@ -25,10 +25,17 @@ generate_export_header(doodle_lib
 add_subdirectory(core)
 # add_subdirectory(dem_bones)
 add_subdirectory(exe_warp)
-add_subdirectory(long_task)
-add_subdirectory(launch)
-add_subdirectory(http_method)
 add_subdirectory(http_client)
+add_subdirectory(http_method)
+add_subdirectory(launch)
+add_subdirectory(lib_warp)
+add_subdirectory(logger)
+add_subdirectory(long_task)
+add_subdirectory(metadata)
+add_subdirectory(platform)
+add_subdirectory(sqlite_orm)
+add_subdirectory(time_tool)
+
 # add_subdirectory(ai)
 
 set_target_properties(doodle_lib

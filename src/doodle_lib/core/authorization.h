@@ -6,7 +6,7 @@
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/metadata/time_point_wrap.h>
 namespace doodle {
-class DOODLE_CORE_API authorization {
+class DOODLELIB_API authorization {
   class impl;
   std::shared_ptr<impl> p_i;
 

@@ -7,14 +7,4 @@
 #include "entt/core/type_traits.hpp"
 #include <filesystem>
 
-namespace doodle {
-namespace detail {
-template <typename Id_Type>
-class one_file_base {
- public:
-  FSys::path path_{};
-  constexpr static auto id = Id_Type::value;
-};
-
-}  // namespace detail
-}  // namespace doodle
+namespace doodle {}  // namespace doodle

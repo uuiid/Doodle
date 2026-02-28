@@ -7,5 +7,5 @@
 #include <doodle_core/configure/doodle_core_export.h>
 
 namespace doodle::win {
-std::vector<FSys::path> DOODLE_CORE_API list_drive();
+std::vector<FSys::path> DOODLELIB_API list_drive();
 }

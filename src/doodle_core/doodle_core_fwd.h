@@ -5,16 +5,11 @@
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/doodle_core_export.h>
 #include <doodle_core/configure/static_value.h>
-#include <doodle_core/core/chrono_.h>
-#include <doodle_core/core/file_sys.h>
-#include <doodle_core/core/global_function.h>
 #include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/lib_warp/boost_fmt_beast.h>
-#include <doodle_core/lib_warp/boost_fmt_string.h>
-#include <doodle_core/lib_warp/enum_template_tool.h>
-#include <doodle_core/lib_warp/json_warp.h>
+
+#include <boost/uuid/uuid.hpp>
 
 #include <entt/entt.hpp>
 #include <spdlog/common.h>
@@ -25,11 +20,37 @@ class io_context;
 class thread_pool;
 }  // namespace boost::asio
 
+namespace doodle::chrono {
+using namespace std::chrono;
+namespace literals {
+using namespace std::chrono_literals;
+}  // namespace literals
+using namespace std::chrono;
+
+using hours_double      = duration<std::double_t, std::ratio<3600>>;
+using sys_time_pos      = time_point<system_clock>;
+using local_time_pos    = time_point<local_t, seconds>;
+using system_zoned_time = zoned_time<system_clock::duration>;
+template <class dur>
+std::time_t to_time_t(const time_point<local_t, dur>& in_timePoint) {
+  return duration_cast<seconds>(in_timePoint.time_since_epoch()).count();
+};
+};  // namespace doodle::chrono
+
 namespace spdlog {
 class logger;
 SPDLOG_API logger* default_logger_raw();
 namespace level {}  // namespace level
 }  // namespace spdlog
+
+namespace doodle::FSys {
+using namespace std::filesystem;
+using fstream  = std::fstream;
+using istream  = std::istream;
+using ifstream = std::ifstream;
+using ofstream = std::ofstream;
+using ostream  = std::ostream;
+}  // namespace doodle::FSys
 
 #define DOODLE_TO_EXECUTOR(executor_)                             \
   auto this_executor = co_await boost::asio::this_coro::executor; \
@@ -71,10 +92,6 @@ using spdlog::level::warn;
 namespace details {
 class logger_ctrl;
 }  // namespace details
-namespace detail {
-template <typename>
-class one_file_base;
-}  // namespace detail
 
 class doodle_error;
 class user;
@@ -87,15 +104,4 @@ using spdlog::default_logger_raw;
 
 using namespace std::literals;
 
-DOODLE_CORE_API boost::asio::io_context& g_io_context();
-DOODLE_CORE_API entt::registry::context& g_ctx();
-
-namespace movie {
-class image_attr;
-class image_watermark;
-}  // namespace movie
-
-namespace business {
-class work_clock2;
-}  // namespace business
 };  // namespace doodle

@@ -2,11 +2,12 @@
 // Created by TD on 25-7-14.
 //
 #include <doodle_core/metadata/entity.h>
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
-#include <doodle_core/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+
 
 namespace doodle::http {
 
@@ -192,8 +193,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
-  auto l_sql   = g_ctx().get<sqlite_database>();
-  auto l_not   = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
+  auto l_sql        = g_ctx().get<sqlite_database>();
+  auto l_not        = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   const bool l_read = in_handle->get_json().value<bool>("read", false);
 
   SPDLOG_LOGGER_WARN(

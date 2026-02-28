@@ -4,11 +4,12 @@
 
 #include "doodle_lib.h"
 
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/logger/crash_reporting_thread.h>
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
+
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/logger/crash_reporting_thread.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
@@ -17,6 +18,7 @@
 #include <memory>
 #include <utility>
 #include <wil/result.h>
+
 
 namespace doodle {
 

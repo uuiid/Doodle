@@ -3,15 +3,28 @@
 #include <doodle_core/doodle_core.h>
 #include <doodle_core/doodle_core_fwd.h>
 
-
 #include <doodle_lib/configure/doodle_lib_export.h>
 #include <doodle_lib/doodle_lib_pch.h>
+
+#include <entt/entt.hpp>
+#include <spdlog/spdlog.h>
 
 // 开始我们的名称空间
 namespace doodle {
 
+DOODLELIB_API boost::asio::io_context& g_io_context();
+DOODLELIB_API entt::registry::context& g_ctx();
+
+namespace movie {
+class image_attr;
+class image_watermark;
+}  // namespace movie
+
+namespace business {
+class work_clock2;
+}  // namespace business
 namespace FSys {
-DOODLELIB_API std::string file_hash_sha224(const path &in_file);
+DOODLELIB_API std::string file_hash_sha224(const path& in_file);
 }
 
 namespace render_farm {

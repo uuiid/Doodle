@@ -17,7 +17,7 @@
 
 namespace doodle::business {
 
-class DOODLE_CORE_API work_clock2 {
+class DOODLELIB_API work_clock2 {
  public:
   using time_type     = chrono::local_time_pos;
   using duration_type = time_type::duration;

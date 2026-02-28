@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/core_set.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/assets.h>
@@ -37,14 +35,17 @@
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/metadata/working_file.h>
-#include <doodle_core/sqlite_orm/detail/macro.h>
-#include <doodle_core/sqlite_orm/detail/nlohmann_json.h>
-#include <doodle_core/sqlite_orm/detail/std_chrono_duration.h>
-#include <doodle_core/sqlite_orm/detail/std_chrono_time_point.h>
-#include <doodle_core/sqlite_orm/detail/std_chrono_zoned_time.h>
-#include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
-#include <doodle_core/sqlite_orm/detail/std_vector_string.h>
-#include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
+
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/sqlite_orm/detail/macro.h>
+#include <doodle_lib/sqlite_orm/detail/nlohmann_json.h>
+#include <doodle_lib/sqlite_orm/detail/std_chrono_duration.h>
+#include <doodle_lib/sqlite_orm/detail/std_chrono_time_point.h>
+#include <doodle_lib/sqlite_orm/detail/std_chrono_zoned_time.h>
+#include <doodle_lib/sqlite_orm/detail/std_filesystem_path_orm.h>
+#include <doodle_lib/sqlite_orm/detail/std_vector_string.h>
+#include <doodle_lib/sqlite_orm/detail/uuid_to_blob.h>
 
 #include <range/v3/view/split.hpp>
 #include <sqlite_orm/sqlite_orm.h>
