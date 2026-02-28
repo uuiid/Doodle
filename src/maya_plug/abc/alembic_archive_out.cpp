@@ -109,8 +109,8 @@ std::tuple<std::vector<Imath::V2f>, std::vector<std::uint32_t>> get_mesh_uv(cons
     }
   }
 
-  // SPDLOG_INFO("uv nums {} index {} ,{} ", l_uv_array.size(), l_index_array.size(), l_index_array);
-  // SPDLOG_INFO("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
+  // display_info("uv nums {} index {} ,{} ", l_uv_array.size(), l_index_array.size(), l_index_array);
+  // display_info("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
   // Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_array_sample{};
   // l_uv_array_sample.setScope(Alembic::AbcGeom::kFacevaryingScope);
   // l_uv_array_sample.setVals(l_uv_array);
@@ -332,7 +332,7 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
   MDagPath l_path = in_path.dag_path_;
   l_path.extendToShape();
   MFnMesh l_mesh{l_path};
-  SPDLOG_INFO("开始写入网格体 {}", maya_plug::get_node_name(l_path));
+  display_info("开始写入网格体 {}", maya_plug::get_node_name(l_path));
 
   auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(l_path));
 
@@ -356,7 +356,7 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
     l_normal_s.setScope(Alembic::AbcGeom::kFacevaryingScope);
     l_normal_s.setVals(l_normal);
   } else {
-    SPDLOG_WARN("物体 {} 没有法线", l_name);
+    display_warning("物体 {} 没有法线", l_name);
   }
 
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{l_p, l_f, l_pc, l_uv_s, l_normal_s};
@@ -381,7 +381,7 @@ void archive_out::wirte_frame(const dag_path_out_data& in_path) {
 
   auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
   auto [l_uv, l_uv_i]   = archive_out_ns::get_mesh_uv(l_mesh);
-  // SPDLOG_INFO("uvi {}", l_uv_i);
+  // display_info("uvi {}", l_uv_i);
   Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_s{l_uv, l_uv_i, Alembic::AbcGeom::kFacevaryingScope};
   Alembic::AbcGeom::ON3fGeomParam::Sample l_normal_s{};
   auto l_normal = archive_out_ns::get_mesh_normals(l_mesh);
@@ -389,7 +389,7 @@ void archive_out::wirte_frame(const dag_path_out_data& in_path) {
     l_normal_s.setScope(Alembic::AbcGeom::kFacevaryingScope);
     l_normal_s.setVals(l_normal);
   } else {
-    SPDLOG_WARN("物体 {} 没有法线", maya_plug::get_node_name(in_path.dag_path_));
+    display_warning("物体 {} 没有法线", maya_plug::get_node_name(in_path.dag_path_));
   }
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{l_p, l_f, l_pc, l_uv_s, l_normal_s};
 
@@ -425,7 +425,7 @@ void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime
   //         boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.value() * maya_plug::details::spf()},
   //     l_times
   // );
-  SPDLOG_INFO(
+  display_info(
       "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), in_time_begin.value(),
       in_time_end.as(MTime::kSeconds)
   );

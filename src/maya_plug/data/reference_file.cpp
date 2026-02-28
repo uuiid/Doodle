@@ -73,12 +73,12 @@ std::string generate_file_path_base::get_extract_scene_name(const std::string& i
       std::regex const l_regex{extract_scene_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_scene_name);
     } catch (const std::regex_error& in) {
-      SPDLOG_ERROR("提取 {} 场景名称 {} 异常 {}", extract_scene_name, in_name, in.what());
+      display_error("提取 {} 场景名称 {} 异常 {}", extract_scene_name, in_name, in.what());
     }
   } else {
     l_out_name = in_name;
   }
-  SPDLOG_INFO("正则 {} 提取完成场景名称 {}", extract_scene_name, l_out_name);
+  display_info("正则 {} 提取完成场景名称 {}", extract_scene_name, l_out_name);
   return l_out_name;
 }
 std::string generate_file_path_base::get_extract_reference_name(const std::string& in_name) const {
@@ -88,12 +88,12 @@ std::string generate_file_path_base::get_extract_reference_name(const std::strin
       std::regex const l_regex{extract_reference_name};
       l_out_name = std::regex_replace(in_name, l_regex, format_reference_name);
     } catch (const std::regex_error& in) {
-      SPDLOG_ERROR("提取 {} 引用 {} 异常 {}", in_name, extract_reference_name, in.what());
+      display_error("提取 {} 引用 {} 异常 {}", in_name, extract_reference_name, in.what());
     }
   } else {
     l_out_name = in_name;
   }
-  SPDLOG_INFO("正则 {} 提取完成引用名称 {}", extract_reference_name, l_out_name);
+  display_info("正则 {} 提取完成引用名称 {}", extract_reference_name, l_out_name);
   return l_out_name;
 }
 
@@ -235,7 +235,7 @@ MSelectionList reference_file::get_collision_model() const {
     maya_chick(l_status);
 
     maya_chick(l_list.add(l_collision_message_plug.node()));
-    SPDLOG_INFO("添加碰撞体: {}", get_node_full_name(l_collision_message_plug.node()));
+    display_info("添加碰撞体: {}", get_node_full_name(l_collision_message_plug.node()));
   }
 
   return l_list;
@@ -282,14 +282,14 @@ bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::p
   /// \brief 检查各种必须属性
   if (!k_ref.isLoaded(&k_s)) {
     DOODLE_MAYA_CHICK(k_s);
-    SPDLOG_WARN("引用没有加载, 跳过!");
+    display_warning("引用没有加载, 跳过!");
     return false;
   }
 
   FSys::path k_m_str{get_abs_path()};
   DOODLE_MAYA_CHICK(k_s);
   auto k_vfx_path = fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
-  SPDLOG_INFO("推测资产路径 {}", k_vfx_path);
+  display_info("推测资产路径 {}", k_vfx_path);
   if (!in_sim_file_map.contains(k_vfx_path)) {
     display_error("引用文件 {} 没有对应的资产文件", get_namespace());
     return false;
@@ -402,7 +402,7 @@ std::optional<MDagPath> reference_file::export_group_attr() const {
     k_s = k_select.getDagPath(0, l_path);
     DOODLE_MAYA_CHICK(k_s);
   } else {
-    SPDLOG_INFO("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), "UE4");
+    display_info("引用文件 {} 没有配置中指定的 {} 导出组", get_namespace(), "UE4");
   }
   return l_path.isValid() ? std::make_optional(l_path) : std::optional<MDagPath>{};
 }

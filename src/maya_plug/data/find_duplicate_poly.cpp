@@ -101,8 +101,8 @@ std::vector<std::pair<MObject, MObject>> find_duplicate_poly::operator()(const s
   //                          const maya_poly_info& in_info_r) -> bool {
   //                         return in_info_l.cloth_priority < in_info_r.cloth_priority;
   //                       });
-  //               SPDLOG_INFO("cloth_p {} skin {}", l_m_1->cloth_priority, l_m_1->skin_priority)
-  //               SPDLOG_INFO("cloth_p {} skin {}", l_m_2->cloth_priority, l_m_2->skin_priority)
+  //               display_info("cloth_p {} skin {}", l_m_1->cloth_priority, l_m_1->skin_priority)
+  //               display_info("cloth_p {} skin {}", l_m_2->cloth_priority, l_m_2->skin_priority)
   //
   //               return std::make_pair(l_m_1->maya_obj, l_m_2->maya_obj);
   //             }) |

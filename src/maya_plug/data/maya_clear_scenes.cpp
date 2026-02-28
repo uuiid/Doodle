@@ -33,7 +33,7 @@ bool maya_clear_scenes::unlock_normal() {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh)) SPDLOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) display_info("错误的类型");
 
     /// 开始软化边
     k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
@@ -126,7 +126,7 @@ bool maya_clear_scenes::uv_set(MSelectionList& in_select) {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh)) SPDLOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) display_info("错误的类型");
 
     MFnMesh k_mesh{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);

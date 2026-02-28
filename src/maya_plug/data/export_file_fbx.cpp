@@ -60,35 +60,35 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
   };
   auto l_comm =
       fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "false"s, get_node_full_name(in_path));
-  SPDLOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+  display_info("开始使用命令 {} 主动烘培动画帧", l_comm);
   try {
     k_s = MGlobal::executeCommand(d_str{l_comm});
     DOODLE_MAYA_CHICK(k_s);
   } catch (const std::runtime_error& in) {
-    SPDLOG_INFO("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in));
+    display_info("开始主动烘培动画帧失败, 开始使用备用参数重试 {}", boost::diagnostic_information(in));
     try {
       l_comm =
           fmt::format(maya_bakeResults_str, in_start.value(), in_end.value(), "true"s, get_node_full_name(in_path));
-      SPDLOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+      display_info("开始使用命令 {} 主动烘培动画帧", l_comm);
       k_s = MGlobal::executeCommand(d_str{l_comm});
       DOODLE_MAYA_CHICK(k_s);
     } catch (const std::runtime_error& in2) {
-      SPDLOG_INFO("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", boost::diagnostic_information(in2));
+      display_info("开始主动烘培动画帧失败, 开始使用默认参数重试  error {} ", boost::diagnostic_information(in2));
 
       try {
         l_comm = fmt::format(
             R"(bakeResults  -simulation true -t "{}:{}" -hierarchy below "{}";)", in_start.value(), in_end.value(),
             get_node_full_name(in_path)
         );
-        SPDLOG_INFO("开始使用命令 {} 主动烘培动画帧", l_comm);
+        display_info("开始使用命令 {} 主动烘培动画帧", l_comm);
         k_s = MGlobal::executeCommand(d_str{l_comm});
         DOODLE_MAYA_CHICK(k_s);
       } catch (const std::runtime_error& in3) {
-        SPDLOG_INFO("烘培失败, 直接导出 {}", boost::diagnostic_information(in3));
+        display_info("烘培失败, 直接导出 {}", boost::diagnostic_information(in3));
       }
     }
 
-    SPDLOG_INFO("完成烘培, 不检查结果, 直接进行输出");
+    display_info("完成烘培, 不检查结果, 直接进行输出");
   }
 }
 
@@ -98,7 +98,7 @@ FSys::path export_file_fbx::export_anim(
   std::vector<MDagPath> l_export_list{};
   auto l_export_group = in_ref.export_group_attr();
   if (!l_export_group) {
-    SPDLOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
+    display_warning("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return {};
   }
 
@@ -249,7 +249,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
   std::vector<MDagPath> l_export_list{};
   auto l_export_group = in_ref.export_group_attr();
   if (!l_export_group) {
-    SPDLOG_WARN("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
+    display_warning("没有物体被配置文件中的 export_group 值选中, 疑似场景文件, 或为不符合配置的文件, 不进行导出");
     return {};
   }
 

@@ -215,7 +215,7 @@ class dem_bones_comm::impl {
     for (auto i = 0; i < dem.nF; ++i) {
       k_s = MGlobal::viewFrame((std::double_t)(i + startFrame_p));
       DOODLE_MAYA_CHICK(k_s);
-      SPDLOG_INFO("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
+      display_info("获取网格 {} 第 {} 帧的数据", l_mesh_name, i);
       /// \brief 添加当前帧的逆矩阵
       push_time_tran_inverse();
 
@@ -231,7 +231,7 @@ class dem_bones_comm::impl {
       }
 
       if (i + startFrame_p == bindFrame_p) {  /// \brief 设置绑定帧
-        SPDLOG_INFO("获取绑定{} 帧 网格 {} 的数据", i, l_mesh_name);
+        display_info("获取绑定{} 帧 网格 {} 的数据", i, l_mesh_name);
         // 设置多边形拓扑网格;
         for (vexpoint.reset(); !vexpoint.isDone(); vexpoint.next()) {
           int index  = vexpoint.index();
@@ -261,12 +261,12 @@ class dem_bones_comm::impl {
     MComputation computtation;
     computtation.beginComputation();
 
-    SPDLOG_INFO("开始计算分布骨骼......请等待");
+    display_info("开始计算分布骨骼......请等待");
     if (computtation.isInterruptRequested()) {
       return;
     }
 
-    SPDLOG_INFO("开始计算权重......请等待");
+    display_info("开始计算权重......请等待");
     dem.compute();
     computtation.endComputation();
 

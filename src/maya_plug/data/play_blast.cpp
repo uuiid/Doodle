@@ -58,7 +58,7 @@ void play_blast::captureCallback(MHWRender::MDrawContext& context, void* clientD
     }
   }
 
-  SPDLOG_INFO("save texture: {}", k_path);
+  display_info("save texture: {}", k_path);
 }
 
 play_blast::play_blast() : p_current_time(), p_uuid() {}
@@ -129,7 +129,7 @@ FSys::path play_blast::play_blast_(const MTime& in_start, const MTime& in_end, c
                            }};
     //    MHWRender::MRenderTarget* l_rt{l_target_manager->acquireRenderTargetFromScreen(k_play_blast_tex)};
 
-    SPDLOG_INFO("set output camera: {}", l_cam_path);
+    display_info("set output camera: {}", l_cam_path);
     // 开始排屏, 并且开始将结果属性写入
     /// \brief 当前帧和总帧数
     auto k_len = in_end - in_start + 1;

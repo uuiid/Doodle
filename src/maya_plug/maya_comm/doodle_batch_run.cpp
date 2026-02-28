@@ -437,14 +437,14 @@ class replace_file_run {
           },
           &l_data
       )};
-      SPDLOG_INFO("开始替换引用");
+      display_info("开始替换引用");
       maya_file_io::open_file(file_path_);
     }
-    SPDLOG_INFO("开始扫瞄引用");
+    display_info("开始扫瞄引用");
     ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
 
     // rename namespace
-    SPDLOG_INFO("开始重命名命名空间");
+    display_info("开始重命名命名空间");
     MFnReference l_fn_ref{};
     for (auto&& l_pair : l_data.rename_namespaces) {
       k_s = l_fn_ref.setObject(l_pair.first);
@@ -459,7 +459,7 @@ class replace_file_run {
       file_info_edit::refresh_node(l_pair.first);
     }
 
-    SPDLOG_INFO("重命名完成");
+    display_info("重命名完成");
     maya_file_io::save_file(
         maya_plug::maya_file_io::work_path("replace_file") / maya_plug::maya_file_io::get_current_path().filename()
     );
@@ -787,7 +787,7 @@ class export_rig_run {
     maya_file_io::set_workspace(file_);
     maya_file_io::open_file(file_, MFileIO::kLoadDefault);
 
-    SPDLOG_INFO("开始导出 rig fbx");
+    display_info("开始导出 rig fbx");
     auto l_s = boost::asio::make_strand(g_io_context());
     maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
     anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
