@@ -6,6 +6,7 @@
 
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
+#include <maya_plug/data/maya_display.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
@@ -115,7 +116,7 @@ class xgen_alembic_out {
 
   void open() {
     if (auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-    SPDLOG_INFO(
+    display_info(
         "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), begin_time_.value(),
         end_time_.as(MTime::kSeconds)
     );
@@ -339,7 +340,6 @@ void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_ca
 }
 void XgenRender::log(const char* in_str) {
   p_owner->displayInfo(in_str);
-  default_logger_raw()->info(in_str);
 }
 bool XgenRender::get(EBoolAttribute in_attr) const {
   if (in_attr == EBoolAttribute::ClearDescriptionCache) return true;  // 这样才会在运行时渲染
