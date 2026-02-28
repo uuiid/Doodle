@@ -1,7 +1,13 @@
 #include "status_automation.h"
 
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_core/metadata/comment.h>
+#include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/task_status.h>
+#include <doodle_core/metadata/task_type.h>
+
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+
 namespace doodle::status_automation_ns {
 
 boost::asio::awaitable<void> run(

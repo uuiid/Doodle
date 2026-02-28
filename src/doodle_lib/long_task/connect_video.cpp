@@ -4,14 +4,17 @@
 
 #include "connect_video.h"
 
-#include <doodle_lib/core/core_set.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/logger/logger.h>
+
 #include <opencv2/core.hpp>
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
+
 namespace doodle::detail {
 
 void connect_video(
