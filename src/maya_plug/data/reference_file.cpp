@@ -42,7 +42,6 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MTime.h>
 #include <maya/MUuid.h>
-#include <spdlog/common.h>
 #include <vector>
 
 namespace doodle::maya_plug {
