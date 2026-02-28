@@ -26,7 +26,7 @@
 #include <doodle_core/metadata/working_file.h>
 
 #include <doodle_lib/core/app_base.h>
-#include <doodle_lib/logger/logger_ctrl.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
@@ -34,7 +34,6 @@
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
-
 
 namespace doodle {
 
