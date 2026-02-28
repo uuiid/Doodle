@@ -3,8 +3,10 @@
 //
 #pragma once
 
-#include <doodle_core/configure/doodle_core_export.h>
-#include <doodle_core/metadata/time_point_wrap.h>
+#include <doodle_core/doodle_core_fwd.h>
+
+#include <doodle_lib/configure/doodle_lib_export.h>
+
 namespace doodle {
 class DOODLELIB_API authorization {
   class impl;

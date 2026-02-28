@@ -1,7 +1,9 @@
 #pragma once
-#include "doodle_core/core/file_sys.h"
-
+#include "doodle_lib/core/file_sys.h"
 #include <doodle_lib/doodle_lib_fwd.h>
+
+#include <boost/asio/awaitable.hpp>
+
 
 namespace doodle {
 class async_task {

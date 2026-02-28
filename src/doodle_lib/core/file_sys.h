@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <doodle_core/doodle_core_fwd.h>
+
 #include <doodle_lib/configure/doodle_lib_export.h>
 #include <doodle_lib/core/chrono_.h>
 
@@ -15,7 +17,6 @@
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <spdlog/logger.h>
-
 
 namespace doodle {
 using logger_ptr     = std::shared_ptr<spdlog::logger>;

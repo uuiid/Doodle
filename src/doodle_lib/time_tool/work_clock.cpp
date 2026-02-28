@@ -15,11 +15,10 @@
 #include <boost/icl/interval_map.hpp>
 #include <boost/icl/split_interval_set.hpp>
 
-#include "logger/logger.h"
-#include "metadata/time_point_wrap.h"
 #include "time_tool/work_clock.h"
 #include <chrono>
 #include <range/v3/range.hpp>
+
 
 namespace doodle::business {
 
@@ -50,7 +49,8 @@ work_clock2::time_type work_clock2::next_time(const time_type& in_begin, const d
   for (auto&& l_i : l_l) {
     auto l_en_t = boost::icl::upper(l_i) - boost::icl::lower(l_i);
     if ((l_en_t + l_len) >= in_du) {
-      // default_logger_raw()->info("{} + {} ", boost::icl::lower(l_i), doodle::chrono::round<doodle::chrono::seconds>(in_du - l_len));
+      // default_logger_raw()->info("{} + {} ", boost::icl::lower(l_i),
+      // doodle::chrono::round<doodle::chrono::seconds>(in_du - l_len));
       return boost::icl::lower(l_i) + doodle::chrono::round<doodle::chrono::seconds>(in_du - l_len);
     } else {
       l_len += l_en_t;

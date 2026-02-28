@@ -4,10 +4,9 @@
 
 #include "authorization.h"
 
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/metadata/time_point_wrap.h"
-#include <doodle_core/logger/logger.h>
-#include <doodle_core/platform/win/register_file_type.h>
+#include "doodle_lib/core/core_set.h"
+#include <doodle_lib/logger/logger.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include "cryptopp/files.h"
 #include "cryptopp/hex.h"

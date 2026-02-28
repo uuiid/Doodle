@@ -4,8 +4,9 @@
 
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/lib_warp/boost_icl_warp.h>
 #include <doodle_core/metadata/rules.h>
+
+#include <doodle_lib/lib_warp/boost_icl_warp.h>
 
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/interval_map.hpp>
@@ -14,6 +15,7 @@
 
 #include <bitset>
 #include <utility>
+
 
 namespace doodle::business {
 

@@ -3,12 +3,12 @@
 //
 
 #pragma once
-#include "doodle_core/metadata/server_task_info.h"
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/shot.h>
 
 #include <doodle_lib/core/asyn_task.h>
@@ -23,6 +23,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <vector>
+
 
 namespace doodle {
 namespace import_and_render_ue_ns {
@@ -137,7 +138,7 @@ class run_ue_assembly_local : public async_task {
       j.at("ue_asset_path").get_to(p.ue_asset_path_);
       j.at("update_ue_path").get_to(p.update_ue_path_);
       j.at("clear_path").get_to(p.clear_path_);
-      
+
       j.at("begin_time").get_to(p.begin_time_);
       j.at("end_time").get_to(p.end_time_);
       j.at("out_file_dir").get_to(p.out_file_dir_);

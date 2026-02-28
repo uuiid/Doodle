@@ -20,7 +20,6 @@ target_sources(
         doodle_lib.h
         template_util.h
         file_sys.h
-        chrono_.h
         app_base.h
         global_function.h
         app_service.h

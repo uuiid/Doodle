@@ -1,16 +1,16 @@
 #include "computing_time.h"
 
 #include "doodle_core/exception/exception.h"
-#include "doodle_core/metadata/time_point_wrap.h"
-#include "doodle_core/platform/win/register_file_type.h"
 #include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/entity_type.h>
 
 #include "doodle_lib/core/http/http_session_data.h"
+#include "doodle_lib/platform/win/register_file_type.h"
 
 #include <boost/rational.hpp>
 
 #include <memory>
+
 
 //
 #include "doodle_core/sqlite_orm/sqlite_database.h"
@@ -489,16 +489,15 @@ std::string patch_time(
 boost::asio::awaitable<boost::beast::http::message_generator> computing_time::post(session_data_ptr in_handle) {
   if (user_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 
-  auto l_json      = in_handle->get_json();
+  auto l_json = in_handle->get_json();
 
-  auto l_data      = l_json.get<std::vector<computing_time_post_req_data>>();
-  auto l_user      = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
+  auto l_data = l_json.get<std::vector<computing_time_post_req_data>>();
+  auto l_user = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始提交工时 user_id {} year_month {} count {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()}),
-      l_data.size()
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_data.size()
   );
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
@@ -539,9 +538,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成提交工时 user_id {} year_month {} 写入 {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()}),
-      l_block_ptr->size()
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_block_ptr->size()
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
@@ -564,13 +562,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
   computing_time_post_req_data l_data = l_json.get<computing_time_post_req_data>();
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始追加工时 user_id {} year_month {} task_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()}),
-      l_data.task_id
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始追加工时 user_id {} year_month {} task_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_data.task_id
   );
 
-  auto l_user                         = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
+  auto l_user = g_ctx().get<sqlite_database>().get_by_uuid<person>(user_id_);
 
   {
     work_xlsx_task_info_helper::database_t l_data_work{
@@ -614,9 +611,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成追加工时 user_id {} year_month {} 总条目 {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()}),
-      l_block_ptr->size()
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_block_ptr->size()
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
@@ -632,12 +628,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始自定义工时 user_id {} year_month {} name {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_data.user_id_, fmt::format("{}-{}", std::int32_t{l_data.year_month_.year()},
-                                                     std::uint32_t{l_data.year_month_.month()}),
+      person_.person_.get_full_name(), l_data.user_id_,
+      fmt::format("{}-{}", std::int32_t{l_data.year_month_.year()}, std::uint32_t{l_data.year_month_.month()}),
       l_data.name
   );
 
-  auto l_user                                = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_data.user_id_);
+  auto l_user = g_ctx().get<sqlite_database>().get_by_uuid<person>(l_data.user_id_);
   co_await g_ctx().get<sqlite_database>().install(
       std::make_shared<work_xlsx_task_info_helper::database_t>(
           work_xlsx_task_info_helper::database_t{
@@ -679,8 +675,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   co_await g_ctx().get<sqlite_database>().update_range(l_block_ptr);
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成自定义工时 user_id {} year_month {} 总条目 {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_data.user_id_,
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成自定义工时 user_id {} year_month {} 总条目 {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_data.user_id_,
       fmt::format("{}-{}", std::int32_t{l_data.year_month_.year()}, std::uint32_t{l_data.year_month_.month()}),
       l_block_ptr->size()
   );
@@ -696,9 +692,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始排序工时 user_id {} year_month {} count {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()}),
-      l_data.size()
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_data.size()
   );
 
   const auto l_block =
@@ -737,8 +732,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_sor
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成排序工时 user_id {} year_month {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()})
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()})
   );
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_sort));
 }
@@ -748,8 +743,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始平均工时 user_id {} year_month {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()})
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()})
   );
 
   auto l_block = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
@@ -761,9 +756,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成平均工时 user_id {} year_month {} 条目 {}", person_.person_.email_,
-      person_.person_.get_full_name(), user_id_, fmt::format("{}-{}", std::int32_t{year_month_.year()},
-                                                     std::uint32_t{year_month_.month()}),
-      l_block->size()
+      person_.person_.get_full_name(), user_id_,
+      fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()}), l_block->size()
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block));

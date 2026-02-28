@@ -11,7 +11,6 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/main_map.h>
-#include <doodle_core/metadata/time_point_wrap.h>
 
 #include <doodle_lib/core/alembic_file.h>
 #include <doodle_lib/core/fbx_file.h>
@@ -26,6 +25,7 @@
 #include "http_client/kitsu_client.h"
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
+
 
 namespace doodle {
 

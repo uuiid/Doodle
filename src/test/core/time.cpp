@@ -2,12 +2,12 @@
 // Created by TD on 2022/9/20.
 //
 
-#include "doodle_core/core/doodle_lib.h"
 #include "doodle_core/metadata/rules.h"
 #include "doodle_core/metadata/user.h"
-#include "doodle_core/time_tool/work_clock.h"
 #include <doodle_core/doodle_core.h>
-#include <doodle_core/metadata/time_point_wrap.h>
+
+#include "doodle_lib/core/doodle_lib.h"
+#include "doodle_lib/time_tool/work_clock.h"
 
 #include <boost/system/detail/error_code.hpp>
 #include <boost/test/unit_test.hpp>
@@ -32,14 +32,14 @@ BOOST_AUTO_TEST_CASE(time_to_json) {
       chrono::current_zone(), std::chrono::system_clock::time_point{chrono::sys_days{2022y / 5 / 7} + 11h + 46min + 55s}
   };
   auto l_time_sys = l_time.get_sys_time();
-  auto l_t =
-      nlohmann::json::parse(R"({"time":"2022-05-07 11:46:55"})")["time"].get<chrono::system_zoned_time>().get_sys_time(
-      );
+  auto l_t        = nlohmann::json::parse(R"({"time":"2022-05-07 11:46:55"})")["time"]
+                 .get<chrono::system_zoned_time>()
+                 .get_sys_time();
   BOOST_TEST(l_t == l_time_sys);
 
-  auto l_t1 =
-      nlohmann::json::parse(R"({"time":"2022-05-07T11:46:55Z"})")["time"].get<chrono::system_zoned_time>().get_sys_time(
-      );
+  auto l_t1 = nlohmann::json::parse(R"({"time":"2022-05-07T11:46:55Z"})")["time"]
+                  .get<chrono::system_zoned_time>()
+                  .get_sys_time();
   BOOST_TEST(l_t1 == l_time_sys);
 
   auto l_t2 = nlohmann::json::parse(R"({"time":"2022-05-07T19:46:55+08:00"})")["time"]

@@ -11,7 +11,6 @@ target_sources(
         project.h
         season.h
         shot.h
-        time_point_wrap.h
         user.h
         move_create.h
         rules.h
