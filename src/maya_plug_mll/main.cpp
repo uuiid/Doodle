@@ -1,5 +1,4 @@
 #include <maya_plug/data/maya_register_main.h>
-#include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
 #include <maya_plug/maya_comm/chick_export_fbx.h>
 #include <maya_plug/maya_comm/clear_scene_comm.h>
