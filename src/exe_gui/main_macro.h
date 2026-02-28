@@ -21,7 +21,7 @@
     try {                                                                              \
       return app.run();                                                                \
     } catch (...) {                                                                    \
-      DOODLE_LOG_ERROR(boost::current_exception_diagnostic_information(true));         \
+      SPDLOG_ERROR(boost::current_exception_diagnostic_information(true));         \
       std::cout << boost::current_exception_diagnostic_information(true) << std::endl; \
       return 1;                                                                        \
     }                                                                                  \

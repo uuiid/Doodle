@@ -43,14 +43,14 @@ auto print_abc_xform(Alembic::AbcGeom::IXform& in_xform) {
   {
     auto l_index_ll = *l_index_l.getIndices();
     for (auto i = 0; i < l_index_ll.size(); ++i) {
-      DOODLE_LOG_INFO(" {} : {} ", i, l_index_ll[i]);
+      SPDLOG_INFO(" {} : {} ", i, l_index_ll[i]);
     }
   }
 
   {
     auto l_index_ll = *l_index_l.getVals();
     for (auto i = 0; i < l_index_ll.size(); ++i) {
-      DOODLE_LOG_INFO(" {} : {} {} ", i, l_index_ll[i].x, l_index_ll[i].y);
+      SPDLOG_INFO(" {} : {} {} ", i, l_index_ll[i].x, l_index_ll[i].y);
     }
   }
 
@@ -58,12 +58,12 @@ auto print_abc_xform(Alembic::AbcGeom::IXform& in_xform) {
     std::vector<std::string> l_names;
     l_s.getFaceSetNames(l_names);
     for (auto& l_name : l_names) {
-      DOODLE_LOG_INFO("face set name {} ", l_name);
+      SPDLOG_INFO("face set name {} ", l_name);
       auto l_f   = l_s.getFaceSet(l_name);
 
       auto l_f_s = *l_f.getSchema().getValue().getFaces();
       for (auto i = 0; i < l_f_s.size(); ++i) {
-        DOODLE_LOG_INFO(" {} : {} ", i, l_f_s[i]);
+        SPDLOG_INFO(" {} : {} ", i, l_f_s[i]);
       }
     }
   }
@@ -77,15 +77,15 @@ auto maya_abc_r() {
   auto l_top        = l_ar.getTop();
   const auto l_meta = l_top.getMetaData();
   if (!Alembic::AbcGeom::IXform::matches(l_meta)) {
-    DOODLE_LOG_ERROR("not a xform, name {}", l_top.getName());
+    SPDLOG_ERROR("not a xform, name {}", l_top.getName());
 
     const auto l_child_count = l_top.getNumChildren();
     for (auto i = 0; i < l_child_count; ++i) {
       auto l_child = l_top.getChild(i);
-      DOODLE_LOG_INFO("child {} : {} ", i, l_child.getName());
+      SPDLOG_INFO("child {} : {} ", i, l_child.getName());
 
       if (Alembic::AbcGeom::IXform::matches(l_child.getMetaData())) {
-        DOODLE_LOG_INFO("child {} is a xform", i);
+        SPDLOG_INFO("child {} is a xform", i);
         Alembic::AbcGeom::IXform l_geo{l_child, Alembic::Abc::kWrapExisting};
         print_abc_xform(l_geo);
       }

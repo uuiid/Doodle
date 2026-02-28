@@ -76,7 +76,7 @@ bool maya_camera::back_camera(const MTime& in_start, const MTime& in_end) {
 }
 bool maya_camera::unlock_attr() {
   chick();
-  DOODLE_LOG_INFO("开始解除相机属性锁定");
+  SPDLOG_INFO("开始解除相机属性锁定");
   MStatus k_s{};
   MFnDependencyNode k_node{};
   {
@@ -91,7 +91,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_MAYA_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-    //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    //    SPDLOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_MAYA_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -110,7 +110,7 @@ bool maya_camera::unlock_attr() {
     auto k_attr = k_node.attribute(l_i, &k_s);
     DOODLE_MAYA_CHICK(k_s);
     auto k_plug = k_node.findPlug(k_attr, false, &k_s);
-    //    DOODLE_LOG_INFO("开始解锁属性 {}", k_plug.info());
+    //    SPDLOG_INFO("开始解锁属性 {}", k_plug.info());
     if (k_plug.isLocked(&k_s)) {
       DOODLE_MAYA_CHICK(k_s);
       k_s = k_plug.setLocked(false);
@@ -167,7 +167,7 @@ maya_camera maya_camera::conjecture() {
     std::sort(k_list.begin(), k_list.end(), [](auto& in_l, auto& in_r) { return in_l > in_r; });
 
     for (const auto& k_c : k_list) {
-      DOODLE_LOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
+      SPDLOG_INFO("相机 {} 优先级是 {}", k_c.p_dag_path.fullPathName(), k_c.priority);
     }
     if (!k_list.empty()) {
       return maya_camera{k_list[0].p_dag_path};
@@ -281,7 +281,7 @@ bool maya_camera::camera_parent_is_word() {
   l_s = l_node.getPath(l_path);
   DOODLE_MAYA_CHICK(l_s);
 
-  DOODLE_LOG_INFO("检查相机级数为 {}", l_path.length());
+  SPDLOG_INFO("检查相机级数为 {}", l_path.length());
   return l_path.length() > 1;
 }
 

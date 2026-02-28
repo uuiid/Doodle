@@ -87,7 +87,7 @@ void write_test_fbx(
     const std::shared_ptr<fbxsdk::FbxManager>& in_manager, const FSys::path& in_fbx_path, const fbx_load_result& in_data
 ) {
   auto l_path = in_fbx_path.parent_path() / fmt::format("{}_test.fbx", in_fbx_path.stem().string());
-  DOODLE_LOG_WARN("写出测试文件 {}", l_path);
+  SPDLOG_WARN("写出测试文件 {}", l_path);
   // 创建新场景, 并将骨骼数据写入
   auto l_scene = fbxsdk::FbxScene::Create(in_manager.get(), "testScene");
   auto l_root  = l_scene->GetRootNode();

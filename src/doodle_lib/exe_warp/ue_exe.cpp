@@ -56,7 +56,7 @@ void install_SideFX_Labs(const FSys::path& path) {
   }
 
   auto sourePath = register_file_type::program_location().parent_path() / "SideFX_Labs";
-  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
+  SPDLOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 
@@ -68,7 +68,7 @@ void install_UnrealEngine5VLC(const FSys::path& path) {
   }
 
   auto sourePath = register_file_type::program_location().parent_path() / "UnrealEngine5VLC";
-  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
+  SPDLOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 
@@ -95,7 +95,7 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
     FSys::create_directories(targetPath);
   }
 
-  DOODLE_LOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
+  SPDLOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
   copy(l_out_path, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
 

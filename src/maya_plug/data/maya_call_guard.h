@@ -17,7 +17,7 @@ class maya_call_guard {
   ~maya_call_guard() {
     auto k_s = MMessage::removeCallback(call_id);
     if (!k_s) {
-      DOODLE_LOG_ERROR("卸载回调出错");
+      SPDLOG_ERROR("卸载回调出错");
     }
   }
 };

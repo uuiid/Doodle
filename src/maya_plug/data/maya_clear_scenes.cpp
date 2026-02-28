@@ -34,7 +34,7 @@ bool maya_clear_scenes::unlock_normal() {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh)) DOODLE_LOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) SPDLOG_INFO("错误的类型");
 
     /// 开始软化边
     k_s = MGlobal::select(k_dag_path, MObject::kNullObj, MGlobal::kReplaceList);
@@ -127,7 +127,7 @@ bool maya_clear_scenes::uv_set(MSelectionList& in_select) {
     MFnDagNode k_dag_node{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
 
-    if (!k_dag_path.hasFn(MFn::kMesh)) DOODLE_LOG_INFO("错误的类型");
+    if (!k_dag_path.hasFn(MFn::kMesh)) SPDLOG_INFO("错误的类型");
 
     MFnMesh k_mesh{k_dag_path, &k_s};
     DOODLE_MAYA_CHICK(k_s);
@@ -244,15 +244,15 @@ if 'leukocyte' in globals():
     auto k_varc = k_maya_script / "vaccine.pyc";
     MString k_str{};
     if (FSys::exists(k_user)) {
-      DOODLE_LOG_INFO("删除 {}", k_user);
+      SPDLOG_INFO("删除 {}", k_user);
       FSys::remove(k_user);
     }
     if (FSys::exists(k_var)) {
-      DOODLE_LOG_INFO("删除 {}", k_var);
+      SPDLOG_INFO("删除 {}", k_var);
       FSys::remove(k_var);
     }
     if (FSys::exists(k_varc)) {
-      DOODLE_LOG_INFO("删除 {}", k_varc);
+      SPDLOG_INFO("删除 {}", k_varc);
       FSys::remove(k_varc);
     }
   }

@@ -106,14 +106,14 @@ MObject make_low_node(const MObject& in_object, const MObject& in_parent, const 
   DOODLE_MAYA_CHICK(l_s);
   l_r = l_node.duplicate(false, false, &l_s);
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_LOG_INFO("复制节点 {}", k_anim_mesh_name);
+  SPDLOG_INFO("复制节点 {}", k_anim_mesh_name);
 
   // 设置复制节点的名称
   l_s = l_node.setObject(l_r);
   DOODLE_MAYA_CHICK(l_s);
   l_node.setName(d_str{fmt::format("{}_{}", k_anim_mesh_name, in_suffix)}, false, &l_s);
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_LOG_INFO("设置复制节点名称 {}", l_node.name(&l_s));
+  SPDLOG_INFO("设置复制节点名称 {}", l_node.name(&l_s));
   DOODLE_MAYA_CHICK(l_s);
 
   // 设置材质属性
@@ -127,7 +127,7 @@ MObject make_low_node(const MObject& in_object, const MObject& in_parent, const 
   DOODLE_MAYA_CHICK(l_s);
   l_s = l_node.addChild(l_r);
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_LOG_INFO("设置复制节点父物体 {}", l_node.name(&l_s));
+  SPDLOG_INFO("设置复制节点父物体 {}", l_node.name(&l_s));
   DOODLE_MAYA_CHICK(l_s);
   return l_r;
 }
@@ -151,14 +151,14 @@ std::vector<MObject> make_high_node(const std::vector<MObject>& in_list, const M
     DOODLE_MAYA_CHICK(l_s);
     auto l_r = l_node.duplicate(false, false, &l_s);
     DOODLE_MAYA_CHICK(l_s);
-    DOODLE_LOG_INFO("复制高模节点 {}", k_anim_mesh_name);
+    SPDLOG_INFO("复制高模节点 {}", k_anim_mesh_name);
     DOODLE_MAYA_CHICK(l_s);
 
     // 设置复制节点的名称
     l_node.setObject(l_r);
     l_node.setName(d_str{fmt::format("{}_out_mesh", k_anim_mesh_name)}, false, &l_s);
     DOODLE_MAYA_CHICK(l_s);
-    DOODLE_LOG_INFO("设置复制高模节点名称 {}", l_node.name(&l_s));
+    SPDLOG_INFO("设置复制高模节点名称 {}", l_node.name(&l_s));
     DOODLE_MAYA_CHICK(l_s);
 
     /// 设置材质
@@ -172,7 +172,7 @@ std::vector<MObject> make_high_node(const std::vector<MObject>& in_list, const M
     DOODLE_MAYA_CHICK(l_s);
     l_s = l_node.addChild(l_r);
     DOODLE_MAYA_CHICK(l_s);
-    DOODLE_LOG_INFO("设置复制高模节点父物体 {}", l_node.name(&l_s));
+    SPDLOG_INFO("设置复制高模节点父物体 {}", l_node.name(&l_s));
     DOODLE_MAYA_CHICK(l_s);
 
     return l_r;
@@ -207,7 +207,7 @@ MObject warp_model(const MObject& in_low, const std::vector<MObject>& in_high_no
   DOODLE_MAYA_CHICK(l_s);
   l_string += fmt::format(" 低模节点 {} 进行包裹变形", l_node.name(&l_s));
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_LOG_INFO(l_string);
+  SPDLOG_INFO(l_string);
   /// 设置选择
   l_s = MGlobal::setActiveSelectionList(k_select);
   DOODLE_MAYA_CHICK(l_s);
@@ -243,7 +243,7 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
   l_s = l_fn_skin_cluster.setEnvelope(0);
   DOODLE_MAYA_CHICK(l_s);
 
-  DOODLE_LOG_INFO("找到高模皮肤簇 {}， 并将包裹设置为0 ", l_fn_skin_cluster.name(&l_s));
+  SPDLOG_INFO("找到高模皮肤簇 {}， 并将包裹设置为0 ", l_fn_skin_cluster.name(&l_s));
   DOODLE_MAYA_CHICK(l_s);
 
   ///  获得名称进行格式化命令
@@ -257,7 +257,7 @@ void transfer_dynamic(const MObject& in_sim_node, const MObject& in_anim_node) {
 
   std::string l_sim_name = d_str{l_node.name(&l_s)};
   DOODLE_MAYA_CHICK(l_s);
-  DOODLE_LOG_INFO("生成包裹命令 blendShape -automatic {} {};", l_sim_name, l_aim_name);
+  SPDLOG_INFO("生成包裹命令 blendShape -automatic {} {};", l_sim_name, l_aim_name);
   /// 这个设置包裹
   MStringArray l_blend{};
   l_s = MGlobal::executeCommand(d_str{fmt::format(R"(blendShape -automatic {} {};)", l_sim_name, l_aim_name)}, l_blend);
@@ -602,7 +602,7 @@ class create_qcloth_assets::impl {
 
 create_qcloth_assets::create_qcloth_assets() : p_i(std::make_unique<impl>()) {}
 void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
-  DOODLE_LOG_INFO(in_arg);
+  SPDLOG_INFO(in_arg);
   MStatus l_s{};
   MArgDatabase const l_arg{syntax(), in_arg, &l_s};
 

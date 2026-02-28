@@ -34,14 +34,14 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
     l_plug = l_node.findPlug(d_str{in_name}, false, &k_s);
 
     if (!k_s) {  /// \brief 出错后再次寻找
-      DOODLE_LOG_WARN(k_s.errorString());
+      SPDLOG_WARN(k_s.errorString());
       l_plug = l_node.findPlug(d_str{in_name}, true, &k_s);
       if (!k_s) {
-        DOODLE_LOG_WARN(k_s.errorString());
+        SPDLOG_WARN(k_s.errorString());
       }
     }
   } catch (const std::runtime_error& error) {
-    DOODLE_LOG_INFO("没有在这个节点中找到属性 {}", in_name);
+    SPDLOG_INFO("没有在这个节点中找到属性 {}", in_name);
   }
   if (!l_plug.isNull()) {
     return l_plug;
@@ -60,16 +60,16 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
       l_plug = l_dag_node_shape.findPlug(d_str{in_name}, false, &k_s);
 
       if (!k_s) {
-        DOODLE_LOG_WARN(k_s.errorString());
+        SPDLOG_WARN(k_s.errorString());
       }
 
       l_plug = l_dag_node_shape.findPlug(d_str{in_name}, true, &k_s);
       if (!k_s) {
-        DOODLE_LOG_WARN(k_s.errorString());
+        SPDLOG_WARN(k_s.errorString());
       }
 
     } catch (const std::runtime_error& error) {
-      DOODLE_LOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点");
+      SPDLOG_INFO("节点下方没有 shape 形状节点, 不需要寻找形状节点");
     }
   }
 
@@ -121,7 +121,7 @@ MObject get_shading_engine(const MDagPath& in_node) {
     //    DOODLE_MAYA_CHICK(k_s);
     //    MFnDependencyNode k_node{};
     //    k_node.setObject(obj);
-    //    DOODLE_LOG_INFO(fmt::format("找到节点 {}", d_str{k_node.name()}.str()));
+    //    SPDLOG_INFO(fmt::format("找到节点 {}", d_str{k_node.name()}.str()));
     break;
   }
   DOODLE_CHICK(!obj.isNull(), "没有找到节点");
@@ -469,7 +469,7 @@ MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_ma
     auto k_name = fmt::format("{}_export_abc", in_marge_name);
     std::string l_mel =
         fmt::format(R"(polyUnite -ch 1 -mergeUVSets 1 -centerPivot -name "{}" {};)", k_name, fmt::join(l_names, " "));
-    DOODLE_LOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
+    SPDLOG_INFO("开始合并网格体 {}", fmt::join(l_names, " "));
     k_s = MGlobal::executeCommand(d_str{l_mel}, k_r_s, true);
     DOODLE_MAYA_CHICK(k_s);
 
@@ -477,7 +477,7 @@ MDagPath marge_mesh(const MSelectionList& in_marge_obj, const std::string& in_ma
     k_s = k_select.add(k_r_s[0], true);
     DOODLE_MAYA_CHICK(k_s);
   } else {
-    DOODLE_LOG_INFO("只有一个网格体 不合并");
+    SPDLOG_INFO("只有一个网格体 不合并");
   }
   MDagPath k_mesh_path{};
   k_s = k_select.getDagPath(0, k_mesh_path);

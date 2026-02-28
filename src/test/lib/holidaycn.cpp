@@ -26,11 +26,11 @@ using namespace doodle;
 //   struct empty : public msm::front::state<> {
 //     template <class Event, class FSM>
 //     void on_entry(Event const&, FSM&) {
-//       DOODLE_LOG_INFO("empty");
+//       SPDLOG_INFO("empty");
 //     }
 //     template <class Event, class FSM>
 //     void on_exit(Event const&, FSM&) {
-//       DOODLE_LOG_INFO("empty");
+//       SPDLOG_INFO("empty");
 //     }
 //     struct internal_guard_fct {
 //       template <class EVT, class FSM, class SourceState, class TargetState>
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(test_holidaycn) {
   // holidaycn_time2 l_time{l_rule.work_pair_p};
   // l_time.set_clock(work_clock);
 
-  DOODLE_LOG_INFO(work_clock.debug_print());
+  SPDLOG_INFO(work_clock.debug_print());
 
 }
 

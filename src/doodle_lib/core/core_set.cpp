@@ -55,7 +55,7 @@ core_set::core_set()
       auto l_data = nlohmann::json::parse(l_in_josn);
       l_data.at("setting").get_to(*this);
     } catch (const nlohmann::json::parse_error& err) {
-      DOODLE_LOG_DEBUG(boost::diagnostic_information(err));
+      SPDLOG_DEBUG(boost::diagnostic_information(err));
     }
   }
 }

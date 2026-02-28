@@ -37,7 +37,7 @@ work_clock2::duration_type work_clock2::operator()(const time_type& in_min, cons
   for (const auto& l_i : l_l) {
     l_len += (l_i.upper() - l_i.lower());
     // l_len += (boost::icl::upper(l_i).get_sys_time() - boost::icl::lower(l_i).get_sys_time());
-    // DOODLE_LOG_INFO("{} - {} = {}", l_i.upper(), l_i.lower(), chrono::round<chrono::seconds>(l_len));
+    // SPDLOG_INFO("{} - {} = {}", l_i.upper(), l_i.lower(), chrono::round<chrono::seconds>(l_len));
   }
   return l_len;
 }
@@ -127,11 +127,11 @@ work_clock2& work_clock2::operator+=(const std::tuple<time_type, time_type, std:
 work_clock2& work_clock2::operator-=(const std::tuple<time_type, time_type, std::string>& in_time) {
   auto&& [l_time_1, l_time_2, l_info] = in_time;
   auto l_dis                          = discrete_interval_time::closed(l_time_1, l_time_2);
-  // DOODLE_LOG_INFO("减去时间 {} -> {} {}", l_time_1, l_time_2, l_info);
-  // DOODLE_LOG_INFO("减去时间2 {} ", l_dis);
+  // SPDLOG_INFO("减去时间 {} -> {} {}", l_time_1, l_time_2, l_info);
+  // SPDLOG_INFO("减去时间2 {} ", l_dis);
   interval_set_time_ -= l_dis;
   interval_map_time_ += std::make_pair(discrete_interval_time::right_open(l_time_1, l_time_2), info_type{l_info});
-  // DOODLE_LOG_INFO("时间段 {}", interval_set_time_);
+  // SPDLOG_INFO("时间段 {}", interval_set_time_);
   return *this;
 }
 void work_clock2::add_info(const std::tuple<time_type, time_type, std::string>& in_time) {

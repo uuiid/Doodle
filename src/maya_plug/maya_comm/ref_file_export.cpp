@@ -40,7 +40,7 @@ MStatus ref_file_export::doIt(const MArgList& in_list) {
   if (l_refs.empty()) return {};
 
   auto l_cloth = qcloth_factory{}.create_cloth();
-  DOODLE_LOG_INFO("开始导出abc");
+  SPDLOG_INFO("开始导出abc");
 
   auto l_gen               = std::make_shared<reference_file_ns::generate_abc_file_path>();
 

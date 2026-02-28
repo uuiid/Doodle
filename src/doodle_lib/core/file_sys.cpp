@@ -20,7 +20,7 @@
 namespace doodle::FSys {
 
 void open_explorer(const path& in_path) {
-  DOODLE_LOG_INFO("打开路径: {}", in_path.generic_string());
+  SPDLOG_INFO("打开路径: {}", in_path.generic_string());
   ShellExecute(
       nullptr, _T("open"), _T("EXPLORER.EXE"), in_path.lexically_normal().native().c_str(), nullptr, SW_SHOWDEFAULT
   );
@@ -152,13 +152,13 @@ bool folder_is_save(const FSys::path& in_file_path) {
   try {
     FSys::fstream{l_temp, std::ios::out} << "test_file";
   } catch (const FSys::filesystem_error& e) {
-    DOODLE_LOG_INFO("文件 {} 不可写入 {}", l_path.generic_string(), e.what());
+    SPDLOG_INFO("文件 {} 不可写入 {}", l_path.generic_string(), e.what());
     return false;
   }
   std::error_code l_error_code{};
   FSys::remove(l_temp, l_error_code);
   if (l_error_code) {
-    DOODLE_LOG_INFO("文件 {} 不可删除 {}", l_path.generic_string(), l_error_code.message());
+    SPDLOG_INFO("文件 {} 不可删除 {}", l_path.generic_string(), l_error_code.message());
     return false;
   }
   return true;

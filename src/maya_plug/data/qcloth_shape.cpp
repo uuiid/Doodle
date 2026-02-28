@@ -67,10 +67,10 @@ void qcloth_shape::set_cache_folder(const reference_file& in_handle, const FSys:
   auto k_file_name        = maya_file_io::get_current_path();
   FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
   l_string /= in_path;
-  DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
+  SPDLOG_INFO("设置缓存路径 {}", l_string);
   auto k_path = maya_file_io::work_path(l_string);
   if (need_clear && FSys::exists(k_path)) {
-    DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
+    SPDLOG_INFO("发现缓存目录, 主动删除 {}", k_path);
     FSys::remove_all(k_path);
   }
   FSys::create_directories(k_path);
@@ -128,7 +128,7 @@ MDagPath qcloth_shape::cloth_mesh() const {
   MStatus l_s{};
   MObject l_mesh{};
   /// \brief 获得组件点上下文
-  DOODLE_LOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
+  SPDLOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
   auto l_shape = maya_plug::get_shape(obj);
   auto l_plug  = get_plug(l_shape, "outputMesh");
 
@@ -141,7 +141,7 @@ MDagPath qcloth_shape::cloth_mesh() const {
 
   DOODLE_CHICK(!l_mesh.isNull(), "没有找到布料模型节点");
   auto l_path = get_dag_path(l_mesh);
-  DOODLE_LOG_INFO("找到布料节点 {}", l_path);
+  SPDLOG_INFO("找到布料节点 {}", l_path);
   return l_path;
 }
 
@@ -157,7 +157,7 @@ void qcloth_shape::add_field(const reference_file& in_handle) const {
   auto l_f = in_handle.get_field_dag();
   if (l_f) {
     auto l_mesh = cloth_mesh();
-    DOODLE_LOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
+    SPDLOG_INFO("开始设置解算布料 {} 关联的风场", l_mesh);
     MStatus l_status{};
     MSelectionList l_select_list{};
 
@@ -173,7 +173,7 @@ void qcloth_shape::add_field(const reference_file& in_handle) const {
     l_status = l_select_list.add(*l_f);
     DOODLE_MAYA_CHICK(l_status);
     MGlobal::setActiveSelectionList(l_select_list);
-    DOODLE_LOG_INFO("设置布料风场 {}", *l_f);
+    SPDLOG_INFO("设置布料风场 {}", *l_f);
     l_status = MGlobal::executeCommand(d_str{"qlConnectField;"});
   }
 }
@@ -211,12 +211,12 @@ void qcloth_shape::rest() const {
   auto l_name = get_node_name(l_path);
   boost::replace_last(l_name, l_proxy_, l_simple_module_proxy_);
 
-  DOODLE_LOG_INFO("开始寻找布料对应的初识姿势 {} -> {}", get_node_name(l_path), l_name);
+  SPDLOG_INFO("开始寻找布料对应的初识姿势 {} -> {}", get_node_name(l_path), l_name);
   maya_chick(l_list.add(conv::to_ms(l_name)));
   maya_chick(MGlobal::setActiveSelectionList(l_list));
   auto l_status = MGlobal::executeCommand(d_str{"qlUpdateInitialPose;"});
   if (!l_status) {
-    DOODLE_LOG_WARN("布料对应的初识姿势 {} 设置出错", l_name);
+    SPDLOG_WARN("布料对应的初识姿势 {} 设置出错", l_name);
   }
 }
 MObject qcloth_shape::get_solver() const {
@@ -239,7 +239,7 @@ MObject qcloth_shape::get_solver() const {
 }
 
 MDagPath qcloth_shape::get_shape() const {
-  DOODLE_LOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
+  SPDLOG_INFO(fmt::format("使用q布料节点 {}", get_node_full_name(obj)));
   return maya_plug::get_dag_path(obj);
 }
 
@@ -279,13 +279,13 @@ void qcloth_shape::set_cache_folder_read_only() const {
   // auto k_file_name    = maya_file_io::get_current_path();
   // FSys::path l_string = fmt::format("cache/{}/{}/{}", k_file_name.stem().generic_string(), k_namespace, k_node_name);
   // l_string /= in_path;
-  // DOODLE_LOG_INFO("设置缓存路径 {}", l_string);
+  // SPDLOG_INFO("设置缓存路径 {}", l_string);
   auto k_path         = maya_file_io::work_path(l_cache_folder);
-  DOODLE_LOG_WARN("发现缓存路径 {}", k_path);
+  SPDLOG_WARN("发现缓存路径 {}", k_path);
   if (!FSys::exists(k_path))
     throw_exception(doodle_error{enum_to_num(maya_enum::maya_error_t::cache_path_error), "缓存路径 {} 不存在", k_path});
   // if (need_clear && FSys::exists(k_path)) {
-  // DOODLE_LOG_INFO("发现缓存目录, 主动删除 {}", k_path);
+  // SPDLOG_INFO("发现缓存目录, 主动删除 {}", k_path);
   // FSys::remove_all(k_path);
   // }
   // FSys::create_directories(k_path);

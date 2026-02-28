@@ -115,7 +115,7 @@ class xgen_alembic_out {
 
   void open() {
     if (auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-    DOODLE_LOG_INFO(
+    SPDLOG_INFO(
         "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), begin_time_.value(),
         end_time_.as(MTime::kSeconds)
     );

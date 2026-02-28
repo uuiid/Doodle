@@ -662,7 +662,7 @@ struct SemiSupervisedTrainer {
       if (epoch % 10 == 0) {
         save_model(save_path.parent_path() / fmt::format("{}_epoch{}", save_path.stem(), epoch));
       }
-      DOODLE_LOG_INFO("Completed epoch {}/{}", epoch, epochs);
+      SPDLOG_INFO("Completed epoch {}/{}", epoch, epochs);
     }
     save_model(save_path);
   }
@@ -831,7 +831,7 @@ class cross_attention_bone_weight::impl {
     std::vector<fbx_load_result> results;
     for (const auto& fbx_file : in_fbx_files) {
       if (!FSys::exists(fbx_file)) {
-        DOODLE_LOG_ERROR("FBX file does not exist: {}", fbx_file);
+        SPDLOG_ERROR("FBX file does not exist: {}", fbx_file);
         continue;
       }
       auto l_fbx_pt = fbx_file;

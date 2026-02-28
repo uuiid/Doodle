@@ -156,7 +156,7 @@ void write_fbx_impl(FbxScene* in_scene, const FSys::path& in_fbx_path) {
           in_fbx_path.string().c_str(), l_manager->GetIOPluginRegistry()->GetNativeWriterFormat(),
           in_scene->GetFbxManager()->GetIOSettings()
       )) {
-    DOODLE_LOG_ERROR("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString());
+    SPDLOG_ERROR("fbx exporter Initialize error: {}", l_exporter->GetStatus().GetErrorString());
   }
   l_exporter->Export(in_scene);
 }
@@ -270,22 +270,22 @@ void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh&
     auto l_sample_face_counts  = l_sample_data.getFaceCounts();
     auto l_sample_pos          = l_sample_data.getPositions();
 
-    DOODLE_LOG_INFO("pos size: {}", l_sample_pos->size());
+    SPDLOG_INFO("pos size: {}", l_sample_pos->size());
     l_mesh->InitControlPoints(l_sample_pos->size());
     auto* l_pos_list = l_mesh->GetControlPoints();
     for (std::size_t j = 0; j < l_sample_pos->size(); ++j) {
       const auto& l_pos = (*l_sample_pos)[j];
       l_pos_list[j]     = FbxVector4{l_pos.x, l_pos.y, l_pos.z};
-      //    DOODLE_LOG_INFO("pos: {} {} {}", l_pos.x, l_pos.y, l_pos.z);
+      //    SPDLOG_INFO("pos: {} {} {}", l_pos.x, l_pos.y, l_pos.z);
     }
-    DOODLE_LOG_INFO("face size: {} {}", l_sample_face_counts->size(), l_sample_face_indices->size());
+    SPDLOG_INFO("face size: {} {}", l_sample_face_counts->size(), l_sample_face_indices->size());
     //  写出多边形连接
     std::size_t l_index{};
     for (std::size_t j = 0; j < l_sample_face_counts->size(); ++j) {
       l_mesh->BeginPolygon();
       // 在abc 多边形旋转顺序是相反的, 所以直接反向
       for (std::int32_t k = (*l_sample_face_counts)[j] - 1; k > -1; --k) {
-        //      DOODLE_LOG_INFO("face index: {}", l_index + k);
+        //      SPDLOG_INFO("face index: {}", l_index + k);
         l_mesh->AddPolygon((*l_sample_face_indices)[l_index + k]);
       }
       l_index += (*l_sample_face_counts)[j];
@@ -390,16 +390,16 @@ void write_fbx(const FSys::path& in_fbx_path, const Alembic::AbcGeom::IPolyMesh&
 
       l_cluster->SetTransformMatrix(l_mesh_node->EvaluateGlobalTransform());
       l_cluster->SetTransformLinkMatrix(l_bones[l]->EvaluateGlobalTransform());
-      if (!l_sk->AddCluster(l_cluster)) DOODLE_LOG_ERROR("add cluster error: {}", l);
+      if (!l_sk->AddCluster(l_cluster)) SPDLOG_ERROR("add cluster error: {}", l);
     }
     l_mesh->AddDeformer(l_sk);
-    DOODLE_LOG_INFO("sk cluster size {}", l_sk->GetClusterCount());
+    SPDLOG_INFO("sk cluster size {}", l_sk->GetClusterCount());
     // 绑定post
     auto* l_post = FbxPose::Create(l_scene, "bind_pose");
     l_post->SetIsBindPose(true);
     for (auto* l_bone : l_bones) {
       if (l_post->Add(l_bone, l_bone->EvaluateGlobalTransform()) == -1) {
-        DOODLE_LOG_ERROR("add bone error: {}", l_bone->GetName());
+        SPDLOG_ERROR("add bone error: {}", l_bone->GetName());
       }
     }
     l_post->Add(l_mesh_node, l_mesh_node->EvaluateGlobalTransform());
@@ -429,7 +429,7 @@ void run(const FSys::path& in_abc_path) {
   Alembic::Abc::IArchive l_archive{Alembic::AbcCoreOgawa::ReadArchive(), in_abc_path.string()};
   auto l_top = l_archive.getTop();
   if (l_top.getNumChildren() == 0) {
-    DOODLE_LOG_ERROR("abc file is empty");
+    SPDLOG_ERROR("abc file is empty");
     return;
   }
 
@@ -438,14 +438,14 @@ void run(const FSys::path& in_abc_path) {
     l_child.getHeader();
     if (Alembic::AbcGeom::IXform::matches(l_child.getHeader())) {
       auto l_xform = Alembic::AbcGeom::IXform{l_child};
-      DOODLE_LOG_INFO("xform {}", l_xform.getName());
+      SPDLOG_INFO("xform {}", l_xform.getName());
       for (int l = 0; l < l_xform.getNumChildren(); ++l) {
         if (Alembic::AbcGeom::IPolyMesh::matches(l_xform.getChild(l).getHeader())) {
           auto l_poly = Alembic::AbcGeom::IPolyMesh{l_xform.getChild(l)};
-          DOODLE_LOG_INFO("poly {}", l_poly.getName());
+          SPDLOG_INFO("poly {}", l_poly.getName());
           // print bounds
           auto l_bounds = l_poly.getSchema().getSelfBoundsProperty().getValue();
-          DOODLE_LOG_INFO(
+          SPDLOG_INFO(
               "bounds: [{} {} {}, {} {} {}] {} {} {}", l_bounds.min.x, l_bounds.min.y, l_bounds.min.z, l_bounds.max.x,
               l_bounds.max.y, l_bounds.max.z, l_bounds.size().x, l_bounds.size().y, l_bounds.size().z
           );
@@ -468,7 +468,7 @@ int main(int argc, char* argv[]) {
     l_path = l_path.make_preferred();
     run(l_path);
   } else {
-    DOODLE_LOG_ERROR("abc path is empty");
+    SPDLOG_ERROR("abc path is empty");
   }
   return 0;
 }
