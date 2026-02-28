@@ -5,7 +5,7 @@
 #include "app_service.h"
 
 #include <doodle_core/lib_warp/boost_locale_warp.h>
-#include <doodle_core/platform/win/register_file_type.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include <boost/asio.hpp>
 

@@ -1,7 +1,7 @@
-#include "doodle_core/core/app_base.h"
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/platform/win/register_file_type.h>
+#include "doodle_lib/core/app_base.h"
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include <maya_plug/data/maya_register_main.h>
 #include <maya_plug/logger/maya_logger_info.h>

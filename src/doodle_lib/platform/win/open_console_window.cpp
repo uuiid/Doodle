@@ -1,7 +1,7 @@
 //
 // Created by td_main on 2023/8/21.
 //
-#include <doodle_core/platform/win/windows_alias.h>
+#include <doodle_lib/platform/win/windows_alias.h>
 
 #include <boost/locale.hpp>
 

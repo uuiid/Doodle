@@ -4,9 +4,9 @@
 
 #include "auto_light_client_lau.h"
 
-#include <doodle_core/core/app_service.h>
+#include <doodle_lib/core/app_service.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
-#include <doodle_core/platform/win/register_file_type.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include <doodle_lib/http_client/work.h>
 

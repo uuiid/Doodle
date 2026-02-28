@@ -3,7 +3,7 @@
 //
 
 #include "doodle_core/configure/static_value.h"
-#include "doodle_core/core/core_set.h"
+#include "doodle_lib/core/core_set.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity.h"
@@ -12,9 +12,9 @@
 #include "doodle_core/metadata/shot.h"
 #include "doodle_core/metadata/task_type.h"
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
-#include <doodle_core/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_function.h>

@@ -7,7 +7,7 @@
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/core/authorization.h>
+#include <doodle_lib/core/authorization.h>
 namespace doodle::socket_io {
 void broadcast(
     const std::string& in_event, const nlohmann::json& in_data, const std::string& in_namespace,

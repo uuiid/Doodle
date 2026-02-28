@@ -3,10 +3,10 @@
 //
 
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/core/bcrypt/bcrypt.h>
+#include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
-#include <doodle_core/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>

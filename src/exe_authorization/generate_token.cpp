@@ -2,8 +2,8 @@
 // Created by TD on 2022/3/24.
 //
 
-#include <doodle_core/core/doodle_lib.h>
-#include <doodle_core/core/authorization.h>
+#include <doodle_lib/core/doodle_lib.h>
+#include <doodle_lib/core/authorization.h>
 
 
 int main(int argc, char *argv[]) {

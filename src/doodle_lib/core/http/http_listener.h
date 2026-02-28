@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "doodle_core/configure/static_value.h"
-#include "doodle_core/core/global_function.h"
+#include "doodle_lib/core/global_function.h"
 
 #include "boost/asio.hpp"
 #include "boost/beast.hpp"

@@ -1,7 +1,7 @@
 #include "alembic_archive_out.h"
 
 #include "doodle_core/exception/exception.h"
-#include "doodle_core/logger/logger.h"
+#include "doodle_lib/logger/logger.h"
 
 #include <boost/numeric/conversion/cast.hpp>
 

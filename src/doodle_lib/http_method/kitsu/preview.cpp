@@ -2,17 +2,17 @@
 // Created by TD on 25-3-27.
 //
 
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/core/file_sys.h"
-#include "doodle_core/core/global_function.h"
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/core/file_sys.h"
+#include "doodle_lib/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/comment.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/preview_file.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
-#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
-#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include "doodle_lib/sqlite_orm/detail/sqlite_database_impl.h"
+#include "doodle_lib/sqlite_orm/sqlite_database.h"
 
 #include "doodle_lib/core/http/http_function.h"
 #include <doodle_lib/core/ffmpeg_video.h>

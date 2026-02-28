@@ -3,13 +3,13 @@
 //
 
 #include "doodle_core/metadata/ai_image_metadata.h"
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 
-#include <doodle_core/core/global_function.h>
+#include <doodle_lib/core/global_function.h>
 
 #include "model_library.h"
 #include <memory>

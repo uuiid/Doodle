@@ -5,7 +5,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/main_map.h>
 
-#include <doodle_core/core/app_base.h>
+#include <doodle_lib/core/app_base.h>
 
 
 #include <doodle_lib/doodle_lib_all.h>

@@ -1,6 +1,6 @@
 #include "load_fbx.h"
 
-#include "doodle_core/logger/logger.h"
+#include "doodle_lib/logger/logger.h"
 
 #include <boost/numeric/conversion/cast.hpp>
 

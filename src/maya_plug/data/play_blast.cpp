@@ -5,8 +5,8 @@
 #include "play_blast.h"
 
 #include "doodle_core/exception/exception.h"
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/core_set.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/user.h>
 

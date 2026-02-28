@@ -1,7 +1,7 @@
 #include "assets_update.h"
 
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/core/file_sys.h"
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/image_size.h"
 #include "doodle_core/metadata/move_create.h"

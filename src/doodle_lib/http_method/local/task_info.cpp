@@ -2,11 +2,11 @@
 // Created by TD on 2024/2/27.
 //
 
-#include "doodle_core/core/app_base.h"
-#include "doodle_core/core/core_set.h"
+#include "doodle_lib/core/app_base.h"
+#include "doodle_lib/core/core_set.h"
 #include "doodle_core/doodle_core_fwd.h"
-#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
-#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include "doodle_lib/sqlite_orm/detail/sqlite_database_impl.h"
+#include "doodle_lib/sqlite_orm/sqlite_database.h"
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/project.h>

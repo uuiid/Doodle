@@ -4,8 +4,8 @@
 
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/core/file_sys.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <maya_plug/data/dagpath_cmp.h>
 

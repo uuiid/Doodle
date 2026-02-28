@@ -1,7 +1,7 @@
 #include "dingding_client.h"
 
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/core/app_base.h>
+#include <doodle_lib/core/app_base.h>
 #include <doodle_core/lib_warp/boost_fmt_beast.h>
 
 #include <boost/asio/io_context.hpp>

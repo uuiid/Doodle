@@ -1,11 +1,11 @@
 #include "kitsu_supplement.h"
 
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/authorization.h>
-#include <doodle_core/logger/crash_reporting_thread.h>
-#include <doodle_core/platform/win/register_file_type.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/authorization.h>
+#include <doodle_lib/logger/crash_reporting_thread.h>
+#include <doodle_lib/platform/win/register_file_type.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>

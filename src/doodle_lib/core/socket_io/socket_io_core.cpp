@@ -4,7 +4,7 @@
 
 #include "socket_io_core.h"
 
-#include <doodle_core/core/core_set.h>
+#include <doodle_lib/core/core_set.h>
 
 #include <doodle_lib/core/socket_io/engine_io.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>

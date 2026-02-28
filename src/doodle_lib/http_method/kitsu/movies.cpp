@@ -4,8 +4,8 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/entity.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
-#include <doodle_core/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>

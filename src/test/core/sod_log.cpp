@@ -2,7 +2,7 @@
 // Created by td_main on 2023/9/7.
 //
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/logger/logger.h>
 template <typename... Args>
 inline void log_debug(
     const doodle::logger_ptr& in_logger, fmt::format_string<Args...> in_fmt, Args&&... in_args,

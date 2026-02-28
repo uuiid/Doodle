@@ -39,7 +39,7 @@
  * Bruce Schneier.
  */
 
-#include <doodle_core/core/bcrypt/node_blf.h>
+#include <doodle_lib/core/bcrypt/node_blf.h>
 
 
 #undef inline

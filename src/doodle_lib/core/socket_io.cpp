@@ -4,7 +4,7 @@
 
 #include "socket_io.h"
 
-#include <doodle_core/core/co_queue.h>
+#include <doodle_lib/core/co_queue.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_core/core/app_base.h>
+#include <doodle_lib/core/app_base.h>
 namespace doodle {
 class app_service : public app_base {
  public:

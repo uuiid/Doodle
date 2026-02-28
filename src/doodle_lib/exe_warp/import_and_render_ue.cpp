@@ -4,10 +4,10 @@
 
 #include "import_and_render_ue.h"
 
-#include "doodle_core/core/file_sys.h"
+#include "doodle_lib/core/file_sys.h"
 #include "doodle_core/metadata/task_status.h"
 #include "doodle_core/metadata/task_type.h"
-#include <doodle_core/core/http_client_core.h>
+#include <doodle_lib/core/http_client_core.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/main_map.h>

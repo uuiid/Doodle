@@ -37,10 +37,10 @@
 #include <sys/types.h>
 #include <string.h>
 
-#include <doodle_core/core/bcrypt/node_blf.h>
+#include <doodle_lib/core/bcrypt/node_blf.h>
 
-#include <doodle_core/core/bcrypt/bcrypt.h>
-#include <doodle_core/core/bcrypt/openbsd.h>
+#include <doodle_lib/core/bcrypt/bcrypt.h>
+#include <doodle_lib/core/bcrypt/openbsd.h>
 
 #ifdef _WIN32
 #define snprintf _snprintf

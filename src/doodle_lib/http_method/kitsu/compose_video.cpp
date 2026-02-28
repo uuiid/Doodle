@@ -1,4 +1,4 @@
-#include "doodle_core/core/file_sys.h"
+#include "doodle_lib/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/attachment_file.h"
 #include "doodle_core/metadata/comment.h"
@@ -8,9 +8,9 @@
 #include "doodle_core/metadata/project.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
-#include <doodle_core/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>
 #include <doodle_lib/core/generate_text_video.hpp>

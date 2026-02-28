@@ -1,8 +1,8 @@
 //
 // Created by TD on 2022/10/26.
 //
-#include <doodle_core/platform/win/get_prot.h>
-#include <doodle_core/time_tool/work_clock.h>
+#include <doodle_lib/platform/win/get_prot.h>
+#include <doodle_lib/time_tool/work_clock.h>
 
 #include <doodle_lib/core/holidaycn_time.h>
 

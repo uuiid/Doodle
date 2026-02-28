@@ -9,7 +9,7 @@
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/task.h"
 #include "doodle_core/metadata/task_type.h"
-#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include "doodle_lib/sqlite_orm/sqlite_database.h"
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/entity_path.h>

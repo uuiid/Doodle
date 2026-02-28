@@ -3,16 +3,16 @@
 //
 #include "kitsu.h"
 
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/authorization.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/authorization.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_core/platform/win/register_file_type.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/platform/win/register_file_type.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "doodle_lib/http_method/dingding_attendance.h"
 #include "doodle_lib/http_method/kitsu/computing_time.h"

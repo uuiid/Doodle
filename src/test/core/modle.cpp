@@ -2,7 +2,7 @@
 // Created by TD on 24-8-6.
 //
 
-#include <doodle_core/core/app_base.h>
+#include <doodle_lib/core/app_base.h>
 
 #include <doodle_lib/core/alembic_file.h>
 #include <doodle_lib/core/fbx_file.h>

@@ -5,9 +5,9 @@
 #include "auto_light_process.h"
 
 #include "doodle_core/configure/static_value.h"
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/core/doodle_lib.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
@@ -16,7 +16,7 @@
 #include <doodle_core/metadata/season.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/platform/win/register_file_type.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/doodle_lib_all.h>

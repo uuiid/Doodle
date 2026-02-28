@@ -4,13 +4,13 @@
 
 #pragma once
 #include <doodle_core/configure/static_value.h>
-#include <doodle_core/core/co_queue.h>
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/core/global_function.h>
+#include <doodle_lib/core/co_queue.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/lib_warp/boost_fmt_asio.h>
 #include <doodle_core/lib_warp/boost_fmt_error.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>

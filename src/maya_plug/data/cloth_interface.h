@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_core/core/file_sys.h>
+#include <doodle_lib/core/file_sys.h>
 
 #include "entt/entity/fwd.hpp"
 #include "maya/MApiNamespace.h"

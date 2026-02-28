@@ -3,7 +3,7 @@
 //
 
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/logger/logger.h>
 int core_folder_is_save(int argc, char* argv[]) {
   using namespace doodle;
   if (FSys::folder_is_save("//192.168.20.7/test_delte/test.txt")) {

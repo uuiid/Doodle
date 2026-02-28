@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <doodle_core/core/co_queue.h>
+#include <doodle_lib/core/co_queue.h>
 #include <doodle_core/lib_warp/maya_exe_out.h>
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/server_task_info.h>

@@ -5,16 +5,16 @@
 // Created by TD on 2022/8/26.
 //
 
-#include "doodle_core/sqlite_orm/sqlite_database.h"
-#include <doodle_core/core/app_base.h>
+#include "doodle_lib/sqlite_orm/sqlite_database.h"
+#include <doodle_lib/core/app_base.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/scan_data_t.h>
 #include <doodle_core/metadata/server_task_info.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/sqlite_orm/detail/std_filesystem_path_orm.h>
-#include <doodle_core/sqlite_orm/detail/uuid_to_blob.h>
+#include <doodle_lib/sqlite_orm/detail/std_filesystem_path_orm.h>
+#include <doodle_lib/sqlite_orm/detail/uuid_to_blob.h>
 
 #include <boost/test/unit_test.hpp>
 

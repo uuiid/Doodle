@@ -5,9 +5,9 @@
 #include "ue_exe.h"
 
 #include "doodle_core/exception/exception.h"
-#include "doodle_core/platform/win/register_file_type.h"
-#include <doodle_core/core/core_set.h>
-#include <doodle_core/logger/logger.h>
+#include "doodle_lib/platform/win/register_file_type.h"
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <doodle_lib/exe_warp/async_read_pipe.h>
 #include <doodle_lib/exe_warp/windows_hide.h>

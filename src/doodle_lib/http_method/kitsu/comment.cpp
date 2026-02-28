@@ -3,15 +3,15 @@
 //
 #include "comment.h"
 
-#include "doodle_core/core/chrono_.h"
-#include "doodle_core/sqlite_orm/detail/sqlite_database_impl.h"
+#include "doodle_lib/core/chrono_.h"
+#include "doodle_lib/sqlite_orm/detail/sqlite_database_impl.h"
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/status_automation.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>

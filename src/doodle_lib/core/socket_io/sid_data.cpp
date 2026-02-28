@@ -4,10 +4,10 @@
 
 #include "sid_data.h"
 
-#include "doodle_core/core/global_function.h"
+#include "doodle_lib/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <doodle_lib/core/socket_io/engine_io.h>
 #include <doodle_lib/core/socket_io/socket_io_core.h>

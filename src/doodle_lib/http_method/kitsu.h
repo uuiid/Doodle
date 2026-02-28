@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_core/core/http_client_core.h>
+#include <doodle_lib/core/http_client_core.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 

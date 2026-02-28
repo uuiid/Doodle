@@ -1,7 +1,7 @@
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/core/global_function.h"
-#include <doodle_core/core/app_base.h>
-#include <doodle_core/core/doodle_lib.h>
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/core/global_function.h"
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/doodle_lib.h>
 
 #include <doodle_lib/http_client/kitsu_client.h>
 

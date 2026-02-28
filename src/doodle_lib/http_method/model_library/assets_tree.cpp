@@ -5,7 +5,7 @@
 #include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>

@@ -6,7 +6,7 @@
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "doodle_lib/core/http/http_function.h"
 #include <doodle_lib/http_method/kitsu.h>

@@ -3,7 +3,7 @@
 //
 #include "doodle_core/metadata/rules.h"
 #include "doodle_core/metadata/user.h"
-#include "doodle_core/time_tool/work_clock.h"
+#include "doodle_lib/time_tool/work_clock.h"
 #include <doodle_core/doodle_core.h>
 
 #include "doodle_lib/core/doodle_lib.h"

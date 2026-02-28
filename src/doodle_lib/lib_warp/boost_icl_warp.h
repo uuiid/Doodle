@@ -6,7 +6,7 @@
 
 #include <boost/icl/discrete_interval.hpp>
 #include <boost/icl/split_interval_set.hpp>
-#include <doodle_core/core/chrono_.h>
+#include <doodle_lib/core/chrono_.h>
 namespace boost::icl {
 // template <>
 // struct is_discrete<doodle::chrono::local_time_pos> {

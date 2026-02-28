@@ -13,11 +13,11 @@
 
 
 //
-#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include "doodle_lib/sqlite_orm/sqlite_database.h"
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/time_tool/work_clock.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/time_tool/work_clock.h>
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/holidaycn_time.h>

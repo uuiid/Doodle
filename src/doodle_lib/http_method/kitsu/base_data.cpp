@@ -1,14 +1,14 @@
 //
 // Created by TD on 25-4-8.
 //
-#include "doodle_core/core/app_base.h"
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/core/global_function.h"
+#include "doodle_lib/core/app_base.h"
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/person.h"
-#include "doodle_core/sqlite_orm/sqlite_database.h"
+#include "doodle_lib/sqlite_orm/sqlite_database.h"
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/status_automation.h>
 #include <doodle_core/metadata/studio.h>

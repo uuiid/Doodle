@@ -1,9 +1,9 @@
 //
 // Created by TD on 25-5-13.
 //
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/core/file_sys.h"
-#include "doodle_core/core/global_function.h"
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/core/file_sys.h"
+#include "doodle_lib/core/global_function.h"
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/long_task/image_to_move.h>

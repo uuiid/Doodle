@@ -1,6 +1,6 @@
-#include <doodle_core/core/global_function.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/http_method/model_library/model_library.h>
 

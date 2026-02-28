@@ -1,9 +1,9 @@
 #include "core_set.h"
 
 #include <doodle_core/configure/static_value.h>
-#include <doodle_core/core/doodle_lib.h>
+#include <doodle_lib/core/doodle_lib.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
-#include <doodle_core/logger/logger.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_core/metadata/user.h>
 
 #include <boost/algorithm/string.hpp>

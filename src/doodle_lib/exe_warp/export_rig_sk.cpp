@@ -1,8 +1,8 @@
 #include "export_rig_sk.h"
 
 #include "doodle_core/configure/static_value.h"
-#include "doodle_core/core/core_set.h"
-#include "doodle_core/core/file_sys.h"
+#include "doodle_lib/core/core_set.h"
+#include "doodle_lib/core/file_sys.h"
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/entity_type.h"
 

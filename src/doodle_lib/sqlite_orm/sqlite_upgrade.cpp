@@ -3,9 +3,9 @@
 //
 
 #include <doodle_core/metadata/assets_file.h>
-#include <doodle_core/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_core/sqlite_orm/sqlite_database.h>
-#include <doodle_core/sqlite_orm/sqlite_upgrade.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 
 #include <boost/hana/ext/std/tuple.hpp>
 
