@@ -3,9 +3,10 @@
 //
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_lib/logger/logger.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/logger/logger.h>
 
 #include "boost/algorithm/string.hpp"
 #include "boost/dynamic_bitset.hpp"
@@ -17,6 +18,7 @@
 #include "http_route.h"
 #include <magic_enum/magic_enum_all.hpp>
 #include <string>
+
 
 namespace doodle::http {
 

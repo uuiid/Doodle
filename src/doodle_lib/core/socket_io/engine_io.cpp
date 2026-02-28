@@ -4,9 +4,9 @@
 
 #include "engine_io.h"
 
+#include <doodle_lib/core/global_function.h>
+
 #include <magic_enum/magic_enum_all.hpp>
-
-
 
 namespace doodle::socket_io {
 
@@ -27,8 +27,5 @@ query_data parse_query_data(const boost::urls::url& in_url) {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的请求"});
   return l_ret;
 }
-
-
-
 
 }  // namespace doodle::socket_io
