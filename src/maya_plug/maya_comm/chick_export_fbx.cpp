@@ -41,8 +41,6 @@ MStatus chick_export_fbx::doIt(const MArgList &in_arg) {
   auto l_end_time   = MAnimControl::maxTime();
   try {
     fbx_write l_fbx_write{};
-    l_fbx_write.set_logger(spdlog::default_logger());
-
     l_fbx_write.write(l_list, l_begin_time, l_end_time);
   } catch (const std::exception& in_error) {
     auto l_str = boost::diagnostic_information(in_error);

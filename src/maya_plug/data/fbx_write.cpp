@@ -182,7 +182,6 @@ void fbx_node_cam::build_data() {
     maya_chick(l_status);
     // auto l_x_rot                 = l_pose_quaternion.asEulerRotation().x + std::numbers::pi / 2;  // 弧度表示
     // auto l_axi                   = MVector{0, std::sin(l_x_rot), std::cos(l_x_rot)};
-    // default_logger_raw()->info("axi {}", l_axi);
     MQuaternion l_rot{std::numbers::pi / 2, {0, -1, 0}};
     auto l_tmp_rot = (l_pose_quaternion.inverse() * l_rot).asEulerRotation();
 
@@ -743,7 +742,6 @@ void fbx_node_mesh::build_skin() {
         MFnMatrixData l_matrix{};
         maya_chick(l_matrix.setObject(l_matrix_obj));
         auto l_soure = l_matrix_plug[i].source();
-        // default_logger_raw()->info("{}",l_soure.info());
         auto l_m     = l_matrix.matrix(&l_status);
         maya_chick(l_status);
         l_dag_matrix_map.emplace(get_dag_path(l_soure.node()), l_m);
@@ -1149,11 +1147,7 @@ void fbx_write::write(
     const std::vector<MDagPath>& in_vector, const std::vector<MDagPath>& in_sim_vector, const MTime& in_begin,
     const MTime& in_end
 ) {
-  if (!logger_) {
-    logger_ = spdlog::default_logger();
-  }
-
-  log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
+  display_info("开始导出文件 {}", path_);
 
   auto* anim_stack = scene_->GetCurrentAnimationStack();
   FbxTime l_fbx_begin{};
@@ -1179,7 +1173,7 @@ void fbx_write::write(
     l_sequence_to_blend_shape.emplace_back(i, l_size);
   }
 
-  log_info(logger_, "开始导出动画");
+  display_info("开始导出动画");
 
   if (export_anim_) {
     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
@@ -1198,8 +1192,6 @@ void fbx_write::write(
   }
   // } catch (const std::exception& in_error) {
   //   auto l_str = boost::diagnostic_information(in_error);
-  //   MGlobal::displayError(conv::to_ms(l_str));
-  //   log_error(logger_, fmt::format("导出文件 {} 错误 {}", path_, l_str));
   //   return;
   // }
 
@@ -1220,17 +1212,12 @@ void fbx_write::write(
     l_iter(tree_.begin());
     scene_->AddPose(l_post);
   }
-  if (logger_) logger_->flush();
 }
 
 void fbx_write::write(
     MDagPath in_cam_path, const MTime& in_begin, const MTime& in_end, std::double_t in_film_aperture
 ) {
-  if (!logger_) {
-    logger_ = spdlog::default_logger();
-  }
-
-  log_info(logger_, fmt::format("开始导出文件 {}", path_.generic_string()));
+  display_info("开始导出文件 {}", path_);
 
   auto* anim_stack = scene_->GetCurrentAnimationStack();
   FbxTime l_fbx_begin{};
@@ -1249,7 +1236,6 @@ void fbx_write::write(
   );
 
   scene_->GetRootNode()->AddChild(l_fbx_cam->node);
-  l_fbx_cam->extra_data_.logger_ = logger_;
   l_fbx_cam->film_aperture_      = in_film_aperture;
   l_fbx_cam->build_data();
   display_info("开始导出camera动画 {}", in_cam_path);
@@ -1261,7 +1247,6 @@ void fbx_write::write(
     }
   }
 
-  if (logger_) logger_->flush();
 }
 
 std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vector) {
@@ -1389,7 +1374,7 @@ void fbx_write::build_tree(const std::vector<MDagPath>& in_vector, const std::ve
           return in_value->dag_path == l_parent_path;
         });
         if (l_tree_parent == std::end(tree_)) {
-          log_error(logger_, fmt::format("找不到父节点 {}, 此处可能是有错误的绑定", l_parent_path));
+          display_error("找不到父节点 {}, 此处可能是有错误的绑定", l_parent_path);
           continue;
         }
         auto l_parent_node = (*l_tree_parent)->node;
@@ -1419,7 +1404,6 @@ void fbx_write::build_data() {
     for (auto i = in_iterator.begin(); i != in_iterator.end(); ++i) {
       (*i)->extra_data_.tree_         = &tree_;
       (*i)->extra_data_.material_map_ = &material_map_;
-      (*i)->extra_data_.logger_       = logger_;
       l_iter_init(i);
     }
   };
@@ -1476,7 +1460,6 @@ MTime fbx_write::find_begin_anim_time() {
 void fbx_write::not_export_anim(bool in_value) { export_anim_ = !in_value; }
 void fbx_write::ascii_fbx(bool in_value) { ascii_fbx_ = in_value; }
 void fbx_write::set_path(const FSys::path& in_path) { path_ = in_path; }
-void fbx_write::set_logger(const logger_ptr& in_logger) { logger_ = in_logger; }
 std::pair<MTime, MTime> fbx_write::get_anim_time() const { return anim_time_; };
 
 fbx_write_ns::fbx_node* fbx_write::find_node(const MDagPath& in_path) const {

@@ -27,7 +27,6 @@ using fbx_tree_t   = tree<fbx_node_ptr>;
 // 额外数据
 struct fbx_extra_data {
   fbx_tree_t* tree_{};
-  logger_ptr logger_{};
 
   std::map<std::string, FbxSurfaceLambert*>* material_map_{};
   fbx_extra_data() = default;
@@ -148,11 +147,7 @@ class fbx_write {
   std::vector<MDagPath> joints_{};
   MObjectArray bind_pose_array_{};
 
-  struct fbx_logger {
-    logger_ptr logger_{};
-  };
 
-  logger_ptr logger_{};
 
   bool export_anim_{true};
   bool ascii_fbx_{false};
@@ -172,7 +167,6 @@ public:
   void not_export_anim(bool in_value = true);
   void ascii_fbx(bool in_value = true);
   void set_path(const FSys::path& in_path);
-  void set_logger(const logger_ptr& in_logger);
 
   void write_end();
   // 写出fbx
