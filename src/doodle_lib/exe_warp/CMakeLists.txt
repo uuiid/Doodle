@@ -6,7 +6,6 @@ target_sources(
         import_and_render_ue.h
         async_read_pipe.h
         windows_hide.h
-        check_files.h
         export_rig_sk.h
         inspect_maya.h
         export_fbx_arg.h
@@ -20,7 +19,6 @@ target_sources(
         import_and_render_ue.cpp
         async_read_pipe.cpp
         windows_hide.cpp
-        check_files.cpp
         export_rig_sk.cpp
         inspect_maya.cpp
         export_fbx_arg.cpp
