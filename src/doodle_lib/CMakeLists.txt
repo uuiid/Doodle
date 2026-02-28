@@ -65,6 +65,7 @@ target_link_libraries(doodle_lib
         Boost::interprocess
         Boost::url
         Boost::iostreams
+        spdlog::spdlog
         nlohmann_json nlohmann_json::nlohmann_json
         ${OpenCV_LIBS}
         opencv_ml opencv_dnn opencv_core opencv_flann
@@ -105,6 +106,7 @@ add_custom_command(
 target_compile_definitions(doodle_lib
         PUBLIC
         WIN32_LEAN_AND_MEAN
+        SPDLOG_ACTIVE_LEVEL=0
         PRIVATE
         #        $<$<STREQUAL:$<TARGET_PROPERTY:doodle_lib,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>
 )

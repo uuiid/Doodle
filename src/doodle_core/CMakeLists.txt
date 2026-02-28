@@ -48,7 +48,6 @@ target_link_libraries(
         fmt::fmt
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT
-        spdlog::spdlog
         range-v3 range-v3-meta range-v3::meta range-v3-concepts
         cryptopp::cryptopp
         WIL::WIL
@@ -65,9 +64,7 @@ target_compile_definitions(doodle_core
         BOOST_DLL_USE_STD_FS
         _WIN32_WINNT=0x0A00
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,STATIC_LIBRARY>:DOODLE_CORE_STATIC_DEFINE>
-        SPDLOG_ACTIVE_LEVEL=0
         PRIVATE
-
         $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:DOODLE_CORE_EXPORT>
 
         # $<$<STREQUAL:$<TARGET_PROPERTY:doodle_core,TYPE>,SHARED_LIBRARY>:ENTT_API_EXPORT>

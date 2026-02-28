@@ -12,7 +12,6 @@
 
 #include <filesystem>
 #include <magic_enum/magic_enum.hpp>
-#include <spdlog/common.h>
 #include <stdexcept>
 #include <string>
 

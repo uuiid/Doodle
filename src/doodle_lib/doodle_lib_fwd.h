@@ -10,14 +10,65 @@
 #include <boost/asio.hpp>
 
 #include <entt/entt.hpp>
+#include <spdlog/common.h>
+#include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
 
+#define DOODLE_TO_EXECUTOR(executor_)                             \
+  auto this_executor = co_await boost::asio::this_coro::executor; \
+  co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
+
+#define DOODLE_TO_MAIN_THREAD() DOODLE_TO_EXECUTOR(g_strand())
+
+#define DOODLE_TO_SELF() \
+  co_await boost::asio::post(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
+
+#define G_DETACHED_LOG(...)                                                \
+  [__VA_ARGS__](std::exception_ptr in_ptr) {                               \
+    try {                                                                  \
+      if (in_ptr) std::rethrow_exception(in_ptr);                          \
+    } catch (const boost::system::system_error& in_err) {                  \
+      if (in_err.code() == boost::asio::error::connection_aborted) return; \
+      if (in_err.code() == boost::asio::error::operation_aborted) return;  \
+                                                                           \
+      SPDLOG_WARN(boost::current_exception_diagnostic_information());      \
+    } catch (...) {                                                        \
+      SPDLOG_WARN(boost::current_exception_diagnostic_information());      \
+    };                                                                     \
+  }
+
+namespace spdlog {
+class logger;
+SPDLOG_API logger* default_logger_raw();
+namespace level {}  // namespace level
+}  // namespace spdlog
 
 // 开始我们的名称空间
 namespace doodle {
 
+namespace details {
+class logger_ctrl;
+}  // namespace details
+
+using logger_ptr = std::shared_ptr<spdlog::logger>;
+namespace level {
+using spdlog::level::critical;
+using spdlog::level::debug;
+using spdlog::level::err;
+using spdlog::level::info;
+using spdlog::level::level_enum;
+using spdlog::level::off;
+using spdlog::level::trace;
+using spdlog::level::warn;
+}  // namespace level
+using spdlog::default_logger_raw;
+
 DOODLELIB_API boost::asio::io_context& g_io_context();
 DOODLELIB_API entt::registry::context& g_ctx();
+
+class doodle_lib;
+
+using doodle_lib_ptr = std::shared_ptr<doodle_lib>;
 
 namespace movie {
 class image_attr;

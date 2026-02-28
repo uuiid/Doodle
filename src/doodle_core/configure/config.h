@@ -52,11 +52,3 @@ class DOODLE_CORE_API build_info {
 #elif defined __linux__  // _WIN32
 
 #endif  // __linux__
-
-#include <boost/current_function.hpp>
-#ifndef SPDLOG_FUNCTION
-#define SPDLOG_FUNCTION static_cast<const char*>(BOOST_CURRENT_FUNCTION)
-#else
-#undef SPDLOG_FUNCTION
-#define SPDLOG_FUNCTION static_cast<const char*>(BOOST_CURRENT_FUNCTION)
-#endif
