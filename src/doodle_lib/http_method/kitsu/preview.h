@@ -1,4 +1,4 @@
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/preview_file.h>
 

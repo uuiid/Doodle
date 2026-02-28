@@ -1,10 +1,10 @@
 #include "entity_path.h"
 
-#include "doodle_core/configure/static_value.h"
-#include "doodle_core/doodle_core_fwd.h"
-#include "doodle_core/doodle_macro.h"
+#include <doodle_core/configure/static_value.h>
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/person.h"
+#include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/person.h>

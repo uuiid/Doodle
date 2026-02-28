@@ -9,7 +9,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include "cloth_interface.h"
-#include "entt/entity/fwd.hpp"
+#include <entt/entity/fwd.hpp>
 #include "maya_tool.h"
 #include <maya/MFnDependencyNode.h>
 #include <maya/MItDependencyNodes.h>

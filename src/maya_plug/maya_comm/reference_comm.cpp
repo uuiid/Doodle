@@ -11,7 +11,7 @@
 
 #include <boost/asio/use_future.hpp>
 
-#include "maya_plug/data/qcloth_factory.h"
+#include <maya_plug/data/qcloth_factory.h>
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_tool.h>

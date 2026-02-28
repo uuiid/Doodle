@@ -4,8 +4,8 @@
 #include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/entity_type.h>
 
-#include "doodle_lib/core/http/http_session_data.h"
-#include "doodle_lib/platform/win/register_file_type.h"
+#include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include <boost/rational.hpp>
 
@@ -13,7 +13,7 @@
 
 
 //
-#include "doodle_lib/sqlite_orm/sqlite_database.h"
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>

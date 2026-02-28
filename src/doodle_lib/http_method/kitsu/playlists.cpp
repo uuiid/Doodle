@@ -1,11 +1,11 @@
 //
 // Created by TD on 25-5-14.
 //
-#include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/person.h"
-#include "doodle_core/metadata/preview_file.h"
-#include "doodle_core/metadata/task.h"
+#include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/preview_file.h>
+#include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/playlist.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
@@ -15,7 +15,7 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
-#include "core/http/http_function.h"
+#include <core/http/http_function.h>
 #include <spdlog/spdlog.h>
 #include <vector>
 

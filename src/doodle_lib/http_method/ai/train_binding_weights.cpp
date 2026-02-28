@@ -1,4 +1,4 @@
-#include "doodle_lib/core/global_function.h"
+#include <doodle_lib/core/global_function.h>
 
 #include <doodle_lib/ai/bone_weight_inference.h>
 #include <doodle_lib/ai/cross_attention_bone_weight.h>

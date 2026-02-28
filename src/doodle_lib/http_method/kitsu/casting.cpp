@@ -1,8 +1,8 @@
 //
 // Created by TD on 25-8-21.
 //
-#include "doodle_core/doodle_core_fwd.h"
-#include "doodle_core/metadata/person.h"
+#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>

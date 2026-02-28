@@ -6,7 +6,7 @@
 
 #include <maya_plug/maya_plug_fwd.h>
 
-#include "maya/MApiNamespace.h"
+#include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
 #include <regex>
 

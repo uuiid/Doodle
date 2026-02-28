@@ -7,7 +7,7 @@
 
 #include <maya_plug/maya_plug_fwd.h>
 
-#include "entt/entity/fwd.hpp"
+#include <entt/entity/fwd.hpp>
 #include <maya/MApiNamespace.h>
 #include <maya/MTime.h>
 #include <optional>

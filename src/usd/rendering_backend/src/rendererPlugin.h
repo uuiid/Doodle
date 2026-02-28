@@ -3,8 +3,8 @@
 //
 
 #pragma once
-#include "pxr/imaging/hd/rendererPlugin.h"
-#include "pxr/pxr.h"
+#include <pxr/imaging/hd/rendererPlugin.h>
+#include <pxr/pxr.h>
 namespace doodle::usd {
 class HdDoodleRendererPlugin final : public pxr::HdRendererPlugin {
  public:

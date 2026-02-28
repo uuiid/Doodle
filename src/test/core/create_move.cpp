@@ -2,8 +2,8 @@
 // Created by TD on 2022/10/8.
 //
 
-#include "doodle_lib/core/app_base.h"
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_lib/core/app_base.h>
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_core/doodle_core.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>

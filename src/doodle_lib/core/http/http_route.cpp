@@ -7,7 +7,6 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
 
-#include "../../../../build/Ninja_RelWithDebInfo/vcpkg_installed/x64-windows/include/boost/preprocessor/tuple/to_seq.hpp"
 namespace doodle::http {
 
 DOODLE_HTTP_FUN(http_not_function)

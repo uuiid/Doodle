@@ -4,8 +4,8 @@
 
 #include "maya_exe.h"
 
-#include "doodle_lib/core/file_sys.h"
-#include "doodle_lib/core/global_function.h"
+#include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_core/configure/config.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>

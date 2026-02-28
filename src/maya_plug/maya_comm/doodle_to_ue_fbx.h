@@ -4,7 +4,7 @@
 #pragma once
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "maya/MApiNamespace.h"
+#include <maya/MApiNamespace.h>
 namespace doodle {
 namespace maya_plug {
 namespace doodle_to_ue_fbx_ns {

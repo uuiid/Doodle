@@ -1,7 +1,7 @@
 #include "doodle_batch_run.h"
 
 #include <doodle_core/exception/exception.h>
-#include "doodle_lib/lib_warp/maya_exe_out.h"
+#include <doodle_lib/lib_warp/maya_exe_out.h>
 
 #include <maya_plug/data/export_file_fbx.h>
 #include <maya_plug/data/maya_call_guard.h>
@@ -13,7 +13,7 @@
 #include <maya_plug/node/files_info.h>
 
 // #include <maya_plug/data/
-#include "maya_plug/exception/exception.h"
+#include <maya_plug/exception/exception.h>
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_clear_scenes.h>
 #include <maya_plug/data/maya_conv_str.h>

@@ -1,7 +1,7 @@
-#include "doodle_lib/core/core_set.h"
-#include "doodle_core/metadata/computer.h"
-#include "doodle_core/metadata/person.h"
-#include "doodle_core/metadata/studio.h"
+#include <doodle_lib/core/core_set.h>
+#include <doodle_core/metadata/computer.h>
+#include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -13,7 +13,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
 
-#include "core/http/http_function.h"
+#include <core/http/http_function.h>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
 #include <string>

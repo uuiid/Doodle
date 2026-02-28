@@ -2,7 +2,7 @@
 // Created by TD on 25-7-1.
 //
 
-#include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>

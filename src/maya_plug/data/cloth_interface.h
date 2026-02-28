@@ -6,8 +6,8 @@
 
 #include <doodle_lib/core/file_sys.h>
 
-#include "entt/entity/fwd.hpp"
-#include "maya/MApiNamespace.h"
+#include <entt/entity/fwd.hpp>
+#include <maya/MApiNamespace.h>
 #include <entt/entt.hpp>
 #include <memory>
 #include <vector>

@@ -1,6 +1,6 @@
 #include "crashpad.h"
 
-#include "doodle_lib/core/core_set.h"
+#include <doodle_lib/core/core_set.h>
 #include <doodle_core/doodle_core.h>
 
 #include <boost/dll/runtime_symbol_info.hpp>

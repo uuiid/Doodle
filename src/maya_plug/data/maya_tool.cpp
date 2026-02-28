@@ -7,7 +7,7 @@
 #include <maya_plug/main/maya_plug_fwd.h>
 
 #include <doodle_core/exception/exception.h>
-#include "maya/MApiNamespace.h"
+#include <maya/MApiNamespace.h>
 #include "maya_conv_str.h"
 #include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>

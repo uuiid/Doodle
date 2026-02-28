@@ -6,7 +6,7 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-#include "torch/torch.h"
+#include <torch/torch.h>
 #include <ATen/core/TensorBody.h>
 #include <ATen/ops/exp.h>
 #include <iostream>

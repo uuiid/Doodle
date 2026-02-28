@@ -2,9 +2,9 @@
 // Created by TD on 24-12-30.
 //
 
-#include "doodle_core/metadata/person.h"
-#include "doodle_core/metadata/studio.h"
-#include "doodle_core/metadata/working_file.h"
+#include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/studio.h>
+#include <doodle_core/metadata/working_file.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>

@@ -7,7 +7,7 @@
 #include <maya_plug/data/maya_poly_info.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "entt/entity/fwd.hpp"
+#include <entt/entity/fwd.hpp>
 #include <maya/MObject.h>
 #include <vector>
 

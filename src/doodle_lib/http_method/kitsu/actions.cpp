@@ -1,8 +1,8 @@
 //
 // Created by TD on 25-7-14.
 //
-#include "doodle_core/metadata/organisation.h"
-#include "doodle_core/metadata/task.h"
+#include <doodle_core/metadata/organisation.h>
+#include <doodle_core/metadata/task.h>
 #include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>

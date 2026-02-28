@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/move_create.h>
 
 #include <doodle_lib/core/asyn_task.h>

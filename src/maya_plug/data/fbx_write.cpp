@@ -4,7 +4,7 @@
 
 #include "fbx_write.h"
 
-#include "doodle_core/configure/config.h"
+#include <doodle_core/configure/config.h>
 #include <doodle_core/exception/exception.h>
 
 #include <boost/lambda2.hpp>
@@ -17,7 +17,7 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
-#include "data/maya_tool.h"
+#include <data/maya_tool.h>
 #include <doodle_core/exception/exception.h>
 #include <fbxsdk.h>
 #include <fmt/format.h>

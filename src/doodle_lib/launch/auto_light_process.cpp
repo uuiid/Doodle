@@ -4,7 +4,7 @@
 
 #include "auto_light_process.h"
 
-#include "doodle_core/configure/static_value.h"
+#include <doodle_core/configure/static_value.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/doodle_lib.h>

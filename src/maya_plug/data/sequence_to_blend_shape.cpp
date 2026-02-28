@@ -6,7 +6,7 @@
 
 #include <doodle_core/exception/exception.h>
 
-#include "main/maya_plug_fwd.h"
+#include <main/maya_plug_fwd.h>
 #include <maya_plug/data/fbx_write.h>
 #include <maya_plug/data/maya_display.h>
 #include <maya_plug/data/maya_file_io.h>

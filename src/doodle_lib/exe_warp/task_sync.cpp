@@ -1,12 +1,12 @@
-#include "doodle_lib/exe_warp/task_sync.h"
+#include <doodle_lib/exe_warp/task_sync.h>
 
-#include "doodle_lib/core/file_sys.h"
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/task_status.h"
+#include <doodle_core/metadata/task_status.h>
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 
-#include "http_client/kitsu_client.h"
+#include <http_client/kitsu_client.h>
 #include <filesystem>
 #include <vector>
 

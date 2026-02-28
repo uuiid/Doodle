@@ -4,7 +4,7 @@
 
 #include "tool_version.h"
 
-#include "doodle_lib/sqlite_orm/sqlite_database.h"
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/server_task_info.h>

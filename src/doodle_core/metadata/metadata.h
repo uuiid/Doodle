@@ -6,8 +6,8 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-#include "boost/lexical_cast.hpp"
-#include "boost/uuid/uuid.hpp"
+#include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <entt/core/type_info.hpp>
 #include <optional>

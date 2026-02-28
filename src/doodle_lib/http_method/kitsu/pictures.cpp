@@ -2,8 +2,8 @@
 // Created by TD on 25-5-12.
 //
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/organisation.h"
-#include "doodle_core/metadata/preview_file.h"
+#include <doodle_core/metadata/organisation.h>
+#include <doodle_core/metadata/preview_file.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
@@ -12,7 +12,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
-#include "core/http/http_function.h"
+#include <core/http/http_function.h>
 #include <opencv2/opencv.hpp>
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_organisations_png::get(

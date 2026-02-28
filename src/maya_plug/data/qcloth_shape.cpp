@@ -4,7 +4,7 @@
 
 #include "qcloth_shape.h"
 
-#include "doodle_lib/logger/logger.h"
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -18,10 +18,10 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "data/maya_conv_str.h"
-#include "data/qcloth_shape.h"
-#include "data/sim_cover_attr.h"
-#include "entt/entity/fwd.hpp"
+#include <data/maya_conv_str.h>
+#include <data/qcloth_shape.h>
+#include <data/sim_cover_attr.h>
+#include <entt/entity/fwd.hpp>
 #include <doodle_core/exception/exception.h>
 #include <fmt/core.h>
 #include <magic_enum/magic_enum_all.hpp>

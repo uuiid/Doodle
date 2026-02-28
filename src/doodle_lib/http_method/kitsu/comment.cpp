@@ -3,7 +3,7 @@
 //
 #include "comment.h"
 
-#include "doodle_lib/sqlite_orm/detail/sqlite_database_impl.h"
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/notification.h>

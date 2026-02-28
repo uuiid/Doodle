@@ -5,7 +5,7 @@
 #include "ue_exe.h"
 
 #include <doodle_core/exception/exception.h>
-#include "doodle_lib/platform/win/register_file_type.h"
+#include <doodle_lib/platform/win/register_file_type.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/logger/logger.h>
 
@@ -13,7 +13,7 @@
 #include <doodle_lib/exe_warp/windows_hide.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 
-#include "boost/asio/readable_pipe.hpp"
+#include <boost/asio/readable_pipe.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
@@ -21,7 +21,7 @@
 #include <boost/scope/scope_exit.hpp>
 #include <boost/system.hpp>
 
-#include "fmt/core.h"
+#include <fmt/core.h>
 #include <bit7z/bit7z.hpp>
 #include <bit7z/bit7zlibrary.hpp>
 #include <bit7z/bitfileextractor.hpp>

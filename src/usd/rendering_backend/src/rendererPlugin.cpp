@@ -4,9 +4,9 @@
 
 #include "rendererPlugin.h"
 
-#include "pxr/imaging/hd/rendererPluginRegistry.h"
-#include "pxr/imaging/hdSt/renderDelegate.h"
-#include "pxr/pxr.h"
+#include <pxr/imaging/hd/rendererPluginRegistry.h>
+#include <pxr/imaging/hdSt/renderDelegate.h>
+#include <pxr/pxr.h>
 namespace pxr {
 TF_REGISTRY_FUNCTION(TfType) { pxr::HdRendererPluginRegistry::Define<doodle::usd::HdDoodleRendererPlugin>(); }
 }  // namespace pxr

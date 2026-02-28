@@ -5,7 +5,7 @@
 
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "maya/MApiNamespace.h"
+#include <maya/MApiNamespace.h>
 
 namespace doodle {
 namespace maya_plug {

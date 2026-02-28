@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "doodle_lib/core/core_set.h"
+#include <doodle_lib/core/core_set.h>
 
 #include <doodle_lib/core/http/http_content_type.h>
 #include <doodle_lib/core/http/multipart_body_value.h>
@@ -19,7 +19,7 @@
 #include <boost/beast/core/static_buffer.hpp>
 #include <boost/beast/http.hpp>
 
-#include "core/http/multipart_body_value.h"
+#include <core/http/multipart_body_value.h>
 #include <algorithm>
 #include <array>
 #include <cctype>

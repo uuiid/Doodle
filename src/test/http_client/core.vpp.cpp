@@ -1,7 +1,7 @@
 //
 // Created by TD on 24-7-15.
 //
-#include "doodle_lib/core/global_function.h"
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/core/http_client_core.h>

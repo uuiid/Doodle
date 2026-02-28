@@ -4,11 +4,11 @@
 
 #include "http_session_data.h"
 
-#include "doodle_core/configure/static_value.h"
-#include "doodle_lib/core/app_base.h"
-#include "doodle_lib/core/core_set.h"
+#include <doodle_core/configure/static_value.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
 // ReSharper disable once CppUnusedIncludeDirective
-#include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
@@ -35,7 +35,7 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/winapi/error_codes.hpp>
 
-#include "cryptopp/hex.h"
+#include <cryptopp/hex.h>
 #include "http_content_type.h"
 #include <cryptopp/adler32.h>
 #include <cryptopp/filters.h>

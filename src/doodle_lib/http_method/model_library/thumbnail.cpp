@@ -2,7 +2,7 @@
 // Created by TD on 24-10-18.
 //
 
-#include "doodle_core/metadata/ai_image_metadata.h"
+#include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_function.h>

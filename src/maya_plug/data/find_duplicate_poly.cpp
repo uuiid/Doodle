@@ -4,14 +4,14 @@
 
 #include "find_duplicate_poly.h"
 
-#include "doodle_lib/logger/logger.h"
+#include <doodle_lib/logger/logger.h>
 
-#include "data/m_namespace.h"
-#include "data/maya_tool.h"
-#include "maya/MApiNamespace.h"
-#include "maya/MObject.h"
+#include <data/m_namespace.h>
+#include <data/maya_tool.h>
+#include <maya/MApiNamespace.h>
+#include <maya/MObject.h>
 #include "maya_conv_str.h"
-#include "range/v3/algorithm/find_if.hpp"
+#include <range/v3/algorithm/find_if.hpp>
 #include "reference_file.h"
 #include <data/maya_poly_info.h>
 #include <fmt/format.h>

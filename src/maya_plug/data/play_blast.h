@@ -4,11 +4,11 @@
 //
 
 #pragma once
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_core/metadata/image_size.h>
 
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "maya/MApiNamespace.h"
+#include <maya/MApiNamespace.h>
 #include <filesystem>
 #include <maya/MSelectionList.h>
 #include <maya/MStatus.h>

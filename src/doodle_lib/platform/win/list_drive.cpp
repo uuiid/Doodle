@@ -4,7 +4,7 @@
 
 #include "list_drive.h"
 
-#include "wil/result_macros.h"
+#include <wil/result_macros.h>
 #include <Windows.h>
 #include <wil/result.h>
 namespace doodle::win {

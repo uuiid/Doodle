@@ -7,8 +7,8 @@
 
 #include <boost/algorithm/string.hpp>
 
-#include "entt/entity/entity.hpp"
-#include "entt/entity/fwd.hpp"
+#include <entt/entity/entity.hpp>
+#include <entt/entity/fwd.hpp>
 #include <treehh/tree.hh>
 
 namespace doodle {}  // namespace doodle

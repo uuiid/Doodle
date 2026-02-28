@@ -4,7 +4,7 @@
 
 #include "epiboly.h"
 
-#include "doodle_core/doodle_core_fwd.h"
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 

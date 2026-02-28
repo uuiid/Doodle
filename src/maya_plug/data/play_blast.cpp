@@ -11,15 +11,15 @@
 #include <doodle_core/metadata/user.h>
 
 
-#include "boost/numeric/conversion/cast.hpp"
+#include <boost/numeric/conversion/cast.hpp>
 
-#include "maya_plug/data/maya_conv_str.h"
-#include "maya_plug/exception/exception.h"
+#include <maya_plug/data/maya_conv_str.h>
+#include <maya_plug/exception/exception.h>
 #include <maya_plug/data/maya_camera.h>
 
-#include "maya/MRenderTargetManager.h"
-#include "maya/MString.h"
-#include "maya/MTextureManager.h"
+#include <maya/MRenderTargetManager.h>
+#include <maya/MString.h>
+#include <maya/MTextureManager.h>
 #include <cstdint>
 #include <filesystem>
 #include <fmt/chrono.h>

@@ -1,6 +1,6 @@
 #include "qcloth_arg.h"
 
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/task_status.h>
 
 #include <doodle_lib/long_task/image_to_move.h>

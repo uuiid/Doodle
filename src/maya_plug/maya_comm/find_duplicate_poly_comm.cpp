@@ -6,7 +6,7 @@
 
 #include <maya_plug/data/m_namespace.h>
 
-#include "data/qcloth_factory.h"
+#include <data/qcloth_factory.h>
 #include <data/maya_tool.h>
 #include <data/reference_file.h>
 #include <maya/MArgDatabase.h>

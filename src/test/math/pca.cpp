@@ -6,7 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "Eigen/Eigen"
+#include <Eigen/Eigen>
 #include <Eigen/src/Core/Matrix.h>
 #include <Eigen/src/SVD/JacobiSVD.h>
 #include <cmath>

@@ -2,7 +2,7 @@
 // Created by TD on 25-3-6.
 //
 
-#include "doodle_core/metadata/organisation.h"
+#include <doodle_core/metadata/organisation.h>
 #include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>

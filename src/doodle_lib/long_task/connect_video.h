@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_core/metadata/image_size.h>
 
 #include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/doodle_lib_fwd.h>

@@ -2,14 +2,14 @@
 // Created by TD on 24-8-21.
 //
 
-#include "doodle_lib/core/bcrypt/bcrypt.h"
+#include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/department.h"
-#include "doodle_core/metadata/person.h"
-#include "doodle_core/metadata/project_status.h"
-#include "doodle_core/metadata/status_automation.h"
-#include "doodle_core/metadata/task_status.h"
-#include "doodle_core/metadata/task_type.h"
+#include <doodle_core/metadata/department.h>
+#include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/project_status.h>
+#include <doodle_core/metadata/status_automation.h>
+#include <doodle_core/metadata/task_status.h>
+#include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/user.h>
@@ -21,7 +21,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
-#include "core/http/http_function.h"
+#include <core/http/http_function.h>
 #include "kitsu_reg_url.h"
 #include <string>
 

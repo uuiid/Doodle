@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
-#include "opencv2/core.hpp"
+#include <opencv2/core.hpp>
 #include <opencv2/freetype.hpp>
 #include <opencv2/opencv.hpp>
 namespace doodle::detail {

@@ -1,9 +1,9 @@
 #include "ffmpeg_video.h"
 
-#include "doodle_core/configure/static_value.h"
-#include "doodle_lib/core/global_function.h"
+#include <doodle_core/configure/static_value.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_core/exception/exception.h>
-#include "doodle_lib/logger/logger.h"
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/numeric/conversion/cast.hpp>
 

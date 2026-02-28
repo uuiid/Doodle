@@ -5,7 +5,7 @@
 // Created by TD on 2022/8/26.
 //
 
-#include "doodle_lib/sqlite_orm/sqlite_database.h"
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_core/metadata/metadata.h>
 #include <doodle_core/metadata/project.h>

@@ -5,13 +5,13 @@
 #include "image_to_move.h"
 
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/image_size.h"
+#include <doodle_core/metadata/image_size.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
-#include "opencv2/core.hpp"
+#include <opencv2/core.hpp>
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/freetype.hpp>

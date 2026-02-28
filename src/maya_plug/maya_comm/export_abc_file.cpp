@@ -9,13 +9,13 @@
 #include <maya_plug/data/maya_display.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
-#include "maya/MAnimControl.h"
-#include "maya/MArgDatabase.h"
-#include "maya/MDagPath.h"
-#include "maya/MItDag.h"
-#include "maya/MItSelectionList.h"
-#include "maya/MSelectionList.h"
-#include "maya/MSyntax.h"
+#include <maya/MAnimControl.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MDagPath.h>
+#include <maya/MItDag.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MSelectionList.h>
+#include <maya/MSyntax.h>
 
 namespace doodle::maya_plug {
 MSyntax export_abc_file_syntax() {

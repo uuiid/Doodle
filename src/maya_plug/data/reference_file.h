@@ -5,9 +5,9 @@
 #include <maya_plug/data/cloth_interface.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "entt/entity/fwd.hpp"
-#include "maya/MApiNamespace.h"
-#include "maya/MString.h"
+#include <entt/entity/fwd.hpp>
+#include <maya/MApiNamespace.h>
+#include <maya/MString.h>
 #include <maya/MDagPath.h>
 #include <maya/MSelectionList.h>
 #include <maya/MTime.h>

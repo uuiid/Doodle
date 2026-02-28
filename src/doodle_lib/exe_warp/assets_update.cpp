@@ -1,18 +1,18 @@
 #include "assets_update.h"
 
-#include "doodle_lib/core/core_set.h"
-#include "doodle_lib/core/file_sys.h"
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_core/exception/exception.h>
-#include "doodle_core/metadata/image_size.h"
-#include "doodle_core/metadata/move_create.h"
-#include "doodle_core/metadata/project.h"
-#include "doodle_core/metadata/task_status.h"
+#include <doodle_core/metadata/image_size.h>
+#include <doodle_core/metadata/move_create.h>
+#include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/task_status.h>
 
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include "http_client/kitsu_client.h"
+#include <http_client/kitsu_client.h>
 #include <array>
 #include <filesystem>
 #include <opencv2/core/types.hpp>

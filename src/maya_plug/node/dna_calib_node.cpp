@@ -3,7 +3,7 @@
 #include "maya_plug_fwd.h"
 #include <maya_plug/node/dna_calib_node_impl.h>
 
-#include "data/maya_tool.h"
+#include <data/maya_tool.h>
 #include <fmt/xchar.h>
 #include <maya/MAngle.h>
 #include <maya/MApiNamespace.h>
