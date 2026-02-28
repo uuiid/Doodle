@@ -16,9 +16,5 @@ class doodle_batch_run
   doodle_batch_run();
   ~doodle_batch_run() override;
   [[maybe_unused]] MStatus doIt(const MArgList& in_list) override;
-
- private:
-  class impl;
-  std::unique_ptr<impl> ptr;
 };
 }  // namespace doodle::maya_plug
