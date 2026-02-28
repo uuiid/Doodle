@@ -1,8 +1,3 @@
-#include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/doodle_lib.h>
-#include <doodle_lib/platform/win/register_file_type.h>
-
 #include <maya_plug/data/maya_register_main.h>
 #include <maya_plug/logger/maya_logger_info.h>
 #include <maya_plug/maya_comm/add_entt.h>
@@ -31,7 +26,6 @@
 namespace {
 
 using namespace doodle;
-std::shared_ptr<app_base> p_doodle_app = nullptr;
 std::shared_ptr<::doodle::maya_plug::maya_register> maya_reg{nullptr};
 
 }  // namespace
@@ -45,11 +39,8 @@ MStatus initializePlugin(MObject obj) {
       obj, "doodle", version::build_info::get().version_str.c_str(), fmt::format("{}", MAYA_API_VERSION).c_str()
   };
 
-  maya_reg     = std::make_shared<::doodle::maya_plug::maya_register>();
-  p_doodle_app = std::make_shared<app_base>();
-
-  doodle::g_logger_ctrl().add_log_sink(std::make_shared<::doodle::maya_plug::maya_msg_mt>(), "maya_plug");
-
+  maya_reg = std::make_shared<::doodle::maya_plug::maya_register>();
+  
   status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::dna_calib_node>(k_plugin);
