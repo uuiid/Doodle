@@ -4,13 +4,12 @@
 
 #include "move_create.h"
 
-#include <doodle_core/core/core_set.h>
 #include <doodle_core/doodle_core_fwd.h>
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
+#include "exception/exception.h"
 #include <fmt/chrono.h>
 #include <nlohmann/json.hpp>
 #include <range/v3/algorithm/all_of.hpp>
@@ -66,25 +65,18 @@ void image_attr::extract_num(std::vector<image_attr>& in_image_list) {
       ranges::to_vector;
   const auto k_size = l_list.front().num_list.size();
 
-  ranges::all_of(l_list, [k_size](const image_attr_auxiliary& in) -> bool { return in.num_list.size() == k_size; })
-      ? void()
-      : throw_exception(doodle_error{"序列不匹配"s});
-
-  if (l_list.size() < 2) {
-    default_logger_raw()->log(log_loc(), level::warn, "传入的序列只有一个，无法进行比较");
-    return;
-  }
+  DOODLE_CHICK(
+      ranges::all_of(l_list, [k_size](const image_attr_auxiliary& in) -> bool { return in.num_list.size() == k_size; }),
+      "序列不匹配"
+  );
+  DOODLE_CHICK(l_list.size() > 1, "序列太小, 无法比较")
 
   auto& one   = l_list[0].num_list;
   auto& tow   = l_list[1].num_list;
   auto l_item = ranges::views::ints(std::size_t{0}, k_size) |
                 ranges::views::filter([&](const std::size_t& in_tuple) { return one[in_tuple] != tow[in_tuple]; }) |
                 ranges::to_vector;
-
-  if (l_item.empty()) {
-    default_logger_raw()->log(log_loc(), level::warn, "没有找到序列号");
-    return;
-  }
+  DOODLE_CHICK(!l_item.empty(), "序列完全相同, 无法比较")
   auto l_index = l_item.front();
   ranges::for_each(l_list, [&](image_attr_auxiliary& in_attribute) {
     in_attribute.image->num_attr = in_attribute.num_list[l_index];

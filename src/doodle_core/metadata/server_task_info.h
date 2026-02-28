@@ -145,8 +145,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   static constexpr auto logger_category = "server_task";
 
-  void get_last_line_log();
-  void clear_log_file();
+  void get_last_line_log(const FSys::path& in_log_path);
+  void clear_log_file(const FSys::path& in_log_path);
 
   bool operator==(const server_task_info& in_rhs) const {
     return std::tie(

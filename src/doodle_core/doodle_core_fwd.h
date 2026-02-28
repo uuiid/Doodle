@@ -8,6 +8,7 @@
 #include <doodle_core/doodle_core_pch.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/lib_warp/json_warp.h>
 
 #include <boost/uuid/uuid.hpp>
 
