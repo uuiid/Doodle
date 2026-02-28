@@ -6,6 +6,7 @@
 
 #include <maya_plug/abc/alembic_archive_out.h>
 #include <maya_plug/data/dagpath_cmp.h>
+#include <maya_plug/data/maya_display.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include "maya/MAnimControl.h"
@@ -41,9 +42,7 @@ MStatus export_abc_file::doIt(const MArgList &in_arg) {
   auto file_name  = arg_data.isFlagSet("-f") ? FSys::path{conv::to_s(arg_data.flagArgumentString("-f", 0))}
                                              : FSys::get_cache_path() / "default.abc";
 
-  default_logger_raw()->info(
-      "export_abc_file::doIt: file_name: {}, begin_time: {}, end_time: {}", file_name, begin_time, end_time
-  );
+  display_info("export_abc_file::doIt: file_name: {}, begin_time: {}, end_time: {}", file_name, begin_time, end_time);
 
   MItSelectionList it_list{list, MFn::kDagNode, &status};
   maya_chick(status);
@@ -79,7 +78,7 @@ MStatus export_abc_file::doIt(const MArgList &in_arg) {
       archive_out.write();
     }
   } catch (std::exception const &e) {
-    default_logger_raw()->error("export_abc_file::doIt: {}", e.what());
+    display_error("export_abc_file::doIt: {}", e.what());
     if (FSys::exists(file_name)) FSys::remove(file_name);
     return MS::kFailure;
   }

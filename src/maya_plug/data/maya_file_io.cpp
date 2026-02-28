@@ -7,6 +7,8 @@
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
+#include <maya_plug/data/maya_display.h>
+
 // #include <Windows.h>
 #include "maya_conv_str.h"
 #include <maya/MFileIO.h>
@@ -89,7 +91,7 @@ void maya_file_io::open_file(const FSys::path& in_file_path, MFileIO::ReferenceM
   try {
     maya_chick(open_file_impl(l_str, in_mode));
   } catch (const std::exception& e) {
-    default_logger_raw()->log(log_loc(), level::err, "打开文件失败, 无法保证输出正确:{} {}", e.what(), in_file_path);
+    display_error("打开文件失败, 无法保证输出正确:{} {}", e.what(), in_file_path);
   }
 }
 

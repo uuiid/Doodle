@@ -9,6 +9,8 @@
 
 #include <maya_plug/fmt/fmt_warp.h>
 
+#include <maya_plug/data/maya_display.h>
+
 #include <maya/MStatus.h>
 #include <maya/MString.h>
 
@@ -27,7 +29,7 @@ inline void maya_chick(const MStatus& in_status, ::boost::source_location const&
 #define DOODLE_MAYA_RETURN(in_status)                                        \
   if (auto&& l_m_s = in_status; !l_m_s) {                                    \
     l_m_s.pAPIerror(__FILE__, __LINE__);                                     \
-    default_logger_raw()->log(log_loc(), level::err, fmt::to_string(l_m_s)); \
+    display_error(fmt::to_string(l_m_s));                                    \
     return l_m_s;                                                            \
   }
 

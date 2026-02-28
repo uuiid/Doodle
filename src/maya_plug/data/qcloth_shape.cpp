@@ -100,11 +100,11 @@ MObject qcloth_shape::get_ql_solver(const MSelectionList& in_selection_list) {
     DOODLE_MAYA_CHICK(l_status);
     MFnDependencyNode k_dep{l_object};
     if (k_dep.typeName(&l_status) == qlSolverShape) {
-      default_logger_raw()->info("找到解算核心 {}", get_node_full_name(l_object));
+      display_info("找到解算核心 {}", get_node_full_name(l_object));
       break;
     }
   }
-  default_logger_raw()->info("未找到解算核心");
+  display_info("未找到解算核心");
 
   return l_object;
 }
@@ -252,12 +252,12 @@ void qcloth_shape::cover_cloth_attr(const reference_file& in_handle) const {
   auto l_node    = in_handle.get_file_info_node();
   auto l_ql_core = get_ql_solver();
   if (l_ql_core.isNull()) {
-    default_logger_raw()->warn("{} 没有找到解算核心", get_node_full_name(obj));
+    display_warning("{} 没有找到解算核心", get_node_full_name(obj));
     return;
   }
 
   if (!get_attribute<std::int32_t>(l_node, "sim_override")) {
-    default_logger_raw()->warn("{} 没有开启覆盖模式", get_node_full_name(obj));
+    display_warning("{} 没有开启覆盖模式", get_node_full_name(obj));
     return;
   }
   set_attribute(l_ql_core, "simpleSubsampling", get_attribute<std::int32_t>(l_node, "simple_subsampling"));

@@ -40,7 +40,7 @@ std::vector<cloth_interface> qcloth_factory::create_cloth() const {
     MFnDependencyNode const k_dep{l_object};
     if (k_dep.typeName(&l_status) == qcloth_shape::qlClothShape) {
       l_ret.emplace_back(std::make_shared<qcloth_shape>(l_object));
-      default_logger_raw()->info("获取布料 {}", get_node_name(l_object));
+      display_info("获取布料 {}", get_node_name(l_object));
     }
   }
   return l_ret;

@@ -435,7 +435,7 @@ void fbx_node_transform::build_animation(const MTime& in_time) {
     std::double_t l_scale[3];
     l_transform.getScale(l_scale);
     if (l_scale[0] < 0.0000000001 || l_scale[1] < 0.0000000001 || l_scale[2] < 0.0000000001) {
-      default_logger_raw()->error("{} 缩放为 {} 近 0", dag_path, l_scale);
+      display_error("{} 缩放为 {} 近 0", dag_path, l_scale);
       throw_exception(
           doodle_error{enum_to_num(doodle::maya_enum::maya_error_t::bone_scale_error), "{} 缩放为 0", dag_path}
       );
@@ -638,7 +638,7 @@ void fbx_node_mesh::build_mesh() {
     FbxLayerElementNormal* l_layer_n = FbxLayerElementNormal::Create(mesh, "");
     l_layer_n->SetMappingMode(FbxLayerElement::eByPolygonVertex);
     l_layer_n->SetReferenceMode(FbxLayerElement::eDirect);
-    default_logger_raw()->info("写出mesh normal {}", node->GetName());
+    display_info("写出mesh normal {}", node->GetName());
 
     for (auto i = 0; i < l_fn_mesh.numPolygons(); ++i) {
       MIntArray l_vert_list{};
@@ -676,7 +676,7 @@ void fbx_node_mesh::build_skin() {
   auto l_skin_obj = get_skin_custer();
   if (l_skin_obj.isNull()) throw_exception(doodle_error{"未找到皮肤簇 {}", get_node_name(dag_path)});
 
-  default_logger_raw()->info("使用皮肤簇 {}", get_node_name(l_skin_obj));
+  display_info("使用皮肤簇 {}", get_node_name(l_skin_obj));
   auto* l_sk = FbxSkin::Create(node->GetScene(), get_node_name(l_skin_obj).c_str());
   mesh->AddDeformer(l_sk);
 
@@ -763,7 +763,7 @@ void fbx_node_mesh::build_skin() {
         for (auto j = 0; j < 4; ++j) l_fbx_matrix.mData[i2][j] = l_world_matrix[i2][j];
     } else {
       l_fbx_matrix.SetIdentity();
-      default_logger_raw()->warn("无法获取矩阵 {}", l_joint->dag_path);
+      display_warning("无法获取矩阵 {}", l_joint->dag_path);
     }
     l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
@@ -893,7 +893,7 @@ void fbx_node_mesh::build_blend_shape() {
         if (std::any_of(std::begin(l_name_list), std::end(l_name_list), [&](const std::string_view& in_name) -> bool {
               return conv::to_s(l_name) == in_name;
             })) {
-          default_logger_raw()->log(log_loc(), level::info, "blend shape {} is not export", l_name);
+          display_info("blend shape {} is not export", l_name);
           continue;
         }
       }
@@ -1220,7 +1220,7 @@ void fbx_write::write(
     l_iter(tree_.begin());
     scene_->AddPose(l_post);
   }
-  logger_->flush();
+  if (logger_) logger_->flush();
 }
 
 void fbx_write::write(
@@ -1252,7 +1252,7 @@ void fbx_write::write(
   l_fbx_cam->extra_data_.logger_ = logger_;
   l_fbx_cam->film_aperture_      = in_film_aperture;
   l_fbx_cam->build_data();
-  logger_->info("开始导出camera动画 {}", in_cam_path);
+  display_info("开始导出camera动画 {}", in_cam_path);
 
   if (export_anim_) {
     for (auto l_time = in_begin; l_time <= in_end; ++l_time) {
@@ -1261,7 +1261,7 @@ void fbx_write::write(
     }
   }
 
-  logger_->flush();
+  if (logger_) logger_->flush();
 }
 
 std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vector) {

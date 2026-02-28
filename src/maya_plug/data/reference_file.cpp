@@ -186,9 +186,7 @@ MObject reference_file::get_ref_node() const {
 
     return l_node;
   } else {
-    default_logger_raw()->log(
-        log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_node_full_name(file_info_node_)
-    );
+    display_error("引用文件 {} 没有连接文件", get_node_full_name(file_info_node_));
   }
   return {};
 }
@@ -197,7 +195,7 @@ bool reference_file::is_loaded() const {
   MStatus l_status{};
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
-    default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
+    display_error("引用文件 {} 没有连接文件", get_namespace());
     return false;
   }
   MFnReference l_ref{};
@@ -211,12 +209,12 @@ void reference_file::load_file() {
   MStatus l_status{};
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
-    default_logger_raw()->log(log_loc(), spdlog::level::err, "引用文件 {} 没有连接文件", get_namespace());
+    display_error("引用文件 {} 没有连接文件", get_namespace());
     return;
   }
   MString l_file_str = MFileIO::loadReferenceByNode(l_node, &l_status);
   maya_chick(l_status);
-  default_logger_raw()->log(log_loc(), spdlog::level::info, "加载引用文件 {}", l_file_str);
+  display_info("加载引用文件 {}", l_file_str);
 }
 
 MSelectionList reference_file::get_collision_model() const {
@@ -244,8 +242,10 @@ MSelectionList reference_file::get_collision_model() const {
 }
 
 std::string reference_file::get_namespace() const {
-  if (file_info_node_.isNull())
-    return SPDLOG_LOGGER_WARN(default_logger_raw(), "引用文件节点为空, 无法获取名称空间"), "";
+  if (file_info_node_.isNull()) {
+    display_warning("引用文件节点为空, 无法获取名称空间");
+    return "";
+  }
   MStatus l_status{};
   auto l_node = get_ref_node();
   DOODLE_CHICK(!l_node.isNull(), "引用文件 {} 没有连接文件", get_node_full_name(file_info_node_));
@@ -262,7 +262,7 @@ bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path>
   }
   auto k_vfx_path = fmt::format("{}_cloth{}", l_stem, k_m_str.extension().generic_string());
   if (!in_sim_file_map.contains(k_vfx_path)) {
-    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
+    display_error("引用文件 {} 没有对应的资产文件", get_namespace());
     return false;
   }
   return true;
@@ -271,7 +271,7 @@ bool reference_file::has_sim_assets_file(const std::map<std::string, FSys::path>
 bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::path>& in_sim_file_map) {
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
-    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
+    display_error("引用文件 {} 没有连接文件", get_namespace());
     return false;
   }
 
@@ -291,7 +291,7 @@ bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::p
   auto k_vfx_path = fmt::format("{}_cloth{}", k_m_str.stem().generic_string(), k_m_str.extension().generic_string());
   DOODLE_LOG_INFO("推测资产路径 {}", k_vfx_path);
   if (!in_sim_file_map.contains(k_vfx_path)) {
-    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有对应的资产文件", get_namespace());
+    display_error("引用文件 {} 没有对应的资产文件", get_namespace());
     return false;
   }
 
@@ -301,11 +301,11 @@ bool reference_file::replace_sim_assets_file(const std::map<std::string, FSys::p
 bool reference_file::replace_file(const FSys::path& in_handle) {
   auto l_node = get_ref_node();
   if (l_node.isNull()) {
-    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 没有连接文件", get_namespace());
+    display_error("引用文件 {} 没有连接文件", get_namespace());
     return false;
   }
   if (!FSys::exists(in_handle)) {
-    default_logger_raw()->log(log_loc(), level::err, "引用文件 {} 不存在", in_handle);
+    display_error("引用文件 {} 不存在", in_handle);
     return false;
   }
 
@@ -331,7 +331,7 @@ bool reference_file::replace_file(const FSys::path& in_handle) {
 
     std::string l_s = d_str{MFileIO::loadReferenceByNode(l_node, &k_s)};
     maya_chick(k_s);
-    default_logger_raw()->log(log_loc(), level::info, "加载引用文件 {}", l_s);
+    display_info("加载引用文件 {}", l_s);
   }
   return true;
 }
@@ -341,9 +341,7 @@ void reference_file::rename_namespace(const std::string& in_name) {
   for (int l_i = 1; l_i < 1000 && MNamespace::namespaceExists(d_str{l_name_d}); ++l_i) {
     l_name_d = fmt::format("{}{}", in_name, l_i);
   }
-  default_logger_raw()->log(
-      log_loc(), level::info, "确认名称空间 {} 开始重命名名称空间到 {}", get_namespace(), l_name_d
-  );
+  display_info("确认名称空间 {} 开始重命名名称空间到 {}", get_namespace(), l_name_d);
   k_s = MNamespace::renameNamespace(d_str{get_namespace()}, d_str{l_name_d});
   DOODLE_MAYA_CHICK(k_s);
   doodle::maya_plug::set_attribute(file_info_node_, "reference_file_namespace", l_name_d);
@@ -487,9 +485,7 @@ std::vector<reference_file> reference_file_factory::create_ref() const {
     if (l_fn_node.typeId() == doodle_file_info::doodle_id) {
       reference_file l_ref{l_it.thisNode()};
       if (!l_ref.get_namespace().empty()) {
-        default_logger_raw()->log(
-            log_loc(), spdlog::level::info, "获得引用文件 {} {}", l_ref.get_abs_path(), l_ref.get_namespace()
-        );
+        display_info("获得引用文件 {} {}", l_ref.get_abs_path(), l_ref.get_namespace());
         l_ret.emplace_back(l_ref);
       }
     }
@@ -507,7 +503,7 @@ std::vector<reference_file> reference_file_factory::create_ref(const MSelectionL
       reference_file l_ref{l_it.thisNode()};
       MString l_name = get_plug(l_it.thisNode(), "reference_file_namespace").asString(&l_status);
       if (!l_ref.get_namespace().empty() && l_ref.has_node(in_list)) {
-        default_logger_raw()->log(log_loc(), spdlog::level::info, "获得引用文件 {}", l_ref.get_abs_path());
+        display_info("获得引用文件 {}", l_ref.get_abs_path());
         l_ret.emplace_back(l_ref);
       }
     }

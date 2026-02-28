@@ -144,7 +144,7 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     l_s = l_select.getDagPath(0, l_main_path);
     maya_chick(l_s);
   } else {
-    default_logger_raw()->warn("没有配置中指定的 {} 导出组", "UE4");
+    display_warning("没有配置中指定的 {} 导出组", "UE4");
     return {};
   }
   std::vector<MDagPath> l_export_list{};
@@ -169,12 +169,12 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     std::erase_if(l_export_list, [&](const MDagPath& in) {
       return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end();
     });
-    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
+    display_info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
     fbx_write l_fbx_write{};
     auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("{}_cloth.fbx", l_stem);
     if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
-    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    display_info("导出fbx 文件{}", l_file);
     l_fbx_write.set_path(l_file);
     l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
     l_ret.emplace_back(l_file);
@@ -185,12 +185,12 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     std::erase_if(l_export_list_old, [&](const MDagPath& in) {
       return std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
     });
-    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list_old, "\n"));
+    display_info("导出选中物体 {}", fmt::join(l_export_list_old, "\n"));
 
     fbx_write l_fbx_write{};
     auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("{}_hair.fbx", l_stem);
     if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
-    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    display_info("导出fbx 文件{}", l_file);
     l_fbx_write.set_path(l_file);
     l_fbx_write.write(l_export_list_old, MAnimControl::minTime(), MAnimControl::maxTime());
     l_ret.emplace_back(l_file);
@@ -202,12 +202,12 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
       return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end() ||
              std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
     });
-    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
+    display_info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
     fbx_write l_fbx_write{};
     auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("{}_cloth_hair.fbx", l_stem);
     if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
-    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    display_info("导出fbx 文件{}", l_file);
     l_fbx_write.set_path(l_file);
     l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
     l_ret.emplace_back(l_file);
@@ -215,12 +215,12 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
   if (l_export_sim_cloth.empty() && l_export_sim_hair.empty()) {
     l_export_list = l_export_list_old;
     // 排除 export_sim 中的物体
-    default_logger_raw()->info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
+    display_info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
     fbx_write l_fbx_write{};
     auto l_file = maya_file_io::work_path(FSys::path{"fbx"}) / fmt::format("{}.fbx", l_stem);
     if (auto l_p_path = l_file.parent_path(); !FSys::exists(l_p_path)) FSys::create_directories(l_p_path);
-    default_logger_raw()->info(fmt::format("导出fbx 文件{}", l_file));
+    display_info("导出fbx 文件{}", l_file);
     l_fbx_write.set_path(l_file);
     l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
     l_ret.emplace_back(l_file);
@@ -287,7 +287,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
 
   boost::scope::scope_exit l_ex{[&]() { in_gen_file->add_external_string = {}; }};
   boost::scope::scope_fail l_fail{[&]() {
-    default_logger_raw()->error("导出abc 文件 {} 失败", l_ret);
+    display_error("导出abc 文件 {} 失败", l_ret);
     for (auto&& i : l_ret)
       if (FSys::exists(i)) FSys::remove(i);
   }};
@@ -296,7 +296,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
     in_gen_file->add_external_string = "cloth";
     auto l_file_path                 = (*in_gen_file)(in_ref);
     l_file_path.replace_extension(".abc");
-    default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
+    display_info("导出abc 文件{}", l_file_path);
     alembic::archive_out l_archive_out{
         l_file_path, l_export_sim_cloth, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
     };
@@ -310,7 +310,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
     in_gen_file->add_external_string = "hair";
     auto l_file_path                 = (*in_gen_file)(in_ref);
     l_file_path.replace_extension(".abc");
-    default_logger_raw()->info(fmt::format("导出abc 文件{}", l_file_path));
+    display_info("导出abc 文件{}", l_file_path);
     alembic::archive_out l_archive_out{
         l_file_path, l_export_sim_hair, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
     };

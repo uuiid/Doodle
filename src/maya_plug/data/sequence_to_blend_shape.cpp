@@ -8,6 +8,7 @@
 
 #include "main/maya_plug_fwd.h"
 #include <maya_plug/data/fbx_write.h>
+#include <maya_plug/data/maya_display.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
 
@@ -62,7 +63,6 @@ void sequence_to_blend_shape::init(const MDagPath& in_mesh, std::int64_t in_samp
 }
 
 void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
-  // default_logger_raw()->info("添加采样 {}", in_sample_index);
   auto l_mesh_dag = base_mesh_obj_;
   l_mesh_dag.extendToShape();
   MFnMesh l_fn_mesh{l_mesh_dag};
@@ -100,7 +100,7 @@ void sequence_to_blend_shape::add_sample(std::int64_t in_sample_index) {
 }
 
 void sequence_to_blend_shape::compute() {
-  default_logger_raw()->info("开始计算混合变形 {}", get_node_full_name(base_mesh_obj_));
+  display_info("开始计算混合变形 {}", get_node_full_name(base_mesh_obj_));
   // 计算法线
   for (auto& l_n : normal_) {
     for (auto& l_v : l_n) {

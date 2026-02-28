@@ -296,7 +296,7 @@ MStatus file_info_edit::create_node() {
 
       auto l_file_path = l_fn_ref.fileName(false, false, false, &l_status);
       if (l_status != MStatus::kSuccess) {
-        default_logger_raw()->log(log_loc(), level::err, "无法获取基本的引用路径");
+        display_error("无法获取基本的引用路径");
         l_status = MStatus::kSuccess;
         continue;
       }
@@ -306,7 +306,7 @@ MStatus file_info_edit::create_node() {
 
       auto l_namespace = l_fn_ref.associatedNamespace(false, &l_status);
       if (l_status != MStatus::kSuccess) {
-        default_logger_raw()->log(log_loc(), level::err, "无法获取基本的引用命名空间");
+        display_error("无法获取基本的引用命名空间");
         l_status = MStatus::kSuccess;
         continue;
       }

@@ -8,6 +8,7 @@
 #include <doodle_core/platform/win/register_file_type.h>
 
 #include <maya_plug/data/maya_file_io.h>
+#include <maya_plug/data/maya_display.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/main/maya_plug_fwd.h>
@@ -121,7 +122,7 @@ bool maya_camera::unlock_attr() {
 }
 maya_camera maya_camera::conjecture() {
   {
-    default_logger_raw()->warn("先旧版本相机测试");
+    display_warning("先旧版本相机测试");
     static auto l_list = std::vector{
         std::make_pair(R"(front|persp|side|top|camera)"s, -1000),
         std::make_pair(R"(ep\d+_sc\d+)"s, 30),
@@ -172,7 +173,7 @@ maya_camera maya_camera::conjecture() {
       return maya_camera{k_list[0].p_dag_path};
     }
   }
-  default_logger_raw()->warn("新版本相机测试");
+  display_warning("新版本相机测试");
   MStatus k_s;
   MItDag k_it{MItDag::kBreadthFirst, MFn::kCamera, &k_s};
   DOODLE_MAYA_CHICK(k_s);
@@ -189,7 +190,7 @@ maya_camera maya_camera::conjecture() {
     DOODLE_MAYA_CHICK(k_s);
 
     auto l_sub = k_path_str.substr(1, k_path_str.find('|', 1) - 1);
-    default_logger_raw()->warn("获取场景名称 {}, 并开始测试相机 {}", l_s_name, l_sub);
+    display_warning("获取场景名称 {}, 并开始测试相机 {}", l_s_name, l_sub);
     if (std::regex_search(l_sub, l_re) && l_sub == l_s_name) {
       l_cam_dag_path = k_path;
       break;
@@ -197,12 +198,12 @@ maya_camera maya_camera::conjecture() {
   }
 
   if (!l_cam_dag_path.isValid()) {
-    default_logger_raw()->error("没有找到任何相机");
+    display_error("没有找到任何相机");
     throw_exception(
         doodle_error{enum_to_num(maya_enum::maya_error_t::camera_name_error), "没有找到相机, 请检查相机名称是否正确"}
     );
   }
-  default_logger_raw()->warn("找到相机 {}", l_cam_dag_path);
+  display_warning("找到相机 {}", l_cam_dag_path);
   return maya_camera{l_cam_dag_path};
 }
 void maya_camera::set_render_cam() const {

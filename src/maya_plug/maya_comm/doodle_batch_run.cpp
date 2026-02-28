@@ -142,9 +142,7 @@ class cloth_sim_run {
     cloth_lists_.reserve(l_cloth_list_.size());
     for (auto&& in_handle : l_cloth_list_) {
       if (!l_ref_map.contains(in_handle->get_namespace())) {
-        default_logger_raw()->log(
-            log_loc(), level::info, "布料{}未找到对应的引用文件, 无法解算, 请查找对应的引用", in_handle->get_shape()
-        );
+        display_info("布料{}未找到对应的引用文件, 无法解算, 请查找对应的引用", in_handle->get_shape());
       }
       cloth_lists_.emplace_back(in_handle);
     }
@@ -424,7 +422,7 @@ class replace_file_run {
                 }
             );
             if (l_it == self->files_.end()) {
-              default_logger_raw()->log(log_loc(), level::info, "跳过引用文件 {}", l_name);
+              display_info("跳过引用文件 {}", l_name);
               *retCode = true;
               return;
             }
@@ -435,7 +433,7 @@ class replace_file_run {
             *retCode = true;
 
             self->rename_namespaces.emplace_back(referenceNode, l_it->second.stem().generic_string());
-            default_logger_raw()->log(log_loc(), level::info, "替换加载引用文件 {}", l_it->second);
+            display_info("替换加载引用文件 {}", l_it->second);
           },
           &l_data
       )};
@@ -713,7 +711,6 @@ class inspect_file_run {
         maya_chick(l_mesh.setObject(l_iter.currentItem()));
         auto l_num_ver = l_mesh.numVertices();
         auto l_num_uv  = l_mesh.numUVs();
-        // default_logger_raw()->warn("{} {} {}", get_node_name(l_iter.currentItem()), l_num_ver, l_num_uv);
         if (l_num_ver > l_num_uv) {
           l_e = maya_enum::maya_error_t::check_error;
           display_error("存在多余点数 {}", get_node_full_name(l_iter.currentItem()));
@@ -813,7 +810,7 @@ class export_rig_run {
     nlohmann::json l_json = l_out_arg;
     if (!out_path_file_.empty()) {
       if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
-      default_logger_raw()->log(log_loc(), spdlog::level::info, "写出配置文件 {}", out_path_file_);
+      display_info("写出配置文件 {}", out_path_file_);
       FSys::ofstream{out_path_file_} << l_json.dump(4);
     } else
       log_info(fmt::format("导出文件 {}", l_json.dump(4)));
