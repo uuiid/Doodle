@@ -1,6 +1,6 @@
 #include "cross_attention_bone_weight.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 
 #include <doodle_lib/ai/load_fbx.h>
 #include <doodle_lib/ai/sparsemax.h>

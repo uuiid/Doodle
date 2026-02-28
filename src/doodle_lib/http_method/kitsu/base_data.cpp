@@ -5,7 +5,7 @@
 #include "doodle_lib/core/core_set.h"
 #include "doodle_lib/core/global_function.h"
 #include "doodle_core/doodle_core_fwd.h"
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "doodle_core/metadata/entity_type.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_lib/sqlite_orm/sqlite_database.h"

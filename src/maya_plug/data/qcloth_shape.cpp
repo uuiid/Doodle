@@ -22,7 +22,7 @@
 #include "data/qcloth_shape.h"
 #include "data/sim_cover_attr.h"
 #include "entt/entity/fwd.hpp"
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include <fmt/core.h>
 #include <magic_enum/magic_enum_all.hpp>
 #include <maya/MAnimControl.h>

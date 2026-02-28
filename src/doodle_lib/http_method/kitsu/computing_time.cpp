@@ -1,6 +1,6 @@
 #include "computing_time.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/attendance.h>
 #include <doodle_core/metadata/entity_type.h>
 

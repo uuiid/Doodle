@@ -4,7 +4,7 @@
 
 #include "export_file_fbx.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "doodle_core/lib_warp/enum_template_tool.h"
 #include <doodle_core/doodle_core_fwd.h>
 
@@ -23,7 +23,7 @@
 #include <maya_plug/fmt/fmt_select_list.h>
 
 #include "data/maya_tool.h"
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "fmt/core.h"
 #include "maya_conv_str.h"
 #include <filesystem>

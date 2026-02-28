@@ -1,6 +1,6 @@
 #include "global_function.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/lexical_cast.hpp>

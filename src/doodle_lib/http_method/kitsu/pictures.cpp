@@ -1,7 +1,7 @@
 //
 // Created by TD on 25-5-12.
 //
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "doodle_core/metadata/organisation.h"
 #include "doodle_core/metadata/preview_file.h"
 #include <doodle_lib/sqlite_orm/sqlite_database.h>

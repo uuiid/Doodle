@@ -4,7 +4,7 @@
 
 #include "reference_file.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "doodle_lib/logger/logger.h"
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
@@ -22,7 +22,7 @@
 
 #include "data/maya_tool.h"
 #include "data/reference_file.h"
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "maya_conv_str.h"
 #include "maya_tool.h"
 #include <filesystem>

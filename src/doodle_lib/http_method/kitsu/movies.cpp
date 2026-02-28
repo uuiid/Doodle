@@ -2,7 +2,7 @@
 // Created by TD on 25-7-29.
 //
 #include "doodle_core/doodle_core_fwd.h"
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>

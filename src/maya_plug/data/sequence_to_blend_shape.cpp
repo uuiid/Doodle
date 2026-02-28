@@ -4,7 +4,7 @@
 
 #include "sequence_to_blend_shape.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 
 #include "main/maya_plug_fwd.h"
 #include <maya_plug/data/fbx_write.h>

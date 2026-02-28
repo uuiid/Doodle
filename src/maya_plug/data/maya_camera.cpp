@@ -13,7 +13,7 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "maya_conv_str.h"
 #include <maya/MDGModifier.h>
 #include <maya/MFnCamera.h>

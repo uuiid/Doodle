@@ -3,7 +3,7 @@
 //
 
 #include "doodle_lib/core/bcrypt/bcrypt.h"
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "doodle_core/metadata/department.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/project_status.h"

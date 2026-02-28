@@ -4,7 +4,7 @@
 
 #include "ue_exe.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include "doodle_lib/platform/win/register_file_type.h"
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/logger/logger.h>

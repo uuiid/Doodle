@@ -9,7 +9,7 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/user.h>
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 #include <fmt/chrono.h>
 #include <nlohmann/json.hpp>
 #include <range/v3/algorithm/all_of.hpp>

@@ -1,6 +1,6 @@
 #include "inspect_maya.h"
 
-#include "doodle_core/exception/exception.h"
+#include <doodle_core/exception/exception.h>
 
 namespace doodle {
 
