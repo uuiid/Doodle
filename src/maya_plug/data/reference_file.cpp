@@ -5,7 +5,7 @@
 #include "reference_file.h"
 
 #include <doodle_core/exception/exception.h>
-#include <doodle_lib/logger/logger.h>
+#include <maya_plug/data/maya_display.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/shot.h>
 

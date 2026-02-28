@@ -4,7 +4,7 @@
 
 #include "find_duplicate_poly.h"
 
-#include <doodle_lib/logger/logger.h>
+#include <maya_plug/data/maya_display.h>
 
 #include <data/m_namespace.h>
 #include <data/maya_tool.h>

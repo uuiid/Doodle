@@ -4,7 +4,7 @@
 
 #include "qcloth_shape.h"
 
-#include <doodle_lib/logger/logger.h>
+#include <maya_plug/data/maya_display.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/replace.hpp>

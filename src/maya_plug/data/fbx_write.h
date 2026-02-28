@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <doodle_lib/logger/logger.h>
+#include <maya_plug/data/maya_display.h>
 
 #include <maya_plug/data/dagpath_cmp.h>
 
