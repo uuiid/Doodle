@@ -37,10 +37,10 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
     l_plug = l_node.findPlug(d_str{in_name}, false, &k_s);
 
     if (!k_s) {  /// \brief 出错后再次寻找
-      display_warning(k_s.errorString());
+      display_warning(fmt::to_string(k_s));
       l_plug = l_node.findPlug(d_str{in_name}, true, &k_s);
       if (!k_s) {
-        display_warning(k_s.errorString());
+        display_warning(fmt::to_string(k_s));
       }
     }
   } catch (const std::runtime_error& error) {

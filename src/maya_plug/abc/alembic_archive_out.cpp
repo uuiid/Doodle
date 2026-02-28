@@ -12,6 +12,7 @@
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/maya_display.h>
+#include <maya_plug/data/maya_display.h>
 
 #include <abc/alembic_archive_out.h>
 #include <Alembic/Abc/ArchiveInfo.h>

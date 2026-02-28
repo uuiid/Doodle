@@ -40,7 +40,7 @@ MStatus export_abc_file::doIt(const MArgList &in_arg) {
                         ? MTime{boost::numeric_cast<std::double_t>(arg_data.flagArgumentInt("-e", 0)), MTime::uiUnit()}
                         : MAnimControl::maxTime();
   auto file_name  = arg_data.isFlagSet("-f") ? FSys::path{conv::to_s(arg_data.flagArgumentString("-f", 0))}
-                                             : FSys::get_cache_path() / "default.abc";
+                                             : FSys::temp_directory_path() / "default.abc";
 
   display_info("export_abc_file::doIt: file_name: {}, begin_time: {}, end_time: {}", file_name, begin_time, end_time);
 

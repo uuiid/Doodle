@@ -441,7 +441,7 @@ class replace_file_run {
       maya_file_io::open_file(file_path_);
     }
     display_info("开始扫瞄引用");
-    ref_files_ = g_ctx().get<reference_file_factory>().create_ref();
+    ref_files_ = reference_file_factory{}.create_ref();
 
     // rename namespace
     display_info("开始重命名命名空间");
