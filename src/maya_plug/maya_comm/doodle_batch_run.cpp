@@ -53,11 +53,11 @@ static constexpr auto export_rig_config{"-export_rig"};
 MSyntax doodle_batch_run_syntax() {
   MSyntax syntax;
   syntax.addFlag("-c", "-config", MSyntax::kString);
-  syntax.addFlag("-clsm", cloth_sim_config, MSyntax::kString);
-  syntax.addFlag("-efbx", export_fbx_config, MSyntax::kString);
-  syntax.addFlag("-ref", replace_file_config, MSyntax::kString);
-  syntax.addFlag("-inf", inspect_file_config, MSyntax::kString);
-  syntax.addFlag("-erig", export_rig_config, MSyntax::kString);
+  syntax.addFlag("-cls", cloth_sim_config);
+  syntax.addFlag("-efb", export_fbx_config);
+  syntax.addFlag("-ref", replace_file_config);
+  syntax.addFlag("-inf", inspect_file_config);
+  syntax.addFlag("-eri", export_rig_config);
   return syntax;
 }
 
@@ -851,7 +851,7 @@ MStatus doodle_batch_run::doIt(const MArgList& in_list) {
       l_export_rig.config_export_rig(l_json);
       l_export_rig.run();
     } else {
-      display_error("没有传入正确的配置文件路径");
+      display_error("没有传入正确的配置标志");
       return MStatus::kFailure;
     }
   } catch (const doodle_error& e) {
