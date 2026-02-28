@@ -3,13 +3,13 @@
 //
 
 #pragma once
+#include <doodle_core/doodle_core_fwd.h>
 
 #include <entt/entity/fwd.hpp>
 #include <entt/entt.hpp>
 #include <maya/MApiNamespace.h>
 #include <memory>
 #include <vector>
-
 
 namespace doodle::maya_plug {
 class reference_file;

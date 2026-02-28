@@ -18,7 +18,6 @@
 #include <maya_plug/fmt/fmt_warp.h>
 
 #include <data/maya_tool.h>
-#include <doodle_core/exception/exception.h>
 #include <fbxsdk.h>
 #include <fmt/format.h>
 #include <fmt/std.h>
@@ -52,6 +51,7 @@
 #include <maya/MVector.h>
 #include <numbers>
 #include <treehh/tree.hh>
+
 namespace doodle::maya_plug {
 namespace fbx_write_ns {
 
@@ -481,7 +481,7 @@ void fbx_node_mesh::build_mesh() {
   if (!dag_path.hasFn(MFn::kMesh)) {
     return;
   }
-  log_info(fmt::format("build mesh {}", dag_path));
+  display_info(fmt::format("build mesh {}", dag_path));
 
   auto l_sk = get_skin_custer();
   skin_guard const l_guard{l_sk};
@@ -602,7 +602,7 @@ void fbx_node_mesh::build_mesh() {
     MStringArray l_uv_set_names{};
     maya_chick(l_fn_mesh.getUVSetNames(l_uv_set_names));
     for (auto i = 0; i < l_uv_set_names.length(); ++i) {
-      log_info(fmt::format("uv set name: {}", l_uv_set_names[i]));
+      display_info(fmt::format("uv set name: {}", l_uv_set_names[i]));
       auto* l_layer = mesh->CreateElementUV(l_uv_set_names[i].asChar());
       l_layer->SetMappingMode(fbxsdk::FbxLayerElement::eByPolygonVertex);
       l_layer->SetReferenceMode(fbxsdk::FbxLayerElement::eIndexToDirect);
@@ -669,7 +669,7 @@ void fbx_node_mesh::build_mesh() {
 
 void fbx_node_mesh::build_skin() {
   if (mesh == nullptr) {
-    log_error(fmt::format(" {} is not mesh", dag_path));
+    display_error(fmt::format(" {} is not mesh", dag_path));
     return;
   }
   auto l_skin_obj = get_skin_custer();
@@ -707,7 +707,7 @@ void fbx_node_mesh::build_skin() {
     maya_chick(l_skin_cluster.getPathAtIndex(l_index, l_skin_mesh_path));
 
     MItGeometry l_it_geo{l_skin_mesh_path};
-    log_info(fmt::format("写出网格体 {} 顶点数 {}", l_skin_mesh_path, l_it_geo.count()));
+    display_info(fmt::format("写出网格体 {} 顶点数 {}", l_skin_mesh_path, l_it_geo.count()));
     for (; !l_it_geo.isDone(); l_it_geo.next()) {
       auto l_com = l_it_geo.currentItem(&l_status);
       maya_chick(l_status);
@@ -765,7 +765,7 @@ void fbx_node_mesh::build_skin() {
     }
     l_cluster->SetTransformLinkMatrix(l_fbx_matrix);
     if (!l_sk->AddCluster(l_cluster)) {
-      log_error(fmt::format("add cluster error: {}", node->GetName()));
+      display_error("add cluster error: {}", node->GetName());
     }
   }
 
@@ -787,7 +787,7 @@ void fbx_node_mesh::build_blend_shape() {
   auto l_fbx_bl = FbxBlendShape::Create(node->GetScene(), fmt::format("{}", get_node_name(l_bls[0])).c_str());
   mesh->AddDeformer(l_fbx_bl);
   FbxProperty::Create(l_fbx_bl->RootProperty, FbxStringDT, "RootGroup");
-  log_info(fmt::format("{} build blend shape {}", dag_path, get_node_name(l_bls[0])));
+  display_info("{} build blend shape {}", dag_path, get_node_name(l_bls[0]));
 
   MStatus l_status{};
   auto l_skin_obj = get_skin_custer();
@@ -802,12 +802,12 @@ void fbx_node_mesh::build_blend_shape() {
     for (auto j = 0; j < l_input_target_plug_array.numElements(); ++j) {
       l_input_target_plug = l_input_target_plug_array.elementByPhysicalIndex(j, &l_status);
       if (l_status != MStatus::kSuccess) {
-        log_error(fmt::format("blend shape {} inputTarget error", get_node_name(dag_path)));
+        display_error("blend shape {} inputTarget error", get_node_name(dag_path));
         continue;
       }
       auto l_output_geometry = l_output_geometry_array.elementByPhysicalIndex(j, &l_status);
       if (l_status != MStatus::kSuccess) {
-        log_error(fmt::format("blend shape {} outputGeometry error", get_node_name(dag_path)));
+        display_error("blend shape {} outputGeometry error", get_node_name(dag_path));
         continue;
       }
       bool l_is_skin{};
@@ -819,7 +819,7 @@ void fbx_node_mesh::build_blend_shape() {
         maya_chick(l_status);
         if (l_it_graph.thisNode() == l_skin_obj) {
           l_is_skin = true;
-          log_info(fmt::format("find skin {}", get_node_name(l_skin_obj)));
+          display_info("find skin {}", get_node_name(l_skin_obj));
           break;
         }
       }
@@ -827,7 +827,7 @@ void fbx_node_mesh::build_blend_shape() {
     }
 
     if (l_input_target_plug.isNull()) {
-      log_error(fmt::format("blend shape {} inputTarget is null", get_node_name(dag_path)));
+      display_error("blend shape {} inputTarget is null", get_node_name(dag_path));
       continue;
     }
 
@@ -851,19 +851,19 @@ void fbx_node_mesh::build_blend_shape() {
       maya_chick(l_status);
 
       if (l_input_point_target_data_handle.type() != MFnData::Type::kPointArray) {
-        log_info(fmt::format("blend shape {} point data type error", get_node_name(dag_path)));
+        display_info("blend shape {} point data type error", get_node_name(dag_path));
         continue;
       }
       if (l_input_components_target_data_handle.type() != MFnData::Type::kComponentList) {
-        log_info(fmt::format("blend shape {} component data type error", get_node_name(dag_path)));
+        display_info("blend shape {} component data type error", get_node_name(dag_path));
         continue;
       }
       if (l_input_point_target_data_handle.data().isNull()) {
-        log_info(fmt::format("blend shape {} point data is null", get_node_name(dag_path)));
+        display_info("blend shape {} point data is null", get_node_name(dag_path));
         continue;
       }
       if (l_input_components_target_data_handle.data().isNull()) {
-        log_info(fmt::format("blend shape {} component data is null", get_node_name(dag_path)));
+        display_info("blend shape {} component data is null", get_node_name(dag_path));
         continue;
       }
       MFnPointArrayData l_point_data{l_input_point_target_data_handle.data(), &l_status};
@@ -925,12 +925,11 @@ void fbx_node_mesh::build_blend_shape() {
       }
 
       if (l_point_data.length() != l_point_index_main.size()) {
-        log_error(
-            fmt::format(
-                "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
-                l_point_index_main.size()
-            )
+        display_error(
+            "blend shape {} point data length {} != point index length {}", get_node_name(i), l_point_data.length(),
+            l_point_index_main.size()
         );
+
         continue;
       }
 
@@ -1236,7 +1235,7 @@ void fbx_write::write(
   );
 
   scene_->GetRootNode()->AddChild(l_fbx_cam->node);
-  l_fbx_cam->film_aperture_      = in_film_aperture;
+  l_fbx_cam->film_aperture_ = in_film_aperture;
   l_fbx_cam->build_data();
   display_info("开始导出camera动画 {}", in_cam_path);
 
@@ -1246,7 +1245,6 @@ void fbx_write::write(
       l_fbx_cam->build_animation(l_time);
     }
   }
-
 }
 
 std::vector<MDagPath> fbx_write::select_to_vector(const MSelectionList& in_vector) {

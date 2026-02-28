@@ -4,11 +4,13 @@
 
 #include "maya_tool.h"
 
+#include <doodle_core/exception/exception.h>
+
+#include <maya_plug/fmt/fmt_warp.h>
 #include <maya_plug/main/maya_plug_fwd.h>
 
-#include <doodle_core/exception/exception.h>
-#include <maya/MApiNamespace.h>
 #include "maya_conv_str.h"
+#include <maya/MApiNamespace.h>
 #include <maya/MDagPath.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnSet.h>
@@ -20,6 +22,7 @@
 #include <maya/MStatus.h>
 #include <maya/MTime.h>
 #include <vector>
+
 
 namespace doodle::maya_plug {
 
@@ -60,12 +63,12 @@ MPlug get_plug(const MObject& in_node, const std::string& in_name) {
       l_plug = l_dag_node_shape.findPlug(d_str{in_name}, false, &k_s);
 
       if (!k_s) {
-        display_warning(k_s.errorString());
+        SPDLOG_WARN(k_s.errorString());
       }
 
       l_plug = l_dag_node_shape.findPlug(d_str{in_name}, true, &k_s);
       if (!k_s) {
-        display_warning(k_s.errorString());
+        SPDLOG_WARN(k_s.errorString());
       }
 
     } catch (const std::runtime_error& error) {

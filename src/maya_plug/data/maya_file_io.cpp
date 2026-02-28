@@ -81,7 +81,7 @@ auto open_file_impl(const MString& in_str, MFileIO::ReferenceMode in_mod) {
   try {
     l_s = MFileIO::open(in_str, nullptr, true, in_mod, true);
   } catch (...) {
-    log_error(boost::current_exception_diagnostic_information());
+    display_error(boost::current_exception_diagnostic_information());
   }
   return l_s;
 }

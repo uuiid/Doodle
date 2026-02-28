@@ -4,9 +4,9 @@
 
 #include "export_file_fbx.h"
 
+#include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/lib_warp/enum_template_tool.h>
-#include <doodle_core/doodle_core_fwd.h>
 
 #include <boost/scope/scope_exit.hpp>
 #include <boost/scope/scope_fail.hpp>
@@ -22,11 +22,10 @@
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 
-#include <data/maya_tool.h>
-#include <doodle_core/exception/exception.h>
-#include <fmt/core.h>
 #include "maya_conv_str.h"
+#include <data/maya_tool.h>
 #include <filesystem>
+#include <fmt/core.h>
 #include <fmt/format.h>
 #include <maya/MAnimControl.h>
 #include <maya/MApiNamespace.h>
@@ -36,6 +35,7 @@
 #include <memory>
 #include <range/v3/view/transform.hpp>
 #include <vector>
+
 
 namespace doodle::maya_plug {
 void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, const MDagPath& in_path) {
@@ -129,7 +129,7 @@ FSys::path export_file_fbx::export_anim(
   bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
 
   auto l_file_path = (*in_gen_file)(in_ref);
-  log_info(fmt::format("导出fbx文件路径 {}", l_file_path));
+  display_info("导出fbx文件路径 {}", l_file_path);
 
   fbx_write l_fbx_write{};
   l_fbx_write.set_path(l_file_path);
@@ -265,7 +265,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
   // bake_anim(in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second, *l_export_group);
   std::vector<FSys::path> l_ret{};
   auto l_fbx_file_path = (*in_gen_file)(in_ref);
-  log_info(fmt::format("导出fbx文件路径 {}", l_fbx_file_path));
+  display_info("导出fbx文件路径 {}", l_fbx_file_path);
   l_ret.emplace_back(l_fbx_file_path);
   std::vector<MDagPath> l_export_sim_cloth = in_ref.get_all_cloth_obj();
   auto l_export_sim_hair                   = in_ref.get_all_hair_obj();
@@ -291,7 +291,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
     for (auto&& i : l_ret)
       if (FSys::exists(i)) FSys::remove(i);
   }};
-  
+
   if (!l_export_sim_cloth.empty()) {
     in_gen_file->add_external_string = "cloth";
     auto l_file_path                 = (*in_gen_file)(in_ref);

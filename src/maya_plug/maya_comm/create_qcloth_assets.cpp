@@ -602,7 +602,6 @@ class create_qcloth_assets::impl {
 
 create_qcloth_assets::create_qcloth_assets() : p_i(std::make_unique<impl>()) {}
 void create_qcloth_assets::parse_arg(const MArgList& in_arg) {
-  display_info(in_arg);
   MStatus l_s{};
   MArgDatabase const l_arg{syntax(), in_arg, &l_s};
 
