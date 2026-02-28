@@ -3,25 +3,26 @@
 //
 #include "kitsu.h"
 
-#include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/authorization.h>
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_lib/platform/win/register_file_type.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <doodle_lib/http_method/dingding_attendance.h>
-#include <doodle_lib/http_method/kitsu/computing_time.h>
-#include <doodle_lib/http_method/model_library/model_library.h>
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/authorization.h>
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/socket_io.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/dingding_attendance.h>
+#include <doodle_lib/http_method/kitsu/computing_time.h>
+#include <doodle_lib/http_method/model_library/model_library.h>
+#include <doodle_lib/platform/win/register_file_type.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+
 // #include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/computer.h>
 #include <doodle_lib/http_method/kitsu/epiboly.h>
@@ -31,10 +32,6 @@
 #include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
-
-#include <kitsu/epiboly.h>
-#include <kitsu/kitsu_reg_url.h>
-#include <local/local.h>
 
 namespace doodle::http {
 
