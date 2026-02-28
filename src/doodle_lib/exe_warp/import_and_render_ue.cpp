@@ -9,7 +9,7 @@
 #include "doodle_core/metadata/task_type.h"
 #include <doodle_lib/core/http_client_core.h>
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/main_map.h>
 
 #include <doodle_lib/core/alembic_file.h>

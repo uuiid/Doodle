@@ -6,7 +6,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
-#include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 

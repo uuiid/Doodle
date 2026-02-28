@@ -4,7 +4,7 @@
 
 #include "register_file_type.h"
 
-#include <doodle_core/lib_warp/boost_locale_warp.h>
+#include <doodle_lib/lib_warp/boost_locale_warp.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_core/metadata/project.h>
 

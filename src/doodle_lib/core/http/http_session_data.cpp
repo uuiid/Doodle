@@ -9,10 +9,10 @@
 #include "doodle_lib/core/core_set.h"
 // ReSharper disable once CppUnusedIncludeDirective
 #include "doodle_core/doodle_core_fwd.h"
-#include <doodle_core/lib_warp/boost_fmt_beast.h>
+#include <doodle_lib/lib_warp/boost_fmt_beast.h>
 // ReSharper disable once CppUnusedIncludeDirective
-#include <doodle_core/lib_warp/boost_fmt_error.h>
-#include <doodle_core/lib_warp/boost_fmt_url.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
+#include <doodle_lib/lib_warp/boost_fmt_url.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <doodle_lib/core/http/http_function.h>

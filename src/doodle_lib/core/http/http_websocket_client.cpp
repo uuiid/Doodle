@@ -5,7 +5,7 @@
 #include "http_websocket_client.h"
 
 #include "doodle_lib/logger/logger.h"
-#include <doodle_core/lib_warp/boost_fmt_error.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/websocket_route.h>
