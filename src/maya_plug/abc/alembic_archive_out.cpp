@@ -11,8 +11,6 @@
 #include <maya_plug/exception/exception.h>
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_file_io.h>
-#include <maya_plug/data/maya_display.h>
-#include <maya_plug/data/maya_display.h>
 
 #include <abc/alembic_archive_out.h>
 #include <Alembic/Abc/ArchiveInfo.h>
@@ -110,8 +108,8 @@ std::tuple<std::vector<Imath::V2f>, std::vector<std::uint32_t>> get_mesh_uv(cons
     }
   }
 
-  // display_info("uv nums {} index {} ,{} ", l_uv_array.size(), l_index_array.size(), l_index_array);
-  // display_info("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
+  // maya_plug::display_info("uv nums {} index {} ,{} ", l_uv_array.size(), l_index_array.size(), l_index_array);
+  // maya_plug::display_info("uv maya nums {} index {}", in_mesh.numUVs(), in_mesh.numFaceVertices());
   // Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_array_sample{};
   // l_uv_array_sample.setScope(Alembic::AbcGeom::kFacevaryingScope);
   // l_uv_array_sample.setVals(l_uv_array);
@@ -256,7 +254,7 @@ MBoundingBox get_bound_box(const MDagPath& in_path) {
 void archive_out::wirte_transform(dag_path_out_data& in_path, const o_xform_ptr& in_parent_xform) {
   MStatus l_s{};
   auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
-  maya_plug::display_info("开始写入变换 {}", l_name);
+  maya_plug::maya_plug::display_info("开始写入变换 {}", l_name);
   MFnTransform l_fn_transform{in_path.dag_path_, &l_s};
   maya_plug::maya_chick(l_s);
 
@@ -333,7 +331,7 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
   MDagPath l_path = in_path.dag_path_;
   l_path.extendToShape();
   MFnMesh l_mesh{l_path};
-  display_info("开始写入网格体 {}", maya_plug::get_node_name(l_path));
+  maya_plug::display_info("开始写入网格体 {}", maya_plug::get_node_name(l_path));
 
   auto l_name         = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(l_path));
 
@@ -357,7 +355,7 @@ void archive_out::wirte_mesh(dag_path_out_data& in_path) {
     l_normal_s.setScope(Alembic::AbcGeom::kFacevaryingScope);
     l_normal_s.setVals(l_normal);
   } else {
-    display_warning("物体 {} 没有法线", l_name);
+    maya_plug::display_warning("物体 {} 没有法线", l_name);
   }
 
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{l_p, l_f, l_pc, l_uv_s, l_normal_s};
@@ -382,7 +380,7 @@ void archive_out::wirte_frame(const dag_path_out_data& in_path) {
 
   auto [l_p, l_f, l_pc] = archive_out_ns::get_mesh_poly(l_mesh);
   auto [l_uv, l_uv_i]   = archive_out_ns::get_mesh_uv(l_mesh);
-  // display_info("uvi {}", l_uv_i);
+  // maya_plug::display_info("uvi {}", l_uv_i);
   Alembic::AbcGeom::OV2fGeomParam::Sample l_uv_s{l_uv, l_uv_i, Alembic::AbcGeom::kFacevaryingScope};
   Alembic::AbcGeom::ON3fGeomParam::Sample l_normal_s{};
   auto l_normal = archive_out_ns::get_mesh_normals(l_mesh);
@@ -390,7 +388,7 @@ void archive_out::wirte_frame(const dag_path_out_data& in_path) {
     l_normal_s.setScope(Alembic::AbcGeom::kFacevaryingScope);
     l_normal_s.setVals(l_normal);
   } else {
-    display_warning("物体 {} 没有法线", maya_plug::get_node_name(in_path.dag_path_));
+    maya_plug::display_warning("物体 {} 没有法线", maya_plug::get_node_name(in_path.dag_path_));
   }
   Alembic::AbcGeom::OPolyMeshSchema::Sample l_poly_samp{l_p, l_f, l_pc, l_uv_s, l_normal_s};
 
@@ -426,7 +424,7 @@ void archive_out::create_time_sampling_2(const MTime& in_time_begin, const MTime
   //         boost::numeric_cast<std::uint32_t>(l_times.size()), in_time_begin.value() * maya_plug::details::spf()},
   //     l_times
   // );
-  display_info(
+  maya_plug::display_info(
       "检查到帧率 {}({}), 开始时间 {}({})", maya_plug::details::fps(), maya_plug::details::spf(), in_time_begin.value(),
       in_time_end.as(MTime::kSeconds)
   );

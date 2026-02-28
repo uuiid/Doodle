@@ -788,7 +788,6 @@ class export_rig_run {
     maya_file_io::open_file(file_, MFileIO::kLoadDefault);
 
     display_info("开始导出 rig fbx");
-    auto l_s = boost::asio::make_strand(g_io_context());
     maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
     anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
 
@@ -813,7 +812,7 @@ class export_rig_run {
       display_info("写出配置文件 {}", out_path_file_);
       FSys::ofstream{out_path_file_} << l_json.dump(4);
     } else
-      log_info(fmt::format("导出文件 {}", l_json.dump(4)));
+      display_info(fmt::format("导出文件 {}", l_json.dump(4)));
   }
 };
 
