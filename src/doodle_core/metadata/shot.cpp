@@ -1,6 +1,5 @@
 #include "shot.h"
 
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/episodes.h>
 
@@ -8,6 +7,7 @@
 
 #include <cctype>
 #include <string>
+
 
 namespace doodle {
 

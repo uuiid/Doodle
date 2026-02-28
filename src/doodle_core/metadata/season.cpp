@@ -3,45 +3,22 @@
 //
 
 #include "season.h"
-#include <doodle_core/logger/logger.h>
 
 namespace doodle {
-season::season()
-    : p_int(0) {
-}
-season::season(std::int32_t in_)
-    : p_int(in_) {
-}
+season::season() : p_int(0) {}
+season::season(std::int32_t in_) : p_int(in_) {}
 
-void season::set_season(std::int32_t in_) {
-  p_int = in_;
-}
+void season::set_season(std::int32_t in_) { p_int = in_; }
 
-std::int32_t season::get_season() const {
-  return p_int;
-}
-std::string season::str() const {
-  return fmt::format("seas_{}", p_int);
-}
+std::int32_t season::get_season() const { return p_int; }
+std::string season::str() const { return fmt::format("seas_{}", p_int); }
 
-bool season::operator<(const season& in_rhs) const {
-  return p_int < in_rhs.p_int;
-}
-bool season::operator>(const season& in_rhs) const {
-  return in_rhs < *this;
-}
-bool season::operator<=(const season& in_rhs) const {
-  return !(in_rhs < *this);
-}
-bool season::operator>=(const season& in_rhs) const {
-  return !(*this < in_rhs);
-}
-bool season::operator==(const season& in_rhs) const {
-  return p_int == in_rhs.p_int;
-}
-bool season::operator!=(const season& in_rhs) const {
-  return !(in_rhs == *this);
-}
+bool season::operator<(const season& in_rhs) const { return p_int < in_rhs.p_int; }
+bool season::operator>(const season& in_rhs) const { return in_rhs < *this; }
+bool season::operator<=(const season& in_rhs) const { return !(in_rhs < *this); }
+bool season::operator>=(const season& in_rhs) const { return !(*this < in_rhs); }
+bool season::operator==(const season& in_rhs) const { return p_int == in_rhs.p_int; }
+bool season::operator!=(const season& in_rhs) const { return !(in_rhs == *this); }
 bool season::analysis(const std::string& in_path) {
   static std::regex reg{R"(seas_?(\d+))", std::regex_constants::icase};
   std::smatch k_match{};

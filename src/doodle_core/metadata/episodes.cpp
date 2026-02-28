@@ -1,5 +1,4 @@
 
-#include <doodle_core/logger/logger.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/season.h>
