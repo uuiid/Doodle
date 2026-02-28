@@ -148,7 +148,7 @@ void create_move(
       k_image = cv::imread(l_image.path_attr.generic_string());
     }
     if (k_image.empty()) {
-      DOODLE_LOG_ERROR("{} 图片读取失败 跳过", l_image.path_attr);
+      SPDLOG_LOGGER_ERROR(in_logger, "{} 图片读取失败 跳过", l_image.path_attr);
       continue;
     }
     if (k_image.cols != k_size.width || k_image.rows != k_size.height) cv::resize(k_image, k_image, k_size);

@@ -2,23 +2,18 @@
 // Created by TD on 2024/2/27.
 //
 
-#include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/asyn_task.h>
-#include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/http_method/kitsu/epiboly.h>
-#include <doodle_lib/http_method/local/local.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/assets_update.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
@@ -28,10 +23,15 @@
 #include <doodle_lib/exe_warp/qcloth_arg.h>
 #include <doodle_lib/exe_warp/task_sync.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/computer_reg_data.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/epiboly.h>
+#include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
 
@@ -41,6 +41,7 @@
 #include <memory>
 #include <random>
 #include <spdlog/sinks/basic_file_sink.h>
+
 
 namespace doodle::http::local {
 namespace {
@@ -259,7 +260,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_
       where(l_type == server_task_info_type::unknown || c(&server_task_info::type_) == l_type)
   );
 
-  for (auto&& i : l_list) i.get_last_line_log();
+  for (auto&& i : l_list)
+    i.get_last_line_log(
+        core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", i.uuid_id_)
+    );
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 void task::init_ctx() {
