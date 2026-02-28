@@ -48,8 +48,8 @@ boost::asio::awaitable<void> run(
       break;
     case status_automation_change_type::ready_for: {
       auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(in_task->entity_id_));
-      if (l_entt->ready_for_ == out_task_type_id_) co_return;
-      l_entt->ready_for_ = out_task_type_id_;
+      if (l_entt->ready_for_ == in_status_automation.out_task_type_id_) co_return;
+      l_entt->ready_for_ = in_status_automation.out_task_type_id_;
       co_await l_sql.update(l_entt);
     } break;
   }

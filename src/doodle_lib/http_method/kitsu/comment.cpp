@@ -15,6 +15,8 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/metadata/task_status.h>
+#include <doodle_lib/metadata/status_automation.h>
 
 #include <algorithm>
 #include <chrono>
@@ -40,7 +42,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
   in_person->check_task_status_access(in_comment->task_status_id_);
 
   auto l_task_status = l_sql.get_by_uuid<task_status>(in_comment->task_status_id_);
-  l_task_status.check_retake_capping(*l_task);
+  task_status_ns::check_retake_capping(l_task_status, *l_task);
   std::vector<attachment_file> l_attachment_files{};
   {  // 创建基本的评论(包括辅助结构)
     in_comment->set_comment_department_mentions();
@@ -145,7 +147,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
 
   // 运行自动化任务
   for (auto&& i : l_sql.get_project_status_automations(l_task->project_id_))
-    co_await i.run(l_task, in_person->person_.uuid_id_);
+    co_await status_automation_ns::run(i, l_task, in_person->person_.uuid_id_);
 
   socket_io::broadcast(
       "comment:new",
