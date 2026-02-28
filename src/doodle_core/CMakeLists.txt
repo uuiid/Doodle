@@ -45,12 +45,6 @@ target_link_libraries(
         doodle_core
         PUBLIC
         magic_enum::magic_enum
-        Boost::locale
-        Boost::contract
-        Boost::filesystem
-        Boost::coroutine
-        Boost::process
-        Boost::interprocess
         fmt::fmt
         nlohmann_json nlohmann_json::nlohmann_json
         EnTT::EnTT
