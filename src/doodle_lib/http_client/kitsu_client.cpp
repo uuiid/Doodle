@@ -3,7 +3,7 @@
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/static_value.h>
 #include <doodle_lib/core/core_set.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task_status.h>

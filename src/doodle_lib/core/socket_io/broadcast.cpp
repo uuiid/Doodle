@@ -6,7 +6,7 @@
 
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/authorization.h>
 namespace doodle::socket_io {
 void broadcast(

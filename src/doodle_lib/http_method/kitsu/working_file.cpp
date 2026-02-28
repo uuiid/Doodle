@@ -1,7 +1,7 @@
 //
 // Created by TD on 25-8-15.
 //
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project.h>

@@ -4,7 +4,7 @@
 #include "file_sys.h"
 
 #include <doodle_lib/core/core_set.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/algorithm/string/predicate.hpp>

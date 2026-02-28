@@ -1,7 +1,7 @@
 //
 // Created by TD on 25-5-14.
 //
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/preview_file.h>

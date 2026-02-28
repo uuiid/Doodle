@@ -5,7 +5,7 @@
 #pragma once
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/cancellation_signals.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <doodle_lib/core/socket_io/core_enum.h>
 

@@ -2,7 +2,7 @@
 // Created by TD on 2024/2/21.
 //
 #pragma once
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
 

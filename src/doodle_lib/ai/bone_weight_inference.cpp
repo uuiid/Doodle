@@ -3,7 +3,7 @@
 #include <mimalloc.h>
 
 #include <doodle_lib/core/file_sys.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
 
 #include <ATen/core/Reduction.h>

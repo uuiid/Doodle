@@ -1,5 +1,5 @@
 #pragma once
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 namespace doodle {
 class cancellation_signals {

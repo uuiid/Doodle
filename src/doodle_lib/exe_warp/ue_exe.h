@@ -5,7 +5,7 @@
 #pragma once
 
 #include <doodle_lib/core/co_queue.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/server_task_info.h>
 
 #include <boost/asio.hpp>

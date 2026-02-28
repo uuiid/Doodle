@@ -8,7 +8,7 @@
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
 // ReSharper disable once CppUnusedIncludeDirective
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 // ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_lib/lib_warp/boost_fmt_error.h>

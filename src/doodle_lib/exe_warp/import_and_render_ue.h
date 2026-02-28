@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/episodes.h>
 #include <doodle_core/metadata/image_size.h>

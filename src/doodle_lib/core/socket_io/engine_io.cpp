@@ -6,6 +6,7 @@
 
 #include <doodle_lib/core/global_function.h>
 
+
 #include <magic_enum/magic_enum_all.hpp>
 
 namespace doodle::socket_io {

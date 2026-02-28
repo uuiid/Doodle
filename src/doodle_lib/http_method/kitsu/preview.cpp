@@ -5,7 +5,7 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/preview_file.h>

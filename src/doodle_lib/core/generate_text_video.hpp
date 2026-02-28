@@ -1,6 +1,6 @@
 #pragma once
 #include <doodle_lib/core/file_sys.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/image_size.h>
 
 #include <opencv2/core.hpp>

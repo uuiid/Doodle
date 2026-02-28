@@ -1,6 +1,6 @@
 #include "kitsu_supplement.h"
 
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/authorization.h>
 #include <doodle_lib/platform/win/register_file_type.h>

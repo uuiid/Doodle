@@ -4,7 +4,7 @@
 
 #include "sqlite_database.h"
 
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>

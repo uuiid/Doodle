@@ -6,7 +6,7 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/global_function.h>
-#include <doodle_core/doodle_core_fwd.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/co_queue.h>
 
 #include <doodle_lib/core/http/http_function.h>
