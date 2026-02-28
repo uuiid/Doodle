@@ -824,7 +824,7 @@ MStatus doodle_batch_run::doIt(const MArgList& in_list) {
     MArgDatabase arg_data(syntax(), in_list);
     auto l_config_str = conv::to_s(arg_data.flagArgumentString("-config", 0));
     DOODLE_CHICK(!l_config_str.empty(), "没有传入正确的配置文件路径");
-    nlohmann::json l_json = nlohmann::json::parse(FSys::ifstream{FSys::from_quotation_marks(l_config_str)});
+    nlohmann::json l_json = nlohmann::json::parse(FSys::ifstream{l_config_str});
 
     if (arg_data.isFlagSet(cloth_sim_config)) {
       cloth_sim_run l_cloth_sim{};

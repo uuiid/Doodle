@@ -254,7 +254,7 @@ MBoundingBox get_bound_box(const MDagPath& in_path) {
 void archive_out::wirte_transform(dag_path_out_data& in_path, const o_xform_ptr& in_parent_xform) {
   MStatus l_s{};
   auto l_name = maya_plug::m_namespace::strip_namespace_from_name(maya_plug::get_node_name(in_path.dag_path_));
-  maya_plug::maya_plug::display_info("开始写入变换 {}", l_name);
+  maya_plug::display_info("开始写入变换 {}", l_name);
   MFnTransform l_fn_transform{in_path.dag_path_, &l_s};
   maya_plug::maya_chick(l_s);
 
