@@ -3,20 +3,21 @@
 //
 #include "comment.h"
 
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/status_automation.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/metadata/task_status.h>
+#include <doodle_lib/metadata/comment.h>
 #include <doodle_lib/metadata/status_automation.h>
+#include <doodle_lib/metadata/task_status.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <algorithm>
 #include <chrono>
@@ -45,8 +46,8 @@ boost::asio::awaitable<create_comment_result> create_comment(
   task_status_ns::check_retake_capping(l_task_status, *l_task);
   std::vector<attachment_file> l_attachment_files{};
   {  // 创建基本的评论(包括辅助结构)
-    in_comment->set_comment_department_mentions();
-    in_comment->set_comment_mentions(l_task->project_id_);
+    comment_ns::set_comment_department_mentions(*in_comment);
+    comment_ns::set_comment_mentions(*in_comment, l_task->project_id_);
     co_await l_sql.install(in_comment);
     auto in_comment_mentions = std::make_shared<std::vector<comment_mentions>>(
         in_comment->mentions_ | ranges::views::transform([in_comment](const uuid& in) {
