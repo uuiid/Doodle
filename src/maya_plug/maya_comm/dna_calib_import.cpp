@@ -256,6 +256,7 @@ class dna_calib_import::impl {
     }
     return MS::kSuccess;
   }
+
   MStatus create_blend_shape_for_mesh(std::size_t in_mesh_index) {
     if (in_mesh_index >= imported_meshes_.size()) {
       return display_warning("mesh index {} 超出 imported_meshes_ 范围, 跳过 blendShape", in_mesh_index), MS::kSuccess;
@@ -274,19 +275,22 @@ class dna_calib_import::impl {
     MFnMesh l_base_mesh_fn{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_base_mesh_fn.setObject(l_mesh_info.mesh_obj_));
 
-    // // create blendShape deformer
-    // MFnBlendShapeDeformer l_blend_fn{};
-    // // Maya API: create a blendShape for the given base object
-    // MObject l_blend_obj = l_blend_fn.create(l_mesh_info.mesh_obj_, MFnBlendShapeDeformer::kLocalOrigin, &l_status);
-    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(l_blend_obj));
+    // create blendShape deformer
+    // NOTE:
+    // - Maya2020: MFnBlendShapeDeformer::addTarget(...) 在部分对象/场景组合下容易报 (kInvalidParameter)
+    // - Maya2024+: 该 API 可正常使用，因此优先走 API，避免依赖 MEL
+    MFnBlendShapeDeformer l_blend_fn{};
+    MObject l_blend_obj{};
+    l_blend_obj = l_blend_fn.create(l_mesh_info.mesh_obj_, MFnBlendShapeDeformer::kLocalOrigin, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(l_blend_obj));
 
-    // {
-    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-    //       dag_modifier_.renameNode(l_blend_obj, conv::to_ms(fmt::format("{}_blendShape", l_mesh_info.name_)))
-    //   );
-    //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
-    // }
+    {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          dag_modifier_.renameNode(l_blend_obj, conv::to_ms(fmt::format("{}_blendShape", l_mesh_info.name_)))
+      );
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    }
 
     // read base points once
     MPointArray l_base_points{};
@@ -306,8 +310,6 @@ class dna_calib_import::impl {
     // MFnDependencyNode l_blend_dep_fn{l_blend_obj, &l_status};
     // DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
 
-    std::int32_t l_next_weight_index{};
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     std::vector<MDagPath> l_target_paths{};
     l_target_paths.reserve(static_cast<std::size_t>(l_target_count));
     // for each target, build a target mesh in meshData and add it
@@ -346,9 +348,6 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
 
-      // 这里不要直接使用 MFnBlendShapeDeformer::addTarget(...)。
-      // 在不同 Maya 版本/对象类型组合下，该 API 很容易报 (kInvalidParameter): 对象与此方法不兼容。
-      // 使用等价的 MEL 命令更稳定：blendShape -e -t base index target weight blendShapeNode
       MFnMesh l_target_mesh_fn{};
       MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, l_bs_tran, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
@@ -369,22 +368,17 @@ class dna_calib_import::impl {
         }
         l_target_paths.push_back(l_target_path);
       }
+
+      // baseIndex: 通常为 0（blendShape 在该 base 上新建）
+      const unsigned int k_base_index = i;
+      constexpr float k_target_weight = 1.0f;
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
+          l_blend_fn.addTarget(l_mesh_info.mesh_obj_, k_base_index, l_target_mesh_obj, k_target_weight)
+      );
       MProgressWindow::advanceProgress(1);
     }
 
     if (!l_target_paths.empty()) {
-      auto l_mel = fmt::format(R"(blendShape {} {})", fmt::join(l_target_paths, " "), l_base_path);
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_mel)));
-
-      // alias weight[weightIndex] with channel name
-      // for (const auto& t : l_target_paths) {
-      //   const auto l_alias_mel = fmt::format(
-      //       R"(catchQuiet(`aliasAttr -rm \"{}\"`); aliasAttr -add \"{}\" \"{}.weight[{}]\";)", t.channel_name,
-      //       t.channel_name, l_blend_dep_fn.name().asChar(), t.weight_index
-      //   );
-      //   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_alias_mel)));
-      // }
-
       MProgressWindow::advanceProgress(1);
 
       // delete all temporary target meshes
