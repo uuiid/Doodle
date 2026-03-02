@@ -25,6 +25,7 @@
 #include <maya/MEulerRotation.h>
 #include <maya/MFloatArray.h>
 #include <maya/MFn.h>
+#include <maya/MFnAttribute.h>
 #include <maya/MFnBlendShapeDeformer.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnDependencyNode.h>
@@ -370,10 +371,10 @@ class dna_calib_import::impl {
       }
 
       // baseIndex: 通常为 0（blendShape 在该 base 上新建）
-      const unsigned int k_base_index = i;
+      const unsigned int k_weight_index = i;
       constexpr float k_target_weight = 1.0f;
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
-          l_blend_fn.addTarget(l_mesh_info.mesh_obj_, k_base_index, l_target_mesh_obj, k_target_weight)
+          l_blend_fn.addTarget(l_mesh_info.mesh_obj_, k_weight_index, l_target_mesh_obj, k_target_weight)
       );
       MProgressWindow::advanceProgress(1);
     }
@@ -386,6 +387,30 @@ class dna_calib_import::impl {
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.deleteNode(t.node()));
       }
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
+    }
+    {  // 重命名 blendShape 通道
+      // 寻找对应的 weight 属性
+      MPlug l_weight_plug = l_blend_fn.findPlug("weight", true, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      MFnAttribute l_arrt{};
+      for (std::uint16_t i = 0; i < l_target_count; ++i) {
+        const auto l_channel_index = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_index, i);
+        const auto l_channel_name  = get_dna_reader()->getBlendShapeChannelName(l_channel_index);
+        auto l_plug                = l_weight_plug.elementByLogicalIndex(i, &l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arrt.setObject(l_plug.attribute()));
+
+        const auto l_weight_index = l_plug.logicalIndex(&l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+        const auto l_attr_name = fmt::format("weight[{}]", l_weight_index);
+        display_warning(
+            "为 mesh {} 的 blendShape 通道 {} 设置别名 '{}' (原属性 '{}')", l_mesh_info.name_, i, l_channel_name,
+            l_attr_name
+        );
+
+        l_blend_fn.setAlias(l_channel_name.c_str(), l_attr_name.c_str(), l_plug, true, &l_status);
+        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      }
     }
 
     return MS::kSuccess;
