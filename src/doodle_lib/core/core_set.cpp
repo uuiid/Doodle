@@ -36,7 +36,7 @@ core_set::core_set()
       utf8_locale(boost::locale::generator().generate("zh_CN.UTF-8")),
       p_root(FSys::temp_directory_path() / "Doodle"),
       p_doc(get_pwd() / "doodle"),
-      maya_version(2020),
+      maya_version(2024),
 #ifdef NDEBUG
       server_ip("http://192.168.40.188")
 #else
