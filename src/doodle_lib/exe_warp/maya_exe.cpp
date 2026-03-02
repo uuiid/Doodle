@@ -139,7 +139,7 @@ boost::asio::awaitable<void> arg::async_run_maya() {
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
   logger_ptr_->warn("开始运行maya");
   if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
-  auto l_maya_path = find_maya_path_impl() / "bin" / "maya.exe";
+  auto l_maya_path = find_maya_path_impl() / "bin" / "mayabatch.exe";
   out_path_file_   = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
                    fmt::format("{}.json", core_set::get_set().get_uuid());
 
@@ -152,7 +152,7 @@ loadPlugin fbxmaya;
 loadPlugin "AbcExport";
 loadPlugin xgenToolkit;
 int $doodle_batch_run_1 = `doodle_batch_run -config "{}" -{}`;
-quit -abort -force $doodle_batch_run_1;
+quit -abort -force -exitCode $doodle_batch_run_1;
 )";
 
   auto l_arg_path          = FSys::write_tmp_file("maya/json", l_args, ".json");
