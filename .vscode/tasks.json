@@ -209,6 +209,18 @@
       "command": "Copy-Item -Path E:/source/kitsu/mayaPlugins/* -Destination ${workspaceFolder}/build/Ninja_RelWithDebInfo/plug/maya -Recurse -Force",
       "problemMatcher": [],
       "hide": false
+    },
+    {
+      "label": "build_all_2020",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/build/set_env.ps1",
+      "args": [
+        "C:/PROGRA~1/CMake/bin/cmake.exe",
+        "--workflow",
+        "--preset",
+        "Release_Maya_2020",
+      ],
+      "problemMatcher": []
     }
   ],
   "inputs": [

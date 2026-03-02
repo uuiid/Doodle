@@ -39,8 +39,8 @@ MStatus initializePlugin(MObject obj) {
   };
 
   maya_reg = std::make_shared<::doodle::maya_plug::maya_register>();
-  
-  status = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
+
+  status   = maya_reg->register_node<doodle::maya_plug::doodle_file_info>(k_plugin);
   CHECK_MSTATUS(status);
   status = maya_reg->register_node<doodle::maya_plug::dna_calib_node>(k_plugin);
   CHECK_MSTATUS(status);
@@ -91,7 +91,7 @@ MStatus initializePlugin(MObject obj) {
   /// 添加批量运行命令
   status = maya_reg->register_command<::doodle::maya_plug::doodle_batch_run>(k_plugin);
   CHECK_MSTATUS(status);
-
+#if MAYA_APP_VERSION >= 2024
   /// 等所有命令完成后加载工具架
   status = MGlobal::executePythonCommandOnIdle(R"(import Doodle_shelf
 Doodle_shelf.DoodleUIManage.deleteSelf()
@@ -110,7 +110,7 @@ import doodle.main
 doodle.main.main.remove_menu()
 )");
   });
-
+#endif
   status = MGlobal::executeCommandOnIdle(R"(optionVar -iv FileDialogStyle 1;)");
   CHECK_MSTATUS(status);
   maya_reg->register_unregister_fun([](MFnPlugin& in_plug) {
