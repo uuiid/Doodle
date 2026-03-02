@@ -2,12 +2,12 @@
 // Created by TD on 24-12-3.
 //
 
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/authorization.h>
 #include <doodle_core/lib_warp/boost_uuid_warp.h>
 #include <doodle_core/lib_warp/json_warp.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include <doodle_lib/core/authorization.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -48,6 +48,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::get
           {"UE_version", core_set::get_set().ue4_version},
           {"timeout", core_set::get_set().timeout},
           {"user_work_root", core_set::get_set().user_work_root_},
+          {"maya_version", core_set::get_set().maya_version},
       }
   );
 }
@@ -72,6 +73,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "UE4路径不正确"});
   if (l_json.contains("timeout")) l_set.timeout = l_json["timeout"].get<std::uint32_t>();
   if (l_json.contains("user_work_root")) l_set.user_work_root_ = l_json["user_work_root"].get<std::string>();
+  if (l_json.contains("maya_version") && l_json["maya_version"].is_number_integer())
+    l_set.maya_version = l_json["maya_version"].get<std::int32_t>();
+  if (l_json.contains("maya_version") && l_json["maya_version"].is_string())
+    l_set.maya_version = std::stoi(l_json["maya_version"].get<std::string>());
 
   l_set.save();
   FSys::path l_maya_path{};
@@ -89,7 +94,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> local_setting::pos
           {"UE_version", l_set.ue4_version},
           {"timeout", l_set.timeout},
           {"user_work_root", l_set.user_work_root_},
-
+          {"maya_version", l_set.maya_version},
       }
   );
 }

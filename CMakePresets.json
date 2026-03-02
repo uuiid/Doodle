@@ -57,6 +57,16 @@
       }
     },
     {
+      "name": "Ninja_release_maya_2020",
+      "inherits": "Ninja_build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ADD_VERSION_LABEL": true,
+        "Maya_Version": "2020"
+      },
+      "hidden": true
+    },
+    {
       "name": "Ninja_debug",
       "inherits": "Ninja_build",
       "cacheVariables": {
@@ -113,6 +123,14 @@
       "targets": [
         "doodle_maya"
       ]
+    },
+    {
+      "name": "Release_Maya_2020",
+      "configurePreset": "Ninja_release_maya_2020",
+      "targets": [
+        "doodle_maya"
+      ],
+      "hidden": true
     },
     {
       "name": "Release_install",
@@ -177,6 +195,18 @@
         {
           "type": "build",
           "name": "Release_Exe"
+        },
+        {
+          "type": "build",
+          "name": "Release_Maya"
+        },
+        {
+          "type": "build",
+          "name": "Release_install"
+        },
+        {
+          "type": "configure",
+          "name": "Ninja_release_maya_2020"
         },
         {
           "type": "build",
