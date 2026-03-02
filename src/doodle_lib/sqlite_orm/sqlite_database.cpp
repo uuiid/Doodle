@@ -4,7 +4,6 @@
 
 #include "sqlite_database.h"
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>
@@ -26,6 +25,7 @@
 #include <doodle_core/metadata/working_file.h>
 
 #include <doodle_lib/core/app_base.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
@@ -82,6 +82,9 @@ void sqlite_database::load(const FSys::path& in_path) {
   }
   impl_->storage_any_.pragma.synchronous(1);
   impl_->storage_any_.pragma.journal_mode(sqlite_orm::journal_mode::WAL);
+  // 使用原始句柄运行 optimize 命令，sqlite_orm 没有提供接口
+  sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
+  sqlite3_exec(db_handle, "PRAGMA optimize=0x10002;", nullptr, nullptr, nullptr);
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SQLITE_THREAD_2()
