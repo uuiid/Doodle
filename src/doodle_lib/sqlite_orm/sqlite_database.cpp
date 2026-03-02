@@ -84,12 +84,12 @@ void sqlite_database::load(const FSys::path& in_path) {
   impl_->storage_any_.pragma.journal_mode(sqlite_orm::journal_mode::WAL);
   // 使用原始句柄运行 optimize 命令，sqlite_orm 没有提供接口
   sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
-  sqlite3_exec(db_handle, "PRAGMA optimize=0x10002;", nullptr, nullptr, nullptr);
+  if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize=0x10002;", nullptr, nullptr, nullptr);
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SQLITE_THREAD_2()
   sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
-  sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
+  if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
   impl_->storage_any_.backup_to(in_path.generic_string());
   impl_->storage_any_.vacuum();
   DOODLE_TO_SELF();

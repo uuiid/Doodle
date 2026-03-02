@@ -95,14 +95,23 @@ struct type_is_nullable<doodle::FSys::path> : std::true_type {
 }  // namespace sqlite_orm
 
 namespace doodle {
+struct sqlite_database_impl;
+
 namespace details {
-inline auto make_storage_doodle(const std::string& in_path) {
+
+void on_storage_open(sqlite3* in_ptr, sqlite_database_impl* impl);
+
+inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl* impl) {
   using namespace sqlite_orm;
 
   return std::move(make_storage(
       in_path,  //
-
-
+      connection_control{
+          .open_forever = true,
+      },
+      on_open([impl](sqlite3* in_ptr) {
+        on_storage_open(in_ptr, impl);
+      }),
       make_unique_index(
           "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
           &outsource_studio_authorization::entity_id_
@@ -933,9 +942,9 @@ inline auto make_storage_doodle(const std::string& in_path) {
       )
   ));
 }
-using sqlite_orm_type = decltype(make_storage_doodle(""));
+using sqlite_orm_type = decltype(make_storage_doodle("", nullptr));
 
-sqlite_orm_type make_storage_doodle_impl(const std::string& in_path);
+sqlite_orm_type make_storage_doodle_impl(const std::string& in_path, sqlite_database_impl* impl);
 
 }  // namespace details
 struct sqlite_database_impl {
@@ -946,18 +955,13 @@ struct sqlite_database_impl {
   using strand_type     = boost::asio::strand<boost::asio::io_context::executor_type>;
   using strand_type_ptr = std::shared_ptr<strand_type>;
   strand_type strand_;
-  sqlite_orm_type storage_any_;
   void* raw_sqlite_handle_{nullptr};
+  sqlite_orm_type storage_any_;
 
   explicit sqlite_database_impl(const FSys::path& in_path)
       : strand_(boost::asio::make_strand(g_io_context())),
-        storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string()))) {
-    storage_any_.on_open = [this](sqlite3* in_) {
-      raw_sqlite_handle_ = in_;
-      default_logger_raw()->info("数据库连接已打开");
-    };
-    storage_any_.open_forever();
-  }
+        raw_sqlite_handle_(nullptr),
+        storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string(), this))) {}
 
   void sync_schema() try {
     auto l_g   = storage_any_.transaction_guard();
@@ -1230,4 +1234,7 @@ struct sqlite_database_impl {
     return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_parent_) == in_id));
   }
 };
+
+
+
 }  // namespace doodle
