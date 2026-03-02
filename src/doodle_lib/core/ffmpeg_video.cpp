@@ -711,10 +711,8 @@ class ffmpeg_video::impl {
     in_frame.setPts(output_handle_.video_next_pts_);
     output_handle_.video_next_pts_ += av::Timestamp{1, output_handle_.video_next_pts_.timebase()};
     if (auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame); out_pkt) {
-      out_pkt.setTimeBase(output_handle_.video_next_pts_.timebase());
-      out_pkt.setPts(output_handle_.video_packet_time_);
-      output_handle_.video_packet_time_ +=
-          av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
+      // 不要覆盖编码器生成的 PTS/DTS：当存在 B 帧重排序时，复用器需要正确的时间戳来生成 CTTS。
+      out_pkt.setTimeBase(output_handle_.video_stream_.timeBase());
       out_pkt.setStreamIndex(output_handle_.video_stream_.index());
       output_handle_.format_context_.writePacket(out_pkt);
     }
@@ -1179,9 +1177,7 @@ class ffmpeg_video_resize::impl {
       // Flush video encoder
       const int l_out_video_index = video_stream_.index();
       while (auto out_pkt = video_enc_ctx_.encode()) {
-        out_pkt.setTimeBase(video_next_pts_.timebase());
-        out_pkt.setPts(video_packet_time_);
-        video_packet_time_ += av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
+        out_pkt.setTimeBase(video_stream_.timeBase());
         out_pkt.setStreamIndex(l_out_video_index);
         format_context_.writePacket(out_pkt);
       }
@@ -1236,9 +1232,7 @@ class ffmpeg_video_resize::impl {
       in_frame.setPts(video_next_pts_);
       video_next_pts_ += av::Timestamp{1, video_next_pts_.timebase()};
       if (auto out_pkt = video_enc_ctx_.encode(in_frame); out_pkt) {
-        out_pkt.setTimeBase(video_next_pts_.timebase());
-        out_pkt.setPts(video_packet_time_);
-        video_packet_time_ += av::Timestamp{out_pkt.duration() == 0 ? 1 : out_pkt.duration(), out_pkt.timeBase()};
+        out_pkt.setTimeBase(video_stream_.timeBase());
         out_pkt.setStreamIndex(video_stream_.index());
         format_context_.writePacket(out_pkt);
       }
@@ -1273,11 +1267,12 @@ class ffmpeg_video_resize::impl {
   ) {
     const int l_src_width  = input_video_handle_.video_dec_ctx_.width();
     const int l_src_height = input_video_handle_.video_dec_ctx_.height();
-    const auto l_pix_fmt   = input_video_handle_.video_dec_ctx_.pixelFormat().get();
+    const auto l_src_pix_fmt = input_video_handle_.video_dec_ctx_.pixelFormat().get();
     output_handle_.open_output_video(in_high_path.string(), in_high_size.width, in_high_size.height);
-    if (in_high_size.width != l_src_width || in_high_size.height != l_src_height)
+    const auto l_high_dst_pix_fmt = output_handle_.video_enc_ctx_.pixelFormat().get();
+    if (in_high_size.width != l_src_width || in_high_size.height != l_src_height || l_high_dst_pix_fmt != l_src_pix_fmt)
       output_handle_.add_rescaler(
-          in_high_size.width, in_high_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
+        in_high_size.width, in_high_size.height, l_high_dst_pix_fmt, l_src_width, l_src_height, l_src_pix_fmt
       );
     output_handle_.open_output_audio();
     output_handle_.add_resampler(
@@ -1287,9 +1282,10 @@ class ffmpeg_video_resize::impl {
 
     // 低码率输出
     output_low_handle_.open_output_video(in_low_path.string(), in_low_size.width, in_low_size.height);
-    if (in_low_size.width != l_src_width || in_low_size.height != l_src_height)
+    const auto l_low_dst_pix_fmt = output_low_handle_.video_enc_ctx_.pixelFormat().get();
+    if (in_low_size.width != l_src_width || in_low_size.height != l_src_height || l_low_dst_pix_fmt != l_src_pix_fmt)
       output_low_handle_.add_rescaler(
-          in_low_size.width, in_low_size.height, l_pix_fmt, l_src_width, l_src_height, l_pix_fmt
+          in_low_size.width, in_low_size.height, l_low_dst_pix_fmt, l_src_width, l_src_height, l_src_pix_fmt
       );
     output_low_handle_.open_output_audio();
     output_low_handle_.add_resampler(
