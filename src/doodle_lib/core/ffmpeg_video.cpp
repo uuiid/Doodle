@@ -1,8 +1,9 @@
 #include "ffmpeg_video.h"
 
 #include <doodle_core/configure/static_value.h>
-#include <doodle_lib/core/global_function.h>
 #include <doodle_core/exception/exception.h>
+
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -33,6 +34,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -1001,8 +1003,8 @@ class ffmpeg_video_resize::impl {
       audio_dec_ctx_.open();
 
       audio_channel_layout_ = audio_dec_ctx_.channelLayout2().layout() == 0
-                  ? av::ChannelLayout{audio_dec_ctx_.channels()}
-                  : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
+                                  ? av::ChannelLayout{audio_dec_ctx_.channels()}
+                                  : av::ChannelLayout{audio_dec_ctx_.channelLayout2()};
       // 如果输入流没有提供 channel layout，就需要在每帧上补全 layout，避免重采样参数不匹配
       fixed_audio_channels_ = audio_dec_ctx_.channelLayout2().layout() != 0;
     }
@@ -1265,14 +1267,14 @@ class ffmpeg_video_resize::impl {
       const FSys::path& in_high_path, const cv::Size& in_high_size, const FSys::path& in_low_path,
       const cv::Size& in_low_size
   ) {
-    const int l_src_width  = input_video_handle_.video_dec_ctx_.width();
-    const int l_src_height = input_video_handle_.video_dec_ctx_.height();
+    const int l_src_width    = input_video_handle_.video_dec_ctx_.width();
+    const int l_src_height   = input_video_handle_.video_dec_ctx_.height();
     const auto l_src_pix_fmt = input_video_handle_.video_dec_ctx_.pixelFormat().get();
     output_handle_.open_output_video(in_high_path.string(), in_high_size.width, in_high_size.height);
     const auto l_high_dst_pix_fmt = output_handle_.video_enc_ctx_.pixelFormat().get();
     if (in_high_size.width != l_src_width || in_high_size.height != l_src_height || l_high_dst_pix_fmt != l_src_pix_fmt)
       output_handle_.add_rescaler(
-        in_high_size.width, in_high_size.height, l_high_dst_pix_fmt, l_src_width, l_src_height, l_src_pix_fmt
+          in_high_size.width, in_high_size.height, l_high_dst_pix_fmt, l_src_width, l_src_height, l_src_pix_fmt
       );
     output_handle_.open_output_audio();
     output_handle_.add_resampler(
