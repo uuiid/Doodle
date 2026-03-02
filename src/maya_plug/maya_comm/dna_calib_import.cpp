@@ -231,7 +231,21 @@ class dna_calib_import::impl {
 
     return MS::kSuccess;
   }
-  MStatus connect_blend_shape() { return MS::kSuccess; }
+  MStatus connect_blend_shape() {
+    for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
+      MProgressWindow::advanceProgress(1);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape_for_mesh(i));
+    }
+    return MS::kSuccess;
+  }
+
+  MStatus connect_blend_shape_for_mesh(std::size_t in_mesh_index) {
+    if (in_mesh_index >= imported_meshes_.size()) {
+      return display_warning("mesh index {} 超出 imported_meshes_ 范围, 跳过 blendShape 连接", in_mesh_index),
+             MS::kSuccess;
+    }
+    return MS::kSuccess;
+  }
 
   // 创建混合变形
   MStatus create_blend_shape() {

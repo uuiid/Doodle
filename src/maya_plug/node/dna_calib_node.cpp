@@ -170,6 +170,7 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     // todo: 查找文档后, 发现每个关节不是 9 个属性都会计算, 需要对属性进行筛选, 目前先假设每个关节都有完整的 9
     // 个输出属性
     auto l_raw_j      = impl()->rig_instance_ptr_->getJointOutputs();
+    auto l_raw_bsw    = impl()->rig_instance_ptr_->getBlendShapeOutputs();
     auto& l_joint_map = impl()->joint_decode_cache(impl()->rig_instance_ptr_->getLOD());
 
     if (std::ranges::all_of(l_raw_j, [](auto& v) { return v == 0; }))
