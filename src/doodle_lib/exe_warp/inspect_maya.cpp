@@ -36,6 +36,7 @@ void to_json(nlohmann::json& in_json, const inspect_file_arg& out_obj) {
   in_json["space_name_check"]          = out_obj.space_name_check_;
   in_json["only_default_camera_check"] = out_obj.only_default_camera_check_;
   in_json["too_many_point_check"]      = out_obj.too_many_point_check_;
+  in_json["multi_uv_inspection"]       = out_obj.multi_uv_inspection_;
 }
 boost::asio::awaitable<void> inspect_file_arg::run() {
   if (!client_) throw_exception(doodle_error{"客户端指针未初始化"});
