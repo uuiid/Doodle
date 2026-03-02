@@ -60,7 +60,8 @@ $excelData = for ($day = 1; $day -le $DaysInLastMonth; $day++) {
 
   if ($Doodle_GitMsg -ne "") {
     # Write-Host "Doodle commits on $dateString :`n$Doodle_GitMsg`n"
-  
+    # $Doodle_GitMsg 转换为单行字符串
+    $Doodle_GitMsg = $Doodle_GitMsg -replace "`n", ""
     # 生成Excel格式内容
     [ExcelRow]@{
       项目名称 = "doodle"
@@ -70,13 +71,12 @@ $excelData = for ($day = 1; $day -le $DaysInLastMonth; $day++) {
       结束日期 = $dateString
       工作量  = 1
       备注   = ""
-      # $Doodle_GitMsg 转换为单行字符串
       工作内容 = $Doodle_GitMsg -replace "`n", " "
     }
   }
 }
 
-$excelData | Export-Excel -Path "E:/月报生成示例.xlsx" -WorksheetName "月报" -AutoSize -ClearSheet
+$excelData | Export-Excel -Path "E:/TD-$($LastMonth.ToString("yyyy-MM")).xlsx" -WorksheetName "月报" -AutoSize -ClearSheet
 
 # Write-Host $Doodle_GitMsg
 # Write-Host "-----------------------------------"
