@@ -88,8 +88,10 @@ void sqlite_database::load(const FSys::path& in_path) {
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SQLITE_THREAD_2()
-
+  sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
+  sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
   impl_->storage_any_.backup_to(in_path.generic_string());
+  impl_->storage_any_.vacuum();
   DOODLE_TO_SELF();
 }
 
