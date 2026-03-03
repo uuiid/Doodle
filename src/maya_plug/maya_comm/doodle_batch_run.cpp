@@ -361,11 +361,11 @@ class export_fbx_run {
     // 注意. 这个是外包的临时解决方案. 以后要改成必须检查
     if (frame_in_ != 0 && frame_out_ != 0) {
       DOODLE_CHICK(
-          MAnimControl::maxTime().as(MTime::uiUnit()) != frame_out_, maya_enum::maya_error_t::frame_in_out_error,
+          MAnimControl::maxTime().as(MTime::uiUnit()) == frame_out_, maya_enum::maya_error_t::frame_in_out_error,
           "结束帧配置错误 value {} org {}", MAnimControl::maxTime().as(MTime::uiUnit()), frame_out_
       );
       DOODLE_CHICK(
-          MAnimControl::minTime().as(MTime::uiUnit()) != frame_in_, maya_enum::maya_error_t::frame_in_out_error,
+          MAnimControl::minTime().as(MTime::uiUnit()) == frame_in_, maya_enum::maya_error_t::frame_in_out_error,
           "开始帧配置错误 value {} org {}", MAnimControl::minTime().as(MTime::uiUnit()), frame_in_
       );
     }
