@@ -7,6 +7,7 @@
 #include <maya_plug/maya_plug_fwd.h>
 
 #include <maya/MPxNode.h>
+#include <maya/MStatus.h>
 namespace doodle::maya_plug {
 class dna_calib_node : public MPxNode {
  public:
@@ -31,6 +32,9 @@ class dna_calib_node : public MPxNode {
   static MObject output_blendshape_weights;
 
   MStatus compute(const MPlug& in_plug, MDataBlock& in_data_block) override;
+
+  void postConstructor() override;
+  MStatus setDependentsDirty(const MPlug& plug, MPlugArray& plugArray) override;
   class impl_t;
 
   impl_t* impl();

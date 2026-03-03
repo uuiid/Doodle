@@ -10,6 +10,7 @@
 #include <maya/MApiNamespace.h>
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MArrayDataHandle.h>
+#include <maya/MFnDependencyNode.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnUnitAttribute.h>
@@ -42,6 +43,7 @@ MStatus dna_calib_node::initialize() {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setStorable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setWritable(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setReadable(true));
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_typed_attr.setUsedAsFilename(true));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(addAttribute(dna_file_path));
   }
   {
@@ -110,10 +112,30 @@ MStatus dna_calib_node::initialize() {
 #undef DOODLE_ATTRAFF
   return l_status;
 }
+
+void dna_calib_node::postConstructor() {}
+MStatus dna_calib_node::setDependentsDirty(const MPlug& plug, MPlugArray& plugArray) {
+  if (plug == dna_file_path) {
+    display_error("不支持对文件路径进行修改, 请删除节点后重新创建并设置文件路径");
+  }
+  return MPxNode::setDependentsDirty(plug, plugArray);
+}
 MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block) {
+  if (in_plug == dna_file_path) {
+    auto l_dna_file_path_handle = in_data_block.inputValue(dna_file_path);
+    auto l_path                 = conv::to_s(l_dna_file_path_handle.asString());
+    if (l_path.empty()) return display_warning("DNA 文件路径为空"), MS::kSuccess;
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->open_dna_file());
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->create_rig_data());
+    return MS::kSuccess;
+  }
+
   if (in_plug == output_join_transforms || in_plug == output_join_rotations || in_plug == output_join_scales ||
       in_plug == output_blendshape_weights) {
-    if (!impl()->rig_instance_ptr_) return display_error("请先创建rig数据"), MS::kFailure;
+    if (!impl()->rig_instance_ptr_) {
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->open_dna_file());
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(impl()->create_rig_data(0));
+    }
     MStatus l_status{};
     // 确保 gui_control_list 的数据被正确读取到内存中, 以便在 rig 计算中使用
     auto l_gui_control = in_data_block.inputArrayValue(gui_control_list, &l_status);
