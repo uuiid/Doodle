@@ -308,8 +308,8 @@ class cloth_sim_run {
   }
   void write_config() {
     display_info("导出动画文件完成, 开始写出配置文件");
-    out_arg_.begin_time   = anim_begin_time_.value();
-    out_arg_.end_time     = MAnimControl::maxTime().value();
+    out_arg_.begin_time   = anim_begin_time_.as(MTime::uiUnit());
+    out_arg_.end_time     = MAnimControl::maxTime().as(MTime::uiUnit());
 
     nlohmann::json l_json = out_arg_;
     if (!out_path_file_.empty()) {
@@ -343,8 +343,8 @@ class export_fbx_run {
 
     anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
     display_info("配置导出完成 画幅 {} 创建排屏 {}", size_, create_play_blast_);
-    out_arg_.begin_time = anim_begin_time_.value();
-    out_arg_.end_time   = MAnimControl::maxTime().value();
+    out_arg_.begin_time = anim_begin_time_.as(MTime::uiUnit());
+    out_arg_.end_time   = MAnimControl::maxTime().as(MTime::uiUnit());
   }
   void run() {
     maya_file_io::set_workspace(file_);
@@ -356,17 +356,17 @@ class export_fbx_run {
     export_file_fbx l_ex{};
     auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
     l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
-    out_arg_.begin_time   = anim_begin_time_.value();
-    out_arg_.end_time     = MAnimControl::maxTime().value();
+    out_arg_.begin_time   = anim_begin_time_.as(MTime::uiUnit());
+    out_arg_.end_time     = MAnimControl::maxTime().as(MTime::uiUnit());
     // 注意. 这个是外包的临时解决方案. 以后要改成必须检查
     if (frame_in_ != 0 && frame_out_ != 0) {
       DOODLE_CHICK(
-          MAnimControl::maxTime().value() != frame_out_, maya_enum::maya_error_t::frame_in_out_error,
-          "结束帧配置错误 value {} org {}", MAnimControl::maxTime().value(), frame_out_
+          MAnimControl::maxTime().as(MTime::uiUnit()) != frame_out_, maya_enum::maya_error_t::frame_in_out_error,
+          "结束帧配置错误 value {} org {}", MAnimControl::maxTime().as(MTime::uiUnit()), frame_out_
       );
       DOODLE_CHICK(
-          MAnimControl::minTime().value() != frame_in_, maya_enum::maya_error_t::frame_in_out_error,
-          "开始帧配置错误 value {} org {}", MAnimControl::minTime().value(), frame_in_
+          MAnimControl::minTime().as(MTime::uiUnit()) != frame_in_, maya_enum::maya_error_t::frame_in_out_error,
+          "开始帧配置错误 value {} org {}", MAnimControl::minTime().as(MTime::uiUnit()), frame_in_
       );
     }
 
@@ -814,8 +814,8 @@ class export_rig_run {
     maya_out_arg l_out_arg{};
     auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
     l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
-    l_out_arg.begin_time  = anim_begin_time_.value();
-    l_out_arg.end_time    = MAnimControl::maxTime().value();
+    l_out_arg.begin_time  = anim_begin_time_.as(MTime::uiUnit());
+    l_out_arg.end_time    = MAnimControl::maxTime().as(MTime::uiUnit());
     reference_file l_ref{};
     cloth_factory_interface l_cf{};
     std::vector<cloth_interface> l_cloth_interfaces{};
