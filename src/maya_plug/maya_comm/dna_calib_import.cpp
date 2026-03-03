@@ -138,9 +138,9 @@ class dna_calib_import::impl {
   }
   MStatus create_dna_node() {
     MStatus l_status{};
-    dna_node_obj = dag_modifier_.createNode(dna_calib_node::doodle_id, MObject::kNullObj, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    MFnDependencyNode l_fn_node{dna_node_obj, &l_status};
+    MFnDependencyNode l_fn_node{};
+    dna_node_obj = l_fn_node.create(dna_calib_node::doodle_id, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     auto l_path_plug = l_fn_node.findPlug(dna_calib_node::dna_file_path, false, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
@@ -949,9 +949,6 @@ MStatus dna_calib_import::get_arg(const MArgList& in_arg) {
 
 MStatus dna_calib_import::doIt(const MArgList& in_list) {
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(get_arg(in_list));
-
-  if (p_i->dna_node_obj.isNull() || p_i->dna_node_data == nullptr)
-    return display_error("未选择dna_calib_node节点"), MS::kFailure;
   // 读取文件
   MProgressWindow::reserve();
   MProgressWindow::setTitle("Import DNA Calib");
