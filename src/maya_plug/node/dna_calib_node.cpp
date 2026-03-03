@@ -92,7 +92,7 @@ MStatus dna_calib_node::initialize() {
   {
     MFnNumericAttribute l_numeric_attr{};
     output_blendshape_weights =
-        l_numeric_attr.create("output_blendshape_weights", "out_bsw", MFnNumericData::kDouble, 0, &l_status);
+        l_numeric_attr.create("output_blendshape_weights", "out_bsw", MFnNumericData::kFloat, 0, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setStorable(false));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_numeric_attr.setWritable(false));
