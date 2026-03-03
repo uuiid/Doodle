@@ -395,11 +395,6 @@ class dna_calib_import::impl {
       MObject l_target_mesh_obj = l_target_mesh_fn.copy(l_mesh_info.mesh_obj_, l_bs_tran, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_target_mesh_fn.setPoints(l_points, MSpace::kObject));
-      // 重命名网格体为目标混变名称
-      {
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.renameNode(l_bs_tran, l_channel_name.c_str()));
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
-      }
 
       // add target (each target uses a unique weight index)
       {
@@ -542,6 +537,7 @@ class dna_calib_import::impl {
         }
       }
     }
+    MProgressWindow::advanceProgress(1);
 
     // display_info(
     //     "网格 {} Maya 影响对象数量 {}, 匹配上的骨骼 {}", imported_meshes_[in_mesh_index].name_, l_joint_cout,
@@ -566,6 +562,8 @@ class dna_calib_import::impl {
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
     l_weights_array = MDoubleArray{l_joint_cout * l_vertex_count, 0.0};
+    MProgressWindow::advanceProgress(1);
+
     //
     for (auto i = 0; i < l_vertex_count; ++i) {
       auto l_joint_indices = get_dna_reader()->getSkinWeightsJointIndices(in_mesh_index, i);
@@ -595,6 +593,7 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setWeights(
         l_mesh_dag_path, l_skin_component_fn.object(), l_joint_indices_array, l_weights_array, false
     ));
+    MProgressWindow::advanceProgress(1);
     return MS::kSuccess;
   }
 
