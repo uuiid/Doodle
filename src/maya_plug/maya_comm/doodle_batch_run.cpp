@@ -78,8 +78,6 @@ class cloth_sim_run {
   bool create_play_blast_{};
 
   void config_cloth_sim(const nlohmann::json& in_json) {
-    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
-    t_post_time_     = MTime{boost::numeric_cast<std::double_t>(950), MTime::uiUnit()};
     in_json.at("image_size").get_to(size_);
     in_json.at("film_aperture").get_to(film_aperture_);
     auto l_sim_path = in_json.at("sim_path").get<FSys::path>();
@@ -110,6 +108,9 @@ class cloth_sim_run {
     maya_file_io::open_file(file_, MFileIO::kLoadDefault);
     maya_chick(file_info_edit::delete_node_static());
     maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
+
+    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
+    t_post_time_     = MTime{boost::numeric_cast<std::double_t>(950), MTime::uiUnit()};
     display_warning("开始扫瞄引用");
     all_ref_files_ = reference_file_factory{}.create_ref();
 
@@ -341,10 +342,7 @@ class export_fbx_run {
       frame_out_ = in_json.at("frame_out").get<std::int32_t>();
     }
 
-    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
     display_info("配置导出完成 画幅 {} 创建排屏 {}", size_, create_play_blast_);
-    out_arg_.begin_time = anim_begin_time_.as(MTime::uiUnit());
-    out_arg_.end_time   = MAnimControl::maxTime().as(MTime::uiUnit());
   }
   void run() {
     maya_file_io::set_workspace(file_);
@@ -352,7 +350,10 @@ class export_fbx_run {
     maya_chick(file_info_edit::delete_node_static());
     maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
     display_warning("开始扫瞄引用");
-    ref_files_ = reference_file_factory{}.create_ref();
+    out_arg_.begin_time = anim_begin_time_.as(MTime::uiUnit());
+    out_arg_.end_time   = MAnimControl::maxTime().as(MTime::uiUnit());
+    anim_begin_time_    = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
+    ref_files_          = reference_file_factory{}.create_ref();
     export_file_fbx l_ex{};
     auto l_gen            = std::make_shared<reference_file_ns::generate_fbx_file_path>();
     l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
@@ -793,9 +794,8 @@ class export_rig_run {
   MTime anim_begin_time_{};
 
   void config_export_rig(const nlohmann::json& in_json) {
-    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
-    file_            = in_json.at("path").get<FSys::path>();
-    out_path_file_   = in_json.at("out_path_file").get<FSys::path>();
+    file_          = in_json.at("path").get<FSys::path>();
+    out_path_file_ = in_json.at("out_path_file").get<FSys::path>();
     display_info("配置导出完成");
   }
   void run() {
@@ -805,7 +805,7 @@ class export_rig_run {
 
     maya_file_io::set_workspace(file_);
     maya_file_io::open_file(file_, MFileIO::kLoadDefault);
-
+    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
     display_info("开始导出 rig fbx");
     maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
     anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
