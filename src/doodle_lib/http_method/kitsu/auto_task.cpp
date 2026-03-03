@@ -86,7 +86,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
   auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
-  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_episode_entity.uuid_id_);
+  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_shot_entity.uuid_id_);
   DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
   DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧率起始，请联系管理员添加扩展信息");
   DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧率结束，请联系管理员添加扩展信息");
