@@ -73,8 +73,7 @@ struct formatter<dna::StringView> : formatter<string_view> {
 namespace doodle::maya_plug {
 MSyntax dna_calib_import_syntax() {
   MSyntax l_syntax{};
-  CHECK_MSTATUS(l_syntax.setObjectType(MSyntax::kSelectionList, 1, 1));
-  l_syntax.useSelectionAsDefault(true);
+  CHECK_MSTATUS(l_syntax.addFlag("-fp", "-file_path", MSyntax::kString));
   return l_syntax;
 }
 
@@ -137,10 +136,22 @@ class dna_calib_import::impl {
         break;
     }
   }
+  MStatus create_dna_node() {
+    MStatus l_status{};
+    dna_node_obj = dag_modifier_.createNode(dna_calib_node::doodle_id, MObject::kNullObj, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    MFnDependencyNode l_fn_node{dna_node_obj, &l_status};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    auto l_path_plug = l_fn_node.findPlug(dna_calib_node::dna_file_path, false, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_path_plug.setValue(conv::to_ms(file_path)));
+    dna_node_data = static_cast<dna_calib_node*>(l_fn_node.userNode());
+    return MS::kSuccess;
+  }
 
   MStatus import_dna_calib() {
     MProgressWindow::setProgressStatus("Opening DNA file...");
-
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_dna_node());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->open_dna_file());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dna_node_data->impl()->create_rig_data());
 
@@ -925,18 +936,13 @@ MStatus dna_calib_import::get_arg(const MArgList& in_arg) {
   MStatus l_status{};
   MArgDatabase const l_arg_data{syntax(), in_arg, &l_status};
   DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-  MSelectionList l_list{};
-  DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_data.getObjects(l_list));
-  for (unsigned int i = 0; i < l_list.length(); ++i) {
-    MObject l_node_obj{};
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_list.getDependNode(i, l_node_obj));
-    if (!l_node_obj.hasFn(MFn::kDependencyNode)) continue;
-    MFnDependencyNode l_fn_node{l_node_obj, &l_status};
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-    if (l_fn_node.typeId() != dna_calib_node::doodle_id) continue;
-    p_i->dna_node_obj  = l_node_obj;
-    p_i->dna_node_data = static_cast<dna_calib_node*>(l_fn_node.userNode());
-    break;
+  if (l_arg_data.isFlagSet("-fp")) {
+    MString l_file_path;
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arg_data.getFlagArgument("-fp", 0, l_file_path));
+    p_i->file_path = conv::to_s(l_file_path);
+    return MS::kSuccess;
+  } else {
+    return display_error("缺少参数 -fp <file_path>"), MS::kFailure;
   }
   return MS::kSuccess;
 }
