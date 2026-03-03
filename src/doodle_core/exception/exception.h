@@ -43,6 +43,10 @@ enum class maya_error_t : std::int32_t {
   check_error         = 6,
   // 名称空间错误
   namespace_error     = 7,
+  // 开始帧和结束帧错误
+  frame_in_out_error  = 8,
+  // 帧率配置错误
+  fps_error           = 9,
 
 };
 }  // namespace maya_enum
@@ -92,6 +96,12 @@ class DOODLE_CORE_API doodle_error : public std::runtime_error {
             fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
         ),
         error_code_(in_core){};
+  template <typename... Args>
+  explicit doodle_error(maya_enum::maya_error_t in_core, fmt::format_string<Args...> fmt_str, Args&&... in_args)
+      : std::runtime_error(
+            fmt::format(std::forward<fmt::format_string<Args...>>(fmt_str), std::forward<Args>(in_args)...)
+        ),
+        error_code_(static_cast<std::int32_t>(in_core)){};
 
   template <typename... Args>
   explicit doodle_error(boost::beast::http::status in_core, fmt::format_string<Args...> fmt_str, Args&&... in_args)

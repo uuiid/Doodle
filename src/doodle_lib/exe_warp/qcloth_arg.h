@@ -38,6 +38,17 @@ class DOODLELIB_API qcloth_update_arg : public async_task {
   uuid task_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 
+  struct data_t {
+    std::int32_t frame_in_{};
+    std::int32_t frame_out_{};
+
+    // from json
+    friend void from_json(const nlohmann::json& j, data_t& p) {
+      j.at("frame_in").get_to(p.frame_in_);
+      j.at("frame_out").get_to(p.frame_out_);
+    }
+  };
+
   // from json
   friend void from_json(const nlohmann::json& in_json, qcloth_update_arg& out_obj);
   // to json

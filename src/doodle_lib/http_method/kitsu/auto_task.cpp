@@ -84,8 +84,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
   if (l_shot_entity.parent_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
-  auto l_episode_entity     = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
-  auto l_prj                = l_sql.get_by_uuid<project>(project_id_);
+  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
+  auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
+  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_episode_entity.uuid_id_);
+  DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
+  DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧率起始，请联系管理员添加扩展信息");
+  DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧率结束，请联系管理员添加扩展信息");
 
   bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
   SPDLOG_LOGGER_WARN(
@@ -104,10 +108,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   constexpr auto sequence = "sequence"_alias.for_<entity>();
 
   run_ue_assembly_local::run_ue_assembly_arg l_ret{};
-  l_ret.episodes_ = l_episodes;
-  l_ret.shot_     = l_shot;
+  l_ret.episodes_   = l_episodes;
+  l_ret.shot_       = l_shot;
 
-  l_ret.size_     = l_prj.get_resolution();
+  l_ret.size_       = l_prj.get_resolution();
+  l_ret.begin_time_ = l_shot_extend->frame_in_.value();
+  l_ret.end_time_   = l_shot_extend->frame_out_.value();
+
   FSys::path l_shot_path_dir{};
   FSys::path l_sim_shot_path_dir{};
   std::set<std::string> l_sim_output_key{};
@@ -120,11 +127,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   if (l_is_simulation_task) l_sim_shot_path_dir = l_prj.path_ / l_sim_shot_path_dir;
   auto l_shot_file_name =
       get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
+  auto l_file_end_str = fmt::format("_{}-{}", l_shot_extend->frame_in_.value(), l_shot_extend->frame_out_.value());
 
   if (l_is_simulation_task) {
     for (auto&& l_path : FSys::directory_iterator{l_sim_shot_path_dir}) {
       auto l_stem = l_path.path().stem().string();
-      if (!(l_stem.starts_with(l_shot_file_name) &&
+      if (!(l_stem.starts_with(l_shot_file_name) && l_stem.ends_with(l_file_end_str) &&
             (l_path.path().extension() == ".abc" || l_path.path().extension() == ".fbx")))
         continue;
       if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
@@ -146,14 +154,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   for (auto&& l_path : FSys::directory_iterator{l_shot_path_dir}) {
     auto l_stem = l_path.path().stem().string();
-    if (!(l_stem.starts_with(l_shot_file_name) && l_path.path().extension() == ".fbx")) continue;
+    if (!(l_stem.starts_with(l_shot_file_name) && l_stem.ends_with(l_file_end_str) &&
+          l_path.path().extension() == ".fbx"))
+      continue;
 
     if (l_sim_output_key.contains(l_stem)) continue;
     if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) {
       l_ret.camera_file_path_ = l_path.path();
-      // 名称形式 _camera_0001-0240
-      l_ret.begin_time_       = std::stoll(l_stem.substr(l_cam + 8, 4));   // "_camera_" 长度8, 时间长度 4
-      l_ret.end_time_         = std::stoll(l_stem.substr(l_cam + 13, 4));  // "_camera_" 长度8, 时间长度 4 加 '-' = 13
       continue;
     }
 
@@ -563,6 +570,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   auto l_proj           = l_sql.get_by_uuid<project>(l_task.project_id_);
   auto l_entity         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
+  auto l_ext            = l_sql.get_entity_shot_extend(l_entity.uuid_id_);
+  DOODLE_CHICK_HTTP(l_ext, bad_request, "镜头扩展信息不存在，无法导出动画 fbx");
+  DOODLE_CHICK_HTTP(l_ext->frame_in_, bad_request, "镜头扩展信息开始帧不存在，无法导出动画 fbx");
+  DOODLE_CHICK_HTTP(l_ext->frame_out_, bad_request, "镜头扩展信息结束帧不存在，无法导出动画 fbx");
+
   episodes l_episodes{l_episode_entity};
   shot l_shot{l_entity};
 
@@ -571,6 +583,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   l_arg.movie_file_.replace_extension(".mp4");
   l_arg.film_aperture_ = l_proj.get_film_aperture();
   l_arg.size_          = l_proj.get_resolution();
+  l_arg.frame_in_      = *l_ext->frame_in_;
+  l_arg.frame_out_     = *l_ext->frame_out_;
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 

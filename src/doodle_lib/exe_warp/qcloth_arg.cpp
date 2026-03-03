@@ -6,6 +6,8 @@
 
 #include <doodle_lib/long_task/image_to_move.h>
 
+#include <fmt/compile.h>
+
 namespace doodle {
 void from_json(const nlohmann::json& in_json, qcloth_arg& out_obj) {
   from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
@@ -67,11 +69,28 @@ boost::asio::awaitable<void> qcloth_update_arg::run() {
   auto l_fbx = FSys::list_files(alembic_file_dir_, ".fbx");
   kitsu_client_->set_logger(logger_ptr_);
 
+  auto l_arg = (co_await kitsu_client_->get_export_anim_fbx(task_id_)).get<data_t>();
+
   SPDLOG_LOGGER_INFO(
-      logger_ptr_, "上传qcloth abc文件数量 {} {}, fbx {} {}", l_abc.size(), fmt::join(l_abc, "\n "), l_fbx.size(),
-      fmt::join(l_fbx, "\n ")
+      logger_ptr_, "上传qcloth 帧 {}-{} abc文件数量 {} {}, fbx {} {}", l_arg.frame_in_, l_arg.frame_out_, l_abc.size(),
+      fmt::join(l_abc, "\n "), l_fbx.size(), fmt::join(l_fbx, "\n ")
   );
+
+  auto l_end_str = fmt::format("{}-{}", l_arg.frame_in_, l_arg.frame_out_);
+
+  for (auto&& i : l_abc)
+    DOODLE_CHICK(
+        i.stem().string().ends_with(l_end_str), "文件 {} 命名不符合规范，无法上传, 帧率范围错误 {}-{}", i,
+        l_arg.frame_in_, l_arg.frame_out_
+    );
+  for (auto&& i : l_fbx)
+    DOODLE_CHICK(
+        i.stem().string().ends_with(l_end_str), "文件 {} 命名不符合规范，无法上传, 帧率范围错误 {}-{}", i,
+        l_arg.frame_in_, l_arg.frame_out_
+    );
+
   co_await kitsu_client_->remove_shot_animation_export_file(task_id_);
+
   for (auto& p : l_abc) {
     co_await kitsu_client_->upload_shot_animation_export_file(task_id_, alembic_file_dir_, p.filename());
   }
