@@ -13,7 +13,6 @@
 #include <maya_plug/node/files_info.h>
 
 // #include <maya_plug/data/
-#include <maya_plug/exception/exception.h>
 #include <maya_plug/data/m_namespace.h>
 #include <maya_plug/data/maya_clear_scenes.h>
 #include <maya_plug/data/maya_conv_str.h>
@@ -21,6 +20,7 @@
 #include <maya_plug/data/maya_tool.h>
 #include <maya_plug/data/reference_file.h>
 #include <maya_plug/data/sim_cover_attr.h>
+#include <maya_plug/exception/exception.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_select_list.h>
 #include <maya_plug/fmt/fmt_warp.h>
@@ -327,14 +327,21 @@ class export_fbx_run {
   ~export_fbx_run() = default;
   maya_out_arg out_arg_{};
   FSys::path file_{};
+  std::int32_t frame_in_{};
+  std::int32_t frame_out_{};
+
   void config_export_fbx(const nlohmann::json& in_json) {
     film_aperture_     = in_json.at("camera_film_aperture").get<std::double_t>();
     size_              = in_json.at("image_size").get<image_size>();
     create_play_blast_ = in_json.at("create_play_blast").get<bool>();
     out_path_file_     = in_json.at("out_path_file").get<FSys::path>();
     file_              = in_json.at("path").get<FSys::path>();
+    if (in_json.contains("frame_in") && in_json.contains("frame_out")) {
+      frame_in_  = in_json.at("frame_in").get<std::int32_t>();
+      frame_out_ = in_json.at("frame_out").get<std::int32_t>();
+    }
 
-    anim_begin_time_   = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
+    anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
     display_info("配置导出完成 画幅 {} 创建排屏 {}", size_, create_play_blast_);
     out_arg_.begin_time = anim_begin_time_.value();
     out_arg_.end_time   = MAnimControl::maxTime().value();
@@ -351,6 +358,16 @@ class export_fbx_run {
     l_gen->begin_end_time = {anim_begin_time_, MAnimControl::maxTime()};
     out_arg_.begin_time   = anim_begin_time_.value();
     out_arg_.end_time     = MAnimControl::maxTime().value();
+    // 注意. 这个是外包的临时解决方案. 以后要改成必须检查
+    if (frame_in_ != 0 && frame_out_ != 0) {
+      DOODLE_CHICK(
+          MAnimControl::maxTime().value() != frame_out_, maya_enum::maya_error_t::frame_in_out_error, "结束帧配置错误"
+      );
+      DOODLE_CHICK(
+          MAnimControl::minTime().value() != frame_in_, maya_enum::maya_error_t::frame_in_out_error, "开始帧配置错误"
+      );
+    }
+
     for (auto&& i : ref_files_) {
       if (i.export_group_attr()) {
         auto l_path = l_ex.export_anim(i, l_gen);
