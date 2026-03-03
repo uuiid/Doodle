@@ -214,11 +214,32 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
           break;  // sx, sy, sz
       }
     }
-    if (impl()->rig_instance_ptr_->getLOD() == 0)
-      for (auto i = 0; i < l_raw_bsw.size(); ++i) {
-        l_out_bsw_bl.addElement(i, &l_status).set(l_raw_bsw[i]);
+    // 显示 BlendShape 权重输出数据
+    for (auto i = 0; i < l_raw_bsw.size(); i += 100)
+      display_info("BlendShape Outputs: {}", fmt::join(l_raw_bsw | std::views::drop(i) | std::views::take(100), ", "));
+
+    if (impl()->rig_instance_ptr_->getLOD() == 0) {
+      auto l_blend_shape_index = impl()->dna_calib_dna_reader_->getBlendShapeChannelOutputIndices();
+      auto l_blend_shape_count = impl()->dna_calib_dna_reader_->getBlendShapeChannelCount();
+      if (l_blend_shape_index.size() != l_blend_shape_count)
+        return display_error(
+                   "BlendShape Channel Output Indices 的大小 {} 与 BlendShape Channel Count {} 不匹配",
+                   l_blend_shape_index.size(), l_blend_shape_count
+               ),
+               MS::kFailure;
+      for (auto i = 0; i < l_blend_shape_index.size(); ++i) {
+        const auto& l_index = l_blend_shape_index[i];
+        if (l_index >= l_raw_bsw.size()) {
+          display_warning(
+              "BlendShape Channel Output Index {} 超过了 RigInstance 输出的 BlendShape 权重数量 {}, 跳过剩余索引",
+              l_index, l_raw_bsw.size()
+          );
+          break;
+        }
+        l_out_bsw_bl.addElement(i, &l_status).set(l_raw_bsw[l_index]);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       }
+    }
 
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_t.set(l_out_j_t_bl));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.set(l_out_j_r_bl));
@@ -228,6 +249,7 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_r.setAllClean());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_j_s.setAllClean());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_out_bsw.setAllClean());
+    return MS::kSuccess;
   }
   return MS::kUnknownParameter;
 }
