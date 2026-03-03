@@ -282,7 +282,7 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_source_plug, l_plug));
     }
-
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.doIt());
     return MS::kSuccess;
   }
 
