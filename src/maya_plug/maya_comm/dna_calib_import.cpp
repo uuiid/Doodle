@@ -95,6 +95,7 @@ class dna_calib_import::impl {
   };
   struct mesh_info {
     MObject mesh_obj_;
+    MObject blend_shape_obj_;
     std::string name_;
   };
 
@@ -163,6 +164,8 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
     MProgressWindow::setProgressStatus("Connecting joints...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_joint());
+    MProgressWindow::setProgressStatus("Connecting blend shapes...");
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_blend_shape());
 
     return MS::kSuccess;
   }
@@ -233,18 +236,46 @@ class dna_calib_import::impl {
     return MS::kSuccess;
   }
   MStatus connect_blend_shape() {
+    auto l_blend_shape_count = get_dna_reader()->getBlendShapeChannelCount();
+    MStatus l_status{};
+    MFnDependencyNode l_dna_node_fn{dna_node_obj, &l_status};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    // 寻找对应的 output_blendshape_weights 属性
+    MPlug l_dna_weight_plug = l_dna_node_fn.findPlug(dna_calib_node::output_blendshape_weights, false, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_dna_weight_plug.setNumElements(l_blend_shape_count));
     for (auto&& i : get_dna_reader()->getMeshIndicesForLOD(0)) {
       MProgressWindow::advanceProgress(1);
-      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape_for_mesh(i));
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_blend_shape_for_mesh(i, l_dna_weight_plug));
     }
     return MS::kSuccess;
   }
 
-  MStatus connect_blend_shape_for_mesh(std::size_t in_mesh_index) {
+  MStatus connect_blend_shape_for_mesh(std::size_t in_mesh_index, MPlug& in_dna_weight_plug) {
     if (in_mesh_index >= imported_meshes_.size()) {
       return display_warning("mesh index {} 超出 imported_meshes_ 范围, 跳过 blendShape 连接", in_mesh_index),
              MS::kSuccess;
     }
+
+    const auto l_target_count = get_dna_reader()->getBlendShapeTargetCount(in_mesh_index);
+    if (l_target_count == 0) return MS::kSuccess;
+    MFnDependencyNode l_blend_fn{};
+    MStatus l_status{};
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(imported_meshes_[in_mesh_index].blend_shape_obj_));
+    // 寻找对应的 weight 属性
+    MPlug l_weight_plug = l_blend_fn.findPlug("weight", true, &l_status);
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+
+    for (std::uint16_t i = 0; i < l_target_count; ++i) {
+      const auto l_channel_index = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_index, i);
+      const auto l_channel_name  = get_dna_reader()->getBlendShapeChannelName(l_channel_index);
+      auto l_plug                = l_weight_plug.elementByLogicalIndex(i, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      auto l_source_plug = in_dna_weight_plug.elementByLogicalIndex(l_channel_index, &l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(dag_modifier_.connect(l_source_plug, l_plug));
+    }
+
     return MS::kSuccess;
   }
 
@@ -285,6 +316,7 @@ class dna_calib_import::impl {
     l_blend_obj = l_blend_fn.create(l_mesh_info.mesh_obj_, MFnBlendShapeDeformer::kLocalOrigin, &l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(l_blend_obj));
+    l_mesh_info.blend_shape_obj_ = l_blend_obj;
 
     {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
@@ -372,7 +404,7 @@ class dna_calib_import::impl {
 
       // baseIndex: 通常为 0（blendShape 在该 base 上新建）
       const unsigned int k_weight_index = i;
-      constexpr float k_target_weight = 1.0f;
+      constexpr float k_target_weight   = 1.0f;
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(
           l_blend_fn.addTarget(l_mesh_info.mesh_obj_, k_weight_index, l_target_mesh_obj, k_target_weight)
       );
@@ -392,13 +424,11 @@ class dna_calib_import::impl {
       // 寻找对应的 weight 属性
       MPlug l_weight_plug = l_blend_fn.findPlug("weight", true, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-      MFnAttribute l_arrt{};
       for (std::uint16_t i = 0; i < l_target_count; ++i) {
         const auto l_channel_index = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_index, i);
         const auto l_channel_name  = get_dna_reader()->getBlendShapeChannelName(l_channel_index);
         auto l_plug                = l_weight_plug.elementByLogicalIndex(i, &l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
-        DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_arrt.setObject(l_plug.attribute()));
 
         const auto l_weight_index = l_plug.logicalIndex(&l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
