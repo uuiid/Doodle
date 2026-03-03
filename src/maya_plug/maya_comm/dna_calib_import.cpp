@@ -96,8 +96,9 @@ class dna_calib_import::impl {
   };
   struct mesh_info {
     MObject mesh_obj_;
-    MObject blend_shape_obj_;
     std::string name_;
+    MObject blend_shape_obj_;
+    MObject skin_cluster_obj_;
   };
 
   std::vector<lod_group_info> lod_grp_objs_{};
@@ -158,11 +159,11 @@ class dna_calib_import::impl {
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_mesh_from_dna_mesh(i, get_mesh_lod_group(i)));
       MProgressWindow::advanceProgress(1);
     }
+    MProgressWindow::setProgressStatus("Creating blend shapes...");
+    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
     MProgressWindow::setProgressStatus("Creating joints...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_joints());
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_bind());
-    MProgressWindow::setProgressStatus("Creating blend shapes...");
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(create_blend_shape());
     MProgressWindow::setProgressStatus("Connecting joints...");
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(connect_joint());
     MProgressWindow::setProgressStatus("Connecting blend shapes...");
@@ -465,6 +466,9 @@ class dna_calib_import::impl {
       );
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(MGlobal::executeCommand(conv::to_ms(l_bind_mel)));
       MProgressWindow::advanceProgress(1);
+      MObject l_skin_cluster_obj{};
+      DOODLE_CHECK_MSTATUS_AND_RETURN_IT(get_skin_cluster(i, l_skin_cluster_obj));
+      imported_meshes_[i].skin_cluster_obj_ = l_skin_cluster_obj;
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(set_skin_cluster_weights(i));
     }
 
@@ -497,9 +501,8 @@ class dna_calib_import::impl {
   }
 
   MStatus set_skin_cluster_weights(std::size_t in_mesh_index) {
-    MObject l_skin_cluster_obj{};
+    MObject l_skin_cluster_obj = imported_meshes_[in_mesh_index].skin_cluster_obj_;
     MStatus l_status{};
-    DOODLE_CHECK_MSTATUS_AND_RETURN_IT(get_skin_cluster(in_mesh_index, l_skin_cluster_obj));
     MFnSkinCluster l_skin_node_fn{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_skin_node_fn.setObject(l_skin_cluster_obj));
     MDagPathArray l_joint_paths{};
@@ -894,7 +897,7 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.setUVs(l_u_array, l_v_array));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.assignUVs(l_face_vertex_counts, l_uv_indices));
-    mesh_info l_mesh_info{l_fn_mesh.object(), MObject{}, l_name.data()};
+    mesh_info l_mesh_info{l_fn_mesh.object(), l_name.data()};
     imported_meshes_.push_back(l_mesh_info);
 
     // 添加材质
