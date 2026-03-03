@@ -403,11 +403,6 @@ class dna_calib_import::impl {
         const auto l_weight_index = l_plug.logicalIndex(&l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
         const auto l_attr_name = fmt::format("weight[{}]", l_weight_index);
-        display_warning(
-            "为 mesh {} 的 blendShape 通道 {} 设置别名 '{}' (原属性 '{}')", l_mesh_info.name_, i, l_channel_name,
-            l_attr_name
-        );
-
         l_blend_fn.setAlias(l_channel_name.c_str(), l_attr_name.c_str(), l_plug, true, &l_status);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       }
