@@ -259,6 +259,13 @@ class dna_calib_import::impl {
 
     const auto l_target_count = get_dna_reader()->getBlendShapeTargetCount(in_mesh_index);
     if (l_target_count == 0) return MS::kSuccess;
+    if (imported_meshes_[in_mesh_index].blend_shape_obj_.isNull()) {
+      return display_warning(
+                 "mesh {} 没有对应的 blendShape 对象, 无法连接 blendShape 权重", imported_meshes_[in_mesh_index].name_
+             ),
+             MS::kSuccess;
+    }
+
     MFnDependencyNode l_blend_fn{};
     MStatus l_status{};
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_blend_fn.setObject(imported_meshes_[in_mesh_index].blend_shape_obj_));
@@ -885,7 +892,7 @@ class dna_calib_import::impl {
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.setUVs(l_u_array, l_v_array));
     DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_fn_mesh.assignUVs(l_face_vertex_counts, l_uv_indices));
-    mesh_info l_mesh_info{l_fn_mesh.object(), l_name.data()};
+    mesh_info l_mesh_info{l_fn_mesh.object(), MObject{}, l_name.data()};
     imported_meshes_.push_back(l_mesh_info);
 
     // 添加材质
