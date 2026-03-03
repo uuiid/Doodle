@@ -3,6 +3,7 @@
 #include "maya_plug_fwd.h"
 #include <maya_plug/node/dna_calib_node_impl.h>
 
+#include "data/maya_display.h"
 #include <data/maya_tool.h>
 #include <fmt/xchar.h>
 #include <maya/MAngle.h>
@@ -214,9 +215,10 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
           break;  // sx, sy, sz
       }
     }
-    // 显示 BlendShape 权重输出数据
-    for (auto i = 0; i < l_raw_bsw.size(); i += 100)
-      display_info("BlendShape Outputs: {}", fmt::join(l_raw_bsw | std::views::drop(i) | std::views::take(100), ", "));
+    // // 显示 BlendShape 权重输出数据
+    // for (auto i = 0; i < l_raw_bsw.size(); i += 100)
+    //   display_info("BlendShape Outputs: {}", fmt::join(l_raw_bsw | std::views::drop(i) | std::views::take(100), ",
+    //   "));
 
     if (impl()->rig_instance_ptr_->getLOD() == 0) {
       auto l_blend_shape_index = impl()->dna_calib_dna_reader_->getBlendShapeChannelOutputIndices();
@@ -236,7 +238,8 @@ MStatus dna_calib_node::compute(const MPlug& in_plug, MDataBlock& in_data_block)
           );
           break;
         }
-        l_out_bsw_bl.addElement(i, &l_status).set(l_raw_bsw[l_index]);
+        // if (l_index == 124) display_info("BlendShape Channel Output Index {} value {}", l_index, l_raw_bsw[l_index]);
+        l_out_bsw_bl.addElement(l_index, &l_status).set(l_raw_bsw[l_index]);
         DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       }
     }

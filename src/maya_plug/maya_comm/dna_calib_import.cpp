@@ -11,6 +11,7 @@
 #include <maya_plug/node/dna_calib_node.h>
 #include <maya_plug/node/dna_calib_node_impl.h>
 
+#include "data/maya_display.h"
 #include <algorithm>
 #include <array>
 #include <arrayview/ArrayView.h>
@@ -251,7 +252,7 @@ class dna_calib_import::impl {
     return MS::kSuccess;
   }
 
-  MStatus connect_blend_shape_for_mesh(std::size_t in_mesh_index, MPlug& in_dna_weight_plug) {
+  MStatus connect_blend_shape_for_mesh(std::size_t in_mesh_index, const MPlug& in_dna_weight_plug) {
     if (in_mesh_index >= imported_meshes_.size()) {
       return display_warning("mesh index {} 超出 imported_meshes_ 范围, 跳过 blendShape 连接", in_mesh_index),
              MS::kSuccess;
@@ -275,7 +276,8 @@ class dna_calib_import::impl {
 
     for (std::uint16_t i = 0; i < l_target_count; ++i) {
       const auto l_channel_index = get_dna_reader()->getBlendShapeChannelIndex(in_mesh_index, i);
-      const auto l_channel_name  = get_dna_reader()->getBlendShapeChannelName(l_channel_index);
+      // const auto l_channel_name  = get_dna_reader()->getBlendShapeChannelName(l_channel_index);
+      // display_info("name {} index {}", std::string_view{l_channel_name}, l_channel_index);
       auto l_plug                = l_weight_plug.elementByLogicalIndex(i, &l_status);
       DOODLE_CHECK_MSTATUS_AND_RETURN_IT(l_status);
       auto l_source_plug = in_dna_weight_plug.elementByLogicalIndex(l_channel_index, &l_status);
