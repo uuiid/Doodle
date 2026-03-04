@@ -561,8 +561,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
       );
     }
   }
-  co_await l_sql.remove_playlist_shot_for_playlist(l_arg.target_sequence_id_);
-  co_await l_sql.install_range(l_install_entity_links);
+  if (!l_install_entity_links->empty()) {
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(),
+        "用户 {}({}) 开始复制 Casting project_id {} source_sequence_id {} target_sequence_id "
+        "{} copied_link_count {}",
+        person_.person_.email_, person_.person_.get_full_name(), project_id_, l_arg.source_sequence_id_,
+        l_arg.target_sequence_id_, l_install_entity_links->size()
+    );
+    co_await l_sql.remove_playlist_shot_for_playlist(l_arg.target_sequence_id_);
+    co_await l_sql.install_range(l_install_entity_links);
+  }
   co_return in_handle->make_msg(
       nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, l_arg.target_sequence_id_)
   );
