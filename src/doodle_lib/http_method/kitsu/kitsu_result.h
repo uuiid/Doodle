@@ -4,6 +4,8 @@
 
 #pragma once
 #include <doodle_core/metadata/task.h>
+#include <doodle_core/metadata/task_status.h>
+#include <doodle_core/metadata/task_type.h>
 namespace doodle::http {
 
 struct actions_projects_task_types_create_tasks_result : task {
