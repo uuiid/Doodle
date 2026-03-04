@@ -12,6 +12,7 @@
 #include <array>
 #include <filesystem>
 #include <string_view>
+#include <vector>
 
 namespace doodle {
 void from_json(const nlohmann::json& in_json, export_fbx_arg& out_obj) {
@@ -50,6 +51,25 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     frame_in_      = l_out_arg_.frame_in_;
     frame_out_     = l_out_arg_.frame_out_;
   }
+
+  // 检测孪生文件 LQ_EP001_SC0010.ma 和 LQ_EP001G_SC0010.ma, 他们被视为同一个文件, 需要将  LQ_EP001_SC0010.ma 重命名为
+  // LQ_EP001G_SC0010.ma 以便后续正确生成排屏文件和上传
+  {
+    std::vector<std::string> l_name_vec{};
+    boost::split(l_name_vec, maya_file_.filename().generic_string(), boost::is_any_of("_"));
+    if (l_name_vec.size() >= 3) {
+      auto l_name_1 = fmt::format("{}_{}_{}", l_name_vec[0], l_name_vec[1], l_name_vec[2]);
+      auto l_name_2 = fmt::format("{}G_{}_{}", l_name_vec[0], l_name_vec[1], l_name_vec[2]);
+      if (maya_file_.filename().generic_string() == l_name_1) {
+        auto l_new_path = maya_file_.parent_path() / l_name_2;
+        if (FSys::exists(l_new_path)) FSys::remove(l_new_path);
+        FSys::copy(maya_file_, l_new_path);
+        maya_file_ = l_new_path;
+        logger_ptr_->info("检测到孪生文件 {}, 已重命名为 {}", l_name_1, l_name_2);
+      }
+    }
+  }
+
   DOODLE_CHICK(
       l_out_arg_.maya_file_name_ == maya_file_.filename(), "Maya文件命名不规范，无法继续后续操作 {} {}",
       l_out_arg_.maya_file_name_, maya_file_.filename()
