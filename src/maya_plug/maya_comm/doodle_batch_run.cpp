@@ -532,7 +532,6 @@ class inspect_file_run {
     too_many_point_check_      = in_json.at("too_many_point_check").get<bool>();
     multi_uv_inspection_       = in_json.at("multi_uv_inspection").get<bool>();
     file_                      = in_json.at("path").get<FSys::path>();
-    multi_uv_inspection_       = false;
     display_info(
         "配置检查完成 是否检测5边面 {} 重命名检查 {} 名称长度检查 {} 模型历史数值检查 {} 特殊复制检查 {} uv正反面检查 "
         "{} 模型k帧检查 {} 空间名称检查 {} 只有默认相机检查 {} 多余点数检查 {} 多UV检查 {}",
