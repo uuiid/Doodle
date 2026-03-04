@@ -1,11 +1,12 @@
 #include "export_fbx_arg.h"
 
-#include <doodle_lib/core/file_sys.h>
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <array>
@@ -49,6 +50,11 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
     frame_in_      = l_out_arg_.frame_in_;
     frame_out_     = l_out_arg_.frame_out_;
   }
+  DOODLE_CHICK(
+      l_out_arg_.maya_file_name_ == maya_file_.filename(), "Maya文件命名不规范，无法继续后续操作 {} {}",
+      l_out_arg_.maya_file_name_, maya_file_.filename()
+  );
+
   auto l_name_end = fmt::format("_{}-{}", frame_in_, frame_out_);
   auto l_root_dir = maya_file_.parent_path().parent_path();
   constexpr static std::array<std::string_view, 3> g_movie_ext{".mp4", ".mov", ".avi"};

@@ -3,8 +3,6 @@
 //
 
 #include <doodle_core/configure/static_value.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -12,14 +10,13 @@
 #include <doodle_core/metadata/shot.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
@@ -29,6 +26,9 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/asio/awaitable.hpp>
 
@@ -579,7 +579,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
   shot l_shot{l_entity};
 
   export_fbx_arg::get_export_fbx_arg l_arg{};
-  l_arg.movie_file_ = get_shots_animation_file_name(l_episode_entity.name_, l_entity.name_, l_proj.code_);
+  l_arg.maya_file_name_ = get_shots_animation_file_name(l_episode_entity.name_, l_entity.name_, l_proj.code_);
+  l_arg.movie_file_     = l_arg.maya_file_name_;
+  l_arg.maya_file_name_.replace_extension(".ma");
   l_arg.movie_file_.replace_extension(".mp4");
   l_arg.film_aperture_ = l_proj.get_film_aperture();
   l_arg.size_          = l_proj.get_resolution();
