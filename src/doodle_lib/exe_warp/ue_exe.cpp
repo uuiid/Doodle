@@ -166,6 +166,7 @@ boost::asio::awaitable<void> async_run_ue(
     l_env.emplace(l_it.key(), l_it.value());
   }
   l_env[L"UE-LocalDataCachePath"] = std::wstring{L"%GAMEDIR%DerivedDataCache"};
+  l_env[L"UE-SharedDataCachePath"] = std::wstring{LR"(\\192.168.10.220\Global Shared DDC Path)"};
 
   auto l_out_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
   auto l_err_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
