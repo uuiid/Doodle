@@ -32,6 +32,7 @@
 #include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
+#include "kitsu/kitsu_reg_url.h"
 
 namespace doodle::http {
 
@@ -208,6 +209,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &data_playlists_instance_shots::shot_id_
       ))
       .reg_t<actions_projects_casting_replace>("/api/actions/projects/{}/casting/replace"_url(&actions_projects_casting_replace::project_id_))
+      .reg_t<actions_projects_casting_copy>("/api/actions/projects/{}/casting/copy"_url(&actions_projects_casting_copy::project_id_))
       .reg_t<data_entity_types_instance>("/api/data/entity-types/{}"_url(&data_entity_types_instance::id_))
       .reg_t<model_library::ai_image>("/api/doodle/ai_image"_url)
       .reg_t<model_library::ai_image_instance>("/api/doodle/ai_image/{}"_url(&model_library::ai_image_instance::id_))

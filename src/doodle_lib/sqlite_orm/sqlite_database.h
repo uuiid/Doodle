@@ -226,8 +226,10 @@ class sqlite_database {
   std::size_t get_project_entity_count(const uuid& in_project_id);
 
   // 删除孤立的, 没有和其他连接的工作文件
-  boost::asio::awaitable<void> delete_working_file_orphaned();
+  boost::asio::awaitable<void> remove_working_file_orphaned();
   // 是给外包授权的实体
   bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id = uuid{});
+  // 删除sequence下的所有casting数据
+  boost::asio::awaitable<void> remove_sequence_casting(const uuid& in_sequence_id);
 };
 }  // namespace doodle

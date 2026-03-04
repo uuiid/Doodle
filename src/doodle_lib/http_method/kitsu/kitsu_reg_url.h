@@ -567,6 +567,11 @@ DOODLE_HTTP_JWT_FUN(actions_projects_casting_replace)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/casting/copy
+DOODLE_HTTP_JWT_FUN(actions_projects_casting_copy)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+DOODLE_HTTP_FUN_END()
 // /api/data/projects/{project_id}/sequences/{sequence_id}/casting
 DOODLE_HTTP_JWT_FUN(data_project_sequences_casting)
 DOODLE_HTTP_FUN_OVERRIDE(get)

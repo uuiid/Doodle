@@ -1,18 +1,20 @@
 //
 // Created by TD on 25-8-21.
 //
-#include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_core/metadata/person.h>
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/person.h>
+
+#include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/http_method/kitsu/kitsu_result.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-#include <doodle_lib/core/socket_io/broadcast.h>
-#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/http_method/kitsu/kitsu_result.h>
-
+#include "core/http/http_function.h"
 #include <map>
 #include <range/v3/range/conversion.hpp>
 #include <spdlog/common.h>
@@ -402,21 +404,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   if (auto l_id_list = l_shot_links | ranges::views::transform(&entity_link::id_) | ranges::to_vector;
       !l_id_list.empty()) {
     co_await l_sql.remove<entity_link>(l_id_list);
-    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "用户 {}({}) 移除实体链接 count {}", person_.person_.email_,
-                      person_.person_.get_full_name(), l_id_list.size());
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "用户 {}({}) 移除实体链接 count {}", person_.person_.email_,
+        person_.person_.get_full_name(), l_id_list.size()
+    );
   }
 
   l_ent->nb_entities_out_ = l_list.size();
   co_await l_sql.update(l_ent);
   if (!l_entity_links_update->empty()) {
     co_await l_sql.update_range(l_entity_links_update);
-    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "用户 {}({}) 更新实体链接 count {}", person_.person_.email_,
-                      person_.person_.get_full_name(), l_entity_links_update->size());
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "用户 {}({}) 更新实体链接 count {}", person_.person_.email_,
+        person_.person_.get_full_name(), l_entity_links_update->size()
+    );
   }
   if (!l_entity_links_insert->empty()) {
     co_await l_sql.install_range(l_entity_links_insert);
-    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "用户 {}({}) 新增实体链接 count {}", person_.person_.email_,
-                      person_.person_.get_full_name(), l_entity_links_insert->size());
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "用户 {}({}) 新增实体链接 count {}", person_.person_.email_,
+        person_.person_.get_full_name(), l_entity_links_insert->size()
+    );
   }
   // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
@@ -426,12 +434,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
       }
   );
 
-    SPDLOG_LOGGER_WARN(
+  SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成更新 Casting 关联 project_id {} entity_id {} nb_entities_out {} updated_link_count {} inserted_link_count {}",
+      "用户 {}({}) 完成更新 Casting 关联 project_id {} entity_id {} nb_entities_out {} updated_link_count {} "
+      "inserted_link_count {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_ent->uuid_id_, l_ent->nb_entities_out_,
       l_entity_links_update->size(), l_entity_links_insert->size()
-    );
+  );
   co_return in_handle->make_msg(in_handle->get_json());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences_casting::get(
@@ -460,8 +469,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   person_.check_not_outsourcer();
   auto l_list = in_handle->get_json().get<std::vector<actions_projects_casting_replace_arg>>();
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始替换 Casting project_id {} item_count {}",
-      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_list.size()
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始替换 Casting project_id {} item_count {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, l_list.size()
   );
   auto l_sql                                               = g_ctx().get<sqlite_database>();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
@@ -497,5 +506,65 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
 
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting({}, person_.person_, {}, l_shot_ids));
 }
+struct actions_projects_casting_copy_arg {
+  uuid source_sequence_id_;
+  uuid target_sequence_id_;
+  // from_json
+  friend void from_json(const nlohmann::json& in_json, actions_projects_casting_copy_arg& in_arg) {
+    in_json.at("source_sequence_id").get_to(in_arg.source_sequence_id_);
+    in_json.at("target_sequence_id").get_to(in_arg.target_sequence_id_);
+    if (in_arg.source_sequence_id_.is_nil() || in_arg.target_sequence_id_.is_nil())
+      throw_exception(doodle_error{boost::beast::http::status::bad_request, "ID 不能为空"});
+  }
+};
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
+  auto l_arg = in_handle->get_json().get<actions_projects_casting_copy_arg>();
+  person_.check_in_project(project_id_);
+  person_.check_not_outsourcer();
+  auto l_sql                  = g_ctx().get<sqlite_database>();
+
+  auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
+  {
+    using namespace sqlite_orm;
+    constexpr auto shot     = "shot"_alias.for_<entity>();
+    constexpr auto sequence = "sequence"_alias.for_<entity>();
+    auto l_source_casting   = l_sql.impl_->storage_any_.get_all<entity_link>(
+        join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+        join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+        where(c(sequence->*&entity::uuid_id_) == l_arg.source_sequence_id_)
+    );
+    // 查找 shot
+    auto l_source_shots = l_sql.impl_->storage_any_.get_all<entity>(
+        where(c(&entity::parent_id_) == l_arg.source_sequence_id_ && c(&entity::canceled_) != true)
+    );
+    auto l_target_shots = l_sql.impl_->storage_any_.get_all<entity>(
+        where(c(&entity::parent_id_) == l_arg.target_sequence_id_ && c(&entity::canceled_) != true)
+    );
+    std::map<uuid, uuid> l_shot_id_map{};
+    std::map<std::string, entity*> l_target_shot_name_map{};
+    for (auto&& target_shot : l_target_shots) l_target_shot_name_map[target_shot.name_] = &target_shot;
+    // 按照名称匹配 shot，生成 shot_id_map
+    for (auto&& source_shot : l_source_shots)
+      if (l_target_shot_name_map.contains(source_shot.name_))
+        l_shot_id_map[source_shot.uuid_id_] = l_target_shot_name_map[source_shot.name_]->uuid_id_;
+
+    for (auto&& i : l_source_casting) {
+      if (!l_shot_id_map.contains(i.entity_in_id_)) continue;
+      l_install_entity_links->emplace_back(
+          entity_link{
+              .entity_in_id_  = l_shot_id_map[i.entity_in_id_],
+              .entity_out_id_ = i.entity_out_id_,
+              .nb_occurences_ = i.nb_occurences_,
+              .label_         = i.label_
+          }
+      );
+    }
+  }
+  co_await l_sql.remove_playlist_shot_for_playlist(l_arg.target_sequence_id_);
+  co_await l_sql.install_range(l_install_entity_links);
+  co_return in_handle->make_msg(
+      nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, l_arg.target_sequence_id_)
+  );
+}
 }  // namespace doodle::http
