@@ -109,9 +109,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       connection_control{
           .open_forever = true,
       },
-      on_open([impl](sqlite3* in_ptr) {
-        on_storage_open(in_ptr, impl);
-      }),
+      on_open([impl](sqlite3* in_ptr) { on_storage_open(in_ptr, impl); }),
       make_unique_index(
           "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
           &outsource_studio_authorization::entity_id_
@@ -127,7 +125,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           foreign_key(&outsource_studio_authorization::studio_id_).references(&studio::uuid_id_).on_delete.cascade(),
           foreign_key(&outsource_studio_authorization::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
-      
+
       make_table<ai_image_metadata>(
           "ai_image_metadata", make_column("id", &ai_image_metadata::id_, primary_key().autoincrement()),
           make_column("uuid_id", &ai_image_metadata::uuid_id_, unique(), not_null()),
@@ -218,8 +216,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           "server_task_info_tab",  //
           make_column("id", &server_task_info::id_, primary_key()),
           make_column("uuid_id", &server_task_info::uuid_id_, unique(), not_null()),  //
-          make_column("exe", &server_task_info::exe_),                                //
-          make_column("command", &server_task_info::command_),                        //
+          make_column("run_data", &server_task_info::run_data_),                      //
           make_column("status", &server_task_info::status_),                          //
           make_column("name", &server_task_info::name_),                              //
           make_column("source_computer", &server_task_info::source_computer_),        //
@@ -231,7 +228,18 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("kitsu_task_id", &server_task_info::kitsu_task_id_),            //
           make_column("type", &server_task_info::type_),
           make_column("run_time_info", &server_task_info::run_time_info_),
-          make_column("result_path", &server_task_info::result_path_)
+          make_column("result_path", &server_task_info::result_path_),
+          foreign_key(&server_task_info::submitter_).references(&person::uuid_id_).on_delete.cascade(),
+          foreign_key(&server_task_info::run_computer_id_).references(&computer::uuid_id_).on_delete.set_null(),
+          foreign_key(&server_task_info::kitsu_task_id_).references(&server_task_info::uuid_id_).on_delete.cascade()
+      ),
+
+      make_index("computer_tab_uuid_id_index", &computer::uuid_id_),
+      make_table<computer>(
+          "computer", make_column("id", &computer::id_, primary_key()),
+          make_column("uuid_id", &computer::uuid_id_, unique(), not_null()),
+          make_column("name", &computer::name_, not_null()), make_column("status", &computer::status_),
+          make_column("last_heartbeat_time", &computer::last_heartbeat_time_)
       ),
       make_table<assets_file_helper::link_parent_t>(
           "assets_link_parent_t", make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
@@ -1234,7 +1242,5 @@ struct sqlite_database_impl {
     return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_parent_) == in_id));
   }
 };
-
-
 
 }  // namespace doodle

@@ -21,16 +21,17 @@ class computer {
   std::string name_;
   std::string ip_;
 
-  computer_status server_status_ = computer_status::online;
-  computer_status client_status_ = computer_status::online;
+  computer_status status_ = computer_status::online;
+  chrono::system_zoned_time last_heartbeat_time_{chrono::current_zone(), chrono::system_clock::now()};
 
  private:
   // to json
   friend void to_json(nlohmann::json& j, const computer& p) {
     j["name"]   = p.name_;
     j["ip"]     = p.ip_;
-    j["status"] = p.server_status_;
+    j["status"] = p.status_;
     j["id"]     = p.uuid_id_;
+    j["last_heartbeat_time"] = p.last_heartbeat_time_;
   }
 };
 
