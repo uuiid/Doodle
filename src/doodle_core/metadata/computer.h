@@ -23,7 +23,7 @@ class computer {
 
   computer_status status_ = computer_status::online;
   chrono::system_zoned_time last_heartbeat_time_{chrono::current_zone(), chrono::system_clock::now()};
-
+  uuid bot_uuid_;
  private:
   // to json
   friend void to_json(nlohmann::json& j, const computer& p) {

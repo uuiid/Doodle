@@ -238,8 +238,11 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       make_table<computer>(
           "computer", make_column("id", &computer::id_, primary_key()),
           make_column("uuid_id", &computer::uuid_id_, unique(), not_null()),
-          make_column("name", &computer::name_, not_null()), make_column("status", &computer::status_),
-          make_column("last_heartbeat_time", &computer::last_heartbeat_time_)
+          make_column("name", &computer::name_, not_null()),
+          make_column("status", &computer::status_),
+          make_column("last_heartbeat_time", &computer::last_heartbeat_time_),
+          make_column("bot_uuid", &computer::bot_uuid_),
+          foreign_key(&computer::bot_uuid_).references(&person::uuid_id_).on_delete.cascade()
       ),
       make_table<assets_file_helper::link_parent_t>(
           "assets_link_parent_t", make_column("id", &assets_file_helper::link_parent_t::id_, primary_key()),
