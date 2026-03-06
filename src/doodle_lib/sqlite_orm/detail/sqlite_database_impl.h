@@ -216,7 +216,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           "server_task_info_tab",  //
           make_column("id", &server_task_info::id_, primary_key()),
           make_column("uuid_id", &server_task_info::uuid_id_, unique(), not_null()),  //
-          make_column("run_data", &server_task_info::run_data_),                      //
+          make_column("command", &server_task_info::command_),                      //
           make_column("status", &server_task_info::status_),                          //
           make_column("name", &server_task_info::name_),                              //
           make_column("source_computer", &server_task_info::source_computer_),        //

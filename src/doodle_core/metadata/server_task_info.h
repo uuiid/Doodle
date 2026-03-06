@@ -87,7 +87,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   std::int32_t id_{};
   // 唯一id
   uuid uuid_id_{};
-  nlohmann::json run_data_;
+  nlohmann::json command_;
   // 任务的状态
   server_task_info_status status_{server_task_info_status::submitted};
   // 任务名称
@@ -147,11 +147,11 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   bool operator==(const server_task_info& in_rhs) const {
     return std::tie(
-               id_, uuid_id_, run_data_, status_, name_, source_computer_, submitter_, submit_time_, run_computer_id_,
+               id_, uuid_id_, command_, status_, name_, source_computer_, submitter_, submit_time_, run_computer_id_,
                run_time_, end_time_, kitsu_task_id_, type_
            ) ==
            std::tie(
-               in_rhs.id_, in_rhs.uuid_id_, in_rhs.run_data_, in_rhs.status_, in_rhs.name_, in_rhs.source_computer_,
+               in_rhs.id_, in_rhs.uuid_id_, in_rhs.command_, in_rhs.status_, in_rhs.name_, in_rhs.source_computer_,
                in_rhs.submitter_, in_rhs.submit_time_, in_rhs.run_computer_id_, in_rhs.run_time_, in_rhs.end_time_,
                in_rhs.kitsu_task_id_, in_rhs.type_
            );
@@ -162,7 +162,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
     j["id"]              = p.uuid_id_;
-    j["run_data"]        = p.run_data_;
+    j["run_data"]        = p.command_;
     j["status"]          = p.status_;
     j["name"]            = p.name_;
     j["source_computer"] = p.source_computer_;
@@ -183,7 +183,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     if (j.contains("submitter")) j.at("submitter").get_to(p.submitter_);
     if (j.contains("run_computer_id")) j.at("run_computer_id").get_to(p.run_computer_id_);
     if (j.contains("type")) j.at("type").get_to(p.type_);
-    if (j.contains("run_data")) j.at("run_data").get_to(p.run_data_);
+    if (j.contains("run_data")) j.at("run_data").get_to(p.command_);
   }
 };
 }  // namespace doodle
