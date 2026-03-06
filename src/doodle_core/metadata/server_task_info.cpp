@@ -12,14 +12,6 @@
 
 namespace doodle {
 
-const std::string& server_task_info::sql_command() const {
-  sql_command_cache_ = command_.dump();
-  return sql_command_cache_;
-}
-void server_task_info::sql_command(const std::string& in_str) {
-  if (!in_str.empty()) command_ = nlohmann::json::parse(in_str);
-}
-
 void server_task_info::get_last_line_log(const FSys::path& in_log_path) {
   if (status_ != server_task_info_status::failed) return;
   // auto l_path =

@@ -157,9 +157,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
            );
   }
 
-  void sql_command(const std::string& in_str);
-  const std::string& sql_command() const;
-
  private:
   mutable std::string sql_command_cache_;
   // to json
