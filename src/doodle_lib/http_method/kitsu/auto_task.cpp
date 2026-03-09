@@ -76,29 +76,22 @@ auto check_multiple_scene(auto& in_vector) {
 }
 
 }  // namespace
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly::post(
-    session_data_ptr in_handle
-) {
+
+namespace auto_task {
+run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id) {
   auto l_sql         = g_ctx().get<sqlite_database>();
-  auto l_shot_task   = l_sql.get_by_uuid<task>(id_);
+  auto l_shot_task   = l_sql.get_by_uuid<task>(in_shot_id);
   auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
   if (l_shot_entity.parent_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
-  auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
+  auto l_prj            = l_sql.get_by_uuid<project>(in_project_id);
   auto l_shot_extend    = l_sql.get_entity_shot_extend(l_shot_entity.uuid_id_);
   DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
   DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧率起始，请联系管理员添加扩展信息");
   DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧率结束，请联系管理员添加扩展信息");
 
   bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {} shot_entity_id {} episode_entity_id {} is_simulation "
-      "{}",
-      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_,
-      l_shot_entity.uuid_id_, l_episode_entity.uuid_id_, l_is_simulation_task
-  );
 
   episodes l_episodes{l_episode_entity};
   shot l_shot{l_shot_entity};
@@ -424,10 +417,23 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
   }
 
+  return l_ret;
+}
+}  // namespace auto_task
+
+boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly::post(
+    session_data_ptr in_handle
+) {
+  person_.check_not_outsourcer();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, id_
+  );
+  auto l_ret = auto_task::shot_render_light(project_id_, id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}", person_.person_.email_,
-      person_.person_.get_full_name(), project_id_, l_shot_task.uuid_id_, l_ret.asset_infos_.size(),
+      person_.person_.get_full_name(), project_id_, id_, l_ret.asset_infos_.size(),
       l_ret.camera_file_path_.filename().generic_string()
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);

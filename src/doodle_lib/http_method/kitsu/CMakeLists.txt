@@ -9,7 +9,7 @@ target_sources(
         preview.h
         comment.h
         computing_time.h
-
+        auto_task.h
 
         PRIVATE
         kitsu_reg_url.cpp
