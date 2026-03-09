@@ -714,4 +714,14 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid shot_id_{};
 DOODLE_HTTP_FUN_END()
+//  /api/data/jobs
+DOODLE_HTTP_JWT_FUN(data_jobs)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/data/jobs/{job_id}
+DOODLE_HTTP_JWT_FUN(data_jobs_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid job_id_{};
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http
