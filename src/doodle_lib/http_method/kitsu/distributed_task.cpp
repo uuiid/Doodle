@@ -4,8 +4,10 @@
 #include "doodle_lib_fwd.h"
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/http_method/kitsu/auto_task.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
+
 
 namespace doodle::http {
 
@@ -36,7 +38,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly_subtas
     l_ptr->run_computer_id_ = l_online_computer[dis(gen)].uuid_id_;
   }
   l_ptr->kitsu_task_id_ = shot_id_;
-  l_ptr->command_       = {{"project_id", project_id_}, {"shot_id", shot_id_}};
+  l_ptr->command_       = auto_task::shot_render_light(project_id_, shot_id_);
 
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
