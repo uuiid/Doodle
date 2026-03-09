@@ -1121,6 +1121,7 @@ DOODLE_GET_ALL_SQL(organisation)
 DOODLE_GET_ALL_SQL(ai_image_metadata)
 DOODLE_GET_ALL_SQL(project)
 DOODLE_GET_ALL_SQL(outsource_studio_authorization)
+DOODLE_GET_ALL_SQL(computer)
 template <>
 std::vector<asset_type> sqlite_database::get_all() {
   auto l_list = impl_->get_all<asset_type>();
@@ -1184,6 +1185,7 @@ DOODLE_INSTALL_SQL(project_status_automation_link)
 DOODLE_INSTALL_SQL(entity_shot_extend)
 DOODLE_INSTALL_SQL(status_automation)
 DOODLE_INSTALL_SQL(studio)
+DOODLE_INSTALL_SQL(computer)
 DOODLE_INSTALL_SQL(outsource_studio_authorization)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
@@ -1221,6 +1223,7 @@ DOODLE_REMOVE_BY_ID(working_file_task_link)
 DOODLE_REMOVE_BY_ID(working_file)
 DOODLE_REMOVE_BY_ID(entity_link)
 DOODLE_REMOVE_BY_ID(playlist)
+DOODLE_REMOVE_BY_ID(computer)
 DOODLE_REMOVE_BY_ID(playlist_shot)
 DOODLE_REMOVE_BY_ID(entity_shot_extend)
 DOODLE_REMOVE_BY_ID(project_status_automation_link)
@@ -1237,6 +1240,7 @@ DOODLE_REMOVE_BY_UUID(entity_link)
 DOODLE_REMOVE_BY_UUID(ai_image_metadata)
 DOODLE_REMOVE_BY_UUID(playlist_shot)
 DOODLE_REMOVE_BY_UUID(studio)
+DOODLE_REMOVE_BY_UUID(computer)
 DOODLE_REMOVE_BY_UUID(outsource_studio_authorization)
 
 template <>

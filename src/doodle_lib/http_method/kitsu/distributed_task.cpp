@@ -1,5 +1,7 @@
+#include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include "doodle_lib_fwd.h"
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
@@ -8,6 +10,10 @@
 namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly_subtasks, post) {
+  person_.check_not_outsourcer();
+
+  auto l_sql              = g_ctx().get<sqlite_database>();
+
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::auto_light;
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
@@ -16,6 +22,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly_subtas
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
+  if (l_ptr->run_computer_id_.is_nil()) {
+    auto l_all_computer = l_sql.get_all<computer>();
+    // 过滤在线的计算机
+    std::vector<computer> l_online_computer{};
+    for (auto&& i : l_all_computer)
+      if (i.status_ == computer_status::online) l_online_computer.push_back(i);
+    if (l_online_computer.empty()) l_online_computer = l_all_computer;  // 如果没有在线的计算机，就使用所有计算机
+    // 随机选择一台计算机
+    static std::random_device rd{};
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, l_online_computer.size() - 1);
+    l_ptr->run_computer_id_ = l_online_computer[dis(gen)].uuid_id_;
+  }
+  l_ptr->kitsu_task_id_ = shot_id_;
+  l_ptr->command_       = {{"project_id", project_id_}, {"shot_id", shot_id_}};
+
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 
   socket_io::broadcast("doodle:task_info:create", nlohmann::json{} = *l_ptr);

@@ -32,7 +32,9 @@
 #include <doodle_lib/http_method/other/other.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
+
 #include "kitsu/kitsu_reg_url.h"
+
 
 namespace doodle::http {
 
@@ -240,6 +242,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_projects_shots_run_ue_assembly>("/api/actions/projects/{}/shots/{}/run-ue-assembly"_url(
         &actions_projects_shots_run_ue_assembly::project_id_,
         &actions_projects_shots_run_ue_assembly::id_
+      ))
+      .reg_t<actions_projects_shots_run_ue_assembly_subtasks>("/api/actions/projects/{}/shots/{}/run-ue-assembly/subtasks"_url(
+        &actions_projects_shots_run_ue_assembly_subtasks::project_id_,
+        &actions_projects_shots_run_ue_assembly_subtasks::shot_id_
       ))
       .reg_t<actions_tasks_export_rig_sk>("/api/actions/tasks/{}/export-rig-sk"_url(&actions_tasks_export_rig_sk::task_id_))
       .reg_t<actions_tasks_export_anim_fbx>("/api/actions/tasks/{}/export-anim-fbx"_url(&actions_tasks_export_anim_fbx::task_id_))
