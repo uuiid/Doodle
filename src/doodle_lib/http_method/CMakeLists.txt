@@ -1,7 +1,6 @@
 target_sources(
         doodle_lib
         PUBLIC
-        computer.h
         dingding_attendance.h
         tool_version.h
         up_file.h
@@ -10,7 +9,6 @@ target_sources(
         kitsu.h
 
         PRIVATE
-        computer.cpp
         dingding_attendance.cpp
         computer_reg_data.cpp
         tool_version.cpp
