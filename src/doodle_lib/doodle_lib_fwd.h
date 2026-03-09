@@ -46,6 +46,10 @@ namespace level {}  // namespace level
 // 开始我们的名称空间
 namespace doodle {
 
+namespace socket_io {
+class sid_ctx;
+}
+
 namespace details {
 class logger_ctrl;
 }  // namespace details
