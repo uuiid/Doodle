@@ -1048,6 +1048,7 @@ DOODLE_GET_BY_UUID_SQL(working_file)
 DOODLE_GET_BY_UUID_SQL(ai_image_metadata)
 DOODLE_GET_BY_UUID_SQL(organisation)
 DOODLE_GET_BY_UUID_SQL(playlist_shot)
+DOODLE_GET_BY_UUID_SQL(computer)
 DOODLE_GET_BY_UUID_SQL(studio)
 template <>
 task sqlite_database::get_by_uuid<task>(const uuid& in_uuid) {

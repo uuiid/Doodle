@@ -12,7 +12,6 @@
 
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
-#include <doodle_lib/http_method/computer.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/process/process.hpp>
