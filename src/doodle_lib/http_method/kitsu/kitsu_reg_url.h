@@ -3,9 +3,8 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <core/http/http_function.h>
@@ -708,5 +707,11 @@ DOODLE_HTTP_FUN_END()
 // /api/data/fix-preview-files-thumbnails
 DOODLE_HTTP_JWT_FUN(data_fix_preview_files_thumbnails)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/shots/{shot_id}/run-ue-assembly/subtasks
+DOODLE_HTTP_JWT_FUN(actions_projects_shots_run_ue_assembly_subtasks)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+uuid shot_id_{};
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

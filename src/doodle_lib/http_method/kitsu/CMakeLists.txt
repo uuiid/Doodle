@@ -45,7 +45,7 @@ target_sources(
         compose_video.cpp
         auth_outsource.cpp
         computing_time.cpp
-
+        distributed_task.cpp
 )
 
 # 这个文件夹中所有的源文件都要使用限制池构建
