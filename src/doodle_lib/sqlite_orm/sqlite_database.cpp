@@ -984,6 +984,15 @@ boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid
   co_return;
 }
 
+std::vector<server_task_info> sqlite_database::get_server_tasks_by_computer_id(const uuid& in_computer_id) {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<server_task_info>(
+      where(c(&server_task_info::run_computer_id_) == in_computer_id),
+      multi_order_by(order_by(&server_task_info::priority_).desc(), order_by(&server_task_info::submit_time_).desc())
+  );
+  return l_t;
+}
+
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)

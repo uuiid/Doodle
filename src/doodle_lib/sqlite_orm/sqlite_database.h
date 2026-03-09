@@ -15,7 +15,6 @@
 #include <optional>
 #include <vector>
 
-
 namespace doodle {
 struct preview_file;
 struct preview_files_for_entity_t;
@@ -231,5 +230,7 @@ class sqlite_database {
   bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id = uuid{});
   // 删除sequence下的所有casting数据
   boost::asio::awaitable<void> remove_sequence_casting(const uuid& in_sequence_id);
+  // 按照计算机id 获取工作
+  std::vector<server_task_info> get_server_tasks_by_computer_id(const uuid& in_computer_id);
 };
 }  // namespace doodle

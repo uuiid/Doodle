@@ -222,6 +222,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("source_computer", &server_task_info::source_computer_),        //
           make_column("submitter", &server_task_info::submitter_),                    //
           make_column("submit_time", &server_task_info::submit_time_),                //
+          make_column("priority", &server_task_info::priority_),                //
           make_column("run_time", &server_task_info::run_time_),                      //
           make_column("end_time", &server_task_info::end_time_),                      //
           make_column("run_computer_id", &server_task_info::run_computer_id_),        //

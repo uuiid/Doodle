@@ -103,6 +103,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   uuid run_computer_id_{};
 
   std::float_t progress_{0.0};
+  // 优先级
+  std::int32_t priority_{100};
 
   // 开始运行任务的时间
   std::optional<zoned_time> run_time_{};
@@ -158,7 +160,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
   }
 
  private:
-  mutable std::string sql_command_cache_;
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
     j["id"]              = p.uuid_id_;
