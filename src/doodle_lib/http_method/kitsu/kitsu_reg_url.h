@@ -732,8 +732,6 @@ void websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
 ) override;
 [[nodiscard]] bool has_websocket() const override;
-std::shared_ptr<socket_io::sid_ctx> sid_ctx_;
-explicit socket_io_computer(std::shared_ptr<socket_io::sid_ctx> sid_ctx) : sid_ctx_(std::move(sid_ctx)) {}
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http

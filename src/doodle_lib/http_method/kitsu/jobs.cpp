@@ -89,8 +89,6 @@ void socket_io_computer::websocket_callback(
   boost::asio::co_spawn(
       g_io_context(), set_computer(person_.person_.uuid_id_, person_.person_.get_full_name()), boost::asio::detached
   );
-  auto l_websocket = std::make_shared<socket_io::socket_io_websocket_core>(in_handle, sid_ctx_, std::move(in_stream));
-  l_websocket->async_run();
 }
 
 }  // namespace doodle::http
