@@ -8,10 +8,25 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-
 namespace doodle::http {
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly_subtasks, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, get) {
+  person_.check_not_outsourcer();
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, id_
+  );
+  auto l_ret = auto_task::shot_render_light(project_id_, id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_, id_, l_ret.asset_infos_.size(),
+      l_ret.camera_file_path_.filename().generic_string()
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
   person_.check_not_outsourcer();
 
   auto l_sql              = g_ctx().get<sqlite_database>();
@@ -37,8 +52,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly_subtas
     std::uniform_int_distribution<> dis(0, l_online_computer.size() - 1);
     l_ptr->run_computer_id_ = l_online_computer[dis(gen)].uuid_id_;
   }
-  l_ptr->kitsu_task_id_ = shot_id_;
-  l_ptr->command_       = auto_task::shot_render_light(project_id_, shot_id_);
+  l_ptr->kitsu_task_id_ = id_;
+  l_ptr->command_       = auto_task::shot_render_light(project_id_, id_);
 
   co_await g_ctx().get<sqlite_database>().install(l_ptr);
 

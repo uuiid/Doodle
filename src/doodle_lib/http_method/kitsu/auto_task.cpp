@@ -421,24 +421,6 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
 }
 }  // namespace auto_task
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly::post(
-    session_data_ptr in_handle
-) {
-  person_.check_not_outsourcer();
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始生成 UE 装配参数 project_id {} task_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), project_id_, id_
-  );
-  auto l_ret = auto_task::shot_render_light(project_id_, id_);
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成生成 UE 装配参数 project_id {} task_id {} asset_count {} camera_file {}", person_.person_.email_,
-      person_.person_.get_full_name(), project_id_, id_, l_ret.asset_infos_.size(),
-      l_ret.camera_file_path_.filename().generic_string()
-  );
-  co_return in_handle->make_msg(nlohmann::json{} = l_ret);
-}
-
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_rig_sk::get(
     session_data_ptr in_handle
 ) {

@@ -241,10 +241,6 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &actions_projects_shots_run_ue_assembly::project_id_,
         &actions_projects_shots_run_ue_assembly::id_
       ))
-      .reg_t<actions_projects_shots_run_ue_assembly_subtasks>("/api/actions/projects/{}/shots/{}/run-ue-assembly/subtasks"_url(
-        &actions_projects_shots_run_ue_assembly_subtasks::project_id_,
-        &actions_projects_shots_run_ue_assembly_subtasks::shot_id_
-      ))
       .reg_t<actions_tasks_export_rig_sk>("/api/actions/tasks/{}/export-rig-sk"_url(&actions_tasks_export_rig_sk::task_id_))
       .reg_t<actions_tasks_export_anim_fbx>("/api/actions/tasks/{}/export-anim-fbx"_url(&actions_tasks_export_anim_fbx::task_id_))
       .reg_t<doodle_backup>("/api/doodle/backup"_url)
