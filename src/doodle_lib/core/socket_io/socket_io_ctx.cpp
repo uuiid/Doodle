@@ -5,17 +5,17 @@
 #include "socket_io_ctx.h"
 
 #include <doodle_lib/core/global_function.h>
-#include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/logger/logger.h>
-
 #include <doodle_lib/core/socket_io/sid_data.h>
 #include <doodle_lib/core/socket_io/socket_io_core.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/asio/post.hpp>
 
 #include <spdlog/spdlog.h>
 #include <utility>
+
 
 namespace doodle {
 namespace socket_io {
@@ -33,7 +33,9 @@ sid_ctx::sid_ctx()
           .ping_interval_ = chrono::milliseconds{25000},
           .ping_timeout_  = chrono::milliseconds{40000},
           .max_payload_   = 1000000
-      } {}
+      } {
+  g_ctx().emplace<sid_ctx&>(*this);
+}
 
 void sid_ctx::clear_timeout_sid() {
   std::size_t l_clear_count = 0;
@@ -138,9 +140,7 @@ void sid_ctx::register_namespace(const std::string& in_namespace) {
   });
 }
 void sid_ctx::clear() {
-  boost::asio::post(strand_, [this]() {
-    clear_timeout_sid();
-  });
+  boost::asio::post(strand_, [this]() { clear_timeout_sid(); });
 }
 }  // namespace socket_io
 }  // namespace doodle
