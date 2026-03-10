@@ -91,11 +91,12 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   }
 };
 
-void data_computers_socket_io::websocket_callback(
+void data_computers::websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
 ) {
   person_.check_not_outsourcer();
   auto l_impl = std::make_shared<data_computers_socket_io_impl>(std::move(in_stream));
   l_impl->run();
 }
+bool data_computers::has_websocket() const { return true; }
 }  // namespace doodle::http

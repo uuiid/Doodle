@@ -270,6 +270,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<auth_change_password>("/api/auth/change-password"_url())
       .reg_t<data_jobs>("api/data/jobs"_url)
       .reg_t<data_jobs_instance>("api/data/jobs/{}"_url(&data_jobs_instance::job_id_))
+      .reg_t<actions_jobs_log>("api/actions/jobs/{}/log"_url(&actions_jobs_log::job_id_))
+      .reg_t<data_computers>("/api/data/computers"_url)
+      .reg_t<data_computers_instance>("/api/data/computers/{}"_url(&data_computers_instance::computer_id_))
+
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
