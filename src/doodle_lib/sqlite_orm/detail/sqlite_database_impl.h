@@ -216,13 +216,13 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           "server_task_info_tab",  //
           make_column("id", &server_task_info::id_, primary_key()),
           make_column("uuid_id", &server_task_info::uuid_id_, unique(), not_null()),  //
-          make_column("command", &server_task_info::command_),                      //
+          make_column("command", &server_task_info::command_),                        //
           make_column("status", &server_task_info::status_),                          //
           make_column("name", &server_task_info::name_),                              //
           make_column("source_computer", &server_task_info::source_computer_),        //
           make_column("submitter", &server_task_info::submitter_),                    //
           make_column("submit_time", &server_task_info::submit_time_),                //
-          make_column("priority", &server_task_info::priority_),                //
+          make_column("priority", &server_task_info::priority_),                      //
           make_column("run_time", &server_task_info::run_time_),                      //
           make_column("end_time", &server_task_info::end_time_),                      //
           make_column("run_computer_id", &server_task_info::run_computer_id_),        //
@@ -239,6 +239,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       make_table<computer>(
           "computer", make_column("id", &computer::id_, primary_key()),
           make_column("uuid_id", &computer::uuid_id_, unique(), not_null()),
+          make_column("hardware_id", &computer::hardware_id_, unique(), not_null()),
           make_column("name", &computer::name_, not_null()),
           make_column("status", &computer::status_),
           make_column("last_heartbeat_time", &computer::last_heartbeat_time_),

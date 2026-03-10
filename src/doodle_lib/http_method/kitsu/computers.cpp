@@ -6,6 +6,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/awaitable.hpp>
+#include <boost/asio/buffers_iterator.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
@@ -57,7 +58,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     boost::beast::flat_buffer l_buffer{};
 
     co_await web_stream_->async_read(l_buffer);
-    auto l_json                     = nlohmann::json::parse(l_buffer.data());
+    auto l_json                     = nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
     computer_                       = std::make_shared<computer>(l_json.get<computer>());
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = g_ctx().get<sqlite_database>();
