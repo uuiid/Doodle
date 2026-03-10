@@ -725,6 +725,13 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid job_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/jobs/{job_id}/log
+DOODLE_HTTP_JWT_FUN(actions_jobs_log)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid job_id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/data/computers
 DOODLE_HTTP_JWT_FUN(data_computers)
 DOODLE_HTTP_FUN_OVERRIDE(get)

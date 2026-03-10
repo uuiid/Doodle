@@ -1,3 +1,5 @@
+#include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/kitsu_ctx_t.h"
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
@@ -11,6 +13,7 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include <filesystem>
 
 namespace doodle::http {
 
@@ -37,6 +40,22 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, put) {
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {
+  person_.check_not_outsourcer();
+  auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
+  if (!FSys::exists(l_jobs_path)) co_return in_handle->make_msg_204();
+  co_return in_handle->make_msg(l_jobs_path, "text/plain");
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
+  person_.check_not_outsourcer();
+  auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
+  auto l_string    = in_handle->get_string();
+  if (auto l_p = l_jobs_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  FSys::ofstream{l_jobs_path} << l_string;
+  co_return in_handle->make_msg_204();
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
   person_.check_not_outsourcer();
   auto l_sql = g_ctx().get<sqlite_database>();
@@ -60,6 +79,5 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
-
 
 }  // namespace doodle::http

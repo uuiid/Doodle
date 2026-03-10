@@ -104,6 +104,8 @@ class session_data : public std::enable_shared_from_this<session_data> {
   std::vector<FSys::path> get_files() const;
   // 获取请求中的图片, 或者视频
   FSys::path get_file() const;
+  // 直接获取字符串
+  std::string get_string() const;
   // 检查请求头中是否包含 deflate 压缩字段
   bool is_deflate() const { return req_header_[boost::beast::http::field::accept_encoding].contains("deflate"); }
   boost::asio::awaitable<void> run();

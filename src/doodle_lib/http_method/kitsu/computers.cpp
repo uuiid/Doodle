@@ -37,28 +37,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
   co_return in_handle->make_msg(nlohmann::json{} = l_computer);
 }
 
-namespace {
-boost::asio::awaitable<void> set_computer(uuid in_person_id, std::string in_name) {
-  auto l_sql      = g_ctx().get<sqlite_database>();
-  auto l_computer = std::make_shared<computer>();
-  using namespace sqlite_orm;
-  if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::bot_uuid_) == in_person_id)) != 0) {
-    *l_computer = l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::bot_uuid_) == in_person_id)).front();
-    l_computer->status_ = computer_status::online;
-    l_computer->name_   = in_name;
-    co_await l_sql.update(l_computer);
-  } else {
-    l_computer->bot_uuid_ = in_person_id;
-    l_computer->name_     = in_name;
-    l_computer->status_   = computer_status::online;
-    co_await l_sql.install(l_computer);
-  }
-  co_return;
-}
-
-}  // namespace
-// 第一步, 等待计算机发送自身信息, 第二步, 将计算机信息保存到数据库
-
 class data_computers_socket_io_impl : public std::enable_shared_from_this<data_computers_socket_io_impl> {
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<computer> computer_;
@@ -74,6 +52,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     }
   }
 
+  // 第一步, 等待计算机发送自身信息, 第二步, 将计算机信息保存到数据库
   boost::asio::awaitable<void> init() {
     boost::beast::flat_buffer l_buffer{};
 

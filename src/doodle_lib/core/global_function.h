@@ -6,6 +6,8 @@
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/doodle_core_export.h>
 
+#include <doodle_lib/configure/doodle_lib_export.h>
+
 #include <boost/asio.hpp>
 #include <boost/uuid/uuid.hpp>
 
@@ -14,7 +16,6 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <tl/expected.hpp>
-
 
 namespace boost::asio {
 class io_context;
@@ -27,11 +28,11 @@ namespace details {
 class logger_ctrl;
 }  // namespace details
 
-DOODLELIB_API boost::asio::io_context &g_io_context();
-DOODLELIB_API details::logger_ctrl &g_logger_ctrl();
+DOODLELIB_API boost::asio::io_context& g_io_context();
+DOODLELIB_API details::logger_ctrl& g_logger_ctrl();
 
-DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type> &g_strand();
-DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type> &g_pool_strand();
+DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
+DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
 DOODLELIB_API std::size_t get_hardware_concurrency();
 template <class... Ts>
 struct overloaded : Ts... {
@@ -49,11 +50,11 @@ overloaded(Ts...) -> overloaded<Ts...>;
  * @note This function does not throw exceptions and uses noexcept.
  */
 
-DOODLELIB_API boost::uuids::uuid from_uuid_str(const std::string &uuid_str);
+DOODLELIB_API boost::uuids::uuid from_uuid_str(const std::string& uuid_str);
 
 template <typename Duration = std::chrono::system_clock::duration>
 DOODLELIB_API std::chrono::zoned_time<std::chrono::system_clock::duration> from_chrono_time_zone_str(
-    const std::string &in_time_zone_str
+    const std::string& in_time_zone_str
 ) {
   using time_point     = std::chrono::zoned_time<Duration>;
   using time_loc_point = std::chrono::time_point<std::chrono::local_t, Duration>;
@@ -76,7 +77,7 @@ DOODLELIB_API std::chrono::zoned_time<std::chrono::system_clock::duration> from_
   return l_time_zone;
 };
 template <typename T>
-T parse_time(const std::string &time_str, const std::string &format) {
+T parse_time(const std::string& time_str, const std::string& format) {
   std::istringstream l_year_month_stream{time_str};
   T l_time{};
   l_year_month_stream >> std::chrono::parse(format, l_time);

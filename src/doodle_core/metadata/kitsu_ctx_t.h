@@ -1,12 +1,15 @@
 
 #pragma once
-#include <doodle_lib/core/global_function.h>
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/doodle_core_pch.h>
+
+#include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/core/global_function.h>
 
 #include <filesystem>
 #include <fmt/format.h>
 #include <string>
+
 
 namespace doodle::http {
 
@@ -28,6 +31,10 @@ struct kitsu_ctx_t {
   /// 服务器 协议和域名(基本在发送电子邮件时使用)
   std::string domain_protocol_;
   std::string domain_name_;
+
+  FSys::path get_jobs_logs_file(const uuid& in_uuid) {
+    return root_ / "jobs" / FSys::split_uuid_path(fmt::format("{}.log", in_uuid));
+  }
 
   FSys::path get_tiles_file_path(const uuid& in_uuid) { return root_ / get_tiles_file_path_(in_uuid); }
   FSys::path get_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {

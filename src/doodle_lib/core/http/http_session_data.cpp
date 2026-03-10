@@ -446,6 +446,12 @@ FSys::path session_data::get_file() const {
     return std::get<multipart_body::value_type>(body_).get_files().front();
   return {};
 }
+
+std::string session_data::get_string() const {
+  if (std::holds_alternative<std::string>(body_)) return std::get<std::string>(body_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "body 不是字符串"});
+}
+
 session_data::~session_data() = default;
 
 }  // namespace doodle::http::detail
