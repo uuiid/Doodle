@@ -5,22 +5,23 @@
 #include "http_session_data.h"
 
 #include <doodle_core/configure/static_value.h>
+
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
+
 // ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 // ReSharper disable once CppUnusedIncludeDirective
-#include <doodle_lib/lib_warp/boost_fmt_error.h>
-#include <doodle_lib/lib_warp/boost_fmt_url.h>
-#include <doodle_lib/logger/logger.h>
-
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_websocket_client.h>
 #include <doodle_lib/core/http/multipart_body.h>
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
+#include <doodle_lib/lib_warp/boost_fmt_url.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/deferred.hpp>
@@ -35,14 +36,15 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/winapi/error_codes.hpp>
 
-#include <cryptopp/hex.h>
 #include "http_content_type.h"
 #include <cryptopp/adler32.h>
 #include <cryptopp/filters.h>
+#include <cryptopp/hex.h>
 #include <magic_enum/magic_enum.hpp>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <variant>
+
 namespace doodle::http::detail {
 namespace {
 
@@ -275,7 +277,7 @@ boost::asio::awaitable<bool> session_data::parse_body() {
           );
           const auto& l_str = std::get<string_request_parser_ptr>(request_parser_)->get().body();
           if (content_type_ == content_type::application_json)
-            body_ = nlohmann::json::parse(l_str);
+            body_ = l_str.empty() ? nlohmann::json{} : nlohmann::json::parse(l_str);
           else
             body_ = l_str;
           break;
