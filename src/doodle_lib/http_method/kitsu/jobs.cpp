@@ -38,6 +38,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, put) {
   l_job_ptr->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   co_await g_ctx().get<sqlite_database>().update(l_job_ptr);
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
+      person_.person_.get_full_name(), l_job_ptr->uuid_id_, l_jobs.front().status_, l_job_ptr->status_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
 
@@ -75,7 +79,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   auto l_job_ptr = std::make_shared<server_task_info>(l_job);
   l_json.get_to(*l_job_ptr);
   co_await g_ctx().get<sqlite_database>().update(l_job_ptr);
-
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
+      person_.person_.get_full_name(), job_id_, l_job.status_, l_job_ptr->status_
+  );
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
