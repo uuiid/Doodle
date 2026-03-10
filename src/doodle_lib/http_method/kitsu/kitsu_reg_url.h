@@ -725,8 +725,18 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid job_id_{};
 DOODLE_HTTP_FUN_END()
-
-DOODLE_HTTP_JWT_FUN(socket_io_computer)
+// /api/data/computers
+DOODLE_HTTP_JWT_FUN(data_computers)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/data/computers/{computer_id}
+DOODLE_HTTP_JWT_FUN(data_computers_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid computer_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/data/computers/socket-io
+DOODLE_HTTP_JWT_FUN(data_computers_socket_io)
 using session_data_ptr = std::shared_ptr<http::session_data>;
 void websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle

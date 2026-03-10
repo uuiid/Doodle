@@ -11,7 +11,6 @@
 
 #include <boost/asio/awaitable.hpp>
 
-#include "core/global_function.h"
 
 namespace doodle::http {
 
@@ -62,33 +61,5 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
 
-namespace {
-boost::asio::awaitable<void> set_computer(uuid in_person_id, std::string in_name) {
-  auto l_sql      = g_ctx().get<sqlite_database>();
-  auto l_computer = std::make_shared<computer>();
-  using namespace sqlite_orm;
-  if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::bot_uuid_) == in_person_id)) != 0) {
-    *l_computer = l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::bot_uuid_) == in_person_id)).front();
-    l_computer->status_ = computer_status::online;
-    l_computer->name_   = in_name;
-    co_await l_sql.update(l_computer);
-  } else {
-    l_computer->bot_uuid_ = in_person_id;
-    l_computer->name_     = in_name;
-    l_computer->status_   = computer_status::online;
-    co_await l_sql.install(l_computer);
-  }
-  co_return;
-}
-}  // namespace
-
-void socket_io_computer::websocket_callback(
-    boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
-) {
-  person_.check_not_outsourcer();
-  boost::asio::co_spawn(
-      g_io_context(), set_computer(person_.person_.uuid_id_, person_.person_.get_full_name()), boost::asio::detached
-  );
-}
 
 }  // namespace doodle::http

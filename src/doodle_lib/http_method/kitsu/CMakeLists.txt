@@ -46,6 +46,7 @@ target_sources(
         auth_outsource.cpp
         computing_time.cpp
         distributed_task.cpp
+        computers.cpp
         jobs.cpp
 )
 
@@ -68,7 +69,8 @@ set_source_files_properties(
         auto_task.cpp
         compose_video.cpp
         jobs.cpp
-
+        computers.cpp
+        
         TARGET_DIRECTORY doodle_lib
         PROPERTIES JOB_POOL_COMPILE sql_query_pool
 )

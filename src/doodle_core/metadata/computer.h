@@ -17,6 +17,8 @@ class computer {
  public:
   std::int32_t id_{};
   uuid uuid_id_{};
+  // 电脑硬件id, 唯一识别码, 由计算机生成, 用于区分不同的计算机
+  uuid hardware_id_{};
 
   std::string name_;
   std::string ip_;
@@ -31,7 +33,16 @@ class computer {
     j["ip"]     = p.ip_;
     j["status"] = p.status_;
     j["id"]     = p.uuid_id_;
+    j["hardware_id"] = p.hardware_id_;
     j["last_heartbeat_time"] = p.last_heartbeat_time_;
+  }
+  // from json
+  friend void from_json(const nlohmann::json& j, computer& p) {
+    j.at("name").get_to(p.name_);
+    j.at("status").get_to(p.status_);
+    j.at("id").get_to(p.uuid_id_);
+    j.at("hardware_id").get_to(p.hardware_id_);
+    j.at("last_heartbeat_time").get_to(p.last_heartbeat_time_);
   }
 };
 
