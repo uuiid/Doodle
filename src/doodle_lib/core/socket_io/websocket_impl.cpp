@@ -5,16 +5,15 @@
 #include "websocket_impl.h"
 
 #include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/global_function.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/co_queue.h>
-
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io/engine_io.h>
 #include <doodle_lib/core/socket_io/sid_data.h>
 #include <doodle_lib/core/socket_io/socket_io_core.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
@@ -30,6 +29,7 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <utility>
+
 
 namespace doodle::socket_io {
 
@@ -64,7 +64,12 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
 // }
 
 void socket_io_websocket_core::async_run() {
-  boost::asio::co_spawn(g_io_context(), run(), G_DETACHED_LOG(l_shared = shared_from_this()));
+  boost::asio::co_spawn(
+      g_io_context(), run(),
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+      )
+  );
 }
 void socket_io_websocket_core::write_msg() {
   if (writing_) return;
