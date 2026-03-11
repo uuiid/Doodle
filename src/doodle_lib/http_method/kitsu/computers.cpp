@@ -7,6 +7,7 @@
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/buffers_iterator.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/beast/websocket/stream.hpp>
 
@@ -58,7 +59,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     boost::beast::flat_buffer l_buffer{};
 
     co_await web_stream_->async_read(l_buffer);
-    auto l_json                     = nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
+    auto l_json =
+        nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
     computer_                       = std::make_shared<computer>(l_json.get<computer>());
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = g_ctx().get<sqlite_database>();
@@ -79,6 +81,19 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
  public:
   explicit data_computers_socket_io_impl(boost::beast::websocket::stream<http::tcp_stream_type> in_stream)
       : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))) {}
+  ~data_computers_socket_io_impl() {
+    boost::asio::co_spawn(
+        g_io_context(),
+        [computer = computer_]() -> boost::asio::awaitable<void> {
+          if (!computer) co_return;
+          auto l_sql        = g_ctx().get<sqlite_database>();
+          computer->status_ = computer_status::offline;
+          co_await l_sql.update(computer);
+          socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer);
+        },
+        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+    );
+  }
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
 
