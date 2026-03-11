@@ -21,7 +21,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     http::session_data_ptr in_handle
 ) {
   person_.check_user();
-  auto l_list = g_ctx().get<sqlite_database>().get_all<assets_file_helper::database_t>();
+  auto l_list = get_sqlite_database().get_all<assets_file_helper::database_t>();
   nlohmann::json l_json{};
   l_json = l_list;
   co_return in_handle->make_msg(l_json);
@@ -36,16 +36,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   // 额外添加标签
   l_json["parents"].get_to(l_ptr->uuid_parents_);
   for (auto&& i : l_ptr->uuid_parents_)
-    if (auto l_list = g_ctx().get<sqlite_database>().uuid_to_id<assets_helper::database_t>(i); l_list == 0)
+    if (auto l_list = get_sqlite_database().uuid_to_id<assets_helper::database_t>(i); l_list == 0)
       co_return in_handle->make_error_code_msg(
           boost::beast::http::status::not_found, fmt::format("未找到父节点 {}", i)
       );
 
-  co_await g_ctx().get<sqlite_database>().install<assets_file_helper::database_t>(l_ptr);
+  co_await get_sqlite_database().install<assets_file_helper::database_t>(l_ptr);
   auto l_link = std::make_shared<std::vector<assets_file_helper::link_parent_t>>();
   for (auto&& i : l_ptr->uuid_parents_)
     l_link->emplace_back(assets_file_helper::link_parent_t{.assets_type_uuid_ = i, .assets_uuid_ = l_ptr->uuid_id_});
-  co_await g_ctx().get<sqlite_database>().install_range<assets_file_helper::link_parent_t>(l_link);
+  co_await get_sqlite_database().install_range<assets_file_helper::link_parent_t>(l_link);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库文件 {} ", person_.person_.email_,
@@ -59,10 +59,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 ) {
   person_.check_supervisor();
   std::shared_ptr<assets_file_helper::database_t> const l_ptr = std::make_shared<assets_file_helper::database_t>(
-      g_ctx().get<sqlite_database>().get_by_uuid<assets_file_helper::database_t>(id_)
+      get_sqlite_database().get_by_uuid<assets_file_helper::database_t>(id_)
   );
   in_handle->get_json().get_to(*l_ptr);
-  co_await g_ctx().get<sqlite_database>().update<assets_file_helper::database_t>(l_ptr);
+  co_await get_sqlite_database().update<assets_file_helper::database_t>(l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
@@ -74,7 +74,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 资产库文件 {} ", person_.person_.email_,
       person_.person_.get_full_name(), id_
   );
-  co_await g_ctx().get<sqlite_database>().remove<assets_file_helper::database_t>(id_);
+  co_await get_sqlite_database().remove<assets_file_helper::database_t>(id_);
   co_return in_handle->make_msg(nlohmann::json{});
 }
 

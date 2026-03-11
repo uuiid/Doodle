@@ -4,11 +4,13 @@
 
 #include "doodle_lib.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/metadata_cpp.h>
 #include <doodle_core/metadata/rules.h>
 
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/logger/logger.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio.hpp>
 #include <boost/locale.hpp>
@@ -17,7 +19,6 @@
 #include <memory>
 #include <utility>
 #include <wil/result.h>
-
 
 namespace doodle {
 
@@ -61,7 +62,10 @@ void doodle_lib::init() {
 
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 
-doodle_lib::~doodle_lib() = default;
+doodle_lib::~doodle_lib() {
+  core_set::get_set().database_.reset();
+  ptr.reset();
+}
 
 boost::asio::io_context& g_io_context() { return doodle_lib::Get().ptr->io_context_; }
 details::logger_ctrl& g_logger_ctrl() { return *doodle_lib::Get().ptr->p_log; }
@@ -76,6 +80,11 @@ std::size_t get_hardware_concurrency() {
       boost::numeric_cast<std::size_t>(GetActiveProcessorCount(ALL_PROCESSOR_GROUPS)),
       boost::numeric_cast<std::size_t>(std::thread::hardware_concurrency())
   );
+}
+DOODLELIB_API sqlite_database& get_sqlite_database() {
+  auto& db = core_set::get_set().database_;
+  DOODLE_CHICK(!db, "错误: 数据库未打开")
+  return *db;
 }
 
 }  // namespace doodle

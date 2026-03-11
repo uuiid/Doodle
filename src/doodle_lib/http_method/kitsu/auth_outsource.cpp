@@ -43,7 +43,7 @@ struct entity_outsource_studio_authorization : entity {
   }
 
   static std::vector<entity_outsource_studio_authorization> get(const uuid& in_project_id) {
-    auto l_sql = g_ctx().get<sqlite_database>();
+    auto l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     std::vector<entity_outsource_studio_authorization> l_ret{};
     l_ret.reserve(l_sql.get_project_entity_count(in_project_id));
@@ -90,14 +90,14 @@ struct entity_outsource_studio_authorization : entity {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, get) {
   person_.check_producer();
-  auto l_sql       = g_ctx().get<sqlite_database>();
+  auto l_sql       = get_sqlite_database();
   auto l_auth_list = entity_outsource_studio_authorization::get(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_auth_list);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
   person_.check_producer();
 
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_auth = std::make_shared<outsource_studio_authorization>();
   in_handle->get_json().get_to(*l_auth);
   SPDLOG_LOGGER_WARN(
@@ -114,7 +114,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, get) {
   person_.check_producer();
 
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_auth = l_sql.get_by_uuid<outsource_studio_authorization>(authorization_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_auth);
 }
@@ -124,7 +124,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, delete_)
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 实体外包授权 {}", person_.person_.email_,
       person_.person_.get_full_name(), authorization_id_
   );
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   co_await l_sql.remove<outsource_studio_authorization>(authorization_id_);
   co_return in_handle->make_msg_204();
 }

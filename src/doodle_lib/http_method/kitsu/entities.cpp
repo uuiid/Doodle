@@ -11,7 +11,7 @@
 namespace doodle::http {
 namespace {}
 boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put(session_data_ptr in_handle) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
 

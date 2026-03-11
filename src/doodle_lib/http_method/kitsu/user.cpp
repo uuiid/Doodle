@@ -28,7 +28,7 @@
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
-  auto& l_sql                       = g_ctx().get<sqlite_database>();
+  auto& l_sql                       = get_sqlite_database();
   l_ret["asset_types"]              = l_sql.get_asset_types_not_temporal_type();
   l_ret["custom_actions"]           = nlohmann::json::value_t::array;
   l_ret["departments"]              = l_sql.get_all<department>();
@@ -49,7 +49,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person::get(session_data_ptr in_handle) {
-  auto l_p = g_ctx().get<sqlite_database>().get_all<person>();
+  auto l_p = get_sqlite_database().get_all<person>();
   co_return in_handle->make_msg(nlohmann::json{} = l_p);
 }
 
@@ -63,12 +63,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
       person_.person_.get_full_name(), l_person->email_
   );
 
-  co_await g_ctx().get<sqlite_database>().install(l_person);
+  co_await get_sqlite_database().install(l_person);
   auto l_person_deps = std::make_shared<std::vector<person_department_link>>();
   for (auto&& l_dep : l_person->departments_) {
     l_person_deps->emplace_back(person_department_link{.person_id_ = l_person->uuid_id_, .department_id_ = l_dep});
   }
-  co_await g_ctx().get<sqlite_database>().install_range(l_person_deps);
+  co_await get_sqlite_database().install_range(l_person_deps);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建用户 person_id {} email {} 部门数量 {}", person_.person_.email_,
@@ -79,7 +79,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -97,7 +97,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
-  auto l_sql               = g_ctx().get<sqlite_database>();
+  auto l_sql               = get_sqlite_database();
   auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
   auto l_json              = in_handle->get_json();
   const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
@@ -108,7 +108,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
-  auto l_sql                 = g_ctx().get<sqlite_database>();
+  auto l_sql                 = get_sqlite_database();
   auto l_person              = std::make_shared<person>(l_sql.get_by_uuid<person>(person_.person_.uuid_id_));
   auto l_json                = in_handle->get_json();
   const auto& l_old_password = l_json.at("old_password").get_ref<const std::string&>();

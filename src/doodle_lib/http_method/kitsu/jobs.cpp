@@ -19,13 +19,13 @@ namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, get) {
   person_.check_not_outsourcer();
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_all<server_task_info>();
   co_return in_handle->make_msg(nlohmann::json{} = l_jobs);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, put) {
   person_.check_not_outsourcer();
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json().at("id").get<uuid>();
   if (l_json.is_nil()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺少计算机 ID"});
   auto l_computer_id = l_sql.get_by_uuid<computer>(l_json);
@@ -36,7 +36,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, put) {
   auto l_job_ptr       = std::make_shared<server_task_info>(l_jobs.front());
   l_job_ptr->status_   = server_task_info_status::running;
   l_job_ptr->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  co_await g_ctx().get<sqlite_database>().update(l_job_ptr);
+  co_await get_sqlite_database().update(l_job_ptr);
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
@@ -62,13 +62,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
   person_.check_not_outsourcer();
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_job);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   person_.check_not_outsourcer();
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   if (l_job.status_ == server_task_info_status::failed || l_job.status_ == server_task_info_status::completed ||
       l_job.status_ == server_task_info_status::canceled)
@@ -78,7 +78,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   auto l_json    = in_handle->get_json();
   auto l_job_ptr = std::make_shared<server_task_info>(l_job);
   l_json.get_to(*l_job_ptr);
-  co_await g_ctx().get<sqlite_database>().update(l_job_ptr);
+  co_await get_sqlite_database().update(l_job_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
       person_.person_.get_full_name(), job_id_, l_job.status_, l_job_ptr->status_

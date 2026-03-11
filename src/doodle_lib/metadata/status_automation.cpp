@@ -16,7 +16,7 @@ boost::asio::awaitable<void> run(
   if (in_status_automation.archived_ || in_task->task_type_id_ != in_status_automation.in_task_type_id_ ||
       in_task->task_status_id_ != in_status_automation.in_task_status_id_)
     co_return;
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   if (auto l_map = l_sql.get_task_type_priority_map(in_task->project_id_, in_status_automation.entity_type_);
       !l_map.empty() && in_status_automation.out_field_type_ != status_automation_change_type::ready_for &&
       ((l_map.contains(in_status_automation.in_task_type_id_) ? l_map.at(in_status_automation.in_task_type_id_) : 0) >

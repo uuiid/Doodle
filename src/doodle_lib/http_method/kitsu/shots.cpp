@@ -173,7 +173,7 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
   std::vector<shots_with_tasks_result> l_ret{};
   std::map<uuid, std::size_t> l_shots_ids{};
   std::set<uuid> l_tasks_ids;
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
 
@@ -237,7 +237,7 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
 }
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
-  auto& l_sql    = g_ctx().get<sqlite_database>();
+  auto& l_sql    = get_sqlite_database();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
 
   uuid l_project_uuid{};
@@ -269,7 +269,7 @@ struct data_project_shots_args {
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::post(session_data_ptr in_handle) {
   auto l_args = in_handle->get_json().get<data_project_shots_args>();
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取镜头 name {} sequence_id {}", person_.person_.email_,
@@ -327,7 +327,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(session_data_ptr in_handle) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   auto l_ent = l_sql.get_by_uuid<entity>(id_);
   auto l_ext = l_sql.get_entity_shot_extend(id_);
   nlohmann::json l_result;
@@ -339,7 +339,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(ses
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql       = g_ctx().get<sqlite_database>();
+  auto l_sql       = get_sqlite_database();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
 
@@ -397,7 +397,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_shot = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(
           (l_shot->created_by_ == person_.person_.uuid_id_ &&

@@ -25,7 +25,7 @@ struct actions_tasks_clear_assignation_put_args {
 };
 // 获取任务分配的人(连接表)
 std::optional<assignees_table> get_task_assignees(uuid in_task_id, uuid in_person_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<assignees_table>(
       where(c(&assignees_table::task_id_) == in_task_id && c(&assignees_table::person_id_) == in_person_id)
@@ -33,7 +33,7 @@ std::optional<assignees_table> get_task_assignees(uuid in_task_id, uuid in_perso
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<assignees_table>{std::nullopt};
 }
 std::vector<std::int64_t> get_task_assignees_ids(uuid in_task_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret =
       l_sql.impl_->storage_any_.select(&assignees_table::id_, where(c(&assignees_table::task_id_) == in_task_id));
@@ -45,7 +45,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
     session_data_ptr in_handle
 ) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
@@ -60,9 +60,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
   for (auto&& l_i : l_args.task_id_)
     if (!l_args.person_id_.is_nil()) {
       if (auto l_assign = get_task_assignees(l_i, l_args.person_id_); l_assign)
-        co_await g_ctx().get<sqlite_database>().remove<assignees_table>(l_assign.value().id_);
+        co_await get_sqlite_database().remove<assignees_table>(l_assign.value().id_);
     } else {
-      co_await g_ctx().get<sqlite_database>().remove<assignees_table>(get_task_assignees_ids(l_i));
+      co_await get_sqlite_database().remove<assignees_table>(get_task_assignees_ids(l_i));
     }
 
   SPDLOG_LOGGER_WARN(

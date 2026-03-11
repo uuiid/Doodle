@@ -111,7 +111,6 @@ void from_json(const nlohmann::json& j, core_set& p) {
   j.at("max_thread").get_to(p.p_max_thread);
   j.at("timeout").get_to(p.timeout);
   /// \brief 兼容旧版本段配置文件
-  if (j.contains("user_")) j.at("user_").get_to(p.user_name);
   if (j.contains("user_name")) j.at("user_name").get_to(p.user_name);
 
   if (j.contains("maya_version")) j.at("maya_version").get_to(p.maya_version);

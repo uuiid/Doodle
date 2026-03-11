@@ -23,7 +23,7 @@ class thread_pool;
 }  // namespace boost::asio
 
 namespace doodle {
-
+class sqlite_database;
 namespace details {
 class logger_ctrl;
 }  // namespace details
@@ -34,6 +34,7 @@ DOODLELIB_API details::logger_ctrl& g_logger_ctrl();
 DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
 DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
 DOODLELIB_API std::size_t get_hardware_concurrency();
+DOODLELIB_API sqlite_database& get_sqlite_database();
 template <class... Ts>
 struct overloaded : Ts... {
   using Ts::operator()...;

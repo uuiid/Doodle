@@ -12,7 +12,7 @@ namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_files_file::get(
     session_data_ptr in_handle
 ) {
-  auto l_sql             = g_ctx().get<sqlite_database>();
+  auto l_sql             = get_sqlite_database();
   auto l_attachment_file = l_sql.get_by_uuid<attachment_file>(id_);
 
   if (l_attachment_file.comment_id_.is_nil() && l_attachment_file.chat_message_id_.is_nil())

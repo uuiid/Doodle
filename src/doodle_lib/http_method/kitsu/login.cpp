@@ -35,22 +35,22 @@ boost::asio::awaitable<boost::beast::http::message_generator> authenticated::get
   nlohmann::json l_r{};
   l_r["authenticated"] = true;
   l_r["user"]          = person_.person_;
-  auto l_org           = g_ctx().get<sqlite_database>().get_all<organisation>();
+  auto l_org           = get_sqlite_database().get_all<organisation>();
   l_r["organisation"]  = l_org.empty() ? organisation::get_default() : l_org.front();
   co_return in_handle->make_msg(l_r.dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> organisations::get(session_data_ptr in_handle) {
-  auto l_org = g_ctx().get<sqlite_database>().get_all<organisation>();
+  auto l_org = get_sqlite_database().get_all<organisation>();
   co_return in_handle->make_msg((nlohmann::json{l_org.empty() ? organisation::get_default() : l_org.front()}).dump());
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(session_data_ptr in_handle) {
   auto l_data = in_handle->get_json().get<login_data>();
-  auto& l_sql = g_ctx().get<sqlite_database>();
+  auto& l_sql = get_sqlite_database();
   if (l_data.email_.empty() || l_data.password_.empty())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "email 或 password 为空"});
-  auto l_p = std::make_shared<person>(g_ctx().get<sqlite_database>().get_person_for_email(l_data.email_));
+  auto l_p = std::make_shared<person>(get_sqlite_database().get_person_for_email(l_data.email_));
   if (!l_p->active_) throw_exception(http_request_error{boost::beast::http::status::unauthorized, "用户未激活"});
 
   if (l_p->login_failed_attemps_ > 5 && l_p->last_login_failed_ &&
@@ -71,7 +71,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
   nlohmann::json l_json{};
 
   l_json["user"]         = *l_p;
-  auto l_org             = g_ctx().get<sqlite_database>().get_all<organisation>();
+  auto l_org             = get_sqlite_database().get_all<organisation>();
   l_json["organisation"] = l_org.empty() ? organisation::get_default() : l_org.front();
   l_json["login"]        = true;
   auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();

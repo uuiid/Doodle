@@ -105,7 +105,7 @@ data_project_sequences_casting_result_map get_sequence_casting(
     const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id = {},
     const std::vector<uuid>& in_shot_ids = {}
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   data_project_sequences_casting_result_map l_result{};
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
@@ -193,7 +193,7 @@ struct data_project_asset_types_casting_result_map {
 data_project_asset_types_casting_result_map get_asset_type_casting(
     const uuid& in_project_id, const uuid& in_asset_type_id
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   data_project_asset_types_casting_result_map l_result{};
   using namespace sqlite_orm;
   constexpr auto asset = "asset"_alias.for_<entity>();
@@ -234,7 +234,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 
 namespace {
 auto get_entity_link_by_entity_id(const uuid& in_entity_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
 
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == in_entity_id));
@@ -243,7 +243,7 @@ auto get_entity_link_by_entity_id(const uuid& in_entity_id) {
 }
 
 auto get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
 
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(in(&entity_link::entity_in_id_, in_entity_id)));
@@ -279,7 +279,7 @@ struct get_casting_t {
   uuid project_id_;
 
   static std::vector<get_casting_t> get(const uuid& in_entity_id) {
-    auto l_sql = g_ctx().get<sqlite_database>();
+    auto l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     auto l_r = l_sql.impl_->storage_any_.select(
         columns(
@@ -323,7 +323,7 @@ struct get_casting_t {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(entity_id_) == 0)
+  if (get_sqlite_database().uuid_to_id<entity>(entity_id_) == 0)
     throw_exception(doodle_error{"实体不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
@@ -332,7 +332,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     session_data_ptr in_handle
 ) {
   person_.check_in_project(project_id_);
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
@@ -448,7 +448,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 ) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  if (g_ctx().get<sqlite_database>().uuid_to_id<entity>(sequence_id_) == 0)
+  if (get_sqlite_database().uuid_to_id<entity>(sequence_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, sequence_id_));
 }
@@ -457,7 +457,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_asset
 ) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  if (g_ctx().get<sqlite_database>().uuid_to_id<asset_type>(asset_type_id_) == 0)
+  if (get_sqlite_database().uuid_to_id<asset_type>(asset_type_id_) == 0)
     throw_exception(doodle_error{"序列不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_asset_type_casting(project_id_, asset_type_id_));
 }
@@ -472,7 +472,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
       g_logger_ctrl().get_http(), "用户 {}({}) 开始替换 Casting project_id {} item_count {}", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, l_list.size()
   );
-  auto l_sql                                               = g_ctx().get<sqlite_database>();
+  auto l_sql                                               = get_sqlite_database();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
   auto l_shot_linke = get_entity_link_by_entity_id(
@@ -522,7 +522,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
   auto l_arg = in_handle->get_json().get<actions_projects_casting_copy_arg>();
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto l_sql                  = g_ctx().get<sqlite_database>();
+  auto l_sql                  = get_sqlite_database();
 
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   {

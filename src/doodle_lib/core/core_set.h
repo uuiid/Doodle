@@ -6,12 +6,10 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace doodle {
-
-class user;
-class doodle_lib;
 
 /**
  * @brief 全局静态设置类
@@ -57,6 +55,8 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   // 用户工作根目录
   FSys::path user_work_root_{};
 
+  std::shared_ptr<sqlite_database> database_;
+
  private:
   // 用户名称
   std::string user_name;
@@ -65,9 +65,6 @@ class DOODLELIB_API core_set : public boost::noncopyable {
    *
    */
   core_set();
-
- private:
-  FSys::path program_location_attr{};
 
  private:
   // 这里是序列化的代码

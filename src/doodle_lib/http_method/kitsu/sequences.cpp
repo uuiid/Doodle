@@ -125,7 +125,7 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
   DOODLE_CHICK(!in_entity_type_id.is_nil(), "实体类型id不可为空");
 
   std::vector<sequences_with_tasks_result> l_ret{};
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_outsource_select = select(
       &outsource_studio_authorization::entity_id_,
@@ -173,7 +173,7 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
 
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks::get(session_data_ptr in_handle) {
-  auto& l_sql    = g_ctx().get<sqlite_database>();
+  auto& l_sql    = get_sqlite_database();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence});
 
   uuid l_project_uuid{};
@@ -200,7 +200,7 @@ struct data_project_sequences_args {
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::post(session_data_ptr in_handle) {
   person_.check_in_project(id_);
   person_.check_not_outsourcer();
-  auto& l_sql = g_ctx().get<sqlite_database>();
+  auto& l_sql = get_sqlite_database();
   auto l_args = in_handle->get_json().get<data_project_sequences_args>();
 
   SPDLOG_LOGGER_WARN(
@@ -238,7 +238,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::get(session_data_ptr in_handle) {
   person_.check_in_project(id_);
-  auto& l_sql = g_ctx().get<sqlite_database>();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_sq_list = l_sql.impl_->storage_any_.get_all<entity>(where(
       c(&entity::entity_type_id_) ==
@@ -248,14 +248,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   co_return in_handle->make_msg(nlohmann::json{} = l_sq_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_data);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::delete_(
     session_data_ptr in_handle
 ) {
-  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_sql      = get_sqlite_database();
   auto l_sequence = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(l_sequence->created_by_ == person_.person_.uuid_id_ &&
         l_sql.is_person_in_project(person_.person_.uuid_id_, l_sequence->project_id_)))
@@ -292,7 +292,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 ) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_sql          = get_sqlite_database();
   auto l_task_type    = l_sql.get_by_uuid<task_type>(task_type_id_);
   auto l_type_name    = std::string{magic_enum::enum_name(entity_type_)};
   l_type_name.front() = std::toupper(l_type_name.front());

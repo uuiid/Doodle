@@ -131,7 +131,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
       break;
   }
 
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   if (auto l_id = l_sql.uuid_to_id<ai_image_metadata>(id_); l_id != 0) {
     auto l_entt     = std::make_shared<ai_image_metadata>(l_sql.get_by_uuid<ai_image_metadata>(id_));
     l_entt->width_  = l_size.first;

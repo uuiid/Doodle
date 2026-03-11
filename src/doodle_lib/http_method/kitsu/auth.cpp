@@ -108,7 +108,7 @@ void auth_reset_password::init() {
 boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::post(session_data_ptr in_handle) {
   auto l_email = in_handle->get_json()["email"].get<std::string>();
   default_logger_raw()->info("重置密码 {}", l_email);
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   person l_person;
   try {
     l_person = l_sql.get_person_for_email(l_email);
@@ -140,7 +140,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_passwor
   if (l_token.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "无效的重置令牌。"});
   if (l_arg.password != l_arg.password2)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "Passwords do not match."});
-  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_sql          = get_sqlite_database();
   auto l_person       = std::make_shared<person>(l_sql.get_person_for_email(l_arg.email));
   l_person->password_ = bcrypt::generateHash(l_arg.password);
   co_await l_sql.update(l_person);

@@ -18,21 +18,21 @@
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
   person_.check_not_outsourcer();
-  auto l_sql       = g_ctx().get<sqlite_database>();
+  auto l_sql       = get_sqlite_database();
   auto l_computers = l_sql.get_all<computer>();
   co_return in_handle->make_msg(nlohmann::json{} = l_computers);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, get) {
   person_.check_not_outsourcer();
-  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_sql      = get_sqlite_database();
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_computer);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
   person_.check_not_outsourcer();
-  auto l_sql      = g_ctx().get<sqlite_database>();
+  auto l_sql      = get_sqlite_database();
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
   co_await l_sql.remove<computer>(computer_id_);
   socket_io::broadcast("doodle:computer:delete", nlohmann::json{} = l_computer);
@@ -63,7 +63,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
         nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
     computer_                       = std::make_shared<computer>(l_json.get<computer>());
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    auto l_sql                      = g_ctx().get<sqlite_database>();
+    auto l_sql                      = get_sqlite_database();
     using namespace sqlite_orm;
     if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_)) != 0) {
       *computer_ =
@@ -84,7 +84,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   ~data_computers_socket_io_impl() {
     if (!computer_) return;
     if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了, 因为程序退出会导致数据库连接不可用
-    auto l_sql        = g_ctx().get<sqlite_database>();
+    auto l_sql        = get_sqlite_database();
     computer_->status_ = computer_status::offline;
     l_sql.update_sync(computer_);
     socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);

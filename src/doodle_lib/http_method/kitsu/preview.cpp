@@ -42,7 +42,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     session_data_ptr in_handle
 ) {
   person_.check_task_action_access(task_id_);
-  auto l_sql     = g_ctx().get<sqlite_database>();
+  auto l_sql     = get_sqlite_database();
 
   auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
   auto l_task    = l_sql.get_by_uuid<task>(task_id_);
@@ -138,7 +138,7 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_now  = std::chrono::steady_clock::now();
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
   auto l_watermarked_image = l_add_watermark(in_image, {1920, 1080});
   std::array g_variants{
@@ -172,7 +172,7 @@ cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存加水印图片时输入图片为空");
 
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_path = l_ctx.get_outsource_pictures_original_file(in_id);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
@@ -285,13 +285,13 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   );
   in_preview_file->file_size_ = FSys::exists(l_high_file_path) ? FSys::file_size(l_high_file_path) : 0;
   in_preview_file->status_    = preview_file_statuses::ready;
-  boost::asio::co_spawn(g_io_context(), g_ctx().get<sqlite_database>().update(in_preview_file), boost::asio::detached);
+  boost::asio::co_spawn(g_io_context(), get_sqlite_database().update(in_preview_file), boost::asio::detached);
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
 }  // namespace preview
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files::post(session_data_ptr in_handle) {
-  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_sql          = get_sqlite_database();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(id_));
   if (!l_preview_file->original_name_.empty())
     throw_exception(
@@ -381,7 +381,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_preview_files::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql  = g_ctx().get<sqlite_database>();
+  auto l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_task_action_access(*l_task);
   auto l_comment          = std::make_shared<comment>(l_sql.get_by_uuid<comment>(comment_id_));
@@ -441,7 +441,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview::put(
     session_data_ptr in_handle
 ) {
-  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_sql          = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(id_);
 
   std::int32_t l_frame_number{-1};
@@ -474,7 +474,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   auto l_ent = l_sql.get_by_uuid<entity>(entity_id_);
   person_.check_in_project(l_ent.project_id_);
   person_.check_not_outsourcer();
@@ -493,7 +493,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
 struct data_fix_preview_files_thumbnails_run_t {
   std::shared_ptr<doodle::detail::add_watermark_t> watermark_adder_;
   void operator()() {
-    auto l_sql      = g_ctx().get<sqlite_database>();
+    auto l_sql      = get_sqlite_database();
     auto l_previews = l_sql.impl_->storage_any_.get_all<preview_file>();
     watermark_adder_ =
         std::make_shared<doodle::detail::add_watermark_t>(l_sql.get_all<doodle::organisation>().front().name_, 150);

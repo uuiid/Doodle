@@ -25,7 +25,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, get) 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
   person_.check_not_outsourcer();
 
-  auto l_sql              = g_ctx().get<sqlite_database>();
+  auto l_sql              = get_sqlite_database();
 
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::auto_light;
@@ -51,7 +51,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   l_ptr->kitsu_task_id_ = id_;
   l_ptr->command_       = auto_task::shot_render_light(project_id_, id_);
 
-  co_await g_ctx().get<sqlite_database>().install(l_ptr);
+  co_await get_sqlite_database().install(l_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,

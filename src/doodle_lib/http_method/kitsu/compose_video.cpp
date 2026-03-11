@@ -107,7 +107,7 @@ auto compose_video_impl(
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_file = in_handle->get_file();
   DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "必须上传视频文件");
-  auto l_sql          = g_ctx().get<sqlite_database>();
+  auto l_sql          = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
   auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_project      = l_sql.get_by_uuid<project>(l_task.project_id_);
@@ -264,7 +264,7 @@ struct run_actions_playlists_preview_files_create_review {
     FSys::rename(l_out_backup_path, l_out_path);
     // 删除临时文件
     FSys::remove(l_tmp);
-    auto l_sql = g_ctx().get<sqlite_database>();
+    auto l_sql = get_sqlite_database();
     // 更新预览文件信息
     cv::Size size_{data_ptr_->size_.width, data_ptr_->size_.height};
     auto l_prj =
@@ -278,7 +278,7 @@ struct run_actions_playlists_preview_files_create_review {
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review, post) {
-  auto l_sql           = g_ctx().get<sqlite_database>();
+  auto l_sql           = get_sqlite_database();
   auto l_playlist      = l_sql.get_by_uuid<playlist>(playlist_id_);
   auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
   auto l_preview_file  = l_sql.get_by_uuid<preview_file>(preview_file_id_);

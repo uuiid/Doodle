@@ -33,12 +33,12 @@
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> departments::get(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_list = g_ctx().get<sqlite_database>().get_all<department>();
+  auto l_list = get_sqlite_database().get_all<department>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> departments_instance::put(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql            = g_ctx().get<sqlite_database>();
+  auto l_sql            = get_sqlite_database();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -57,12 +57,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments_instan
 
 boost::asio::awaitable<boost::beast::http::message_generator> studios::get(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_list = g_ctx().get<sqlite_database>().get_all<studio>();
+  auto l_list = get_sqlite_database().get_all<studio>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   person_.check_admin();
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_studio = std::make_shared<studio>();
   in_handle->get_json().get_to(*l_studio);
   DOODLE_CHICK(!l_studio->name_.empty(), "工作室名称不可为空");
@@ -79,7 +79,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   person_.check_admin();
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_studio = l_sql.get_by_uuid<studio>(id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_,
@@ -90,7 +90,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
-  auto l_sql        = g_ctx().get<sqlite_database>();
+  auto l_sql        = get_sqlite_database();
   auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -109,7 +109,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_list = g_ctx().get<sqlite_database>().get_all<task_type>();
+  auto l_list = get_sqlite_database().get_all<task_type>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> custom_actions::get(session_data_ptr in_handle) {
@@ -119,12 +119,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> custom_actions::ge
 }
 boost::asio::awaitable<boost::beast::http::message_generator> status_automations::get(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_list = g_ctx().get<sqlite_database>().get_all<status_automation>();
+  auto l_list = get_sqlite_database().get_all<status_automation>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   person_.check_admin();
-  auto l_sql               = g_ctx().get<sqlite_database>();
+  auto l_sql               = get_sqlite_database();
   auto l_status_automation = std::make_shared<status_automation>();
   in_handle->get_json().get_to(*l_status_automation);
   SPDLOG_LOGGER_WARN(
@@ -143,7 +143,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql            = g_ctx().get<sqlite_database>();
+  auto l_sql            = get_sqlite_database();
   auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -175,7 +175,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>();
   in_handle->get_json().get_to(*l_status);
   SPDLOG_LOGGER_WARN(
@@ -193,7 +193,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_i
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -219,7 +219,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
       g_logger_ctrl().get_http(), "用户 {}({}) 开始备份数据库 filename {}", person_.person_.email_,
       person_.person_.get_full_name(), l_file.filename().generic_string()
   );
-  co_await g_ctx().get<sqlite_database>().backup(l_file);
+  co_await get_sqlite_database().backup(l_file);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成备份数据库 filename {} size {}", person_.person_.email_,
       person_.person_.get_full_name(), l_file.filename().generic_string(),

@@ -6,7 +6,7 @@ namespace doodle::task_status_ns {
 void check_retake_capping(const task_status& in_task_status, const task& in_task) {
   if (!in_task_status.is_retake_) return;
 
-  auto l_prj = g_ctx().get<sqlite_database>().get_by_uuid<project>(in_task.project_id_);
+  auto l_prj = get_sqlite_database().get_by_uuid<project>(in_task.project_id_);
   if (l_prj.max_retakes_ <= 0) return;
   if (in_task.retake_count_ >= l_prj.max_retakes_)
     throw_exception(

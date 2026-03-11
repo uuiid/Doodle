@@ -65,7 +65,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .source_id_      = l_data.source_id,
       .created_by_     = person_.person_.uuid_id_,
   });
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   co_await l_sql.install(l_entity);
   nlohmann::json l_json_ret{};
   l_json_ret = *l_entity;
@@ -245,7 +245,7 @@ struct with_tasks_get_result_t {
 };
 
 auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_id) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   std::vector<with_tasks_get_result_t> l_ret{};
 
   using namespace sqlite_orm;
@@ -334,7 +334,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_t
   co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(person_.person_, l_prj_id, {})).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
-  auto&& l_sql = g_ctx().get<sqlite_database>();
+  auto&& l_sql = get_sqlite_database();
   auto l_t     = with_tasks_sql_query(person_.person_, {}, id_);
   if (l_t.empty())
     throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", id_)});
@@ -351,7 +351,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get
   co_return in_handle->make_msg(l_json);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   person_.check_delete_access(l_ass->project_id_);
   bool l_force{};
@@ -382,7 +382,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_i
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(session_data_ptr in_handle) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
   bool l_is_shared{};

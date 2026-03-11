@@ -102,7 +102,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::dele
   co_return in_handle->make_msg_204();
 }
 void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_task   = l_sql.get_by_uuid<task>(id_);
   auto l_extend = l_sql.get_entity_asset_extend(l_task.entity_id_);
   if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
@@ -131,7 +131,7 @@ void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
   root_path_       = l_prj.path_;
 }
 void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
-  auto l_sql    = g_ctx().get<sqlite_database>();
+  auto l_sql    = get_sqlite_database();
   auto l_task   = l_sql.get_by_uuid<task>(id_);
 
   task_type_id_ = l_task.task_type_id_;

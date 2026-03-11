@@ -32,7 +32,7 @@ namespace doodle::http {
 
 bool entity_has_simulation_asset(const uuid& in_entity_id) {
   using namespace sqlite_orm;
-  return g_ctx().get<sqlite_database>().impl_->storage_any_.count<task>(
+  return get_sqlite_database().impl_->storage_any_.count<task>(
              where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_simulation_id())
          ) > 0;
 }
@@ -230,7 +230,7 @@ std::vector<working_file_and_link> create_ground_working_files(
 std::vector<working_file_and_link> get_working_files_for_entity(
     const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
 
   std::vector<working_file_and_link> l_working_files{};
   using namespace sqlite_orm;
@@ -280,7 +280,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_working_file::get(
     session_data_ptr in_handle
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的镜头 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
@@ -292,7 +292,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_sequences_working_file::get(
     session_data_ptr in_handle
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
@@ -303,7 +303,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_working_file::get(
     session_data_ptr in_handle
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_entity_ = l_sql.get_by_uuid<entity>(id_);
@@ -346,7 +346,7 @@ struct map_to_json {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entity_working_file_many::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql = g_ctx().get<sqlite_database>();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<project>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_prj        = l_sql.get_by_uuid<project>(id_);

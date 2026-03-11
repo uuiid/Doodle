@@ -1,19 +1,18 @@
 #include "kitsu_supplement.h"
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/authorization.h>
-#include <doodle_lib/platform/win/register_file_type.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-
+#include <doodle_lib/core/crashpad.h>
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/http/http_route.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/seed_email.h>
-#include <doodle_lib/core/crashpad.h>
+#include <doodle_lib/platform/win/register_file_type.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <opencv2/core/utility.hpp>
 #include <winreg/WinReg.hpp>
@@ -120,6 +119,8 @@ bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
   // g_ctx().emplace<detail::crash_reporting_thread>();
   crashpad_init::get();
+  auto& l_set     = core_set::get_set();
+  l_set.database_ = std::make_shared<sqlite_database>();
   kitsu_supplement_args_t l_args{
       .port_    = 80,
       .db_path_ = "C:/kitsu_new.database",
@@ -150,11 +151,12 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = boost::lexical_cast<std::uint16_t>(l_str.str());
     else
       l_args.port_ = 0;
-    core_set::get_set().set_root("D:/sy_maigc");
+    l_set.set_root("D:/sy_maigc");
     // 打开内存数据库
-    g_ctx().emplace<sqlite_database>().load("");
+    l_set.database_->load("");
+
     // 初始化授权上下文
-    g_ctx().emplace<authorization>(core_set::get_set().authorize_);
+    g_ctx().emplace<authorization>(l_set.authorize_);
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_local_route();
     // 开始运行服务器
@@ -174,9 +176,9 @@ bool kitsu_supplement_main::init() {
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
     );
-    g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+    l_set.database_->load(l_args.db_path_);
     // 初始化授权上下文
-    g_ctx().emplace<authorization>(core_set::get_set().authorize_);
+    g_ctx().emplace<authorization>(l_set.authorize_);
     // 初始化路由
     auto l_rout_ptr = http::create_kitsu_epiboly_route(l_args.kitsu_front_end_path_);
     // 开始运行服务器
@@ -188,7 +190,7 @@ bool kitsu_supplement_main::init() {
   cv::setNumThreads(::GetActiveProcessorCount(0));
 
   // 初始化数据库
-  g_ctx().emplace<sqlite_database>().load(l_args.db_path_);
+  l_set.database_->load(l_args.db_path_);
 
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
