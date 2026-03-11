@@ -14,7 +14,7 @@ namespace doodle::http::local {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
   auto l_woek = std::make_shared<http_work>();
   auto& l_set = core_set::get_set();
-  l_woek->run(boost::urls::url{l_set.server_ip + "/api/data/computers"});
+  l_woek->run(token_);
 
   co_return in_handle->make_msg_204();
 }

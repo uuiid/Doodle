@@ -12,11 +12,13 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
 
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/process/process.hpp>
+#include <boost/url/url.hpp>
 
 #include <core/http/json_body.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -128,16 +130,9 @@ uuid get_motherboard_uuid() {
 
 }  // namespace
 
-boost::asio::awaitable<tl::expected<http_work::run_task_info, std::string>> http_work::get_task_data() {
-  run_task_info l_info{};
-
-  co_return tl::expected<http_work::run_task_info, std::string>{l_info};
-}
-
-void http_work::run(const boost::urls::url& in_url) {
+void http_work::run(const std::string& in_token) {
   executor_ = boost::asio::make_strand(g_io_context());
-  timer_    = std::make_shared<timer>(executor_);
-  url_      = in_url;
+  token_    = in_token;
 
   logger_   = g_logger_ctrl().make_log("http_work");
   boost::asio::co_spawn(
@@ -149,8 +144,9 @@ void http_work::run(const boost::urls::url& in_url) {
 boost::asio::awaitable<void> http_work::async_run() {
   const computer l_computer_data{.hardware_id_ = get_motherboard_uuid(), .name_ = boost::asio::ip::host_name()};
   const auto l_computer_json = nlohmann::json(l_computer_data).dump();
+  const boost::urls::url l_url{core_set::get_set().server_ip + "/api/data/computers"};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    auto l_websocket_client = co_await make_websocket_stream(url_);
+    auto l_websocket_client = co_await make_websocket_stream(l_url);
     co_await l_websocket_client->async_write(boost::asio::buffer(l_computer_json));
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       boost::beast::flat_buffer l_msg;
@@ -159,18 +155,18 @@ boost::asio::awaitable<void> http_work::async_run() {
       // 处理消息
       auto l_json =
           nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
+      auto l_data = l_json.get<server_task_info>();
+      SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
     }
   }
 
   co_return;
 }
-boost::asio::awaitable<void> http_work::async_run_task() { co_return; }
-
-boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe) {
-  co_return;
+void http_work::run_task(const server_task_info& in_task_info) {
+  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+  if (in_task_info.type_ == server_task_info_type::auto_light) {
+  }
 }
-
-boost::asio::awaitable<void> http_work::async_set_status(computer_status in_status) { co_return; }
-boost::asio::awaitable<void> http_work::async_set_task_status(server_task_info_status in_status) { co_return; }
 
 }  // namespace doodle::http

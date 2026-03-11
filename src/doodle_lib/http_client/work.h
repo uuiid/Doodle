@@ -31,47 +31,19 @@ class http_work {
   using timer     = boost::asio::high_resolution_timer;
   using timer_ptr = std::shared_ptr<timer>;
 
-  boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket_data_ptr in_handle);
-  boost::asio::awaitable<std::string> websocket_list_task_fun_launch(http_websocket_data_ptr in_handle);
   boost::asio::any_io_executor executor_{};
-  // 自动连接定时器
-  timer_ptr timer_{};
-
-
   logger_ptr logger_{};
-  computer_status status_{computer_status::online};
-
-  uuid task_id_{};
-
-  std::string host_name_{};
-  boost::urls::url url_{};
-  uuid uuid_id_{};
-  std::vector<uuid> run_task_ids_{};
-
-  struct run_task_info {
-    std::string run_exe{};
-    std::vector<std::string> run_args{};
-    server_task_info_status status{};
-  };
+  std::string token_{};
 
   boost::asio::awaitable<void> async_run();
 
-  boost::asio::awaitable<tl::expected<run_task_info, std::string>> get_task_data();
-
-  template <typename Handle>
-  auto async_relay_websocket(std::shared_ptr<boost::asio::readable_pipe> in_pipe, Handle&& in_handle);
-
-  boost::asio::awaitable<void> async_set_status(computer_status in_status);
-  boost::asio::awaitable<void> async_set_task_status(server_task_info_status in_status);
-  boost::asio::awaitable<void> async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe);
-
  protected:
-  virtual boost::asio::awaitable<void> async_run_task();
+  void run_task(const server_task_info& in_task_info);
 
  public:
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const boost::urls::url& in_web_socket_url);
+  void run(const std::string& in_token);
 };
 }  // namespace doodle::http
