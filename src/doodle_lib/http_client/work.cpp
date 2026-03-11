@@ -51,16 +51,32 @@ uuid get_motherboard_uuid() {
     BYTE length;
     WORD handle;
   };
-  constexpr auto l_size = sizeof(RawSMBIOSData);
+  struct SMBIOS_SYSTEM_INFO {
+    SMBIOSHeader Header;
+
+    uint8_t Manufacturer;
+    uint8_t ProductName;
+    uint8_t Version;
+    uint8_t SerialNumber;
+
+    uint8_t UUID[16];
+
+    uint8_t WakeUpType;
+  };
   // SMBIOS 数据结构：前 8 字节为 header，之后是 SMBIOS tables
   // UUID 通常在 Type 1 (System Information) 结构中，偏移为 8 字节
-  DOODLE_CHICK(size >= 24, "固件表数据过小，无法包含 Type 1 结构");
-  auto raw_data = reinterpret_cast<RawSMBIOSData*>(buffer.data());
+  DOODLE_CHICK(size >= sizeof(RawSMBIOSData), "固件表数据过小，无法包含 SMBIOS 头");
+  auto raw_data                = reinterpret_cast<RawSMBIOSData*>(buffer.data());
+  const BYTE* smbios_table     = raw_data->SMBIOSTableData;
+  const UINT smbios_table_size = raw_data->Length;
 
-  for (UINT i = 0; i + 16 < raw_data->Length; ++i) {
-    auto header = reinterpret_cast<SMBIOSHeader*>(raw_data->SMBIOSTableData + i);
+  for (UINT i = 0; i + sizeof(SMBIOSHeader) <= smbios_table_size;) {
+    auto header = reinterpret_cast<const SMBIOSHeader*>(smbios_table + i);
+    DOODLE_CHICK(header->length >= sizeof(SMBIOSHeader), "SMBIOS 结构头长度无效");
+    DOODLE_CHICK(i + header->length <= smbios_table_size, "SMBIOS 结构越界");
+
     if (header->type == 1 && header->length >= 24) {  // Type 1: System Information
-      const BYTE* uuid_ptr = raw_data->SMBIOSTableData + i + 8;
+      const BYTE* uuid_ptr = smbios_table + i + 8;
       boost::uuids::uuid l_uuid{{
           uuid_ptr[3], uuid_ptr[2], uuid_ptr[1], uuid_ptr[0],  // Data1 (4 bytes, little-endian)
           uuid_ptr[5], uuid_ptr[4],                            // Data2 (2 bytes, little-endian)
@@ -70,7 +86,20 @@ uuid get_motherboard_uuid() {
       }};
       return l_uuid;
     }
-    i += header->length;  // 跳过当前结构
+
+    UINT next                  = i + header->length;
+    bool has_string_terminator = false;
+    while (next + 1 < smbios_table_size) {
+      if (smbios_table[next] == 0 && smbios_table[next + 1] == 0) {
+        next += 2;
+        has_string_terminator = true;
+        break;
+      }
+      ++next;
+    }
+
+    DOODLE_CHICK(has_string_terminator, "SMBIOS 字符串区未正确结束");
+    i = next;
   }
 
   throw_exception(doodle_error{"无法找到主板 UUID"});
