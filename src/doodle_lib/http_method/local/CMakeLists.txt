@@ -5,6 +5,7 @@ target_sources(doodle_lib
         local_setting.cpp
         task_info.cpp
         movie.cpp
+        event.cpp
 )
 set_source_files_properties(
         task_info.cpp
