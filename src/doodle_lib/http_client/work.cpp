@@ -22,6 +22,7 @@
 
 // 使用 win32 GetSystemFirmwareTable api 获取主板(RSMB)的uuid
 
+#include <spdlog/spdlog.h>
 #include <windows.h>
 
 namespace doodle::http {
@@ -38,7 +39,7 @@ uuid get_motherboard_uuid() {
   UINT read_size = GetSystemFirmwareTable(kFirmwareTableId, 0, buffer.data(), size);
   DOODLE_CHICK(read_size == size, "无法读取固件表数据");
 
-  #pragma pack(push, 1)
+#pragma pack(push, 1)
   struct RawSMBIOSData {
     BYTE Used20CallingMethod;
     BYTE SMBIOSMajorVersion;
@@ -64,7 +65,7 @@ uuid get_motherboard_uuid() {
 
     uint8_t WakeUpType;
   };
-  #pragma pack(pop)
+#pragma pack(pop)
   // SMBIOS 数据结构：前 8 字节为 header，之后是 SMBIOS tables
   // UUID 通常在 Type 1 (System Information) 结构中，偏移为 8 字节
   DOODLE_CHICK(size >= sizeof(RawSMBIOSData), "固件表数据过小，无法包含 SMBIOS 头");
@@ -87,6 +88,7 @@ uuid get_motherboard_uuid() {
           uuid_ptr[8], uuid_ptr[9], uuid_ptr[10], uuid_ptr[11], uuid_ptr[12], uuid_ptr[13], uuid_ptr[14],
           uuid_ptr[15]  // Data4 (8 bytes, big-endian)
       }};
+      SPDLOG_WARN("获取到主板uuid {}", l_uuid);
       return l_uuid;
     }
 
