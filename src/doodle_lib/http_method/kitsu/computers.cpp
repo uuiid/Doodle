@@ -83,16 +83,11 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))) {}
   ~data_computers_socket_io_impl() {
     if (!computer_) return;
-    boost::asio::co_spawn(
-        g_io_context(),
-        [computer = computer_]() -> boost::asio::awaitable<void> {
-          auto l_sql        = g_ctx().get<sqlite_database>();
-          computer->status_ = computer_status::offline;
-          co_await l_sql.update(computer);
-          socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer);
-        },
-        boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
-    );
+    auto l_sql        = g_ctx().get<sqlite_database>();
+    computer_->status_ = computer_status::offline;
+    l_sql.update_sync(computer_);
+    socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);
+ 
   }
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
