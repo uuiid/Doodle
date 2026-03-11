@@ -82,10 +82,10 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   explicit data_computers_socket_io_impl(boost::beast::websocket::stream<http::tcp_stream_type> in_stream)
       : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))) {}
   ~data_computers_socket_io_impl() {
+    if (!computer_) return;
     boost::asio::co_spawn(
         g_io_context(),
         [computer = computer_]() -> boost::asio::awaitable<void> {
-          if (!computer) co_return;
           auto l_sql        = g_ctx().get<sqlite_database>();
           computer->status_ = computer_status::offline;
           co_await l_sql.update(computer);
