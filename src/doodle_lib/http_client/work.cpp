@@ -38,6 +38,7 @@ uuid get_motherboard_uuid() {
   UINT read_size = GetSystemFirmwareTable(kFirmwareTableId, 0, buffer.data(), size);
   DOODLE_CHICK(read_size == size, "无法读取固件表数据");
 
+  #pragma pack(push, 1)
   struct RawSMBIOSData {
     BYTE Used20CallingMethod;
     BYTE SMBIOSMajorVersion;
@@ -63,6 +64,7 @@ uuid get_motherboard_uuid() {
 
     uint8_t WakeUpType;
   };
+  #pragma pack(pop)
   // SMBIOS 数据结构：前 8 字节为 header，之后是 SMBIOS tables
   // UUID 通常在 Type 1 (System Information) 结构中，偏移为 8 字节
   DOODLE_CHICK(size >= sizeof(RawSMBIOSData), "固件表数据过小，无法包含 SMBIOS 头");
@@ -75,8 +77,9 @@ uuid get_motherboard_uuid() {
     DOODLE_CHICK(header->length >= sizeof(SMBIOSHeader), "SMBIOS 结构头长度无效");
     DOODLE_CHICK(i + header->length <= smbios_table_size, "SMBIOS 结构越界");
 
-    if (header->type == 1 && header->length >= 24) {  // Type 1: System Information
-      const BYTE* uuid_ptr = smbios_table + i + 8;
+    if (header->type == 1 && header->length >= sizeof(SMBIOS_SYSTEM_INFO)) {  // Type 1: System Information
+      const auto* system_info = reinterpret_cast<const SMBIOS_SYSTEM_INFO*>(smbios_table + i);
+      const auto& uuid_ptr    = system_info->UUID;
       boost::uuids::uuid l_uuid{{
           uuid_ptr[3], uuid_ptr[2], uuid_ptr[1], uuid_ptr[0],  // Data1 (4 bytes, little-endian)
           uuid_ptr[5], uuid_ptr[4],                            // Data2 (2 bytes, little-endian)
