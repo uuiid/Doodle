@@ -62,6 +62,7 @@ class DOODLELIB_API app_base {
 
   bool is_main_thread() const;
   void use_multithread(bool in_use = true);
+  inline bool is_cancelled() const { return stop_.load(); }
 
   // get argh
   inline const argh::parser& arg() const { return arg_; }

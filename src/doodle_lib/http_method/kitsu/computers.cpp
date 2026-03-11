@@ -83,6 +83,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))) {}
   ~data_computers_socket_io_impl() {
     if (!computer_) return;
+    if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了, 因为程序退出会导致数据库连接不可用
     auto l_sql        = g_ctx().get<sqlite_database>();
     computer_->status_ = computer_status::offline;
     l_sql.update_sync(computer_);
