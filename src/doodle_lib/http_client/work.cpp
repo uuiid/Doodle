@@ -28,6 +28,28 @@
 namespace doodle::http {
 
 namespace {
+bool uses_smbios_rfc4122_byte_order(BYTE major_version, BYTE minor_version) {
+  return major_version > 2 || (major_version == 2 && minor_version >= 6);
+}
+
+boost::uuids::uuid convert_smbios_uuid(const uint8_t (&uuid_ptr)[16], BYTE major_version, BYTE minor_version) {
+  if (uses_smbios_rfc4122_byte_order(major_version, minor_version)) {
+    return boost::uuids::uuid{{
+        uuid_ptr[3], uuid_ptr[2], uuid_ptr[1], uuid_ptr[0],
+        uuid_ptr[5], uuid_ptr[4],
+        uuid_ptr[7], uuid_ptr[6],
+        uuid_ptr[8], uuid_ptr[9], uuid_ptr[10], uuid_ptr[11], uuid_ptr[12], uuid_ptr[13], uuid_ptr[14],
+        uuid_ptr[15]
+    }};
+  }
+
+  return boost::uuids::uuid{{
+      uuid_ptr[0], uuid_ptr[1], uuid_ptr[2], uuid_ptr[3], uuid_ptr[4], uuid_ptr[5], uuid_ptr[6], uuid_ptr[7],
+      uuid_ptr[8], uuid_ptr[9], uuid_ptr[10], uuid_ptr[11], uuid_ptr[12], uuid_ptr[13], uuid_ptr[14],
+      uuid_ptr[15]
+  }};
+}
+
 uuid get_motherboard_uuid() {
   constexpr UINT kFirmwareTableId = 'RSMB';
 
@@ -81,14 +103,13 @@ uuid get_motherboard_uuid() {
     if (header->type == 1 && header->length >= sizeof(SMBIOS_SYSTEM_INFO)) {  // Type 1: System Information
       const auto* system_info = reinterpret_cast<const SMBIOS_SYSTEM_INFO*>(smbios_table + i);
       const auto& uuid_ptr    = system_info->UUID;
-      boost::uuids::uuid l_uuid{{
-          uuid_ptr[3], uuid_ptr[2], uuid_ptr[1], uuid_ptr[0],  // Data1 (4 bytes, little-endian)
-          uuid_ptr[5], uuid_ptr[4],                            // Data2 (2 bytes, little-endian)
-          uuid_ptr[7], uuid_ptr[6],                            // Data3 (2 bytes, little-endian)
-          uuid_ptr[8], uuid_ptr[9], uuid_ptr[10], uuid_ptr[11], uuid_ptr[12], uuid_ptr[13], uuid_ptr[14],
-          uuid_ptr[15]  // Data4 (8 bytes, big-endian)
-      }};
-      SPDLOG_WARN("获取到主板uuid {}", l_uuid);
+      auto l_uuid             = convert_smbios_uuid(uuid_ptr, raw_data->SMBIOSMajorVersion, raw_data->SMBIOSMinorVersion);
+      SPDLOG_WARN(
+          "获取到主板uuid {}, SMBIOS 版本 {}.{}",
+          l_uuid,
+          static_cast<int>(raw_data->SMBIOSMajorVersion),
+          static_cast<int>(raw_data->SMBIOSMinorVersion)
+      );
       return l_uuid;
     }
 
