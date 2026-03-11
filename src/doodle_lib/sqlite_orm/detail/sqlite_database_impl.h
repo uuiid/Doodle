@@ -1084,6 +1084,23 @@ struct sqlite_database_impl {
     install_unsafe<T>(in_data);
     DOODLE_TO_SELF();
   }
+  template <typename T>
+  void install_sync(std::shared_ptr<T> in_data) {
+    DOODLE_CHICK(in_data, "不可传入空指针");
+    if constexpr (has_uuid_id<T>) {
+      DOODLE_CHICK(in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
+      in_data->uuid_id_ = core_set::get_set().get_uuid();
+    }
+    DOODLE_CHICK(in_data->id_ == 0, "必须传入id为0的新实体");
+
+    if constexpr (has_created_at<T>)
+      in_data->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    if constexpr (has_updated_at<T>)
+      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    boost::asio::post(strand_, [this, in_data = std::move(in_data)]() mutable { install_unsafe<T>(in_data); });
+  }
 
   template <typename T>
   boost::asio::awaitable<void> update(std::shared_ptr<T> in_data) {
@@ -1100,6 +1117,20 @@ struct sqlite_database_impl {
     DOODLE_TO_SQLITE_THREAD();
     update_unsafe<T>(in_data);
     DOODLE_TO_SELF();
+  }
+  template <typename T>
+  void update_sync(std::shared_ptr<T> in_data) {
+    DOODLE_CHICK(in_data, "不可传入空指针");
+    if constexpr (has_uuid_id<T>) {
+      DOODLE_CHICK(!in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 为空");
+      in_data->id_ = uuid_to_id<T>(in_data->uuid_id_);
+    }
+    DOODLE_CHICK(in_data->id_ != 0, "不可传入空指针");
+
+    if constexpr (has_updated_at<T>)
+      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    boost::asio::post(strand_, [this, in_data = std::move(in_data)]() mutable { update_unsafe<T>(in_data); });
   }
 
   template <typename T>

@@ -113,8 +113,16 @@ std::vector<T> string_to_enum_array(const std::string& t) {
     return impl_->install<class_name>(in_data);                                                       \
   }                                                                                                   \
   template <>                                                                                         \
+  void sqlite_database::install_sync(const std::shared_ptr<class_name>& in_data) {                    \
+    return impl_->install_sync<class_name>(in_data);                                                  \
+  }                                                                                                   \
+  template <>                                                                                         \
   boost::asio::awaitable<void> sqlite_database::update(const std::shared_ptr<class_name>& in_data) {  \
     return impl_->update<class_name>(in_data);                                                        \
+  }                                                                                                   \
+  template <>                                                                                         \
+  void sqlite_database::update_sync(const std::shared_ptr<class_name>& in_data) {                     \
+    return impl_->update_sync<class_name>(in_data);                                                   \
   }
 
 #define DOODLE_INSTALL_RANGE(class_name)                                                          \
