@@ -15,7 +15,7 @@ boost::asio::awaitable<std::shared_ptr<boost::beast::websocket::stream<boost::be
 make_websocket_stream(const boost::urls::url& in_url) {
   using stream_type   = boost::beast::websocket::stream<boost::beast::tcp_stream>;
   auto executor_      = boost::asio::make_strand(g_io_context());
-  auto web_stream_    = std::make_shared<stream_type>(boost::asio::make_strand(executor_));
+  auto web_stream_    = std::make_shared<stream_type>(executor_);
 
   using resolver_type = boost::asio::ip::tcp::resolver;
   auto l_resolver     = std::make_shared<resolver_type>(g_io_context());

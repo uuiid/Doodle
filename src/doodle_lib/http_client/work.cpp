@@ -84,20 +84,25 @@ boost::asio::awaitable<tl::expected<http_work::run_task_info, std::string>> http
   co_return tl::expected<http_work::run_task_info, std::string>{l_info};
 }
 
-void http_work::run(const std::string& in_url, const std::string& in_http_url) {
-  executor_  = boost::asio::make_strand(g_io_context());
-  timer_     = std::make_shared<timer>(executor_);
-  url_       = in_url;
+void http_work::run(const boost::urls::url& in_url) {
+  executor_ = boost::asio::make_strand(g_io_context());
+  timer_    = std::make_shared<timer>(executor_);
+  url_      = in_url;
 
-  logger_    = g_logger_ctrl().make_log("http_work");
-  host_name_ = boost::asio::ip::host_name();
+  logger_   = g_logger_ctrl().make_log("http_work");
   boost::asio::co_spawn(
       executor_, async_run(),
       boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
   );
 }
 
-boost::asio::awaitable<void> http_work::async_run() { co_return; }
+boost::asio::awaitable<void> http_work::async_run() {
+  auto l_websocket_client = co_await make_websocket_stream(url_);
+  computer l_computer_data{.hardware_id_ = get_motherboard_uuid(), .name_ = boost::asio::ip::host_name()};
+  co_await l_websocket_client->async_write(boost::asio::buffer(nlohmann::json(l_computer_data).dump()));
+
+  co_return;
+}
 boost::asio::awaitable<void> http_work::async_run_task() { co_return; }
 
 boost::asio::awaitable<void> http_work::async_read_pip(std::shared_ptr<boost::asio::readable_pipe> in_pipe) {

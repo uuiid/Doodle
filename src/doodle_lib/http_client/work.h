@@ -44,7 +44,7 @@ class http_work {
   uuid task_id_{};
 
   std::string host_name_{};
-  std::string url_{};
+  boost::urls::url url_{};
   uuid uuid_id_{};
   std::vector<uuid> run_task_ids_{};
 
@@ -72,6 +72,6 @@ class http_work {
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const std::string& in_web_socket_url, const std::string& in_http_url);
+  void run(const boost::urls::url& in_web_socket_url);
 };
 }  // namespace doodle::http
