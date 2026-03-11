@@ -46,7 +46,7 @@ uuid get_motherboard_uuid() {
     DWORD Length;
     BYTE SMBIOSTableData[];
   };
-  struct dmi_header {
+  struct SMBIOSHeader {
     BYTE type;
     BYTE length;
     WORD handle;
@@ -58,7 +58,7 @@ uuid get_motherboard_uuid() {
   auto raw_data = reinterpret_cast<RawSMBIOSData*>(buffer.data());
 
   for (UINT i = 0; i + 16 < raw_data->Length; ++i) {
-    auto header = reinterpret_cast<dmi_header*>(raw_data->SMBIOSTableData + i);
+    auto header = reinterpret_cast<SMBIOSHeader*>(raw_data->SMBIOSTableData + i);
     if (header->type == 1 && header->length >= 24) {  // Type 1: System Information
       const BYTE* uuid_ptr = raw_data->SMBIOSTableData + i + 8;
       boost::uuids::uuid l_uuid{{
@@ -97,8 +97,8 @@ void http_work::run(const boost::urls::url& in_url) {
 }
 
 boost::asio::awaitable<void> http_work::async_run() {
-  auto l_websocket_client = co_await make_websocket_stream(url_);
   computer l_computer_data{.hardware_id_ = get_motherboard_uuid(), .name_ = boost::asio::ip::host_name()};
+  auto l_websocket_client = co_await make_websocket_stream(url_);
   co_await l_websocket_client->async_write(boost::asio::buffer(nlohmann::json(l_computer_data).dump()));
 
   co_return;
