@@ -3,15 +3,17 @@
 //
 
 #pragma once
-#include <doodle_lib/core/http_client_core.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
 #include <doodle_lib/core/http/http_websocket_client.h>
+#include <doodle_lib/core/http_client_core.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <boost/process.hpp>
+
 namespace doodle::http {
 namespace detail {
 class http_websocket_data;
@@ -26,9 +28,8 @@ using http_websocket_data_ptr = std::shared_ptr<detail::http_websocket_data>;
  */
 
 class http_work {
-  using executor_type = boost::asio::as_tuple_t<boost::asio::use_awaitable_t<>>;
-  using timer         = executor_type::as_default_on_t<boost::asio::high_resolution_timer>;
-  using timer_ptr     = std::shared_ptr<timer>;
+  using timer     = boost::asio::high_resolution_timer;
+  using timer_ptr = std::shared_ptr<timer>;
 
   boost::asio::awaitable<std::string> websocket_run_task_fun_launch(http_websocket_data_ptr in_handle);
   boost::asio::awaitable<std::string> websocket_list_task_fun_launch(http_websocket_data_ptr in_handle);
@@ -36,7 +37,6 @@ class http_work {
   // 自动连接定时器
   timer_ptr timer_{};
 
-  std::shared_ptr<http_websocket_client> websocket_client_{};
 
   logger_ptr logger_{};
   computer_status status_{computer_status::online};
@@ -72,6 +72,6 @@ class http_work {
   http_work()  = default;
   ~http_work() = default;
 
-  void run(const std::string& in_web_socket_url, const std::string& in_http_url, const uuid& in_uuid = uuid{});
+  void run(const std::string& in_web_socket_url, const std::string& in_http_url);
 };
 }  // namespace doodle::http

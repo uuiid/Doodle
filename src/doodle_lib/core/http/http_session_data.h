@@ -19,7 +19,6 @@
 
 namespace doodle::http {
 struct multipart_body;
-class http_websocket_client;
 struct capture_t;
 class http_route;
 class http_function;
@@ -179,7 +178,6 @@ class http_websocket_data {
   logger_ptr logger_{};
   std::string remote_endpoint_{};
   std::shared_ptr<void> user_data_{};
-  std::weak_ptr<http_websocket_client> client_{};
   void* in_args_{};
 };
 

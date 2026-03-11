@@ -15,7 +15,6 @@
 // ReSharper disable once CppUnusedIncludeDirective
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/http_route.h>
-#include <doodle_lib/core/http/http_websocket_client.h>
 #include <doodle_lib/core/http/multipart_body.h>
 #include <doodle_lib/core/http/websocket_route.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
