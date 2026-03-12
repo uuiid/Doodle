@@ -156,7 +156,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
 // 清除 1001 以前的帧数
 std::vector<FSys::path> clean_1001_before_frame(const FSys::path& in_path, std::int32_t in_frame);
 
-class run_ue_assembly_local : public async_task {
+class run_ue_assembly_base : public async_task {
  public:
   boost::asio::awaitable<void> run() override;
 
@@ -166,13 +166,24 @@ class run_ue_assembly_local : public async_task {
 
   boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
 
- private:
+ protected:
+  virtual boost::asio::awaitable<void> get_arg() = 0;
+
   import_and_render_ue_ns::run_ue_assembly_arg arg_;
 
-  // to json
-  friend void to_json(nlohmann::json& j, const run_ue_assembly_local& p) { j = p.arg_; }
-  // from json
-  friend void from_json(const nlohmann::json& j, run_ue_assembly_local& p) { j.get_to(p.arg_); }
+ private:
 };
 
+class run_ue_assembly_local : public run_ue_assembly_base {
+ protected:
+  boost::asio::awaitable<void> get_arg() override;
+};
+
+// 分布式任务, 日志需要发送给中心服务器
+class run_ue_assembly_distributed : public run_ue_assembly_base {
+  boost::asio::awaitable<void> run() override;
+
+ protected:
+  boost::asio::awaitable<void> get_arg() override;
+};
 }  // namespace doodle

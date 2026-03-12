@@ -4,28 +4,28 @@
 
 #include "import_and_render_ue.h"
 
-#include <doodle_lib/core/file_sys.h>
+#include <doodle_core/exception/exception.h>
+#include <doodle_core/metadata/main_map.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_lib/core/http_client_core.h>
-#include <doodle_core/exception/exception.h>
-#include <doodle_lib/lib_warp/boost_fmt_error.h>
-#include <doodle_core/metadata/main_map.h>
 
 #include <doodle_lib/core/alembic_file.h>
 #include <doodle_lib/core/fbx_file.h>
+#include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/core/http_client_core.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
 #include <boost/system.hpp>
 
 #include <core/entity_path.h>
-#include <http_client/kitsu_client.h>
+#include <exception>
 #include <fmt/format.h>
+#include <http_client/kitsu_client.h>
 #include <spdlog/spdlog.h>
-
 
 namespace doodle {
 
@@ -177,14 +177,11 @@ std::vector<FSys::path> clean_1001_before_frame(const FSys::path& in_path, std::
   return l_move_paths;
 }
 
-boost::asio::awaitable<void> run_ue_assembly_local::run() {
+boost::asio::awaitable<void> run_ue_assembly_base::run() {
   SPDLOG_LOGGER_WARN(logger_ptr_, "开始运行组装");
   kitsu_client_->set_logger(logger_ptr_);
 
-  {
-    auto l_arg_json = co_await kitsu_client_->get_ue_assembly(project_id_, shot_task_id_);
-    l_arg_json.get_to(arg_);
-  }
+  co_await get_arg();
   auto l_g = co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable);
   //
   for (auto&& [p_from, p_to] : arg_.ue_asset_path_) {
@@ -267,6 +264,35 @@ boost::asio::awaitable<void> run_ue_assembly_local::run() {
           .attach_files_        = arg_.create_move_path_,
           .task_status_id_      = task_status::get_completed(),
           .preview_file_source_ = preview_file_source_enum::auto_light_generate,
+      }
+  );
+}
+
+boost::asio::awaitable<void> run_ue_assembly_local::get_arg() {
+  auto l_arg_json = co_await kitsu_client_->get_ue_assembly(project_id_, shot_task_id_);
+  l_arg_json.get_to(arg_);
+  co_return;
+}
+
+boost::asio::awaitable<void> run_ue_assembly_distributed::get_arg() { co_return; }
+
+boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
+  logger_ptr_ = spdlog::default_logger();
+
+  std::exception_ptr l_exception_ptr{};
+  std::string l_error_msg{};
+  try {
+    co_await run_ue_assembly_base::run();
+  } catch (...) {
+    l_exception_ptr = std::current_exception();
+    l_error_msg     = boost::current_exception_diagnostic_information();
+    logger_ptr_->error("分布式任务发生错误: {}", l_error_msg);
+  }
+  co_await kitsu_client_->comment_task(
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_        = shot_task_id_,
+          .comment_        = l_exception_ptr ? fmt::format("UE组装和渲染发生错误: {}", l_error_msg) : "成功完成任务",
+          .task_status_id_ = l_exception_ptr ? task_status::get_to_do() : task_status::get_completed(),
       }
   );
 }
