@@ -19,7 +19,6 @@
 #include <tl/expected.hpp>
 #include <vector>
 
-
 namespace doodle {
 class async_task;
 }
@@ -139,6 +138,8 @@ class kitsu_client {
   boost::asio::awaitable<nlohmann::json> get_task_assets_update_ue_files(uuid in_task_id) const;
   // /api/data/jobs/{job_id}
   boost::asio::awaitable<void> put_job_info(uuid in_job_id, nlohmann::json in_json) const;
+  // put /api/actions/jobs/{job_id}/log
+  boost::asio::awaitable<void> put_job_log(uuid in_job_id, std::string& in_log) const;
 };
 
 }  // namespace doodle::kitsu

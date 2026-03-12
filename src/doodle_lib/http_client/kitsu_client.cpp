@@ -515,10 +515,24 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_task_assets_update_ue_f
 
 boost::asio::awaitable<void> kitsu_client::put_job_info(uuid in_task_id, nlohmann::json in_job_info) const {
   boost::beast::http::request<boost::beast::http::string_body> l_req{
-      boost::beast::http::verb::put, fmt::format("/api/actions/jobs/{}/log", in_task_id), 11
+      boost::beast::http::verb::put, fmt::format("/api/data/jobs/{}", in_task_id), 11
   };
   set_req_headers(l_req, "application/json");
   l_req.body() = in_job_info.dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&
+      l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu put job info error {} {}", l_res.result(), l_res.body()});
+  co_return;
+}
+
+boost::asio::awaitable<void> kitsu_client::put_job_log(uuid in_task_id, std::string& in_log) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::put, fmt::format("/api/actions/jobs/{}/log", in_task_id), 11
+  };
+  set_req_headers(l_req, "text/plain");
+  l_req.body() = in_log;
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&
