@@ -183,7 +183,7 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
     auto l_results = resolver.resolve(server_ip_, server_port_, l_ec);
     if (l_ec) throw boost::system::system_error(l_ec);
     resolver_results_ = l_results;
-    boost::beast::get_lowest_layer(*socket_).connect(resolver_results_, l_ec);
+    socket_->connect(resolver_results_, l_ec);
     if (l_ec) throw boost::system::system_error(l_ec);
   }
 
@@ -219,20 +219,25 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
     expires_after(timeout_);
     if (!is_open()) {
       resolve_and_connect_sync();
+      expires_after(timeout_);
     }
     boost::system::error_code l_ec{};
     boost::beast::http::write(*socket_, in_req, l_ec);
     if (l_ec) throw boost::system::system_error(l_ec);
 
     expires_after(timeout_);
-    boost::beast::flat_buffer buffer{};
-    boost::beast::http::response_parser<ResponseBody> parser{out_res};
+    auto parser = boost::beast::http::response_parser<ResponseBody>{std::move(out_res)};
     if (body_limit_) parser.body_limit(*body_limit_);
-    boost::beast::http::read(*socket_, buffer, parser, l_ec);
+    boost::beast::http::read_header(*socket_, buffer_, parser, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    parse_response_timeout(parser.get());
+    expires_after(timeout_);
+    boost::beast::http::read(*socket_, buffer_, parser, l_ec);
     if (l_ec) throw boost::system::system_error(l_ec);
 
     expires_after(timeout_);
-    parse_response_timeout(parser.get());
+    out_res = parser.release();
   }
 };
 
