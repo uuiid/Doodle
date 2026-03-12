@@ -78,7 +78,7 @@ auto check_multiple_scene(auto& in_vector) {
 }  // namespace
 
 namespace auto_task {
-run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id) {
+import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id) {
   auto l_sql         = get_sqlite_database();
   auto l_shot_task   = l_sql.get_by_uuid<task>(in_shot_id);
   auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
@@ -100,7 +100,7 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
 
-  run_ue_assembly_local::run_ue_assembly_arg l_ret{};
+  import_and_render_ue_ns::run_ue_assembly_arg l_ret{};
   l_ret.episodes_   = l_episodes;
   l_ret.shot_       = l_shot;
 
@@ -131,10 +131,10 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
       if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
 
       l_ret.asset_infos_.emplace_back(
-          run_ue_assembly_local::run_ue_assembly_asset_info{
+          import_and_render_ue_ns::run_ue_assembly_asset_info{
               .shot_output_path_ = l_path.path(),
-              .type_             = l_path.path().extension() == ".fbx" ? run_ue_assembly_local::import_ue_type::char_
-                                                                       : run_ue_assembly_local::import_ue_type::geo
+              .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
+                                                                       : import_and_render_ue_ns::import_ue_type::geo
           }
       );
 
@@ -158,10 +158,10 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
     }
 
     l_ret.asset_infos_.emplace_back(
-        run_ue_assembly_local::run_ue_assembly_asset_info{
+        import_and_render_ue_ns::run_ue_assembly_asset_info{
             .shot_output_path_ = l_path.path(),
-            .type_             = l_path.path().extension() == ".fbx" ? run_ue_assembly_local::import_ue_type::char_
-                                                                     : run_ue_assembly_local::import_ue_type::geo
+            .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
+                                                                     : import_and_render_ue_ns::import_ue_type::geo
         }
     );
   }
@@ -190,7 +190,7 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
   /// asset_info
   if (l_is_simulation_task) {
     for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-      if (l_ret.asset_infos_[i].type_ != run_ue_assembly_local::import_ue_type::geo) continue;
+      if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::geo) continue;
 
       auto&& l_info = l_ret.asset_infos_[i];
       auto l_stem   = l_info.shot_output_path_.stem().string();
@@ -211,7 +211,7 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
       if (auto l_it = std::ranges::find_if(
               l_ret.asset_infos_,
               [&](const auto& in_info) {
-                if (in_info.type_ != run_ue_assembly_local::import_ue_type::char_) return false;
+                if (in_info.type_ != import_and_render_ue_ns::import_ue_type::char_) return false;
                 auto l_char_stem = in_info.shot_output_path_.stem().string();
                 return l_char_stem == l_stem;
               }
@@ -320,7 +320,7 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
       if (l_asset_infos_key_map.contains(l_key)) {
         if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-            if (l_ret.asset_infos_[l_idx].type_ == run_ue_assembly_local::import_ue_type::char_)
+            if (l_ret.asset_infos_[l_idx].type_ == import_and_render_ue_ns::import_ue_type::char_)
               l_ret.asset_infos_[l_idx].skin_path_ =
                   l_ret.asset_infos_[l_idx].simulation_type_.any()
                       ? get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
@@ -400,7 +400,7 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
   }
   for (auto&& l_info : l_ret.asset_infos_) {
     DOODLE_CHICK_HTTP(
-        !(l_info.type_ == run_ue_assembly_local::import_ue_type::char_ &&
+        !(l_info.type_ == import_and_render_ue_ns::import_ue_type::char_ &&
           !FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)),
         bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
         (l_info.ue_project_dir_ / l_info.skin_path_).string()
@@ -411,7 +411,7 @@ run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_proj
 
   for (auto&& l_info : l_ret.asset_infos_) {
     DOODLE_CHICK_HTTP(
-        !(l_info.skin_path_.empty() && l_info.type_ == run_ue_assembly_local::import_ue_type::char_), bad_request,
+        !(l_info.skin_path_.empty() && l_info.type_ == import_and_render_ue_ns::import_ue_type::char_), bad_request,
         "无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string()
     );
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
