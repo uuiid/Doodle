@@ -4,6 +4,7 @@
 
 #pragma once
 #include <doodle_core/configure/static_value.h>
+
 #include <doodle_lib/core/co_queue.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/global_function.h>
@@ -175,6 +176,17 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
         resolve_and_connect_compose{this, resolver_t{socket_->get_executor()}}, in_handle
     );
   }
+
+  void resolve_and_connect_sync() {
+    boost::system::error_code l_ec{};
+    resolver_t resolver{socket_->get_executor()};
+    auto l_results = resolver.resolve(server_ip_, server_port_, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+    resolver_results_ = l_results;
+    boost::beast::get_lowest_layer(*socket_).connect(resolver_results_, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+  }
+
   bool is_open() { return socket_->socket().is_open(); }
 
   void reset_socket() { socket_ = std::make_unique<socket_type>(socket_->get_executor()); }
@@ -193,6 +205,34 @@ class http_client : public http_stream_base<boost::beast::tcp_stream> {
         },
         in_handle
     );
+  }
+  template <typename ResponseBody, typename RequestType>
+  auto read_and_write_sync(
+      boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res
+  ) {
+    set_request_timeout(in_req);
+    in_req.prepare_payload();
+
+    if (is_timeout()) {
+      reset_socket();
+    }
+    expires_after(timeout_);
+    if (!is_open()) {
+      resolve_and_connect_sync();
+    }
+    boost::system::error_code l_ec{};
+    boost::beast::http::write(*socket_, in_req, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    expires_after(timeout_);
+    boost::beast::flat_buffer buffer{};
+    boost::beast::http::response_parser<ResponseBody> parser{out_res};
+    if (body_limit_) parser.body_limit(*body_limit_);
+    boost::beast::http::read(*socket_, buffer, parser, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    expires_after(timeout_);
+    parse_response_timeout(parser.get());
   }
 };
 

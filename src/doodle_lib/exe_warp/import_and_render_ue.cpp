@@ -27,6 +27,7 @@
 #include <boost/asio/use_future.hpp>
 #include <boost/system.hpp>
 
+#include "core/core_set.h"
 #include "core/global_function.h"
 #include <array>
 #include <atomic>
@@ -34,6 +35,7 @@
 #include <exception>
 #include <fmt/format.h>
 #include <http_client/kitsu_client.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 
 namespace doodle {
@@ -301,7 +303,7 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
     log_buffer_[log_index_].reserve(1024 * 10);
   }
   void sink_it_(const spdlog::details::log_msg& msg) override {
-    fmt::memory_buffer formatted{};
+    spdlog::memory_buf_t formatted{};
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
     log_buffer_[log_index_] += fmt::to_string(formatted);
   }
@@ -317,7 +319,7 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
         .get();
   }
   boost::asio::awaitable<void> async_seed_http_log() {
-    auto l_log      = std::make_shared<std::string>(std::move(log_buffer_[!log_index_]));
+    auto l_log = std::make_shared<std::string>(std::move(log_buffer_[!log_index_]));
     log_buffer_[!log_index_].clear();
     co_await kitsu_client_->put_job_log(job_id_, l_log);
     co_return;
@@ -326,8 +328,19 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
 using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
 
 boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
-  logger_ptr_ = spdlog::default_logger();
-
+  auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                       fmt::format("{}.log", task_info_.uuid_id_);
+  logger_ptr_ = std::make_shared<spdlog::async_logger>(
+      task_info_.name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+      spdlog::thread_pool()
+  );
+  kitsu_client_ = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  // 这里使用两个不同的客户端, 防止日志发送和获取参数互相干扰
+  logger_ptr_->sinks().emplace_back(
+      std::make_shared<run_ue_assembly_distributed_sink_mt>(
+          std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip), task_info_.uuid_id_
+      )
+  );
   std::exception_ptr l_exception_ptr{};
   std::string l_error_msg{};
   try {
