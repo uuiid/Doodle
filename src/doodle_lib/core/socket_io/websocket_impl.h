@@ -37,6 +37,7 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   std::atomic_bool writing_{false};
+  std::atomic_bool closing_{false};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{};
 
   // template <typename Handle>

@@ -43,7 +43,7 @@ inline std::vector<std::string> split_multi_packet(const std::string& in_data) {
   std::vector<std::string> l_vec{};
   return boost::split(l_vec, in_data, boost::is_any_of("\x1e"));
 }
-inline bool is_binary_packet(const std::string& in_data) { return in_data.front() == 'b'; }
+inline bool is_binary_packet(const std::string& in_data) { return !in_data.empty() && in_data.front() == 'b'; }
 /// 解码二进制包
 inline std::string decode_binary_packet(const std::string& in_data) {
   if (!is_binary_packet(in_data)) return in_data;
