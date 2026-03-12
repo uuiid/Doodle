@@ -593,14 +593,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   auto l_assets           = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
       left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(in(
-          &entity::uuid_id_, select(
-                                 &entity_link::entity_out_id_, from<entity_link>(),
-                                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                                 where(c(shot->*&entity::uuid_id_) == l_shot_entity.uuid_id_)
-                             )
-      ))
+      where(
+          in(&entity::uuid_id_,
+                       select(
+                 &entity_link::entity_out_id_, from<entity_link>(),
+                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+                 where(c(shot->*&entity::uuid_id_) == l_shot_entity.uuid_id_)
+             )) &&
+          !c(&entity::canceled_)
+      )
   );
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};
