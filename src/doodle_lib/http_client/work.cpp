@@ -11,10 +11,13 @@
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/websocket_route.h>
+#include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
 
+#include <boost/asio/consign.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/this_coro.hpp>
 #include <boost/process/process.hpp>
@@ -163,9 +166,9 @@ boost::asio::awaitable<void> http_work::async_run() {
   co_return;
 }
 void http_work::run_task(const server_task_info& in_task_info) {
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
-  l_client->set_token(token_);
   if (in_task_info.type_ == server_task_info_type::auto_light) {
+    auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, token_);
+    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
   }
 }
 
