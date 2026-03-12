@@ -1,6 +1,5 @@
 #include "bone_weight_inference.h"
 
-#include <mimalloc.h>
 
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/doodle_lib_fwd.h>
