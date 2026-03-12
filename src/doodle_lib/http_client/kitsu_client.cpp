@@ -28,6 +28,7 @@
 #include <filesystem>
 #include <fmt/compile.h>
 #include <fmt/format.h>
+#include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -527,12 +528,12 @@ boost::asio::awaitable<void> kitsu_client::put_job_info(uuid in_task_id, nlohman
   co_return;
 }
 
-boost::asio::awaitable<void> kitsu_client::put_job_log(uuid in_task_id, std::string& in_log) const {
+boost::asio::awaitable<void> kitsu_client::put_job_log(uuid in_task_id, std::shared_ptr<std::string> in_log) const {
   boost::beast::http::request<boost::beast::http::string_body> l_req{
       boost::beast::http::verb::put, fmt::format("/api/actions/jobs/{}/log", in_task_id), 11
   };
   set_req_headers(l_req, "text/plain");
-  l_req.body() = in_log;
+  l_req.body() = *in_log;
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&

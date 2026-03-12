@@ -139,7 +139,7 @@ class kitsu_client {
   // /api/data/jobs/{job_id}
   boost::asio::awaitable<void> put_job_info(uuid in_job_id, nlohmann::json in_json) const;
   // put /api/actions/jobs/{job_id}/log
-  boost::asio::awaitable<void> put_job_log(uuid in_job_id, std::string& in_log) const;
+  boost::asio::awaitable<void> put_job_log(uuid in_job_id, std::shared_ptr<std::string> in_log) const;
 };
 
 }  // namespace doodle::kitsu
