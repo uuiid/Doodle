@@ -307,6 +307,18 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
     );
   }
 
+  void resolve_and_connect_sync() {
+    boost::system::error_code l_ec{};
+    resolver_t resolver{socket_->get_executor()};
+    auto l_results = resolver.resolve(server_ip_, server_port_, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+    resolver_results_ = l_results;
+    boost::beast::get_lowest_layer(*socket_).connect(resolver_results_, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+    socket_->handshake(boost::asio::ssl::stream_base::client, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+  }
+
   bool is_open() { return socket_->next_layer().socket().is_open(); }
   void reset_socket() {
     socket_ = std::make_unique<boost::beast::ssl_stream<boost::beast::tcp_stream>>(socket_->get_executor(), ctx_);
@@ -330,6 +342,40 @@ class http_client_ssl : public http_stream_base<boost::beast::ssl_stream<boost::
         },
         in_handle
     );
+  }
+
+  template <typename ResponseBody, typename RequestType>
+  auto read_and_write_sync(
+      boost::beast::http::request<RequestType>& in_req, boost::beast::http::response<ResponseBody>& out_res
+  ) {
+    set_request_timeout(in_req);
+    in_req.prepare_payload();
+
+    if (is_timeout()) {
+      reset_socket();
+    }
+    expires_after(timeout_);
+    if (!is_open()) {
+      resolve_and_connect_sync();
+      expires_after(timeout_);
+    }
+    boost::system::error_code l_ec{};
+    boost::beast::http::write(*socket_, in_req, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    expires_after(timeout_);
+    auto parser = boost::beast::http::response_parser<ResponseBody>{std::move(out_res)};
+    if (body_limit_) parser.body_limit(*body_limit_);
+    boost::beast::http::read_header(*socket_, buffer_, parser, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    parse_response_timeout(parser.get());
+    expires_after(timeout_);
+    boost::beast::http::read(*socket_, buffer_, parser, l_ec);
+    if (l_ec) throw boost::system::system_error(l_ec);
+
+    expires_after(timeout_);
+    out_res = parser.release();
   }
 };
 
