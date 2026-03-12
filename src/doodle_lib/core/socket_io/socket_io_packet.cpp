@@ -11,8 +11,7 @@ const std::vector<std::string>& packet_base::get_binary_data() const {
   static std::vector<std::string> binary_data_{};
   return binary_data_;
 }
-const std::string& packet_base::get_dump_data() const { return dump_data_; }
-void packet_base::start_dump() { dump_data_ = dump(); }
+std::string packet_base::get_dump_data() const { return dump(); }
 
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   socket_io_packet l_packet{};

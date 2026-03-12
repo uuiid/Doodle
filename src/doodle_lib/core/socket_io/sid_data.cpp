@@ -4,15 +4,14 @@
 
 #include "sid_data.h"
 
-#include <doodle_lib/core/global_function.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/app_base.h>
-#include <doodle_lib/logger/logger.h>
-
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/engine_io.h>
 #include <doodle_lib/core/socket_io/socket_io_core.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/logger/logger.h>
 
 #include <boost/asio/as_tuple.hpp>
 #include <boost/asio/co_spawn.hpp>
@@ -73,7 +72,6 @@ std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::s
       update_sid_time();
       in_data.erase(0, 1);
       l_ptr = std::make_shared<engine_io_packet>(engine_io_packet_type::pong, in_data);
-      l_ptr->start_dump();
       break;
     case engine_io_packet_type::pong:  // 收到pong后, 直接返回, 不在消息队列中处理
       update_sid_time();
@@ -142,8 +140,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
 void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
   if (block_message_) return;
   if (!in_message) return;
-  if (in_message->get_dump_data().empty()) return;
-  boost::asio::post(strand_, [this, in_message]() {
+  boost::asio::post(strand_, [this, in_message, sh = shared_from_this()]() {
     message_queue_.push(in_message);
     write_websocket();
   });
@@ -151,16 +148,13 @@ void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
 void sid_data::seed_message_self(const std::shared_ptr<packet_base>& in_message) {
   if (block_message_) return;
   if (!in_message) return;
-  if (in_message->get_dump_data().empty()) in_message->start_dump();
-  // default_logger_raw()->error("seed_message {}", in_message->get_dump_data());
-  boost::asio::post(strand_, [this, in_message]() {
+  boost::asio::post(strand_, [this, in_message, sh = shared_from_this()]() {
     message_queue_.push(in_message);
     write_websocket();
   });
 }
 void sid_data::seed_message_ping() {
   auto l_ping_message_ = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
-  l_ping_message_->start_dump();
   ping_message_.write(l_ping_message_);
   write_websocket();
 }
@@ -173,7 +167,7 @@ packet_base_ptr sid_data::get_message() {
     return l_ptr;
   }
   std::shared_ptr<packet_base> l_msg{};
-  if (message_queue_.pop(l_msg) && l_msg && !l_msg->get_dump_data().empty()) return l_msg;
+  if (message_queue_.pop(l_msg) && l_msg) return l_msg;
   return nullptr;
 }
 }  // namespace doodle::socket_io

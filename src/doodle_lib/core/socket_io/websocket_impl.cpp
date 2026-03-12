@@ -30,7 +30,6 @@
 #include <spdlog/spdlog.h>
 #include <utility>
 
-
 namespace doodle::socket_io {
 
 socket_io_websocket_core::socket_io_websocket_core(
@@ -51,7 +50,6 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
   auto l_ptr            = std::make_shared<engine_io_packet>(engine_io_packet_type::open, l_json.dump());
-  l_ptr->start_dump();
   return l_ptr;
 }
 // template <typename Handle>
@@ -125,18 +123,20 @@ void socket_io_websocket_core::async_write() {
   if (!sid_data_) return;
   if (sid_data_->is_timeout()) return writing_ = true, async_close_websocket();
   // SPDLOG_LOGGER_WARN(logger_, "thread {} async_write", std::this_thread::get_id());
-  if (auto l_ptr = sid_data_->get_message(); l_ptr)
-    writing_ = true,
+  if (auto l_ptr = sid_data_->get_message(); l_ptr) {
+    auto l_str = std::make_shared<std::string>(l_ptr->get_dump_data());
+    writing_   = true,
     web_stream_->async_write(
-        boost::asio::buffer(l_ptr->get_dump_data()),
+        boost::asio::buffer(*l_str),
         boost::asio::bind_executor(
-            strand_, [self = shared_from_this(), l_ptr](const boost::system::error_code& in_ec, std::size_t) {
+            strand_, [self = shared_from_this(), l_ptr, l_str](const boost::system::error_code& in_ec, std::size_t) {
               self->writing_ = false;
               if (in_ec) return self->logger_->error(in_ec.what());
               self->async_write();
             }
         )
     );
+  }
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(packet_base_ptr in_data) {

@@ -3,27 +3,23 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_lib/core/socket_io/core_enum.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
 
 struct packet_base {
  protected:
-  // 缓存的序列化数据
-  std::string dump_data_{};
-
   virtual std::string dump() const = 0;
 
  public:
   virtual ~packet_base() = default;
 
-  const std::string& get_dump_data() const;
-  /// 开始序列化, 再发送消息时调用
-  void start_dump();
+  std::string get_dump_data() const;
   virtual const std::vector<std::string>& get_binary_data() const;
+
+  virtual operator bool() const = 0;
 };
 
 struct engine_io_packet : public packet_base {
@@ -34,6 +30,7 @@ struct engine_io_packet : public packet_base {
   explicit engine_io_packet(engine_io_packet_type type) : type_(type) {}
   engine_io_packet() = default;
   std::string dump() const override;
+  operator bool() const override { return true; }
 };
 struct socket_io_packet : public packet_base {
  private:
@@ -51,6 +48,7 @@ struct socket_io_packet : public packet_base {
   static socket_io_packet parse(const std::string& in_str);
   /// 自动包含 engine.io 的消息头
   const std::vector<std::string>& get_binary_data() const override;
+  operator bool() const override { return true; }
 };
 using packet_base_ptr = std::shared_ptr<packet_base>;
 }  // namespace doodle::socket_io
