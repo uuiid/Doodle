@@ -7,5 +7,5 @@
 
 namespace doodle::http::auto_task {
 
-run_ue_assembly_local::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id);
+import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id);
 }
