@@ -2,14 +2,14 @@
 
 #include <doodle_core/configure/config.h>
 #include <doodle_core/configure/static_value.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/working_file.h>
 
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -22,8 +22,8 @@
 #include <boost/beast/http/string_body_fwd.hpp>
 #include <boost/scope/scope_exit.hpp>
 
-#include <core/http/json_body.h>
 #include <chrono>
+#include <core/http/json_body.h>
 #include <cpp-base64/base64.h>
 #include <filesystem>
 #include <fmt/compile.h>
@@ -511,6 +511,20 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_task_assets_update_ue_f
     );
 
   co_return l_res.body();
+}
+
+boost::asio::awaitable<void> kitsu_client::put_job_info(uuid in_task_id, nlohmann::json in_job_info) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::put, fmt::format("/api/actions/jobs/{}/log", in_task_id), 11
+  };
+  set_req_headers(l_req, "application/json");
+  l_req.body() = in_job_info.dump();
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&
+      l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu put job info error {} {}", l_res.result(), l_res.body()});
+  co_return;
 }
 
 }  // namespace doodle::kitsu

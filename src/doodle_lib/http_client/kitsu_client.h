@@ -1,13 +1,13 @@
 #pragma once
 
-#include <doodle_lib/core/file_sys.h>
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_lib/core/http_client_core.h>
-#include <doodle_core/metadata/assets.h>
 
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/core/http_client_core.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/awaitable.hpp>
@@ -18,6 +18,7 @@
 #include <string>
 #include <tl/expected.hpp>
 #include <vector>
+
 
 namespace doodle {
 class async_task;
@@ -136,6 +137,8 @@ class kitsu_client {
 
   // /api/actions/tasks/{task_id}/assets/update/ue
   boost::asio::awaitable<nlohmann::json> get_task_assets_update_ue_files(uuid in_task_id) const;
+  // /api/data/jobs/{job_id}
+  boost::asio::awaitable<void> put_job_info(uuid in_job_id, nlohmann::json in_json) const;
 };
 
 }  // namespace doodle::kitsu
