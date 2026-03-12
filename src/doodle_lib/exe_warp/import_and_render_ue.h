@@ -182,7 +182,16 @@ class run_ue_assembly_local : public run_ue_assembly_base {
 // 分布式任务, 日志需要发送给中心服务器
 class run_ue_assembly_distributed : public run_ue_assembly_base {
   boost::asio::awaitable<void> run() override;
+  server_task_info task_info_;
+  std::string token_;
 
+ public:
+  explicit run_ue_assembly_distributed(server_task_info in_task_info, std::string in_token)
+      : task_info_(std::move(in_task_info)), token_(std::move(in_token)) {}
+
+
+  
+  
  protected:
   boost::asio::awaitable<void> get_arg() override;
 };
