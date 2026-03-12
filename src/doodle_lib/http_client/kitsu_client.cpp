@@ -541,5 +541,17 @@ boost::asio::awaitable<void> kitsu_client::put_job_log(uuid in_task_id, std::sha
     throw_exception(doodle_error{"kitsu put job info error {} {}", l_res.result(), l_res.body()});
   co_return;
 }
+void kitsu_client::put_job_log_sync(const uuid& in_job_id, const std::string& in_log) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::put, fmt::format("/api/actions/jobs/{}/log", in_job_id), 11
+  };
+  set_req_headers(l_req, "text/plain");
+  l_req.body() = in_log;
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  http_client_ptr_->read_and_write_sync(l_req, l_res);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&
+      l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu put job info error {} {}", l_res.result(), l_res.body()});
+}
 
 }  // namespace doodle::kitsu

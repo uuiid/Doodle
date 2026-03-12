@@ -310,19 +310,7 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
   void flush_() override {
     if (log_buffer_[log_index_].empty()) return;
     log_index_ = !log_index_;
-    begin_flush();
-  }
-  void begin_flush() {
-    boost::asio::co_spawn(
-        strand_, async_seed_http_log(), boost::asio::consign(boost::asio::use_future, this->shared_from_this())
-    )
-        .get();
-  }
-  boost::asio::awaitable<void> async_seed_http_log() {
-    auto l_log = std::make_shared<std::string>(std::move(log_buffer_[!log_index_]));
-    log_buffer_[!log_index_].clear();
-    co_await kitsu_client_->put_job_log(job_id_, l_log);
-    co_return;
+    kitsu_client_->put_job_log_sync(job_id_, log_buffer_[!log_index_]);
   }
 };
 using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
