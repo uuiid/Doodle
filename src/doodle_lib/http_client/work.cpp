@@ -149,17 +149,24 @@ boost::asio::awaitable<void> http_work::async_run() {
   const auto l_computer_json = nlohmann::json(l_computer_data).dump();
   const boost::urls::url l_url{core_set::get_set().server_ip + "/api/data/computers"};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-    auto l_websocket_client = co_await make_websocket_stream(l_url);
-    co_await l_websocket_client->async_write(boost::asio::buffer(l_computer_json));
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      boost::beast::flat_buffer l_msg;
-      co_await l_websocket_client->async_read(l_msg);
-
-      // 处理消息
-      auto l_json =
-          nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
-      auto l_data = l_json.get<server_task_info>();
-      SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
+    try {
+      auto l_websocket_client = co_await make_websocket_stream(l_url);
+      co_await l_websocket_client->async_write(boost::asio::buffer(l_computer_json));
+      while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
+             boost::asio::cancellation_type::none) {
+        boost::beast::flat_buffer l_msg;
+        co_await l_websocket_client->async_read(l_msg);
+        // 处理消息
+        auto l_json =
+            nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
+        auto l_data = l_json.get<server_task_info>();
+        SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
+        run_task(l_data);
+      }
+    } catch (const boost::system::system_error& e) {
+      SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
+    } catch (const std::exception& e) {
+      SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
     }
   }
 
