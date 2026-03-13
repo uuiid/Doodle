@@ -7,11 +7,17 @@
 #include <doodle_lib/core/socket_io/engine_io.h>
 namespace doodle::socket_io {
 
+packet_base::packet_base(const engine_io_packet& in_data) { set_data(in_data); }
+packet_base::packet_base(const socket_io_packet& in_data) { set_data(in_data); }
+
 const std::vector<std::string>& packet_base::get_binary_data() const {
   static std::vector<std::string> binary_data_{};
   return binary_data_;
 }
-std::string packet_base::get_dump_data() const { return dump(); }
+const std::string& packet_base::get_dump_data() const { return data_; }
+
+void packet_base::set_data(const engine_io_packet& in_data) { data_ = in_data.dump(); }
+void packet_base::set_data(const socket_io_packet& in_data) { data_ = in_data.dump(); }
 
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   socket_io_packet l_packet{};
@@ -31,16 +37,16 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
     if (l_dash_pos == std::string::npos)
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
     l_packet.binary_count_ = std::stoll(in_str.substr(l_start, l_dash_pos - l_start));
-    l_pos                 = l_dash_pos;
+    l_pos                  = l_dash_pos;
   }
 
   if (l_pos + 1 < in_str.size() && in_str[l_pos + 1] == '/') {
-    auto l_begin = l_pos + 1;
+    auto l_begin     = l_pos + 1;
     auto l_comma_pos = in_str.find(',', l_begin);
     if (l_comma_pos == std::string::npos)
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
     l_packet.namespace_ = in_str.substr(l_begin, l_comma_pos - l_begin);
-    l_pos              = l_comma_pos;
+    l_pos               = l_comma_pos;
   }
   if (l_pos >= in_str.size()) return l_packet;
 
@@ -55,8 +61,7 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   if (l_json_pos < in_str.size()) {
     if (!nlohmann::json::accept(in_str.begin() + static_cast<std::ptrdiff_t>(l_json_pos), in_str.end()))
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
-    l_packet.json_data_ =
-        nlohmann::json::parse(in_str.begin() + static_cast<std::ptrdiff_t>(l_json_pos), in_str.end());
+    l_packet.json_data_ = nlohmann::json::parse(in_str.begin() + static_cast<std::ptrdiff_t>(l_json_pos), in_str.end());
   } else
     l_packet.json_data_ = nlohmann::json::object();
   if (l_packet.type_ != socket_io_packet_type::connect &&

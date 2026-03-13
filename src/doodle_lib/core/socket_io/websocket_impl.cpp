@@ -49,7 +49,7 @@ packet_base_ptr socket_io_websocket_core::generate_register_reply(const std::sha
   l_hd.sid_ = in_data->get_sid();
   l_hd.upgrades_.clear();
   nlohmann::json l_json = l_hd;
-  auto l_ptr            = std::make_shared<engine_io_packet>(engine_io_packet_type::open, l_json.dump());
+  auto l_ptr            = std::make_shared<packet_base>(engine_io_packet{engine_io_packet_type::open, l_json.dump()});
   return l_ptr;
 }
 // template <typename Handle>
@@ -125,13 +125,11 @@ void socket_io_websocket_core::async_write() {
   if (sid_data_->is_timeout()) return async_close_websocket();
   // SPDLOG_LOGGER_WARN(logger_, "thread {} async_write", std::this_thread::get_id());
   if (auto l_ptr = sid_data_->get_message(); l_ptr) {
-    auto l_str = std::make_shared<std::string>(l_ptr->get_dump_data());
-    if (l_str->empty()) return;
     writing_ = true,
     web_stream_->async_write(
-        boost::asio::buffer(*l_str),
+        boost::asio::buffer(l_ptr->get_dump_data()),
         boost::asio::bind_executor(
-            strand_, [self = shared_from_this(), l_ptr, l_str](const boost::system::error_code& in_ec, std::size_t) {
+            strand_, [self = shared_from_this(), l_ptr](const boost::system::error_code& in_ec, std::size_t) {
               self->writing_ = false;
               if (in_ec) {
                 if (in_ec != boost::asio::error::operation_aborted) self->logger_->error(in_ec.what());
@@ -154,10 +152,8 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(pac
   co_await boost::asio::post(strand_, boost::asio::use_awaitable);
   if (closing_) co_return;
 
-  auto l_str = in_data->get_dump_data();
-  if (l_str.empty()) co_return;
   // default_logger_raw()->error("async_write_websocket {}", l_str);
-  co_await web_stream_->async_write(boost::asio::buffer(l_str), boost::asio::use_awaitable);
+  co_await web_stream_->async_write(boost::asio::buffer(in_data->get_dump_data()), boost::asio::use_awaitable);
 
   if (!in_data->get_binary_data().empty()) {
     struct binary_data_guard {

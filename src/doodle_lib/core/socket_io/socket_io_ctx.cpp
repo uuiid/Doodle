@@ -16,7 +16,6 @@
 #include <spdlog/spdlog.h>
 #include <utility>
 
-
 namespace doodle {
 namespace socket_io {
 
@@ -112,7 +111,9 @@ void sid_ctx::emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_si
   boost::asio::post(strand_, [this, in_data, in_sid]() {
     try {
       if (!sid_map_.contains(in_sid)) return;
-      if (auto l_ptr = sid_map_.at(in_sid); l_ptr) l_ptr->seed_message(in_data);
+      auto l_packet = std::make_shared<packet_base>();
+      l_packet->set_data(*in_data);
+      if (auto l_ptr = sid_map_.at(in_sid); l_ptr) l_ptr->seed_message(l_packet);
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
@@ -124,7 +125,9 @@ void sid_ctx::emit_impl(const socket_io_packet_ptr& in_data) const {
   std::vector<std::shared_ptr<sid_data>> l_sid_data{};
   for (auto l_it : sid_map_)
     if (auto l_ptr = l_it.second; l_ptr) l_sid_data.emplace_back(l_ptr);
-  for (auto& l_ptr : l_sid_data) l_ptr->seed_message(in_data);
+  auto l_packet = std::make_shared<packet_base>();
+  l_packet->set_data(*in_data);
+  for (auto& l_ptr : l_sid_data) l_ptr->seed_message(l_packet);
 }
 boost::asio::awaitable<bool> sid_ctx::has_register(std::string in_namespace) const {
   auto l_namespace = std::move(in_namespace);

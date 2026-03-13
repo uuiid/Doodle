@@ -20,6 +20,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/lockfree/detail/uses_optional.hpp>
 
+#include "core_enum.h"
 #include "websocket_impl.h"
 #include <spdlog/spdlog.h>
 
@@ -62,9 +63,9 @@ boost::asio::awaitable<void> sid_data::impl_run() {
   co_return;
 }
 
-std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::string& in_data) {
+std::tuple<bool, std::shared_ptr<engine_io_packet>> sid_data::handle_engine_io(std::string& in_data) {
   bool l_ret{true};
-  std::shared_ptr<packet_base> l_ptr{};
+  std::shared_ptr<engine_io_packet> l_ptr{};
   switch (auto l_engine_packet = parse_engine_packet(in_data); l_engine_packet) {
     case engine_io_packet_type::open:  // 服务器再get中, 已经处理了open, 不会收到这个消息, 静默
       break;
@@ -84,9 +85,11 @@ std::tuple<bool, std::shared_ptr<packet_base>> sid_data::handle_engine_io(std::s
       close();
     case engine_io_packet_type::upgrade:
       upgrade_to_websocket();
-    case engine_io_packet_type::noop:
-      seed_message_self(std::make_shared<engine_io_packet>(engine_io_packet_type::noop));
-      break;
+    case engine_io_packet_type::noop: {
+      auto l_ptr = std::make_shared<packet_base>();
+      l_ptr->set_data(engine_io_packet{engine_io_packet_type::noop});
+      seed_message_self(l_ptr);
+    } break;
   }
   return {l_ret, l_ptr};
 }
@@ -95,7 +98,9 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
   if (!(co_await ctx_->has_register(in_body.namespace_))) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
-    seed_message_self(std::make_shared<socket_io_packet>(in_body));
+    auto l_ptr         = std::make_shared<packet_base>();
+    l_ptr->set_data(socket_io_packet{in_body});
+    seed_message_self(l_ptr);
     co_return;
   }
 
@@ -104,11 +109,13 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
       auto l_ptr                              = std::make_shared<socket_io_core>(ctx_, shared_from_this());
       socket_io_contexts_[in_body.namespace_] = l_ptr;
       co_await l_ptr->set_namespace(in_body.namespace_, in_body.json_data_);
-      auto l_p        = std::make_shared<socket_io_packet>();
-      l_p->type_      = socket_io_packet_type::connect;
-      l_p->namespace_ = in_body.namespace_;
-      l_p->json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
-      seed_message_self(l_p);
+      socket_io_packet l_p{};
+      l_p.type_      = socket_io_packet_type::connect;
+      l_p.namespace_ = in_body.namespace_;
+      l_p.json_data_ = nlohmann::json{{"sid", l_ptr->get_sid()}};
+      auto l_packet  = std::make_shared<packet_base>();
+      l_packet->set_data(socket_io_packet{l_p});
+      seed_message_self(l_packet);
       ctx_->emit_connect(l_ptr);
       break;
     }
@@ -154,8 +161,9 @@ void sid_data::seed_message_self(const std::shared_ptr<packet_base>& in_message)
   });
 }
 void sid_data::seed_message_ping() {
-  auto l_ping_message_ = std::make_shared<engine_io_packet>(engine_io_packet_type::ping);
-  ping_message_.write(l_ping_message_);
+  auto l_ptr = std::make_shared<packet_base>();
+  l_ptr->set_data(engine_io_packet{engine_io_packet_type::ping});
+  ping_message_.write(l_ptr);
   write_websocket();
 }
 void sid_data::write_websocket() {

@@ -3,11 +3,10 @@
 //
 
 #pragma once
-#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/cancellation_signals.h>
-#include <doodle_lib/doodle_lib_fwd.h>
-
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/socket_io/core_enum.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/strand.hpp>
@@ -15,11 +14,15 @@
 
 #include <memory>
 
+
 namespace doodle ::socket_io {
 class socket_io_core;
+struct engine_io_packet;
 struct socket_io_packet;
+struct packet_base;
 class sid_data;
 using socket_io_packet_ptr = std::shared_ptr<socket_io_packet>;
+using packet_base_ptr      = std::shared_ptr<packet_base>;
 
 /// 握手数据
 struct handshake_data {

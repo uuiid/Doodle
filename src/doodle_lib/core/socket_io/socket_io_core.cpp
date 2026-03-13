@@ -5,7 +5,6 @@
 #include "socket_io_core.h"
 
 #include <doodle_lib/core/core_set.h>
-
 #include <doodle_lib/core/socket_io/engine_io.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
@@ -62,27 +61,29 @@ void socket_io_core::on_impl(const socket_io_packet_ptr& in_data) {
 void socket_io_core::ask(const nlohmann::json& in_data) const {
   if (!current_packet_) return;
 
-  auto l_data        = std::make_shared<socket_io_packet>();
-  l_data->type_      = socket_io_packet_type::ack;
-  l_data->id_        = current_packet_->id_;
-  l_data->namespace_ = namespace_;
-  l_data->json_data_ = in_data;
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(l_data);
+  socket_io_packet l_data{};
+  l_data.type_      = socket_io_packet_type::ack;
+  l_data.id_        = current_packet_->id_;
+  l_data.namespace_ = namespace_;
+  l_data.json_data_ = in_data;
+  if (auto l_sid_data = sid_data_.lock(); l_sid_data)
+    l_sid_data->seed_message(std::make_shared<packet_base>(l_data));
 }
 void socket_io_core::ask(const std::vector<std::string>& in_data) const {
   if (!current_packet_) return;
 
-  auto l_data        = std::make_shared<socket_io_packet>();
-  l_data->id_        = current_packet_->id_;
-  l_data->type_      = socket_io_packet_type::binary_ack;
-  l_data->namespace_ = namespace_;
-  l_data->json_data_ = nlohmann::json::array();
+  socket_io_packet l_data{};
+  l_data.id_        = current_packet_->id_;
+  l_data.type_      = socket_io_packet_type::binary_ack;
+  l_data.namespace_ = namespace_;
+  l_data.json_data_ = nlohmann::json::array();
   for (auto i = 0; i < in_data.size(); ++i) {
-    l_data->json_data_.emplace_back(nlohmann::json::object({{"_placeholder", true}, {"num", i}}));
+    l_data.json_data_.emplace_back(nlohmann::json::object({{"_placeholder", true}, {"num", i}}));
   }
-  l_data->binary_data_  = in_data;
-  l_data->binary_count_ = in_data.size();
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(l_data);
+  l_data.binary_data_  = in_data;
+  l_data.binary_count_ = in_data.size();
+  if (auto l_sid_data = sid_data_.lock(); l_sid_data)
+    l_sid_data->seed_message(std::make_shared<packet_base>(l_data));
 }
 
 boost::asio::awaitable<void> socket_io_core::set_namespace(
