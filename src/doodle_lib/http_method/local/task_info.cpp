@@ -34,6 +34,8 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
+#include <boost/uuid/detail/nil_uuid.hpp>
+#include <boost/uuid/uuid.hpp>
 
 #include <algorithm>
 #include <cstdlib>
@@ -266,9 +268,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::post(session
   auto l_ptr  = std::make_shared<server_task_info>();
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_ptr);
-  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
-  l_ptr->command_         = l_json["task_data"];
+  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->command_     = l_json["task_data"];
+  l_ptr->submitter_   = boost::uuids::nil_uuid();
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -319,6 +321,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   l_json.get_to(*l_ptr);
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+  l_ptr->submitter_       = boost::uuids::nil_uuid();
+
   auto l_arg_t            = std::make_shared<inspect_file_arg>(token_, id_);
   l_json.get_to(*l_arg_t);
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
@@ -334,15 +338,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance_generate_uesk_file::post(
     session_data_ptr in_handle
 ) {
-  auto l_ptr              = std::make_shared<server_task_info>();
-  l_ptr->type_            = server_task_info_type::create_rig_sk;
-  l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
-
-  auto l_json             = in_handle->get_json();
+  auto l_ptr          = std::make_shared<server_task_info>();
+  l_ptr->type_        = server_task_info_type::create_rig_sk;
+  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  auto l_json         = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+  l_ptr->submitter_       = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
   std::shared_ptr<export_rig_sk_arg> l_arg_t = std::make_shared<export_rig_sk_arg>();
   l_arg_t->kitsu_client_                     = l_client;
@@ -369,8 +373,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
   std::shared_ptr<run_ue_assembly_local> l_arg_t = std::make_shared<run_ue_assembly_local>();
   l_arg_t->kitsu_client_                         = l_client;
@@ -403,8 +408,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
   std::shared_ptr<export_fbx_arg> l_arg_t = std::make_shared<export_fbx_arg>();
   l_arg_t->kitsu_client_                  = l_client;
@@ -431,8 +437,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
   std::shared_ptr<qcloth_update_arg> l_arg_t = std::make_shared<qcloth_update_arg>();
   l_arg_t->kitsu_client_                     = l_client;
@@ -459,8 +466,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
 
   std::shared_ptr<task_sync> l_arg_t = std::make_shared<task_sync>();
@@ -485,8 +493,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
 
   std::shared_ptr<update_ue_files> l_arg_t = std::make_shared<update_ue_files>();
@@ -511,8 +520,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
 
   std::shared_ptr<update_movie_files> l_arg_t = std::make_shared<update_movie_files>();
@@ -537,8 +547,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_ = boost::uuids::nil_uuid();
 
-  auto l_client = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client     = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
 
   std::shared_ptr<update_movie_compose_files> l_arg_t = std::make_shared<update_movie_compose_files>();
@@ -583,6 +594,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->submitter_                               = boost::uuids::nil_uuid();
 
   std::shared_ptr<export_fbx_arg_epiboly> l_arg_t = std::make_shared<export_fbx_arg_epiboly>();
   l_json.get_to(*l_arg_t);
