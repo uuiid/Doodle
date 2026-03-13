@@ -15,6 +15,8 @@ std::string packet_base::get_dump_data() const { return dump(); }
 
 socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   socket_io_packet l_packet{};
+  if (in_str.empty()) throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
+
   std::size_t l_pos{};
   {
     std::int32_t l_type = in_str.front() - '0';
@@ -24,31 +26,37 @@ socket_io_packet socket_io_packet::parse(const std::string& in_str) {
   }
 
   if (l_packet.type_ == socket_io_packet_type::binary_ack || l_packet.type_ == socket_io_packet_type::binary_event) {
-    std::size_t l_size{};
-    while (in_str[++l_pos] != '-' && l_pos < in_str.size()) ++l_size;
-    l_packet.binary_count_ = std::stoll(in_str.substr(1, l_size));
-  }
-
-  if (in_str[l_pos + 1] == '/') {
-    auto l_begin = l_pos + 1;
-    std::size_t l_size{};
-    while (in_str[++l_pos] != ',' && l_pos < in_str.size()) ++l_size;
-    l_packet.namespace_ = in_str.substr(l_begin, l_size);
-  }
-  if (l_pos == in_str.size()) return l_packet;
-
-  if (auto l_id = in_str[l_pos + 1]; std::isdigit(l_id)) {
-    auto l_begin = l_pos + 1;
-    std::size_t l_size{};
-    while (std::isdigit(in_str[++l_pos]) && l_pos < in_str.size()) ++l_size;
-    l_packet.id_ = std::stoll(in_str.substr(l_begin, l_size));
-    --l_pos;
-  }
-  ++l_pos;
-  if (in_str.begin() + l_pos != in_str.end()) {
-    if (!nlohmann::json::accept(in_str.begin() + l_pos, in_str.end()))
+    std::size_t l_start = 1;
+    auto l_dash_pos     = in_str.find('-', l_start);
+    if (l_dash_pos == std::string::npos)
       throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
-    l_packet.json_data_ = nlohmann::json::parse(in_str.begin() + l_pos, in_str.end());
+    l_packet.binary_count_ = std::stoll(in_str.substr(l_start, l_dash_pos - l_start));
+    l_pos                 = l_dash_pos;
+  }
+
+  if (l_pos + 1 < in_str.size() && in_str[l_pos + 1] == '/') {
+    auto l_begin = l_pos + 1;
+    auto l_comma_pos = in_str.find(',', l_begin);
+    if (l_comma_pos == std::string::npos)
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
+    l_packet.namespace_ = in_str.substr(l_begin, l_comma_pos - l_begin);
+    l_pos              = l_comma_pos;
+  }
+  if (l_pos >= in_str.size()) return l_packet;
+
+  if (l_pos + 1 < in_str.size() && std::isdigit(static_cast<unsigned char>(in_str[l_pos + 1]))) {
+    auto l_begin = l_pos + 1;
+    auto l_cur   = l_begin;
+    while (l_cur < in_str.size() && std::isdigit(static_cast<unsigned char>(in_str[l_cur]))) ++l_cur;
+    l_packet.id_ = std::stoll(in_str.substr(l_begin, l_cur - l_begin));
+    l_pos        = l_cur - 1;
+  }
+  auto l_json_pos = l_pos + 1;
+  if (l_json_pos < in_str.size()) {
+    if (!nlohmann::json::accept(in_str.begin() + static_cast<std::ptrdiff_t>(l_json_pos), in_str.end()))
+      throw_exception(http_request_error{boost::beast::http::status::bad_request, "数据包格式错误"});
+    l_packet.json_data_ =
+        nlohmann::json::parse(in_str.begin() + static_cast<std::ptrdiff_t>(l_json_pos), in_str.end());
   } else
     l_packet.json_data_ = nlohmann::json::object();
   if (l_packet.type_ != socket_io_packet_type::connect &&
