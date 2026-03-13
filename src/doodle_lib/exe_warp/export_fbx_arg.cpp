@@ -54,6 +54,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
 
   // 检测孪生文件 LQ_EP001_SC0010.ma 和 LQ_EP001G_SC0010.ma, 他们被视为同一个文件, 需要将  LQ_EP001_SC0010.ma 重命名为
   // LQ_EP001G_SC0010.ma 以便后续正确生成排屏文件和上传
+  bool l_fix_twin_file = false;
   {
     std::vector<std::string> l_name_vec{};
     boost::split(l_name_vec, maya_file_.filename().generic_string(), boost::is_any_of("_"));
@@ -61,7 +62,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
       auto l_name_1 = fmt::format("{}_{}_{}", l_name_vec[0], l_name_vec[1], l_name_vec[2]);
       auto l_name_2 = fmt::format("{}_{}G_{}", l_name_vec[0], l_name_vec[1], l_name_vec[2]);
       if (maya_file_.filename().generic_string() == l_name_1 && l_out_arg_.maya_file_name_ == l_name_2) {
-        auto l_new_path = maya_file_.parent_path() / l_name_2;
+        auto l_new_path = maya_file_.parent_path() / "GD" / l_name_2;
         if (FSys::exists(l_new_path)) FSys::remove(l_new_path);
         if (auto parent_path = l_new_path.parent_path(); !FSys::exists(parent_path))
           FSys::create_directories(parent_path);
@@ -69,6 +70,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
         FSys::copy(maya_file_, l_new_path);
         maya_file_ = l_new_path;
         logger_ptr_->info("检测到孪生文件 {}, 已重命名为 {}", l_name_1, l_name_2);
+        l_fix_twin_file = true;
       }
     }
   }
@@ -82,6 +84,8 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   auto l_root_dir = maya_file_.parent_path().parent_path();
   constexpr static std::array<std::string_view, 3> g_movie_ext{".mp4", ".mov", ".avi"};
   if (only_upload_) {
+    // 如果只是上传, 则生成文件遵循之前的命名规范, 不区分孪生文件, 以便后续正确查找排屏文件和上传
+    if (l_fix_twin_file) l_root_dir = l_root_dir.parent_path();
     SPDLOG_LOGGER_INFO(logger_ptr_, "仅上传文件 {}", maya_file_);
     auto l_path = l_root_dir / "mov" / l_out_arg_.movie_file_.filename();
 
