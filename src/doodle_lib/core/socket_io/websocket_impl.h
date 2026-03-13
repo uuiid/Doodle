@@ -5,9 +5,8 @@
 #pragma once
 
 #include <doodle_lib/core/co_queue.h>
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/io_context.hpp>
@@ -54,8 +53,9 @@ class socket_io_websocket_core : public std::enable_shared_from_this<socket_io_w
 
   boost::asio::awaitable<void> init();
   packet_base_ptr generate_register_reply(const std::shared_ptr<sid_data>& in_data) const;
-  void async_write();
-  boost::asio::awaitable<void> async_write_websocket(packet_base_ptr in_data);
+
+  boost::asio::awaitable<void> async_write_websocket();
+  boost::asio::awaitable<void> async_write_websocket_impl(packet_base_ptr in_data);
 
  public:
   explicit socket_io_websocket_core(

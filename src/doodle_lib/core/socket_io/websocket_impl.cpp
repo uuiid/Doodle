@@ -18,6 +18,7 @@
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/bind_cancellation_slot.hpp>
 #include <boost/asio/bind_executor.hpp>
+#include <boost/asio/co_spawn.hpp>
 #include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/post.hpp>
@@ -71,16 +72,14 @@ void socket_io_websocket_core::async_run() {
 }
 void socket_io_websocket_core::write_msg() {
   if (writing_ || closing_) return;
-  boost::asio::post(strand_, boost::asio::bind_executor(strand_, [self = shared_from_this()]() {
-                      self->async_write();
-                    }));
+  boost::asio::co_spawn(strand_, async_write_websocket(), boost::asio::detached);
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // 注册
   if (const auto l_p = parse_query_data(url_); l_p.sid_.is_nil()) {
     sid_data_ = co_await sid_ctx_->generate();
-    co_await async_write_websocket(generate_register_reply(sid_data_));
+    co_await async_write_websocket_impl(generate_register_reply(sid_data_));
   } else
     sid_data_ = co_await sid_ctx_->get_sid(l_p.sid_);
 
@@ -118,41 +117,22 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
   socket_io_contexts_.clear();
 }
 
-void socket_io_websocket_core::async_write() {
-  if (writing_ || closing_) return;
-  if (!sid_data_) return;
-  if (!web_stream_) return;
-  if (sid_data_->is_timeout()) return async_close_websocket();
-  // SPDLOG_LOGGER_WARN(logger_, "thread {} async_write", std::this_thread::get_id());
-  if (auto l_ptr = sid_data_->get_message(); l_ptr) {
-    writing_ = true,
-    web_stream_->async_write(
-        boost::asio::buffer(l_ptr->get_dump_data()),
-        boost::asio::bind_executor(
-            strand_, [self = shared_from_this(), l_ptr](const boost::system::error_code& in_ec, std::size_t) {
-              self->writing_ = false;
-              if (in_ec) {
-                if (in_ec != boost::asio::error::operation_aborted) self->logger_->error(in_ec.what());
-                return self->async_close_websocket();
-              }
-              self->async_write();
-            }
-        )
-    );
-  }
-}
+boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket() {
+  co_await boost::asio::post(strand_, boost::asio::use_awaitable);
+  if (writing_ || closing_) co_return;
+  writing_ = true;
 
-boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket(packet_base_ptr in_data) {
+  while (auto l_ptr = sid_data_->get_message()) {
+    co_await async_write_websocket_impl(l_ptr);
+  }
+  writing_ = false;
+}
+boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket_impl(packet_base_ptr in_data) {
   if (!in_data) co_return;
   if (closing_) co_return;
   if (sid_data_ && sid_data_->is_timeout()) co_return async_close_websocket();
   if (!web_stream_) co_return;
 
-  // websocket write/close must be serialized on the same executor.
-  co_await boost::asio::post(strand_, boost::asio::use_awaitable);
-  if (closing_) co_return;
-
-  // default_logger_raw()->error("async_write_websocket {}", l_str);
   co_await web_stream_->async_write(boost::asio::buffer(in_data->get_dump_data()), boost::asio::use_awaitable);
 
   if (!in_data->get_binary_data().empty()) {
