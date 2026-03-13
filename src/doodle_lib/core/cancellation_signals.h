@@ -3,8 +3,15 @@
 
 namespace doodle {
 class cancellation_signals {
-  std::list<boost::asio::cancellation_signal> sigs;
+  struct signal_entry {
+    boost::asio::cancellation_signal signal;
+    bool observed_handler{false};
+  };
+
+  std::list<signal_entry> sigs;
   std::mutex mtx;
+
+  void sweep_locked();
 
  public:
   void emit(boost::asio::cancellation_type ct = boost::asio::cancellation_type::all);
