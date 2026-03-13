@@ -61,7 +61,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
       auto l_name_1 = fmt::format("{}_{}_{}", l_name_vec[0], l_name_vec[1], l_name_vec[2]);
       auto l_name_2 = fmt::format("{}_{}G_{}", l_name_vec[0], l_name_vec[1], l_name_vec[2]);
       if (maya_file_.filename().generic_string() == l_name_1 && l_out_arg_.maya_file_name_ == l_name_2) {
-        auto l_new_path = maya_file_.parent_path() / "GD" / l_name_2;
+        auto l_new_path = maya_file_.parent_path() / l_name_2;
         if (FSys::exists(l_new_path)) FSys::remove(l_new_path);
         if (auto parent_path = l_new_path.parent_path(); !FSys::exists(parent_path))
           FSys::create_directories(parent_path);
