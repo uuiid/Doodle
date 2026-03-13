@@ -9,13 +9,13 @@ Write-Host "Packaging Doodle version $DoodleVersion for Epiboly"
 
 $DoodleExePath = "E:\source\doodle\dist\win-unpacked\*"
 $DoodleOut = Convert-Path "$PSScriptRoot/../build"
+$DoodleInstallRoot = Convert-Path "$DoodleOut/install" 
+
 Remove-Item -Path "$DoodleOut/epiboly/*" -Recurse -Force
 Initialize-Doodle -OutPath "$DoodleOut/epiboly" -OnlyOne
 
 Copy-Item $DoodleExePath -Destination "$DoodleOut/epiboly" -Recurse -Force
-Expand-Archive -Path "$DoodleOut/Ninja_release/Doodle-$DoodleVersion-win64.zip" -DestinationPath "$DoodleOut/epiboly" -Force
-Copy-Item -Path "$DoodleOut/epiboly/Doodle-$DoodleVersion-win64/maya" -Destination "$DoodleOut/epiboly/maya" -Recurse -Force
-Remove-Item -Path "$DoodleOut/epiboly/Doodle-$DoodleVersion-win64" -Recurse -Force
+Copy-Item -Path "$DoodleInstallRoot/maya" -Destination "$DoodleOut/epiboly/maya" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly" -Include "*.zip" -Recurse -Force
 Remove-Item -Path "$DoodleOut/epiboly/dist" -Include "*.exe" -Recurse -Force
 
