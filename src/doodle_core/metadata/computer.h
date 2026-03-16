@@ -26,23 +26,23 @@ class computer {
   computer_status status_ = computer_status::online;
   chrono::system_zoned_time last_heartbeat_time_{chrono::current_zone(), chrono::system_clock::now()};
   uuid bot_uuid_;
+
  private:
   // to json
   friend void to_json(nlohmann::json& j, const computer& p) {
-    j["name"]   = p.name_;
-    j["ip"]     = p.ip_;
-    j["status"] = p.status_;
-    j["id"]     = p.uuid_id_;
-    j["hardware_id"] = p.hardware_id_;
+    j["name"]                = p.name_;
+    j["ip"]                  = p.ip_;
+    j["status"]              = p.status_;
+    j["id"]                  = p.uuid_id_;
+    j["hardware_id"]         = p.hardware_id_;
     j["last_heartbeat_time"] = p.last_heartbeat_time_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, computer& p) {
-    j.at("name").get_to(p.name_);
-    j.at("status").get_to(p.status_);
-    j.at("id").get_to(p.uuid_id_);
+    if (j.contains("name")) j.at("name").get_to(p.name_);
+    if (j.contains("status")) j.at("status").get_to(p.status_);
     j.at("hardware_id").get_to(p.hardware_id_);
-    j.at("last_heartbeat_time").get_to(p.last_heartbeat_time_);
+    if (j.contains("last_heartbeat_time")) j.at("last_heartbeat_time").get_to(p.last_heartbeat_time_);
   }
 };
 
