@@ -46,8 +46,8 @@ struct formatter<::doodle::episodes> : formatter<std::int32_t> {
   auto format(const ::doodle::episodes& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     auto l_out = formatter<std::int32_t>::format(in_.p_episodes, ctx);
     if (!in_.suffix_.empty())  // 如果后缀不为空, 则在集数后面添加后缀
-      l_out = format_to(l_out, "{}", in_.suffix_);
-    return l_out.out();
+      format_to(l_out, "{}", in_.suffix_);
+    return ctx.out();
   }
 };
 }  // namespace fmt
