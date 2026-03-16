@@ -15,7 +15,7 @@ episodes::episodes(std::int32_t in_episodes) : p_episodes(in_episodes) {
 episodes::episodes(const entity& in_entity)
     : p_episodes(in_entity.name_.starts_with("EP") ? std::stoi(in_entity.name_.substr(2)) : 0),
       // 如果后缀是以数字结尾的, 则为空, 如果是 A-Z 结尾的, 则取最后一个字符作为后缀
-      suffix_(std::isalpha(in_entity.name_.back()) ? std::string{1, in_entity.name_.back()} : std::string{}) {}
+      suffix_(std::isalpha(in_entity.name_.back()) ? in_entity.name_.back() : '\0') {}
 
 // Episodes::~Episodes() {
 //   if (p_metadata_flctory_ptr_)

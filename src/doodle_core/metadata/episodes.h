@@ -9,7 +9,7 @@ class DOODLE_CORE_API episodes {
  public:
   std::int32_t p_episodes;
   // 后缀
-  std::string suffix_;
+  char suffix_;
   episodes();
   explicit episodes(std::int32_t in_episodes);
   explicit episodes(const entity& in_entity);
@@ -45,7 +45,7 @@ struct formatter<::doodle::episodes> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
     auto l_out = formatter<std::int32_t>::format(in_.p_episodes, ctx);
-    if (!in_.suffix_.empty())  // 如果后缀不为空, 则在集数后面添加后缀
+    if (in_.suffix_ != '\0')  // 如果后缀不为空, 则在集数后面添加后缀
       format_to(l_out, "{}", in_.suffix_);
     return ctx.out();
   }
