@@ -3,12 +3,13 @@
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/metadata.h>
 
-
 namespace doodle {
 
 class DOODLE_CORE_API episodes {
  public:
   std::int32_t p_episodes;
+  // 后缀
+  std::string suffix_;
   episodes();
   explicit episodes(std::int32_t in_episodes);
   explicit episodes(const entity& in_entity);
@@ -43,15 +44,17 @@ template <>
 struct formatter<::doodle::episodes> : formatter<std::int32_t> {
   template <typename FormatContext>
   auto format(const ::doodle::episodes& in_, FormatContext& ctx) const -> decltype(ctx.out()) {
-    return formatter<std::int32_t>::format(in_.p_episodes, ctx);
+    auto l_out = formatter<std::int32_t>::format(in_.p_episodes, ctx);
+    if (!in_.suffix_.empty()) format_to(l_out, "{}", in_.suffix_);
+    return l_out;
   }
 };
 }  // namespace fmt
-namespace std {
-template <>
-struct hash<doodle::episodes> : hash<std::int32_t> {
-  std::size_t operator()(const doodle::episodes& value) const noexcept {
-    return hash<std::int32_t>::operator()(value.p_episodes);
-  }
-};
-}  // namespace std
+// namespace std {
+// template <>
+// struct hash<doodle::episodes> : hash<std::int32_t> {
+//   std::size_t operator()(const doodle::episodes& value) const noexcept {
+//     return hash<std::int32_t>::operator()(value.p_episodes);
+//   }
+// };
+// }  // namespace std
