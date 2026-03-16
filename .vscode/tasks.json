@@ -221,6 +221,15 @@
         "Release_Maya_2020",
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "node js socketio",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/src/test_js/test/socket_io.js"
+      ],
+      "problemMatcher": []
     }
   ],
   "inputs": [

@@ -118,7 +118,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
 }
 
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket() {
-  co_await boost::asio::post(strand_, boost::asio::use_awaitable);
+  // co_await boost::asio::post(strand_, boost::asio::use_awaitable);
   if (writing_ || closing_) co_return;
   writing_ = true;
 
