@@ -17,6 +17,7 @@
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_client/work.h>
 #include <doodle_lib/lib_warp/boost_fmt_error.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
@@ -348,6 +349,7 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
           .task_status_id_ = l_exception_ptr ? task_status::get_to_do() : task_status::get_completed(),
       }
   );
+  co_await http_work_ptr_->set_computer_status(computer_status::online);
   co_await kitsu_client_->get_next_job(task_info_.run_computer_id_);
   logger_ptr_->flush();
 }

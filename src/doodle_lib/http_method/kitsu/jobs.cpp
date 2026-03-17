@@ -31,22 +31,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, put) {
   if (l_computer_id.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺少计算机 ID"});
   auto l_computer = l_sql.get_by_uuid<computer>(l_computer_id);
-  if (l_computer.status_ != computer_status::online)
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "只能分配给在线的计算机"});
-  auto l_jobs = l_sql.get_server_tasks_by_computer_id(l_computer.uuid_id_);
-  if (l_jobs.empty()) co_return in_handle->make_msg_204();
-  auto l_job_ptr       = std::make_shared<server_task_info>(l_jobs.front());
-  l_job_ptr->status_   = server_task_info_status::running;
-  l_job_ptr->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  co_await computers_assign_task::get_instance().assign_task(*l_job_ptr);
-  co_await get_sqlite_database().update(l_job_ptr);
 
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
-      person_.person_.get_full_name(), l_job_ptr->uuid_id_, l_jobs.front().status_, l_job_ptr->status_
-  );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
+  co_await computers_assign_task::get_instance().run_next_task(l_computer_id);
+  co_return in_handle->make_msg_204();
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {

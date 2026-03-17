@@ -140,22 +140,26 @@ void http_work::run(const std::string& in_token) {
   logger_   = g_logger_ctrl().make_log("http_work");
   boost::asio::co_spawn(
       executor_, async_run(),
-      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+      )
   );
 }
 
 boost::asio::awaitable<void> http_work::async_run() {
-  const computer l_computer_data{.hardware_id_ = get_motherboard_uuid(), .name_ = boost::asio::ip::host_name()};
-  const auto l_computer_json = nlohmann::json(l_computer_data).dump();
+  this_computer_info_.hardware_id_ = get_motherboard_uuid();
+  this_computer_info_.name_        = boost::asio::ip::host_name();
+  this_computer_info_.status_      = computer_status::online;
+  const auto l_computer_json       = nlohmann::json(this_computer_info_).dump();
   const boost::urls::url l_url{core_set::get_set().server_ip + "/api/data/computers"};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
-      auto l_websocket_client = co_await make_websocket_stream(l_url);
-      co_await l_websocket_client->async_write(boost::asio::buffer(l_computer_json));
+      websocket_client_ = co_await make_websocket_stream(l_url);
+      co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
         boost::beast::flat_buffer l_msg;
-        co_await l_websocket_client->async_read(l_msg);
+        co_await websocket_client_->async_read(l_msg);
         // 处理消息
         auto l_json =
             nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
@@ -175,7 +179,19 @@ boost::asio::awaitable<void> http_work::async_run() {
 void http_work::run_task(const server_task_info& in_task_info) {
   if (in_task_info.type_ == server_task_info_type::auto_light) {
     auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, token_);
+    l_run->set_http_work_ptr(shared_from_this());
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+  }
+}
+boost::asio::awaitable<void> http_work::set_computer_status(computer_status in_status) {
+  try {
+    this_computer_info_.status_ = in_status;
+    const auto l_computer_json  = nlohmann::json(this_computer_info_).dump();
+    co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
+  } catch (const boost::system::system_error& e) {
+    SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
+  } catch (const std::exception& e) {
+    SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
   }
 }
 

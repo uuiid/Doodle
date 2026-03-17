@@ -27,15 +27,16 @@ using http_websocket_data_ptr = std::shared_ptr<detail::http_websocket_data>;
  *
  */
 
-class http_work {
+class http_work : public std::enable_shared_from_this<http_work> {
   using timer     = boost::asio::high_resolution_timer;
   using timer_ptr = std::shared_ptr<timer>;
 
   boost::asio::any_io_executor executor_{};
   logger_ptr logger_{};
   std::string token_{};
-
+  std::shared_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>> websocket_client_{};
   boost::asio::awaitable<void> async_run();
+  computer this_computer_info_;
 
  protected:
   void run_task(const server_task_info& in_task_info);
@@ -45,5 +46,6 @@ class http_work {
   ~http_work() = default;
 
   void run(const std::string& in_token);
+  boost::asio::awaitable<void> set_computer_status(computer_status in_status);
 };
 }  // namespace doodle::http

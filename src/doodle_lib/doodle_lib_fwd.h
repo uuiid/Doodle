@@ -113,4 +113,8 @@ class image_icon;
 class holidaycn_time;
 class udp_client;
 using udp_client_ptr = std::shared_ptr<udp_client>;
+
+namespace http {
+class http_work;
+}
 }  // namespace doodle

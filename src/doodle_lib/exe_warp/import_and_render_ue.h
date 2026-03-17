@@ -183,12 +183,14 @@ class run_ue_assembly_local : public run_ue_assembly_base {
 class run_ue_assembly_distributed : public run_ue_assembly_base {
   server_task_info task_info_;
   std::string token_;
-
+  std::shared_ptr<http::http_work> http_work_ptr_;
  public:
   explicit run_ue_assembly_distributed(server_task_info in_task_info, std::string in_token)
       : task_info_(std::move(in_task_info)), token_(std::move(in_token)) {}
 
   boost::asio::awaitable<void> run() override;
+
+  void set_http_work_ptr(std::shared_ptr<http::http_work> in_http_work_ptr) { http_work_ptr_ = std::move(in_http_work_ptr); }
 
  protected:
   boost::asio::awaitable<void> get_arg() override;

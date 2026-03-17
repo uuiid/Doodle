@@ -179,11 +179,11 @@ boost::asio::awaitable<void> computers_assign_task::assign_task(const server_tas
   clear_offline_computer();
   if (computer_map_.contains(in_task_info.run_computer_id_)) {
     if (auto l_ptr = computer_map_[in_task_info.run_computer_id_].lock(); l_ptr) {
-      if (l_ptr->get_computer() && l_ptr->get_computer()->uuid_id_ == in_task_info.run_computer_id_ &&
-          l_ptr->get_computer()->status_ == computer_status::free) {
+      if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
         auto l_json = (nlohmann::json{} = in_task_info).dump();
         l_ptr->write_msg(l_json);
         l_ptr->begin_write_msg();
+        l_ptr->get_computer()->status_ = computer_status::busy;
         co_return;
       }
     }
@@ -191,6 +191,32 @@ boost::asio::awaitable<void> computers_assign_task::assign_task(const server_tas
   SPDLOG_LOGGER_ERROR(
       g_logger_ctrl().get_http(), "分发任务 {} 失败，未找到在线计算机 {}，任务将无法执行", in_task_info.uuid_id_,
       in_task_info.run_computer_id_
+  );
+}
+boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_computer) {
+  DOODLE_TO_EXECUTOR(strand_);
+  clear_offline_computer();
+  if (computer_map_.contains(in_computer)) {
+    if (auto l_ptr = computer_map_[in_computer].lock(); l_ptr) {
+      if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
+        auto l_sql  = get_sqlite_database();
+        auto l_jobs = l_sql.get_server_tasks_by_computer_id(in_computer);
+        if (l_jobs.empty()) {
+          l_ptr->get_computer()->status_ = computer_status::online;
+          co_return;
+        }
+        auto l_job_ptr     = std::make_shared<server_task_info>(l_jobs.front());
+        l_job_ptr->status_ = server_task_info_status::running;
+        co_await l_sql.update(l_job_ptr);
+        auto l_json = (nlohmann::json{} = *l_job_ptr);
+        l_ptr->write_msg(l_json.dump());
+        l_ptr->begin_write_msg();
+      }
+    }
+  }
+  SPDLOG_LOGGER_ERROR(
+      g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务失败，未找到在线计算机，计算机将无法继续执行任务",
+      in_computer
   );
 }
 void data_computers::websocket_callback(
