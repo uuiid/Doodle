@@ -476,22 +476,14 @@ class ffmpeg_video::impl {
         pick_first_supported_pix_fmt(output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat())
     );
     // 设置码率 vbr 目标 9.9 mpbs
-    constexpr static int k_bitrate = 9'900'000;
+    // constexpr static int k_bitrate = 9'900'000;
     // output_handle_.video_enc_ctx_.setBitRate(k_bitrate);
     // output_handle_.video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 3 / 2});
-    output_handle_.video_enc_ctx_.setOption("crf", "23");
+    output_handle_.video_enc_ctx_.setOption("crf", "23", AV_OPT_SEARCH_CHILDREN);
     output_handle_.video_enc_ctx_.setOption("preset", "medium");
-    // 可选：VBV 约束（用于限制瞬时码率/缓冲，便于对接带宽或播放器要求）。
-    // output_handle_.video_enc_ctx_.setOption("maxrate", std::to_string(k_bitrate * 3 / 2));
-    // output_handle_.video_enc_ctx_.setOption("bufsize", std::to_string(k_bitrate));
-    // // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
-    // output_handle_.video_enc_ctx_.setBitRate(0);
-    // output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
-
-    // output_handle_.video_enc_ctx_.setOption("crf", std::to_string(video_rate_control_.crf_));
-    // if (!video_rate_control_.preset_.empty()) {
-    //   output_handle_.video_enc_ctx_.setOption("preset", video_rate_control_.preset_);
-    // }
+    // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
+    output_handle_.video_enc_ctx_.setBitRate(0);
+    output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
     // // 可选：VBV 约束（用于限制瞬时码率/缓冲，便于对接带宽或播放器要求）。
     // if (video_rate_control_.vbv_maxrate_ > 0) {
     //   output_handle_.video_enc_ctx_.setOption("maxrate", std::to_string(video_rate_control_.vbv_maxrate_));
