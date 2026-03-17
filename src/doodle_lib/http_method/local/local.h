@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <doodle_lib/core/http/http_function.h>
+#include <memory>
 namespace doodle::http::local {
 
 class local_http_fun : public http_function {

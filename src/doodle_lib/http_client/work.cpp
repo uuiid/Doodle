@@ -164,6 +164,9 @@ boost::asio::awaitable<void> http_work::async_run() {
         auto l_json =
             nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
         auto l_data = l_json.get<server_task_info>();
+        l_data.uuid_id_ = l_json.at("id").get<uuid>();
+        l_data.command_ = l_json.at("command");
+        
         SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
         run_task(l_data);
       }
