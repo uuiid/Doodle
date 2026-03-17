@@ -5,6 +5,7 @@
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/auto_task.h>
+#include <doodle_lib/http_method/kitsu/computers.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -56,6 +57,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   l_ptr->command_ = auto_task::shot_render_light(project_id_, id_);
 #endif
   co_await get_sqlite_database().install(l_ptr);
+  co_await computers_assign_task::get_instance().assign_task(*l_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,

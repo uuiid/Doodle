@@ -81,15 +81,26 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::asio::awaitable<void> async_run() {
     co_await init();
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
-    boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
 
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      // boost::beast::flat_buffer l_buffer{};
-      std::string l_body{};
-      auto l_buffer = boost::asio::dynamic_buffer(l_body);
-      if (!web_stream_) co_return;
-      co_await web_stream_->async_read(l_buffer);
+    {
+      boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
+      while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
+             boost::asio::cancellation_type::none) {
+        // boost::beast::flat_buffer l_buffer{};
+        std::string l_body{};
+        auto l_buffer = boost::asio::dynamic_buffer(l_body);
+        if (!web_stream_) co_return;
+        co_await web_stream_->async_read(l_buffer);
+        auto l_json = nlohmann::json::parse(
+            boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data())
+        );
+        computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+        computer_->status_              = l_json.get<computer>().status_;
+        auto l_sql                      = get_sqlite_database();
+        co_await l_sql.update(computer_);
+      }
     }
+    co_await web_stream_->async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
   }
   boost::asio::awaitable<void> write_websocket() {
     if (writing_ || should_close_) co_return;
@@ -169,7 +180,7 @@ boost::asio::awaitable<void> computers_assign_task::assign_task(const server_tas
   if (computer_map_.contains(in_task_info.run_computer_id_)) {
     if (auto l_ptr = computer_map_[in_task_info.run_computer_id_].lock(); l_ptr) {
       if (l_ptr->get_computer() && l_ptr->get_computer()->uuid_id_ == in_task_info.run_computer_id_ &&
-          l_ptr->get_computer()->status_ == computer_status::online) {
+          l_ptr->get_computer()->status_ == computer_status::free) {
         auto l_json = (nlohmann::json{} = in_task_info).dump();
         l_ptr->write_msg(l_json);
         l_ptr->begin_write_msg();
