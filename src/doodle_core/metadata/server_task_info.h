@@ -116,7 +116,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   server_task_info_type type_{};
   std::string last_line_log_;
-  FSys::path result_path_;
 
   struct run_time_info_t {
     zoned_time start_time_{chrono::current_zone(), chrono::system_clock::now()};
@@ -175,7 +174,6 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["type"]            = p.type_;
     j["last_line_log"]   = p.last_line_log_;
     j["run_time_info"]   = p.run_time_info_;
-    j["result_path"]     = p.result_path_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {

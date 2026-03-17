@@ -1,5 +1,8 @@
+#include "computers.h"
+
 #include "doodle_core/metadata/computer.h"
 
+#include "doodle_lib_fwd.h"
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
@@ -45,6 +48,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
 
   boost::asio::awaitable<void> async_run() {
     co_await init();
+    co_await computers_assign_task::get_instance().register_computer(shared_from_this());
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       // boost::beast::flat_buffer l_buffer{};
       std::string l_body{};
@@ -83,12 +87,12 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))) {}
   ~data_computers_socket_io_impl() {
     if (!computer_) return;
-    // if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了, 因为程序退出会导致数据库连接不可用
-    auto l_sql        = get_sqlite_database();
+    // if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了,
+    // 因为程序退出会导致数据库连接不可用
+    auto l_sql         = get_sqlite_database();
     computer_->status_ = computer_status::offline;
     l_sql.update_sync(computer_);
     socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);
- 
   }
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
@@ -102,6 +106,17 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     );
   }
 };
+
+computers_assign_task& computers_assign_task::get_instance() {
+  static computers_assign_task l_instance{};
+  return l_instance;
+}
+boost::asio::awaitable<void> computers_assign_task::register_computer(
+    std::shared_ptr<data_computers_socket_io_impl> in_computer
+) {
+  DOODLE_TO_EXECUTOR(strand_);
+  computers_.emplace_back(in_computer);
+}
 
 void data_computers::websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle

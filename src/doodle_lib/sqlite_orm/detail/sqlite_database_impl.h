@@ -229,7 +229,6 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("kitsu_task_id", &server_task_info::kitsu_task_id_),            //
           make_column("type", &server_task_info::type_),
           make_column("run_time_info", &server_task_info::run_time_info_),
-          make_column("result_path", &server_task_info::result_path_),
           foreign_key(&server_task_info::submitter_).references(&person::uuid_id_).on_delete.cascade(),
           foreign_key(&server_task_info::run_computer_id_).references(&computer::uuid_id_).on_delete.set_null(),
           foreign_key(&server_task_info::kitsu_task_id_).references(&server_task_info::uuid_id_).on_delete.cascade()

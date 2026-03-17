@@ -59,6 +59,7 @@ DOODLELIB_API entt::registry::context& g_ctx();
 class doodle_lib;
 class doodle_lib;
 class sqlite_database;
+class server_task_info;
 using doodle_lib_ptr = std::shared_ptr<doodle_lib>;
 
 namespace movie {

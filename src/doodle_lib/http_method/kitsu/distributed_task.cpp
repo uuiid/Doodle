@@ -34,6 +34,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);
+  l_ptr->status_      = server_task_info_status::submitted;
+  l_ptr->submitter_   = person_.person_.uuid_id_;
+  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
+  l_ptr->type_        = server_task_info_type::auto_light;
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   if (l_ptr->run_computer_id_.is_nil()) {
     auto l_all_computer = l_sql.get_all<computer>();
@@ -48,9 +52,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
     std::uniform_int_distribution<> dis(0, l_online_computer.size() - 1);
     l_ptr->run_computer_id_ = l_online_computer[dis(gen)].uuid_id_;
   }
-  l_ptr->kitsu_task_id_ = id_;
-  l_ptr->command_       = auto_task::shot_render_light(project_id_, id_);
-
+#ifdef NDEBUG
+  l_ptr->command_ = auto_task::shot_render_light(project_id_, id_);
+#endif
   co_await get_sqlite_database().install(l_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",

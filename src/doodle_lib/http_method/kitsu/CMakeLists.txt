@@ -10,7 +10,8 @@ target_sources(
         comment.h
         computing_time.h
         auto_task.h
-
+        computers.h
+        
         PRIVATE
         kitsu_reg_url.cpp
         task.cpp
