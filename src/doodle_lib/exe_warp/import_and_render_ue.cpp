@@ -348,6 +348,7 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
           .task_status_id_ = l_exception_ptr ? task_status::get_to_do() : task_status::get_completed(),
       }
   );
+  co_await kitsu_client_->get_next_job(task_info_.run_computer_id_);
   logger_ptr_->flush();
 }
 

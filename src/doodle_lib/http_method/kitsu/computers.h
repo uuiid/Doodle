@@ -29,6 +29,8 @@ class computers_assign_task : public boost::noncopyable {
   boost::asio::awaitable<void> register_computer(std::shared_ptr<data_computers_socket_io_impl> in_computer);
   // 分发任务
   boost::asio::awaitable<void> assign_task(const server_task_info& in_task_info);
+  // 让计算机运行下一个任务
+  boost::asio::awaitable<void> run_next_task(std::shared_ptr<data_computers_socket_io_impl> in_computer);
 };
 
 }  // namespace doodle::http
