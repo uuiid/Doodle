@@ -324,11 +324,14 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
       spdlog::thread_pool()
   );
   kitsu_client_ = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  kitsu_client_->set_logger(logger_ptr_);
+  kitsu_client_->set_token(token_);
+  auto l_kitsu_client_2 = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_kitsu_client_2->set_logger(logger_ptr_);
+  l_kitsu_client_2->set_token(token_);
   // 这里使用两个不同的客户端, 防止日志发送和获取参数互相干扰
   logger_ptr_->sinks().emplace_back(
-      std::make_shared<run_ue_assembly_distributed_sink_mt>(
-          std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip), task_info_.uuid_id_
-      )
+      std::make_shared<run_ue_assembly_distributed_sink_mt>(l_kitsu_client_2, task_info_.uuid_id_)
   );
   std::exception_ptr l_exception_ptr{};
   std::string l_error_msg{};
