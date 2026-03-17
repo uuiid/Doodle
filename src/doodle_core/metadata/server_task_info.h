@@ -174,6 +174,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["type"]            = p.type_;
     j["last_line_log"]   = p.last_line_log_;
     j["run_time_info"]   = p.run_time_info_;
+    j["command"]         = p.command_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {

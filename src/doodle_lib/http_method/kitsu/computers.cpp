@@ -211,6 +211,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_comput
         auto l_json = (nlohmann::json{} = *l_job_ptr);
         l_ptr->write_msg(l_json.dump());
         l_ptr->begin_write_msg();
+        co_return;
       }
     }
   }
