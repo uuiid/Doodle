@@ -2,6 +2,8 @@
 
 #include "doodle_core/metadata/computer.h"
 
+#include "doodle_lib/core/app_base.h"
+#include "doodle_lib/core/http/http_function.h"
 #include "doodle_lib_fwd.h"
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
@@ -13,10 +15,10 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/consign.hpp>
 #include <boost/beast/websocket/stream.hpp>
+#include <boost/scope/scope_exit.hpp>
 
-#include "core/app_base.h"
-#include "core/http/http_function.h"
 #include <memory>
+#include <string>
 
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
@@ -46,17 +48,9 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<computer> computer_;
 
-  boost::asio::awaitable<void> async_run() {
-    co_await init();
-    co_await computers_assign_task::get_instance().register_computer(shared_from_this());
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      // boost::beast::flat_buffer l_buffer{};
-      std::string l_body{};
-      auto l_buffer = boost::asio::dynamic_buffer(l_body);
-      if (!web_stream_) co_return;
-      co_await web_stream_->async_read(l_buffer);
-    }
-  }
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_;
+  boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
+  std::atomic<bool> writing_{false}, should_close_{false};
 
   // 第一步, 等待计算机发送自身信息, 第二步, 将计算机信息保存到数据库
   boost::asio::awaitable<void> init() {
@@ -81,25 +75,66 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       co_await l_sql.install(computer_);
     }
   }
+  void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
+  friend class computers_assign_task;
+
+  boost::asio::awaitable<void> async_run() {
+    co_await init();
+    co_await computers_assign_task::get_instance().register_computer(shared_from_this());
+    boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
+
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      // boost::beast::flat_buffer l_buffer{};
+      std::string l_body{};
+      auto l_buffer = boost::asio::dynamic_buffer(l_body);
+      if (!web_stream_) co_return;
+      co_await web_stream_->async_read(l_buffer);
+    }
+  }
+  boost::asio::awaitable<void> write_websocket() {
+    if (writing_ || should_close_) co_return;
+    writing_ = true;
+    boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { writing_ = false; }};
+
+    while (!message_queue_.empty()) {
+      std::string l_msg{};
+      message_queue_.pop(l_msg);
+      if (!web_stream_) break;
+      co_await web_stream_->async_write(boost::asio::buffer(l_msg), boost::asio::use_awaitable);
+    }
+  }
 
  public:
   explicit data_computers_socket_io_impl(boost::beast::websocket::stream<http::tcp_stream_type> in_stream)
-      : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))) {}
+      : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))),
+        strand_(boost::asio::make_strand(g_io_context())) {}
+
   ~data_computers_socket_io_impl() {
     if (!computer_) return;
     // if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了,
     // 因为程序退出会导致数据库连接不可用
-    auto l_sql         = get_sqlite_database();
-    computer_->status_ = computer_status::offline;
+    auto l_sql                      = get_sqlite_database();
+    computer_->status_              = computer_status::offline;
+    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     l_sql.update_sync(computer_);
     socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);
   }
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
+  std::shared_ptr<computer> get_computer() const { return computer_; }
 
   void run() {
     boost::asio::co_spawn(
         g_io_context(), async_run(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+        )
+    );
+  }
+  void begin_write_msg() {
+    if (writing_ || should_close_) return;
+    boost::asio::co_spawn(
+        strand_, write_websocket(),
         boost::asio::bind_cancellation_slot(
             app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
         )
@@ -115,9 +150,38 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
   DOODLE_TO_EXECUTOR(strand_);
-  computers_.emplace_back(in_computer);
+  computer_map_.emplace(in_computer->get_computer()->uuid_id_, in_computer);
 }
-
+void computers_assign_task::clear_offline_computer() {
+  for (auto it = computer_map_.begin(); it != computer_map_.end();) {
+    if (auto l_ptr = it->second.lock()) {
+      if (l_ptr->get_computer()) {
+        ++it;
+        continue;
+      }
+    }
+    it = computer_map_.erase(it);
+  }
+}
+boost::asio::awaitable<void> computers_assign_task::assign_task(const server_task_info& in_task_info) {
+  DOODLE_TO_EXECUTOR(strand_);
+  clear_offline_computer();
+  if (computer_map_.contains(in_task_info.run_computer_id_)) {
+    if (auto l_ptr = computer_map_[in_task_info.run_computer_id_].lock(); l_ptr) {
+      if (l_ptr->get_computer() && l_ptr->get_computer()->uuid_id_ == in_task_info.run_computer_id_ &&
+          l_ptr->get_computer()->status_ == computer_status::online) {
+        auto l_json = (nlohmann::json{} = in_task_info).dump();
+        l_ptr->write_msg(l_json);
+        l_ptr->begin_write_msg();
+        co_return;
+      }
+    }
+  }
+  SPDLOG_LOGGER_ERROR(
+      g_logger_ctrl().get_http(), "分发任务 {} 失败，未找到在线计算机 {}，任务将无法执行", in_task_info.uuid_id_,
+      in_task_info.run_computer_id_
+  );
+}
 void data_computers::websocket_callback(
     boost::beast::websocket::stream<http::tcp_stream_type> in_stream, http::session_data_ptr in_handle
 ) {
