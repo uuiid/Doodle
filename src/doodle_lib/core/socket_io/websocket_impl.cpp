@@ -121,11 +121,11 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket() {
   // co_await boost::asio::post(strand_, boost::asio::use_awaitable);
   if (writing_ || closing_) co_return;
   writing_ = true;
-
+  boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { writing_ = false; }};
+  
   while (auto l_ptr = sid_data_->get_message()) {
     co_await async_write_websocket_impl(l_ptr);
   }
-  writing_ = false;
 }
 boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket_impl(packet_base_ptr in_data) {
   if (!in_data) co_return;
