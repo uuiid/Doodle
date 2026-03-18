@@ -94,7 +94,7 @@ boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   if (db_handle) sqlite3_wal_checkpoint_v2(db_handle, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
   if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
   impl_->storage_any_.backup_to(in_path.generic_string());
-  impl_->storage_any_.vacuum();
+  // impl_->storage_any_.vacuum();
   DOODLE_TO_SELF();
 }
 
