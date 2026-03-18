@@ -35,7 +35,6 @@
 #include <string_view>
 #include <system_error>
 
-
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavfilter/buffersrc.h>
@@ -480,10 +479,10 @@ class ffmpeg_video::impl {
     // output_handle_.video_enc_ctx_.setBitRate(k_bitrate);
     // output_handle_.video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 3 / 2});
     output_handle_.video_enc_ctx_.setOption("crf", "23", AV_OPT_SEARCH_CHILDREN);
-    output_handle_.video_enc_ctx_.setOption("preset", "medium");
+    // output_handle_.video_enc_ctx_.setOption("preset", "medium");
     // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
-    output_handle_.video_enc_ctx_.setBitRate(0);
-    output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
+    // output_handle_.video_enc_ctx_.setBitRate(0);
+    // output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
     // // 可选：VBV 约束（用于限制瞬时码率/缓冲，便于对接带宽或播放器要求）。
     // if (video_rate_control_.vbv_maxrate_ > 0) {
     //   output_handle_.video_enc_ctx_.setOption("maxrate", std::to_string(video_rate_control_.vbv_maxrate_));
@@ -1089,6 +1088,7 @@ class ffmpeg_video_resize::impl {
       video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(h264_codec_, AV_PIX_FMT_YUV420P));
       // 设置码率 vbr 目标 9.9 mpbs
       // constexpr static int k_bitrate = 9'900'000;
+      video_enc_ctx_.setOption("crf", "23", AV_OPT_SEARCH_CHILDREN);
       // video_enc_ctx_.setBitRate(k_bitrate);
       // video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 2});
 
