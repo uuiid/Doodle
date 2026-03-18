@@ -337,6 +337,7 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   );
   std::exception_ptr l_exception_ptr{};
   std::string l_error_msg{};
+  logger_ptr_->warn("开始运行分布式UE组装和渲染任务 {}", task_info_.uuid_id_);
   try {
     co_await run_ue_assembly_base::run();
   } catch (...) {
