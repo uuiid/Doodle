@@ -63,6 +63,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
       g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
       person_.person_.get_full_name(), job_id_, l_job.status_, l_job_ptr->status_
   );
+
+  if (l_job_ptr->run_computer_id_ != l_job.run_computer_id_) {
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "任务 {} 分配的计算机由 {} 变更为 {}, 将尝试让新计算机执行任务",
+        l_job_ptr->uuid_id_, l_job.run_computer_id_, l_job_ptr->run_computer_id_
+    );
+    co_await computers_assign_task::get_instance().run_next_task(l_job_ptr->run_computer_id_);
+  }
   socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
