@@ -42,8 +42,6 @@ target_compile_options(test_main PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 add_subdirectory(core)
-add_subdirectory(lib)
-add_subdirectory(math)
 add_subdirectory(ai)
 add_subdirectory(http_client)
 add_subdirectory(fbx_abc)

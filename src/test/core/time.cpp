@@ -2,9 +2,9 @@
 // Created by TD on 2022/9/20.
 //
 
+#include <doodle_core/doodle_core.h>
 #include <doodle_core/metadata/rules.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_core/doodle_core.h>
 
 #include <doodle_lib/core/doodle_lib.h>
 #include <doodle_lib/time_tool/work_clock.h>
@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <fmt/core.h>
+
 
 using namespace doodle;
 
