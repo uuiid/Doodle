@@ -355,9 +355,8 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
             .task_status_id_ = task_status::get_to_do(),
         }
     );
-  co_await http_work_ptr_->set_computer_status(computer_status::online);
-  co_await kitsu_client_->get_next_job(task_info_.run_computer_id_);
   logger_ptr_->flush();
+  co_await http_work_ptr_->set_computer_status(computer_status::online);
 }
 
 }  // namespace doodle

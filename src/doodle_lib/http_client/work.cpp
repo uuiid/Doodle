@@ -150,11 +150,11 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.hardware_id_ = get_motherboard_uuid();
   this_computer_info_.name_        = boost::asio::ip::host_name();
   this_computer_info_.status_      = computer_status::online;
-  const auto l_computer_json       = nlohmann::json(this_computer_info_).dump();
   const boost::urls::url l_url{core_set::get_set().server_ip + "/api/data/computers"};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
-      websocket_client_ = co_await make_websocket_stream(l_url);
+      websocket_client_          = co_await make_websocket_stream(l_url);
+      const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
       co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
@@ -163,10 +163,10 @@ boost::asio::awaitable<void> http_work::async_run() {
         // 处理消息
         auto l_json =
             nlohmann::json::parse(boost::asio::buffers_begin(l_msg.data()), boost::asio::buffers_end(l_msg.data()));
-        auto l_data = l_json.get<server_task_info>();
+        auto l_data     = l_json.get<server_task_info>();
         l_data.uuid_id_ = l_json.at("id").get<uuid>();
         l_data.command_ = l_json.at("command");
-        
+
         SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
         run_task(l_data);
       }

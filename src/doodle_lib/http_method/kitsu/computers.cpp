@@ -17,6 +17,7 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -63,17 +64,15 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = get_sqlite_database();
     using namespace sqlite_orm;
-    if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_)) != 0) {
+    if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_)) == 0) {
       *computer_ =
           l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_))
               .front();
-      computer_->status_ = computer_status::online;
-      computer_->name_   = computer_->name_;
-      co_await l_sql.update(computer_);
-    } else {
-      computer_->status_ = computer_status::online;
+
       co_await l_sql.install(computer_);
     }
+    //
+    co_await set_computer_status(*computer_);
   }
   void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
   friend class computers_assign_task;
@@ -94,10 +93,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
         auto l_json = nlohmann::json::parse(
             boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data())
         );
-        computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-        computer_->status_              = l_json.get<computer>().status_;
-        auto l_sql                      = get_sqlite_database();
-        co_await l_sql.update(computer_);
+        auto l_computer = l_json.get<computer>();
+        co_await set_computer_status(l_computer);
       }
     }
     co_await web_stream_->async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
@@ -113,6 +110,31 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       if (!web_stream_) break;
       co_await web_stream_->async_write(boost::asio::buffer(l_msg), boost::asio::use_awaitable);
     }
+  }
+  boost::asio::awaitable<void> set_computer_status(std::reference_wrapper<computer> in_computer) {
+    computer_->status_              = in_computer.get().status_;
+    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+    auto l_sql                      = get_sqlite_database();
+    if (computer_->status_ == computer_status::online) {
+      auto l_sql  = get_sqlite_database();
+      auto l_jobs = l_sql.get_server_tasks_by_computer_id(computer_->uuid_id_);
+      if (l_jobs.empty()) {
+        computer_->status_ = computer_status::online;
+        co_return;
+      }
+      auto l_job_ptr     = std::make_shared<server_task_info>(l_jobs.front());
+      l_job_ptr->status_ = server_task_info_status::running;
+      co_await l_sql.update(l_job_ptr);
+      auto l_json = (nlohmann::json{} = *l_job_ptr);
+      SPDLOG_LOGGER_ERROR(
+          g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_, computer_->uuid_id_
+      );
+      write_msg(l_json.dump());
+      begin_write_msg();
+    } else {
+      co_await l_sql.update(computer_);
+    }
+    socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);
   }
 
  public:

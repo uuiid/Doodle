@@ -24,17 +24,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, get) {
   auto l_jobs = l_sql.get_all<server_task_info>();
   co_return in_handle->make_msg(nlohmann::json{} = l_jobs);
 }
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, put) {
-  person_.check_not_outsourcer();
-  auto l_sql         = get_sqlite_database();
-  auto l_computer_id = in_handle->get_json().at("id").get<uuid>();
-  if (l_computer_id.is_nil())
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺少计算机 ID"});
-  auto l_computer = l_sql.get_by_uuid<computer>(l_computer_id);
-
-  co_await computers_assign_task::get_instance().run_next_task(l_computer_id);
-  co_return in_handle->make_msg_204();
-}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {
   person_.check_not_outsourcer();
