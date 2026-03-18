@@ -57,12 +57,30 @@ auto pick_first_supported_pix_fmt(const av::Codec& codec, av::PixelFormat fallba
   return fallback;
 }
 
+auto pick_h264_pix_fmt(const av::Codec& codec, av::PixelFormat fallback) -> av::PixelFormat {
+  auto fmts = codec.supportedPixelFormats();
+  for (auto&& fmt : fmts) {
+    if (fmt == av::PixelFormat{AV_PIX_FMT_YUV420P}) return fmt;
+  }
+  return pick_first_supported_pix_fmt(codec, fallback);
+}
+
 auto pick_first_supported_sample_fmt(const av::Codec& codec, av::SampleFormat fallback) -> av::SampleFormat {
   auto fmts = codec.supportedSampleFormats();
   for (auto&& fmt : fmts) {
     if (fmt != av::SampleFormat{AV_SAMPLE_FMT_NONE}) return fmt;
   }
   return fallback;
+}
+
+auto pick_h264_encoder_for_crf() -> av::Codec {
+  // CRF is an x264 private option; prefer libx264 to avoid silently selecting
+  // another H.264 encoder that ignores "crf".
+  auto codec = av::findEncodingCodec(std::string{"libx264"});
+  if (codec.isEncoder()) {
+    return codec;
+  }
+  return av::findEncodingCodec(AV_CODEC_ID_H264);
 }
 
 auto pick_channel_layout(uint64_t preferred, const av::Codec& codec) -> uint64_t {
@@ -463,7 +481,7 @@ class ffmpeg_video::impl {
 
   void open_output_video(const FSys::path& out_path) {
     output_handle_.format_context_.openOutput(out_path.string());
-    output_handle_.h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
+    output_handle_.h264_codec_ = pick_h264_encoder_for_crf();
     DOODLE_CHICK(output_handle_.h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
 
     const static av::Rational l_video_tb{1, g_fps};
@@ -472,17 +490,17 @@ class ffmpeg_video::impl {
     output_handle_.video_enc_ctx_.setHeight(input_video_handle_.video_dec_ctx_.height());
     output_handle_.video_enc_ctx_.setTimeBase(l_video_tb);
     output_handle_.video_enc_ctx_.setPixelFormat(
-        pick_first_supported_pix_fmt(output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat())
+      pick_h264_pix_fmt(output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat())
     );
+    // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
+    output_handle_.video_enc_ctx_.setBitRate(0);
+    output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
     // 设置码率 vbr 目标 9.9 mpbs
     // constexpr static int k_bitrate = 9'900'000;
     // output_handle_.video_enc_ctx_.setBitRate(k_bitrate);
     // output_handle_.video_enc_ctx_.setBitRateRange({k_bitrate / 2, k_bitrate * 3 / 2});
+    output_handle_.video_enc_ctx_.setOption("preset", "medium");
     output_handle_.video_enc_ctx_.setOption("crf", "23", AV_OPT_SEARCH_CHILDREN);
-    // output_handle_.video_enc_ctx_.setOption("preset", "medium");
-    // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
-    // output_handle_.video_enc_ctx_.setBitRate(0);
-    // output_handle_.video_enc_ctx_.setBitRateRange({0, 0});
     // // 可选：VBV 约束（用于限制瞬时码率/缓冲，便于对接带宽或播放器要求）。
     // if (video_rate_control_.vbv_maxrate_ > 0) {
     //   output_handle_.video_enc_ctx_.setOption("maxrate", std::to_string(video_rate_control_.vbv_maxrate_));
@@ -700,6 +718,9 @@ class ffmpeg_video::impl {
 
   void encode_video_frame(av::VideoFrame& in_frame) {
     // SPDLOG_WARN("帧时间 {}", output_handle_.video_next_pts_.seconds());
+    // Avoid forcing source frame types into encoder. Let x264 decide I/P/B by rate control.
+    in_frame.raw()->pict_type = AV_PICTURE_TYPE_NONE;
+    in_frame.raw()->flags &= ~AV_FRAME_FLAG_KEY;
     in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
     in_frame.setPts(output_handle_.video_next_pts_);
     output_handle_.video_next_pts_ += av::Timestamp{1, output_handle_.video_next_pts_.timebase()};
@@ -1077,7 +1098,7 @@ class ffmpeg_video_resize::impl {
     }
 
     void open_output_video(int width, int height) {
-      h264_codec_ = av::findEncodingCodec(AV_CODEC_ID_H264);
+      h264_codec_ = pick_h264_encoder_for_crf();
       DOODLE_CHICK(h264_codec_.isEncoder(), "ffmpeg_video: cannot find h264 encoder");
 
       const static av::Rational l_video_tb{1, g_fps};
@@ -1085,8 +1106,8 @@ class ffmpeg_video_resize::impl {
       video_enc_ctx_.setWidth(width);
       video_enc_ctx_.setHeight(height);
       video_enc_ctx_.setTimeBase(l_video_tb);
-      video_enc_ctx_.setPixelFormat(pick_first_supported_pix_fmt(h264_codec_, AV_PIX_FMT_YUV420P));
-      video_enc_ctx_.setOption("crf", "23", AV_OPT_SEARCH_CHILDREN);
+      video_enc_ctx_.setPixelFormat(pick_h264_pix_fmt(h264_codec_, AV_PIX_FMT_YUV420P));
+      video_enc_ctx_.setOption("crf", "23.0", AV_OPT_SEARCH_CHILDREN);
 
       video_enc_ctx_.open();
 
@@ -1218,6 +1239,9 @@ class ffmpeg_video_resize::impl {
     }
     void encode_video_frame(av::VideoFrame& in_frame) {
       // SPDLOG_WARN("帧时间 {}", video_next_pts_.seconds());
+      // Avoid forcing source frame types into encoder. Let x264 decide I/P/B by rate control.
+      in_frame.raw()->pict_type = AV_PICTURE_TYPE_NONE;
+      in_frame.raw()->flags &= ~AV_FRAME_FLAG_KEY;
       in_frame.setTimeBase(video_next_pts_.timebase());
       in_frame.setPts(video_next_pts_);
       video_next_pts_ += av::Timestamp{1, video_next_pts_.timebase()};
