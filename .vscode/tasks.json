@@ -271,9 +271,10 @@
         "fileName": "${workspaceFolder}/.vscode/test_list.json",
         "fileFormat": "json",
         "description": "选择测试",
-        "jsonOption": [
-          "content.options[__itemIdx__]"
-        ]
+        "jsonOption": {
+          "label": "content.options[__itemIdx__]",
+          "value": "content.options[__itemIdx__]"
+        },
       }
     }
   ]
