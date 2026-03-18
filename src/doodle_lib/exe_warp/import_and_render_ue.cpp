@@ -271,7 +271,7 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
   }
   co_await kitsu_client_->comment_task(
       kitsu::kitsu_client::comment_task_arg{
-          .task_id_             = shot_task_id_,
+          .task_id_             = arg_.shot_task_id_,
           .comment_             = "UE组装和渲染完成, 已上传合成视频",
           .attach_files_        = arg_.create_move_path_,
           .task_status_id_      = task_status::get_completed(),
@@ -283,6 +283,8 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
 boost::asio::awaitable<void> run_ue_assembly_local::get_arg() {
   auto l_arg_json = co_await kitsu_client_->get_ue_assembly(project_id_, shot_task_id_);
   l_arg_json.get_to(arg_);
+  arg_.project_id_   = project_id_;
+  arg_.shot_task_id_ = shot_task_id_;
   co_return;
 }
 
@@ -344,14 +346,14 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   }
   task_info_.status_ = l_exception_ptr ? server_task_info_status::failed : server_task_info_status::completed;
   co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
-
-  co_await kitsu_client_->comment_task(
-      kitsu::kitsu_client::comment_task_arg{
-          .task_id_        = shot_task_id_,
-          .comment_        = l_exception_ptr ? fmt::format("UE组装和渲染发生错误: {}", l_error_msg) : "成功完成任务",
-          .task_status_id_ = l_exception_ptr ? task_status::get_to_do() : task_status::get_completed(),
-      }
-  );
+  if (l_exception_ptr)
+    co_await kitsu_client_->comment_task(
+        kitsu::kitsu_client::comment_task_arg{
+            .task_id_        = arg_.shot_task_id_,
+            .comment_        = fmt::format("UE组装和渲染发生错误: {}", l_error_msg),
+            .task_status_id_ = task_status::get_to_do(),
+        }
+    );
   co_await http_work_ptr_->set_computer_status(computer_status::online);
   co_await kitsu_client_->get_next_job(task_info_.run_computer_id_);
   logger_ptr_->flush();

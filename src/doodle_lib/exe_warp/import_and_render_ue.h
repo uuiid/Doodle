@@ -96,6 +96,10 @@ struct run_ue_assembly_arg {
   FSys::path create_move_path_;  // 合成视屏的路径
   shot shot_;
   episodes episodes_;
+
+  uuid shot_task_id_{};
+  uuid project_id_{};
+
   // to josn
   friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
     j["files"]                 = p.asset_infos_;
@@ -119,6 +123,8 @@ struct run_ue_assembly_arg {
     j["create_move_path"]      = p.create_move_path_;
     j["shot"]                  = p.shot_;
     j["episodes"]              = p.episodes_;
+    j["shot_task_id"]          = p.shot_task_id_;
+    j["project_id"]            = p.project_id_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
@@ -143,6 +149,8 @@ struct run_ue_assembly_arg {
     j.at("create_move_path").get_to(p.create_move_path_);
     j.at("shot").get_to(p.shot_);
     j.at("episodes").get_to(p.episodes_);
+    j.at("shot_task_id").get_to(p.shot_task_id_);
+    j.at("project_id").get_to(p.project_id_);
   }
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
@@ -160,8 +168,6 @@ class run_ue_assembly_base : public async_task {
  public:
   boost::asio::awaitable<void> run() override;
 
-  uuid shot_task_id_{};
-  uuid project_id_{};
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
 
   boost::signals2::signal<void(const server_task_info::run_time_info_t&)> on_run_time_info_;
@@ -175,6 +181,10 @@ class run_ue_assembly_base : public async_task {
 };
 
 class run_ue_assembly_local : public run_ue_assembly_base {
+ public:
+  uuid shot_task_id_{};
+  uuid project_id_{};
+
  protected:
   boost::asio::awaitable<void> get_arg() override;
 };
@@ -184,13 +194,16 @@ class run_ue_assembly_distributed : public run_ue_assembly_base {
   server_task_info task_info_;
   std::string token_;
   std::shared_ptr<http::http_work> http_work_ptr_;
+
  public:
   explicit run_ue_assembly_distributed(server_task_info in_task_info, std::string in_token)
       : task_info_(std::move(in_task_info)), token_(std::move(in_token)) {}
 
   boost::asio::awaitable<void> run() override;
 
-  void set_http_work_ptr(std::shared_ptr<http::http_work> in_http_work_ptr) { http_work_ptr_ = std::move(in_http_work_ptr); }
+  void set_http_work_ptr(std::shared_ptr<http::http_work> in_http_work_ptr) {
+    http_work_ptr_ = std::move(in_http_work_ptr);
+  }
 
  protected:
   boost::asio::awaitable<void> get_arg() override;

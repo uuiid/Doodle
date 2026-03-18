@@ -101,12 +101,13 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   constexpr auto sequence = "sequence"_alias.for_<entity>();
 
   import_and_render_ue_ns::run_ue_assembly_arg l_ret{};
-  l_ret.episodes_   = l_episodes;
-  l_ret.shot_       = l_shot;
-
-  l_ret.size_       = l_prj.get_resolution();
-  l_ret.begin_time_ = l_shot_extend->frame_in_.value();
-  l_ret.end_time_   = l_shot_extend->frame_out_.value();
+  l_ret.project_id_   = in_project_id;
+  l_ret.shot_task_id_ = in_shot_id;
+  l_ret.episodes_     = l_episodes;
+  l_ret.shot_         = l_shot;
+  l_ret.size_         = l_prj.get_resolution();
+  l_ret.begin_time_   = l_shot_extend->frame_in_.value();
+  l_ret.end_time_     = l_shot_extend->frame_out_.value();
 
   FSys::path l_shot_path_dir{};
   FSys::path l_sim_shot_path_dir{};
