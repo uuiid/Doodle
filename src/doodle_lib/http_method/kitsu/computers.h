@@ -9,6 +9,7 @@
 #include <boost/asio/strand.hpp>
 #include <boost/core/noncopyable.hpp>
 
+#include <memory>
 #include <unordered_map>
 
 namespace doodle::http {
@@ -20,6 +21,7 @@ class computers_assign_task : public boost::noncopyable {
   std::unordered_map<uuid, std::weak_ptr<data_computers_socket_io_impl>> computer_map_;
 
   void clear_offline_computer();
+  boost::asio::awaitable<void> run_next_task_impl(std::shared_ptr<data_computers_socket_io_impl> in_computer);
 
  public:
   ~computers_assign_task() = default;
@@ -31,6 +33,7 @@ class computers_assign_task : public boost::noncopyable {
   boost::asio::awaitable<void> assign_task(const server_task_info& in_task_info);
   // 让计算机运行下一个任务
   boost::asio::awaitable<void> run_next_task(uuid in_computer);
+  boost::asio::awaitable<void> run_next_task();
 };
 
 }  // namespace doodle::http
