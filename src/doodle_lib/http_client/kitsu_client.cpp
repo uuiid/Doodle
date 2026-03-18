@@ -560,7 +560,7 @@ boost::asio::awaitable<void> kitsu_client::get_next_job(uuid in_computer_id) con
       boost::beast::http::verb::put, fmt::format("/api/data/jobs"), 11
   };
   set_req_headers(l_req, "application/json");
-  l_req.body() = nlohmann::json{{"computer_id", in_computer_id}}.dump();
+  l_req.body() = nlohmann::json{{"id", in_computer_id}}.dump();
   boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::no_content &&
