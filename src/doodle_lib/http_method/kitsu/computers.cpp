@@ -60,18 +60,21 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     co_await web_stream_->async_read(l_buffer);
     auto l_json =
         nlohmann::json::parse(boost::asio::buffers_begin(l_buffer.data()), boost::asio::buffers_end(l_buffer.data()));
-    computer_                       = std::make_shared<computer>(l_json.get<computer>());
+    auto l_computer_json            = l_json.get<computer>();
+    computer_                       = std::make_shared<computer>(l_computer_json);
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = get_sqlite_database();
     using namespace sqlite_orm;
-    if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_)) == 0) {
+    if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_)) != 0) {
       *computer_ =
           l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_))
               .front();
-
+      computer_->name_ = computer_->name_;
+      co_await l_sql.update(computer_);
+    } else {
       co_await l_sql.install(computer_);
     }
-    //
+    computer_->status_ = l_computer_json.status_;
     co_await set_computer_status(*computer_);
   }
   void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
