@@ -151,7 +151,10 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.name_        = boost::asio::ip::host_name();
   this_computer_info_.status_      = computer_status::online;
   const boost::urls::url l_url{core_set::get_set().server_ip + "/api/data/computers"};
-  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+  for (auto i = 0;
+       (co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
+       i < 100;
+       ++i) {
     try {
       websocket_client_          = co_await make_websocket_stream(l_url);
       const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
