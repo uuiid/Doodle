@@ -56,6 +56,8 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   FSys::path user_work_root_{};
 
   std::shared_ptr<sqlite_database> database_;
+  // 内部分布式渲染客户端弱指针
+  std::weak_ptr<void> internal_distributed_render_client_;
 
  private:
   // 用户名称
