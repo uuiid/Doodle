@@ -314,6 +314,7 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
     if (log_buffer_[log_index_].empty()) return;
     log_index_ = !log_index_;
     kitsu_client_->put_job_log_sync(job_id_, log_buffer_[!log_index_]);
+    log_buffer_[!log_index_].clear();
   }
 };
 using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
