@@ -230,6 +230,15 @@
         "${workspaceFolder}/src/test_js/test/socket_io.js"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "node js distributed_work",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "${workspaceFolder}/src/test_js/test/distributed_work.js"
+      ],
+      "problemMatcher": []
     }
   ],
   "inputs": [
