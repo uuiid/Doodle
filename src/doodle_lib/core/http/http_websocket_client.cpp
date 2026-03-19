@@ -19,7 +19,21 @@ make_websocket_stream(const boost::urls::url& in_url) {
 
   using resolver_type = boost::asio::ip::tcp::resolver;
   auto l_resolver     = std::make_shared<resolver_type>(g_io_context());
-  auto l_res          = co_await l_resolver->async_resolve(in_url.host(), in_url.port());
+  std::string l_port;
+  switch (in_url.scheme_id()) {
+    case boost::urls::scheme::http:
+    case boost::urls::scheme::ws:
+      l_port = in_url.port().empty() ? "80" : in_url.port();
+      break;
+    case boost::urls::scheme::https:
+    case boost::urls::scheme::wss:
+      l_port = in_url.port().empty() ? "443" : in_url.port();
+      break;
+    default:
+      break;
+  }
+
+  auto l_res          = co_await l_resolver->async_resolve(in_url.host(), l_port);
 
   auto l_res_endpoint = co_await boost::beast::get_lowest_layer(*web_stream_).async_connect(l_res);
 
