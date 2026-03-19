@@ -23,9 +23,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, post) {
     SPDLOG_WARN("已经有一个分布式任务在运行了, 无法同时运行多个分布式任务");
     co_return in_handle->make_msg_204();
   }
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "收到运行分布式任务的请求, 将尝试运行分布式任务");
   auto l_woek                               = std::make_shared<http_work>();
   l_set.internal_distributed_render_client_ = l_woek;
   l_woek->run(token_);
+  SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "分布式任务已经开始运行");
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_run, delete_) { co_return in_handle->make_msg_204(); }
