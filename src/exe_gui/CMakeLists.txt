@@ -17,19 +17,19 @@ target_link_libraries(doodle_kitsu_supplement
 
 
 # 调整动态库导入模块顺序
-function(dow_minject)
-    include(ExternalProject)
-    ExternalProject_Add(
-            minject
-            GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
-            GIT_TAG dev
-            CONFIGURE_COMMAND ""
-            BUILD_COMMAND ""
-            INSTALL_COMMAND ""
-    )
-    set(MIMALLOC_EXE ${CMAKE_BINARY_DIR}/_deps/minject-src/bin/minject.exe PARENT_SCOPE)
-endfunction()
-dow_minject()
+# function(dow_minject)
+#     include(ExternalProject)
+#     ExternalProject_Add(
+#             minject
+#             GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+#             GIT_TAG dev
+#             CONFIGURE_COMMAND ""
+#             BUILD_COMMAND ""
+#             INSTALL_COMMAND ""
+#     )
+#     set(MIMALLOC_EXE ${CMAKE_BINARY_DIR}/_deps/minject-src/bin/minject.exe PARENT_SCOPE)
+# endfunction()
+# dow_minject()
 
 # add_custom_command(
 #         TARGET doodle_kitsu_supplement
