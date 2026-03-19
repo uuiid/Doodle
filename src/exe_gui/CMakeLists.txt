@@ -51,14 +51,13 @@ find_program(
 )
 
 # 复制动态加载库 E:\Doodle\vcpkg\buildtrees\libtorch\x64-windows-dbg\bin\
-add_custom_command(
-        TARGET doodle_kitsu_supplement
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement>
-        # COMMAND ${CMAKE_COMMAND} -E echo "${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll" 
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crashpad_handler_exe} $<TARGET_FILE_DIR:doodle_kitsu_supplement>
-
-)
+# add_custom_command(
+#         TARGET doodle_kitsu_supplement
+#         POST_BUILD
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll $<TARGET_FILE_DIR:doodle_kitsu_supplement>
+#         # COMMAND ${CMAKE_COMMAND} -E echo "${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$<CONFIG:Debug,RelWithDebInfo>,dbg,rel>/bin/nvfuser_codegen.dll" 
+#         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${crashpad_handler_exe} $<TARGET_FILE_DIR:doodle_kitsu_supplement>
+# )
 # 如果是debug, 需要将 zlibd1.dll 复制一份, 命名为 zlib1.dll
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_custom_command(
