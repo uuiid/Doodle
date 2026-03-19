@@ -69,6 +69,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
 
         FSys::copy(maya_file_, l_new_path);
         maya_file_ = l_new_path;
+        file_path  = maya_file_;
         logger_ptr_->info("检测到孪生文件 {}, 已重命名为 {}", l_name_1, l_name_2);
         l_fix_twin_file = true;
       }
