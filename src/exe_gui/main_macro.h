@@ -2,10 +2,10 @@
 // Created by td_main on 2023/9/11.
 //
 #pragma once
-#include <mimalloc.h>
-#include <mimalloc-new-delete.h>
+// #include <mimalloc.h>
+// #include <mimalloc-new-delete.h>
 
-#pragma comment(linker, "/include:mi_version")
+// #pragma comment(linker, "/include:mi_version")
 
 #include <doodle_lib/core/app_base.h>
 
@@ -13,10 +13,10 @@
 #include <windows.h>
 
 //  int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
-
+//  mi_version();
+//
 #define DOODLE_MAIN_IMPL_(app_class)                                                   \
   {                                                                                    \
-    mi_version();                                                                      \
     using main_app = app_class;                                                        \
     main_app app{argc, argv};                                                          \
     try {                                                                              \
