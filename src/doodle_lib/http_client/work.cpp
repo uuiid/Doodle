@@ -150,7 +150,10 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.hardware_id_ = get_motherboard_uuid();
   this_computer_info_.name_        = boost::asio::ip::host_name();
   this_computer_info_.status_      = computer_status::online;
-  const boost::urls::url l_url{core_set::get_set().server_ip + "/api/data/computers"};
+  auto l_ip                        = core_set::get_set().server_ip;
+  if (l_ip.starts_with("http://")) l_ip.erase(0, 7);
+  else if (l_ip.starts_with("https://")) l_ip.erase(0, 8);
+  const boost::urls::url l_url{fmt::format("ws://{}/api/data/computers", l_ip)};
   for (auto i = 0;
        (co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
        i < 100;
