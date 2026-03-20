@@ -978,11 +978,14 @@ boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
-  impl_->storage_any_.remove_all<entity_link>(
-      join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-      join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      where(c(&entity_link::entity_out_id_) == in_sequence_id)
-  );
+  impl_->storage_any_.remove_all<entity_link>(where(
+      in(&entity_link::id_,
+         select(
+             &entity_link::id_, join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+             join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+             where(c(sequence->*&entity::uuid_id_) == in_sequence_id)
+         ))
+  ));
   DOODLE_TO_SELF();
   co_return;
 }
