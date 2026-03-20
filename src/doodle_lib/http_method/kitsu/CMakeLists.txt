@@ -53,24 +53,43 @@ target_sources(
 
 # 这个文件夹中所有的源文件都要使用限制池构建
 set_source_files_properties(
-        task.cpp
-        project.cpp
+        actions.cpp
         assets.cpp
-        sequences.cpp
-        comment.cpp
-        playlists.cpp
-        notifications.cpp
-        shots.cpp
-        movies.cpp
-        working_file.cpp
-        casting.cpp
+        attachment_files.cpp
         auth_outsource.cpp
-        computing_time.cpp
-        action.cpp
+        auth.cpp
         auto_task.cpp
+        base_data.cpp
+        casting.cpp
+        CMakeLists.txt
+        comment.cpp
         compose_video.cpp
-        jobs.cpp
         computers.cpp
+        computing_time.cpp
+        config.cpp
+        distributed_task.cpp
+        entities.cpp
+        epiboly.cpp
+        file_status.cpp
+        jobs.cpp
+        kitsu_front_end.cpp
+        kitsu_reg_url.cpp
+        login.cpp
+        metadata_descriptors.cpp
+        movies.cpp
+        notifications.cpp
+        output_types.cpp
+        pictures.cpp
+        playlists.cpp
+        preview.cpp
+        project.cpp
+        schedule_items.cpp
+        sequences.cpp
+        shots.cpp
+        task.cpp
+        time.cpp
+        user.cpp
+        working_file.cpp
         
         TARGET_DIRECTORY doodle_lib
         PROPERTIES JOB_POOL_COMPILE sql_query_pool
