@@ -12,7 +12,7 @@ class progress_data {
   // 总共分为多少步
   reational_t total_steps_{1};
   // 当前一共多少步
-  reational_t current_steps_{0};
+  reational_t current_steps_{1};
 
   void update_progress(std::int32_t in_progress);
 

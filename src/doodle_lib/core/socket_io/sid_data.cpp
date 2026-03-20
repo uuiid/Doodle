@@ -147,18 +147,14 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
 void sid_data::seed_message(const std::shared_ptr<packet_base>& in_message) {
   if (block_message_) return;
   if (!in_message) return;
-  boost::asio::post(strand_, [this, in_message, sh = shared_from_this()]() {
-    message_queue_.push(in_message);
-    write_websocket();
-  });
+  message_queue_.push(in_message);
+  write_websocket();
 }
 void sid_data::seed_message_self(const std::shared_ptr<packet_base>& in_message) {
   if (block_message_) return;
   if (!in_message) return;
-  boost::asio::post(strand_, [this, in_message, sh = shared_from_this()]() {
-    message_queue_.push(in_message);
-    write_websocket();
-  });
+  self_message_queue_.push(in_message);
+  write_websocket();
 }
 void sid_data::seed_message_ping() {
   auto l_ptr = std::make_shared<packet_base>();
@@ -175,6 +171,7 @@ packet_base_ptr sid_data::get_message() {
     return l_ptr;
   }
   std::shared_ptr<packet_base> l_msg{};
+  if (self_message_queue_.pop(l_msg); l_msg) return l_msg;
   if (message_queue_.pop(l_msg) && l_msg) return l_msg;
   return nullptr;
 }

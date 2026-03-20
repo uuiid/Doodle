@@ -4,14 +4,14 @@
 
 #pragma once
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_lib/core/socket_io/engine_io.h>
 #include <doodle_lib/core/socket_io/socket_io_packet.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/experimental/concurrent_channel.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/strand.hpp>
+#include <boost/lockfree/queue.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/lockfree/spsc_value.hpp>
 #include <boost/signals2.hpp>
@@ -92,6 +92,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::asio::strand<boost::asio::io_context::executor_type> write_strand_;
   boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> message_queue_;
+  boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> self_message_queue_;
   boost::lockfree::spsc_value<std::shared_ptr<packet_base>> ping_message_;
 
   struct block_message_guard {
