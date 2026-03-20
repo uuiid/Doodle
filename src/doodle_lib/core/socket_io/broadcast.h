@@ -22,18 +22,6 @@ void broadcast(
     const std::shared_ptr<sid_ctx>& in_ctx = nullptr
 );
 
-template <typename To_Jsonable>
-concept Jsonable = requires(const To_Jsonable& t) {
-  { nlohmann::json{} = t };
-};
-template <Jsonable To_Jsonable>
-void broadcast(
-    const std::string& in_event, const To_Jsonable& in_data, const std::string& in_namespace = {"/events"},
-    const std::shared_ptr<sid_ctx>& in_ctx = nullptr
-) {
-  broadcast(in_event, nlohmann::json{} = in_data, in_namespace, in_ctx);
-}
-
 /*
     结构体约束
     1. 结构体成员必须是可序列化 json 的类型(使用 nlohmann::json{} = value 的方式序列化)
@@ -223,6 +211,16 @@ struct server_task_info_update_broadcast_t {
   uuid server_task_info_id_;
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info_update_broadcast_t& p) {
+    j["server_task_info_id"] = p.server_task_info_id_;
+  }
+};
+
+struct server_task_info_delete_broadcast_t {
+  static constexpr std::string_view event_name_ = "server-task-info:delete";
+  static constexpr std::string_view namespace_  = "/events";
+  uuid server_task_info_id_;
+  // to json
+  friend void to_json(nlohmann::json& j, const server_task_info_delete_broadcast_t& p) {
     j["server_task_info_id"] = p.server_task_info_id_;
   }
 };

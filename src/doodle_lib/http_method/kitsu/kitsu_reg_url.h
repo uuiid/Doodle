@@ -724,6 +724,7 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_jobs_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid job_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/jobs/{job_id}/log

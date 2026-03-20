@@ -74,5 +74,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job_ptr->uuid_id_});
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
+  person_.check_not_outsourcer();
+  auto l_sql = get_sqlite_database();
+  auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
+  if (l_job.status_ == server_task_info_status::running)
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "运行中的任务无法删除"});
+  co_await l_sql.remove<server_task_info>(job_id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除任务 job_id {} status {} ", person_.person_.email_,
+      person_.person_.get_full_name(), job_id_, l_job.status_
+  );
+  socket_io::broadcast(socket_io::server_task_info_delete_broadcast_t{.server_task_info_id_ = job_id_});
+  co_return in_handle->make_msg_204();
+}
 
 }  // namespace doodle::http
