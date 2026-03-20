@@ -2,15 +2,15 @@
 // Created by TD on 25-4-28.
 //
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/metadata/working_file.h>
 #include <doodle_core/metadata/entity_type.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_core/metadata/working_file.h>
 
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <sqlite_orm/sqlite_orm.h>
 
@@ -225,7 +225,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
         l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_;
     l_entity_ptr->created_by_ = person_.person_.uuid_id_;
     co_await l_sql.install(l_entity_ptr);
-    socket_io::broadcast("sequence:new", nlohmann::json{{"sequence_id", l_entity_ptr->uuid_id_}, {"project_id", id_}});
+    socket_io::broadcast(
+        socket_io::sequence_new_broadcast_t{.sequence_id_ = l_entity_ptr->uuid_id_, .project_id_ = id_}
+    );
   } else
     *l_entity_ptr = l_sq_list.front();
 
@@ -271,8 +273,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
     l_sequence->canceled_ = true;
     co_await l_sql.update(l_sequence);
     socket_io::broadcast(
-        "sequence:update",
-        nlohmann::json{{"sequence_id", l_sequence->uuid_id_}, {"project_id", l_sequence->project_id_}}
+        socket_io::sequence_update_broadcast_t{
+            .sequence_id_ = l_sequence->uuid_id_, .project_id_ = l_sequence->project_id_
+        }
     );
   } else {
     auto l_task     = l_sql.get_tasks_for_entity(l_sequence->uuid_id_);
@@ -280,8 +283,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_inst
     co_await l_sql.remove<task>(l_task_ids);
     co_await l_sql.remove<entity>(l_sequence->uuid_id_);
     socket_io::broadcast(
-        "sequence:delete",
-        nlohmann::json{{"sequence_id", l_sequence->uuid_id_}, {"project_id", l_sequence->project_id_}}
+        socket_io::sequence_delete_broadcast_t{
+            .sequence_id_ = l_sequence->uuid_id_, .project_id_ = l_sequence->project_id_
+        }
     );
   }
   co_return in_handle->make_msg_204();

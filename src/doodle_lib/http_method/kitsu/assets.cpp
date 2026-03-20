@@ -80,7 +80,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
   }
   socket_io::broadcast(
       socket_io::asset_new_broadcast_t{
-          .asset_id = l_entity->uuid_id_, .asset_type = l_entity->entity_type_id_, .project_id = l_entity->project_id_
+          .asset_id_   = l_entity->uuid_id_,
+          .asset_type_ = l_entity->entity_type_id_,
+          .project_id_ = l_entity->project_id_
       }
   );
 

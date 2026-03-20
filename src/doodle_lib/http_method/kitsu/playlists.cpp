@@ -1,19 +1,19 @@
 //
 // Created by TD on 25-5-14.
 //
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/playlist.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/task.h>
-#include <doodle_core/metadata/entity.h>
-#include <doodle_core/metadata/playlist.h>
+
+#include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
-
-#include <doodle_lib/core/socket_io/broadcast.h>
-#include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 
 #include <core/http/http_function.h>
 #include <spdlog/spdlog.h>
@@ -99,22 +99,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 
   co_await l_sql.update(l_prev);
   socket_io::broadcast(
-      "preview-file:annotation-update",
-      nlohmann::json{
-          {"preview_file_id", l_prev->uuid_id_},
-          {"person_id", person_.person_.uuid_id_},
-          {"updated_at", l_prev->updated_at_},
-          {"project_id", l_task.project_id_}
-      },
-      "/events"
+      socket_io::preview_file_annotation_update_broadcast_t{
+          .preview_file_id_ = l_prev->uuid_id_,
+          .person_id_       = person_.person_.uuid_id_,
+          .updated_at_      = l_prev->updated_at_,
+          .project_id_      = l_task.project_id_
+      }
   );
-
-    SPDLOG_LOGGER_WARN(
+  SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成更新预览批注 preview_file_id {} task_id {} project_id {} updated_at {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_prev->uuid_id_, l_prev->task_id_, l_task.project_id_,
-      l_prev->updated_at_
-    );
+      "用户 {}({}) 完成更新预览批注 preview_file_id {} task_id {} project_id {} updated_at {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_prev->uuid_id_, l_prev->task_id_, l_task.project_id_, l_prev->updated_at_
+  );
   co_return in_handle->make_msg(nlohmann::json{} = *l_prev);
 }
 namespace {
@@ -726,9 +722,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   person_.check_not_outsourcer();
   auto l_json = in_handle->get_json();
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始在播放列表中添加镜头 playlist_id {} entity_id {} playlist_name {}", person_.person_.email_,
-      person_.person_.get_full_name(), playlist_id_, l_entity.uuid_id_, l_playlist->name_
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在播放列表中添加镜头 playlist_id {} entity_id {} playlist_name {}",
+      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, l_entity.uuid_id_, l_playlist->name_
   );
   std::shared_ptr<playlist_shot> l_playlist_shot = std::make_shared<playlist_shot>();
   l_json.get_to(*l_playlist_shot);
@@ -765,8 +760,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成修改播放列表镜头 playlist_id {} shot_id {} preview_id {} order_index {}",
-      person_.person_.email_, person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist_shot->preview_id_,
+      "用户 {}({}) 完成修改播放列表镜头 playlist_id {} shot_id {} preview_id {} order_index {}", person_.person_.email_,
+      person_.person_.get_full_name(), playlist_id_, shot_id_, l_playlist_shot->preview_id_,
       l_playlist_shot->order_index_
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
@@ -858,8 +853,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, po
   }
   co_await l_sql.install_range(l_playlist_shots);
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成创建 Review 播放列表 sequence_id {} playlist_id {} shot_count {}",
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建 Review 播放列表 sequence_id {} playlist_id {} shot_count {}",
       person_.person_.email_, person_.person_.get_full_name(), sequence_id_, l_playlist->uuid_id_,
       l_playlist_shots->size()
   );

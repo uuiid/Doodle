@@ -226,12 +226,12 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("run_time", &server_task_info::run_time_),                      //
           make_column("end_time", &server_task_info::end_time_),                      //
           make_column("run_computer_id", &server_task_info::run_computer_id_),        //
-          make_column("kitsu_task_id", &server_task_info::kitsu_task_id_),            //
+          make_column("entity_id", &server_task_info::entity_id_),            //
           make_column("type", &server_task_info::type_),
           make_column("run_time_info", &server_task_info::run_time_info_),
           foreign_key(&server_task_info::submitter_).references(&person::uuid_id_).on_delete.cascade(),
           foreign_key(&server_task_info::run_computer_id_).references(&computer::uuid_id_).on_delete.set_null(),
-          foreign_key(&server_task_info::kitsu_task_id_).references(&server_task_info::uuid_id_).on_delete.cascade()
+          foreign_key(&server_task_info::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
       ),
 
       make_index("computer_tab_uuid_id_index", &computer::uuid_id_),

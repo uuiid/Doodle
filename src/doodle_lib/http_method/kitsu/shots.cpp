@@ -2,17 +2,17 @@
 // Created by TD on 25-7-28.
 //
 
-#include <doodle_lib/core/global_function.h>
-#include <doodle_core/metadata/working_file.h>
 #include <doodle_core/metadata/person.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_core/metadata/working_file.h>
 
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
@@ -272,8 +272,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
   auto l_sql  = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取镜头 name {} sequence_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), project_id_, l_args.name_, l_args.sequence_id_
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取镜头 name {} sequence_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_args.name_, l_args.sequence_id_
   );
 
   using namespace sqlite_orm;
@@ -310,10 +310,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       std::make_shared<entity_shot_extend>(entity_shot_extend{.entity_id_ = l_shot->uuid_id_, .frame_in_ = 1001});
   co_await l_sql.install(l_shot_extend);
   socket_io::broadcast(
-      "shot:new",
-      nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"episode_id", l_args.sequence_id_}, {"project_id", project_id_}}
+      socket_io::shot_new_broadcast_t{
+          .shot_id_ = l_shot->uuid_id_, .episode_id_ = l_args.sequence_id_, .project_id_ = project_id_
+      }
   );
-
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建镜头 shot_id {} name {} sequence_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_shot->uuid_id_, l_shot->name_,
@@ -390,8 +390,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
     l_results.emplace_back(actions_projects_task_types_create_tasks_result{l_task, l_task_type, l_task_status});
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建镜头任务 task_type_id {} 数量 {}", person_.person_.email_,
-      person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建镜头任务 task_type_id {} 数量 {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
@@ -420,15 +420,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
     l_shot->canceled_ = true;
     co_await l_sql.update(l_shot);
     socket_io::broadcast(
-        "shot:update", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
+        socket_io::shot_update_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}
     );
   } else {
     auto l_task     = l_sql.get_tasks_for_entity(l_shot->uuid_id_);
     auto l_task_ids = l_task | ranges::views::transform([](const task& in) { return in.uuid_id_; }) | ranges::to_vector;
     co_await l_sql.remove<task>(l_task_ids);
     co_await l_sql.remove<entity>(l_shot->uuid_id_);
+
     socket_io::broadcast(
-        "shot:delete", nlohmann::json{{"shot_id", l_shot->uuid_id_}, {"project_id", l_shot->project_id_}}
+        socket_io::shot_delete_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}
     );
   }
   co_return in_handle->make_msg_204();

@@ -323,8 +323,7 @@ struct get_casting_t {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_entities_casting, get) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  if (get_sqlite_database().uuid_to_id<entity>(entity_id_) == 0)
-    throw_exception(doodle_error{"实体不存在或已被删除"});
+  if (get_sqlite_database().uuid_to_id<entity>(entity_id_) == 0) throw_exception(doodle_error{"实体不存在或已被删除"});
   co_return in_handle->make_msg(nlohmann::json{} = get_casting_t::get(entity_id_));
 }
 
@@ -359,9 +358,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
       l_entity_links_update->emplace_back(*l_link);
       l_delay_events.emplace_back([i, this]() {
         socket_io::broadcast(
-            "entity-link:update",
-            nlohmann::json{
-                {"entity_link_id", i.uuid_id_}, {"nb_occurences", i.nb_occurences_}, {"project_id", project_id_}
+            socket_io::entity_link_update_broadcast_t{
+                .entity_link_id_ = i.uuid_id_, .nb_occurences_ = i.nb_occurences_, .project_id_ = project_id_
             }
         );
       });
@@ -377,7 +375,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
             }
         );
         l_delay_events.emplace_back([id = i.entity_out_id_, this]() {
-          socket_io::broadcast("asset:update", nlohmann::json{{"asset_id", id}, {"project_id", project_id_}});
+          socket_io::broadcast(socket_io::asset_update_broadcast_t{.asset_id_ = id, .project_id_ = project_id_});
         });
       }
       l_entity_links_insert->emplace_back(
@@ -390,13 +388,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
       );
       l_delay_events.emplace_back([i, this]() {
         socket_io::broadcast(
-            "entity-link:new", nlohmann::json{
-                                   {"entity_link_id", i.uuid_id_},
-                                   {"entity_in_id", i.entity_in_id_},
-                                   {"entity_out_id", i.entity_out_id_},
-                                   {"nb_occurences", i.nb_occurences_},
-                                   {"project_id", project_id_}
-                               }
+            socket_io::entity_link_new_broadcast_t{
+                .entity_link_id_ = i.uuid_id_,
+                .entity_in_id_   = i.entity_in_id_,
+                .entity_out_id_  = i.entity_out_id_,
+                .nb_occurences_  = i.nb_occurences_,
+                .project_id_     = project_id_
+            }
         );
       });
     }
@@ -428,9 +426,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   }
   // for (auto&& i : l_delay_events) i();
   socket_io::broadcast(
-      "shot:casting-update",
-      nlohmann::json{
-          {"shot_id", l_ent->uuid_id_}, {"project_id", project_id_}, {"nb_entities_out", l_ent->nb_entities_out_}
+      socket_io::shot_casting_update_broadcast_t{
+          .shot_id_ = l_ent->uuid_id_, .project_id_ = project_id_, .nb_entities_out_ = l_ent->nb_entities_out_
       }
   );
 
@@ -485,11 +482,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
     l_entity_links->emplace_back(*l_link);
     l_delay_events.emplace_back([&, this]() {
       socket_io::broadcast(
-          "entity-link:update", nlohmann::json{
-                                    {"entity_link_id", l_link->uuid_id_},
-                                    {"nb_occurences", l_link->nb_occurences_},
-                                    {"project_id", project_id_}
-                                }
+          socket_io::entity_link_update_broadcast_t{
+              .entity_link_id_ = l_link->uuid_id_, .nb_occurences_ = l_link->nb_occurences_, .project_id_ = project_id_
+          }
       );
     });
   }

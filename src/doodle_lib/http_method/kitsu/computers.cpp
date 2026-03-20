@@ -41,7 +41,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
   auto l_sql      = get_sqlite_database();
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
   co_await l_sql.remove<computer>(computer_id_);
-  socket_io::broadcast("doodle:computer:delete", nlohmann::json{} = l_computer);
+  socket_io::broadcast(socket_io::computer_delete_broadcast_t{.computer_id_ = computer_id_});
   co_return in_handle->make_msg(nlohmann::json{} = l_computer);
 }
 
@@ -137,7 +137,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     } else {
       co_await l_sql.update(computer_);
     }
-    socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);
+    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
   }
 
  public:
@@ -153,7 +153,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->status_              = computer_status::offline;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     l_sql.update_sync(computer_);
-    socket_io::broadcast("doodle:computer:update", nlohmann::json{} = *computer_);
+    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
   }
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }

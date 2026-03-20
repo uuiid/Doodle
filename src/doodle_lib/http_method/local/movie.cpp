@@ -4,7 +4,6 @@
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
-
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
@@ -193,8 +192,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> tools_add_watermar
       const auto l_out_path = l_args.out_path_ / l_image_path.filename().replace_extension(".png");
       l_add_watermark(l_image_path, l_out_path, l_args.image_size_);
       socket_io::broadcast(
-          "tools:add_watermark:progress",
-          nlohmann::json{{"id", l_uuid}, {"image_path", l_image_path}, {"out_path", l_out_path}}, "/events"
+          socket_io::tools_add_watermark_progress_broadcast_t{
+              .id_ = l_uuid, .image_path_ = l_image_path, .output_path_ = l_out_path
+          }
       );
     }
   });

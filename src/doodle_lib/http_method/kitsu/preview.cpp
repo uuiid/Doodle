@@ -2,32 +2,32 @@
 // Created by TD on 25-3-27.
 //
 
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/file_sys.h>
-#include <doodle_lib/core/global_function.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/ffmpeg_video.h>
+#include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/core/global_function.h>
+#include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/preview.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/post.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 
 #include "kitsu_reg_url.h"
-#include <long_task/image_to_move.h>
 #include <algorithm>
 #include <filesystem>
+#include <long_task/image_to_move.h>
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <opencv2/opencv.hpp>
@@ -42,21 +42,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     session_data_ptr in_handle
 ) {
   person_.check_task_action_access(task_id_);
-  auto l_sql     = get_sqlite_database();
+  auto l_sql      = get_sqlite_database();
 
-  auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
-  auto l_task    = l_sql.get_by_uuid<task>(task_id_);
+  auto l_comment  = l_sql.get_by_uuid<comment>(comment_id_);
+  auto l_task     = l_sql.get_by_uuid<task>(task_id_);
   auto l_revision = in_handle->get_json().value("revision", 0);
   if (l_revision == 0 && !l_sql.has_preview_file(comment_id_))
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
-  auto l_position     = l_sql.get_next_position(task_id_, l_revision);
+  auto l_position = l_sql.get_next_position(task_id_, l_revision);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始创建预览文件(评论关联) task_id {} comment_id {} revision {} position {}",
-      person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_revision, l_position
+      "用户 {}({}) 开始创建预览文件(评论关联) task_id {} comment_id {} revision {} position {}", person_.person_.email_,
+      person_.person_.get_full_name(), task_id_, comment_id_, l_revision, l_position
   );
 
   auto l_preview_file = std::make_shared<preview_file>();
@@ -76,16 +76,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   co_await l_sql.install(l_preview_link);
   // 产生事件( "preview-file:new", "comment:update")
   socket_io::broadcast(
-      "preview-file:new",
-      nlohmann::json{
-          {"preview_file_id", l_preview_file->uuid_id_}, {"comment_id", comment_id_}, {"project_id", l_task.project_id_}
-      },
-      "/events"
+      socket_io::preview_file_new_broadcast_t{
+          .preview_file_id_ = l_preview_file->uuid_id_, .comment_id_ = comment_id_, .project_id_ = l_task.project_id_
+      }
   );
   socket_io::broadcast(
-      "comment:update", nlohmann::json{{"comment_id", comment_id_}, {"project_id", l_task.project_id_}}, "/events"
+      socket_io::comment_update_broadcast_t{.comment_id_ = comment_id_, .project_id_ = l_task.project_id_}
   );
-
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成创建预览文件(评论关联) task_id {} comment_id {} preview_file_id {} revision {} position {}",
@@ -307,8 +304,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     l_file = l_fs;
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始上传预览文件 preview_file_id {} task_id {} filename {} ext {}",
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始上传预览文件 preview_file_id {} task_id {} filename {} ext {}",
       person_.person_.email_, person_.person_.get_full_name(), l_preview_file->uuid_id_, l_preview_file->task_id_,
       l_file.filename().generic_string(), l_file.extension().generic_string()
   );
@@ -370,7 +366,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成上传预览文件 preview_file_id {} task_id {} status {} ext {} size {} width {} height {} duration {}",
+      "用户 {}({}) 完成上传预览文件 preview_file_id {} task_id {} status {} ext {} size {} width {} height {} duration "
+      "{}",
       person_.person_.email_, person_.person_.get_full_name(), l_preview_file->uuid_id_, l_preview_file->task_id_,
       magic_enum::enum_name(l_preview_file->status_), l_preview_file->extension_, l_preview_file->file_size_,
       l_preview_file->width_, l_preview_file->height_, l_preview_file->duration_
@@ -392,11 +389,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
     l_revision = l_sql.get_next_preview_revision(task_id_);
   else if (l_revision == 0)
     l_revision = l_sql.get_preview_revision(comment_id_);
-  auto l_position     = l_sql.get_next_position(task_id_, l_revision);
+  auto l_position = l_sql.get_next_position(task_id_, l_revision);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始创建预览文件(从已有预览复制) task_id {} comment_id {} from_preview_file_id {} revision {} position {}",
+      "用户 {}({}) 开始创建预览文件(从已有预览复制) task_id {} comment_id {} from_preview_file_id {} revision {} "
+      "position {}",
       person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, preview_file_id_, l_revision,
       l_position
   );
@@ -416,22 +414,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
   l_preview_link->comment_id_      = comment_id_;
   l_preview_link->preview_file_id_ = l_preview_file->uuid_id_;
   co_await l_sql.install(l_preview_link);
-  socket_io::broadcast(
-      "preview-file:new",
-      nlohmann::json{
-          {"preview_file_id", l_preview_file->uuid_id_},
-          {"comment_id", comment_id_},
-          {"project_id", l_task->project_id_}
-      },
-      "/events"
-  );
-  socket_io::broadcast(
-      "comment:update", nlohmann::json{{"comment_id", comment_id_}, {"project_id", l_task->project_id_}}, "/events"
-  );
 
+  socket_io::broadcast(
+      socket_io::preview_file_new_broadcast_t{
+          .preview_file_id_ = l_preview_file->uuid_id_, .comment_id_ = comment_id_, .project_id_ = l_task->project_id_
+      }
+  );
+  socket_io::broadcast(
+      socket_io::comment_update_broadcast_t{.comment_id_ = comment_id_, .project_id_ = l_task->project_id_}
+  );
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成创建预览文件(从已有预览复制) task_id {} comment_id {} preview_file_id {} revision {} position {}",
+      "用户 {}({}) 完成创建预览文件(从已有预览复制) task_id {} comment_id {} preview_file_id {} revision {} position "
+      "{}",
       person_.person_.email_, person_.person_.get_full_name(), task_id_, comment_id_, l_preview_file->uuid_id_,
       l_revision, l_position
   );
@@ -453,9 +448,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
-      "用户 {}({}) 开始设置主预览 entity_id {} task_id {} preview_file_id {} frame_number {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_ent->uuid_id_, l_task.uuid_id_, l_preview_file.uuid_id_,
-      l_frame_number
+      "用户 {}({}) 开始设置主预览 entity_id {} task_id {} preview_file_id {} frame_number {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_ent->uuid_id_, l_task.uuid_id_, l_preview_file.uuid_id_, l_frame_number
   );
   if (l_preview_file.extension_ == "mp4") {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "mp4文件不支持设置为主预览文件"});
@@ -466,8 +460,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
   }
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(),
-      "用户 {}({}) 完成设置主预览 entity_id {} task_id {} preview_file_id {}",
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成设置主预览 entity_id {} task_id {} preview_file_id {}",
       person_.person_.email_, person_.person_.get_full_name(), l_ent->uuid_id_, l_task.uuid_id_, l_preview_file.uuid_id_
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_ent);

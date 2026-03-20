@@ -39,6 +39,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   l_ptr->submitter_   = person_.person_.uuid_id_;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->type_        = server_task_info_type::auto_light;
+  l_ptr->entity_id_   = id_;
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_computer_id = l_ptr->run_computer_id_;
   if (l_ptr->run_computer_id_.is_nil()) {
@@ -67,7 +68,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,
       l_ptr->run_computer_id_
   );
-  socket_io::broadcast("doodle:task_info:create", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast(socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_ptr->uuid_id_});
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 }  // namespace doodle::http

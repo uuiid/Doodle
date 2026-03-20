@@ -71,7 +71,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
     );
     co_await computers_assign_task::get_instance().run_next_task(l_job_ptr->run_computer_id_);
   }
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_job_ptr);
+  socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job_ptr->uuid_id_});
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
 }
 

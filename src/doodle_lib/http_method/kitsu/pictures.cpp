@@ -4,16 +4,17 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/organisation.h>
 #include <doodle_core/metadata/preview_file.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <core/http/http_function.h>
 #include <opencv2/opencv.hpp>
+
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnails_organisations_png::get(
     session_data_ptr in_handle
@@ -53,7 +54,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
     l_file = l_fs.front();
   FSys::path l_save_path = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_file(id_);
   handle_organisation_thumbnail(l_file, l_save_path);
-  socket_io::broadcast("organisation:set-thumbnail", nlohmann::json{{"organisation_id", id_}});
+  socket_io::broadcast(socket_io::organisation_set_thumbnail_broadcast_t{.organisation_id_ = id_});
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置组织 {} 缩略图 file {}", person_.person_.email_,
@@ -69,7 +70,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 ) {
   FSys::path l_filename = fmt::format("{}.png", id_);
   auto l_path           = g_ctx().get<kitsu_ctx_t>().get_pictures_thumbnails_square_file(id_);
-  auto l_ext = l_filename.extension();
+  auto l_ext            = l_filename.extension();
   DOODLE_CHICK(FSys::exists(l_path), "缩略图不存在 文件 {}", l_path.generic_string());
   co_return in_handle->make_msg(l_path, kitsu::mime_type(l_ext));
 }

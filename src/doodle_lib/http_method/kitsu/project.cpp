@@ -6,14 +6,14 @@
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include "kitsu_reg_url.h"
 #include <algorithm>
@@ -56,9 +56,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_all::get(s
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::get(session_data_ptr in_handle) {
   auto l_list = get_sqlite_database().get_by_uuid<project>(id_);
   nlohmann::json l_j{};
-  l_j = l_list;
-  l_j["project_status_name"] =
-      get_sqlite_database().get_by_uuid<project_status>(l_list.project_status_id_).name_;
+  l_j                        = l_list;
+  l_j["project_status_name"] = get_sqlite_database().get_by_uuid<project_status>(l_list.project_status_id_).name_;
   co_return in_handle->make_msg(l_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::put(session_data_ptr in_handle) {
@@ -115,8 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
       person_.person_.get_full_name(), id_, l_prj_task_type_link->task_type_id_
   );
 
-  if (auto l_t = get_sqlite_database().get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_);
-      !l_t) {
+  if (auto l_t = get_sqlite_database().get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_); !l_t) {
     co_await get_sqlite_database().install(l_prj_task_type_link);
   }
 
@@ -145,8 +143,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
 ) {
   auto l_json = in_handle->get_json();
   person_.check_project_manager(id_);
-  auto l_status_id                        = l_json["task_status_id"].get<uuid>();
-  auto l_prj_task_status_link             = std::make_shared<project_task_status_link>();
+  auto l_status_id            = l_json["task_status_id"].get<uuid>();
+  auto l_prj_task_status_link = std::make_shared<project_task_status_link>();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 任务状态 task_status_id {}", person_.person_.email_,
@@ -251,13 +249,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     l_task_json["task_type_priority"]     = l_task_type.priority_;
 
     socket_io::broadcast(
-        "task:new", nlohmann::json{{"task_id", l_task->uuid_id_}, {"project_id", l_task->project_id_}}, "/events"
+        socket_io::task_new_broadcast_t{.task_id_ = l_task->uuid_id_, .project_id_ = l_task->project_id_}
     );
 
     SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建任务 task_id {} entity_id {} task_type_id {}",
-      person_.person_.email_, person_.person_.get_full_name(), project_id_, l_task->uuid_id_, l_task->entity_id_,
-      l_task->task_type_id_
+        g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建任务 task_id {} entity_id {} task_type_id {}",
+        person_.person_.email_, person_.person_.get_full_name(), project_id_, l_task->uuid_id_, l_task->entity_id_,
+        l_task->task_type_id_
     );
 
     co_return in_handle->make_msg(l_json_r.dump());
@@ -291,11 +289,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     i["task_type_priority"]     = l_task_type.priority_;
   }
   for (const auto& i : *l_tasks)
-    socket_io::broadcast("task:new", nlohmann::json{{"task_id", i.uuid_id_}, {"project_id", i.project_id_}}, "/events");
+    socket_io::broadcast(socket_io::task_new_broadcast_t{.task_id_ = i.uuid_id_, .project_id_ = i.project_id_});
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建任务 task_type_id {} 数量 {}", person_.person_.email_,
-      person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 批量创建任务 task_type_id {} 数量 {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, task_type_id_, l_tasks->size()
   );
 
   co_return in_handle->make_msg(l_json_r);
@@ -317,7 +315,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team
     l_team->project_id_ = id_;
     l_team->person_id_  = l_add_team;
     co_await l_sql.install(l_team);
-    socket_io::broadcast("project:update", nlohmann::json{{"project_id", id_}}, "/events");
+    socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = id_});
   }
   auto l_prj = l_sql.get_by_uuid<project>(id_);
 
@@ -347,7 +345,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
       );
       !l_id.empty()) {
     co_await l_sql.remove<project_person_link>(l_id[0]);
-    socket_io::broadcast("project:update", nlohmann::json{{"project_id", project_id_}}, "/events");
+    socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = project_id_});
   }
   co_return in_handle->make_msg_204();
 }
@@ -389,19 +387,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   l_ptr->status_automation_id_ = in_handle->get_json().at("status_automation_id").get<uuid>();
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 状态自动化 status_automation_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_ptr->status_automation_id_
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 状态自动化 status_automation_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_ptr->status_automation_id_
   );
 
-  auto l_prj                   = l_sql.get_by_uuid<project>(id_);
+  auto l_prj = l_sql.get_by_uuid<project>(id_);
   if (std::ranges::find(l_prj.status_automations_, l_ptr->status_automation_id_) == l_prj.status_automations_.end()) {
     co_await l_sql.install(l_ptr);
     l_prj.status_automations_.push_back(l_ptr->status_automation_id_);
   }
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 状态自动化 status_automation_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_ptr->status_automation_id_
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 状态自动化 status_automation_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), id_, l_ptr->status_automation_id_
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);

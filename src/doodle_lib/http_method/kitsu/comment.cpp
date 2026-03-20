@@ -92,22 +92,19 @@ boost::asio::awaitable<create_comment_result> create_comment(
     co_await l_sql.update(l_task);
 
     socket_io::broadcast(
-        "task:update", nlohmann::json{{"task_id", in_comment->object_id_}, {"project_id", l_task->project_id_}},
-        "/events"
+        socket_io::task_update_broadcast_t{.task_id_ = in_comment->object_id_, .project_id_ = l_task->project_id_}
     );
 
     if (l_status_changed) {
       // 需要通知状态改变
       socket_io::broadcast(
-          "task:status-changed",
-          nlohmann::json{
-              {"task_id", in_comment->object_id_},
-              {"new_task_status_id", l_task_status.uuid_id_},
-              {"previous_task_status_id", l_task_status.uuid_id_},
-              {"person_id", in_comment->person_id_},
-              {"project_id", l_task->project_id_}
-          },
-          "/events"
+          socket_io::task_status_change_broadcast_t{
+              .task_id_                 = in_comment->object_id_,
+              .new_task_status_id_      = l_task_status.uuid_id_,
+              .previous_task_status_id_ = l_task_status.uuid_id_,
+              .person_id_               = in_comment->person_id_,
+              .project_id_              = l_task->project_id_
+          }
       );
     };
   }
@@ -151,14 +148,12 @@ boost::asio::awaitable<create_comment_result> create_comment(
     co_await status_automation_ns::run(i, l_task, in_person->person_.uuid_id_);
 
   socket_io::broadcast(
-      "comment:new",
-      nlohmann::json{
-          {"comment_id", in_comment->uuid_id_},
-          {"task_id", in_comment->object_id_},
-          {"task_status_id", in_comment->task_status_id_},
-          {"project_id", l_task->project_id_}
-      },
-      "/events"
+      socket_io::comment_new_broadcast_t{
+          .comment_id_     = in_comment->uuid_id_,
+          .task_id_        = in_comment->object_id_,
+          .task_status_id_ = in_comment->task_status_id_,
+          .project_id_     = l_task->project_id_
+      }
   );
 
   co_return create_comment_result{*in_comment, l_task_status, in_person->person_, l_attachment_files};
@@ -264,7 +259,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
     session_data_ptr in_handle
 ) {
   auto l_sql = get_sqlite_database();
-  std::string l_event_name{};
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始评论 {} 点赞/取消点赞", person_.person_.email_,
@@ -294,26 +288,27 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
     l_ack->comment_id_ = comment_id_;
     l_ack->person_id_  = person_.person_.uuid_id_;
     co_await l_sql.install(l_ack);
-    l_event_name = "comment:acknowledge";
+    socket_io::broadcast(
+        socket_io::comment_acknowledge_broadcast_t{
+            .comment_id_ = comment_id_, .person_id_ = person_.person_.uuid_id_, .project_id_ = l_prj_id.front()
+        }
+    );
     default_logger_raw()->info("{} 点赞 {}", person_.person_.email_, comment_id_);
   } else {
-    l_event_name = "comment:unacknowledge";
+    socket_io::broadcast(
+        socket_io::comment_unacknowledge_broadcast_t{
+            .comment_id_ = comment_id_, .person_id_ = person_.person_.uuid_id_, .project_id_ = l_prj_id.front()
+        }
+    );
     default_logger_raw()->info("{} 取消点赞 {}", person_.person_.email_, comment_id_);
     co_await l_sql.remove<comment_acknoledgments>(l_id[0]);
   }
 
-  socket_io::broadcast(
-      l_event_name,
-      nlohmann::json{
-          {"comment_id", comment_id_}, {"person_id", person_.person_.uuid_id_}, {"project_id", l_prj_id.front()}
-      },
-      "/events"
-  );
   auto l_comment = l_sql.get_by_uuid<comment>(comment_id_);
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成评论 {} 点赞操作 event {}", person_.person_.email_,
-      person_.person_.get_full_name(), comment_id_, l_event_name
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成评论 {} 点赞操作", person_.person_.email_,
+      person_.person_.get_full_name(), comment_id_
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_comment);
