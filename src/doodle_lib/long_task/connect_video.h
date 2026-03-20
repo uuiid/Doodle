@@ -13,7 +13,7 @@ namespace doodle::detail {
 
 void connect_video(
     const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<FSys::path> &in_vector,
-    const image_size &in_size
+    const image_size &in_size, const uuid &in_task_info_id = uuid{}
 );
 
 class connect_video_t : public async_task {
@@ -21,7 +21,7 @@ class connect_video_t : public async_task {
   FSys::path out_path_;
   std::vector<FSys::path> file_list_{};
   image_size image_size_;
-
+  uuid task_info_id_;
   boost::asio::awaitable<void> run() override;
 
   friend void from_json(const nlohmann::json &nlohmann_json_j, connect_video_t &nlohmann_json_t) {

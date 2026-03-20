@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/user.h>
 
 #include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <opencv2/core.hpp>
@@ -19,7 +20,7 @@ namespace doodle::detail {
 
 void connect_video(
     const FSys::path& in_out_path, doodle::logger_ptr in_logger, const std::vector<FSys::path>& in_vector,
-    const image_size& in_size
+    const image_size& in_size, const uuid& in_task_info_id
 ) {
   in_logger->log(log_loc(), level::info, "开始创建视频 {}", in_out_path);
   in_logger->log(log_loc(), level::info, "获得视屏路径 {}", in_vector);
@@ -35,9 +36,13 @@ void connect_video(
   DOODLE_CHICK(video.isOpened(), "无法创建视频文件: {} ", in_out_path.generic_string());
   auto l_video_cap = cv::VideoCapture{};
   cv::Mat l_image{};
+  std::double_t l_index{0};
   for (auto& l_video : in_vector) {
     in_logger->log(log_loc(), level::info, "开始读取视屏 {}", l_video);
-
+    if (!in_task_info_id.is_nil())
+      socket_io::broadcast(
+          socket_io::preview_file_progress_update_broadcast_t{.preview_file_id_ = in_task_info_id, .progress_ = l_index}
+      );
     l_video_cap.open(l_video.generic_string());
     if (!l_video_cap.isOpened()) {
       in_logger->log(log_loc(), level::warn, "视屏读取失败 跳过 {}", l_video);
@@ -53,6 +58,7 @@ void connect_video(
 
       video << l_image;
     }
+    ++l_index;
   }
 
   in_logger->log(log_loc(), level::info, "成功完成任务");
@@ -60,7 +66,7 @@ void connect_video(
 boost::asio::awaitable<void> connect_video_t::run() {
   file_list_ |=
       ranges::actions::sort([](const FSys::path& l_a, const FSys::path& l_b) { return l_a.stem() < l_b.stem(); });
-  connect_video(out_path_, logger_ptr_, file_list_, image_size_);
+  connect_video(out_path_, logger_ptr_, file_list_, image_size_, task_info_id_);
   co_return;
 }
 

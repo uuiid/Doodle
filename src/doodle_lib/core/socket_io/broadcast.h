@@ -393,4 +393,16 @@ struct local_server_task_info_update_broadcast_t {
   friend void to_json(nlohmann::json& j, const local_server_task_info_update_broadcast_t& p) { j = p.main_info_; }
 };
 
+struct preview_file_progress_update_broadcast_t {
+  static constexpr std::string_view event_name_ = "preview-file:progress-update";
+  static constexpr std::string_view namespace_  = "/events";
+  uuid preview_file_id_;
+  double progress_;
+  // to json
+  friend void to_json(nlohmann::json& j, const preview_file_progress_update_broadcast_t& p) {
+    j["preview_file_id"] = p.preview_file_id_;
+    j["progress"]        = p.progress_;
+  }
+};
+
 }  // namespace doodle::socket_io

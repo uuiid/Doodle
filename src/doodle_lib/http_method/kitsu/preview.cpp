@@ -245,7 +245,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
   {
-    ffmpeg_video_resize l_resizer{in_path, l_high_file_path_backup, l_low_file_path_backup, in_size};
+    ffmpeg_video_resize l_resizer{in_path, l_high_file_path_backup, l_low_file_path_backup, in_size, in_preview_file->uuid_id_};
     l_resizer.process();
   }
 

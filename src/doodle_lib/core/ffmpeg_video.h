@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <doodle_core/metadata/image_size.h>
+#include <doodle_core/metadata/server_task_info.h>
+
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_core/metadata/image_size.h>
 
 #include <filesystem>
 #include <opencv2/core/types.hpp>
@@ -35,6 +37,8 @@ class ffmpeg_video {
   std::string watermark_text_;
   // 时间码
   bool time_code_{false};
+  // 任务信息
+  uuid task_info_id_;
 
  public:
   explicit ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path);
@@ -51,6 +55,7 @@ class ffmpeg_video {
 
   void set_input_video(const FSys::path& in_video_path) { video_path_ = in_video_path; }
   void set_output_video(const FSys::path& in_out_path) { out_path_ = in_out_path; }
+  void set_task_info(const uuid& in_task_info_id) { task_info_id_ = in_task_info_id; }
   // 开始处理
   void process();
 
@@ -68,16 +73,19 @@ class ffmpeg_video_resize {
   FSys::path video_path_;
   FSys::path out_high_path_;
   FSys::path out_low_path_;
+  uuid task_info_id_;
   class impl;
 
  public:
   explicit ffmpeg_video_resize(
-      FSys::path in_video_path, FSys::path in_out_high_path, FSys::path in_out_low_path, const cv::Size& in_size
+      FSys::path in_video_path, FSys::path in_out_high_path, FSys::path in_out_low_path, const cv::Size& in_size,
+      uuid in_task_info_id
   )
       : high_size_(std::move(in_size)),
         video_path_(std::move(in_video_path)),
         out_high_path_(std::move(in_out_high_path)),
-        out_low_path_(std::move(in_out_low_path)) {
+        out_low_path_(std::move(in_out_low_path)),
+        task_info_id_(std::move(in_task_info_id)) {
     // 低分辨率定义为宽度小于等于 1280
     low_size_ = cv::Size{1280, static_cast<int>(1280.0 / high_size_.width * high_size_.height)};
   }

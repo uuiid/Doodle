@@ -357,7 +357,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
   if (l_arg.add_time_code_) {
     l_run.data_ptr_->ffmpeg_video_.set_time_code(true);
   }
-
+  l_run.data_ptr_->ffmpeg_video_.set_task_info(preview_file_id_);
+  
   std::vector<FSys::path> l_paths{};
   for (const auto& l_shot_preview : l_playlist_shot) {
     auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.preview_id_);
