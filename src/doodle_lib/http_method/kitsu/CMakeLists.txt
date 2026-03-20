@@ -61,7 +61,6 @@ set_source_files_properties(
         auto_task.cpp
         base_data.cpp
         casting.cpp
-        CMakeLists.txt
         comment.cpp
         compose_video.cpp
         computers.cpp
