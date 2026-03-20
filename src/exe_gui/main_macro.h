@@ -2,16 +2,17 @@
 // Created by td_main on 2023/9/11.
 //
 #pragma once
-#include <mimalloc.h>
-#include <mimalloc-new-delete.h>
+// #include <mimalloc.h>
+// #include <mimalloc-new-delete.h>
 
-#pragma comment(linker, "/include:mi_version")
+// #pragma comment(linker, "/include:mi_version")
 
 #include <doodle_lib/core/app_base.h>
 
 #include <tchar.h>
 #include <windows.h>
-#define DOODLE_MI_VERSION mi_version();
+// #define DOODLE_MI_VERSION mi_version();
+#define DOODLE_MI_VERSION
 //  int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR strCmdLine, int nCmdShow) try {
 #define DOODLE_MAIN_IMPL_(app_class)                                                   \
   {                                                                                    \
