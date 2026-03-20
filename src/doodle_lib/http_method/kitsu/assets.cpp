@@ -4,11 +4,8 @@
 
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/studio.h>
-#include <doodle_core/metadata/working_file.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_core/metadata/working_file.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
@@ -17,6 +14,9 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
@@ -78,21 +78,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
     // l_json_ret = *l_entity_extend;
     l_json_ret.update(*l_entity_extend);
   }
-
   socket_io::broadcast(
-      "asset:new",
-      nlohmann::json{
-          {"asset_id", l_entity->uuid_id_},
-          {"asset_type", l_entity->entity_type_id_},
-          {"project_id", l_entity->project_id_}
-      },
-      "/events"
+      socket_io::asset_new_broadcast_t{
+          .asset_id = l_entity->uuid_id_, .asset_type = l_entity->entity_type_id_, .project_id = l_entity->project_id_
+      }
   );
 
-    SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建资产 asset_id {} asset_type_id {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_entity->project_id_, l_entity->uuid_id_, l_entity->entity_type_id_
-    );
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建资产 asset_id {} asset_type_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_entity->project_id_, l_entity->uuid_id_,
+      l_entity->entity_type_id_
+  );
 
   co_return in_handle->make_msg(l_json_ret);
 }

@@ -72,7 +72,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
         g_io_context(),
         [l_t = task_info_]() -> boost::asio::awaitable<void> {
           co_await get_sqlite_database().update(l_t);
-          socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_t);
+          socket_io::broadcast("doodle:task_info:update", *l_t);
           co_return;
         },
         boost::asio::detached
@@ -220,13 +220,13 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
   }
   void emit_signal() const {
     default_logger_raw()->warn("写出事件 {} {}", "doodle:task_info:update", (nlohmann::json{} = *task_info_).dump());
-    socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *task_info_);
+    socket_io::broadcast("doodle:task_info:update", *task_info_);
   }
 };
 
 void emit_signal(const std::shared_ptr<server_task_info>& in_ptr) {
   default_logger_raw()->warn("写出事件 {} {}", "doodle:task_info:update", (nlohmann::json{} = *in_ptr).dump());
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *in_ptr);
+  socket_io::broadcast("doodle:task_info:update", *in_ptr);
 }
 
 }  // namespace
@@ -360,7 +360,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
@@ -396,7 +396,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
 
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_export_anim_fbx_local::post(
@@ -424,7 +424,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
@@ -453,7 +453,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
@@ -482,7 +482,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
@@ -509,7 +509,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
@@ -536,7 +536,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
@@ -563,7 +563,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
@@ -610,7 +610,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
   auto l_run_long_task_local = std::make_shared<local::run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
-  socket_io::broadcast("doodle:task_info:update", nlohmann::json{} = *l_ptr);
+  socket_io::broadcast("doodle:task_info:update", *l_ptr);
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
