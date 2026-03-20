@@ -746,6 +746,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/computers/{computer_id}
 DOODLE_HTTP_JWT_FUN(data_computers_instance)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid computer_id_{};
 DOODLE_HTTP_FUN_END()
