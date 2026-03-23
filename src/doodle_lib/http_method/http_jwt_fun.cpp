@@ -8,11 +8,12 @@
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <jwt-cpp/jwt.h>
+
 namespace doodle::http {
 
 void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
@@ -61,9 +62,9 @@ void http_jwt_fun::http_jwt_t::check_project_manager(const uuid& in_project_id) 
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 bool http_jwt_fun::http_jwt_t::is_project_manager(const uuid& in_project_id) const {
-  return person_.role_ == person_role_type::admin ||                                     // 是管理员
-         person_.role_ == person_role_type::producer ||                                  //  是制片
-         (person_.role_ == person_role_type::manager &&                                  //
+  return person_.role_ == person_role_type::admin ||                            // 是管理员
+         person_.role_ == person_role_type::producer ||                         //  是制片
+         (person_.role_ == person_role_type::manager &&                         //
           get_sqlite_database().is_person_in_project(person_, in_project_id));  // 是项目经理并且在项目中
 }
 
@@ -71,13 +72,13 @@ void http_jwt_fun::http_jwt_t::check_project_access(const uuid& in_project_id) c
   if (person_.uuid_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   if (
-      !(                                                                                 //
-          person_.role_ == person_role_type::admin ||                                    // 是管理员
-          person_.role_ == person_role_type::producer ||                                 //  是制片
-          person_.role_ == person_role_type::manager ||                                  // 是项目经理
-          (person_.role_ == person_role_type::supervisor &&                              // 是项目主管
+      !(                                                                        //
+          person_.role_ == person_role_type::admin ||                           // 是管理员
+          person_.role_ == person_role_type::producer ||                        //  是制片
+          person_.role_ == person_role_type::manager ||                         // 是项目经理
+          (person_.role_ == person_role_type::supervisor &&                     // 是项目主管
            get_sqlite_database().is_person_in_project(person_, in_project_id))  // 在项目中
-      )                                                                                  //
+      )                                                                         //
   )
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
@@ -97,7 +98,7 @@ void http_jwt_fun::http_jwt_t::check_not_outsourcer() const {
 
 bool http_jwt_fun::http_jwt_t::is_in_project(const uuid& in_project_id) const {
   if (person_.uuid_id_.is_nil()) return false;
-  return get_sqlite_database().is_person_in_project(person_, in_project_id);
+  return person_.role_ == person_role_type::admin || get_sqlite_database().is_person_in_project(person_, in_project_id);
 }
 void http_jwt_fun::http_jwt_t::check_in_project(const uuid& in_project_id) const {
   if (!is_in_project(in_project_id)) {
@@ -152,9 +153,8 @@ void http_jwt_fun::http_jwt_t::check_project_supervisor(const uuid& in_project_i
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 bool http_jwt_fun::http_jwt_t::is_project_supervisor(const uuid& in_project_id) const {
-  return is_project_manager(in_project_id) ||
-         (person_.role_ == person_role_type::supervisor &&
-          get_sqlite_database().is_person_in_project(person_, in_project_id));
+  return is_project_manager(in_project_id) || (person_.role_ == person_role_type::supervisor &&
+                                               get_sqlite_database().is_person_in_project(person_, in_project_id));
 }
 void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) const {
   check_task_action_access(get_sqlite_database().get_by_uuid<task>(in_task_id));
