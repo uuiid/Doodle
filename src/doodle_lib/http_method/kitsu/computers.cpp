@@ -17,6 +17,7 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
@@ -83,7 +84,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       *computer_ =
           l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_))
               .front();
-      computer_->name_ = computer_->name_;
+      computer_->name_   = computer_->name_;
       computer_->status_ = l_computer_json.status_;
       co_await l_sql.update(computer_);
     } else {
@@ -140,8 +141,9 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
         computer_->status_ = computer_status::online;
         co_return;
       }
-      auto l_job_ptr     = std::make_shared<server_task_info>(l_jobs.front());
-      l_job_ptr->status_ = server_task_info_status::running;
+      auto l_job_ptr       = std::make_shared<server_task_info>(l_jobs.front());
+      l_job_ptr->status_   = server_task_info_status::running;
+      l_job_ptr->run_time_ = {chrono::current_zone(), chrono::system_clock::now()};
       co_await l_sql.update(l_job_ptr);
       auto l_json = (nlohmann::json{} = *l_job_ptr);
       SPDLOG_LOGGER_ERROR(

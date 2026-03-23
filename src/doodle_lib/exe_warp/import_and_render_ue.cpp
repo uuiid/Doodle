@@ -350,7 +350,8 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
     l_error_msg     = boost::current_exception_diagnostic_information();
     SPDLOG_LOGGER_ERROR(logger_ptr_, "分布式任务发生错误: {}", l_error_msg);
   }
-  task_info_.status_ = l_exception_ptr ? server_task_info_status::failed : server_task_info_status::completed;
+  task_info_.status_   = l_exception_ptr ? server_task_info_status::failed : server_task_info_status::completed;
+  task_info_.end_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
   if (l_exception_ptr)
     co_await kitsu_client_->comment_task(
