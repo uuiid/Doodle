@@ -179,8 +179,10 @@ boost::asio::awaitable<void> http_work::async_run() {
         SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
         if (run_task(l_data))
           co_await set_computer_status(computer_status::busy);
-        else
+        else {
           SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}，不支持的任务类型 {}", l_data.uuid_id_, l_data.type_);
+          co_await set_computer_status(computer_status::online);
+        }
       }
     } catch (const boost::system::system_error& e) {
       SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
