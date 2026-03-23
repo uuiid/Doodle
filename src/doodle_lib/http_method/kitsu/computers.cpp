@@ -84,6 +84,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
           l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_))
               .front();
       computer_->name_ = computer_->name_;
+      computer_->status_ = l_computer_json.status_;
       co_await l_sql.update(computer_);
     } else {
       co_await l_sql.install(computer_);
