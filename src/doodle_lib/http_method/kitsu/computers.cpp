@@ -244,8 +244,13 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_comput
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
   if (computer_map_.contains(in_computer)) {
+    SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "尝试让计算机 {} 执行下一个任务", in_computer);
     if (auto l_ptr = computer_map_[in_computer].lock(); l_ptr) {
       l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
+      SPDLOG_LOGGER_INFO(
+          g_logger_ctrl().get_http(), "计算机 {} 的状态是 {}, 正在尝试让它执行下一个任务", in_computer,
+          l_ptr->get_computer() ? l_ptr->get_computer()->status_ : computer_status::unknown
+      );
       if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
         co_await run_next_task_impl(l_ptr);
         co_return;
