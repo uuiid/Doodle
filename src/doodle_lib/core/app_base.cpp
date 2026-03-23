@@ -112,6 +112,10 @@ std::int32_t app_base::run() {
       l_thread.join();
     }
   }
+  auto& io = g_io_context();
+  io.stop();
+  while (io.poll_one() != 0) {
+  }
 
   facets_.clear();
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
@@ -119,12 +123,16 @@ std::int32_t app_base::run() {
 }
 
 void app_base::stop_app(std::int32_t in_exit_code) {
-  stop_     = true;
+  bool l_expected = false;
+  if (!stop_.compare_exchange_strong(l_expected, true)) return;
+
   exit_code = in_exit_code;
   on_cancel.emit();
   facets_.clear();
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   g_io_context().stop();
+  while (g_io_context().poll_one() != 0) {
+  }
 }
 
 bool app_base::is_main_thread() const { return run_id == std::this_thread::get_id(); }

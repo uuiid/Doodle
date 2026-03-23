@@ -63,6 +63,11 @@ void doodle_lib::init() {
 bool doodle_lib::operator==(const doodle_lib& in_rhs) const { return ptr == in_rhs.ptr; }
 
 doodle_lib::~doodle_lib() {
+  if (ptr) {
+    ptr->io_context_.stop();
+    while (ptr->io_context_.poll_one() != 0) {
+    }
+  }
   core_set::get_set().database_.reset();
   ptr.reset();
 }
