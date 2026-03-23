@@ -114,11 +114,12 @@ function Initialize-Doodle {
         }
     }
     if ($BackupPdb) {
-        Write-Host "开始备份 PDB 文件"
+        Write-Host "开始备份 PDB 文件 和 EXE 文件"
         if (-not (Test-Path "$DoodleBuildRoot\pdb\$DoodleVersion\")) {
             New-Item -Path "$DoodleBuildRoot\pdb\$DoodleVersion\" -ItemType Directory
         }
         Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.pdb" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
+        Copy-Item -Path "$DoodleBuildRoot\Ninja_debug\bin\*.exe" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
     }
     Write-Host "开始复制文件"
     Write-Host "robocopy 日志 $DoodleLogPath"
