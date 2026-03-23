@@ -173,7 +173,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
   std::shared_ptr<computer> get_computer() const { return computer_; }
   std::shared_ptr<computer> sql_get_computer() {
-    if (!computer_) return nullptr;
+    if (!computer_)
+      return SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_http(), "计算机指针为空, 无法从数据库获取计算机信息"), nullptr;
     auto l_sql = get_sqlite_database();
     *computer_ = l_sql.get_by_uuid<computer>(computer_->uuid_id_);
     return computer_;
