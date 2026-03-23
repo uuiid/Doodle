@@ -7,7 +7,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 option(ADD_VERSION_LABEL "添加git版本标签和递增版本号" OFF)
 # SQL_BUILD_POOL:数据库编译池(数据库使用大量模板, 会消耗大量内存, 需要限制), 未设置时, 默认 12 
 if (NOT SQL_BUILD_POOL)
-    set(SQL_BUILD_POOL 12)
+    set(SQL_BUILD_POOL 8)
 endif ()
 
 
