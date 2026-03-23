@@ -246,6 +246,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   }
   auto l_job_ptr     = std::make_shared<server_task_info>(l_jobs.front());
   l_job_ptr->status_ = server_task_info_status::running;
+  l_job_ptr->run_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   co_await l_sql.update(l_job_ptr);
   auto l_json = (nlohmann::json{} = *l_job_ptr);
   in_computer->write_msg(l_json.dump());
