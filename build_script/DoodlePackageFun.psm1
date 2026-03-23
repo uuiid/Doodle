@@ -119,7 +119,7 @@ function Initialize-Doodle {
             New-Item -Path "$DoodleBuildRoot\pdb\$DoodleVersion\" -ItemType Directory
         }
         Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.pdb" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
-        Copy-Item -Path "$DoodleBuildRoot\Ninja_debug\bin\*.exe" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
+        Copy-Item -Path "$DoodleBuildRoot\Ninja_release\bin\*.exe" -Destination "$DoodleBuildRoot\pdb\$DoodleVersion\" -Force
     }
     Write-Host "开始复制文件"
     Write-Host "robocopy 日志 $DoodleLogPath"
