@@ -241,7 +241,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
 
   auto l_timer = std::make_shared<boost::asio::system_timer>(g_io_context());
 #ifndef NDEBUG
-  l_timer->expires_after(20s);  // 20秒
+  l_timer->expires_after(2s);  // 2秒
 #else
   l_timer->expires_after(20min);  // 20分钟
 #endif
