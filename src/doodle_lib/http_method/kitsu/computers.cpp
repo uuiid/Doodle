@@ -173,6 +173,12 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
   std::shared_ptr<computer> get_computer() const { return computer_; }
+  std::shared_ptr<computer> sql_get_computer() {
+    if (!computer_) return nullptr;
+    auto l_sql = get_sqlite_database();
+    *computer_ = l_sql.get_by_uuid<computer>(computer_->uuid_id_);
+    return computer_;
+  }
 
   void run() {
     boost::asio::co_spawn(
@@ -216,6 +222,7 @@ boost::asio::awaitable<void> computers_assign_task::assign_task(const server_tas
   clear_offline_computer();
   if (computer_map_.contains(in_task_info.run_computer_id_)) {
     if (auto l_ptr = computer_map_[in_task_info.run_computer_id_].lock(); l_ptr) {
+      l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
       if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
         auto l_json = (nlohmann::json{} = in_task_info).dump();
         l_ptr->write_msg(l_json);
@@ -258,6 +265,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_comput
   clear_offline_computer();
   if (computer_map_.contains(in_computer)) {
     if (auto l_ptr = computer_map_[in_computer].lock(); l_ptr) {
+      l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
       if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
         co_await run_next_task_impl(l_ptr);
         co_return;
@@ -275,6 +283,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   clear_offline_computer();
   for (auto& [uuid, weak_ptr] : computer_map_) {
     if (auto l_ptr = weak_ptr.lock(); l_ptr) {
+      l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
       if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
         co_await run_next_task_impl(l_ptr);
         co_return;
