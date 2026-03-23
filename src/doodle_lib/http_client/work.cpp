@@ -151,8 +151,10 @@ boost::asio::awaitable<void> http_work::async_run() {
   this_computer_info_.name_        = boost::asio::ip::host_name();
   this_computer_info_.status_      = computer_status::online;
   auto l_ip                        = core_set::get_set().server_ip;
-  if (l_ip.starts_with("http://")) l_ip.erase(0, 7);
-  else if (l_ip.starts_with("https://")) l_ip.erase(0, 8);
+  if (l_ip.starts_with("http://"))
+    l_ip.erase(0, 7);
+  else if (l_ip.starts_with("https://"))
+    l_ip.erase(0, 8);
   const boost::urls::url l_url{fmt::format("ws://{}/api/data/computers", l_ip)};
   for (auto i = 0;
        (co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
@@ -162,6 +164,7 @@ boost::asio::awaitable<void> http_work::async_run() {
       websocket_client_          = co_await make_websocket_stream(l_url);
       const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
       co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
+      co_await set_computer_status(computer_status::online);
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
         boost::beast::flat_buffer l_msg;
@@ -174,7 +177,10 @@ boost::asio::awaitable<void> http_work::async_run() {
         l_data.command_ = l_json.at("command");
 
         SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
-        run_task(l_data);
+        if (run_task(l_data))
+          co_await set_computer_status(computer_status::busy);
+        else
+          SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}，不支持的任务类型 {}", l_data.uuid_id_, l_data.type_);
       }
     } catch (const boost::system::system_error& e) {
       SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
@@ -185,12 +191,14 @@ boost::asio::awaitable<void> http_work::async_run() {
 
   co_return;
 }
-void http_work::run_task(const server_task_info& in_task_info) {
+bool http_work::run_task(const server_task_info& in_task_info) {
   if (in_task_info.type_ == server_task_info_type::auto_light) {
     auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, token_);
     l_run->set_http_work_ptr(shared_from_this());
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    return true;
   }
+  return false;
 }
 boost::asio::awaitable<void> http_work::set_computer_status(computer_status in_status) {
   try {

@@ -90,8 +90,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     } else {
       co_await l_sql.install(computer_);
     }
-    computer_->status_ = l_computer_json.status_;
-    co_await set_computer_status(*computer_);
   }
   void write_msg(const std::string& in_msg) { message_queue_.push(in_msg); }
   friend class computers_assign_task;

@@ -39,7 +39,7 @@ class http_work : public std::enable_shared_from_this<http_work> {
   computer this_computer_info_;
 
  protected:
-  void run_task(const server_task_info& in_task_info);
+  bool run_task(const server_task_info& in_task_info);
 
  public:
   http_work()  = default;
