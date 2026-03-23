@@ -20,6 +20,7 @@
     "auto_light_test/utf16_test",
     "move_test/add_audio",
     "move_test/conv_audio",
-    "move_test/text_video"
+    "move_test/text_video",
+    "data/http_client"
   ]
 }
