@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_SUITE(data)
 BOOST_AUTO_TEST_CASE(http_client) {
   using namespace doodle;
   app_base l_app{};
-  kitsu::kitsu_client l_client{"127.0.0.1:50025"};
+  kitsu::kitsu_client l_client{"http://127.0.0.1:50025"};
 
   boost::asio::co_spawn(
       g_io_context(),

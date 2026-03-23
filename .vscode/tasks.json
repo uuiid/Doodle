@@ -239,6 +239,15 @@
         "${workspaceFolder}/src/test_js/test/distributed_work.js"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "only server",
+      "type": "shell",
+      "command": "${workspaceFolder}/build/Ninja_debug/bin/doodle_kitsu_supplement.exe",
+      "args": [
+        "--config=${workspaceFolder}/build/my_debug_server.json"
+      ],
+      "problemMatcher": []
     }
   ],
   "inputs": [
