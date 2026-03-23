@@ -39,7 +39,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   l_ptr->submitter_   = person_.person_.uuid_id_;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->type_        = server_task_info_type::auto_light;
-  l_ptr->entity_id_   = id_;
+  l_ptr->task_id_   = id_;
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_computer_id = l_ptr->run_computer_id_;
   if (l_ptr->run_computer_id_.is_nil()) {

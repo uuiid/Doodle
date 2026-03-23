@@ -99,7 +99,7 @@ void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
   if (!in_data) return;
   boost::asio::post(strand_, [this, in_data]() {
-    try {
+  try {
       emit_impl(in_data);
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
