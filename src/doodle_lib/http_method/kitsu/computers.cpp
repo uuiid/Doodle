@@ -132,6 +132,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->status_              = in_computer.get().status_;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = get_sqlite_database();
+    co_await l_sql.update(computer_);
     if (computer_->status_ == computer_status::online) {
       auto l_sql  = get_sqlite_database();
       auto l_jobs = l_sql.get_server_tasks_by_computer_id(computer_->uuid_id_);
@@ -149,8 +150,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       );
       write_msg(l_json.dump());
       begin_write_msg();
-    } else {
-      co_await l_sql.update(computer_);
     }
     socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
   }
