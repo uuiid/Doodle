@@ -1,31 +1,31 @@
 //
 // Created by TD on 25-4-8.
 //
-#include <doodle_lib/core/app_base.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/global_function.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/exception/exception.h>
+#include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/person.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/status_automation.h>
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 
+#include <doodle_lib/core/app_base.h>
+#include <doodle_lib/core/core_set.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_listener.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/cancellation_type.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/system/detail/error_code.hpp>
 
-#include <core/http/http_session_data.h>
 #include "kitsu_reg_url.h"
 #include <chrono>
+#include <core/http/http_session_data.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -82,8 +82,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   auto l_sql    = get_sqlite_database();
   auto l_studio = l_sql.get_by_uuid<studio>(id_);
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_studio.name_
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_, person_.person_.get_full_name(),
+      l_studio.name_
   );
   co_await l_sql.remove<studio>(l_studio.uuid_id_);
   co_return in_handle->make_msg_204();
@@ -228,6 +228,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
   co_return in_handle->make_msg(l_file.generic_string());
 }
 
+namespace {
+// 循环 3s 检查 http 计数是否为 0 , 为 0 时停止服务器
+boost::asio::awaitable<void> check_http_connection_count_and_stop_server() {
+  auto l_timer = std::make_shared<boost::asio::system_timer>(g_io_context());
+  while (true) {
+    l_timer->expires_after(3s);
+    co_await l_timer->async_wait(boost::asio::use_awaitable);
+    if (core_set::get_set().http_connection_count_ == 0) {
+      app_base::Get().stop_app();
+      co_return;
+    }
+  }
+}
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server::post(session_data_ptr in_handle) {
   person_.check_admin();
   SPDLOG_LOGGER_WARN(
@@ -239,13 +254,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
     g_ctx().get<socket_io::sid_ctx>().on_cancel.emit(boost::asio::cancellation_type::all);
   }
 
-  auto l_timer = std::make_shared<boost::asio::system_timer>(g_io_context());
-#ifndef NDEBUG
-  l_timer->expires_after(2s);  // 2秒
-#else
-  l_timer->expires_after(20min);  // 20分钟
-#endif
-  l_timer->async_wait([l_timer](const boost::system::error_code&) { app_base::Get().stop_app(); });
+  boost::asio::co_spawn(g_io_context(), check_http_connection_count_and_stop_server(), boost::asio::detached);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 已触发停止服务器流程", person_.person_.email_,
       person_.person_.get_full_name()
