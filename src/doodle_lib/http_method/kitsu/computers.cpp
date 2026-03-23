@@ -216,26 +216,7 @@ void computers_assign_task::clear_offline_computer() {
     it = computer_map_.erase(it);
   }
 }
-boost::asio::awaitable<void> computers_assign_task::assign_task(const server_task_info& in_task_info) {
-  DOODLE_TO_EXECUTOR(strand_);
-  clear_offline_computer();
-  if (computer_map_.contains(in_task_info.run_computer_id_)) {
-    if (auto l_ptr = computer_map_[in_task_info.run_computer_id_].lock(); l_ptr) {
-      l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
-      if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
-        auto l_json = (nlohmann::json{} = in_task_info).dump();
-        l_ptr->write_msg(l_json);
-        l_ptr->begin_write_msg();
-        l_ptr->get_computer()->status_ = computer_status::busy;
-        co_return;
-      }
-    }
-  }
-  SPDLOG_LOGGER_ERROR(
-      g_logger_ctrl().get_http(), "分发任务 {} 失败，未找到在线计算机 {}，任务将无法执行", in_task_info.uuid_id_,
-      in_task_info.run_computer_id_
-  );
-}
+
 boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
