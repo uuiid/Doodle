@@ -31,7 +31,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   auto l_ptr              = std::make_shared<server_task_info>();
   l_ptr->type_            = server_task_info_type::auto_light;
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
 
   auto l_json             = in_handle->get_json();
   l_json.get_to(*l_ptr);

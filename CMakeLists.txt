@@ -5,6 +5,12 @@ cmake_minimum_required(VERSION 4.2)
 # CMAKE_SOURCE_DIR 代表当前文件的路径
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 option(ADD_VERSION_LABEL "添加git版本标签和递增版本号" OFF)
+# SQL_BUILD_POOL:数据库编译池(数据库使用大量模板, 会消耗大量内存, 需要限制), 未设置时, 默认 12 
+if (NOT SQL_BUILD_POOL)
+    set(SQL_BUILD_POOL 12)
+endif ()
+
+
 # 寻找git版本标签🏷️
 include(GetGitVersion)
 get_git_version(
@@ -52,7 +58,7 @@ option(BUILD_USD "构建usd相关" OFF)
 # 设置 Ninja 线程池, 这个池是用来限制生成查询数据库模板时占用过高的内存, 默认是 3
 include(ProcessorCount)
 ProcessorCount(DOODLE_CORES)
-set_property(GLOBAL PROPERTY JOB_POOLS sql_query_pool=7 sql_query_pool_compile=${DOODLE_CORES}) 
+set_property(GLOBAL PROPERTY JOB_POOLS sql_query_pool=${SQL_BUILD_POOL} sql_query_pool_compile=${DOODLE_CORES}) 
 set(CMAKE_JOB_POOL_COMPILE sql_query_pool_compile)
 set(CMAKE_JOB_POOL_LINK sql_query_pool_compile)
 # 首先搜索我们的自定义函数
