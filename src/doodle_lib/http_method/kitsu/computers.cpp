@@ -164,7 +164,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
 
   ~data_computers_socket_io_impl() {
     if (!computer_) return;
-    // if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了,
+    if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了,
     // 因为程序退出会导致数据库连接不可用
     auto l_sql                      = get_sqlite_database();
     computer_->status_              = computer_status::offline;
@@ -196,8 +196,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
 };
 
 computers_assign_task& computers_assign_task::get_instance() {
-  static computers_assign_task l_instance{};
-  return l_instance;
+  return *core_set::get_set().computers_assign_task_ptr_;
 }
 boost::asio::awaitable<void> computers_assign_task::register_computer(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
@@ -244,8 +243,8 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
     in_computer->get_computer()->status_ = computer_status::online;
     co_return;
   }
-  auto l_job_ptr     = std::make_shared<server_task_info>(l_jobs.front());
-  l_job_ptr->status_ = server_task_info_status::running;
+  auto l_job_ptr       = std::make_shared<server_task_info>(l_jobs.front());
+  l_job_ptr->status_   = server_task_info_status::running;
   l_job_ptr->run_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   co_await l_sql.update(l_job_ptr);
   auto l_json = (nlohmann::json{} = *l_job_ptr);

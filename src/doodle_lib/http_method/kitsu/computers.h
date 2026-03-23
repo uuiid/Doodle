@@ -16,7 +16,6 @@ namespace doodle::http {
 // 一个为任务分配计算机的模块
 class data_computers_socket_io_impl;
 class computers_assign_task : public boost::noncopyable {
-  computers_assign_task() = default;
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   std::unordered_map<uuid, std::weak_ptr<data_computers_socket_io_impl>> computer_map_;
 
@@ -24,6 +23,7 @@ class computers_assign_task : public boost::noncopyable {
   boost::asio::awaitable<void> run_next_task_impl(std::shared_ptr<data_computers_socket_io_impl> in_computer);
 
  public:
+  computers_assign_task()  = default;
   ~computers_assign_task() = default;
 
   static computers_assign_task& get_instance();

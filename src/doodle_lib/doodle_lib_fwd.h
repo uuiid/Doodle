@@ -116,5 +116,6 @@ using udp_client_ptr = std::shared_ptr<udp_client>;
 
 namespace http {
 class http_work;
+class computers_assign_task;
 }
 }  // namespace doodle

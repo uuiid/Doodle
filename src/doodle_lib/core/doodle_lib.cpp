@@ -68,6 +68,7 @@ doodle_lib::~doodle_lib() {
     while (ptr->io_context_.poll_one() != 0) {
     }
   }
+  core_set::get_set().computers_assign_task_ptr_.reset();
   core_set::get_set().database_.reset();
   ptr.reset();
 }

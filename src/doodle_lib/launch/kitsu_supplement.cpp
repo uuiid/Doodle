@@ -10,12 +10,14 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/http_method/kitsu/computers.h>
 #include <doodle_lib/http_method/seed_email.h>
 #include <doodle_lib/platform/win/register_file_type.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <opencv2/core/utility.hpp>
 #include <winreg/WinReg.hpp>
+
 
 namespace doodle {
 
@@ -119,8 +121,9 @@ bool kitsu_supplement_main::init() {
   app_base::Get().use_multithread(true);
   // g_ctx().emplace<detail::crash_reporting_thread>();
   crashpad_init::get();
-  auto& l_set     = core_set::get_set();
-  l_set.database_ = std::make_shared<sqlite_database>();
+  auto& l_set                      = core_set::get_set();
+  l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
+  l_set.database_                  = std::make_shared<sqlite_database>();
   kitsu_supplement_args_t l_args{
       .port_    = 80,
       .db_path_ = "C:/kitsu_new.database",
