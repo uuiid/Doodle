@@ -193,9 +193,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   }
 };
 
-computers_assign_task& computers_assign_task::get_instance() {
-  return *core_set::get_set().computers_assign_task_ptr_;
-}
+computers_assign_task& computers_assign_task::get_instance() { return *core_set::get_set().computers_assign_task_ptr_; }
 boost::asio::awaitable<void> computers_assign_task::register_computer(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
@@ -235,6 +233,7 @@ boost::asio::awaitable<void> computers_assign_task::assign_task(const server_tas
 boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
+  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer()->uuid_id_);
   auto l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_server_tasks_by_computer_id(in_computer->get_computer()->uuid_id_);
   if (l_jobs.empty()) {
@@ -248,6 +247,10 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   auto l_json = (nlohmann::json{} = *l_job_ptr);
   in_computer->write_msg(l_json.dump());
   in_computer->begin_write_msg();
+  SPDLOG_LOGGER_ERROR(
+      g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_,
+      in_computer->get_computer()->uuid_id_
+  );
   co_return;
 }
 boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_computer) {
