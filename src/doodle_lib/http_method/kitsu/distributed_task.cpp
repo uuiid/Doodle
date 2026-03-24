@@ -55,10 +55,9 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
     auto& l_computer        = l_online_computer[dis(gen)];
     l_ptr->run_computer_id_ = l_computer.uuid_id_;
     if (l_computer.status_ == computer_status::online) l_computer_id = l_computer.uuid_id_;
-  } else {
-    l_ptr->run_computer_id_ = {};
-    l_computer_id           = {};
   }
+  DOODLE_CHICK(!l_computer_id.is_nil(), "没有可用的计算机来运行任务, 无法创建任务");
+  
   l_ptr->run_computer_id_ = l_computer_id;
   return l_ptr;
 }
@@ -83,10 +82,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-
-namespace {
-  
-}
+namespace {}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, post) {
   person_.check_not_outsourcer();
