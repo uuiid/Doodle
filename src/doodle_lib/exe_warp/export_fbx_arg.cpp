@@ -39,6 +39,46 @@ void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
   in_json["frame_out"]            = out_obj.frame_out_;
 }
 
+void from_json(const nlohmann::json& j, export_fbx_arg_distributed::args& p) {
+  if (j.contains("create_play_blast")) j.at("create_play_blast").get_to(p.create_play_blast_);
+  if (j.contains("film_aperture")) j.at("film_aperture").get_to(p.film_aperture_);
+  if (j.contains("image_size")) j.at("image_size").get_to(p.size_);
+  if (j.contains("frame_in")) j.at("frame_in").get_to(p.frame_in_);
+  if (j.contains("frame_out")) j.at("frame_out").get_to(p.frame_out_);
+  if (j.contains("maya_file_name")) j.at("maya_file_name").get_to(p.maya_file_name_);
+  if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
+}
+
+void to_json(nlohmann::json& j, const export_fbx_arg_distributed::args& p) {
+  j["create_play_blast"] = p.create_play_blast_;
+  j["film_aperture"]     = p.film_aperture_;
+  j["image_size"]        = p.size_;
+  j["frame_in"]          = p.frame_in_;
+  j["frame_out"]         = p.frame_out_;
+  j["maya_file_name"]    = p.maya_file_name_;
+  j["task_id"]           = p.task_id_;
+}
+
+void from_json(const nlohmann::json& j, export_fbx_arg_distributed& p) {
+  from_json(j, static_cast<maya_exe_ns::arg&>(p));
+  j.get_to(p.arg_);
+}
+void to_json(nlohmann::json& j, const export_fbx_arg_distributed& p) {
+  j = p.arg_;
+  to_json(j, static_cast<const maya_exe_ns::arg&>(p));
+}
+
+void from_json(const nlohmann::json& in_json, export_fbx_arg_epiboly& out_obj) {
+  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
+}
+// to json
+void to_json(nlohmann::json& in_json, const export_fbx_arg_epiboly& out_obj) {
+  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
+  in_json["create_play_blast"]    = out_obj.create_play_blast_;
+  in_json["camera_film_aperture"] = out_obj.film_aperture_;
+  in_json["image_size"]           = out_obj.size_;
+}
+
 boost::asio::awaitable<void> export_fbx_arg::run() {
   kitsu_client_->set_logger(logger_ptr_);
 
@@ -149,15 +189,27 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
   }
 }
 
-void from_json(const nlohmann::json& in_json, export_fbx_arg_epiboly& out_obj) {
-  from_json(in_json, static_cast<maya_exe_ns::arg&>(out_obj));
-}
-// to json
-void to_json(nlohmann::json& in_json, const export_fbx_arg_epiboly& out_obj) {
-  to_json(in_json, static_cast<const maya_exe_ns::arg&>(out_obj));
-  in_json["create_play_blast"]    = out_obj.create_play_blast_;
-  in_json["camera_film_aperture"] = out_obj.film_aperture_;
-  in_json["image_size"]           = out_obj.size_;
+void export_fbx_arg_distributed::set_arg(const nlohmann::json& in_arg) { in_arg.get_to(*this); }
+
+boost::asio::awaitable<void> export_fbx_arg_distributed::run() {
+  kitsu_client_->set_logger(logger_ptr_);
+
+  co_await arg::async_run_maya();
+  auto l_root_dir = file_path.parent_path().parent_path();
+  if (!out_arg_.movie_file_dir.empty()) {
+    auto l_path = l_root_dir / "mov" / file_path.stem().concat(".mp4");
+    SPDLOG_LOGGER_INFO(logger_ptr_, "导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_path);
+    if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) {
+      FSys::create_directories(l_p);
+    }
+    detail::create_move(
+        l_path, logger_ptr_, movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")),
+        arg_.size_
+    );
+    co_await kitsu_client_->upload_shot_animation_other_file(
+        arg_.task_id_, l_root_dir, l_path.lexically_proximate(l_root_dir)
+    );
+  }
 }
 
 boost::asio::awaitable<void> export_fbx_arg_epiboly::run() {

@@ -66,9 +66,6 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
   person_.check_not_outsourcer();
-
-  auto l_sql = get_sqlite_database();
-
   auto l_ptr = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
 
 #ifdef NDEBUG
@@ -88,7 +85,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
 
 
 namespace {
-
+  
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, post) {
