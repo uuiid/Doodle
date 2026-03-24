@@ -43,7 +43,6 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
   l_ptr->type_        = server_task_info_type::auto_light;
   l_ptr->task_id_     = task_id;
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
-  auto l_computer_id = l_ptr->run_computer_id_;
 
   if (auto l_all_computer = l_sql.get_all<computer>(); l_ptr->run_computer_id_.is_nil() && !l_all_computer.empty()) {
     // 过滤在线的计算机
@@ -58,11 +57,9 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
     std::uniform_int_distribution<> dis(0, l_online_computer.size() - 1);
     auto& l_computer        = l_online_computer[dis(gen)];
     l_ptr->run_computer_id_ = l_computer.uuid_id_;
-    if (l_computer.status_ == computer_status::online) l_computer_id = l_computer.uuid_id_;
   }
-  DOODLE_CHICK(!l_computer_id.is_nil(), "没有可用的计算机来运行任务, 无法创建任务");
-
-  l_ptr->run_computer_id_ = l_computer_id;
+  DOODLE_CHICK(!l_ptr->run_computer_id_.is_nil(), "没有可用的计算机来运行任务, 无法创建任务");
+  l_ptr->run_computer_id_ = l_ptr->run_computer_id_;
   return l_ptr;
 }
 }  // namespace
