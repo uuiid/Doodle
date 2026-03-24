@@ -205,7 +205,7 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
   DOODLE_TO_EXECUTOR(strand_);
-  computer_map_.emplace(in_computer->get_computer()->uuid_id_, in_computer);
+  computer_map_[in_computer->get_computer()->uuid_id_] = in_computer;
 }
 void computers_assign_task::clear_offline_computer() {
   for (auto it = computer_map_.begin(); it != computer_map_.end();) {
