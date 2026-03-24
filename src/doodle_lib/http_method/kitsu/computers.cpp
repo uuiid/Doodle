@@ -134,24 +134,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = get_sqlite_database();
     co_await l_sql.update(computer_);
-    if (computer_->status_ == computer_status::online) {
-      auto l_sql  = get_sqlite_database();
-      auto l_jobs = l_sql.get_server_tasks_by_computer_id(computer_->uuid_id_);
-      if (l_jobs.empty()) {
-        computer_->status_ = computer_status::online;
-        co_return;
-      }
-      auto l_job_ptr       = std::make_shared<server_task_info>(l_jobs.front());
-      l_job_ptr->status_   = server_task_info_status::running;
-      l_job_ptr->run_time_ = {chrono::current_zone(), chrono::system_clock::now()};
-      co_await l_sql.update(l_job_ptr);
-      auto l_json = (nlohmann::json{} = *l_job_ptr);
-      SPDLOG_LOGGER_ERROR(
-          g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_, computer_->uuid_id_
-      );
-      write_msg(l_json.dump());
-      begin_write_msg();
-    }
+    if (computer_->status_ == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
+
     socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
   }
 
@@ -223,14 +207,15 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
 ) {
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer()->uuid_id_);
   auto l_sql  = get_sqlite_database();
-  auto l_jobs = l_sql.get_server_tasks_by_computer_id(in_computer->get_computer()->uuid_id_);
+  auto l_jobs = l_sql.get_server_tasks_by_submitted();
   if (l_jobs.empty()) {
     in_computer->get_computer()->status_ = computer_status::online;
     co_return;
   }
-  auto l_job_ptr       = std::make_shared<server_task_info>(l_jobs.front());
-  l_job_ptr->status_   = server_task_info_status::running;
-  l_job_ptr->run_time_ = {chrono::current_zone(), chrono::system_clock::now()};
+  auto l_job_ptr              = std::make_shared<server_task_info>(l_jobs.front());
+  l_job_ptr->status_          = server_task_info_status::running;
+  l_job_ptr->run_time_        = {chrono::current_zone(), chrono::system_clock::now()};
+  l_job_ptr->run_computer_id_ = in_computer->get_computer()->uuid_id_;
   co_await l_sql.update(l_job_ptr);
   auto l_json = (nlohmann::json{} = *l_job_ptr);
   in_computer->write_msg(l_json.dump());

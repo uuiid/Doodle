@@ -235,6 +235,6 @@ class sqlite_database {
   // 删除sequence下的所有casting数据
   boost::asio::awaitable<void> remove_sequence_casting(const uuid& in_sequence_id);
   // 按照计算机id 获取工作
-  std::vector<server_task_info> get_server_tasks_by_computer_id(const uuid& in_computer_id);
+  std::vector<server_task_info> get_server_tasks_by_submitted();
 };
 }  // namespace doodle
