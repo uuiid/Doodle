@@ -75,6 +75,9 @@ class DOODLELIB_API export_fbx_arg_distributed : public export_fbx_arg {
     std::int32_t frame_out_{};
     FSys::path maya_file_name_{};
     uuid task_id_{};
+
+    FSys::path download_file_{};
+
     // from json
     friend void from_json(const nlohmann::json& j, args& p);
     // to json
