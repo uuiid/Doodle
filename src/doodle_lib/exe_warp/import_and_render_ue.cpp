@@ -354,7 +354,16 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   task_info_.end_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   logger_ptr_->flush();
   co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
-  http_work_ptr_->set_computer_status(computer_status::online);
+}
+
+run_ue_assembly_distributed::~run_ue_assembly_distributed() {
+  if (logger_ptr_) {
+    logger_ptr_->flush();
+    logger_ptr_->sinks().clear();
+  }
+  if (http_work_ptr_) {
+    http_work_ptr_->set_computer_status(computer_status::online);
+  }
 }
 
 }  // namespace doodle
