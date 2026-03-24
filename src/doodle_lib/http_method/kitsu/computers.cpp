@@ -18,8 +18,10 @@
 #include <boost/scope/scope_exit.hpp>
 
 #include <chrono>
+#include <fmt/ranges.h>
 #include <functional>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <string>
 
 namespace doodle::http {
@@ -241,6 +243,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
 boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_computer) {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
+  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
   if (computer_map_.contains(in_computer)) {
     SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "尝试让计算机 {} 执行下一个任务", in_computer);
     if (auto l_ptr = computer_map_[in_computer].lock(); l_ptr) {
