@@ -353,14 +353,6 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   task_info_.status_   = l_exception_ptr ? server_task_info_status::failed : server_task_info_status::completed;
   task_info_.end_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
-  if (l_exception_ptr)
-    co_await kitsu_client_->comment_task(
-        kitsu::kitsu_client::comment_task_arg{
-            .task_id_        = arg_.shot_task_id_,
-            .comment_        = fmt::format("UE组装和渲染发生错误: {}", l_error_msg),
-            .task_status_id_ = task_status::get_to_do(),
-        }
-    );
   logger_ptr_->flush();
   co_await http_work_ptr_->set_computer_status(computer_status::online);
 }
