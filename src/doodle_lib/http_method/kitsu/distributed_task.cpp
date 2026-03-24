@@ -59,7 +59,6 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
     l_ptr->run_computer_id_ = l_computer.uuid_id_;
   }
   DOODLE_CHICK(!l_ptr->run_computer_id_.is_nil(), "没有可用的计算机来运行任务, 无法创建任务");
-  l_ptr->run_computer_id_ = l_ptr->run_computer_id_;
   return l_ptr;
 }
 }  // namespace
