@@ -99,7 +99,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     co_await init();
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
 
-    {
+    try {
       boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
@@ -114,6 +114,11 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
         auto l_computer = l_json.get<computer>();
         co_await set_computer_status(l_computer);
       }
+    } catch (...) {
+      SPDLOG_LOGGER_ERROR(
+          g_logger_ctrl().get_http(), "计算机 {} 连接发生错误: {}", computer_->uuid_id_,
+          boost::current_exception_diagnostic_information()
+      );
     }
     co_await web_stream_->async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
   }
