@@ -182,8 +182,13 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     if (j.contains("submitter")) j.at("submitter").get_to(p.submitter_);
     if (j.contains("run_computer_id")) j.at("run_computer_id").get_to(p.run_computer_id_);
     if (j.contains("type")) j.at("type").get_to(p.type_);
-    if (j.contains("run_data")) j.at("run_data").get_to(p.command_);
+    if (j.contains("command")) j.at("command").get_to(p.command_);
     if (j.contains("status")) j.at("status").get_to(p.status_);
+    if (j.contains("submit_time")) j.at("submit_time").get_to(p.submit_time_);
+    if (j.contains("run_time")) j.at("run_time").get_to(p.run_time_);
+    if (j.contains("end_time")) j.at("end_time").get_to(p.end_time_);
+    if (j.contains("last_line_log")) j.at("last_line_log").get_to(p.last_line_log_);
+    if (j.contains("run_time_info")) j.at("run_time_info").get_to(p.run_time_info_);
   }
 };
 }  // namespace doodle
