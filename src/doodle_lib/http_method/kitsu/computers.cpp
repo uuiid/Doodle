@@ -194,10 +194,10 @@ void computers_assign_task::clear_offline_computer() {
       ++it;
       continue;
     } else {
-      it = computer_map_.erase(it);
       SPDLOG_LOGGER_INFO(
           g_logger_ctrl().get_http(), "清理离线计算机 {}, 当前在线计算机数量 {}", it->first, computer_map_.size()
       );
+      it = computer_map_.erase(it);
     }
   }
 }
