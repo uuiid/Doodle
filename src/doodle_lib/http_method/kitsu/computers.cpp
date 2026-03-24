@@ -199,14 +199,22 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
 ) {
   DOODLE_TO_EXECUTOR(strand_);
   computer_map_[in_computer->get_computer()->uuid_id_] = in_computer;
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer()->uuid_id_,
+      computer_map_.size()
+  );
 }
 void computers_assign_task::clear_offline_computer() {
   for (auto it = computer_map_.begin(); it != computer_map_.end();) {
     if (auto l_ptr = it->second.lock(); l_ptr) {
       ++it;
       continue;
-    } else
+    } else {
       it = computer_map_.erase(it);
+      SPDLOG_LOGGER_INFO(
+          g_logger_ctrl().get_http(), "清理离线计算机 {}, 当前在线计算机数量 {}", it->first, computer_map_.size()
+      );
+    }
   }
 }
 
