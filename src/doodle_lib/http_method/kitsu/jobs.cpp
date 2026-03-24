@@ -29,14 +29,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {
   person_.check_not_outsourcer();
   auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
   if (!FSys::exists(l_jobs_path)) co_return in_handle->make_msg_204();
-  co_return in_handle->make_msg(l_jobs_path, "text/plain; charset=utf-8"); // utf-8编码的文本文件
+  co_return in_handle->make_msg(l_jobs_path, "text/plain; charset=utf-8");  // utf-8编码的文本文件
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
   person_.check_not_outsourcer();
   auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
   auto l_string    = in_handle->get_string();
   if (auto l_p = l_jobs_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-  FSys::ofstream{l_jobs_path} << l_string;
+  FSys::ofstream{l_jobs_path, std::ios::out | std::ios::binary | std::ios::app} << l_string;
   co_return in_handle->make_msg_204();
 }
 
