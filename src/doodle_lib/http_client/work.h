@@ -11,8 +11,15 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio.hpp>
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
 #include <boost/asio/use_awaitable.hpp>
+#include <boost/beast/websocket/rfc6455.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
+#include <boost/lockfree/spsc_value.hpp>
 #include <boost/process.hpp>
+
+#include <optional>
 
 namespace doodle::http {
 namespace detail {
@@ -35,17 +42,27 @@ class http_work : public std::enable_shared_from_this<http_work> {
   logger_ptr logger_{};
   std::string token_{};
   std::shared_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>> websocket_client_{};
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::awaitable<void> async_run();
   computer this_computer_info_;
+  bool is_writing_{false};
+  boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
+  boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
+
+  boost::asio::awaitable<void> async_write_msg();
 
  protected:
   bool run_task(const server_task_info& in_task_info);
+
+  void begin_write_msg();
+  void begin_ping();
+  boost::asio::awaitable<void> async_ping_loop();
 
  public:
   http_work()  = default;
   ~http_work() = default;
 
   void run(const std::string& in_token);
-  boost::asio::awaitable<void> set_computer_status(computer_status in_status);
+  void set_computer_status(computer_status in_status);
 };
 }  // namespace doodle::http

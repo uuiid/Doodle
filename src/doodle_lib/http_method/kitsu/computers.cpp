@@ -122,6 +122,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     }
     co_await web_stream_->async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
   }
+
   boost::asio::awaitable<void> write_websocket() {
     if (writing_ || should_close_) co_return;
     writing_ = true;

@@ -20,9 +20,12 @@
 #include <boost/asio/detached.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/this_coro.hpp>
+#include <boost/lockfree/detail/uses_optional.hpp>
 #include <boost/process/process.hpp>
+#include <boost/scope/scope_exit.hpp>
 #include <boost/url/url.hpp>
 
+#include "core/global_function.h"
 #include <core/http/json_body.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -137,7 +140,7 @@ void http_work::run(const std::string& in_token) {
   executor_ = boost::asio::make_strand(g_io_context());
   token_    = in_token;
   spdlog::flush_every(1s);
-  logger_   = g_logger_ctrl().make_log("http_work");
+  logger_ = g_logger_ctrl().make_log("http_work");
   boost::asio::co_spawn(
       executor_, async_run(),
       boost::asio::bind_cancellation_slot(
@@ -164,7 +167,8 @@ boost::asio::awaitable<void> http_work::async_run() {
       websocket_client_          = co_await make_websocket_stream(l_url);
       const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
       co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
-      co_await set_computer_status(computer_status::online);
+      set_computer_status(computer_status::online);
+      begin_ping();
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
              boost::asio::cancellation_type::none) {
         boost::beast::flat_buffer l_msg;
@@ -178,10 +182,10 @@ boost::asio::awaitable<void> http_work::async_run() {
 
         SPDLOG_LOGGER_INFO(logger_, "收到任务 {}，命令 {}", l_data.uuid_id_, l_data.command_.dump());
         if (run_task(l_data))
-          co_await set_computer_status(computer_status::busy);
+          set_computer_status(computer_status::busy);
         else {
           SPDLOG_LOGGER_ERROR(logger_, "无法运行任务 {}，不支持的任务类型 {}", l_data.uuid_id_, l_data.type_);
-          co_await set_computer_status(computer_status::online);
+          set_computer_status(computer_status::online);
         }
       }
     } catch (const boost::system::system_error& e) {
@@ -202,11 +206,52 @@ bool http_work::run_task(const server_task_info& in_task_info) {
   }
   return false;
 }
-boost::asio::awaitable<void> http_work::set_computer_status(computer_status in_status) {
+
+void http_work::set_computer_status(computer_status in_status) {
+  this_computer_info_.status_ = in_status;
+  message_queue_.push(nlohmann::json(this_computer_info_).dump());
+  begin_write_msg();
+}
+
+void http_work::begin_write_msg() {
+  if (is_writing_) return;
+  boost::asio::co_spawn(
+      strand_, async_write_msg(),
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+      )
+  );
+}
+
+void http_work::begin_ping() {
+  boost::asio::co_spawn(
+      g_io_context(), async_ping_loop(),
+      boost::asio::bind_cancellation_slot(
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+      )
+  );
+}
+
+boost::asio::awaitable<void> http_work::async_write_msg() {
+  DOODLE_TO_EXECUTOR(strand_);
+  if (is_writing_) co_return;
+  is_writing_ = true;
+  boost::scope::scope_exit l_{[this]() { is_writing_ = false; }};
+
   try {
-    this_computer_info_.status_ = in_status;
-    const auto l_computer_json  = nlohmann::json(this_computer_info_).dump();
-    co_await websocket_client_->async_write(boost::asio::buffer(l_computer_json));
+    if (ping_message_.read(boost::lockfree::uses_optional)) {
+      co_await websocket_client_->async_ping(boost::beast::websocket::ping_data{}, boost::asio::use_awaitable);
+    }
+
+    while (!message_queue_.empty()) {
+      std::string l_msg{};
+      message_queue_.pop(l_msg);
+      if (!websocket_client_) break;
+      if (!l_msg.empty())
+        co_await websocket_client_->async_write(boost::asio::buffer(l_msg), boost::asio::use_awaitable);
+      else
+        co_await websocket_client_->async_ping(boost::beast::websocket::ping_data{}, boost::asio::use_awaitable);
+    }
   } catch (const boost::system::system_error& e) {
     SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
   } catch (const std::exception& e) {
@@ -214,4 +259,20 @@ boost::asio::awaitable<void> http_work::set_computer_status(computer_status in_s
   }
 }
 
+boost::asio::awaitable<void> http_work::async_ping_loop() {
+  DOODLE_TO_EXECUTOR(strand_);
+  try {
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      timer.expires_after(std::chrono::seconds(30));
+      co_await timer.async_wait(boost::asio::use_awaitable);
+      ping_message_.write(boost::beast::websocket::ping_data{});
+      begin_write_msg();
+    }
+  } catch (const boost::system::system_error& e) {
+    SPDLOG_LOGGER_ERROR(logger_, "WebSocket 连接发生错误: {}", e.what());
+  } catch (const std::exception& e) {
+    SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
+  }
+}
 }  // namespace doodle::http
