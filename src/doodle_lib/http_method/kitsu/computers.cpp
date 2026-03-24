@@ -207,13 +207,11 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
 }
 void computers_assign_task::clear_offline_computer() {
   for (auto it = computer_map_.begin(); it != computer_map_.end();) {
-    if (auto l_ptr = it->second.lock()) {
-      if (l_ptr->get_computer()) {
-        ++it;
-        continue;
-      }
-    }
-    it = computer_map_.erase(it);
+    if (auto l_ptr = it->second.lock(); l_ptr) {
+      ++it;
+      continue;
+    } else
+      it = computer_map_.erase(it);
   }
 }
 
