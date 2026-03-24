@@ -9,6 +9,8 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <memory>
+
 namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, get) {
@@ -23,22 +25,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, get) 
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
-  person_.check_not_outsourcer();
+namespace {
+std::shared_ptr<server_task_info> make_server_task_info_from_json(
+    const nlohmann::json& in_json, const uuid& person_id, const uuid& task_id
+) {
+  auto l_sql = get_sqlite_database();
 
-  auto l_sql          = get_sqlite_database();
-
-  auto l_ptr          = std::make_shared<server_task_info>();
-  l_ptr->type_        = server_task_info_type::auto_light;
-  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-
-  auto l_json         = in_handle->get_json();
-  l_json.get_to(*l_ptr);
+  auto l_ptr = std::make_shared<server_task_info>();
+  in_json.get_to(*l_ptr);
   l_ptr->status_      = server_task_info_status::submitted;
-  l_ptr->submitter_   = person_.person_.uuid_id_;
+  l_ptr->submitter_   = person_id;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->type_        = server_task_info_type::auto_light;
-  l_ptr->task_id_     = id_;
+  l_ptr->task_id_     = task_id;
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_computer_id = l_ptr->run_computer_id_;
 
@@ -60,13 +59,50 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
     l_ptr->run_computer_id_ = {};
     l_computer_id           = {};
   }
+  l_ptr->run_computer_id_ = l_computer_id;
+  return l_ptr;
+}
+}  // namespace
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
+  person_.check_not_outsourcer();
+
+  auto l_sql = get_sqlite_database();
+
+  auto l_ptr = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
+
 #ifdef NDEBUG
   l_ptr->command_ = auto_task::shot_render_light(project_id_, id_);
 #endif
   co_await get_sqlite_database().install(l_ptr);
-  if (!l_computer_id.is_nil()) co_await computers_assign_task::get_instance().run_next_task(l_computer_id);
+  if (!l_ptr->run_computer_id_.is_nil())
+    co_await computers_assign_task::get_instance().run_next_task(l_ptr->run_computer_id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 提交 UE 装配任务 project_id {} task_id {} job_id {} computer_id {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,
+      l_ptr->run_computer_id_
+  );
+  socket_io::broadcast(socket_io::server_task_info_new_broadcast_t{.server_task_info_id_ = l_ptr->uuid_id_});
+  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+}
+
+
+namespace {
+
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, post) {
+  person_.check_not_outsourcer();
+  auto l_sql = get_sqlite_database();
+  auto l_ptr = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
+#ifdef NDEBUG
+  l_ptr->command_ = auto_task::shot_export_anim_fbx(project_id_, id_);
+#endif
+  co_await get_sqlite_database().install(l_ptr);
+  if (!l_ptr->run_computer_id_.is_nil())
+    co_await computers_assign_task::get_instance().run_next_task(l_ptr->run_computer_id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 提交动画导出任务 project_id {} task_id {} job_id {} computer_id {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_ptr->uuid_id_,
       l_ptr->run_computer_id_
   );
