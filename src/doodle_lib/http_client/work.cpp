@@ -260,7 +260,6 @@ boost::asio::awaitable<void> http_work::async_write_msg() {
 }
 
 boost::asio::awaitable<void> http_work::async_ping_loop() {
-  DOODLE_TO_EXECUTOR(strand_);
   try {
     boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {

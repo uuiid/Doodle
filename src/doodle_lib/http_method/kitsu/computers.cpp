@@ -14,7 +14,10 @@
 #include <boost/asio/buffers_iterator.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/consign.hpp>
+#include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
+#include <boost/lockfree/detail/uses_optional.hpp>
+#include <boost/lockfree/spsc_value.hpp>
 #include <boost/scope/scope_exit.hpp>
 
 #include <chrono>
@@ -69,6 +72,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
   std::atomic<bool> writing_{false}, should_close_{false};
+  boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
 
   // 第一步, 等待计算机发送自身信息, 第二步, 将计算机信息保存到数据库
   boost::asio::awaitable<void> init() {
@@ -98,7 +102,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   boost::asio::awaitable<void> async_run() {
     co_await init();
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
-
+    begin_ping();
     try {
       boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
@@ -128,6 +132,9 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     writing_ = true;
     boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { writing_ = false; }};
 
+    if (ping_message_.read(boost::lockfree::uses_optional))
+      co_await web_stream_->async_ping(boost::beast::websocket::ping_data{});
+
     while (!message_queue_.empty()) {
       std::string l_msg{};
       message_queue_.pop(l_msg);
@@ -143,6 +150,30 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     if (computer_->status_ == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
 
     socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
+  }
+  void begin_ping() {
+    boost::asio::co_spawn(
+        strand_, async_ping_loop(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+        )
+    );
+  }
+  boost::asio::awaitable<void> async_ping_loop() {
+    try {
+      boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
+      while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
+             boost::asio::cancellation_type::none) {
+        timer.expires_after(std::chrono::seconds(30));
+        co_await timer.async_wait(boost::asio::use_awaitable);
+        ping_message_.write(boost::beast::websocket::ping_data{});
+        begin_write_msg();
+      }
+    } catch (const boost::system::system_error& e) {
+      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_http(), "WebSocket 连接发生错误: {}", e.what());
+    } catch (const std::exception& e) {
+      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_http(), "处理 WebSocket 消息发生错误: {}", e.what());
+    }
   }
 
  public:
