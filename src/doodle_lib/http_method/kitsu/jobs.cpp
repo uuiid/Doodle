@@ -70,7 +70,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
         g_logger_ctrl().get_http(), "任务 {} 分配的计算机由 {} 变更为 {}, 将尝试让新计算机执行任务",
         l_job_ptr->uuid_id_, l_job.run_computer_id_, l_job_ptr->run_computer_id_
     );
-    co_await computers_assign_task::get_instance().run_next_task(l_job_ptr->run_computer_id_);
+    co_await computers_assign_task::get_instance().run_next_task();
   }
   socket_io::broadcast(socket_io::server_task_info_update_broadcast_t{.server_task_info_id_ = l_job_ptr->uuid_id_});
   co_return in_handle->make_msg(nlohmann::json{} = *l_job_ptr);
