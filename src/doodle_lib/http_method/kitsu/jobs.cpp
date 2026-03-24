@@ -51,11 +51,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
-  if (l_job.status_ == server_task_info_status::failed || l_job.status_ == server_task_info_status::completed ||
-      l_job.status_ == server_task_info_status::canceled)
-    throw_exception(
-        http_request_error{boost::beast::http::status::bad_request, "任务在(失败, 完成, 取消)状态下无法修改"}
-    );
   auto l_json    = in_handle->get_json();
   auto l_job_ptr = std::make_shared<server_task_info>(l_job);
   l_json.get_to(*l_job_ptr);
