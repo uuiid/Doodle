@@ -173,13 +173,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
   std::shared_ptr<computer> get_computer() const { return computer_; }
-  std::shared_ptr<computer> sql_get_computer() {
-    if (!computer_)
-      return SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_http(), "计算机指针为空, 无法从数据库获取计算机信息"), nullptr;
-    auto l_sql = get_sqlite_database();
-    *computer_ = l_sql.get_by_uuid<computer>(computer_->uuid_id_);
-    return computer_;
-  }
 
   void run() {
     boost::asio::co_spawn(
@@ -234,46 +227,20 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   auto l_json = (nlohmann::json{} = *l_job_ptr);
   in_computer->write_msg(l_json.dump());
   in_computer->begin_write_msg();
-  SPDLOG_LOGGER_ERROR(
+  SPDLOG_LOGGER_INFO(
       g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_,
       in_computer->get_computer()->uuid_id_
   );
   co_return;
 }
-boost::asio::awaitable<void> computers_assign_task::run_next_task(uuid in_computer) {
-  DOODLE_TO_EXECUTOR(strand_);
-  clear_offline_computer();
-  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
-  if (computer_map_.contains(in_computer)) {
-    SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "尝试让计算机 {} 执行下一个任务", in_computer);
-    if (auto l_ptr = computer_map_[in_computer].lock(); l_ptr) {
-      l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
-      SPDLOG_LOGGER_INFO(
-          g_logger_ctrl().get_http(), "计算机 {} 的状态是 {}, 正在尝试让它执行下一个任务", in_computer,
-          l_ptr->get_computer() ? l_ptr->get_computer()->status_ : computer_status::unknown
-      );
-      if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
-        co_await run_next_task_impl(l_ptr);
-        co_return;
-      }
-    }
-  }
-  SPDLOG_LOGGER_ERROR(
-      g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务失败，未找到在线计算机，计算机将无法继续执行任务",
-      in_computer
-  );
-}
-
 boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   DOODLE_TO_EXECUTOR(strand_);
   clear_offline_computer();
+  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
   for (auto& [uuid, weak_ptr] : computer_map_) {
-    if (auto l_ptr = weak_ptr.lock(); l_ptr) {
-      l_ptr->sql_get_computer();  // 从数据库获取最新的计算机状态
-      if (l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
-        co_await run_next_task_impl(l_ptr);
-        co_return;
-      }
+    if (auto l_ptr = weak_ptr.lock();
+        l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
+      co_await run_next_task_impl(l_ptr);
     }
   }
 }

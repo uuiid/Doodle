@@ -30,7 +30,6 @@ class computers_assign_task : public boost::noncopyable {
   // 注册在线计算机
   boost::asio::awaitable<void> register_computer(std::shared_ptr<data_computers_socket_io_impl> in_computer);
   // 让计算机运行下一个任务
-  boost::asio::awaitable<void> run_next_task(uuid in_computer);
   boost::asio::awaitable<void> run_next_task();
 };
 
