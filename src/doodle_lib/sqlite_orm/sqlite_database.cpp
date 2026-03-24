@@ -994,7 +994,7 @@ std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
   using namespace sqlite_orm;
   auto l_t = impl_->storage_any_.get_all<server_task_info>(
       where(c(&server_task_info::status_) == server_task_info_status::submitted),
-      multi_order_by(order_by(&server_task_info::priority_).desc(), order_by(&server_task_info::submit_time_).desc())
+      multi_order_by(order_by(&server_task_info::priority_).desc(), order_by(&server_task_info::submit_time_))
   );
   return l_t;
 }
