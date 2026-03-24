@@ -136,7 +136,7 @@ uuid get_motherboard_uuid() {
 void http_work::run(const std::string& in_token) {
   executor_ = boost::asio::make_strand(g_io_context());
   token_    = in_token;
-
+  spdlog::flush_every(1s);
   logger_   = g_logger_ctrl().make_log("http_work");
   boost::asio::co_spawn(
       executor_, async_run(),
