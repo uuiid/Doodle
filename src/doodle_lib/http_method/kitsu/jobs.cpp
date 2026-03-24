@@ -29,7 +29,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, get) {
   person_.check_not_outsourcer();
   auto l_jobs_path = g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_);
   if (!FSys::exists(l_jobs_path)) co_return in_handle->make_msg_204();
-  co_return in_handle->make_msg(l_jobs_path, "text/plain");
+  co_return in_handle->make_msg(l_jobs_path, "text/plain; charset=utf-8"); // utf-8编码的文本文件
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
   person_.check_not_outsourcer();
