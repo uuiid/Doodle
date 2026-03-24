@@ -96,7 +96,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, p
   auto l_sql = get_sqlite_database();
   auto l_ptr = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
 #ifdef NDEBUG
-  l_ptr->command_ = auto_task::shot_export_anim_fbx(project_id_, id_);
+  // l_ptr->command_ = auto_task::shot_export_anim_fbx(project_id_, id_);
 #endif
   co_await get_sqlite_database().install(l_ptr);
   if (!l_ptr->run_computer_id_.is_nil())
