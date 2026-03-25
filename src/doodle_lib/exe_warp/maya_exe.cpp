@@ -176,7 +176,7 @@ quit -abort -force -exitCode $doodle_batch_run_1;
   auto l_process_maya = boost::process::v2::process{
       g_io_context(),
       l_maya_path,
-      {"-prompt", "-hideConsole", "-script", l_com_path.generic_string()},
+      {"-batch", "-hideConsole", "-script", l_com_path.generic_string()},
       boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe},
       boost::process::v2::process_environment{l_env},
       boost::process::v2::process_start_dir{l_maya_path.parent_path()},
