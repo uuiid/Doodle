@@ -47,6 +47,7 @@ void from_json(const nlohmann::json& j, export_fbx_arg_distributed::args& p) {
   if (j.contains("frame_out")) j.at("frame_out").get_to(p.frame_out_);
   if (j.contains("maya_file_name")) j.at("maya_file_name").get_to(p.maya_file_name_);
   if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
+  if (j.contains("download_file")) j.at("download_file").get_to(p.download_file_);
 }
 
 void to_json(nlohmann::json& j, const export_fbx_arg_distributed::args& p) {
@@ -57,6 +58,7 @@ void to_json(nlohmann::json& j, const export_fbx_arg_distributed::args& p) {
   j["frame_out"]         = p.frame_out_;
   j["maya_file_name"]    = p.maya_file_name_;
   j["task_id"]           = p.task_id_;
+  j["download_file"]     = p.download_file_;
 }
 
 void from_json(const nlohmann::json& j, export_fbx_arg_distributed& p) {

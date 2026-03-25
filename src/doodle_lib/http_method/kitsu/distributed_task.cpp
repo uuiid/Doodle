@@ -40,7 +40,6 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
   l_ptr->status_      = server_task_info_status::submitted;
   l_ptr->submitter_   = person_id;
   l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-  l_ptr->type_        = server_task_info_type::auto_light;
   l_ptr->task_id_     = task_id;
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   return l_ptr;
@@ -50,6 +49,7 @@ std::shared_ptr<server_task_info> make_server_task_info_from_json(
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post) {
   person_.check_not_outsourcer();
   auto l_ptr = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
+  l_ptr->type_    = server_task_info_type::auto_light;
 
 #ifdef NDEBUG
   l_ptr->command_ = auto_task::shot_render_light(project_id_, id_);
@@ -86,6 +86,7 @@ export_fbx_arg_distributed::args shot_export_anim_fbx(const uuid& project_id, co
   l_arg.size_          = l_proj.get_resolution();
   l_arg.frame_in_      = *l_ext->frame_in_;
   l_arg.frame_out_     = *l_ext->frame_out_;
+  l_arg.task_id_       = in_task_id;
   DOODLE_CHICK_HTTP(!l_arg.download_file_.empty(), bad_request, "生成的 maya 文件路径无效，无法导出动画 fbx");
 #ifdef NDEBUG
   DOODLE_CHICK_HTTP(FSys::exists(l_arg.download_file_), bad_request, "生成的 maya 文件路径不存在，无法导出动画 fbx");
@@ -99,6 +100,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, p
   person_.check_not_outsourcer();
   auto l_sql      = get_sqlite_database();
   auto l_ptr      = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
+  l_ptr->type_    = server_task_info_type::export_fbx;
   l_ptr->command_ = shot_export_anim_fbx(project_id_, id_);
   co_await get_sqlite_database().install(l_ptr);
   co_await computers_assign_task::get_instance().run_next_task();
