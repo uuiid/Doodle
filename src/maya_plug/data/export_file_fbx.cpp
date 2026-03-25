@@ -36,7 +36,6 @@
 #include <range/v3/view/transform.hpp>
 #include <vector>
 
-
 namespace doodle::maya_plug {
 void export_file_fbx::bake_anim(const MTime& in_start, const MTime& in_end, const MDagPath& in_path) {
   MStatus k_s{};
@@ -87,9 +86,8 @@ bakeResults -simulation true -t "{}:{}" -hierarchy below -sampleBy 1 -oversampli
         display_info("烘培失败, 直接导出 {}", boost::diagnostic_information(in3));
       }
     }
-
-    display_info("完成烘培, 不检查结果, 直接进行输出");
   }
+  display_info("完成烘培");
 }
 
 FSys::path export_file_fbx::export_anim(
