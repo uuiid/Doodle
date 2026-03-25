@@ -1,16 +1,16 @@
 #include "entity_path.h"
 
 #include <doodle_core/configure/static_value.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/doodle_macro.h>
 #include <doodle_core/exception/exception.h>
-#include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -421,6 +421,23 @@ FSys::path get_shots_effect_movie_path(const entity& episode_) {
 FSys::path get_shots_lighting_movie_path(const entity& episode_) {
   return FSys::path{"9_LIGHT"} / "Light_Mp4" / episode_.name_ / "Fix";
 }
+// 自动灯光上传文件夹
+FSys::path get_shots_auto_lighting_upload_path(const episodes& episode_, const entity_asset_extend& ground_extend_) {
+  return FSys::path{"03_Workflow"} / "Shot" / fmt::format("EP{:04}", episode_) / ground_extend_.pin_yin_ming_cheng_;
+}
+FSys::path get_shots_auto_lighting_upload_animation_name(
+    const episodes& episode_, const shot& shot_, const project& prj_
+) {
+  return FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", episode_) /
+         fmt::format("{}{:03}_sc{:03}", prj_.code_, episode_, shot_) / "Import_DH";
+}
+FSys::path get_shots_auto_lighting_upload_simulation_name(
+    const episodes& episode_, const shot& shot_, const project& prj_
+) {
+  return FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", episode_) /
+         fmt::format("{}{:03}_sc{:03}", prj_.code_, episode_, shot_) / "Import_JS";
+}
+
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
   auto l_str = in_path.generic_string();
   boost::replace_all(l_str, doodle_config::ue4_content, doodle_config::ue4_game);
