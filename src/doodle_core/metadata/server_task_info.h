@@ -174,6 +174,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     j["last_line_log"]   = p.last_line_log_;
     j["run_time_info"]   = p.run_time_info_;
     j["command"]         = p.command_;
+    j["priority"]        = p.priority_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
@@ -189,6 +190,7 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     if (j.contains("end_time")) j.at("end_time").get_to(p.end_time_);
     if (j.contains("last_line_log")) j.at("last_line_log").get_to(p.last_line_log_);
     if (j.contains("run_time_info")) j.at("run_time_info").get_to(p.run_time_info_);
+    if (j.contains("priority")) j.at("priority").get_to(p.priority_);
   }
 };
 }  // namespace doodle
