@@ -146,8 +146,8 @@ FSys::path get_shots_effect_movie_path(const entity& episode_);
 FSys::path get_shots_lighting_movie_path(const entity& episode_);
 // 自动灯光上传文件夹
 FSys::path get_shots_auto_lighting_upload_path(const episodes& episode_, const entity_asset_extend& ground_extend_);
-FSys::path get_shots_auto_lighting_upload_name_animation(const episodes& episode_, const shot& shot_, const project& prj_);
-FSys::path get_shots_auto_lighting_upload_name_simulation(const episodes& episode_, const shot& shot_, const project& prj_);
+FSys::path get_shots_auto_lighting_upload_animation_name(const episodes& episode_, const shot& shot_, const project& prj_);
+FSys::path get_shots_auto_lighting_upload_simulation_name(const episodes& episode_, const shot& shot_, const project& prj_);
 
 // 将路径转换为 ue_game 路径
 FSys::path conv_ue_game_path(const FSys::path& in_path);
