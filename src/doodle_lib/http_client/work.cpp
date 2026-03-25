@@ -161,10 +161,7 @@ boost::asio::awaitable<void> http_work::async_run() {
   else if (l_ip.starts_with("https://"))
     l_ip.erase(0, 8);
   const boost::urls::url l_url{fmt::format("ws://{}/api/data/computers", l_ip)};
-  for (auto i = 0;
-       (co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
-       i < 100;
-       ++i) {
+  while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     try {
       websocket_client_          = co_await make_websocket_stream(l_url);
       const auto l_computer_json = nlohmann::json(this_computer_info_).dump();
