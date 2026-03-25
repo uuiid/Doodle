@@ -187,6 +187,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了,
     // 因为程序退出会导致数据库连接不可用
     auto l_sql                      = get_sqlite_database();
+    computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
     computer_->status_              = computer_status::offline;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     l_sql.update_sync(computer_);
