@@ -72,8 +72,8 @@ class http_work : public std::enable_shared_from_this<http_work> {
 class base_distributed_task {
  protected:
   server_task_info task_info_;
-  std::shared_ptr<http_work> http_work_ptr_;
   std::string token_;
+  std::shared_ptr<http_work> http_work_ptr_;
 
  public:
   explicit base_distributed_task(
