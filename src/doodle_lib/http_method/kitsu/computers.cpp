@@ -143,9 +143,10 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     }
   }
   boost::asio::awaitable<void> set_computer_status(std::reference_wrapper<computer> in_computer) {
+    auto l_sql                      = get_sqlite_database();
+    computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
     computer_->status_              = in_computer.get().status_;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    auto l_sql                      = get_sqlite_database();
     co_await l_sql.update(computer_);
     if (computer_->status_ == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
 
