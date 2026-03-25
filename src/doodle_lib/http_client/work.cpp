@@ -321,6 +321,7 @@ logger_ptr base_distributed_task::create_logger() const {
       task_info_.name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
       spdlog::thread_pool()
   );
+  l_logger->flush_on(spdlog::level::warn);
   l_logger->sinks().push_back(
       std::make_shared<run_ue_assembly_distributed_sink_mt>(create_kitsu_client(), task_info_.uuid_id_)
   );
