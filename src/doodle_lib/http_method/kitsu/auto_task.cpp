@@ -669,18 +669,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
     }
   }
   {  // 添加自动灯光生成的文件
-    auto l_path_1 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                    fmt::format("ep{:04}", l_episodes) /
-                    fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_DH";
-    auto l_path_2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                    fmt::format("ep{:04}", l_episodes) /
-                    fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_JS";
-
-    for (auto&& l_p : {l_path_1, l_path_2})
-      l_arg.download_file_list_.emplace_back(
-          l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{:04}", l_episodes) / l_uprj.stem() / l_p,
-          l_scene_ue_path / l_p
-      );
+    auto l_root   = l_prj.path_ / get_shots_auto_lighting_upload_path(l_episodes, l_scene_asset_extend);
+    auto l_path_1 = get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj);
+    auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj);
+    l_arg.download_file_list_.emplace_back(l_root / l_path_1, l_scene_ue_path / l_path_1);
+    l_arg.download_file_list_.emplace_back(l_root / l_path_2, l_scene_ue_path / l_path_2);
   }
 
   auto l_vfx_path = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
