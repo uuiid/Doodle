@@ -195,6 +195,10 @@ boost::asio::awaitable<void> http_work::async_run() {
     } catch (const std::exception& e) {
       SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
     }
+
+    boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
+    timer.expires_after(std::chrono::seconds(10));
+    co_await timer.async_wait(boost::asio::use_awaitable);
   }
 
   co_return;
