@@ -48,7 +48,7 @@ class http_work : public std::enable_shared_from_this<http_work> {
   bool is_writing_{false};
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
   boost::lockfree::spsc_value<boost::beast::websocket::ping_data> ping_message_;
-
+  boost::asio::cancellation_signal on_cancel_;
   boost::asio::awaitable<void> async_write_msg();
 
  protected:

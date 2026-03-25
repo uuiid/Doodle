@@ -262,7 +262,8 @@ boost::asio::awaitable<void> http_work::async_write_msg() {
 boost::asio::awaitable<void> http_work::async_ping_loop() {
   try {
     boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
-    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none &&
+           websocket_client_ && websocket_client_->is_open()) {
       timer.expires_after(std::chrono::seconds(30));
       co_await timer.async_wait(boost::asio::use_awaitable);
       ping_message_.write(boost::beast::websocket::ping_data{});

@@ -163,7 +163,8 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     try {
       boost::asio::steady_timer timer{co_await boost::asio::this_coro::executor};
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
-             boost::asio::cancellation_type::none) {
+                 boost::asio::cancellation_type::none &&
+             web_stream_ && web_stream_->is_open()) {
         timer.expires_after(std::chrono::seconds(30));
         co_await timer.async_wait(boost::asio::use_awaitable);
         ping_message_.write(boost::beast::websocket::ping_data{});
