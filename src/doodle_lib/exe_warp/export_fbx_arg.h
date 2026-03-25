@@ -67,7 +67,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   boost::asio::awaitable<void> run() override;
 };
 
-class DOODLELIB_API export_fbx_arg_distributed : public maya_exe_ns::arg {
+class DOODLELIB_API export_fbx_arg_distributed : public maya_exe_ns::arg, public http::base_distributed_task {
  public:
   struct args {
     bool create_play_blast_{true};
@@ -90,12 +90,12 @@ class DOODLELIB_API export_fbx_arg_distributed : public maya_exe_ns::arg {
   args arg_;
 
  public:
-  export_fbx_arg_distributed() = default;
-  ~export_fbx_arg_distributed();
-  std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
-  std::shared_ptr<http::http_work> http_work_ptr_;
+  explicit export_fbx_arg_distributed(
+      server_task_info in_task_info, std::string in_token, std::shared_ptr<http::http_work> in_http_work_ptr
+  )
+      : http::base_distributed_task(std::move(in_task_info), std::move(in_token), std::move(in_http_work_ptr)) {}
+  ~export_fbx_arg_distributed() override = default;
 
-  void set_arg(const nlohmann::json& in_json);
   constexpr static std::string_view k_name{"export_fbx"};
   // form json
   friend void from_json(const nlohmann::json& in_json, export_fbx_arg_distributed& out_obj);

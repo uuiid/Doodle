@@ -14,6 +14,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_client/work.h>
 
 #include <boost/signals2/signal.hpp>
 
@@ -190,20 +191,14 @@ class run_ue_assembly_local : public run_ue_assembly_base {
 };
 
 // 分布式任务, 日志需要发送给中心服务器
-class run_ue_assembly_distributed : public run_ue_assembly_base {
-  server_task_info task_info_;
-  std::string token_;
-  std::shared_ptr<http::http_work> http_work_ptr_;
-
+class run_ue_assembly_distributed : public run_ue_assembly_base, public http::base_distributed_task {
  public:
-  explicit run_ue_assembly_distributed(server_task_info in_task_info, std::string in_token)
-      : task_info_(std::move(in_task_info)), token_(std::move(in_token)) {}
-  ~run_ue_assembly_distributed() override;
+  explicit run_ue_assembly_distributed(
+      server_task_info in_task_info, std::string in_token, std::shared_ptr<http::http_work> in_http_work_ptr
+  )
+      : http::base_distributed_task(std::move(in_task_info), std::move(in_token), std::move(in_http_work_ptr)) {}
+  ~run_ue_assembly_distributed() override = default;
   boost::asio::awaitable<void> run() override;
-
-  void set_http_work_ptr(std::shared_ptr<http::http_work> in_http_work_ptr) {
-    http_work_ptr_ = std::move(in_http_work_ptr);
-  }
 
  protected:
   boost::asio::awaitable<void> get_arg() override;

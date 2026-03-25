@@ -11,6 +11,7 @@
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/websocket_route.h>
+#include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
 #include <doodle_lib/http_client/kitsu_client.h>
@@ -27,6 +28,7 @@
 
 #include "core/global_function.h"
 #include <core/http/json_body.h>
+#include <memory>
 #include <spdlog/sinks/basic_file_sink.h>
 
 // 使用 win32 GetSystemFirmwareTable api 获取主板(RSMB)的uuid
@@ -199,8 +201,12 @@ boost::asio::awaitable<void> http_work::async_run() {
 }
 bool http_work::run_task(const server_task_info& in_task_info) {
   if (in_task_info.type_ == server_task_info_type::auto_light) {
-    auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, token_);
-    l_run->set_http_work_ptr(shared_from_this());
+    auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, token_, shared_from_this());
+    boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
+    return true;
+  }
+  if (in_task_info.type_ == server_task_info_type::export_fbx) {
+    auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, token_, shared_from_this());
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
@@ -258,6 +264,34 @@ boost::asio::awaitable<void> http_work::async_write_msg() {
     SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
   }
 }
+template <class Mutex>
+class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
+                                         public std::enable_shared_from_this<run_ue_assembly_distributed_sink<Mutex>> {
+  std::once_flag flag_;
+  std::shared_ptr<kitsu::kitsu_client> kitsu_client_;
+  uuid job_id_;
+  std::array<std::string, 2> log_buffer_;
+  std::atomic_int log_index_{0};
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
+
+ public:
+  explicit run_ue_assembly_distributed_sink(std::shared_ptr<kitsu::kitsu_client> in_kitsu_client, uuid in_job_id)
+      : kitsu_client_(in_kitsu_client), job_id_(in_job_id) {
+    log_buffer_[log_index_].reserve(1024 * 10);
+  }
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    spdlog::memory_buf_t formatted{};
+    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
+    log_buffer_[log_index_] += fmt::to_string(formatted);
+  }
+  void flush_() override {
+    if (log_buffer_[log_index_].empty()) return;
+    log_index_ = !log_index_;
+    kitsu_client_->put_job_log_sync(job_id_, log_buffer_[!log_index_]);
+    log_buffer_[!log_index_].clear();
+  }
+};
+using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
 
 boost::asio::awaitable<void> http_work::async_ping_loop() {
   try {
@@ -275,4 +309,27 @@ boost::asio::awaitable<void> http_work::async_ping_loop() {
     SPDLOG_LOGGER_ERROR(logger_, "处理 WebSocket 消息发生错误: {}", e.what());
   }
 }
+base_distributed_task::~base_distributed_task() {
+  if (http_work_ptr_) http_work_ptr_->set_computer_status(computer_status::online);
+}
+
+logger_ptr base_distributed_task::create_logger() const {
+  auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
+                       fmt::format("{}.log", task_info_.uuid_id_);
+  auto l_logger = std::make_shared<spdlog::async_logger>(
+      task_info_.name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
+      spdlog::thread_pool()
+  );
+  l_logger->sinks().push_back(
+      std::make_shared<run_ue_assembly_distributed_sink_mt>(create_kitsu_client(), task_info_.uuid_id_)
+  );
+  return l_logger;
+}
+
+std::shared_ptr<kitsu::kitsu_client> base_distributed_task::create_kitsu_client() const {
+  auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+  return l_client;
+}
+
 }  // namespace doodle::http

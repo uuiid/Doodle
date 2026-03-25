@@ -293,53 +293,14 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::get_arg() {
   co_return;
 }
 
-template <class Mutex>
-class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
-                                         public std::enable_shared_from_this<run_ue_assembly_distributed_sink<Mutex>> {
-  std::once_flag flag_;
-  std::shared_ptr<kitsu::kitsu_client> kitsu_client_;
-  uuid job_id_;
-  std::array<std::string, 2> log_buffer_;
-  std::atomic_int log_index_{0};
-  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
-
- public:
-  explicit run_ue_assembly_distributed_sink(std::shared_ptr<kitsu::kitsu_client> in_kitsu_client, uuid in_job_id)
-      : kitsu_client_(in_kitsu_client), job_id_(in_job_id) {
-    log_buffer_[log_index_].reserve(1024 * 10);
-  }
-  void sink_it_(const spdlog::details::log_msg& msg) override {
-    spdlog::memory_buf_t formatted{};
-    spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-    log_buffer_[log_index_] += fmt::to_string(formatted);
-  }
-  void flush_() override {
-    if (log_buffer_[log_index_].empty()) return;
-    log_index_ = !log_index_;
-    kitsu_client_->put_job_log_sync(job_id_, log_buffer_[!log_index_]);
-    log_buffer_[!log_index_].clear();
-  }
-};
-using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
-
 boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                        fmt::format("{}.log", task_info_.uuid_id_);
 
-  logger_ptr_ = std::make_shared<spdlog::async_logger>(
-      task_info_.name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
-      spdlog::thread_pool()
-  );
-  kitsu_client_ = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  logger_ptr_   = create_logger();
+  kitsu_client_ = create_kitsu_client();
   kitsu_client_->set_logger(logger_ptr_);
-  kitsu_client_->set_token(token_);
-  auto l_kitsu_client_2 = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
-  l_kitsu_client_2->set_logger(logger_ptr_);
-  l_kitsu_client_2->set_token(token_);
-  // 这里使用两个不同的客户端, 防止日志发送和获取参数互相干扰
-  logger_ptr_->sinks().emplace_back(
-      std::make_shared<run_ue_assembly_distributed_sink_mt>(l_kitsu_client_2, task_info_.uuid_id_)
-  );
+
   std::exception_ptr l_exception_ptr{};
   std::string l_error_msg{};
   SPDLOG_LOGGER_WARN(
@@ -358,14 +319,6 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
 }
 
-run_ue_assembly_distributed::~run_ue_assembly_distributed() {
-  if (logger_ptr_) {
-    logger_ptr_->flush();
-    logger_ptr_->sinks().clear();
-  }
-  if (http_work_ptr_) {
-    http_work_ptr_->set_computer_status(computer_status::online);
-  }
-}
+ 
 
 }  // namespace doodle

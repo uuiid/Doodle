@@ -6,6 +6,7 @@
 #include <doodle_core/metadata/computer.h>
 #include <doodle_core/metadata/server_task_info.h>
 
+#include "doodle_lib/http_client/kitsu_client.h"
 #include <doodle_lib/core/http/http_websocket_client.h>
 #include <doodle_lib/core/http_client_core.h>
 #include <doodle_lib/doodle_lib_fwd.h>
@@ -19,7 +20,9 @@
 #include <boost/lockfree/spsc_value.hpp>
 #include <boost/process.hpp>
 
+#include <memory>
 #include <optional>
+#include <string>
 
 namespace doodle::http {
 namespace detail {
@@ -65,4 +68,23 @@ class http_work : public std::enable_shared_from_this<http_work> {
   void run(const std::string& in_token);
   void set_computer_status(computer_status in_status);
 };
+
+class base_distributed_task {
+ protected:
+  server_task_info task_info_;
+  std::shared_ptr<http_work> http_work_ptr_;
+  std::string token_;
+
+ public:
+  explicit base_distributed_task(
+      server_task_info in_task_info, std::string in_token, std::shared_ptr<http_work> in_http_work_ptr
+  )
+      : task_info_(std::move(in_task_info)), token_(std::move(in_token)), http_work_ptr_(std::move(in_http_work_ptr)) {}
+  virtual ~base_distributed_task();
+
+  logger_ptr create_logger() const;
+
+  std::shared_ptr<kitsu::kitsu_client> create_kitsu_client() const;
+};
+
 }  // namespace doodle::http
