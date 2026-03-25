@@ -107,7 +107,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
                                 .sign(jwt::algorithm::hs256{l_ctx.secret_});
   }
 
-  co_return in_handle->make_msg(nlohmann::json{} = *l_person);
+  co_return in_handle->make_msg(l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
