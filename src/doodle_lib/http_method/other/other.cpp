@@ -6,8 +6,7 @@
 
 #include <doodle_lib/http_method/kitsu.h>
 
-#include <jwt-cpp/jwt.h>
-
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
 
 namespace doodle::http::other {
 

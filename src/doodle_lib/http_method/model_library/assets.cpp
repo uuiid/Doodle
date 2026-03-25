@@ -14,7 +14,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include "model_library.h"
-#include <jwt-cpp/jwt.h>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
+
 namespace doodle::http::model_library {
 
 boost::asio::awaitable<boost::beast::http::message_generator> model_library_assets::get(

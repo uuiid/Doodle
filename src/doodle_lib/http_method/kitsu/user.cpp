@@ -2,27 +2,28 @@
 // Created by TD on 24-8-21.
 //
 
-#include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/department.h>
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/project_status.h>
 #include <doodle_core/metadata/status_automation.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_core/metadata/entity_type.h>
-#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/bcrypt/bcrypt.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-#include <core/http/http_function.h>
 #include "kitsu_reg_url.h"
+#include <core/http/http_function.h>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <string>
 
 namespace doodle::http {
@@ -81,18 +82,31 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
   auto l_sql    = get_sqlite_database();
   auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(id_));
-
-  SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 开始更新用户 person_id {} email {}", person_.person_.email_,
-      person_.person_.get_full_name(), id_, l_person->email_
-  );
-  in_handle->get_json().get_to(*l_person);
+  auto l_json   = in_handle->get_json();
+  l_json.get_to(*l_person);
   co_await l_sql.update(l_person);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新用户 person_id {} email {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_person->email_
   );
+
+  nlohmann::json l_ret{};
+  l_ret = *l_person;
+
+  if (l_json.contains("expiration_date")) {
+    auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
+
+    l_ret["access_token"] = jwt::create()
+                                .set_payload_claim("identity_type", jwt::claim{"person"s})
+                                .set_issued_at(chrono::system_clock::now())
+                                .set_id(fmt::to_string(person_.person_.uuid_id_))
+                                .set_subject(fmt::to_string(person_.person_.uuid_id_))
+                                .set_not_before(chrono::system_clock::now())
+                                .set_expires_at(chrono::system_clock::now() + chrono::days{15})
+                                .sign(jwt::algorithm::hs256{l_ctx.secret_});
+  }
+
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
