@@ -87,18 +87,19 @@ export_fbx_arg_distributed::args shot_export_anim_fbx(const uuid& project_id, co
   l_arg.frame_in_      = *l_ext->frame_in_;
   l_arg.frame_out_     = *l_ext->frame_out_;
   DOODLE_CHICK_HTTP(!l_arg.download_file_.empty(), bad_request, "生成的 maya 文件路径无效，无法导出动画 fbx");
+#ifdef NDEBUG
   DOODLE_CHICK_HTTP(FSys::exists(l_arg.download_file_), bad_request, "生成的 maya 文件路径不存在，无法导出动画 fbx");
+#endif
+
   return l_arg;
 }
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, post) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
-  auto l_ptr = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
-#ifdef NDEBUG
+  auto l_sql      = get_sqlite_database();
+  auto l_ptr      = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
   l_ptr->command_ = shot_export_anim_fbx(project_id_, id_);
-#endif
   co_await get_sqlite_database().install(l_ptr);
   co_await computers_assign_task::get_instance().run_next_task();
   SPDLOG_LOGGER_WARN(
