@@ -288,7 +288,10 @@ boost::asio::awaitable<void> run_ue_assembly_local::get_arg() {
   co_return;
 }
 
-boost::asio::awaitable<void> run_ue_assembly_distributed::get_arg() { co_return; }
+boost::asio::awaitable<void> run_ue_assembly_distributed::get_arg() {
+  task_info_.command_.get_to(arg_);
+  co_return;
+}
 
 template <class Mutex>
 class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
@@ -322,7 +325,6 @@ using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std
 boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   auto l_logger_path = core_set::get_set().get_cache_root() / server_task_info::logger_category /
                        fmt::format("{}.log", task_info_.uuid_id_);
-  task_info_.command_.get_to(arg_);
 
   logger_ptr_ = std::make_shared<spdlog::async_logger>(
       task_info_.name_, std::make_shared<spdlog::sinks::basic_file_sink_mt>(l_logger_path.generic_string()),
