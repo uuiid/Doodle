@@ -1,4 +1,5 @@
 #pragma once
+#include "doodle_core/metadata/episodes.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/project.h>
 
@@ -143,6 +144,10 @@ FSys::path get_shots_effect_ue_path(const entity& episode_);
 FSys::path get_shots_lighting_ue_path(const entity& episode_);
 FSys::path get_shots_effect_movie_path(const entity& episode_);
 FSys::path get_shots_lighting_movie_path(const entity& episode_);
+// 自动灯光上传文件夹
+FSys::path get_shots_auto_lighting_upload_path(const episodes& episode_, const entity_asset_extend& ground_extend_);
+FSys::path get_shots_auto_lighting_upload_name(const episodes& episode_, const shot& shot_, const project& prj_);
+
 // 将路径转换为 ue_game 路径
 FSys::path conv_ue_game_path(const FSys::path& in_path);
 // 将 ue_game 路径转换为 正常路径
