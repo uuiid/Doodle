@@ -3,9 +3,11 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_client/work.h>
 
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 
 namespace doodle {
 
@@ -65,7 +67,7 @@ class DOODLELIB_API export_fbx_arg : public maya_exe_ns::arg {
   boost::asio::awaitable<void> run() override;
 };
 
-class DOODLELIB_API export_fbx_arg_distributed : public export_fbx_arg {
+class DOODLELIB_API export_fbx_arg_distributed : public maya_exe_ns::arg {
  public:
   struct args {
     bool create_play_blast_{true};
@@ -88,9 +90,10 @@ class DOODLELIB_API export_fbx_arg_distributed : public export_fbx_arg {
   args arg_;
 
  public:
-  export_fbx_arg_distributed()           = default;
-  ~export_fbx_arg_distributed() override = default;
+  export_fbx_arg_distributed() = default;
+  ~export_fbx_arg_distributed();
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_{};
+  std::shared_ptr<http::http_work> http_work_ptr_;
 
   void set_arg(const nlohmann::json& in_json);
   constexpr static std::string_view k_name{"export_fbx"};
