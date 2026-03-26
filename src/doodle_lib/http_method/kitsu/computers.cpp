@@ -103,6 +103,14 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     co_await init();
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
     begin_ping();
+    boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
+      auto l_sql                      = get_sqlite_database();
+      computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
+      computer_->status_              = computer_status::offline;
+      computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+      l_sql.update_sync(computer_);
+      socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
+    }};
     try {
       boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
       while ((co_await boost::asio::this_coro::cancellation_state).cancelled() ==
@@ -124,12 +132,6 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
           boost::current_exception_diagnostic_information()
       );
     }
-    auto l_sql                      = get_sqlite_database();
-    computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
-    computer_->status_              = computer_status::offline;
-    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    l_sql.update_sync(computer_);
-    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
     co_await web_stream_->async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
   }
 
@@ -224,6 +226,16 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
       computer_map_.size()
   );
 }
+
+void computers_assign_task::unregister_computer(const uuid& in_computer_id) {
+  boost::asio::post(strand_, [this, in_computer_id]() {
+    computer_map_.erase(in_computer_id);
+    SPDLOG_LOGGER_INFO(
+        g_logger_ctrl().get_http(), "计算机 {} 注销成功, 当前在线计算机数量 {}", in_computer_id, computer_map_.size()
+    );
+  });
+}
+
 void computers_assign_task::clear_offline_computer() {
   for (auto it = computer_map_.begin(); it != computer_map_.end();) {
     if (auto l_ptr = it->second.lock(); l_ptr) {
