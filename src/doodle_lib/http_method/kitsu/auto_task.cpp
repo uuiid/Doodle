@@ -657,8 +657,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   }
   {  // 添加自动灯光生成的文件
     auto l_root   = l_prj.path_ / get_shots_auto_lighting_upload_path(l_episodes, l_scene_asset_extend);
-    auto l_path_1 = get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj);
-    auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj);
+    auto l_path_1 = get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj.code_);
+    auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj.code_);
     l_arg.download_file_list_.emplace_back(l_root / l_path_1, l_scene_ue_path / l_path_1);
     l_arg.download_file_list_.emplace_back(l_root / l_path_2, l_scene_ue_path / l_path_2);
   }
