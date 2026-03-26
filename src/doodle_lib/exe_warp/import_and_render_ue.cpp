@@ -34,6 +34,7 @@
 #include <atomic>
 #include <core/entity_path.h>
 #include <exception>
+#include <filesystem>
 #include <fmt/format.h>
 #include <http_client/kitsu_client.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -266,11 +267,18 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
     );
   }
   SPDLOG_LOGGER_WARN(logger_ptr_, "完成合成视屏 :{} 上传文件 {}", arg_.create_move_path_, arg_.update_ue_path_);
-
-  for (auto&& p : arg_.update_ue_path_) {
-    logger_ptr_->info("复制UE资源文件 from {} to {}", p.from_, p.to_);
-    FSys::copy_diff(p.from_, p.to_, logger_ptr_);
+  co_await kitsu_client_->remove_shot_animation_auto_light(arg_.shot_task_id_);
+  DOODLE_CHICK(FSys::is_directory(arg_.update_ue_path_), "上传路径 {} 不是一个目录", arg_.update_ue_path_);
+  std::vector<kitsu::kitsu_client::update_file_arg> l_update_args{};
+  for (auto&& l_path : FSys::directory_iterator{arg_.update_ue_path_}) {
+    l_update_args.emplace_back(
+        kitsu::kitsu_client::update_file_arg{
+            .local_path_ = l_path.path(),
+            .field_name_ = l_path.path().lexically_relative(arg_.update_ue_path_).generic_string()
+        }
+    );
   }
+
   co_await kitsu_client_->comment_task(
       kitsu::kitsu_client::comment_task_arg{
           .task_id_             = arg_.shot_task_id_,
