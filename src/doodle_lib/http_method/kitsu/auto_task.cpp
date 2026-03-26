@@ -293,16 +293,11 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   );
 
   {
-    auto l_path_1 = get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj);
-    auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj);
+    auto l_path = l_is_simulation_task ? get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj)
+                                       : get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj);
     l_ret.update_ue_path_.emplace_back(
-        l_scene_ue_path / l_path_1, l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{:04}", l_ret.episodes_) /
-                                        l_scene_ue_path.stem() / l_path_1
-
-    );
-    l_ret.update_ue_path_.emplace_back(
-        l_scene_ue_path / l_path_2, l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{:04}", l_ret.episodes_) /
-                                        l_scene_ue_path.stem() / l_path_2
+        l_scene_ue_path / l_path,
+        l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{:04}", l_ret.episodes_) / l_scene_ue_path.stem() / l_path
 
     );
   }
