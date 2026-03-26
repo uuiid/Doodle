@@ -159,7 +159,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
       l_out_arg_.movie_file_.clear();
     }
   }
-
+  DOODLE_CHICK(!out_arg_.out_file_list.empty() || !out_arg_.out_file_list.empty(), "没有生成任何文件，无法上传");
   for (auto& l_p : out_arg_.out_file_list) {
     SPDLOG_LOGGER_INFO(logger_ptr_, "导出文件 {}", l_p);
     DOODLE_CHICK(
@@ -196,7 +196,7 @@ boost::asio::awaitable<void> export_fbx_arg_distributed::run() {
   auto l_kitsu_client = create_kitsu_client();
   l_kitsu_client->set_logger(logger_ptr_);
   task_info_.command_.get_to(arg_);
-  
+
   // 将文件复制到本地路径, 避免网络文件访问导致的 maya 导出失败
   auto l_local_maya_file = core_set::get_set().get_cache_root("temp/export_fbx") / arg_.maya_file_name_;
   if (FSys::exists(l_local_maya_file)) FSys::remove(l_local_maya_file);
