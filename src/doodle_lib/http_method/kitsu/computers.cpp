@@ -124,6 +124,12 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
           boost::current_exception_diagnostic_information()
       );
     }
+    auto l_sql                      = get_sqlite_database();
+    computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
+    computer_->status_              = computer_status::offline;
+    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+    l_sql.update_sync(computer_);
+    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
     co_await web_stream_->async_close(boost::beast::websocket::close_code::normal, boost::asio::use_awaitable);
   }
 
@@ -183,17 +189,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
       : web_stream_(std::make_shared<boost::beast::websocket::stream<http::tcp_stream_type>>(std::move(in_stream))),
         strand_(boost::asio::make_strand(g_io_context())) {}
 
-  ~data_computers_socket_io_impl() {
-    if (!computer_) return;
-    if (app_base::Get().is_cancelled()) return;  // 如果是程序退出, 就不更新数据库了,
-    // 因为程序退出会导致数据库连接不可用
-    auto l_sql                      = get_sqlite_database();
-    computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
-    computer_->status_              = computer_status::offline;
-    computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    l_sql.update_sync(computer_);
-    socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
-  }
+  ~data_computers_socket_io_impl() {}
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
   std::shared_ptr<computer> get_computer() const { return computer_; }
