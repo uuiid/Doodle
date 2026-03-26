@@ -4,18 +4,20 @@
 
 #include "up_file.h"
 
-#include <doodle_lib/doodle_lib_fwd.h>
+#include "doodle_core/metadata/episodes.h"
+#include "doodle_core/metadata/shot.h"
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_session_data.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/beast/http/field.hpp>
 
@@ -243,6 +245,13 @@ FSys::path doodle_data_shots_file_ue::gen_file_path() {
     return get_shots_effect_ue_path(episode_);
   else if (task_type_id_ == task_type::get_lighting_id())
     return get_shots_lighting_ue_path(episode_);
+  throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
+}
+FSys::path doodle_data_shots_file_auto_light::gen_file_path() {
+  if (task_type_id_ == task_type::get_animation_id())
+    return get_shots_auto_lighting_upload_animation_name(episodes{episode_}, shot{shot_}, project_code_);
+  else if (task_type_id_ == task_type::get_simulation_task_id())
+    return get_shots_auto_lighting_upload_simulation_name(episodes{episode_}, shot{shot_}, project_code_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 

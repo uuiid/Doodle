@@ -426,16 +426,16 @@ FSys::path get_shots_auto_lighting_upload_path(const episodes& episode_, const e
   return FSys::path{"03_Workflow"} / "Shot" / fmt::format("EP{:04}", episode_) / ground_extend_.pin_yin_ming_cheng_;
 }
 FSys::path get_shots_auto_lighting_upload_animation_name(
-    const episodes& episode_, const shot& shot_, const project& prj_
+    const episodes& episode_, const shot& shot_, const std::string& project_code_
 ) {
   return FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", episode_) /
-         fmt::format("{}{:03}_sc{:03}", prj_.code_, episode_, shot_) / "Import_DH";
+         fmt::format("{}{:03}_sc{:03}", project_code_, episode_, shot_) / "Import_DH";
 }
 FSys::path get_shots_auto_lighting_upload_simulation_name(
-    const episodes& episode_, const shot& shot_, const project& prj_
+    const episodes& episode_, const shot& shot_, const std::string& project_code_
 ) {
   return FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", episode_) /
-         fmt::format("{}{:03}_sc{:03}", prj_.code_, episode_, shot_) / "Import_JS";
+         fmt::format("{}{:03}_sc{:03}", project_code_, episode_, shot_) / "Import_JS";
 }
 
 FSys::path conv_ue_game_path(const FSys::path& in_path) {
