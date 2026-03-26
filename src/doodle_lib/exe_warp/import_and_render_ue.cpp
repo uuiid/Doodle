@@ -278,6 +278,7 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
         }
     );
   }
+  co_await kitsu_client_->upload_shot_animation_auto_light(arg_.shot_task_id_, l_update_args);
 
   co_await kitsu_client_->comment_task(
       kitsu::kitsu_client::comment_task_arg{
