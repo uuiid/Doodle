@@ -159,7 +159,7 @@ boost::asio::awaitable<void> export_fbx_arg::run() {
       l_out_arg_.movie_file_.clear();
     }
   }
-  DOODLE_CHICK(!out_arg_.out_file_list.empty() || !out_arg_.out_file_list.empty(), "没有生成任何文件，无法上传");
+  DOODLE_CHICK(!out_arg_.out_file_list.empty(), "没有生成任何文件，无法上传");
   for (auto& l_p : out_arg_.out_file_list) {
     SPDLOG_LOGGER_INFO(logger_ptr_, "导出文件 {}", l_p);
     DOODLE_CHICK(
@@ -224,6 +224,7 @@ boost::asio::awaitable<void> export_fbx_arg_distributed::run() {
         movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), arg_.size_
     );
   }
+  DOODLE_CHICK(!out_arg_.out_file_list.empty(), "没有生成任何文件，无法上传");
 
   for (auto& l_p : out_arg_.out_file_list) {
     SPDLOG_LOGGER_INFO(logger_ptr_, "导出文件 {}", l_p);
