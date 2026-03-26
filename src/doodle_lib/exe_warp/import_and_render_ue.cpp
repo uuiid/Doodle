@@ -301,24 +301,23 @@ boost::asio::awaitable<void> run_ue_assembly_distributed::run() {
   kitsu_client_ = create_kitsu_client();
   kitsu_client_->set_logger(logger_ptr_);
 
-  std::exception_ptr l_exception_ptr{};
   std::string l_error_msg{};
   SPDLOG_LOGGER_WARN(
       logger_ptr_, "开始运行分布式UE组装和渲染任务 {} 命令: {}", task_info_.uuid_id_, task_info_.command_.dump()
   );
   try {
     co_await run_ue_assembly_base::run();
+  } catch (const doodle_error& err) {
+    l_error_msg = err.what();
+    SPDLOG_LOGGER_ERROR(logger_ptr_, "分布式任务发生错误: {}", l_error_msg);
   } catch (...) {
-    l_exception_ptr = std::current_exception();
-    l_error_msg     = boost::current_exception_diagnostic_information();
+    l_error_msg = boost::current_exception_diagnostic_information();
     SPDLOG_LOGGER_ERROR(logger_ptr_, "分布式任务发生错误: {}", l_error_msg);
   }
-  task_info_.status_   = l_exception_ptr ? server_task_info_status::failed : server_task_info_status::completed;
+  task_info_.status_   = l_error_msg.empty() ? server_task_info_status::completed : server_task_info_status::failed;
   task_info_.end_time_ = {chrono::current_zone(), chrono::system_clock::now()};
   logger_ptr_->flush();
   co_await kitsu_client_->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
 }
-
- 
 
 }  // namespace doodle
