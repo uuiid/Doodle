@@ -271,12 +271,13 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
   DOODLE_CHICK(FSys::is_directory(arg_.update_ue_path_), "上传路径 {} 不是一个目录", arg_.update_ue_path_);
   std::vector<kitsu::kitsu_client::update_file_arg> l_update_args{};
   for (auto&& l_path : FSys::recursive_directory_iterator{arg_.update_ue_path_}) {
-    l_update_args.emplace_back(
-        kitsu::kitsu_client::update_file_arg{
-            .local_path_ = l_path.path(),
-            .field_name_ = l_path.path().lexically_relative(arg_.update_ue_path_).generic_string()
-        }
-    );
+    if (l_path.is_regular_file())
+      l_update_args.emplace_back(
+          kitsu::kitsu_client::update_file_arg{
+              .local_path_ = l_path.path(),
+              .field_name_ = l_path.path().lexically_relative(arg_.update_ue_path_).generic_string()
+          }
+      );
   }
   co_await kitsu_client_->upload_shot_animation_auto_light(arg_.shot_task_id_, l_update_args);
 
