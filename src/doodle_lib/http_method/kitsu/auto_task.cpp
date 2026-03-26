@@ -291,29 +291,21 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
       l_scene_ue_path / doodle_config::ue4_config
   );
-  l_ret.update_ue_path_.emplace_back(
-      l_scene_ue_path / doodle_config::ue4_content, l_prj.path_ / "03_Workflow" / "Shot" /
-                                                        fmt::format("EP{:04}", l_ret.episodes_) /
-                                                        l_scene_ue_path.stem() / doodle_config::ue4_content
 
-  );
-  l_ret.update_ue_path_.emplace_back(
-      l_scene_ue_path / doodle_config::ue4_config, l_prj.path_ / "03_Workflow" / "Shot" /
-                                                       fmt::format("EP{:04}", l_ret.episodes_) /
-                                                       l_scene_ue_path.stem() / doodle_config::ue4_config
+  {
+    auto l_path_1 = get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj);
+    auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj);
+    l_ret.update_ue_path_.emplace_back(
+        l_scene_ue_path / l_path_1, l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{:04}", l_ret.episodes_) /
+                                        l_scene_ue_path.stem() / l_path_1
 
-  );
-  l_ret.update_ue_path_.emplace_back(
-      l_scene_ue_path / l_uprj.filename(), l_prj.path_ / "03_Workflow" / "Shot" /
-                                               fmt::format("EP{:04}", l_ret.episodes_) / l_scene_ue_path.stem() /
-                                               l_uprj.filename()
+    );
+    l_ret.update_ue_path_.emplace_back(
+        l_scene_ue_path / l_path_2, l_prj.path_ / "03_Workflow" / "Shot" / fmt::format("EP{:04}", l_ret.episodes_) /
+                                        l_scene_ue_path.stem() / l_path_2
 
-  );
-  l_ret.update_ue_path_.emplace_back(
-      l_scene_ue_path / doodle_config::ue4_saved / doodle_config::ue4_movie_renders,
-      FSys::path{l_prj.auto_upload_path_} / fmt::format("EP{:03}", l_ret.episodes_) / "自动灯光序列"
-
-  );
+    );
+  }
 
   for (auto&& [l_asset, l_asset_extend] : l_assets) {
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
