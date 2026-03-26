@@ -380,7 +380,7 @@ boost::asio::awaitable<void> kitsu_client::upload_shot_animation_auto_light(
   for (auto&& l_path : in_file_path) {
     SPDLOG_LOGGER_INFO(logger_, "上传文件 {}", l_path.local_path_);
     co_await upload_asset_file(
-        fmt::format("/api/doodle/data/shots/{}/file/auto_light", in_shot_task_id), l_path.local_path_,
+        fmt::format("/api/doodle/data/shots/{}/file/auto-light", in_shot_task_id), l_path.local_path_,
         base64_encode(l_path.field_name_)
     );
   }
