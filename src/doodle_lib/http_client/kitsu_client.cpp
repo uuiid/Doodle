@@ -401,7 +401,9 @@ boost::asio::awaitable<void> kitsu_client::remove_shot_animation_maya(const uuid
 boost::asio::awaitable<void> kitsu_client::remove_shot_animation_export_file(const uuid& in_uuid) {
   return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/output", in_uuid));
 }
-
+boost::asio::awaitable<void> kitsu_client::remove_shot_animation_auto_light(const uuid& in_uuid) {
+  return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/auto-light", in_uuid));
+}
 boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get,
