@@ -109,11 +109,17 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_shot_animation_ue(
       uuid in_shot_task_id, std::vector<update_file_arg> in_file_path
   ) const;
+  /// 上传自动灯光文件
+  boost::asio::awaitable<void> upload_shot_animation_auto_light(
+      uuid in_shot_task_id, std::vector<update_file_arg> in_file_path
+  ) const;
+
   boost::asio::awaitable<void> remove_asset_file_maya(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_ue(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_asset_file_image(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_shot_animation_maya(const uuid& in_uuid);
   boost::asio::awaitable<void> remove_shot_animation_export_file(const uuid& in_uuid);
+  boost::asio::awaitable<void> remove_shot_animation_auto_light(const uuid& in_uuid);
 
   boost::asio::awaitable<nlohmann::json> get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const;
 
