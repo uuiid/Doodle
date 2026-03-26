@@ -265,6 +265,8 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
         arg_.create_move_path_, logger_ptr_, movie::image_attr::make_default_attr(l_move_paths), arg_.size_
     );
   }
+  SPDLOG_LOGGER_WARN(logger_ptr_, "完成合成视屏 :{} 上传文件 {}", arg_.create_move_path_, arg_.update_ue_path_);
+
   for (auto&& p : arg_.update_ue_path_) {
     logger_ptr_->info("复制UE资源文件 from {} to {}", p.from_, p.to_);
     FSys::copy_diff(p.from_, p.to_, logger_ptr_);
