@@ -271,25 +271,24 @@ class run_ue_assembly_distributed_sink : public spdlog::sinks::base_sink<Mutex>,
   std::once_flag flag_;
   std::shared_ptr<kitsu::kitsu_client> kitsu_client_;
   uuid job_id_;
-  std::array<std::string, 2> log_buffer_;
+  std::string log_buffer_;
   std::atomic_int log_index_{0};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
 
  public:
   explicit run_ue_assembly_distributed_sink(std::shared_ptr<kitsu::kitsu_client> in_kitsu_client, uuid in_job_id)
       : kitsu_client_(in_kitsu_client), job_id_(in_job_id) {
-    log_buffer_[log_index_].reserve(1024 * 10);
+    log_buffer_.reserve(1024 * 10);
   }
   void sink_it_(const spdlog::details::log_msg& msg) override {
     spdlog::memory_buf_t formatted{};
     spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
-    log_buffer_[log_index_] += fmt::to_string(formatted);
+    log_buffer_ += fmt::to_string(formatted);
   }
   void flush_() override {
-    if (log_buffer_[log_index_].empty()) return;
-    log_index_ = !log_index_;
-    kitsu_client_->put_job_log_sync(job_id_, log_buffer_[!log_index_]);
-    log_buffer_[!log_index_].clear();
+    if (log_buffer_.empty()) return;
+    kitsu_client_->put_job_log_sync(job_id_, log_buffer_);
+    log_buffer_.clear();
   }
 };
 using run_ue_assembly_distributed_sink_mt = run_ue_assembly_distributed_sink<std::mutex>;
