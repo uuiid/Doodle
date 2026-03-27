@@ -4,6 +4,9 @@
 
 #include <boost/rational.hpp>
 
+#include <string>
+
+
 namespace doodle {
 class progress_data {
   using reational_t = boost::rational<std::int64_t>;
@@ -15,10 +18,15 @@ class progress_data {
   reational_t current_steps_{1};
 
   void update_progress(std::int32_t in_progress);
+  // 百分比发送事件标识
+  reational_t last_emitted_progress_{0, 100};
+
+  std::string namespace_{};
+  std::string event_name_{};
 
  public:
-  progress_data() = default;
-
+  explicit progress_data(std::string in_namespace, std::string in_event_name)
+      : namespace_(std::move(in_namespace)), event_name_(std::move(in_event_name)) {};
   void set_total_steps(std::int32_t in_total_steps);
   std::int32_t get_total_steps() const;
 
