@@ -295,6 +295,7 @@ std::vector<FSys::path> export_file_fbx::export_sim(
     auto l_file_path                 = (*in_gen_file)(in_ref);
     l_file_path.replace_extension(".abc");
     display_info("导出abc 文件{}", l_file_path);
+    l_ret.emplace_back(l_file_path);
     alembic::archive_out l_archive_out{
         l_file_path, l_export_sim_cloth, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
     };
@@ -302,13 +303,13 @@ std::vector<FSys::path> export_file_fbx::export_sim(
       MAnimControl::setCurrentTime(i);
       l_archive_out.write();
     }
-    l_ret.emplace_back(l_file_path);
   }
   if (!l_export_sim_hair.empty()) {
     in_gen_file->add_external_string = "hair";
     auto l_file_path                 = (*in_gen_file)(in_ref);
     l_file_path.replace_extension(".abc");
     display_info("导出abc 文件{}", l_file_path);
+    l_ret.emplace_back(l_file_path);
     alembic::archive_out l_archive_out{
         l_file_path, l_export_sim_hair, in_gen_file->begin_end_time.first, in_gen_file->begin_end_time.second
     };
@@ -316,7 +317,6 @@ std::vector<FSys::path> export_file_fbx::export_sim(
       MAnimControl::setCurrentTime(i);
       l_archive_out.write();
     }
-    l_ret.emplace_back(l_file_path);
   }
 
   return l_ret;
