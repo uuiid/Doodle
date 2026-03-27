@@ -236,5 +236,7 @@ class sqlite_database {
   boost::asio::awaitable<void> remove_sequence_casting(const uuid& in_sequence_id);
   // 按照计算机id 获取工作
   std::vector<server_task_info> get_server_tasks_by_submitted();
+  // 获取镜头任务对应的 场景资产的扩展数据 如果没有, 抛出异常, 大于一个, 抛出异常
+  entity_asset_extend get_entity_shot_extend_by_task(const uuid& in_shot_id);
 };
 }  // namespace doodle

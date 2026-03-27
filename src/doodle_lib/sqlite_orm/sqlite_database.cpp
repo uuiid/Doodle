@@ -4,6 +4,7 @@
 
 #include "sqlite_database.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>
@@ -997,6 +998,29 @@ std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
       multi_order_by(order_by(&server_task_info::priority_).desc(), order_by(&server_task_info::submit_time_))
   );
   return l_t;
+}
+
+entity_asset_extend sqlite_database::get_entity_shot_extend_by_task(const uuid& in_shot_id) {
+  using namespace sqlite_orm;
+  constexpr auto shot     = "shot"_alias.for_<entity>();
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  auto l_assets           = impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(
+          in(&entity::uuid_id_,
+                       select(
+                 &entity_link::entity_out_id_, from<entity_link>(),
+                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+                 where(c(shot->*&entity::uuid_id_) == in_shot_id)
+             )) &&
+          !c(&entity::canceled_) && c(&entity::entity_type_id_) == asset_type::get_ground_id()
+      )
+  );
+  DOODLE_CHICK(l_assets.size() == 1, "错误, 找个了 {} 个对应的地编资产", l_assets.size());
+  auto& [shot_entity, shot_extend] = l_assets.front();
+  return {shot_extend};
 }
 
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);

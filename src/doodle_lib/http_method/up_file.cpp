@@ -248,10 +248,16 @@ FSys::path doodle_data_shots_file_ue::gen_file_path() {
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 FSys::path doodle_data_shots_file_auto_light::gen_file_path() {
+  episodes l_episodes{episode_};
+  shot l_shot{shot_};
+  auto l_asset_extend = get_sqlite_database().get_entity_shot_extend_by_task(shot_.uuid_id_);
+
   if (task_type_id_ == task_type::get_animation_id())
-    return get_shots_auto_lighting_upload_animation_name(episodes{episode_}, shot{shot_}, project_code_);
+    return get_shots_auto_lighting_upload_path(l_episodes, l_asset_extend) /
+           get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, project_code_);
   else if (task_type_id_ == task_type::get_simulation_task_id())
-    return get_shots_auto_lighting_upload_simulation_name(episodes{episode_}, shot{shot_}, project_code_);
+    return get_shots_auto_lighting_upload_path(l_episodes, l_asset_extend) /
+           get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, project_code_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 task_type 类型"});
 }
 
