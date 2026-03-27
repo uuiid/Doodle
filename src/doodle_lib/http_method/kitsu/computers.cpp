@@ -258,8 +258,11 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
   if (l_jobs.empty()) {
     in_computer->get_computer()->status_ = computer_status::online;
+    co_await l_sql.update_computer_status(in_computer->get_computer()->uuid_id_, computer_status::online);
     co_return;
   }
+  in_computer->get_computer()->status_ = computer_status::busy;
+  co_await l_sql.update_computer_status(in_computer->get_computer()->uuid_id_, computer_status::busy);
   auto l_job_ptr              = std::make_shared<server_task_info>(l_jobs.front());
   l_job_ptr->status_          = server_task_info_status::running;
   l_job_ptr->run_time_        = {chrono::current_zone(), chrono::system_clock::now()};
