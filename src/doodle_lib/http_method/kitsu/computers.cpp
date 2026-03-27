@@ -20,6 +20,7 @@
 #include <boost/lockfree/spsc_value.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <fmt/ranges.h>
 #include <functional>
@@ -68,6 +69,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
 class data_computers_socket_io_impl : public std::enable_shared_from_this<data_computers_socket_io_impl> {
   std::shared_ptr<boost::beast::websocket::stream<http::tcp_stream_type>> web_stream_;
   std::shared_ptr<computer> computer_;
+  std::atomic<computer_status> last_status_{computer_status::offline};
 
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::lockfree::spsc_queue<std::string, boost::lockfree::capacity<1024>> message_queue_;
@@ -155,6 +157,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
     computer_->status_              = in_computer.get().status_;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+    last_status_                    = computer_->status_;
     co_await l_sql.update(computer_);
     if (computer_->status_ == computer_status::online) co_await computers_assign_task::get_instance().run_next_task();
 
@@ -194,7 +197,10 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
   ~data_computers_socket_io_impl() {}
 
   boost::beast::websocket::stream<http::tcp_stream_type>& get_web_stream() { return *web_stream_; }
-  std::shared_ptr<computer> get_computer() const { return computer_; }
+
+  void set_computer_status(computer_status in_status) { last_status_ = in_status; }
+  computer_status get_computer_status() const { return last_status_; }
+  uuid get_computer_id() const { return computer_ ? computer_->uuid_id_ : uuid{}; }
 
   void run() {
     boost::asio::co_spawn(
@@ -220,20 +226,11 @@ boost::asio::awaitable<void> computers_assign_task::register_computer(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
   DOODLE_TO_EXECUTOR(strand_);
-  computer_map_[in_computer->get_computer()->uuid_id_] = in_computer;
+  computer_map_[in_computer->get_computer_id()] = in_computer;
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer()->uuid_id_,
+      g_logger_ctrl().get_http(), "计算机 {} 注册成功, 当前在线计算机数量 {}", in_computer->get_computer_id(),
       computer_map_.size()
   );
-}
-
-void computers_assign_task::unregister_computer(const uuid& in_computer_id) {
-  boost::asio::post(strand_, [this, in_computer_id]() {
-    computer_map_.erase(in_computer_id);
-    SPDLOG_LOGGER_INFO(
-        g_logger_ctrl().get_http(), "计算机 {} 注销成功, 当前在线计算机数量 {}", in_computer_id, computer_map_.size()
-    );
-  });
 }
 
 void computers_assign_task::clear_offline_computer() {
@@ -253,27 +250,26 @@ void computers_assign_task::clear_offline_computer() {
 boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
-  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer()->uuid_id_);
+  SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer_id());
   auto l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
   if (l_jobs.empty()) {
-    in_computer->get_computer()->status_ = computer_status::online;
-    co_await l_sql.update_computer_status(in_computer->get_computer()->uuid_id_, computer_status::online);
+    in_computer->set_computer_status(computer_status::online);
+    co_await l_sql.update_computer_status(in_computer->get_computer_id(), computer_status::online);
     co_return;
   }
-  in_computer->get_computer()->status_ = computer_status::busy;
-  co_await l_sql.update_computer_status(in_computer->get_computer()->uuid_id_, computer_status::busy);
+  in_computer->set_computer_status(computer_status::busy);
+  co_await l_sql.update_computer_status(in_computer->get_computer_id(), computer_status::busy);
   auto l_job_ptr              = std::make_shared<server_task_info>(l_jobs.front());
   l_job_ptr->status_          = server_task_info_status::running;
   l_job_ptr->run_time_        = {chrono::current_zone(), chrono::system_clock::now()};
-  l_job_ptr->run_computer_id_ = in_computer->get_computer()->uuid_id_;
+  l_job_ptr->run_computer_id_ = in_computer->get_computer_id();
   co_await l_sql.update(l_job_ptr);
   auto l_json = (nlohmann::json{} = *l_job_ptr);
   in_computer->write_msg(l_json.dump());
   in_computer->begin_write_msg();
   SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_,
-      in_computer->get_computer()->uuid_id_
+      g_logger_ctrl().get_http(), "分发任务 {} 成功，在线计算机 {}", l_job_ptr->uuid_id_, in_computer->get_computer_id()
   );
   co_return;
 }
@@ -283,7 +279,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task() {
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "{}", fmt::join(computer_map_ | std::ranges::views::keys, ", "));
   for (auto& [uuid, weak_ptr] : computer_map_) {
     if (auto l_ptr = weak_ptr.lock();
-        l_ptr->get_computer() && l_ptr->get_computer()->status_ == computer_status::online) {
+        !l_ptr->get_computer_id().is_nil() && l_ptr->get_computer_status() == computer_status::online) {
       co_await run_next_task_impl(l_ptr);
     }
   }
