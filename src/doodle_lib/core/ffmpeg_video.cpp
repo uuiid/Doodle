@@ -331,7 +331,9 @@ class ffmpeg_video::impl {
       if (!in_channel_layout_fixed) {
         av::frame::set_channel_layout(in_frame.raw(), audio_channel_layout_.layout());
       }
-      if (in_frame.sampleRate() <= 0) av::frame::set_sample_rate(in_frame.raw(), audio_dec_ctx_.sampleRate());
+      if (in_frame.sampleRate() <= 0) {
+        in_frame.raw()->sample_rate = audio_dec_ctx_.sampleRate();
+      }
 
       if (audio_resampler_.isValid()) {
         in_frame.setTimeBase(audio_dec_ctx_.timeBase());
@@ -490,7 +492,7 @@ class ffmpeg_video::impl {
     output_handle_.video_enc_ctx_.setHeight(input_video_handle_.video_dec_ctx_.height());
     output_handle_.video_enc_ctx_.setTimeBase(l_video_tb);
     output_handle_.video_enc_ctx_.setPixelFormat(
-      pick_h264_pix_fmt(output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat())
+        pick_h264_pix_fmt(output_handle_.h264_codec_, input_video_handle_.video_dec_ctx_.pixelFormat())
     );
     // 对 libx264：CRF 模式通过私有选项设置。bit_rate 不设置（或置 0）避免和 ABR 混用。
     output_handle_.video_enc_ctx_.setBitRate(0);
@@ -1211,7 +1213,7 @@ class ffmpeg_video_resize::impl {
       if (!fixed_audio_channels_) {
         av::frame::set_channel_layout(in_frame.raw(), audio_channel_layout_.layout());
       }
-      if (in_frame.sampleRate() <= 0) av::frame::set_sample_rate(in_frame.raw(), source_audio_sample_rate_);
+      if (in_frame.sampleRate() <= 0) in_frame.raw()->sample_rate = source_audio_sample_rate_;
 
       if (resampler_.isValid()) {
         // in_frame.setTimeBase(l_time_base);
