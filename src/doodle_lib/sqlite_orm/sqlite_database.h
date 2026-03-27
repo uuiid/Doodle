@@ -18,6 +18,7 @@
 namespace doodle {
 struct preview_file;
 struct preview_files_for_entity_t;
+enum class computer_status;
 struct status_automation;
 enum class server_task_info_type;
 struct asset_type;
@@ -238,5 +239,7 @@ class sqlite_database {
   std::vector<server_task_info> get_server_tasks_by_submitted();
   // 获取镜头任务对应的 场景资产的扩展数据 如果没有, 抛出异常, 大于一个, 抛出异常
   entity_asset_extend get_entity_shot_extend_by_task(const uuid& in_shot_id);
+  // 更新计算机状态
+  boost::asio::awaitable<void> update_computer_status(const uuid& in_computer_id, computer_status in_status);
 };
 }  // namespace doodle

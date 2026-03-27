@@ -1022,7 +1022,16 @@ entity_asset_extend sqlite_database::get_entity_shot_extend_by_task(const uuid& 
   auto& [shot_entity, shot_extend] = l_assets.front();
   return {shot_extend};
 }
-
+boost::asio::awaitable<void> sqlite_database::update_computer_status(
+    const uuid& in_computer_id, computer_status in_status
+) {
+  DOODLE_TO_SQLITE_THREAD_2();
+  using namespace sqlite_orm;
+  impl_->storage_any_.update_all(
+      set(c(&computer::status_) = in_status), where(c(&computer::uuid_id_) == in_computer_id)
+  );
+  DOODLE_TO_SELF();
+}
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
