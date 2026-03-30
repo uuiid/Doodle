@@ -290,12 +290,10 @@ struct project_with_extra_data : project {
   std::vector<project_task_type_link> task_types_priority_;
   std::vector<project_task_status_link> task_statuses_link_;
   struct project_int {
-    std::int32_t number_;
+    std::optional<std::int32_t> number_;
     std::int32_t count_;
-    explicit project_int(std::tuple<std::int32_t, std::int32_t> in_tuple)
-        : number_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
     explicit project_int(std::tuple<std::optional<std::int32_t>, std::int32_t> in_tuple)
-        : number_(std::get<0>(in_tuple).value_or(-1)), count_(std::get<1>(in_tuple)) {}
+        : number_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
     // to json
     friend void to_json(nlohmann::json& j, const project_int& p) {
       j["name"]  = p.number_;
@@ -312,7 +310,7 @@ struct project_with_extra_data : project {
     std::int32_t count_;
     explicit project_str(std::tuple<std::string, std::int32_t> in_tuple)
         : name_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
-    
+
     friend void to_json(nlohmann::json& j, const project_str& p) {
       j["name"]  = p.name_;
       j["count"] = p.count_;
