@@ -242,7 +242,10 @@ struct with_tasks_get_result_t {
   }
 };
 
-auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, const uuid& in_id) {
+auto with_tasks_sql_query(
+    const person& in_person, const uuid& in_project_id, const uuid& in_id, std::int32_t in_offset = 0,
+    int32_t in_limit = 100
+) {
   auto l_sql = get_sqlite_database();
   std::vector<with_tasks_get_result_t> l_ret{};
 
@@ -275,7 +278,7 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
           ) &&
           not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
       ),
-      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
+      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_)), limit(in_offset, in_limit)
   ));
   std::map<uuid, std::size_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
@@ -301,25 +304,6 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
             .assigners_.emplace_back(l_person_id);
     }
   }
-
-  // std::vector<uuid> l_task_ids{};
-  // l_task_ids.reserve(l_entities_and_tasks_map.size() * 10);
-  // for (auto&& l_i : l_entities_and_tasks_map)
-  //   for (auto&& l_j : l_i.second.tasks_) l_task_ids.push_back(l_j.uuid_id_);
-  // for (auto&& [l_work_file, l_task_id, l_entity_id] : l_sql.impl_->storage_any_.select(
-  //          columns(
-  //              object<working_file>(true), &working_file_task_link::task_id_, &working_file_entity_link::entity_id_
-  //          ),
-  //          join<working_file_entity_link>(on(c(&working_file_entity_link::working_file_id_) ==
-  //          c(&working_file::uuid_id_))), join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_)
-  //          == c(&working_file::uuid_id_))), where(in(&working_file_task_link::task_id_, l_task_ids))
-  //      )) {
-  //   if (l_entities_and_tasks_map.contains(l_entity_id)) {
-  //     auto& l_task = l_ret[l_entities_and_tasks_map[l_entity_id]].tasks_;
-  //     if (l_task.size() > l_task_id_set.at(l_task_id))
-  //       l_task.at(l_task_id_set.at(l_task_id)).working_files_.emplace_back(l_work_file);
-  //   }
-  // }
   return l_ret;
 }
 
@@ -327,9 +311,17 @@ auto with_tasks_sql_query(const person& in_person, const uuid& in_project_id, co
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_tasks::get(session_data_ptr in_handle) {
   uuid l_prj_id{};
-  for (auto&& l_i : in_handle->url_.params())
+  std::int32_t l_offset{};
+  std::int32_t l_limit{};
+  for (auto&& l_i : in_handle->url_.params()) {
     if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
-  co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(person_.person_, l_prj_id, {})).dump());
+    if (l_i.key == "offset") l_offset = std::stoi(l_i.value);
+    if (l_i.key == "limit") l_limit = std::stoi(l_i.value);
+  }
+  co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(
+                                     person_.person_, l_prj_id, {}, l_offset ? l_offset : 0, l_limit ? l_limit : 100
+                                 ))
+                                    .dump());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
   auto&& l_sql = get_sqlite_database();
