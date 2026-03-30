@@ -146,12 +146,11 @@ function Initialize-Doodle {
             Move-Item "$DoodleInstallRoot\Doodle-$DoodleVersion-win64\maya" "$DoodleInstallRoot\maya"
             # 删除文件夹
             Remove-Item "$DoodleInstallRoot\Doodle-$DoodleVersion-win64" -Recurse -Force
-        }1
-        $Tags = $Tags[0..100]
+        }
+        $Tags = $Tags[0..400]
         [array]::Reverse($Tags)
         #         寻找版本号 3.6.678 并放在最后
         #        $DoodleVersionList = $DoodleVersionList | Where-Object { $_ -ne "3.6.678" }
-        #        $DoodleVersionList += "`n3.6.678"
     }
     Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
