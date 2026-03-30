@@ -171,7 +171,7 @@ struct shots_with_tasks_result {
 };
 auto get_shots_with_tasks(
     const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
-    int32_t in_limit = 100
+    std::int32_t in_limit = 300
 ) {
   std::vector<shots_with_tasks_result> l_ret{};
   std::map<uuid, std::size_t> l_shots_ids{};

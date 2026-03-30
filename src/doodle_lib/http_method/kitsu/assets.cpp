@@ -244,7 +244,7 @@ struct with_tasks_get_result_t {
 
 auto with_tasks_sql_query(
     const person& in_person, const uuid& in_project_id, const uuid& in_id, std::int32_t in_offset = 0,
-    int32_t in_limit = 100
+    std::int32_t in_limit = 300
 ) {
   auto l_sql = get_sqlite_database();
   std::vector<with_tasks_get_result_t> l_ret{};

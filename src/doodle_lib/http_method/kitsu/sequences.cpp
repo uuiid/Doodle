@@ -123,7 +123,7 @@ struct sequences_with_tasks_result {
 
 auto get_get_entities_and_tasks(
     const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
-    int32_t in_limit = 100
+    std::int32_t in_limit = 300
 ) {
   DOODLE_CHICK(!in_entity_type_id.is_nil(), "实体类型id不可为空");
 
