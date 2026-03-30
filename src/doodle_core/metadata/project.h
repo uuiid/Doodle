@@ -5,6 +5,7 @@
 #include <doodle_core/metadata/person.h>
 
 #include <cmath>
+#include <optional>
 #include <vector>
 
 namespace doodle {
@@ -291,6 +292,10 @@ struct project_with_extra_data : project {
   struct project_int {
     std::int32_t number_;
     std::int32_t count_;
+    explicit project_int(std::tuple<std::int32_t, std::int32_t> in_tuple)
+        : number_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
+    explicit project_int(std::tuple<std::optional<std::int32_t>, std::int32_t> in_tuple)
+        : number_(std::get<0>(in_tuple).value_or(-1)), count_(std::get<1>(in_tuple)) {}
     // to json
     friend void to_json(nlohmann::json& j, const project_int& p) {
       j["name"]  = p.number_;
@@ -305,6 +310,9 @@ struct project_with_extra_data : project {
   struct project_str {
     std::string name_;
     std::int32_t count_;
+    explicit project_str(std::tuple<std::string, std::int32_t> in_tuple)
+        : name_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
+    
     friend void to_json(nlohmann::json& j, const project_str& p) {
       j["name"]  = p.name_;
       j["count"] = p.count_;
