@@ -5,6 +5,7 @@
 #include <doodle_core/metadata/person.h>
 
 #include <cmath>
+#include <vector>
 
 namespace doodle {
 
@@ -287,6 +288,29 @@ struct project_with_extra_data : project {
   std::vector<metadata_descriptor> descriptors_;
   std::vector<project_task_type_link> task_types_priority_;
   std::vector<project_task_status_link> task_statuses_link_;
+  struct project_int {
+    std::int32_t number_;
+    std::int32_t count_;
+    // to json
+    friend void to_json(nlohmann::json& j, const project_int& p) {
+      j["name"]  = p.number_;
+      j["count"] = p.count_;
+    }
+  };
+  // 集数
+  std::vector<project_int> episodes_;
+  // 季度
+  std::vector<project_int> seasons_;
+  // 等级
+  struct project_str {
+    std::string name_;
+    std::int32_t count_;
+    friend void to_json(nlohmann::json& j, const project_str& p) {
+      j["name"]  = p.name_;
+      j["count"] = p.count_;
+    }
+  };
+  std::vector<project_str> levels_;
 
   // to json
   friend void to_json(nlohmann::json& j, const project_with_extra_data& p) {
@@ -316,6 +340,11 @@ struct project_with_extra_data : project {
       j["task_statuses_link"][fmt::to_string(d.task_status_id_)] =
           nlohmann::json{{"priority", d.priority_}, {"roles_for_board", d.roles_for_board_}};
     }
+    for (const auto& d : p.episodes_) j["episodes"].push_back(d);
+
+    for (const auto& d : p.seasons_) j["seasons"].push_back(d);
+
+    for (const auto& d : p.levels_) j["levels"].push_back(d);
   }
 };
 
