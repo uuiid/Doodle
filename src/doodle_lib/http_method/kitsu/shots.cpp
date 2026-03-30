@@ -169,7 +169,10 @@ struct shots_with_tasks_result {
     l_data["max_retakes"];
   }
 };
-auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
+auto get_shots_with_tasks(
+    const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
+    int32_t in_limit = 100
+) {
   std::vector<shots_with_tasks_result> l_ret{};
   std::map<uuid, std::size_t> l_shots_ids{};
   std::set<uuid> l_tasks_ids;
@@ -206,8 +209,9 @@ auto get_shots_with_tasks(const person& in_person, const uuid& in_project_id, co
                 in(sequence->*&entity::uuid_id_, l_outsource_select) ||  //
                 in(episode->*&entity::uuid_id_, l_outsource_select)
             )))
-      )
-
+      ),
+      multi_order_by(order_by(episode->*&entity::name_), order_by(sequence->*&entity::name_), order_by(&entity::name_)),
+      limit(in_offset, in_limit)
   );
   for (auto&& [
 
@@ -241,10 +245,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_ta
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
 
   uuid l_project_uuid{};
-  for (auto&& [key, value, has] : in_handle->url_.params())
+  std::int32_t l_offset{};
+  std::int32_t l_limit{};
+  for (auto&& [key, value, has] : in_handle->url_.params()) {
     if (key == "project_id" && has) l_project_uuid = from_uuid_str(value);
+    if (key == "offset" && has) l_offset = std::stoi(value);
+    if (key == "limit" && has) l_limit = std::stoi(value);
+  }
   co_return in_handle->make_msg(
-      nlohmann::json{} = get_shots_with_tasks(person_.person_, l_project_uuid, l_type_id.uuid_id_)
+      nlohmann::json{} = get_shots_with_tasks(
+          person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset ? l_offset : 0, l_limit ? l_limit : 100
+      )
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {

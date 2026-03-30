@@ -121,7 +121,10 @@ struct sequences_with_tasks_result {
   }
 };
 
-auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id) {
+auto get_get_entities_and_tasks(
+    const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
+    int32_t in_limit = 100
+) {
   DOODLE_CHICK(!in_entity_type_id.is_nil(), "实体类型id不可为空");
 
   std::vector<sequences_with_tasks_result> l_ret{};
@@ -143,7 +146,8 @@ auto get_get_entities_and_tasks(const person& in_person, const uuid& in_project_
           ((in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
            (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select)))
 
-      )
+      ),
+      multi_order_by(order_by(&entity::name_)), limit(in_offset, in_limit)
   );
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
@@ -177,10 +181,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tas
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence});
 
   uuid l_project_uuid{};
-  for (auto&& [key, value, has] : in_handle->url_.params())
+  std::int32_t l_offset{};
+  std::int32_t l_limit{};
+  for (auto&& [key, value, has] : in_handle->url_.params()) {
     if (key == "project_id" && has) l_project_uuid = from_uuid_str(value);
+    if (key == "offset" && has) l_offset = std::stoi(value);
+    if (key == "limit" && has) l_limit = std::stoi(value);
+  }
 
-  auto l_r = get_get_entities_and_tasks(person_.person_, l_project_uuid, l_type_id.uuid_id_);
+  auto l_r = get_get_entities_and_tasks(person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset, l_limit);
   co_return in_handle->make_msg(nlohmann::json{} = l_r);
 }
 
