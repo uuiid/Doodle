@@ -18,6 +18,9 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
+#include <boost/hana.hpp>
+
+#include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 
@@ -306,6 +309,127 @@ auto with_tasks_sql_query(
   }
   return l_ret;
 }
+
+struct make_with_tasks_sql_result_t {
+  person& person_;
+  uuid project_id_;
+  uuid id_;
+  std::int32_t offset_;
+  std::int32_t limit_;
+  std::vector<uuid> entity_type_id_;
+  std::vector<std::int32_t> ji_du_filter_;
+  std::vector<std::int32_t> ji_shu_lie_filter_;
+  std::vector<uuid> task_status_id_filter_;
+  std::vector<uuid> person_id_filter_;
+
+ private:
+  auto project_id_where() {
+    using namespace sqlite_orm;
+    return c(&entity::project_id_) == project_id_;
+  }
+  auto outsource_where() {
+    using namespace sqlite_orm;
+
+    return in(
+        &entity::uuid_id_, select(
+                               &outsource_studio_authorization::entity_id_,
+                               where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_)
+                           )
+    );
+  }
+
+  auto entity_type_id_where() {
+    using namespace sqlite_orm;
+    return in(&entity::entity_type_id_, entity_type_id_);
+  }
+  auto ji_du_where() {
+    using namespace sqlite_orm;
+    return in(&entity_asset_extend::ji_du_, ji_du_filter_);
+  }
+  auto ji_shu_lie_where() {
+    using namespace sqlite_orm;
+    return in(&entity_asset_extend::ji_shu_lie_, ji_shu_lie_filter_);
+  }
+  auto task_status_id_where() {
+    using namespace sqlite_orm;
+    return in(&task::task_status_id_, task_status_id_filter_);
+  }
+  auto person_id_where() {
+    using namespace sqlite_orm;
+    return in(&assignees_table::person_id_, person_id_filter_);
+  }
+
+  template <typename T>
+  auto with_tasks_sql_query(T&& in_where) {
+    auto l_sql = get_sqlite_database();
+    std::vector<with_tasks_get_result_t> l_ret{};
+
+    using namespace sqlite_orm;
+
+    l_ret.reserve(l_sql.get_project_entity_count(project_id_));
+
+    auto l_subscriptions_for_user = l_sql.get_person_subscriptions(person_, project_id_, {});
+
+    auto l_outsource_select       = select(
+        &outsource_studio_authorization::entity_id_,
+        where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_)
+    );
+
+    auto l_rows = l_sql.impl_->storage_any_.iterate(select(
+        columns(
+            object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
+            &assignees_table::person_id_
+        ),
+        from<entity>(), join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+        left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
+        left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+        left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+        where(std::forward<T>(in_where)), multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_)),
+        limit(offset_, limit_)
+    ));
+    std::map<uuid, std::size_t> l_entities_and_tasks_map{};
+    std::map<uuid, std::size_t> l_task_id_set{};
+    for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
+      if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
+        l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
+        l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
+      }
+      if (!l_task.uuid_id_.is_nil()) {
+        if (!l_task_id_set.contains(l_task.uuid_id_)) {
+          l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.emplace_back(
+              with_tasks_get_result_t::task_t{
+                  l_entity,
+                  l_task,
+                  l_subscriptions_for_user.contains(l_task.uuid_id_),
+              }
+          );
+          l_task_id_set.emplace(l_task.uuid_id_, l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.size() - 1);
+        }
+        if (!l_person_id.is_nil())
+          l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]]
+              .tasks_[l_task_id_set.at(l_task.uuid_id_)]
+              .assigners_.emplace_back(l_person_id);
+      }
+    }
+    return l_ret;
+  }
+
+ public:
+  auto operator()() {
+    using namespace sqlite_orm;
+
+    auto l_sql        = get_sqlite_database();
+    auto l_base_where = not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids());
+    if (!id_.is_nil()) return with_tasks_sql_query(c(&entity::uuid_id_) == id_ && l_base_where);
+    // 0 位 project id
+    // 1 位 outsource
+    // 2 位 entity type id
+    // 3 位 ji du
+    // 4 位 ji shu lie
+    // 5 位 task status id
+    // 6 位 person id
+  }
+};
 
 }  // namespace
 
