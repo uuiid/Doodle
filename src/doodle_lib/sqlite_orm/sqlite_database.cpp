@@ -204,7 +204,8 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     auto l_episodes        = impl_->storage_any_.select(
         columns(&entity_asset_extend::ji_shu_lie_, count(&entity_asset_extend::ji_shu_lie_)),
         join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_)
+        where(c(&entity::project_id_) == i.uuid_id_),
+        group_by(&entity_asset_extend::ji_shu_lie_)
     );
     i.episodes_.reserve(l_episodes.size());
     for (const auto& d : l_episodes) i.episodes_.emplace_back(d);
@@ -212,7 +213,8 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     auto l_seasons = impl_->storage_any_.select(
         columns(&entity_asset_extend::ji_du_, count(&entity_asset_extend::ji_du_)),
         join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_)
+        where(c(&entity::project_id_) == i.uuid_id_),
+        group_by(&entity_asset_extend::ji_du_)
     );
     i.seasons_.reserve(l_seasons.size());
     for (const auto& d : l_seasons) i.seasons_.emplace_back(d);
@@ -220,7 +222,8 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     auto l_levels = impl_->storage_any_.select(
         columns(&entity_asset_extend::deng_ji_, count(&entity_asset_extend::deng_ji_)),
         join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_)
+        where(c(&entity::project_id_) == i.uuid_id_),
+        group_by(&entity_asset_extend::deng_ji_)
     );
     i.levels_.reserve(l_levels.size());
     for (const auto& d : l_levels) i.levels_.emplace_back(d);
