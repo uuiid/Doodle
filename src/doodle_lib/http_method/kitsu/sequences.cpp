@@ -189,7 +189,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tas
     if (key == "limit" && has) l_limit = std::stoi(value);
   }
 
-  auto l_r = get_get_entities_and_tasks(person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset, l_limit);
+  auto l_r = get_get_entities_and_tasks(
+      person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset ? l_offset : 0, l_limit ? l_limit : 300
+  );
   co_return in_handle->make_msg(nlohmann::json{} = l_r);
 }
 

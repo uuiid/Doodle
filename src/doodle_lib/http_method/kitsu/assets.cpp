@@ -319,7 +319,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_t
     if (l_i.key == "limit") l_limit = std::stoi(l_i.value);
   }
   co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(
-                                     person_.person_, l_prj_id, {}, l_offset ? l_offset : 0, l_limit ? l_limit : 100
+                                     person_.person_, l_prj_id, {}, l_offset ? l_offset : 0, l_limit ? l_limit : 300
                                  ))
                                     .dump());
 }

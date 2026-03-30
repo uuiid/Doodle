@@ -254,7 +254,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_ta
   }
   co_return in_handle->make_msg(
       nlohmann::json{} = get_shots_with_tasks(
-          person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset ? l_offset : 0, l_limit ? l_limit : 100
+          person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset ? l_offset : 0, l_limit ? l_limit : 300
       )
   );
 }
