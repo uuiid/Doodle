@@ -46,7 +46,10 @@
       "default-features": false,
       "features": [
         "json1",
-        "rtree"
+        "rtree",
+        "fts5",
+        "dbstat",
+        "unicode"
       ]
     },
     "sqlite-orm",
