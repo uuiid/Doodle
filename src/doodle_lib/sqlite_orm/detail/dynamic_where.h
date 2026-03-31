@@ -73,6 +73,8 @@ struct statement_serializer<dynamic_where_t<C>, void> {
 
     static constexpr std::array<orm_gsl::czstring, 2> sep = {" AND ", ""};
     auto l_len                                            = statement.size();
+    if (l_len == 0)
+      throw std::logic_error("dynamic_where statement cannot be empty");
     for (bool first = true; const typename statement_type::entry_t& entry : statement) {
       ss << sep[std::exchange(first, false)] << (l_len == 1 ? "" : "(") << entry(in_context) << (l_len == 1 ? "" : ")");
     }
