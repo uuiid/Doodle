@@ -1,8 +1,8 @@
 #pragma once
 
-#include <sqlite_orm/sqlite_orm.h>
-
 #include <array>
+#include <functional>
+#include <sqlite_orm/sqlite_orm.h>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -12,91 +12,74 @@ namespace sqlite_orm {
 
 namespace internal {
 
-	struct dynamic_where_entry_base {
-		std::string expression;
-	};
+/**
+ * C - serializer context class
+ */
+template <class C>
+struct dynamic_where_t {
+  using context_t      = C;
+  using serialize_fun  = std::function<std::string(context_t)>;
+  using entry_t        = serialize_fun;
+  using const_iterator = typename std::vector<entry_t>::const_iterator;
 
-	/**
-	 * C - serializer context class
-	 */
-	template <class C>
-	struct dynamic_where_t : where_string {
-		using context_t = C;
-		using entry_t = dynamic_where_entry_base;
-		using const_iterator = typename std::vector<entry_t>::const_iterator;
+  dynamic_where_t(context_t) {}
 
-		dynamic_where_t(const context_t& context_) : context(context_) {}
+  template <class E>
+  void push_back(E expression) {
+    // NOTE: follow sqlite_orm dynamic_set/dynamic_order_by pattern:
+    // store fully serialized expression, with bindables inlined.
+    this->entries.push_back([expression = std::move(expression)](const context_t& in_context) {
+      return serialize(expression, in_context);
+    });
+  }
 
-		template <class E>
-		void push_back(E expression) {
-			auto newContext = this->context;
-			newContext.omit_table_name = false;
-			// NOTE: follow sqlite_orm dynamic_set/dynamic_order_by pattern:
-			// store fully serialized expression, with bindables inlined.
-			this->entries.push_back({serialize(std::move(expression), newContext)});
-		}
+  const_iterator begin() const { return this->entries.begin(); }
 
-		const_iterator begin() const {
-			return this->entries.begin();
-		}
+  const_iterator end() const { return this->entries.end(); }
 
-		const_iterator end() const {
-			return this->entries.end();
-		}
+  bool empty() const { return this->entries.empty(); }
 
-		bool empty() const {
-			return this->entries.empty();
-		}
+  void clear() { this->entries.clear(); }
 
-		void clear() {
-			this->entries.clear();
-		}
+  std::size_t size() const { return this->entries.size(); }
 
-	protected:
-		std::vector<entry_t> entries;
-		context_t context;
-	};
+ protected:
+  std::vector<entry_t> entries;
+};
 
-	template <class T>
-	inline constexpr bool is_dynamic_where_v = polyfill::is_specialization_of<T, dynamic_where_t>::value;
+template <class T>
+inline constexpr bool is_dynamic_where_v = polyfill::is_specialization_of<T, dynamic_where_t>::value;
 
-	template <class T>
-	struct is_dynamic_where : polyfill::bool_constant<is_dynamic_where_v<T>> {};
+template <class T>
+struct is_dynamic_where : polyfill::bool_constant<is_dynamic_where_v<T>> {};
 
-	template <class T>
-	inline constexpr bool is_where_clause_v = polyfill::disjunction<is_where<T>, is_dynamic_where<T>>::value;
+template <class T>
+inline constexpr bool is_where_clause_v = polyfill::disjunction<is_where<T>, is_dynamic_where<T>>::value;
 
-	template <class T>
-	struct is_where_clause : polyfill::bool_constant<is_where_clause_v<T>> {};
+template <class T>
+struct is_where_clause : polyfill::bool_constant<is_where_clause_v<T>> {};
 
-	template <class C>
-	struct statement_serializer<dynamic_where_t<C>, void> {
-		using statement_type = dynamic_where_t<C>;
+template <class C>
+struct statement_serializer<dynamic_where_t<C>, void> {
+  using statement_type = dynamic_where_t<C>;
 
-		template <class Ctx>
-		std::string operator()(const statement_type& statement, const Ctx&) const {
-			if (statement.empty()) {
-				return {};
-			}
+  template <class Ctx>
+  std::string operator()(const statement_type& statement, const Ctx& in_context) const {
+    if (statement.empty()) {
+      return {};
+    }
 
-			std::stringstream ss;
-			ss << statement.serialize() << " ";
+    std::stringstream ss;
 
-			static constexpr std::array<orm_gsl::czstring, 2> sep = {" AND ", ""};
-#ifdef SQLITE_ORM_INITSTMT_RANGE_BASED_FOR_SUPPORTED
-			for (bool first = true; const dynamic_where_entry_base& entry : statement) {
-				ss << sep[std::exchange(first, false)] << '(' << entry.expression << ')';
-			}
-#else
-			bool first = true;
-			for (const dynamic_where_entry_base& entry : statement) {
-				ss << sep[std::exchange(first, false)] << '(' << entry.expression << ')';
-			}
-#endif
+    static constexpr std::array<orm_gsl::czstring, 2> sep = {" AND ", ""};
+    auto l_len                                            = statement.size();
+    for (bool first = true; const typename statement_type::entry_t& entry : statement) {
+      ss << sep[std::exchange(first, false)] << (l_len == 1 ? "" : "(") << entry(in_context) << (l_len == 1 ? "" : ")");
+    }
 
-			return ss.str();
-		}
-	};
+    return ss.str();
+  }
+};
 
 }  // namespace internal
 
@@ -106,8 +89,7 @@ namespace internal {
  */
 template <class S>
 internal::dynamic_where_t<internal::serializer_context<typename S::db_objects_type>> dynamic_where(const S& storage) {
-	return {obtain_db_objects(storage)};
+  return {obtain_db_objects(storage)};
 }
 
-
-}
+}  // namespace sqlite_orm

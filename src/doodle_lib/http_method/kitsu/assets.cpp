@@ -431,7 +431,7 @@ struct make_with_tasks_sql_result_t {
     // 4 位 ji shu lie
     // 5 位 task status id
     // 6 位 person id
-    return nullptr;
+    return with_tasks_sql_query(l_base_where);
   }
 };
 

@@ -21,6 +21,9 @@
     "move_test/add_audio",
     "move_test/conv_audio",
     "move_test/text_video",
-    "data/http_client"
+    "data/http_client",
+    "data/sqlite_orm_dynamic_where"
+
+
   ]
 }
