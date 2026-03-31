@@ -14,11 +14,13 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/detail/dynamic_where.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/hana.hpp>
+#include <boost/url/url.hpp>
 
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -415,15 +417,32 @@ struct make_with_tasks_sql_result_t {
   }
 
  public:
+  explicit make_with_tasks_sql_result_t(person& in_person, const boost::urls::url& in_url, const uuid& in_id)
+      : person_(in_person), id_(in_id) {
+    for (auto&& l_i : in_url.params()) {
+      if (l_i.key == "entity_type_id") entity_type_id_.emplace_back(from_uuid_str(l_i.value));
+      if (l_i.key == "ji_du") ji_du_filter_.emplace_back(std::stoi(l_i.value));
+      if (l_i.key == "ji_shu_lie") ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
+      if (l_i.key == "task_status_id") task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
+      if (l_i.key == "person_id") person_id_filter_.emplace_back(from_uuid_str(l_i.value));
+      if (l_i.key == "offset") offset_ = std::stoi(l_i.value);
+      if (l_i.key == "limit") limit_ = std::stoi(l_i.value);
+      if (l_i.key == "project_id") project_id_ = from_uuid_str(l_i.value);
+    }
+  }
+
   auto operator()() {
     using namespace sqlite_orm;
 
-    auto l_sql        = get_sqlite_database();
-    auto l_base_where = not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids());
-    if (!id_.is_nil())
-      return person_.role_ == person_role_type::outsource
-                 ? with_tasks_sql_query(c(&entity::uuid_id_) == id_ && l_base_where && outsource_where())
-                 : with_tasks_sql_query(c(&entity::uuid_id_) == id_ && l_base_where);
+    auto l_sql           = get_sqlite_database();
+
+    auto l_dynamic_where = dynamic_where(l_sql.impl_->storage_any_);
+    l_dynamic_where.push_back(not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids()));
+    if (person_.role_ == person_role_type::outsource) l_dynamic_where.push_back(outsource_where());
+    if (!id_.is_nil()) {
+      l_dynamic_where.push_back(c(&entity::uuid_id_) == id_);
+      return with_tasks_sql_query(l_dynamic_where);
+    }
     // 0 位 project id
     // 1 位 outsource
     // 2 位 entity type id
@@ -431,29 +450,28 @@ struct make_with_tasks_sql_result_t {
     // 4 位 ji shu lie
     // 5 位 task status id
     // 6 位 person id
-    return with_tasks_sql_query(l_base_where);
+    if (!project_id_.is_nil()) l_dynamic_where.push_back(project_id_where());
+    if (!entity_type_id_.empty()) l_dynamic_where.push_back(entity_type_id_where());
+    if (!ji_du_filter_.empty()) l_dynamic_where.push_back(ji_du_where());
+    if (!ji_shu_lie_filter_.empty()) l_dynamic_where.push_back(ji_shu_lie_where());
+    if (!task_status_id_filter_.empty()) l_dynamic_where.push_back(task_status_id_where());
+    if (!person_id_filter_.empty()) l_dynamic_where.push_back(person_id_where());
+
+    return with_tasks_sql_query(l_dynamic_where);
   }
 };
 
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_tasks::get(session_data_ptr in_handle) {
-  uuid l_prj_id{};
-  std::int32_t l_offset{};
-  std::int32_t l_limit{};
-  for (auto&& l_i : in_handle->url_.params()) {
-    if (l_i.key == "project_id") l_prj_id = from_uuid_str(l_i.value);
-    if (l_i.key == "offset") l_offset = std::stoi(l_i.value);
-    if (l_i.key == "limit") l_limit = std::stoi(l_i.value);
-  }
-  co_return in_handle->make_msg((nlohmann::json{} = with_tasks_sql_query(
-                                     person_.person_, l_prj_id, {}, l_offset ? l_offset : 0, l_limit ? l_limit : 300
-                                 ))
-                                    .dump());
+  make_with_tasks_sql_result_t l_make_result(person_.person_, in_handle->url_, {});
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_make_result());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
   auto&& l_sql = get_sqlite_database();
-  auto l_t     = with_tasks_sql_query(person_.person_, {}, id_);
+  make_with_tasks_sql_result_t l_make_result(person_.person_, in_handle->url_, id_);
+  auto l_t = l_make_result();
   if (l_t.empty())
     throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", id_)});
   auto l_ass                = l_sql.get_by_uuid<entity>(id_);
