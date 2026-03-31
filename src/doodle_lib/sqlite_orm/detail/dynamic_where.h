@@ -25,10 +25,10 @@ struct dynamic_where_t {
   dynamic_where_t(context_t) {}
 
   template <class E>
-  void push_back(E expression) {
+  void push_back(E&& expression) {
     // NOTE: follow sqlite_orm dynamic_set/dynamic_order_by pattern:
     // store fully serialized expression, with bindables inlined.
-    this->entries.push_back([expression = std::move(expression)](const context_t& in_context) {
+    this->entries.push_back([expression = std::forward<E>(expression)](const context_t& in_context) {
       return serialize(expression, in_context);
     });
   }
