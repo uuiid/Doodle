@@ -14,10 +14,10 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/dynamic_where.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+
 
 #include <boost/hana.hpp>
 #include <boost/url/url.hpp>
@@ -316,8 +316,8 @@ struct make_with_tasks_sql_result_t {
   person& person_;
   uuid project_id_;
   uuid id_;
-  std::int32_t offset_;
-  std::int32_t limit_;
+  std::int32_t offset_{0};
+  std::int32_t limit_{300};
   std::vector<uuid> entity_type_id_;
   std::vector<std::int32_t> ji_du_filter_;
   std::vector<std::int32_t> ji_shu_lie_filter_;
@@ -434,10 +434,11 @@ struct make_with_tasks_sql_result_t {
   auto operator()() {
     using namespace sqlite_orm;
 
-    auto l_sql           = get_sqlite_database();
+    auto l_sql               = get_sqlite_database();
+    auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
 
-    auto l_dynamic_where = dynamic_where(l_sql.impl_->storage_any_);
-    l_dynamic_where.push_back(not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids()));
+    auto l_dynamic_where     = dynamic_where(l_sql.impl_->storage_any_);
+    l_dynamic_where.push_back(not_in(&entity::entity_type_id_, l_temporal_type_ids));
     if (person_.role_ == person_role_type::outsource) l_dynamic_where.push_back(outsource_where());
     if (!id_.is_nil()) {
       l_dynamic_where.push_back(c(&entity::uuid_id_) == id_);

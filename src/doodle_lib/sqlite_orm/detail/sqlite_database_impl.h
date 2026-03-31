@@ -38,6 +38,8 @@
 
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
+
+// clang-format off
 #include <doodle_lib/sqlite_orm/detail/macro.h>
 #include <doodle_lib/sqlite_orm/detail/nlohmann_json.h>
 #include <doodle_lib/sqlite_orm/detail/std_chrono_duration.h>
@@ -46,6 +48,8 @@
 #include <doodle_lib/sqlite_orm/detail/std_filesystem_path_orm.h>
 #include <doodle_lib/sqlite_orm/detail/std_vector_string.h>
 #include <doodle_lib/sqlite_orm/detail/uuid_to_blob.h>
+#include <doodle_lib/sqlite_orm/detail/dynamic_where.h>
+// clang-format on
 
 #include <range/v3/view/split.hpp>
 #include <sqlite_orm/sqlite_orm.h>

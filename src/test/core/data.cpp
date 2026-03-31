@@ -49,18 +49,20 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
   l_sql.open_forever();
   l_sql.sync_schema();
 
-  auto l_uuid       = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
+  auto l_uuid = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
+  auto l_uuid_vector = std::vector<uuid>{l_uuid};
 
   auto l_pr_not_dyn = l_sql.prepare(
       select(&entity::uuid_id_, from<entity>(), where(c(&entity::uuid_id_) == l_uuid && c(&entity::name_) == "test"))
   );
   auto l_sql_str_not_dyn = l_pr_not_dyn.sql();
-  auto l_dynamic_where = dynamic_where(l_sql);
-  l_dynamic_where.push_back(c(&entity::uuid_id_) == l_uuid);
+  auto l_dynamic_where   = dynamic_where(l_sql);
+  l_dynamic_where.push_back(not_in(&entity::uuid_id_, l_uuid_vector));
   l_dynamic_where.push_back(c(&entity::name_) == "test");
   auto l_select  = select(&entity::uuid_id_, from<entity>(), where(l_dynamic_where));
   auto l_pr      = l_sql.prepare(l_select);
   auto l_sql_str = l_pr.sql();
+  l_sql.select(&entity::uuid_id_, from<entity>(), where(l_dynamic_where));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
