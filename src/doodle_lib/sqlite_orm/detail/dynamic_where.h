@@ -2,6 +2,7 @@
 
 #include <array>
 #include <functional>
+#include <memory>
 #include <sqlite_orm/sqlite_orm.h>
 #include <sstream>
 #include <string>
@@ -17,20 +18,30 @@ namespace internal {
  */
 template <class C>
 struct dynamic_where_t {
-  using context_t      = C;
-  using serialize_fun  = std::function<std::string(context_t)>;
-  using entry_t        = serialize_fun;
+  using context_t = C;
+
+  // Holds type-erased expression: lazy serialization + AST traversal for binding.
+  struct entry_t {
+    std::function<std::string(const context_t&)> serialize_fn;
+    std::function<void(conditional_binder&)>     bind_fn;
+  };
+
   using const_iterator = typename std::vector<entry_t>::const_iterator;
 
   dynamic_where_t(context_t) {}
 
   template <class E>
   void push_back(E&& expression) {
-    // NOTE: follow sqlite_orm dynamic_set/dynamic_order_by pattern:
-    // store fully serialized expression, with bindables inlined.
-    this->entries.push_back([expression = std::forward<E>(expression)](const context_t& in_context) {
-      return serialize(expression, in_context);
-    });
+    // Share the expression between the two closures without double-move.
+    auto shared_expr = std::make_shared<std::decay_t<E>>(std::forward<E>(expression));
+    entry_t entry;
+    entry.serialize_fn = [shared_expr](const context_t& in_context) {
+      return serialize(*shared_expr, in_context);
+    };
+    entry.bind_fn = [shared_expr](conditional_binder& binder) {
+      iterate_ast(*shared_expr, binder);
+    };
+    this->entries.push_back(std::move(entry));
   }
 
   const_iterator begin() const { return this->entries.begin(); }
@@ -59,6 +70,22 @@ inline constexpr bool is_where_clause_v = polyfill::disjunction<is_where<T>, is_
 template <class T>
 struct is_where_clause : polyfill::bool_constant<is_where_clause_v<T>> {};
 
+// AST traversal support: allows conditional_binder to reach stored expressions.
+template <class C>
+struct ast_iterator<dynamic_where_t<C>, void> {
+  using node_type = dynamic_where_t<C>;
+
+  template <class L>
+  void operator()(const node_type& where, L& lambda) const {
+    // Only handle conditional_binder; other visitors see no nodes (safe no-op).
+    if constexpr (std::is_same_v<polyfill::remove_cvref_t<L>, conditional_binder>) {
+      for (const auto& entry : where) {
+        entry.bind_fn(lambda);
+      }
+    }
+  }
+};
+
 template <class C>
 struct statement_serializer<dynamic_where_t<C>, void> {
   using statement_type = dynamic_where_t<C>;
@@ -76,7 +103,7 @@ struct statement_serializer<dynamic_where_t<C>, void> {
     if (l_len == 0)
       throw std::logic_error("dynamic_where statement cannot be empty");
     for (bool first = true; const typename statement_type::entry_t& entry : statement) {
-      ss << sep[std::exchange(first, false)] << (l_len == 1 ? "" : "(") << entry(in_context) << (l_len == 1 ? "" : ")");
+      ss << sep[std::exchange(first, false)] << (l_len == 1 ? "" : "(") << entry.serialize_fn(in_context) << (l_len == 1 ? "" : ")");
     }
 
     return ss.str();
