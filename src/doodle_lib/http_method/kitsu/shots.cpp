@@ -2,6 +2,7 @@
 // Created by TD on 25-7-28.
 //
 
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/working_file.h>
 
@@ -14,8 +15,12 @@
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <boost/url/url.hpp>
+
+#include <range/v3/view/unique.hpp>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <vector>
 
 namespace doodle::http {
 namespace {
@@ -169,94 +174,130 @@ struct shots_with_tasks_result {
     l_data["max_retakes"];
   }
 };
-auto get_shots_with_tasks(
-    const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
-    std::int32_t in_limit = 300
-) {
-  std::vector<shots_with_tasks_result> l_ret{};
-  std::map<uuid, std::size_t> l_shots_ids{};
-  std::set<uuid> l_tasks_ids;
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
 
-  constexpr auto sequence       = "sequence"_alias.for_<entity>();
-  constexpr auto episode        = "episode"_alias.for_<entity>();
+struct make_shots_with_tasks_result_t {
+  person person_;
+  uuid entity_type_id_;
+  uuid project_id_;
+  std::vector<uuid> episode_id_;
+  std::vector<uuid> sequence_id_;
+  std::int32_t offset_;
+  std::int32_t limit_;
 
-  auto l_outsource_select       = select(
-      &outsource_studio_authorization::entity_id_,
-      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
-  );
-
-  auto l_list = l_sql.impl_->storage_any_.select(
-      columns(
-          object<entity>(true), object<task>(true), episode->*&entity::uuid_id_, episode->*&entity::name_,
-          sequence->*&entity::uuid_id_, sequence->*&entity::name_, &assignees_table::person_id_, &project::uuid_id_,
-          &project::name_, object<entity_shot_extend>(true)
-      ),
-      from<entity>(), join<project>(on(c(&entity::project_id_) == c(&project::uuid_id_))),
-      left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
-      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      join<episode>(on(c(sequence->*&entity::uuid_id_) == c(episode->*&entity::uuid_id_))),
-      left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
-      where(
-          c(&entity::entity_type_id_) == in_entity_type_id &&                       //
-          ((in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&  //
-           (in_person.role_ != person_role_type::outsource ||
-            (                                                            //
-                in(&entity::uuid_id_, l_outsource_select) ||             //
-                in(sequence->*&entity::uuid_id_, l_outsource_select) ||  //
-                in(episode->*&entity::uuid_id_, l_outsource_select)
-            )))
-      ),
-      multi_order_by(order_by(episode->*&entity::name_), order_by(sequence->*&entity::name_), order_by(&entity::name_)),
-      limit(in_offset, in_limit)
-  );
-  for (auto&& [
-
-           l_entity, l_task, l_episode_id, l_episode_name, l_sequence_id, l_sequence_name,
-
-           l_assignee_id, l_project_id, l_project_name, l_shot_extend
-
-  ] : l_list) {
-    if (!l_shots_ids.contains(l_entity.uuid_id_)) {
-      l_ret.emplace_back(
-          shots_with_tasks_result{
-              l_entity, l_episode_id, l_episode_name, l_project_id, l_project_name, l_sequence_id, l_sequence_name,
-              l_shot_extend
-          }
-      );
-      l_shots_ids.emplace(l_entity.uuid_id_, l_ret.size() - 1);
-    }
-    if (!l_task.uuid_id_.is_nil()) {
-      auto&& l_r = l_ret[l_shots_ids[l_entity.uuid_id_]].tasks_.emplace_back(
-          shots_with_tasks_result::task_t{l_task, l_subscriptions_for_user.contains(l_task.uuid_id_)}
-      );
-      if (!l_assignee_id.is_nil()) l_r.assigners_.emplace_back(l_assignee_id);
-    }
+  static constexpr auto get_sequence_table() {
+    using namespace sqlite_orm;
+    return "sequence"_alias.for_<entity>();
+  }
+  static constexpr auto get_episode_table() {
+    using namespace sqlite_orm;
+    return "episode"_alias.for_<entity>();
   }
 
-  return l_ret;
-}
+  template <typename T>
+  auto get_shots_with_tasks(T&& in_dynamic_query) {
+    std::vector<shots_with_tasks_result> l_ret{};
+    std::map<uuid, std::size_t> l_shots_ids{};
+    std::set<uuid> l_tasks_ids;
+    auto l_sql = get_sqlite_database();
+    using namespace sqlite_orm;
+    auto l_subscriptions_for_user = l_sql.get_person_subscriptions(person_, project_id_, entity_type_id_);
+
+    auto l_outsource_select       = select(
+        &outsource_studio_authorization::entity_id_,
+        where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_)
+    );
+    constexpr auto sequence = get_sequence_table();
+    constexpr auto episode  = get_episode_table();
+
+    auto l_list             = l_sql.impl_->storage_any_.select(
+        columns(
+            object<entity>(true), object<task>(true), episode->*&entity::uuid_id_, episode->*&entity::name_,
+            sequence->*&entity::uuid_id_, sequence->*&entity::name_, &assignees_table::person_id_, &project::uuid_id_,
+            &project::name_, object<entity_shot_extend>(true)
+        ),
+        from<entity>(), join<project>(on(c(&entity::project_id_) == c(&project::uuid_id_))),
+        left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
+        join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+        join<episode>(on(c(sequence->*&entity::uuid_id_) == c(episode->*&entity::uuid_id_))),
+        left_outer_join<task>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+        left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
+        where(std::forward<T>(in_dynamic_query)),
+        multi_order_by(
+            order_by(episode->*&entity::name_), order_by(sequence->*&entity::name_), order_by(&entity::name_)
+        ),
+        limit(offset_, limit_)
+    );
+    for (auto&& [
+
+             l_entity, l_task, l_episode_id, l_episode_name, l_sequence_id, l_sequence_name,
+
+             l_assignee_id, l_project_id, l_project_name, l_shot_extend
+
+    ] : l_list) {
+      if (!l_shots_ids.contains(l_entity.uuid_id_)) {
+        l_ret.emplace_back(
+            shots_with_tasks_result{
+                l_entity, l_episode_id, l_episode_name, l_project_id, l_project_name, l_sequence_id, l_sequence_name,
+                l_shot_extend
+            }
+        );
+        l_shots_ids.emplace(l_entity.uuid_id_, l_ret.size() - 1);
+      }
+      if (!l_task.uuid_id_.is_nil()) {
+        auto&& l_r = l_ret[l_shots_ids[l_entity.uuid_id_]].tasks_.emplace_back(
+            shots_with_tasks_result::task_t{l_task, l_subscriptions_for_user.contains(l_task.uuid_id_)}
+        );
+        if (!l_assignee_id.is_nil()) l_r.assigners_.emplace_back(l_assignee_id);
+      }
+    }
+
+    return l_ret;
+  }
+
+  explicit make_shots_with_tasks_result_t(
+      const person& in_person, const uuid& in_entity_type_id, const boost::urls::url& in_url
+  )
+      : person_(in_person), entity_type_id_(in_entity_type_id) {
+    for (auto&& [key, value, has] : in_url.params()) {
+      if (key == "project_id" && has) project_id_ = from_uuid_str(value);
+      if (key == "episode_id" && has) episode_id_.emplace_back(from_uuid_str(value));
+      if (key == "sequence_id" && has) sequence_id_.emplace_back(from_uuid_str(value));
+      if (key == "offset" && has) offset_ = std::stoi(value);
+      if (key == "limit" && has) limit_ = std::stoi(value);
+    }
+  }
+  auto operator()() {
+    using namespace sqlite_orm;
+    constexpr auto sequence = get_sequence_table();
+    constexpr auto episode  = get_episode_table();
+    auto l_dynamic_query    = dynamic_where(get_sqlite_database().impl_->storage_any_);
+    l_dynamic_query.push_back(c(&entity::entity_type_id_) == entity_type_id_);
+    if (person_.role_ == person_role_type::outsource) {
+      auto l_outsource_select = select(
+          &outsource_studio_authorization::entity_id_,
+          where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_)
+      );
+      l_dynamic_query.push_back(
+          in(&entity::uuid_id_, l_outsource_select) || in(sequence->*&entity::uuid_id_, l_outsource_select) ||
+          in(episode->*&entity::uuid_id_, l_outsource_select)
+      );
+    }
+
+    if (!project_id_.is_nil()) l_dynamic_query.push_back(c(&entity::project_id_) == project_id_);
+    if (!episode_id_.empty()) l_dynamic_query.push_back(in(episode->*&entity::uuid_id_, episode_id_));
+    if (!sequence_id_.empty()) l_dynamic_query.push_back(in(sequence->*&entity::uuid_id_, sequence_id_));
+    return get_shots_with_tasks(std::move(l_dynamic_query));
+  }
+};
+
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
   auto& l_sql    = get_sqlite_database();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
 
-  uuid l_project_uuid{};
-  std::int32_t l_offset{};
-  std::int32_t l_limit{};
-  for (auto&& [key, value, has] : in_handle->url_.params()) {
-    if (key == "project_id" && has) l_project_uuid = from_uuid_str(value);
-    if (key == "offset" && has) l_offset = std::stoi(value);
-    if (key == "limit" && has) l_limit = std::stoi(value);
-  }
-  co_return in_handle->make_msg(
-      nlohmann::json{} = get_shots_with_tasks(
-          person_.person_, l_project_uuid, l_type_id.uuid_id_, l_offset ? l_offset : 0, l_limit ? l_limit : 300
-      )
-  );
+  make_shots_with_tasks_result_t l_make_result(person_.person_, l_type_id.uuid_id_, in_handle->url_);
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_make_result());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg_204();
