@@ -18,13 +18,13 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-
 #include <boost/hana.hpp>
 #include <boost/url/url.hpp>
 
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
+
 
 namespace doodle::http {
 namespace {
@@ -246,71 +246,6 @@ struct with_tasks_get_result_t {
     j["chang_ci"]            = p.chang_ci_;
   }
 };
-
-auto with_tasks_sql_query(
-    const person& in_person, const uuid& in_project_id, const uuid& in_id, std::int32_t in_offset = 0,
-    std::int32_t in_limit = 300
-) {
-  auto l_sql = get_sqlite_database();
-  std::vector<with_tasks_get_result_t> l_ret{};
-
-  using namespace sqlite_orm;
-
-  l_ret.reserve(l_sql.get_project_entity_count(in_project_id));
-
-  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, {});
-
-  auto l_outsource_select       = select(
-      &outsource_studio_authorization::entity_id_,
-      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
-  );
-
-  auto l_rows = l_sql.impl_->storage_any_.iterate(select(
-      columns(
-          object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
-          &assignees_table::person_id_
-      ),
-      from<entity>(), join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-      left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
-      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(
-          (
-              (!in_id.is_nil() && c(&entity::uuid_id_) == in_id) ||
-              (!in_project_id.is_nil() && c(&entity::project_id_) == in_project_id) &&
-                  (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select))
-
-          ) &&
-          not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids())
-      ),
-      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_)), limit(in_offset, in_limit)
-  ));
-  std::map<uuid, std::size_t> l_entities_and_tasks_map{};
-  std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
-    if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
-      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
-    }
-    if (!l_task.uuid_id_.is_nil()) {
-      if (!l_task_id_set.contains(l_task.uuid_id_)) {
-        l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.emplace_back(
-            with_tasks_get_result_t::task_t{
-                l_entity,
-                l_task,
-                l_subscriptions_for_user.contains(l_task.uuid_id_),
-            }
-        );
-        l_task_id_set.emplace(l_task.uuid_id_, l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.size() - 1);
-      }
-      if (!l_person_id.is_nil())
-        l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]]
-            .tasks_[l_task_id_set.at(l_task.uuid_id_)]
-            .assigners_.emplace_back(l_person_id);
-    }
-  }
-  return l_ret;
-}
 
 struct make_with_tasks_sql_result_t {
   person& person_;
