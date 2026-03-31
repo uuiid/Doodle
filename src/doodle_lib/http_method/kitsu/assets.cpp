@@ -420,7 +420,10 @@ struct make_with_tasks_sql_result_t {
 
     auto l_sql        = get_sqlite_database();
     auto l_base_where = not_in(&entity::entity_type_id_, l_sql.get_temporal_type_ids());
-    if (!id_.is_nil()) return with_tasks_sql_query(c(&entity::uuid_id_) == id_ && l_base_where);
+    if (!id_.is_nil())
+      return person_.role_ == person_role_type::outsource
+                 ? with_tasks_sql_query(c(&entity::uuid_id_) == id_ && l_base_where && outsource_where())
+                 : with_tasks_sql_query(c(&entity::uuid_id_) == id_ && l_base_where);
     // 0 位 project id
     // 1 位 outsource
     // 2 位 entity type id
@@ -428,6 +431,7 @@ struct make_with_tasks_sql_result_t {
     // 4 位 ji shu lie
     // 5 位 task status id
     // 6 位 person id
+    return nullptr;
   }
 };
 
