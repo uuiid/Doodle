@@ -181,8 +181,8 @@ struct make_shots_with_tasks_result_t {
   uuid project_id_;
   std::vector<uuid> episode_id_;
   std::vector<uuid> sequence_id_;
-  std::int32_t offset_;
-  std::int32_t limit_;
+  std::int32_t offset_{};
+  std::int32_t limit_{300};
 
   static constexpr auto get_sequence_table() {
     using namespace sqlite_orm;
