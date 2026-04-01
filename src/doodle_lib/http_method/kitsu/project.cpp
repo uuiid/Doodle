@@ -448,7 +448,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
   using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
 
   auto l_re               = l_sql.impl_->storage_any_.select(
-      columns(object<entity_fts>()), where(match(entity_fts_hidden::any_field, l_arg.query_)), order_by(rank()).desc(),
+      columns(object<entity_fts>()), where(match(entity_fts_hidden::any_field, l_arg.query_)), order_by(rank()).asc(),
       limit(l_arg.offset_, l_arg.limit_)
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_re);
