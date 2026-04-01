@@ -140,7 +140,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
                 is_not_equal(old(&entity::description_), new_(&entity::description_))
               )
               .begin(  //
-                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == c(&entity::uuid_id_))),
+                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == old(&entity::uuid_id_))),
                   insert(
                       into<entity_fts>(),
                       columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
@@ -155,7 +155,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
               .delete_()
               .on<entity>()
               .begin(  //
-                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == c(&entity::uuid_id_)))
+                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == old(&entity::uuid_id_)))
               )
               .end()
       ),
