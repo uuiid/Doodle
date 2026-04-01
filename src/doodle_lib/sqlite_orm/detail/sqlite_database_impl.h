@@ -125,7 +125,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
                   insert(
                       into<entity_fts>(),
                       columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
-                      values(c(&entity::uuid_id_), c(&entity::name_), c(&entity::description_))
+                      values(std::make_tuple(new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_)))
                   )  //
               )
               .end()
@@ -140,7 +140,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
                   insert(
                       into<entity_fts>(),
                       columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
-                      values(c(&entity::uuid_id_), c(&entity::name_), c(&entity::description_))
+                      values(std::make_tuple(new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_)))
                   )  //
               )
               .end()

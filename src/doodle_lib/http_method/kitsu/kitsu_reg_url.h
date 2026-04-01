@@ -757,4 +757,10 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid computer_id_{};
 DOODLE_HTTP_FUN_END()
 
+// /api/actions/projects/{project_id}/search
+DOODLE_HTTP_JWT_FUN(actions_projects_search)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http
