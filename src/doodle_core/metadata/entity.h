@@ -229,11 +229,18 @@ struct DOODLE_CORE_API entity_fts {
   uuid entity_id_;
   std::string name_;
   std::string description_;
+  uuid project_id_;
+  uuid entity_type_id_;
+  uuid parent_id_;
+
   // to json
   friend void to_json(nlohmann::json& j, const entity_fts& p) {
-    j["entity_id"]  = p.entity_id_;
-    j["name"]       = p.name_;
-    j["description"] = p.description_;
+    j["entity_id"]      = p.entity_id_;
+    j["name"]           = p.name_;
+    j["description"]    = p.description_;
+    j["project_id"]     = p.project_id_;
+    j["entity_type_id"] = p.entity_type_id_;
+    j["parent_id"]      = p.parent_id_;
   }
 };
 }  // namespace doodle

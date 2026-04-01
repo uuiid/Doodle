@@ -118,14 +118,17 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       // 创建触发器，自动更新 entity_fts 虚拟表
       make_trigger(
           "entity_fts_insert_trigger",
-          after()
-              .insert()
-              .on<entity>()
-              .begin(  //
-                  insert(
-                      into<entity_fts>(),
-                      columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
-                      values(std::make_tuple(new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_)))
+          after().insert().on<entity>().begin(  //
+              insert(
+                  into<entity_fts>(),
+                  columns(
+                      &entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_, &entity_fts::project_id_,
+                      &entity_fts::entity_type_id_, &entity_fts::parent_id_
+                  ),
+                  values(
+                      std::make_tuple(
+                          new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_),
+                          new_(&entity::project_id_), new_(&entity::entity_type_id_), new_(&entity::parent_id_)))
                   )  //
               )
               .end()
@@ -137,14 +140,19 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
               .on<entity>()
               .when(
                 is_not_equal(old(&entity::name_), new_(&entity::name_)) ||
-                is_not_equal(old(&entity::description_), new_(&entity::description_))
+                is_not_equal(old(&entity::description_), new_(&entity::description_)) ||
+                is_not_equal(old(&entity::project_id_), new_(&entity::project_id_)) ||
+                is_not_equal(old(&entity::entity_type_id_), new_(&entity::entity_type_id_)) ||
+                is_not_equal(old(&entity::parent_id_), new_(&entity::parent_id_))
               )
               .begin(  //
                   remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == old(&entity::uuid_id_))),
                   insert(
                       into<entity_fts>(),
-                      columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
-                      values(std::make_tuple(new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_)))
+                      columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_,
+                              &entity_fts::project_id_, &entity_fts::entity_type_id_, &entity_fts::parent_id_),
+                      values(std::make_tuple(new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_),
+                                             new_(&entity::project_id_), new_(&entity::entity_type_id_), new_(&entity::parent_id_)))
                   )  //
               )
               .end()
@@ -163,9 +171,12 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           "entity_fts",
           using_fts5(//
             make_column("uuid", &entity_fts::entity_id_, unindexed()),  //
-              make_column("name", &entity_fts::name_),//
-              make_column("description", &entity_fts::description_),//
-              content<entity>()
+            make_column("name", &entity_fts::name_),//
+            make_column("description", &entity_fts::description_),//
+            make_column("project_id", &entity_fts::project_id_, unindexed()),//
+            make_column("entity_type_id", &entity_fts::entity_type_id_, unindexed()),//
+            make_column("parent_id", &entity_fts::parent_id_, unindexed()),//
+            content<entity>()
         )
       ),
 
