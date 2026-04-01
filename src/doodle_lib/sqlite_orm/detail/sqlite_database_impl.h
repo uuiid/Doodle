@@ -135,6 +135,10 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           before()
               .update()
               .on<entity>()
+              .when(
+                is_not_equal(old(&entity::name_), new_(&entity::name_)) ||
+                is_not_equal(old(&entity::description_), new_(&entity::description_))
+              )
               .begin(  //
                   remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == c(&entity::uuid_id_))),
                   insert(
