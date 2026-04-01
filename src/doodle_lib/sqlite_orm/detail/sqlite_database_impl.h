@@ -158,7 +158,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       make_virtual_table<entity_fts>(
           "entity_fts",
           using_fts5(//
-            make_column("entity_id", &entity_fts::entity_id_, unindexed()),  //
+            make_column("uuid", &entity_fts::entity_id_, unindexed()),  //
               make_column("name", &entity_fts::name_),//
               make_column("description", &entity_fts::description_),//
               content<entity>()
