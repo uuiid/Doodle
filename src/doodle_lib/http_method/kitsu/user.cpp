@@ -80,10 +80,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
-  auto l_sql    = get_sqlite_database();
-  auto l_person = std::make_shared<person>(l_sql.get_by_uuid<person>(id_));
-  auto l_json   = in_handle->get_json();
+  auto l_sql        = get_sqlite_database();
+  auto l_old_person = l_sql.get_by_uuid<person>(id_);
+  auto l_person     = std::make_shared<person>(l_old_person);
+  auto l_json       = in_handle->get_json();
   l_json.get_to(*l_person);
+  if (l_old_person.studio_id_ != l_person->studio_id_ && !l_person->phone_.empty()) {
+    auto l_studio          = l_sql.get_by_uuid<studio>(l_person->studio_id_);
+    auto l_dingding_client = g_ctx().get<dingding::dingding_company>().make_client(l_studio);
+    l_person->dingding_id_ = co_await l_dingding_client->get_user_by_mobile(l_person->phone_);
+  }
+
   co_await l_sql.update(l_person);
 
   SPDLOG_LOGGER_WARN(
