@@ -17,6 +17,7 @@
 
 #include "kitsu_reg_url.h"
 #include <algorithm>
+#include <sqlite_orm/sqlite_orm.h>
 
 namespace doodle::http {
 
@@ -425,5 +426,31 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_inst
   }
   auto l_prj = l_sql.get_by_uuid<project>(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);
+}
+
+struct actions_projects_search_arg_t {
+  std::string query_;
+  std::int32_t offset_{0};
+  std::int32_t limit_{10};
+  // from json
+  friend void from_json(const nlohmann::json& j, actions_projects_search_arg_t& arg) {
+    j.at("query").get_to(arg.query_);
+    if (j.contains("offset")) j.at("offset").get_to(arg.offset_);
+    if (j.contains("limit")) j.at("limit").get_to(arg.limit_);
+  }
+};
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
+  person_.check_not_outsourcer();
+  auto l_arg = in_handle->get_json().get<actions_projects_search_arg_t>();
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
+
+  auto l_re               = l_sql.impl_->storage_any_.select(
+      columns(object<entity_fts>()), where(match(entity_fts_hidden::any_field, l_arg.query_)), order_by(rank()).desc(),
+      limit(l_arg.offset_, l_arg.limit_)
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = l_re);
 }
 }  // namespace doodle::http
