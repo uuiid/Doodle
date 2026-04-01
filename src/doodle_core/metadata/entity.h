@@ -224,4 +224,10 @@ struct DOODLE_CORE_API entity {
     if (j.contains("parent_id")) j.at("parent_id").get_to(p.parent_id_);
   }
 };
+// 实体虚拟表搜索结构
+struct DOODLE_CORE_API entity_fts {
+  uuid entity_id_;
+  std::string name_;
+  std::string description_;
+};
 }  // namespace doodle

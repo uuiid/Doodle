@@ -2,7 +2,9 @@
 // Created by TD on 25-5-15.
 //
 
+#include "doodle_core/metadata/entity.h"
 #include <doodle_core/metadata/assets_file.h>
+
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
@@ -16,6 +18,7 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <tuple>
 #include <type_traits>
+
 namespace doodle::details {
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -34,6 +37,15 @@ struct upgrade_init_t : sqlite_upgrade {
   explicit upgrade_init_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     in_data->sync_schema();
+    // 选择虚表, 如果为空表示第一次运行，设置初始数据
+    if (in_data->storage_any_.count<entity>() == 0) {
+      using namespace sqlite_orm;
+      auto l_g = in_data->storage_any_.transaction_guard();
+      in_data->storage_any_.insert(
+          into<entity_fts>(), values(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
+          select(columns(&entity::uuid_id_, &entity::name_, &entity::description_), from<entity>())
+      );
+    }
     if (in_data->storage_any_.pragma.user_version() == 0) {
       in_data->storage_any_.pragma.user_version(1);
     }

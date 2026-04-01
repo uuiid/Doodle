@@ -114,6 +114,57 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           .open_forever = true,
       },
       on_open([impl](sqlite3* in_ptr) { on_storage_open(in_ptr, impl); }),
+
+      // 创建触发器，自动更新 entity_fts 虚拟表
+      make_trigger(
+          "entity_fts_insert_trigger",
+          after()
+              .insert()
+              .on<entity>()
+              .begin(  //
+                  insert(
+                      into<entity_fts>(),
+                      columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
+                      values(c(&entity::uuid_id_), c(&entity::name_), c(&entity::description_))
+                  )  //
+              )
+              .end()
+      ),
+      make_trigger(
+          "entity_fts_update_trigger",
+          before()
+              .update()
+              .on<entity>()
+              .begin(  //
+                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == c(&entity::uuid_id_))),
+                  insert(
+                      into<entity_fts>(),
+                      columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
+                      values(c(&entity::uuid_id_), c(&entity::name_), c(&entity::description_))
+                  )  //
+              )
+              .end()
+      ),
+      make_trigger(
+          "entity_fts_delete_trigger",
+          after()
+              .delete_()
+              .on<entity>()
+              .begin(  //
+                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == c(&entity::uuid_id_)))
+              )
+              .end()
+      ),
+      make_virtual_table<entity_fts>(
+          "entity_fts",
+          using_fts5(//
+            make_column("entity_id", &entity_fts::entity_id_, unindexed()),  //
+              make_column("name", &entity_fts::name_),//
+              make_column("description", &entity_fts::description_),//
+              content<entity>()
+        )
+      ),
+
       make_unique_index(
           "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
           &outsource_studio_authorization::entity_id_
