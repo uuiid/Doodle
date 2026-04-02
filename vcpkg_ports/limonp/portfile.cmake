@@ -3,22 +3,17 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO yanyiwu/limonp
-        REF "v${VERSION}"
-        SHA512 3cf1103ea04610dce471c294b052e1bbef84a401c2a10d4251357423e302f4d3a2f3518c0ef332be009f1093f8a1b0bbfa7f857f7f09181ddb899246d59ff139
+        REF 8c50bfd6fc05c51e89ba36b02aad6b9531995d73
+        SHA512 2dbf8543742d705d1067e02939828edbefd6d1f62367b5fed45e7fbc67a62179ae84bff2ce5149c5f06cd0180161d095632a93100772ba5410b549d382ff3225
         HEAD_REF master
 
 )
 
-vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
-        FEATURES
-        test BUILD_TESTING
-        example BUILD_EXAMPLES
-)
 
 vcpkg_cmake_configure(
         SOURCE_PATH "${SOURCE_PATH}"
         OPTIONS
-        ${FEATURE_OPTIONS}
+        -DENABLE_UNIT_TESTS=OFF
 )
 
 vcpkg_cmake_install()
