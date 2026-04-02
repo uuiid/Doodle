@@ -176,6 +176,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
             make_column("project_id", &entity_fts::project_id_, unindexed()),//
             make_column("entity_type_id", &entity_fts::entity_type_id_, unindexed()),//
             make_column("parent_id", &entity_fts::parent_id_, unindexed()),//
+            tokenize("jieba"), 
             content<entity>()
         )
       ),
