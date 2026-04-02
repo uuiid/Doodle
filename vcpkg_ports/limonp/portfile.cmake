@@ -4,7 +4,7 @@ vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO yanyiwu/limonp
         REF "v${VERSION}"
-        SHA512 0
+        SHA512 3cf1103ea04610dce471c294b052e1bbef84a401c2a10d4251357423e302f4d3a2f3518c0ef332be009f1093f8a1b0bbfa7f857f7f09181ddb899246d59ff139
         HEAD_REF master
 
 )
