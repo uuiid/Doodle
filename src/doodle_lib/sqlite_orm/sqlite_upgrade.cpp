@@ -36,7 +36,7 @@ struct upgrade_init_t : sqlite_upgrade {
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     auto l_exit_fts = in_data->storage_any_.table_exists("entity_fts");
     in_data->sync_schema();
-    // 选择虚表, 如果为空表示第一次运行，设置初始数据
+    // 不存在表, 并在同步后, 存在虚拟表, 说明是第一次安装, 需要将已有的 entity 数据同步到 entity_fts 虚拟表中
     if (!l_exit_fts) {
       using namespace sqlite_orm;
       using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
