@@ -446,10 +446,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
   auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
-
+  auto l_t                = l_sql.get_temporal_type_ids();
   auto l_re               = l_sql.impl_->storage_any_.select(
-      columns(object<entity_fts>()), where(match(entity_fts_hidden::any_field, l_arg.query_)), order_by(rank()).asc(),
-      limit(l_arg.offset_, l_arg.limit_)
+      columns(object<entity_fts>()),
+      where(
+          match(entity_fts_hidden::any_field, l_arg.query_) && not_in(&entity_fts::entity_type_id_, l_t) &&
+          c(&entity_fts::project_id_) == project_id_
+      ),
+      order_by(rank()).asc(), limit(l_arg.offset_, l_arg.limit_)
   );
   co_return in_handle->make_msg(nlohmann::json{} = l_re);
 }
