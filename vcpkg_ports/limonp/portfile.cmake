@@ -2,9 +2,9 @@
 
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
-        REPO yanyiwu/cppjieba
+        REPO yanyiwu/limonp
         REF "v${VERSION}"
-        SHA512 a01fbed1729b1b53d2ffc7f5882736ae46e877610dfbdcfa49308244d4127959a397d1da861f38ff95a573d875d4f51e87ec19eba9810d176edf1a47b446adcf
+        SHA512 0
         HEAD_REF master
 
 )
