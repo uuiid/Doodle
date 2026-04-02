@@ -24,3 +24,5 @@ file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug")
 # file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/lib")
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
+# 复制 ${SOURCE_PATH}/dict 到 ${CURRENT_PACKAGES_DIR}/tools/cppjieba/dict
+file(COPY "${SOURCE_PATH}/dict" DESTINATION "${CURRENT_PACKAGES_DIR}/tools/cppjieba")
