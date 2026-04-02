@@ -34,16 +34,13 @@ struct upgrade_init_t : sqlite_upgrade {
   };
   explicit upgrade_init_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
+    auto l_exit_fts = in_data->storage_any_.table_exists("entity_fts");
     in_data->sync_schema();
     // 选择虚表, 如果为空表示第一次运行，设置初始数据
-    using namespace sqlite_orm;
-    using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
-    if (auto l_count = in_data->storage_any_.select(
-            count<entity_fts>(), from<entity_fts>()
-            // , where(match(entity_fts_hidden::any_field, "1*"))
-        );
-        l_count.empty() ? 0 : l_count.front() == 0) {
-      auto l_g = in_data->storage_any_.transaction_guard();
+    if (!l_exit_fts) {
+      using namespace sqlite_orm;
+      using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
+      auto l_g                = in_data->storage_any_.transaction_guard();
       in_data->storage_any_.insert(
           into<entity_fts>(), columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
           select(columns(&entity::uuid_id_, &entity::name_, &entity::description_), from<entity>())
