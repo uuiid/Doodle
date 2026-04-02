@@ -128,7 +128,10 @@ install(FILES ${PROJECT_SOURCE_DIR}/vcpkg/buildtrees/libtorch/x64-windows-$<IF:$
 install(FILES ${crashpad_handler_exe}
         DESTINATION bin
 )
-
+# 安装目录 bin/dict
+install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/dict
+        DESTINATION dict
+)
 # 最后实现camke修复
 install(CODE
         "

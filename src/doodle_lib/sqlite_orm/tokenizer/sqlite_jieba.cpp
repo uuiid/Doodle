@@ -1,7 +1,5 @@
 #include "sqlite_jieba.h"
 
-#include "doodle_core/exception/exception.h"
-
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 
@@ -9,6 +7,7 @@
 
 #include <cppjieba/Jieba.hpp>
 #include <sqlite3.h>
+
 
 using xTokenFn = int (*)(void*, int, const char*, int, int, int);
 extern "C" int fts5_simple_xCreate(void* sqlite3, const char** azArg, int nArg, Fts5Tokenizer** ppOut);
@@ -27,15 +26,15 @@ class jitba_tokenizer {
   explicit jitba_tokenizer(const char** azArg, int nArg) {
     // 这里可以根据 azArg 和 nArg 来配置分词器，例如加载不同的词典等
     // 目前我们不使用这些参数，直接初始化结巴分词器
-    auto l_curr_path = FSys::current_path() / "dict";
-    auto l_dict_path = (l_curr_path / "jieba.dict.utf8").generic_string();
-    auto l_model_path = (l_curr_path / "hmm_model.utf8").generic_string();
+    auto l_curr_path      = FSys::current_path() / "dict";
+    auto l_dict_path      = (l_curr_path / "jieba.dict.utf8").generic_string();
+    auto l_model_path     = (l_curr_path / "hmm_model.utf8").generic_string();
     auto l_user_dict_path = (l_curr_path / "user.dict.utf8").generic_string();
-    auto l_idf_path = (l_curr_path / "idf.utf8").generic_string();
+    auto l_idf_path       = (l_curr_path / "idf.utf8").generic_string();
     auto l_stop_word_path = (l_curr_path / "stop_words.utf8").generic_string();
 
-
-    jieba_ = std::make_unique<cppjieba::Jieba>(l_dict_path, l_model_path, l_user_dict_path, l_idf_path, l_stop_word_path);
+    jieba_ =
+        std::make_unique<cppjieba::Jieba>(l_dict_path, l_model_path, l_user_dict_path, l_idf_path, l_stop_word_path);
   }
 
   std::int32_t tokenize(
