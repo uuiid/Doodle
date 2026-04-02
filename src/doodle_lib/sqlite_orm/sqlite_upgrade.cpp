@@ -42,8 +42,18 @@ struct upgrade_init_t : sqlite_upgrade {
       using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
       auto l_g                = in_data->storage_any_.transaction_guard();
       in_data->storage_any_.insert(
-          into<entity_fts>(), columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_),
-          select(columns(&entity::uuid_id_, &entity::name_, &entity::description_), from<entity>())
+          into<entity_fts>(),
+          columns(
+              &entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_, &entity_fts::project_id_,
+              &entity_fts::entity_type_id_, &entity_fts::parent_id_
+          ),
+          select(
+              columns(
+                  &entity::uuid_id_, &entity::name_, &entity::description_, &entity::project_id_,
+                  &entity::entity_type_id_, &entity::parent_id_
+              ),
+              from<entity>()
+          )
       );
     }
     if (in_data->storage_any_.pragma.user_version() == 0) {
