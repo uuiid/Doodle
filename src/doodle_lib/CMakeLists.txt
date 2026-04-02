@@ -102,6 +102,12 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:7zip::7zip> ${CMAKE_BINARY_DIR}/bin
 )
+# 添加分词字典
+add_custom_command(
+        TARGET doodle_lib
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_BINARY_DIR}/vcpkg_installed/x64-windows/tools/cppjieba/dict ${CMAKE_BINARY_DIR}/bin/dict
+)
 
 target_compile_definitions(doodle_lib
         PUBLIC
