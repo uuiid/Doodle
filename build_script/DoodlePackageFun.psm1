@@ -100,7 +100,7 @@ function Initialize-Doodle {
     Write-Host "开始检查文件"
     $id = Get-GitKitsuCommendID
 
-    $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
+    $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3_li" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
     if ($NpmResult.ExitCode -ne 0) {
         # 抛出异常
         throw "拉取失败"
