@@ -6,3 +6,10 @@ target_sources(
         PRIVATE
         sqlite_jieba.cpp
 )
+
+
+set_source_files_properties(
+        sqlite_jieba.cpp
+        TARGET_DIRECTORY doodle_lib
+        PROPERTIES JOB_POOL_COMPILE sql_query_pool
+)

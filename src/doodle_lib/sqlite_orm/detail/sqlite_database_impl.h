@@ -1081,6 +1081,7 @@ struct sqlite_database_impl {
   //   using namespace sqlite_orm;
   //   return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::kitsu_uuid_) == in_uuid));
   // }
+  fts5_api* get_fts5_api();
 
   template <typename T>
   std::int64_t uuid_to_id(const uuid& in_uuid) {

@@ -3,6 +3,7 @@
 #include "doodle_core/exception/exception.h"
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 
 #include <boost/scope/scope_exit.hpp>
 
@@ -12,7 +13,8 @@
 using xTokenFn = int (*)(void*, int, const char*, int, int, int);
 extern "C" int fts5_simple_xCreate(void* sqlite3, const char** azArg, int nArg, Fts5Tokenizer** ppOut);
 extern "C" int fts5_simple_xTokenize(
-    Fts5Tokenizer* tokenizer_ptr, void* pCtx, int flags, const char* pText, int nText, xTokenFn xToken
+    Fts5Tokenizer* tokenizer_ptr, void* pCtx, int flags, const char* pText, int nText, const char* pLocale, int nLocale,
+    xTokenFn xToken
 );
 extern "C" void fts5_simple_xDelete(Fts5Tokenizer* tokenizer_ptr);
 
@@ -31,7 +33,9 @@ class jitba_tokenizer {
     jieba_ = std::make_unique<cppjieba::Jieba>(l_dict_path, l_dict_path, l_dict_path, l_dict_path, l_dict_path);
   }
 
-  std::int32_t tokenize(void* pCtx, int flags, const char* pText, int nText, xTokenFn xToken) {
+  std::int32_t tokenize(
+      void* pCtx, int flags, const char* pText, int nText, const char* pLocale, int nLocale, xTokenFn xToken
+  ) {
     std::string text(pText, nText);
     std::vector<std::string> words;
     jieba_->CutForSearch(text, words, true);  // 使用全模式分词
@@ -42,31 +46,12 @@ class jitba_tokenizer {
     return SQLITE_OK;
   }
 };
-/*
-** 返回指向数据库连接 db 的 fts5_api 指针。
-** 如果发生错误，则返回 NULL 并在数据库句柄中留下错误信息（可通过 sqlite3_errcode()/errmsg() 访问）。
-*/
-fts5_api* fts5_api_from_db(sqlite3* db) {
-  fts5_api* pRet      = 0;
-  sqlite3_stmt* pStmt = 0;
-  boost::scope::scope_exit stmt_guard([&]() {
-    if (pStmt) sqlite3_finalize(pStmt);
-  });
-
-  if (SQLITE_OK == sqlite3_prepare(db, "SELECT fts5(?1)", -1, &pStmt, 0)) {
-    sqlite3_bind_pointer(pStmt, 1, (void*)&pRet, "fts5_api_ptr", NULL);
-    sqlite3_step(pStmt);
-  } else {
-    // 处理错误，例如记录日志
-    auto l_msg = sqlite3_errmsg(db);
-    SPDLOG_ERROR("Failed to prepare statement: {}", l_msg);
-    throw_exception(doodle_error{l_msg});
-  }
-  return pRet;
-}
 
 void register_jieba_tokenizer(sqlite_database_impl& sqlite_db) {
   // Implementation for registering the Jieba tokenizer
+  auto l_fts5_api = sqlite_db.get_fts5_api();
+  fts5_tokenizer_v2 tokenizer{2, fts5_simple_xCreate, fts5_simple_xDelete, fts5_simple_xTokenize};
+  l_fts5_api->xCreateTokenizer_v2(l_fts5_api, "jieba", nullptr, &tokenizer, nullptr);
 }
 }  // namespace doodle::tokenizer
 
@@ -78,10 +63,11 @@ int fts5_simple_xCreate(void* sqlite3, const char** azArg, int nArg, Fts5Tokeniz
 }
 
 int fts5_simple_xTokenize(
-    Fts5Tokenizer* tokenizer_ptr, void* pCtx, int flags, const char* pText, int nText, xTokenFn xToken
+    Fts5Tokenizer* tokenizer_ptr, void* pCtx, int flags, const char* pText, int nText, const char* pLocale, int nLocale,
+    xTokenFn xToken
 ) {
   auto* p = reinterpret_cast<doodle::tokenizer::jitba_tokenizer*>(tokenizer_ptr);
-  return p->tokenize(pCtx, flags, pText, nText, xToken);
+  return p->tokenize(pCtx, flags, pText, nText, pLocale, nLocale, xToken);
 }
 
 void fts5_simple_xDelete(Fts5Tokenizer* p) {
