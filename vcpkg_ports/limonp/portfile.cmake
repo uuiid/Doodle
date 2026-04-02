@@ -19,7 +19,6 @@ vcpkg_cmake_configure(
         SOURCE_PATH "${SOURCE_PATH}"
         OPTIONS
         ${FEATURE_OPTIONS}
-        -DCPPJIEBA_TOP_LEVEL_PROJECT=OFF
 )
 
 vcpkg_cmake_install()

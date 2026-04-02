@@ -41,6 +41,7 @@
     "tl-expected",
     "bit7z",
     "cppjieba",
+    "limonp",
     "mimalloc",
     {
       "name": "sqlite3",
