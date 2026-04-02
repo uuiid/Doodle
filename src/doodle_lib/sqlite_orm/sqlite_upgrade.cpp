@@ -16,6 +16,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <tuple>
 
 namespace doodle::details {
 
@@ -33,28 +34,36 @@ struct upgrade_init_t : sqlite_upgrade {
       {0x51, 0x59, 0xf2, 0x10, 0x7e, 0xc8, 0x40, 0xe3, 0xb8, 0xc9, 0x2a, 0x06, 0xd0, 0xb4, 0xb1, 0x16}
   };
   explicit upgrade_init_t(const FSys::path& in_path) {}
+
+  void full_fts_sync(const std::shared_ptr<sqlite_database_impl>& in_data) {
+    using namespace sqlite_orm;
+    auto l_g                = in_data->storage_any_.transaction_guard();
+    // in_data->storage_any_.insert(
+    //     into<entity_fts>(),
+    //     columns(
+    //         &entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_, &entity_fts::project_id_,
+    //         &entity_fts::entity_type_id_, &entity_fts::parent_id_
+    //     ),
+    //     select(
+    //         columns(
+    //             &entity::uuid_id_, &entity::name_, &entity::description_, &entity::project_id_,
+    //             &entity::entity_type_id_, &entity::parent_id_
+    //         ),
+    //         from<entity>()
+    //     )
+    // );
+    using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
+    in_data->storage_any_.insert(into<entity_fts>(), columns(entity_fts_hidden::any_field), values(std::make_tuple("rebuild")));
+    l_g.commit();
+  }
+
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     auto l_exit_fts = in_data->storage_any_.table_exists("entity_fts");
     in_data->sync_schema();
     // 不存在表, 并在同步后, 存在虚拟表, 说明是第一次安装, 需要将已有的 entity 数据同步到 entity_fts 虚拟表中
     if (!l_exit_fts) {
-      using namespace sqlite_orm;
-      using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
-      auto l_g                = in_data->storage_any_.transaction_guard();
-      in_data->storage_any_.insert(
-          into<entity_fts>(),
-          columns(
-              &entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_, &entity_fts::project_id_,
-              &entity_fts::entity_type_id_, &entity_fts::parent_id_
-          ),
-          select(
-              columns(
-                  &entity::uuid_id_, &entity::name_, &entity::description_, &entity::project_id_,
-                  &entity::entity_type_id_, &entity::parent_id_
-              ),
-              from<entity>()
-          )
-      );
+      bool re_full_sync = false;
+      full_fts_sync(in_data);
     }
     if (in_data->storage_any_.pragma.user_version() == 0) {
       in_data->storage_any_.pragma.user_version(1);

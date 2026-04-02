@@ -1039,13 +1039,15 @@ struct sqlite_database_impl {
   strand_type strand_;
   void* raw_sqlite_handle_{nullptr};
   sqlite_orm_type storage_any_;
-
+  FSys::path db_path_;
   explicit sqlite_database_impl(const FSys::path& in_path)
       : strand_(boost::asio::make_strand(g_io_context())),
         raw_sqlite_handle_(nullptr),
-        storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string(), this))) {}
+        storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string(), this))),
+        db_path_(in_path) {}
 
   void sync_schema() try {
+    storage_any_.open_forever();
     auto l_g   = storage_any_.transaction_guard();
     auto l_map = storage_any_.sync_schema();
     l_map      = l_map | ranges::views::filter([](const std::pair<std::string, sqlite_orm::sync_schema_result>& in) {
