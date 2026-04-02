@@ -11,6 +11,7 @@ target_sources(
         sqlite_upgrade.cpp
 )
 add_subdirectory(detail)
+add_subdirectory(tokenizer)
 
 set_source_files_properties(
         sqlite_database.cpp
