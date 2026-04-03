@@ -44,7 +44,45 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 namespace doodle::http::local {
+
 namespace {
+
+class task_info_manager {
+ private:
+  std::map<uuid, std::shared_ptr<server_task_info>> task_infos_;
+  std::recursive_mutex mtx_;
+
+ public:
+  void add_task_info(const std::shared_ptr<server_task_info>& in_info) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    task_infos_[in_info->uuid_id_] = in_info;
+  }
+
+  std::shared_ptr<server_task_info> get_task_info(const uuid& in_id) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    auto itr = task_infos_.find(in_id);
+    if (itr != task_infos_.end()) return itr->second;
+    return nullptr;
+  }
+  std::vector<server_task_info> get_all_task_info() {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    std::vector<server_task_info> result;
+    for (const auto& [_, info_ptr] : task_infos_) {
+      if (info_ptr) result.push_back(*info_ptr);
+    }
+    return result;
+  }
+
+  void remove_task_info(const uuid& in_id) {
+    std::lock_guard<std::recursive_mutex> _(mtx_);
+    task_infos_.erase(in_id);
+  }
+
+  task_info_manager& get_instance() {
+    static task_info_manager instance;
+    return instance;
+  }
+};
 
 template <class Mutex>
 class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
@@ -70,15 +108,7 @@ class run_post_task_local_impl_sink : public spdlog::sinks::base_sink<Mutex> {
 
     task_info_->status_   = server_task_info_status::running;
     task_info_->run_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-    boost::asio::co_spawn(
-        g_io_context(),
-        [l_t = task_info_]() -> boost::asio::awaitable<void> {
-          co_await get_sqlite_database().update(l_t);
-          socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_t});
-          co_return;
-        },
-        boost::asio::detached
-    );
+    socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *task_info_});
   }
 };
 using run_post_task_local_impl_sink_mt = run_post_task_local_impl_sink<std::mutex>;
@@ -217,7 +247,6 @@ class run_long_task_local : public std::enable_shared_from_this<run_long_task_lo
     }
     task_info_->end_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
     logger_->flush();
-    co_await get_sqlite_database().update(task_info_);
     emit_signal();
   }
   void emit_signal() const {
@@ -234,8 +263,9 @@ void emit_signal(const std::shared_ptr<server_task_info>& in_ptr) {
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance::get(session_data_ptr in_handle) {
-  auto l_list = get_sqlite_database().get_by_uuid<server_task_info>(id_);
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  auto l_list = task_info_manager().get_instance().get_all_task_info();
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_data_ptr in_handle) {
   server_task_info_type l_type{server_task_info_type::unknown};
@@ -244,16 +274,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::get(session_
       l_type = magic_enum::enum_cast<server_task_info_type>(i.value).value_or(server_task_info_type::unknown);
     }
   }
-  using namespace sqlite_orm;
-  auto l_list = get_sqlite_database().impl_->storage_any_.get_all<server_task_info>(
-      where(l_type == server_task_info_type::unknown || c(&server_task_info::type_) == l_type)
-  );
+  auto l_l    = task_info_manager().get_instance().get_all_task_info();
+  auto l_list = l_l | ranges::views::filter([l_type](const server_task_info& in_info) {
+                  return l_type == server_task_info_type::unknown || in_info.type_ == l_type;
+                }) |
+                ranges::to<std::vector>();
 
   for (auto&& i : l_list)
     i.get_last_line_log(
         core_set::get_set().get_cache_root() / server_task_info::logger_category / fmt::format("{}.log", i.uuid_id_)
     );
-  co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = l_list);
 }
 void task::init_ctx() {
   static std::once_flag l_flag{};
@@ -279,7 +310,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::post(session
 
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
   // 先进行数据加载, 如果出错抛出异常后直接不插入数据库
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
   l_run_long_task_local->load_form_json(l_ptr->command_);
   l_run_long_task_local->run();
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
@@ -294,29 +325,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_log:
   co_return in_handle->make_msg(l_path, l_mime);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance::delete_(session_data_ptr in_handle) {
-  auto l_list = get_sqlite_database().get_by_uuid<server_task_info>(id_);
-  if (l_list.status_ == server_task_info_status::running) {
+  auto l_list = task_info_manager().get_instance().get_task_info(id_);
+  if (l_list->status_ == server_task_info_status::running) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
   }
-  co_await get_sqlite_database().remove<server_task_info>(id_);
+  task_info_manager().get_instance().remove_task_info(id_);
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_instance::patch(session_data_ptr in_handle) {
-  auto l_server_task_info =
-      std::make_shared<server_task_info>(get_sqlite_database().get_by_uuid<server_task_info>(id_));
+  auto l_server_task_info = task_info_manager().get_instance().get_task_info(id_);
 
   server_task_info l_server_task_info_org{*l_server_task_info};
   auto l_sr   = l_server_task_info->status_;
   auto l_json = std::get<nlohmann::json>(in_handle->body_);
   if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
   if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
-  if (*l_server_task_info != l_server_task_info_org) co_await get_sqlite_database().update(l_server_task_info);
+
   if (l_sr == server_task_info_status::running && l_server_task_info->status_ == server_task_info_status::canceled)
     g_ctx().get<run_post_task_local_cancel_manager>().cancel(l_server_task_info->uuid_id_);
-  co_return in_handle->make_msg((nlohmann::json{} = *l_server_task_info).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = *l_server_task_info);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_instance::post(session_data_ptr in_handle) {
   auto l_ptr   = std::make_shared<server_task_info>();
@@ -331,7 +361,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   auto l_arg_t            = std::make_shared<inspect_file_arg>(token_, id_);
   l_json.get_to(*l_arg_t);
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -359,7 +389,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   l_arg_t->maya_file_                        = l_json["path"].get<FSys::path>();
   l_arg_t->task_id_                          = id_;
   l_ptr->command_                            = (nlohmann::json{} = *l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -391,11 +421,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 
   l_arg_t->on_run_time_info_.connect([l_ptr](const server_task_info::run_time_info_t& in_info) {
     l_ptr->add_run_time_info(in_info);
-    // auto l_v = std::visit(*this, arg_);
-    boost::asio::co_spawn(g_io_context(), get_sqlite_database().update(l_ptr), boost::asio::detached);
     emit_signal(l_ptr);
   });
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -425,7 +453,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_arg_t->task_id_                       = id_;
   l_json.get_to(*l_arg_t);
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -455,7 +483,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_arg_t->task_id_                          = id_;
   l_json.get_to(*l_arg_t);
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -485,7 +513,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
   l_arg_t->kitsu_client_             = l_client;
   l_json.get_to(*l_arg_t);
   l_ptr->command_ = (nlohmann::json{} = *l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -513,7 +541,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
   l_arg_t->kitsu_client_                   = l_client;
   l_arg_t->task_id_                        = id_;
   l_json.get_to(*l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -541,7 +569,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
   l_arg_t->kitsu_client_                      = l_client;
   l_arg_t->task_id_                           = id_;
   l_json.get_to(*l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -569,7 +597,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
   l_arg_t->kitsu_client_                              = l_client;
   l_arg_t->task_id_                                   = id_;
   l_json.get_to(*l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
+  task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
@@ -616,14 +644,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
   l_arg_t->film_aperture_     = l_project.get_film_aperture();
   l_arg_t->size_              = l_project.get_resolution();
   l_ptr->command_             = (nlohmann::json{} = *l_arg_t);
-  co_await get_sqlite_database().install(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<local::run_long_task_local>(l_ptr);
   l_run_long_task_local->set_arg(l_arg_t);
   l_run_long_task_local->run();
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
+  co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
 
 }  // namespace doodle::http
