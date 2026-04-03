@@ -1,6 +1,7 @@
 #include "export_fbx_arg.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/server_task_info.h"
 #include <doodle_core/metadata/image_size.h>
 #include <doodle_core/metadata/move_create.h>
 #include <doodle_core/metadata/task_status.h>
@@ -11,6 +12,7 @@
 
 #include <array>
 #include <filesystem>
+#include <nlohmann/json_fwd.hpp>
 #include <string_view>
 #include <vector>
 
@@ -41,7 +43,7 @@ void to_json(nlohmann::json& in_json, const export_fbx_arg& out_obj) {
 
 void from_json(const nlohmann::json& j, export_fbx_arg_distributed::args& p) {
   if (j.contains("create_play_blast")) j.at("create_play_blast").get_to(p.create_play_blast_);
-  if (j.contains("film_aperture")) j.at("film_aperture").get_to(p.film_aperture_);
+  if (j.contains("camera_film_aperture")) j.at("camera_film_aperture").get_to(p.film_aperture_);
   if (j.contains("image_size")) j.at("image_size").get_to(p.size_);
   if (j.contains("frame_in")) j.at("frame_in").get_to(p.frame_in_);
   if (j.contains("frame_out")) j.at("frame_out").get_to(p.frame_out_);
@@ -51,14 +53,14 @@ void from_json(const nlohmann::json& j, export_fbx_arg_distributed::args& p) {
 }
 
 void to_json(nlohmann::json& j, const export_fbx_arg_distributed::args& p) {
-  j["create_play_blast"] = p.create_play_blast_;
-  j["film_aperture"]     = p.film_aperture_;
-  j["image_size"]        = p.size_;
-  j["frame_in"]          = p.frame_in_;
-  j["frame_out"]         = p.frame_out_;
-  j["maya_file_name"]    = p.maya_file_name_;
-  j["task_id"]           = p.task_id_;
-  j["download_file"]     = p.download_file_;
+  j["create_play_blast"]    = p.create_play_blast_;
+  j["camera_film_aperture"] = p.film_aperture_;
+  j["image_size"]           = p.size_;
+  j["frame_in"]             = p.frame_in_;
+  j["frame_out"]            = p.frame_out_;
+  j["maya_file_name"]       = p.maya_file_name_;
+  j["task_id"]              = p.task_id_;
+  j["download_file"]        = p.download_file_;
 }
 
 void from_json(const nlohmann::json& j, export_fbx_arg_distributed& p) {
@@ -196,63 +198,72 @@ boost::asio::awaitable<void> export_fbx_arg_distributed::run() {
   auto l_kitsu_client = create_kitsu_client();
   l_kitsu_client->set_logger(logger_ptr_);
   task_info_.command_.get_to(arg_);
+  std::string l_error_msg;
+  try {
+    // 将文件复制到本地路径, 避免网络文件访问导致的 maya 导出失败
+    auto l_local_maya_file = core_set::get_set().get_cache_root("temp/export_fbx") / arg_.maya_file_name_;
+    if (FSys::exists(l_local_maya_file)) FSys::remove(l_local_maya_file);
+    if (auto parent_path = l_local_maya_file.parent_path(); !FSys::exists(parent_path))
+      FSys::create_directories(parent_path);
+    FSys::copy(arg_.download_file_, l_local_maya_file);
+    file_path = l_local_maya_file;
 
-  // 将文件复制到本地路径, 避免网络文件访问导致的 maya 导出失败
-  auto l_local_maya_file = core_set::get_set().get_cache_root("temp/export_fbx") / arg_.maya_file_name_;
-  if (FSys::exists(l_local_maya_file)) FSys::remove(l_local_maya_file);
-  if (auto parent_path = l_local_maya_file.parent_path(); !FSys::exists(parent_path))
-    FSys::create_directories(parent_path);
-  FSys::copy(arg_.download_file_, l_local_maya_file);
-  file_path = l_local_maya_file;
-
-  DOODLE_CHICK(
-      arg_.maya_file_name_ == file_path.filename(), "Maya文件命名不规范，无法继续后续操作 {} {}", arg_.maya_file_name_,
-      file_path.filename()
-  );
-
-  auto l_name_end = fmt::format("_{}-{}", arg_.frame_in_, arg_.frame_out_);
-  co_await arg::async_run_maya();
-  auto l_root_dir   = file_path.parent_path().parent_path();
-  auto l_movie_path = l_root_dir / "mov" / file_path.stem().concat(".mp4");
-  if (!out_arg_.movie_file_dir.empty()) {
-    SPDLOG_LOGGER_INFO(logger_ptr_, "导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_movie_path);
-    if (auto l_p = l_movie_path.parent_path(); !FSys::exists(l_p)) {
-      FSys::create_directories(l_p);
-    }
-    detail::create_move(
-        l_movie_path, logger_ptr_,
-        movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), arg_.size_
-    );
-  }
-  DOODLE_CHICK(!out_arg_.out_file_list.empty(), "没有生成任何文件，无法上传");
-
-  for (auto& l_p : out_arg_.out_file_list) {
-    SPDLOG_LOGGER_INFO(logger_ptr_, "导出文件 {}", l_p);
     DOODLE_CHICK(
-        l_p.stem().string().ends_with(l_name_end), "导出文件 {} 命名不符合规范，无法上传, 名称应以 {} 结尾", l_p,
-        l_name_end
+        arg_.maya_file_name_ == file_path.filename(), "Maya文件命名不规范，无法继续后续操作 {} {}",
+        arg_.maya_file_name_, file_path.filename()
     );
-  }
 
-  co_await l_kitsu_client->upload_shot_animation_maya(arg_.task_id_, arg_.maya_file_name_);
-  co_await l_kitsu_client->remove_shot_animation_export_file(arg_.task_id_);
-  for (auto& l_p : out_arg_.out_file_list) {
-    SPDLOG_LOGGER_INFO(logger_ptr_, "上传导出文件 {}", l_p);
-    co_await l_kitsu_client->upload_shot_animation_export_file(arg_.task_id_, l_p.parent_path(), l_p.filename());
-  }
-  co_await l_kitsu_client->comment_task(
-      kitsu::kitsu_client::comment_task_arg{
-          .task_id_        = arg_.task_id_,
-          .comment_        = fmt::format("自动导出和上传文件 拍屏 {}", arg_.create_play_blast_ ? "是" : "否"),
-          .attach_files_   = FSys::exists(l_movie_path) ? l_movie_path : FSys::path{},
-          .task_status_id_ = task_status::get_nearly_completed(),
+    auto l_name_end = fmt::format("_{}-{}", arg_.frame_in_, arg_.frame_out_);
+    co_await arg::async_run_maya();
+    auto l_root_dir   = file_path.parent_path().parent_path();
+    auto l_movie_path = l_root_dir / "mov" / file_path.stem().concat(".mp4");
+    if (!out_arg_.movie_file_dir.empty()) {
+      SPDLOG_LOGGER_INFO(logger_ptr_, "导出排屏目录 {} 合成路径 {}", out_arg_.movie_file_dir, l_movie_path);
+      if (auto l_p = l_movie_path.parent_path(); !FSys::exists(l_p)) {
+        FSys::create_directories(l_p);
       }
-  );
-  if (FSys::exists(l_movie_path)) {
-    co_await l_kitsu_client->upload_shot_animation_other_file(
-        arg_.task_id_, l_root_dir, l_movie_path.lexically_proximate(l_root_dir)
+      detail::create_move(
+          l_movie_path, logger_ptr_,
+          movie::image_attr::make_default_attr(FSys::list_files(out_arg_.movie_file_dir, ".png")), arg_.size_
+      );
+    }
+    DOODLE_CHICK(!out_arg_.out_file_list.empty(), "没有生成任何文件，无法上传");
+
+    for (auto& l_p : out_arg_.out_file_list) {
+      SPDLOG_LOGGER_INFO(logger_ptr_, "导出文件 {}", l_p);
+      DOODLE_CHICK(
+          l_p.stem().string().ends_with(l_name_end), "导出文件 {} 命名不符合规范，无法上传, 名称应以 {} 结尾", l_p,
+          l_name_end
+      );
+    }
+
+    co_await l_kitsu_client->upload_shot_animation_maya(arg_.task_id_, arg_.maya_file_name_);
+    co_await l_kitsu_client->remove_shot_animation_export_file(arg_.task_id_);
+    for (auto& l_p : out_arg_.out_file_list) {
+      SPDLOG_LOGGER_INFO(logger_ptr_, "上传导出文件 {}", l_p);
+      co_await l_kitsu_client->upload_shot_animation_export_file(arg_.task_id_, l_p.parent_path(), l_p.filename());
+    }
+    co_await l_kitsu_client->comment_task(
+        kitsu::kitsu_client::comment_task_arg{
+            .task_id_        = arg_.task_id_,
+            .comment_        = fmt::format("自动导出和上传文件 拍屏 {}", arg_.create_play_blast_ ? "是" : "否"),
+            .attach_files_   = FSys::exists(l_movie_path) ? l_movie_path : FSys::path{},
+            .task_status_id_ = task_status::get_nearly_completed(),
+        }
     );
+    if (FSys::exists(l_movie_path)) {
+      co_await l_kitsu_client->upload_shot_animation_other_file(
+          arg_.task_id_, l_root_dir, l_movie_path.lexically_proximate(l_root_dir)
+      );
+    }
+  } catch (...) {
+    l_error_msg = fmt::format("导出FBX失败: {}", boost::current_exception_diagnostic_information());
   }
+  task_info_.status_   = l_error_msg.empty() ? server_task_info_status::completed : server_task_info_status::failed;
+  task_info_.end_time_ = std::chrono::system_clock::now();
+
+  if (!l_error_msg.empty()) logger_ptr_->error(l_error_msg);
+  co_await l_kitsu_client->put_job_info(task_info_.uuid_id_, nlohmann::json{} = task_info_);
 }
 
 boost::asio::awaitable<void> export_fbx_arg_epiboly::run() {

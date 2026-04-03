@@ -7,7 +7,6 @@
 #include <boost/scope/scope_exit.hpp>
 
 #include <sqlite_orm/sqlite_orm.h>
-#include <type_traits>
 namespace doodle::details {
 sqlite_orm_type make_storage_doodle_impl(const std::string& in_path, sqlite_database_impl* impl) {
   return make_storage_doodle(in_path, impl);

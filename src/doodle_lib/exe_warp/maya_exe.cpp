@@ -137,11 +137,11 @@ FSys::path find_maya_path() { return find_maya_path_impl(); }
 
 boost::asio::awaitable<void> arg::async_run_maya() {
   auto l_g = co_await g_ctx().get<maya_ctx>().queue_->queue(boost::asio::use_awaitable);
-  logger_ptr_->warn("开始运行maya");
   if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
   auto l_maya_path = find_maya_path_impl() / "bin" / "mayabatch.exe";
   out_path_file_   = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
-                   fmt::format("{}.json", core_set::get_set().get_uuid());
+  fmt::format("{}.json", core_set::get_set().get_uuid());
+  logger_ptr_->warn("开始运行maya {}", l_maya_path);
 
   auto [l_key, l_args] = get_json_str();
   if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
