@@ -237,7 +237,7 @@ boost::asio::awaitable<void> export_fbx_arg_distributed::run() {
       );
     }
 
-    co_await l_kitsu_client->upload_shot_animation_maya(arg_.task_id_, arg_.maya_file_name_);
+    co_await l_kitsu_client->upload_shot_animation_maya(arg_.task_id_, file_path);
     co_await l_kitsu_client->remove_shot_animation_export_file(arg_.task_id_);
     for (auto& l_p : out_arg_.out_file_list) {
       SPDLOG_LOGGER_INFO(logger_ptr_, "上传导出文件 {}", l_p);

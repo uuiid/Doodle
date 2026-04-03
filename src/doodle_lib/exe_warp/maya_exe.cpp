@@ -4,17 +4,17 @@
 
 #include "maya_exe.h"
 
-#include <doodle_lib/core/file_sys.h>
-#include <doodle_lib/core/global_function.h>
 #include <doodle_core/configure/config.h>
+
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/core_set.h>
-#include <doodle_lib/lib_warp/boost_fmt_error.h>
-#include <doodle_lib/platform/win/register_file_type.h>
-
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/filesystem_extend.h>
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/exe_warp/async_read_pipe.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
+#include <doodle_lib/lib_warp/boost_fmt_error.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
 #include <boost/asio.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
@@ -29,6 +29,7 @@
 #include <string>
 #include <winnt.h>
 #include <winreg/WinReg.hpp>
+
 
 namespace doodle {
 namespace {
@@ -140,7 +141,7 @@ boost::asio::awaitable<void> arg::async_run_maya() {
   if (time_info_) time_info_->start_time_ = std::chrono::system_clock::now();
   auto l_maya_path = find_maya_path_impl() / "bin" / "mayabatch.exe";
   out_path_file_   = FSys::get_cache_path() / "maya" / "out" / version::build_info::get().version_str /
-  fmt::format("{}.json", core_set::get_set().get_uuid());
+                   fmt::format("{}.json", core_set::get_set().get_uuid());
   logger_ptr_->warn("开始运行maya {}", l_maya_path);
 
   auto [l_key, l_args] = get_json_str();
@@ -156,8 +157,9 @@ quit -abort -force -exitCode $doodle_batch_run_1;
 )";
 
   auto l_arg_path          = FSys::write_tmp_file("maya/json", l_args, ".json");
-  auto l_com_path =
-      FSys::write_tmp_file("maya/mel", fmt::format(l_fmt_str, core_set::get_set().maya_version, l_arg_path.generic_string(), l_key), ".mel");
+  auto l_com_path          = FSys::write_tmp_file(
+      "maya/mel", fmt::format(l_fmt_str, core_set::get_set().maya_version, l_arg_path.generic_string(), l_key), ".mel"
+  );
 
   logger_ptr_->warn("配置命令行 {}", l_arg_path);
 
@@ -219,6 +221,9 @@ quit -abort -force -exitCode $doodle_batch_run_1;
             throw_exception(doodle_error{"maya 文件中有错误, 具体请点击查看日志"});
           case maya_enum::maya_error_t::namespace_error:
             throw_exception(doodle_error{"maya 中名称空间错误, 引用文件和名称空间不匹配"});
+            break;
+          case maya_enum::maya_error_t::frame_in_out_error:
+            throw_exception(doodle_error{"maya 中帧范围错误, 帧范围超过了动画的实际范围"});
             break;
           default:
             throw_exception(doodle_error{"maya 运行未知错误 {}", l_exit_code});
