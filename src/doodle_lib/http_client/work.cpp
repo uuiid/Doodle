@@ -202,12 +202,12 @@ boost::asio::awaitable<void> http_work::async_run() {
 }
 bool http_work::run_task(const server_task_info& in_task_info) {
   if (in_task_info.type_ == server_task_info_type::auto_light) {
-    auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, token_, shared_from_this());
+    auto l_run = std::make_shared<run_ue_assembly_distributed>(in_task_info, shared_from_this());
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
   if (in_task_info.type_ == server_task_info_type::export_fbx) {
-    auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, token_, shared_from_this());
+    auto l_run = std::make_shared<export_fbx_arg_distributed>(in_task_info, shared_from_this());
     boost::asio::co_spawn(executor_, l_run->run(), boost::asio::consign(boost::asio::detached, l_run));
     return true;
   }
@@ -329,7 +329,7 @@ logger_ptr base_distributed_task::create_logger() const {
 
 std::shared_ptr<kitsu::kitsu_client> base_distributed_task::create_kitsu_client() const {
   auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
-  l_client->set_token(token_);
+  l_client->set_token(task_info_.submitter_cookies_);
   return l_client;
 }
 

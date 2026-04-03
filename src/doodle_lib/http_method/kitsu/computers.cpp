@@ -6,6 +6,7 @@
 #include "doodle_lib/core/http/http_function.h"
 #include "doodle_lib_fwd.h"
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -24,6 +25,7 @@
 #include <chrono>
 #include <fmt/ranges.h>
 #include <functional>
+#include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -264,6 +266,16 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
   l_job_ptr->status_          = server_task_info_status::running;
   l_job_ptr->run_time_        = {chrono::current_zone(), chrono::system_clock::now()};
   l_job_ptr->run_computer_id_ = in_computer->get_computer_id();
+  auto& l_ctx                 = g_ctx().get<kitsu_ctx_t>();
+  auto l_access_token         = jwt::create()
+                            .set_payload_claim("identity_type", jwt::claim{"person"s})
+                            .set_issued_at(chrono::system_clock::now())
+                            .set_id(fmt::to_string(l_job_ptr->submitter_))
+                            .set_subject(fmt::to_string(l_job_ptr->submitter_))
+                            .set_not_before(chrono::system_clock::now())
+                            .set_expires_at(chrono::system_clock::now() + chrono::days{7})
+                            .sign(jwt::algorithm::hs256{l_ctx.secret_});
+  l_job_ptr->submitter_cookies_ = l_access_token;
   co_await l_sql.update(l_job_ptr);
   auto l_json = (nlohmann::json{} = *l_job_ptr);
   in_computer->write_msg(l_json.dump());

@@ -72,14 +72,11 @@ class http_work : public std::enable_shared_from_this<http_work> {
 class base_distributed_task {
  protected:
   server_task_info task_info_;
-  std::string token_;
   std::shared_ptr<http_work> http_work_ptr_;
 
  public:
-  explicit base_distributed_task(
-      server_task_info in_task_info, std::string in_token, std::shared_ptr<http_work> in_http_work_ptr
-  )
-      : task_info_(std::move(in_task_info)), token_(std::move(in_token)), http_work_ptr_(std::move(in_http_work_ptr)) {}
+  explicit base_distributed_task(server_task_info in_task_info, std::shared_ptr<http_work> in_http_work_ptr)
+      : task_info_(std::move(in_task_info)), http_work_ptr_(std::move(in_http_work_ptr)) {}
   virtual ~base_distributed_task();
 
   logger_ptr create_logger() const;

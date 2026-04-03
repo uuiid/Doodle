@@ -116,6 +116,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
 
   server_task_info_type type_{};
   std::string last_line_log_;
+  // 提交者的 cookies
+  std::string submitter_cookies_;
 
   struct run_time_info_t {
     zoned_time start_time_{chrono::current_zone(), chrono::system_clock::now()};
@@ -161,20 +163,22 @@ class server_task_info : boost::equality_comparable<server_task_info> {
  private:
   // to json
   friend void to_json(nlohmann::json& j, const server_task_info& p) {
-    j["id"]              = p.uuid_id_;
-    j["status"]          = p.status_;
-    j["name"]            = p.name_;
-    j["source_computer"] = p.source_computer_;
-    j["submitter"]       = p.submitter_;
-    j["submit_time"]     = p.submit_time_;
-    j["run_time"]        = p.run_time_;
-    j["end_time"]        = p.end_time_;
-    j["run_computer_id"] = p.run_computer_id_;
-    j["type"]            = p.type_;
-    j["last_line_log"]   = p.last_line_log_;
-    j["run_time_info"]   = p.run_time_info_;
-    j["command"]         = p.command_;
-    j["priority"]        = p.priority_;
+    j["id"]                = p.uuid_id_;
+    j["status"]            = p.status_;
+    j["name"]              = p.name_;
+    j["source_computer"]   = p.source_computer_;
+    j["submitter"]         = p.submitter_;
+    j["submit_time"]       = p.submit_time_;
+    j["run_time"]          = p.run_time_;
+    j["end_time"]          = p.end_time_;
+    j["run_computer_id"]   = p.run_computer_id_;
+    j["type"]              = p.type_;
+    j["last_line_log"]     = p.last_line_log_;
+    j["run_time_info"]     = p.run_time_info_;
+    j["command"]           = p.command_;
+    j["priority"]          = p.priority_;
+    j["task_id"]           = p.task_id_;
+    j["submitter_cookies"] = p.submitter_cookies_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, server_task_info& p) {
@@ -191,6 +195,8 @@ class server_task_info : boost::equality_comparable<server_task_info> {
     if (j.contains("last_line_log")) j.at("last_line_log").get_to(p.last_line_log_);
     if (j.contains("run_time_info")) j.at("run_time_info").get_to(p.run_time_info_);
     if (j.contains("priority")) j.at("priority").get_to(p.priority_);
+    if (j.contains("task_id")) j.at("task_id").get_to(p.task_id_);
+    if (j.contains("submitter_cookies")) j.at("submitter_cookies").get_to(p.submitter_cookies_);
   }
 };
 }  // namespace doodle

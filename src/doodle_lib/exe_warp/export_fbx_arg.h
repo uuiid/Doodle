@@ -90,10 +90,8 @@ class DOODLELIB_API export_fbx_arg_distributed : public maya_exe_ns::arg, public
   args arg_;
 
  public:
-  explicit export_fbx_arg_distributed(
-      server_task_info in_task_info, std::string in_token, std::shared_ptr<http::http_work> in_http_work_ptr
-  )
-      : http::base_distributed_task(std::move(in_task_info), std::move(in_token), std::move(in_http_work_ptr)) {}
+  explicit export_fbx_arg_distributed(server_task_info in_task_info, std::shared_ptr<http::http_work> in_http_work_ptr)
+      : http::base_distributed_task(std::move(in_task_info), std::move(in_http_work_ptr)) {}
   ~export_fbx_arg_distributed() override = default;
 
   constexpr static std::string_view k_name{"export_fbx"};
