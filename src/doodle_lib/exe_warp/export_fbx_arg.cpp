@@ -10,7 +10,6 @@
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/long_task/image_to_move.h>
 
-#include "core/http/http_function.h"
 #include <array>
 #include <filesystem>
 #include <nlohmann/json_fwd.hpp>

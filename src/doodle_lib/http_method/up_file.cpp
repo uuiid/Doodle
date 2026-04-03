@@ -21,7 +21,6 @@
 
 #include <boost/beast/http/field.hpp>
 
-#include "core/core_set.h"
 #include <chrono>
 #include <cpp-base64/base64.h>
 #include <filesystem>
