@@ -10,9 +10,11 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <core/http/http_function.h>
+#include <filesystem>
 #include <opencv2/opencv.hpp>
 
 namespace doodle::http {
@@ -134,5 +136,37 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(movies_originals_preview_files_download, get)
                       fmt::format("movie_preview_{}.{}", l_pre_file.original_name_, l_ext.string().substr(1))
               }
   );
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_volcano_engine_inference_materials_video, post) {
+  auto l_uuid = core_set::get_set().get_uuid();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_inference_materials_video(l_uuid);
+  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  auto l_fs = in_handle->get_file();
+  DOODLE_CHICK(!l_fs.empty() && FSys::is_regular_file(l_fs), "请上传视频文件");
+  FSys::rename(l_fs, l_path);
+  co_return in_handle->make_msg(nlohmann::json{{"id", l_uuid}});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_volcano_engine_inference_materials_video_id, get) {
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_inference_materials_video(id_);
+  DOODLE_CHICK(FSys::exists(l_path), "视频文件不存在 文件 {}", l_path.generic_string());
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_volcano_engine_inference_materials_image, post) {
+  auto l_uuid = core_set::get_set().get_uuid();
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_inference_materials_image(l_uuid);
+  if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  auto l_fs = in_handle->get_file();
+  DOODLE_CHICK(!l_fs.empty() && FSys::is_regular_file(l_fs), "请上传图片文件");
+
+  auto l_image = preview::convert_to_png(l_fs);
+
+  FSys::rename(l_image.path_, l_path);
+  co_return in_handle->make_msg(nlohmann::json{{"id", l_uuid}});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(doodle_ai_volcano_engine_inference_materials_image_id, get) {
+  auto l_path = g_ctx().get<kitsu_ctx_t>().get_inference_materials_image(id_);
+  DOODLE_CHICK(FSys::exists(l_path), "图片文件不存在 文件 {}", l_path.generic_string());
+  co_return in_handle->make_msg(l_path, kitsu::mime_type(l_path.extension()));
 }
 }  // namespace doodle::http

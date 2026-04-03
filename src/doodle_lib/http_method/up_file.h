@@ -105,5 +105,4 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN_C(doodle_data_shots_file_auto_light, up_file_shots_base)
 FSys::path gen_file_path() override;
 DOODLE_HTTP_FUN_END()
-// 
 }  // namespace doodle::http

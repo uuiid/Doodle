@@ -36,6 +36,13 @@ struct kitsu_ctx_t {
     return root_ / "jobs" / FSys::split_uuid_path(fmt::format("{}.log", in_uuid));
   }
 
+  FSys::path get_inference_materials_video(const uuid& in_uuid) {
+    return root_ / "inference_materials" / "video" / FSys::split_uuid_path(fmt::format("{}.mp4", in_uuid));
+  }
+  FSys::path get_inference_materials_image(const uuid& in_uuid) {
+    return root_ / "inference_materials" / "image" / FSys::split_uuid_path(fmt::format("{}.png", in_uuid));
+  }
+
   FSys::path get_tiles_file_path(const uuid& in_uuid) { return root_ / get_tiles_file_path_(in_uuid); }
   FSys::path get_pictures_thumbnails_file(const uuid& in_uuid, const std::string& in_ext = {}) {
     return root_ / get_pictures_thumbnails_file_(in_uuid, in_ext);

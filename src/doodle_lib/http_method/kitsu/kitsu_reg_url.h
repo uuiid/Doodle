@@ -3,11 +3,14 @@
 //
 
 #pragma once
+#include "doodle_core/doodle_core_fwd.h"
+
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <core/http/http_function.h>
+
 
 namespace doodle::http {
 // /api/auth/login
@@ -761,6 +764,25 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(actions_projects_search)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
+DOODLE_HTTP_FUN_END()
+
+// /api/doodle/ai/volcano-engine/inference/materials/video
+DOODLE_HTTP_FUN(doodle_ai_volcano_engine_inference_materials_video)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/doodle/ai/volcano-engine/inference/materials/video/{id}.mp4
+DOODLE_HTTP_FUN(doodle_ai_volcano_engine_inference_materials_video_id)
+uuid id_{};
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/doodle/ai/volcano-engine/inference/materials/image
+DOODLE_HTTP_FUN(doodle_ai_volcano_engine_inference_materials_image)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/doodle/ai/volcano-engine/inference/materials/image/{id}.png
+DOODLE_HTTP_FUN(doodle_ai_volcano_engine_inference_materials_image_id)
+uuid id_{};
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http
