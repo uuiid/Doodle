@@ -273,6 +273,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task::post(session
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->command_         = l_json["task_data"];
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
 
@@ -325,6 +326,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_inspect_insta
   l_ptr->submit_time_     = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_arg_t            = std::make_shared<inspect_file_arg>(token_, id_);
   l_json.get_to(*l_arg_t);
@@ -348,6 +350,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -377,6 +380,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -412,6 +416,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -441,6 +446,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -470,6 +476,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_project_sy
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -497,6 +504,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_ue_files, post) {
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -524,6 +532,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_files, post) 
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
@@ -551,6 +560,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
   l_json.get_to(*l_ptr);
   l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
   l_ptr->submitter_       = boost::uuids::nil_uuid();
+  l_ptr->task_id_         = boost::uuids::nil_uuid();
 
   auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
