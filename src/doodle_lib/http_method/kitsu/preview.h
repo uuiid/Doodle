@@ -1,6 +1,7 @@
 #include <doodle_core/metadata/image_size.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/preview_file.h>
+
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <opencv2/opencv.hpp>
 
@@ -16,4 +17,10 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
     const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
     const std::shared_ptr<preview_file>& in_preview_file
 );
+
+struct image_info_t {
+  FSys::path path_;
+  cv::Size size_{0, 0};
+};
+image_info_t convert_to_png(const FSys::path& in_path);
 }  // namespace doodle::http::preview

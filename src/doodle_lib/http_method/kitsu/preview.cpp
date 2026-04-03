@@ -103,26 +103,6 @@ bool is_video_extension(const FSys::path& in_ext) {
   static const std::set<FSys::path> l_video_exts{".mp4", ".avi", ".m4v", ".mov", ".webm"};
   return l_video_exts.contains(in_ext);
 }
-/// 将图片转换为png图片
-FSys::path convert_to_png(const FSys::path& in_path) {
-  auto l_new_path = in_path;
-  if (l_new_path.extension() != ".png") {
-    l_new_path.replace_extension(".png");
-    auto l_cv = cv::imread(in_path.generic_string());
-    if (l_cv.empty()) {
-      throw_exception(doodle_error{"无法读取图片文件: " + in_path.generic_string()});
-    }
-    cv::imwrite(l_new_path.generic_string(), l_cv);
-  }
-  return l_new_path;
-}
-std::tuple<std::size_t, std::size_t> get_image_size(const FSys::path& in_path) {
-  auto l_cv = cv::imread(in_path.generic_string());
-  if (l_cv.empty()) {
-    throw_exception(doodle_error{"无法读取图片文件: " + in_path.generic_string()});
-  }
-  return {l_cv.cols, l_cv.rows};
-}
 
 struct handle_video_file_t {
   FSys::path video_path_;
@@ -245,7 +225,9 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
 
   {
-    ffmpeg_video_resize l_resizer{in_path, l_high_file_path_backup, l_low_file_path_backup, in_size, in_preview_file->uuid_id_};
+    ffmpeg_video_resize l_resizer{
+        in_path, l_high_file_path_backup, l_low_file_path_backup, in_size, in_preview_file->uuid_id_
+    };
     l_resizer.process();
   }
 
@@ -286,6 +268,20 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
+
+image_info_t convert_to_png(const FSys::path& in_path) {
+  auto l_new_path = in_path;
+  auto l_cv       = cv::imread(in_path.generic_string());
+  if (l_new_path.extension() != ".png") {
+    l_new_path.replace_extension(".png");
+    if (l_cv.empty()) {
+      throw_exception(doodle_error{"无法读取图片文件: " + in_path.generic_string()});
+    }
+    cv::imwrite(l_new_path.generic_string(), l_cv);
+  }
+  return image_info_t{l_new_path, cv::Size{l_cv.cols, l_cv.rows}};
+}
+
 }  // namespace preview
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files::post(session_data_ptr in_handle) {
   auto l_sql          = get_sqlite_database();
