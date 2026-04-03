@@ -130,7 +130,7 @@ install(FILES ${crashpad_handler_exe}
 )
 # 安装目录 bin/dict
 install(DIRECTORY ${CMAKE_BINARY_DIR}/bin/dict
-        DESTINATION bin/dict
+        DESTINATION bin
 )
 # 最后实现camke修复
 install(CODE
