@@ -2,6 +2,7 @@
 // Created by TD on 24-12-30.
 //
 
+#include "doodle_core/metadata/entity.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/user.h>
@@ -24,7 +25,7 @@
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
-
+#include <sys/stat.h>
 
 namespace doodle::http {
 namespace {
@@ -365,6 +366,11 @@ struct make_with_tasks_sql_result_t {
     }
   }
 
+  template <typename T>
+  auto operator()(T&& in_where) {
+    return with_tasks_sql_query(std::forward<T>(in_where));
+  }
+
   auto operator()() {
     using namespace sqlite_orm;
 
@@ -468,5 +474,49 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(s
   ));
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
+struct actions_projects_search_arg_t {
+  std::string query_;
+  std::int32_t offset_{0};
+  std::int32_t limit_{10};
+  bool task_detail_{false};
+  // from json
+  friend void from_json(const nlohmann::json& j, actions_projects_search_arg_t& arg) {
+    j.at("query").get_to(arg.query_);
+    if (j.contains("offset")) j.at("offset").get_to(arg.offset_);
+    if (j.contains("limit")) j.at("limit").get_to(arg.limit_);
+    if (j.contains("task_detail")) j.at("task_detail").get_to(arg.task_detail_);
+  }
+};
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
+  person_.check_not_outsourcer();
+  auto l_arg = in_handle->get_json().get<actions_projects_search_arg_t>();
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
+  auto l_t                = l_sql.get_temporal_type_ids();
+  if (!l_arg.task_detail_) {
+    auto l_re = l_sql.impl_->storage_any_.select(
+        object<entity_fts>(),
+        where(
+            match(entity_fts_hidden::any_field, l_arg.query_) && not_in(&entity_fts::entity_type_id_, l_t) &&
+            c(&entity_fts::project_id_) == project_id_
+        ),
+        order_by(rank()).asc(), limit(l_arg.offset_, l_arg.limit_)
+    );
+    co_return in_handle->make_msg(nlohmann::json{} = l_re);
+  }
 
+  make_with_tasks_sql_result_t l_make_result(person_.person_, in_handle->url_, {});
+  auto l_re = l_make_result(in(
+      &entity::uuid_id_, select(
+                             &entity_fts::entity_id_,
+                             where(
+                                 match(entity_fts_hidden::any_field, l_arg.query_) &&
+                                 not_in(&entity_fts::entity_type_id_, l_t) && c(&entity_fts::project_id_) == project_id_
+                             ),
+                             order_by(rank()).asc(), limit(l_arg.offset_, l_arg.limit_)
+                         )
+  ));
+  co_return in_handle->make_msg(nlohmann::json{} = l_re);
+}
 }  // namespace doodle::http
