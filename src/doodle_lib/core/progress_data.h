@@ -1,10 +1,13 @@
 #pragma once
 
+#include "doodle_core/doodle_core_fwd.h"
+
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/rational.hpp>
 
 #include <string>
+
 
 namespace doodle {
 class progress_data {
@@ -19,13 +22,13 @@ class progress_data {
   void update_progress(std::int32_t in_progress);
   // 百分比发送事件标识
   reational_t last_emitted_progress_{0, 100};
-
+  uuid uuid_id_;
   std::string namespace_{};
   std::string event_name_{};
 
  public:
-  explicit progress_data(std::string in_event_name, std::string in_namespace = "/events")
-      : namespace_(std::move(in_namespace)), event_name_(std::move(in_event_name)) {};
+  explicit progress_data(uuid in_uuid, std::string in_event_name, std::string in_namespace = "/events")
+      : uuid_id_(in_uuid), namespace_(std::move(in_namespace)), event_name_(std::move(in_event_name)) {};
   void set_total_steps(std::int32_t in_total_steps);
   std::int32_t get_total_steps() const;
 

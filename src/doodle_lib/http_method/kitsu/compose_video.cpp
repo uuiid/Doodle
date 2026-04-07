@@ -60,7 +60,7 @@ struct compose_video_impl_t {
         size_(in_size),
         preview_file_(std::move(in_preview_file)),
         target_preview_file_(std::move(in_target_preview_file)),
-        progress_data_(std::make_shared<progress_data>("compose-video-progress:update")) {}
+        progress_data_(std::make_shared<progress_data>(preview_file_->uuid_id_, "compose-video-progress:update")) {}
 
   void operator()() {
     progress_data_->set_total_steps(2);
@@ -120,7 +120,7 @@ struct compose_video_impl_t {
         std::chrono::steady_clock::now() - l_now
     );
 
-    preview::handle_video_file(l_new_path, fps_, size_, preview_file_);
+    preview::handle_video_file(l_new_path, fps_, size_, preview_file_, progress_data_);
   }
 };
 

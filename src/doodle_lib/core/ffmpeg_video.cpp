@@ -3,7 +3,9 @@
 #include <doodle_core/configure/static_value.h>
 #include <doodle_core/exception/exception.h>
 
+#include "doodle_lib_fwd.h"
 #include <doodle_lib/core/global_function.h>
+#include <doodle_lib/core/progress_data.h>
 #include <doodle_lib/logger/logger.h>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -34,6 +36,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -996,7 +999,11 @@ class ffmpeg_video_resize::impl {
         fps_filter_.init_fps_filter(video_dec_ctx_, g_fps);
       }
     }
-
+    std::int64_t get_video_duration() const {
+      // 获取视频总帧数
+      return video_stream_.duration().timestamp() *
+             (video_stream_.timeBase() * video_stream_.averageFrameRate()).getDouble();
+    }
     void open_audio_context() {
       for (size_t i = 0; i < format_context_.streamsCount(); ++i) {
         auto st = format_context_.stream(i);
@@ -1266,16 +1273,19 @@ class ffmpeg_video_resize::impl {
     output_handle_.encode_video_frame(l_f);
     l_f = output_low_handle_.rescaler_.isValid() ? output_low_handle_.rescaler_.rescale(in_frame) : in_frame;
     output_low_handle_.encode_video_frame(l_f);
+    if (progress_data_) ++(*progress_data_);
   }
 
  public:
   impl()  = default;
   ~impl() = default;
+  progress_data_ptr progress_data_;
 
   void open(const FSys::path& in_path) {
     input_video_handle_.open_format_context(in_path);
     input_video_handle_.open_video_context();
     input_video_handle_.open_audio_context();
+    if (progress_data_) progress_data_->set_current_steps(input_video_handle_.get_video_duration());
   }
   void open_out(
       const FSys::path& in_high_path, const cv::Size& in_high_size, const FSys::path& in_low_path,
@@ -1324,7 +1334,8 @@ class ffmpeg_video_resize::impl {
 };
 void ffmpeg_video_resize::process() {
   impl l_impl{};
-  auto l_now = chrono::system_clock::now();
+  auto l_now            = chrono::system_clock::now();
+  l_impl.progress_data_ = progress_data_;
   l_impl.open(video_path_);
   l_impl.open_out(out_high_path_, high_size_, out_low_path_, low_size_);
   l_impl.process();

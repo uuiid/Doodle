@@ -227,9 +227,8 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   if (in_progress_data) in_progress_data->set_current_steps(5);
 
   {
-    ffmpeg_video_resize l_resizer{
-        in_path, l_high_file_path_backup, l_low_file_path_backup, in_size, in_preview_file->uuid_id_
-    };
+    ffmpeg_video_resize l_resizer{in_path, l_high_file_path_backup,   l_low_file_path_backup,
+                                  in_size, in_preview_file->uuid_id_, in_progress_data};
     l_resizer.process();
   }
 
@@ -339,7 +338,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     boost::asio::post(
         g_pool_strand(),
         [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
-          preview::handle_video_file(l_new_path, fps, size, l_preview_file);
+          preview::handle_video_file(
+              l_new_path, fps, size, l_preview_file,
+              std::make_shared<progress_data>(l_preview_file->uuid_id_, "preview-video:process")
+          );
         }
     );
 

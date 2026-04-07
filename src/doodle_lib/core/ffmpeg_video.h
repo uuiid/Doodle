@@ -74,18 +74,20 @@ class ffmpeg_video_resize {
   FSys::path out_high_path_;
   FSys::path out_low_path_;
   uuid task_info_id_;
+  progress_data_ptr progress_data_;
   class impl;
 
  public:
   explicit ffmpeg_video_resize(
       FSys::path in_video_path, FSys::path in_out_high_path, FSys::path in_out_low_path, const cv::Size& in_size,
-      uuid in_task_info_id
+      uuid in_task_info_id, progress_data_ptr in_progress_data = nullptr
   )
       : high_size_(std::move(in_size)),
         video_path_(std::move(in_video_path)),
         out_high_path_(std::move(in_out_high_path)),
         out_low_path_(std::move(in_out_low_path)),
-        task_info_id_(std::move(in_task_info_id)) {
+        task_info_id_(std::move(in_task_info_id)),
+        progress_data_(std::move(in_progress_data)) {
     // 低分辨率定义为宽度小于等于 1280
     low_size_ = cv::Size{1280, static_cast<int>(1280.0 / high_size_.width * high_size_.height)};
   }

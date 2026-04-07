@@ -11,15 +11,18 @@ namespace {
 struct progress_update_broadcast_t {
   const std::string event_name_;
   const std::string namespace_;
-
+  uuid& id_;
   explicit progress_update_broadcast_t(
-      std::string_view in_namespace, std::string_view in_event_name, double in_progress
+      std::string_view in_namespace, std::string_view in_event_name, double in_progress, uuid& in_id
   )
-      : event_name_(in_event_name), namespace_(in_namespace), progress_(in_progress) {}
+      : event_name_(in_event_name), namespace_(in_namespace), id_(in_id), progress_(in_progress) {}
 
   double progress_;
   // to json
-  friend void to_json(nlohmann::json& j, const progress_update_broadcast_t& p) { j["progress"] = p.progress_; }
+  friend void to_json(nlohmann::json& j, const progress_update_broadcast_t& p) {
+    j["progress"] = p.progress_;
+    j["id"]       = p.id_;
+  }
 };
 }  // namespace
 
@@ -30,7 +33,7 @@ void progress_data::update_progress(std::int32_t in_progress) {
     // 发送事件
     SPDLOG_INFO("Progress update: {}", current_steps_);
     progress_update_broadcast_t broadcast{
-        "/events", "progress:update", boost::rational_cast<std::double_t>(current_steps_)
+        "/events", "progress:update", boost::rational_cast<std::double_t>(current_steps_), uuid_id_
     };
     socket_io::broadcast(broadcast);
     while (progress_rational_ - last_emitted_progress_ >= one_hundred_percent)
