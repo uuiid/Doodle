@@ -31,7 +31,7 @@ void progress_data::update_progress(std::int32_t in_progress) {
   constexpr reational_t one_hundred_percent{1, 100};
   if (progress_rational_ - last_emitted_progress_ >= one_hundred_percent) {
     // 发送事件
-    SPDLOG_INFO("Progress update: {}", progress_rational_);
+    // SPDLOG_INFO("Progress update: {}", progress_rational_);
     progress_update_broadcast_t broadcast{
         namespace_, event_name_, boost::rational_cast<std::double_t>(progress_rational_), uuid_id_
     };
