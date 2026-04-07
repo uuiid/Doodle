@@ -37,7 +37,9 @@ concept BroadcastStruct = requires(const Struct& s) {
 
 template <BroadcastStruct Struct>
 void broadcast(const Struct& in_struct, const std::shared_ptr<sid_ctx>& in_ctx = nullptr) {
-  broadcast(std::string{in_struct.event_name_}, nlohmann::json{} = in_struct, std::string{in_struct.namespace_}, in_ctx);
+  broadcast(
+      std::string{in_struct.event_name_}, nlohmann::json{} = in_struct, std::string{in_struct.namespace_}, in_ctx
+  );
 }
 
 struct asset_new_broadcast_t {
@@ -259,6 +261,17 @@ struct preview_file_new_broadcast_t {
     j["preview_file_id"] = p.preview_file_id_;
     j["comment_id"]      = p.comment_id_;
     j["project_id"]      = p.project_id_;
+  }
+};
+struct preview_file_update_broadcast_t {
+  static constexpr std::string_view event_name_ = "preview-file:update";
+  static constexpr std::string_view namespace_  = "/events";
+  uuid preview_file_id_;
+  preview_file_statuses status_;
+  // to json
+  friend void to_json(nlohmann::json& j, const preview_file_update_broadcast_t& p) {
+    j["preview_file_id"] = p.preview_file_id_;
+    j["status"]          = p.status_;
   }
 };
 struct comment_update_broadcast_t {

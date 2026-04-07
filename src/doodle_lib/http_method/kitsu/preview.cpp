@@ -250,7 +250,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   save_variants(l_frame, in_preview_file->uuid_id_);
 
   auto l_tiles = create_video_tile_image(l_video, l_files);
-  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
+  auto l_path  = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
                 FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
   auto l_path_backup = FSys::add_time_stamp(l_path);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -267,6 +267,11 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   in_preview_file->file_size_ = FSys::exists(l_high_file_path) ? FSys::file_size(l_high_file_path) : 0;
   in_preview_file->status_    = preview_file_statuses::ready;
   boost::asio::co_spawn(g_io_context(), get_sqlite_database().update(in_preview_file), boost::asio::detached);
+  socket_io::broadcast(
+      socket_io::preview_file_update_broadcast_t{
+          .preview_file_id_ = in_preview_file->uuid_id_, .status_ = in_preview_file->status_
+      }
+  );
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }
