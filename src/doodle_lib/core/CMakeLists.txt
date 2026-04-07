@@ -49,6 +49,7 @@ target_sources(
         authorization.cpp
         global_function.cpp
         cancellation_signals.cpp
+        progress_data.cpp
 
 )
 add_subdirectory(http)
