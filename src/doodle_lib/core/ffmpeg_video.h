@@ -39,6 +39,7 @@ class ffmpeg_video {
   bool time_code_{false};
   // 任务信息
   uuid task_info_id_;
+  progress_data_ptr progress_data_;
 
  public:
   explicit ffmpeg_video(const FSys::path& in_video_path, const FSys::path& in_out_path);
@@ -56,6 +57,7 @@ class ffmpeg_video {
   void set_input_video(const FSys::path& in_video_path) { video_path_ = in_video_path; }
   void set_output_video(const FSys::path& in_out_path) { out_path_ = in_out_path; }
   void set_task_info(const uuid& in_task_info_id) { task_info_id_ = in_task_info_id; }
+  void set_progress_data(const progress_data_ptr& in_progress_data) { progress_data_ = in_progress_data; }
   // 开始处理
   void process();
 

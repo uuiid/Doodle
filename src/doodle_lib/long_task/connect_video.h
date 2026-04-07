@@ -13,7 +13,7 @@ namespace doodle::detail {
 
 void connect_video(
     const FSys::path &in_out_path, logger_ptr in_msg, const std::vector<FSys::path> &in_vector,
-    const image_size &in_size, const uuid &in_task_info_id = uuid{}
+    const image_size &in_size, const uuid &in_task_info_id = uuid{}, const progress_data_ptr &in_progress_data = nullptr
 );
 
 class connect_video_t : public async_task {

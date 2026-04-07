@@ -37,7 +37,6 @@
 #include <string_view>
 #include <system_error>
 
-
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavfilter/buffersrc.h>
@@ -226,6 +225,15 @@ class ffmpeg_video::impl {
     void open_format_context(const FSys::path& in_path) {
       format_context_.openInput(in_path.string());
       format_context_.findStreamInfo();
+    }
+
+    std::int64_t get_video_duration() const {
+      if (!video_stream_.isValid()) {
+        return 0;
+      }
+      // 获取视频总帧数
+      return video_stream_.duration().timestamp() *
+             (video_stream_.timeBase() * video_stream_.averageFrameRate()).getDouble();
     }
 
     void open_video_context() {
@@ -564,9 +572,12 @@ class ffmpeg_video::impl {
   }
 
  public:
+  progress_data_ptr progress_data_{nullptr};
+
   void open(const FSys::path& in_path, const FSys::path& out_path) {
     open_input_video(in_path);
     open_output_video(out_path);
+    if (progress_data_) progress_data_->set_current_steps(input_video_handle_.get_video_duration());
   }
 
   // 添加音频轨道, 传入 MP4 文件路径, 提取音频轨道, 检查必须为 AAC 编码, 并将流直接复制到输出文件
@@ -729,6 +740,7 @@ class ffmpeg_video::impl {
     in_frame.setTimeBase(output_handle_.video_next_pts_.timebase());
     in_frame.setPts(output_handle_.video_next_pts_);
     output_handle_.video_next_pts_ += av::Timestamp{1, output_handle_.video_next_pts_.timebase()};
+    if (progress_data_) ++(*progress_data_);
     if (auto out_pkt = output_handle_.video_enc_ctx_.encode(in_frame); out_pkt) {
       // 不要覆盖编码器生成的 PTS/DTS：当存在 B 帧重排序时，复用器需要正确的时间戳来生成 CTTS。
       out_pkt.setTimeBase(output_handle_.video_stream_.timeBase());
@@ -826,6 +838,7 @@ void ffmpeg_video::process() {
   out_path_.replace_extension(".mp4");
   DOODLE_CHICK(!video_path_.empty() && FSys::exists(video_path_), "ffmpeg_video: video path is empty or not exists");
   impl l_impl{};
+  l_impl.progress_data_ = progress_data_;
   l_impl.open(video_path_, out_path_);
   if (!audio_path_.empty() && FSys::exists(audio_path_)) {
     l_impl.add_audio(audio_path_);

@@ -60,7 +60,7 @@ struct compose_video_impl_t {
         size_(in_size),
         preview_file_(std::move(in_preview_file)),
         target_preview_file_(std::move(in_target_preview_file)),
-        progress_data_(std::make_shared<progress_data>(preview_file_->uuid_id_, "compose-video-progress:update")) {}
+        progress_data_(std::make_shared<progress_data>(preview_file_->uuid_id_, "preview-video:process")) {}
 
   void operator()() {
     progress_data_->set_total_steps(2);
@@ -249,12 +249,18 @@ struct run_actions_playlists_preview_files_create_review {
     logger_ptr logger_{};
 
     std::shared_ptr<preview_file> review_preview_file_{};
+    progress_data_ptr progress_data_{};
   };
   std::shared_ptr<data> data_ptr_;
 
   run_actions_playlists_preview_files_create_review() : data_ptr_(std::make_shared<data>()) {}
 
   void operator()() {
+    data_ptr_->progress_data_ =
+        std::make_shared<progress_data>(data_ptr_->review_preview_file_->uuid_id_, "preview-video:process");
+    data_ptr_->progress_data_->set_total_steps(3);
+    data_ptr_->ffmpeg_video_.set_progress_data(data_ptr_->progress_data_);
+
     data_ptr_->logger_ = g_logger_ctrl().get_long_task();
     if (data_ptr_->shot_preview_paths_.empty()) {
       SPDLOG_LOGGER_WARN(data_ptr_->logger_, "没有找到任何镜头预览视频, 无法生成评审视频");
@@ -264,7 +270,9 @@ struct run_actions_playlists_preview_files_create_review {
     auto l_tmp = core_set::get_set().get_cache_root("compose_review_tmp") /
                  fmt::format("{}.mp4", core_set::get_set().get_uuid());
     auto l_now = std::chrono::steady_clock::now();
-    doodle::detail::connect_video(l_tmp, data_ptr_->logger_, data_ptr_->shot_preview_paths_, data_ptr_->size_);
+    doodle::detail::connect_video(
+        l_tmp, data_ptr_->logger_, data_ptr_->shot_preview_paths_, data_ptr_->size_, {}, data_ptr_->progress_data_
+    );
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_long_task(), "连接视频完成 {} {:%H:%M:%S}", l_tmp, std::chrono::steady_clock::now() - l_now
     );
