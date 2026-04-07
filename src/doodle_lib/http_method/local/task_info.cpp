@@ -399,40 +399,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance_gene
   co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
 }
 
-boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_run_ue_assembly_local::post(
-    session_data_ptr in_handle
-) {
-  auto l_ptr          = std::make_shared<server_task_info>();
-  l_ptr->type_        = server_task_info_type::auto_light;
-  l_ptr->submit_time_ = server_task_info::zoned_time{chrono::current_zone(), std::chrono::system_clock::now()};
-
-  auto l_json         = in_handle->get_json();
-  l_json.get_to(*l_ptr);
-  l_ptr->run_computer_id_ = boost::uuids::nil_uuid();
-  l_ptr->submitter_       = boost::uuids::nil_uuid();
-  l_ptr->task_id_         = boost::uuids::nil_uuid();
-
-  auto l_client           = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
-  l_client->set_token(token_);
-  std::shared_ptr<run_ue_assembly_local> l_arg_t = std::make_shared<run_ue_assembly_local>();
-  l_arg_t->kitsu_client_                         = l_client;
-  l_arg_t->shot_task_id_                         = id_;
-  l_arg_t->project_id_                           = project_id_;
-
-  l_arg_t->on_run_time_info_.connect([l_ptr](const server_task_info::run_time_info_t& in_info) {
-    l_ptr->add_run_time_info(in_info);
-    emit_signal(l_ptr);
-  });
-  task_info_manager().get_instance().add_task_info(l_ptr);
-
-  if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
-  auto l_run_long_task_local = std::make_shared<run_long_task_local>(l_ptr);
-  l_run_long_task_local->set_arg(l_arg_t);
-  l_run_long_task_local->run();
-
-  socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
-  co_return in_handle->make_msg((nlohmann::json{} = *l_ptr).dump());
-}
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_export_anim_fbx_local::post(
     session_data_ptr in_handle
 ) {
