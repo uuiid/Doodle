@@ -37,7 +37,7 @@ concept BroadcastStruct = requires(const Struct& s) {
 
 template <BroadcastStruct Struct>
 void broadcast(const Struct& in_struct, const std::shared_ptr<sid_ctx>& in_ctx = nullptr) {
-  broadcast(std::string{Struct::event_name_}, nlohmann::json{} = in_struct, std::string{Struct::namespace_}, in_ctx);
+  broadcast(std::string{in_struct.event_name_}, nlohmann::json{} = in_struct, std::string{in_struct.namespace_}, in_ctx);
 }
 
 struct asset_new_broadcast_t {

@@ -9,8 +9,8 @@ namespace doodle {
 
 namespace {
 struct progress_update_broadcast_t {
-  const std::string_view event_name_;
-  const std::string_view namespace_;
+  const std::string event_name_;
+  const std::string namespace_;
 
   explicit progress_update_broadcast_t(
       std::string_view in_namespace, std::string_view in_event_name, double in_progress
