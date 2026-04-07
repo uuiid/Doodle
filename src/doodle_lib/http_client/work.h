@@ -21,7 +21,6 @@
 #include <boost/process.hpp>
 
 #include <memory>
-#include <optional>
 #include <string>
 
 namespace doodle::http {
