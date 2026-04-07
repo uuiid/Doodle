@@ -76,7 +76,7 @@ $excelData = for ($day = 1; $day -le $DaysInLastMonth; $day++) {
   }
 }
 
-$excelData | Export-Excel -Path "E:/TD-$($LastMonth.ToString("yyyy-MM")).xlsx" -WorksheetName "月报" -AutoSize -ClearSheet
+$excelData | Export-Excel -Path "E:/TD-$($LastMonth.ToString("yyyy-MM"))_.xlsx" -WorksheetName "月报" -AutoSize -ClearSheet
 
 # Write-Host $Doodle_GitMsg
 # Write-Host "-----------------------------------"
