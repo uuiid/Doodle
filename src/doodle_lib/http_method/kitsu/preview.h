@@ -15,7 +15,7 @@ struct video_info_t {
 video_info_t get_video_duration(const FSys::path& in_path);
 std::tuple<cv::Size, double, FSys::path> handle_video_file(
     const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
-    const std::shared_ptr<preview_file>& in_preview_file
+    const std::shared_ptr<preview_file>& in_preview_file, const progress_data_ptr& in_progress_data = nullptr
 );
 
 struct image_info_t {

@@ -13,6 +13,7 @@
 #include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_function.h>
+#include <doodle_lib/core/progress_data.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -213,7 +214,7 @@ video_info_t get_video_duration(const FSys::path& in_path) {
 /// 处理上传的视频文件 格式化大小, 生成预览文件
 std::tuple<cv::Size, double, FSys::path> handle_video_file(
     const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
-    const std::shared_ptr<preview_file>& in_preview_file
+    const std::shared_ptr<preview_file>& in_preview_file, const progress_data_ptr& in_progress_data
 ) {
   handle_video_file_t l_files{in_path, in_fps, in_size, in_preview_file};
 
@@ -223,6 +224,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   auto l_high_file_path_backup = FSys::add_time_stamp(l_high_file_path);
   if (auto l_p = l_low_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_high_file_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (in_progress_data) in_progress_data->set_current_steps(5);
 
   {
     ffmpeg_video_resize l_resizer{
@@ -231,6 +233,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
     l_resizer.process();
   }
 
+  if (in_progress_data) ++(*in_progress_data);
   auto l_video         = cv::VideoCapture{in_path.generic_string()};
   cv::Size l_high_size = in_size;
   cv::Size l_low_size{
@@ -239,6 +242,8 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
           boost::numeric_cast<std::double_t>(in_size.height) / boost::numeric_cast<std::double_t>(in_size.width) * 1280
       ))
   };
+  if (in_progress_data) ++(*in_progress_data);
+
   // 获取持续时间(秒)
   auto l_duration = l_video.get(cv::CAP_PROP_FRAME_COUNT) / l_video.get(cv::CAP_PROP_FPS);
   cv::Mat l_frame{};
@@ -247,12 +252,16 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
   l_video >> l_frame;
   if (l_frame.empty()) throw_exception(doodle_error{"无法读取视频文件: {} ", in_path.generic_string()});
   save_variants(l_frame, in_preview_file->uuid_id_);
+  if (in_progress_data) ++(*in_progress_data);
+
   auto l_tiles = create_video_tile_image(l_video, l_files);
-  auto l_path  = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
+  if (in_progress_data) ++(*in_progress_data);
+  auto l_path = g_ctx().get<kitsu_ctx_t>().root_ / "pictures" / "tiles" /
                 FSys::split_uuid_path(fmt::format("{}.png", in_preview_file->uuid_id_));
   auto l_path_backup = FSys::add_time_stamp(l_path);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   cv::imwrite(l_path_backup.generic_string(), l_tiles);
+  if (in_progress_data) ++(*in_progress_data);
 
   {  // rename
     FSys::rename(l_low_file_path_backup, l_low_file_path);

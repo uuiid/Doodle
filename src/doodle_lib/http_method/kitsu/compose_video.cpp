@@ -1,4 +1,3 @@
-#include <doodle_lib/core/file_sys.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
@@ -8,14 +7,13 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <doodle_lib/core/ffmpeg_video.h>
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/core/generate_text_video.hpp>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/core/progress_data.h>
 #include <doodle_lib/http_client/dingding_client.h>
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
@@ -24,6 +22,9 @@
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seed_email.h>
 #include <doodle_lib/long_task/connect_video.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/asio/post.hpp>
 
@@ -42,65 +43,86 @@ namespace doodle::http {
 namespace {
 // 先合成视频, 再生成预览
 
-auto compose_video_impl(
-    const FSys::path& in_path, const std::size_t& in_fps, const cv::Size& in_size,
-    const std::shared_ptr<preview_file>& in_preview_file, const preview_file& in_target_preview_file
-) {
-  auto l_now             = std::chrono::steady_clock::now();
-  auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
-  auto l_target_path     = l_ctx.get_movie_source_file(in_target_preview_file.uuid_id_);
+struct compose_video_impl_t {
+  FSys::path path_;
+  std::size_t fps_;
+  cv::Size size_;
+  std::shared_ptr<preview_file> preview_file_;
+  preview_file target_preview_file_;
+  std::shared_ptr<progress_data> progress_data_;
 
-  auto l_new_path        = l_ctx.get_movie_source_file(in_preview_file->uuid_id_);
-  auto l_new_backup_path = FSys::add_time_stamp(l_new_path);
-  if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
-  {
-    cv::VideoCapture l_cap(in_path.generic_string(), cv::CAP_FFMPEG);
-    cv::VideoCapture l_target_cap(l_target_path.generic_string(), cv::CAP_FFMPEG);
-    DOODLE_CHICK(l_cap.isOpened() && l_target_cap.isOpened(), "无法打开视频文件 {} {}", in_path, l_target_path);
+  explicit compose_video_impl_t(
+      FSys::path in_path, std::size_t in_fps, cv::Size in_size, std::shared_ptr<preview_file> in_preview_file,
+      preview_file in_target_preview_file
+  )
+      : path_(std::move(in_path)),
+        fps_(in_fps),
+        size_(in_size),
+        preview_file_(std::move(in_preview_file)),
+        target_preview_file_(std::move(in_target_preview_file)),
+        progress_data_(std::make_shared<progress_data>("compose-video-progress:update")) {}
 
-    DOODLE_CHICK(
-        l_cap.get(cv::CAP_PROP_FRAME_COUNT) == l_target_cap.get(cv::CAP_PROP_FRAME_COUNT), "视频帧数不匹配 {} {} ",
-        in_path, l_target_path
+  void operator()() {
+    progress_data_->set_total_steps(2);
+    auto l_now             = std::chrono::steady_clock::now();
+    auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
+    auto l_target_path     = l_ctx.get_movie_source_file(target_preview_file_.uuid_id_);
+
+    auto l_new_path        = l_ctx.get_movie_source_file(preview_file_->uuid_id_);
+    auto l_new_backup_path = FSys::add_time_stamp(l_new_path);
+    if (auto l_p = l_new_path.parent_path(); !exists(l_p)) FSys::create_directories(l_p);
+    {
+      cv::VideoCapture l_cap(path_.generic_string(), cv::CAP_FFMPEG);
+      cv::VideoCapture l_target_cap(l_target_path.generic_string(), cv::CAP_FFMPEG);
+      DOODLE_CHICK(l_cap.isOpened() && l_target_cap.isOpened(), "无法打开视频文件 {} {}", path_, l_target_path);
+
+      DOODLE_CHICK(
+          l_cap.get(cv::CAP_PROP_FRAME_COUNT) == l_target_cap.get(cv::CAP_PROP_FRAME_COUNT), "视频帧数不匹配 {} {} ",
+          path_, l_target_path
+      );
+
+      cv::VideoWriter l_video{
+          l_new_backup_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
+          boost::numeric_cast<std::double_t>(fps_), size_
+      };
+      l_video.set(cv::VIDEOWRITER_PROP_QUALITY, 90);
+
+      DOODLE_CHICK(l_video.isOpened(), "无法创建视频文件: {} ", l_new_path.generic_string());
+      cv::Mat l_frame{};
+      cv::Mat l_target_frame{};
+      /// 255 color
+      cv::Mat l_255_mat{size_, CV_8UC3, cv::Scalar(255, 255, 255)};
+      const auto l_frame_count = l_cap.get(cv::CAP_PROP_FRAME_COUNT);
+      progress_data_->set_current_steps(l_frame_count);
+      while (l_cap.read(l_frame) && l_target_cap.read(l_target_frame)) {
+        DOODLE_CHICK(!l_frame.empty() && !l_target_frame.empty(), "无法读取视频文件: {} {}", path_, l_target_path);
+
+        if (l_frame.cols != size_.width || l_frame.rows != size_.height) {
+          cv::resize(l_frame, l_frame, size_, 0, 0, cv::INTER_LINEAR);
+        }
+        /// 将 l_frame 通过 滤色叠加模型 叠加到 l_target_frame 上
+        /// 结果色 = 255 - [(255 - 基色) × (255 - 混合色)] / 255
+        cv::Mat l_result_frame = cv::Mat::zeros(size_, l_frame.type());
+        cv::subtract(l_255_mat, l_frame, l_frame);
+        cv::subtract(l_255_mat, l_target_frame, l_target_frame);
+
+        cv::multiply(l_frame, l_target_frame, l_result_frame, 1.0 / 255);
+        cv::subtract(l_255_mat, l_result_frame, l_result_frame);
+
+        l_video << l_result_frame;
+        ++(*progress_data_);
+      }
+    }
+    FSys::rename(l_new_backup_path, l_new_path);
+    SPDLOG_INFO("合成视频完成 {} ", l_new_path);
+    SPDLOG_LOGGER_INFO(
+        g_logger_ctrl().get_long_task(), "合成视频完成 {} {:%H:%M:%S}", l_new_path,
+        std::chrono::steady_clock::now() - l_now
     );
 
-    cv::VideoWriter l_video{
-        l_new_backup_path.generic_string(), cv::VideoWriter::fourcc('a', 'v', 'c', '1'),
-        boost::numeric_cast<std::double_t>(in_fps), in_size
-    };
-    l_video.set(cv::VIDEOWRITER_PROP_QUALITY, 90);
-
-    DOODLE_CHICK(l_video.isOpened(), "无法创建视频文件: {} ", l_new_path.generic_string());
-    cv::Mat l_frame{};
-    cv::Mat l_target_frame{};
-    /// 255 color
-    cv::Mat l_255_mat{in_size, CV_8UC3, cv::Scalar(255, 255, 255)};
-    while (l_cap.read(l_frame) && l_target_cap.read(l_target_frame)) {
-      DOODLE_CHICK(!l_frame.empty() && !l_target_frame.empty(), "无法读取视频文件: {} {}", in_path, l_target_path);
-
-      if (l_frame.cols != in_size.width || l_frame.rows != in_size.height) {
-        cv::resize(l_frame, l_frame, in_size);
-      }
-      /// 将 l_frame 通过 滤色叠加模型 叠加到 l_target_frame 上
-      /// 结果色 = 255 - [(255 - 基色) × (255 - 混合色)] / 255
-      cv::Mat l_result_frame = cv::Mat::zeros(in_size, l_frame.type());
-      cv::subtract(l_255_mat, l_frame, l_frame);
-      cv::subtract(l_255_mat, l_target_frame, l_target_frame);
-
-      cv::multiply(l_frame, l_target_frame, l_result_frame, 1.0 / 255);
-      cv::subtract(l_255_mat, l_result_frame, l_result_frame);
-
-      l_video << l_result_frame;
-    }
+    preview::handle_video_file(l_new_path, fps_, size_, preview_file_);
   }
-  FSys::rename(l_new_backup_path, l_new_path);
-  SPDLOG_INFO("合成视频完成 {} ", l_new_path);
-  SPDLOG_LOGGER_INFO(
-      g_logger_ctrl().get_long_task(), "合成视频完成 {} {:%H:%M:%S}", l_new_path,
-      std::chrono::steady_clock::now() - l_now
-  );
-
-  preview::handle_video_file(l_new_path, in_fps, in_size, in_preview_file);
-}
+};
 
 }  // namespace
 
@@ -178,13 +200,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_preview_file_ptr       = std::make_shared<preview_file>(l_preview_file);
   co_await l_sql.update(l_preview_file_ptr);
 
-  boost::asio::post(
-      g_strand(), [fps = l_project.fps_, l_prj_size, l_preview_file_ptr, l_target_preview_file, l_file]() mutable {
-        compose_video_impl(
-            l_file, fps, cv::Size{l_prj_size.first, l_prj_size.second}, l_preview_file_ptr, l_target_preview_file
-        );
-      }
+  compose_video_impl_t l_compose_video_impl(
+      l_file, l_project.fps_, cv::Size{l_prj_size.first, l_prj_size.second}, l_preview_file_ptr, l_target_preview_file
   );
+  boost::asio::post(g_pool_strand(), l_compose_video_impl);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
@@ -358,7 +377,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
     l_run.data_ptr_->ffmpeg_video_.set_time_code(true);
   }
   l_run.data_ptr_->ffmpeg_video_.set_task_info(preview_file_id_);
-  
+
   std::vector<FSys::path> l_paths{};
   for (const auto& l_shot_preview : l_playlist_shot) {
     auto l_path = g_ctx().get<kitsu_ctx_t>().get_movie_source_file(l_shot_preview.preview_id_);

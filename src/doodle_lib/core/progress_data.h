@@ -6,7 +6,6 @@
 
 #include <string>
 
-
 namespace doodle {
 class progress_data {
   using reational_t = boost::rational<std::int64_t>;
@@ -25,7 +24,7 @@ class progress_data {
   std::string event_name_{};
 
  public:
-  explicit progress_data(std::string in_namespace, std::string in_event_name)
+  explicit progress_data(std::string in_event_name, std::string in_namespace = "/events")
       : namespace_(std::move(in_namespace)), event_name_(std::move(in_event_name)) {};
   void set_total_steps(std::int32_t in_total_steps);
   std::int32_t get_total_steps() const;

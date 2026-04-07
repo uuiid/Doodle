@@ -31,7 +31,8 @@ namespace level {}  // namespace level
 
 // 开始我们的名称空间
 namespace doodle {
-
+class progress_data;
+using progress_data_ptr = std::shared_ptr<progress_data>;
 namespace socket_io {
 class sid_ctx;
 }
@@ -117,5 +118,5 @@ using udp_client_ptr = std::shared_ptr<udp_client>;
 namespace http {
 class http_work;
 class computers_assign_task;
-}
+}  // namespace http
 }  // namespace doodle
