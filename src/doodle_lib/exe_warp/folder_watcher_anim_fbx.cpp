@@ -68,6 +68,8 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
       }
     }
   }
+
+
 };
 
 class folder_watcher_anim_fbx::impl {

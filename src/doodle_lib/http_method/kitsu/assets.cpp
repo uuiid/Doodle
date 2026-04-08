@@ -310,7 +310,7 @@ struct make_with_tasks_sql_result_t {
                 match(entity_fts_hidden::any_field, search_key_) && not_in(&entity_fts::entity_type_id_, l_t) &&
                 c(&entity_fts::project_id_) == project_id_
             ),
-            order_by(rank()).asc(), limit(offset_, limit_)
+            order_by(rank()).asc()
         )
     );
   }
