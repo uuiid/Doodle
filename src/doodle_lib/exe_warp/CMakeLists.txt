@@ -12,6 +12,7 @@ target_sources(
         qcloth_arg.h
         task_sync.h
         assets_update.h
+        folder_watcher_anim_fbx.h
         
         PRIVATE
         maya_exe.cpp
@@ -25,4 +26,5 @@ target_sources(
         qcloth_arg.cpp
         task_sync.cpp
         assets_update.cpp
+        folder_watcher_anim_fbx.cpp
 )
