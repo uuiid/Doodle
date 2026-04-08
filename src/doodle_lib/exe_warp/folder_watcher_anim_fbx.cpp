@@ -1,5 +1,7 @@
 #include "folder_watcher_anim_fbx.h"
 
+#include "doodle_core/doodle_core_fwd.h"
+
 #include <doodle_lib/core/app_base.h>
 
 #include <boost/asio/awaitable.hpp>
@@ -26,6 +28,7 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
   FSys::path watch_path_;
   boost::lockfree::spsc_queue<FSys::path, boost::lockfree::capacity<1024>> message_queue_;
   wil::unique_folder_change_reader change_notification_;
+  std::map<FSys::path, uuid> path_task_map_;
 
   void push_message(const FSys::path& in_path) {
     message_queue_.push(in_path);
@@ -37,6 +40,12 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
               boost::asio::consign(boost::asio::detached, self_->shared_from_this(), shared_from_this())
           )
       );
+  }
+
+  bool is_processing_path(const FSys::path& in_path) const {
+    if (in_path.extension() != ".ma") return false;
+    if (!path_task_map_.contains(in_path)) return false;
+    return true;
   }
 
  private:
@@ -68,8 +77,6 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
       }
     }
   }
-
-
 };
 
 class folder_watcher_anim_fbx::impl {
@@ -80,10 +87,12 @@ class folder_watcher_anim_fbx::impl {
   folder_watcher_anim_fbx* self_{};
   std::vector<std::shared_ptr<folder_watcher_anim_fbx_folder>> folders_;
 
-  void create_watcher(const FSys::path& in_path) {
+  void create_watcher(const FSys::path& in_root_path, const std::vector<watch_arg>& in_arg) {
     folders_.emplace_back(std::make_shared<folder_watcher_anim_fbx_folder>());
-    folders_.back()->self_                = self_;
-    folders_.back()->watch_path_          = in_path;
+    folders_.back()->self_       = self_;
+    folders_.back()->watch_path_ = in_root_path;
+    for (const auto& arg : in_arg) folders_.back()->path_task_map_[arg.path_] = arg.task_id_;
+
     folders_.back()->change_notification_ = wil::make_folder_change_reader(
         folders_.back()->watch_path_.c_str(), true, wil::FolderChangeEvents::All,
         [this, self = self_->shared_from_this(),
@@ -91,18 +100,23 @@ class folder_watcher_anim_fbx::impl {
           FSys::path l_path{in_path};
           switch (in_event) {
             case wil::FolderChangeEvent::Modified:
-              if (l_path.extension() == ".ma") folder->push_message(l_path);
+            case wil::FolderChangeEvent::RenameNewName:
+            case wil::FolderChangeEvent::Added:
+              if (folder->is_processing_path(l_path)) folder->push_message(l_path);
               break;
             default:
               break;
           }
         }
     );
+    folders_.back()->change_notification_.get()->StartIo();
   }
 };
 
 folder_watcher_anim_fbx::folder_watcher_anim_fbx() : impl_(std::make_unique<impl>()) { impl_->self_ = this; }
 folder_watcher_anim_fbx::~folder_watcher_anim_fbx() = default;
 
-void folder_watcher_anim_fbx::watch(const FSys::path& in_path) { impl_->create_watcher(in_path); }
+void folder_watcher_anim_fbx::watch(const FSys::path& in_root_path, const std::vector<watch_arg>& in_arg) {
+  impl_->create_watcher(in_root_path, in_arg);
+}
 }  // namespace doodle::exe_warp

@@ -4,6 +4,9 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <filesystem>
+#include <vector>
+
 namespace doodle::exe_warp {
 class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watcher_anim_fbx> {
   class impl;
@@ -13,7 +16,12 @@ class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watch
   folder_watcher_anim_fbx();
   ~folder_watcher_anim_fbx();
 
-  void watch(const FSys::path& in_path);
+  struct watch_arg {
+    FSys::path path_;
+    uuid task_id_;
+  };
+
+  void watch(const FSys::path& in_root_path, const std::vector<watch_arg>& in_task_id);
 
   void stop_watch();
 };
