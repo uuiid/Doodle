@@ -1,7 +1,7 @@
 #include "dingding_client.h"
 
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/app_base.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
 #include <boost/asio/io_context.hpp>
@@ -54,7 +54,12 @@ boost::asio::awaitable<std::string> client::get_user_by_mobile(const std::string
 
   auto& l_json = l_res.body();
   if (!(l_json.contains("result") && l_json.at("result").contains("userid")))
-    throw_exception(doodle_error{fmt::format("错误的电话号码或者所属公司 不正确: {}", in_mobile)});
+    throw_exception(
+        doodle_error{fmt::format(
+            "错误的电话号码或者所属公司 不正确: {} {}", in_mobile,
+            l_json.contains("errmsg") ? l_json.at("errmsg").get<std::string>() : ""
+        )}
+    );
   l_ret = l_json.at("result").at("userid").get<std::string>();
 
   co_return l_ret;
