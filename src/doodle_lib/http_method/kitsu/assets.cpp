@@ -355,14 +355,14 @@ struct make_with_tasks_sql_result_t {
   explicit make_with_tasks_sql_result_t(person& in_person, const boost::urls::url& in_url, const uuid& in_id)
       : person_(in_person), id_(in_id) {
     for (auto&& l_i : in_url.params()) {
-      if (l_i.key == "entity_type_id") entity_type_id_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.key == "ji_du") ji_du_filter_.emplace_back(std::stoi(l_i.value));
-      if (l_i.key == "ji_shu_lie") ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
-      if (l_i.key == "task_status_id") task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.key == "person_id") person_id_filter_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.key == "offset") offset_ = std::stoi(l_i.value);
-      if (l_i.key == "limit") limit_ = std::stoi(l_i.value);
-      if (l_i.key == "project_id") project_id_ = from_uuid_str(l_i.value);
+      if (l_i.has_value && l_i.key == "entity_type_id") entity_type_id_.emplace_back(from_uuid_str(l_i.value));
+      if (l_i.has_value && l_i.key == "ji_du") ji_du_filter_.emplace_back(std::stoi(l_i.value));
+      if (l_i.has_value && l_i.key == "ji_shu_lie") ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
+      if (l_i.has_value && l_i.key == "task_status_id") task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
+      if (l_i.has_value && l_i.key == "person_id") person_id_filter_.emplace_back(from_uuid_str(l_i.value));
+      if (l_i.has_value && l_i.key == "offset") offset_ = std::stoi(l_i.value);
+      if (l_i.has_value && l_i.key == "limit") limit_ = std::stoi(l_i.value);
+      if (l_i.has_value && l_i.key == "project_id") project_id_ = from_uuid_str(l_i.value);
     }
   }
 

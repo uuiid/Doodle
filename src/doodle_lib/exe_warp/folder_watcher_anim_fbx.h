@@ -6,7 +6,13 @@
 
 namespace doodle::exe_warp {
 class folder_watcher_anim_fbx {
+  
  public:
+  folder_watcher_anim_fbx()  = default;
+  ~folder_watcher_anim_fbx() = default;
+
   void watch(const FSys::path& in_path);
+
+  void stop_watch();
 };
 }  // namespace doodle::exe_warp
