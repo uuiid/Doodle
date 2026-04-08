@@ -224,7 +224,8 @@ struct make_shots_with_tasks_result_t {
         where(std::forward<T>(in_dynamic_query)),
         multi_order_by(
             order_by(episode->*&entity::name_), order_by(sequence->*&entity::name_), order_by(&entity::name_)
-        )
+        ),
+        limit(offset_, limit_)
     );
     for (auto&& [
 
