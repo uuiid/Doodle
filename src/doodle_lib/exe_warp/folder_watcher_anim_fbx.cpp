@@ -18,7 +18,7 @@
 #include <boost/asio/windows/basic_object_handle.hpp>
 #include <boost/asio/windows/object_handle.hpp>
 #include <boost/asio/windows/overlapped_ptr.hpp>
-#include <boost/system/detail/error_code.hpp>
+#include <boost/system/error_code.hpp>
 
 #include <Windows.h>
 #include <array>
@@ -36,6 +36,14 @@
 #include <wil/result_macros.h>
 
 namespace doodle {
+namespace {
+boost::system::error_code make_last_error_code() {
+  boost::system::error_code error_code;
+  error_code.assign(static_cast<int>(::GetLastError()), boost::system::system_category());
+  return error_code;
+}
+}  // namespace
+
 template <typename Executor = boost::asio::any_io_executor>
 class read_directory_changes_watcher {
  public:
@@ -70,12 +78,7 @@ class read_directory_changes_watcher {
         OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, nullptr
     );
 
-    if (native == INVALID_HANDLE_VALUE)
-      throw_exception(
-          std::system_error{
-              boost::system::error_code{static_cast<int>(::GetLastError()), boost::system::system_category()}
-          }
-      );
+    if (native == INVALID_HANDLE_VALUE) throw_exception(std::system_error{make_last_error_code()});
     directory_handle_.assign(native);
   }
 
@@ -103,10 +106,7 @@ class read_directory_changes_watcher {
               directory_handle_.native_handle(), notify_buffer_.data(), static_cast<DWORD>(notify_buffer_.size()),
               FALSE, kDirectoryNotifyFilter, &bytes_transferred, overlapped.get(), nullptr
           );
-          if (!result)
-            return overlapped.complete(
-                boost::system::error_code{static_cast<int>(::GetLastError()), boost::system::system_category()}, 0U
-            );
+          if (!result) return overlapped.complete(make_last_error_code(), 0U);
 
           overlapped.release();
         },
