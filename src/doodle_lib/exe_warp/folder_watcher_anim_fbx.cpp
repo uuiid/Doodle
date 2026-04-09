@@ -93,25 +93,22 @@ class read_directory_changes_watcher {
           handler_type l_h{std::forward<decltype(handler)>(handler)};
           // 获取默认执行器
           auto ex = boost::asio::get_associated_executor(l_h, directory_handle_.get_executor());
-          if (!directory_handle_.is_open()) {
-            boost::asio::post(ex, [in_h = std::move(l_h)]() mutable {
-              in_h(boost::asio::error::make_error_code(boost::asio::error::operation_aborted), 0U);
-            });
-            return;
-          }
+          boost::asio::windows::overlapped_ptr overlapped{directory_handle_, std::move(l_h)};
+          if (!directory_handle_.is_open())
+            return overlapped.complete(boost::asio::error::make_error_code(boost::asio::error::operation_aborted), 0U);
+
           constexpr DWORD kDirectoryNotifyFilter = FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE;
-          auto overlapped = std::make_shared<boost::asio::windows::overlapped_ptr>(directory_handle_, std::move(l_h));
-          DWORD bytes_transferred = 0;
-          BOOL result             = ::ReadDirectoryChangesW(
+          DWORD bytes_transferred                = 0;
+          BOOL result                            = ::ReadDirectoryChangesW(
               directory_handle_.native_handle(), notify_buffer_.data(), static_cast<DWORD>(notify_buffer_.size()),
-              FALSE, kDirectoryNotifyFilter, &bytes_transferred, overlapped->overlapped(), nullptr
+              FALSE, kDirectoryNotifyFilter, &bytes_transferred, overlapped.get(), nullptr
           );
-          if (!result) {
-            auto ec = boost::system::error_code{static_cast<int>(::GetLastError()), boost::system::system_category()};
-            boost::asio::post(ex, [in_h = std::move(overlapped->handler()), ec]() mutable { in_h(ec, 0U); });
-            return;
-          }
-          overlapped->release();
+          if (!result)
+            return overlapped.complete(
+                boost::system::error_code{static_cast<int>(::GetLastError()), boost::system::system_category()}, 0U
+            );
+
+          overlapped.release();
         },
         token
     );
@@ -176,17 +173,49 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
     path_task_map_[in_arg.path_.generic_string()] = in_arg.task_id_;
   }
 
+  void start_watch() {
+    boost::asio::co_spawn(
+        strand_, watch_loop(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(),
+            boost::asio::consign(boost::asio::detached, shared_from_this(), self_->shared_from_this())
+        )
+    );
+  }
+
  private:
-  std::atomic_bool started_{false};
-  std::atomic_bool stop_requested_{false};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
-  std::unique_ptr<boost::asio::windows::object_handle> directory_handle_{};
   boost::asio::steady_timer flush_timer_{strand_};
   std::map<FSys::path, FSys::file_time_type> changed_files_{};
+  read_directory_changes_watcher_t watcher_{strand_};
 
   bool is_processing_path(const FSys::path& in_path) const {
     if (in_path.extension() != ".ma") return false;
     return path_task_map_.contains(in_path.generic_string());
+  }
+  // 是否 小于 1 小时
+  bool is_recently_changed(const FSys::path& in_path) const {
+    return FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now();
+  }
+
+  boost::asio::awaitable<void> watch_loop() {
+    watcher_.open(watch_path_);
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      std::size_t l_bytes_transferred = co_await watcher_.async_read_changes(boost::asio::use_awaitable);
+
+      for (const auto& [path, action] : watcher_.parse_changes(l_bytes_transferred)) {
+        // 处理文件变更事件
+        if (is_processing_path(path))
+          // 记录变更的文件和时间戳
+          changed_files_[path] = FSys::last_write_time(path);
+      }
+    }
+  }
+  // 开始处理文件
+  boost::asio::awaitable<void> process_changed(const FSys::path& in_path) {
+    // 小于 1 小时不处理
+    if (FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now()) co_return;
+    auto l_task_id = path_task_map_[in_path];
   }
 };
 
@@ -204,6 +233,7 @@ class folder_watcher_anim_fbx::impl {
     folder->watch_path_ = in_root_path;
     for (const auto& arg : in_arg) folder->add_task_path(arg);
     folders_.emplace_back(std::move(folder));
+    folder->start_watch();
   }
 
   void stop_all() {}
