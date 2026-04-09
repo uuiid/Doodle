@@ -25,6 +25,7 @@
 #include "http_client/kitsu_client.h"
 #include <Windows.h>
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <filesystem>
 #include <fmt/format.h>
@@ -193,12 +194,46 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
         )
     );
   }
+  void stop_watch() {
+    stopping_ = true;
+    boost::asio::co_spawn(
+        strand_, process_changed(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(),
+            boost::asio::consign(boost::asio::detached, shared_from_this(), self_->shared_from_this())
+        )
+    );
+  }
 
  private:
+  std::atomic_bool stopping_{false};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::steady_timer flush_timer_{strand_};
   std::set<FSys::path> changed_files_{};
   read_directory_changes_watcher_t watcher_{strand_};
+
+  // 定时为一小时后处理
+  void schedule_flush() {
+    flush_timer_.expires_after(std::chrono::hours(1));
+    flush_timer_.async_wait(
+        boost::asio::bind_executor(
+            strand_, [self = shared_from_this(), l_s = self_->shared_from_this()](const boost::system::error_code& ec) {
+              if (ec == boost::asio::error::operation_aborted) return;
+              if (ec) {
+                SPDLOG_ERROR("flush_timer_ error: {}", ec.message());
+                return;
+              }
+              boost::asio::co_spawn(
+                  self->strand_, self->process_changed(),
+                  boost::asio::bind_cancellation_slot(
+                      app_base::Get().on_cancel.slot(),
+                      boost::asio::consign(boost::asio::detached, self->shared_from_this(), l_s->shared_from_this())
+                  )
+              );
+            }
+        )
+    );
+  }
 
   bool is_processing_path(const FSys::path& in_path) const {
     if (in_path.extension() != ".ma") return false;
@@ -206,7 +241,20 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
   }
   // 是否 小于 1 小时
   bool is_recently_changed(const FSys::path& in_path) const {
-    return FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now();
+    return FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now() || stopping_;
+  }
+
+  // 全部处理
+  boost::asio::awaitable<void> process_changed() {
+    auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+    for (auto begin = changed_files_.begin(); begin != changed_files_.end();) {
+      if (is_recently_changed(*begin)) {
+        co_await process_changed(*begin, l_client);
+        begin = changed_files_.erase(begin);
+      } else {
+        ++begin;
+      }
+    }
   }
 
   boost::asio::awaitable<void> watch_loop() {
@@ -218,10 +266,8 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
         // 处理文件变更事件
         if (is_processing_path(path)) changed_files_.insert(path);
       }
-      auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
-      for (auto&& l_file : changed_files_) {
-        if (is_recently_changed(l_file)) co_await process_changed(l_file, l_client);
-      }
+      co_await process_changed();
+      schedule_flush();
     }
   }
   // 开始处理文件
