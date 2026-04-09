@@ -18,15 +18,19 @@
 #include <boost/asio/windows/basic_object_handle.hpp>
 #include <boost/asio/windows/object_handle.hpp>
 #include <boost/asio/windows/overlapped_ptr.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <boost/system/error_code.hpp>
 
+#include "core/core_set.h"
+#include "http_client/kitsu_client.h"
 #include <Windows.h>
 #include <array>
-#include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <fmt/format.h>
 #include <map>
 #include <memory>
+#include <spdlog/spdlog.h>
 #include <string>
 #include <system_error>
 #include <utility>
@@ -167,10 +171,17 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
 
   folder_watcher_anim_fbx* self_{};
   FSys::path watch_path_;
-  std::map<FSys::path, uuid> path_task_map_{};
+
+  struct task_info {
+    uuid project_id_;
+    uuid task_id_;
+    FSys::path file_name_;
+  };
+
+  std::map<FSys::path, task_info> path_task_map_{};
 
   void add_task_path(const folder_watcher_anim_fbx::watch_arg& in_arg) {
-    path_task_map_[in_arg.path_.generic_string()] = in_arg.task_id_;
+    path_task_map_[in_arg.path_.generic_string()] = {in_arg.project_id_, in_arg.task_id_, in_arg.file_name_};
   }
 
   void start_watch() {
@@ -186,7 +197,7 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
  private:
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::steady_timer flush_timer_{strand_};
-  std::map<FSys::path, FSys::file_time_type> changed_files_{};
+  std::set<FSys::path> changed_files_{};
   read_directory_changes_watcher_t watcher_{strand_};
 
   bool is_processing_path(const FSys::path& in_path) const {
@@ -205,17 +216,31 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
 
       for (const auto& [path, action] : watcher_.parse_changes(l_bytes_transferred)) {
         // 处理文件变更事件
-        if (is_processing_path(path))
-          // 记录变更的文件和时间戳
-          changed_files_[path] = FSys::last_write_time(path);
+        if (is_processing_path(path)) changed_files_.insert(path);
+      }
+      for (auto&& l_file : changed_files_) {
+        if (is_recently_changed(l_file)) co_await process_changed(l_file);
       }
     }
   }
   // 开始处理文件
   boost::asio::awaitable<void> process_changed(const FSys::path& in_path) {
     // 小于 1 小时不处理
-    if (FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now()) co_return;
+    if (is_processing_path(in_path)) co_return;
     auto l_task_id = path_task_map_[in_path];
+    try {
+      auto l_copy_path =
+          core_set::get_set().get_cache_root(fmt::format("anim_maya/{}", core_set::get_set().get_uuid())) /
+          l_task_id.file_name_;
+      if (auto l_p = l_copy_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+      FSys::copy_file(in_path, l_copy_path, FSys::copy_options::overwrite_existing);
+      auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+      // 上传文件
+      co_await l_client->upload_shot_animation_maya(l_task_id.task_id_, l_copy_path);
+      co_await l_client->run_export_anim_fbx_task(l_task_id.project_id_, l_task_id.task_id_);
+    } catch (...) {
+      SPDLOG_ERROR(boost::current_exception_diagnostic_information());
+    }
   }
 };
 

@@ -18,7 +18,9 @@ class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watch
 
   struct watch_arg {
     FSys::path path_;
+    uuid project_id_;
     uuid task_id_;
+    FSys::path file_name_;
   };
 
   void watch(const FSys::path& in_root_path, const std::vector<watch_arg>& in_task_id);

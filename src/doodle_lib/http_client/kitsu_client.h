@@ -142,6 +142,8 @@ class kitsu_client {
 
   // /api/actions/tasks/{task_id}/assets/update/ue
   boost::asio::awaitable<nlohmann::json> get_task_assets_update_ue_files(uuid in_task_id) const;
+  // /api/actions/projects/{project_id}/shots/{shot_id}/run-export-anim-fbx
+  boost::asio::awaitable<void> run_export_anim_fbx_task(uuid in_project_id, uuid in_shot_id) const;
   // /api/data/jobs/{job_id}
   boost::asio::awaitable<void> put_job_info(uuid in_job_id, nlohmann::json in_json) const;
   // put /api/actions/jobs/{job_id}/log

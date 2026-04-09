@@ -16,6 +16,7 @@
 #include <doodle_lib/http_method/kitsu.h>
 
 #include <boost/asio/awaitable.hpp>
+#include <boost/asio/ip/host_name.hpp>
 #include <boost/beast/http/empty_body.hpp>
 #include <boost/beast/http/field.hpp>
 #include <boost/beast/http/file_body_fwd.hpp>
@@ -526,6 +527,25 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_task_assets_update_ue_f
     );
 
   co_return l_res.body();
+}
+
+boost::asio::awaitable<void> kitsu_client::run_export_anim_fbx_task(uuid in_project_id, uuid in_task_id) const {
+  boost::beast::http::request<boost::beast::http::string_body> l_req{
+      boost::beast::http::verb::post,
+      fmt::format("/api/actions/projects/{}/shots/{}/run-export-anim-fbx", in_project_id, in_task_id), 11
+  };
+  l_req.body() = nlohmann::json{
+      {"name", fmt::format("自动化导出任务 {}", in_task_id)},
+      {"source_computer", fmt::format("computer_{}", boost::asio::ip::host_name())}
+  }.dump();
+  set_req_headers(l_req, "application/json");
+
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu run export anim fbx task error {} {}", l_res.result(), l_res.body()});
+
+  co_return;
 }
 
 boost::asio::awaitable<void> kitsu_client::put_job_info(uuid in_task_id, nlohmann::json in_job_info) const {
