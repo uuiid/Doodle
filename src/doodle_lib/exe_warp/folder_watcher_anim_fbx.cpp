@@ -19,6 +19,7 @@
 #include <boost/asio/windows/object_handle.hpp>
 #include <boost/asio/windows/overlapped_ptr.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 #include <boost/system/error_code.hpp>
 
 #include "core/core_set.h"
@@ -299,6 +300,7 @@ class folder_watcher_anim_fbx::impl {
 
   folder_watcher_anim_fbx* self_{};
   std::vector<std::shared_ptr<folder_watcher_anim_fbx_folder>> folders_;
+  boost::lockfree::spsc_queue<watch_arg> watch_queue_{1024};
 
   void create_watcher(const FSys::path& in_root_path, const std::vector<watch_arg>& in_arg) {
     auto folder         = std::make_shared<folder_watcher_anim_fbx_folder>();
@@ -315,8 +317,8 @@ class folder_watcher_anim_fbx::impl {
 folder_watcher_anim_fbx::folder_watcher_anim_fbx() : impl_(std::make_unique<impl>()) { impl_->self_ = this; }
 folder_watcher_anim_fbx::~folder_watcher_anim_fbx() { stop_watch(); }
 
-void folder_watcher_anim_fbx::watch(const FSys::path& in_root_path, const std::vector<watch_arg>& in_arg) {
-  impl_->create_watcher(in_root_path, in_arg);
+void folder_watcher_anim_fbx::watch(const std::vector<watch_arg>& in_arg) {
+  for (const auto& arg : in_arg) impl_->watch_queue_.push(arg);
 }
 
 void folder_watcher_anim_fbx::stop_watch() { impl_->stop_all(); }
