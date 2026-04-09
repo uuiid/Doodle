@@ -3,6 +3,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <boost/asio/awaitable.hpp>
 
 #include <filesystem>
 #include <vector>
@@ -26,5 +27,8 @@ class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watch
   void watch(const std::vector<watch_arg>& in_task_id);
 
   void stop_watch();
+
+  // 获取所有的监事对象
+  boost::asio::awaitable<std::vector<watch_arg>> get_watch_args() const;
 };
 }  // namespace doodle::exe_warp

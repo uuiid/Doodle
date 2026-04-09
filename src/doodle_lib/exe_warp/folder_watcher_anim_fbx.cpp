@@ -19,6 +19,7 @@
 #include <boost/asio/windows/object_handle.hpp>
 #include <boost/asio/windows/overlapped_ptr.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include <boost/lockfree/detail/uses_optional.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 #include <boost/system/error_code.hpp>
 
@@ -299,19 +300,85 @@ class folder_watcher_anim_fbx::impl {
   ~impl() = default;
 
   folder_watcher_anim_fbx* self_{};
-  std::vector<std::shared_ptr<folder_watcher_anim_fbx_folder>> folders_;
   boost::lockfree::spsc_queue<watch_arg> watch_queue_{1024};
 
-  void create_watcher(const FSys::path& in_root_path, const std::vector<watch_arg>& in_arg) {
-    auto folder         = std::make_shared<folder_watcher_anim_fbx_folder>();
-    folder->self_       = self_;
-    folder->watch_path_ = in_root_path;
-    for (const auto& arg : in_arg) folder->add_task_path(arg);
-    folders_.emplace_back(std::move(folder));
-    folder->start_watch();
+  void begin_watch() {
+    boost::asio::co_spawn(
+        strand_, watch_loop(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, self_->shared_from_this())
+        )
+    );
   }
 
-  void stop_all() {}
+  void stop_all() {
+    stopping_ = true;
+    flush_timer_.cancel();
+    boost::asio::co_spawn(
+        strand_, process_changed(),
+        boost::asio::bind_cancellation_slot(
+            app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, self_->shared_from_this())
+        )
+    );
+  }
+  boost::asio::awaitable<std::vector<watch_arg>> get_watch_args() const {
+    DOODLE_TO_EXECUTOR(strand_);
+    std::vector<watch_arg> out = changed_files_;
+    co_return out;
+  }
+
+ private:
+  // 是否 小于 1 小时
+  bool is_recently_changed(const FSys::path& in_path) const {
+    return FSys::exists(in_path) &&
+           (FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now() || stopping_);
+  }
+
+  std::atomic_bool stopping_{false};
+  boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
+  boost::asio::steady_timer flush_timer_{strand_};
+  std::vector<watch_arg> changed_files_{};
+
+  boost::asio::awaitable<void> watch_loop() {
+    while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
+      flush_timer_.expires_after(std::chrono::hours(1));
+      co_await flush_timer_.async_wait(boost::asio::use_awaitable);
+      while (!watch_queue_.empty())
+        if (auto l_v = watch_queue_.pop(boost::lockfree::uses_optional); l_v) changed_files_.push_back(*l_v);
+      co_await process_changed();
+    }
+  }
+  boost::asio::awaitable<void> process_changed() {
+    auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+    for (auto begin = changed_files_.begin(); begin != changed_files_.end();) {
+      if (is_recently_changed(begin->path_)) {
+        co_await process_changed(*begin, l_client);
+        begin = changed_files_.erase(begin);
+      } else {
+        ++begin;
+      }
+    }
+  }
+
+  // 开始处理文件
+  boost::asio::awaitable<void> process_changed(
+      const watch_arg& in_arg, const std::shared_ptr<kitsu::kitsu_client>& in_client
+  ) {
+    // 小于 1 小时不处理
+    if (is_recently_changed(in_arg.path_)) co_return;
+    try {
+      auto l_copy_path =
+          core_set::get_set().get_cache_root(fmt::format("anim_maya/{}", core_set::get_set().get_uuid())) /
+          in_arg.file_name_;
+      if (auto l_p = l_copy_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+      FSys::copy_file(in_arg.path_, l_copy_path, FSys::copy_options::overwrite_existing);
+      // 上传文件
+      co_await in_client->upload_shot_animation_maya(in_arg.task_id_, l_copy_path);
+      co_await in_client->run_export_anim_fbx_task(in_arg.project_id_, in_arg.task_id_);
+    } catch (...) {
+      SPDLOG_ERROR(boost::current_exception_diagnostic_information());
+    }
+  }
 };
 
 folder_watcher_anim_fbx::folder_watcher_anim_fbx() : impl_(std::make_unique<impl>()) { impl_->self_ = this; }
@@ -322,4 +389,9 @@ void folder_watcher_anim_fbx::watch(const std::vector<watch_arg>& in_arg) {
 }
 
 void folder_watcher_anim_fbx::stop_watch() { impl_->stop_all(); }
+boost::asio::awaitable<std::vector<folder_watcher_anim_fbx::watch_arg>>
+folder_watcher_anim_fbx::get_watch_args() const {
+  return impl_->get_watch_args();
+}
+
 }  // namespace doodle::exe_warp
