@@ -93,7 +93,7 @@ class read_directory_changes_watcher {
           handler_type l_h{std::forward<decltype(handler)>(handler)};
           // 获取默认执行器
           auto ex = boost::asio::get_associated_executor(l_h, directory_handle_.get_executor());
-          boost::asio::windows::overlapped_ptr overlapped{directory_handle_, std::move(l_h)};
+          boost::asio::windows::overlapped_ptr overlapped{ex, std::move(l_h)};
           if (!directory_handle_.is_open())
             return overlapped.complete(boost::asio::error::make_error_code(boost::asio::error::operation_aborted), 0U);
 
