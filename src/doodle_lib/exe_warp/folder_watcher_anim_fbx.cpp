@@ -262,10 +262,10 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       std::size_t l_bytes_transferred = co_await watcher_.async_read_changes(boost::asio::use_awaitable);
 
-      for (const auto& [path, action] : watcher_.parse_changes(l_bytes_transferred)) {
-        // 处理文件变更事件
+      // 处理文件变更事件
+      for (const auto& [path, action] : watcher_.parse_changes(l_bytes_transferred))
         if (is_processing_path(path)) changed_files_.insert(path);
-      }
+
       co_await process_changed();
       schedule_flush();
     }
