@@ -218,13 +218,16 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
         // 处理文件变更事件
         if (is_processing_path(path)) changed_files_.insert(path);
       }
+      auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
       for (auto&& l_file : changed_files_) {
-        if (is_recently_changed(l_file)) co_await process_changed(l_file);
+        if (is_recently_changed(l_file)) co_await process_changed(l_file, l_client);
       }
     }
   }
   // 开始处理文件
-  boost::asio::awaitable<void> process_changed(const FSys::path& in_path) {
+  boost::asio::awaitable<void> process_changed(
+      const FSys::path& in_path, const std::shared_ptr<kitsu::kitsu_client>& in_client
+  ) {
     // 小于 1 小时不处理
     if (is_processing_path(in_path)) co_return;
     auto l_task_id = path_task_map_[in_path];
@@ -234,10 +237,9 @@ class folder_watcher_anim_fbx_folder : public std::enable_shared_from_this<folde
           l_task_id.file_name_;
       if (auto l_p = l_copy_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
       FSys::copy_file(in_path, l_copy_path, FSys::copy_options::overwrite_existing);
-      auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
       // 上传文件
-      co_await l_client->upload_shot_animation_maya(l_task_id.task_id_, l_copy_path);
-      co_await l_client->run_export_anim_fbx_task(l_task_id.project_id_, l_task_id.task_id_);
+      co_await in_client->upload_shot_animation_maya(l_task_id.task_id_, l_copy_path);
+      co_await in_client->run_export_anim_fbx_task(l_task_id.project_id_, l_task_id.task_id_);
     } catch (...) {
       SPDLOG_ERROR(boost::current_exception_diagnostic_information());
     }
