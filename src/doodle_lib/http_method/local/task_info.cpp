@@ -55,6 +55,7 @@ class task_info_manager {
 
  public:
   void add_task_info(const std::shared_ptr<server_task_info>& in_info) {
+    if (in_info->uuid_id_ == boost::uuids::nil_uuid()) in_info->uuid_id_ = core_set::get_set().get_uuid();
     std::lock_guard<std::recursive_mutex> _(mtx_);
     task_infos_[in_info->uuid_id_] = in_info;
   }
