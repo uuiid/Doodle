@@ -58,11 +58,19 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   auto l_json    = in_handle->get_json();
   auto l_job_ptr = std::make_shared<server_task_info>(l_job);
   l_json.get_to(*l_job_ptr);
-  co_await get_sqlite_database().update(l_job_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 更新任务 job_id {} status {} -> {} ", person_.person_.email_,
       person_.person_.get_full_name(), job_id_, l_job.status_, l_job_ptr->status_
   );
+  if (l_job.status_ != l_job_ptr->status_ && l_job_ptr->status_ == server_task_info_status::submitted) {
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_http(), "任务 {} 由 {} 变更为 {}", l_job_ptr->uuid_id_, l_job.status_, l_job_ptr->status_
+    );
+    l_job_ptr->run_computer_id_ = boost::uuids::nil_uuid();
+    l_job_ptr->end_time_.reset();
+    l_job_ptr->run_time_.reset();
+  }
+  co_await get_sqlite_database().update(l_job_ptr);
 
   if (l_job_ptr->run_computer_id_ != l_job.run_computer_id_) {
     SPDLOG_LOGGER_WARN(
