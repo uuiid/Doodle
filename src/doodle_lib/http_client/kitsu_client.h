@@ -158,6 +158,8 @@ class kitsu_client {
   void put_job_log_sync(const uuid& in_job_id, const std::string& in_log) const;
   // 获取下一个任务
   boost::asio::awaitable<void> get_next_job(uuid in_computer_id) const;
+  // get /api/actions/tasks/{task_id}/sync/export-anim-fbx
+  boost::asio::awaitable<nlohmann::json> get_task_sync_export_anim_fbx(uuid in_task_id) const;
 };
 
 }  // namespace doodle::kitsu

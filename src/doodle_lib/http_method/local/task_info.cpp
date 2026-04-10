@@ -582,9 +582,35 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, post) {
   auto l_client   = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
   l_client->set_token(token_);
 
-
+  std::vector<doodle::exe_warp::folder_watcher_anim_fbx::watch_arg> l_watch_infos;
+  for (const auto& task_id : l_task_ids) {
+    auto l_task_info = co_await l_client->get_task_sync_export_anim_fbx(task_id);
+    l_watch_infos.push_back(l_task_info.get<doodle::exe_warp::folder_watcher_anim_fbx::watch_arg>());
+    if (auto l_path = l_watch_infos.back().path_; !FSys::exists(l_path)) FSys::create_directories(l_path);
+  }
+  folder_watcher_->watch(l_watch_infos);
+  folder_watcher_->set_token(token_);
   DOODLE_TO_SELF();
+  co_return in_handle->make_msg(nlohmann::json{} = l_watch_infos);
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, delete_) {
+  DOODLE_TO_EXECUTOR(strand_);
+  if (folder_watcher_) {
+    folder_watcher_->stop_watch();
+    folder_watcher_.reset();
+  }
+  DOODLE_TO_SELF();
+  co_return in_handle->make_msg(nlohmann::json{});
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, get) {
+  DOODLE_TO_EXECUTOR(strand_);
+  std::vector<doodle::exe_warp::folder_watcher_anim_fbx::watch_arg> l_watch_infos;
+  if (folder_watcher_) l_watch_infos = co_await folder_watcher_->get_watch_args();
+  DOODLE_TO_SELF();
+  co_return in_handle->make_msg(nlohmann::json{} = l_watch_infos);
+}
+
 }  // namespace doodle::http::local
 
 namespace doodle::http {

@@ -442,6 +442,20 @@ boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_pro
   co_return l_res.body();
 }
 
+boost::asio::awaitable<nlohmann::json> kitsu_client::get_task_sync_export_anim_fbx(uuid in_task_id) const {
+  // get /api/actions/tasks/{task_id}/sync/export-anim-fbx
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/api/actions/tasks/{}/sync/export-anim-fbx", in_task_id), 11
+  };
+  set_req_headers(l_req);
+  boost::beast::http::response<http::basic_json_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::created)
+    throw_exception(doodle_error{"kitsu get task error {} {}", l_res.result(), l_res.body().dump()});
+  auto l_json = l_res.body();
+  co_return l_json;
+}
+
 boost::asio::awaitable<void> kitsu_client::comment_task(comment_task_arg in_arg) const {
   if (kitsu_token_.empty()) throw_exception(doodle_error{"kitsu token is empty, can not comment task"});
   SPDLOG_LOGGER_WARN(logger_, "创建评论 {} {}", in_arg.task_id_, in_arg.comment_);

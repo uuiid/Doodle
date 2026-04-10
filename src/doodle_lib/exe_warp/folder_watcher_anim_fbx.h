@@ -9,8 +9,8 @@
 #include <filesystem>
 #include <vector>
 
-
 namespace doodle::exe_warp {
+//  这个类线程不安全, 需要单线程访问
 class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watcher_anim_fbx> {
   class impl;
   std::unique_ptr<impl> impl_;
@@ -29,6 +29,7 @@ class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watch
   };
 
   void watch(const std::vector<watch_arg>& in_task_id);
+  void set_token(const std::string& in_token);
 
   void stop_watch();
 

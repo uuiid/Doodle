@@ -33,6 +33,7 @@
 #include <fmt/format.h>
 #include <map>
 #include <memory>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <system_error>
@@ -301,6 +302,7 @@ class folder_watcher_anim_fbx::impl {
 
   folder_watcher_anim_fbx* self_{};
   boost::lockfree::spsc_queue<watch_arg> watch_queue_{1024};
+  std::string token_{};
 
   void begin_watch() {
     boost::asio::co_spawn(
@@ -339,18 +341,23 @@ class folder_watcher_anim_fbx::impl {
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::steady_timer flush_timer_{strand_};
   std::vector<watch_arg> changed_files_{};
+  std::set<uuid> task_ids_{};
 
   boost::asio::awaitable<void> watch_loop() {
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
       flush_timer_.expires_after(std::chrono::hours(1));
       co_await flush_timer_.async_wait(boost::asio::use_awaitable);
       while (!watch_queue_.empty())
-        if (auto l_v = watch_queue_.pop(boost::lockfree::uses_optional); l_v) changed_files_.push_back(*l_v);
+        if (auto l_v = watch_queue_.pop(boost::lockfree::uses_optional); l_v && !task_ids_.contains(l_v->task_id_)) {
+          changed_files_.push_back(*l_v);
+          task_ids_.insert(l_v->task_id_);
+        }
       co_await process_changed();
     }
   }
   boost::asio::awaitable<void> process_changed() {
     auto l_client = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+    l_client->set_token(token_);
     for (auto begin = changed_files_.begin(); begin != changed_files_.end();) {
       if (is_recently_changed(begin->path_)) {
         co_await process_changed(*begin, l_client);
@@ -389,13 +396,15 @@ class folder_watcher_anim_fbx::impl {
 };
 
 folder_watcher_anim_fbx::folder_watcher_anim_fbx() : impl_(std::make_unique<impl>()) { impl_->self_ = this; }
-folder_watcher_anim_fbx::~folder_watcher_anim_fbx() { stop_watch(); }
+folder_watcher_anim_fbx::~folder_watcher_anim_fbx() = default;
 
 void folder_watcher_anim_fbx::watch(const std::vector<watch_arg>& in_arg) {
   for (const auto& arg : in_arg) impl_->watch_queue_.push(arg);
 }
 
 void folder_watcher_anim_fbx::stop_watch() { impl_->stop_all(); }
+void folder_watcher_anim_fbx::set_token(const std::string& in_token) { impl_->token_ = in_token; }
+
 boost::asio::awaitable<std::vector<folder_watcher_anim_fbx::watch_arg>>
 folder_watcher_anim_fbx::get_watch_args() const {
   return impl_->get_watch_args();
