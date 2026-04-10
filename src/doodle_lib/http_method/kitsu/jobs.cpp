@@ -78,6 +78,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
+  if (l_job.status_ == server_task_info_status::running) {
+    co_return in_handle->make_error_code_msg(
+        boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
+    );
+  }
   co_await l_sql.remove<server_task_info>(job_id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除任务 job_id {} status {} ", person_.person_.email_,
