@@ -305,6 +305,8 @@ class folder_watcher_anim_fbx::impl {
   std::string token_{};
 
   void begin_watch() {
+    if (running_) return;
+    running_ = true;
     boost::asio::co_spawn(
         strand_, watch_loop(),
         boost::asio::bind_cancellation_slot(
@@ -337,7 +339,7 @@ class folder_watcher_anim_fbx::impl {
            ((l_new - FSys::last_write_time(in_path) > 1h /* && l_new - FSys::last_write_time(in_path) < 3h */) ||
             stopping_);
   }
-
+  std::atomic_bool running_{false};
   std::atomic_bool stopping_{false};
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
   boost::asio::steady_timer flush_timer_{strand_};
@@ -348,7 +350,7 @@ class folder_watcher_anim_fbx::impl {
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
 #ifdef NDEBUG
       flush_timer_.expires_after(1h);
-      #else
+#else
       flush_timer_.expires_after(1s);
 #endif
       co_await flush_timer_.async_wait(boost::asio::use_awaitable);
@@ -405,6 +407,7 @@ folder_watcher_anim_fbx::~folder_watcher_anim_fbx() = default;
 
 void folder_watcher_anim_fbx::watch(const std::vector<watch_arg>& in_arg) {
   for (const auto& arg : in_arg) impl_->watch_queue_.push(arg);
+  impl_->begin_watch();
 }
 
 void folder_watcher_anim_fbx::stop_watch() { impl_->stop_all(); }
