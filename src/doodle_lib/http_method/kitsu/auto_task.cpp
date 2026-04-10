@@ -759,8 +759,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
   shot l_shot{l_entity};
 
   l_arg.file_name_ = get_shots_animation_file_name(l_episode_entity.name_, l_entity.name_, l_prj.code_);
-  l_arg.path_ = FSys::path{l_prj.code_} / "shot" / fmt::format("ep{:04}", l_episodes) / fmt::format("sc{:03}", l_shot);
   l_arg.file_name_.replace_extension(".ma");
+
+  auto l_name = l_arg.file_name_.stem().generic_string();
+  // LQ_EP004G_SC001 to LQ_EP004_SC001
+  if (l_episodes.suffix_ != '\0') l_name.erase(l_prj.code_.size() + l_episode_entity.name_.size(), 1);
+
+  l_arg.path_ = FSys::path{l_prj.code_} / "shot" / fmt::format("ep{:04}", l_episodes) / l_name;
+  l_arg.path_.replace_extension(".ma");
+
   l_arg.project_id_ = l_task.project_id_;
   l_arg.task_id_    = task_id_;
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
