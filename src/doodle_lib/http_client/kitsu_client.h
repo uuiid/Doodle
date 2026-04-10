@@ -75,6 +75,7 @@ class kitsu_client {
     );
   };
   struct file_info {
+    bool exist_{false};
     chrono::utc_seconds updated_time_;
   };
   void set_logger(logger_ptr in_logger) { logger_ = std::move(in_logger); }

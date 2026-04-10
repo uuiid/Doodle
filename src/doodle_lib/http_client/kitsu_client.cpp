@@ -418,8 +418,10 @@ boost::asio::awaitable<kitsu_client::file_info> kitsu_client::upload_shot_animat
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::not_found)
     throw_exception(doodle_error{"kitsu get ue assembly error {} {}", l_res.result(), l_res.body().dump()});
+  if (l_res.result() == boost::beast::http::status::not_found) co_return file_info{};
+
   std::string l_last_mod_time{l_res.at(boost::beast::http::field::last_modified)};
-  kitsu_client::file_info l_file_info{};
+  kitsu_client::file_info l_file_info{.exist_ = true};
   std::istringstream l_ist{l_last_mod_time};
   l_ist >> chrono::parse("%a, %d %b %Y %T GMT", l_file_info.updated_time_);
   co_return l_file_info;
