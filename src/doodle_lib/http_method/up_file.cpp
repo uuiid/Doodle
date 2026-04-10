@@ -84,6 +84,16 @@ void up_file_base::move_file(session_data_ptr in_handle) {
   SPDLOG_LOGGER_INFO(in_handle->logger_, "转移文件 {} {}", l_tmp_path, l_path);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::head(session_data_ptr in_handle) {
+  std::string l_name{in_handle->req_header_[boost::beast::http::field::content_disposition]};
+  FSys::path l_d{l_name};
+  try {
+    static const std::regex g_regex_base64{R"(^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$)"};
+    if (std::regex_match(l_name, g_regex_base64))
+      l_d = base64_decode(std::string_view{in_handle->req_header_[boost::beast::http::field::content_disposition]});
+  } catch (...) {
+    default_logger_raw()->error("base64 decode error {}", boost::current_exception_diagnostic_information());
+  }
+  file_path_ = l_d;
   query_task_info(in_handle);
   auto l_gen_path = gen_file_path();
   auto l_dir      = root_path_ / l_gen_path;
