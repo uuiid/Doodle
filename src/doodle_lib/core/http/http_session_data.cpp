@@ -335,6 +335,15 @@ boost::beast::http::message_generator session_data::make_msg(
 ) {
   // if (is_deflate()) return make_file_deflate(in_path, mine_type);
   if (!FSys::exists(in_path)) return make_error_code_msg(boost::beast::http::status::not_found, "文件不存在");
+
+  if (method_verb_ == boost::beast::http::verb::head) {
+    boost::beast::http::response<boost::beast::http::empty_body> l_res{boost::beast::http::status::ok, version_};
+    set_response_file_header(l_res, in_path, in_http_header_ctrl);
+    l_res.keep_alive(keep_alive_);
+    l_res.prepare_payload();
+    return l_res;
+  }
+
   boost::system::error_code l_code{};
   boost::beast::http::response<boost::beast::http::file_body> l_res{boost::beast::http::status::ok, version_};
   l_res.body().open(in_path.generic_string().c_str(), boost::beast::file_mode::scan, l_code);

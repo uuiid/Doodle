@@ -32,6 +32,7 @@ class up_file_base : public http_jwt_fun {
 
  public:
   uuid id_{};
+  DOODLE_HTTP_FUN_OVERRIDE(head)
   DOODLE_HTTP_FUN_OVERRIDE(post)
   DOODLE_HTTP_FUN_OVERRIDE(get)
   DOODLE_HTTP_FUN_OVERRIDE(delete_)

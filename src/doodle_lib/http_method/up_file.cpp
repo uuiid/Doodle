@@ -83,7 +83,13 @@ void up_file_base::move_file(session_data_ptr in_handle) {
   FSys::rename(l_tmp_path, l_path);
   SPDLOG_LOGGER_INFO(in_handle->logger_, "转移文件 {} {}", l_tmp_path, l_path);
 }
-
+boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::head(session_data_ptr in_handle) {
+  query_task_info(in_handle);
+  auto l_gen_path = gen_file_path();
+  auto l_dir      = root_path_ / l_gen_path;
+  auto l_path     = l_dir / file_path_;
+  co_return in_handle->make_msg(l_path, http_header_ctrl{});
+}
 boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::get(session_data_ptr in_handle) {
   query_task_info(in_handle);
   co_return in_handle->make_msg(nlohmann::json{{"file_path", gen_file_path()}});
