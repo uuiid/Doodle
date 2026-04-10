@@ -380,7 +380,6 @@ class folder_watcher_anim_fbx::impl {
       const watch_arg& in_arg, const std::shared_ptr<kitsu::kitsu_client>& in_client
   ) {
     // 小于 1 小时不处理
-    if (is_recently_changed(in_arg.path_)) co_return;
     try {
       auto l_copy_path =
           core_set::get_set().get_cache_root(fmt::format("anim_maya/{}", core_set::get_set().get_uuid())) /

@@ -65,7 +65,7 @@ template <typename T>
 auto session_data::set_response_header(T& in_res, std::string_view in_mine_type) {
   auto l_time = chrono::floor<chrono::seconds>(chrono::system_clock::now());
   in_res.set(boost::beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-  in_res.set(boost::beast::http::field::content_type, in_mine_type);
+  if (!in_mine_type.empty()) in_res.set(boost::beast::http::field::content_type, in_mine_type);
   in_res.set(boost::beast::http::field::access_control_allow_origin, access_control_allow_origin_);
   in_res.set(boost::beast::http::field::access_control_allow_credentials, "true");
   in_res.set(boost::beast::http::field::access_control_allow_methods, "GET, POST, PUT, PATCH, DELETE, OPTIONS");

@@ -588,7 +588,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, post) {
     auto l_arg       = l_task_info.get<doodle::exe_warp::folder_watcher_anim_fbx::watch_arg>();
     l_arg.path_      = core_set::get_set().user_work_root_ / l_arg.path_;
     l_watch_infos.push_back(std::move(l_arg));
-    if (auto l_path = l_watch_infos.back().path_; !FSys::exists(l_path)) FSys::create_directories(l_path);
+    if (auto l_path = l_watch_infos.back().path_.parent_path(); !FSys::exists(l_path)) FSys::create_directories(l_path);
   }
   folder_watcher_->watch(l_watch_infos);
   folder_watcher_->set_token(token_);
