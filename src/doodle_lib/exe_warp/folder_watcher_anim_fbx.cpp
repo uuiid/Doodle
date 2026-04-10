@@ -334,7 +334,8 @@ class folder_watcher_anim_fbx::impl {
   bool is_recently_changed(const FSys::path& in_path) const {
     auto l_new = FSys::file_time_type::clock::now();
     return FSys::exists(in_path) &&
-           ((l_new - FSys::last_write_time(in_path) > 1h /* && l_new - FSys::last_write_time(in_path) < 3h */) || stopping_);
+           ((l_new - FSys::last_write_time(in_path) > 1h /* && l_new - FSys::last_write_time(in_path) < 3h */) ||
+            stopping_);
   }
 
   std::atomic_bool stopping_{false};
@@ -345,7 +346,7 @@ class folder_watcher_anim_fbx::impl {
 
   boost::asio::awaitable<void> watch_loop() {
     while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
-      flush_timer_.expires_after(std::chrono::hours(1));
+      flush_timer_.expires_after(1h);
       co_await flush_timer_.async_wait(boost::asio::use_awaitable);
       while (!watch_queue_.empty())
         if (auto l_v = watch_queue_.pop(boost::lockfree::uses_optional); l_v && !task_ids_.contains(l_v->task_id_)) {
