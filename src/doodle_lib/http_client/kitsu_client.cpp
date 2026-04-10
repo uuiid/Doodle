@@ -405,6 +405,26 @@ boost::asio::awaitable<void> kitsu_client::remove_shot_animation_export_file(con
 boost::asio::awaitable<void> kitsu_client::remove_shot_animation_auto_light(const uuid& in_uuid) {
   return remove_asset_file(fmt::format("/api/doodle/data/shots/{}/file/auto-light", in_uuid));
 }
+
+boost::asio::awaitable<kitsu_client::file_info> kitsu_client::upload_shot_animation_maya_heap(
+    uuid in_shot_task_id, FSys::path in_file_path
+) {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/api/doodle/data/shots/{}/file/maya", in_shot_task_id), 11
+  };
+  set_req_headers(l_req);
+  l_req.set(boost::beast::http::field::content_disposition, base64_encode(in_file_path.filename().generic_string()));
+  boost::beast::http::response<http::basic_json_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::not_found)
+    throw_exception(doodle_error{"kitsu get ue assembly error {} {}", l_res.result(), l_res.body().dump()});
+  std::string l_last_mod_time{l_res.at(boost::beast::http::field::last_modified)};
+  kitsu_client::file_info l_file_info{};
+  std::istringstream l_ist{l_last_mod_time};
+  l_ist >> chrono::parse("%a, %d %b %Y %T GMT", l_file_info.updated_time_);
+  co_return l_file_info;
+}
+
 boost::asio::awaitable<nlohmann::json> kitsu_client::get_ue_assembly(uuid in_project_id, uuid in_shot_task_id) const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get,

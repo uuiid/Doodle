@@ -12,6 +12,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/awaitable.hpp>
 
+#include <chrono>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -73,6 +74,9 @@ class kitsu_client {
         const FSys::path& in_project_path, const std::vector<FSys::path>& in_extra_path = {}
     );
   };
+  struct file_info {
+    chrono::utc_seconds updated_time_;
+  };
   void set_logger(logger_ptr in_logger) { logger_ = std::move(in_logger); }
 
   // set token
@@ -95,6 +99,8 @@ class kitsu_client {
   boost::asio::awaitable<void> upload_asset_file_image(uuid in_task_id, FSys::path in_file_path) const;
   /// 上传镜头maya文件
   boost::asio::awaitable<void> upload_shot_animation_maya(uuid in_shot_task_id, FSys::path in_file_path);
+  /// 检查镜头maya文件, 获取是否存在已经一些其他信息
+  boost::asio::awaitable<file_info> upload_shot_animation_maya_heap(uuid in_shot_task_id, FSys::path in_file_path);
   /// 上传镜头导出文件
   boost::asio::awaitable<void> upload_shot_animation_export_file(
       uuid in_shot_task_id, FSys::path in_dir, FSys::path in_file_name
