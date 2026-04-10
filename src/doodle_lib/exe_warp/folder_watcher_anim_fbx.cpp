@@ -334,7 +334,7 @@ class folder_watcher_anim_fbx::impl {
   bool is_recently_changed(const FSys::path& in_path) const {
     auto l_new = FSys::file_time_type::clock::now();
     return FSys::exists(in_path) &&
-           ((l_new - FSys::last_write_time(in_path) > 1h && l_new - FSys::last_write_time(in_path) < 3h) || stopping_);
+           ((l_new - FSys::last_write_time(in_path) > 1h /* && l_new - FSys::last_write_time(in_path) < 3h */) || stopping_);
   }
 
   std::atomic_bool stopping_{false};
