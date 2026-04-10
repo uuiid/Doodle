@@ -147,7 +147,7 @@ auto get_get_entities_and_tasks(
            (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select)))
 
       ),
-      multi_order_by(order_by(&entity::name_)), limit(in_offset, in_limit)
+      multi_order_by(order_by(&entity::name_))
   );
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
