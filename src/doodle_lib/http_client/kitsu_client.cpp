@@ -414,10 +414,10 @@ boost::asio::awaitable<kitsu_client::file_info> kitsu_client::upload_shot_animat
   };
   set_req_headers(l_req);
   l_req.set(boost::beast::http::field::content_disposition, base64_encode(in_file_path.filename().generic_string()));
-  boost::beast::http::response<http::basic_json_body> l_res{};
+  boost::beast::http::response<boost::beast::http::empty_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::not_found)
-    throw_exception(doodle_error{"kitsu get ue assembly error {} {}", l_res.result(), l_res.body().dump()});
+    throw_exception(doodle_error{"kitsu get ue assembly error {}", l_res.result()});
   if (l_res.result() == boost::beast::http::status::not_found) co_return file_info{};
 
   std::string l_last_mod_time{l_res.at(boost::beast::http::field::last_modified)};
