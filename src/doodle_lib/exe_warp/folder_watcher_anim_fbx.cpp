@@ -373,6 +373,12 @@ class folder_watcher_anim_fbx::impl {
           in_arg.file_name_;
       if (auto l_p = l_copy_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
       FSys::copy_file(in_arg.path_, l_copy_path, FSys::copy_options::overwrite_existing);
+      if (auto l_file_info = co_await in_client->upload_shot_animation_maya_heap(in_arg.task_id_, l_copy_path);
+          l_file_info.exist_ &&
+          l_file_info.updated_time_ >= chrono::clock_cast<chrono::utc_clock>(FSys::last_write_time(in_arg.path_))) {
+        SPDLOG_INFO("文件 {} 已经存在且未修改, 跳过上传", in_arg.path_.generic_string());
+        co_return;
+      }
       // 上传文件
       co_await in_client->upload_shot_animation_maya(in_arg.task_id_, l_copy_path);
       co_await in_client->run_export_anim_fbx_task(in_arg.project_id_, in_arg.task_id_);
