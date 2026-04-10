@@ -19,6 +19,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
+#include <doodle_lib/exe_warp/folder_watcher_anim_fbx.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/task_sync.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
@@ -32,6 +33,7 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include "exe_warp/folder_watcher_anim_fbx.h"
 #include <algorithm>
 #include <cstddef>
 #include <filesystem>
@@ -740,6 +742,28 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_assets_update_ue, get) {
     l_paths.emplace_back(get_entity_prop_ue_files_path(*l_asset_extend));
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_paths);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
+  exe_warp::folder_watcher_anim_fbx::watch_arg l_arg{};
+  auto l_sql            = get_sqlite_database();
+  auto l_task           = l_sql.get_by_uuid<task>(task_id_);
+  auto l_entity         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
+  auto l_prj            = l_sql.get_by_uuid<project>(l_task.project_id_);
+  auto l_ext            = l_sql.get_entity_shot_extend(l_entity.uuid_id_);
+  DOODLE_CHICK_HTTP(l_ext, bad_request, "镜头扩展信息不存在，无法导出动画 fbx");
+  DOODLE_CHICK_HTTP(l_ext->frame_in_, bad_request, "镜头扩展信息开始帧不存在，无法导出动画 fbx");
+  DOODLE_CHICK_HTTP(l_ext->frame_out_, bad_request, "镜头扩展信息结束帧不存在，无法导出动画 fbx");
+
+  episodes l_episodes{l_episode_entity};
+  shot l_shot{l_entity};
+
+  l_arg.file_name_ = get_shots_animation_file_name(l_episode_entity.name_, l_entity.name_, l_prj.code_);
+  l_arg.path_ = FSys::path{l_prj.code_} / "shot" / fmt::format("ep{:04}", l_episodes) / fmt::format("sc{:03}", l_shot);
+  l_arg.file_name_.replace_extension(".ma");
+  l_arg.project_id_ = l_task.project_id_;
+  l_arg.task_id_    = task_id_;
+  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 
 }  // namespace doodle::http

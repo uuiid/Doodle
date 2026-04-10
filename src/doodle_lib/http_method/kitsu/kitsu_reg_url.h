@@ -11,7 +11,6 @@
 
 #include <core/http/http_function.h>
 
-
 namespace doodle::http {
 // /api/auth/login
 DOODLE_HTTP_FUN(auth_login)
@@ -69,6 +68,11 @@ uuid task_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/actions/tasks/{task_id}/export-anim-fbx
 DOODLE_HTTP_JWT_FUN(actions_tasks_export_anim_fbx)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid task_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/actions/tasks/{task_id}/sync/export-anim-fbx
+DOODLE_HTTP_JWT_FUN(actions_tasks_sync_export_anim_fbx)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid task_id_{};
 DOODLE_HTTP_FUN_END()

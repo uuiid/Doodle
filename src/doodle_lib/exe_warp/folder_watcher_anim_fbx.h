@@ -3,10 +3,12 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+
 #include <boost/asio/awaitable.hpp>
 
 #include <filesystem>
 #include <vector>
+
 
 namespace doodle::exe_warp {
 class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watcher_anim_fbx> {
@@ -22,6 +24,8 @@ class folder_watcher_anim_fbx : public std::enable_shared_from_this<folder_watch
     uuid project_id_;
     uuid task_id_;
     FSys::path file_name_;
+    // to json
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(watch_arg, path_, project_id_, task_id_, file_name_)
   };
 
   void watch(const std::vector<watch_arg>& in_task_id);

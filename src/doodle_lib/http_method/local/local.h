@@ -4,6 +4,15 @@
 #pragma once
 #include <doodle_lib/core/http/http_function.h>
 
+#include <boost/asio/io_context.hpp>
+#include <boost/asio/strand.hpp>
+
+#include <memory>
+
+namespace doodle::exe_warp {
+class folder_watcher_anim_fbx;
+}
+
 namespace doodle::http::local {
 
 class local_http_fun : public http_function {
@@ -115,6 +124,15 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_FUN_C(actions_local_task_run, local_http_fun)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+DOODLE_HTTP_FUN_END()
+// 监事文件, 自动上传动画文件
+// /api/actions/local/watch_file/maya_anim
+DOODLE_HTTP_FUN_C(actions_local_watch_file_maya_anim, local_http_fun)
+boost::asio::strand<boost::asio::io_context::executor_type> strand_{boost::asio::make_strand(g_io_context())};
+std::shared_ptr<doodle::exe_warp::folder_watcher_anim_fbx> folder_watcher_{};
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::local

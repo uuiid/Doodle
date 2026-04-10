@@ -17,6 +17,7 @@
 #include <doodle_lib/exe_warp/assets_update.h>
 #include <doodle_lib/exe_warp/export_fbx_arg.h>
 #include <doodle_lib/exe_warp/export_rig_sk.h>
+#include <doodle_lib/exe_warp/folder_watcher_anim_fbx.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/inspect_maya.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
@@ -572,7 +573,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_task_update_movie_compose, post
   socket_io::broadcast(socket_io::local_server_task_info_update_broadcast_t{.main_info_ = *l_ptr});
   co_return in_handle->make_msg(nlohmann::json{} = *l_ptr);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_local_watch_file_maya_anim, post) {
+  DOODLE_TO_EXECUTOR(strand_);
+  if (!folder_watcher_) folder_watcher_ = std::make_shared<doodle::exe_warp::folder_watcher_anim_fbx>();
+  auto l_json     = in_handle->get_json();
+  auto l_task_ids = l_json["task_ids"].get<std::vector<uuid>>();
 
+  auto l_client   = std::make_shared<doodle::kitsu::kitsu_client>(core_set::get_set().server_ip);
+  l_client->set_token(token_);
+
+
+  DOODLE_TO_SELF();
+}
 }  // namespace doodle::http::local
 
 namespace doodle::http {
