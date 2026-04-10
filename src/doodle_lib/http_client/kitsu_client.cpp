@@ -410,11 +410,11 @@ boost::asio::awaitable<kitsu_client::file_info> kitsu_client::upload_shot_animat
     uuid in_shot_task_id, FSys::path in_file_path
 ) {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
-      boost::beast::http::verb::get, fmt::format("/api/doodle/data/shots/{}/file/maya", in_shot_task_id), 11
+      boost::beast::http::verb::head, fmt::format("/api/doodle/data/shots/{}/file/maya", in_shot_task_id), 11
   };
   set_req_headers(l_req);
   l_req.set(boost::beast::http::field::content_disposition, base64_encode(in_file_path.filename().generic_string()));
-  boost::beast::http::response<boost::beast::http::empty_body> l_res{};
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
   co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
   if (l_res.result() != boost::beast::http::status::ok && l_res.result() != boost::beast::http::status::not_found)
     throw_exception(doodle_error{"kitsu get ue assembly error {}", l_res.result()});
