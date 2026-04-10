@@ -328,10 +328,11 @@ class folder_watcher_anim_fbx::impl {
   }
 
  private:
-  // 是否 小于 1 小时
+  // 是否 大于 1 小时 小于 3 小时
   bool is_recently_changed(const FSys::path& in_path) const {
+    auto l_new = FSys::file_time_type::clock::now();
     return FSys::exists(in_path) &&
-           (FSys::last_write_time(in_path) + std::chrono::hours(1) > FSys::file_time_type::clock::now() || stopping_);
+           ((l_new - FSys::last_write_time(in_path) > 1h && l_new - FSys::last_write_time(in_path) < 3h) || stopping_);
   }
 
   std::atomic_bool stopping_{false};
