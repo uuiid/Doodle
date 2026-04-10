@@ -16,12 +16,12 @@
 
 #define DOODLE_TO_EXECUTOR(executor_)                             \
   auto this_executor = co_await boost::asio::this_coro::executor; \
-  co_await boost::asio::post(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
+  co_await boost::asio::dispatch(boost::asio::bind_executor(executor_, boost::asio::use_awaitable));
 
 #define DOODLE_TO_MAIN_THREAD() DOODLE_TO_EXECUTOR(g_strand())
 
 #define DOODLE_TO_SELF() \
-  co_await boost::asio::post(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
+  co_await boost::asio::dispatch(boost::asio::bind_executor(this_executor, boost::asio::use_awaitable));
 
 namespace spdlog {
 class logger;
