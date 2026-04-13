@@ -35,6 +35,7 @@ foreach ($Tab in $Tabls) {
     if ($Tab.name -eq "sqlite_sequence") { continue }
     if ($Tab.name -eq "project") { continue }
     if ($Tab.name -eq "project_status") { continue }
+    if ($Tab.name -eq "entity_fts") { continue }
     Invoke-SqliteQuery -DataSource $DataSource_loc -Query "DROP TABLE $($Tab.name);"
 }
 INVOKE-SqliteQuery -DataSource $DataSource_loc -Query "PRAGMA user_version = 0;"
