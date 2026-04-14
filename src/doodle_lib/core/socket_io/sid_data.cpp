@@ -44,7 +44,7 @@ void sid_data::run() {
   boost::asio::co_spawn(
       g_io_context(), impl_run(),
       boost::asio::bind_cancellation_slot(
-          ctx_->on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
+          app_base::Get().on_cancel.slot(), boost::asio::consign(boost::asio::detached, shared_from_this())
       )
   );
 }
