@@ -4,14 +4,14 @@
 
 #include "http_listener.h"
 
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/core/app_base.h>
-
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
+
 
 namespace doodle::http {
 boost::asio::awaitable<void> detail::run_http_listener(
@@ -51,9 +51,7 @@ void run_http_listener(boost::asio::io_context& in_io_context, http_route_ptr in
   g_ctx().emplace<detail::http_listener_cancellation_slot>();
   boost::asio::co_spawn(
       g_io_context(), detail::run_http_listener(in_io_context, in_route_ptr, in_port),
-      boost::asio::bind_cancellation_slot(
-          g_ctx().get<detail::http_listener_cancellation_slot>().slot(), boost::asio::detached
-      )
+      boost::asio::bind_cancellation_slot(app_base::Get().on_cancel.slot(), boost::asio::detached)
   );
 }
 }  // namespace doodle::http

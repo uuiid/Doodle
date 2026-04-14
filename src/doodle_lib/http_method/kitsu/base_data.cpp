@@ -248,11 +248,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始停止服务器", person_.person_.email_, person_.person_.get_full_name()
   );
-  g_ctx().get<detail::http_listener_cancellation_slot>().signal_.emit(boost::asio::cancellation_type::all);
   core_set::get_set().read_only_mode_ = true;
-  if (g_ctx().contains<socket_io::sid_ctx>()) {
-    g_ctx().get<socket_io::sid_ctx>().on_cancel.emit(boost::asio::cancellation_type::all);
-  }
+  app_base::Get().on_cancel.emit();
 
   boost::asio::co_spawn(g_io_context(), check_http_connection_count_and_stop_server(), boost::asio::detached);
   SPDLOG_LOGGER_WARN(

@@ -14,7 +14,6 @@
 
 #include <memory>
 
-
 namespace doodle ::socket_io {
 class socket_io_core;
 struct engine_io_packet;
@@ -104,7 +103,5 @@ class sid_ctx {
 
   boost::asio::awaitable<bool> has_register(std::string in_namespace) const;
   void clear();
-
-  cancellation_signals on_cancel;
 };
 }  // namespace doodle::socket_io
