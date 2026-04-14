@@ -1,21 +1,21 @@
 //
 // Created by TD on 25-8-15.
 //
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_type.h>
 #include <doodle_core/metadata/working_file.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/entity_path.h>
 #include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -51,7 +51,7 @@ std::vector<working_file_and_link> create_character_working_files(
               .software_type_ = software_enum::unreal_engine,
 
           },
-          in_entity.uuid_id_,
+          in_entity, in_entity_asset_extend
       }
   );
   l_working_files.emplace_back(
@@ -62,7 +62,7 @@ std::vector<working_file_and_link> create_character_working_files(
                        get_entity_character_rig_maya_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya_rig,
           },
-          in_entity.uuid_id_,
+          in_entity, in_entity_asset_extend
       }
   );
   if (entity_has_simulation_asset(in_entity.uuid_id_)) {
@@ -74,7 +74,7 @@ std::vector<working_file_and_link> create_character_working_files(
                          get_entity_simulation_character_asset_name(in_entity_asset_extend),
                 .software_type_ = software_enum::maya_sim,
             },
-            in_entity.uuid_id_,
+            in_entity, in_entity_asset_extend
         }
     );
 
@@ -87,7 +87,7 @@ std::vector<working_file_and_link> create_character_working_files(
                 .software_type_ = software_enum::unreal_engine,
 
             },
-            in_entity.uuid_id_,
+            in_entity, in_entity_asset_extend
         }
     );
 
@@ -100,7 +100,7 @@ std::vector<working_file_and_link> create_character_working_files(
                 .software_type_ = software_enum::unreal_engine,
 
             },
-            in_entity.uuid_id_,
+            in_entity, in_entity_asset_extend
         }
     );
 
@@ -113,7 +113,7 @@ std::vector<working_file_and_link> create_character_working_files(
                 .software_type_ = software_enum::unreal_engine,
 
             },
-            in_entity.uuid_id_,
+            in_entity, in_entity_asset_extend
         }
     );
   }
@@ -133,7 +133,8 @@ std::vector<working_file_and_link> create_prop_working_files(
                        get_entity_prop_ue_name(in_entity_asset_extend),
               .software_type_ = software_enum::unreal_engine,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
 
@@ -145,7 +146,8 @@ std::vector<working_file_and_link> create_prop_working_files(
                        get_entity_prop_model_maya_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
 
@@ -157,7 +159,8 @@ std::vector<working_file_and_link> create_prop_working_files(
                        get_entity_prop_rig_maya_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya_rig,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
   if (entity_has_simulation_asset(in_entity.uuid_id_))
@@ -169,7 +172,8 @@ std::vector<working_file_and_link> create_prop_working_files(
                          get_entity_simulation_prop_asset_name(in_entity_asset_extend),
                 .software_type_ = software_enum::maya_sim,
             },
-            in_entity.uuid_id_,
+
+            in_entity, in_entity_asset_extend
         }
     );
   return l_working_files;
@@ -187,7 +191,8 @@ std::vector<working_file_and_link> create_ground_working_files(
                        get_entity_ground_ue_map_name(in_entity_asset_extend),
               .software_type_ = software_enum::unreal_engine,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
   l_working_files.emplace_back(
@@ -198,7 +203,8 @@ std::vector<working_file_and_link> create_ground_working_files(
                        get_entity_ground_ue_sk_name(in_entity_asset_extend),
               .software_type_ = software_enum::unreal_engine_sk,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
   l_working_files.emplace_back(
@@ -209,7 +215,8 @@ std::vector<working_file_and_link> create_ground_working_files(
                        get_entity_ground_alembic_name(in_entity_asset_extend),
               .software_type_ = software_enum::alembic,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
   l_working_files.emplace_back(
@@ -220,7 +227,8 @@ std::vector<working_file_and_link> create_ground_working_files(
                        get_entity_ground_rig_name(in_entity_asset_extend),
               .software_type_ = software_enum::maya_rig,
           },
-          in_entity.uuid_id_,
+
+          in_entity, in_entity_asset_extend
       }
   );
 
@@ -366,12 +374,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   std::vector<working_file_and_link> l_working_files{};
   for (auto&& [l_entity, l_entity_asset_extend] : l_r) {
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
-      l_working_files |= ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |=
+          ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
     } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
                l_entity.entity_type_id_ == asset_type::get_effect_id()) {
       l_working_files |= ranges::actions::push_back(create_prop_working_files(l_prj, l_entity, l_entity_asset_extend));
     } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
-      l_working_files |= ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |=
+          ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
     }
   }
 
