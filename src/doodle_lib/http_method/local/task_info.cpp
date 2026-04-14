@@ -651,6 +651,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> epiboly_actions_pr
   l_arg_t->film_aperture_     = l_project.get_film_aperture();
   l_arg_t->size_              = l_project.get_resolution();
   l_ptr->command_             = (nlohmann::json{} = *l_arg_t);
+  local::task_info_manager().get_instance().add_task_info(l_ptr);
 
   if (l_ptr->name_.empty()) l_ptr->name_ = fmt::to_string(l_ptr->uuid_id_);
   auto l_run_long_task_local = std::make_shared<local::run_long_task_local>(l_ptr);
