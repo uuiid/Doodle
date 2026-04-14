@@ -340,7 +340,8 @@ struct make_with_tasks_sql_result_t {
         left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
         left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
         left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-        where(std::forward<T>(in_where)), multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
+        where(std::forward<T>(in_where)), multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_)),
+        limit(offset_, limit_)
     ));
     std::map<uuid, std::size_t> l_entities_and_tasks_map{};
     std::map<uuid, std::size_t> l_task_id_set{};
