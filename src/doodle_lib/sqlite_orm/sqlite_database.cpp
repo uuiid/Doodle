@@ -227,6 +227,15 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     );
     i.levels_.reserve(l_levels.size());
     for (const auto& d : l_levels) i.levels_.emplace_back(d);
+    // 获取场次统计
+    auto l_scenes = impl_->storage_any_.select(
+        columns(&entity_asset_extend::chang_ci_, count(&entity_asset_extend::chang_ci_)),
+        join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
+        where(c(&entity::project_id_) == i.uuid_id_), group_by(&entity_asset_extend::chang_ci_)
+    );
+    i.scenes_.reserve(l_scenes.size());
+    for (const auto& d : l_scenes) i.scenes_.emplace_back(d);
+
   }
   return l_projects;
 }

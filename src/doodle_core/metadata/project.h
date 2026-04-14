@@ -317,6 +317,7 @@ struct project_with_extra_data : project {
     }
   };
   std::vector<project_str> levels_;
+  std::vector<project_int> scenes_;
 
   // to json
   friend void to_json(nlohmann::json& j, const project_with_extra_data& p) {
@@ -346,11 +347,10 @@ struct project_with_extra_data : project {
       j["task_statuses_link"][fmt::to_string(d.task_status_id_)] =
           nlohmann::json{{"priority", d.priority_}, {"roles_for_board", d.roles_for_board_}};
     }
-    for (const auto& d : p.episodes_) j["episodes"].push_back(d);
-
-    for (const auto& d : p.seasons_) j["seasons"].push_back(d);
-
-    for (const auto& d : p.levels_) j["levels"].push_back(d);
+    j["episodes"] = p.episodes_;
+    j["seasons"]  = p.seasons_;
+    j["levels"]   = p.levels_;
+    j["scenes"]   = p.scenes_;
   }
 };
 
