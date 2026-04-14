@@ -79,7 +79,7 @@ class cloth_sim_run {
 
   void config_cloth_sim(const nlohmann::json& in_json) {
     in_json.at("image_size").get_to(size_);
-    in_json.at("film_aperture").get_to(film_aperture_);
+    in_json.at("camera_film_aperture").get_to(film_aperture_);
     auto l_sim_path = in_json.at("sim_path").get<FSys::path>();
     if (FSys::is_directory(l_sim_path)) {
       for (auto&& l_p : FSys::directory_iterator(l_sim_path)) {
