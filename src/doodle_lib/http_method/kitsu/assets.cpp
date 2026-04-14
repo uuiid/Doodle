@@ -26,6 +26,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <sys/stat.h>
+#include <vector>
 
 namespace doodle::http {
 namespace {
@@ -260,6 +261,7 @@ struct make_with_tasks_sql_result_t {
   std::vector<uuid> task_status_id_filter_;
   std::vector<uuid> person_id_filter_;
   std::string search_key_;
+  std::vector<std::int32_t> scenes_;
 
  private:
   auto project_id_where() {
@@ -288,6 +290,10 @@ struct make_with_tasks_sql_result_t {
   auto ji_shu_lie_where() {
     using namespace sqlite_orm;
     return in(&entity_asset_extend::ji_shu_lie_, ji_shu_lie_filter_);
+  }
+  auto scenes_where() {
+    using namespace sqlite_orm;
+    return in(&entity_asset_extend::chang_ci_, scenes_);
   }
   auto task_status_id_where() {
     using namespace sqlite_orm;
@@ -383,6 +389,7 @@ struct make_with_tasks_sql_result_t {
       if (l_i.has_value && l_i.key == "limit") limit_ = std::stoi(l_i.value);
       if (l_i.has_value && l_i.key == "project_id") project_id_ = from_uuid_str(l_i.value);
       if (l_i.has_value && l_i.key == "search_key") search_key_ = l_i.value;
+      if (l_i.has_value && l_i.key == "scenes") scenes_.emplace_back(std::stoi(l_i.value));
     }
   }
 
@@ -418,6 +425,7 @@ struct make_with_tasks_sql_result_t {
     if (!task_status_id_filter_.empty()) l_dynamic_where.push_back(task_status_id_where());
     if (!person_id_filter_.empty()) l_dynamic_where.push_back(person_id_where());
     if (!search_key_.empty()) l_dynamic_where.push_back(search_key_where());
+    if (!scenes_.empty()) l_dynamic_where.push_back(scenes_where());
 
     return with_tasks_sql_query(l_dynamic_where);
   }
