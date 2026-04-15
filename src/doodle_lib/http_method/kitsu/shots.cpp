@@ -547,18 +547,27 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
       from<entity>(), join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
       where(c(&entity::project_id_) == project_id_ && in(sqlite_orm::get<name_all>(), l_shot_names))
   );
-  auto l_shot_ext = std::make_shared<std::vector<entity_shot_extend>>();
-  for (auto&& [l_shot_name, l_shot_id] : l_args.shots_) {
+  auto l_shot_ext_instasll = std::make_shared<std::vector<entity_shot_extend>>();
+  auto l_shot_ext_update   = std::make_shared<std::vector<entity_shot_extend>>();
+  for (auto&& [l_shot_name, l_shot_id] : l_list) {
     if (l_shot_name_to_frame_range.contains(l_shot_name)) {
       auto&& l_frame_range = l_shot_name_to_frame_range[l_shot_name];
-      auto l_shot_extend =
-          l_sql.get_entity_shot_extend(l_shot_id).value_or(entity_shot_extend{.entity_id_ = l_shot_id});
-      l_shot_extend.frame_in_  = l_frame_range->frame_in_;
-      l_shot_extend.frame_out_ = l_frame_range->frame_out_;
-      l_shot_ext->emplace_back(std::move(l_shot_extend));
+      auto l_shot_extend   = l_sql.get_entity_shot_extend(l_shot_id);
+      if (l_shot_extend) {
+        l_shot_extend->frame_in_  = l_frame_range->frame_in_;
+        l_shot_extend->frame_out_ = l_frame_range->frame_out_;
+        l_shot_ext_update->emplace_back(std::move(*l_shot_extend));
+      } else {
+        l_shot_ext_instasll->emplace_back(
+            entity_shot_extend{
+                .entity_id_ = l_shot_id, .frame_in_ = l_frame_range->frame_in_, .frame_out_ = l_frame_range->frame_out_
+            }
+        );
+      }
     }
   }
-  if (!l_shot_ext->empty()) co_await l_sql.update_range(l_shot_ext);
+  if (!l_shot_ext_update->empty()) co_await l_sql.update_range(l_shot_ext_update);
+  if (!l_shot_ext_instasll->empty()) co_await l_sql.install_range(l_shot_ext_instasll);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 导入镜头帧范围", person_.person_.email_,
