@@ -235,7 +235,16 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     );
     i.scenes_.reserve(l_scenes.size());
     for (const auto& d : l_scenes) i.scenes_.emplace_back(d);
-
+    // 获取序列统计
+    auto sequence   = "sequence"_alias.for_<entity>();
+    auto l_sequences = impl_->storage_any_.select(
+        columns(sequence->*&entity::uuid_id_, count(sequence->*&entity::uuid_id_)),
+        from<entity>(),
+        join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+        where(c(&entity::project_id_) == i.uuid_id_), group_by(sequence->*&entity::uuid_id_)
+    );
+    i.sequences_.reserve(l_sequences.size());
+    for (const auto& d : l_sequences) i.sequences_.emplace_back(d);
   }
   return l_projects;
 }
