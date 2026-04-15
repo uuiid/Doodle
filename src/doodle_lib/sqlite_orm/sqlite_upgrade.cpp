@@ -63,10 +63,8 @@ struct upgrade_init_t : sqlite_upgrade {
     auto l_exit_fts = in_data->storage_any_.table_exists("entity_fts");
     in_data->sync_schema();
     // 不存在表, 并在同步后, 存在虚拟表, 说明是第一次安装, 需要将已有的 entity 数据同步到 entity_fts 虚拟表中
-    if (!l_exit_fts) {
-      bool re_full_sync = false;
-      full_fts_sync(in_data);
-    }
+    if (!l_exit_fts) full_fts_sync(in_data);
+
     if (in_data->storage_any_.pragma.user_version() == 0) {
       in_data->storage_any_.pragma.user_version(1);
     }
@@ -129,8 +127,14 @@ struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     if (in_data->storage_any_.pragma.user_version() == 1) {
+      in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger");
+      in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger");
+      in_data->storage_any_.drop_trigger_if_exists("entity_fts_delete_trigger");
+      in_data->storage_any_.drop_table("entity_fts");
+
       in_data->sync_schema();
-      in_data->storage_any_.pragma.user_version(4);
+      full_fts_sync(in_data);
+      in_data->storage_any_.pragma.user_version(2);
     }
   }
   ~upgrade_2_t() override = default;
