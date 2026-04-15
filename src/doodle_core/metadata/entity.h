@@ -79,6 +79,7 @@ struct DOODLE_CORE_API entity_shot_extend {
 
   // to json
   friend void to_json(nlohmann::json& j, const entity_shot_extend& p) {
+    j["entity_id"] = p.entity_id_;
     j["frame_in"]  = p.frame_in_;
     j["frame_out"] = p.frame_out_;
   }
