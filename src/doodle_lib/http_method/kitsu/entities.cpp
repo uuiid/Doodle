@@ -10,6 +10,11 @@
 
 namespace doodle::http {
 namespace {}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
+  auto l_sql = get_sqlite_database();
+  auto l_entt = l_sql.get_by_uuid<entity>(id_);
+  co_return in_handle->make_msg(nlohmann::json{} = l_entt);
+}
 boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put(session_data_ptr in_handle) {
   auto l_sql  = get_sqlite_database();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
