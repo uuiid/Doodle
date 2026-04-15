@@ -35,7 +35,7 @@ struct upgrade_init_t : sqlite_upgrade {
   };
   explicit upgrade_init_t(const FSys::path& in_path) {}
 
-  void full_fts_sync(const std::shared_ptr<sqlite_database_impl>& in_data) {
+  static void full_fts_sync(const std::shared_ptr<sqlite_database_impl>& in_data) {
     using namespace sqlite_orm;
     auto l_g                = in_data->storage_any_.transaction_guard();
     // in_data->storage_any_.insert(
@@ -133,7 +133,7 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data->storage_any_.drop_table("entity_fts");
 
       in_data->sync_schema();
-      full_fts_sync(in_data);
+      upgrade_init_t::full_fts_sync(in_data);
       in_data->storage_any_.pragma.user_version(2);
     }
   }
