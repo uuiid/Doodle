@@ -2,20 +2,19 @@
 // Created by TD on 24-8-20.
 //
 
-#include <doodle_core/metadata/task.h>
-
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/notification.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_core/metadata/project.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_core/metadata/task.h>
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -23,6 +22,7 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <tuple>
 #include <vector>
+
 
 namespace doodle::http {
 
@@ -87,8 +87,8 @@ auto get_todo_fun(Where&& in_where, OrderBy&& in_order_by) {
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto l_sql              = get_sqlite_database();
-  auto l_json             = in_handle->get_json();
+  auto l_sql  = get_sqlite_database();
+  auto l_json = in_handle->get_json();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置任务状态关联 project_id {} task_status_id {}",
@@ -133,15 +133,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign::put(session_data_ptr in_handle) {
-  auto l_sql                                 = get_sqlite_database();
-  auto l_person_data                         = l_sql.get_by_uuid<person>(id_);
-  auto l_task_ids                            = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
+  auto l_sql         = get_sqlite_database();
+  auto l_person_data = l_sql.get_by_uuid<person>(id_);
+  auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始批量分配任务 to_person_id {} task_count {}", person_.person_.email_,
       person_.person_.get_full_name(), l_person_data.uuid_id_, l_task_ids.size()
   );
-  std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
+  std::shared_ptr<std::vector<task>> l_tasks                      = std::make_shared<std::vector<task>>();
   std::shared_ptr<std::vector<assignees_table>> l_assignees_table = std::make_shared<std::vector<assignees_table>>();
   std::shared_ptr<std::vector<notification>> l_notifications      = std::make_shared<std::vector<notification>>();
   l_tasks->reserve(l_task_ids.size());
@@ -176,8 +176,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
       "用户 {}({}) 完成批量分配任务 to_person_id {} requested_task_count {} assigned_task_count {} notify_count {}",
-      person_.person_.email_, person_.person_.get_full_name(), l_person_data.uuid_id_, l_task_ids.size(), l_tasks->size(),
-      l_notifications->size()
+      person_.person_.email_, person_.person_.get_full_name(), l_person_data.uuid_id_, l_task_ids.size(),
+      l_tasks->size(), l_notifications->size()
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_tasks);
 }
@@ -457,7 +457,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
   auto l_assignees = l_sql.impl_->storage_any_.select(
       object<person>(true), from<person>(), where(in(&person::uuid_id_, l_task.assignees_))
   );
-  auto l_working_files = l_sql.get_working_file_by_task(id_);
   nlohmann::json l_ret{};
   l_ret = l_task;
   l_ret.update(
@@ -469,7 +468,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
           {"project", l_project},
           {"task_type", l_task_type},
           {"task_status", l_task_status},
-          {"working_files", l_working_files},
       }
   );
   co_return in_handle->make_msg(l_ret);

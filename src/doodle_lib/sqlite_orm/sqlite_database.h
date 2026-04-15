@@ -134,8 +134,6 @@ class sqlite_database {
   std::vector<work_xlsx_task_info_helper::database_t> get_work_xlsx_task_info(
       const uuid& in_person_id, const chrono::local_days& in_data
   );
-  std::vector<working_file> get_working_file_by_task(const uuid& in_task_id);
-  // working_file get_sim_working_file_by_rig;
 
   std::int32_t get_notification_count(const uuid& in_user_id);
   std::vector<project_with_extra_data> get_project_for_user(const person& in_user);
@@ -229,8 +227,6 @@ class sqlite_database {
   // 获取 项目中实体数量
   std::size_t get_project_entity_count(const uuid& in_project_id);
 
-  // 删除孤立的, 没有和其他连接的工作文件
-  boost::asio::awaitable<void> remove_working_file_orphaned();
   // 是给外包授权的实体
   bool is_entity_outsourced(const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id = uuid{});
   // 删除sequence下的所有casting数据

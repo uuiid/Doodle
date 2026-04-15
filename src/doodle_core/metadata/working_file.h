@@ -21,17 +21,6 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
                    }
 );
 
-struct working_file_task_link {
-  std::int64_t id_;
-  uuid working_file_id_;
-  uuid task_id_;
-};
-struct working_file_entity_link {
-  std::int64_t id_;
-  uuid working_file_id_;
-  uuid entity_id_;
-};
-
 struct working_file {
   DOODLE_BASE_FIELDS();
   std::string name_;

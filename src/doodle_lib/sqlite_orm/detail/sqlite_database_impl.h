@@ -241,47 +241,6 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           foreign_key(&playlist::episodes_id_).references(&entity::uuid_id_).on_delete.cascade(),
           foreign_key(&playlist::task_type_id_).references(&task_type::uuid_id_).on_delete.cascade()
       ),
-      make_index("working_file_task_link_working_file_id_index", &working_file_task_link::working_file_id_),
-      make_index("working_file_task_link_task_id_index", &working_file_task_link::task_id_),
-      make_index("working_file_entity_link_working_file_id_index", &working_file_entity_link::working_file_id_),
-      make_index("working_file_entity_link_entity_id_index", &working_file_entity_link::entity_id_),
-      make_unique_index(
-          "working_file_task_link_unique", &working_file_task_link::working_file_id_, &working_file_task_link::task_id_
-      ),
-      make_table<working_file_task_link>(
-          "working_file_task_link", make_column("id", &working_file_task_link::id_, primary_key().autoincrement()),
-          make_column("working_file_id", &working_file_task_link::working_file_id_, not_null()),
-          make_column("task_id", &working_file_task_link::task_id_, not_null()),
-          foreign_key(&working_file_task_link::working_file_id_)
-              .references(&working_file::uuid_id_)
-              .on_delete.cascade(),
-          foreign_key(&working_file_task_link::task_id_).references(&task::uuid_id_).on_delete.cascade()
-      ),
-      make_unique_index(
-          "working_file_entity_link_unique", &working_file_entity_link::working_file_id_,
-          &working_file_entity_link::entity_id_
-      ),
-      make_table<working_file_entity_link>(
-          "working_file_entity_link", make_column("id", &working_file_entity_link::id_, primary_key().autoincrement()),
-          make_column("working_file_id", &working_file_entity_link::working_file_id_, not_null()),
-          make_column("entity_id", &working_file_entity_link::entity_id_, not_null()),
-          foreign_key(&working_file_entity_link::working_file_id_)
-              .references(&working_file::uuid_id_)
-              .on_delete.cascade(),
-          foreign_key(&working_file_entity_link::entity_id_).references(&entity::uuid_id_).on_delete.cascade()
-      ),
-      make_table<working_file>(
-          "working_file", make_column("id", &working_file::id_, primary_key()),
-          make_column("uuid_id", &working_file::uuid_id_, unique(), not_null()),
-          make_column("name", &working_file::name_),                                                                 //
-          make_column("description", &working_file::description_), make_column("comment", &working_file::comment_),  //
-          make_column("revision", &working_file::revision_, not_null(), default_value(0)),
-          make_column("size", &working_file::size_, not_null(), default_value(0)),
-          make_column("checksum", &working_file::checksum_, not_null(), default_value(0)),
-          make_column("path", &working_file::path_),  //
-          make_column("software_type", &working_file::software_type_, not_null())
-      ),
-
       make_index("server_task_info_tab_uuid_id_idx", &server_task_info::uuid_id_),
       make_table<server_task_info>(
           "server_task_info_tab",  //

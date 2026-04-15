@@ -53,7 +53,9 @@ struct upgrade_init_t : sqlite_upgrade {
     //     )
     // );
     using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
-    in_data->storage_any_.insert(into<entity_fts>(), columns(entity_fts_hidden::any_field), values(std::make_tuple("rebuild")));
+    in_data->storage_any_.insert(
+        into<entity_fts>(), columns(entity_fts_hidden::any_field), values(std::make_tuple("rebuild"))
+    );
     l_g.commit();
   }
 
@@ -120,18 +122,13 @@ struct upgrade_init_t : sqlite_upgrade {
     DOODLE_TASK_TYPE(simulation, 解算资产)
     DOODLE_TASK_TYPE(effect_asset, 特效资产)
 #undef DOODLE_TASK_TYPE
-    using namespace sqlite_orm;
-    in_data->storage_any_.remove_all<working_file>(where(not_in(
-        &working_file::uuid_id_,
-        union_(select(&working_file_task_link::working_file_id_), select(&working_file_entity_link::working_file_id_))
-    )));
   }
 };  // namespace doodle::details
 
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
-    if (in_data->storage_any_.pragma.user_version() == 3) {
+    if (in_data->storage_any_.pragma.user_version() == 1) {
       in_data->sync_schema();
       in_data->storage_any_.pragma.user_version(4);
     }

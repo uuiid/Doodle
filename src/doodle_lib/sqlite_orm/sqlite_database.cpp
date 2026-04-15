@@ -236,10 +236,9 @@ std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const
     i.scenes_.reserve(l_scenes.size());
     for (const auto& d : l_scenes) i.scenes_.emplace_back(d);
     // 获取序列统计
-    auto sequence   = "sequence"_alias.for_<entity>();
+    auto sequence    = "sequence"_alias.for_<entity>();
     auto l_sequences = impl_->storage_any_.select(
-        columns(sequence->*&entity::uuid_id_, count(sequence->*&entity::uuid_id_)),
-        from<entity>(),
+        columns(sequence->*&entity::uuid_id_, count(sequence->*&entity::uuid_id_)), from<entity>(),
         join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
         where(c(&entity::project_id_) == i.uuid_id_), group_by(sequence->*&entity::uuid_id_)
     );
@@ -683,14 +682,6 @@ std::vector<status_automation> sqlite_database::get_project_status_automations(c
       where(c(&project_status_automation_link::project_id_) == in_project_uuid)
   );
 }
-std::vector<working_file> sqlite_database::get_working_file_by_task(const uuid& in_task_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<working_file>(
-      join<working_file_task_link>(on(c(&working_file_task_link::working_file_id_) == c(&working_file::uuid_id_))),
-      where(c(&working_file_task_link::task_id_) == in_task_id)
-  );
-  return l_t;
-}
 
 std::map<uuid, std::int32_t> sqlite_database::get_task_type_priority_map(
     const uuid& in_project, const std::string& in_for_entity
@@ -993,17 +984,6 @@ std::size_t sqlite_database::get_project_entity_count(const uuid& in_project_id)
   return impl_->storage_any_.count<entity>(where(in_project_id.is_nil() || c(&entity::project_id_) == in_project_id));
 }
 
-boost::asio::awaitable<void> sqlite_database::remove_working_file_orphaned() {
-  DOODLE_TO_SQLITE_THREAD_2();
-  using namespace sqlite_orm;
-
-  impl_->storage_any_.remove_all<working_file>(where(not_in(
-      &working_file::uuid_id_,
-      union_(select(&working_file_task_link::working_file_id_), select(&working_file_entity_link::working_file_id_))
-  )));
-  DOODLE_TO_SELF();
-  co_return;
-}
 bool sqlite_database::is_entity_outsourced(
     const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id
 ) {
@@ -1296,8 +1276,6 @@ DOODLE_INSTALL_RANGE(task)
 DOODLE_INSTALL_RANGE(person_department_link)
 DOODLE_INSTALL_RANGE(working_file)
 DOODLE_INSTALL_RANGE(entity_link)
-DOODLE_INSTALL_RANGE(working_file_task_link)
-DOODLE_INSTALL_RANGE(working_file_entity_link)
 DOODLE_INSTALL_RANGE(playlist_shot)
 DOODLE_INSTALL_RANGE(task_type_asset_type_link)
 DOODLE_INSTALL_RANGE(assignees_table)
@@ -1312,7 +1290,6 @@ DOODLE_REMOVE_BY_ID(comment)
 DOODLE_REMOVE_BY_ID(assets_file_helper::link_parent_t)
 DOODLE_REMOVE_BY_ID(comment_acknoledgments)
 DOODLE_REMOVE_BY_ID(project_person_link)
-DOODLE_REMOVE_BY_ID(working_file_task_link)
 DOODLE_REMOVE_BY_ID(working_file)
 DOODLE_REMOVE_BY_ID(entity_link)
 DOODLE_REMOVE_BY_ID(playlist)
