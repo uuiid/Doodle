@@ -132,7 +132,10 @@ class cloth_sim_run {
     else if (ncloth_factory::has_cloth())
       l_cf = std::make_shared<ncloth_factory>();
 
-    if (!l_cf) return;
+    if (!l_cf) {
+      display_info("没有找到布料, 无法解算, 请确认是否有对应的资产文件, 现在直接退出");
+      return;
+    }
 
     auto l_cloth_list_ = l_cf->create_cloth();
     std::map<std::string, reference_file> l_ref_map{};
