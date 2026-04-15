@@ -543,7 +543,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
   auto sequence                            = "sequence"_alias.for_<entity>();
   constexpr orm_column_alias auto name_all = name_all_t{};
   auto l_list                              = l_sql.impl_->storage_any_.select(
-      columns(conc(sequence->*&entity::name_, conc('_', &entity::name_)) >>= name_all, &entity::uuid_id_),
+      columns(conc(sequence->*&entity::name_, conc("_", &entity::name_)) >>= name_all, &entity::uuid_id_),
       from<entity>(), join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
       where(c(&entity::project_id_) == project_id_ && in(sqlite_orm::get<name_all>(), l_shot_names))
   );
@@ -574,7 +574,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
       person_.person_.get_full_name(), project_id_
   );
 
-  co_return in_handle->make_msg_204();
+  std::vector<entity_shot_extend> l_result;
+  l_result.reserve(l_shot_ext_update->size() + l_shot_ext_instasll->size());
+  for (auto&& l_shot_ext : *l_shot_ext_update) l_result.emplace_back(std::move(l_shot_ext));
+  for (auto&& l_shot_ext : *l_shot_ext_instasll) l_result.emplace_back(std::move(l_shot_ext));
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 
 }  // namespace doodle::http
