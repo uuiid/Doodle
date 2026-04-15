@@ -159,7 +159,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       ),
       make_trigger(
           "entity_fts_delete_trigger",
-          after()
+          before()
               .delete_()
               .on<entity>()
               .begin(  //
