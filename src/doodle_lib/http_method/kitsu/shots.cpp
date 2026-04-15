@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/entity.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/working_file.h>
 
@@ -484,6 +485,67 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_
         socket_io::shot_delete_broadcast_t{.shot_id_ = l_shot->uuid_id_, .project_id_ = l_shot->project_id_}
     );
   }
+  co_return in_handle->make_msg_204();
+}
+struct actions_projects_shots_import_frame_range_args {
+  struct shot_frame_range_t {
+    std::string name_;
+    std::int32_t frame_in_;
+    std::int32_t frame_out_;
+    // from json
+    friend void from_json(const nlohmann::json& j, shot_frame_range_t& p) {
+      j.at("name").get_to(p.name_);
+      j.at("frame_in").get_to(p.frame_in_);
+      j.at("frame_out").get_to(p.frame_out_);
+    }
+  };
+  std::vector<shot_frame_range_t> shots_;
+  // from json
+  friend void from_json(const nlohmann::json& j, actions_projects_shots_import_frame_range_args& p) {
+    j.at("shots").get_to(p.shots_);
+  }
+};
+namespace {
+struct name_all_t : sqlite_orm::alias_tag {
+  static const std::string& get() {
+    static const std::string res = "name_all";
+    return res;
+  }
+};
+}  // namespace
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, post) {
+  auto l_args = in_handle->get_json().get<actions_projects_shots_import_frame_range_args>();
+  auto l_sql  = get_sqlite_database();
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 导入镜头帧范围", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_
+  );
+  auto l_project = l_sql.get_by_uuid<project>(project_id_);
+  using namespace sqlite_orm;
+  std::vector<std::string> l_shot_names;
+  for (auto&& l_shot : l_args.shots_)
+    if (!l_shot.name_.empty() && l_shot.name_.starts_with(l_project.code_))
+      l_shot_names.emplace_back(
+          l_shot.name_.substr(l_project.code_.size() + 1)
+      );  // 镜头名称如果以项目 code 开头, 则去掉项目 code + "_" 前缀再匹配
+
+  auto sequence                            = "sequence"_alias.for_<entity>();
+  constexpr orm_column_alias auto name_all = name_all_t{};
+  auto l_list                              = l_sql.impl_->storage_any_.select(
+      conc(sequence->*&entity::name_, conc('_', &entity::name_)), from<entity>() >>= name_all,
+      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      where(c(&entity::project_id_) == project_id_ && in(get<name_all>(), l_shot_names))
+  );
+  for (auto&& l_shot : l_args.shots_) {
+  }
+
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 导入镜头帧范围", person_.person_.email_,
+      person_.person_.get_full_name(), project_id_
+  );
+
   co_return in_handle->make_msg_204();
 }
 

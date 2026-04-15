@@ -225,6 +225,7 @@ uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/entities/{id}
 DOODLE_HTTP_JWT_FUN(data_entities)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
@@ -563,6 +564,12 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid task_type_id_{};
 DOODLE_HTTP_FUN_END()
+// /api/actions/projects/{project_id}/shots/import/frame-range
+DOODLE_HTTP_JWT_FUN(actions_projects_shots_import_frame_range)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+uuid project_id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/data/projects/{project_id}/sequences/all/casting
 DOODLE_HTTP_JWT_FUN(data_project_sequences_all_casting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
