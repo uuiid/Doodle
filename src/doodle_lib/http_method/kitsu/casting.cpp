@@ -629,7 +629,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       l_assembly_names_prop.emplace_back(l_assembly_name);
   }
   SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
-  auto l_tem = l_sql.get_temporal_type_ids();
+
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
@@ -639,33 +639,58 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
       where(c(sequence->*&entity::uuid_id_) == l_episode_entity.uuid_id_)
   );
-
-  auto l_ass = l_sql.impl_->storage_any_.select(
+  // 直接获取当集资产, 后续不使用数据库进行匹配, 人工匹配
+  auto l_ass_all = l_sql.impl_->storage_any_.select(
       columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
 
       where(
-          (      //
-              (  //
-                  (
-                      in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
-                         l_assembly_names_prop) ||
-                      in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop)
+          // (      //
+          //     (  //
+          //         (
+          //             in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
+          //                l_assembly_names_prop) ||
+          //             in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop)
 
-                  ) &&
-                  c(&entity::entity_type_id_) == asset_type::get_prop_id()
-              ) ||
-              (  //
-                  in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
-                  c(&entity::entity_type_id_) == asset_type::get_character_id()
-              )
-
-          ) &&
+          //         ) &&
+          //         c(&entity::entity_type_id_) == asset_type::get_prop_id()
+          //     ) ||
+          //     (  //
+          //         in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
+          //         c(&entity::entity_type_id_) == asset_type::get_character_id()
+          //     )
+          // ) &&
           c(&entity::project_id_) == project_id_ && in(&entity_asset_extend::entity_id_, l_seq_entts)
       )
   );
 
-  // 对 l_ass 排序和去重
+  decltype(l_ass_all) l_ass{};
+  std::map<std::string, std::size_t> l_ass_all_map{};
+
+  for (auto i = 0; i < l_ass_all.size(); ++i) {
+    auto&& [l_ass_ext, l_entity_type_id] = l_ass_all[i];
+    if (l_entity_type_id == asset_type::get_prop_id()) {
+      l_ass_all_map.emplace(
+          l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
+                                     : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_),
+          i
+      );
+    } else {
+      l_ass_all_map.emplace(l_ass_ext.bian_hao_, i);
+    }
+  }
+  for (auto&& l_ass_name : l_assembly_names_character) {
+    if (!l_ass_all_map.contains(l_ass_name)) continue;
+    if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_character_id())
+      l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+  }
+  for (auto&& l_ass_name : l_assembly_names_prop) {
+    if (!l_ass_all_map.contains(l_ass_name)) continue;
+    if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_prop_id())
+      l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+  }
+
+  // 现在镜头用到的资产
   auto l_link = l_sql.impl_->storage_any_.select(
       columns(&entity_link::entity_out_id_, object<entity_asset_extend>(), &entity::entity_type_id_),
       from<entity_link>(), join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
