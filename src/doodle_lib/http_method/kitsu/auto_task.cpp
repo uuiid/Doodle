@@ -788,8 +788,7 @@ struct name_all_t : sqlite_orm::alias_tag {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_harvest, post) {
   person_.check_not_outsourcer();
   auto l_sql         = get_sqlite_database();
-  auto l_shot_task   = l_sql.get_by_uuid<task>(id_);
-  auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
+  auto l_shot_entity = l_sql.get_by_uuid<entity>(id_);
   if (l_shot_entity.parent_id_.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
@@ -801,14 +800,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
 
   episodes l_episodes{l_episode_entity};
   shot l_shot{l_shot_entity};
-  bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
 
-  FSys::path l_path_dir{};
-  /// tag: 格式化路径
-  l_path_dir = l_is_simulation_task
-                   ? get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_)
-                   : get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  l_path_dir = l_prj.path_ / l_path_dir;
+  FSys::path l_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+  l_path_dir            = l_prj.path_ / l_path_dir;
   DOODLE_CHICK_HTTP(FSys::exists(l_path_dir), bad_request, "输出路径 {} 不存在，无法收集组件", l_path_dir.string());
   auto l_file_end_str = fmt::format("_{}-{}", l_shot_extend->frame_in_.value(), l_shot_extend->frame_out_.value());
   auto l_shot_file_name =
