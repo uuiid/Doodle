@@ -287,7 +287,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
       .reg_t<actions_projects_shots_casting_ue_assembly_harvest>("/api/actions/projects/{}/shots/{}/casting/ue-assembly-harvest"_url(
         &actions_projects_shots_casting_ue_assembly_harvest::project_id_,
-        &actions_projects_shots_casting_ue_assembly_harvest::id_,
+        &actions_projects_shots_casting_ue_assembly_harvest::id_
       ))
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
