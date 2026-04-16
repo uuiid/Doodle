@@ -16,68 +16,66 @@ Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 $NewSession = New-ServerPSSession
 
 $KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
-Invoke-Command -Session $NewSession -ScriptBlock {
+Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies -ScriptBlock {
+    param ($KitsuCookies)
+
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $LogPath = "$env:TEMP\build_$timestamp.log"
     &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1
-}
+    
+    if (!$Using:CopyServer) { return; }
 
-
-if ($CopyServer) {
-    Invoke-Command -Session $NewSession  -ArgumentList $KitsuCookies -ScriptBlock {
-        param ($KitsuCookies)
-        $Kitsu_Ip = "127.0.0.1"
-        Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
-        #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
-
-        $headers = @{
-            "Authorization" = "Bearer $KitsuCookies"
-        }
-        # 兼容5.1版本 需要加 -UseBasicParsing
-        if ($PSVersionTable.PSVersion.Major -lt 6) {
-            Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers -UseBasicParsing
+    $Kitsu_Ip = "127.0.0.1"
+    Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
+    #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
+    
+    $headers = @{
+        "Authorization" = "Bearer $KitsuCookies"
+    }
+    # 兼容5.1版本 需要加 -UseBasicParsing
+    if ($PSVersionTable.PSVersion.Major -lt 6) {
+        Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers -UseBasicParsing
+    }
+    else {
+        Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers
+    }
+    $Target = "D:"
+    $Tmp = "D:\tmp"
+    $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
+    $LogPath = "$env:TEMP\build_$timestamp.log"
+    # 进行数据库升级
+    $sqlite_upgrade_script = "D:/sql.sql"
+    $database_path = "C:\kitsu_new.database"
+    
+    if ((Get-Item -Path $sqlite_upgrade_script).Length -gt 0) {
+        Write-Host "进行数据库升级"
+        &"D:\sqlite3.exe" $database_path ".read $sqlite_upgrade_script"
+        Set-Content -Path $sqlite_upgrade_script -Value $null
+    }
+    # 找到停止的服务
+    $UpdataServers = $false
+    # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
+    foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
+        if ($server.Status -eq "Stopped") {
+            if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
+                Write-Host "更新服务 $($server.Name)"
+                &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
+                Start-Service -InputObject $server
+                Set-Service -Name $server.Name -StartupType Automatic
+                $UpdataServers = $true
+            }
         }
         else {
-            Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers
-        }
-        $Target = "D:"
-        $Tmp = "D:\tmp"
-        $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
-        $LogPath = "$env:TEMP\build_$timestamp.log"
-        # 进行数据库升级
-        $sqlite_upgrade_script = "D:/sql.sql"
-        $database_path = "C:\kitsu_new.database"
-
-        if ((Get-Item -Path $sqlite_upgrade_script).Length -gt 0) {
-            Write-Host "进行数据库升级"
-            &"D:\sqlite3.exe" $database_path ".read $sqlite_upgrade_script"
-            Set-Content -Path $sqlite_upgrade_script -Value $null
-        }
-        # 找到停止的服务
-        $UpdataServers = $false
-        # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
-        foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
-            if ($server.Status -eq "Stopped") {
-                if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
-                    Write-Host "更新服务 $($server.Name)"
-                    &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
-                    Start-Service -InputObject $server
-                    Set-Service -Name $server.Name -StartupType Automatic
-                    $UpdataServers = $true
-                }
-            }
-            else {
-                if ($UpdataServers) {
-                    Write-Host "服务 $($server.Name) 未停止 将在 $((Get-Date).AddMinutes(20)) 停止，设置为手动启动"
-                    Set-Service -Name $server.Name -StartupType Manual 
-                }
+            if ($UpdataServers) {
+                Write-Host "服务 $($server.Name) 未停止 将在 $((Get-Date).AddMinutes(20)) 停止，设置为手动启动"
+                Set-Service -Name $server.Name -StartupType Manual 
             }
         }
     }
+
 }
- 
 
 # 清除 zip文件
 Remove-Item -Path "$DoodleOut" -Include "*.zip" -Recurse -Force
