@@ -16,8 +16,8 @@ Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 $NewSession = New-ServerPSSession
 
 $KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
-Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies -ScriptBlock {
-    param ($KitsuCookies)
+Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -ScriptBlock {
+    param ($KitsuCookies, $CopyServer)
 
     $Target = "D:\kitsu"
     $Tmp = "D:\tmp"
@@ -25,7 +25,7 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies -ScriptBlock {
     $LogPath = "$env:TEMP\build_$timestamp.log"
     &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1
     
-    if (!$Using:CopyServer) { return; }
+    if (!$CopyServer) { return; }
 
     $Kitsu_Ip = "127.0.0.1"
     Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
