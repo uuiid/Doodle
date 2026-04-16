@@ -16,11 +16,13 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
+#include <any>
 #include <map>
 #include <range/v3/range/conversion.hpp>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <string>
 #include <vector>
 
 namespace doodle::http {
@@ -639,7 +641,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   );
 
   auto l_ass = l_sql.impl_->storage_any_.select(
-      &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
+      columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
       where(
           in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
@@ -648,16 +650,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       )
   );
   auto l_ass_2 = l_sql.impl_->storage_any_.select(
-      &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
+      columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
 
       where(
           (
               in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
-                 l_assembly_names_prop) &&
-                  is_not_null(&entity_asset_extend::ban_ben_) ||
-              in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop) &&
-                  is_null(&entity_asset_extend::ban_ben_)
+                 l_assembly_names_prop) ||
+              in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop)
 
           ) &&
           c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == asset_type::get_prop_id() &&
@@ -669,38 +669,41 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   l_ass.insert(l_ass.end(), l_ass_2.begin(), l_ass_2.end());
 
   // 对 l_ass 排序和去重
-  std::sort(l_ass.begin(), l_ass.end());
-  l_ass.erase(std::unique(l_ass.begin(), l_ass.end()), l_ass.end());
   auto l_link = l_sql.impl_->storage_any_.select(
-      columns(&entity_link::entity_out_id_, object<entity_asset_extend>()), from<entity_link>(),
-      join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
+      columns(&entity_link::entity_out_id_, object<entity_asset_extend>(), &entity::entity_type_id_),
+      from<entity_link>(), join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
       join<entity_asset_extend>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
       where(c(&entity_link::entity_in_id_) == id_)
   );
   std::set<std::string> l_key_names{};
-  for (auto&& l_name : l_assembly_names) l_key_names.insert(l_name);
   std::set<uuid> l_key_uuids{};
-  for (auto&& [l_uuid, l_ass_ext] : l_link) l_key_uuids.insert(l_uuid);
+  for (auto&& [l_uuid, l_ass_ext, l_entity_type_id] : l_link) {
+    l_key_uuids.insert(l_uuid);
+    if (!l_ass_ext.pin_yin_ming_cheng_.empty() && l_entity_type_id == asset_type::get_prop_id())
+      l_key_names.insert(
+          l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
+                                     : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_)
+      );
+    if (!l_ass_ext.bian_hao_.empty() && l_entity_type_id == asset_type::get_character_id())
+      l_key_names.insert(l_ass_ext.bian_hao_);
+  }
 
-  auto l_find = [&](const uuid& in_uuid) {
-    if (l_key_uuids.contains(in_uuid)) return true;
+  auto l_find = [&](const entity_asset_extend& in_ext, bool is_prop) {
+    if (l_key_uuids.contains(in_ext.entity_id_)) return true;
+    auto l_name = is_prop ? in_ext.ban_ben_.empty() ? in_ext.pin_yin_ming_cheng_
+                                                    : fmt::format("{}_{}", in_ext.pin_yin_ming_cheng_, in_ext.ban_ben_)
+                          : in_ext.bian_hao_;
 
-    auto it = std::find_if(l_link.begin(), l_link.end(), [&](const std::tuple<uuid, entity_asset_extend>& link) {
-      auto&& l_ass_ext = std::get<1>(link);
-      return l_key_names.contains(
-                 l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
-                                            : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_)
-             ) ||
-             l_key_names.contains(l_ass_ext.bian_hao_);
-    });
-    return it != l_link.end();
+    return l_key_names.contains(l_name);
   };
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   auto l_ents                 = std::make_shared<entity>(l_shot_entity);
-  for (auto&& l_uuid : l_ass) {
-    if (l_find(l_uuid)) continue;
+  for (auto&& [l_ass_ext, l_entity_type_id] : l_ass) {
+    if (l_find(l_ass_ext, l_entity_type_id == asset_type::get_prop_id())) continue;
     l_install_entity_links->emplace_back(
-        entity_link{.entity_in_id_ = id_, .entity_out_id_ = l_uuid, .nb_occurences_ = 1, .label_ = "animate"}
+        entity_link{
+            .entity_in_id_ = id_, .entity_out_id_ = l_ass_ext.entity_id_, .nb_occurences_ = 1, .label_ = "animate"
+        }
     );
     ++l_ents->nb_entities_out_;
   }
