@@ -622,11 +622,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
 
   using namespace sqlite_orm;
   auto l_ass = l_sql.impl_->storage_any_.select(
-      &entity_asset_extend::uuid_id_, from<entity_asset_extend>(),
+      &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
       where(in(&entity_asset_extend::bian_hao_, l_assembly_names))
   );
   auto l_ass_2 = l_sql.impl_->storage_any_.select(
-      &entity_asset_extend::uuid_id_, from<entity_asset_extend>(),
+      &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
       where(
           in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
              l_assembly_names) &&
