@@ -596,7 +596,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   auto l_shot_file_name =
       get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
   l_shot_file_name += '_';
-  std::vector<std::string> l_assembly_names;
+  std::vector<std::string> l_assembly_names{};
+  std::vector<std::string> l_assembly_names_character{};
+  std::vector<std::string> l_assembly_names_prop{};
   for (auto&& l_file : FSys::directory_iterator(l_path_dir)) {
     auto l_stem = l_file.path().stem().string();
     if (!(
@@ -613,10 +615,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
     if (auto l_it = l_assembly_name.find("_rig_"); l_it != std::string::npos)
       l_assembly_name = l_assembly_name.substr(0, l_it);
     // 去除开头的 Ch
-    if (l_assembly_name.starts_with("Ch")) l_assembly_name = l_assembly_name.substr(2);
+    bool is_character = l_assembly_name.starts_with("Ch");
+    if (is_character) l_assembly_name = l_assembly_name.substr(2);
 
     if (l_assembly_name.empty()) continue;
     l_assembly_names.emplace_back(l_assembly_name);
+    if (is_character)
+      l_assembly_names_character.emplace_back(l_assembly_name);
+    else
+      l_assembly_names_prop.emplace_back(l_assembly_name);
   }
   SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
   auto l_tem = l_sql.get_temporal_type_ids();
@@ -633,7 +640,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
       where(
-          in(&entity_asset_extend::bian_hao_, l_assembly_names) &&
+          in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
           c(&entity::entity_type_id_) == asset_type::get_character_id() && c(&entity::project_id_) == project_id_ &&
           in(&entity_asset_extend::entity_id_, l_seq_entts)
       )
@@ -645,9 +652,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       where(
           (
               in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
-                 l_assembly_names) &&
+                 l_assembly_names_prop) &&
                   is_not_null(&entity_asset_extend::ban_ben_) ||
-              in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names) && is_null(&entity_asset_extend::ban_ben_)
+              in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop) &&
+                  is_null(&entity_asset_extend::ban_ben_)
 
           ) &&
           c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == asset_type::get_prop_id() &&
