@@ -621,12 +621,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
   auto l_tem = l_sql.get_temporal_type_ids();
   using namespace sqlite_orm;
+  constexpr auto shot     = "shot"_alias.for_<entity>();
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  auto l_seq_entts        = select(
+      &entity::uuid_id_, from<entity>(), join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+      join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      where(c(sequence->*&entity::uuid_id_) == l_episode_entity.uuid_id_)
+  );
+
   auto l_ass = l_sql.impl_->storage_any_.select(
       &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
       where(
           in(&entity_asset_extend::bian_hao_, l_assembly_names) &&
-          c(&entity::entity_type_id_) == asset_type::get_character_id() && c(&entity::project_id_) == project_id_
+          c(&entity::entity_type_id_) == asset_type::get_character_id() && c(&entity::project_id_) == project_id_ &&
+          in(&entity_asset_extend::entity_id_, l_seq_entts)
       )
   );
   auto l_ass_2 = l_sql.impl_->storage_any_.select(
@@ -634,32 +643,44 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
 
       where(
-          in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
-             l_assembly_names) &&
-          is_not_null(&entity_asset_extend::ban_ben_) && c(&entity::project_id_) == project_id_ &&
-          c(&entity::entity_type_id_) == asset_type::get_prop_id()
-      )
-  );
-  auto l_ass_3 = l_sql.impl_->storage_any_.select(
-      &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
-      join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-      where(
-          in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names) && is_null(&entity_asset_extend::ban_ben_) &&
-          c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == asset_type::get_prop_id()
+          (
+              in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
+                 l_assembly_names) &&
+                  is_not_null(&entity_asset_extend::ban_ben_) ||
+              in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names) && is_null(&entity_asset_extend::ban_ben_)
+
+          ) &&
+          c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == asset_type::get_prop_id() &&
+          in(&entity_asset_extend::entity_id_, l_seq_entts)
       )
   );
 
-  // 将 l_ass + l_ass_2 + l_ass_3 合并
+  // 将 l_ass + l_ass_2 合并
   l_ass.insert(l_ass.end(), l_ass_2.begin(), l_ass_2.end());
-  l_ass.insert(l_ass.end(), l_ass_3.begin(), l_ass_3.end());
 
   // 对 l_ass 排序和去重
   std::sort(l_ass.begin(), l_ass.end());
   l_ass.erase(std::unique(l_ass.begin(), l_ass.end()), l_ass.end());
-  auto l_link = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == id_));
+  auto l_link = l_sql.impl_->storage_any_.select(
+      columns(&entity_link::entity_out_id_, object<entity_asset_extend>()), from<entity_link>(),
+      join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
+      join<entity_asset_extend>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
+      where(c(&entity_link::entity_in_id_) == id_)
+  );
+  std::set<std::string> l_key_names{};
+  for (auto&& l_name : l_assembly_names) l_key_names.insert(l_name);
+
+  SPDLOG_INFO("l_key_names {} l_link {}", fmt::join(l_key_names, ", "), fmt::join(l_link, ", "))
+
   auto l_find = [&](const uuid& in_uuid) {
-    auto it = std::find_if(l_link.begin(), l_link.end(), [&](const entity_link& link) {
-      return link.entity_out_id_ == in_uuid;
+    auto it = std::find_if(l_link.begin(), l_link.end(), [&](const std::tuple<uuid, entity_asset_extend>& link) {
+      auto&& l_ass_ext = std::get<1>(link);
+      return std::get<0>(link) == in_uuid ||
+             l_key_names.contains(
+                 l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
+                                            : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_)
+             ) ||
+             l_key_names.contains(l_ass_ext.bian_hao_);
     });
     return it != l_link.end() ? &(*it) : nullptr;
   };
