@@ -87,6 +87,7 @@ void sqlite_database::load(const FSys::path& in_path) {
     i->upgrade(impl_);
   }
   impl_->storage_any_.pragma.synchronous(1);
+  impl_->storage_any_.pragma.recursive_triggers(1);
   impl_->storage_any_.pragma.journal_mode(sqlite_orm::journal_mode::WAL);
   // 使用原始句柄运行 optimize 命令，sqlite_orm 没有提供接口
   sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
