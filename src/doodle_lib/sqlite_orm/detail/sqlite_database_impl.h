@@ -146,13 +146,12 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
                 is_not_equal(old(&entity::parent_id_), new_(&entity::parent_id_))
               )
               .begin(  //
-                  remove_all<entity_fts>(where(c(&entity_fts::entity_id_) == old(&entity::uuid_id_))),
-                  insert(
-                      into<entity_fts>(),
-                      columns(&entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_,
-                              &entity_fts::project_id_, &entity_fts::entity_type_id_, &entity_fts::parent_id_),
-                      values(std::make_tuple(new_(&entity::uuid_id_), new_(&entity::name_), new_(&entity::description_),
-                                             new_(&entity::project_id_), new_(&entity::entity_type_id_), new_(&entity::parent_id_)))
+                  update_all(
+                      set(c(&entity_fts::name_) = new_(&entity::name_), c(&entity_fts::description_) = new_(&entity::description_),
+                          c(&entity_fts::project_id_) = new_(&entity::project_id_),
+                          c(&entity_fts::entity_type_id_) = new_(&entity::entity_type_id_),
+                          c(&entity_fts::parent_id_) = new_(&entity::parent_id_)),
+                      where(c(&entity_fts::entity_id_) == old(&entity::uuid_id_))
                   )  //
               )
               .end()
