@@ -684,8 +684,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       g_logger_ctrl().get_http(), "Harvested {} assemblies for shot {}, created {} entity links",
       l_assembly_names.size(), l_shot_entity.name_, l_install_entity_links->size()
   );
-  co_return in_handle->make_msg(
-      nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, l_episode_entity.uuid_id_)
-  );
+  co_return in_handle->make_msg(nlohmann::json{} = *l_install_entity_links);
 }
 }  // namespace doodle::http
