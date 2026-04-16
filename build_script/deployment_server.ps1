@@ -14,8 +14,8 @@ Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
 
 $NewSession = New-ServerPSSession
-
 $KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
+
 Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -ScriptBlock {
     param ($KitsuCookies, $CopyServer)
 
