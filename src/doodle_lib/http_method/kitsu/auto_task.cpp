@@ -38,7 +38,9 @@
 #include <cstddef>
 #include <filesystem>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <map>
+#include <memory>
 #include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
@@ -772,5 +774,99 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
   l_arg.task_id_    = task_id_;
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_harvest, post) {
+  person_.check_not_outsourcer();
+  auto l_sql         = get_sqlite_database();
+  auto l_shot_task   = l_sql.get_by_uuid<task>(id_);
+  auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
+  if (l_shot_entity.parent_id_.is_nil())
+    throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
+  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
+  auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
+  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_shot_entity.uuid_id_);
+  DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
+  DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧率起始，请联系管理员添加扩展信息");
+  DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧率结束，请联系管理员添加扩展信息");
 
+  episodes l_episodes{l_episode_entity};
+  shot l_shot{l_shot_entity};
+  bool l_is_simulation_task = l_shot_task.task_type_id_ == task_type::get_simulation_task_id();
+
+  FSys::path l_path_dir{};
+  /// tag: 格式化路径
+  l_path_dir = l_is_simulation_task
+                   ? get_shots_simulation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_)
+                   : get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
+  l_path_dir = l_prj.path_ / l_path_dir;
+  DOODLE_CHICK_HTTP(FSys::exists(l_path_dir), bad_request, "输出路径 {} 不存在，无法收集组件", l_path_dir.string());
+  auto l_file_end_str = fmt::format("_{}-{}", l_shot_extend->frame_in_.value(), l_shot_extend->frame_out_.value());
+  auto l_shot_file_name =
+      get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
+  l_shot_file_name += '_';
+  std::vector<std::string> l_assembly_names;
+  for (auto&& l_file : FSys::directory_iterator(l_path_dir)) {
+    auto l_stem = l_file.path().stem().string();
+    if (!(
+            l_stem.ends_with(l_file_end_str) && l_stem.starts_with(l_shot_file_name) && l_file.is_regular_file() &&
+            l_file.path().extension() == ".fbx"
+
+        ))
+      continue;
+    auto l_assembly_name =
+        l_stem.substr(l_shot_file_name.size(), l_stem.size() - l_shot_file_name.size() - l_file_end_str.size());
+    if (l_assembly_name.empty()) continue;
+    if (l_assembly_name == "camera") continue;
+    l_assembly_names.emplace_back(l_assembly_name);
+  }
+  SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
+
+  using namespace sqlite_orm;
+  auto l_ass = l_sql.impl_->storage_any_.select(
+      &entity_asset_extend::uuid_id_, from<entity_asset_extend>(),
+      where(
+          in(&entity_asset_extend::bian_hao_, l_assembly_names) ||
+          in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names)
+      )
+  );
+  auto l_link = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == id_));
+  auto l_find = [&](const uuid& in_uuid) {
+    auto it = std::find_if(l_link.begin(), l_link.end(), [&](const entity_link& link) {
+      return link.entity_out_id_ == in_uuid;
+    });
+    return it != l_link.end() ? &(*it) : nullptr;
+  };
+  auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
+  auto l_ents                 = std::make_shared<entity>(l_shot_entity);
+  for (auto&& l_uuid : l_ass) {
+    if (l_find(l_uuid) != nullptr) continue;
+    l_install_entity_links->emplace_back(
+        entity_link{.entity_in_id_ = id_, .entity_out_id_ = l_uuid, .nb_occurences_ = 1, .label_ = "animate"}
+    );
+    ++l_ents->nb_entities_out_;
+  }
+  if (!l_install_entity_links->empty()) {
+    co_await l_sql.install_range(l_install_entity_links);
+    co_await l_sql.update<entity>(l_ents);
+    // for (auto&& i : *l_install_entity_links)
+    //   socket_io::broadcast(
+    //       socket_io::entity_link_new_broadcast_t{
+    //           .entity_link_id_ = i.uuid_id_,
+    //           .entity_in_id_   = i.entity_in_id_,
+    //           .entity_out_id_  = i.entity_out_id_,
+    //           .nb_occurences_  = i.nb_occurences_,
+    //           .project_id_     = project_id_
+    //       }
+    //   );
+    socket_io::broadcast(
+        socket_io::shot_casting_update_broadcast_t{
+            .shot_id_ = l_ents->uuid_id_, .project_id_ = project_id_, .nb_entities_out_ = l_ents->nb_entities_out_
+        }
+    );
+  }
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "Harvested {} assemblies for shot {}, created {} entity links",
+      l_assembly_names.size(), l_shot_entity.name_, l_install_entity_links->size()
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = *l_install_entity_links);
+}
 }  // namespace doodle::http
