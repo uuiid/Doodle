@@ -643,30 +643,27 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   auto l_ass = l_sql.impl_->storage_any_.select(
       columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-      where(
-          in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
-          c(&entity::entity_type_id_) == asset_type::get_character_id() && c(&entity::project_id_) == project_id_ &&
-          in(&entity_asset_extend::entity_id_, l_seq_entts)
-      )
-  );
-  auto l_ass_2 = l_sql.impl_->storage_any_.select(
-      columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
-      join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
 
       where(
-          (
-              in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
-                 l_assembly_names_prop) ||
-              in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop)
+          (      //
+              (  //
+                  (
+                      in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
+                         l_assembly_names_prop) ||
+                      in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop)
+
+                  ) &&
+                  c(&entity::entity_type_id_) == asset_type::get_prop_id()
+              ) ||
+              (  //
+                  in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
+                  c(&entity::entity_type_id_) == asset_type::get_character_id()
+              )
 
           ) &&
-          c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == asset_type::get_prop_id() &&
-          in(&entity_asset_extend::entity_id_, l_seq_entts)
+          c(&entity::project_id_) == project_id_ && in(&entity_asset_extend::entity_id_, l_seq_entts)
       )
   );
-
-  // 将 l_ass + l_ass_2 合并
-  l_ass.insert(l_ass.end(), l_ass_2.begin(), l_ass_2.end());
 
   // 对 l_ass 排序和去重
   auto l_link = l_sql.impl_->storage_any_.select(
