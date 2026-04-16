@@ -610,10 +610,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
     auto l_assembly_name =
         l_stem.substr(l_shot_file_name.size(), l_stem.size() - l_shot_file_name.size() - l_file_end_str.size());
     if (l_assembly_name == "camera") continue;
-
-    if (l_assembly_name.ends_with("_Low")) l_assembly_name = l_assembly_name.substr(0, l_assembly_name.size() - 4);
-    if (auto l_it = l_assembly_name.find("_rig_"); l_it != std::string::npos)
-      l_assembly_name = l_assembly_name.substr(0, l_it);
+    // 以 Low + 数字 + _ 结尾的组件，去除 Low + 数字 + _ 后缀
+    const static std::regex low_regex(R"((_Low\d*)$)");
+    l_assembly_name = std::regex_replace(l_assembly_name, low_regex, "");
+    const static std::regex rig_regex(R"((_rig_?[a-zA-Z]*\d*)$)");
+    l_assembly_name   = std::regex_replace(l_assembly_name, rig_regex, "");
     // 去除开头的 Ch
     bool is_character = l_assembly_name.starts_with("Ch");
     if (is_character) l_assembly_name = l_assembly_name.substr(2);
@@ -631,7 +632,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
   auto l_seq_entts        = select(
-      &entity::uuid_id_, from<entity>(), join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+      &entity_link::entity_out_id_, from<entity_link>(),
+      join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
       join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
       where(c(sequence->*&entity::uuid_id_) == l_episode_entity.uuid_id_)
   );
