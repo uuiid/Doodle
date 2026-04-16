@@ -774,6 +774,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
   l_arg.task_id_    = task_id_;
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
+
+namespace {
+struct name_all_t : sqlite_orm::alias_tag {
+  static const std::string& get() {
+    static const std::string res = "name_all";
+    return res;
+  }
+};
+
+}  // namespace
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_harvest, post) {
   person_.check_not_outsourcer();
   auto l_sql         = get_sqlite_database();
@@ -814,20 +825,43 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       continue;
     auto l_assembly_name =
         l_stem.substr(l_shot_file_name.size(), l_stem.size() - l_shot_file_name.size() - l_file_end_str.size());
-    if (l_assembly_name.empty()) continue;
     if (l_assembly_name == "camera") continue;
+
+    if (l_assembly_name.ends_with("_Low")) l_assembly_name = l_assembly_name.substr(0, l_assembly_name.size() - 4);
+    if (auto l_it = l_assembly_name.find("_rig_"); l_it != std::string::npos)
+      l_assembly_name = l_assembly_name.substr(0, l_it);
+    // 去除开头的 Ch
+    if (l_assembly_name.starts_with("Ch_")) l_assembly_name = l_assembly_name.substr(3);
+
+    if (l_assembly_name.empty()) continue;
     l_assembly_names.emplace_back(l_assembly_name);
   }
   SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
 
   using namespace sqlite_orm;
-  auto l_ass = l_sql.impl_->storage_any_.select(
+  constexpr orm_column_alias auto name_all = name_all_t{};
+
+  auto l_ass                               = l_sql.impl_->storage_any_.select(
+      &entity_asset_extend::uuid_id_, from<entity_asset_extend>(),
+      where(in(&entity_asset_extend::bian_hao_, l_assembly_names))
+  );
+  auto l_ass_2 = l_sql.impl_->storage_any_.select(
       &entity_asset_extend::uuid_id_, from<entity_asset_extend>(),
       where(
-          in(&entity_asset_extend::bian_hao_, l_assembly_names) ||
-          in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names)
+          in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
+             l_assembly_names) &&
+          is_not_null(&entity_asset_extend::ban_ben_)
       )
   );
+  auto l_ass_3 = l_sql.impl_->storage_any_.select(
+      &entity_asset_extend::uuid_id_, from<entity_asset_extend>(),
+      where(in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names) && is_null(&entity_asset_extend::ban_ben_))
+  );
+
+  // 将 l_ass + l_ass_2 + l_ass_3 合并
+  l_ass.insert(l_ass.end(), l_ass_2.begin(), l_ass_2.end());
+  l_ass.insert(l_ass.end(), l_ass_3.begin(), l_ass_3.end());
+
   // 对 l_ass 排序和去重
   std::sort(l_ass.begin(), l_ass.end());
   l_ass.erase(std::unique(l_ass.begin(), l_ass.end()), l_ass.end());

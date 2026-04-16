@@ -506,13 +506,15 @@ struct actions_projects_shots_import_frame_range_args {
     j.at("shots").get_to(p.shots_);
   }
 };
+namespace {
 struct name_all_t : sqlite_orm::alias_tag {
   static const std::string& get() {
     static const std::string res = "name_all";
     return res;
   }
 };
-namespace {}  // namespace
+
+}  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, post) {
   auto l_args = in_handle->get_json().get<actions_projects_shots_import_frame_range_args>();
