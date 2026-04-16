@@ -828,6 +828,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
           in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names)
       )
   );
+  // 对 l_ass 排序和去重
+  std::sort(l_ass.begin(), l_ass.end());
+  l_ass.erase(std::unique(l_ass.begin(), l_ass.end()), l_ass.end());
   auto l_link = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == id_));
   auto l_find = [&](const uuid& in_uuid) {
     auto it = std::find_if(l_link.begin(), l_link.end(), [&](const entity_link& link) {
