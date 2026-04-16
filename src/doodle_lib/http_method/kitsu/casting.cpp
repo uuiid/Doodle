@@ -619,23 +619,34 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
     l_assembly_names.emplace_back(l_assembly_name);
   }
   SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
-
+  auto l_tem = l_sql.get_temporal_type_ids();
   using namespace sqlite_orm;
   auto l_ass = l_sql.impl_->storage_any_.select(
       &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
-      where(in(&entity_asset_extend::bian_hao_, l_assembly_names))
+      join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
+      where(
+          in(&entity_asset_extend::bian_hao_, l_assembly_names) &&
+          c(&entity::entity_type_id_) == asset_type::get_character_id() && c(&entity::project_id_) == project_id_
+      )
   );
   auto l_ass_2 = l_sql.impl_->storage_any_.select(
       &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
+      join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
+
       where(
           in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
              l_assembly_names) &&
-          is_not_null(&entity_asset_extend::ban_ben_)
+          is_not_null(&entity_asset_extend::ban_ben_) && c(&entity::project_id_) == project_id_ &&
+          c(&entity::entity_type_id_) == asset_type::get_prop_id()
       )
   );
   auto l_ass_3 = l_sql.impl_->storage_any_.select(
       &entity_asset_extend::entity_id_, from<entity_asset_extend>(),
-      where(in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names) && is_null(&entity_asset_extend::ban_ben_))
+      join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
+      where(
+          in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names) && is_null(&entity_asset_extend::ban_ben_) &&
+          c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == asset_type::get_prop_id()
+      )
   );
 
   // 将 l_ass + l_ass_2 + l_ass_3 合并
