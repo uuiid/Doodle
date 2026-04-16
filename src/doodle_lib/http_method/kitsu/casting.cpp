@@ -613,7 +613,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
     if (auto l_it = l_assembly_name.find("_rig_"); l_it != std::string::npos)
       l_assembly_name = l_assembly_name.substr(0, l_it);
     // 去除开头的 Ch
-    if (l_assembly_name.starts_with("Ch_")) l_assembly_name = l_assembly_name.substr(3);
+    if (l_assembly_name.starts_with("Ch")) l_assembly_name = l_assembly_name.substr(2);
 
     if (l_assembly_name.empty()) continue;
     l_assembly_names.emplace_back(l_assembly_name);
