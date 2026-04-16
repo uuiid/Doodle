@@ -669,25 +669,26 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
   );
   std::set<std::string> l_key_names{};
   for (auto&& l_name : l_assembly_names) l_key_names.insert(l_name);
-
-  SPDLOG_INFO("l_key_names {} l_link {}", fmt::join(l_key_names, ", "), fmt::join(l_link, ", "))
+  std::set<uuid> l_key_uuids{};
+  for (auto&& [l_uuid, l_ass_ext] : l_link) l_key_uuids.insert(l_uuid);
 
   auto l_find = [&](const uuid& in_uuid) {
+    if (l_key_uuids.contains(in_uuid)) return true;
+
     auto it = std::find_if(l_link.begin(), l_link.end(), [&](const std::tuple<uuid, entity_asset_extend>& link) {
       auto&& l_ass_ext = std::get<1>(link);
-      return std::get<0>(link) == in_uuid ||
-             l_key_names.contains(
+      return l_key_names.contains(
                  l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
                                             : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_)
              ) ||
              l_key_names.contains(l_ass_ext.bian_hao_);
     });
-    return it != l_link.end() ? &(*it) : nullptr;
+    return it != l_link.end();
   };
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   auto l_ents                 = std::make_shared<entity>(l_shot_entity);
   for (auto&& l_uuid : l_ass) {
-    if (l_find(l_uuid) != nullptr) continue;
+    if (l_find(l_uuid)) continue;
     l_install_entity_links->emplace_back(
         entity_link{.entity_in_id_ = id_, .entity_out_id_ = l_uuid, .nb_occurences_ = 1, .label_ = "animate"}
     );
