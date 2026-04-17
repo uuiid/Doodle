@@ -600,12 +600,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
     void operator()(
         std::shared_ptr<std::vector<entity_link>>& out_entity_links, std::shared_ptr<std::vector<entity>>& out_entities
     ) {
-      DOODLE_CHICK_HTTP(shot_extend_.frame_in_, bad_request, "镜头 {} 实体扩展信息缺少帧起始，请联系管理员添加扩展信息", shot_entity_.name_);
-      DOODLE_CHICK_HTTP(shot_extend_.frame_out_, bad_request, "镜头 {} 实体扩展信息缺少帧结束，请联系管理员添加扩展信息", shot_entity_.name_);
+      DOODLE_CHICK_HTTP(
+          shot_extend_.frame_in_, bad_request, "镜头 {} 实体扩展信息缺少帧起始，请联系管理员添加扩展信息",
+          shot_entity_.name_
+      );
+      DOODLE_CHICK_HTTP(
+          shot_extend_.frame_out_, bad_request, "镜头 {} 实体扩展信息缺少帧结束，请联系管理员添加扩展信息",
+          shot_entity_.name_
+      );
 
       FSys::path l_path_dir = get_shots_animation_output_path(sequence_entity_->name_, shot_entity_.name_, prj_->code_);
       l_path_dir            = prj_->path_ / l_path_dir;
-      DOODLE_CHICK_HTTP(FSys::exists(l_path_dir), bad_request, "输出路径 {} 不存在，无法收集组件", l_path_dir.string());
+      if (!FSys::exists(l_path_dir)) return;
       auto l_file_end_str = fmt::format("_{}-{}", shot_extend_.frame_in_.value(), shot_extend_.frame_out_.value());
       auto l_shot_file_name =
           get_shots_animation_file_name(sequence_entity_->name_, shot_entity_.name_, prj_->code_).generic_string();
@@ -639,6 +645,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
           assembly_names_prop_.emplace_back(l_assembly_name);
       }
       SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(assembly_names_, ", "), shot_entity_.name_);
+
+      if (assembly_names_.empty()) return;
 
       decltype(std::decay_t<decltype(*seq_entts_)>()) l_ass{};
       // 查找对应的资产
