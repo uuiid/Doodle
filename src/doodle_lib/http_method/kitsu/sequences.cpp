@@ -104,6 +104,7 @@ struct sequences_with_tasks_result {
     }
   };
   std::vector<task_t> tasks_;
+  std::size_t shot_count_{};
   // to json
   friend void to_json(nlohmann::json& j, const sequences_with_tasks_result& p) {
     j["id"]              = p.uuid_id_;
@@ -118,6 +119,7 @@ struct sequences_with_tasks_result {
     j["preview_file_id"] = p.preview_file_id_;
     j["canceled"]        = p.canceled_;
     j["tasks"]           = p.tasks_;
+    j["shot_count"]      = p.shot_count_;
   }
 };
 
@@ -136,6 +138,7 @@ auto get_get_entities_and_tasks(
   );
 
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
+  auto sequence                 = "sequence"_alias.for_<entity>();
 
   auto l_rows                   = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<task>(true), &assignees_table::person_id_), from<entity>(),
@@ -171,7 +174,20 @@ auto get_get_entities_and_tasks(
         );
     }
   }
+  for (auto&& [l_entity_id, l_count] : l_sql.impl_->storage_any_.select(
+           columns(sequence->*&entity::uuid_id_, count(sequence->*&entity::uuid_id_)), from<entity>(),
+           join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+           where(c(&entity::project_id_) == in_project_id), group_by(sequence->*&entity::uuid_id_)
+       )) {
+    l_entities_and_tasks_map[l_entity_id].shot_count_ = l_count;
+  }
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
+  SPDLOG_LOGGER_INFO(
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 获取项目 {} 实体类型 {} 的实体列表, 实体数量 {}, 任务数量 {}, offset {}, limit {}", in_person.email_,
+      in_person.get_full_name(), in_project_id, in_entity_type_id, l_entities_and_tasks_map.size(),
+      l_task_id_set.size(), in_offset, in_limit
+  );
   return l_ret;
 }
 

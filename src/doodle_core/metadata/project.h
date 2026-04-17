@@ -318,19 +318,6 @@ struct project_with_extra_data : project {
   };
   std::vector<project_str> levels_;
   std::vector<project_int> scenes_;
-  // 序列
-  struct project_uuid {
-    uuid uuid_id_;
-    std::int32_t count_;
-    explicit project_uuid(std::tuple<uuid, std::int32_t> in_tuple)
-        : uuid_id_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
-
-    friend void to_json(nlohmann::json& j, const project_uuid& p) {
-      j["id"]    = p.uuid_id_;
-      j["count"] = p.count_;
-    }
-  };
-  std::vector<project_uuid> sequences_;
 
   // to json
   friend void to_json(nlohmann::json& j, const project_with_extra_data& p) {
@@ -364,7 +351,6 @@ struct project_with_extra_data : project {
     j["seasons"]  = p.seasons_;
     j["levels"]   = p.levels_;
     j["scenes"]   = p.scenes_;
-    j["sequences"] = p.sequences_;
   }
 };
 
