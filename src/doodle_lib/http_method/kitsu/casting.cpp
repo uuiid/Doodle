@@ -725,14 +725,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       l_ass_all_map.emplace(l_ass_ext.bian_hao_, i);
     }
   }
-  auto l_ass_shots = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_shot_extend>(true)), from<entity>(),
-      join<entity_shot_extend>(on(c(&entity::uuid_id_) == c(&entity_shot_extend::entity_id_))),
-      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      where(c(sequence->*&entity::uuid_id_) == id_)
-  );
+  std::vector<uuid> l_ass_shot_ids{};
   std::map<uuid, shot_harvest_t> l_shot_harvest_map;
-  for (auto&& [l_shot, l_shot_ext] : l_ass_shots) {
+  for (auto&& [l_shot, l_shot_ext] : l_sql.impl_->storage_any_.select(
+           columns(object<entity>(true), object<entity_shot_extend>(true)), from<entity>(),
+           join<entity_shot_extend>(on(c(&entity::uuid_id_) == c(&entity_shot_extend::entity_id_))),
+           join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+           where(c(sequence->*&entity::uuid_id_) == id_)
+       )) {
+    l_ass_shot_ids.emplace_back(l_shot.uuid_id_);
     l_shot_harvest_map.emplace(
         l_shot.uuid_id_, shot_harvest_t{
                              .shot_entity_       = l_shot,
@@ -754,7 +755,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       ),
       from<entity_link>(), join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
       join<entity_asset_extend>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-      where(in(&entity_link::entity_in_id_, l_ass_shots))
+      where(in(&entity_link::entity_in_id_, l_ass_shot_ids))
   );
 
   for (auto&& [l_entity_out_id, l_asset_ext, l_entity_type_id, l_entity_in_id] : l_ass_link) {
