@@ -641,7 +641,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(assembly_names_, ", "), shot_entity_.name_);
 
       decltype(std::decay_t<decltype(*seq_entts_)>()) l_ass{};
-
+      // 查找对应的资产
       for (auto&& l_ass_name : assembly_names_character_) {
         if (!seq_entts_all_map_->contains(l_ass_name)) continue;
         if (std::get<1>(seq_entts_->at(seq_entts_all_map_->at(l_ass_name))) == asset_type::get_character_id())
@@ -655,6 +655,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
 
       std::set<std::string> l_key_names{};
       std::set<uuid> l_key_uuids{};
+      // 将已有的资产进行key提取, 在后面去重使用
       for (auto&& [l_uuid, l_ass_ext, l_entity_type_id] : shot_entts_) {
         l_key_uuids.insert(l_uuid);
         if (!l_ass_ext.pin_yin_ming_cheng_.empty() && l_entity_type_id == asset_type::get_prop_id())
@@ -676,6 +677,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
         return l_key_names.contains(l_name);
       };
       for (auto&& [l_ass_ext, l_entity_type_id] : l_ass) {
+        // 重复就不加入
         if (l_find(l_ass_ext, l_entity_type_id == asset_type::get_prop_id())) continue;
         out_entity_links->emplace_back(
             entity_link{
