@@ -257,11 +257,14 @@ struct make_with_tasks_sql_result_t {
   std::int32_t limit_{300};
   std::vector<uuid> entity_type_id_;
   std::vector<std::int32_t> ji_du_filter_;
+  bool ji_du_filter_is_null{false};
   std::vector<std::int32_t> ji_shu_lie_filter_;
+  bool ji_shu_lie_filter_is_null{false};
   std::vector<uuid> task_status_id_filter_;
   std::vector<uuid> person_id_filter_;
   std::string search_key_;
   std::vector<std::int32_t> scenes_;
+  bool scenes_is_null{false};
 
  private:
   auto project_id_where() {
@@ -287,13 +290,25 @@ struct make_with_tasks_sql_result_t {
     using namespace sqlite_orm;
     return in(&entity_asset_extend::ji_du_, ji_du_filter_);
   }
+  auto ji_du_is_null_where() {
+    using namespace sqlite_orm;
+    return is_null(c(&entity_asset_extend::ji_du_));
+  }
   auto ji_shu_lie_where() {
     using namespace sqlite_orm;
     return in(&entity_asset_extend::ji_shu_lie_, ji_shu_lie_filter_);
   }
+  auto ji_shu_lie_is_null_where() {
+    using namespace sqlite_orm;
+    return is_null(c(&entity_asset_extend::ji_shu_lie_));
+  }
   auto scenes_where() {
     using namespace sqlite_orm;
     return in(&entity_asset_extend::chang_ci_, scenes_);
+  }
+  auto scenes_is_null_where() {
+    using namespace sqlite_orm;
+    return is_null(c(&entity_asset_extend::chang_ci_));
   }
   auto task_status_id_where() {
     using namespace sqlite_orm;
@@ -381,15 +396,30 @@ struct make_with_tasks_sql_result_t {
       : person_(in_person), id_(in_id) {
     for (auto&& l_i : in_url.params()) {
       if (l_i.has_value && l_i.key == "entity_type_id") entity_type_id_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.has_value && l_i.key == "ji_du") ji_du_filter_.emplace_back(std::stoi(l_i.value));
-      if (l_i.has_value && l_i.key == "ji_shu_lie") ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
+      if (l_i.has_value && l_i.key == "ji_du") {
+        if (std::isdigit(l_i.value.front()))
+          ji_du_filter_.emplace_back(std::stoi(l_i.value));
+        else if (l_i.value == "null")
+          ji_du_filter_is_null = true;
+      }
+      if (l_i.has_value && l_i.key == "ji_shu_lie") {
+        if (std::isdigit(l_i.value.front()))
+          ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
+        else if (l_i.value == "null")
+          ji_shu_lie_filter_is_null = true;
+      }
       if (l_i.has_value && l_i.key == "task_status_id") task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
       if (l_i.has_value && l_i.key == "person_id") person_id_filter_.emplace_back(from_uuid_str(l_i.value));
       if (l_i.has_value && l_i.key == "offset") offset_ = std::stoi(l_i.value);
       if (l_i.has_value && l_i.key == "limit") limit_ = std::stoi(l_i.value);
       if (l_i.has_value && l_i.key == "project_id") project_id_ = from_uuid_str(l_i.value);
       if (l_i.has_value && l_i.key == "search_key") search_key_ = l_i.value;
-      if (l_i.has_value && l_i.key == "scenes") scenes_.emplace_back(std::stoi(l_i.value));
+      if (l_i.has_value && l_i.key == "scenes") {
+        if (std::isdigit(l_i.value.front()))
+          scenes_.emplace_back(std::stoi(l_i.value));
+        else if (l_i.value == "null")
+          scenes_is_null = true;
+      }
     }
   }
 
@@ -420,12 +450,21 @@ struct make_with_tasks_sql_result_t {
     // 6 位 person id
     if (!project_id_.is_nil()) l_dynamic_where.push_back(project_id_where());
     if (!entity_type_id_.empty()) l_dynamic_where.push_back(entity_type_id_where());
-    if (!ji_du_filter_.empty()) l_dynamic_where.push_back(ji_du_where());
+    if (!ji_du_filter_.empty()) {
+      l_dynamic_where.push_back(ji_du_where());
+    } else if (ji_du_filter_is_null)
+      l_dynamic_where.push_back(ji_du_is_null_where());
     if (!ji_shu_lie_filter_.empty()) l_dynamic_where.push_back(ji_shu_lie_where());
-    if (!task_status_id_filter_.empty()) l_dynamic_where.push_back(task_status_id_where());
+    if (ji_shu_lie_filter_is_null) {
+      l_dynamic_where.push_back(ji_shu_lie_is_null_where());
+    } else if (!task_status_id_filter_.empty())
+      l_dynamic_where.push_back(task_status_id_where());
     if (!person_id_filter_.empty()) l_dynamic_where.push_back(person_id_where());
     if (!search_key_.empty()) l_dynamic_where.push_back(search_key_where());
-    if (!scenes_.empty()) l_dynamic_where.push_back(scenes_where());
+    if (!scenes_.empty()) {
+      l_dynamic_where.push_back(scenes_where());
+    } else if (scenes_is_null)
+      l_dynamic_where.push_back(scenes_is_null_where());
 
     return with_tasks_sql_query(l_dynamic_where);
   }
