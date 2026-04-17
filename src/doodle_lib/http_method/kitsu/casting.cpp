@@ -641,17 +641,16 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(assembly_names_, ", "), shot_entity_.name_);
 
       decltype(std::decay_t<decltype(*seq_entts_)>()) l_ass{};
-      auto&& l_ass_all_map = *seq_entts_all_map_;
-      auto&& l_ass_all     = *seq_entts_;
+
       for (auto&& l_ass_name : assembly_names_character_) {
-        if (!l_ass_all_map.contains(l_ass_name)) continue;
-        if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_character_id())
-          l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+        if (!seq_entts_all_map_->contains(l_ass_name)) continue;
+        if (std::get<1>(seq_entts_->at(seq_entts_all_map_->at(l_ass_name))) == asset_type::get_character_id())
+          l_ass.push_back(seq_entts_->at(seq_entts_all_map_->at(l_ass_name)));
       }
       for (auto&& l_ass_name : assembly_names_prop_) {
-        if (!l_ass_all_map.contains(l_ass_name)) continue;
-        if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_prop_id())
-          l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+        if (!seq_entts_all_map_->contains(l_ass_name)) continue;
+        if (std::get<1>(seq_entts_->at(seq_entts_all_map_->at(l_ass_name))) == asset_type::get_prop_id())
+          l_ass.push_back(seq_entts_->at(seq_entts_all_map_->at(l_ass_name)));
       }
 
       std::set<std::string> l_key_names{};
