@@ -106,8 +106,8 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/actions/projects/{project_id}/shots/{shot_id}/casting/ue-assembly-harvest
-DOODLE_HTTP_JWT_FUN(actions_projects_shots_casting_ue_assembly_harvest)
+// /api/actions/projects/{project_id}/sequences/{sequence_id}/casting/ue-assembly-harvest
+DOODLE_HTTP_JWT_FUN(actions_projects_sequences_casting_ue_assembly_harvest)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid project_id_{};
 uuid id_{};

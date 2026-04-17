@@ -18,11 +18,14 @@
 
 #include <any>
 #include <map>
+#include <memory>
 #include <range/v3/range/conversion.hpp>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <tuple>
+#include <type_traits>
 #include <vector>
 
 namespace doodle::http {
@@ -575,98 +578,141 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
   );
 }
 
-DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_harvest, post) {
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembly_harvest, post) {
   person_.check_not_outsourcer();
-  auto l_sql         = get_sqlite_database();
-  auto l_shot_entity = l_sql.get_by_uuid<entity>(id_);
-  if (l_shot_entity.parent_id_.is_nil())
-    throw_exception(http_request_error{boost::beast::http::status::bad_request, "镜头实体缺少父级序列信息"});
-  auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
-  auto l_prj            = l_sql.get_by_uuid<project>(project_id_);
-  auto l_shot_extend    = l_sql.get_entity_shot_extend(l_shot_entity.uuid_id_);
-  DOODLE_CHICK_HTTP(l_shot_extend, bad_request, "镜头实体缺少扩展信息，请联系管理员添加扩展信息");
-  DOODLE_CHICK_HTTP(l_shot_extend->frame_in_, bad_request, "镜头实体扩展信息缺少帧起始，请联系管理员添加扩展信息");
-  DOODLE_CHICK_HTTP(l_shot_extend->frame_out_, bad_request, "镜头实体扩展信息缺少帧结束，请联系管理员添加扩展信息");
+  auto l_sql = get_sqlite_database();
+  auto l_seq = l_sql.get_by_uuid<entity>(id_);
+  auto l_prj = l_sql.get_by_uuid<project>(project_id_);
+  episodes l_episodes{l_seq};
+  struct shot_harvest_t {
+    entity shot_entity_;
+    entity_shot_extend shot_extend_;
+    entity* sequence_entity_;
+    episodes* episode_;
+    project* prj_;
+    std::vector<std::tuple<entity_asset_extend, uuid>>* seq_entts_;
+    std::map<std::string, std::size_t>* seq_entts_all_map_;
+    std::vector<std::tuple<uuid, entity_asset_extend, uuid>> shot_entts_;
 
-  episodes l_episodes{l_episode_entity};
-  shot l_shot{l_shot_entity};
+    std::vector<std::string> assembly_names_{};
+    std::vector<std::string> assembly_names_character_{};
+    std::vector<std::string> assembly_names_prop_{};
+    void operator()(
+        std::shared_ptr<std::vector<entity_link>>& out_entity_links, std::shared_ptr<std::vector<entity>>& out_entities
+    ) {
+      DOODLE_CHICK_HTTP(shot_extend_.frame_in_, bad_request, "镜头实体扩展信息缺少帧起始，请联系管理员添加扩展信息");
+      DOODLE_CHICK_HTTP(shot_extend_.frame_out_, bad_request, "镜头实体扩展信息缺少帧结束，请联系管理员添加扩展信息");
 
-  FSys::path l_path_dir = get_shots_animation_output_path(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_);
-  l_path_dir            = l_prj.path_ / l_path_dir;
-  DOODLE_CHICK_HTTP(FSys::exists(l_path_dir), bad_request, "输出路径 {} 不存在，无法收集组件", l_path_dir.string());
-  auto l_file_end_str = fmt::format("_{}-{}", l_shot_extend->frame_in_.value(), l_shot_extend->frame_out_.value());
-  auto l_shot_file_name =
-      get_shots_animation_file_name(l_episode_entity.name_, l_shot_entity.name_, l_prj.code_).generic_string();
-  l_shot_file_name += '_';
-  std::vector<std::string> l_assembly_names{};
-  std::vector<std::string> l_assembly_names_character{};
-  std::vector<std::string> l_assembly_names_prop{};
-  for (auto&& l_file : FSys::directory_iterator(l_path_dir)) {
-    auto l_stem = l_file.path().stem().string();
-    if (!(
-            l_stem.ends_with(l_file_end_str) && l_stem.starts_with(l_shot_file_name) && l_file.is_regular_file() &&
-            l_file.path().extension() == ".fbx"
+      FSys::path l_path_dir = get_shots_animation_output_path(sequence_entity_->name_, shot_entity_.name_, prj_->code_);
+      l_path_dir            = prj_->path_ / l_path_dir;
+      DOODLE_CHICK_HTTP(FSys::exists(l_path_dir), bad_request, "输出路径 {} 不存在，无法收集组件", l_path_dir.string());
+      auto l_file_end_str = fmt::format("_{}-{}", shot_extend_.frame_in_.value(), shot_extend_.frame_out_.value());
+      auto l_shot_file_name =
+          get_shots_animation_file_name(sequence_entity_->name_, shot_entity_.name_, prj_->code_).generic_string();
+      l_shot_file_name += '_';
+      std::vector<std::string> l_assembly_names{};
+      std::vector<std::string> l_assembly_names_character{};
+      std::vector<std::string> l_assembly_names_prop{};
+      for (auto&& l_file : FSys::directory_iterator(l_path_dir)) {
+        auto l_stem = l_file.path().stem().string();
+        if (!(
+                l_stem.ends_with(l_file_end_str) && l_stem.starts_with(l_shot_file_name) && l_file.is_regular_file() &&
+                l_file.path().extension() == ".fbx"
 
-        ))
-      continue;
-    auto l_assembly_name =
-        l_stem.substr(l_shot_file_name.size(), l_stem.size() - l_shot_file_name.size() - l_file_end_str.size());
-    if (l_assembly_name == "camera") continue;
-    // 以 Low + 数字 + _ 结尾的组件，去除 Low + 数字 + _ 后缀
-    const static std::regex low_regex(R"((_Low\d*)$)");
-    l_assembly_name = std::regex_replace(l_assembly_name, low_regex, "");
-    const static std::regex rig_regex(R"((_rig_?[a-zA-Z]*\d*)$)");
-    l_assembly_name   = std::regex_replace(l_assembly_name, rig_regex, "");
-    // 去除开头的 Ch
-    bool is_character = l_assembly_name.starts_with("Ch");
-    if (is_character) l_assembly_name = l_assembly_name.substr(2);
+            ))
+          continue;
+        auto l_assembly_name =
+            l_stem.substr(l_shot_file_name.size(), l_stem.size() - l_shot_file_name.size() - l_file_end_str.size());
+        if (l_assembly_name == "camera") continue;
+        // 以 Low + 数字 + _ 结尾的组件，去除 Low + 数字 + _ 后缀
+        const static std::regex low_regex(R"((_Low\d*)$)");
+        l_assembly_name = std::regex_replace(l_assembly_name, low_regex, "");
+        const static std::regex rig_regex(R"((_rig_?[a-zA-Z]*\d*)$)");
+        l_assembly_name   = std::regex_replace(l_assembly_name, rig_regex, "");
+        // 去除开头的 Ch
+        bool is_character = l_assembly_name.starts_with("Ch");
+        if (is_character) l_assembly_name = l_assembly_name.substr(2);
 
-    if (l_assembly_name.empty()) continue;
-    l_assembly_names.emplace_back(l_assembly_name);
-    if (is_character)
-      l_assembly_names_character.emplace_back(l_assembly_name);
-    else
-      l_assembly_names_prop.emplace_back(l_assembly_name);
-  }
-  SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), l_shot_entity.name_);
+        if (l_assembly_name.empty()) continue;
+        l_assembly_names.emplace_back(l_assembly_name);
+        if (is_character)
+          l_assembly_names_character.emplace_back(l_assembly_name);
+        else
+          l_assembly_names_prop.emplace_back(l_assembly_name);
+      }
+      SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), shot_entity_.name_);
+
+      decltype(std::decay_t<decltype(*seq_entts_)>()) l_ass{};
+      auto&& l_ass_all_map = *seq_entts_all_map_;
+      auto&& l_ass_all     = *seq_entts_;
+      for (auto&& l_ass_name : l_assembly_names_character) {
+        if (!l_ass_all_map.contains(l_ass_name)) continue;
+        if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_character_id())
+          l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+      }
+      for (auto&& l_ass_name : l_assembly_names_prop) {
+        if (!l_ass_all_map.contains(l_ass_name)) continue;
+        if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_prop_id())
+          l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+      }
+
+      std::set<std::string> l_key_names{};
+      std::set<uuid> l_key_uuids{};
+      for (auto&& [l_uuid, l_ass_ext, l_entity_type_id] : shot_entts_) {
+        l_key_uuids.insert(l_uuid);
+        if (!l_ass_ext.pin_yin_ming_cheng_.empty() && l_entity_type_id == asset_type::get_prop_id())
+          l_key_names.insert(
+              l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
+                                         : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_)
+          );
+        if (!l_ass_ext.bian_hao_.empty() && l_entity_type_id == asset_type::get_character_id())
+          l_key_names.insert(l_ass_ext.bian_hao_);
+      }
+
+      auto l_find = [&](const entity_asset_extend& in_ext, bool is_prop) {
+        if (l_key_uuids.contains(in_ext.entity_id_)) return true;
+        auto l_name = is_prop ? in_ext.ban_ben_.empty()
+                                    ? in_ext.pin_yin_ming_cheng_
+                                    : fmt::format("{}_{}", in_ext.pin_yin_ming_cheng_, in_ext.ban_ben_)
+                              : in_ext.bian_hao_;
+
+        return l_key_names.contains(l_name);
+      };
+      for (auto&& [l_ass_ext, l_entity_type_id] : l_ass) {
+        if (l_find(l_ass_ext, l_entity_type_id == asset_type::get_prop_id())) continue;
+        out_entity_links->emplace_back(
+            entity_link{
+                .entity_in_id_  = shot_entity_.uuid_id_,
+                .entity_out_id_ = l_ass_ext.entity_id_,
+                .nb_occurences_ = 1,
+                .label_         = "animate"
+            }
+        );
+        ++shot_entity_.nb_entities_out_;
+      }
+      if (!l_ass.empty()) out_entities->emplace_back(shot_entity_);
+    }
+  };
 
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_seq_entts        = select(
-      &entity_link::entity_out_id_, from<entity_link>(),
-      join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-      join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      where(c(sequence->*&entity::uuid_id_) == l_episode_entity.uuid_id_)
-  );
   // 直接获取当集资产, 后续不使用数据库进行匹配, 人工匹配
-  auto l_ass_all = l_sql.impl_->storage_any_.select(
+  auto l_ass_all          = l_sql.impl_->storage_any_.select(
       columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
       join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-
       where(
-          // (      //
-          //     (  //
-          //         (
-          //             in(conc(conc(&entity_asset_extend::pin_yin_ming_cheng_, "_"), &entity_asset_extend::ban_ben_),
-          //                l_assembly_names_prop) ||
-          //             in(&entity_asset_extend::pin_yin_ming_cheng_, l_assembly_names_prop)
-
-          //         ) &&
-          //         c(&entity::entity_type_id_) == asset_type::get_prop_id()
-          //     ) ||
-          //     (  //
-          //         in(&entity_asset_extend::bian_hao_, l_assembly_names_character) &&
-          //         c(&entity::entity_type_id_) == asset_type::get_character_id()
-          //     )
-          // ) &&
-          c(&entity::project_id_) == project_id_ && in(&entity_asset_extend::entity_id_, l_seq_entts)
+          c(&entity::project_id_) == project_id_ &&
+          in(&entity_asset_extend::entity_id_,
+                      select(
+                 &entity_link::entity_out_id_, from<entity_link>(),
+                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+                 where(c(sequence->*&entity::uuid_id_) == id_)
+             ))
       )
   );
-
-  decltype(l_ass_all) l_ass{};
   std::map<std::string, std::size_t> l_ass_all_map{};
-
   for (auto i = 0; i < l_ass_all.size(); ++i) {
     auto&& [l_ass_ext, l_entity_type_id] = l_ass_all[i];
     if (l_entity_type_id == asset_type::get_prop_id()) {
@@ -679,59 +725,50 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
       l_ass_all_map.emplace(l_ass_ext.bian_hao_, i);
     }
   }
-  for (auto&& l_ass_name : l_assembly_names_character) {
-    if (!l_ass_all_map.contains(l_ass_name)) continue;
-    if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_character_id())
-      l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
-  }
-  for (auto&& l_ass_name : l_assembly_names_prop) {
-    if (!l_ass_all_map.contains(l_ass_name)) continue;
-    if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_prop_id())
-      l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
+  auto l_ass_shots = l_sql.impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_shot_extend>(true)), from<entity>(),
+      join<entity_shot_extend>(on(c(&entity::uuid_id_) == c(&entity_shot_extend::entity_id_))),
+      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      where(c(sequence->*&entity::uuid_id_) == id_)
+  );
+  std::map<uuid, shot_harvest_t> l_shot_harvest_map;
+  for (auto&& [l_shot, l_shot_ext] : l_ass_shots) {
+    l_shot_harvest_map.emplace(
+        l_shot.uuid_id_, shot_harvest_t{
+                             .shot_entity_       = l_shot,
+                             .shot_extend_       = l_shot_ext,
+                             .sequence_entity_   = &l_seq,
+                             .episode_           = &l_episodes,
+                             .prj_               = &l_prj,
+                             .seq_entts_         = &l_ass_all,
+                             .seq_entts_all_map_ = &l_ass_all_map
+                         }
+    );
   }
 
-  // 现在镜头用到的资产
-  auto l_link = l_sql.impl_->storage_any_.select(
-      columns(&entity_link::entity_out_id_, object<entity_asset_extend>(), &entity::entity_type_id_),
+  // 查询所有的子镜头和用到的资产
+  auto l_ass_link = l_sql.impl_->storage_any_.select(
+      columns(
+          &entity_link::entity_out_id_, object<entity_asset_extend>(), &entity::entity_type_id_,
+          &entity_link::entity_in_id_
+      ),
       from<entity_link>(), join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
       join<entity_asset_extend>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-      where(c(&entity_link::entity_in_id_) == id_)
+      where(in(&entity_link::entity_in_id_, l_ass_shots))
   );
-  std::set<std::string> l_key_names{};
-  std::set<uuid> l_key_uuids{};
-  for (auto&& [l_uuid, l_ass_ext, l_entity_type_id] : l_link) {
-    l_key_uuids.insert(l_uuid);
-    if (!l_ass_ext.pin_yin_ming_cheng_.empty() && l_entity_type_id == asset_type::get_prop_id())
-      l_key_names.insert(
-          l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
-                                     : fmt::format("{}_{}", l_ass_ext.pin_yin_ming_cheng_, l_ass_ext.ban_ben_)
-      );
-    if (!l_ass_ext.bian_hao_.empty() && l_entity_type_id == asset_type::get_character_id())
-      l_key_names.insert(l_ass_ext.bian_hao_);
+
+  for (auto&& [l_entity_out_id, l_asset_ext, l_entity_type_id, l_entity_in_id] : l_ass_link) {
+    l_shot_harvest_map.at(l_entity_in_id).shot_entts_.emplace_back(l_entity_out_id, l_asset_ext, l_entity_type_id);
   }
 
-  auto l_find = [&](const entity_asset_extend& in_ext, bool is_prop) {
-    if (l_key_uuids.contains(in_ext.entity_id_)) return true;
-    auto l_name = is_prop ? in_ext.ban_ben_.empty() ? in_ext.pin_yin_ming_cheng_
-                                                    : fmt::format("{}_{}", in_ext.pin_yin_ming_cheng_, in_ext.ban_ben_)
-                          : in_ext.bian_hao_;
-
-    return l_key_names.contains(l_name);
-  };
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
-  auto l_ents                 = std::make_shared<entity>(l_shot_entity);
-  for (auto&& [l_ass_ext, l_entity_type_id] : l_ass) {
-    if (l_find(l_ass_ext, l_entity_type_id == asset_type::get_prop_id())) continue;
-    l_install_entity_links->emplace_back(
-        entity_link{
-            .entity_in_id_ = id_, .entity_out_id_ = l_ass_ext.entity_id_, .nb_occurences_ = 1, .label_ = "animate"
-        }
-    );
-    ++l_ents->nb_entities_out_;
-  }
+  auto l_install_entity       = std::make_shared<std::vector<entity>>();
+
+  for (auto&& [l_key, l_val] : l_shot_harvest_map) l_val(l_install_entity_links, l_install_entity);
+
   if (!l_install_entity_links->empty()) {
     co_await l_sql.install_range(l_install_entity_links);
-    co_await l_sql.update<entity>(l_ents);
+    co_await l_sql.update_range(l_install_entity);
     // for (auto&& i : *l_install_entity_links)
     //   socket_io::broadcast(
     //       socket_io::entity_link_new_broadcast_t{
@@ -742,15 +779,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_casting_ue_assembly_ha
     //           .project_id_     = project_id_
     //       }
     //   );
-    socket_io::broadcast(
-        socket_io::shot_casting_update_broadcast_t{
-            .shot_id_ = l_ents->uuid_id_, .project_id_ = project_id_, .nb_entities_out_ = l_ents->nb_entities_out_
-        }
-    );
+    for (auto&& i : *l_install_entity)
+      socket_io::broadcast(
+          socket_io::shot_casting_update_broadcast_t{
+              .shot_id_ = i.uuid_id_, .project_id_ = project_id_, .nb_entities_out_ = i.nb_entities_out_
+          }
+      );
   }
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "Harvested {} assemblies for shot {}, created {} entity links",
-      l_assembly_names.size(), l_shot_entity.name_, l_install_entity_links->size()
+      g_logger_ctrl().get_http(),
+      "用户 {}({}) 完成 UE Assembly 组件收集 project_id {} sequence_id {} harvested_shot_count {} "
+      "harvested_assembly_count {} installed_link_count {}",
+      person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_install_entity_links->size(), 1, 1
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_install_entity_links);
 }
