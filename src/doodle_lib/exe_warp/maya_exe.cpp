@@ -152,6 +152,7 @@ loadPlugin doodle_maya_{};
 loadPlugin fbxmaya;
 loadPlugin "AbcExport";
 loadPlugin xgenToolkit;
+loadPlugin "qualoth";
 int $doodle_batch_run_1 = `doodle_batch_run -config "{}" -{}`;
 quit -abort -force -exitCode $doodle_batch_run_1;
 )";
