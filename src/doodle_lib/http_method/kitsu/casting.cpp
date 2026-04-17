@@ -730,7 +730,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
            columns(object<entity>(true), object<entity_shot_extend>(true)), from<entity>(),
            join<entity_shot_extend>(on(c(&entity::uuid_id_) == c(&entity_shot_extend::entity_id_))),
            join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-           where(c(sequence->*&entity::uuid_id_) == id_)
+           where(c(sequence->*&entity::uuid_id_) == id_ && !c(&entity::canceled_))
        )) {
     l_ass_shot_ids.emplace_back(l_shot.uuid_id_);
     l_shot_harvest_map.emplace(
