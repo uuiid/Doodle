@@ -600,8 +600,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
     void operator()(
         std::shared_ptr<std::vector<entity_link>>& out_entity_links, std::shared_ptr<std::vector<entity>>& out_entities
     ) {
-      DOODLE_CHICK_HTTP(shot_extend_.frame_in_, bad_request, "镜头实体扩展信息缺少帧起始，请联系管理员添加扩展信息");
-      DOODLE_CHICK_HTTP(shot_extend_.frame_out_, bad_request, "镜头实体扩展信息缺少帧结束，请联系管理员添加扩展信息");
+      DOODLE_CHICK_HTTP(shot_extend_.frame_in_, bad_request, "镜头 {} 实体扩展信息缺少帧起始，请联系管理员添加扩展信息", shot_entity_.name_);
+      DOODLE_CHICK_HTTP(shot_extend_.frame_out_, bad_request, "镜头 {} 实体扩展信息缺少帧结束，请联系管理员添加扩展信息", shot_entity_.name_);
 
       FSys::path l_path_dir = get_shots_animation_output_path(sequence_entity_->name_, shot_entity_.name_, prj_->code_);
       l_path_dir            = prj_->path_ / l_path_dir;
