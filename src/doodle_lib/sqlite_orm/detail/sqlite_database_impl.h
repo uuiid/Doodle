@@ -114,7 +114,34 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           .open_forever = true,
       },
       on_open([impl](sqlite3* in_ptr) { on_storage_open(in_ptr, impl); }),
-
+      // 创建辅助表的触发器
+      make_trigger(
+          "entity_fts_insert_trigger2",
+          after()
+              .insert()
+              .on<entity_asset_extend>()
+              .begin(  //
+                  update_all(
+                      set(c(&entity_fts::bian_hao_) = new_(&entity_asset_extend::bian_hao_)),
+                      where(c(&entity_fts::entity_id_) == new_(&entity_asset_extend::entity_id_))
+                  )
+              )
+              .end()
+      ),
+      make_trigger(
+          "entity_fts_update_trigger2",
+          before()
+              .update()
+              .on<entity_asset_extend>()
+              .when(is_not_equal(old(&entity_asset_extend::bian_hao_), new_(&entity_asset_extend::bian_hao_)))
+              .begin(  //
+                  update_all(
+                      set(c(&entity_fts::bian_hao_) = new_(&entity_asset_extend::bian_hao_)),
+                      where(c(&entity_fts::entity_id_) == old(&entity_asset_extend::entity_id_))
+                  )
+              )
+              .end()
+      ),
       // 创建触发器，自动更新 entity_fts 虚拟表
       make_trigger(
           "entity_fts_insert_trigger",
@@ -172,13 +199,20 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
             make_column("uuid", &entity_fts::entity_id_, unindexed()),  //
             make_column("name", &entity_fts::name_),//
             make_column("description", &entity_fts::description_),//
+            make_column("bian_hao", &entity_fts::bian_hao_),//
             make_column("project_id", &entity_fts::project_id_, unindexed()),//
             make_column("entity_type_id", &entity_fts::entity_type_id_, unindexed()),//
             make_column("parent_id", &entity_fts::parent_id_, unindexed()),//
             tokenize("jieba"), 
-            content<entity>()
+            content<entity_asset_view>()
         )
       ),
+
+      make_view<entity_asset_view>("entity_asset_view", select(
+          columns(&entity::uuid_id_, &entity::name_, &entity::description_, &entity_asset_extend::bian_hao_,
+                  &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_),
+          from<entity>(), join<entity_asset_extend>(on(c(&entity::uuid_id_) == &entity_asset_extend::entity_id_))
+      )),
 
       make_unique_index(
           "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
