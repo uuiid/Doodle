@@ -792,6 +792,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       "harvested_assembly_count {} installed_link_count {}",
       person_.person_.email_, person_.person_.get_full_name(), project_id_, id_, l_install_entity_links->size(), 1, 1
   );
-  co_return in_handle->make_msg(nlohmann::json{} = *l_install_entity_links);
+  co_return in_handle->make_msg(nlohmann::json{} = get_sequence_casting(project_id_, person_.person_, id_));
 }
 }  // namespace doodle::http
