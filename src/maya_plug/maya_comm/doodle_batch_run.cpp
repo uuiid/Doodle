@@ -108,6 +108,7 @@ class cloth_sim_run {
     maya_file_io::open_file(file_, MFileIO::kLoadDefault);
     maya_chick(file_info_edit::delete_node_static());
     maya_chick(MGlobal::executeCommand(R"(doodle_file_info_edit;)"));
+    maya_chick(MGlobal::executeCommand(R"(loadPlugin "qualoth";)"));
 
     anim_begin_time_ = MTime{boost::numeric_cast<std::double_t>(1001), MTime::uiUnit()};
     t_post_time_     = MTime{boost::numeric_cast<std::double_t>(950), MTime::uiUnit()};
