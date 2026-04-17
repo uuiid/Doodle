@@ -707,7 +707,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
                  &entity_link::entity_out_id_, from<entity_link>(),
                  join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
                  join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                 where(c(sequence->*&entity::uuid_id_) == id_)
+                 where(c(sequence->*&entity::uuid_id_) == id_ && !c(shot->*&entity::canceled_))
              ))
       )
   );

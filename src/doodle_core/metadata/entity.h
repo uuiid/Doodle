@@ -160,6 +160,7 @@ struct DOODLE_CORE_API entity {
   std::string code_;
   std::string description_;
   std::int32_t shotgun_id_;
+  // 镜头是否作废，作废的镜头不参与casting true表示作废, false表示正常
   bool canceled_;
 
   std::optional<std::int32_t> nb_frames_;
