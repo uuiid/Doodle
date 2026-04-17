@@ -288,28 +288,21 @@ struct make_with_tasks_sql_result_t {
   }
   auto ji_du_where() {
     using namespace sqlite_orm;
-    return in(&entity_asset_extend::ji_du_, ji_du_filter_);
+    return in(&entity_asset_extend::ji_du_, ji_du_filter_) ||
+           (ji_du_filter_is_null && is_null(&entity_asset_extend::ji_du_));
   }
-  auto ji_du_is_null_where() {
-    using namespace sqlite_orm;
-    return is_null(c(&entity_asset_extend::ji_du_));
-  }
+
   auto ji_shu_lie_where() {
     using namespace sqlite_orm;
-    return in(&entity_asset_extend::ji_shu_lie_, ji_shu_lie_filter_);
+    return in(&entity_asset_extend::ji_shu_lie_, ji_shu_lie_filter_) ||
+           (ji_shu_lie_filter_is_null && is_null(&entity_asset_extend::ji_shu_lie_));
   }
-  auto ji_shu_lie_is_null_where() {
-    using namespace sqlite_orm;
-    return is_null(c(&entity_asset_extend::ji_shu_lie_));
-  }
+
   auto scenes_where() {
     using namespace sqlite_orm;
-    return in(&entity_asset_extend::chang_ci_, scenes_);
+    return in(&entity_asset_extend::chang_ci_, scenes_) || (scenes_is_null && is_null(&entity_asset_extend::chang_ci_));
   }
-  auto scenes_is_null_where() {
-    using namespace sqlite_orm;
-    return is_null(c(&entity_asset_extend::chang_ci_));
-  }
+
   auto task_status_id_where() {
     using namespace sqlite_orm;
     return in(&task::task_status_id_, task_status_id_filter_);
@@ -450,21 +443,12 @@ struct make_with_tasks_sql_result_t {
     // 6 位 person id
     if (!project_id_.is_nil()) l_dynamic_where.push_back(project_id_where());
     if (!entity_type_id_.empty()) l_dynamic_where.push_back(entity_type_id_where());
-    if (!ji_du_filter_.empty()) {
-      l_dynamic_where.push_back(ji_du_where());
-    } else if (ji_du_filter_is_null)
-      l_dynamic_where.push_back(ji_du_is_null_where());
-    if (!ji_shu_lie_filter_.empty()) l_dynamic_where.push_back(ji_shu_lie_where());
-    if (ji_shu_lie_filter_is_null) {
-      l_dynamic_where.push_back(ji_shu_lie_is_null_where());
-    } else if (!task_status_id_filter_.empty())
-      l_dynamic_where.push_back(task_status_id_where());
+    if (!ji_du_filter_.empty() || ji_du_filter_is_null) l_dynamic_where.push_back(ji_du_where());
+    if (!ji_shu_lie_filter_.empty() || ji_shu_lie_filter_is_null) l_dynamic_where.push_back(ji_shu_lie_where());
+    if (!task_status_id_filter_.empty()) l_dynamic_where.push_back(task_status_id_where());
     if (!person_id_filter_.empty()) l_dynamic_where.push_back(person_id_where());
     if (!search_key_.empty()) l_dynamic_where.push_back(search_key_where());
-    if (!scenes_.empty()) {
-      l_dynamic_where.push_back(scenes_where());
-    } else if (scenes_is_null)
-      l_dynamic_where.push_back(scenes_is_null_where());
+    if (!scenes_.empty() || scenes_is_null) l_dynamic_where.push_back(scenes_where());
 
     return with_tasks_sql_query(l_dynamic_where);
   }
