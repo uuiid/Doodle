@@ -610,9 +610,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
       auto l_shot_file_name =
           get_shots_animation_file_name(sequence_entity_->name_, shot_entity_.name_, prj_->code_).generic_string();
       l_shot_file_name += '_';
-      std::vector<std::string> l_assembly_names{};
-      std::vector<std::string> l_assembly_names_character{};
-      std::vector<std::string> l_assembly_names_prop{};
+
       for (auto&& l_file : FSys::directory_iterator(l_path_dir)) {
         auto l_stem = l_file.path().stem().string();
         if (!(
@@ -634,23 +632,23 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
         if (is_character) l_assembly_name = l_assembly_name.substr(2);
 
         if (l_assembly_name.empty()) continue;
-        l_assembly_names.emplace_back(l_assembly_name);
+        assembly_names_.emplace_back(l_assembly_name);
         if (is_character)
-          l_assembly_names_character.emplace_back(l_assembly_name);
+          assembly_names_character_.emplace_back(l_assembly_name);
         else
-          l_assembly_names_prop.emplace_back(l_assembly_name);
+          assembly_names_prop_.emplace_back(l_assembly_name);
       }
-      SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(l_assembly_names, ", "), shot_entity_.name_);
+      SPDLOG_INFO("Harvested {} assemblies for shot {}", fmt::join(assembly_names_, ", "), shot_entity_.name_);
 
       decltype(std::decay_t<decltype(*seq_entts_)>()) l_ass{};
       auto&& l_ass_all_map = *seq_entts_all_map_;
       auto&& l_ass_all     = *seq_entts_;
-      for (auto&& l_ass_name : l_assembly_names_character) {
+      for (auto&& l_ass_name : assembly_names_character_) {
         if (!l_ass_all_map.contains(l_ass_name)) continue;
         if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_character_id())
           l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
       }
-      for (auto&& l_ass_name : l_assembly_names_prop) {
+      for (auto&& l_ass_name : assembly_names_prop_) {
         if (!l_ass_all_map.contains(l_ass_name)) continue;
         if (std::get<1>(l_ass_all[l_ass_all_map[l_ass_name]]) == asset_type::get_prop_id())
           l_ass.push_back(l_ass_all[l_ass_all_map[l_ass_name]]);
