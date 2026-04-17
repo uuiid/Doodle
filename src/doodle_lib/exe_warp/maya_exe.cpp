@@ -30,7 +30,6 @@
 #include <winnt.h>
 #include <winreg/WinReg.hpp>
 
-
 namespace doodle {
 namespace {
 FSys::path find_maya_path_impl() {
@@ -146,13 +145,12 @@ boost::asio::awaitable<void> arg::async_run_maya() {
 
   auto [l_key, l_args] = get_json_str();
   if (!FSys::exists(out_path_file_.parent_path())) FSys::create_directories(out_path_file_.parent_path());
-
+  // loadPlugin "qualoth";
   constexpr auto l_fmt_str = R"(file -f -new;
 loadPlugin doodle_maya_{};
 loadPlugin fbxmaya;
 loadPlugin "AbcExport";
 loadPlugin xgenToolkit;
-loadPlugin "qualoth";
 int $doodle_batch_run_1 = `doodle_batch_run -config "{}" -{}`;
 quit -abort -force -exitCode $doodle_batch_run_1;
 )";
