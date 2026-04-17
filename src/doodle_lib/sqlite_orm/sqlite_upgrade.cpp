@@ -66,7 +66,7 @@ struct upgrade_init_t : sqlite_upgrade {
     if (!l_exit_fts) full_fts_sync(in_data);
 
     if (in_data->storage_any_.pragma.user_version() == 0) {
-      in_data->storage_any_.pragma.user_version(1);
+      in_data->storage_any_.pragma.user_version(2);
     }
 
     if (in_data->uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
