@@ -23,7 +23,7 @@ struct dynamic_where_t {
   // Holds type-erased expression: lazy serialization + AST traversal for binding.
   struct entry_t {
     std::function<std::string(const context_t&)> serialize_fn;
-    std::function<void(conditional_binder&)>     bind_fn;
+    std::function<void(conditional_binder&)> bind_fn;
   };
 
   using const_iterator = typename std::vector<entry_t>::const_iterator;
@@ -35,12 +35,8 @@ struct dynamic_where_t {
     // Share the expression between the two closures without double-move.
     auto shared_expr = std::make_shared<std::decay_t<E>>(std::forward<E>(expression));
     entry_t entry;
-    entry.serialize_fn = [shared_expr](const context_t& in_context) {
-      return serialize(*shared_expr, in_context);
-    };
-    entry.bind_fn = [shared_expr](conditional_binder& binder) {
-      iterate_ast(*shared_expr, binder);
-    };
+    entry.serialize_fn = [shared_expr](const context_t& in_context) { return serialize(*shared_expr, in_context); };
+    entry.bind_fn      = [shared_expr](conditional_binder& binder) { iterate_ast(*shared_expr, binder); };
     this->entries.push_back(std::move(entry));
   }
 
@@ -100,12 +96,33 @@ struct statement_serializer<dynamic_where_t<C>, void> {
 
     static constexpr std::array<orm_gsl::czstring, 2> sep = {" AND ", ""};
     auto l_len                                            = statement.size();
-    if (l_len == 0)
-      throw std::logic_error("dynamic_where statement cannot be empty");
+    if (l_len == 0) throw std::logic_error("dynamic_where statement cannot be empty");
     for (bool first = true; const typename statement_type::entry_t& entry : statement) {
-      ss << sep[std::exchange(first, false)] << (l_len == 1 ? "" : "(") << entry.serialize_fn(in_context) << (l_len == 1 ? "" : ")");
+      ss << sep[std::exchange(first, false)] << (l_len == 1 ? "" : "(") << entry.serialize_fn(in_context)
+         << (l_len == 1 ? "" : ")");
     }
 
+    return ss.str();
+  }
+};
+
+template <class T>
+struct content_rowid_t {
+  using value_type = T;
+
+  value_type value;
+};
+
+template <class T>
+struct statement_serializer<content_rowid_t<T>, void> {
+  using statement_type = content_rowid_t<T>;
+
+  template <class Ctx>
+  SQLITE_ORM_STATIC_CALLOP std::string operator()(
+      const statement_type& statement, const Ctx& context
+  ) SQLITE_ORM_OR_CONST_CALLOP {
+    std::stringstream ss;
+    ss << "content_rowid=" << serialize(statement.value, context);
     return ss.str();
   }
 };
@@ -119,6 +136,11 @@ struct statement_serializer<dynamic_where_t<C>, void> {
 template <class S>
 internal::dynamic_where_t<internal::serializer_context<typename S::db_objects_type>> dynamic_where(const S& storage) {
   return {obtain_db_objects(storage)};
+}
+
+template <class T>
+internal::content_rowid_t<T> content_rowid(T value) {
+  return {std::move(value)};
 }
 
 }  // namespace sqlite_orm

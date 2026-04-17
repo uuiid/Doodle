@@ -209,7 +209,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       ),
 
       make_view<entity_asset_view>("entity_asset_view", select(
-          columns(&entity::uuid_id_, &entity::name_, &entity::description_, &entity_asset_extend::bian_hao_,
+          columns(&entity::id_, &entity::uuid_id_, &entity::name_, &entity::description_, &entity_asset_extend::bian_hao_,
                   &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_),
           from<entity>(), join<entity_asset_extend>(on(c(&entity::uuid_id_) == &entity_asset_extend::entity_id_))
       )),

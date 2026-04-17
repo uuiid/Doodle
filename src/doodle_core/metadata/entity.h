@@ -250,7 +250,7 @@ struct DOODLE_CORE_API entity_fts {
 
 // 使用资产搜索使用的视图
 struct DOODLE_CORE_API entity_asset_view {
-  uuid entity_id_;
+  DOODLE_BASE_FIELDS();
   std::string name_;
   std::string description_;
   std::string bian_hao_;
@@ -259,7 +259,7 @@ struct DOODLE_CORE_API entity_asset_view {
   uuid parent_id_;
   // to json
   friend void to_json(nlohmann::json& j, const entity_asset_view& p) {
-    j["entity_id"]      = p.entity_id_;
+    j["entity_id"]      = p.uuid_id_;
     j["name"]           = p.name_;
     j["description"]    = p.description_;
     j["project_id"]     = p.project_id_;
