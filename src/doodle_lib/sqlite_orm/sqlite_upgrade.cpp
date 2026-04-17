@@ -130,7 +130,10 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger");
       in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger");
       in_data->storage_any_.drop_trigger_if_exists("entity_fts_delete_trigger");
+      in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger2");
+      in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger2");
       in_data->storage_any_.drop_table("entity_fts");
+      in_data->storage_any_.drop_table("entity_asset_view");
 
       in_data->sync_schema();
       upgrade_init_t::full_fts_sync(in_data);
