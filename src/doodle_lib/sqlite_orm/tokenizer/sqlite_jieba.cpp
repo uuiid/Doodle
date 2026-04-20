@@ -18,6 +18,16 @@ extern "C" int fts5_simple_xTokenize(
 extern "C" void fts5_simple_xDelete(Fts5Tokenizer* tokenizer_ptr);
 
 namespace doodle::tokenizer {
+namespace {
+std::size_t utf8_char_len(const unsigned char c) {
+  if ((c & 0x80U) == 0U) return 1;
+  if ((c & 0xE0U) == 0xC0U) return 2;
+  if ((c & 0xF0U) == 0xE0U) return 3;
+  if ((c & 0xF8U) == 0xF0U) return 4;
+  return 1;
+}
+}  // namespace
+
 class jitba_tokenizer {
  private:
   std::unique_ptr<cppjieba::Jieba> jieba_;
@@ -47,13 +57,55 @@ class jitba_tokenizer {
     std::vector<cppjieba::Word> words;
     jieba_->CutForSearch(text, words, true);  // 使用搜索模式分词，并保留原文偏移
 
+    auto emit_token = [&](const std::string& in_token, int in_begin, int in_end) -> int {
+      return xToken(pCtx, flags, in_token.c_str(), static_cast<int>(in_token.size()), in_begin, in_end);
+    };
+
     for (const auto& word : words) {
       const auto l_begin  = static_cast<int>(word.offset);
       const auto l_end    = static_cast<int>(word.offset + word.word.size());
-      const auto l_result = xToken(pCtx, flags, word.word.c_str(), static_cast<int>(word.word.size()), l_begin, l_end);
+      auto l_result       = emit_token(word.word, l_begin, l_end);
       if (l_result != SQLITE_OK) {
         return l_result;
       }
+
+      std::vector<std::size_t> l_offsets;
+      l_offsets.reserve(word.word.size());
+      for (std::size_t i = 0; i < word.word.size();) {
+        l_offsets.emplace_back(i);
+        auto l_step = utf8_char_len(static_cast<unsigned char>(word.word[i]));
+        if (l_step == 0 || i + l_step > word.word.size()) l_step = 1;
+        i += l_step;
+      }
+
+      // 额外输出字符级 token，保证“枪”这类单字查询可命中“狙击枪”等词。
+      for (std::size_t i = 0; i < l_offsets.size(); ++i) {
+        const auto l_char_start = l_offsets[i];
+        const auto l_char_end   = (i + 1 < l_offsets.size()) ? l_offsets[i + 1] : word.word.size();
+        if (l_char_end <= l_char_start) continue;
+
+        const auto l_char_token = word.word.substr(l_char_start, l_char_end - l_char_start);
+        l_result = emit_token(
+            l_char_token, static_cast<int>(word.offset + l_char_start), static_cast<int>(word.offset + l_char_end)
+        );
+        if (l_result != SQLITE_OK) {
+          return l_result;
+        }
+      }
+
+      // 同时输出 2-gram token，兼顾短词组合检索。
+      // for (std::size_t i = 0; i + 1 < l_offsets.size(); ++i) {
+      //   const auto l_ngram_start = l_offsets[i];
+      //   const auto l_ngram_end = (i + 2 < l_offsets.size()) ? l_offsets[i + 2] : word.word.size();
+      //   if (l_ngram_end <= l_ngram_start || (l_ngram_end - l_ngram_start) == word.word.size()) continue;
+      //   const auto l_ngram_token = word.word.substr(l_ngram_start, l_ngram_end - l_ngram_start);
+      //   l_result = emit_token(
+      //       l_ngram_token, static_cast<int>(word.offset + l_ngram_start), static_cast<int>(word.offset + l_ngram_end)
+      //   );
+      //   if (l_result != SQLITE_OK) {
+      //     return l_result;
+      //   }
+      // }
     }
     return SQLITE_OK;
   }
