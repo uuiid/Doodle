@@ -117,12 +117,11 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       // 创建辅助表的触发器
       make_trigger(
           "entity_fts_insert_trigger2",
-          after()
-              .insert()
-              .on<entity_asset_extend>()
-              .begin(  //
-                  update_all(
-                      set(c(&entity_fts::bian_hao_) = new_(&entity_asset_extend::bian_hao_)),
+          after().insert().on<entity_asset_extend>().begin(  //
+              update_all(set(
+                        c(&entity_fts::bian_hao_) = new_(&entity_asset_extend::bian_hao_),
+                        c(&entity_fts::pin_yin_ming_cheng_) = new_(&entity_asset_extend::pin_yin_ming_cheng_)
+                        ),
                       where(c(&entity_fts::entity_id_) == new_(&entity_asset_extend::entity_id_))
                   )
               )
@@ -133,10 +132,17 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           before()
               .update()
               .on<entity_asset_extend>()
-              .when(is_not_equal(old(&entity_asset_extend::bian_hao_), new_(&entity_asset_extend::bian_hao_)))
+              .when(
+                  is_not_equal(old(&entity_asset_extend::bian_hao_), new_(&entity_asset_extend::bian_hao_)) ||
+                  is_not_equal(
+                      old(&entity_asset_extend::pin_yin_ming_cheng_), new_(&entity_asset_extend::pin_yin_ming_cheng_)
+                  )
+              )
               .begin(  //
-                  update_all(
-                      set(c(&entity_fts::bian_hao_) = new_(&entity_asset_extend::bian_hao_)),
+                  update_all(set(
+                      c(&entity_fts::bian_hao_)           = new_(&entity_asset_extend::bian_hao_),
+                      c(&entity_fts::pin_yin_ming_cheng_) = new_(&entity_asset_extend::pin_yin_ming_cheng_)
+                      ),
                       where(c(&entity_fts::entity_id_) == old(&entity_asset_extend::entity_id_))
                   )
               )
@@ -200,6 +206,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
             make_column("name_", &entity_fts::name_),//
             make_column("description_", &entity_fts::description_),//
             make_column("bian_hao_", &entity_fts::bian_hao_),//
+            make_column("pin_yin_ming_cheng_", &entity_fts::pin_yin_ming_cheng_),//
             make_column("project_id_", &entity_fts::project_id_, unindexed()),//
             make_column("entity_type_id_", &entity_fts::entity_type_id_, unindexed()),//
             make_column("parent_id_", &entity_fts::parent_id_, unindexed()),//
@@ -211,7 +218,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
 
       make_view<entity_asset_view>("entity_asset_view", select(
           columns(&entity::id_, &entity::uuid_id_, &entity::name_, &entity::description_, &entity_asset_extend::bian_hao_,
-                  &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_),
+                  &entity_asset_extend::pin_yin_ming_cheng_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_),
           from<entity>(), join<entity_asset_extend>(on(c(&entity::uuid_id_) == &entity_asset_extend::entity_id_))
       )),
 

@@ -232,6 +232,8 @@ struct DOODLE_CORE_API entity_fts {
   std::string name_;
   std::string description_;
   std::string bian_hao_;
+  std::string pin_yin_ming_cheng_;
+
   uuid project_id_;
   uuid entity_type_id_;
   uuid parent_id_;
@@ -254,6 +256,8 @@ struct DOODLE_CORE_API entity_asset_view {
   std::string name_;
   std::string description_;
   std::string bian_hao_;
+  std::string pin_yin_ming_cheng_;
+
   uuid project_id_;
   uuid entity_type_id_;
   uuid parent_id_;
