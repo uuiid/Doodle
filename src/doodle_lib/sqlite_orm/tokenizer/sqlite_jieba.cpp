@@ -40,12 +40,20 @@ class jitba_tokenizer {
   std::int32_t tokenize(
       void* pCtx, int flags, const char* pText, int nText, const char* pLocale, int nLocale, xTokenFn xToken
   ) {
+    (void)pLocale;
+    (void)nLocale;
+
     std::string text(pText, nText);
-    std::vector<std::string> words;
-    jieba_->CutForSearch(text, words, true);  // 使用全模式分词
+    std::vector<cppjieba::Word> words;
+    jieba_->CutForSearch(text, words, true);  // 使用搜索模式分词，并保留原文偏移
 
     for (const auto& word : words) {
-      xToken(pCtx, flags, word.c_str(), static_cast<int>(word.size()), 0, 0);
+      const auto l_begin  = static_cast<int>(word.offset);
+      const auto l_end    = static_cast<int>(word.offset + word.word.size());
+      const auto l_result = xToken(pCtx, flags, word.word.c_str(), static_cast<int>(word.word.size()), l_begin, l_end);
+      if (l_result != SQLITE_OK) {
+        return l_result;
+      }
     }
     return SQLITE_OK;
   }
