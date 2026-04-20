@@ -6,6 +6,7 @@
 
 #include <boost/scope/scope_exit.hpp>
 
+#include "core/core_set.h"
 #include <cppjieba/Jieba.hpp>
 #include <sqlite3.h>
 
@@ -62,6 +63,12 @@ class jitba_tokenizer {
     };
 
     for (const auto& word : words) {
+      // 如果这个 word 为空或者为标点符，跳过不处理
+      if (word.word.empty() || std::all_of(word.word.begin(), word.word.end(), [](unsigned char c) {
+            return std::ispunct(c, core_set::get_set().utf8_locale);
+          }))
+        continue;
+
       const auto l_begin = static_cast<int>(word.offset);
       const auto l_end   = static_cast<int>(word.offset + word.word.size());
       auto l_result      = emit_token(word.word, l_begin, l_end);
