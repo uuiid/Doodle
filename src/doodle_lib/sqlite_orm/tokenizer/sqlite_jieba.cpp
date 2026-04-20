@@ -62,12 +62,16 @@ class jitba_tokenizer {
     };
 
     for (const auto& word : words) {
-      const auto l_begin  = static_cast<int>(word.offset);
-      const auto l_end    = static_cast<int>(word.offset + word.word.size());
-      auto l_result       = emit_token(word.word, l_begin, l_end);
+      const auto l_begin = static_cast<int>(word.offset);
+      const auto l_end   = static_cast<int>(word.offset + word.word.size());
+      auto l_result      = emit_token(word.word, l_begin, l_end);
       if (l_result != SQLITE_OK) {
         return l_result;
       }
+      // 如果 word 中只含有一个字符，或者全部为 ASCII 字符，则不需要额外处理。
+      if (word.word.size() <= 1 ||
+          std::all_of(word.word.begin(), word.word.end(), [](unsigned char c) { return c < 128; }))
+        continue;
 
       std::vector<std::size_t> l_offsets;
       l_offsets.reserve(word.word.size());
@@ -85,7 +89,7 @@ class jitba_tokenizer {
         if (l_char_end <= l_char_start) continue;
 
         const auto l_char_token = word.word.substr(l_char_start, l_char_end - l_char_start);
-        l_result = emit_token(
+        l_result                = emit_token(
             l_char_token, static_cast<int>(word.offset + l_char_start), static_cast<int>(word.offset + l_char_end)
         );
         if (l_result != SQLITE_OK) {
