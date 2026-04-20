@@ -75,6 +75,9 @@ class jitba_tokenizer {
       if (l_result != SQLITE_OK) {
         return l_result;
       }
+      // 如果是查询 flag , 不进行额外处理，避免过多冗余 token 导致查询性能下降
+      if (flags & FTS5_TOKENIZE_QUERY) continue;
+      
       // 如果 word 中只含有一个字符，或者全部为 ASCII 字符，则不需要额外处理。
       if (word.word.size() <= 1 ||
           std::all_of(word.word.begin(), word.word.end(), [](unsigned char c) { return c < 128; }))
