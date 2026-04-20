@@ -19,6 +19,9 @@
 #include <tuple>
 
 namespace doodle::details {
+namespace {
+constexpr std::size_t g_current_version = 3;
+}
 
 struct upgrade_init_t : sqlite_upgrade {
   // 755c9edd-9481-4145-ab43-21491bdf2739
@@ -68,7 +71,7 @@ struct upgrade_init_t : sqlite_upgrade {
     }
 
     if (in_data->storage_any_.pragma.user_version() == 0) {
-      in_data->storage_any_.pragma.user_version(2);
+      in_data->storage_any_.pragma.user_version(g_current_version);
     }
 
     if (in_data->uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
@@ -139,8 +142,14 @@ struct upgrade_2_t : sqlite_upgrade {
 
       in_data->sync_schema();
       upgrade_init_t::full_fts_sync(in_data);
-      in_data->storage_any_.pragma.user_version(2);
+      in_data->storage_any_.pragma.user_version(g_current_version);
     }
+
+    if (in_data->storage_any_.pragma.user_version() == 2) {
+      upgrade_init_t::full_fts_sync(in_data);
+      in_data->storage_any_.pragma.user_version(g_current_version);
+    }
+
   }
   ~upgrade_2_t() override = default;
 };
