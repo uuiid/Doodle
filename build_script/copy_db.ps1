@@ -4,9 +4,9 @@ param (
 
 $DataDestination = "$PSScriptRoot/../build/kitsu_new.db"
 
-Remove-Item $DataDestination -ErrorAction SilentlyContinue
-Remove-Item "$DataDestination-shm" -ErrorAction SilentlyContinue
-Remove-Item "$DataDestination-wal" -ErrorAction SilentlyContinue
+Remove-Item $DataDestination
+Remove-Item "$DataDestination-shm"
+Remove-Item "$DataDestination-wal"
 
 # Install-Module PSSQLite
 Import-Module PSSQLite
