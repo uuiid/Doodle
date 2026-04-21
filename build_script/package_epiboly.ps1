@@ -31,6 +31,7 @@ Write-Host "使用最新的备份数据库: $DataSource"
 
 Copy-Item $DataSource $DataSource_loc -Force
 $Tabls = Invoke-SqliteQuery -DataSource $DataSource_loc -Query "SELECT name FROM sqlite_master WHERE type='table';"
+INVOKE-SqliteQuery -DataSource $DataSource_loc -Query "DROP VIEW IF EXISTS entity_asset_view;"
 foreach ($Tab in $Tabls) {
     if ($Tab.name -eq "sqlite_sequence") { continue }
     if ($Tab.name -eq "project") { continue }
