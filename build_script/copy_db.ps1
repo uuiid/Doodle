@@ -3,10 +3,12 @@ param (
 )
 
 $DataDestination = "$PSScriptRoot/../build/kitsu_new.db"
-
-Remove-Item $DataDestination
-Remove-Item "$DataDestination-shm"
-Remove-Item "$DataDestination-wal"
+if (Test-Path $DataDestination) {
+  Write-Host "删除旧的数据库: $DataDestination"
+  Remove-Item $DataDestination
+  Remove-Item "$DataDestination-shm"
+  Remove-Item "$DataDestination-wal"
+}
 
 # Install-Module PSSQLite
 Import-Module PSSQLite
@@ -28,7 +30,7 @@ foreach ($p in $prjs) {
   $q = "update project set path = '$path' where id=$($p.id);";
   Invoke-SqliteQuery -DataSource $DataDestination -Query $q;
 }
-if ($DBVersion -gt 0){
+if ($DBVersion -gt 0) {
   Write-Host "设置数据库版本为 $DBVersion"
   Invoke-SqliteQuery -DataSource $DataDestination -Query "pragma user_version=$DBVersion;"
 }
