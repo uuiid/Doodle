@@ -50,8 +50,7 @@ struct upgrade_init_t : sqlite_upgrade {
 
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     auto l_exit_fts = in_data->storage_any_.table_exists("entity_fts");
-    if (auto l_exit_view = in_data->storage_any_.view_exists("entity_asset_view"); !l_exit_view)
-      in_data->sync_schema();
+    if (auto l_exit_view = in_data->storage_any_.view_exists("entity_asset_view"); !l_exit_view) in_data->sync_schema();
 
     // 不存在表, 并在同步后, 存在虚拟表, 说明是第一次安装, 需要将已有的 entity 数据同步到 entity_fts 虚拟表中
     if (!l_exit_fts) {
@@ -140,79 +139,7 @@ struct upgrade_2_t : sqlite_upgrade {
     }
 
     if (in_data->storage_any_.pragma.user_version() == 3) {
-      in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger");
-      in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger");
-      in_data->storage_any_.drop_trigger_if_exists("entity_fts_delete_trigger");
-      in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger2");
-      in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger2");
-      in_data->storage_any_.drop_trigger_if_exists("entity_fts_delete_trigger2");
-      in_data->storage_any_.drop_table_if_exists("entity_fts");
-      in_data->storage_any_.drop_view_if_exists("entity_asset_view");
-
-      if (sqlite3* db_handle = static_cast<sqlite3*>(in_data->raw_sqlite_handle_); db_handle) {
-        char* err_msg = nullptr;
-        auto l_rc     = sqlite3_exec(
-            db_handle, R"(BEGIN TRANSACTION;
-pragma foreign_keys=0;
-pragma recursive_triggers=0;
-create table entity_asset_extend_dg_tmp
-(
-    id                 INTEGER not null
-        primary key autoincrement,
-    uuid               BLOB    not null
-        unique,
-    entity_id          BLOB    not null
-        references entity (uuid)
-            on delete cascade,
-    ji_shu_lie         INTEGER,
-    deng_ji            TEXT,
-    gui_dang           INTEGER,
-    bian_hao           TEXT,
-    pin_yin_ming_cheng TEXT,
-    ban_ben            TEXT,
-    ji_du              INTEGER,
-    kai_shi_ji_shu     INTEGER,
-    chang_ci           INTEGER
-);
-
-insert into entity_asset_extend_dg_tmp(id, uuid, entity_id, ji_shu_lie, deng_ji, gui_dang, bian_hao, pin_yin_ming_cheng,
-                                       ban_ben, ji_du, kai_shi_ji_shu, chang_ci)
-select id,
-       uuid,
-       entity_id,
-       ji_shu_lie,
-       deng_ji,
-       gui_dang,
-       bian_hao,
-       pin_yin_ming_cheng,
-       ban_ben,
-       ji_du,
-       kai_shi_ji_shu,
-       chang_ci
-from entity_asset_extend;
-
-drop table entity_asset_extend;
-
-alter table entity_asset_extend_dg_tmp
-    rename to entity_asset_extend;
-
-create index entity_asset_extend_entity_id_idx
-    on entity_asset_extend (entity_id);
-    
-pragma foreign_keys=1;
-pragma recursive_triggers=1;
-
-END TRANSACTION ;
-)",
-            nullptr, nullptr, &err_msg
-        );
-        if (l_rc != SQLITE_OK) {
-          SPDLOG_ERROR("Failed to upgrade database from version 3 to 4: {}", err_msg);
-          sqlite3_free(err_msg);
-        }
-      }
-      in_data->sync_schema();
-      upgrade_init_t::full_fts_sync(in_data);
+      in_data->storage_any_.pragma.user_version(g_current_version);
     }
   }
   ~upgrade_2_t() override = default;
