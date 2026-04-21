@@ -6,8 +6,14 @@ $DataDestination = "$PSScriptRoot/../build/kitsu_new.db"
 if (Test-Path $DataDestination) {
   Write-Host "删除旧的数据库: $DataDestination"
   Remove-Item $DataDestination
-  Remove-Item "$DataDestination-shm"
-  Remove-Item "$DataDestination-wal"
+  if (Test-Path "$DataDestination-shm") {
+    Write-Host "删除旧的数据库共享内存文件: $DataDestination-shm"
+    Remove-Item "$DataDestination-shm"
+  }
+  if (Test-Path "$DataDestination-wal") {
+    Write-Host "删除旧的数据库日志文件: $DataDestination-wal"
+    Remove-Item "$DataDestination-wal"
+  }
 }
 
 # Install-Module PSSQLite
