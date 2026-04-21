@@ -185,6 +185,10 @@
       "label": "复制数据库",
       "type": "shell",
       "command": "${workspaceFolder}/build_script/copy_db.ps1",
+      "args": [
+        "-DBVersion",
+        "${input:DB_Version}"
+      ],
       "problemMatcher": [
         {
           "owner": "powershell",
@@ -279,6 +283,20 @@
       "options": [
         "-CopyServer",
         ""
+      ]
+    },
+    {
+      "id": "DB_Version",
+      "type": "pickString",
+      "description": "选择数据库版本",
+      "default": "0",
+      "options": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5"
       ]
     },
     {

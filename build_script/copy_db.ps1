@@ -1,3 +1,7 @@
+param (
+  [int]$DBVersion = 0
+)
+
 $DataDestination = "$PSScriptRoot/../build/kitsu_new.db"
 
 Remove-Item $DataDestination -ErrorAction SilentlyContinue
@@ -23,4 +27,8 @@ foreach ($p in $prjs) {
   $path = 'D:/test_db' + $p.path.Substring(16)
   $q = "update project set path = '$path' where id=$($p.id);";
   Invoke-SqliteQuery -DataSource $DataDestination -Query $q;
+}
+if ($DBVersion -gt 0){
+  Write-Host "设置数据库版本为 $DBVersion"
+  Invoke-SqliteQuery -DataSource $DataDestination -Query "pragma user_version=$DBVersion;"
 }
