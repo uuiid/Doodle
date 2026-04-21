@@ -41,20 +41,6 @@ struct upgrade_init_t : sqlite_upgrade {
   static void full_fts_sync(const std::shared_ptr<sqlite_database_impl>& in_data) {
     using namespace sqlite_orm;
     auto l_g                = in_data->storage_any_.transaction_guard();
-    // in_data->storage_any_.insert(
-    //     into<entity_fts>(),
-    //     columns(
-    //         &entity_fts::entity_id_, &entity_fts::name_, &entity_fts::description_, &entity_fts::project_id_,
-    //         &entity_fts::entity_type_id_, &entity_fts::parent_id_
-    //     ),
-    //     select(
-    //         columns(
-    //             &entity::uuid_id_, &entity::name_, &entity::description_, &entity::project_id_,
-    //             &entity::entity_type_id_, &entity::parent_id_
-    //         ),
-    //         from<entity>()
-    //     )
-    // );
     using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
     in_data->storage_any_.insert(
         into<entity_fts>(), columns(entity_fts_hidden::any_field), values(std::make_tuple("rebuild"))
