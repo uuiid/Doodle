@@ -64,9 +64,10 @@ struct upgrade_init_t : sqlite_upgrade {
 
   void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) override {
     auto l_exit_fts = in_data->storage_any_.table_exists("entity_fts");
+    if (auto l_exit_view = in_data->storage_any_.table_exists("entity_asset_view"); !l_exit_view)
+      in_data->sync_schema();
     // 不存在表, 并在同步后, 存在虚拟表, 说明是第一次安装, 需要将已有的 entity 数据同步到 entity_fts 虚拟表中
     if (!l_exit_fts) {
-      in_data->sync_schema();
       full_fts_sync(in_data);
     }
 
@@ -149,7 +150,6 @@ struct upgrade_2_t : sqlite_upgrade {
       upgrade_init_t::full_fts_sync(in_data);
       in_data->storage_any_.pragma.user_version(g_current_version);
     }
-
   }
   ~upgrade_2_t() override = default;
 };
