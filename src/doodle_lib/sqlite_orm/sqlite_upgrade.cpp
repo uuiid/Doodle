@@ -211,6 +211,8 @@ END TRANSACTION ;
           sqlite3_free(err_msg);
         }
       }
+      in_data->sync_schema();
+      upgrade_init_t::full_fts_sync(in_data);
     }
   }
   ~upgrade_2_t() override = default;
