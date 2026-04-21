@@ -34,3 +34,7 @@ if ($DBVersion -gt 0) {
   Write-Host "设置数据库版本为 $DBVersion"
   Invoke-SqliteQuery -DataSource $DataDestination -Query "pragma user_version=$DBVersion;"
 }
+else {
+  $version = Invoke-SqliteQuery -DataSource $DataDestination -Query "pragma user_version;"
+  Write-Host "当前数据库版本为 $($version[0].user_version)"
+}
