@@ -632,9 +632,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
         const static std::regex low_regex(R"((_Low\d*)$)");
         l_assembly_name = std::regex_replace(l_assembly_name, low_regex, "");
         const static std::regex rig_regex(R"((_rig_?[a-zA-Z]*\d*)$)");
-        l_assembly_name   = std::regex_replace(l_assembly_name, rig_regex, "");
+        l_assembly_name = std::regex_replace(l_assembly_name, rig_regex, "");
         // 去除开头的 Ch
-        bool is_character = l_assembly_name.starts_with("Ch");
+        const static std::regex ch_regex(R"(^Ch\d+[A-Z]$)");
+        auto is_character = std::regex_match(l_assembly_name, ch_regex);
         if (is_character) l_assembly_name = l_assembly_name.substr(2);
 
         if (l_assembly_name.empty()) continue;
