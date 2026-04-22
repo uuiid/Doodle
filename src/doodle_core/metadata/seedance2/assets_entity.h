@@ -13,6 +13,8 @@ struct DOODLE_CORE_API assets_entity {
   uuid group_id_;
   uuid user_id_;
   uuid preview_id_;
+  uuid studio_id_;
+
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
   // to json
@@ -23,6 +25,7 @@ struct DOODLE_CORE_API assets_entity {
     j["group_id"]    = p.group_id_;
     j["user_id"]     = p.user_id_;
     j["preview_id"]  = p.preview_id_;
+    j["studio_id"]   = p.studio_id_;
     j["created_at"]  = p.created_at_;
     j["updated_at"]  = p.updated_at_;
   }

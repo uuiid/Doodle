@@ -20,6 +20,7 @@ struct DOODLE_CORE_API task {
   std::string data_request_;
   std::string file_extension_;
   std::string data_response_;
+  uuid studio_id_;
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // to json
@@ -30,6 +31,8 @@ struct DOODLE_CORE_API task {
     j["data_request"]   = p.data_request_;
     j["file_extension"] = p.file_extension_;
     j["data_response"]  = p.data_response_;
+    j["studio_id"]      = p.studio_id_;
+
     j["created_at"]     = p.created_at_;
   }
 };
