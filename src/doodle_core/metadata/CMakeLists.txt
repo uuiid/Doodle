@@ -74,3 +74,4 @@ target_sources(
         task_type.cpp
 )
 add_subdirectory(bvh)
+add_subdirectory(seedance2)
