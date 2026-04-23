@@ -10,7 +10,6 @@
 #include <fmt/format.h>
 #include <string>
 
-
 namespace doodle::http {
 
 struct kitsu_ctx_t {
@@ -31,6 +30,15 @@ struct kitsu_ctx_t {
   /// 服务器 协议和域名(基本在发送电子邮件时使用)
   std::string domain_protocol_;
   std::string domain_name_;
+  // seedance2_thumbnail_task
+  FSys::path get_sd2_thumbnail_task_file(const uuid& in_uuid) {
+    return root_ / "sd2" / "thumbnail_tasks" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+  }
+  // seedance2_pictures_task
+  FSys::path get_sd2_pictures_task_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "sd2" / "pictures_tasks" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
 
   FSys::path get_jobs_logs_file(const uuid& in_uuid) {
     return root_ / "jobs" / FSys::split_uuid_path(fmt::format("{}.log", in_uuid));
