@@ -4,6 +4,10 @@
 
 #pragma once
 
+#include "doodle_core/metadata/seedance2/assets_entity.h"
+#include "doodle_core/metadata/seedance2/assets_entity_item.h"
+#include "doodle_core/metadata/seedance2/group.h"
+#include "doodle_core/metadata/seedance2/task.h"
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/assets.h>
@@ -74,6 +78,7 @@ DOODLE_SQLITE_ENUM_TYPE_(::doodle::entity_status);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::contract_types);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::notification_type);
 DOODLE_SQLITE_ENUM_TYPE_(::doodle::software_enum);
+DOODLE_SQLITE_ENUM_TYPE_(::doodle::seedance2::task_status);
 DOODLE_SQLITE_ENUM_ARRAY_TYPE_(::doodle::person_role_type);
 
 template <>
@@ -114,6 +119,68 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           .open_forever = true,
       },
       on_open([impl](sqlite3* in_ptr) { on_storage_open(in_ptr, impl); }),
+      //
+      make_index("seedance2_assets_entity_item_uuid_id_index", &seedance2::assets_entity_item::uuid_id_),
+      make_index("seedance2_assets_entity_item_parent_id_index", &seedance2::assets_entity_item::parent_id_),
+      make_table<seedance2::assets_entity_item>(
+          "seedance2_assets_entity_item",  //
+          make_column("id", &seedance2::assets_entity_item::id_, primary_key().autoincrement()),
+          make_column("uuid_id", &seedance2::assets_entity_item::uuid_id_, unique(), not_null()),
+          make_column("parent_id", &seedance2::assets_entity_item::parent_id_, not_null()),
+          make_column("file_extension", &seedance2::assets_entity_item::file_extension_),
+          foreign_key(&seedance2::assets_entity_item::parent_id_)
+              .references(&seedance2::assets_entity::uuid_id_)
+              .on_delete.cascade()
+      ),
+      make_index("seedance2_assets_entity_group_id_index", &seedance2::assets_entity::group_id_),
+      make_index("seedance2_assets_entity_uuid_id_index", &seedance2::assets_entity::uuid_id_),
+      make_index("seedance2_assets_entity_user_id_index", &seedance2::assets_entity::user_id_),
+      make_index("seedance2_assets_entity_studio_id_index", &seedance2::assets_entity::studio_id_),
+      make_table<seedance2::assets_entity>(
+          "seedance2_assets_entity",  //
+          make_column("id", &seedance2::assets_entity::id_, primary_key().autoincrement()),
+          make_column("uuid_id", &seedance2::assets_entity::uuid_id_, unique(), not_null()),
+          make_column("name", &seedance2::assets_entity::name_, not_null()),
+          make_column("description", &seedance2::assets_entity::description_),
+          make_column("group_id", &seedance2::assets_entity::group_id_, not_null()),
+          make_column("user_id", &seedance2::assets_entity::user_id_),
+          make_column("preview_id", &seedance2::assets_entity::preview_id_),
+          make_column("studio_id", &seedance2::assets_entity::studio_id_, not_null()),
+          make_column("created_at", &seedance2::assets_entity::created_at_),
+          make_column("updated_at", &seedance2::assets_entity::updated_at_),
+          foreign_key(&seedance2::assets_entity::group_id_)
+              .references(&seedance2::assets_group::uuid_id_)
+              .on_delete.cascade(),
+          foreign_key(&seedance2::assets_entity::user_id_).references(&person::uuid_id_).on_delete.set_null(),
+          foreign_key(&seedance2::assets_entity::studio_id_).references(&studio::uuid_id_).on_delete.cascade(),
+          foreign_key(&seedance2::assets_entity::preview_id_)
+              .references(&seedance2::assets_entity_item::uuid_id_)
+              .on_delete.set_null()
+      ),
+      make_index("seedance2_group_uuid_id_index", &seedance2::assets_group::uuid_id_),
+      make_table<seedance2::assets_group>(
+          "seedance2_assets_group",  //
+          make_column("id", &seedance2::assets_group::id_, primary_key().autoincrement()),
+          make_column("uuid_id", &seedance2::assets_group::uuid_id_, unique(), not_null()),
+          make_column("label", &seedance2::assets_group::label_),
+          make_column("user_id", &seedance2::assets_group::user_id_),
+          make_column("studio_id", &seedance2::assets_group::studio_id_),
+          make_column("created_at", &seedance2::assets_group::created_at_)
+      ),
+      make_index("seedance2_task_user_id_index", &seedance2::task::user_id_),
+      make_index("seedance2_task_uuid_id_index", &seedance2::task::uuid_id_),
+      make_index("seedance2_task_studio_id_index", &seedance2::task::studio_id_),
+      make_table<seedance2::task>("seedance2_task",  //
+          make_column("id", &seedance2::task::id_, primary_key().autoincrement()),
+          make_column("uuid_id", &seedance2::task::uuid_id_, unique(), not_null()),
+          make_column("user_id", &seedance2::task::user_id_),
+          make_column("status", &seedance2::task::status_),
+          make_column("data_request", &seedance2::task::data_request_),
+          make_column("file_extension", &seedance2::task::file_extension_),
+          make_column("data_response", &seedance2::task::data_response_),
+          make_column("studio_id", &seedance2::task::studio_id_),
+          make_column("created_at", &seedance2::task::created_at_)
+      ),
       // 创建辅助表的触发器
       make_trigger(
           "entity_fts_insert_trigger2",
