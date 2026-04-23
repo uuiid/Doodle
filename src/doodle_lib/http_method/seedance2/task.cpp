@@ -16,12 +16,11 @@
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
-  auto l_json           = in_handle->get_json();
+  auto l_json = in_handle->get_json();
 
-  auto l_task           = std::make_shared<sd2::task>();
-  l_task->data_request_ = l_json.at("data");
+  auto l_task = std::make_shared<sd2::task>();
+  l_json.get_to(*l_task);
   l_task->user_id_      = person_.person_.uuid_id_;
-  l_task->studio_id_    = person_.person_.studio_id_;
   auto l_sql            = get_sqlite_database();
   co_await l_sql.install(l_task);
 

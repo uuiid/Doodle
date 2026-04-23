@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core/metadata/ai_studio.h"
 #include "doodle_core/metadata/seedance2/assets_entity.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/group.h"
@@ -145,14 +146,14 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("group_id", &seedance2::assets_entity::group_id_, not_null()),
           make_column("user_id", &seedance2::assets_entity::user_id_),
           make_column("preview_id", &seedance2::assets_entity::preview_id_),
-          make_column("studio_id", &seedance2::assets_entity::studio_id_, not_null()),
+          make_column("ai_studio_id", &seedance2::assets_entity::ai_studio_id_, not_null()),
           make_column("created_at", &seedance2::assets_entity::created_at_),
           make_column("updated_at", &seedance2::assets_entity::updated_at_),
           foreign_key(&seedance2::assets_entity::group_id_)
               .references(&seedance2::assets_group::uuid_id_)
               .on_delete.cascade(),
           foreign_key(&seedance2::assets_entity::user_id_).references(&person::uuid_id_).on_delete.set_null(),
-          foreign_key(&seedance2::assets_entity::studio_id_).references(&studio::uuid_id_).on_delete.cascade(),
+          foreign_key(&seedance2::assets_entity::ai_studio_id_).references(&studio::uuid_id_).on_delete.cascade(),
           foreign_key(&seedance2::assets_entity::preview_id_)
               .references(&seedance2::assets_entity_item::uuid_id_)
               .on_delete.set_null()
@@ -164,22 +165,33 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("uuid_id", &seedance2::assets_group::uuid_id_, unique(), not_null()),
           make_column("label", &seedance2::assets_group::label_),
           make_column("user_id", &seedance2::assets_group::user_id_),
-          make_column("studio_id", &seedance2::assets_group::studio_id_),
+          make_column("ai_studio_id", &seedance2::assets_group::ai_studio_id_),
           make_column("created_at", &seedance2::assets_group::created_at_)
       ),
       make_index("seedance2_task_user_id_index", &seedance2::task::user_id_),
       make_index("seedance2_task_uuid_id_index", &seedance2::task::uuid_id_),
-      make_index("seedance2_task_studio_id_index", &seedance2::task::studio_id_),
-      make_table<seedance2::task>("seedance2_task",  //
+      make_index("seedance2_task_ai_studio_id_index", &seedance2::task::ai_studio_id_),
+      make_table<seedance2::task>(
+          "seedance2_task",  //
           make_column("id", &seedance2::task::id_, primary_key().autoincrement()),
           make_column("uuid_id", &seedance2::task::uuid_id_, unique(), not_null()),
-          make_column("user_id", &seedance2::task::user_id_),
-          make_column("status", &seedance2::task::status_),
+          make_column("user_id", &seedance2::task::user_id_), make_column("status", &seedance2::task::status_),
           make_column("data_request", &seedance2::task::data_request_),
           make_column("file_extension", &seedance2::task::file_extension_),
           make_column("data_response", &seedance2::task::data_response_),
-          make_column("studio_id", &seedance2::task::studio_id_),
+          make_column("ai_studio_id", &seedance2::task::ai_studio_id_),
           make_column("created_at", &seedance2::task::created_at_)
+      ),
+
+      make_table<ai_studio>(
+          "ai_studio",  //
+          make_column("id", &ai_studio::id_, primary_key().autoincrement()),
+          make_column("uuid_id", &ai_studio::uuid_id_, unique(), not_null()),
+          make_column("name", &ai_studio::name_, not_null()),//
+          make_column("color", &ai_studio::color_),
+          make_column("app_key", &ai_studio::app_key_),                                    //
+          make_column("app_secret", &ai_studio::app_secret_),                              //
+          make_column("archived", &ai_studio::archived_) 
       ),
       // 创建辅助表的触发器
       make_trigger(

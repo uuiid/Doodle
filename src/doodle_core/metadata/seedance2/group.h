@@ -10,7 +10,7 @@ struct DOODLE_CORE_API assets_group {
   DOODLE_BASE_FIELDS();
   std::string label_;
   uuid user_id_;
-  uuid studio_id_;
+  uuid ai_studio_id_;
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // to json
@@ -18,7 +18,7 @@ struct DOODLE_CORE_API assets_group {
     j["id"]         = p.uuid_id_;
     j["label"]      = p.label_;
     j["user_id"]    = p.user_id_;
-    j["studio_id"]  = p.studio_id_;
+    j["ai_studio_id"]  = p.ai_studio_id_;
     j["created_at"] = p.created_at_;
   }
   // from json

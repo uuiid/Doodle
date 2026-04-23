@@ -20,7 +20,7 @@ struct DOODLE_CORE_API task {
   std::string data_request_;
   std::string file_extension_;
   std::string data_response_;
-  uuid studio_id_;
+  uuid ai_studio_id_;
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // to json
@@ -31,9 +31,13 @@ struct DOODLE_CORE_API task {
     j["data_request"]   = p.data_request_;
     j["file_extension"] = p.file_extension_;
     j["data_response"]  = p.data_response_;
-    j["studio_id"]      = p.studio_id_;
+    j["ai_studio_id"]   = p.ai_studio_id_;
 
     j["created_at"]     = p.created_at_;
+  }
+  friend void from_json(const nlohmann::json& j, task& p) {
+    if (j.contains("data_request")) j.at("data_request").get_to(p.data_request_);
+    if (j.contains("ai_studio_id")) j.at("ai_studio_id").get_to(p.ai_studio_id_);
   }
 };
 
