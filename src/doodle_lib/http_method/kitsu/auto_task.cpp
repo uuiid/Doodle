@@ -646,13 +646,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
       );
 
     } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
-    } else {
-      throw_exception(
-          http_request_error{
-              boost::beast::http::status::bad_request, "不支持的资产类型: {}",
-              l_sql.get_by_uuid<asset_type>(l_asset.entity_type_id_).name_
-          }
-      );
     }
   }
   {  // 添加自动灯光生成的文件
