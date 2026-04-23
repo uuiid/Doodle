@@ -5,15 +5,16 @@
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_route.h>
 #include <doodle_lib/core/http/http_session_data.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "model_library.h"
 #include <memory>
 #include <treehh/tree.hh>
 #include <vector>
+
 namespace doodle::http::model_library {
 
 void check_data(const assets_helper::database_t& in_data) {
@@ -51,14 +52,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     http::session_data_ptr in_handle
 ) {
   person_.check_supervisor();
-  auto l_json                                      = in_handle->get_json();
-  std::shared_ptr<assets_helper::database_t> l_ptr = std::make_shared<assets_helper::database_t>(
-      std::get<nlohmann::json>(in_handle->body_).get<assets_helper::database_t>()
-  );
+  auto l_json = in_handle->get_json();
+  std::shared_ptr<assets_helper::database_t> l_ptr =
+      std::make_shared<assets_helper::database_t>(in_handle->get_json().get<assets_helper::database_t>());
 
   if (!l_ptr->uuid_parent_.is_nil()) {
-    if (auto l_list = get_sqlite_database().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_);
-        l_list == 0)
+    if (auto l_list = get_sqlite_database().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_); l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
   }
   co_await get_sqlite_database().install<assets_helper::database_t>(l_ptr);
@@ -88,9 +87,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     http::session_data_ptr in_handle
 ) {
   person_.check_supervisor();
-  auto l_value = std::make_shared<assets_helper::database_t>(
-      get_sqlite_database().get_by_uuid<assets_helper::database_t>(id_)
-  );
+  auto l_value =
+      std::make_shared<assets_helper::database_t>(get_sqlite_database().get_by_uuid<assets_helper::database_t>(id_));
   in_handle->get_json().get_to(*l_value);
   check_data(*l_value);
   co_await get_sqlite_database().install<assets_helper::database_t>(l_value);

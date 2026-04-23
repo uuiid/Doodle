@@ -71,6 +71,8 @@ class session_data : public std::enable_shared_from_this<session_data> {
   boost::asio::awaitable<void> save_bode_file(const std::string& in_ext);
   boost::asio::awaitable<void> save_multipart_form_data_file();
   std::string access_control_allow_origin_{"*"};
+  std::variant<std::string, nlohmann::json, FSys::path, multipart_body_impl::value_type_impl>
+      body_;  // std::variant<std::string, nlohmann::json>
 
   template <typename T>
   auto set_response_header(T& in_res, std::string_view in_mine_type);
@@ -95,8 +97,6 @@ class session_data : public std::enable_shared_from_this<session_data> {
   bool keep_alive_{};
 
   content_type content_type_{content_type::text_plain};
-  std::variant<std::string, nlohmann::json, FSys::path, multipart_body_impl::value_type_impl>
-      body_;  // std::variant<std::string, nlohmann::json>
   // 请求头
   boost::beast::http::request_header<> req_header_;
 

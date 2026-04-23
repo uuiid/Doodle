@@ -3,13 +3,12 @@
 //
 
 #include <doodle_core/metadata/ai_image_metadata.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <doodle_lib/core/global_function.h>
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu.h>
-
-#include <doodle_lib/core/global_function.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "model_library.h"
 #include <memory>
@@ -20,17 +19,14 @@
 namespace doodle::http::model_library {
 
 std::pair<std::size_t, std::size_t> pictures_base::create_thumbnail_image(
-    const std::string& in_data, const FSys::path& in_path, FSys::path in_name
+    const FSys::path& in_data, const FSys::path& in_path, FSys::path in_name
 ) {
   auto l_thumbnails_path = in_path / "thumbnails" / in_name.replace_extension(".png");
   auto l_preview_path    = in_path / "previews" / in_name.replace_extension(".png");
 
   if (auto l_p = l_thumbnails_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   if (auto l_p = l_preview_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-  cv::Mat l_image = cv::imdecode(
-      cv::InputArray{reinterpret_cast<const uchar*>(in_data.data()), boost::numeric_cast<int>(in_data.size())},
-      cv::IMREAD_COLOR
-  );
+  cv::Mat l_image = cv::imread(in_data.generic_string());
   if (l_image.empty()) throw_exception(doodle_error{"图片解码失败"});
 
   std::pair<std::size_t, std::size_t> l_size = {l_image.cols, l_image.rows};
@@ -118,13 +114,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_base::thu
     case detail::content_type::image_jpeg:
     case detail::content_type::image_jpg:
     case detail::content_type::image_png:
-      l_size = create_thumbnail_image(std::get<std::string>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
+      l_size = create_thumbnail_image(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     case detail::content_type::image_gif:
-      l_size = create_thumbnail_gif(std::get<FSys::path>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
+      l_size = create_thumbnail_gif(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     case detail::content_type::video_mp4:
-      l_size = create_thumbnail_mp4(std::get<FSys::path>(in_handle->body_), l_path, FSys::split_uuid_path(l_name));
+      l_size = create_thumbnail_mp4(in_handle->get_file(), l_path, FSys::split_uuid_path(l_name));
       break;
     default:
       co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "错误的请求类型");

@@ -342,7 +342,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_instance::pat
 
   server_task_info l_server_task_info_org{*l_server_task_info};
   auto l_sr   = l_server_task_info->status_;
-  auto l_json = std::get<nlohmann::json>(in_handle->body_);
+  auto l_json = in_handle->get_json();
   if (l_json.contains("status")) l_json["status"].get_to(l_server_task_info->status_);
   if (l_json.contains("name")) l_json["name"].get_to(l_server_task_info->name_);
 

@@ -59,7 +59,7 @@ class pictures_base : public http_jwt_fun {
       const FSys::path& in_data_path, const FSys::path& in_path, FSys::path in_name
   );
   std::pair<std::size_t, std::size_t> create_thumbnail_image(
-      const std::string& in_data, const FSys::path& in_path, FSys::path in_name
+      const FSys::path& in_data, const FSys::path& in_path, FSys::path in_name
   );
   boost::asio::awaitable<boost::beast::http::message_generator> thumbnail_get(
       session_data_ptr in_handle, FSys::path in_path, std::string in_extension = ".png"
