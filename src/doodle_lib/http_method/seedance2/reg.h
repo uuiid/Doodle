@@ -42,14 +42,11 @@ DOODLE_HTTP_FUN_END()
 
 // /api/seedance2/asset-library/entity/{parent_id}/item
 DOODLE_HTTP_JWT_FUN(seedance2_asset_library_entity_item)
-DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 uuid parent_id_{};
 DOODLE_HTTP_FUN_END()
 // /api/seedance2/asset-library/entity/{parent_id}/item/{id}
 DOODLE_HTTP_JWT_FUN(seedance2_asset_library_entity_item_instance)
-DOODLE_HTTP_FUN_OVERRIDE(get)
-DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid parent_id_{};
 uuid id_{};

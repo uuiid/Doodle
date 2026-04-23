@@ -30,13 +30,24 @@ struct kitsu_ctx_t {
   /// 服务器 协议和域名(基本在发送电子邮件时使用)
   std::string domain_protocol_;
   std::string domain_name_;
+  // seedance2_asset_library_entity_pictures_item
+  FSys::path get_sd2_asset_library_entity_pictures_item_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "sd2" / "pictures" / "asset_library" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+  // seedance2_asset_library_entity_thumbnail_item
+  FSys::path get_sd2_asset_library_entity_thumbnail_item_file(const uuid& in_uuid, const std::string& in_ext = {}) {
+    return root_ / "sd2" / "thumbnails" / "asset_library" /
+           FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
+  }
+
   // seedance2_thumbnail_task
   FSys::path get_sd2_thumbnail_task_file(const uuid& in_uuid) {
-    return root_ / "sd2" / "thumbnail_tasks" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+    return root_ / "sd2" / "thumbnail" / "tasks" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
   }
   // seedance2_pictures_task
   FSys::path get_sd2_pictures_task_file(const uuid& in_uuid, const std::string& in_ext = {}) {
-    return root_ / "sd2" / "pictures_tasks" /
+    return root_ / "sd2" / "pictures" / "tasks" /
            FSys::split_uuid_path(fmt::format("{}{}", in_uuid, fix_ext(true, in_ext)));
   }
 

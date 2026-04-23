@@ -261,9 +261,6 @@ boost::asio::awaitable<bool> session_data::parse_body() {
     case boost::beast::http::verb::patch:
       content_type_ = get_content_type(req_header_[boost::beast::http::field::content_type]);
       switch (content_type_) {
-        case content_type::image_jpeg:
-        case content_type::image_jpg:
-        case content_type::image_png:
         case content_type::text_plain:
         case content_type::application_json: {
           request_parser_ = std::make_shared<boost::beast::http::request_parser<boost::beast::http::string_body>>(

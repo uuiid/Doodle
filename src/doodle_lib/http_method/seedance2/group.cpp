@@ -60,6 +60,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, delet
   auto l_group = l_sql.get_by_uuid<sd2::assets_group>(group_id_);
   DOODLE_CHICK_HTTP(l_group.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_group.uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");
+
+  using namespace sqlite_orm;
+  DOODLE_CHICK_HTTP(
+      l_sql.impl_->storage_any_.count<sd2::assets_entity>(where(c(&sd2::assets_entity::group_id_) == group_id_)) == 0,
+      bad_request, "分组下存在资产，无法删除"
+  );
+
   co_await l_sql.remove<sd2::assets_group>(group_id_);
   co_return in_handle->make_msg(nlohmann::json{} = {{"id", group_id_}});
 }
