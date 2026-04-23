@@ -124,13 +124,17 @@ void http_jwt_fun::http_jwt_t::check_producer() const {
 }
 
 void http_jwt_fun::http_jwt_t::check_manager() const {
-  if (!person_.uuid_id_.is_nil() &&
-      (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::producer ||
-       person_.role_ == person_role_type::admin))
-    return;
+  if (is_manager()) return;
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+
+bool http_jwt_fun::http_jwt_t::is_manager() const {
+  return !person_.uuid_id_.is_nil() &&
+         (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::producer ||
+          person_.role_ == person_role_type::admin);
+}
+
 void http_jwt_fun::http_jwt_t::check_supervisor() const {
   if (!person_.uuid_id_.is_nil() &&
       (person_.role_ == person_role_type::supervisor || person_.role_ == person_role_type::manager ||
