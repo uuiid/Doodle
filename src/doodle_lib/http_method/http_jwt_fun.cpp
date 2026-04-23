@@ -4,16 +4,17 @@
 
 #include "http_jwt_fun.h"
 
+#include "doodle_core/exception/exception.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
-
 
 namespace doodle::http {
 
@@ -214,6 +215,15 @@ void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) co
   auto l_sql = get_sqlite_database();
   if (!l_sql.is_person_in_project(person_, in_project_id))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
+}
+uuid http_jwt_fun::http_jwt_t::get_ai_studio_id() const {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_vec = l_sql.impl_->storage_any_.get_all<ai_studio_person_role_link>(
+      where(c(&ai_studio_person_role_link::person_id_) == person_.uuid_id_)
+  );
+  DOODLE_CHICK(!l_vec.empty(), "人员没有所属的 ai 配置");
+  return l_vec.front().ai_studio_id_;
 }
 
 }  // namespace doodle::http

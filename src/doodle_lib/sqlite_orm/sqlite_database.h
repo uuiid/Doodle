@@ -237,5 +237,6 @@ class sqlite_database {
   entity_asset_extend get_entity_shot_extend_by_task(const uuid& in_shot_id);
   // 更新计算机状态
   boost::asio::awaitable<void> update_computer_status(const uuid& in_computer_id, computer_status in_status);
+  
 };
 }  // namespace doodle
