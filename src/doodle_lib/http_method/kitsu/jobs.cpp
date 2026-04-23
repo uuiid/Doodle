@@ -14,6 +14,7 @@
 
 #include <boost/asio/awaitable.hpp>
 
+#include <chrono>
 #include <filesystem>
 
 namespace doodle::http {
@@ -89,7 +90,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   // 运行中, 并且小于 24 小时的无法删除
   auto l_now = chrono::system_clock::now();
   if (l_job.status_ == server_task_info_status::running &&
-      l_now - l_job.run_time_.value_or(l_now).get_sys_time() < 24h) {
+      l_now - l_job.run_time_.value_or(chrono::system_zoned_time{chrono::current_zone(), l_now}).get_sys_time() < 24h) {
     co_return in_handle->make_error_code_msg(
         boost::beast::http::status::method_not_allowed, "任务正在运行中, 无法删除"
     );
