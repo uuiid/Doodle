@@ -136,7 +136,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
       make_index("seedance2_assets_entity_group_id_index", &seedance2::assets_entity::group_id_),
       make_index("seedance2_assets_entity_uuid_id_index", &seedance2::assets_entity::uuid_id_),
       make_index("seedance2_assets_entity_user_id_index", &seedance2::assets_entity::user_id_),
-      make_index("seedance2_assets_entity_studio_id_index", &seedance2::assets_entity::studio_id_),
+      make_index("seedance2_assets_entity_studio_id_index", &seedance2::assets_entity::ai_studio_id_),
       make_table<seedance2::assets_entity>(
           "seedance2_assets_entity",  //
           make_column("id", &seedance2::assets_entity::id_, primary_key().autoincrement()),
@@ -153,7 +153,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
               .references(&seedance2::assets_group::uuid_id_)
               .on_delete.cascade(),
           foreign_key(&seedance2::assets_entity::user_id_).references(&person::uuid_id_).on_delete.set_null(),
-          foreign_key(&seedance2::assets_entity::ai_studio_id_).references(&studio::uuid_id_).on_delete.cascade(),
+          foreign_key(&seedance2::assets_entity::ai_studio_id_).references(&ai_studio::uuid_id_).on_delete.cascade(),
           foreign_key(&seedance2::assets_entity::preview_id_)
               .references(&seedance2::assets_entity_item::uuid_id_)
               .on_delete.set_null()
@@ -181,6 +181,15 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("data_response", &seedance2::task::data_response_),
           make_column("ai_studio_id", &seedance2::task::ai_studio_id_),
           make_column("created_at", &seedance2::task::created_at_)
+      ),
+
+      make_table<ai_studio_person_role_link>(
+          "ai_studio_person_role_link",  //
+          make_column("id", &ai_studio_person_role_link::id_, primary_key().autoincrement()),
+          make_column("ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, not_null()),
+          make_column("person_id", &ai_studio_person_role_link::person_id_, not_null()),
+          foreign_key(&ai_studio_person_role_link::ai_studio_id_).references(&ai_studio::uuid_id_).on_delete.cascade(),
+          foreign_key(&ai_studio_person_role_link::person_id_).references(&person::uuid_id_).on_delete.cascade()
       ),
 
       make_table<ai_studio>(
