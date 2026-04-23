@@ -22,6 +22,7 @@ add_subdirectory(kitsu)
 add_subdirectory(model_library)
 add_subdirectory(local)
 add_subdirectory(other)
+add_subdirectory(seedance2)
 # add_subdirectory1(ai)
 
 set_source_files_properties(
