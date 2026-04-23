@@ -19,15 +19,15 @@ struct DOODLE_CORE_API assets_entity {
   chrono::system_zoned_time updated_at_{chrono::current_zone(), chrono::system_clock::now()};
   // to json
   friend void to_json(nlohmann::json& j, const assets_entity& p) {
-    j["id"]          = p.uuid_id_;
-    j["name"]        = p.name_;
-    j["description"] = p.description_;
-    j["group_id"]    = p.group_id_;
-    j["user_id"]     = p.user_id_;
-    j["preview_id"]  = p.preview_id_;
-    j["ai_studio_id"]   = p.ai_studio_id_;
-    j["created_at"]  = p.created_at_;
-    j["updated_at"]  = p.updated_at_;
+    j["id"]           = p.uuid_id_;
+    j["name"]         = p.name_;
+    j["description"]  = p.description_;
+    j["group_id"]     = p.group_id_;
+    j["user_id"]      = p.user_id_;
+    j["preview_id"]   = p.preview_id_;
+    j["ai_studio_id"] = p.ai_studio_id_;
+    j["created_at"]   = p.created_at_;
+    j["updated_at"]   = p.updated_at_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, assets_entity& p) {
