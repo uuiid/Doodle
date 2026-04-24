@@ -1051,6 +1051,26 @@ boost::asio::awaitable<void> sqlite_database::update_computer_status(
   );
   DOODLE_TO_SELF();
 }
+
+bool sqlite_database::is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id) const {
+  using namespace sqlite_orm;
+  auto l_r = impl_->storage_any_.count<ai_studio_person_role_link>(where(
+      c(&ai_studio_person_role_link::person_id_) == in_person_id &&
+      c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id
+  ));
+  return l_r > 0;
+}
+std::optional<ai_studio_person_role_link> sqlite_database::get_ai_studio_person_role_link(
+    const uuid& in_person_id, const uuid& in_ai_studio_id
+) const {
+  using namespace sqlite_orm;
+  auto l_t = impl_->storage_any_.get_all<ai_studio_person_role_link>(where(
+      c(&ai_studio_person_role_link::person_id_) == in_person_id &&
+      c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id
+  ));
+  if (l_t.empty()) return std::nullopt;
+  return l_t.front();
+}
 DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
 
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
@@ -1194,6 +1214,7 @@ DOODLE_GET_ALL_SQL(seedance2::assets_group)
 DOODLE_GET_ALL_SQL(seedance2::task)
 DOODLE_GET_ALL_SQL(seedance2::assets_entity_item)
 DOODLE_GET_ALL_SQL(project)
+DOODLE_GET_ALL_SQL(ai_studio_person_role_link)
 DOODLE_GET_ALL_SQL(ai_studio)
 DOODLE_GET_ALL_SQL(outsource_studio_authorization)
 DOODLE_GET_ALL_SQL(computer)
@@ -1239,6 +1260,7 @@ DOODLE_INSTALL_SQL(asset_type)
 DOODLE_INSTALL_SQL(task_type_asset_type_link)
 DOODLE_INSTALL_SQL(project_task_type_link)
 DOODLE_INSTALL_SQL(project_task_status_link)
+DOODLE_INSTALL_SQL(ai_studio_person_role_link)
 DOODLE_INSTALL_SQL(department)
 DOODLE_INSTALL_SQL(entity_asset_extend)
 DOODLE_INSTALL_SQL(person)
@@ -1292,7 +1314,6 @@ DOODLE_INSTALL_RANGE(seedance2::assets_group)
 DOODLE_INSTALL_RANGE(seedance2::task)
 DOODLE_INSTALL_RANGE(seedance2::assets_entity_item)
 
-
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)
 DOODLE_REMOVE_BY_ID(assets_file_helper::database_t)
@@ -1304,6 +1325,7 @@ DOODLE_REMOVE_BY_ID(comment_acknoledgments)
 DOODLE_REMOVE_BY_ID(project_person_link)
 DOODLE_REMOVE_BY_ID(entity_link)
 DOODLE_REMOVE_BY_ID(playlist)
+DOODLE_REMOVE_BY_ID(ai_studio_person_role_link)
 DOODLE_REMOVE_BY_ID(computer)
 DOODLE_REMOVE_BY_ID(ai_studio)
 DOODLE_REMOVE_BY_ID(playlist_shot)
@@ -1315,7 +1337,7 @@ DOODLE_REMOVE_BY_ID(task)
 DOODLE_REMOVE_BY_ID(seedance2::assets_entity)
 DOODLE_REMOVE_BY_ID(seedance2::assets_group)
 DOODLE_REMOVE_BY_ID(seedance2::task)
-DOODLE_REMOVE_BY_ID(seedance2::assets_entity_item) 
+DOODLE_REMOVE_BY_ID(seedance2::assets_entity_item)
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)

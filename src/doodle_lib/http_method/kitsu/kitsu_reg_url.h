@@ -801,5 +801,23 @@ DOODLE_HTTP_FUN(doodle_ai_volcano_engine_inference_materials_image_id)
 uuid id_{};
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
-
+// /api/data/ai_studio
+DOODLE_HTTP_JWT_FUN(data_ai_studio)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/data/ai_studio/{id}
+DOODLE_HTTP_JWT_FUN(data_ai_studio_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+// /api/data/ai_studio/{id}/person/{id}
+DOODLE_HTTP_JWT_FUN(data_ai_studio_instance_person_instance)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
+uuid ai_studio_id_{};
+uuid person_id_{};
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

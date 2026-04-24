@@ -103,4 +103,5 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(seedance2_animation_waiting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
+
 }  // namespace doodle::http::seedance2

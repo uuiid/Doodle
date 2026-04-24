@@ -36,6 +36,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
 }
 
 struct assets_entity_and_item : public sd2::assets_entity {
+  explicit assets_entity_and_item(const sd2::assets_entity& in_entity) : sd2::assets_entity(in_entity) {}
+
   std::vector<sd2::assets_entity_item> items_;
   // to json
   friend void to_json(nlohmann::json& j, const assets_entity_and_item& p) {
@@ -57,10 +59,8 @@ struct assets_entity_and_item : public sd2::assets_entity {
     std::map<uuid, std::size_t> l_map{};
     for (auto&& [entity, item] : l_entities) {
       if (!l_map.contains(entity.uuid_id_)) {
-        l_result.emplace_back();
-        auto& l_entity                             = l_result.back();
-        static_cast<sd2::assets_entity&>(l_entity) = entity;
-        l_map[entity.uuid_id_]                     = l_result.size() - 1;
+        l_result.emplace_back(entity);
+        l_map[entity.uuid_id_] = l_result.size() - 1;
       }
       if (!item.uuid_id_.is_nil()) l_result[l_map[entity.uuid_id_]].items_.push_back(item);
     }
