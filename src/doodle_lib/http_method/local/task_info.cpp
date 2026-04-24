@@ -31,7 +31,6 @@
 #include <doodle_lib/http_method/local/local.h>
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/long_task/image_to_move.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>

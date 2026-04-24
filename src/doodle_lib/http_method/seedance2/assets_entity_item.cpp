@@ -9,7 +9,6 @@
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "reg.h"
