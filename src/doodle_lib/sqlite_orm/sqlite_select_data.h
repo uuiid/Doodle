@@ -23,9 +23,11 @@
 
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <tuple>
+#include <vector>
 
 namespace doodle {
-
+struct working_file_and_link;
 struct todo_t {
   // std::shared_ptr<project> project_;
   // std::shared_ptr<entity> entity_;
@@ -423,5 +425,14 @@ std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
 );
 // 实体是否有解算资产
 bool entity_has_simulation_asset(const uuid& in_entity_id);
+// 获取资产和资产扩展数据 使用项目和镜头, 集数过滤
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
+    const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
+);
+// 获取资产和资产扩展数据 使用项目和镜头, 集数过滤
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(const uuid& in_entity_id);
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
+    const std::vector<uuid>& in_entity_ids
+);
 }  // namespace sqlite_select
 }  // namespace doodle

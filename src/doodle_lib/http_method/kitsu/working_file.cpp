@@ -14,7 +14,6 @@
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -235,26 +234,9 @@ std::vector<working_file_and_link> get_working_files_for_entity(
   auto l_sql = get_sqlite_database();
 
   std::vector<working_file_and_link> l_working_files{};
-  using namespace sqlite_orm;
 
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_assets           = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(in(
-          &entity::uuid_id_, select(
-                                 &entity_link::entity_out_id_, from<entity_link>(),
-                                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                                 where(
-                                     (in_shot_id.is_nil() || c(shot->*&entity::uuid_id_) == in_shot_id) &&
-                                     (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id)
-                                 )
-                             )
-      ))
-  );
-  auto l_prj = l_sql.get_by_uuid<project>(in_project_id);
+  auto l_assets = sqlite_select::get_working_files_for_entity(in_project_id, in_shot_id, in_sequence_id);
+  auto l_prj    = l_sql.get_by_uuid<project>(in_project_id);
   for (auto&& [l_entity, l_entity_asset_extend] : l_assets) {
     auto l_begin = l_working_files.size();
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
@@ -310,12 +292,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_wor
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_entity_ = l_sql.get_by_uuid<entity>(id_);
   auto l_prj     = l_sql.get_by_uuid<project>(l_entity_.project_id_);
-  using namespace sqlite_orm;
-  auto l_r = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(c(&entity::uuid_id_) == id_)
-  );
+  auto l_r       = sqlite_select::get_working_files_for_entity(id_);
   std::vector<working_file_and_link> l_working_files{};
   if (auto&& [l_entity, l_entity_asset_extend] = l_r.front();
       l_entity.entity_type_id_ == asset_type::get_character_id()) {
@@ -360,11 +337,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   );
 
   using namespace sqlite_orm;
-  auto l_r = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(in(&entity::uuid_id_, l_entity_ids))
-  );
+  auto l_r = sqlite_select::get_working_files_for_entity(l_entity_ids);
   std::vector<working_file_and_link> l_working_files{};
   for (auto&& [l_entity, l_entity_asset_extend] : l_r) {
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {

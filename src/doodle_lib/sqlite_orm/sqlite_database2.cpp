@@ -174,4 +174,54 @@ bool entity_has_simulation_asset(const uuid& in_entity_id) {
              where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_simulation_id())
          ) > 0;
 }
+
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
+    const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+
+  constexpr auto shot     = "shot"_alias.for_<entity>();
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  auto l_assets           = l_sql.impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(in(
+          &entity::uuid_id_, select(
+                                 &entity_link::entity_out_id_, from<entity_link>(),
+                                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
+                                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+                                 where(
+                                     (in_shot_id.is_nil() || c(shot->*&entity::uuid_id_) == in_shot_id) &&
+                                     (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id)
+                                 )
+                             )
+      ))
+  );
+
+  return l_assets;
+}
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(const uuid& in_entity_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(c(&entity::uuid_id_) == in_entity_id)
+  );
+  return l_r;
+}
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
+    const std::vector<uuid>& in_entity_ids
+);
+{
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
+      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(in(&entity::uuid_id_, in_entity_ids))
+  );
+  return l_r;
+}
 }  // namespace doodle::sqlite_select
