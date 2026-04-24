@@ -41,7 +41,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
   auto l_entity_item        = std::make_shared<sd2::assets_entity_item>();
   l_entity_item->parent_id_ = parent_id_;
   auto l_sql                = get_sqlite_database();
-  co_await l_sql.install(l_entity_item);
 
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     auto l_file_pictures =
@@ -62,6 +61,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
       cv::imwrite(l_file_pictures.generic_string(), l_image);
     } else
       FSys::rename(l_file, l_file_pictures);
+    l_entity_item->file_extension_ = ".png";
   } else if (is_video_extension(l_file.extension())) {
     // 大于 100M 直接拒绝 上传
     DOODLE_CHICK_HTTP(FSys::file_size(l_file) < 100 * 1024 * 1024, bad_request, "视频文件大小超过100M，无法上传");
@@ -100,9 +100,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
       while (l_video.read(l_frame)) l_writer.write(l_frame);
     } else
       FSys::rename(l_file, l_file_pictures);
+    l_entity_item->file_extension_ = ".mp4";
   } else {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的文件类型"});
   }
+  co_await l_sql.install(l_entity_item);
 
   co_return in_handle->make_msg_204();
 }
