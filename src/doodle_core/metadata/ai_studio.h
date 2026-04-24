@@ -47,5 +47,14 @@ struct ai_studio_person_role_link {
     if (j.contains("person_id")) j.at("person_id").get_to(p.person_id_);
   }
 };
+struct ai_studio_and_link_t : ai_studio {
+  std::vector<ai_studio_person_role_link> link_;
+  explicit ai_studio_and_link_t(const ai_studio& in_ai_studio) : ai_studio(in_ai_studio) {}
 
+  // to json
+  friend void to_json(nlohmann::json& j, const ai_studio_and_link_t& p) {
+    to_json(j, static_cast<const ai_studio&>(p));
+    j["link"] = p.link_;
+  }
+};
 }  // namespace doodle

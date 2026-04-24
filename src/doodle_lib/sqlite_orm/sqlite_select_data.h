@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
 #include <doodle_core/metadata/entity.h>
@@ -15,8 +15,12 @@
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
 
+#include <doodle_lib/doodle_lib_fwd.h>
+
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+
+
 namespace doodle {
 
 struct todo_t {
@@ -378,5 +382,5 @@ struct preview_files_for_entity_t {
   // to json
   friend void to_json(nlohmann::json& j, const preview_files_for_entity_t& p);
 };
-
+std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all();
 }  // namespace doodle

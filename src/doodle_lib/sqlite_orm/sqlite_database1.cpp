@@ -28,12 +28,7 @@
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
-#include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
-#include "sqlite_database.h"
-#include "tokenizer/sqlite_jieba.h"
-#include <cstddef>
-#include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
