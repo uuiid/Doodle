@@ -434,5 +434,19 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entit
 std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
     const std::vector<uuid>& in_entity_ids
 );
+// 从项目,集数人员, 镜头获取序列投射数据
+std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
+get_sequence_casting_for_project_and_person_and_sequence(
+    const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id, const std::vector<uuid>& in_shot_ids
+);
+// 从项目, 资产类型 获取序列投射数据
+std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
+get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id);
+std::vector<std::tuple<entity_link, std::string, std::string, uuid, uuid, uuid, uuid>> get_sequence_casting_for_entity(
+    const uuid& in_entity_id
+);
+// 从镜头获取关联的 资产链接
+std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id);
+std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id);
 }  // namespace sqlite_select
 }  // namespace doodle

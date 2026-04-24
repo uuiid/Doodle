@@ -111,40 +111,10 @@ data_project_sequences_casting_result_map get_sequence_casting(
     const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id = {},
     const std::vector<uuid>& in_shot_ids = {}
 ) {
-  auto l_sql = get_sqlite_database();
   data_project_sequences_casting_result_map l_result{};
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_outsource_select = select(
-      &outsource_studio_authorization::entity_id_,
-      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
-  );
-
   for (auto&& [ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_] :
-       l_sql.impl_->storage_any_.select(
-           columns(
-               object<entity_link>(true), &entity::name_, &entity::preview_file_id_, &entity::project_id_,
-               &asset_type::name_
-           ),
-           from<entity_link>(), join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-           join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-           join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
-           join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-           where(
-               c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-               (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id) &&
-               (in_shot_ids.empty() || in(shot->*&entity::uuid_id_, in_shot_ids)) &&  //
-               (in_person.role_ != person_role_type::outsource ||
-                (                                                 //
-                    in(&entity::uuid_id_, l_outsource_select) ||  //
-                    in(sequence->*&entity::uuid_id_, l_outsource_select)
-                ))
-           ),
-           multi_order_by(
-               order_by(sequence->*&entity::name_), order_by(shot->*&entity::name_), order_by(&asset_type::name_),
-               order_by(&entity::name_)
-           )
+       sqlite_select::get_sequence_casting_for_project_and_person_and_sequence(
+           in_project_id, in_person, in_sequence_id, in_shot_ids
        )) {
     l_result.maps[ent_link.entity_in_id_].emplace_back(
         data_project_sequences_casting_result{
@@ -204,23 +174,7 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
   using namespace sqlite_orm;
   constexpr auto asset = "asset"_alias.for_<entity>();
   for (auto&& [ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_] :
-       l_sql.impl_->storage_any_.select(
-
-           columns(
-               object<entity_link>(true), &entity::name_, &entity::preview_file_id_, &entity::project_id_,
-               &asset_type::name_
-           ),
-           from<entity_link>(),  //
-           join<asset>(on(c(&entity_link::entity_in_id_) == c(asset->*&entity::uuid_id_))),
-           join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
-           join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-           where(
-               c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-               (in_asset_type_id.is_nil() || c(&entity::entity_type_id_) == in_asset_type_id)
-           ),
-           multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
-
-       )) {
+       sqlite_select::get_sequence_casting_for_project_and_asset_type(in_project_id, in_asset_type_id)) {
     l_result.maps[ent_link.entity_in_id_].emplace_back(
         data_project_asset_types_casting_result{
             ent_link, entity_name_, entity_name_, asset_type_name_, entity_preview_file_id_
@@ -239,23 +193,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 }
 
 namespace {
-auto get_entity_link_by_entity_id(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
-
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == in_entity_id));
-
-  return l_ret;
-}
-
-auto get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
-  auto l_sql = get_sqlite_database();
-
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(in(&entity_link::entity_in_id_, in_entity_id)));
-
-  return l_ret;
-}
 
 std::optional<entity_link> find_entity_link(std::vector<entity_link>& in_entity_links, const uuid& in_entity_out_id) {
   auto l_it =
@@ -283,29 +220,28 @@ struct get_casting_t {
   std::string label_;
   bool is_shared_;
   uuid project_id_;
+  explicit get_casting_t(
+      const entity_link& in_ent_link, const std::string& in_asset_name, const std::string& in_asset_type_name,
+      const uuid& in_ready_for, const uuid& in_episode_id, const uuid& in_preview_file_id, const uuid& in_project_id
+  )
+      : asset_id_(in_ent_link.entity_out_id_),
+        asset_name_(in_asset_name),
+        asset_type_name_(in_asset_type_name),
+        ready_for_(in_ready_for),
+        episode_id_(in_episode_id),
+        preview_file_id_(in_preview_file_id),
+        nb_occurences_(in_ent_link.nb_occurences_),
+        label_(in_ent_link.label_),
+        is_shared_(false),
+        project_id_(in_project_id) {}
 
   static std::vector<get_casting_t> get(const uuid& in_entity_id) {
     auto l_sql = get_sqlite_database();
     using namespace sqlite_orm;
-    auto l_r = l_sql.impl_->storage_any_.select(
-        columns(
-            object<entity_link>(true), &entity::name_, &asset_type::name_, &entity::ready_for_, &entity::source_id_,
-            &entity::preview_file_id_, &entity::project_id_
-        ),
-        from<entity_link>(), join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
-        join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-        where(c(&entity_link::entity_in_id_) == in_entity_id && c(&entity::canceled_) != true),
-        multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
-    );
+    auto l_r = sqlite_select::get_sequence_casting_for_entity(in_entity_id);
     std::vector<get_casting_t> l_ret{};
-    for (auto&& [ent_link, entity_name_, asset_type_name_, ready_for_, episode_id_, preview_file_id_, project_id_] :
-         l_r) {
-      l_ret.emplace_back(
-          get_casting_t{
-              ent_link.entity_out_id_, entity_name_, asset_type_name_, ready_for_, episode_id_, preview_file_id_,
-              ent_link.nb_occurences_, ent_link.label_, false, project_id_
-          }
-      );
+    for (auto&& l_v : l_r) {
+      l_ret.push_back(std::make_from_tuple<get_casting_t>(l_v));
     }
     return l_ret;
   }
@@ -351,8 +287,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   std::vector<std::function<void()>> l_delay_events{};
   auto l_seq        = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
 
-  auto l_shot_links = get_entity_link_by_entity_id(entity_id_);
-  auto l_seq_links  = get_entity_link_by_entity_id(l_seq.uuid_id_);
+  auto l_shot_links = sqlite_select::get_entity_link_by_entity_id(entity_id_);
+  auto l_seq_links  = sqlite_select::get_entity_link_by_entity_id(l_seq.uuid_id_);
 
   auto l_list       = in_handle->get_json().get<std::vector<entity_link>>();
   for (auto&& i : l_list) {
@@ -478,7 +414,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   auto l_sql                                               = get_sqlite_database();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
-  auto l_shot_linke = get_entity_link_by_entity_id(
+  auto l_shot_linke = sqlite_select::get_entity_link_by_entity_id(
       l_list | ranges::views::transform(&actions_projects_casting_replace_arg::entity_id_) | ranges::to_vector
   );
   for (auto&& i : l_list) {
