@@ -20,6 +20,7 @@
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/computing_time.h>
 #include <doodle_lib/http_method/model_library/model_library.h>
+#include <doodle_lib/http_method/seedance2/reg.h>
 #include <doodle_lib/platform/win/register_file_type.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -289,6 +290,39 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &actions_projects_sequences_casting_ue_assembly_harvest::project_id_,
         &actions_projects_sequences_casting_ue_assembly_harvest::id_
       ))
+
+      .reg_t<seedance2::user_seedance2_task>("/api/user/seedance2/task"_url)
+      .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
+      .reg_t<seedance2::seedance2_task_instance>("/api/seedance2/task/{}"_url(&seedance2::seedance2_task_instance::id_))
+      .reg_t<seedance2::seedance2_thumbnail_task>("/api/seedance2/thumbnail/task/{}.png"_url(&seedance2::seedance2_thumbnail_task::id_))
+      .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{id}.png"_url(&seedance2::seedance2_pictures_task::id_))
+      .reg_t<seedance2::seedance2_asset_library_entity_item>("/api/seedance2/asset-library/entity/{}/item"_url(&seedance2::seedance2_asset_library_entity_item::parent_id_))
+      .reg_t<seedance2::seedance2_asset_library_entity_item_instance>("/api/seedance2/asset-library/entity/{}/item/{}"_url(
+        &seedance2::seedance2_asset_library_entity_item_instance::parent_id_,
+        &seedance2::seedance2_asset_library_entity_item_instance::id_
+      ))
+      .reg_t<seedance2::seedance2_asset_library_group_entity>("/api/seedance2/asset-library/group/{}/entity"_url(
+        &seedance2::seedance2_asset_library_group_entity::group_id_
+      ))
+      .reg_t<seedance2::seedance2_asset_library_entity_instance>("/api/seedance2/asset-library/entity/{}"_url(
+        &seedance2::seedance2_asset_library_entity_instance::entity_id_
+      ))
+      .reg_t<seedance2::seedance2_asset_library_entity_search>("/api/seedance2/asset-library/entity/search"_url)
+      .reg_t<seedance2::seedance2_asset_library_group>("/api/seedance2/asset-library/group"_url)
+      .reg_t<seedance2::seedance2_asset_library_group_instance>("/api/seedance2/asset-library/group/{}"_url(
+        &seedance2::seedance2_asset_library_group_instance::group_id_
+      ))
+      .reg_t<seedance2::seedance2_asset_library_entity_pictures_item>("/api/seedance2/asset-library/entity/{}/pictures/item/{}.png"_url(
+        &seedance2::seedance2_asset_library_entity_pictures_item::parent_id_,
+        &seedance2::seedance2_asset_library_entity_pictures_item::id_
+      ))
+      .reg_t<seedance2::seedance2_asset_library_entity_thumbnail_item>("/api/seedance2/asset-library/entity/{}/thumbnail/item/{}.png"_url(
+        &seedance2::seedance2_asset_library_entity_thumbnail_item::parent_id_,
+        &seedance2::seedance2_asset_library_entity_thumbnail_item::id_
+      ))
+
+      
+
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
       // clang-format on
