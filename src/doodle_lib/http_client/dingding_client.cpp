@@ -100,7 +100,7 @@ client_ptr dingding_company::make_client(std::reference_wrapper<const studio> in
 
   client_ptr l_client_ptr;
 
-  l_client_ptr = std::make_shared<client>(*ctx_ptr);
+  l_client_ptr = std::make_shared<client>(*core_set::get_set().ctx_ptr);
   l_client_ptr->access_token(l_studio.app_key_, l_studio.app_secret_);
 
   return l_client_ptr;

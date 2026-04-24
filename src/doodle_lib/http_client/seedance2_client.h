@@ -14,7 +14,7 @@
 namespace doodle::http::seedance2 {
 
 class seedance2_client : public std::enable_shared_from_this<seedance2_client> {
-  using http_client_t     = doodle::http::http_client;
+  using http_client_t     = doodle::http::http_client_ssl;
   using http_client_ptr_t = std::shared_ptr<http_client_t>;
 
   http_client_ptr_t http_client_ptr_{};
@@ -22,7 +22,8 @@ class seedance2_client : public std::enable_shared_from_this<seedance2_client> {
   logger_ptr logger_{spdlog::default_logger()};
 
  public:
-  explicit seedance2_client(const std::string& in_url) : http_client_ptr_{std::make_shared<http_client_t>(in_url)} {}
+  explicit seedance2_client(boost::asio::ssl::context& in_ctx)
+      : http_client_ptr_{std::make_shared<http_client_t>("https://ark.cn-beijing.volces.com", in_ctx)} {}
 
   void set_logger(logger_ptr in_logger) { logger_ = std::move(in_logger); }
   void set_token(const std::string& in_token) { token_ = in_token; }

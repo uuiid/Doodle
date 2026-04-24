@@ -18,7 +18,6 @@
 #include <opencv2/core/utility.hpp>
 #include <winreg/WinReg.hpp>
 
-
 namespace doodle {
 
 struct kitsu_supplement_args_t {
@@ -198,7 +197,7 @@ bool kitsu_supplement_main::init() {
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
   facets_.emplace_back(l_ssl_ctx);
-
+  l_set.ctx_ptr = l_ssl_ctx;
   {
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_, l_args.deepseek_keys_,
@@ -210,9 +209,6 @@ bool kitsu_supplement_main::init() {
           l_args.mail_config_.address_, l_args.mail_config_.port_, l_args.mail_config_.username_,
           l_args.mail_config_.password_
       );
-
-    // 初始化钉钉客户端
-    g_ctx().emplace<dingding::dingding_company>().ctx_ptr = l_ssl_ctx;
   }
   // 初始化路由
   auto l_rout_ptr = http::create_kitsu_route_2(l_args.kitsu_front_end_path_);

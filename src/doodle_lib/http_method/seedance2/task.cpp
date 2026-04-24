@@ -9,6 +9,7 @@
 #include <doodle_core/metadata/seedance2/task.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
@@ -21,7 +22,12 @@
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
-namespace {}
+namespace {
+constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};
+boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::shared_ptr<seedance2_client> in_client) {
+
+}
+}  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   auto l_json = in_handle->get_json();
@@ -46,7 +52,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
 
     *l_url = std::regex_replace(l_url->get<std::string>(), l_url_regex, "");
   }
-  auto l_sql = get_sqlite_database();
+
+  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+
+  auto l_sql    = get_sqlite_database();
   co_await l_sql.install(l_task);
 
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});

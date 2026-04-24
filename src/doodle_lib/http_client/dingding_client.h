@@ -94,7 +94,6 @@ class dingding_company {
   dingding_company()  = default;
 
   ~dingding_company() = default;
-  std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
 
   client_ptr make_client(std::reference_wrapper<const studio> in_studio);
 

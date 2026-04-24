@@ -2,12 +2,14 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <boost/asio/ssl/context.hpp>
 #include <boost/process.hpp>
 
 #include <atomic>
 #include <cstdint>
 #include <memory>
 #include <string>
+
 
 namespace doodle {
 
@@ -62,6 +64,7 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   std::atomic_uint64_t http_connection_count_{0};
 
   std::shared_ptr<http::computers_assign_task> computers_assign_task_ptr_{};
+  std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
 
  private:
   // 用户名称
