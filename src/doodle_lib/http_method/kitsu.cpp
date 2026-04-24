@@ -34,6 +34,7 @@
 #include <doodle_lib/http_method/up_file.h>
 
 #include "kitsu/kitsu_reg_url.h"
+#include "seedance2/reg.h"
 
 namespace doodle::http {
 
@@ -295,7 +296,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_task>("/api/seedance2/task"_url)
       .reg_t<seedance2::seedance2_task_instance>("/api/seedance2/task/{}"_url(&seedance2::seedance2_task_instance::id_))
       .reg_t<seedance2::seedance2_thumbnail_task>("/api/seedance2/thumbnail/task/{}.png"_url(&seedance2::seedance2_thumbnail_task::id_))
-      .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{id}.png"_url(&seedance2::seedance2_pictures_task::id_))
+      .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.png"_url(&seedance2::seedance2_pictures_task::id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item>("/api/seedance2/asset-library/entity/{}/item"_url(&seedance2::seedance2_asset_library_entity_item::parent_id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item_instance>("/api/seedance2/asset-library/entity/{}/item/{}"_url(
         &seedance2::seedance2_asset_library_entity_item_instance::parent_id_,
@@ -320,7 +321,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_asset_library_entity_thumbnail_item::parent_id_,
         &seedance2::seedance2_asset_library_entity_thumbnail_item::id_
       ))
-
+      .reg_t<seedance2::seedance2_animation_waiting>("/api/seedance2/animation/waiting.mp4"_url)
       
 
       // 最后注册nodejs前端

@@ -99,5 +99,8 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid parent_id_{};
 uuid id_{};
 DOODLE_HTTP_FUN_END()
-// /api/seedance2/animation/waiting.png
+// /api/seedance2/animation/waiting.mp4
+DOODLE_HTTP_JWT_FUN(seedance2_animation_waiting)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::seedance2
