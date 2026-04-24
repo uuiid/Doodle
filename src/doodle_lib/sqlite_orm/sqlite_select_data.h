@@ -20,7 +20,6 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 
-
 namespace doodle {
 
 struct todo_t {
@@ -382,5 +381,9 @@ struct preview_files_for_entity_t {
   // to json
   friend void to_json(nlohmann::json& j, const preview_files_for_entity_t& p);
 };
+namespace sqlite_select {
 std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all();
+// 从实体查询绑定人员
+std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id);
+}  // namespace sqlite_select
 }  // namespace doodle

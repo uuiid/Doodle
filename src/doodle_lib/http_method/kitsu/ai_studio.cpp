@@ -25,7 +25,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
   person_.check_producer();
   auto l_sql = get_sqlite_database();
-  auto l_vec = ai_studio_and_link_t_get_all();
+  auto l_vec = sqlite_select::ai_studio_and_link_t_get_all();
   co_return in_handle->make_msg(nlohmann::json{} = l_vec);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, get) {

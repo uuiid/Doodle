@@ -11,8 +11,8 @@
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/core/noncopyable.hpp>
 
@@ -80,28 +80,13 @@ class cache_manger_user : public boost::noncopyable {
       return l_value.first->user_abbreviation_;
     } else {
       using namespace sqlite_orm;
-      auto l_sql  = get_sqlite_database();
-      auto l_task = l_sql.impl_->storage_any_.select(
-          &task::uuid_id_, from<task>(),
-          where(c(&task::entity_id_) == id && c(&task::task_type_id_) == task_type::get_binding_id()), limit(1)
-      );
+      auto l_user = sqlite_select::get_rig_person_last_name_for_entity(id);
       std::string l_user_abbreviation{};
-      if (!l_task.empty()) {
-        auto l_user = get_sqlite_database().impl_->storage_any_.select(
-            &person::last_name_, from<person>(),
-            where(
-                in(&person::uuid_id_,
-                   select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == l_task.front())))
-            ),
-            limit(1)
-        );
-
-        if (!l_user.empty()) {
-          l_user_abbreviation.reserve(8);
-          l_user_abbreviation.push_back('_');
-          for (auto&& l_ : l_user.front())
-            if (std::isupper(l_)) l_user_abbreviation.push_back(std::tolower(l_));
-        }
+      if (!l_user.empty()) {
+        l_user_abbreviation.reserve(8);
+        l_user_abbreviation.push_back('_');
+        for (auto&& l_ : l_user)
+          if (std::isupper(l_)) l_user_abbreviation.push_back(std::tolower(l_));
       }
       set(id, l_user_abbreviation);
       return l_user_abbreviation;

@@ -27,6 +27,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 
@@ -34,7 +35,8 @@
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 
-namespace doodle {
+
+namespace doodle::sqlite_select {
 
 std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
   auto l_sql = get_sqlite_database();
@@ -56,4 +58,28 @@ std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
   }
   return l_result;
 }
-}  // namespace doodle
+
+std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+
+  auto l_task = l_sql.impl_->storage_any_.select(
+      &task::uuid_id_, from<task>(),
+      where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_binding_id()), limit(1)
+  );
+  std::string l_user_abbreviation{};
+  if (!l_task.empty()) {
+    auto l_user = l_sql.impl_->storage_any_.select(
+        &person::last_name_, from<person>(),
+        where(
+            in(&person::uuid_id_,
+               select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == l_task.front())))
+        ),
+        limit(1)
+    );
+
+    if (!l_user.empty()) return l_user.front();
+  }
+  return {};
+}
+}  // namespace doodle::sqlite_select
