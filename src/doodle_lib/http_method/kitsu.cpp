@@ -322,6 +322,9 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_asset_library_entity_thumbnail_item::id_
       ))
       .reg_t<seedance2::seedance2_animation_waiting>("/api/seedance2/animation/waiting.mp4"_url)
+      .reg_t<data_ai_studio>("/api/data/ai_studio"_url)
+      .reg_t<data_ai_studio_instance>("/api/data/ai_studio/{}"_url(&data_ai_studio_instance::id_))
+      .reg_t<data_ai_studio_instance_person_instance>("/api/data/ai_studio/{}/person/{}"_url(&data_ai_studio_instance::id_))
       
 
       // 最后注册nodejs前端
