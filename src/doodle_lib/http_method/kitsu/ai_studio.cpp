@@ -55,19 +55,19 @@ struct ai_studio_and_link_t : ai_studio {
 };
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
-  person_.check_user();
+  person_.check_producer();
   auto l_sql = get_sqlite_database();
   auto l_vec = ai_studio_and_link_t::get_all();
   co_return in_handle->make_msg(nlohmann::json{} = l_vec);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, get) {
-  person_.check_user();
+  person_.check_producer();
   auto l_sql       = get_sqlite_database();
   auto l_ai_studio = l_sql.get_by_uuid<ai_studio>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
-  person_.check_user();
+  person_.check_producer();
   auto l_sql       = get_sqlite_database();
   auto l_ai_studio = std::make_shared<ai_studio>(l_sql.get_by_uuid<ai_studio>(id_));
   auto l_json      = in_handle->get_json();
@@ -76,14 +76,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_ai_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
-  person_.check_user();
+  person_.check_producer();
   auto l_sql = get_sqlite_database();
   l_sql.uuid_to_id<ai_studio>(id_);
   co_await l_sql.remove<ai_studio>(id_);
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post) {
-  person_.check_user();
+  person_.check_producer();
   auto l_sql = get_sqlite_database();
   l_sql.uuid_to_id<person>(person_id_);
   if (l_sql.is_person_ai_studio_connected(person_id_, ai_studio_id_)) co_return in_handle->make_msg_204();
@@ -95,7 +95,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post
   co_return in_handle->make_msg(nlohmann::json{} = *l_ai_studio_lk);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, delete_) {
-  person_.check_user();
+  person_.check_producer();
   auto l_sql = get_sqlite_database();
   l_sql.uuid_to_id<person>(person_id_);
   if (!l_sql.is_person_ai_studio_connected(person_id_, ai_studio_id_)) co_return in_handle->make_msg_204();
