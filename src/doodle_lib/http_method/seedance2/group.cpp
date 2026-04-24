@@ -22,7 +22,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group, post) {
 
   auto l_group = std::make_shared<sd2::assets_group>();
   l_json.get_to(*l_group);
-  l_group->label_        = "group_";
+  if (l_group->name_.empty()) l_group->name_ = "group_";
   l_group->user_id_      = person_.person_.uuid_id_;
   l_group->ai_studio_id_ = person_.get_ai_studio_id();
   auto l_sql             = get_sqlite_database();
