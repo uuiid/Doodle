@@ -35,7 +35,6 @@
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 
-
 namespace doodle::sqlite_select {
 
 std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
@@ -81,5 +80,13 @@ std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
     if (!l_user.empty()) return l_user.front();
   }
   return {};
+}
+uuid get_ai_studio_uuid_for_person(const uuid& in_person_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_vec = l_sql.impl_->storage_any_.get_all<ai_studio_person_role_link>(
+      where(c(&ai_studio_person_role_link::person_id_) == in_person_id)
+  );
+  return l_vec.empty() ? uuid{} : l_vec.front().ai_studio_id_;
 }
 }  // namespace doodle::sqlite_select

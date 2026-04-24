@@ -385,5 +385,7 @@ namespace sqlite_select {
 std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all();
 // 从实体查询绑定人员
 std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id);
+// 从人员中获取 ai工作室 uuid
+uuid get_ai_studio_uuid_for_person(const uuid& in_person_id);
 }  // namespace sqlite_select
 }  // namespace doodle
