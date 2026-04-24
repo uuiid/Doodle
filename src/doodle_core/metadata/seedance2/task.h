@@ -19,7 +19,13 @@ enum class DOODLE_CORE_API task_status {
   failed,
   expired,
 };
-
+NLOHMANN_JSON_SERIALIZE_ENUM(
+    task_status, {{task_status::queued, "queued"},
+                  {task_status::running, "running"},
+                  {task_status::succeeded, "succeeded"},
+                  {task_status::failed, "failed"},
+                  {task_status::expired, "expired"}}
+);
 struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;

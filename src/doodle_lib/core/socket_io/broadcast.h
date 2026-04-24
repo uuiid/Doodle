@@ -6,8 +6,8 @@
 
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/comment.h"
-#include "doodle_core/metadata/computer.h"
 #include "doodle_core/metadata/preview_file.h"
+#include "doodle_core/metadata/seedance2/task.h"
 #include "doodle_core/metadata/server_task_info.h"
 #include "doodle_core/metadata/task_status.h"
 
@@ -415,6 +415,18 @@ struct preview_file_progress_update_broadcast_t {
   friend void to_json(nlohmann::json& j, const preview_file_progress_update_broadcast_t& p) {
     j["preview_file_id"] = p.preview_file_id_;
     j["progress"]        = p.progress_;
+  }
+};
+
+struct seedance2_task_update_broadcast_t {
+  static constexpr std::string_view event_name_ = "seedance2:task:update";
+  static constexpr std::string_view namespace_  = "/events";
+  uuid task_id_;
+  sd2::task_status status_;
+  // to json
+  friend void to_json(nlohmann::json& j, const seedance2_task_update_broadcast_t& p) {
+    j["task_id"] = p.task_id_;
+    j["status"]  = p.status_;
   }
 };
 
