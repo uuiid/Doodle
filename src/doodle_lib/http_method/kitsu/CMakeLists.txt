@@ -48,6 +48,7 @@ target_sources(
         computing_time.cpp
         distributed_task.cpp
         computers.cpp
+        ai_studio.cpp
         jobs.cpp
 )
 
@@ -68,6 +69,7 @@ set_source_files_properties(
         config.cpp
         distributed_task.cpp
         entities.cpp
+        ai_studio.cpp
         epiboly.cpp
         file_status.cpp
         jobs.cpp
