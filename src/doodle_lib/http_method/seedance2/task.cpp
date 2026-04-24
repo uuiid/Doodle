@@ -15,6 +15,8 @@
 #include "http_method/kitsu.h"
 #include "reg.h"
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
+#include <regex>
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
@@ -28,7 +30,20 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   l_json.get_to(*l_task);
   l_task->user_id_      = person_.person_.uuid_id_;
   l_task->ai_studio_id_ = person_.get_ai_studio_id();
-  auto l_sql            = get_sqlite_database();
+  auto l_seed_json      = l_task->data_request_;
+  // 查找 以https://或者http://开头的url，并替换host部分为空
+  static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
+  for (auto&& l_value : l_task->data_request_.at("content")) {
+    nlohmann::json* l_url{};
+    if (l_value.contains("image_url"))
+      l_url = &l_value.at("image_url").at("url");
+    else if (l_value.contains("video_url"))
+      l_url = &l_value.at("video_url").at("url");
+    else
+      continue;
+    *l_url         = std::regex_replace(l_url->get<std::string>(), l_url_regex, "");
+  }
+  auto l_sql = get_sqlite_database();
   co_await l_sql.install(l_task);
 
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});

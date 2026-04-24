@@ -17,9 +17,9 @@ struct DOODLE_CORE_API task {
   DOODLE_BASE_FIELDS();
   uuid user_id_;
   task_status status_;
-  std::string data_request_;
+  nlohmann::json data_request_;
   std::string file_extension_;
-  std::string data_response_;
+  nlohmann::json data_response_;
   uuid ai_studio_id_;
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
