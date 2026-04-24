@@ -8,6 +8,9 @@
 #include <doodle_core/metadata/seedance2/group.h>
 #include <doodle_core/metadata/seedance2/task.h>
 
+#include "doodle_lib/core/app_base.h"
+#include "doodle_lib/core/global_function.h"
+#include "doodle_lib/core/socket_io/broadcast.h"
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/seedance2_client.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
@@ -17,13 +20,11 @@
 #include <boost/asio/consign.hpp>
 #include <boost/asio/this_coro.hpp>
 
-#include "core/app_base.h"
-#include "core/global_function.h"
-#include "core/socket_io/broadcast.h"
 #include "http_method/kitsu.h"
 #include "reg.h"
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <opencv2/opencv.hpp>
 #include <regex>
 #include <spdlog/spdlog.h>
 
@@ -35,6 +36,7 @@ constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.
 boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::shared_ptr<seedance2_client> in_client) {
   // 每隔5s 查询一次任务状态，直到任务完成或者失败
   boost::asio::steady_timer l_timer{g_io_context()};
+
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_timer.expires_after(5s);
     co_await l_timer.async_wait(boost::asio::use_awaitable);
@@ -44,25 +46,42 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
       continue;
     }
     auto l_status = l_task_status.at("status").get<sd2::task_status>();
-    switch (l_status) {
-      case sd2::task_status::queued:
-      case sd2::task_status::running:
-        SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 仍在进行中...", in_task->task_id_);
-        break;
-      case sd2::task_status::succeeded:
-        SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "任务 {} 已完成!", in_task->task_id_);
-      case sd2::task_status::failed:
-        SPDLOG_LOGGER_WARN(g_logger_ctrl().get_http(), "任务 {} 失败了!", in_task->task_id_);
-        socket_io::broadcast(
-            socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task->uuid_id_, .status_ = l_status}
-        );
-        co_return;
-        break;
-      default:
-        SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_http(), "未知的任务状态: {}", l_status);
-        break;
+    if (l_status == sd2::task_status::succeeded || l_status == sd2::task_status::failed ||
+        l_status == sd2::task_status::expired || l_status == sd2::task_status::cancelled) {
+      in_task->status_        = l_status;
+      in_task->data_response_ = l_task_status;
+      co_await get_sqlite_database().update(in_task);
+      break;
     }
   }
+
+  if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("content") &&
+      in_task->data_response_.at("content").contains("video_url")) {
+    auto l_video_url      = in_task->data_response_.at("content").at("video_url").get<std::string>();
+    auto l_file           = co_await in_client->download_result(l_video_url);
+    auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_task_file(in_task->uuid_id_, ".mp4");
+    auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_task_file(in_task->uuid_id_);
+    if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    {
+      // 生成预览文件
+      auto l_video = cv::VideoCapture{l_file.generic_string()};
+      // 读取第一帧生成预览文件
+      cv::Mat l_image{};
+      l_video >> l_image;
+      if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
+      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      cv::resize(l_image, l_image, cv::Size(100, 100));
+
+      if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+      cv::imwrite(l_file_thumbnail.generic_string(), l_image);
+    }
+    FSys::rename(l_file, l_file_picture);
+  }
+
+  socket_io::broadcast(
+      socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task->uuid_id_, .status_ = in_task->status_}
+  );
 }
 }  // namespace
 
@@ -72,10 +91,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
 
   auto l_task = std::make_shared<sd2::task>();
   l_json.get_to(*l_task);
-  l_task->user_id_      = person_.person_.uuid_id_;
-  l_task->ai_studio_id_ = person_.get_ai_studio_id();
-  auto l_client         = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
-  auto l_studio         = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
+  l_task->user_id_        = person_.person_.uuid_id_;
+  l_task->ai_studio_id_   = person_.get_ai_studio_id();
+  l_task->file_extension_ = ".mp4";
+  auto l_client           = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+  auto l_studio           = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
   l_task->task_id_ = co_await l_client->run_task(l_task->data_request_);  // 异步运行任务，不等待结果

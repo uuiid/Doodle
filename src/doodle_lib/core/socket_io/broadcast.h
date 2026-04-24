@@ -418,10 +418,12 @@ struct preview_file_progress_update_broadcast_t {
   }
 };
 
+namespace sd2 = doodle::seedance2;
 struct seedance2_task_update_broadcast_t {
   static constexpr std::string_view event_name_ = "seedance2:task:update";
   static constexpr std::string_view namespace_  = "/events";
   uuid task_id_;
+
   sd2::task_status status_;
   // to json
   friend void to_json(nlohmann::json& j, const seedance2_task_update_broadcast_t& p) {
