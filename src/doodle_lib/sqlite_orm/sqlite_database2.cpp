@@ -213,8 +213,7 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entit
 }
 std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
     const std::vector<uuid>& in_entity_ids
-);
-{
+){
   auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
