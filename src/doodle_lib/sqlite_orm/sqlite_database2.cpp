@@ -142,7 +142,7 @@ std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_an
   using namespace sqlite_orm;
   auto l_entities = l_sql.impl_->storage_any_.select(
       columns(object<sd2::assets_entity>(), object<sd2::assets_entity_item>()),
-      join<sd2::assets_entity_item>(on(c(&sd2::assets_entity_item::parent_id_) == c(&sd2::assets_entity::uuid_id_))),
+      left_join<sd2::assets_entity_item>(on(c(&sd2::assets_entity_item::parent_id_) == c(&sd2::assets_entity::uuid_id_))),
       where(
           c(&sd2::assets_entity::group_id_) == in_group_id && c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id
       )
