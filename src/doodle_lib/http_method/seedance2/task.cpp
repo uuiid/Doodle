@@ -56,6 +56,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
         socket_io::broadcast(
             socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task->uuid_id_, .status_ = l_status}
         );
+        co_return;
         break;
       default:
         SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_http(), "未知的任务状态: {}", l_status);
