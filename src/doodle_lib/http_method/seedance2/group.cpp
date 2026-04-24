@@ -8,8 +8,8 @@
 
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include "reg.h"
 #include <memory>
@@ -31,12 +31,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_group);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group, get) {
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::assets_group>(
-      where(c(&sd2::assets_group::ai_studio_id_) == person_.get_ai_studio_id())
+  co_return in_handle->make_msg(
+      nlohmann::json{} = sqlite_select::get_sd2_assets_group_for_ai_studio(person_.get_ai_studio_id())
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_vec);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, get) {
   auto l_sql   = get_sqlite_database();
@@ -63,8 +60,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, delet
 
   using namespace sqlite_orm;
   DOODLE_CHICK_HTTP(
-      l_sql.impl_->storage_any_.count<sd2::assets_entity>(where(c(&sd2::assets_entity::group_id_) == group_id_)) == 0,
-      bad_request, "分组下存在资产，无法删除"
+      sqlite_select::get_sd2_assets_count_for_assets_group(group_id_) == 0, bad_request, "分组下存在资产，无法删除"
   );
 
   co_await l_sql.remove<sd2::assets_group>(group_id_);

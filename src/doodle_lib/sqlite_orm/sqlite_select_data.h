@@ -11,6 +11,9 @@
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
+#include <doodle_core/metadata/seedance2/assets_entity.h>
+#include <doodle_core/metadata/seedance2/assets_entity_item.h>
+#include <doodle_core/metadata/seedance2/group.h>
 #include <doodle_core/metadata/seedance2/task.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
@@ -382,6 +385,17 @@ struct preview_files_for_entity_t {
   // to json
   friend void to_json(nlohmann::json& j, const preview_files_for_entity_t& p);
 };
+struct assets_entity_and_item : public seedance2::assets_entity {
+  explicit assets_entity_and_item(const seedance2::assets_entity& in_entity) : seedance2::assets_entity(in_entity) {}
+
+  std::vector<seedance2::assets_entity_item> items_;
+  // to json
+  friend void to_json(nlohmann::json& j, const assets_entity_and_item& p) {
+    to_json(j, static_cast<const seedance2::assets_entity>(p));
+    j["items"] = p.items_;
+  }
+};
+
 namespace sqlite_select {
 namespace sd2 = doodle::seedance2;
 
@@ -396,5 +410,16 @@ std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id);
 std::vector<sd2::task> get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id);
 // 使用 人员id 筛选 seedance2::task
 std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id);
+// 使用 ai 工作室筛选 seedance2::assets_group
+std::vector<sd2::assets_group> get_sd2_assets_group_for_ai_studio(const uuid& in_ai_studio_id);
+// 获取 seedance2::assets_group 组下发资产数量
+std::size_t get_sd2_assets_count_for_assets_group(const uuid& in_assets_group_id);
+std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_and_ai_studio(
+    const uuid& in_group_id, const uuid& in_ai_studio_id
+);
+// 使用名称搜索 seedance2::assets_entity
+std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
+    const uuid& in_ai_studio_id, const std::string& keyword
+);
 }  // namespace sqlite_select
 }  // namespace doodle

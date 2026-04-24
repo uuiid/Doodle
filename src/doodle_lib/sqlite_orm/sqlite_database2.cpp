@@ -118,5 +118,54 @@ std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id) {
   auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::task>(where(c(&sd2::task::user_id_) == in_person_id));
   return l_vec;
 }
+std::vector<sd2::assets_group> get_sd2_assets_group_for_ai_studio(const uuid& in_ai_studio_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::assets_group>(
+      where(c(&sd2::assets_group::ai_studio_id_) == in_ai_studio_id)
+  );
+  return l_vec;
+}
 
+std::size_t get_sd2_assets_count_for_assets_group(const uuid& in_assets_group_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_size = l_sql.impl_->storage_any_.count<sd2::assets_entity>(
+      where(c(&sd2::assets_entity::group_id_) == in_assets_group_id)
+  );
+  return l_size;
+}
+std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_and_ai_studio(
+    const uuid& in_group_id, const uuid& in_ai_studio_id
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_entities = l_sql.impl_->storage_any_.select(
+      columns(object<sd2::assets_entity>(), object<sd2::assets_entity_item>()),
+      join<sd2::assets_entity_item>(on(c(&sd2::assets_entity_item::parent_id_) == c(&sd2::assets_entity::uuid_id_))),
+      where(
+          c(&sd2::assets_entity::group_id_) == in_group_id && c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id
+      )
+  );
+  std::vector<assets_entity_and_item> l_result{};
+  std::map<uuid, std::size_t> l_map{};
+  for (auto&& [entity, item] : l_entities) {
+    if (!l_map.contains(entity.uuid_id_)) {
+      l_result.emplace_back(entity);
+      l_map[entity.uuid_id_] = l_result.size() - 1;
+    }
+    if (!item.uuid_id_.is_nil()) l_result[l_map[entity.uuid_id_]].items_.push_back(item);
+  }
+  return l_result;
+}
+std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
+    const uuid& in_ai_studio_id, const std::string& keyword
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::assets_entity>(
+      where(like(&sd2::assets_entity::name_, keyword) && c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id)
+  );
+  return l_vec;
+}
 }  // namespace doodle::sqlite_select
