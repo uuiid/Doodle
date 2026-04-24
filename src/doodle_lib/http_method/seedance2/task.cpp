@@ -40,6 +40,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_timer.expires_after(5s);
     co_await l_timer.async_wait(boost::asio::use_awaitable);
+#ifdef DOODLE_SEED2
     const auto l_task_status = co_await in_client->query_task(in_task->task_id_);
     if (!l_task_status.contains("status")) {
       default_logger_raw()->error("查询任务状态失败，响应内容: {}", l_task_status.dump());
@@ -53,7 +54,11 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
       co_await get_sqlite_database().update(in_task);
       break;
     }
+#else
+    break;
+#endif
   }
+#ifdef DOODLE_SEED2
 
   if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("content") &&
       in_task->data_response_.at("content").contains("video_url")) {
@@ -78,6 +83,10 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
     }
     FSys::rename(l_file, l_file_picture);
   }
+#else
+  in_task->status_ = sd2::task_status::succeeded;
+  co_await get_sqlite_database().update(in_task);
+#endif
 
   socket_io::broadcast(
       socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task->uuid_id_, .status_ = in_task->status_}
@@ -98,8 +107,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   auto l_studio           = l_sql.get_by_uuid<ai_studio>(l_task->ai_studio_id_);
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
+#ifdef DOODLE_SEED2
   l_task->task_id_ = co_await l_client->run_task(l_task->data_request_);  // 异步运行任务，不等待结果
-
+#endif
   // 查找 以https://或者http://开头的url，并替换host部分为空
   static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
   for (auto&& l_value : l_task->data_request_.at("content")) {
