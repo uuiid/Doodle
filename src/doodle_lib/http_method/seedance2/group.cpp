@@ -49,7 +49,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, put) 
       g_logger_ctrl().get_http(), "用户 {}({}) 开始修改资产分组 group_id {} group_label {}  ", person_.person_.email_,
       person_.person_.get_full_name(), group_id_, l_group->label_
   );
-  DOODLE_CHICK_HTTP(l_group->user_id_ == person_.person_.uuid_id_, unauthorized, "权限不足");
+  DOODLE_CHICK_HTTP(l_group->user_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_group);
   co_await l_sql.update(l_group);
