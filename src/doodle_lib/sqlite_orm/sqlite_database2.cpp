@@ -168,4 +168,10 @@ std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
   );
   return l_vec;
 }
+bool entity_has_simulation_asset(const uuid& in_entity_id) {
+  using namespace sqlite_orm;
+  return get_sqlite_database().impl_->storage_any_.count<task>(
+             where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_simulation_id())
+         ) > 0;
+}
 }  // namespace doodle::sqlite_select

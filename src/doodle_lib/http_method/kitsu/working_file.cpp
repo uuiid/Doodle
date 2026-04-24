@@ -16,6 +16,7 @@
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -29,13 +30,6 @@
 #include <winsock2.h>
 
 namespace doodle::http {
-
-bool entity_has_simulation_asset(const uuid& in_entity_id) {
-  using namespace sqlite_orm;
-  return get_sqlite_database().impl_->storage_any_.count<task>(
-             where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_simulation_id())
-         ) > 0;
-}
 
 std::vector<working_file_and_link> create_character_working_files(
     const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
@@ -65,7 +59,7 @@ std::vector<working_file_and_link> create_character_working_files(
           in_entity, in_entity_asset_extend
       }
   );
-  if (entity_has_simulation_asset(in_entity.uuid_id_)) {
+  if (sqlite_select::entity_has_simulation_asset(in_entity.uuid_id_)) {
     l_working_files.emplace_back(
         working_file_and_link{
             working_file{
@@ -163,7 +157,7 @@ std::vector<working_file_and_link> create_prop_working_files(
           in_entity, in_entity_asset_extend
       }
   );
-  if (entity_has_simulation_asset(in_entity.uuid_id_))
+  if (sqlite_select::entity_has_simulation_asset(in_entity.uuid_id_))
     l_working_files.emplace_back(
         working_file_and_link{
             working_file{

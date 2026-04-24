@@ -421,5 +421,7 @@ std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_an
 std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
     const uuid& in_ai_studio_id, const std::string& keyword
 );
+// 实体是否有解算资产
+bool entity_has_simulation_asset(const uuid& in_entity_id);
 }  // namespace sqlite_select
 }  // namespace doodle
