@@ -297,6 +297,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_task_instance>("/api/seedance2/task/{}"_url(&seedance2::seedance2_task_instance::id_))
       .reg_t<seedance2::seedance2_thumbnail_task>("/api/seedance2/thumbnail/task/{}.png"_url(&seedance2::seedance2_thumbnail_task::id_))
       .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.png"_url(&seedance2::seedance2_pictures_task::id_))
+      .reg_t<seedance2::seedance2_pictures_task>("/api/seedance2/pictures/task/{}.mp4"_url(&seedance2::seedance2_pictures_task::id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item>("/api/seedance2/asset-library/entity/{}/item"_url(&seedance2::seedance2_asset_library_entity_item::parent_id_))
       .reg_t<seedance2::seedance2_asset_library_entity_item_instance>("/api/seedance2/asset-library/entity/{}/item/{}"_url(
         &seedance2::seedance2_asset_library_entity_item_instance::parent_id_,
@@ -318,6 +319,10 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
         &seedance2::seedance2_asset_library_entity_pictures_item::id_
       ))
       .reg_t<seedance2::seedance2_asset_library_entity_thumbnail_item>("/api/seedance2/asset-library/entity/{}/thumbnail/item/{}.png"_url(
+        &seedance2::seedance2_asset_library_entity_thumbnail_item::parent_id_,
+        &seedance2::seedance2_asset_library_entity_thumbnail_item::id_
+      ))
+      .reg_t<seedance2::seedance2_asset_library_entity_thumbnail_item>("/api/seedance2/asset-library/entity/{}/thumbnail/item/{}.mp4"_url(
         &seedance2::seedance2_asset_library_entity_thumbnail_item::parent_id_,
         &seedance2::seedance2_asset_library_entity_thumbnail_item::id_
       ))
