@@ -5,6 +5,9 @@
 #include "sqlite_database.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/seedance2/assets_entity_item.h"
+#include "doodle_core/metadata/seedance2/group.h"
+#include "doodle_core/metadata/seedance2/task.h"
 #include <doodle_core/metadata/ai_image_metadata.h>
 #include <doodle_core/metadata/asset_instance.h>
 #include <doodle_core/metadata/assets.h>
@@ -1153,7 +1156,10 @@ project sqlite_database::get_by_uuid<project>(const uuid& in_uuid) {
 }
 DOODLE_GET_BY_UUID_SQL(attendance_helper::database_t)
 DOODLE_GET_BY_UUID_SQL(outsource_studio_authorization)
-
+DOODLE_GET_BY_UUID_SQL(seedance2::assets_entity)
+DOODLE_GET_BY_UUID_SQL(seedance2::assets_group)
+DOODLE_GET_BY_UUID_SQL(seedance2::task)
+DOODLE_GET_BY_UUID_SQL(seedance2::assets_entity_item)
 template <>
 std::vector<assets_file_helper::database_t> sqlite_database::get_all() {
   auto l_list = impl_->get_all<assets_file_helper::database_t>();
@@ -1180,6 +1186,10 @@ DOODLE_GET_ALL_SQL(studio)
 DOODLE_GET_ALL_SQL(status_automation)
 DOODLE_GET_ALL_SQL(organisation)
 DOODLE_GET_ALL_SQL(ai_image_metadata)
+DOODLE_GET_ALL_SQL(seedance2::assets_entity)
+DOODLE_GET_ALL_SQL(seedance2::assets_group)
+DOODLE_GET_ALL_SQL(seedance2::task)
+DOODLE_GET_ALL_SQL(seedance2::assets_entity_item)
 DOODLE_GET_ALL_SQL(project)
 DOODLE_GET_ALL_SQL(outsource_studio_authorization)
 DOODLE_GET_ALL_SQL(computer)
@@ -1247,6 +1257,10 @@ DOODLE_INSTALL_SQL(status_automation)
 DOODLE_INSTALL_SQL(studio)
 DOODLE_INSTALL_SQL(computer)
 DOODLE_INSTALL_SQL(outsource_studio_authorization)
+DOODLE_INSTALL_SQL(seedance2::assets_entity)
+DOODLE_INSTALL_SQL(seedance2::assets_group)
+DOODLE_INSTALL_SQL(seedance2::task)
+DOODLE_INSTALL_SQL(seedance2::assets_entity_item)
 
 DOODLE_INSTALL_RANGE(attendance_helper::database_t)
 DOODLE_INSTALL_RANGE(work_xlsx_task_info_helper::database_t)
@@ -1267,6 +1281,11 @@ DOODLE_INSTALL_RANGE(playlist_shot)
 DOODLE_INSTALL_RANGE(task_type_asset_type_link)
 DOODLE_INSTALL_RANGE(assignees_table)
 DOODLE_INSTALL_RANGE(entity_shot_extend)
+DOODLE_INSTALL_RANGE(seedance2::assets_entity)
+DOODLE_INSTALL_RANGE(seedance2::assets_group)
+DOODLE_INSTALL_RANGE(seedance2::task)
+DOODLE_INSTALL_RANGE(seedance2::assets_entity_item)
+
 
 DOODLE_REMOVE_BY_ID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_ID(work_xlsx_task_info_helper::database_t)
@@ -1286,6 +1305,10 @@ DOODLE_REMOVE_BY_ID(project_status_automation_link)
 DOODLE_REMOVE_BY_ID(outsource_studio_authorization)
 DOODLE_REMOVE_BY_ID(studio)
 DOODLE_REMOVE_BY_ID(task)
+DOODLE_REMOVE_BY_ID(seedance2::assets_entity)
+DOODLE_REMOVE_BY_ID(seedance2::assets_group)
+DOODLE_REMOVE_BY_ID(seedance2::task)
+DOODLE_REMOVE_BY_ID(seedance2::assets_entity_item) 
 
 DOODLE_REMOVE_BY_UUID(attendance_helper::database_t)
 DOODLE_REMOVE_BY_UUID(work_xlsx_task_info_helper::database_t)
@@ -1303,5 +1326,8 @@ DOODLE_REMOVE_BY_UUID(entity)
 DOODLE_REMOVE_BY_UUID(comment)
 DOODLE_REMOVE_BY_UUID(server_task_info)
 DOODLE_REMOVE_BY_UUID(project_task_status_link)
-
+DOODLE_REMOVE_BY_UUID(seedance2::assets_entity)
+DOODLE_REMOVE_BY_UUID(seedance2::assets_group)
+DOODLE_REMOVE_BY_UUID(seedance2::task)
+DOODLE_REMOVE_BY_UUID(seedance2::assets_entity_item)
 }  // namespace doodle

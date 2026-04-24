@@ -56,6 +56,7 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/asset-library/group/{group_id}/entity
 DOODLE_HTTP_JWT_FUN(seedance2_asset_library_group_entity)
 DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_OVERRIDE(get)
 uuid group_id_{};
 DOODLE_HTTP_FUN_END()
 

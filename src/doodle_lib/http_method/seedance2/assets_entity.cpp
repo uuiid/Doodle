@@ -1,4 +1,5 @@
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/metadata.h"
 #include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/assets_entity.h>
@@ -17,6 +18,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <sqlite_orm/sqlite_orm.h>
+#include <vector>
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
@@ -31,6 +33,44 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
   co_await l_sql.install(l_entity);
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
+}
+
+struct assets_entity_and_item : public sd2::assets_entity {
+  std::vector<sd2::assets_entity_item> items_;
+  // to json
+  friend void to_json(nlohmann::json& j, const assets_entity_and_item& p) {
+    to_json(j, static_cast<const sd2::assets_entity>(p));
+    j["items"] = p.items_;
+  }
+
+  static std::vector<assets_entity_and_item> get_all(const uuid& in_group_id, const uuid& in_ai_studio_id) {
+    auto l_sql = get_sqlite_database();
+    using namespace sqlite_orm;
+    auto l_entities = l_sql.impl_->storage_any_.select(
+        columns(object<sd2::assets_entity>(), object<sd2::assets_entity_item>()),
+        join<sd2::assets_entity_item>(on(c(&sd2::assets_entity_item::parent_id_) == c(&sd2::assets_entity::uuid_id_))),
+        where(
+            c(&sd2::assets_entity::group_id_) == in_group_id && c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id
+        )
+    );
+    std::vector<assets_entity_and_item> l_result{};
+    std::map<uuid, std::size_t> l_map{};
+    for (auto&& [entity, item] : l_entities) {
+      if (!l_map.contains(entity.uuid_id_)) {
+        l_result.emplace_back();
+        auto& l_entity                             = l_result.back();
+        static_cast<sd2::assets_entity&>(l_entity) = entity;
+        l_map[entity.uuid_id_]                     = l_result.size() - 1;
+      }
+      if (!item.uuid_id_.is_nil()) l_result[l_map[entity.uuid_id_]].items_.push_back(item);
+    }
+    return l_result;
+  }
+};
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, get) {
+  co_return in_handle->make_msg(
+      nlohmann::json{} = assets_entity_and_item::get_all(group_id_, person_.get_ai_studio_id())
+  );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, get) {
   auto l_sql    = get_sqlite_database();
