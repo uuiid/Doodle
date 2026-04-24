@@ -89,4 +89,20 @@ uuid get_ai_studio_uuid_for_person(const uuid& in_person_id) {
   );
   return l_vec.empty() ? uuid{} : l_vec.front().ai_studio_id_;
 }
+// 获取任务分配的人(连接表)
+std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_task_id, uuid in_person_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_ret = l_sql.impl_->storage_any_.get_all<assignees_table>(
+      where(c(&assignees_table::task_id_) == in_task_id && c(&assignees_table::person_id_) == in_person_id)
+  );
+  return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<assignees_table>{std::nullopt};
+}
+std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_ret =
+      l_sql.impl_->storage_any_.select(&assignees_table::id_, where(c(&assignees_table::task_id_) == in_task_id));
+  return l_ret;
+}
 }  // namespace doodle::sqlite_select

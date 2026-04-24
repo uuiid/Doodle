@@ -387,5 +387,8 @@ std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all();
 std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id);
 // 从人员中获取 ai工作室 uuid
 uuid get_ai_studio_uuid_for_person(const uuid& in_person_id);
+std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_task_id, uuid in_person_id);
+std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id);
+
 }  // namespace sqlite_select
 }  // namespace doodle
