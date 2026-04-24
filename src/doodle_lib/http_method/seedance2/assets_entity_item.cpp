@@ -41,6 +41,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
   auto l_entity_item        = std::make_shared<sd2::assets_entity_item>();
   l_entity_item->parent_id_ = parent_id_;
   auto l_sql                = get_sqlite_database();
+  co_await l_sql.install(l_entity_item);
 
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
     auto l_file_pictures =
@@ -104,7 +105,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
   } else {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "不支持的文件类型"});
   }
-  co_await l_sql.install(l_entity_item);
+  co_await l_sql.update(l_entity_item);
 
   co_return in_handle->make_msg_204();
 }
