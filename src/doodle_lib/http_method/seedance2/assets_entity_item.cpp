@@ -52,7 +52,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
     {
       auto l_image  = cv::imread(l_file.generic_string());
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-      cv::resize(l_image, l_image, cv::Size(100, 100));
+      cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
       cv::imwrite(l_file_thumbnail.generic_string(), l_image);
     }
     if (l_file.extension() != ".png") {
@@ -80,7 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
       l_video >> l_image;
       if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
       auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
-      cv::resize(l_image, l_image, cv::Size(100, 100));
+      cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
 
       if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
       cv::imwrite(l_file_thumbnail.generic_string(), l_image);
