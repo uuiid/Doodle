@@ -91,7 +91,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post
   auto l_ai_studio_lk = std::make_shared<ai_studio_person_role_link>();
   auto l_json         = in_handle->get_json();
   l_json.get_to(*l_ai_studio_lk);
-  co_await l_sql.update(l_ai_studio_lk);
+  co_await l_sql.install(l_ai_studio_lk);
   co_return in_handle->make_msg(nlohmann::json{} = *l_ai_studio_lk);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, delete_) {
