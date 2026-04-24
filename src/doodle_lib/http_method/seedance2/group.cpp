@@ -45,7 +45,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, put) 
   auto l_sql   = get_sqlite_database();
   auto l_group = std::make_shared<sd2::assets_group>(l_sql.get_by_uuid<sd2::assets_group>(group_id_));
   DOODLE_CHICK_HTTP(l_group->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
-  DOODLE_CHICK_HTTP(l_group->uuid_id_ == person_.person_.uuid_id_, unauthorized, "权限不足");
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 开始修改资产分组 group_id {} group_label {}  ", person_.person_.email_,
+      person_.person_.get_full_name(), group_id_, l_group->label_
+  );
+  DOODLE_CHICK_HTTP(l_group->user_id_ == person_.person_.uuid_id_, unauthorized, "权限不足");
   auto l_json = in_handle->get_json();
   l_json.get_to(*l_group);
   co_await l_sql.update(l_group);
