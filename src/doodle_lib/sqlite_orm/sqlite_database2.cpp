@@ -303,5 +303,21 @@ std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& i
 
   return l_ret;
 }
-
+std::vector<std::tuple<entity_link, std::string, std::string, uuid, uuid, uuid, uuid>> get_sequence_casting_for_entity(
+    const uuid& in_entity_id
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(
+          object<entity_link>(true), &entity::name_, &asset_type::name_, &entity::ready_for_, &entity::source_id_,
+          &entity::preview_file_id_, &entity::project_id_
+      ),
+      from<entity_link>(), join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
+      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
+      where(c(&entity_link::entity_in_id_) == in_entity_id && c(&entity::canceled_) != true),
+      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
+  );
+  return l_r;
+}
 }  // namespace doodle::sqlite_select
