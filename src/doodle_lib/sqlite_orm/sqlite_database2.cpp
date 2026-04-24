@@ -105,4 +105,18 @@ std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
       l_sql.impl_->storage_any_.select(&assignees_table::id_, where(c(&assignees_table::task_id_) == in_task_id));
   return l_ret;
 }
+std::vector<sd2::task> get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::task>(where(c(&sd2::task::ai_studio_id_) == in_ai_studio_id));
+  return l_vec;
+}
+
+std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::task>(where(c(&sd2::task::user_id_) == in_person_id));
+  return l_vec;
+}
+
 }  // namespace doodle::sqlite_select

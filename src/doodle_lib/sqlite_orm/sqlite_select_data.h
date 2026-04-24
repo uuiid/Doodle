@@ -11,6 +11,7 @@
 #include <doodle_core/metadata/preview_file.h>
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/project_status.h>
+#include <doodle_core/metadata/seedance2/task.h>
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
@@ -382,6 +383,8 @@ struct preview_files_for_entity_t {
   friend void to_json(nlohmann::json& j, const preview_files_for_entity_t& p);
 };
 namespace sqlite_select {
+namespace sd2 = doodle::seedance2;
+
 std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all();
 // 从实体查询绑定人员
 std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id);
@@ -389,6 +392,9 @@ std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id);
 uuid get_ai_studio_uuid_for_person(const uuid& in_person_id);
 std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_task_id, uuid in_person_id);
 std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id);
-
+// 使用 ai 工作室筛选 seedance2::task
+std::vector<sd2::task> get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id);
+// 使用 人员id 筛选 seedance2::task
+std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id);
 }  // namespace sqlite_select
 }  // namespace doodle

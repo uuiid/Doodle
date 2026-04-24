@@ -13,7 +13,6 @@
 #include "doodle_lib/core/socket_io/broadcast.h"
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_client/seedance2_client.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/bind_cancellation_slot.hpp>
@@ -22,6 +21,7 @@
 
 #include "http_method/kitsu.h"
 #include "reg.h"
+#include "sqlite_orm/sqlite_select_data.h"
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/opencv.hpp>
@@ -137,18 +137,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, get) {
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::task>(where(c(&sd2::task::user_id_) == person_.person_.uuid_id_));
-  co_return in_handle->make_msg(l_vec);
+  co_return in_handle->make_msg(nlohmann::json{} = sqlite_select::get_sd2_tasks_for_person(person_.person_.uuid_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_vec =
-      l_sql.impl_->storage_any_.get_all<sd2::task>(where(c(&sd2::task::ai_studio_id_) == person_.get_ai_studio_id()));
-  co_return in_handle->make_msg(l_vec);
+  co_return in_handle->make_msg(
+      nlohmann::json{} = sqlite_select::get_sd2_tasks_for_ai_studio(person_.get_ai_studio_id())
+  );
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
