@@ -75,7 +75,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
       cv::Mat l_image{};
       l_video >> l_image;
       if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
-      auto l_resize = std::min(192.0 / l_image.cols, 108.0 / l_image.rows);
+      auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
       cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
 
       if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
