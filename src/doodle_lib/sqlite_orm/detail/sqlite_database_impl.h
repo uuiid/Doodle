@@ -180,6 +180,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("file_extension", &seedance2::task::file_extension_),
           make_column("data_response", &seedance2::task::data_response_),
           make_column("ai_studio_id", &seedance2::task::ai_studio_id_),
+          make_column("task_id", &seedance2::task::task_id_),
           make_column("created_at", &seedance2::task::created_at_)
       ),
 

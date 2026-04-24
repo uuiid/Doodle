@@ -39,9 +39,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
       l_url = &l_value.at("image_url").at("url");
     else if (l_value.contains("video_url"))
       l_url = &l_value.at("video_url").at("url");
+    else if (l_value.contains("audio_url "))
+      l_url = &l_value.at("audio_url ").at("url");
     else
       continue;
-    *l_url         = std::regex_replace(l_url->get<std::string>(), l_url_regex, "");
+
+    *l_url = std::regex_replace(l_url->get<std::string>(), l_url_regex, "");
   }
   auto l_sql = get_sqlite_database();
   co_await l_sql.install(l_task);

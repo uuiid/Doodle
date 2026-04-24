@@ -5,12 +5,19 @@
 #include <string>
 
 namespace doodle::seedance2 {
-
+/**
+queued：排队中。
+running：任务运行中。
+succeeded： 任务成功。（如发送失败，即5秒内没有接收到成功发送的信息，回调三次）
+failed：任务失败。（如发送失败，即5秒内没有接收到成功发送的信息，回调三次）
+expired：任务超时，即任务处于运行中或排队中状态超过过期时间。可通过 execution_expires_after 字段设置过期时间。
+*/
 enum class DOODLE_CORE_API task_status {
-  standby,
+  queued,
   running,
-  complete,
-  canceled,
+  succeeded,
+  failed,
+  expired,
 };
 
 struct DOODLE_CORE_API task {
@@ -21,6 +28,8 @@ struct DOODLE_CORE_API task {
   std::string file_extension_;
   nlohmann::json data_response_;
   uuid ai_studio_id_;
+
+  std::string task_id_;  // 任务ID，外部唯一标识
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // to json
