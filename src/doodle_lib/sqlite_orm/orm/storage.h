@@ -41,8 +41,10 @@ struct column_info {
 
 struct foreign_key_info {
   std::string name_;
-  void* ptr_{};      // 指向类成员变量的指针
-  void* ref_ptr_{};  // 指向引用表的成员变量的指针
+  std::type_index table_index_{typeid(void)};     // 指向外键类型的指针
+  void* ptr_{};                                   // 指向类成员变量的指针
+  std::type_index ref_type_index_{typeid(void)};  // 引用表的 type_index
+  void* ref_ptr_{};                               // 指向引用表的成员变量的指针
   foreign_key_action on_delete_{foreign_key_action::no_action};
   foreign_key_action on_update_{foreign_key_action::no_action};
 };
@@ -108,8 +110,10 @@ struct table_info {
   template <typename T, typename T2>
   table_info& add_foreign_key(auto T::* in_ptr, auto T2::* in_ref_ptr, auto... in_options) {
     foreign_key_info l_fk;
-    l_fk.ptr_     = reinterpret_cast<void*>(in_ptr);
-    l_fk.ref_ptr_ = reinterpret_cast<void*>(in_ref_ptr);
+    l_fk.table_index_    = std::type_index(typeid(T));
+    l_fk.ptr_            = reinterpret_cast<void*>(in_ptr);
+    l_fk.ref_type_index_ = std::type_index(typeid(T2));
+    l_fk.ref_ptr_        = reinterpret_cast<void*>(in_ref_ptr);
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(on_delete(foreign_key_action::cascade))>) {
