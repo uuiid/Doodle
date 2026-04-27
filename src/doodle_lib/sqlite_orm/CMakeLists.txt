@@ -12,6 +12,7 @@ target_sources(
 )
 add_subdirectory(detail)
 add_subdirectory(tokenizer)
+add_subdirectory(orm)
 
 set_source_files_properties(
         sqlite_database.cpp
