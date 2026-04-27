@@ -40,6 +40,7 @@ struct DOODLE_CORE_API task {
 
   std::string task_id_;  // 任务ID，外部唯一标识
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
+  chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   // to json
   friend void to_json(nlohmann::json& j, const task& p) {

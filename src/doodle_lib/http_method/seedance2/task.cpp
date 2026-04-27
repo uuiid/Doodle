@@ -84,7 +84,8 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
     FSys::rename(l_file, l_file_picture);
   }
 #else
-  in_task->status_ = sd2::task_status::succeeded;
+  in_task->status_   = sd2::task_status::succeeded;
+  in_task->ended_at_ = chrono::system_clock::now();
   co_await get_sqlite_database().update(in_task);
 #endif
 
