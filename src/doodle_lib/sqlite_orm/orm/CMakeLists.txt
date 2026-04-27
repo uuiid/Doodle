@@ -5,3 +5,4 @@ target_sources(
 
         PRIVATE
         storage.cpp
+)
