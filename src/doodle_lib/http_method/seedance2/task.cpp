@@ -58,6 +58,8 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
     break;
 #endif
   }
+  in_task->ended_at_ = chrono::system_clock::now();
+
 #ifdef DOODLE_SEED2
 
   if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("content") &&
@@ -84,8 +86,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
     FSys::rename(l_file, l_file_picture);
   }
 #else
-  in_task->status_   = sd2::task_status::succeeded;
-  in_task->ended_at_ = chrono::system_clock::now();
+  in_task->status_ = sd2::task_status::succeeded;
   co_await get_sqlite_database().update(in_task);
 #endif
 

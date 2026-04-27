@@ -182,7 +182,7 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
           make_column("ai_studio_id", &seedance2::task::ai_studio_id_),
           make_column("task_id", &seedance2::task::task_id_),
           make_column("created_at", &seedance2::task::created_at_),
-          make_column("ended_at", &seedance2::task::ended_at_),
+          make_column("ended_at", &seedance2::task::ended_at_)
       ),
 
       make_table<ai_studio_person_role_link>(
