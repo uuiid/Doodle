@@ -110,6 +110,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item_instance, delete_) {
+  auto l_sql    = get_sqlite_database();
+  auto l_item   = l_sql.get_by_uuid<sd2::assets_entity_item>(id_);
+  auto l_entity = l_sql.get_by_uuid<sd2::assets_entity>(l_item.parent_id_);
+  person_.check_manager();
+  DOODLE_CHICK_HTTP(l_entity.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
+  co_await l_sql.remove<sd2::assets_entity_item>(id_);
   co_return in_handle->make_msg_204();
 }
 
