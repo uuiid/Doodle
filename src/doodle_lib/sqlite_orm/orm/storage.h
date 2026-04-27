@@ -6,6 +6,7 @@
 #include <string>
 #include <typeindex>
 #include <utility>
+#include <vector>
 
 namespace doodle {
 
@@ -28,6 +29,17 @@ enum class foreign_key_action {
   set_null,
   set_default,
   cascade,
+};
+
+enum class where_op {
+  equal,
+  not_equal,
+  greater,
+  less,
+  greater_equal,
+  less_equal,
+  like,
+  in,
 };
 
 struct column_info {
@@ -132,6 +144,26 @@ auto make_table_info(std::string&& in_name) {
   table_info l_table{std::move(in_name), std::type_index(typeid(T))};
   return l_table;
 }
+
+struct joint_table_info {
+  std::type_index left_table_index_{typeid(void)};
+  std::type_index right_table_index_{typeid(void)};
+  std::pair<void*, void*> left_right_ptrs_{};  // 指向类成员变量的指针
+};
+template <typename T>
+struct where_info {
+  std::type_index table_index_{typeid(void)};
+  void* ptr_{};  // 指向类成员变量的指针
+  where_op op_;
+  T value_;
+};
+
+struct select_info {
+  std::vector<void*> column_ptrs_;  // 指向类成员变量的指针
+  std::type_index from_table_index_{typeid(void)};
+  std::vector<joint_table_info> joins_;
+};
+
 }  // namespace orm
 
 class storage {
@@ -141,7 +173,7 @@ class storage {
 
  public:
   virtual ~storage() = default;
-  orm::table_info& reg_table(orm::table_info&& in_table) {
+  orm::table_inf              o& reg_table(orm::table_info&& in_table) {
     tables_.push_back(std::move(in_table));
     return tables_.back();
   }
