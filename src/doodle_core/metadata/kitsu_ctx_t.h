@@ -43,7 +43,7 @@ struct kitsu_ctx_t {
 
   // seedance2_thumbnail_task
   FSys::path get_sd2_thumbnail_task_file(const uuid& in_uuid) {
-    return root_ / "sd2" / "thumbnail" / "tasks" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
+    return root_ / "sd2" / "thumbnails" / "tasks" / FSys::split_uuid_path(fmt::format("{}{}", in_uuid, ".png"));
   }
   // seedance2_pictures_task
   FSys::path get_sd2_pictures_task_file(const uuid& in_uuid, const std::string& in_ext = {}) {
