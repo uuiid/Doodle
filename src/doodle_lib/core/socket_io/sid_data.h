@@ -18,6 +18,7 @@
 
 #include <atomic>
 #include <memory>
+#include <tbb/concurrent_queue.h>
 
 namespace doodle::socket_io {
 struct packet_base;
@@ -91,7 +92,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   std::map<std::string, socket_io_core_ptr> socket_io_contexts_;
   boost::asio::strand<boost::asio::io_context::executor_type> strand_;
   boost::asio::strand<boost::asio::io_context::executor_type> write_strand_;
-  boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> message_queue_;
+  tbb::concurrent_queue<std::shared_ptr<packet_base>> message_queue_;
   boost::lockfree::spsc_queue<std::shared_ptr<packet_base>, boost::lockfree::capacity<1024>> self_message_queue_;
   boost::lockfree::spsc_value<std::shared_ptr<packet_base>> ping_message_;
 

@@ -176,7 +176,7 @@ packet_base_ptr sid_data::get_message() {
   }
   std::shared_ptr<packet_base> l_msg{};
   if (self_message_queue_.pop(l_msg); l_msg) return l_msg;
-  if (message_queue_.pop(l_msg) && l_msg) return l_msg;
+  if (message_queue_.try_pop(l_msg) && l_msg) return l_msg;
   return nullptr;
 }
 }  // namespace doodle::socket_io
