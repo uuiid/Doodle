@@ -32,6 +32,8 @@ class seedance2_client : public std::enable_shared_from_this<seedance2_client> {
   const std::string& get_token() const { return token_; }
 
   boost::asio::awaitable<std::string> run_task(const nlohmann::json& in_task);
+  // 取消任务
+  boost::asio::awaitable<void> cancel_task(const std::string& in_task_id);
 
   // 查询任务
   boost::asio::awaitable<nlohmann::json> query_task(const std::string& in_task_id);

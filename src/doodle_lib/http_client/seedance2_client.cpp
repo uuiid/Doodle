@@ -24,6 +24,15 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
   DOODLE_CHICK(l_json.contains("id"), "run_task response error: {}", l_json.dump());
   co_return l_json.at("id").get<std::string>();
 }
+boost::asio::awaitable<void> seedance2_client::cancel_task(const std::string& in_task_id) {
+  boost::beast::http::request<boost::beast::http::empty_body> req{
+      boost::beast::http::verb::delete_, fmt::format("/api/v3/contents/generations/tasks/{}", in_task_id), 11
+  };
+  req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
+  boost::beast::http::response<boost::beast::http::empty_body> l_res{};
+  co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
+  DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "cancel_task error: {}", l_res.result());
+}
 
 boost::asio::awaitable<nlohmann::json> seedance2_client::query_task(const std::string& in_task_id) {
   boost::beast::http::request<boost::beast::http::string_body> req{

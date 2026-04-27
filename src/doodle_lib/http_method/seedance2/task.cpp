@@ -153,6 +153,21 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
 
   co_return in_handle->make_msg(l_task);
 }
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
+  auto l_sql  = get_sqlite_database();
+  auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
+  DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
+  auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task.ai_studio_id_);
+  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+
+  l_client->set_token(l_studio.app_secret_);
+  l_client->set_logger(g_logger_ctrl().get_http());
+  if (l_task->status_ == sd2::task_status::running && !l_task->task_id_.empty())
+    co_await l_client->cancel_task(l_task.task_id_);
+  l_task.status_ = sd2::task_status::cancelled;
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_task);
+}
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
   auto l_sql  = get_sqlite_database();
