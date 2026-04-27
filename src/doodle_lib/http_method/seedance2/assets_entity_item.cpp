@@ -120,7 +120,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item_instance,
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_pictures_item, get) {
-  auto l_file = g_ctx().get<kitsu_ctx_t>().get_sd2_asset_library_entity_pictures_item_file(id_, ".png");
+  auto l_sql  = get_sqlite_database();
+  auto l_item = l_sql.get_by_uuid<sd2::assets_entity_item>(id_);
+  auto l_file = g_ctx().get<kitsu_ctx_t>().get_sd2_asset_library_entity_pictures_item_file(id_, l_item.file_extension_);
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "文件不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
