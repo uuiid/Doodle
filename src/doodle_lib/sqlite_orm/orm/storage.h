@@ -173,7 +173,7 @@ class storage {
 
  public:
   virtual ~storage() = default;
-  orm::table_info o& reg_table(orm::table_info&& in_table) {
+  orm::table_info& reg_table(orm::table_info&& in_table) {
     tables_.push_back(std::move(in_table));
     return tables_.back();
   }
