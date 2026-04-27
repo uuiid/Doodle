@@ -53,16 +53,17 @@ class jitba_tokenizer {
   ) {
     (void)pLocale;
     (void)nLocale;
-    if (flags & FTS5_TOKENIZE_QUERY)
-      return SQLITE_OK;  // 查询时不进行分词，直接使用原始输入，避免过多冗余 token 导致查询性能下降
-
-    std::string text(pText, nText);
-    std::vector<cppjieba::Word> words;
-    jieba_->CutForSearch(text, words, true);  // 使用搜索模式分词，并保留原文偏移
 
     auto emit_token = [&](const std::string& in_token, int in_begin, int in_end) -> int {
       return xToken(pCtx, flags, in_token.c_str(), static_cast<int>(in_token.size()), in_begin, in_end);
     };
+
+    // 查询时不进行分词，直接使用原始输入，避免过多冗余 token 导致查询性能下降
+    if (flags & FTS5_TOKENIZE_QUERY) return xToken(pCtx, flags, pText, nText, 0, nText);
+
+    std::string text(pText, nText);
+    std::vector<cppjieba::Word> words;
+    jieba_->CutForSearch(text, words, true);  // 使用搜索模式分词，并保留原文偏移
 
     for (const auto& word : words) {
       // 如果这个 word 为空或者为标点符，跳过不处理
