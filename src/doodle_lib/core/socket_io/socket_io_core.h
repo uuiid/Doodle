@@ -67,7 +67,7 @@ class socket_io_core : public std::enable_shared_from_this<socket_io_core> {
 
   const uuid& get_sid() const { return sid_; }
   const std::string& get_namespace() const { return namespace_; }
-  boost::asio::awaitable<void> set_namespace(const std::string& in_namespace, const nlohmann::json& in_json);
+  void set_namespace(const std::string& in_namespace, const nlohmann::json& in_json);
 
   nlohmann::json auth_{};
 

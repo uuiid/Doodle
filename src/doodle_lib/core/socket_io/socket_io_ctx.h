@@ -11,6 +11,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/signals2/signal.hpp>
+#include <boost/unordered/concurrent_flat_map.hpp>
 
 #include <memory>
 
@@ -72,10 +73,9 @@ class sid_ctx {
 
  private:
   using signal_type_ptr = std::shared_ptr<signal_type>;
-
-  std::map<uuid, std::shared_ptr<sid_data>> sid_map_{};
-  std::map<std::string, socket_io_packet_ptr> socket_map_{};
-  std::map<std::string, signal_type_ptr> signal_map_{};
+  boost::unordered::concurrent_flat_map<uuid, std::shared_ptr<sid_data>> sid_map_{};
+  boost::unordered::concurrent_flat_map<std::string, socket_io_packet_ptr> socket_map_{};
+  boost::unordered::concurrent_flat_map<std::string, signal_type_ptr> signal_map_{};
   // decltype(boost::asio::make_strand(g_io_context()))
   boost::asio::strand<boost::asio::io_context::executor_type> strand_{};
 
@@ -89,11 +89,13 @@ class sid_ctx {
   void register_namespace(const std::string& in_namespace);
 
   /// 线程安全
-  boost::asio::awaitable<std::shared_ptr<sid_data>> generate();
+  std::shared_ptr<sid_data> generate();
   /// 线程安全
-  boost::asio::awaitable<std::shared_ptr<sid_data>> get_sid(uuid in_sid) const;
+  std::shared_ptr<sid_data> get_sid(uuid in_sid) const;
   /// 线程安全
-  boost::asio::awaitable<signal_type_ptr> on(std::string in_namespace);
+  signal_type_ptr on(std::string in_namespace);
+  /// 移除 sid
+  void remove_sid(uuid in_sid);
 
   void emit_connect(const std::shared_ptr<socket_io_core>& in_data) const;
   /// 发出信号
@@ -101,7 +103,6 @@ class sid_ctx {
   /// 针对单条连接发出信号
   void emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_sid) const;
 
-  boost::asio::awaitable<bool> has_register(std::string in_namespace) const;
-  void clear();
+  bool has_register(std::string in_namespace) const;
 };
 }  // namespace doodle::socket_io

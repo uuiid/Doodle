@@ -19,6 +19,7 @@
 #include <boost/asio/experimental/parallel_group.hpp>
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/lockfree/detail/uses_optional.hpp>
+#include <boost/scope/scope_exit.hpp>
 
 #include "core_enum.h"
 #include "websocket_impl.h"
@@ -49,6 +50,11 @@ void sid_data::run() {
   );
 }
 boost::asio::awaitable<void> sid_data::impl_run() {
+  boost::scope::scope_exit l_cleanup{[this, sh = shared_from_this()]() {
+    close();
+    seed_message_ping();
+    ctx_->remove_sid(sid_);
+  }};
   boost::asio::system_timer l_timer{co_await boost::asio::this_coro::executor};
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     if (is_timeout()) co_return;
@@ -58,8 +64,6 @@ boost::asio::awaitable<void> sid_data::impl_run() {
     if (auto l_websocket = socket_io_websocket_core_.lock(); !l_websocket) co_return;
     seed_message_ping();
   }
-  close();
-  seed_message_ping();
   co_return;
 }
 
@@ -94,21 +98,21 @@ std::tuple<bool, std::shared_ptr<engine_io_packet>> sid_data::handle_engine_io(s
   return {l_ret, l_ptr};
 }
 
-boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_body) {
-  if (!(co_await ctx_->has_register(in_body.namespace_))) {
+void sid_data::handle_socket_io(socket_io_packet& in_body) {
+  if (!ctx_->has_register(in_body.namespace_)) {
     in_body.type_      = socket_io_packet_type::connect_error;
     in_body.json_data_ = nlohmann::json{{"message", "Invalid namespace"}};
     auto l_ptr         = std::make_shared<packet_base>();
     l_ptr->set_data(socket_io_packet{in_body});
     seed_message_self(l_ptr);
-    co_return;
+    return;
   }
 
   switch (in_body.type_) {
     case socket_io_packet_type::connect: {
       auto l_ptr                              = std::make_shared<socket_io_core>(ctx_, shared_from_this());
       socket_io_contexts_[in_body.namespace_] = l_ptr;
-      co_await l_ptr->set_namespace(in_body.namespace_, in_body.json_data_);
+      l_ptr->set_namespace(in_body.namespace_, in_body.json_data_);
       socket_io_packet l_p{};
       l_p.type_      = socket_io_packet_type::connect;
       l_p.namespace_ = in_body.namespace_;
@@ -126,7 +130,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
         auto l_ptr    = socket_io_contexts_[in_body.namespace_];
         if (!in_body.namespace_.empty()) {
           // 转移到主名称空间
-          co_await l_ptr->set_namespace({}, in_body.json_data_);
+          l_ptr->set_namespace({}, in_body.json_data_);
           socket_io_contexts_[""] = l_ptr;
           ctx_->emit_connect(l_ptr);
         } else
@@ -135,7 +139,7 @@ boost::asio::awaitable<void> sid_data::handle_socket_io(socket_io_packet& in_bod
       break;
     case socket_io_packet_type::event:
     case socket_io_packet_type::binary_event:
-      (co_await ctx_->on(in_body.namespace_))->message(std::make_shared<socket_io_packet>(std::move(in_body)));
+      ctx_->on(in_body.namespace_)->message(std::make_shared<socket_io_packet>(std::move(in_body)));
       break;
     case socket_io_packet_type::ack:
     case socket_io_packet_type::connect_error:

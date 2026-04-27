@@ -66,8 +66,7 @@ void socket_io_core::ask(const nlohmann::json& in_data) const {
   l_data.id_        = current_packet_->id_;
   l_data.namespace_ = namespace_;
   l_data.json_data_ = in_data;
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data)
-    l_sid_data->seed_message(std::make_shared<packet_base>(l_data));
+  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(std::make_shared<packet_base>(l_data));
 }
 void socket_io_core::ask(const std::vector<std::string>& in_data) const {
   if (!current_packet_) return;
@@ -82,19 +81,12 @@ void socket_io_core::ask(const std::vector<std::string>& in_data) const {
   }
   l_data.binary_data_  = in_data;
   l_data.binary_count_ = in_data.size();
-  if (auto l_sid_data = sid_data_.lock(); l_sid_data)
-    l_sid_data->seed_message(std::make_shared<packet_base>(l_data));
+  if (auto l_sid_data = sid_data_.lock(); l_sid_data) l_sid_data->seed_message(std::make_shared<packet_base>(l_data));
 }
 
-boost::asio::awaitable<void> socket_io_core::set_namespace(
-    const std::string& in_namespace, const nlohmann::json& in_json
-) {
+void socket_io_core::set_namespace(const std::string& in_namespace, const nlohmann::json& in_json) {
   namespace_ = in_namespace;
   auth_      = in_json;
-  // signal_map_.clear();
-  on_message_scoped_connection_ =
-      (co_await ctx_->on(namespace_))
-          ->on_message(sid_ctx::signal_type::message_solt_type{std::bind_front(&socket_io_core::on_impl, this)});
 }
 
 }  // namespace doodle::socket_io

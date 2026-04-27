@@ -78,10 +78,10 @@ void socket_io_websocket_core::write_msg() {
 boost::asio::awaitable<void> socket_io_websocket_core::init() {
   // 注册
   if (const auto l_p = parse_query_data(url_); l_p.sid_.is_nil()) {
-    sid_data_ = co_await sid_ctx_->generate();
+    sid_data_ = sid_ctx_->generate();
     co_await async_write_websocket_impl(generate_register_reply(sid_data_));
   } else
-    sid_data_ = co_await sid_ctx_->get_sid(l_p.sid_);
+    sid_data_ = sid_ctx_->get_sid(l_p.sid_);
 
   /// 查看是否有锁, 有锁直接返回
   if (!sid_data_ || sid_data_->is_locked()) co_return async_close_websocket();
@@ -112,7 +112,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::run() {
       co_await web_stream_->async_read(l_buffer_);
       l_socket_io.binary_data_.emplace_back(l_body_);
     }
-    co_await sid_data_->handle_socket_io(l_socket_io);
+    sid_data_->handle_socket_io(l_socket_io);
   }
   socket_io_contexts_.clear();
 }
@@ -122,7 +122,7 @@ boost::asio::awaitable<void> socket_io_websocket_core::async_write_websocket() {
   if (writing_ || closing_) co_return;
   writing_ = true;
   boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { writing_ = false; }};
-  
+
   while (auto l_ptr = sid_data_->get_message()) {
     co_await async_write_websocket_impl(l_ptr);
   }
@@ -162,8 +162,6 @@ void socket_io_websocket_core::async_close_websocket() {
         }
     );
   });
-  if (sid_data_) sid_data_->close();
-  if (sid_ctx_) sid_ctx_->clear();
 }
 
 }  // namespace doodle::socket_io

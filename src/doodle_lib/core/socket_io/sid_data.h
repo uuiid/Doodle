@@ -61,7 +61,7 @@ class sid_data : public std::enable_shared_from_this<sid_data> {
   bool is_locked() const;
   // 开始 ping pong 消息发送
   void run();
-  boost::asio::awaitable<void> handle_socket_io(socket_io_packet& in_code);
+  void handle_socket_io(socket_io_packet& in_code);
   /// 处理 engine io 包, 结束处理返回 true, 继续处理返回 false,
   /// 第二个参数是必须立即返回的 engine io 包, 这个包的优先级最高, 不进入队列
   std::tuple<bool, std::shared_ptr<engine_io_packet>> handle_engine_io(std::string& in_data);

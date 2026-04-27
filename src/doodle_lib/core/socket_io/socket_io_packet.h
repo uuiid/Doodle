@@ -5,6 +5,7 @@
 #pragma once
 #include <doodle_lib/core/socket_io/core_enum.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+
 namespace doodle::socket_io {
 class sid_ctx;
 class sid_data;
@@ -22,7 +23,7 @@ struct packet_base {
   ~packet_base() = default;
   void set_data(const engine_io_packet& in_data);
   void set_data(const socket_io_packet& in_data);
- const std::string& get_dump_data() const;
+  const std::string& get_dump_data() const;
 
   inline void set_binary_data(std::vector<std::string> in_binary_data) { binary_data_ = std::move(in_binary_data); }
   inline void add_binary_data(std::string in_binary_data) { binary_data_.push_back(std::move(in_binary_data)); }

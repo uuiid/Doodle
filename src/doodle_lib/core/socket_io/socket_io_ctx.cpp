@@ -36,52 +36,35 @@ sid_ctx::sid_ctx()
   g_ctx().emplace<sid_ctx&>(*this);
 }
 
-void sid_ctx::clear_timeout_sid() {
-  std::size_t l_clear_count = 0;
-  for (auto it = sid_map_.begin(); it != sid_map_.end();) {
-    if (it->second->is_timeout()) {
-      it = sid_map_.erase(it);
-      l_clear_count++;
-    } else {
-      ++it;
-    }
-  }
-  if (l_clear_count > 0)
-    SPDLOG_LOGGER_WARN(g_logger_ctrl().get_socket_io(), "清理超时sid数量 {} / {}", l_clear_count, sid_map_.size());
-}
-
-boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::generate() {
-  DOODLE_TO_EXECUTOR(strand_);
-  clear_timeout_sid();
-  // 加锁
+std::shared_ptr<sid_data> sid_ctx::generate() {
   auto l_ptr = std::make_shared<sid_data>(this);
   l_ptr->run();
   sid_map_.emplace(l_ptr->get_sid(), l_ptr);
-  DOODLE_TO_SELF();
-  co_return l_ptr;
+  return l_ptr;
 }
 
-boost::asio::awaitable<std::shared_ptr<sid_data>> sid_ctx::get_sid(uuid in_sid) const {
-  // 加锁
+std::shared_ptr<sid_data> sid_ctx::get_sid(uuid in_sid) const {
   auto l_sid = std::move(in_sid);
-  DOODLE_TO_EXECUTOR(strand_);
   std::shared_ptr<sid_data> l_ptr{};
-  l_ptr = sid_map_.contains(l_sid) ? sid_map_.at(l_sid) : nullptr;
-  if (l_ptr && l_ptr->is_timeout()) l_ptr = nullptr;
-  DOODLE_TO_SELF();
+  if (sid_map_.contains(l_sid))
+    sid_map_.cvisit(l_sid, [&l_ptr](const auto& in_pair) {
+      if (auto l_data = in_pair.second; l_data && !l_data->is_timeout()) l_ptr = l_data;
+    });
 
-  co_return l_ptr;
+  return l_ptr;
 }
-boost::asio::awaitable<sid_ctx::signal_type_ptr> sid_ctx::on(std::string in_namespace) {
+
+void sid_ctx::remove_sid(uuid in_sid) { sid_map_.erase(in_sid); }
+
+sid_ctx::signal_type_ptr sid_ctx::on(std::string in_namespace) {
   auto l_namespace = std::move(in_namespace);
-  DOODLE_TO_EXECUTOR(strand_);
   signal_type_ptr l_ptr{};
   if (!signal_map_.contains(l_namespace)) signal_map_.emplace(l_namespace, std::make_shared<signal_type>());
+  signal_map_.cvisit(in_namespace, [&l_ptr](const auto& in_pair) {
+    if (auto l_data = in_pair.second; l_data) l_ptr = l_data;
+  });
 
-  l_ptr = signal_map_.at(l_namespace);
-  DOODLE_TO_SELF();
-
-  co_return l_ptr;
+  return l_ptr;
 }
 
 void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const {
@@ -89,7 +72,9 @@ void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const
   boost::asio::post(strand_, [this, in_data]() {
     try {
       if (!signal_map_.contains(in_data->get_namespace())) return;
-      signal_map_.at(in_data->get_namespace())->on_connect_(in_data);
+      signal_map_.visit(in_data->get_namespace(), [&in_data](const auto& in_pair) {
+        if (auto l_sig = in_pair.second; l_sig) l_sig->on_connect_(in_data);
+      });
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
@@ -99,7 +84,7 @@ void sid_ctx::emit_connect(const std::shared_ptr<socket_io_core>& in_data) const
 void sid_ctx::emit(const socket_io_packet_ptr& in_data) const {
   if (!in_data) return;
   boost::asio::post(strand_, [this, in_data]() {
-  try {
+    try {
       emit_impl(in_data);
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
@@ -113,7 +98,10 @@ void sid_ctx::emit_to_sid(const socket_io_packet_ptr& in_data, const uuid& in_si
       if (!sid_map_.contains(in_sid)) return;
       auto l_packet = std::make_shared<packet_base>();
       l_packet->set_data(*in_data);
-      if (auto l_ptr = sid_map_.at(in_sid); l_ptr) l_ptr->seed_message(l_packet);
+      sid_map_.cvisit(in_sid, [&l_packet](const auto& in_pair) {
+        if (auto l_data = in_pair.second; l_data && !l_data->is_timeout()) l_data->seed_message(l_packet);
+      });
+
     } catch (...) {
       default_logger_raw()->error(boost::current_exception_diagnostic_information());
     }
@@ -123,26 +111,23 @@ void sid_ctx::emit_impl(const socket_io_packet_ptr& in_data) const {
   if (!signal_map_.contains(in_data->namespace_)) return;
   if (!in_data) return;
   std::vector<std::shared_ptr<sid_data>> l_sid_data{};
-  for (auto l_it : sid_map_)
-    if (auto l_ptr = l_it.second; l_ptr) l_sid_data.emplace_back(l_ptr);
+
+  sid_map_.cvisit_all([&l_sid_data](const auto& in_pair) {
+    if (auto l_data = in_pair.second; l_data && !l_data->is_timeout()) l_sid_data.emplace_back(l_data);
+  });
+
   auto l_packet = std::make_shared<packet_base>();
   l_packet->set_data(*in_data);
   for (auto& l_ptr : l_sid_data) l_ptr->seed_message(l_packet);
 }
-boost::asio::awaitable<bool> sid_ctx::has_register(std::string in_namespace) const {
+bool sid_ctx::has_register(std::string in_namespace) const {
   auto l_namespace = std::move(in_namespace);
-  DOODLE_TO_EXECUTOR(strand_);
-  bool l_ret = signal_map_.contains(l_namespace);
-  DOODLE_TO_SELF();
-  co_return l_ret;
+  bool l_ret       = signal_map_.contains(l_namespace);
+  return l_ret;
 }
 void sid_ctx::register_namespace(const std::string& in_namespace) {
-  boost::asio::post(strand_, [this, in_namespace]() {
-    if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
-  });
+  if (!signal_map_.contains(in_namespace)) signal_map_.emplace(in_namespace, std::make_shared<signal_type>());
 }
-void sid_ctx::clear() {
-  boost::asio::post(strand_, [this]() { clear_timeout_sid(); });
-}
+
 }  // namespace socket_io
 }  // namespace doodle
