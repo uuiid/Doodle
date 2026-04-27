@@ -93,6 +93,7 @@ target_link_libraries(doodle_lib
         avcpp::FFmpeg
         crashpad::crashpad
         #        OpenSSL::applink
+        TBB::tbb
 )
 
 

@@ -29,6 +29,7 @@ target_link_libraries(test_main
         Boost::log_setup
         Alembic::Alembic
         Fbx::Fbx-static
+        TBB::tbb
 )
 target_compile_definitions(test_main
         PUBLIC
