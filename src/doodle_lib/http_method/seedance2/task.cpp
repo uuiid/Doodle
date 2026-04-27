@@ -162,8 +162,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
 
   l_client->set_token(l_studio.app_secret_);
   l_client->set_logger(g_logger_ctrl().get_http());
-  if (l_task->status_ == sd2::task_status::running && !l_task->task_id_.empty())
-    co_await l_client->cancel_task(l_task.task_id_);
+  if (!l_task.task_id_.empty()) co_await l_client->cancel_task(l_task.task_id_);
   l_task.status_ = sd2::task_status::cancelled;
 
   co_return in_handle->make_msg(nlohmann::json{} = l_task);
