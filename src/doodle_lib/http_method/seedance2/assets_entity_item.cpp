@@ -107,7 +107,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
   }
   co_await l_sql.update(l_entity_item);
 
-  co_return in_handle->make_msg_204();
+  co_return in_handle->make_msg(nlohmann::json{} = *l_entity_item);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item_instance, delete_) {
   auto l_sql    = get_sqlite_database();
