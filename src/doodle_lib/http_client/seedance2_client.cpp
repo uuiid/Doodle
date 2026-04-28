@@ -60,9 +60,14 @@ boost::asio::awaitable<nlohmann::json> seedance2_client::query_task(const std::s
 
 boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::string& in_file_url) {
   // 解析文件名
-  auto l_url = in_file_url;
-  if (l_url.starts_with(g_sd2_host_url)) l_url.erase(0, g_sd2_host_url.size());
-  boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url, 11};
+
+  static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
+  // https://ark.cn-beijing.volces.com/contents/generations/xxx.mp4 -> /contents/generations/xxx.mp4
+  auto l_url_path                     = std::regex_replace(in_file_url, l_url_regex, "");
+  auto l_ip                           = in_file_url.substr(0, in_file_url.size() - l_url_path.size());
+  http_client_ptr_t l_http_client_ptr = std::make_shared<http_client_t>(std::move(l_ip), *core_set::get_set().ctx_ptr);
+
+  boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url_path, 11};
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   req.set(boost::beast::http::field::accept, "application/json");
   req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
@@ -72,7 +77,7 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::
   boost::system::error_code l_ec{};
   l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
   if (l_ec) throw_exception(http_request_error{boost::beast::http::status::internal_server_error, l_ec.message()});
-  co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
+  co_await l_http_client_ptr->read_and_write(req, l_res, boost::asio::use_awaitable);
   DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
   co_return l_path;
 }
