@@ -8,9 +8,14 @@
 #include <doodle_lib/core/http/zlib_deflate_file_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 
+#include <boost/beast/http/field.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
+
+#include <memory>
+#include <string_view>
+
 namespace doodle::http {
 
 std::tuple<bool, std::shared_ptr<http_function>> kitsu_front_end_url_route_component::set_match_url(
@@ -21,8 +26,12 @@ std::tuple<bool, std::shared_ptr<http_function>> kitsu_front_end_url_route_compo
 }
 
 namespace {
-FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost::urls::segments_ref& in_) {
+FSys::path make_doc_path(
+    const std::shared_ptr<FSys::path>& in_root, std::string_view in_host, const boost::urls::segments_ref& in_
+) {
   auto l_path = *in_root;
+  if (FSys::exists(*in_root / in_host)) l_path /= in_host;
+
   for (auto&& i : in_) {
     l_path /= i;
   }
@@ -49,7 +58,13 @@ std::string get_file_deflate(const FSys::path& in_path) {
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
-  auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
+  auto l_path = make_doc_path(
+      root_path_,
+      in_handle->req_header_.contains(boost::beast::http::field::host)
+          ? in_handle->req_header_.at(boost::beast::http::field::host)
+          : boost::core::string_view{},
+      in_handle->url_.segments()
+  );
 
   co_return in_handle->make_msg(
       l_path, http_header_ctrl{
