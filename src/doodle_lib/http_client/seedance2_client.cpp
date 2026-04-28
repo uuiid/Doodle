@@ -5,6 +5,7 @@
 #include <doodle_lib/core/http/json_body.h>
 
 #include "core/core_set.h"
+#include <fmt/format.h>
 
 namespace doodle::http::seedance2 {
 
@@ -15,6 +16,9 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
   req.body() = in_task.dump();
   req.set(boost::beast::http::field::content_type, "application/json");
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
+  req.set(boost::beast::http::field::accept, "application/json");
+  req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
+  req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
 
@@ -29,6 +33,9 @@ boost::asio::awaitable<void> seedance2_client::cancel_task(const std::string& in
       boost::beast::http::verb::delete_, fmt::format("/api/v3/contents/generations/tasks/{}", in_task_id), 11
   };
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
+  req.set(boost::beast::http::field::accept, "application/json");
+  req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
+  req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<boost::beast::http::empty_body> l_res{};
   co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
   DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "cancel_task error: {}", l_res.result());
@@ -40,6 +47,9 @@ boost::asio::awaitable<nlohmann::json> seedance2_client::query_task(const std::s
   };
   req.set(boost::beast::http::field::content_type, "application/json");
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
+  req.set(boost::beast::http::field::accept, "application/json");
+  req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
+  req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<http::basic_json_body> l_res{};
   co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
 
@@ -54,6 +64,9 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::
   if (l_url.starts_with(g_sd2_host_url)) l_url.erase(0, g_sd2_host_url.size());
   boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url, 11};
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
+  req.set(boost::beast::http::field::accept, "application/json");
+  req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
+  req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<boost::beast::http::file_body> l_res{};
   auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".mp4");
   boost::system::error_code l_ec{};
