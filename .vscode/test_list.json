@@ -22,6 +22,7 @@
     "move_test/conv_audio",
     "move_test/text_video",
     "data/http_client",
+    "data/mu_sqlorm_type_id",
     "data/sqlite_orm_dynamic_where"
 
 

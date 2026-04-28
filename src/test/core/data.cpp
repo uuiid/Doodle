@@ -69,7 +69,12 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
   auto l_sql_str = l_pr.sql();
   l_sql.select(&entity::uuid_id_, from<entity>(), where(l_dynamic_where));
 }
-
+BOOST_AUTO_TEST_CASE(mu_sqlorm_type_id) {
+  using namespace doodle;
+  auto l_type_id  = std::type_index(typeid(&entity::uuid_id_));
+  auto l_type_id2 = std::type_index(typeid(&entity::parent_id_));
+  BOOST_CHECK(l_type_id != l_type_id2);
+}
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
   auto l_reg      = storage{};
