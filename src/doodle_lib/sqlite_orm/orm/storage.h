@@ -177,9 +177,8 @@ auto make_table_info(std::string&& in_name) {
 }
 
 struct joint_table_info {
-  std::type_index left_table_index_{typeid(void)};
-  std::type_index right_table_index_{typeid(void)};
-  std::pair<void*, void*> left_right_ptrs_{};  // 指向类成员变量的指针
+  std::type_index table_index_{typeid(void)};
+  std::pair<std::type_index, std::type_index> left_right_ptrs_{typeid(void), typeid(void)};  // 指向类成员变量的指针
 };
 template <typename T>
 struct where_info {
@@ -190,10 +189,51 @@ struct where_info {
 };
 
 struct select_info {
-  std::vector<void*> column_ptrs_;  // 指向类成员变量的指针
+  std::vector<std::type_index> column_ptrs_;           // 指向类成员变量的指针
+  std::vector<std::type_index> select_table_indices_;  // 选择的表的类型索引
   std::type_index from_table_index_{typeid(void)};
   std::vector<joint_table_info> joins_;
+  template <typename Table>
+  select_info& from() {
+    from_table_index_ = std::type_index(typeid(Table));
+    return *this;
+  }
+
+  template <typename Table>
+  select_info& join(auto&& LeftPtr, auto&& RightPtr) {
+    joint_table_info l_join;
+    l_join.table_index_     = std::type_index(typeid(Table));
+    l_join.left_right_ptrs_ = {std::type_index(typeid(LeftPtr)), std::type_index(typeid(RightPtr))};
+    joins_.push_back(std::move(l_join));
+    return *this;
+  }
+
+  // 其他成员函数，如 where、order_by 等
 };
+
+struct object_t {
+  std::type_index table_index_{typeid(void)};
+  bool is_order{false};
+};
+template <typename T>
+object_t object(bool is_order = false) {
+  return object_t{typeid(T), is_order};
+}
+
+template <typename... Args>
+select_info select(Args... in_args) {
+  // 解析 in_args，构建 select_info,  arg 可能是 object<T>，也可能是 auto T::* 指针
+  select_info l_info;
+  (([&]() {
+     if constexpr (std::is_same_v<std::decay_t<Args>, object_t>) {
+       l_info.select_table_indices_.push_back(in_args.table_index_);
+     } else if constexpr (std::is_member_object_pointer_v<Args>) {
+       l_info.column_ptrs_.push_back(std::type_index(typeid(Args)));
+     }
+   }()),
+   ...);
+  return l_info;
+}
 
 }  // namespace orm
 
@@ -234,6 +274,11 @@ class storage {
     } else {
       throw std::runtime_error("Table not found for type " + std::string(typeid(T).name()));
     }
+  }
+  // 编译 sql
+  template <typename T>
+  auto& prepare(T&& in_query) {
+    return *this;
   }
 };
 }  // namespace doodle
