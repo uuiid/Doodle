@@ -70,7 +70,7 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::
   boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url_path, 11};
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   req.set(boost::beast::http::field::accept, "application/json");
-  req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
+  req.set(boost::beast::http::field::host, l_http_client_ptr->server_ip_);
   req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<boost::beast::http::file_body> l_res{};
   auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".mp4");
