@@ -18,6 +18,11 @@ void basic_json_body::reader::init(boost::optional<std::uint64_t> const& length,
 }
 
 void basic_json_body::reader::finish(boost::system::error_code& ec) {
+  if (json_str_.empty()) {
+    body_ = json_type::object();
+    ec    = {};
+    return;
+  }
   if (json_type ::accept(json_str_)) {
     body_ = json_type::parse(json_str_);
     ec    = {};
