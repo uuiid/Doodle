@@ -71,7 +71,7 @@ struct class_member_ptr {
     using member_type  = member_type_t<T>;
     using class_type   = member_class_type_t<T>;
     class_type_        = std::type_index(typeid(class_type));
-    class_member_type_ = std::type_index(typeid(member_type));
+    class_member_type_ = std::type_index(typeid(T));
   }
 
   ~class_member_ptr() = default;
