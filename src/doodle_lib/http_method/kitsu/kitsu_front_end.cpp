@@ -75,7 +75,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::g
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
-  auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
+  auto l_path = make_doc_path(
+      root_path_,
+      in_handle->req_header_.contains(boost::beast::http::field::host)
+          ? in_handle->req_header_.at(boost::beast::http::field::host)
+          : boost::core::string_view{},
+      in_handle->url_.segments()
+  );
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };
