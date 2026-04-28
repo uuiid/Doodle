@@ -2,17 +2,22 @@
 #include <boost/pfr.hpp>
 #include <boost/pfr/core_name.hpp>
 
+#include <map>
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <type_traits>
 #include <typeindex>
 #include <utility>
+#include <valarray>
+#include <variant>
 #include <vector>
 
 namespace doodle {
-
+class storage;
 namespace orm {
+struct object_t;
+
 // 使用 boost::pfr 来获取结构体成员变量的指针
 template <typename T, std::size_t Index>
 auto get_member_ptr() {}
@@ -42,6 +47,13 @@ enum class where_op {
   less_equal,
   like,
   in,
+};
+
+enum class join_type {
+  inner,
+  left,
+  right,
+  full,
 };
 
 template <typename T>
@@ -179,6 +191,7 @@ auto make_table_info(std::string&& in_name) {
 struct joint_table_info {
   std::type_index table_index_{typeid(void)};
   std::pair<std::type_index, std::type_index> left_right_ptrs_{typeid(void), typeid(void)};  // 指向类成员变量的指针
+  join_type type_{join_type::inner};
 };
 template <typename T>
 struct where_info {
@@ -189,8 +202,7 @@ struct where_info {
 };
 
 struct select_info {
-  std::vector<std::type_index> column_ptrs_;           // 指向类成员变量的指针
-  std::vector<std::type_index> select_table_indices_;  // 选择的表的类型索引
+  std::vector<std::variant<std::type_index, object_t>> column_ptrs_;  // 指向类成员变量的指针
   std::type_index from_table_index_{typeid(void)};
   std::vector<joint_table_info> joins_;
   template <typename Table>
@@ -200,7 +212,7 @@ struct select_info {
   }
 
   template <typename Table>
-  select_info& join(auto&& LeftPtr, auto&& RightPtr) {
+  select_info& join(auto&& LeftPtr, auto&& RightPtr, join_type type = join_type::inner) {
     joint_table_info l_join;
     l_join.table_index_     = std::type_index(typeid(Table));
     l_join.left_right_ptrs_ = {std::type_index(typeid(LeftPtr)), std::type_index(typeid(RightPtr))};
@@ -208,6 +220,8 @@ struct select_info {
     return *this;
   }
 
+  // 序列化
+  std::string to_sql(const storage& in_storage) const;
   // 其他成员函数，如 where、order_by 等
 };
 
@@ -226,7 +240,7 @@ select_info select(Args... in_args) {
   select_info l_info;
   (([&]() {
      if constexpr (std::is_same_v<std::decay_t<Args>, object_t>) {
-       l_info.select_table_indices_.push_back(in_args.table_index_);
+       l_info.column_ptrs_.push_back(in_args);
      } else if constexpr (std::is_member_object_pointer_v<Args>) {
        l_info.column_ptrs_.push_back(std::type_index(typeid(Args)));
      }
@@ -234,13 +248,17 @@ select_info select(Args... in_args) {
    ...);
   return l_info;
 }
-
 }  // namespace orm
 
 class storage {
   std::vector<orm::table_info> tables_;
   std::vector<orm::index_info> indexes_;
   std::vector<orm::unique_index_info> unique_indexes_;
+
+  std::map<std::type_index, std::size_t> type_to_table_index_;
+  std::map<std::type_index, std::pair<std::size_t, std::size_t>> type_to_column_index_;
+
+  friend struct orm::select_info;
 
  public:
   virtual ~storage() = default;
@@ -282,3 +300,30 @@ class storage {
   }
 };
 }  // namespace doodle
+
+namespace fmt {
+template <>
+struct formatter<doodle::orm::join_type> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+  template <typename FormatContext>
+  auto format(const doodle::orm::join_type& joinType, FormatContext& ctx) {
+    std::string joinTypeStr;
+    switch (joinType) {
+      case doodle::orm::join_type::inner:
+        joinTypeStr = "INNER JOIN";
+        break;
+      case doodle::orm::join_type::left:
+        joinTypeStr = "LEFT JOIN";
+        break;
+      case doodle::orm::join_type::right:
+        joinTypeStr = "RIGHT JOIN";
+        break;
+      case doodle::orm::join_type::full:
+        joinTypeStr = "FULL JOIN";
+        break;
+    }
+    return format_to(ctx.out(), "{}", joinTypeStr);
+  }
+};
+}  // namespace fmt
