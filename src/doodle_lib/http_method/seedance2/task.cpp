@@ -28,6 +28,8 @@
 #include <regex>
 #include <spdlog/spdlog.h>
 
+#define DOODLE_SEED2
+
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
@@ -87,8 +89,8 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
   }
 #else
   in_task->status_ = sd2::task_status::succeeded;
-  co_await get_sqlite_database().update(in_task);
 #endif
+  co_await get_sqlite_database().update(in_task);
 
   socket_io::broadcast(
       socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task->uuid_id_, .status_ = in_task->status_}
