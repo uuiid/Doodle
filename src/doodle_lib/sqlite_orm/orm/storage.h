@@ -2,8 +2,10 @@
 #include <boost/pfr.hpp>
 #include <boost/pfr/core_name.hpp>
 
+#include <memory>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <type_traits>
 #include <typeindex>
 #include <utility>
 #include <vector>
@@ -42,33 +44,62 @@ enum class where_op {
   in,
 };
 
+template <typename T>
+struct member_type;  // 主模板：不定义，仅用于特化
+
+// 特化：数据成员指针 (T C::*)
+template <typename C, typename T>
+struct member_type<T C::*> {
+  using ptr_type   = T;
+  using class_type = C;
+};
+// 辅助别名
+template <typename T>
+using member_type_t = typename member_type<T>::ptr_type;
+template <typename T>
+using member_class_type_t = typename member_type<T>::class_type;
+
+// 指向成员变量的指针，包含类型信息
+struct class_member_ptr {
+  std::type_index class_type_{typeid(void)};
+
+  virtual ~class_member_ptr() = default;
+};
+
+template <typename T>
+struct class_member_ptr_impl : class_member_ptr {
+  using class_type  = member_class_type_t<T>;
+  using member_type = member_type_t<T>;
+  member_type class_type::* ptr_{};
+
+  explicit class_member_ptr_impl(T in_ptr) : ptr_(in_ptr) { class_type_ = std::type_index(typeid(class_type)); }
+};
+
 struct column_info {
   std::string name_;
   column_type type_;
   bool not_null_{false};
   bool primary_key_{};
   bool autoincrement_{};
-  void* ptr_{};  // 指向类成员变量的指针
+  std::unique_ptr<class_member_ptr> ptr_{};  // 指向类成员变量的指针
 };
 
 struct foreign_key_info {
   std::string name_;
-  std::type_index table_index_{typeid(void)};     // 指向外键类型的指针
-  void* ptr_{};                                   // 指向类成员变量的指针
-  std::type_index ref_type_index_{typeid(void)};  // 引用表的 type_index
-  void* ref_ptr_{};                               // 指向引用表的成员变量的指针
+  std::unique_ptr<class_member_ptr> ptr_{};      // 指向类成员变量的指针
+  std::unique_ptr<class_member_ptr> ref_ptr_{};  // 指向引用表的成员变量的指针
   foreign_key_action on_delete_{foreign_key_action::no_action};
   foreign_key_action on_update_{foreign_key_action::no_action};
 };
 
 struct index_info {
   std::string name_;
-  void* ptr_{};  // 指向类成员变量的指针
+  std::unique_ptr<class_member_ptr> ptr_{};  // 指向类成员变量的指针
 };
 
 struct unique_index_info {
   std::string name_;
-  std::vector<void*> ptrs_;  // 指向类成员变量的指针
+  std::vector<std::unique_ptr<class_member_ptr>> ptrs_;  // 指向类成员变量的指针
 };
 
 struct not_null {};
@@ -93,7 +124,7 @@ struct table_info {
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
     column_info l_column;
     l_column.name_ = std::move(in_name);
-    l_column.ptr_  = reinterpret_cast<void*>(in_ptr);
+    l_column.ptr_  = std::make_unique<class_member_ptr_impl<std::remove_cv_t<decltype(in_ptr)>>>(in_ptr);
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
@@ -122,10 +153,8 @@ struct table_info {
   template <typename T, typename T2>
   table_info& add_foreign_key(auto T::* in_ptr, auto T2::* in_ref_ptr, auto... in_options) {
     foreign_key_info l_fk;
-    l_fk.table_index_    = std::type_index(typeid(T));
-    l_fk.ptr_            = reinterpret_cast<void*>(in_ptr);
-    l_fk.ref_type_index_ = std::type_index(typeid(T2));
-    l_fk.ref_ptr_        = reinterpret_cast<void*>(in_ref_ptr);
+    l_fk.ptr_     = std::make_unique<class_member_ptr_impl<std::remove_cv_t<decltype(in_ptr)>>>(in_ptr);
+    l_fk.ref_ptr_ = std::make_unique<class_member_ptr_impl<std::remove_cv_t<decltype(in_ptr)>>>(in_ref_ptr);
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(on_delete(foreign_key_action::cascade))>) {
@@ -173,9 +202,9 @@ class storage {
 
  public:
   virtual ~storage() = default;
-  orm::table_info& reg_table(orm::table_info&& in_table) {
+  storage& reg_table(orm::table_info&& in_table) {
     tables_.push_back(std::move(in_table));
-    return tables_.back();
+    return *this;
   }
 
   template <typename T>
@@ -198,7 +227,9 @@ class storage {
       return t.type_index_ == std::type_index(typeid(T));
     });
     if (it != tables_.end()) {
-      std::vector<void*> ptrs{reinterpret_cast<void*>(in_ptrs)...};
+      std::vector<std::unique_ptr<orm::class_member_ptr>> ptrs{
+          std::make_unique<orm::class_member_ptr_impl<std::remove_cv_t<decltype(in_ptrs)>>>(in_ptrs)...
+      };
       unique_indexes_.emplace_back(in_index_name, std::move(ptrs));
     } else {
       throw std::runtime_error("Table not found for type " + std::string(typeid(T).name()));

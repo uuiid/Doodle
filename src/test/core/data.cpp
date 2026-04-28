@@ -11,11 +11,15 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/sqlite_orm/detail/dynamic_where.h>
 #include <doodle_lib/sqlite_orm/detail/uuid_to_blob.h>
+#include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
+#include <boost/test/unit_test_suite.hpp>
 
+#include <ratio>
 #include <sqlite_orm/sqlite_orm.h>
+#include <utility>
 
 BOOST_AUTO_TEST_SUITE(data)
 BOOST_AUTO_TEST_CASE(http_client) {
@@ -49,10 +53,10 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
   l_sql.open_forever();
   l_sql.sync_schema();
 
-  auto l_uuid = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
+  auto l_uuid        = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
   auto l_uuid_vector = std::vector<uuid>{l_uuid};
 
-  auto l_pr_not_dyn = l_sql.prepare(
+  auto l_pr_not_dyn  = l_sql.prepare(
       select(&entity::uuid_id_, from<entity>(), where(c(&entity::uuid_id_) == l_uuid && c(&entity::name_) == "test"))
   );
   auto l_sql_str_not_dyn = l_pr_not_dyn.sql();
@@ -63,6 +67,25 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
   auto l_pr      = l_sql.prepare(l_select);
   auto l_sql_str = l_pr.sql();
   l_sql.select(&entity::uuid_id_, from<entity>(), where(l_dynamic_where));
+}
+
+BOOST_AUTO_TEST_CASE(mu_sqlorm) {
+  using namespace doodle;
+  auto l_reg      = storage{};
+  auto l_enit_tab = orm::make_table_info<entity>("entity");
+  using test_t    = std::decay_t<decltype(&entity::name_)>;
+  l_enit_tab.add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
+      .add_column("uuid_id", &entity::uuid_id_)
+      .add_column("name", &entity::name_);
+
+  l_reg.reg_table(
+      std::move(
+          orm::make_table_info<entity>("entity")
+              .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
+              .add_column("uuid_id", &entity::uuid_id_)
+              .add_column("name", &entity::name_)
+      )
+  );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
