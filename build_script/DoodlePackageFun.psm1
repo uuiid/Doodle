@@ -65,13 +65,38 @@ function Compress-UEPlugins() {
     Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
 }
 
-function Get-GitKitsuCommendID() {
-    $DoodleKitsuRoot = "E:\source\kitsu"
+function Get-GitCommendID() {
+    param(
+        [string]$Path = "E:\source\kitsu"
+    )
+
     $TempPath = "$env:TEMP/doodle_kitsu_git.txt"
-    Start-Process -FilePath "git.exe" -ArgumentList  "rev-parse", "HEAD" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -RedirectStandardOutput $TempPath
+    Start-Process -FilePath "git.exe" -ArgumentList  "rev-parse", "HEAD" -WorkingDirectory $Path -NoNewWindow -Wait -RedirectStandardOutput $TempPath
 
     $id = Get-Content $TempPath
     return $id;
+}
+
+function Start-GitPull {
+    param (
+        [string]$Remote = "origin",
+        [string]$Branch = "master",
+        [string]$WorkingDirectory = "E:\source\kitsu",
+        [string]$LogPath = "$env:TEMP/doodle_kitsu_git_pull.log"
+    )
+    $id = Get-GitCommendID -Path $WorkingDirectory
+
+    $Result = Start-Process -FilePath "git.exe" -ArgumentList  "pull", $Remote, $Branch -WorkingDirectory $WorkingDirectory -NoNewWindow -Wait -PassThru
+    if ($Result.ExitCode -ne 0) {
+        throw "Git pull failed with exit code $($Result.ExitCode)"
+    }
+    if ($id -ne (Get-GitCommendID -Path $WorkingDirectory)) {
+        Write-Host "开始构建"
+        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $WorkingDirectory -RedirectStandardOutput $LogPath -NoNewWindow -Wait -PassThru
+        if ($NpmResult.ExitCode -ne 0) {
+            throw "Build failed with exit code $($NpmResult.ExitCode)"
+        }
+    }
 }
 
 function Initialize-Doodle {
@@ -95,24 +120,15 @@ function Initialize-Doodle {
     $DoodleVersion = $Tags[0]
     Write-Host "当前最新版本号: $DoodleVersion" 
     $DoodleKitsuRoot = "E:\source\kitsu"
+    $DoodleSdRoot = "E:\source\sd"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
+    $DoodleExeSD = "E:\source\sd\release\SyAIStudio.exe"
     Write-Host "开始检查文件"
-    $id = Get-GitKitsuCommendID
 
-    $NpmResult = Start-Process -FilePath "git.exe" -ArgumentList  "pull", "loc", "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -NoNewWindow -Wait -PassThru
-    if ($NpmResult.ExitCode -ne 0) {
-        # 抛出异常
-        throw "拉取失败"
-    }
-    if ($id -ne (Get-GitKitsuCommendID)) {
-        Write-Host "开始构建 Kitsu"
-        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "build" -WorkingDirectory $DoodleKitsuRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
-        if ($NpmResult.ExitCode -ne 0) {
-            # 抛出异常
-            throw "构建失败"
-        }
-    }
+    Start-GitPull -Remote "loc" -Branch "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -LogPath $DoodleLogPath
+    Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
+ 
     if ($BackupPdb) {
         Write-Host "开始备份 PDB 文件 和 EXE 文件"
         if (-not (Test-Path "$DoodleBuildRoot\pdb\$DoodleVersion\")) {
@@ -125,6 +141,7 @@ function Initialize-Doodle {
     Write-Host "robocopy 日志 $DoodleLogPath"
     &robocopy "$DoodleInstallRoot\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
+    &robocopy "$DoodleSdRoot\dist" "$OutPath\dist\192.168.40.189" /MIR /unilog+:$DoodleLogPath | Out-Null
     # 复制安装包
     if ( -not $OnlyOne) {
         &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
@@ -155,6 +172,8 @@ function Initialize-Doodle {
     Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
+    Copy-Item $DoodleExeSD -Destination "$OutPath\dist\" -Force
+
 
     # 从github 下载网络资源
     # 先查看标签, 再组合下载url
