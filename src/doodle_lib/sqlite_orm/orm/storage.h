@@ -307,7 +307,7 @@ struct formatter<doodle::orm::join_type> {
   constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
 
   template <typename FormatContext>
-  auto format(const doodle::orm::join_type& joinType, FormatContext& ctx) {
+  auto format(const doodle::orm::join_type& joinType, FormatContext& ctx) const -> decltype(ctx.out()) {
     std::string joinTypeStr;
     switch (joinType) {
       case doodle::orm::join_type::inner:
@@ -323,7 +323,8 @@ struct formatter<doodle::orm::join_type> {
         joinTypeStr = "FULL JOIN";
         break;
     }
-    return format_to(ctx.out(), "{}", joinTypeStr);
+    format_to(ctx.out(), "{}", joinTypeStr);
+    return ctx.out();
   }
 };
 }  // namespace fmt
