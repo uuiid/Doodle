@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/metadata/entity.h"
+#include "doodle_core/metadata/entity_type.h"
 
 #include "doodle_lib/core/global_function.h"
 #include "doodle_lib/http_client/kitsu_client.h"
@@ -76,7 +77,11 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using test_t    = std::decay_t<decltype(&entity::name_)>;
   l_enit_tab.add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid_id", &entity::uuid_id_)
-      .add_column("name", &entity::name_);
+      .add_column("name", &entity::name_)
+      .add_foreign_key(
+          &entity::entity_type_id_, &asset_type::uuid_id_, orm::on_delete(orm::foreign_key_action::cascade)
+      );
+  ;
 
   l_reg.reg_table(
       std::move(

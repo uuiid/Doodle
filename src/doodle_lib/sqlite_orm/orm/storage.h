@@ -154,13 +154,13 @@ struct table_info {
   table_info& add_foreign_key(auto T::* in_ptr, auto T2::* in_ref_ptr, auto... in_options) {
     foreign_key_info l_fk;
     l_fk.ptr_     = std::make_unique<class_member_ptr_impl<std::remove_cv_t<decltype(in_ptr)>>>(in_ptr);
-    l_fk.ref_ptr_ = std::make_unique<class_member_ptr_impl<std::remove_cv_t<decltype(in_ptr)>>>(in_ref_ptr);
+    l_fk.ref_ptr_ = std::make_unique<class_member_ptr_impl<std::remove_cv_t<decltype(in_ref_ptr)>>>(in_ref_ptr);
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(on_delete(foreign_key_action::cascade))>) {
-         l_fk.on_delete_ = on_delete(foreign_key_action::cascade).action_;
+         l_fk.on_delete_ = in_options.action_;
        } else if constexpr (std::is_same_v<decltype(in_options), decltype(on_update(foreign_key_action::cascade))>) {
-         l_fk.on_update_ = on_update(foreign_key_action::cascade).action_;
+         l_fk.on_update_ = in_options.action_;
        }
      }()),
      ...);
