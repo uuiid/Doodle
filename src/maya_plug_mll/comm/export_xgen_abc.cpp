@@ -267,11 +267,8 @@ class xgen_alembic_out {
     // 写入动画
     using namespace XGenRenderAPI;
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
-    const auto* l_prim_ids = in_cache->get(PrimitiveCache::PrimitiveID_XP);
-    const auto l_count     = in_cache->get(PrimitiveCache::CacheCount);
-    const auto l_is_guide  = (l_prim_ids && l_count > 0 && l_prim_ids[0] < 0);
-    auto& l_curve_data     = l_is_guide ? guide_curve_data_ : render_curve_data_;
-    auto l_inited          = l_is_guide ? guide_init_ : render_init_;
+    auto& l_curve_data = render_curve_data_;
+    auto l_inited      = render_init_;
 
     if (!l_inited) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
