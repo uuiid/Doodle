@@ -170,7 +170,7 @@ class xgen_alembic_out {
       l_curve_sample.setCurvesNumVertices(in_data.vertices_);
       l_curve_sample.setPositions(in_data.points_);
       l_curve_sample.setWidths(
-          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, Alembic::AbcGeom::kVertexScope}
+          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, Alembic::AbcGeom::kUniformScope}
       );
       l_curve_sample.setKnots(in_data.knots_);
       in_init = true;
@@ -308,8 +308,6 @@ class xgen_alembic_out {
   void write_begin() {
     render_curve_data_ = {};
     guide_curve_data_  = {};
-    render_curve_data_.widths_.emplace_back();
-    guide_curve_data_.widths_.emplace_back();
   }
 
   void write_section(XGenRenderAPI::PrimitiveCache* in_cache) {
@@ -376,7 +374,7 @@ class xgen_alembic_out {
   };
 
   void write_end() {
-    write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_);
+    if (render_curve_data_) write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_);
     if (guide_curve_data_) {
       write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_);
     }
