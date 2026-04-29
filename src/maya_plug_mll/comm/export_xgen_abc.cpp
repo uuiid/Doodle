@@ -87,7 +87,9 @@ class xgen_alembic_out {
   using o_xform_ptr           = std::shared_ptr<Alembic::AbcGeom::OXform>;
   using o_curve_ptr           = std::shared_ptr<Alembic::AbcGeom::OCurves>;
   using o_curve_sample_ptr    = std::shared_ptr<Alembic::AbcGeom::OCurvesSchema::Sample>;
-  using o_string_property_ptr = std::shared_ptr<Alembic::Abc::OStringProperty>;
+  using o_string_property_ptr = std::shared_ptr<Alembic::Abc::OStringArrayProperty>;
+  using o_bool_property_ptr   = std::shared_ptr<Alembic::Abc::OBoolProperty>;
+  using o_int16_property_ptr  = std::shared_ptr<Alembic::Abc::OInt16Property>;
 
  private:
   MTime begin_time_{};
@@ -101,23 +103,46 @@ class xgen_alembic_out {
   std::int32_t shape_time_index_{};
   std::int32_t transform_time_index_{};
   o_box3d_property_ptr o_box3d_property_ptr_{};
-  o_string_property_ptr o_guide_scope_prop_{};
+  o_int16_property_ptr o_guide_tag_prop_{};
 
   o_xform_ptr o_xform_root_ptr_{};
   o_xform_ptr o_xform_curve_ptr_{};
   o_xform_ptr o_xform_guide_ptr_{};
-  o_curve_ptr o_curve_ptr_{};
+  o_curve_ptr o_render_curve_ptr_{};
+  o_curve_ptr o_guide_curve_ptr_{};
 
   struct curve_data {
     std::vector<std::int32_t> vertices_{};
     std::vector<Alembic::Abc::V3f> points_{};
     std::vector<std::float_t> widths_{};
     std::vector<std::float_t> knots_{};
+    operator bool() const { return !vertices_.empty() && !points_.empty() && !widths_.empty() && !knots_.empty(); }
   };
 
-  curve_data curve_data_{};
-  bool init_{false};
-  bool is_guide_{false};
+  curve_data render_curve_data_{};
+  curve_data guide_curve_data_{};
+  bool render_init_{false};
+  bool guide_init_{false};
+
+  void write_curve_sample(curve_data& in_data, const o_curve_ptr& in_curve_ptr, bool& in_init) {
+    Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
+    if (!in_init) {
+      l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
+      l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
+      l_curve_sample.setType(Alembic::AbcGeom::kCubic);
+      l_curve_sample.setCurvesNumVertices(in_data.vertices_);
+      l_curve_sample.setPositions(in_data.points_);
+      l_curve_sample.setWidths(
+          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, Alembic::AbcGeom::kVertexScope}
+      );
+      l_curve_sample.setKnots(in_data.knots_);
+      in_init = true;
+    } else {
+      l_curve_sample.setPositions(in_data.points_);
+    }
+    auto& l_curve = in_curve_ptr->getSchema();
+    l_curve.set(l_curve_sample);
+  }
 
   void open() {
     if (auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -175,11 +200,18 @@ class xgen_alembic_out {
       Alembic::AbcGeom::XformSample l_sample{};
       l_xform.set(l_sample);
     }
-    o_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
+    {
+      auto l_guide_user_props = o_xform_guide_ptr_->getSchema().getUserProperties();
+      o_guide_tag_prop_       = std::make_shared<Alembic::Abc::OInt16Property>(l_guide_user_props, "groom_guide");
+      o_guide_tag_prop_->set(1);
+    }
+
+    o_render_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
         *o_xform_curve_ptr_, "curve", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
     );
-    auto l_user_props   = o_curve_ptr_->getSchema().getUserProperties();
-    o_guide_scope_prop_ = std::make_shared<Alembic::Abc::OStringProperty>(l_user_props, "groom_guide_AbcGeomScope");
+    o_guide_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
+        *o_xform_guide_ptr_, "curve_guide", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
+    );
   }
   static constexpr auto g_degree{3};
   void creare_curve(
@@ -225,9 +257,10 @@ class xgen_alembic_out {
   };
 
   void write_begin() {
-    curve_data_ = {};
-    curve_data_.widths_.emplace_back();
-    is_guide_ = false;
+    render_curve_data_ = {};
+    guide_curve_data_  = {};
+    render_curve_data_.widths_.emplace_back();
+    guide_curve_data_.widths_.emplace_back();
   }
 
   void write_section(XGenRenderAPI::PrimitiveCache* in_cache) {
@@ -236,8 +269,11 @@ class xgen_alembic_out {
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
     const auto* l_prim_ids = in_cache->get(PrimitiveCache::PrimitiveID_XP);
     const auto l_count     = in_cache->get(PrimitiveCache::CacheCount);
-    is_guide_              = (l_prim_ids && l_count > 0 && l_prim_ids[0] < 0);
-    if (!init_) {
+    const auto l_is_guide  = (l_prim_ids && l_count > 0 && l_prim_ids[0] < 0);
+    auto& l_curve_data     = l_is_guide ? guide_curve_data_ : render_curve_data_;
+    auto l_inited          = l_is_guide ? guide_init_ : render_init_;
+
+    if (!l_inited) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
       for (auto i = 0; i < l_num_samples; i++) {
@@ -247,26 +283,26 @@ class xgen_alembic_out {
 
         auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
         const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-        curve_data_.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + curve_data_.points_.size());
-        curve_data_.knots_.reserve(
-            in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + curve_data_.knots_.size()
+        l_curve_data.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_curve_data.points_.size());
+        l_curve_data.knots_.reserve(
+            in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + l_curve_data.knots_.size()
         );
-        curve_data_.vertices_.reserve(l_num_size + curve_data_.vertices_.size());
+        l_curve_data.vertices_.reserve(l_num_size + l_curve_data.vertices_.size());
         // 获取宽度 width
-        curve_data_.widths_.reserve(l_num_size + curve_data_.widths_.size());
+        l_curve_data.widths_.reserve(l_num_size + l_curve_data.widths_.size());
         if (auto l_width_size = in_cache->getSize(PrimitiveCache::Widths); l_width_size > 0) {
           auto l_width = in_cache->get(PrimitiveCache::Widths);
-          for (auto z = 0; z < l_num_size; ++z) curve_data_.widths_.emplace_back(l_width[z]);
+          for (auto z = 0; z < l_num_size; ++z) l_curve_data.widths_.emplace_back(l_width[z]);
         } else {
           auto l_width = in_cache->get(PrimitiveCache::ConstantWidth);
-          for (auto z = 0; z < l_num_size; ++z) curve_data_.widths_.emplace_back(l_width);
+          for (auto z = 0; z < l_num_size; ++z) l_curve_data.widths_.emplace_back(l_width);
         }
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
-          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, curve_data_.points_, curve_data_.knots_);
+          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, l_curve_data.points_, l_curve_data.knots_);
           l_index_off += l_num[z];
-          curve_data_.vertices_.emplace_back(l_num[z] - 2);
+          l_curve_data.vertices_.emplace_back(l_num[z] - 2);
         }
 
         break;
@@ -281,11 +317,12 @@ class xgen_alembic_out {
 
         auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
         const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-        curve_data_.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + curve_data_.points_.size());
+        l_curve_data.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_curve_data.points_.size());
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
-          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, curve_data_.points_);
+          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, l_curve_data.points_);
+          l_index_off += l_num[z];
         }
         break;
       }
@@ -293,26 +330,14 @@ class xgen_alembic_out {
   };
 
   void write_end() {
-    Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
-    if (!init_) {
-      l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
-      l_curve_sample.setWrap(Alembic::AbcGeom::kNonPeriodic);
-      l_curve_sample.setType(Alembic::AbcGeom::kCubic);
-      l_curve_sample.setCurvesNumVertices(curve_data_.vertices_);
-      l_curve_sample.setPositions(curve_data_.points_);
-      l_curve_sample.setWidths(
-          Alembic::AbcGeom::OFloatGeomParam::Sample{curve_data_.widths_, Alembic::AbcGeom::kVertexScope}
-      );
-      l_curve_sample.setKnots(curve_data_.knots_);
-      if (is_guide_) o_guide_scope_prop_->set("groom_guide_AbcGeomScope");
-      init_ = true;
-    } else {
-      l_curve_sample.setPositions(curve_data_.points_);
+    write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_);
+    if (guide_curve_data_) {
+      write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_);
     }
-    auto& l_curve = o_curve_ptr_->getSchema();
-    l_curve.set(l_curve_sample);
+
     Alembic::Abc::Box3d l_box{};
-    for (auto&& i : curve_data_.points_) l_box.extendBy(i);
+    for (auto&& i : render_curve_data_.points_) l_box.extendBy(i);
+    for (auto&& i : guide_curve_data_.points_) l_box.extendBy(i);
     o_box3d_property_ptr_->set(l_box);
   }
 };
