@@ -145,7 +145,7 @@ class xgen_alembic_out {
             boost::numeric_cast<float>(l_pt[0]), boost::numeric_cast<float>(l_pt[1]),
             boost::numeric_cast<float>(l_pt[2])
         );
-        guide_curve_data_.knots_.emplace_back(boost::numeric_cast<std::float_t>(std::max<std::size_t>(0, j - 1)));
+        guide_curve_data_.knots_.emplace_back(boost::numeric_cast<std::float_t>(std::max(0, j - 1)));
       }
       guide_curve_data_.knots_[guide_curve_data_.knots_.size() - 2] = guide_curve_data_.knots_.back();
       guide_curve_data_.knots_.emplace_back(guide_curve_data_.knots_.back());
