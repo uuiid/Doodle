@@ -141,7 +141,7 @@ function Initialize-Doodle {
     Write-Host "robocopy 日志 $DoodleLogPath"
     &robocopy "$DoodleInstallRoot\bin" "$OutPath\bin" /MIR /unilog+:$DoodleLogPath | Out-Null
     &robocopy "$DoodleKitsuRoot\dist" "$OutPath\dist" /MIR /unilog+:$DoodleLogPath /xd "video" "Plugins" "time" /xf "*.zip" | Out-Null
-    &robocopy "$DoodleSdRoot\dist" "$OutPath\dist\192.168.40.189" /MIR /unilog+:$DoodleLogPath | Out-Null
+
     # 复制安装包
     if ( -not $OnlyOne) {
         &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
@@ -172,8 +172,7 @@ function Initialize-Doodle {
     Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
-    Copy-Item $DoodleExeSD -Destination "$OutPath\dist\" -Force
-    Copy-Item $DoodleExeSD -Destination "$OutPath\dist\192.168.40.189\" -Force
+    Copy-Item $DoodleExeSD -Destination "$DoodleSdRoot\dist\" -Force
 
 
     # 从github 下载网络资源
@@ -283,3 +282,12 @@ function Compare-GitArchive {
 }
 
 Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive
+
+
+function Nono {
+    
+#ssh-keygen -t ed25519 -C "your_deployment_key" -f "$env:USERPROFILE\.ssh\id_ed25519_deploy" -N ''
+#type $env:USERPROFILE\.ssh\id_ed25519_deploy.pub | ssh zyb@192.168.20.188 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
+#scp -i ~/.ssh/id_ed25519_deploy -r E:\source\sd\dist\* zyb@192.168.20.188:/home/zyb/nginx/html/sd2
+# apt install -y git nodejs npm nginx
+}
