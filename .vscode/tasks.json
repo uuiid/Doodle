@@ -282,6 +282,7 @@
       "description": "部署选项",
       "options": [
         "-CopyServer",
+        "-BuildSd2",
         ""
       ]
     },

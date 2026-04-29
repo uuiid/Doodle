@@ -1,6 +1,6 @@
 ﻿param (
     [switch]$CopyServer,
-    [switch]$CreateUEPlugins
+    [switch]$BuildSd2
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
@@ -15,8 +15,10 @@ Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
 $NewSession = New-ServerPSSession
 $KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
-$DoodleSdRoot = "E:\source\sd"
-&scp -i ~/.ssh/id_ed25519_deploy -r "$DoodleSdRoot\dist\*" zyb@192.168.20.188:/home/zyb/nginx/html/sd2
+if ($BuildSd2) {
+    $Sd_path = Initialize-Sd2
+    &scp -i ~/.ssh/id_ed25519_deploy -r "$Sd_path\*" zyb@192.168.20.188:/home/zyb/nginx/html/sd2
+}
 
 Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -ScriptBlock {
     param ($KitsuCookies, $CopyServer)

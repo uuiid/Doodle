@@ -96,7 +96,28 @@ function Start-GitPull {
         if ($NpmResult.ExitCode -ne 0) {
             throw "Build failed with exit code $($NpmResult.ExitCode)"
         }
+        return $true;
     }
+    return $false;
+}
+
+function Initialize-Kitsu() {
+
+}
+
+function Initialize-Sd2 {
+    $DoodleSdRoot = "E:\source\sd"
+    $DoodleExeSD = "E:\source\sd\release\SyAIStudio.exe"
+    $is_run = Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
+    if ($is_run) {
+        Write-Host "开始构建SD.exe"
+        $NpmResult = Start-Process -FilePath "powershell.exe" -ArgumentList  "$Env:APPDATA/npm/npm.ps1", "run", "pack:win" -WorkingDirectory $DoodleSdRoot -RedirectStandardOutput $DoodleLogPath -NoNewWindow -Wait -PassThru
+        if ($NpmResult.ExitCode -ne 0) {
+            throw "Build failed with exit code $($NpmResult.ExitCode)"
+        }
+    }
+    Copy-Item $DoodleExeSD -Destination "$DoodleSdRoot\dist\" -Force
+    return "E:\source\sd\dist";
 }
 
 function Initialize-Doodle {
@@ -120,14 +141,11 @@ function Initialize-Doodle {
     $DoodleVersion = $Tags[0]
     Write-Host "当前最新版本号: $DoodleVersion" 
     $DoodleKitsuRoot = "E:\source\kitsu"
-    $DoodleSdRoot = "E:\source\sd"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
-    $DoodleExeSD = "E:\source\sd\release\SyAIStudio.exe"
     Write-Host "开始检查文件"
 
     Start-GitPull -Remote "loc" -Branch "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -LogPath $DoodleLogPath
-    Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
  
     if ($BackupPdb) {
         Write-Host "开始备份 PDB 文件 和 EXE 文件"
@@ -172,7 +190,6 @@ function Initialize-Doodle {
     Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
-    Copy-Item $DoodleExeSD -Destination "$DoodleSdRoot\dist\" -Force
 
 
     # 从github 下载网络资源
@@ -281,13 +298,13 @@ function Compare-GitArchive {
     return $CombinedFile;
 }
 
-Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive
+Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive, Initialize-Kitsu, Initialize-Sd2
 
 
 function Nono {
     
-#ssh-keygen -t ed25519 -C "your_deployment_key" -f "$env:USERPROFILE\.ssh\id_ed25519_deploy" -N ''
-#type $env:USERPROFILE\.ssh\id_ed25519_deploy.pub | ssh zyb@192.168.20.188 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
-#scp -i ~/.ssh/id_ed25519_deploy -r E:\source\sd\dist\* zyb@192.168.20.188:/home/zyb/nginx/html/sd2
-# apt install -y git nodejs npm nginx
+    #ssh-keygen -t ed25519 -C "your_deployment_key" -f "$env:USERPROFILE\.ssh\id_ed25519_deploy" -N ''
+    #type $env:USERPROFILE\.ssh\id_ed25519_deploy.pub | ssh zyb@192.168.20.188 "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 700 ~/.ssh && chmod 600 ~/.ssh/authorized_keys"
+    #scp -i ~/.ssh/id_ed25519_deploy -r E:\source\sd\dist\* zyb@192.168.20.188:/home/zyb/nginx/html/sd2
+    # apt install -y git nodejs npm nginx
 }
