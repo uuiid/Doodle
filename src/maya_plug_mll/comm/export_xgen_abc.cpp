@@ -284,7 +284,7 @@ class xgen_alembic_out {
           Alembic::AbcGeom::OFloatGeomParam::Sample{curve_data_.widths_, Alembic::AbcGeom::kVertexScope}
       );
       l_curve_sample.setKnots(curve_data_.knots_);
-      if (is_guide_) o_guide_scope_prop_->set("groom_guide_AbcGeomScope");
+      if (is_guide_) o_guide_scope_prop_->set("con");
       init_ = true;
     } else {
       l_curve_sample.setPositions(curve_data_.points_);
