@@ -173,6 +173,7 @@ function Initialize-Doodle {
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
     Copy-Item $DoodleExeSD -Destination "$OutPath\dist\" -Force
+    Copy-Item $DoodleExeSD -Destination "$OutPath\dist\192.168.40.189\" -Force
 
 
     # 从github 下载网络资源
