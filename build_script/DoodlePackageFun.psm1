@@ -108,6 +108,7 @@ function Initialize-Kitsu() {
 function Initialize-Sd2 {
     $DoodleSdRoot = "E:\source\sd"
     $DoodleExeSD = "E:\source\sd\release\SyAIStudio.exe"
+    $DoodleLogPath = "$env:TEMP\build_sd2.log"
     $is_run = Start-GitPull -Remote "origin" -Branch "master" -WorkingDirectory $DoodleSdRoot -LogPath $DoodleLogPath
     if ($is_run) {
         Write-Host "开始构建SD.exe"
