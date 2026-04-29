@@ -26,25 +26,17 @@ std::tuple<bool, std::shared_ptr<http_function>> kitsu_front_end_url_route_compo
 }
 
 namespace {
-FSys::path make_doc_path(
-    const std::shared_ptr<FSys::path>& in_root, std::string_view in_host, const boost::urls::segments_ref& in_
-) {
-  auto l_path      = *in_root;
-  auto l_path_root = *in_root;
-  bool has_host    = false;
-  if (FSys::exists(*in_root / in_host)) {
-    has_host = true;
-    l_path /= in_host;
-    l_path_root /= in_host;
+FSys::path make_doc_path(const std::shared_ptr<FSys::path>& in_root, const boost::urls::segments_ref& in_) {
+  auto l_path = *in_root;
+  for (auto&& i : in_) {
+    l_path /= i;
   }
-
-  for (auto&& i : in_) l_path /= i;
-  if (in_.size() == 0) l_path /= "index.html";
-
-  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path) && has_host) l_path = l_path_root / "index.html";
-
-  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) l_path = *in_root / "index.html";
-
+  if (in_.size() == 0) {
+    l_path /= "index.html";
+  }
+  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) {
+    l_path = *in_root / "index.html";
+  }
   return l_path;
 }
 
@@ -62,13 +54,7 @@ std::string get_file_deflate(const FSys::path& in_path) {
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::get(session_data_ptr in_handle) {
-  auto l_path = make_doc_path(
-      root_path_,
-      in_handle->req_header_.contains(boost::beast::http::field::host)
-          ? in_handle->req_header_.at(boost::beast::http::field::host)
-          : boost::core::string_view{},
-      in_handle->url_.segments()
-  );
+  auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
 
   co_return in_handle->make_msg(
       l_path, http_header_ctrl{
@@ -79,13 +65,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::g
   );
 }
 boost::asio::awaitable<boost::beast::http::message_generator> kitsu_front_end::head(session_data_ptr in_handle) {
-  auto l_path = make_doc_path(
-      root_path_,
-      in_handle->req_header_.contains(boost::beast::http::field::host)
-          ? in_handle->req_header_.at(boost::beast::http::field::host)
-          : boost::core::string_view{},
-      in_handle->url_.segments()
-  );
+  auto l_path = make_doc_path(root_path_, in_handle->url_.segments());
   boost::beast::http::response<boost::beast::http::file_body> l_res{
       boost::beast::http::status::ok, in_handle->version_
   };
