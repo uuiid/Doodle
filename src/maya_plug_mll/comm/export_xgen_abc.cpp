@@ -103,7 +103,9 @@ class xgen_alembic_out {
   o_box3d_property_ptr o_box3d_property_ptr_{};
   o_string_property_ptr o_guide_scope_prop_{};
 
-  o_xform_ptr o_xform_ptr_{};
+  o_xform_ptr o_xform_root_ptr_{};
+  o_xform_ptr o_xform_curve_ptr_{};
+  o_xform_ptr o_xform_guide_ptr_{};
   o_curve_ptr o_curve_ptr_{};
 
   struct curve_data {
@@ -150,13 +152,31 @@ class xgen_alembic_out {
     if (!o_box3d_property_ptr_->valid()) {
       throw_exception(doodle_error{fmt::format("not open file {}", out_path_)});
     }
-    o_xform_ptr_ =
-        std::make_shared<Alembic::AbcGeom::OXform>(o_archive_->getTop(), "root_curve", transform_time_index_);
-    auto& l_xform = o_xform_ptr_->getSchema();
-    Alembic::AbcGeom::XformSample l_sample{};
-    l_xform.set(l_sample);
+    {  // 创建根组
+      o_xform_root_ptr_ =
+          std::make_shared<Alembic::AbcGeom::OXform>(o_archive_->getTop(), "root_curve", transform_time_index_);
+      auto& l_xform = o_xform_root_ptr_->getSchema();
+      Alembic::AbcGeom::XformSample l_sample{};
+      l_xform.set(l_sample);
+    }
+    {  // 创建渲染曲线组
+      o_xform_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OXform>(
+          *o_xform_root_ptr_, "render_curve", Alembic::Abc::kFull, transform_time_index_
+      );
+      auto& l_xform = o_xform_curve_ptr_->getSchema();
+      Alembic::AbcGeom::XformSample l_sample{};
+      l_xform.set(l_sample);
+    }
+    {  // 创建引导曲线组
+      o_xform_guide_ptr_ = std::make_shared<Alembic::AbcGeom::OXform>(
+          *o_xform_root_ptr_, "guide_curve", Alembic::Abc::kFull, transform_time_index_
+      );
+      auto& l_xform = o_xform_guide_ptr_->getSchema();
+      Alembic::AbcGeom::XformSample l_sample{};
+      l_xform.set(l_sample);
+    }
     o_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
-        *o_xform_ptr_, "curve", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
+        *o_xform_curve_ptr_, "curve", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
     );
     auto l_user_props   = o_curve_ptr_->getSchema().getUserProperties();
     o_guide_scope_prop_ = std::make_shared<Alembic::Abc::OStringProperty>(l_user_props, "groom_guide_AbcGeomScope");
@@ -284,7 +304,7 @@ class xgen_alembic_out {
           Alembic::AbcGeom::OFloatGeomParam::Sample{curve_data_.widths_, Alembic::AbcGeom::kVertexScope}
       );
       l_curve_sample.setKnots(curve_data_.knots_);
-      if (is_guide_) o_guide_scope_prop_->set("con");
+      if (is_guide_) o_guide_scope_prop_->set("groom_guide_AbcGeomScope");
       init_ = true;
     } else {
       l_curve_sample.setPositions(curve_data_.points_);
