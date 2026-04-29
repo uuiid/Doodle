@@ -6,6 +6,12 @@
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
+if ($BuildSd2) {
+    $Sd_path = Initialize-Sd2
+    &scp -i ~/.ssh/id_ed25519_deploy -r "$Sd_path\*" zyb@192.168.20.188:/home/zyb/nginx/html/sd2
+    return;
+}
+
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
@@ -15,10 +21,7 @@ Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
 $NewSession = New-ServerPSSession
 $KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
-if ($BuildSd2) {
-    $Sd_path = Initialize-Sd2
-    &scp -i ~/.ssh/id_ed25519_deploy -r "$Sd_path\*" zyb@192.168.20.188:/home/zyb/nginx/html/sd2
-}
+
 
 Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -ScriptBlock {
     param ($KitsuCookies, $CopyServer)
