@@ -41,7 +41,8 @@ struct DOODLE_CORE_API task {
   std::string task_id_;  // 任务ID，外部唯一标识
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
-
+  // 归档
+  bool archived_;
   // to json
   friend void to_json(nlohmann::json& j, const task& p) {
     j["id"]             = p.uuid_id_;
@@ -53,10 +54,13 @@ struct DOODLE_CORE_API task {
     j["ai_studio_id"]   = p.ai_studio_id_;
 
     j["created_at"]     = p.created_at_;
+    j["ended_at"]       = p.ended_at_;
+    j["archived"]        = p.archived_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
     if (j.contains("data_request")) j.at("data_request").get_to(p.data_request_);
     if (j.contains("ai_studio_id")) j.at("ai_studio_id").get_to(p.ai_studio_id_);
+    if (j.contains("archived")) j.at("archived").get_to(p.archived_);
   }
 };
 
