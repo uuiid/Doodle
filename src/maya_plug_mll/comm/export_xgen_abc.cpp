@@ -240,9 +240,12 @@ class xgen_alembic_out {
     {
       // 设置 o_xform_guide_ptr_ 的用户属性 "groom_guide" 为 1，表示这是一个引导曲线组
       auto l_guide_user_props = o_xform_guide_ptr_->getSchema().getUserProperties();
-      o_guide_tag_prop_       = std::make_shared<Alembic::Abc::OInt16Property>(l_guide_user_props, "groom_guide");
-      o_guide_tag_prop_->set(1);
-      // 设置属性为 GeometryScope::kConstantScope
+      Alembic::Abc::MetaData l_meta_data{};
+      Alembic::AbcGeom::SetGeometryScope(l_meta_data, Alembic::AbcGeom::kConstantScope);
+      o_guide_tag_prop_ = std::make_shared<Alembic::Abc::OInt16Property>(
+          l_guide_user_props, "groom_guide", l_meta_data
+      );
+      o_guide_tag_prop_->set(static_cast<std::int16_t>(1));
     }
 
     o_render_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
