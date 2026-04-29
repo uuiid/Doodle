@@ -124,6 +124,43 @@ class xgen_alembic_out {
   bool render_init_{false};
   bool guide_init_{false};
 
+  void append_guide_curve(const XgGuide& in_guide) {
+    const auto& l_orig_points  = in_guide.iOrigGuideGeom();
+    const auto& l_user_points  = in_guide.iGuideGeom();
+    const auto& l_cache_points = in_guide.cGuideGeom();
+    const auto* l_points =
+        !l_orig_points.empty() ? &l_orig_points : (!l_user_points.empty() ? &l_user_points : &l_cache_points);
+    const auto l_size = l_points->size();
+    if (l_size < 2) return;
+
+    if (!guide_init_) {
+      guide_curve_data_.vertices_.emplace_back(boost::numeric_cast<std::int32_t>(l_size));
+      guide_curve_data_.widths_.emplace_back(boost::numeric_cast<std::float_t>(in_guide.radius(0)));
+
+      guide_curve_data_.knots_.emplace_back(0.f);
+      guide_curve_data_.knots_.emplace_back(0.f);
+      for (auto j = 0; j < l_size; ++j) {
+        const auto& l_pt = (*l_points)[j];
+        guide_curve_data_.points_.emplace_back(
+            boost::numeric_cast<float>(l_pt[0]), boost::numeric_cast<float>(l_pt[1]),
+            boost::numeric_cast<float>(l_pt[2])
+        );
+        guide_curve_data_.knots_.emplace_back(boost::numeric_cast<std::float_t>(std::max<std::size_t>(0, j - 1)));
+      }
+      guide_curve_data_.knots_[guide_curve_data_.knots_.size() - 2] = guide_curve_data_.knots_.back();
+      guide_curve_data_.knots_.emplace_back(guide_curve_data_.knots_.back());
+      guide_curve_data_.knots_.emplace_back(guide_curve_data_.knots_.back());
+    } else {
+      for (auto j = 0; j < l_size; ++j) {
+        const auto& l_pt = (*l_points)[j];
+        guide_curve_data_.points_.emplace_back(
+            boost::numeric_cast<float>(l_pt[0]), boost::numeric_cast<float>(l_pt[1]),
+            boost::numeric_cast<float>(l_pt[2])
+        );
+      }
+    }
+  }
+
   void write_curve_sample(curve_data& in_data, const o_curve_ptr& in_curve_ptr, bool& in_init) {
     Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
     if (!in_init) {
@@ -255,6 +292,18 @@ class xgen_alembic_out {
       : begin_time_(in_begin_time), end_time_(in_end_time), out_path_(std::move(in_path)) {
     open();
   };
+
+  void write_guides_from_primitive(XgPrimitive* in_primitive) {
+    if (!in_primitive) return;
+    const auto l_num_guides = in_primitive->numGuides();
+    if (l_num_guides <= 0) return;
+
+    for (auto i = 0; i < l_num_guides; ++i) {
+      auto* l_guide = in_primitive->guide(boost::numeric_cast<unsigned int>(i));
+      if (!l_guide) continue;
+      append_guide_curve(*l_guide);
+    }
+  }
 
   void write_begin() {
     render_curve_data_ = {};
@@ -497,6 +546,7 @@ struct xgen_render_face {
 
 struct xgen_render_des {
   std::shared_ptr<xgen_alembic_out> xgen_alembic_out_ptr_{};
+  XgPrimitive* primitive_ptr_{nullptr};
   std::vector<std::unique_ptr<xgen_render_face>> face_list_{};
 };
 MStatus xgen_abc_export::redoIt() {
@@ -523,6 +573,7 @@ MStatus xgen_abc_export::redoIt() {
       displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
       l_des_render->xgen_alembic_out_ptr_ =
           std::make_shared<xgen_alembic_out>(l_out_path, p_i->begin_time_, p_i->end_time_);
+      l_des_render->primitive_ptr_ = l_des->activePrimitive();
 
       BOOST_ASSERT(l_des_render->xgen_alembic_out_ptr_);
       for (auto&& [l_path_name, l_ptr] : l_des->patches()) {
@@ -562,6 +613,7 @@ MStatus xgen_abc_export::redoIt() {
     MAnimControl::setCurrentTime(i);
     for (auto&& l_list : l_render_list) {
       l_list->xgen_alembic_out_ptr_->write_begin();
+      l_list->xgen_alembic_out_ptr_->write_guides_from_primitive(l_list->primitive_ptr_);
       for (auto&& l_r : l_list->face_list_) {
         l_r->parallel_renderer->spawnAndWait();
       }
