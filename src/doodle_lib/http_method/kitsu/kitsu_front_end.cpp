@@ -31,7 +31,9 @@ FSys::path make_doc_path(
 ) {
   auto l_path      = *in_root;
   auto l_path_root = *in_root;
+  bool has_host    = false;
   if (FSys::exists(*in_root / in_host)) {
+    has_host = true;
     l_path /= in_host;
     l_path_root /= in_host;
   }
@@ -39,7 +41,7 @@ FSys::path make_doc_path(
   for (auto&& i : in_) l_path /= i;
   if (in_.size() == 0) l_path /= "index.html";
 
-  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) l_path = l_path_root / "index.html";
+  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path) && has_host) l_path = l_path_root / "index.html";
 
   if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) l_path = *in_root / "index.html";
 
