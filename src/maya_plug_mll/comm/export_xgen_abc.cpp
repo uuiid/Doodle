@@ -4,9 +4,9 @@
 
 #include "export_xgen_abc.h"
 
+#include <maya_plug/data/maya_display.h>
 #include <maya_plug/data/maya_file_io.h>
 #include <maya_plug/data/reference_file.h>
-#include <maya_plug/data/maya_display.h>
 #include <maya_plug/fmt/fmt_dag_path.h>
 #include <maya_plug/fmt/fmt_warp.h>
 
@@ -81,12 +81,13 @@ void creare_curve_test(const XGenRenderAPI::vec3* in_point, std::size_t in_size)
 
 class xgen_alembic_out {
  public:
-  using time_sampling_ptr    = Alembic::AbcCoreAbstract::TimeSamplingPtr;
-  using o_archive_ptr        = std::shared_ptr<Alembic::Abc::OArchive>;
-  using o_box3d_property_ptr = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
-  using o_xform_ptr          = std::shared_ptr<Alembic::AbcGeom::OXform>;
-  using o_curve_ptr          = std::shared_ptr<Alembic::AbcGeom::OCurves>;
-  using o_curve_sample_ptr   = std::shared_ptr<Alembic::AbcGeom::OCurvesSchema::Sample>;
+  using time_sampling_ptr     = Alembic::AbcCoreAbstract::TimeSamplingPtr;
+  using o_archive_ptr         = std::shared_ptr<Alembic::Abc::OArchive>;
+  using o_box3d_property_ptr  = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
+  using o_xform_ptr           = std::shared_ptr<Alembic::AbcGeom::OXform>;
+  using o_curve_ptr           = std::shared_ptr<Alembic::AbcGeom::OCurves>;
+  using o_curve_sample_ptr    = std::shared_ptr<Alembic::AbcGeom::OCurvesSchema::Sample>;
+  using o_string_property_ptr = std::shared_ptr<Alembic::Abc::OStringProperty>;
 
  private:
   MTime begin_time_{};
@@ -100,6 +101,7 @@ class xgen_alembic_out {
   std::int32_t shape_time_index_{};
   std::int32_t transform_time_index_{};
   o_box3d_property_ptr o_box3d_property_ptr_{};
+  o_string_property_ptr o_guide_scope_prop_{};
 
   o_xform_ptr o_xform_ptr_{};
   o_curve_ptr o_curve_ptr_{};
@@ -113,6 +115,7 @@ class xgen_alembic_out {
 
   curve_data curve_data_{};
   bool init_{false};
+  bool is_guide_{false};
 
   void open() {
     if (auto l_p = out_path_.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
@@ -155,6 +158,8 @@ class xgen_alembic_out {
     o_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
         *o_xform_ptr_, "curve", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
     );
+    auto l_user_props   = o_curve_ptr_->getSchema().getUserProperties();
+    o_guide_scope_prop_ = std::make_shared<Alembic::Abc::OStringProperty>(l_user_props, "groom_guide_AbcGeomScope");
   }
   static constexpr auto g_degree{3};
   void creare_curve(
@@ -202,13 +207,16 @@ class xgen_alembic_out {
   void write_begin() {
     curve_data_ = {};
     curve_data_.widths_.emplace_back();
+    is_guide_ = false;
   }
 
   void write_section(XGenRenderAPI::PrimitiveCache* in_cache) {
     // 写入动画
     using namespace XGenRenderAPI;
-    bool bIsSpline = in_cache->get(PrimitiveCache::PrimIsSpline);
-    if (!bIsSpline) return;
+    if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
+    const auto* l_prim_ids = in_cache->get(PrimitiveCache::PrimitiveID_XP);
+    const auto l_count     = in_cache->get(PrimitiveCache::CacheCount);
+    is_guide_               = (l_prim_ids && l_count > 0 && l_prim_ids[0] < 0);
     if (!init_) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
@@ -276,6 +284,7 @@ class xgen_alembic_out {
           Alembic::AbcGeom::OFloatGeomParam::Sample{curve_data_.widths_, Alembic::AbcGeom::kVertexScope}
       );
       l_curve_sample.setKnots(curve_data_.knots_);
+      if (is_guide_) o_guide_scope_prop_->set("groom_guide_AbcGeomScope");
       init_ = true;
     } else {
       l_curve_sample.setPositions(curve_data_.points_);
@@ -338,9 +347,7 @@ XgenRender::~XgenRender() = default;
 void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_cache) {
   o_alembic_out_->write_section(in_cache);
 }
-void XgenRender::log(const char* in_str) {
-  p_owner->displayInfo(in_str);
-}
+void XgenRender::log(const char* in_str) { p_owner->displayInfo(in_str); }
 bool XgenRender::get(EBoolAttribute in_attr) const {
   if (in_attr == EBoolAttribute::ClearDescriptionCache) return true;  // 这样才会在运行时渲染
   return false;
