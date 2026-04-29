@@ -29,18 +29,20 @@ namespace {
 FSys::path make_doc_path(
     const std::shared_ptr<FSys::path>& in_root, std::string_view in_host, const boost::urls::segments_ref& in_
 ) {
-  auto l_path = *in_root;
-  if (FSys::exists(*in_root / in_host)) l_path /= in_host;
+  auto l_path      = *in_root;
+  auto l_path_root = *in_root;
+  if (FSys::exists(*in_root / in_host)) {
+    l_path /= in_host;
+    l_path_root /= in_host;
+  }
 
-  for (auto&& i : in_) {
-    l_path /= i;
-  }
-  if (in_.size() == 0) {
-    l_path /= "index.html";
-  }
-  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) {
-    l_path = *in_root / "index.html";
-  }
+  for (auto&& i : in_) l_path /= i;
+  if (in_.size() == 0) l_path /= "index.html";
+
+  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) l_path = l_path_root / "index.html";
+
+  if (!in_.empty() && in_.front() != "api" && !FSys::exists(l_path)) l_path = *in_root / "index.html";
+
   return l_path;
 }
 
