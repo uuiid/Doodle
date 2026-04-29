@@ -216,7 +216,7 @@ class xgen_alembic_out {
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
     const auto* l_prim_ids = in_cache->get(PrimitiveCache::PrimitiveID_XP);
     const auto l_count     = in_cache->get(PrimitiveCache::CacheCount);
-    is_guide_               = (l_prim_ids && l_count > 0 && l_prim_ids[0] < 0);
+    is_guide_              = (l_prim_ids && l_count > 0 && l_prim_ids[0] < 0);
     if (!init_) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
@@ -544,8 +544,10 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
   maya_chick(status);
   std::vector<MDagPath> dag_path_list{};
   for (auto&& i : XgPalette::palettes())
-    if (auto l_ptr = XgPalette::palette(i); l_ptr)
-      p_i->palette_v.emplace_back(l_ptr, xgutil::objNameSpace(i)).dag_namespace.pop_back();
+    if (auto l_ptr = XgPalette::palette(i); l_ptr) {
+      auto&& l_p = p_i->palette_v.emplace_back(l_ptr, xgutil::objNameSpace(i));
+      if (!l_p.dag_namespace.empty()) l_p.dag_namespace.pop_back();
+    }
 
   for (; !it_list.isDone(); it_list.next()) {
     MDagPath l_dag_path{};
