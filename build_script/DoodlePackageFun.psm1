@@ -144,6 +144,7 @@ function Initialize-Doodle {
     $DoodleKitsuRoot = "E:\source\kitsu"
     $DoodleTimePath = "$DoodleBuildRoot\holiday-cn"
     $DoodleExePath = "E:\source\doodle\dist\索以魔盒.exe"
+    $DoodleMp4 = "E:\source\sd\src\assets\animation\waiting.mp4"
     Write-Host "开始检查文件"
 
     Start-GitPull -Remote "loc" -Branch "master_sy_new3" -WorkingDirectory $DoodleKitsuRoot -LogPath $DoodleLogPath
@@ -191,6 +192,8 @@ function Initialize-Doodle {
     Set-Content -Path "$OutPath\dist\version.txt" -Value ($Tags -join "`n") -NoNewline
 
     Copy-Item $DoodleExePath -Destination "$OutPath\dist" -Force
+    mkdir "$OutPath\dist\seedance2\animation" -ErrorAction SilentlyContinue | Out-Null
+    Copy-Item $DoodleMp4 -Destination "$OutPath\dist\seedance2\animation\" -Force
 
 
     # 从github 下载网络资源
