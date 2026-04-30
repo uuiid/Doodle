@@ -27,7 +27,6 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -227,18 +226,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     }
   }
 
-  auto l_assets = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(in(
-          &entity::uuid_id_, select(
-                                 &entity_link::entity_out_id_, from<entity_link>(),
-                                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                                 where(c(shot->*&entity::uuid_id_) == l_shot_entity.uuid_id_)
-                             )
-      ))
-  );
+  auto l_assets = sqlite_select::get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
   FSys::path l_scene_ue_path{"D:/sy_magic/ue_projects/"};  // 默认路径
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
 
@@ -578,20 +566,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_assets           = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(
-          in(&entity::uuid_id_,
-                       select(
-                 &entity_link::entity_out_id_, from<entity_link>(),
-                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                 where(c(shot->*&entity::uuid_id_) == l_shot_entity.uuid_id_)
-             )) &&
-          !c(&entity::canceled_)
-      )
-  );
+  auto l_assets           = sqlite_select::get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};
   auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
