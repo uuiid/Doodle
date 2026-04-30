@@ -457,5 +457,7 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset
     const uuid& in_shot_id
 );
 std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_id);
+std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uuid& in_entity_id);
+std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid& in_entity_id);
 }  // namespace sqlite_select
 }  // namespace doodle

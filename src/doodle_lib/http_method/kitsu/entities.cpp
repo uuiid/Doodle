@@ -2,16 +2,16 @@
 // Created by TD on 25-6-16.
 //
 #include <doodle_core/metadata/entity.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 namespace doodle::http {
 namespace {}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
@@ -32,11 +32,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   if (entity_asset_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
     auto l_ext_ptr = std::make_shared<entity_asset_extend>();
-    if (auto l_list_ext = l_sql.impl_->storage_any_.get_all<entity_asset_extend>(
-            where(c(&entity_asset_extend::entity_id_) == l_entt->uuid_id_)
-        );
-        !l_list_ext.empty()) {
-      *l_ext_ptr = l_list_ext.front();
+    if (auto l_list_ext = sqlite_select::get_entity_asset_extend_by_entity_id(l_entt->uuid_id_);
+        l_list_ext.has_value()) {
+      *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
       co_await l_sql.update(l_ext_ptr);
     } else {
@@ -49,11 +47,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   if (entity_shot_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
     auto l_ext_ptr = std::make_shared<entity_shot_extend>();
-    if (auto l_list_ext = l_sql.impl_->storage_any_.get_all<entity_shot_extend>(
-            where(c(&entity_shot_extend::entity_id_) == l_entt->uuid_id_)
-        );
-        !l_list_ext.empty()) {
-      *l_ext_ptr = l_list_ext.front();
+    if (auto l_list_ext = sqlite_select::get_entity_shot_extend_by_entity_id(l_entt->uuid_id_);
+        l_list_ext.has_value()) {
+      *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
       co_await l_sql.update(l_ext_ptr);
     } else {
@@ -65,8 +61,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   }
 
   SPDLOG_LOGGER_WARN(
-      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新实体 entity_id {} project_id {} updated {}", person_.person_.email_,
-      person_.person_.get_full_name(), l_entt->uuid_id_, l_entt->project_id_, l_can_update
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成更新实体 entity_id {} project_id {} updated {}",
+      person_.person_.email_, person_.person_.get_full_name(), l_entt->uuid_id_, l_entt->project_id_, l_can_update
   );
 
   co_return in_handle->make_msg(l_res);
