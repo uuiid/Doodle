@@ -461,5 +461,12 @@ std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_i
 std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uuid& in_entity_id);
 std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid& in_entity_id);
 std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardware_id);
+std::vector<uuid> get_comment_object_ids_by_comment_id(const uuid& in_comment_id);
+std::vector<uuid> get_task_project_ids_by_task_id(const uuid& in_task_id);
+std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_person_id(
+    const uuid& in_comment_id, const uuid& in_person_id
+);
+std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_comment_id);
+
 }  // namespace sqlite_select
 }  // namespace doodle

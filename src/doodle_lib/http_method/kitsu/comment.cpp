@@ -18,6 +18,7 @@
 #include <doodle_lib/metadata/task_status.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <algorithm>
 #include <chrono>
@@ -266,22 +267,19 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
   );
 
   using namespace sqlite_orm;
-  auto l_task_id = l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == comment_id_));
+  auto l_task_id = sqlite_select::get_comment_object_ids_by_comment_id(comment_id_);
 
   if (l_task_id.empty())
     throw_exception(
         http_request_error{boost::beast::http::status::bad_request, fmt::format("未知的评论 id: {}", comment_id_)}
     );
-  auto l_prj_id = l_sql.impl_->storage_any_.select(&task::project_id_, where(c(&task::uuid_id_) == l_task_id[0]));
+  auto l_prj_id = sqlite_select::get_task_project_ids_by_task_id(l_task_id[0]);
   if (l_prj_id.empty())
     throw_exception(
         http_request_error{boost::beast::http::status::bad_request, fmt::format("未知的task id: {}", l_task_id[0])}
     );
-  if (auto l_id = l_sql.impl_->storage_any_.select(
-          &comment_acknoledgments::id_, where(
-                                            c(&comment_acknoledgments::comment_id_) == comment_id_ &&
-                                            c(&comment_acknoledgments::person_id_) == person_.person_.uuid_id_
-                                        )
+  if (auto l_id = sqlite_select::get_comment_acknowledgement_ids_by_comment_id_and_person_id(
+          comment_id_, person_.person_.uuid_id_
       );
       l_id.empty()) {
     auto l_ack         = std::make_shared<comment_acknoledgments>();
@@ -320,10 +318,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(
 
   nlohmann::json l_json{};
   l_json                     = l_comment;
-  l_json["attachment_files"] = l_sql.impl_->storage_any_.get_all<attachment_file>(
-      sqlite_orm::where(sqlite_orm::c(&attachment_file::comment_id_) == id_)
-  );
-
+  l_json["attachment_files"] = sqlite_select::get_attachment_files_by_comment_id(id_);
   co_return in_handle->make_msg(l_json);
 }
 
