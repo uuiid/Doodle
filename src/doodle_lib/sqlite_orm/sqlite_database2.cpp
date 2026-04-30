@@ -674,7 +674,7 @@ std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
   );
   return !l_ids.empty() ? std::optional{l_ids.front()} : std::optional<std::int64_t>{std::nullopt};
 }
-std::optional<std::int64_t> get_project_status_automation_ids_by_project_id_and_status_id(
+std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_status_id(
     const uuid& in_project_id, const uuid& in_status_id
 ) {
   auto l_sql = get_sqlite_database();
