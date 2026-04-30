@@ -11,18 +11,18 @@
 
 #include <memory>
 
-
 //
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/time_tool/work_clock.h>
 
 #include <doodle_lib/core/cache_manger.h>
 #include <doodle_lib/core/holidaycn_time.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_lib/time_tool/work_clock.h>
+
 namespace doodle::http {
 namespace {
 struct work_xlsx_task_info_helper_t {
@@ -99,8 +99,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
     if (!l_item.kitsu_task_ref_id_.is_nil()) l_task_ids.emplace_back(l_item.kitsu_task_ref_id_);
   auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
-  for (auto&& [uuid, name] : l_sql.impl_->storage_any_.select(columns(&project::uuid_id_, &project::name_)))
-    l_project_name_map.emplace(uuid, name);
+  for (auto&& [uuid, name] : sqlite_select::get_project_ids_and_names()) l_project_name_map.emplace(uuid, name);
 
   // 先加载自定义task
   for (auto&& l_item : in_data) {
@@ -131,30 +130,11 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 
            entity_id_, entity_name_, task_type_id_,
 
-           entity_ji_shu_lie_, entity_deng_ji_, entity_gui_dang_, entity_bian_hao_, entity_pin_yin_ming_cheng_,
-           entity_ban_ben_, entity_ji_du_, entity_kai_shi_ji_shu_,
+           entity_asset_extend_,
 
            project_uuid_, project_name_
 
-  ] :
-       l_sql.impl_->storage_any_.select(
-           columns(
-               &task::uuid_id_, &task::name_, &task::last_preview_file_id_,
-
-               &entity::uuid_id_, &entity::name_, &task_type::uuid_id_,
-
-               &entity_asset_extend::ji_shu_lie_, &entity_asset_extend::deng_ji_, &entity_asset_extend::gui_dang_,
-               &entity_asset_extend::bian_hao_, &entity_asset_extend::pin_yin_ming_cheng_,
-               &entity_asset_extend::ban_ben_, &entity_asset_extend::ji_du_, &entity_asset_extend::kai_shi_ji_shu_,
-
-               &project::uuid_id_, &project::name_
-
-           ),
-           from<task>(), join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-           join<task_type>(on(c(&task_type::uuid_id_) == c(&task::task_type_id_))),
-           left_outer_join<entity_asset_extend>(on(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_)),
-           join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))), where(in(&task::uuid_id_, l_task_ids))
-       )) {
+  ] : sqlite_select::get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(l_task_ids)) {
     l_ret.emplace_back(
         work_xlsx_task_info_helper_t{
             .task_id_                   = task_id_,
@@ -164,14 +144,14 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
             .entity_id_                 = entity_id_,
             .entity_name_               = entity_name_,
 
-            .entity_ji_shu_lie_         = entity_ji_shu_lie_,
-            .entity_deng_ji_            = entity_deng_ji_,
-            .entity_gui_dang_           = entity_gui_dang_,
-            .entity_bian_hao_           = entity_bian_hao_,
-            .entity_pin_yin_ming_cheng_ = entity_pin_yin_ming_cheng_,
-            .entity_ban_ben_            = entity_ban_ben_,
-            .entity_ji_du_              = entity_ji_du_,
-            .entity_kai_shi_ji_shu_     = entity_kai_shi_ji_shu_,
+            .entity_ji_shu_lie_         = entity_asset_extend_.ji_shu_lie_,
+            .entity_deng_ji_            = entity_asset_extend_.deng_ji_,
+            .entity_gui_dang_           = entity_asset_extend_.gui_dang_,
+            .entity_bian_hao_           = entity_asset_extend_.bian_hao_,
+            .entity_pin_yin_ming_cheng_ = entity_asset_extend_.pin_yin_ming_cheng_,
+            .entity_ban_ben_            = entity_asset_extend_.ban_ben_,
+            .entity_ji_du_              = entity_asset_extend_.ji_du_,
+            .entity_kai_shi_ji_shu_     = entity_asset_extend_.kai_shi_ji_shu_,
             .task_type_id_              = task_type_id_,
 
             .project_uuid_              = project_uuid_,
@@ -502,13 +482,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
   auto l_sql       = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ids = l_sql.impl_->storage_any_.select(
-      &work_xlsx_task_info_helper::database_t::id_,
-      where(
-          c(&work_xlsx_task_info_helper::database_t::person_id_) == l_user.uuid_id_ &&
-          c(&work_xlsx_task_info_helper::database_t::year_month_) == chrono::local_days{year_month_ / 1}
-      )
+  auto l_ids       = sqlite_select::get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
+      l_user.uuid_id_, chrono::local_days{year_month_ / 1}
   );
   co_await l_sql.remove<work_xlsx_task_info_helper::database_t>(l_ids);
   {  // 检查除空以外的id是否重复
@@ -550,8 +525,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::ge
   auto l_user      = get_sqlite_database().get_by_uuid<person>(user_id_);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
 
-  *l_block_ptr =
-      get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
+  *l_block_ptr = get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   *l_block_ptr |= ranges::actions::sort;
   co_return in_handle->make_msg(nlohmann::json{} = get_task_fulls(*l_block_ptr));
 }
@@ -603,8 +577,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_add
     );
   }
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
+  *l_block_ptr = get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
   auto l_time_clock = create_time_clock(year_month_, l_user.uuid_id_);
   recomputing_time_run(year_month_, l_time_clock, *l_block_ptr);
   co_await get_sqlite_database().update_range(l_block_ptr);
@@ -667,9 +640,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_cus
   );
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr     = get_sqlite_database().get_work_xlsx_task_info(
-      l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1}
-  );
+  *l_block_ptr =
+      get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{l_data.year_month_ / 1});
   auto l_time_clock = create_time_clock(l_data.year_month_, l_user.uuid_id_);
   recomputing_time_run(l_data.year_month_, l_time_clock, *l_block_ptr);
   co_await get_sqlite_database().update_range(l_block_ptr);
@@ -747,8 +719,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_ave
       fmt::format("{}-{}", std::int32_t{year_month_.year()}, std::uint32_t{year_month_.month()})
   );
 
-  auto l_block = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block     = get_sqlite_database().get_work_xlsx_task_info(user_id_, chrono::local_days{year_month_ / 1});
+  auto l_block      = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
+  *l_block          = get_sqlite_database().get_work_xlsx_task_info(user_id_, chrono::local_days{year_month_ / 1});
 
   auto l_time_clock = create_time_clock(year_month_, user_id_);
   average_time_run(year_month_, l_time_clock, *l_block);
@@ -786,8 +758,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_pat
 
   auto l_user      = get_sqlite_database().get_by_uuid<person>(user_id_);
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
+  *l_block_ptr = get_sqlite_database().get_work_xlsx_task_info(l_user.uuid_id_, chrono::local_days{year_month_ / 1});
 
   if (l_block_ptr->empty()) {
     auto l_year_month_str_1 =
@@ -855,8 +826,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time_del
 
 boost::asio::awaitable<void> recomputing_time(const uuid& in_person_id, const chrono::year_month& in_year_month) {
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  *l_block_ptr =
-      get_sqlite_database().get_work_xlsx_task_info(in_person_id, chrono::local_days{in_year_month / 1});
+  *l_block_ptr     = get_sqlite_database().get_work_xlsx_task_info(in_person_id, chrono::local_days{in_year_month / 1});
   auto l_timer_clock = create_time_clock(in_year_month, in_person_id);
   recomputing_time_run(in_year_month, l_timer_clock, *l_block_ptr);
   co_return co_await get_sqlite_database().update_range(l_block_ptr);

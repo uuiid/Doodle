@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "doodle_core/doodle_core_fwd.h"
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
@@ -508,5 +509,21 @@ std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_t
     const uuid& in_entity_id
 );
 std::vector<attachment_file> get_attachment_files_by_comment_id_and_task_id(const uuid& in_task_id);
+std::vector<std::tuple<uuid, std::string>> get_project_ids_and_names();
+std::vector<std::tuple<
+    uuid,                 // task::uuid_id_
+    std::string,          // task::name_
+    uuid,                 // task::last_preview_file_id_
+    uuid,                 // entity::uuid_id_
+    std::string,          // entity::name_
+    uuid,                 // task_type::uuid_id_
+    entity_asset_extend,  // entity_asset_extend
+    uuid,                 // project::uuid_id_
+    std::string           // project::name_
+    >>
+get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std::vector<uuid>& in_task_ids);
+std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
+    const uuid& in_person_id, const chrono::local_days& in_year_month
+);
 }  // namespace sqlite_select
 }  // namespace doodle
