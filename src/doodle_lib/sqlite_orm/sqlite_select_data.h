@@ -22,6 +22,7 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 
+#include <optional>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <tuple>
@@ -524,6 +525,15 @@ std::vector<std::tuple<
 get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std::vector<uuid>& in_task_ids);
 std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
     const uuid& in_person_id, const chrono::local_days& in_year_month
+);
+std::vector<std::tuple<project, std::string>> get_projects_and_status_name_by_project_name(
+    const std::string& in_project_name
+);
+std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
+    const uuid& in_project_id, const uuid& in_person_id
+);
+std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_status_id(
+    const uuid& in_project_id, const uuid& in_status_id
 );
 }  // namespace sqlite_select
 }  // namespace doodle

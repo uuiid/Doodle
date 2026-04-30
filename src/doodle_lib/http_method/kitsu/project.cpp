@@ -11,7 +11,6 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -38,12 +37,9 @@ auto select_project_all_get_result(const std::string& in_name) {
   auto l_sql = get_sqlite_database();
   std::vector<project_all_get_result_t> l_list{};
   using namespace sqlite_orm;
-  for (auto&& [l_prj, l_status_name] : l_sql.impl_->storage_any_.select(
-           columns(object<project>(true), &project_status::name_), from<project>(),
-           join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_))),
-           where(in_name.empty() || c(&project::name_) == in_name), order_by(&project_status::name_)
-       ))
+  for (auto&& [l_prj, l_status_name] : sqlite_select::get_projects_and_status_name_by_project_name(in_name)) {
     l_list.emplace_back(project_all_get_result_t(l_prj, l_status_name));
+  }
   return l_list;
 }
 
@@ -338,14 +334,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
   );
 
   using namespace sqlite_orm;
-  if (auto l_id = l_sql.impl_->storage_any_.select(
-          &project_person_link::id_,
-          where(
-              c(&project_person_link::project_id_) == project_id_ && c(&project_person_link::person_id_) == person_id_
-          )
-      );
-      !l_id.empty()) {
-    co_await l_sql.remove<project_person_link>(l_id[0]);
+
+  if (auto l_id = sqlite_select::get_project_person_id_by_project_id_and_person_id(project_id_, person_id_);
+      l_id.has_value()) {
+    co_await l_sql.remove<project_person_link>(l_id.value());
     socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = project_id_});
   }
   co_return in_handle->make_msg_204();
@@ -414,20 +406,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_inst
       person_.person_.get_full_name(), project_id_, status_automation_id_
   );
   using namespace sqlite_orm;
-  if (auto l_id = l_sql.impl_->storage_any_.select(
-          &project_status_automation_link::id_,
-          where(
-              c(&project_status_automation_link::project_id_) == project_id_ &&
-              c(&project_status_automation_link::status_automation_id_) == status_automation_id_
-          )
+  if (auto l_id = sqlite_select::get_project_status_automation_id_by_project_id_and_status_id(
+          project_id_, status_automation_id_
       );
-      !l_id.empty()) {
-    co_await l_sql.remove<project_status_automation_link>(l_id.front());
+      l_id.has_value()) {
+    co_await l_sql.remove<project_status_automation_link>(l_id.value());
   }
   auto l_prj = l_sql.get_by_uuid<project>(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_prj);
 }
-
-
 
 }  // namespace doodle::http
