@@ -16,7 +16,6 @@
 #include <doodle_lib/metadata/comment.h>
 #include <doodle_lib/metadata/status_automation.h>
 #include <doodle_lib/metadata/task_status.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
