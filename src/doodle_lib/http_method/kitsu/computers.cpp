@@ -8,8 +8,8 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/buffers_iterator.hpp>
@@ -90,10 +90,9 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto l_sql                      = get_sqlite_database();
     using namespace sqlite_orm;
-    if (l_sql.impl_->storage_any_.count<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_)) != 0) {
-      *computer_ =
-          l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == computer_->hardware_id_))
-              .front();
+    if (auto l_db_computer = sqlite_select::get_entity_computer_by_hardware_id(computer_->hardware_id_);
+        l_db_computer.has_value()) {
+      *computer_         = l_db_computer.value();
       computer_->status_ = l_computer_json.status_;
       co_await l_sql.update(computer_);
     } else {

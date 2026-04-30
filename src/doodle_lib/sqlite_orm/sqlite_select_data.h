@@ -29,6 +29,7 @@
 namespace doodle {
 struct working_file_and_link;
 struct outsource_studio_authorization;
+struct computer;
 struct todo_t {
   // std::shared_ptr<project> project_;
   // std::shared_ptr<entity> entity_;
@@ -459,5 +460,6 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset
 std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_id);
 std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uuid& in_entity_id);
 std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid& in_entity_id);
+std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardware_id);
 }  // namespace sqlite_select
 }  // namespace doodle

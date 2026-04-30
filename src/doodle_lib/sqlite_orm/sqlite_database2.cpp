@@ -399,4 +399,10 @@ std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid
       l_sql.impl_->storage_any_.get_all<entity_shot_extend>(where(c(&entity_shot_extend::entity_id_) == in_entity_id));
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<entity_shot_extend>{std::nullopt};
 }
+std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardware_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_ret = l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == in_hardware_id));
+  return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<computer>{std::nullopt};
+}
 }  // namespace doodle::sqlite_select
