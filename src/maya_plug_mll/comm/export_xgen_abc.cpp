@@ -82,15 +82,15 @@ void creare_curve_test(const XGenRenderAPI::vec3* in_point, std::size_t in_size)
 
 class xgen_alembic_out {
  public:
-  using time_sampling_ptr     = Alembic::AbcCoreAbstract::TimeSamplingPtr;
-  using o_archive_ptr         = std::shared_ptr<Alembic::Abc::OArchive>;
-  using o_box3d_property_ptr  = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
-  using o_xform_ptr           = std::shared_ptr<Alembic::AbcGeom::OXform>;
-  using o_curve_ptr           = std::shared_ptr<Alembic::AbcGeom::OCurves>;
-  using o_curve_sample_ptr    = std::shared_ptr<Alembic::AbcGeom::OCurvesSchema::Sample>;
-  using o_string_property_ptr = std::shared_ptr<Alembic::Abc::OStringArrayProperty>;
-  using o_bool_property_ptr   = std::shared_ptr<Alembic::Abc::OBoolProperty>;
-  using o_int16_property_ptr  = std::shared_ptr<Alembic::Abc::OInt16Property>;
+  using time_sampling_ptr      = Alembic::AbcCoreAbstract::TimeSamplingPtr;
+  using o_archive_ptr          = std::shared_ptr<Alembic::Abc::OArchive>;
+  using o_box3d_property_ptr   = std::shared_ptr<Alembic::Abc::OBox3dProperty>;
+  using o_xform_ptr            = std::shared_ptr<Alembic::AbcGeom::OXform>;
+  using o_curve_ptr            = std::shared_ptr<Alembic::AbcGeom::OCurves>;
+  using o_curve_sample_ptr     = std::shared_ptr<Alembic::AbcGeom::OCurvesSchema::Sample>;
+  using o_string_property_ptr  = std::shared_ptr<Alembic::Abc::OStringArrayProperty>;
+  using o_bool_property_ptr    = std::shared_ptr<Alembic::Abc::OBoolProperty>;
+  using o_int16_property_ptr   = std::shared_ptr<Alembic::Abc::OInt16Property>;
   using o_int32_geom_param_ptr = std::shared_ptr<Alembic::AbcGeom::OInt32GeomParam>;
 
  private:
@@ -117,6 +117,7 @@ class xgen_alembic_out {
   struct curve_data {
     std::vector<std::int32_t> vertices_{};
     std::vector<Alembic::Abc::V3f> points_{};
+    std::vector<Alembic::Abc::V2f> uvs_{};
     std::vector<std::float_t> widths_{};
     std::vector<std::float_t> knots_{};
     operator bool() const { return !vertices_.empty() && !points_.empty() && !widths_.empty() && !knots_.empty(); }
@@ -175,6 +176,9 @@ class xgen_alembic_out {
       l_curve_sample.setWidths(
           Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, Alembic::AbcGeom::kVertexScope}
       );
+      if (!in_data.uvs_.empty()) {
+        l_curve_sample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample{in_data.uvs_, Alembic::AbcGeom::kUniformScope});
+      }
       l_curve_sample.setKnots(in_data.knots_);
       in_init = true;
     } else {
@@ -245,9 +249,8 @@ class xgen_alembic_out {
       auto l_guide_user_props = o_xform_guide_ptr_->getSchema().getUserProperties();
       Alembic::Abc::MetaData l_meta_data{};
       Alembic::AbcGeom::SetGeometryScope(l_meta_data, Alembic::AbcGeom::kConstantScope);
-      o_guide_tag_prop_ = std::make_shared<Alembic::Abc::OInt16Property>(
-          l_guide_user_props, "groom_guide", l_meta_data
-      );
+      o_guide_tag_prop_ =
+          std::make_shared<Alembic::Abc::OInt16Property>(l_guide_user_props, "groom_guide", l_meta_data);
       o_guide_tag_prop_->set(static_cast<std::int16_t>(1));
     }
 
@@ -262,13 +265,15 @@ class xgen_alembic_out {
       // UE Groom 导入优先读取 Curves 的几何参数(arbGeomParams)而非 Xform 用户属性。
       auto l_guide_arb_geom_params = o_guide_curve_ptr_->getSchema().getArbGeomParams();
       o_guide_tag_geom_param_      = std::make_shared<Alembic::AbcGeom::OInt32GeomParam>(
-        l_guide_arb_geom_params, "groom_guide", false, Alembic::AbcGeom::kConstantScope, 1
+          l_guide_arb_geom_params, "groom_guide", false, Alembic::AbcGeom::kConstantScope, 1
       );
 
       constexpr std::array<std::int32_t, 1> l_guide_flag{1};
-      o_guide_tag_geom_param_->set(Alembic::AbcGeom::OInt32GeomParam::Sample(
-        Alembic::Abc::Int32ArraySample{l_guide_flag.data(), l_guide_flag.size()}, Alembic::AbcGeom::kConstantScope
-      ));
+      o_guide_tag_geom_param_->set(
+          Alembic::AbcGeom::OInt32GeomParam::Sample(
+              Alembic::Abc::Int32ArraySample{l_guide_flag.data(), l_guide_flag.size()}, Alembic::AbcGeom::kConstantScope
+          )
+      );
     }
   }
   static constexpr auto g_degree{3};
@@ -353,6 +358,7 @@ class xgen_alembic_out {
             in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + l_curve_data.knots_.size()
         );
         l_curve_data.vertices_.reserve(l_num_size + l_curve_data.vertices_.size());
+        l_curve_data.uvs_.reserve(l_num_size + l_curve_data.uvs_.size());
         // 获取宽度 width
         l_curve_data.widths_.reserve(l_num_size + l_curve_data.widths_.size());
         if (auto l_width_size = in_cache->getSize(PrimitiveCache::Widths); l_width_size > 0) {
@@ -361,6 +367,16 @@ class xgen_alembic_out {
         } else {
           auto l_width = in_cache->get(PrimitiveCache::ConstantWidth);
           for (auto z = 0; z < l_num_size; ++z) l_curve_data.widths_.emplace_back(l_width);
+        }
+
+        // 每根曲线一个根部 UV，按 uniform scope 写入到 Alembic 曲线。
+        if (in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
+            in_cache->getSize(PrimitiveCache::V_XS) == l_num_size) {
+          const auto* l_u = in_cache->get(PrimitiveCache::U_XS);
+          const auto* l_v = in_cache->get(PrimitiveCache::V_XS);
+          for (auto z = 0; z < l_num_size; ++z) {
+            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
+          }
         }
 
         std::size_t l_index_off{};
@@ -383,6 +399,16 @@ class xgen_alembic_out {
         auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
         const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
         l_curve_data.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_curve_data.points_.size());
+        l_curve_data.uvs_.reserve(l_num_size + l_curve_data.uvs_.size());
+
+        if (in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
+            in_cache->getSize(PrimitiveCache::V_XS) == l_num_size) {
+          const auto* l_u = in_cache->get(PrimitiveCache::U_XS);
+          const auto* l_v = in_cache->get(PrimitiveCache::V_XS);
+          for (auto z = 0; z < l_num_size; ++z) {
+            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
+          }
+        }
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
