@@ -4,11 +4,9 @@
 #include <doodle_core/metadata/entity.h>
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/metadata/entity.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
-#include <doodle_lib/metadata/entity.h>
-
 
 namespace doodle::http {
 
@@ -138,46 +136,20 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
   auto l_sql = get_sqlite_database();
   std::vector<data_user_notifications_get_result> l_ret{};
   // constexpr auto author = "author"_alias.for_<person>();
+  auto l_row = sqlite_select::
+      get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
+          in_person_id, in_args.after_, in_args.before_, in_args.task_type_id_, in_args.task_status_id_,
+          in_args.notification_type_, in_args.read_
+      );
   for (auto&& [
 
            l_notification, l_entity, l_comment, project_id, project_name, task_type_id, subscription_id
 
-  ] :
-       l_sql.impl_->storage_any_.select(
-           columns(
-               object<notification>(true), object<entity>(true), object<comment>(true), &project::uuid_id_,
-               &project::name_, &task::task_type_id_, &subscription::uuid_id_
-           ),
-           from<notification>(),  //
-           join<task>(on(c(&notification::task_id_) == c(&task::uuid_id_))),
-           join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
-           left_outer_join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-           left_outer_join<comment>(on(c(&notification::comment_id_) == c(&comment::uuid_id_))),
-           left_outer_join<subscription>(
-               on(c(&subscription::task_id_) == c(&task::uuid_id_) && c(&subscription::person_id_) == in_person_id)
-           ),
-
-           where(
-               c(&notification::person_id_) == in_person_id &&
-               (!in_args.after_.has_value() ||
-                c(&notification::created_at_) > in_args.after_.value_or(chrono::system_zoned_time{})) &&
-               (!in_args.before_.has_value() ||
-                c(&notification::created_at_) < in_args.before_.value_or(chrono::system_zoned_time{})) &&
-               (in_args.task_type_id_.is_nil() || c(&task::task_type_id_) == in_args.task_type_id_) &&
-               (in_args.task_status_id_.is_nil() || c(&comment::task_status_id_) == in_args.task_status_id_) &&
-               (!in_args.notification_type_.has_value() ||
-                c(&notification::type_) == in_args.notification_type_.value_or(notification_type::comment)) &&
-               (!in_args.read_.has_value() || c(&notification::read_) == in_args.read_.value_or(true))
-           )
-       )) {
+  ] : l_row) {
     auto l_preview_file_id = l_sql.get_preview_file_for_comment(l_comment.uuid_id_).value_or(preview_file{}).uuid_id_;
-    l_comment.mentions_    = l_sql.impl_->storage_any_.select(
-        &comment_mentions::person_id_, where(c(&comment_mentions::comment_id_) == l_comment.uuid_id_)
-    );
-    l_comment.department_mentions_ = l_sql.impl_->storage_any_.select(
-        &comment_department_mentions::department_id_,
-        where(c(&comment_department_mentions::comment_id_) == l_comment.uuid_id_)
-    );
+    l_comment.mentions_    = sqlite_select::get_comment_mentions_person_ids_by_comment_id(l_comment.uuid_id_);
+    l_comment.department_mentions_ =
+        sqlite_select::get_comment_department_mentions_department_ids_by_comment_id(l_comment.uuid_id_);
     l_ret.emplace_back(
         l_notification, l_entity, l_comment, project_id, project_name, task_type_id, subscription_id, l_preview_file_id
 

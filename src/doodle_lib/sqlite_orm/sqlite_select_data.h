@@ -29,6 +29,9 @@
 namespace doodle {
 struct working_file_and_link;
 struct outsource_studio_authorization;
+struct notification;
+
+enum class notification_type;
 struct computer;
 struct playlist;
 struct todo_t {
@@ -490,5 +493,16 @@ std::size_t count_playlist_shots_by_playlist_shot_id(const uuid& in_playlist_sho
 std::vector<std::tuple<preview_file, uuid, std::string>> get_preview_files_and_entity_id_and_entity_name_by_sequence_id(
     const uuid& in_sequence_id
 );
+
+std::vector<std::tuple<notification, entity, comment, uuid, std::string, uuid, uuid>>
+get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
+    const uuid& in_person_id, const std::optional<chrono::system_zoned_time>& in_after,
+    const std::optional<chrono::system_zoned_time>& in_before, const uuid& in_task_type_id,
+    const uuid& in_task_status_id, const std::optional<notification_type>& in_notification_type,
+    const std::optional<bool>& in_read
+);
+std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id);
+std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id);
+
 }  // namespace sqlite_select
 }  // namespace doodle

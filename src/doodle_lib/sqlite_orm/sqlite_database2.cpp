@@ -513,4 +513,59 @@ std::vector<std::tuple<preview_file, uuid, std::string>> get_preview_files_and_e
   );
   return l_shots;
 }
+
+std::vector<std::tuple<notification, entity, comment, uuid, std::string, uuid, uuid>>
+get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
+    const uuid& in_person_id, const std::optional<chrono::system_zoned_time>& in_after,
+    const std::optional<chrono::system_zoned_time>& in_before, const uuid& in_task_type_id,
+    const uuid& in_task_status_id, const std::optional<notification_type>& in_notification_type,
+    const std::optional<bool>& in_read
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_row = l_sql.impl_->storage_any_.select(
+      columns(
+          object<notification>(true), object<entity>(true), object<comment>(true), &project::uuid_id_, &project::name_,
+          &task::task_type_id_, &subscription::uuid_id_
+      ),
+      from<notification>(),  //
+      join<task>(on(c(&notification::task_id_) == c(&task::uuid_id_))),
+      join<project>(on(c(&task::project_id_) == c(&project::uuid_id_))),
+      left_outer_join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      left_outer_join<comment>(on(c(&notification::comment_id_) == c(&comment::uuid_id_))),
+      left_outer_join<subscription>(
+          on(c(&subscription::task_id_) == c(&task::uuid_id_) && c(&subscription::person_id_) == in_person_id)
+      ),
+
+      where(
+          c(&notification::person_id_) == in_person_id &&
+          (!in_after.has_value() || c(&notification::created_at_) > in_after.value_or(chrono::system_zoned_time{})) &&
+          (!in_before.has_value() || c(&notification::created_at_) < in_before.value_or(chrono::system_zoned_time{})) &&
+          (in_task_type_id.is_nil() || c(&task::task_type_id_) == in_task_type_id) &&
+          (in_task_status_id.is_nil() || c(&comment::task_status_id_) == in_task_status_id) &&
+          (!in_notification_type.has_value() ||
+           c(&notification::type_) == in_notification_type.value_or(notification_type::comment)) &&
+          (!in_read.has_value() || c(&notification::read_) == in_read.value_or(true))
+      )
+  );
+  return l_row;
+}
+
+std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_row = l_sql.impl_->storage_any_.select(
+      &comment_mentions::person_id_, where(c(&comment_mentions::comment_id_) == in_comment_id)
+  );
+  return l_row;
+}
+std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_row = l_sql.impl_->storage_any_.select(
+      &comment_department_mentions::department_id_, where(c(&comment_department_mentions::comment_id_) == in_comment_id)
+  );
+  return l_row;
+}
+
 }  // namespace doodle::sqlite_select
