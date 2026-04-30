@@ -2,7 +2,6 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/platform/win/register_file_type.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 
 #include <boost/scope/scope_exit.hpp>
 
@@ -127,11 +126,10 @@ class jitba_tokenizer {
   }
 };
 
-void register_jieba_tokenizer(sqlite_database_impl& sqlite_db) {
+void register_jieba_tokenizer(fts5_api* in_fts5_api) {
   // Implementation for registering the Jieba tokenizer
-  auto l_fts5_api = sqlite_db.get_fts5_api();
   fts5_tokenizer_v2 tokenizer{2, fts5_simple_xCreate, fts5_simple_xDelete, fts5_simple_xTokenize};
-  l_fts5_api->xCreateTokenizer_v2(l_fts5_api, "jieba", nullptr, &tokenizer, nullptr);
+  in_fts5_api->xCreateTokenizer_v2(in_fts5_api, "jieba", nullptr, &tokenizer, nullptr);
 }
 }  // namespace doodle::tokenizer
 
