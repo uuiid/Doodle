@@ -26,6 +26,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 
 #include "kitsu_reg_url.h"
+#include "sqlite_orm/sqlite_select_data.h"
 #include <algorithm>
 #include <filesystem>
 #include <long_task/image_to_move.h>
@@ -477,16 +478,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   auto l_ent = l_sql.get_by_uuid<entity>(entity_id_);
   person_.check_in_project(l_ent.project_id_);
   person_.check_not_outsourcer();
-  std::vector<preview_file> l_ret;
-  using namespace sqlite_orm;
-  l_ret = l_sql.impl_->storage_any_.get_all<preview_file>(
-      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-      where(c(&task::entity_id_) == entity_id_),
-      multi_order_by(
-          order_by(&task_type::name_), order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_)
-      )
-  );
+  std::vector<preview_file> l_ret = sqlite_select::get_preview_files_by_entity_id(entity_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 struct data_fix_preview_files_thumbnails_run_t {
