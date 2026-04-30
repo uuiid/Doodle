@@ -493,7 +493,7 @@ struct data_fix_preview_files_thumbnails_run_t {
   std::shared_ptr<doodle::detail::add_watermark_t> watermark_adder_;
   void operator()() {
     auto l_sql      = get_sqlite_database();
-    auto l_previews = l_sql.impl_->storage_any_.get_all<preview_file>();
+    auto l_previews = l_sql.get_all<preview_file>();
     watermark_adder_ =
         std::make_shared<doodle::detail::add_watermark_t>(l_sql.get_all<doodle::organisation>().front().name_, 150);
     auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
