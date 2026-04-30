@@ -214,7 +214,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取序列 name {} episode_id {}",
       person_.person_.email_, person_.person_.get_full_name(), id_, l_args.name_, l_args.episode_id_
   );
-  auto l_row = sqlite_select::get_sequence_by_episode_id_and_project_id_and_name(
+  auto l_row = sqlite_select::get_entity_by_episode_id_and_project_id_and_name(
       l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, l_args.episode_id_, id_,
       l_args.name_
   );
@@ -243,7 +243,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::get(session_data_ptr in_handle) {
   person_.check_in_project(id_);
-  auto l_row = sqlite_select::get_sequence_by_episode_id_and_project_id_and_name(
+  auto& l_sql = get_sqlite_database();
+
+  auto l_row  = sqlite_select::get_entity_by_episode_id_and_project_id_and_name(
       l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, {}, id_, {}
   );
 
