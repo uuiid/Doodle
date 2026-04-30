@@ -583,5 +583,20 @@ struct actions_projects_sequences_casting_ue_assembly_harvest_select_t {
   );
 };
 
+struct get_get_entities_and_tasks_select_t {
+  std::vector<std::tuple<entity, task, uuid>> entity_and_task_and_person_id_;
+  std::vector<std::tuple<uuid, std::int32_t>> sequence_and_cout_;
+
+  static get_get_entities_and_tasks_select_t get(
+      const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
+      std::int32_t in_limit = 300
+  );
+};
+
+std::vector<entity> get_entity_by_episode_id_and_project_id_and_name(
+    const uuid& type_id_, const uuid& in_episode_id, const uuid& in_project_id, const std::string& in_name
+);
+
+bool task_exit_by_entity_id_and_task_type_id(const uuid& in_entity_id, const uuid& in_task_type_id);
 }  // namespace sqlite_select
 }  // namespace doodle

@@ -8,7 +8,6 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -130,31 +129,16 @@ auto get_get_entities_and_tasks(
   DOODLE_CHICK(!in_entity_type_id.is_nil(), "实体类型id不可为空");
 
   std::vector<sequences_with_tasks_result> l_ret{};
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_outsource_select = select(
-      &outsource_studio_authorization::entity_id_,
-      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
-  );
 
+  auto l_row = sqlite_select::get_get_entities_and_tasks_select_t::get(
+      in_person, in_project_id, in_entity_type_id, in_offset, in_limit
+  );
+  auto l_sql                    = get_sqlite_database();
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
-  auto sequence                 = "sequence"_alias.for_<entity>();
 
-  auto l_rows                   = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<task>(true), &assignees_table::person_id_), from<entity>(),
-      left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
-      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
-      where(
-          c(&entity::entity_type_id_) == in_entity_type_id &&
-          ((in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-           (in_person.role_ != person_role_type::outsource || in(&entity::uuid_id_, l_outsource_select)))
-
-      ),
-      multi_order_by(order_by(&entity::name_)), limit(in_offset, in_limit)
-  );
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_person_id] : l_rows) {
+  for (auto&& [l_entity, l_task, l_person_id] : l_row.entity_and_task_and_person_id_) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
       l_entities_and_tasks_map.emplace(l_entity.uuid_id_, sequences_with_tasks_result{l_entity});
     }
@@ -174,11 +158,7 @@ auto get_get_entities_and_tasks(
         );
     }
   }
-  for (auto&& [l_entity_id, l_count] : l_sql.impl_->storage_any_.select(
-           columns(sequence->*&entity::uuid_id_, count(sequence->*&entity::uuid_id_)), from<entity>(),
-           join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-           where(c(&entity::project_id_) == in_project_id), group_by(sequence->*&entity::uuid_id_)
-       )) {
+  for (auto&& [l_entity_id, l_count] : l_row.sequence_and_cout_) {
     l_entities_and_tasks_map[l_entity_id].shot_count_ = l_count;
   }
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
@@ -234,16 +214,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取序列 name {} episode_id {}",
       person_.person_.email_, person_.person_.get_full_name(), id_, l_args.name_, l_args.episode_id_
   );
-
-  using namespace sqlite_orm;
-  auto l_sq_list    = l_sql.impl_->storage_any_.get_all<entity>(where(
-      c(&entity::entity_type_id_) ==
-          l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_ &&
-      c(&entity::parent_id_) == l_args.episode_id_ && c(&entity::project_id_) == id_ &&
-      c(&entity::name_) == l_args.name_
-  ));
+  auto l_row = sqlite_select::get_sequence_by_episode_id_and_project_id_and_name(
+      l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, l_args.episode_id_, id_,
+      l_args.name_
+  );
   auto l_entity_ptr = std::make_shared<entity>();
-  if (l_sq_list.empty()) {
+  if (l_row.empty()) {
     l_entity_ptr->name_        = l_args.name_;
     l_entity_ptr->description_ = l_args.description_;
     l_entity_ptr->parent_id_   = l_args.episode_id_;
@@ -256,7 +232,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
         socket_io::sequence_new_broadcast_t{.sequence_id_ = l_entity_ptr->uuid_id_, .project_id_ = id_}
     );
   } else
-    *l_entity_ptr = l_sq_list.front();
+    *l_entity_ptr = l_row.front();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成在项目 {} 创建/获取序列 sequence_id {} name {}",
@@ -267,14 +243,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::get(session_data_ptr in_handle) {
   person_.check_in_project(id_);
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_sq_list = l_sql.impl_->storage_any_.get_all<entity>(where(
-      c(&entity::entity_type_id_) ==
-          l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_ &&
-      c(&entity::project_id_) == id_
-  ));
-  co_return in_handle->make_msg(nlohmann::json{} = l_sq_list);
+  auto l_row = sqlite_select::get_sequence_by_episode_id_and_project_id_and_name(
+      l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, {}, id_, {}
+  );
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_row);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
   auto l_sql  = get_sqlite_database();
@@ -342,11 +315,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
         l_entities.emplace_back(std::move(l_ent));
   } else {
     auto l_episode_id = l_json.value("episode_id", uuid{});
-    using namespace sqlite_orm;
-    l_entities = l_sql.impl_->storage_any_.get_all<entity>(where(
-        c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_entity_type.uuid_id_ &&
-        (l_episode_id.is_nil() || c(&entity::parent_id_) == l_episode_id)
-    ));
+    auto l_entities   = sqlite_select::get_entity_by_episode_id_and_project_id_and_name(
+        l_entity_type.uuid_id_, l_episode_id, project_id_, {}
+    );
   }
   std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
   auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
@@ -354,9 +325,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   std::vector<actions_projects_task_types_create_tasks_result> l_result{};
   for (auto&& l_enit : l_entities) {
     using namespace sqlite_orm;
-    if (l_sql.impl_->storage_any_.count<task>(
-            where(c(&task::entity_id_) == l_enit.uuid_id_) && c(&task::task_type_id_) == task_type_id_
-        ))
+    if (sqlite_select::task_exit_by_entity_id_and_task_type_id(l_enit.uuid_id_, task_type_id_))
       continue;  // 已经存在任务
     auto& l_task = l_tasks->emplace_back(
         task{
