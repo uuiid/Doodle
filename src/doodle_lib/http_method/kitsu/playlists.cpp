@@ -11,7 +11,6 @@
 #include <doodle_lib/core/socket_io/broadcast.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -431,31 +430,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
   auto l_sql = get_sqlite_database();
   std::int32_t l_page{1};
   uuid l_task_type_id{};
-  std::string l_order_by{};
+  sqlite_select::get_playlist_by_task_type_and_project::order_by_enum l_order_by{};
   for (auto&& [key, value, has] : in_handle->url_.params()) {
     if (key == "page" && has) l_page = std::clamp(std::stoi(value), 1, INT32_MAX);
     if (key == "task_type_id" && has) l_task_type_id = from_uuid_str(value);
-    if (key == "order_by" && has) l_order_by = value;
+    if (key == "order_by" && has) {
+      if (value == "created_at")
+        l_order_by = sqlite_select::get_playlist_by_task_type_and_project::order_by_enum::create_at;
+      else if (value == "name")
+        l_order_by = sqlite_select::get_playlist_by_task_type_and_project::order_by_enum::name;
+      else
+        l_order_by = sqlite_select::get_playlist_by_task_type_and_project::order_by_enum::update_at;
+    }
   }
-  std::int32_t l_offset = (l_page - 1) * 20;
 
-  using namespace sqlite_orm;
-  auto l_order = dynamic_order_by(l_sql.impl_->storage_any_);
-  if (l_order_by == "create_at") {
-    l_order.push_back(order_by(&playlist::created_at_).desc());
-  } else if (l_order_by == "name") {
-    l_order.push_back(order_by(&playlist::name_));
-  } else {
-    l_order.push_back(order_by(&playlist::updated_at_).desc());
-  }
-  auto l_playlists = l_sql.impl_->storage_any_.get_all<playlist>(
-      where(
-          c(&playlist::project_id_) == project_id_ &&
-          (l_task_type_id.is_nil() || c(&playlist::task_type_id_) == l_task_type_id)
-      ),
-      l_order, limit(l_offset, 20)
+  co_return in_handle->make_msg(
+      nlohmann::json{} = sqlite_select::get_playlist_by_task_type_and_project{
+          .order_by_     = l_order_by,
+          .project_id_   = project_id_,
+          .task_type_id_ = l_task_type_id,
+          .page_         = l_page,
+      }()
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_playlists);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::post(session_data_ptr in_handle) {
@@ -642,17 +638,8 @@ auto get_playlist_shot_entity(const playlist& in_playlist) {
   };
 
   using namespace sqlite_orm;
-  for (auto&& [l_preview_file, l_task_type_id, l_entity_id] : l_sql.impl_->storage_any_.select(
-           columns(object<preview_file>(true), &task::task_type_id_, &task::entity_id_),
-           join<task>(on(c(&task::uuid_id_) == c(&preview_file::task_id_))),
-           join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-           where(in(&task::entity_id_, l_entity_ids)),
-           multi_order_by(
-               order_by(&task_type::priority_).desc(), order_by(&task_type::name_),
-               order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_),
-               order_by(&preview_file::created_at_)
-           )
-       )) {
+  for (auto&& [l_preview_file, l_task_type_id, l_entity_id] :
+       sqlite_select::get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(l_entity_ids)) {
     DOODLE_CHICK(
         l_playlist_shot_map.contains(l_entity_id),
         fmt::format("Preview file's entity {} is not in playlist {}", l_entity_id, in_playlist.uuid_id_)
@@ -731,8 +718,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   l_playlist_shot->entity_id_   = l_entity.uuid_id_;
   using namespace sqlite_orm;
   if (l_playlist_shot->order_index_ <= 0)  // 如果没有指定顺序，则放在最后
-    l_playlist_shot->order_index_ =
-        l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == playlist_id_)) * 100;
+    l_playlist_shot->order_index_ = sqlite_select::count_playlist_shots_by_playlist_shot_id(playlist_id_) * 100;
   co_await l_sql.install(l_playlist_shot);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
@@ -792,25 +778,7 @@ struct get_sequence_shots_preview_t : boost::less_than_comparable<get_sequence_s
   bool operator==(const get_sequence_shots_preview_t& other) const { return name_ == other.name_; }
 };
 auto get_sequence_shots_preview(const uuid& in_sequence_id) {
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  constexpr auto episode  = "episode"_alias.for_<entity>();
-  auto l_shots            = l_sql.impl_->storage_any_.select(
-      columns(object<preview_file>(true), &entity::uuid_id_, &entity::name_), from<preview_file>(),
-      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
-      where(
-          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
-          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
-           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
-      ),
-      order_by(&preview_file::created_at_).desc()
-  );
-
+  auto l_shots = sqlite_select::get_preview_files_and_entity_id_and_entity_name_by_sequence_id(in_sequence_id);
   std::set<uuid> l_set;
   std::vector<get_sequence_shots_preview_t> l_result;
 

@@ -437,4 +437,80 @@ std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_c
       l_sql.impl_->storage_any_.get_all<attachment_file>(where(c(&attachment_file::comment_id_) == in_comment_id));
   return l_ret;
 }
+std::vector<playlist> get_playlist_by_task_type_and_project::operator()() const {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_order = dynamic_order_by(l_sql.impl_->storage_any_);
+  switch (order_by_) {
+    case order_by_enum::create_at:
+      l_order.push_back(order_by(&playlist::created_at_).desc());
+      break;
+    case order_by_enum::name:
+      l_order.push_back(order_by(&playlist::name_));
+      break;
+    case order_by_enum::update_at:
+      l_order.push_back(order_by(&playlist::updated_at_).desc());
+      break;
+    default:
+      l_order.push_back(order_by(&playlist::updated_at_).desc());
+  }
+  std::int32_t l_offset = (page_ - 1) * 20;
+
+  auto l_playlists      = l_sql.impl_->storage_any_.get_all<playlist>(
+      where(
+          c(&playlist::project_id_) == project_id_ &&
+          (task_type_id_.is_nil() || c(&playlist::task_type_id_) == task_type_id_)
+      ),
+      l_order, limit(l_offset, 20)
+  );
+  return l_playlists;
+}
+std::vector<std::tuple<preview_file, uuid, uuid>> get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(
+    const std::vector<uuid>& in_entity_ids
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_result = l_sql.impl_->storage_any_.select(
+      columns(object<preview_file>(true), &task::task_type_id_, &task::entity_id_),
+      join<task>(on(c(&task::uuid_id_) == c(&preview_file::task_id_))),
+      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
+      where(in(&task::entity_id_, in_entity_ids)),
+      multi_order_by(
+          order_by(&task_type::priority_).desc(), order_by(&task_type::name_),
+          order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_),
+          order_by(&preview_file::created_at_)
+      )
+  );
+  return l_result;
+}
+std::size_t count_playlist_shots_by_playlist_shot_id(const uuid& in_playlist_shot_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_count =
+      l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == in_playlist_shot_id));
+  return l_count;
+}
+std::vector<std::tuple<preview_file, uuid, std::string>> get_preview_files_and_entity_id_and_entity_name_by_sequence_id(
+    const uuid& in_sequence_id
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+
+  constexpr auto sequence = "sequence"_alias.for_<entity>();
+  constexpr auto episode  = "episode"_alias.for_<entity>();
+  auto l_shots            = l_sql.impl_->storage_any_.select(
+      columns(object<preview_file>(true), &entity::uuid_id_, &entity::name_), from<preview_file>(),
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
+      // join<episode>(on(c(&entity::parent_id_) == c(episode->*&entity::uuid_id_))),
+      where(
+          c(sequence->*&entity::uuid_id_) == in_sequence_id &&
+          (c(&preview_file::source_) == preview_file_source_enum::auto_light_generate ||
+           c(&preview_file::source_) == preview_file_source_enum::vfx_review)
+      ),
+      order_by(&preview_file::created_at_).desc()
+  );
+  return l_shots;
+}
 }  // namespace doodle::sqlite_select

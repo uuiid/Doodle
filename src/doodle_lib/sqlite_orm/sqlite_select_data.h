@@ -30,6 +30,7 @@ namespace doodle {
 struct working_file_and_link;
 struct outsource_studio_authorization;
 struct computer;
+struct playlist;
 struct todo_t {
   // std::shared_ptr<project> project_;
   // std::shared_ptr<entity> entity_;
@@ -468,5 +469,26 @@ std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_pers
 );
 std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_comment_id);
 
+struct get_playlist_by_task_type_and_project {
+  enum order_by_enum {
+    create_at,
+    name,
+    update_at,
+  };
+  order_by_enum order_by_;
+  uuid project_id_;
+  uuid task_type_id_;
+  std::int32_t page_;
+
+  std::vector<playlist> operator()() const;
+};
+
+std::vector<std::tuple<preview_file, uuid, uuid>> get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(
+    const std::vector<uuid>& in_entity_ids
+);
+std::size_t count_playlist_shots_by_playlist_shot_id(const uuid& in_playlist_shot_id);
+std::vector<std::tuple<preview_file, uuid, std::string>> get_preview_files_and_entity_id_and_entity_name_by_sequence_id(
+    const uuid& in_sequence_id
+);
 }  // namespace sqlite_select
 }  // namespace doodle
