@@ -28,6 +28,7 @@
 
 namespace doodle {
 struct working_file_and_link;
+struct outsource_studio_authorization;
 struct todo_t {
   // std::shared_ptr<project> project_;
   // std::shared_ptr<entity> entity_;
@@ -448,5 +449,7 @@ std::vector<std::tuple<entity_link, std::string, std::string, uuid, uuid, uuid, 
 // 从镜头获取关联的 资产链接
 std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id);
 std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id);
+std::vector<std::tuple<entity, outsource_studio_authorization, entity_asset_extend, entity_shot_extend>>
+get_entity_and_outsource_studio_authorization_by_project_id(const uuid& in_project_id);
 }  // namespace sqlite_select
 }  // namespace doodle

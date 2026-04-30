@@ -1,17 +1,16 @@
-#include <doodle_lib/core/core_set.h>
 #include <doodle_core/metadata/computer.h>
-#include <doodle_core/metadata/person.h>
-#include <doodle_core/metadata/studio.h>
-#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/entity_type.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
+#include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/studio.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/socket_io/broadcast.h>
+#include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
+#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <core/http/http_function.h>
 #include <nlohmann/json_fwd.hpp>
@@ -46,23 +45,11 @@ struct entity_outsource_studio_authorization : entity {
     auto l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     std::vector<entity_outsource_studio_authorization> l_ret{};
-    l_ret.reserve(l_sql.get_project_entity_count(in_project_id));
+    auto l_row = sqlite_select::get_entity_and_outsource_studio_authorization_by_project_id(in_project_id);
+    l_ret.reserve(l_row.size());
 
-    auto l_rows = l_sql.impl_->storage_any_.iterate(select(
-        columns(
-            object<entity>(true), object<outsource_studio_authorization>(true), object<entity_asset_extend>(true),
-            object<entity_shot_extend>(true)
-        ),
-        from<entity>(),
-        left_outer_join<outsource_studio_authorization>(
-            on(c(&outsource_studio_authorization::entity_id_) == c(&entity::uuid_id_))
-        ),
-        left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-        left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
-        where(c(&entity::project_id_) == in_project_id), order_by(&entity::name_)
-    ));
     std::map<uuid, std::size_t> l_entity_map{};
-    for (auto&& [l_entity, l_authorization, l_entity_asset_extend, l_entity_shot_extend] : l_rows) {
+    for (auto&& [l_entity, l_authorization, l_entity_asset_extend, l_entity_shot_extend] : l_row) {
       if (!l_entity_map.contains(l_entity.uuid_id_)) {
         l_ret.emplace_back(entity_outsource_studio_authorization{l_entity});
         l_entity_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
