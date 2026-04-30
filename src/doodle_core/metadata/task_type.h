@@ -43,19 +43,19 @@ struct task_type {
   static uuid get_animation_id();
   /// 解算任务
   static uuid get_simulation_task_id();
-  
+
   // from json
   template <typename BasicJsonType>
   friend void from_json(const BasicJsonType& j, task_type& p) {
     j.at("name").get_to(p.name_);
     j.at("short_name").get_to(p.short_name_);
-    j.at("description").get_to(p.description_);
+    if (j.contains("description") && !j.at("description").is_null()) j.at("description").get_to(p.description_);
     j.at("color").get_to(p.color_);
     j.at("priority").get_to(p.priority_);
     j.at("for_entity").get_to(p.for_entity_);
     j.at("allow_timelog").get_to(p.allow_timelog_);
-    j.at("archived").get_to(p.archived_);
-    j.at("shotgun_id").get_to(p.shotgun_id_);
+    if (j.contains("archived") && !j.at("archived").is_null()) j.at("archived").get_to(p.archived_);
+    if (j.contains("shotgun_id") && !j.at("shotgun_id").is_null()) j.at("shotgun_id").get_to(p.shotgun_id_);
     j.at("department_id").get_to(p.department_id_);
   }
   // to json
