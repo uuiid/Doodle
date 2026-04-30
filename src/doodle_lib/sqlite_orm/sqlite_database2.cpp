@@ -568,4 +568,31 @@ std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(c
   return l_row;
 }
 
+std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
+    const uuid& in_entity_id
+) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_preview_files = l_sql.impl_->storage_any_.get_all<preview_file>(
+      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
+      where(
+          c(&task::entity_id_) == in_entity_id &&
+          in(&task::task_type_id_,
+             {task_type::get_simulation_task_id(), task_type::get_lighting_id(), task_type::get_animation_id()}) &&
+          c(&preview_file::source_) == preview_file_source_enum::auto_light_generate
+      ),
+      order_by(&preview_file::created_at_).desc(), limit(1)
+  );
+  return !l_preview_files.empty() ? std::optional{l_preview_files.front()} : std::optional<preview_file>{std::nullopt};
+}
+std::vector<attachment_file> get_attachment_files_by_comment_id_and_task_id(const uuid& in_task_id) {
+  auto l_sql = get_sqlite_database();
+
+  using namespace sqlite_orm;
+  auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
+      in(&attachment_file::comment_id_,
+         select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == in_task_id)))
+  ));
+  return l_attachment_files;
+}
 }  // namespace doodle::sqlite_select

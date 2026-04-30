@@ -22,7 +22,6 @@
 #include <doodle_lib/http_method/kitsu/preview.h>
 #include <doodle_lib/http_method/seed_email.h>
 #include <doodle_lib/long_task/connect_video.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -144,17 +143,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   preview_file l_target_preview_file{};
   {
     using namespace sqlite_orm;
-    auto l_preview_files = l_sql.impl_->storage_any_.get_all<preview_file>(
-        join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-        where(
-            c(&task::entity_id_) == l_task.entity_id_ &&
-            in(&task::task_type_id_,
-               {task_type::get_simulation_task_id(), task_type::get_lighting_id(), task_type::get_animation_id()}) &&
-            c(&preview_file::source_) == preview_file_source_enum::auto_light_generate
-        ),
-        order_by(&preview_file::created_at_).desc(), limit(1)
-    );
-    if (l_preview_files.empty()) {
+    auto l_preview_files =
+        sqlite_select::get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
+            l_task.entity_id_
+        );
+    if (!l_preview_files.has_value()) {
       auto l_preview_file_ptr     = std::make_shared<preview_file>();
       *l_preview_file_ptr         = std::move(l_preview_file);
       l_preview_file_ptr->status_ = preview_file_statuses::broken;
@@ -170,9 +163,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
         co_await l_sql.update(l_comm_ptr);
       }
     }
-    DOODLE_CHICK_HTTP(!l_preview_files.empty(), bad_request, "没有找到相关的预览文件");
+    DOODLE_CHICK_HTTP(l_preview_files.has_value(), bad_request, "没有找到相关的预览文件");
     // 选择最新的预览文件
-    l_target_preview_file = l_preview_files.front();
+    l_target_preview_file = l_preview_files.value();
   }
 
   // 检查文件的存在性, 以及长度
@@ -323,11 +316,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
       l_playlist_shot.size(), l_arg.add_subtitle_, l_arg.add_dubbing_, l_arg.add_name_, l_arg.add_head_tail_,
       l_arg.add_watermark_, l_arg.add_time_code_
   );
-  using namespace sqlite_orm;
-  auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
-      in(&attachment_file::comment_id_,
-         select(&comment::uuid_id_, from<comment>(), where(c(&comment::object_id_) == l_task.uuid_id_)))
-  ));
+  auto l_attachment_files = sqlite_select::get_attachment_files_by_comment_id_and_task_id(l_task.uuid_id_);
   // 反转 l_attachment_files
   std::reverse(l_attachment_files.begin(), l_attachment_files.end());
   auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_);

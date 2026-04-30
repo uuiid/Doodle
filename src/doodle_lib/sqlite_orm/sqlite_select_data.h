@@ -504,5 +504,9 @@ get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_tas
 std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id);
 std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id);
 
+std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
+    const uuid& in_entity_id
+);
+std::vector<attachment_file> get_attachment_files_by_comment_id_and_task_id(const uuid& in_task_id);
 }  // namespace sqlite_select
 }  // namespace doodle
