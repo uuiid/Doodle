@@ -1,4 +1,6 @@
 #pragma once
+#include "doodle_core/doodle_core_fwd.h"
+
 #include <boost/pfr.hpp>
 #include <boost/pfr/core_name.hpp>
 
@@ -6,6 +8,7 @@
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <typeindex>
 #include <utility>
@@ -15,12 +18,27 @@
 
 namespace doodle {
 class storage;
+
+using storage_column_types =
+    std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json>;
+
 namespace orm {
 struct object_t;
+template <typename Table, typename Tuple>
+struct tuple_to_table_member_variant;
+template <typename Table, typename... Ts>
+struct tuple_to_table_member_variant<Table, std::tuple<Ts...>> {
+  using type = std::variant<Ts Table::*...>;
+};
 
-// 使用 boost::pfr 来获取结构体成员变量的指针
-template <typename T, std::size_t Index>
-auto get_member_ptr() {}
+template <typename Table>
+using table_columns_t = typename tuple_to_table_member_variant<Table, storage_column_types>::type;
+
+template <typename T>
+struct name_and_type_ptr {
+  std::string_view name_;
+  table_columns_t<T> ptr_;
+};
 
 enum class column_type {
   null,
