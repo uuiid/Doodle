@@ -2,6 +2,8 @@
 // Created by TD on 25-7-14.
 //
 #include <doodle_core/metadata/entity.h>
+#include <doodle_core/metadata/notification.h>
+#include <doodle_core/metadata/subscription.h>
 
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/metadata/entity.h>
