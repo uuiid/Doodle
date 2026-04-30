@@ -4,6 +4,7 @@
 
 #pragma once
 #include "doodle_core/doodle_core_fwd.h"
+#include "doodle_core/metadata/person.h"
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/attachment_file.h>
 #include <doodle_core/metadata/comment.h>
@@ -26,6 +27,7 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace doodle {
@@ -535,5 +537,32 @@ std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
 std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_status_id(
     const uuid& in_project_id, const uuid& in_status_id
 );
+
+std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
+    const uuid& in_person_id, bool in_is_admin, bool in_is_shared
+);
+std::vector<entity_fts> search_entities_fts_by_keyword(
+    const std::string& in_keyword, const uuid& in_project_id, const std::int64_t in_limit, const std::int64_t in_offset
+);
+
+struct make_with_tasks_sql_result_t {
+  person& person_;
+  uuid id_;
+  uuid project_id_;
+  std::int32_t offset_{0};
+  std::int32_t limit_{300};
+  std::vector<uuid> entity_type_id_;
+  std::vector<std::int32_t> ji_du_filter_;
+  bool ji_du_filter_is_null{false};
+  std::vector<std::int32_t> ji_shu_lie_filter_;
+  bool ji_shu_lie_filter_is_null{false};
+  std::vector<uuid> task_status_id_filter_;
+  std::vector<uuid> person_id_filter_;
+  std::string search_key_;
+  std::vector<std::int32_t> scenes_;
+  bool scenes_is_null{false};
+  std::vector<std::tuple<entity, task, entity_asset_extend, asset_type, uuid>> operator()() const;
+};
+
 }  // namespace sqlite_select
 }  // namespace doodle

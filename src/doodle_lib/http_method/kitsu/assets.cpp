@@ -15,7 +15,6 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
@@ -248,223 +247,78 @@ struct with_tasks_get_result_t {
     j["chang_ci"]            = p.chang_ci_;
   }
 };
-
-struct make_with_tasks_sql_result_t {
-  person& person_;
-  uuid project_id_;
-  uuid id_;
-  std::int32_t offset_{0};
-  std::int32_t limit_{300};
-  std::vector<uuid> entity_type_id_;
-  std::vector<std::int32_t> ji_du_filter_;
-  bool ji_du_filter_is_null{false};
-  std::vector<std::int32_t> ji_shu_lie_filter_;
-  bool ji_shu_lie_filter_is_null{false};
-  std::vector<uuid> task_status_id_filter_;
-  std::vector<uuid> person_id_filter_;
-  std::string search_key_;
-  std::vector<std::int32_t> scenes_;
-  bool scenes_is_null{false};
-
- private:
-  auto project_id_where() {
-    using namespace sqlite_orm;
-    return c(&entity::project_id_) == project_id_;
-  }
-  auto outsource_where() {
-    using namespace sqlite_orm;
-
-    return in(
-        &entity::uuid_id_, select(
-                               &outsource_studio_authorization::entity_id_,
-                               where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_)
-                           )
-    );
-  }
-
-  auto entity_type_id_where() {
-    using namespace sqlite_orm;
-    return in(&entity::entity_type_id_, entity_type_id_);
-  }
-  auto ji_du_where() {
-    using namespace sqlite_orm;
-    return in(&entity_asset_extend::ji_du_, ji_du_filter_) ||
-           (ji_du_filter_is_null && is_null(&entity_asset_extend::ji_du_));
-  }
-
-  auto ji_shu_lie_where() {
-    using namespace sqlite_orm;
-    return in(&entity_asset_extend::ji_shu_lie_, ji_shu_lie_filter_) ||
-           (ji_shu_lie_filter_is_null && is_null(&entity_asset_extend::ji_shu_lie_));
-  }
-
-  auto scenes_where() {
-    using namespace sqlite_orm;
-    return in(&entity_asset_extend::chang_ci_, scenes_) || (scenes_is_null && is_null(&entity_asset_extend::chang_ci_));
-  }
-
-  auto task_status_id_where() {
-    using namespace sqlite_orm;
-    return in(&task::task_status_id_, task_status_id_filter_);
-  }
-  auto person_id_where() {
-    using namespace sqlite_orm;
-    return in(&assignees_table::person_id_, person_id_filter_);
-  }
-  auto search_key_where() {
-    auto l_sql = get_sqlite_database();
-    using namespace sqlite_orm;
-    using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
-    auto l_t                = l_sql.get_temporal_type_ids();
-    return in(
-        &entity::uuid_id_,
-        select(
-            &entity_fts::entity_id_,
-            where(
-                match(entity_fts_hidden::any_field, search_key_) && not_in(&entity_fts::entity_type_id_, l_t) &&
-                c(&entity_fts::project_id_) == project_id_
-            ),
-            order_by(rank()).asc()
-        )
-    );
-  }
-
-  template <typename T>
-  auto with_tasks_sql_query(T&& in_where) {
-    auto l_sql = get_sqlite_database();
-    std::vector<with_tasks_get_result_t> l_ret{};
-
-    using namespace sqlite_orm;
-
-    l_ret.reserve(l_sql.get_project_entity_count(project_id_));
-
-    auto l_subscriptions_for_user = l_sql.get_person_subscriptions(person_, project_id_, {});
-
-    auto l_outsource_select       = select(
-        &outsource_studio_authorization::entity_id_,
-        where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_)
-    );
-
-    auto l_rows = l_sql.impl_->storage_any_.iterate(select(
-        columns(
-            object<entity>(true), object<task>(true), object<entity_asset_extend>(true), object<asset_type>(true),
-            &assignees_table::person_id_
-        ),
-        from<entity>(), join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-        left_outer_join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
-        left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
-        left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-        where(std::forward<T>(in_where)), multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_)),
-        limit(offset_, limit_)
-    ));
-    std::map<uuid, std::size_t> l_entities_and_tasks_map{};
-    std::map<uuid, std::size_t> l_task_id_set{};
-    for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
-      if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-        l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
-        l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
-      }
-      if (!l_task.uuid_id_.is_nil()) {
-        if (!l_task_id_set.contains(l_task.uuid_id_)) {
-          l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.emplace_back(
-              with_tasks_get_result_t::task_t{
-                  l_entity,
-                  l_task,
-                  l_subscriptions_for_user.contains(l_task.uuid_id_),
-              }
-          );
-          l_task_id_set.emplace(l_task.uuid_id_, l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.size() - 1);
-        }
-        if (!l_person_id.is_nil())
-          l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]]
-              .tasks_[l_task_id_set.at(l_task.uuid_id_)]
-              .assigners_.emplace_back(l_person_id);
-      }
+auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_url, const uuid& in_id) {
+  sqlite_select::make_with_tasks_sql_result_t l_data{in_person, in_id};
+  for (auto&& l_i : in_url.params()) {
+    if (l_i.has_value && l_i.key == "entity_type_id") l_data.entity_type_id_.emplace_back(from_uuid_str(l_i.value));
+    if (l_i.has_value && l_i.key == "ji_du") {
+      if (std::isdigit(l_i.value.front()))
+        l_data.ji_du_filter_.emplace_back(std::stoi(l_i.value));
+      else if (l_i.value == "null")
+        l_data.ji_du_filter_is_null = true;
     }
-    return l_ret;
-  }
-
- public:
-  explicit make_with_tasks_sql_result_t(person& in_person, const boost::urls::url& in_url, const uuid& in_id)
-      : person_(in_person), id_(in_id) {
-    for (auto&& l_i : in_url.params()) {
-      if (l_i.has_value && l_i.key == "entity_type_id") entity_type_id_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.has_value && l_i.key == "ji_du") {
-        if (std::isdigit(l_i.value.front()))
-          ji_du_filter_.emplace_back(std::stoi(l_i.value));
-        else if (l_i.value == "null")
-          ji_du_filter_is_null = true;
-      }
-      if (l_i.has_value && l_i.key == "ji_shu_lie") {
-        if (std::isdigit(l_i.value.front()))
-          ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
-        else if (l_i.value == "null")
-          ji_shu_lie_filter_is_null = true;
-      }
-      if (l_i.has_value && l_i.key == "task_status_id") task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.has_value && l_i.key == "person_id") person_id_filter_.emplace_back(from_uuid_str(l_i.value));
-      if (l_i.has_value && l_i.key == "offset") offset_ = std::stoi(l_i.value);
-      if (l_i.has_value && l_i.key == "limit") limit_ = std::stoi(l_i.value);
-      if (l_i.has_value && l_i.key == "project_id") project_id_ = from_uuid_str(l_i.value);
-      if (l_i.has_value && l_i.key == "search_key") search_key_ = l_i.value;
-      if (l_i.has_value && l_i.key == "scenes") {
-        if (std::isdigit(l_i.value.front()))
-          scenes_.emplace_back(std::stoi(l_i.value));
-        else if (l_i.value == "null")
-          scenes_is_null = true;
-      }
+    if (l_i.has_value && l_i.key == "ji_shu_lie") {
+      if (std::isdigit(l_i.value.front()))
+        l_data.ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
+      else if (l_i.value == "null")
+        l_data.ji_shu_lie_filter_is_null = true;
+    }
+    if (l_i.has_value && l_i.key == "task_status_id")
+      l_data.task_status_id_filter_.emplace_back(from_uuid_str(l_i.value));
+    if (l_i.has_value && l_i.key == "person_id") l_data.person_id_filter_.emplace_back(from_uuid_str(l_i.value));
+    if (l_i.has_value && l_i.key == "offset") l_data.offset_ = std::stoi(l_i.value);
+    if (l_i.has_value && l_i.key == "limit") l_data.limit_ = std::stoi(l_i.value);
+    if (l_i.has_value && l_i.key == "project_id") l_data.project_id_ = from_uuid_str(l_i.value);
+    if (l_i.has_value && l_i.key == "search_key") l_data.search_key_ = l_i.value;
+    if (l_i.has_value && l_i.key == "scenes") {
+      if (std::isdigit(l_i.value.front()))
+        l_data.scenes_.emplace_back(std::stoi(l_i.value));
+      else if (l_i.value == "null")
+        l_data.scenes_is_null = true;
     }
   }
+  auto l_rows = l_data();
+  std::vector<with_tasks_get_result_t> l_ret{};
 
-  template <typename T>
-  auto operator()(T&& in_where) {
-    return with_tasks_sql_query(std::forward<T>(in_where));
-  }
+  auto l_sql                    = get_sqlite_database();
+  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(l_data.person_, l_data.project_id_, {});
 
-  auto operator()() {
-    using namespace sqlite_orm;
-
-    auto l_sql               = get_sqlite_database();
-    auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
-
-    auto l_dynamic_where     = dynamic_where(l_sql.impl_->storage_any_);
-    l_dynamic_where.push_back(not_in(&entity::entity_type_id_, l_temporal_type_ids));
-    if (person_.role_ == person_role_type::outsource) l_dynamic_where.push_back(outsource_where());
-    if (!id_.is_nil()) {
-      l_dynamic_where.push_back(c(&entity::uuid_id_) == id_);
-      return with_tasks_sql_query(l_dynamic_where);
+  l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));
+  std::map<uuid, std::size_t> l_entities_and_tasks_map{};
+  std::map<uuid, std::size_t> l_task_id_set{};
+  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
+    if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
+      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
+      l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
     }
-    // 0 位 project id
-    // 1 位 outsource
-    // 2 位 entity type id
-    // 3 位 ji du
-    // 4 位 ji shu lie
-    // 5 位 task status id
-    // 6 位 person id
-    if (!project_id_.is_nil()) l_dynamic_where.push_back(project_id_where());
-    if (!entity_type_id_.empty()) l_dynamic_where.push_back(entity_type_id_where());
-    if (!ji_du_filter_.empty() || ji_du_filter_is_null) l_dynamic_where.push_back(ji_du_where());
-    if (!ji_shu_lie_filter_.empty() || ji_shu_lie_filter_is_null) l_dynamic_where.push_back(ji_shu_lie_where());
-    if (!task_status_id_filter_.empty()) l_dynamic_where.push_back(task_status_id_where());
-    if (!person_id_filter_.empty()) l_dynamic_where.push_back(person_id_where());
-    if (!search_key_.empty()) l_dynamic_where.push_back(search_key_where());
-    if (!scenes_.empty() || scenes_is_null) l_dynamic_where.push_back(scenes_where());
-
-    return with_tasks_sql_query(l_dynamic_where);
+    if (!l_task.uuid_id_.is_nil()) {
+      if (!l_task_id_set.contains(l_task.uuid_id_)) {
+        l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.emplace_back(
+            with_tasks_get_result_t::task_t{
+                l_entity,
+                l_task,
+                l_subscriptions_for_user.contains(l_task.uuid_id_),
+            }
+        );
+        l_task_id_set.emplace(l_task.uuid_id_, l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]].tasks_.size() - 1);
+      }
+      if (!l_person_id.is_nil())
+        l_ret[l_entities_and_tasks_map[l_entity.uuid_id_]]
+            .tasks_[l_task_id_set.at(l_task.uuid_id_)]
+            .assigners_.emplace_back(l_person_id);
+    }
   }
-};
+  return l_ret;
+}
 
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_tasks::get(session_data_ptr in_handle) {
-  make_with_tasks_sql_result_t l_make_result(person_.person_, in_handle->url_, {});
-
-  co_return in_handle->make_msg(nlohmann::json{} = l_make_result());
+  co_return in_handle->make_msg(nlohmann::json{} = make_with_tasks_sql_result(person_.person_, in_handle->url_, {}));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
   auto&& l_sql = get_sqlite_database();
-  make_with_tasks_sql_result_t l_make_result(person_.person_, in_handle->url_, id_);
-  auto l_t = l_make_result();
+  auto l_t     = make_with_tasks_sql_result(person_.person_, in_handle->url_, id_);
   if (l_t.empty())
     throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", id_)});
   auto l_ass                = l_sql.get_by_uuid<entity>(id_);
@@ -512,18 +366,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_i
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(session_data_ptr in_handle) {
   auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
   bool l_is_shared{};
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "is_shared") l_is_shared = true;
-  auto l_project_link_ids = l_sql.impl_->storage_any_.select(
-      &project_person_link::project_id_, where(c(&project_person_link::person_id_) == person_.person_.uuid_id_)
+
+  auto l_entt = sqlite_select::get_entities_by_person_id_and_is_admin_and_is_shared(
+      person_.person_.uuid_id_, person_.is_admin(), l_is_shared
   );
-  auto l_entt = l_sql.impl_->storage_any_.get_all<entity>(where(
-      not_in(&entity::entity_type_id_, l_temporal_type_ids) &&
-      (person_.is_admin() || in(&entity::project_id_, l_project_link_ids)) && c(&entity::is_shared_) == l_is_shared
-  ));
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
 struct actions_projects_search_arg_t {
@@ -540,18 +389,9 @@ struct actions_projects_search_arg_t {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
   person_.check_not_outsourcer();
   auto l_arg = in_handle->get_json().get<actions_projects_search_arg_t>();
-  auto l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
-  auto l_t                = l_sql.get_temporal_type_ids();
-  auto l_re               = l_sql.impl_->storage_any_.select(
-      object<entity_fts>(),
-      where(
-          match(entity_fts_hidden::any_field, l_arg.query_) && not_in(&entity_fts::entity_type_id_, l_t) &&
-          c(&entity_fts::project_id_) == project_id_
-      ),
-      order_by(rank()).asc(), limit(l_arg.offset_, l_arg.limit_)
+  co_return in_handle->make_msg(
+      nlohmann::json{} =
+          sqlite_select::search_entities_fts_by_keyword(l_arg.query_, project_id_, l_arg.limit_, l_arg.offset_)
   );
-  co_return in_handle->make_msg(nlohmann::json{} = l_re);
 }
 }  // namespace doodle::http
