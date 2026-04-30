@@ -23,6 +23,7 @@
 #include <boost/asio/system_timer.hpp>
 #include <boost/system/detail/error_code.hpp>
 
+#include "core/http/http_function.h"
 #include "kitsu_reg_url.h"
 #include <chrono>
 #include <core/http/http_session_data.h>
@@ -111,6 +112,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(se
   person_.check_admin();
   auto l_list = get_sqlite_database().get_all<task_type>();
   co_return in_handle->make_msg((nlohmann::json{} = l_list).dump());
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
+  person_.check_admin();
+  auto l_args = std::make_shared<task_type>(in_handle->get_json().get<task_type>());
+  co_await get_sqlite_database().install(l_args);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_args);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> custom_actions::get(session_data_ptr in_handle) {
   person_.check_admin();

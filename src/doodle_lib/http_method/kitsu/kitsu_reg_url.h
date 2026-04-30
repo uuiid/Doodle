@@ -298,6 +298,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/task-types
 DOODLE_HTTP_JWT_FUN(task_types)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 // /api/data/custom-actions
 DOODLE_HTTP_JWT_FUN(custom_actions)
