@@ -24,6 +24,7 @@
 #include <Alembic/AbcGeom/OPolyMesh.h>
 #include <Alembic/AbcGeom/OXform.h>
 #include <Alembic/AbcGeom/XformOp.h>
+#include <array>
 #include <filesystem>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
@@ -90,6 +91,7 @@ class xgen_alembic_out {
   using o_string_property_ptr = std::shared_ptr<Alembic::Abc::OStringArrayProperty>;
   using o_bool_property_ptr   = std::shared_ptr<Alembic::Abc::OBoolProperty>;
   using o_int16_property_ptr  = std::shared_ptr<Alembic::Abc::OInt16Property>;
+  using o_int32_geom_param_ptr = std::shared_ptr<Alembic::AbcGeom::OInt32GeomParam>;
 
  private:
   MTime begin_time_{};
@@ -104,6 +106,7 @@ class xgen_alembic_out {
   std::int32_t transform_time_index_{};
   o_box3d_property_ptr o_box3d_property_ptr_{};
   o_int16_property_ptr o_guide_tag_prop_{};
+  o_int32_geom_param_ptr o_guide_tag_geom_param_{};
 
   o_xform_ptr o_xform_root_ptr_{};
   o_xform_ptr o_xform_curve_ptr_{};
@@ -254,6 +257,19 @@ class xgen_alembic_out {
     o_guide_curve_ptr_ = std::make_shared<Alembic::AbcGeom::OCurves>(
         *o_xform_guide_ptr_, "curve_guide", Alembic::Abc::kFull, shape_time_index_, shape_time_sampling_
     );
+
+    {
+      // UE Groom 导入优先读取 Curves 的几何参数(arbGeomParams)而非 Xform 用户属性。
+      auto l_guide_arb_geom_params = o_guide_curve_ptr_->getSchema().getArbGeomParams();
+      o_guide_tag_geom_param_      = std::make_shared<Alembic::AbcGeom::OInt32GeomParam>(
+        l_guide_arb_geom_params, "groom_guide", false, Alembic::AbcGeom::kConstantScope, 1
+      );
+
+      constexpr std::array<std::int32_t, 1> l_guide_flag{1};
+      o_guide_tag_geom_param_->set(Alembic::AbcGeom::OInt32GeomParam::Sample(
+        Alembic::Abc::Int32ArraySample{l_guide_flag.data(), l_guide_flag.size()}, Alembic::AbcGeom::kConstantScope
+      ));
+    }
   }
   static constexpr auto g_degree{3};
   void creare_curve(
