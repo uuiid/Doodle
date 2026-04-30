@@ -9,7 +9,6 @@
 #include <doodle_lib/core/socket_io/websocket_impl.h>
 #include <doodle_lib/http_method/kitsu/computers.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/asio/awaitable.hpp>
