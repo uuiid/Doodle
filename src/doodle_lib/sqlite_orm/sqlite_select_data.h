@@ -564,5 +564,24 @@ struct make_with_tasks_sql_result_t {
   std::vector<std::tuple<entity, task, entity_asset_extend, asset_type, uuid>> operator()() const;
 };
 
+struct actions_projects_casting_copy_select {
+  std::vector<entity_link> source_casting_;
+  std::vector<entity> source_shots_;
+  std::vector<entity> target_shots_;
+};
+actions_projects_casting_copy_select get_actions_projects_casting_copy_select(
+    const uuid& in_source_project_id, const uuid& in_target_project_id
+);
+
+struct actions_projects_sequences_casting_ue_assembly_harvest_select_t {
+  std::vector<std::tuple<entity_asset_extend, uuid /*entity::entity_type_id_*/>> ass_all_{};
+  std::vector<std::tuple<entity, entity_shot_extend>> shot_and_ext_{};
+  std::vector<std::tuple<entity_link, entity_asset_extend, uuid /*entity::entity_type_id_*/>> ass_link{};
+
+  static actions_projects_sequences_casting_ue_assembly_harvest_select_t get(
+      const uuid& in_project_id, const uuid& in_sequence_id
+  );
+};
+
 }  // namespace sqlite_select
 }  // namespace doodle

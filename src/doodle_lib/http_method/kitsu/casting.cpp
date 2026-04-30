@@ -12,11 +12,9 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-#include <any>
 #include <map>
 #include <memory>
 #include <range/v3/range/conversion.hpp>
@@ -463,30 +461,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
 
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   {
-    using namespace sqlite_orm;
-    constexpr auto shot     = "shot"_alias.for_<entity>();
-    constexpr auto sequence = "sequence"_alias.for_<entity>();
-    auto l_source_casting   = l_sql.impl_->storage_any_.get_all<entity_link>(
-        join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-        join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-        where(c(sequence->*&entity::uuid_id_) == l_arg.source_sequence_id_)
-    );
-    // 查找 shot
-    auto l_source_shots = l_sql.impl_->storage_any_.get_all<entity>(
-        where(c(&entity::parent_id_) == l_arg.source_sequence_id_ && c(&entity::canceled_) != true)
-    );
-    auto l_target_shots = l_sql.impl_->storage_any_.get_all<entity>(
-        where(c(&entity::parent_id_) == l_arg.target_sequence_id_ && c(&entity::canceled_) != true)
-    );
+    auto l_row =
+        sqlite_select::get_actions_projects_casting_copy_select(l_arg.source_sequence_id_, l_arg.target_sequence_id_);
+
     std::map<uuid, uuid> l_shot_id_map{};
     std::map<std::string, entity*> l_target_shot_name_map{};
-    for (auto&& target_shot : l_target_shots) l_target_shot_name_map[target_shot.name_] = &target_shot;
+    for (auto&& target_shot : l_row.target_shots_) l_target_shot_name_map[target_shot.name_] = &target_shot;
     // 按照名称匹配 shot，生成 shot_id_map
-    for (auto&& source_shot : l_source_shots)
+    for (auto&& source_shot : l_row.source_shots_)
       if (l_target_shot_name_map.contains(source_shot.name_))
         l_shot_id_map[source_shot.uuid_id_] = l_target_shot_name_map[source_shot.name_]->uuid_id_;
 
-    for (auto&& i : l_source_casting) {
+    for (auto&& i : l_row.source_casting_) {
       if (!l_shot_id_map.contains(i.entity_in_id_)) continue;
       l_install_entity_links->emplace_back(
           entity_link{
@@ -638,27 +624,11 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
     }
   };
 
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  // 直接获取当集资产, 后续不使用数据库进行匹配, 人工匹配
-  auto l_ass_all          = l_sql.impl_->storage_any_.select(
-      columns(object<entity_asset_extend>(), &entity::entity_type_id_), from<entity_asset_extend>(),
-      join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-      where(
-          c(&entity::project_id_) == project_id_ &&
-          in(&entity_asset_extend::entity_id_,
-                      select(
-                 &entity_link::entity_out_id_, from<entity_link>(),
-                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                 where(c(sequence->*&entity::uuid_id_) == id_ && !c(shot->*&entity::canceled_))
-             ))
-      )
-  );
+  auto l_row = sqlite_select::actions_projects_sequences_casting_ue_assembly_harvest_select_t::get(project_id_, id_);
+
   std::map<std::string, std::size_t> l_ass_all_map{};
-  for (auto i = 0; i < l_ass_all.size(); ++i) {
-    auto&& [l_ass_ext, l_entity_type_id] = l_ass_all[i];
+  for (auto i = 0; i < l_row.ass_all_.size(); ++i) {
+    auto&& [l_ass_ext, l_entity_type_id] = l_row.ass_all_[i];
     if (l_entity_type_id == asset_type::get_prop_id()) {
       l_ass_all_map.emplace(
           l_ass_ext.ban_ben_.empty() ? l_ass_ext.pin_yin_ming_cheng_
@@ -671,12 +641,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
   }
   std::vector<uuid> l_ass_shot_ids{};
   std::map<uuid, shot_harvest_t> l_shot_harvest_map;
-  for (auto&& [l_shot, l_shot_ext] : l_sql.impl_->storage_any_.select(
-           columns(object<entity>(true), object<entity_shot_extend>(true)), from<entity>(),
-           join<entity_shot_extend>(on(c(&entity::uuid_id_) == c(&entity_shot_extend::entity_id_))),
-           join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-           where(c(sequence->*&entity::uuid_id_) == id_ && !c(&entity::canceled_))
-       )) {
+  for (auto&& [l_shot, l_shot_ext] : l_row.shot_and_ext_) {
     l_ass_shot_ids.emplace_back(l_shot.uuid_id_);
     l_shot_harvest_map.emplace(
         l_shot.uuid_id_, shot_harvest_t{
@@ -685,25 +650,15 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
                              .sequence_entity_   = &l_seq,
                              .episode_           = &l_episodes,
                              .prj_               = &l_prj,
-                             .seq_entts_         = &l_ass_all,
+                             .seq_entts_         = &l_row.ass_all_,
                              .seq_entts_all_map_ = &l_ass_all_map
                          }
     );
   }
 
-  // 查询所有的子镜头和用到的资产
-  auto l_ass_link = l_sql.impl_->storage_any_.select(
-      columns(
-          &entity_link::entity_out_id_, object<entity_asset_extend>(), &entity::entity_type_id_,
-          &entity_link::entity_in_id_
-      ),
-      from<entity_link>(), join<entity>(on(c(&entity::uuid_id_) == c(&entity_link::entity_out_id_))),
-      join<entity_asset_extend>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-      where(in(&entity_link::entity_in_id_, l_ass_shot_ids))
-  );
-
-  for (auto&& [l_entity_out_id, l_asset_ext, l_entity_type_id, l_entity_in_id] : l_ass_link) {
-    l_shot_harvest_map.at(l_entity_in_id).shot_entts_.emplace_back(l_entity_out_id, l_asset_ext, l_entity_type_id);
+  for (auto&& [l_ink, l_asset_ext, l_entity_type_id] : l_row.ass_link) {
+    l_shot_harvest_map.at(l_ink.entity_in_id_)
+        .shot_entts_.emplace_back(l_ink.entity_out_id_, l_asset_ext, l_entity_type_id);
   }
 
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
