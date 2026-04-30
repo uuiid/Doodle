@@ -901,7 +901,7 @@ get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
   return get_get_entities_and_tasks_select_t{.entity_and_task_and_person_id_ = l_rows, .sequence_and_cout_ = l_cout};
 }
 
-std::vector<entity> get_sequence_by_episode_id_and_project_id_and_name(
+std::vector<entity> get_entity_by_episode_id_and_project_id_and_name(
     const uuid& type_id_, const uuid& in_episode_id, const uuid& in_project_id, const std::string& in_name
 ) {
   auto& l_sql = get_sqlite_database();
