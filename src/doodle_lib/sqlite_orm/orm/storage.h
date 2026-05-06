@@ -38,6 +38,8 @@ template <typename T>
 struct name_and_type_ptr {
   std::string_view name_;
   table_columns_t<T> ptr_;
+
+  using column_type = table_columns_t<T>;
 };
 
 enum class column_type {
@@ -89,49 +91,31 @@ using member_type_t = typename member_type<T>::ptr_type;
 template <typename T>
 using member_class_type_t = typename member_type<T>::class_type;
 
-// 指向成员变量的指针，包含类型信息
-struct class_member_ptr {
-  std::type_index class_type_{typeid(void)};
-  std::type_index class_member_type_{typeid(void)};
-
-  class_member_ptr() = default;
-
-  template <typename T>
-  explicit class_member_ptr(T in_ptr) {
-    using member_type  = member_type_t<T>;
-    using class_type   = member_class_type_t<T>;
-    class_type_        = std::type_index(typeid(class_type));
-    class_member_type_ = std::type_index(typeid(T));
-  }
-
-  ~class_member_ptr() = default;
-};
-
+template <typename T>
 struct column_info {
-  std::string name_;
-  column_type type_;
+  name_and_type_ptr<T> ptr_{};
   bool not_null_{false};
   bool primary_key_{};
   bool autoincrement_{};
-  class_member_ptr ptr_{};  // 指向类成员变量的指针
 };
 
 struct foreign_key_info {
   std::string name_;
-  class_member_ptr ptr_{};      // 指向类成员变量的指针
-  class_member_ptr ref_ptr_{};  // 指向引用表的成员变量的指针
+  std::string ptr_{};
+  std::string ref_table_;
+  std::string ref_ptr_{};
   foreign_key_action on_delete_{foreign_key_action::no_action};
   foreign_key_action on_update_{foreign_key_action::no_action};
 };
 
 struct index_info {
   std::string name_;
-  class_member_ptr ptr_{};  // 指向类成员变量的指针
+  std::string ptr_{};
 };
 
 struct unique_index_info {
   std::string name_;
-  std::vector<class_member_ptr> ptrs_;  // 指向类成员变量的指针
+  std::vector<std::string> ptrs_;
 };
 
 struct not_null {};
@@ -147,16 +131,20 @@ struct on_update {
   explicit on_update(foreign_key_action action) : action_(action) {}
 };
 
-struct table_info {
+struct table_info_base {
   std::string name_;
   std::type_index type_index_{typeid(void)};
-  std::vector<column_info> columns_;
+};
+
+template <typename T>
+struct table_info : table_info_base {
+  std::vector<column_info<T>> columns_;
 
   template <typename T>
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
-    column_info l_column;
-    l_column.name_ = std::move(in_name);
-    l_column.ptr_  = class_member_ptr{in_ptr};
+    column_info<T> l_column;
+    l_column.ptr_.name_ = std::move(in_name);
+    l_column.ptr_.ptr_  = in_ptr;
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
@@ -182,167 +170,41 @@ struct table_info {
     columns_.push_back(std::move(l_column));
     return *this;
   }
-  template <typename T, typename T2>
-  table_info& add_foreign_key(auto T::* in_ptr, auto T2::* in_ref_ptr, auto... in_options) {
-    foreign_key_info l_fk;
-    l_fk.ptr_     = class_member_ptr{in_ptr};
-    l_fk.ref_ptr_ = class_member_ptr{in_ref_ptr};
-    // 解析 in_options
-    (([&]() {
-       if constexpr (std::is_same_v<decltype(in_options), decltype(on_delete(foreign_key_action::cascade))>) {
-         l_fk.on_delete_ = in_options.action_;
-       } else if constexpr (std::is_same_v<decltype(in_options), decltype(on_update(foreign_key_action::cascade))>) {
-         l_fk.on_update_ = in_options.action_;
-       }
-     }()),
-     ...);
-    return *this;
-  }
 };
 
 template <typename T>
 auto make_table_info(std::string&& in_name) {
-  table_info l_table{std::move(in_name), std::type_index(typeid(T))};
+  table_info<T> l_table{std::move(in_name), std::type_index(typeid(T))};
   return l_table;
 }
-
-struct joint_table_info {
-  std::type_index table_index_{typeid(void)};
-  std::pair<std::type_index, std::type_index> left_right_ptrs_{typeid(void), typeid(void)};  // 指向类成员变量的指针
-  join_type type_{join_type::inner};
-};
-template <typename T>
-struct where_info {
-  std::type_index table_index_{typeid(void)};
-  void* ptr_{};  // 指向类成员变量的指针
-  where_op op_;
-  T value_;
-};
-
-struct select_info {
-  std::vector<std::variant<std::type_index, object_t>> column_ptrs_;  // 指向类成员变量的指针
-  std::type_index from_table_index_{typeid(void)};
-  std::vector<joint_table_info> joins_;
-  template <typename Table>
-  select_info& from() {
-    from_table_index_ = std::type_index(typeid(Table));
-    return *this;
-  }
-
-  template <typename Table>
-  select_info& join(auto&& LeftPtr, auto&& RightPtr, join_type type = join_type::inner) {
-    joint_table_info l_join;
-    l_join.table_index_     = std::type_index(typeid(Table));
-    l_join.left_right_ptrs_ = {std::type_index(typeid(LeftPtr)), std::type_index(typeid(RightPtr))};
-    joins_.push_back(std::move(l_join));
-    return *this;
-  }
-
-  // 序列化
-  std::string to_sql(const storage& in_storage) const;
-  // 其他成员函数，如 where、order_by 等
-};
-
-struct object_t {
-  std::type_index table_index_{typeid(void)};
-  bool is_order{false};
-};
-template <typename T>
-object_t object(bool is_order = false) {
-  return object_t{typeid(T), is_order};
-}
-
-template <typename... Args>
-select_info select(Args... in_args) {
-  // 解析 in_args，构建 select_info,  arg 可能是 object<T>，也可能是 auto T::* 指针
-  select_info l_info;
-  (([&]() {
-     if constexpr (std::is_same_v<std::decay_t<Args>, object_t>) {
-       l_info.column_ptrs_.push_back(in_args);
-     } else if constexpr (std::is_member_object_pointer_v<Args>) {
-       l_info.column_ptrs_.push_back(std::type_index(typeid(Args)));
-     }
-   }()),
-   ...);
-  return l_info;
-}
-}  // namespace orm
-
 class storage {
-  std::vector<orm::table_info> tables_;
-  std::vector<orm::index_info> indexes_;
-  std::vector<orm::unique_index_info> unique_indexes_;
+  std::vector<std::shared_ptr<table_info_base>> tables_;
+  std::vector<index_info> indexes_;
+  std::vector<unique_index_info> unique_indexes_;
 
   std::map<std::type_index, std::size_t> type_to_table_index_;
-  std::map<std::type_index, std::pair<std::size_t, std::size_t>> type_to_column_index_;
-
-  friend struct orm::select_info;
 
  public:
   virtual ~storage() = default;
-  storage& reg_table(orm::table_info&& in_table) {
+  storage& reg_table(std::shared_ptr<table_info_base> in_table) {
     tables_.push_back(std::move(in_table));
     return *this;
   }
-
+  // 表注册结束, 在 finalize 中构建 type_index 到 table 索引的映射
+  storage& finalize();
+  
+  template <typename T, typename T2>
+  storage& reg_foreign_key(
+      std::string&& in_name, auto T::* in_ptr, auto T2::* in_ref_ptr,
+      foreign_key_action on_delete = foreign_key_action::no_action,
+      foreign_key_action on_update = foreign_key_action::no_action
+  );
   template <typename T>
-  void reg_index(const std::string& in_index_name, auto T::* in_ptr) {
-    // 查找对应的 table_info
-    auto it = std::find_if(tables_.begin(), tables_.end(), [](const orm::table_info& t) {
-      return t.type_index_ == std::type_index(typeid(T));
-    });
-    if (it != tables_.end()) {
-      indexes_.emplace_back(in_index_name, in_ptr);
-    } else {
-      throw std::runtime_error("Table not found for type " + std::string(typeid(T).name()));
-    }
-  }
-
+  storage& reg_index(std::string&& in_name, auto T::* in_ptr);
   template <typename T>
-  void reg_unique_index(const std::string& in_index_name, auto... in_ptrs) {
-    // 查找对应的 table_info
-    auto it = std::find_if(tables_.begin(), tables_.end(), [](const orm::table_info& t) {
-      return t.type_index_ == std::type_index(typeid(T));
-    });
-    if (it != tables_.end()) {
-      std::vector<orm::class_member_ptr> ptrs{orm::class_member_ptr{in_ptrs}...};
-      unique_indexes_.emplace_back(in_index_name, std::move(ptrs));
-    } else {
-      throw std::runtime_error("Table not found for type " + std::string(typeid(T).name()));
-    }
-  }
-  // 编译 sql
-  template <typename T>
-  auto& prepare(T&& in_query) {
-    return *this;
-  }
+  storage& reg_unique_index(std::string&& in_name, auto... in_ptrs);
 };
+
+}  // namespace orm
+
 }  // namespace doodle
-
-namespace fmt {
-template <>
-struct formatter<doodle::orm::join_type> {
-  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-
-  template <typename FormatContext>
-  auto format(const doodle::orm::join_type& joinType, FormatContext& ctx) const -> decltype(ctx.out()) {
-    std::string joinTypeStr;
-    switch (joinType) {
-      case doodle::orm::join_type::inner:
-        joinTypeStr = "INNER JOIN";
-        break;
-      case doodle::orm::join_type::left:
-        joinTypeStr = "LEFT JOIN";
-        break;
-      case doodle::orm::join_type::right:
-        joinTypeStr = "RIGHT JOIN";
-        break;
-      case doodle::orm::join_type::full:
-        joinTypeStr = "FULL JOIN";
-        break;
-    }
-    format_to(ctx.out(), "{}", joinTypeStr);
-    return ctx.out();
-  }
-};
-}  // namespace fmt
