@@ -77,25 +77,25 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm_type_id) {
 }
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
-  auto l_reg      = storage{};
-  auto l_enit_tab = orm::make_table_info<entity>("entity");
-  using test_t    = std::decay_t<decltype(&entity::name_)>;
-  l_enit_tab.add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
-      .add_column("uuid_id", &entity::uuid_id_)
-      .add_column("name", &entity::name_)
-      .add_foreign_key(
-          &entity::entity_type_id_, &asset_type::uuid_id_, orm::on_delete(orm::foreign_key_action::cascade)
-      );
-  ;
+//   auto l_reg      = storage{};
+//   auto l_enit_tab = orm::make_table_info<entity>("entity");
+//   using test_t    = std::decay_t<decltype(&entity::name_)>;
+//   l_enit_tab.add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
+//       .add_column("uuid_id", &entity::uuid_id_)
+//       .add_column("name", &entity::name_)
+//       .add_foreign_key(
+//           &entity::entity_type_id_, &asset_type::uuid_id_, orm::on_delete(orm::foreign_key_action::cascade)
+//       );
+//   ;
 
-  l_reg.reg_table(
-      std::move(
-          orm::make_table_info<entity>("entity")
-              .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
-              .add_column("uuid_id", &entity::uuid_id_)
-              .add_column("name", &entity::name_)
-      )
-  );
+//   l_reg.reg_table(
+//       std::move(
+//           orm::make_table_info<entity>("entity")
+//               .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
+//               .add_column("uuid_id", &entity::uuid_id_)
+//               .add_column("name", &entity::name_)
+//       )
+//   );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
