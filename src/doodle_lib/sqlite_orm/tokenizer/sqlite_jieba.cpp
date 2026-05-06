@@ -57,9 +57,6 @@ class jitba_tokenizer {
       return xToken(pCtx, flags, in_token.c_str(), static_cast<int>(in_token.size()), in_begin, in_end);
     };
 
-    // 查询时不进行分词，直接使用原始输入，避免过多冗余 token 导致查询性能下降
-    if (flags & FTS5_TOKENIZE_QUERY) return xToken(pCtx, flags, pText, nText, 0, nText);
-
     std::string text(pText, nText);
     std::vector<cppjieba::Word> words;
     jieba_->CutForSearch(text, words, true);  // 使用搜索模式分词，并保留原文偏移
@@ -78,6 +75,7 @@ class jitba_tokenizer {
         return l_result;
       }
       // 如果是查询 flag , 不进行额外处理，避免过多冗余 token 导致查询性能下降
+      if (flags & FTS5_TOKENIZE_QUERY) continue;
 
       // 如果 word 中只含有一个字符，或者全部为 ASCII 字符，则不需要额外处理。
       if (word.word.size() <= 1 ||
