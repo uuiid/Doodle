@@ -140,8 +140,8 @@ template <typename T>
 struct table_info : table_info_base {
   std::vector<column_info<T>> columns_;
 
-  template <typename T>
-  table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
+  template <typename Table>
+  table_info& add_column(std::string&& in_name, auto Table::* in_ptr, auto... in_options) {
     column_info<T> l_column;
     l_column.ptr_.name_ = std::move(in_name);
     l_column.ptr_.ptr_  = in_ptr;
