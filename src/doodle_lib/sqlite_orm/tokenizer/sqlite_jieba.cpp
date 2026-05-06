@@ -71,9 +71,8 @@ class jitba_tokenizer {
       const auto l_begin = static_cast<int>(word.offset);
       const auto l_end   = static_cast<int>(word.offset + word.word.size());
       auto l_result      = emit_token(word.word, l_begin, l_end);
-      if (l_result != SQLITE_OK) {
-        return l_result;
-      }
+      if (l_result != SQLITE_OK) return l_result;
+
       // 如果是查询 flag , 不进行额外处理，避免过多冗余 token 导致查询性能下降
       if (flags & FTS5_TOKENIZE_QUERY) continue;
 
