@@ -127,6 +127,22 @@ struct statement_serializer<content_rowid_t<T>, void> {
   }
 };
 
+struct raw_expression_t {
+  std::string sql;
+};
+
+template <>
+struct statement_serializer<raw_expression_t, void> {
+  using statement_type = raw_expression_t;
+
+  template <class Ctx>
+  inline SQLITE_ORM_STATIC_CALLOP std::string operator()(
+      const statement_type& statement, const Ctx& context
+  ) SQLITE_ORM_OR_CONST_CALLOP {
+    return statement.sql;
+  }
+};
+
 }  // namespace internal
 
 /**
@@ -142,5 +158,7 @@ template <class T>
 internal::content_rowid_t<T> content_rowid(T value) {
   return {std::move(value)};
 }
+
+inline internal::raw_expression_t raw_expression(std::string sql) { return {std::move(sql)}; }
 
 }  // namespace sqlite_orm
