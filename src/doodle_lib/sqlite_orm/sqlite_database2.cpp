@@ -762,18 +762,30 @@ make_with_tasks_sql_result_t::operator()() const {
     using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
     auto l_t                = l_sql.get_temporal_type_ids();
 
-    if (!search_key_.empty())
-      l_dynamic_where.push_back(
-          in(&entity::uuid_id_,
-             select(
-                 &entity_fts::entity_id_,
-                 where(
-                     match(entity_fts_hidden::any_field, search_key_) && not_in(&entity_fts::entity_type_id_, l_t) &&
-                     c(&entity_fts::project_id_) == project_id_
-                 ),
-                 order_by(rank()).asc()
-             ))
-      );
+    if (!search_key_.empty()) {
+      if (search_key_.starts_with("name_:"))
+        l_dynamic_where.push_back(like(&entity::name_, fmt::format("%{}%", search_key_.substr(6))));
+      else if (search_key_.starts_with("description_:"))
+        l_dynamic_where.push_back(like(&entity::description_, fmt::format("%{}%", search_key_.substr(13))));
+      else if (search_key_.starts_with("bian_hao_:"))
+        l_dynamic_where.push_back(like(&entity_asset_extend::bian_hao_, fmt::format("%{}%", search_key_.substr(9))));
+      else if (search_key_.starts_with("pin_yin_ming_cheng_:"))
+        l_dynamic_where.push_back(
+            like(&entity_asset_extend::pin_yin_ming_cheng_, fmt::format("%{}%", search_key_.substr(20)))
+        );
+      else
+        l_dynamic_where.push_back(
+            in(&entity::uuid_id_,
+               select(
+                   &entity_fts::entity_id_,
+                   where(
+                       match(entity_fts_hidden::any_field, search_key_) && not_in(&entity_fts::entity_type_id_, l_t) &&
+                       c(&entity_fts::project_id_) == project_id_
+                   ),
+                   order_by(rank()).asc()
+               ))
+        );
+    }
     if (!scenes_.empty() || scenes_is_null)
       l_dynamic_where.push_back(
           in(&entity_asset_extend::chang_ci_, scenes_) || (scenes_is_null && is_null(&entity_asset_extend::chang_ci_))
