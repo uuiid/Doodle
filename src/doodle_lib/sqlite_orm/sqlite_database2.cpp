@@ -768,7 +768,7 @@ make_with_tasks_sql_result_t::operator()() const {
       else if (search_key_.starts_with("description_:"))
         l_dynamic_where.push_back(like(&entity::description_, fmt::format("%{}%", search_key_.substr(13))));
       else if (search_key_.starts_with("bian_hao_:"))
-        l_dynamic_where.push_back(like(&entity_asset_extend::bian_hao_, fmt::format("%{}%", search_key_.substr(9))));
+        l_dynamic_where.push_back(like(&entity_asset_extend::bian_hao_, fmt::format("%{}%", search_key_.substr(10))));
       else if (search_key_.starts_with("pin_yin_ming_cheng_:"))
         l_dynamic_where.push_back(
             like(&entity_asset_extend::pin_yin_ming_cheng_, fmt::format("%{}%", search_key_.substr(20)))
