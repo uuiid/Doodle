@@ -8,12 +8,9 @@
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <typeindex>
-#include <unordered_map>
 #include <utility>
-#include <valarray>
 #include <variant>
 #include <vector>
 
