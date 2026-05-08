@@ -19,12 +19,9 @@ struct object_t {
   operator std::type_index() const { return std::type_index{typeid(Table)}; }
 };
 
-template <typename... TableColumns>
 struct select_t {
-  using result_type = std::tuple<std::decay_t<TableColumns>...>;
-  
   struct join_info_t {
-    std::type_index join_table_type_index_;
+    std::type_index join_table_type_index_{typeid(void)};
     join_type type_{join_type::inner};
     std::function<std::pair<std::string, std::string>(const storage&)> on_condition_fun_;
   };
@@ -35,7 +32,7 @@ struct select_t {
 
   // 结果类型
   std::function<std::vector<std::string>(const storage&)> get_column_names_fun_;
-  std::type_index from_table_type_index_;
+  std::type_index from_table_type_index_{typeid(void)};
   std::vector<join_info_t> joins_;
   std::vector<where_info_t> wheres_;
   template <typename FromTable>
@@ -58,6 +55,12 @@ struct select_t {
     joins_.push_back(std::move(join_info));
     return *this;
   }
+};
+
+template <typename... TableColumns>
+struct select_result_type : select_t {
+  using type = std::tuple<std::decay_t<TableColumns>...>;
+  // using result_type = std::tuple<std::decay_t<TableColumns>...>;
 };
 template <typename Table>
 auto object() {
@@ -91,7 +94,7 @@ using select_arg_type_t = typename select_arg_type<std::decay_t<T>>::type;
 template <typename... TableColumns>
 auto select(TableColumns... in_columns) {
   static_assert(sizeof...(TableColumns) > 0, "至少需要选择一个列");
-  select_t<detail::select_arg_type_t<TableColumns>...> l_ret{};
+  select_result_type<detail::select_arg_type_t<TableColumns>...> l_ret{};
   l_ret.get_column_names_fun_ = [columns = std::make_tuple(in_columns...)](const storage& s) {
     std::vector<std::string> column_names;
     std::apply(
