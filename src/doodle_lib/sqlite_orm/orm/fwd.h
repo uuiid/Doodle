@@ -4,7 +4,10 @@
 namespace doodle::orm {
 using storage_column_types =
     std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;
+
 class storage;
+struct select_t;
+
 template <typename...>
 inline constexpr bool always_false = false;
 
@@ -25,7 +28,6 @@ struct name_and_type_ptr {
 
   using column_type = table_columns_t<T>;
 };
-
 enum class column_type {
   null,
   integer,
@@ -76,3 +78,32 @@ template <typename T>
 using member_class_type_t = typename member_type<T>::class_type;
 
 }  // namespace doodle::orm
+
+namespace fmt {
+// join_type 格式化
+template <>
+struct formatter<doodle::orm::join_type> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+  template <typename FormatContext>
+  auto format(doodle::orm::join_type joinType, FormatContext& ctx) const -> decltype(ctx.out()) {
+    std::string_view name;
+    switch (joinType) {
+      case doodle::orm::join_type::inner:
+        name = "INNER JOIN";
+        break;
+      case doodle::orm::join_type::left:
+        name = "LEFT JOIN";
+        break;
+      case doodle::orm::join_type::right:
+        name = "RIGHT JOIN";
+        break;
+      case doodle::orm::join_type::full:
+        name = "FULL JOIN";
+        break;
+    }
+    format_to(ctx.out(), "{}", name);
+    return ctx.out();
+  }
+};
+}  // namespace fmt

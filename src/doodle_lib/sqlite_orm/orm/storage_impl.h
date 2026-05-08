@@ -34,6 +34,14 @@ std::string storage::get_column_name(auto T::* in_ptr) const {
   return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
 }
 template <typename T>
+std::string storage::get_column_name(const table_columns_t<T>& in_column) const {
+  auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
+  auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
+  auto& l_column     = l_table.find_column_info(in_column);
+  return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
+}
+
+template <typename T>
 std::vector<std::string> storage::get_table_column_names() const {
   auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);

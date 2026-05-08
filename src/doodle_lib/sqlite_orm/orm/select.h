@@ -15,7 +15,6 @@ namespace doodle::orm {
 template <typename Table>
 struct object_t {
   using table_type = Table;
-
   operator std::type_index() const { return std::type_index{typeid(Table)}; }
 };
 
@@ -27,14 +26,14 @@ struct select_t {
   };
 
   struct where_info_t {
-    std::function<std::string(const storage&)> condition_fun_;
+    std::function<std::string(const storage&)> condition_fun_{[](const storage&) { return ""; }};
   };
 
   // 结果类型
   std::function<std::vector<std::string>(const storage&)> get_column_names_fun_;
   std::type_index from_table_type_index_{typeid(void)};
   std::vector<join_info_t> joins_;
-  std::vector<where_info_t> wheres_;
+  where_info_t wheres_;
   template <typename FromTable>
   select_t from() {
     from_table_type_index_ = std::type_index{typeid(FromTable)};

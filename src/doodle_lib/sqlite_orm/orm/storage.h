@@ -7,6 +7,7 @@
 #include <boost/pfr/core_name.hpp>
 
 #include <atomic>
+#include <functional>
 #include <map>
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
@@ -20,6 +21,7 @@
 namespace doodle {
 
 namespace orm {
+
 template <typename T>
 struct column_info {
   using column_ptr_type = name_and_type_ptr<T>::column_type;
@@ -88,6 +90,15 @@ struct table_info : table_info_base {
     }
     return *l_iter;
   }
+  column_info<T>& find_column_info(const table_columns_t<T>& in_column) {
+    auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info<T>& in_col) {
+      return in_col.ptr_.ptr_ == in_column;
+    });
+    if (l_iter == columns_.end()) {
+      throw std::runtime_error("Column not found for the given column pointer");
+    }
+    return *l_iter;
+  }
 
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
     column_info<T> l_column;
@@ -129,11 +140,6 @@ struct table_info : table_info_base {
   table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
 };
 
-template <typename T>
-auto make_table_info(std::string&& in_name) {
-  table_info<T> l_table{std::move(in_name), std::type_index(typeid(T))};
-  return l_table;
-}
 class storage {
   std::vector<std::shared_ptr<table_info_base>> tables_;
   std::vector<index_info> indexes_;
@@ -155,7 +161,12 @@ class storage {
   template <typename T>
   std::string get_column_name(auto T::* in_ptr) const;
   template <typename T>
+  std::string get_column_name(const table_columns_t<T>& in_column) const;
+  template <typename T>
   std::vector<std::string> get_table_column_names() const;
+  template <typename T>
+    requires std::derived_from<T, select_t>
+  auto operator()(T&& in_sql) -> T::type;
 
  private:
   template <typename T, typename T2>
@@ -167,6 +178,11 @@ class storage {
   void reg_index(std::string&& in_name, auto T::* in_ptr);
   template <typename T>
   void reg_unique_index(std::string&& in_name, auto... in_ptrs);
+
+  std::string get_table_name(std::type_index in_type_index) const;
+
+  // 编译 select_t 为 sql
+  std::string compile_select(const select_t& in_select) const;
 };
 
 }  // namespace orm
