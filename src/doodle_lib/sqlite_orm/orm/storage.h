@@ -164,9 +164,9 @@ class storage {
       foreign_key_action on_update
   );
   template <typename T>
-  storage& reg_index(std::string&& in_name, auto T::* in_ptr) ;
+  void reg_index(std::string&& in_name, auto T::* in_ptr);
   template <typename T>
-  storage& reg_unique_index(std::string&& in_name, auto... in_ptrs);
+  void reg_unique_index(std::string&& in_name, auto... in_ptrs);
 };
 
 template <typename T>
