@@ -97,6 +97,7 @@ struct column_info {
   bool not_null_{false};
   bool primary_key_{};
   bool autoincrement_{};
+  column_type type_{column_type::null};
 };
 
 struct foreign_key_info {
@@ -134,14 +135,14 @@ struct on_update {
 struct table_info_base {
   std::string name_;
   std::type_index type_index_{typeid(void)};
+  std::vector<std::function<void(storage&)>> foreign_keys_to_register_;
 };
 
 template <typename T>
 struct table_info : table_info_base {
   std::vector<column_info<T>> columns_;
 
-  template <typename Table>
-  table_info& add_column(std::string&& in_name, auto Table::* in_ptr, auto... in_options) {
+  table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
     column_info<T> l_column;
     l_column.ptr_.name_ = std::move(in_name);
     l_column.ptr_.ptr_  = in_ptr;
@@ -170,6 +171,12 @@ struct table_info : table_info_base {
     columns_.push_back(std::move(l_column));
     return *this;
   }
+  template <typename RefTable>
+  table_info& add_foreign_key(
+      std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr,
+      foreign_key_action on_delete = foreign_key_action::no_action,
+      foreign_key_action on_update = foreign_key_action::no_action
+  );
 };
 
 template <typename T>
@@ -186,13 +193,16 @@ class storage {
 
  public:
   virtual ~storage() = default;
-  storage& reg_table(std::shared_ptr<table_info_base> in_table) {
-    tables_.push_back(std::move(in_table));
-    return *this;
+  template <typename T>
+  table_info<T>& reg_table(std::string&& in_name) {
+    auto l_table = std::make_shared<table_info<T>>(make_table_info<T>(std::move(in_name)));
+    type_to_table_index_[l_table->type_index_] = tables_.size();
+    tables_.push_back(std::move(l_table));
+    return static_cast<table_info<T>&>(*tables_.back());
   }
   // 表注册结束, 在 finalize 中构建 type_index 到 table 索引的映射
   storage& finalize();
-  
+
   template <typename T, typename T2>
   storage& reg_foreign_key(
       std::string&& in_name, auto T::* in_ptr, auto T2::* in_ref_ptr,
@@ -205,6 +215,18 @@ class storage {
   storage& reg_unique_index(std::string&& in_name, auto... in_ptrs);
 };
 
+template <typename T>
+template <typename RefTable>
+table_info<T>& table_info<T>::add_foreign_key(
+    std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete,
+    foreign_key_action on_update
+) {
+  foreign_keys_to_register_.push_back([name_ = std::move(in_name), in_ptr, in_ref_ptr, on_delete,
+                                       on_update](storage& s) {
+    s.reg_foreign_key<T, RefTable>(name_, in_ptr, in_ref_ptr, on_delete, on_update);
+  });
+  return *this;
+}
 }  // namespace orm
 
 }  // namespace doodle
