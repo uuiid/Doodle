@@ -225,6 +225,9 @@ class storage {
     return static_cast<table_info<T>&>(*tables_.back());
   }
 
+  storage& finalize();
+
+
  private:
   template <typename T, typename T2>
   void reg_foreign_key(

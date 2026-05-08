@@ -6,7 +6,15 @@
 namespace doodle {
 namespace orm {
 
-// storage& storage::finalize() { return *this; }
+storage& storage::finalize() {
+  for (auto& table : tables_) {
+    for (auto& func : table->to_register_) {
+      func(*this);
+    }
+  }
+
+  return *this;
+}
 
 }  // namespace orm
 
