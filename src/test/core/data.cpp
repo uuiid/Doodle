@@ -98,6 +98,12 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_index("entity_uuid_id_index", &entity::uuid_id_)
       .add_unique_index("entity_name_unique_index", &entity::name_);
   ;
+
+  l_reg.reg_table<asset_type>("asset_type")
+      .add_column("id", &asset_type::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
+      .add_column("uuid_id", &asset_type::uuid_id_)
+      .add_column("name", &asset_type::name_);
+  l_reg.finalize();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
