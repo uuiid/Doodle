@@ -94,7 +94,10 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("name", &entity::name_)
       .add_foreign_key(
           "entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, orm::foreign_key_action::cascade
-      );
+      )
+      .add_index("entity_uuid_id_index", &entity::uuid_id_)
+      .add_unique_index("entity_name_unique_index", &entity::name_);
+  ;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

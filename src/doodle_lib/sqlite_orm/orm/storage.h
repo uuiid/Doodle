@@ -93,6 +93,8 @@ using member_class_type_t = typename member_type<T>::class_type;
 
 template <typename T>
 struct column_info {
+  using column_ptr_type = name_and_type_ptr<T>::column_type;
+
   name_and_type_ptr<T> ptr_{};
   bool not_null_{false};
   bool primary_key_{};
@@ -115,8 +117,12 @@ struct index_info {
 };
 
 struct unique_index_info {
+  struct table_and_column {
+    std::string table_;
+    std::string column_;
+  };
   std::string name_;
-  std::vector<std::string> ptrs_;
+  std::vector<table_and_column> ptrs_;
 };
 
 struct not_null {};
@@ -136,11 +142,22 @@ struct table_info_base {
   std::string name_;
   std::type_index type_index_{typeid(void)};
   std::vector<std::function<void(storage&)>> foreign_keys_to_register_;
+  std::vector<foreign_key_info> foreign_keys_;
 };
 
 template <typename T>
 struct table_info : table_info_base {
   std::vector<column_info<T>> columns_;
+  using column_ptr_type = typename column_info<T>::column_ptr_type;
+
+  std::map<column_ptr_type, std::size_t> column_ptr_to_index_;
+
+  column_info<T>& find_column_info(auto T::* in_ptr) {
+    if (!column_ptr_to_index_.contains(in_ptr)) {
+      throw std::runtime_error("Column not found for the given member pointer");
+    }
+    return columns_.at(column_ptr_to_index_.at(in_ptr));
+  }
 
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
     column_info<T> l_column;
@@ -169,6 +186,7 @@ struct table_info : table_info_base {
       l_column.type_ = column_type::blob;
     }
     columns_.push_back(std::move(l_column));
+    column_ptr_to_index_[columns_.back().ptr_.ptr_] = columns_.size() - 1;
     return *this;
   }
   template <typename RefTable>
@@ -177,6 +195,9 @@ struct table_info : table_info_base {
       foreign_key_action on_delete = foreign_key_action::no_action,
       foreign_key_action on_update = foreign_key_action::no_action
   );
+
+  table_info& add_index(std::string&& in_name, auto T::* in_ptr);
+  table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
 };
 
 template <typename T>
@@ -191,6 +212,9 @@ class storage {
 
   std::map<std::type_index, std::size_t> type_to_table_index_;
 
+  template <typename T>
+  friend struct table_info;
+
  public:
   virtual ~storage() = default;
   template <typename T>
@@ -200,19 +224,47 @@ class storage {
     tables_.push_back(std::move(l_table));
     return static_cast<table_info<T>&>(*tables_.back());
   }
-  // 表注册结束, 在 finalize 中构建 type_index 到 table 索引的映射
-  storage& finalize();
 
+ private:
   template <typename T, typename T2>
-  storage& reg_foreign_key(
+  void reg_foreign_key(
       std::string&& in_name, auto T::* in_ptr, auto T2::* in_ref_ptr,
       foreign_key_action on_delete = foreign_key_action::no_action,
       foreign_key_action on_update = foreign_key_action::no_action
-  );
+  ) {
+    auto l_self_table_index = type_to_table_index_[std::type_index(typeid(T))];
+    auto l_ref_table_index  = type_to_table_index_[std::type_index(typeid(T2))];
+    auto& l_self_table      = static_cast<table_info<T>&>(*tables_[l_self_table_index]);
+    auto& l_ref_table       = static_cast<table_info<T2>&>(*tables_[l_ref_table_index]);
+    foreign_key_info l_fk{};
+    l_fk.name_      = std::move(in_name);
+    l_fk.ptr_       = l_self_table.find_column_info(in_ptr).ptr_.name_;
+    l_fk.ref_table_ = l_ref_table.name_;
+    l_fk.ref_ptr_   = l_ref_table.find_column_info(in_ref_ptr).ptr_.name_;
+    l_fk.on_delete_ = on_delete;
+    l_fk.on_update_ = on_update;
+    l_self_table.foreign_keys_.push_back(std::move(l_fk));
+  }
   template <typename T>
-  storage& reg_index(std::string&& in_name, auto T::* in_ptr);
+  storage& reg_index(std::string&& in_name, auto T::* in_ptr) {
+    auto l_table_index = type_to_table_index_[std::type_index(typeid(T))];
+    auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
+    index_info l_index{};
+    l_index.name_ = std::move(in_name);
+    l_index.ptr_  = l_table.find_column_info(in_ptr).ptr_.name_;
+    indexes_.push_back(std::move(l_index));
+    return *this;
+  }
   template <typename T>
-  storage& reg_unique_index(std::string&& in_name, auto... in_ptrs);
+  storage& reg_unique_index(std::string&& in_name, auto... in_ptrs) {
+    auto l_table_index = type_to_table_index_[std::type_index(typeid(T))];
+    auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
+    unique_index_info l_unique_index{};
+    l_unique_index.name_ = std::move(in_name);
+    ((l_unique_index.ptrs_.push_back({l_table.name_, l_table.find_column_info(in_ptrs).ptr_.name_})), ...);
+    unique_indexes_.push_back(std::move(l_unique_index));
+    return *this;
+  }
 };
 
 template <typename T>
@@ -227,6 +279,21 @@ table_info<T>& table_info<T>::add_foreign_key(
   });
   return *this;
 }
+template <typename T>
+table_info<T>& table_info<T>::add_index(std::string&& in_name, auto T::* in_ptr) {
+  foreign_keys_to_register_.push_back([name_ = std::move(in_name), in_ptr](storage& s) {
+    s.reg_index<T>(name_, in_ptr);
+  });
+  return *this;
+}
+template <typename T>
+table_info<T>& table_info<T>::add_unique_index(std::string&& in_name, auto... in_ptrs) {
+  foreign_keys_to_register_.push_back([name_ = std::move(in_name), in_ptrs...](storage& s) {
+    s.reg_unique_index<T>(name_, in_ptrs...);
+  });
+  return *this;
+}
+
 }  // namespace orm
 
 }  // namespace doodle
