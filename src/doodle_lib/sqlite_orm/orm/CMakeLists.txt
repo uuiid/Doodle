@@ -2,7 +2,8 @@ target_sources(
         doodle_lib
         PUBLIC
         storage.h
-
+        fwd.h
+        select.h
         PRIVATE
         storage.cpp
 )

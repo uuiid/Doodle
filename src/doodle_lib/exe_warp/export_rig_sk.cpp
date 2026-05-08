@@ -1,20 +1,21 @@
 #include "export_rig_sk.h"
 
 #include <doodle_core/configure/static_value.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/core/file_sys.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/task_status.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/entity_path.h>
+#include <doodle_lib/core/file_sys.h>
 #include <doodle_lib/exe_warp/import_and_render_ue.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
 #include <boost/asio/awaitable.hpp>
 
-#include <http_client/kitsu_client.h>
 #include <filesystem>
+#include <http_client/kitsu_client.h>
 #include <spdlog/spdlog.h>
 
 namespace doodle {
@@ -88,6 +89,13 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   co_await kitsu_client_->upload_asset_file_maya(task_id_, maya_file_);
   co_await kitsu_client_->upload_asset_file_ue(
       task_id_, kitsu::kitsu_client::update_file_arg::list_all_project_files(l_ue_project, {impl_.update_ue_path_})
+  );
+  co_await kitsu_client_->comment_task(
+      kitsu::kitsu_client::comment_task_arg{
+          .task_id_        = task_id_,
+          .comment_        = "完成上传解算资产",
+          .task_status_id_ = task_status::get_nearly_completed(),
+      }
   );
 
   co_return;
