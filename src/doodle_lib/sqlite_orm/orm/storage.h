@@ -4,6 +4,7 @@
 #include <boost/pfr.hpp>
 #include <boost/pfr/core_name.hpp>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
@@ -212,7 +213,7 @@ class storage {
 
   template <typename T>
   friend struct table_info;
-
+  std::atomic_bool finalized_{false};
  public:
   virtual ~storage() = default;
   template <typename T>
