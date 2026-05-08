@@ -5,6 +5,8 @@ namespace doodle::orm {
 using storage_column_types =
     std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;
 class storage;
+template <typename...>
+inline constexpr bool always_false = false;
 
 template <typename Table, typename Tuple>
 struct tuple_to_table_member_variant;

@@ -159,6 +159,24 @@ class storage {
 
   storage& finalize();
 
+  template <typename T>
+  std::string get_column_name(auto T::* in_ptr) const {
+    auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
+    auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
+    auto& l_column     = l_table.find_column_info(in_ptr);
+    return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
+  }
+  template <typename T>
+  std::vector<std::string> get_table_column_names() const {
+    auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
+    auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
+    std::vector<std::string> column_names;
+    for (const auto& column : l_table.columns_) {
+      column_names.push_back(fmt::format(R"("{}"."{}")", l_table.name_, column.ptr_.name_));
+    }
+    return column_names;
+  }
+
  private:
   template <typename T, typename T2>
   void reg_foreign_key(
