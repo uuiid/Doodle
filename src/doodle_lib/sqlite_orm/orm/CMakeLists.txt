@@ -4,6 +4,8 @@ target_sources(
         storage.h
         fwd.h
         select.h
+        storage_impl.h
+
         PRIVATE
         storage.cpp
 )
