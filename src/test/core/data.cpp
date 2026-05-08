@@ -92,6 +92,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid_id", &entity::uuid_id_)
       .add_column("name", &entity::name_)
+      .add_column("entity_type_id", &entity::entity_type_id_)
       .add_foreign_key(
           "entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, orm::foreign_key_action::cascade
       )
