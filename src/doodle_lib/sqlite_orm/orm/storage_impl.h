@@ -83,4 +83,31 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
    ...);
   unique_indexes_.push_back(std::move(l_unique_index));
 }
+
+template <typename T>
+template <typename RefTable>
+table_info<T>& table_info<T>::add_foreign_key(
+    std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete,
+    foreign_key_action on_update
+) {
+  to_register_.push_back([name_ = std::move(in_name), in_ptr, in_ref_ptr, on_delete, on_update](storage& s) mutable {
+    s.reg_foreign_key<T, RefTable>(std::move(name_), in_ptr, in_ref_ptr, on_delete, on_update);
+  });
+  return *this;
+}
+template <typename T>
+table_info<T>& table_info<T>::add_index(std::string&& in_name, auto T::* in_ptr) {
+  to_register_.push_back([name_ = std::move(in_name), in_ptr](storage& s) mutable {
+    s.reg_index<T>(std::move(name_), in_ptr);
+  });
+  return *this;
+}
+template <typename T>
+table_info<T>& table_info<T>::add_unique_index(std::string&& in_name, auto... in_ptrs) {
+  to_register_.push_back([name_ = std::move(in_name), in_ptrs...](storage& s) mutable {
+    s.reg_unique_index<T>(std::move(name_), in_ptrs...);
+  });
+  return *this;
+}
+
 }  // namespace doodle::orm
