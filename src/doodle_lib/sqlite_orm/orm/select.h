@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace doodle::orm {
@@ -20,10 +21,43 @@ struct object_t {
 
 template <typename... TableColumns>
 struct select_t {
-  static_assert(sizeof...(TableColumns) > 0, "至少需要选择一个列");
-  // 结果类型
   using result_type = std::tuple<std::decay_t<TableColumns>...>;
+  
+  struct join_info_t {
+    std::type_index join_table_type_index_;
+    join_type type_{join_type::inner};
+    std::function<std::pair<std::string, std::string>(const storage&)> on_condition_fun_;
+  };
+
+  struct where_info_t {
+    std::function<std::string(const storage&)> condition_fun_;
+  };
+
+  // 结果类型
   std::function<std::vector<std::string>(const storage&)> get_column_names_fun_;
+  std::type_index from_table_type_index_;
+  std::vector<join_info_t> joins_;
+  std::vector<where_info_t> wheres_;
+  template <typename FromTable>
+  select_t from() {
+    from_table_type_index_ = std::type_index{typeid(FromTable)};
+    return *this;
+  }
+
+  template <typename JoinTable>
+  select_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner) {
+    static_assert(std::is_member_pointer_v<decltype(in_ptr)>, "join条件必须是成员指针");
+    static_assert(std::is_member_pointer_v<decltype(in_ref_ptr)>, "join条件必须是成员指针");
+    using JoinTableType = typename std::decay_t<decltype(JoinTable::table_type)>;
+    join_info_t join_info{};
+    join_info.join_table_type_index_ = std::type_index{typeid(JoinTableType)};
+    join_info.type_                  = in_join_type;
+    join_info.on_condition_fun_      = [in_ptr, in_ref_ptr](const storage& s) {
+      return std::make_pair(s.get_column_name(in_ptr), s.get_column_name(in_ref_ptr));
+    };
+    joins_.push_back(std::move(join_info));
+    return *this;
+  }
 };
 template <typename Table>
 auto object() {
@@ -56,6 +90,7 @@ using select_arg_type_t = typename select_arg_type<std::decay_t<T>>::type;
 // select_t<uuid, std::string, Table2>
 template <typename... TableColumns>
 auto select(TableColumns... in_columns) {
+  static_assert(sizeof...(TableColumns) > 0, "至少需要选择一个列");
   select_t<detail::select_arg_type_t<TableColumns>...> l_ret{};
   l_ret.get_column_names_fun_ = [columns = std::make_tuple(in_columns...)](const storage& s) {
     std::vector<std::string> column_names;
