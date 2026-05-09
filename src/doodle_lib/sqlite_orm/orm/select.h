@@ -68,7 +68,7 @@ struct select_t {
     std::function<std::string(const storage&)> column_name_fun_;
 
     std::string operator()(const storage& s) const {
-      return fmt::format("{} {}", column_name_fun_(s), ascending_ ? "" : "DESC");
+      return fmt::format("{}{}", column_name_fun_(s), ascending_ ? "" : " DESC");
     }
   };
 
