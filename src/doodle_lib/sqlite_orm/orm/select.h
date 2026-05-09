@@ -91,9 +91,9 @@ struct select_t {
   select_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner) {
     static_assert(std::is_member_pointer_v<decltype(in_ptr)>, "join条件必须是成员指针");
     static_assert(std::is_member_pointer_v<decltype(in_ref_ptr)>, "join条件必须是成员指针");
-    using JoinTableType = typename std::decay_t<decltype(JoinTable::table_type)>;
+    // using JoinTableType = typename std::decay_t<decltype(JoinTable::table_type)>;
     join_info_t join_info{};
-    join_info.join_table_type_index_ = std::type_index{typeid(JoinTableType)};
+    join_info.join_table_type_index_ = std::type_index{typeid(JoinTable)};
     join_info.type_                  = in_join_type;
     join_info.on_condition_fun_      = [in_ptr, in_ref_ptr](const storage& s) {
       return std::make_pair(s.get_column_name(in_ptr), s.get_column_name(in_ref_ptr));
