@@ -12,6 +12,18 @@
 namespace doodle {
 namespace orm {
 
+std::int32_t sqlite_stmt::get_bind_index() {
+  bind_index_++;
+  return bind_index_;
+}
+void sqlite_stmt::prepare(sqlite3* db, const std::string& sql) {
+  if (stmt_) throw std::runtime_error("Statement already prepared");
+  bind_index_ = 0;
+  db_         = db;
+  auto l_r    = sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &stmt_, nullptr);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db);
+}
+
 void storage::open(FSys::path in_path, std::int32_t in_flags) {
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = std::move(in_path);
