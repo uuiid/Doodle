@@ -142,25 +142,23 @@ auto select(TableColumns... in_columns) -> select_result_type<detail::select_arg
   select_result_type<detail::select_arg_type_t<TableColumns>...> l_ret{};
   l_ret.get_column_names_fun_ = [columns = std::make_tuple(in_columns...)](const storage& s) {
     std::vector<std::string> column_names;
-    std::apply(
-        [&s, &column_names](auto&& column) {
-          // 处理每个参数
-          // 如果是成员指针，获取列名
-          if constexpr (std::is_member_pointer_v<std::decay_t<decltype(column)>>) {
-            column_names.push_back(s.get_column_name(column));
-          } else if constexpr (std::is_same_v<
-                                   std::decay_t<decltype(column)>,
-                                   object_t<detail::select_arg_type_t<decltype(column)>>>) {
-            // 如果是object<Table>，获取表的所有列名
-            using table_type        = detail::select_arg_type_t<decltype(column)>;
-            auto table_column_names = s.get_table_column_names<table_type>();
-            column_names.insert(column_names.end(), table_column_names.begin(), table_column_names.end());
-          } else {
-            static_assert(always_false<decltype(column)>, "不支持的参数类型");
-          }
-        },
-        columns
-    );
+    auto l_iter_fun = [&s, &column_names](auto&& column) {
+      // 处理每个参数
+      // 如果是成员指针，获取列名
+      if constexpr (std::is_member_pointer_v<std::decay_t<decltype(column)>>) {
+        column_names.push_back(s.get_column_name(column));
+      } else if constexpr (std::is_same_v<
+                               std::decay_t<decltype(column)>, object_t<detail::select_arg_type_t<decltype(column)>>>) {
+        // 如果是object<Table>，获取表的所有列名
+        using table_type        = detail::select_arg_type_t<decltype(column)>;
+        auto table_column_names = s.get_table_column_names<table_type>();
+        column_names.insert(column_names.end(), table_column_names.begin(), table_column_names.end());
+      } else {
+        static_assert(always_false<decltype(column)>, "不支持的参数类型");
+      }
+    };
+
+    std::apply([&](auto&&... column) { (l_iter_fun(column), ...); }, columns);
     return column_names;
   };
   return l_ret;
