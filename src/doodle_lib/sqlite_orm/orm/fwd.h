@@ -35,15 +35,25 @@ struct is_column_operations_specialization<column_operations<T>> : std::true_typ
 
 template <typename T>
 struct sqlite_statement_binder {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value);
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) {
+    static_assert(always_false<T>, "没有为该类型定义绑定器");
+    return -1;
+  }
 };
 template <typename T>
 struct sqlite_statement_extractor {
-  T extract(sqlite3_stmt* stmt, int columnIndex);
+  T extract(sqlite3_stmt* stmt, int columnIndex) {
+    static_assert(always_false<T>, "没有为该类型定义提取器");
+    return T{};
+  }
 };
 template <typename T>
 struct sqlite_statement_printer {
-  const std::string& operator()() const;
+  const std::string& operator()() const {
+    static_assert(always_false<T>, "没有为该类型定义打印器");
+    static std::string name = "UNKNOWN";
+    return name;
+  }
 };
 
 template <typename T>
