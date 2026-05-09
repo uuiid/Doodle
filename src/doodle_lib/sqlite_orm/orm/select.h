@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include <fmt/format.h>
 #include <functional>
 #include <string>
 #include <utility>
@@ -67,7 +68,7 @@ struct select_t {
     std::function<std::string(const storage&)> column_name_fun_;
 
     std::string operator()(const storage& s) const {
-      return fmt::format("{} {}", column_name_fun_(s), ascending_ ? "ASC" : "DESC");
+      return fmt::format("{} {}", column_name_fun_(s), ascending_ ? "" : "DESC");
     }
   };
 
@@ -106,8 +107,10 @@ struct select_t {
     requires(is_column_operations_specialization_v<T>)
   select_t& where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
-    wheres_.condition_fun_   = [l_condition_fun_ptr](const storage& s) { return l_condition_fun_ptr->to_sql(s); };
-    wheres_.bind_fun_        = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
+    wheres_.condition_fun_   = [l_condition_fun_ptr](const storage& s) {
+      return fmt::format("WHERE {}", l_condition_fun_ptr->to_sql(s));
+    };
+    wheres_.bind_fun_ = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
     return *this;
   }
   template <typename T>
