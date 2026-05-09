@@ -27,6 +27,7 @@ struct select_t {
 
   struct where_info_t {
     std::function<std::string(const storage&)> condition_fun_{[](const storage&) { return ""; }};
+    std::function<void(sqlite_stmt&)> bind_fun_{[](sqlite_stmt&) {}};
   };
 
   struct order_by_info_t {
@@ -44,6 +45,8 @@ struct select_t {
   std::vector<join_info_t> joins_;
   where_info_t wheres_;
   std::vector<order_by_info_t> order_bys_;
+  std::optional<std::size_t> limit_;
+  std::optional<std::size_t> offset_;
 
   template <typename FromTable>
   select_t from() {
@@ -69,7 +72,26 @@ struct select_t {
   template <typename T>
     requires(is_column_operations_specialization_v<T>)
   select_t& where(T condition_fun) {
-    
+    auto l_condition_fun_ptr = std::make_shared<T>(std::move(condition_fun));
+    wheres_.condition_fun_   = [l_condition_fun_ptr](const storage& s) { return l_condition_fun_ptr->to_sql(s); };
+    wheres_.bind_fun_        = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
+    return *this;
+  }
+  template <typename T>
+  select_t& order_by(auto T::* in_column_fun, bool ascending = true) {
+    order_by_info_t order_by_info{};
+    order_by_info.ascending_       = ascending;
+    order_by_info.column_name_fun_ = [in_column_fun](const storage& s) { return s.get_column_name(in_column_fun); };
+    order_bys_.push_back(std::move(order_by_info));
+    return *this;
+  }
+  select_t& limit(std::size_t count) {
+    limit_ = count;
+    return *this;
+  }
+  select_t& offset(std::size_t count) {
+    offset_ = count;
+    return *this;
   }
 };
 
