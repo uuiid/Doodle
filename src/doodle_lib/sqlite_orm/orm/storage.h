@@ -86,18 +86,16 @@ struct table_info : table_info_base {
     auto l_iter = std::find_if(columns_.begin(), columns_.end(), [in_ptr](const column_info<T>& in_column) {
       return in_column.ptr_.ptr_ == column_ptr_type{in_ptr};
     });
-    if (l_iter == columns_.end()) {
-      throw std::runtime_error("Column not found for the given member pointer");
-    }
+    if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given member pointer");
+
     return *l_iter;
   }
   column_info<T>& find_column_info(const table_columns_t<T>& in_column) {
     auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info<T>& in_col) {
       return in_col.ptr_.ptr_ == in_column;
     });
-    if (l_iter == columns_.end()) {
-      throw std::runtime_error("Column not found for the given column pointer");
-    }
+    if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given column pointer");
+
     return *l_iter;
   }
 

@@ -28,14 +28,20 @@ table_info<T>& storage::reg_table(std::string&& in_name) {
 }
 template <typename T>
 std::string storage::get_column_name(auto T::* in_ptr) const {
-  auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
+  auto l_type_index = std::type_index(typeid(T));
+  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
+
+  auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_ptr);
   return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
 }
 template <typename T>
 std::string storage::get_column_name(const table_columns_t<T>& in_column) const {
-  auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
+  auto l_type_index = std::type_index(typeid(T));
+  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
+
+  auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
   return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
@@ -43,7 +49,9 @@ std::string storage::get_column_name(const table_columns_t<T>& in_column) const 
 
 template <typename T>
 std::vector<std::string> storage::get_table_column_names() const {
-  auto l_table_index = type_to_table_index_.at(std::type_index(typeid(T)));
+  auto l_type_index = std::type_index(typeid(T));
+  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
+  auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   std::vector<std::string> column_names;
   for (const auto& column : l_table.columns_) {
@@ -57,8 +65,12 @@ void storage::reg_foreign_key(
     std::string&& in_name, auto T::* in_ptr, auto T2::* in_ref_ptr, foreign_key_action on_delete,
     foreign_key_action on_update
 ) {
-  auto l_self_table_index = type_to_table_index_[std::type_index(typeid(T))];
-  auto l_ref_table_index  = type_to_table_index_[std::type_index(typeid(T2))];
+  auto l_self_type_index = std::type_index(typeid(T));
+  auto l_ref_type_index  = std::type_index(typeid(T2));
+  if (!type_to_table_index_.contains(l_self_type_index)) throw std::runtime_error("Table not found for the given type");
+  if (!type_to_table_index_.contains(l_ref_type_index)) throw std::runtime_error("Table not found for the given type");
+  auto l_self_table_index = type_to_table_index_.at(l_self_type_index);
+  auto l_ref_table_index  = type_to_table_index_.at(l_ref_type_index);
   auto& l_self_table      = static_cast<table_info<T>&>(*tables_[l_self_table_index]);
   auto& l_ref_table       = static_cast<table_info<T2>&>(*tables_[l_ref_table_index]);
   foreign_key_info l_fk{};
@@ -72,7 +84,9 @@ void storage::reg_foreign_key(
 }
 template <typename T>
 void storage::reg_index(std::string&& in_name, auto T::* in_ptr) {
-  auto l_table_index = type_to_table_index_[std::type_index(typeid(T))];
+  auto l_type_index = std::type_index(typeid(T));
+  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
+  auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   index_info l_index{};
   l_index.name_ = std::move(in_name);
@@ -81,7 +95,9 @@ void storage::reg_index(std::string&& in_name, auto T::* in_ptr) {
 }
 template <typename T>
 void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
-  auto l_table_index = type_to_table_index_[std::type_index(typeid(T))];
+  auto l_type_index = std::type_index(typeid(T));
+  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
+  auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   unique_index_info l_unique_index{};
   l_unique_index.name_ = std::move(in_name);
