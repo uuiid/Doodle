@@ -104,8 +104,8 @@ struct select_t {
 
   template <typename T>
     requires(is_column_operations_specialization_v<T>)
-  select_t& where(T condition_fun) {
-    auto l_condition_fun_ptr = std::make_shared<T>(std::move(condition_fun));
+  select_t& where(T&& condition_fun) {
+    auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
     wheres_.condition_fun_   = [l_condition_fun_ptr](const storage& s) { return l_condition_fun_ptr->to_sql(s); };
     wheres_.bind_fun_        = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
     return *this;
@@ -132,6 +132,36 @@ template <typename... TableColumns>
 struct select_result_type : select_t {
   using type = std::tuple<std::decay_t<TableColumns>...>;
   // using result_type = std::tuple<std::decay_t<TableColumns>...>;
+
+  template <typename Table>
+  auto from() {
+    select_t::from<Table>();
+    return *this;
+  }
+  template <typename JoinTable>
+  auto join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner) {
+    select_t::join<JoinTable>(in_ptr, in_ref_ptr, in_join_type);
+    return *this;
+  }
+  template <typename T>
+    requires(is_column_operations_specialization_v<T>)
+  auto where(T&& condition_fun) {
+    select_t::where(std::forward<T>(condition_fun));
+    return *this;
+  }
+  template <typename T>
+  auto order_by(auto T::* in_column_fun, bool ascending = true) {
+    select_t::order_by(in_column_fun, ascending);
+    return *this;
+  }
+  auto limit(std::size_t count) {
+    select_t::limit(count);
+    return *this;
+  }
+  auto offset(std::size_t count) {
+    select_t::offset(count);
+    return *this;
+  }
 };
 
 // 将select(&Table::column1, &Table::column2, object<Table2>()) 转换为
