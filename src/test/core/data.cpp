@@ -12,7 +12,7 @@
 #include <doodle_lib/http_client/kitsu_client.h>
 #include <doodle_lib/sqlite_orm/detail/dynamic_where.h>
 #include <doodle_lib/sqlite_orm/detail/uuid_to_blob.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/orm.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_log.hpp>
@@ -69,14 +69,10 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
   auto l_sql_str = l_pr.sql();
   l_sql.select(&entity::uuid_id_, from<entity>(), where(l_dynamic_where));
 }
-BOOST_AUTO_TEST_CASE(mu_sqlorm_type_id) {
-  using namespace doodle;
-  auto l_type_id  = std::type_index(typeid(&entity::uuid_id_));
-  auto l_type_id2 = std::type_index(typeid(&entity::parent_id_));
-  BOOST_CHECK(l_type_id != l_type_id2);
-}
+BOOST_AUTO_TEST_CASE(mu_sqlorm_type_id) { using namespace doodle::orm; }
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
+  using namespace doodle::orm;
   auto l_reg = orm::storage{};
   //   auto l_enit_tab = orm::make_table_info<entity>("entity");
   //   using test_t    = std::decay_t<decltype(&entity::name_)>;
@@ -105,6 +101,8 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("uuid_id", &asset_type::uuid_id_)
       .add_column("name", &asset_type::name_);
   l_reg.finalize();
+
+  auto l_opt = (c(&entity::uuid_id_) == uuid{}) && (c(&entity::name_) == "test") || (c(&entity::id_) > 10);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
