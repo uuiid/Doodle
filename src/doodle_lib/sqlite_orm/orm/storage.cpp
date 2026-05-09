@@ -23,6 +23,7 @@ void sqlite_stmt::prepare(sqlite3* db, const std::string& sql) {
   auto l_r    = sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &stmt_, nullptr);
   DOODLE_ORM_ERROR_SQLITE3(l_r, db);
 }
+sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
 void storage::open(FSys::path in_path, std::int32_t in_flags) {
   if (in_path.empty()) in_path = ":memory:";
@@ -67,12 +68,21 @@ std::string storage::compile_select(const select_t& in_select) const {
         l_condition.second
     );
   }
+  std::vector<std::string> l_order_by_clauses;
+  l_order_by_clauses.reserve(in_select.order_bys_.size());
+  for (const auto& order_by : in_select.order_bys_) {
+    l_order_by_clauses.push_back(order_by(*this));
+  }
+  std::string l_order_by_sql =
+      l_order_by_clauses.empty() ? "" : fmt::format(" ORDER BY {}", fmt::join(l_order_by_clauses, ", "));
+  std::string l_limit_sql = in_select.limit_ ? fmt::format(" LIMIT {}", *in_select.limit_) : "";
+  l_limit_sql += in_select.offset_ ? fmt::format(" OFFSET {}", *in_select.offset_) : "";
 
   std::string l_sql = fmt::format(
-      "SELECT {} FROM {}{} {}", fmt::join(in_select.get_column_names_fun_(*this), ", "),
-      get_table_name(in_select.from_table_type_index_), l_join_sql, in_select.wheres_.condition_fun_(*this)
+      "SELECT {} FROM {}{} {}{}{}", fmt::join(in_select.get_column_names_fun_(*this), ", "),
+      get_table_name(in_select.from_table_type_index_), l_join_sql, in_select.wheres_.condition_fun_(*this),
+      l_order_by_sql, l_limit_sql
   );
-
   return l_sql;
 }
 
