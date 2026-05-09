@@ -183,8 +183,8 @@ class storage {
   template <typename T>
   std::vector<std::string> get_table_column_names() const;
   template <typename T>
-    requires std::derived_from<T, select_t>
-  auto operator()(T&& in_sql) -> T::type;
+    requires std::derived_from<std::decay_t<T>, select_t>
+  auto operator()(T&& in_sql) -> typename std::decay_t<T>::type;
 
  private:
   template <typename T, typename T2>

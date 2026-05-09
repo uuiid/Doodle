@@ -82,7 +82,7 @@ struct select_t {
 
  public:
   template <typename FromTable>
-  select_t from() {
+  select_t& from() {
     from_table_type_index_ = std::type_index{typeid(FromTable)};
     return *this;
   }

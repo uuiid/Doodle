@@ -93,6 +93,15 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
 }
 
 template <typename T>
+  requires std::derived_from<std::decay_t<T>, select_t>
+auto storage::operator()(T&& in_sql) -> typename std::decay_t<T>::type {
+  auto l_sql_str    = compile_select(in_sql);
+  // std::vector<std::string> column_names = in_sql.get_column_names_fun_(*this);
+  using result_type = typename std::decay_t<T>::type;
+  return {};
+}
+
+template <typename T>
 template <typename RefTable>
 table_info<T>& table_info<T>::add_foreign_key(
     std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete,

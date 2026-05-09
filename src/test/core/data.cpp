@@ -103,8 +103,11 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("name", &asset_type::name_);
   l_reg.finalize();
 
-
-  l_reg(select(&entity::uuid_id_, object_t<asset_type>()));
+  l_reg(select(&entity::uuid_id_, object_t<asset_type>())
+            .from<entity>()
+            .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+            .where(c(&entity::name_) == "test")
+            .order_by(&entity::uuid_id_));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
