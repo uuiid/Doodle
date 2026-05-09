@@ -7,6 +7,7 @@
 
 #include "doodle_lib/core/global_function.h"
 #include "doodle_lib/http_client/kitsu_client.h"
+#include "doodle_lib/sqlite_orm/orm/select.h"
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/http_client_core.h>
 #include <doodle_lib/http_client/kitsu_client.h>
@@ -102,7 +103,8 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("name", &asset_type::name_);
   l_reg.finalize();
 
-  auto l_opt = (c(&entity::uuid_id_) == uuid{}) && (c(&entity::name_) == "test") || (c(&entity::id_) > 10);
+
+  l_reg(select(&entity::uuid_id_, object_t<asset_type>()));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

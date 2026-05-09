@@ -11,14 +11,46 @@
 #include <vector>
 
 namespace doodle::orm {
-
 template <typename Table>
 struct object_t {
   using table_type = Table;
   operator std::type_index() const { return std::type_index{typeid(Table)}; }
 };
 
+template <typename Table>
+auto object() {
+  return object_t<Table>{};
+}
+namespace detail {
+template <typename T>
+struct select_arg_type {
+  using type = std::decay_t<T>;
+};
+
+template <typename C, typename T>
+struct select_arg_type<T C::*> {
+  using type = std::decay_t<T>;
+};
+
+template <typename Table>
+struct select_arg_type<object_t<Table>> {
+  using type = Table;
+};
+
+template <typename T>
+using select_arg_type_t = typename select_arg_type<std::decay_t<T>>::type;
+
+}  // namespace detail
+
+template <typename... TableColumns>
+struct select_result_type;
+
 struct select_t {
+ private:
+  friend class storage;
+
+  template <typename... TableColumns>
+  friend auto select(TableColumns... in_columns) -> select_result_type<detail::select_arg_type_t<TableColumns>...>;
   struct join_info_t {
     std::type_index join_table_type_index_{typeid(void)};
     join_type type_{join_type::inner};
@@ -48,6 +80,7 @@ struct select_t {
   std::optional<std::size_t> limit_;
   std::optional<std::size_t> offset_;
 
+ public:
   template <typename FromTable>
   select_t from() {
     from_table_type_index_ = std::type_index{typeid(FromTable)};
@@ -100,37 +133,11 @@ struct select_result_type : select_t {
   using type = std::tuple<std::decay_t<TableColumns>...>;
   // using result_type = std::tuple<std::decay_t<TableColumns>...>;
 };
-template <typename Table>
-auto object() {
-  return object_t<Table>{};
-}
-
-namespace detail {
-
-template <typename T>
-struct select_arg_type {
-  using type = std::decay_t<T>;
-};
-
-template <typename C, typename T>
-struct select_arg_type<T C::*> {
-  using type = std::decay_t<T>;
-};
-
-template <typename Table>
-struct select_arg_type<object_t<Table>> {
-  using type = Table;
-};
-
-template <typename T>
-using select_arg_type_t = typename select_arg_type<std::decay_t<T>>::type;
-
-}  // namespace detail
 
 // 将select(&Table::column1, &Table::column2, object<Table2>()) 转换为
 // select_t<uuid, std::string, Table2>
 template <typename... TableColumns>
-auto select(TableColumns... in_columns) {
+auto select(TableColumns... in_columns) -> select_result_type<detail::select_arg_type_t<TableColumns>...> {
   static_assert(sizeof...(TableColumns) > 0, "至少需要选择一个列");
   select_result_type<detail::select_arg_type_t<TableColumns>...> l_ret{};
   l_ret.get_column_names_fun_ = [columns = std::make_tuple(in_columns...)](const storage& s) {
