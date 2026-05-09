@@ -141,6 +141,12 @@ struct table_info : table_info_base {
   table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
 };
 
+struct sqlite_stmt {
+  sqlite3_stmt* stmt_{nullptr};
+  explicit sqlite_stmt(sqlite3* db, const std::string& sql);
+  ~sqlite_stmt();
+};
+
 class storage {
   std::vector<std::shared_ptr<table_info_base>> tables_;
   std::vector<index_info> indexes_;
@@ -155,9 +161,6 @@ class storage {
 
   sqlite3* db_{nullptr};
 
-
-
-  
  public:
   storage() = default;
   explicit storage(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE) {

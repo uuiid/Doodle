@@ -1,6 +1,9 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/exception.h>
+
+
 namespace doodle::orm {
 using storage_column_types =
     std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;

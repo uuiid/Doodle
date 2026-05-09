@@ -8,4 +8,5 @@ target_sources(
 
         PRIVATE
         storage.cpp
+        column_operations.cpp
 )

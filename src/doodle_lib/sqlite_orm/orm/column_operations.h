@@ -4,14 +4,48 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-namespace doodle::orm {
+#include <functional>
+#include <utility>
 
+namespace doodle::orm {
+enum class compare_operator {
+  and_,
+  or_,
+
+};
 // and 运算符
-struct and_t {
+struct operator_compare_t {
+  compare_operator op_;
   std::function<std::string(const storage&)> left_;
   std::function<std::string(const storage&)> right_;
+  std::function<void(sqlite_stmt&)> bind_left_;
+  std::function<void(sqlite_stmt&)> bind_right_;
 
-  std::string operator()(const storage& s) const { return fmt::format("({} AND {})", left_(s), right_(s)); }
+  std::string to_sql(const storage& s) const;
+  void bind(sqlite_stmt& stmt) const;
+  // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
+  operator_compare_t operator&&(operator_compare_t&& other) const {
+    operator_compare_t compare{};
+    auto l_self_ptr     = std::make_shared<operator_compare_t>(std::move(*this));
+    auto l_other_ptr    = std::make_shared<operator_compare_t>(other);
+    compare.op_         = compare_operator::and_;
+    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
+    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
+    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
+    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    return compare;
+  }
+  operator_compare_t operator||(operator_compare_t&& other) const {
+    operator_compare_t compare{};
+    auto l_self_ptr     = std::make_shared<operator_compare_t>(std::move(*this));
+    auto l_other_ptr    = std::make_shared<operator_compare_t>(other);
+    compare.op_         = compare_operator::or_;
+    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
+    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
+    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
+    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    return compare;
+  }
 };
 
 template <typename T>
@@ -22,6 +56,7 @@ struct column_operations {
 
  private:
   mutable std::function<std::string(const storage&)> to_sql_;
+  mutable std::function<void(sqlite_stmt&)> bind_;
 
  public:
   column_operations(auto T::* in_ptr) : ptr_(in_ptr) {}
@@ -34,7 +69,9 @@ struct column_operations {
     return to_sql_(s);
   }
   // 创建bind参数
-  void bind();
+  void bind(sqlite_stmt& stmt) const {
+    if (bind_) bind_(stmt);
+  }
 
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
@@ -102,9 +139,61 @@ struct column_operations {
     to_sql_ = [this](const storage& s) { return fmt::format("{} IN ?", s.get_column_name(ptr_)); };
     return *this;
   }
+
+  // operator and, or
+  template <typename U>
+    requires(is_column_operations_specialization_v<U>)
+  auto operator&&(U&& other) const {
+    auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
+    auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
+    operator_compare_t compare{};
+    compare.op_         = compare_operator::and_;
+    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
+    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
+
+    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
+    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    return compare;
+  }
+  template <typename U>
+    requires(is_column_operations_specialization_v<U>)
+  auto operator||(U&& other) const {
+    auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
+    auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
+    operator_compare_t compare{};
+    compare.op_         = compare_operator::or_;
+    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
+    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
+
+    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
+    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    return compare;
+  }
 };
 template <typename T>
 auto c(auto T::* in_ptr) {
   return column_operations<T>{in_ptr};
 }
 }  // namespace doodle::orm
+
+namespace fmt {
+template <>
+struct formatter<doodle::orm::compare_operator> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+  template <typename FormatContext>
+  auto format(doodle::orm::compare_operator op, FormatContext& ctx) const -> decltype(ctx.out()) {
+    std::string_view name;
+    switch (op) {
+      case doodle::orm::compare_operator::and_:
+        name = "AND";
+        break;
+      case doodle::orm::compare_operator::or_:
+        name = "OR";
+        break;
+    }
+    format_to(ctx.out(), "{}", name);
+    return ctx.out();
+  }
+};
+}  // namespace fmt
