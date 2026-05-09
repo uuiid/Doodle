@@ -23,6 +23,7 @@ void sqlite_stmt::prepare(sqlite3* db, const std::string& sql) {
   auto l_r    = sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &stmt_, nullptr);
   DOODLE_ORM_ERROR_SQLITE3(l_r, db);
 }
+std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
 void storage::open(FSys::path in_path, std::int32_t in_flags) {

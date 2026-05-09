@@ -149,6 +149,7 @@ struct sqlite_stmt {
   ~sqlite_stmt();
   void prepare(sqlite3* db, const std::string& sql);
   std::int32_t get_bind_index();
+  std::int64_t get_column_count() const;
 };
 
 class storage {
@@ -160,6 +161,7 @@ class storage {
 
   template <typename T>
   friend struct table_info;
+
   std::atomic_bool finalized_{false};
   FSys::path db_path_;
 
@@ -185,6 +187,9 @@ class storage {
   std::string get_column_name(const table_columns_t<T>& in_column) const;
   template <typename T>
   std::vector<std::string> get_table_column_names() const;
+  template <typename T>
+  const std::vector<column_info<T>>& get_table_columns() const;
+
   template <typename T>
     requires std::derived_from<std::decay_t<T>, select_t>
   auto operator()(T&& in_sql) -> typename std::decay_t<T>::type;
