@@ -144,6 +144,7 @@ struct sqlite_stmt {
   sqlite3* db_{nullptr};
   std::int32_t bind_index_{0};  // sqlite bind index starts from 1, but we use 0-based index internally
  public:
+  sqlite_stmt() = default;
   explicit sqlite_stmt(sqlite3* db, const std::string& sql) { prepare(db, sql); }
   ~sqlite_stmt();
   void prepare(sqlite3* db, const std::string& sql);
