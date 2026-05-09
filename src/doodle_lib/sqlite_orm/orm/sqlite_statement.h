@@ -74,6 +74,14 @@ struct sqlite_statement_printer<std::string> {
     return name;
   }
 };
+// char* 特化
+template <>
+struct sqlite_statement_binder<const char*> {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const char* value) {
+    return sqlite3_bind_text(stmt, index, value, -1, SQLITE_TRANSIENT);
+  }
+};
+
 // uuid特化
 template <>
 struct sqlite_statement_binder<uuid> {
