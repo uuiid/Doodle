@@ -29,11 +29,22 @@ struct select_t {
     std::function<std::string(const storage&)> condition_fun_{[](const storage&) { return ""; }};
   };
 
+  struct order_by_info_t {
+    bool ascending_{true};
+    std::function<std::string(const storage&)> column_name_fun_;
+
+    std::string operator()(const storage& s) const {
+      return fmt::format("{} {}", column_name_fun_(s), ascending_ ? "ASC" : "DESC");
+    }
+  };
+
   // 结果类型
   std::function<std::vector<std::string>(const storage&)> get_column_names_fun_;
   std::type_index from_table_type_index_{typeid(void)};
   std::vector<join_info_t> joins_;
   where_info_t wheres_;
+  std::vector<order_by_info_t> order_bys_;
+
   template <typename FromTable>
   select_t from() {
     from_table_type_index_ = std::type_index{typeid(FromTable)};
@@ -53,6 +64,12 @@ struct select_t {
     };
     joins_.push_back(std::move(join_info));
     return *this;
+  }
+
+  template <typename T>
+    requires(is_column_operations_specialization_v<T>)
+  select_t& where(T condition_fun) {
+    
   }
 };
 

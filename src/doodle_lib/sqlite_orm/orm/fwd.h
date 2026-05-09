@@ -22,6 +22,29 @@ template <typename Table>
 using table_columns_t = typename tuple_to_table_member_variant<Table, storage_column_types>::type;
 
 template <typename T>
+struct column_operations;
+
+template <typename T>
+struct is_column_operations_specialization : std::false_type {};
+
+template <typename T>
+struct is_column_operations_specialization<column_operations<T>> : std::true_type {};
+
+template <typename T>
+inline constexpr bool is_column_operations_specialization_v =
+    is_column_operations_specialization<std::remove_cvref_t<T>>::value;
+
+#define DOODLE_ORM_ERROR_SQLITE3(error_code, sqlite3_ptr)                                         \
+  switch (error_code) {                                                                           \
+    case SQLITE_OK:                                                                               \
+    case SQLITE_ROW:                                                                              \
+    case SQLITE_DONE:                                                                             \
+      break;                                                                                      \
+    default:                                                                                      \
+      throw sqlite_orm_exception(fmt::format("{}: {}", error_code, sqlite3_errmsg(sqlite3_ptr))); \
+  }
+
+template <typename T>
 struct name_and_type_ptr {
   std::string name_;
   table_columns_t<T> ptr_;

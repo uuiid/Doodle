@@ -10,6 +10,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <type_traits>
@@ -150,9 +151,22 @@ class storage {
   template <typename T>
   friend struct table_info;
   std::atomic_bool finalized_{false};
+  FSys::path db_path_;
 
+  sqlite3* db_{nullptr};
+
+
+
+  
  public:
-  virtual ~storage() = default;
+  storage() = default;
+  explicit storage(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE) {
+    open(std::move(in_path), in_flags);
+  }
+  ~storage();
+
+  void open(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+
   template <typename T>
   table_info<T>& reg_table(std::string&& in_name);
 

@@ -1,14 +1,31 @@
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
+#include <doodle_lib/sqlite_orm/orm/exception.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include <fmt/format.h>
+#include <sqlite3.h>
 #include <string>
 #include <vector>
 
 namespace doodle {
 namespace orm {
+
+void storage::open(FSys::path in_path, std::int32_t in_flags) {
+  if (in_path.empty()) in_path = ":memory:";
+  db_path_ = std::move(in_path);
+  db_path_.make_preferred();
+  auto l_str = db_path_.generic_string();
+  // 立即打开数据库连接，确保在注册表结构时数据库已经打开
+  auto l_r   = ::sqlite3_open_v2(l_str.c_str(), &db_, in_flags, nullptr);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  // 启用扩展错误码，以便在发生错误时获取更详细的错误信息
+  l_r = ::sqlite3_extended_result_codes(db_, 1);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+}
+
+storage::~storage() { ::sqlite3_close_v2(db_); }
 
 storage& storage::finalize() {
   if (finalized_) return *this;
