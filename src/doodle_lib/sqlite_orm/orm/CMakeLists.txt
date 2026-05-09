@@ -6,6 +6,7 @@ target_sources(
         select.h
         storage_impl.h
         orm.h   
+        sqlite_statement.h
         
         PRIVATE
         storage.cpp

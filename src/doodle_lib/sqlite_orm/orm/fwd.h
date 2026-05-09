@@ -2,7 +2,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/exception.h>
-
+typedef struct sqlite3_stmt sqlite3_stmt;
 
 namespace doodle::orm {
 using storage_column_types =
@@ -32,6 +32,19 @@ struct is_column_operations_specialization : std::false_type {};
 
 template <typename T>
 struct is_column_operations_specialization<column_operations<T>> : std::true_type {};
+
+template <typename T>
+struct sqlite_statement_binder {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value);
+};
+template <typename T>
+struct sqlite_statement_extractor {
+  T extract(sqlite3_stmt* stmt, int columnIndex);
+};
+template <typename T>
+struct sqlite_statement_printer {
+  const std::string& operator()() const;
+};
 
 template <typename T>
 inline constexpr bool is_column_operations_specialization_v =

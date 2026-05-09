@@ -145,6 +145,7 @@ struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
   explicit sqlite_stmt(sqlite3* db, const std::string& sql);
   ~sqlite_stmt();
+  std::int32_t get_bind_index();
 };
 
 class storage {

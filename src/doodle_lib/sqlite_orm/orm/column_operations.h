@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace doodle::orm {
 enum class compare_operator {
@@ -84,6 +85,22 @@ struct column_operations {
  private:
   mutable std::function<std::string(const storage&)> to_sql_;
   mutable std::function<void(sqlite_stmt&)> bind_;
+  template <typename U>
+  void set_bind(U&& value) const {
+    bind_ = [value = std::forward<U>(value)](sqlite_stmt& stmt) {
+      sqlite_statement_binder<std::decay_t<U>> binder;
+      binder.bind(stmt.stmt_, stmt.get_bind_index(), value);
+    };
+  }
+  template <typename U>
+  void set_bind(U&& value, std::size_t in_size) const {
+    bind_ = [value = std::forward<U>(value), in_size](sqlite_stmt& stmt) {
+      sqlite_statement_binder<std::decay_t<U>> binder;
+      for (std::size_t i = 0; i < in_size; ++i) {
+        binder.bind(stmt.stmt_, stmt.get_bind_index(), value);
+      }
+    };
+  }
 
  public:
   column_operations(auto T::* in_ptr) : ptr_shared_(std::make_shared<column_ptr_type>(in_ptr)) {}
@@ -106,6 +123,7 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} == ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::forward<U>(value));
     return *this;
   }
   template <typename U>
@@ -114,6 +132,7 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} != ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::forward<U>(value));
     return *this;
   }
   // operator >, <, >=, <=
@@ -123,6 +142,7 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} > ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::forward<U>(value));
     return *this;
   }
   template <typename U>
@@ -131,6 +151,7 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} < ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::forward<U>(value));
     return *this;
   }
   template <typename U>
@@ -139,6 +160,7 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} >= ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::forward<U>(value));
     return *this;
   }
   template <typename U>
@@ -147,6 +169,7 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} <= ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::forward<U>(value));
     return *this;
   }
   // operator !
@@ -161,15 +184,25 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} LIKE ?", s.template get_column_name<T>(*ptr));
     };
+    set_bind(std::string{pattern});
     return *this;
   }
   // operator in
   template <typename Container>
     requires std::ranges::range<Container> && (!std::is_same_v<std::decay_t<Container>, std::string>)
   auto in(const Container& values) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} IN ?", s.template get_column_name<T>(*ptr));
+    auto l_size = std::ranges::distance(values);
+    if (l_size == 0) {
+      to_sql_ = [ptr = ptr_shared_](const storage& s) {
+        return fmt::format("{} IN (NULL)", s.template get_column_name<T>(*ptr));
+      };
+      return *this;
+    }
+    to_sql_ = [ptr = ptr_shared_, l_size](const storage& s) {
+      std::vector<char> placeholders(l_size, '?');
+      return fmt::format("{} IN ({})", s.template get_column_name<T>(*ptr), fmt::join(placeholders, ", "));
     };
+    set_bind(values, l_size);
     return *this;
   }
 
