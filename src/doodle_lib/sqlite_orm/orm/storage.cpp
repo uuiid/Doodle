@@ -16,12 +16,12 @@ std::int32_t sqlite_stmt::get_bind_index() {
   bind_index_++;
   return bind_index_;
 }
-void sqlite_stmt::prepare(sqlite3* db, const std::string& sql) {
+void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   if (stmt_) throw std::runtime_error("Statement already prepared");
   bind_index_ = 0;
-  db_         = db;
-  auto l_r    = sqlite3_prepare_v2(db, sql.c_str(), sql.size(), &stmt_, nullptr);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db);
+  db_         = s.db_;
+  auto l_r    = sqlite3_prepare_v2(db_, sql.c_str(), sql.size(), &stmt_, nullptr);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
@@ -45,7 +45,7 @@ void storage::sync_schema() {
     auto l_foreign_keys = table->get_foreign_key_create_sql();
     l_sql.insert(l_sql.end(), l_foreign_keys.begin(), l_foreign_keys.end());
     auto l_create_table_sql = fmt::format("CREATE TABLE IF NOT EXISTS {} ({})", table->name_, fmt::join(l_sql, ", "));
-    auto l_stmt             = sqlite_stmt(db_, l_create_table_sql);
+    auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
     DOODLE_ORM_ERROR_SQLITE3(sqlite3_step(l_stmt.stmt_), db_);
   }
 }
