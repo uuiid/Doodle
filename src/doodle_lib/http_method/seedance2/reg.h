@@ -30,6 +30,12 @@ DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 
+// /api/seedance2/shot/task/{id}
+DOODLE_HTTP_JWT_FUN(seedance2_shot_task_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid id_{};
+DOODLE_HTTP_FUN_END()
+
 // /api/seedance2/thumbnail/task/{id}.png
 DOODLE_HTTP_JWT_FUN(seedance2_thumbnail_task)
 DOODLE_HTTP_FUN_OVERRIDE(get)

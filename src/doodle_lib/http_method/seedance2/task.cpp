@@ -141,9 +141,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, get) {
-  co_return in_handle->make_msg(
-      nlohmann::json{} = sqlite_select::get_sd2_tasks_for_person(person_.person_.uuid_id_)
-  );
+  co_return in_handle->make_msg(nlohmann::json{} = sqlite_select::get_sd2_tasks_for_person(person_.person_.uuid_id_));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
@@ -159,6 +157,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
 
   co_return in_handle->make_msg(l_task);
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_shot_task_instance, get) {
+  co_return in_handle->make_msg(
+      nlohmann::json{} = sqlite_select::get_task_for_shot_task_id(id_, person_.get_ai_studio_id())
+  );
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
   auto l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);

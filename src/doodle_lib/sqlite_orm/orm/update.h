@@ -84,14 +84,14 @@ auto update_object(const TableObject& obj) {
         l_primary_key_ = column;
         continue;
       }
-      auto col_ptr = std::make_shared<column_operations<T>>(std::forward<decltype(column)>(column));
+      auto col_ptr = std::make_shared<column_operations<T>>(std::forward<decltype(column.ptr_.ptr_)>(column.ptr_.ptr_));
       *col_ptr     = obj.*(column.ptr_.ptr_);
 
       l_update.set_clauses_.push_back([col_ptr](const storage& s) { return col_ptr->to_sql(s); });
       l_update.bind_fun_ = [col_ptr](sqlite_stmt& stmt) { col_ptr->bind(stmt); };
     }
     l_update.from<T>();
-    // l_update.where();
+    l_update.where(column_operations<T>{l_primary_key_.ptr_.ptr_} == obj.*(l_primary_key_.ptr_.ptr_));
   };
 
   return l_update;
