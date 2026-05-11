@@ -114,6 +114,15 @@ struct sqlite_statement_printer {
   }
 };
 
+template <typename T, typename Tuple>
+struct is_in_tuple : std::false_type {};
+
+template <typename T, typename... Ts>
+struct is_in_tuple<T, std::tuple<Ts...>> : std::disjunction<std::is_same<T, Ts>...> {};
+
+template <typename T, typename Tuple>
+inline constexpr bool is_in_tuple_v = is_in_tuple<T, Tuple>::value;
+
 template <typename T>
 struct member_type;  // 主模板：不定义，仅用于特化
 

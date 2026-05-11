@@ -6,6 +6,13 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 namespace doodle::orm {
+
+namespace detail {
+template <typename T>
+inline constexpr bool is_extractable_type_v =
+    std::is_arithmetic_v<T> || std::is_same_v<T, std::string> || std::is_same_v<T, uuid>;
+}  // namespace detail
+
 template <typename... TableColumns>
 typename select_result_type_iterator<TableColumns...>::type select_result_type_iterator<TableColumns...>::get() const {
   type result{};
@@ -13,7 +20,7 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
   const auto l_max_column     = stmt_->get_column_count();
   auto l_iter_fun             = [this, &l_column_index](auto&& in_column) {
     using column_or_struct_type = std::decay_t<decltype(in_column)>;
-    if constexpr (std::is_member_pointer_v<column_or_struct_type>) {
+    if constexpr (is_in_tuple_v<column_or_struct_type, storage_column_types>) {
       sqlite_statement_extractor<column_or_struct_type> l_extractor{};
       in_column = l_extractor.extract(stmt_->stmt_, l_column_index++);
     } else {
@@ -21,8 +28,10 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
         std::visit(
             [&](auto&& column_ptr) {
               using column_type = member_type_t<std::decay_t<decltype(column_ptr)>>;
-              sqlite_statement_extractor<column_type> l_extractor{};
-              in_column.*column_ptr = l_extractor.extract(stmt_->stmt_, l_column_index++);
+              if constexpr (detail::is_extractable_type_v<column_type>) {
+                sqlite_statement_extractor<column_type> l_extractor{};
+                in_column.*column_ptr = l_extractor.extract(stmt_->stmt_, l_column_index++);
+              }
             },
             table_column_ptr.ptr_.ptr_
         );
