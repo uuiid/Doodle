@@ -209,6 +209,9 @@ class storage {
   storage& finalize();
 
   template <typename T>
+  bool has_reg_table();
+
+  template <typename T>
   std::string get_column_name(auto T::* in_ptr, bool add_table_name = true) const;
   template <typename T>
   std::string get_column_name(const table_columns_t<T>& in_column, bool add_table_name = true) const;

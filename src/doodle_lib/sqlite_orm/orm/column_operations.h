@@ -103,8 +103,9 @@ struct column_operations {
   }
 
  public:
-  column_operations(auto T::* in_ptr) : ptr_shared_(std::make_shared<column_ptr_type>(in_ptr)) {}
-
+  explicit column_operations(auto T::* in_ptr) : ptr_shared_(std::make_shared<column_ptr_type>(in_ptr)) {}
+  explicit column_operations(const column_ptr_type& in_column)
+      : ptr_shared_(std::make_shared<column_ptr_type>(in_column)) {}
   // to sql operator
   std::string to_sql(const storage& s) const {
     if (!to_sql_) {

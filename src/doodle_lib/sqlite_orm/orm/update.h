@@ -4,16 +4,22 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include <functional>
+
 namespace doodle::orm {
 
 template <typename... TableColumns>
 auto update(TableColumns... in_columns);
+template <typename TableObject>
+auto update_object(const TableObject& obj);
 
 struct update_base_t {
  private:
   friend class storage;
   template <typename... TableColumns>
   friend auto update(TableColumns... in_columns);
+  template <typename TableObject>
+  friend auto update_object(const TableObject& obj);
 
   std::vector<std::function<std::string(const storage&)>> set_clauses_;
   std::function<void(sqlite_stmt&)> bind_fun_;
@@ -39,6 +45,10 @@ struct update_base_t {
   }
 };
 
+struct update_object_t {
+  std::function<update_base_t(const storage&)> update_fun_;
+};
+
 using update_t = update_base_t;
 
 template <typename... TableColumns>
@@ -57,6 +67,33 @@ auto update(TableColumns... in_columns) {
   };
 
   (l_iter_fun(in_columns), ...);
+  return l_update;
+}
+
+template <typename TableObject>
+auto update_object(const TableObject& obj) {
+  update_object_t l_update{};
+  using T              = std::decay_t<TableObject>;
+
+  l_update.update_fun_ = [&obj](const storage& s) {
+    update_base_t l_update{};
+    auto l_table_cloums = s.template get_table_columns<T>();
+    column_info<T> l_primary_key_{};
+    for (const auto& column : l_table_cloums) {
+      if (column.primary_key_) {  // 主键不更新
+        l_primary_key_ = column;
+        continue;
+      }
+      auto col_ptr = std::make_shared<column_operations<T>>(std::forward<decltype(column)>(column));
+      *col_ptr     = obj.*(column.ptr_.ptr_);
+
+      l_update.set_clauses_.push_back([col_ptr](const storage& s) { return col_ptr->to_sql(s); });
+      l_update.bind_fun_ = [col_ptr](sqlite_stmt& stmt) { col_ptr->bind(stmt); };
+    }
+    l_update.from<T>();
+    // l_update.where();
+  };
+
   return l_update;
 }
 
