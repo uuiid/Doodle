@@ -219,7 +219,7 @@ class storage {
 
   template <typename T>
     requires std::derived_from<std::decay_t<T>, select_t>
-  auto operator()(T&& in_sql) -> typename std::decay_t<T>::type;
+  auto operator()(T&& in_sql) -> typename std::decay_t<T>::iterator_type;
 
  private:
   template <typename T, typename T2>

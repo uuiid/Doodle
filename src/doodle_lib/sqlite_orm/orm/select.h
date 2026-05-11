@@ -134,7 +134,8 @@ struct select_t {
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
-  using type = std::tuple<std::decay_t<TableColumns>...>;
+  using type          = std::tuple<std::decay_t<TableColumns>...>;
+  using iterator_type = select_result_type_iterator<TableColumns...>;
 
   storage* s_;
   std::shared_ptr<sqlite_stmt> stmt_;
@@ -177,7 +178,8 @@ struct select_result_type_iterator {
 
 template <typename... TableColumns>
 struct select_result_type : select_t {
-  using type = std::tuple<std::decay_t<TableColumns>...>;
+  using type          = std::tuple<std::decay_t<TableColumns>...>;
+  using iterator_type = select_result_type_iterator<TableColumns...>;
   // using result_type = std::tuple<std::decay_t<TableColumns>...>;
 
   template <typename Table>

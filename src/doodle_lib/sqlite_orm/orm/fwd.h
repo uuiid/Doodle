@@ -7,6 +7,8 @@ typedef struct sqlite3_stmt sqlite3_stmt;
 namespace doodle::orm {
 using storage_column_types =
     std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;
+template <typename... TableColumns>
+struct select_result_type_iterator;
 
 class storage;
 struct select_t;
