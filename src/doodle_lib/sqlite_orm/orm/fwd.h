@@ -129,6 +129,11 @@ using member_type_t = typename member_type<T>::ptr_type;
 template <typename T>
 using member_class_type_t = typename member_type<T>::class_type;
 
+
+
+
+
+
 }  // namespace doodle::orm
 
 namespace fmt {

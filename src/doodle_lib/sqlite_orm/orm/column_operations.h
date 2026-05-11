@@ -112,6 +112,25 @@ struct column_operations {
     }
     return to_sql_(s);
   }
+
+  // 赋值操作符，生成SQL片段和绑定函数
+  template <typename U>
+    requires(!is_column_operations_specialization_v<U>)
+  column_operations operator=(U&& value) const {
+    to_sql_ = [ptr = ptr_shared_](const storage& s) {
+      return fmt::format("{} = ?", s.template get_column_name<T>(*ptr));
+    };
+    set_bind(std::forward<U>(value));
+    return *this;
+  }
+  column_operations operator=(std::nullptr_t) const {
+    to_sql_ = [ptr = ptr_shared_](const storage& s) {
+      return fmt::format("{} = NULL", s.template get_column_name<T>(*ptr));
+    };
+    bind_ = nullptr;
+    return *this;
+  }
+
   // 创建bind参数
   void bind(sqlite_stmt& stmt) const {
     if (bind_) bind_(stmt);

@@ -238,6 +238,11 @@ class storage {
   std::string compile_select(const select_t& in_select) const;
 };
 
+struct where_info_t {
+  std::function<std::string(const storage&)> condition_fun_{[](const storage&) { return ""; }};
+  std::function<void(sqlite_stmt&)> bind_fun_{[](sqlite_stmt&) {}};
+};
+
 }  // namespace orm
 
 }  // namespace doodle

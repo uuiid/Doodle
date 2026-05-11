@@ -63,11 +63,6 @@ struct select_t {
     std::function<std::pair<std::string, std::string>(const storage&)> on_condition_fun_;
   };
 
-  struct where_info_t {
-    std::function<std::string(const storage&)> condition_fun_{[](const storage&) { return ""; }};
-    std::function<void(sqlite_stmt&)> bind_fun_{[](sqlite_stmt&) {}};
-  };
-
   struct order_by_info_t {
     bool ascending_{true};
     std::function<std::string(const storage&)> column_name_fun_;
