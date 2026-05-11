@@ -103,6 +103,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("name", &asset_type::name_);
   l_reg.finalize();
   l_reg.open();
+  l_reg.sync_schema();
 
   l_reg(select(&entity::uuid_id_, object_t<asset_type>())
             .from<entity>()
