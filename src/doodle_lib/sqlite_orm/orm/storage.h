@@ -175,6 +175,7 @@ class storage {
   ~storage();
 
   void open(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+  void open() { open({}); }
 
   template <typename T>
   table_info<T>& reg_table(std::string&& in_name);
