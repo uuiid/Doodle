@@ -685,8 +685,8 @@ struct sd2_select_task_t {
             .frame_out_          = in_entity_shot_extend.frame_out_
         } {}
 };
-static std::vector<sd2_select_task_t> get_tasks_and_entity_for_ai_studio(const uuid& in_ai_studio_id);
-static std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_person_id);
+std::vector<sd2_select_task_t> get_tasks_and_entity_for_ai_studio(const uuid& in_ai_studio_id);
+std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_person_id);
 
 }  // namespace sqlite_select
 }  // namespace doodle
