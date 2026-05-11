@@ -90,14 +90,16 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
   co_await kitsu_client_->upload_asset_file_ue(
       task_id_, kitsu::kitsu_client::update_file_arg::list_all_project_files(l_ue_project, {impl_.update_ue_path_})
   );
-  co_await kitsu_client_->comment_task(
-      kitsu::kitsu_client::comment_task_arg{
-          .task_id_        = task_id_,
-          .comment_        = "完成上传解算资产",
-          .task_status_id_ = task_status::get_nearly_completed(),
-      }
-  );
-
+  if (impl_.create_task_comment_) {
+    logger_ptr_->warn("创建评论");
+    co_await kitsu_client_->comment_task(
+        kitsu::kitsu_client::comment_task_arg{
+            .task_id_        = task_id_,
+            .comment_        = "完成上传解算资产",
+            .task_status_id_ = task_status::get_nearly_completed(),
+        }
+    );
+  }
   co_return;
 }
 
