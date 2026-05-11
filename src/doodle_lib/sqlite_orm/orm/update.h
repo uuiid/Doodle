@@ -84,10 +84,10 @@ auto update(TableColumns... in_columns) {
 
 template <typename TableObject>
 auto update_object(const TableObject& obj) {
-  update_object_t l_update{};
+  update_object_t l_update_obj{};
   using T              = std::decay_t<TableObject>;
 
-  l_update.update_fun_ = [&obj](const storage& s) {
+  l_update_obj.update_fun_ = [&obj](const storage& s) {
     update_base_t l_update{};
     auto l_table_cloums = s.template get_table_columns<T>();
     column_info<T> l_primary_key_{};
@@ -106,7 +106,7 @@ auto update_object(const TableObject& obj) {
     l_update.where(column_operations<T>{l_primary_key_.ptr_.ptr_} == obj.*(l_primary_key_.ptr_.ptr_));
   };
 
-  return l_update;
+  return l_update_obj;
 }
 
 }  // namespace doodle::orm
