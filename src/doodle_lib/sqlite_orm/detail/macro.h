@@ -26,6 +26,7 @@
     enum_type extract(const char* columnText) const { return magic_enum::enum_cast<enum_type>(columnText).value(); } \
     enum_type extract(sqlite3_stmt* stmt, int columnIndex) const {                                                   \
       const auto str = sqlite3_column_text(stmt, columnIndex);                                                       \
+      if (!str) return enum_type{};                                                                                  \
       return this->extract(reinterpret_cast<const char*>(str));                                                      \
     }                                                                                                                \
   };
