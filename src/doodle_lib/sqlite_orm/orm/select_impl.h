@@ -41,7 +41,7 @@ select_result_type<TableColumns...>& select_result_type<TableColumns...>::operat
   auto l_sql      = select_t::to_sql(s);
   auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
   l_stmt_ptr->prepare(s, l_sql);
-  wheres_.bind_fun_(*l_stmt_ptr);
+  wheres_.bind(*l_stmt_ptr);
 
   s_    = &s;
   stmt_ = std::move(l_stmt_ptr);

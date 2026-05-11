@@ -241,8 +241,18 @@ class storage {
 };
 
 struct where_info_t {
-  std::function<std::string(const storage&)> condition_fun_{[](const storage&) { return ""; }};
-  std::function<void(sqlite_stmt&)> bind_fun_{[](sqlite_stmt&) {}};
+  std::function<std::string(const storage&)> condition_fun_{};
+  std::function<void(sqlite_stmt&)> bind_fun_{};
+
+  std::string operator()(const storage& s) const {
+    if (condition_fun_) return condition_fun_(s);
+    return "";
+  }
+  void bind(sqlite_stmt& stmt) const {
+    if (bind_fun_) bind_fun_(stmt);
+  }
+
+  operator bool() const { return static_cast<bool>(condition_fun_); }
 };
 
 }  // namespace orm
