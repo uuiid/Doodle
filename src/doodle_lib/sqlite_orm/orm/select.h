@@ -137,7 +137,7 @@ struct select_t {
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
-  using type = std::tuple<std::decay_t<TableColumns>...>;
+  using type              = std::tuple<std::decay_t<TableColumns>...>;
 
   using iterator_type     = select_result_type_iterator<TableColumns...>;
   using iterator_category = std::input_iterator_tag;
@@ -158,27 +158,21 @@ struct select_result_type_iterator {
 
   // 从sqlite_stmt中提取数据并转换为type类型
   type get() const;
+  void next() {
+    if (is_end_ || !stmt_) return is_end_ = true, void();
+
+    const auto l_rc = sqlite3_step(stmt_->stmt_);
+    if (l_rc == SQLITE_ROW) return is_end_ = false, void();
+    if (l_rc == SQLITE_DONE) return is_end_ = true, void();
+
+    is_end_ = true;
+    DOODLE_ORM_ERROR_SQLITE3(l_rc, stmt_->db_);
+  }
 
   // 实现迭代器接口
   iterator_type begin() const {
     iterator_type l_iter{*this};
-    if (!l_iter.stmt_) {
-      l_iter.is_end_ = true;
-      return l_iter;
-    }
-
-    const auto l_rc = sqlite3_step(l_iter.stmt_->stmt_);
-    if (l_rc == SQLITE_ROW) {
-      l_iter.is_end_ = false;
-      return l_iter;
-    }
-    if (l_rc == SQLITE_DONE) {
-      l_iter.is_end_ = true;
-      return l_iter;
-    }
-
-    DOODLE_ORM_ERROR_SQLITE3(l_rc, l_iter.stmt_->db_);
-    l_iter.is_end_ = true;
+    l_iter.next();
     return l_iter;
   }
 
@@ -189,9 +183,7 @@ struct select_result_type_iterator {
   iterator_type end() { return static_cast<const iterator_type&>(*this).end(); }
 
   reference operator*() const {
-    if (is_end_) {
-      throw std::out_of_range("Dereferencing end iterator");
-    }
+    if (is_end_) throw std::out_of_range("Dereferencing end iterator");
     *cache_ = get();
     return *cache_;
   }
@@ -199,23 +191,7 @@ struct select_result_type_iterator {
   pointer operator->() const { return std::addressof(operator*()); }
 
   iterator_type& operator++() {
-    if (is_end_ || !stmt_) {
-      is_end_ = true;
-      return *this;
-    }
-
-    const auto l_rc = sqlite3_step(stmt_->stmt_);
-    if (l_rc == SQLITE_ROW) {
-      is_end_ = false;
-      return *this;
-    }
-    if (l_rc == SQLITE_DONE) {
-      is_end_ = true;
-      return *this;
-    }
-
-    DOODLE_ORM_ERROR_SQLITE3(l_rc, stmt_->db_);
-    is_end_ = true;
+    next();
     return *this;
   }
 
@@ -227,7 +203,6 @@ struct select_result_type_iterator {
 
   bool operator==(const iterator_type& rhs) const {
     if (is_end_ && rhs.is_end_) return true;
-
     return s_ == rhs.s_ && stmt_.get() == rhs.stmt_.get() && is_end_ == rhs.is_end_;
   }
 
