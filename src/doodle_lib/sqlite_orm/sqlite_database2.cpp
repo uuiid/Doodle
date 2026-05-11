@@ -972,12 +972,12 @@ std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_pe
     l_result.emplace_back(l_sd2_task, l_entity, l_task, l_entity_shot_extend);
   return l_result;
 }
-std::optional<sd2::task> get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
+std::vector<sd2::task> get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
   auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.get_all<sd2::task>(
       where(c(&sd2::task::shot_uuid_id_) == in_task_id && c(&sd2::task::ai_studio_id_) == in_ai_studio_id)
   );
-  return !l_r.empty() ? std::optional{l_r.front()} : std::optional<sd2::task>{std::nullopt};
+  return l_r;
 }
 }  // namespace doodle::sqlite_select
