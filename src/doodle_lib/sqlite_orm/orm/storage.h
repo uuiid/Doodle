@@ -209,9 +209,9 @@ class storage {
   storage& finalize();
 
   template <typename T>
-  std::string get_column_name(auto T::* in_ptr) const;
+  std::string get_column_name(auto T::* in_ptr, bool add_table_name = true) const;
   template <typename T>
-  std::string get_column_name(const table_columns_t<T>& in_column) const;
+  std::string get_column_name(const table_columns_t<T>& in_column, bool add_table_name = true) const;
   template <typename T>
   std::vector<std::string> get_table_column_names() const;
   template <typename T>

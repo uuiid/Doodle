@@ -16,7 +16,6 @@
 #include <variant>
 #include <vector>
 
-
 namespace doodle::orm {
 
 template <typename T>
@@ -29,24 +28,24 @@ table_info<T>& storage::reg_table(std::string&& in_name) {
   return static_cast<table_info<T>&>(*tables_.back());
 }
 template <typename T>
-std::string storage::get_column_name(auto T::* in_ptr) const {
+std::string storage::get_column_name(auto T::* in_ptr, bool add_table_name) const {
   auto l_type_index = std::type_index(typeid(T));
   if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
 
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_ptr);
-  return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
+  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_) : l_column.ptr_.name_;
 }
 template <typename T>
-std::string storage::get_column_name(const table_columns_t<T>& in_column) const {
+std::string storage::get_column_name(const table_columns_t<T>& in_column, bool add_table_name) const {
   auto l_type_index = std::type_index(typeid(T));
   if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
 
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
-  return fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_);
+  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_) : l_column.ptr_.name_;
 }
 
 template <typename T>

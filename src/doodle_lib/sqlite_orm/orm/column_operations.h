@@ -118,14 +118,14 @@ struct column_operations {
     requires(!is_column_operations_specialization_v<U>)
   column_operations operator=(U&& value) const {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} = ?", s.template get_column_name<T>(*ptr));
+      return fmt::format("{} = ?", s.template get_column_name<T>(*ptr, false));
     };
     set_bind(std::forward<U>(value));
     return *this;
   }
   column_operations operator=(std::nullptr_t) const {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} = NULL", s.template get_column_name<T>(*ptr));
+      return fmt::format("{} = NULL", s.template get_column_name<T>(*ptr, false));
     };
     bind_ = nullptr;
     return *this;

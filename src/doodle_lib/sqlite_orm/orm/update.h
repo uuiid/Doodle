@@ -17,6 +17,8 @@ struct update_base_t {
 
   std::vector<std::function<std::string(const storage&)>> set_clauses_;
   std::function<void(sqlite_stmt&)> bind_fun_;
+  std::type_index from_table_type_index_{typeid(void)};
+
   where_info_t wheres_;
 
  public:
@@ -28,6 +30,11 @@ struct update_base_t {
       return fmt::format("WHERE {}", l_condition_fun_ptr->to_sql(s));
     };
     wheres_.bind_fun_ = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
+    return *this;
+  }
+  template <typename FromTable>
+  update_base_t& from() {
+    from_table_type_index_ = std::type_index{typeid(FromTable)};
     return *this;
   }
 };
