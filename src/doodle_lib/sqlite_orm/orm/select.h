@@ -237,10 +237,10 @@ struct select_result_type : select_t {
     return *this;
   }
 
-  iterator_type begin() const { return view_type{*this, nullptr}; }
-  iterator_type end() const { return view_type{*this, nullptr}; }
-  iterator_type begin() { return static_cast<const select_result_type&>(*this); }
-  iterator_type end() { return static_cast<const select_result_type&>(*this); }
+  auto begin() const { return view_type{*this, nullptr}; }
+  auto end() const { return view_type{*this, nullptr}; }
+  auto begin() { return static_cast<const select_result_type&>(*this); }
+  auto end() { return static_cast<const select_result_type&>(*this); }
 
   select_result_type& operator()(const storage& s);
 };
