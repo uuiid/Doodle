@@ -38,16 +38,16 @@ struct sqlite_statement_extractor<T> {
 template <typename T>
   requires std::is_arithmetic_v<T>
 struct sqlite_statement_printer<T> {
-  const std::string& operator()() const {
-    static std::string name = []() {
+  const column_type operator()() const {
+    static column_type type = []() {
       if constexpr (std::is_integral_v<T>) {
-        return "INTEGER";
+        return column_type::integer;
       } else if constexpr (std::is_floating_point_v<T>) {
-        return "REAL";
+        return column_type::real;
       }
-      return "UNKNOWN";
+      return column_type::null;
     }();
-    return name;
+    return type;
   }
 };
 
@@ -69,9 +69,9 @@ struct sqlite_statement_extractor<std::string> {
 
 template <>
 struct sqlite_statement_printer<std::string> {
-  const std::string& operator()() const {
-    static std::string name = "TEXT";
-    return name;
+  const column_type operator()() const {
+    static column_type type = column_type::text;
+    return type;
   }
 };
 // char* 特化
@@ -104,9 +104,9 @@ struct sqlite_statement_extractor<uuid> {
 };
 template <>
 struct sqlite_statement_printer<uuid> {
-  const std::string& operator()() const {
-    static std::string name = "BLOB";
-    return name;
+  const column_type operator()() const {
+    static column_type type = column_type::blob;
+    return type;
   }
 };
 }  // namespace doodle::orm

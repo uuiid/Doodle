@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
 
   l_reg.reg_table<entity>("entity")
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
-      .add_column("uuid_id", &entity::uuid_id_)
+      .add_column("uuid", &entity::uuid_id_)
       .add_column("name", &entity::name_)
       .add_column("entity_type_id", &entity::entity_type_id_)
       .add_foreign_key(
@@ -99,10 +99,10 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
 
   l_reg.reg_table<asset_type>("asset_type")
       .add_column("id", &asset_type::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
-      .add_column("uuid_id", &asset_type::uuid_id_)
+      .add_column("uuid", &asset_type::uuid_id_)
       .add_column("name", &asset_type::name_);
   l_reg.finalize();
-  l_reg.open({});
+  l_reg.open();
 
   l_reg(select(&entity::uuid_id_, object_t<asset_type>())
             .from<entity>()

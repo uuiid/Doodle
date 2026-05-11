@@ -75,6 +75,20 @@ struct table_info_base {
   std::type_index type_index_{typeid(void)};
   std::vector<std::function<void(storage&)>> to_register_;
   std::vector<foreign_key_info> foreign_keys_;
+
+  virtual ~table_info_base()                                     = default;
+  virtual std::vector<std::string> get_column_create_sql() const = 0;
+  std::vector<std::string> get_foreign_key_create_sql() const {
+    std::vector<std::string> l_sqls;
+    for (const auto& fk : foreign_keys_) {
+      std::string l_sql = fmt::format(
+          "FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", fk.ptr_, fk.ref_table_, fk.ref_ptr_,
+          fk.on_delete_, fk.on_update_
+      );
+      l_sqls.push_back(std::move(l_sql));
+    }
+    return l_sqls;
+  }
 };
 
 template <typename T>
@@ -115,16 +129,8 @@ struct table_info : table_info_base {
      }()),
      ...);
     // 根据成员变量类型推断 column_type
-    using member_type = std::remove_reference_t<std::remove_pointer_t<decltype(in_ptr)>>;
-    if constexpr (std::is_integral_v<member_type>) {
-      l_column.type_ = column_type::integer;
-    } else if constexpr (std::is_floating_point_v<member_type>) {
-      l_column.type_ = column_type::real;
-    } else if constexpr (std::is_same_v<member_type, std::string>) {
-      l_column.type_ = column_type::text;
-    } else {
-      l_column.type_ = column_type::blob;
-    }
+    using member_type = std::remove_reference_t<std::remove_pointer_t<member_type_t<decltype(in_ptr)>>>;
+    l_column.type_    = sqlite_statement_printer<member_type>{}();
     columns_.push_back(std::move(l_column));
     return *this;
   }
@@ -137,6 +143,24 @@ struct table_info : table_info_base {
 
   table_info& add_index(std::string&& in_name, auto T::* in_ptr);
   table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
+
+  std::vector<std::string> get_column_create_sql() const override {
+    std::vector<std::string> l_column_sqls;
+    for (const auto& column : columns_) {
+      std::string l_sql = fmt::format("{} {}", column.ptr_.name_, column.type_);
+      if (column.primary_key_) {
+        l_sql += " PRIMARY KEY";
+      }
+      if (column.autoincrement_) {
+        l_sql += " AUTOINCREMENT";
+      }
+      if (column.not_null_) {
+        l_sql += " NOT NULL";
+      }
+      l_column_sqls.push_back(std::move(l_sql));
+    }
+    return l_column_sqls;
+  }
 };
 
 struct sqlite_stmt {
@@ -176,6 +200,8 @@ class storage {
 
   void open(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
   void open() { open({}); }
+
+  void sync_schema();
 
   template <typename T>
   table_info<T>& reg_table(std::string&& in_name);

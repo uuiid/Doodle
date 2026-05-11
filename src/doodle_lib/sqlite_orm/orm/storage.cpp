@@ -39,6 +39,17 @@ void storage::open(FSys::path in_path, std::int32_t in_flags) {
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 
+void storage::sync_schema() {
+  for (const auto& table : tables_) {
+    auto l_sql          = table->get_column_create_sql();
+    auto l_foreign_keys = table->get_foreign_key_create_sql();
+    l_sql.insert(l_sql.end(), l_foreign_keys.begin(), l_foreign_keys.end());
+    auto l_create_table_sql = fmt::format("CREATE TABLE IF NOT EXISTS {} ({})", table->name_, fmt::join(l_sql, ", "));
+    auto l_stmt             = sqlite_stmt(db_, l_create_table_sql);
+    DOODLE_ORM_ERROR_SQLITE3(sqlite3_step(l_stmt.stmt_), db_);
+  }
+}
+
 storage::~storage() { ::sqlite3_close_v2(db_); }
 
 storage& storage::finalize() {

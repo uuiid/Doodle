@@ -47,14 +47,6 @@ struct sqlite_statement_extractor {
     return T{};
   }
 };
-template <typename T>
-struct sqlite_statement_printer {
-  const std::string& operator()() const {
-    static_assert(always_false<T>, "没有为该类型定义打印器");
-    static std::string name = "UNKNOWN";
-    return name;
-  }
-};
 
 template <typename T>
 inline constexpr bool is_column_operations_specialization_v =
@@ -112,6 +104,15 @@ enum class join_type {
 };
 
 template <typename T>
+struct sqlite_statement_printer {
+  const column_type operator()() const {
+    static_assert(always_false<T>, "没有为该类型定义打印器");
+    static column_type type = column_type::null;
+    return type;
+  }
+};
+
+template <typename T>
 struct member_type;  // 主模板：不定义，仅用于特化
 
 // 特化：数据成员指针 (T C::*)
@@ -149,6 +150,65 @@ struct formatter<doodle::orm::join_type> {
         break;
       case doodle::orm::join_type::full:
         name = "FULL JOIN";
+        break;
+    }
+    format_to(ctx.out(), "{}", name);
+    return ctx.out();
+  }
+};
+
+// clumn_type 格式化
+template <>
+struct formatter<doodle::orm::column_type> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+  template <typename FormatContext>
+  auto format(doodle::orm::column_type columnType, FormatContext& ctx) const -> decltype(ctx.out()) {
+    std::string_view name;
+    switch (columnType) {
+      case doodle::orm::column_type::null:
+        name = "NULL";
+        break;
+      case doodle::orm::column_type::integer:
+        name = "INTEGER";
+        break;
+      case doodle::orm::column_type::real:
+        name = "REAL";
+        break;
+      case doodle::orm::column_type::text:
+        name = "TEXT";
+        break;
+      case doodle::orm::column_type::blob:
+        name = "BLOB";
+        break;
+    }
+    format_to(ctx.out(), "{}", name);
+    return ctx.out();
+  }
+};
+// foreign_key_action 格式化
+template <>
+struct formatter<doodle::orm::foreign_key_action> {
+  constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
+
+  template <typename FormatContext>
+  auto format(doodle::orm::foreign_key_action action, FormatContext& ctx) const -> decltype(ctx.out()) {
+    std::string_view name;
+    switch (action) {
+      case doodle::orm::foreign_key_action::no_action:
+        name = "NO ACTION";
+        break;
+      case doodle::orm::foreign_key_action::restrict:
+        name = "RESTRICT";
+        break;
+      case doodle::orm::foreign_key_action::set_null:
+        name = "SET NULL";
+        break;
+      case doodle::orm::foreign_key_action::set_default:
+        name = "SET DEFAULT";
+        break;
+      case doodle::orm::foreign_key_action::cascade:
+        name = "CASCADE";
         break;
     }
     format_to(ctx.out(), "{}", name);
