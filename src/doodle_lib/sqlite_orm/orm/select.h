@@ -198,8 +198,6 @@ struct select_result_type_iterator {
 template <typename... TableColumns>
 struct select_result_type : select_t {
   using type              = std::tuple<std::decay_t<TableColumns>...>;
-  using view_type         = select_result_type_iterator<TableColumns...>;
-  // using result_type = std::tuple<std::decay_t<TableColumns>...>;
 
   using iterator_type     = select_result_type_iterator<TableColumns...>;
   using iterator_category = std::input_iterator_tag;
@@ -237,8 +235,8 @@ struct select_result_type : select_t {
     return *this;
   }
 
-  auto begin() const { return view_type{*this, nullptr}; }
-  auto end() const { return view_type{*this, nullptr}; }
+  auto begin() const { return iterator_type{*this, nullptr}; }
+  auto end() const { return iterator_type{*this, nullptr}; }
   auto begin() { return static_cast<const select_result_type&>(*this); }
   auto end() { return static_cast<const select_result_type&>(*this); }
 
