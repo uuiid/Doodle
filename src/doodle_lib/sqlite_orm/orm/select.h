@@ -197,10 +197,16 @@ struct select_result_type_iterator {
 
 template <typename... TableColumns>
 struct select_result_type : select_t {
-  using type      = std::tuple<std::decay_t<TableColumns>...>;
-  using view_type = select_result_type_iterator<TableColumns...>;
+  using type              = std::tuple<std::decay_t<TableColumns>...>;
+  using view_type         = select_result_type_iterator<TableColumns...>;
   // using result_type = std::tuple<std::decay_t<TableColumns>...>;
 
+  using iterator_type     = select_result_type_iterator<TableColumns...>;
+  using iterator_category = std::input_iterator_tag;
+  using value_type        = type;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = const value_type*;
+  using reference         = const value_type&;
   template <typename Table>
   auto from() {
     select_t::from<Table>();
@@ -231,12 +237,12 @@ struct select_result_type : select_t {
     return *this;
   }
 
-  auto begin() const { return view_type{*this, nullptr}; }
-  auto end() const { return view_type{*this, nullptr}; }
-  auto begin() { return static_cast<const select_result_type&>(*this); }
-  auto end() { return static_cast<const select_result_type&>(*this); }
+  iterator_type begin() const { return view_type{*this, nullptr}; }
+  iterator_type end() const { return view_type{*this, nullptr}; }
+  iterator_type begin() { return static_cast<const select_result_type&>(*this); }
+  iterator_type end() { return static_cast<const select_result_type&>(*this); }
 
-  void operator()(const storage& s);
+  select_result_type& operator()(const storage& s);
 };
 
 // 将select(&Table::column1, &Table::column2, object<Table2>()) 转换为

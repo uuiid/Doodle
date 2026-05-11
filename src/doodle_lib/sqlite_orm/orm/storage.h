@@ -223,8 +223,7 @@ class storage {
   const std::vector<column_info<T>>& get_table_columns() const;
 
   template <typename T>
-    requires std::derived_from<std::decay_t<T>, select_t>
-  auto operator()(T&& in_sql) -> typename std::decay_t<T>::view_type;
+  auto operator()(T&& in_sql) -> decltype(in_sql(std::declval<storage&>()));
 
  private:
   template <typename T, typename T2>

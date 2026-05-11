@@ -110,15 +110,9 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
 }
 
 template <typename T>
-  requires std::derived_from<std::decay_t<T>, select_t>
-auto storage::operator()(T&& in_sql) -> typename std::decay_t<T>::view_type {
-  auto l_sql_str  = compile_select(in_sql);
-  auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
-  l_stmt_ptr->prepare(db_, l_sql_str);
-  in_sql.wheres_.bind_fun_(*l_stmt_ptr);
-  // std::vector<std::string> column_names = in_sql.get_column_names_fun_(*this);
-  using result_type = typename std::decay_t<T>::view_type;
-  return result_type{*this, l_stmt_ptr};
+
+auto storage::operator()(T&& in_sql) -> decltype(in_sql(std::declval<storage&>())) {
+  return in_sql(*this);
 }
 
 template <typename T>

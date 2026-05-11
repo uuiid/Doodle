@@ -36,11 +36,12 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
 }
 
 template <typename... TableColumns>
-void select_result_type<TableColumns...>::operator()(const storage& s) {
+select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()(const storage& s) {
   auto l_sql      = select_t::to_sql(s);
   auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
   l_stmt_ptr->prepare(s, l_sql);
   wheres_.bind_fun_(*l_stmt_ptr);
+  return *this;
 }
 
 }  // namespace doodle::orm
