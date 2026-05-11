@@ -2,6 +2,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
+#include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <atomic>
@@ -14,6 +15,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 
 namespace doodle::orm {
 
@@ -117,7 +119,7 @@ auto storage::operator()(T&& in_sql) -> typename std::decay_t<T>::iterator_type 
   in_sql.wheres_.bind_fun_(*l_stmt_ptr);
   // std::vector<std::string> column_names = in_sql.get_column_names_fun_(*this);
   using result_type = typename std::decay_t<T>::iterator_type;
-  return {*this, l_stmt_ptr};
+  return result_type{*this, l_stmt_ptr};
 }
 
 template <typename T>

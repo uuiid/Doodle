@@ -7,7 +7,10 @@
 
 #include <fmt/format.h>
 #include <functional>
+#include <iterator>
 #include <memory>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <variant>
@@ -134,13 +137,21 @@ struct select_t {
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
-  using type          = std::tuple<std::decay_t<TableColumns>...>;
-  using iterator_type = select_result_type_iterator<TableColumns...>;
+  using type              = std::tuple<std::decay_t<TableColumns>...>;
+  using iterator_type     = select_result_type_iterator<TableColumns...>;
+  using iterator_category = std::input_iterator_tag;
+  using value_type        = type;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = const value_type*;
+  using reference         = const value_type&;
 
   storage* s_;
   std::shared_ptr<sqlite_stmt> stmt_;
+  bool is_end_{true};
+  mutable std::shared_ptr<value_type> cache_;
 
-  explicit select_result_type_iterator(storage& s, const std::shared_ptr<sqlite_stmt>& stmt) : s_(&s), stmt_(stmt) {}
+  explicit select_result_type_iterator(storage& s, const std::shared_ptr<sqlite_stmt>& stmt)
+      : s_(&s), stmt_(stmt), is_end_(false), cache_(std::make_shared<value_type>()) {}
   select_result_type_iterator()  = default;
   ~select_result_type_iterator() = default;
 
@@ -148,6 +159,78 @@ struct select_result_type_iterator {
   type get() const;
 
   // 实现迭代器接口
+  iterator_type begin() const {
+    iterator_type l_iter{*this};
+    if (!l_iter.stmt_) {
+      l_iter.is_end_ = true;
+      return l_iter;
+    }
+
+    const auto l_rc = sqlite3_step(l_iter.stmt_->stmt_);
+    if (l_rc == SQLITE_ROW) {
+      l_iter.is_end_ = false;
+      return l_iter;
+    }
+    if (l_rc == SQLITE_DONE) {
+      l_iter.is_end_ = true;
+      return l_iter;
+    }
+
+    DOODLE_ORM_ERROR_SQLITE3(l_rc, l_iter.stmt_->db_);
+    l_iter.is_end_ = true;
+    return l_iter;
+  }
+
+  iterator_type begin() { return static_cast<const iterator_type&>(*this).begin(); }
+
+  iterator_type end() const { return {}; }
+
+  iterator_type end() { return static_cast<const iterator_type&>(*this).end(); }
+
+  reference operator*() const {
+    if (is_end_) {
+      throw std::out_of_range("Dereferencing end iterator");
+    }
+    *cache_ = get();
+    return *cache_;
+  }
+
+  pointer operator->() const { return std::addressof(operator*()); }
+
+  iterator_type& operator++() {
+    if (is_end_ || !stmt_) {
+      is_end_ = true;
+      return *this;
+    }
+
+    const auto l_rc = sqlite3_step(stmt_->stmt_);
+    if (l_rc == SQLITE_ROW) {
+      is_end_ = false;
+      return *this;
+    }
+    if (l_rc == SQLITE_DONE) {
+      is_end_ = true;
+      return *this;
+    }
+
+    DOODLE_ORM_ERROR_SQLITE3(l_rc, stmt_->db_);
+    is_end_ = true;
+    return *this;
+  }
+
+  iterator_type operator++(int) {
+    iterator_type l_old{*this};
+    ++(*this);
+    return l_old;
+  }
+
+  bool operator==(const iterator_type& rhs) const {
+    if (is_end_ && rhs.is_end_) return true;
+
+    return s_ == rhs.s_ && stmt_.get() == rhs.stmt_.get() && is_end_ == rhs.is_end_;
+  }
+
+  bool operator!=(const iterator_type& rhs) const { return !(*this == rhs); }
 };
 
 template <typename... TableColumns>

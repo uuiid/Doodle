@@ -7,4 +7,5 @@
 
 // clang-format off
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
+#include <doodle_lib/sqlite_orm/orm/select_impl.h>
 // clang-format on
