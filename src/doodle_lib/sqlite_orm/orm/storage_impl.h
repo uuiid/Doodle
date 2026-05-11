@@ -61,6 +61,20 @@ std::vector<std::string> storage::get_table_column_names() const {
   return column_names;
 }
 
+template <typename T>
+bool storage::has_reg_table() {
+  return type_to_table_index_.contains(std::type_index(typeid(T)));
+}
+
+template <typename T>
+const std::vector<column_info<T>>& storage::get_table_columns() const {
+  auto l_type_index = std::type_index(typeid(T));
+  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
+  auto l_table_index = type_to_table_index_.at(l_type_index);
+  auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
+  return l_table.columns_;
+}
+
 template <typename T, typename T2>
 void storage::reg_foreign_key(
     std::string&& in_name, auto T::* in_ptr, auto T2::* in_ref_ptr, foreign_key_action on_delete,

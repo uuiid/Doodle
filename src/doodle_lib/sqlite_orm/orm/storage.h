@@ -187,6 +187,7 @@ class storage {
   friend struct table_info;
 
   friend struct sqlite_stmt;
+  friend struct select_t;
 
   std::atomic_bool finalized_{false};
   FSys::path db_path_;
@@ -237,9 +238,6 @@ class storage {
   void reg_unique_index(std::string&& in_name, auto... in_ptrs);
 
   std::string get_table_name(std::type_index in_type_index) const;
-
-  // 编译 select_t 为 sql
-  std::string compile_select(const select_t& in_select) const;
 };
 
 struct where_info_t {

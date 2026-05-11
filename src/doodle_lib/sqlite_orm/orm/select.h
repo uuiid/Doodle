@@ -205,6 +205,10 @@ struct select_result_type : select_t {
   using difference_type   = std::ptrdiff_t;
   using pointer           = const value_type*;
   using reference         = const value_type&;
+
+  storage* s_{nullptr};
+  std::shared_ptr<sqlite_stmt> stmt_;
+
   template <typename Table>
   auto from() {
     select_t::from<Table>();
@@ -235,12 +239,18 @@ struct select_result_type : select_t {
     return *this;
   }
 
-  auto begin() const { return iterator_type{*this, nullptr}; }
-  auto end() const { return iterator_type{*this, nullptr}; }
-  auto begin() { return static_cast<const select_result_type&>(*this); }
-  auto end() { return static_cast<const select_result_type&>(*this); }
+  auto begin() {
+    if (!s_ || !stmt_) return end();
+    return iterator_type{*s_, stmt_};
+  }
+  auto end() { return iterator_type{}; }
+  auto begin() const {
+    if (!s_ || !stmt_) return end();
+    return iterator_type{*s_, stmt_};
+  }
+  auto end() const { return iterator_type{}; }
 
-  select_result_type& operator()(const storage& s);
+  select_result_type& operator()(storage& s);
 };
 
 // 将select(&Table::column1, &Table::column2, object<Table2>()) 转换为

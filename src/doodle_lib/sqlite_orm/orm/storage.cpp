@@ -71,32 +71,7 @@ std::string storage::get_table_name(std::type_index in_type_index) const {
   return tables_[l_table_index]->name_;
 }
 
-std::string storage::compile_select(const select_t& in_select) const {
-  std::string l_join_sql;
-  for (const auto& join : in_select.joins_) {
-    auto l_condition = join.on_condition_fun_(*this);
-    l_join_sql += fmt::format(
-        " {} {} ON {} = {}", join.type_, get_table_name(join.join_table_type_index_), l_condition.first,
-        l_condition.second
-    );
-  }
-  std::vector<std::string> l_order_by_clauses;
-  l_order_by_clauses.reserve(in_select.order_bys_.size());
-  for (const auto& order_by : in_select.order_bys_) {
-    l_order_by_clauses.push_back(order_by(*this));
-  }
-  std::string l_order_by_sql =
-      l_order_by_clauses.empty() ? "" : fmt::format(" ORDER BY {}", fmt::join(l_order_by_clauses, ", "));
-  std::string l_limit_sql = in_select.limit_ ? fmt::format(" LIMIT {}", *in_select.limit_) : "";
-  l_limit_sql += in_select.offset_ ? fmt::format(" OFFSET {}", *in_select.offset_) : "";
-
-  std::string l_sql = fmt::format(
-      "SELECT {} FROM {}{} {}{}{}", fmt::join(in_select.get_column_names_fun_(*this), ", "),
-      get_table_name(in_select.from_table_type_index_), l_join_sql, in_select.wheres_.condition_fun_(*this),
-      l_order_by_sql, l_limit_sql
-  );
-  return l_sql;
-}
+ 
 
 }  // namespace orm
 
