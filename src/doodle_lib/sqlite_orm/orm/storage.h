@@ -169,9 +169,9 @@ struct sqlite_stmt {
   std::int32_t bind_index_{0};  // sqlite bind index starts from 1, but we use 0-based index internally
  public:
   sqlite_stmt() = default;
-  explicit sqlite_stmt(sqlite3* db, const std::string& sql) { prepare(db, sql); }
+  explicit sqlite_stmt(storage& db, const std::string& sql) { prepare(db, sql); }
   ~sqlite_stmt();
-  void prepare(sqlite3* db, const std::string& sql);
+  void prepare(storage& db, const std::string& sql);
   std::int32_t get_bind_index();
   std::int64_t get_column_count() const;
 };
@@ -185,6 +185,8 @@ class storage {
 
   template <typename T>
   friend struct table_info;
+
+  friend struct sqlite_stmt;
 
   std::atomic_bool finalized_{false};
   FSys::path db_path_;

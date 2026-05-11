@@ -5,7 +5,6 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-
 namespace doodle::orm {
 template <typename... TableColumns>
 typename select_result_type_iterator<TableColumns...>::type select_result_type_iterator<TableColumns...>::get() const {
@@ -35,4 +34,13 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
 
   return result;
 }
+
+template <typename... TableColumns>
+void select_result_type<TableColumns...>::operator()(const storage& s) {
+  auto l_sql      = select_t::to_sql(s);
+  auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
+  l_stmt_ptr->prepare(s, l_sql);
+  wheres_.bind_fun_(*l_stmt_ptr);
+}
+
 }  // namespace doodle::orm

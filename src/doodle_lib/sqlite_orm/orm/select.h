@@ -52,7 +52,7 @@ template <typename... TableColumns>
 struct select_result_type;
 
 struct select_t {
- private:
+ protected:
   friend class storage;
 
   template <typename... TableColumns>
@@ -129,6 +129,8 @@ struct select_t {
     offset_ = count;
     return *this;
   }
+
+  std::string to_sql(const storage& s) const;
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
@@ -147,7 +149,9 @@ struct select_result_type_iterator {
   mutable std::shared_ptr<value_type> cache_;
 
   explicit select_result_type_iterator(storage& s, const std::shared_ptr<sqlite_stmt>& stmt)
-      : s_(&s), stmt_(stmt), is_end_(false), cache_(std::make_shared<value_type>()) {}
+      : s_(&s), stmt_(stmt), is_end_(false), cache_(std::make_shared<value_type>()) {
+    next();
+  }
   select_result_type_iterator()  = default;
   ~select_result_type_iterator() = default;
 
@@ -163,19 +167,6 @@ struct select_result_type_iterator {
     is_end_ = true;
     DOODLE_ORM_ERROR_SQLITE3(l_rc, stmt_->db_);
   }
-
-  // 实现迭代器接口
-  iterator_type begin() const {
-    iterator_type l_iter{*this};
-    l_iter.next();
-    return l_iter;
-  }
-
-  iterator_type begin() { return static_cast<const iterator_type&>(*this).begin(); }
-
-  iterator_type end() const { return {}; }
-
-  iterator_type end() { return static_cast<const iterator_type&>(*this).end(); }
 
   reference operator*() const {
     if (is_end_) throw std::out_of_range("Dereferencing end iterator");
@@ -239,6 +230,13 @@ struct select_result_type : select_t {
     select_t::offset(count);
     return *this;
   }
+
+  auto begin() const { return view_type{*this, nullptr}; }
+  auto end() const { return view_type{*this, nullptr}; }
+  auto begin() { return static_cast<const select_result_type&>(*this); }
+  auto end() { return static_cast<const select_result_type&>(*this); }
+
+  void operator()(const storage& s);
 };
 
 // 将select(&Table::column1, &Table::column2, object<Table2>()) 转换为

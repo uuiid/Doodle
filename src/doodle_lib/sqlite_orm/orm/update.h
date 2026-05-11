@@ -47,6 +47,18 @@ struct update_base_t {
 
 struct update_object_t {
   std::function<update_base_t(const storage&)> update_fun_;
+
+  where_info_t wheres_;
+  template <typename T>
+    requires(is_column_operations_specialization_v<T>)
+  update_object_t& where(T&& condition_fun) {
+    auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
+    wheres_.condition_fun_   = [l_condition_fun_ptr](const storage& s) {
+      return fmt::format("WHERE {}", l_condition_fun_ptr->to_sql(s));
+    };
+    wheres_.bind_fun_ = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
+    return *this;
+  }
 };
 
 using update_t = update_base_t;
