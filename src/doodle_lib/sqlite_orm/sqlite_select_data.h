@@ -598,5 +598,95 @@ std::vector<entity> get_entity_by_episode_id_and_project_id_and_name(
 );
 
 bool task_exit_by_entity_id_and_task_type_id(const uuid& in_entity_id, const uuid& in_task_type_id);
+
+struct sd2_select_task_t {
+  sd2::task task_;
+
+  struct entity_and_task_t {
+    uuid entity_id_;
+    uuid task_id_;
+    std::string name_;
+    std::string code_;
+    std::string description_;
+    bool canceled_;
+    std::optional<std::int32_t> nb_frames_;
+    std::int32_t nb_entities_out_;
+    bool is_casting_standby_;
+
+    bool is_shared_;
+    entity_status status_;
+
+    uuid project_id_;
+    uuid entity_type_id_;
+    uuid parent_id_;
+    uuid source_id_;
+    uuid preview_file_id_;
+    uuid ready_for_;
+    uuid created_by_;
+    std::optional<std::int32_t> frame_in_;
+    std::optional<std::int32_t> frame_out_;
+    // to json
+    friend void to_json(nlohmann::json& j, const entity_and_task_t& p) {
+      j["entity_id"]          = p.entity_id_;
+      j["task_id"]            = p.task_id_;
+      j["name"]               = p.name_;
+      j["code"]               = p.code_;
+      j["description"]        = p.description_;
+      j["canceled"]           = p.canceled_;
+      j["nb_frames"]          = p.nb_frames_;
+      j["nb_entities_out"]    = p.nb_entities_out_;
+      j["is_casting_standby"] = p.is_casting_standby_;
+      j["is_shared"]          = p.is_shared_;
+      j["status"]             = p.status_;
+      j["project_id"]         = p.project_id_;
+      j["entity_type_id"]     = p.entity_type_id_;
+      j["parent_id"]          = p.parent_id_;
+      j["source_id"]          = p.source_id_;
+      j["preview_file_id"]    = p.preview_file_id_;
+      j["ready_for"]          = p.ready_for_;
+      j["created_by"]         = p.created_by_;
+      j["frame_in"]           = p.frame_in_;
+      j["frame_out"]          = p.frame_out_;
+    }
+  };
+
+  entity_and_task_t entity_and_task_;
+  // to json
+  friend void to_json(nlohmann::json& j, const sd2_select_task_t& p) {
+    j["task"]            = p.task_;
+    j["entity_and_task"] = p.entity_and_task_;
+  }
+
+  explicit sd2_select_task_t(
+      const sd2::task& in_sd2_task, const entity& in_entity, const task& in_task,
+      const entity_shot_extend& in_entity_shot_extend
+  )
+      : task_(in_sd2_task),
+        entity_and_task_{
+            .entity_id_          = in_entity.uuid_id_,
+            .task_id_            = in_task.uuid_id_,
+            .name_               = in_entity.name_,
+            .code_               = in_entity.code_,
+            .description_        = in_entity.description_,
+            .canceled_           = in_entity.canceled_,
+            .nb_frames_          = in_entity.nb_frames_,
+            .nb_entities_out_    = in_entity.nb_entities_out_,
+            .is_casting_standby_ = in_entity.is_casting_standby_,
+            .is_shared_          = in_entity.is_shared_,
+            .status_             = in_entity.status_,
+            .project_id_         = in_entity.project_id_,
+            .entity_type_id_     = in_entity.entity_type_id_,
+            .parent_id_          = in_entity.parent_id_,
+            .source_id_          = in_entity.source_id_,
+            .preview_file_id_    = in_entity.preview_file_id_,
+            .ready_for_          = in_entity.ready_for_,
+            .created_by_         = in_entity.created_by_,
+            .frame_in_           = in_entity_shot_extend.frame_in_,
+            .frame_out_          = in_entity_shot_extend.frame_out_
+        } {}
+};
+static std::vector<sd2_select_task_t> get_tasks_and_entity_for_ai_studio(const uuid& in_ai_studio_id);
+static std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_person_id);
+
 }  // namespace sqlite_select
 }  // namespace doodle

@@ -141,12 +141,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   co_return in_handle->make_msg(nlohmann::json{{"id", l_task->uuid_id_}});
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, get) {
-  co_return in_handle->make_msg(nlohmann::json{} = sqlite_select::get_sd2_tasks_for_person(person_.person_.uuid_id_));
+  co_return in_handle->make_msg(
+      nlohmann::json{} = sqlite_select::get_tasks_and_entity_for_person(person_.person_.uuid_id_)
+  );
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
   co_return in_handle->make_msg(
-      nlohmann::json{} = sqlite_select::get_sd2_tasks_for_ai_studio(person_.get_ai_studio_id())
+      nlohmann::json{} = sqlite_select::get_tasks_and_entity_for_ai_studio(person_.get_ai_studio_id())
   );
 }
 

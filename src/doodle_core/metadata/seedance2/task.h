@@ -41,6 +41,9 @@ struct DOODLE_CORE_API task {
   std::string task_id_;  // 任务ID，外部唯一标识
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
+
+  uuid shot_uuid_id_;  // 内部使用的UUID，对应镜头中的uuid_id_
+
   // 归档
   bool archived_;
   // to json
@@ -55,12 +58,14 @@ struct DOODLE_CORE_API task {
 
     j["created_at"]     = p.created_at_;
     j["ended_at"]       = p.ended_at_;
-    j["archived"]        = p.archived_;
+    j["archived"]       = p.archived_;
+    j["shot_uuid_id"]   = p.shot_uuid_id_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
     if (j.contains("data_request")) j.at("data_request").get_to(p.data_request_);
     if (j.contains("ai_studio_id")) j.at("ai_studio_id").get_to(p.ai_studio_id_);
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
+    if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
   }
 };
 

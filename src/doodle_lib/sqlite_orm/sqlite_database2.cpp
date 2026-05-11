@@ -37,6 +37,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <vector>
 
 namespace doodle::sqlite_select {
 
@@ -937,4 +938,39 @@ bool task_exit_by_entity_id_and_task_type_id(const uuid& in_entity_id, const uui
   );
   return l_count > 0;
 }
+
+std::vector<sd2_select_task_t> get_tasks_and_entity_for_ai_studio(const uuid& in_ai_studio_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(object<sd2::task>(true), object<entity>(true), object<task>(true), object<entity_shot_extend>(true)),
+      from<sd2::task>(), left_outer_join<task>(on(c(&sd2::task::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(c(&sd2::task::ai_studio_id_) == in_ai_studio_id)
+  );
+  std::vector<sd2_select_task_t> l_result{};
+  l_result.reserve(l_r.size());
+  for (auto&& [l_sd2_task, l_entity, l_task, l_entity_shot_extend] : l_r)
+    l_result.emplace_back(l_sd2_task, l_entity, l_task, l_entity_shot_extend);
+  return l_result;
+}
+
+std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_person_id) {
+  auto l_sql = get_sqlite_database();
+  using namespace sqlite_orm;
+  auto l_r = l_sql.impl_->storage_any_.select(
+      columns(object<sd2::task>(true), object<entity>(true), object<task>(true), object<entity_shot_extend>(true)),
+      from<sd2::task>(), left_outer_join<task>(on(c(&sd2::task::task_id_) == c(&task::uuid_id_))),
+      left_outer_join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
+      left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
+      where(c(&sd2::task::user_id_) == in_person_id)
+  );
+  std::vector<sd2_select_task_t> l_result{};
+  l_result.reserve(l_r.size());
+  for (auto&& [l_sd2_task, l_entity, l_task, l_entity_shot_extend] : l_r)
+    l_result.emplace_back(l_sd2_task, l_entity, l_task, l_entity_shot_extend);
+  return l_result;
+}
+
 }  // namespace doodle::sqlite_select
