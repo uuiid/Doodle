@@ -9,10 +9,7 @@ std::string operator_compare_t::to_sql(const storage& s) const {
       data_impl_ptr_->right_->to_sql(s)
   );
 }
-void operator_compare_t::bind(sqlite_stmt& stmt) const {
-  data_impl_ptr_->left_->bind(stmt);
-  data_impl_ptr_->right_->bind(stmt);
-}
+
 const std::vector<std::shared_ptr<storage_column_variant>>& operator_compare_t::get_value_variants() const {
   if (data_impl_ptr_->cached_variants_.empty()) {
     const auto& left_variants  = data_impl_ptr_->left_->get_value_variants();
