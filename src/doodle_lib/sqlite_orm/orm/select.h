@@ -181,7 +181,6 @@ struct select_result_type : select_t {
   using pointer           = const value_type*;
   using reference         = const value_type&;
 
-  storage* s_{nullptr};
   std::shared_ptr<sqlite_stmt> stmt_;
 
   template <typename Table>
