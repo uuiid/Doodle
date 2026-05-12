@@ -118,7 +118,11 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} = ?", s.template get_column_name<T>(*ptr, false));
     };
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    if constexpr (std::is_convertible_v<U, std::string>) {
+      value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+    } else {
+      value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    }
     return *this;
   }
   column_operations operator=(std::nullptr_t) const {
@@ -135,7 +139,12 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} == ?", s.template get_column_name<T>(*ptr));
     };
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
+    if constexpr (std::is_convertible_v<U, std::string>) {
+      value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+    } else {
+      value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    }
     return *this;
   }
   template <typename U>
@@ -144,7 +153,12 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} != ?", s.template get_column_name<T>(*ptr));
     };
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
+    if constexpr (std::is_convertible_v<U, std::string>) {
+      value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+    } else {
+      value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    }
     return *this;
   }
   // operator >, <, >=, <=
