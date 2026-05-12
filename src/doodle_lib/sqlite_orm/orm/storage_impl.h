@@ -3,6 +3,7 @@
 
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
+#include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <atomic>
@@ -16,7 +17,14 @@
 #include <variant>
 #include <vector>
 
+
 namespace doodle::orm {
+
+template <typename T>
+T sqlite_stmt::get_column_value(int columnIndex) const {
+  sqlite_statement_extractor<T> l_extractor{};
+  return l_extractor.extract(stmt_, columnIndex);
+}
 
 template <typename T>
 table_info<T>& storage::reg_table(std::string&& in_name) {

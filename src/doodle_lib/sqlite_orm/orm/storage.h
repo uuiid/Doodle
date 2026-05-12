@@ -179,11 +179,8 @@ struct sqlite_stmt {
   void step();
   std::int32_t step_not_throw();
 
-  storage_column_variant get_column_value(int columnIndex) const;
   template <typename T>
-  T get_column_value(int columnIndex) const {
-    return std::get<T>(get_column_value(columnIndex));
-  }
+  T get_column_value(int columnIndex) const;
 };
 
 class storage {
