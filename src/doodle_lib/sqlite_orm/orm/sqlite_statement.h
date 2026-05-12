@@ -155,4 +155,54 @@ struct sqlite_statement_extractor<nlohmann::json> : sqlite_statement_extractor<s
 template <>
 struct sqlite_statement_printer<nlohmann::json> : sqlite_statement_printer<std::string> {};
 
+// FSys::path特化
+template <>
+struct sqlite_statement_binder<FSys::path> : sqlite_statement_binder<std::string> {
+  int bind(sqlite3_stmt* stmt, int index, const FSys::path& value) const {
+    auto l_path_str = value.generic_string();
+    return sqlite_statement_binder<std::string>::bind(stmt, index, l_path_str);
+  }
+};
+template <>
+struct sqlite_statement_extractor<FSys::path> : sqlite_statement_extractor<std::string> {
+  FSys::path extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    return FSys::path{l_str};
+  }
+};
+template <>
+struct sqlite_statement_printer<FSys::path> : sqlite_statement_printer<std::string> {};
+
+
+// std::chrono::zoned_time
+template <typename Duration>
+struct sqlite_statement_binder<std::chrono::zoned_time<Duration>> : sqlite_statement_binder<std::string> {
+  int bind(sqlite3_stmt* stmt, int index, const std::chrono::zoned_time<Duration>& value) const {
+    try {
+      return sqlite_statement_binder<std::string>::bind(stmt, index, fmt::to_string(value.get_sys_time()));
+    } catch (fmt::format_error& err) {
+      SPDLOG_ERROR(err.what());
+      auto l_new = std::chrono::system_clock::now();
+      return sqlite_statement_binder<std::string>::bind(stmt, index, fmt::to_string(l_new));
+    }
+  }
+};
+template <typename Duration>
+struct sqlite_statement_extractor<std::chrono::zoned_time<Duration>> : sqlite_statement_extractor<std::string> {
+  std::chrono::zoned_time<Duration> extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    std::istringstream l_istr{l_str};
+    std::chrono::time_point<std::chrono::system_clock, Duration> l_value =
+        std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
+    if (l_istr >> parse("%F %T", l_value))
+      ;
+    else if (l_istr.clear(), l_istr.str(l_str), l_istr >> parse("%F", l_value))
+      ;
+    else
+      throw std::runtime_error(fmt::format("Failed to parse zoned_time from string: {}", l_str));
+    return std::chrono::zoned_time{std::chrono::current_zone(), l_value};
+  }
+};
+template <typename Duration>
+struct sqlite_statement_printer<std::chrono::zoned_time<Duration>> : sqlite_statement_printer<std::string> {};
 }  // namespace doodle::orm
