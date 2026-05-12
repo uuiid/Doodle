@@ -16,7 +16,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle::orm {
 namespace detail {
 template <typename T>
@@ -47,7 +46,8 @@ struct select_t {
   friend class storage;
 
   template <typename... TableColumns>
-  friend auto select(TableColumns... in_columns) -> select_result_type<detail::select_arg_type_t<TableColumns>...>;
+  friend auto select(storage& s, TableColumns... in_columns)
+      -> select_result_type<detail::select_arg_type_t<TableColumns>...>;
   struct join_info_t {
     std::type_index join_table_type_index_{typeid(void)};
     join_type type_{join_type::inner};
