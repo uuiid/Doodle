@@ -11,10 +11,8 @@ namespace doodle::orm {
 std::string select_t::to_sql(const storage& s) const {
   std::string l_join_sql;
   for (const auto& join : joins_) {
-    auto l_condition = join.on_condition_fun_(s);
     l_join_sql += fmt::format(
-        " {} {} ON {} = {}", join.type_, s.get_table_name(join.join_table_type_index_), l_condition.first,
-        l_condition.second
+        " {} {} ON {} = {}", join.type_, join.join_table_name_, join.condition_.first, join.condition_.second
     );
   }
   std::vector<std::string> l_order_by_clauses;

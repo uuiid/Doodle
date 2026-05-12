@@ -49,18 +49,9 @@ struct select_t {
   friend auto select(storage& s, TableColumns... in_columns)
       -> select_result_type<detail::select_arg_type_t<TableColumns>...>;
   struct join_info_t {
-    std::type_index join_table_type_index_{typeid(void)};
+    std::string join_table_name_;
     join_type type_{join_type::inner};
-    std::function<std::pair<std::string, std::string>(const storage&)> on_condition_fun_;
-  };
-
-  struct order_by_info_t {
-    bool ascending_{true};
-    std::function<std::string(const storage&)> column_name_fun_;
-
-    std::string operator()(const storage& s) const {
-      return fmt::format("{}{}", column_name_fun_(s), ascending_ ? "" : " DESC");
-    }
+    std::pair<std::string, std::string> condition_;
   };
 
   // 结果类型
@@ -68,7 +59,7 @@ struct select_t {
   std::string from_table_name_;
   std::vector<join_info_t> joins_;
   std::shared_ptr<column_operations_base_t> wheres_;
-  std::vector<order_by_info_t> order_bys_;
+  std::vector<std::string> order_bys_;
   std::optional<std::size_t> limit_;
   std::optional<std::size_t> offset_;
   storage* s_{nullptr};
@@ -86,11 +77,9 @@ struct select_t {
     static_assert(std::is_member_pointer_v<decltype(in_ref_ptr)>, "join条件必须是成员指针");
     // using JoinTableType = typename std::decay_t<decltype(JoinTable::table_type)>;
     join_info_t join_info{};
-    join_info.join_table_type_index_ = std::type_index{typeid(JoinTable)};
-    join_info.type_                  = in_join_type;
-    join_info.on_condition_fun_      = [in_ptr, in_ref_ptr](const storage& s) {
-      return std::make_pair(s.get_column_name(in_ptr), s.get_column_name(in_ref_ptr));
-    };
+    join_info.join_table_name_ = s_->get_table_name<JoinTable>();
+    join_info.type_            = in_join_type;
+    join_info.condition_       = {s_->get_column_name(in_ptr), s_->get_column_name(in_ref_ptr)};
     joins_.push_back(std::move(join_info));
     return *this;
   }
@@ -104,10 +93,7 @@ struct select_t {
   }
   template <typename T>
   select_t& order_by(auto T::* in_column_fun, bool ascending = true) {
-    order_by_info_t order_by_info{};
-    order_by_info.ascending_       = ascending;
-    order_by_info.column_name_fun_ = [in_column_fun](const storage& s) { return s.get_column_name(in_column_fun); };
-    order_bys_.push_back(std::move(order_by_info));
+    order_bys_.push_back(s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
     return *this;
   }
   select_t& limit(std::size_t count) {
