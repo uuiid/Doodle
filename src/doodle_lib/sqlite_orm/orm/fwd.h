@@ -50,11 +50,11 @@ struct is_column_operations_specialization<column_operations<T>> : std::true_typ
 
 template <typename T>
 struct sqlite_statement_binder {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value);
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) const;
 };
 template <typename T>
 struct sqlite_statement_extractor {
-  T extract(sqlite3_stmt* stmt, int columnIndex);
+  T extract(sqlite3_stmt* stmt, int columnIndex) const;
 };
 
 template <typename T>

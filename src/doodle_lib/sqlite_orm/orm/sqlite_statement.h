@@ -14,7 +14,7 @@ namespace doodle::orm {
 template <typename T>
   requires std::is_arithmetic_v<T>
 struct sqlite_statement_binder<T> {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) const {
     if constexpr (std::is_integral_v<T>) {
       return sqlite3_bind_int64(stmt, index, static_cast<std::int64_t>(value));
     } else if constexpr (std::is_floating_point_v<T>) {
@@ -26,7 +26,7 @@ struct sqlite_statement_binder<T> {
 template <typename T>
   requires std::is_arithmetic_v<T>
 struct sqlite_statement_extractor<T> {
-  T extract(sqlite3_stmt* stmt, int columnIndex) {
+  T extract(sqlite3_stmt* stmt, int columnIndex) const {
     if constexpr (std::is_integral_v<T>) {
       return static_cast<T>(sqlite3_column_int64(stmt, columnIndex));
     } else if constexpr (std::is_floating_point_v<T>) {
@@ -54,14 +54,14 @@ struct sqlite_statement_printer<T> {
 // 字符串特化
 template <>
 struct sqlite_statement_binder<std::string> {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const std::string& value) {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const std::string& value) const {
     return sqlite3_bind_text(stmt, index, value.c_str(), value.size(), SQLITE_TRANSIENT);
   }
 };
 
 template <>
 struct sqlite_statement_extractor<std::string> {
-  std::string extract(sqlite3_stmt* stmt, int columnIndex) {
+  std::string extract(sqlite3_stmt* stmt, int columnIndex) const {
     const unsigned char* text = sqlite3_column_text(stmt, columnIndex);
     return text ? reinterpret_cast<const char*>(text) : "";
   }
@@ -77,7 +77,7 @@ struct sqlite_statement_printer<std::string> {
 // char* 特化
 template <>
 struct sqlite_statement_binder<const char*> {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const char* value) {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const char* value) const {
     return sqlite3_bind_text(stmt, index, value, -1, SQLITE_TRANSIENT);
   }
 };
@@ -85,13 +85,13 @@ struct sqlite_statement_binder<const char*> {
 // uuid特化
 template <>
 struct sqlite_statement_binder<uuid> {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const uuid& value) {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const uuid& value) const {
     return sqlite3_bind_blob(stmt, index, value.data(), value.size(), SQLITE_TRANSIENT);
   }
 };
 template <>
 struct sqlite_statement_extractor<uuid> {
-  uuid extract(sqlite3_stmt* stmt, int columnIndex) {
+  uuid extract(sqlite3_stmt* stmt, int columnIndex) const {
     const void* blob = sqlite3_column_blob(stmt, columnIndex);
     int size         = sqlite3_column_bytes(stmt, columnIndex);
     if (blob && size == sizeof(uuid)) {
@@ -109,4 +109,50 @@ struct sqlite_statement_printer<uuid> {
     return type;
   }
 };
+
+// 时间点特化
+template <typename Clock, typename Duration>
+struct sqlite_statement_binder<std::chrono::time_point<Clock, Duration>>
+    : sqlite_statement_binder<typename Duration::rep> {
+  int bind(sqlite3_stmt* stmt, int index, const std::chrono::time_point<Clock, Duration>& value) const {
+    return sqlite_statement_binder<typename Duration::rep>::bind(stmt, index, value.time_since_epoch().count());
+  }
+};
+template <typename Clock, typename Duration>
+struct sqlite_statement_extractor<std::chrono::time_point<Clock, Duration>>
+    : sqlite_statement_extractor<typename Duration::rep> {
+  std::chrono::time_point<Clock, Duration> extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_value = sqlite_statement_extractor<typename Duration::rep>::extract(stmt, columnIndex);
+    return std::chrono::time_point<Clock, Duration>{Duration{l_value}};
+  }
+};
+template <typename Clock, typename Duration>
+struct sqlite_statement_printer<std::chrono::time_point<Clock, Duration>> {
+  const column_type operator()() const {
+    if constexpr (std::is_floating_point_v<typename Duration::rep>) {
+      return column_type::real;
+    } else if constexpr (std::is_integral_v<typename Duration::rep>) {
+      return column_type::integer;
+    }
+  }
+};
+
+// nlohmann::json特化
+template <>
+struct sqlite_statement_binder<nlohmann::json> : sqlite_statement_binder<std::string> {
+  int bind(sqlite3_stmt* stmt, int index, const nlohmann::json& value) const {
+    auto l_json_str = value.dump();
+    return sqlite_statement_binder<std::string>::bind(stmt, index, l_json_str);
+  }
+};
+template <>
+struct sqlite_statement_extractor<nlohmann::json> : sqlite_statement_extractor<std::string> {
+  nlohmann::json extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    return l_str.empty() ? nlohmann::json{} : nlohmann::json::parse(l_str);
+  }
+};
+template <>
+struct sqlite_statement_printer<nlohmann::json> : sqlite_statement_printer<std::string> {};
+
 }  // namespace doodle::orm
