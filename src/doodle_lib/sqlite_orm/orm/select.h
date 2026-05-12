@@ -223,7 +223,8 @@ struct select_result_type : select_t {
   }
   auto end() const { return iterator_type{}; }
 
-  select_result_type& operator()();
+  select_result_type& operator()() &;
+  select_result_type operator()() &&;
 };
 
 template <typename... TableColumns>

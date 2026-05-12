@@ -35,7 +35,7 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
 }
 
 template <typename... TableColumns>
-select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()() {
+select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()() & {
   auto l_sql      = select_t::to_sql(*s_);
   auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
   l_stmt_ptr->prepare(*s_, l_sql);
@@ -44,6 +44,18 @@ select_result_type<TableColumns...>& select_result_type<TableColumns...>::operat
   }
   stmt_ = std::move(l_stmt_ptr);
   return *this;
+}
+
+template <typename... TableColumns>
+select_result_type<TableColumns...> select_result_type<TableColumns...>::operator()() && {
+  auto l_sql      = select_t::to_sql(*s_);
+  auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
+  l_stmt_ptr->prepare(*s_, l_sql);
+  for (const auto& val : wheres_->get_value_variants()) {
+    l_stmt_ptr->bind(*val);
+  }
+  stmt_ = std::move(l_stmt_ptr);
+  return std::move(*this);
 }
 
 }  // namespace doodle::orm
