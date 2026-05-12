@@ -84,7 +84,6 @@ struct column_operations {
 
  private:
   mutable std::function<std::string(const storage&)> to_sql_;
-  mutable std::function<void(sqlite_stmt&)> bind_;
 
  public:
   mutable std::vector<std::shared_ptr<storage_column_variant>> value_variant_;
