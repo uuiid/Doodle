@@ -1,12 +1,13 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
-#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 
 #include <functional>
 #include <memory>
+
 
 namespace doodle::orm {
 namespace detail {
@@ -30,11 +31,11 @@ using update_arg_type_t = typename update_arg_type<std::decay_t<T>>::type;
 
 }  // namespace detail
 
-struct update_base_t {
+struct update_t {
  private:
   friend class storage;
   template <typename... TableColumns>
-  friend update_base_t update(storage& s);
+  friend update_t update(storage& s);
 
   std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
   std::type_index from_table_type_index_{typeid(void)};
@@ -45,19 +46,19 @@ struct update_base_t {
  public:
   template <typename T>
     requires(is_column_operations_specialization_v<T>)
-  update_base_t& where(T&& condition_fun) {
+  update_t& where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
     wheres_                  = l_condition_fun_ptr;
     return *this;
   }
   template <typename FromTable>
-  update_base_t& from() {
+  update_t& from() {
     from_table_type_index_ = std::type_index{typeid(FromTable)};
     return *this;
   }
 
   template <typename... TableColumns>
-  update_base_t& set(TableColumns&&... in_columns) {
+  update_t& set(TableColumns&&... in_columns) {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       if constexpr (is_column_operations_specialization_v<column_or_struct_type>) {
@@ -93,10 +94,8 @@ struct update_base_t {
   void operator()();
 };
 
-using update_t = update_base_t;
-
 template <typename... TableColumns>
-update_base_t update(storage& s) {
+update_t update(storage& s) {
   static_assert(sizeof...(TableColumns) > 0, "至少需要更新一个列");
   update_t l_update{};
   l_update.s_ = &s;
