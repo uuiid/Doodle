@@ -117,7 +117,7 @@ struct column_operations : column_operations_base_t {
   }
 
   std::string to_sql(const storage& s) const override {
-    auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, false);
+    auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, true);
     return fmt::vformat(data_impl_ptr_->fmt_str_, fmt::make_format_args(column_name));
   }
 
