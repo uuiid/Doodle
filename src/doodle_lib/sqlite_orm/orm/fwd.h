@@ -50,17 +50,11 @@ struct is_column_operations_specialization<column_operations<T>> : std::true_typ
 
 template <typename T>
 struct sqlite_statement_binder {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) {
-    static_assert(always_false<T>, "没有为该类型定义绑定器");
-    return -1;
-  }
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value);
 };
 template <typename T>
 struct sqlite_statement_extractor {
-  T extract(sqlite3_stmt* stmt, int columnIndex) {
-    static_assert(always_false<T>, "没有为该类型定义提取器");
-    return T{};
-  }
+  T extract(sqlite3_stmt* stmt, int columnIndex);
 };
 
 template <typename T>
@@ -120,11 +114,7 @@ enum class join_type {
 
 template <typename T>
 struct sqlite_statement_printer {
-  const column_type operator()() const {
-    static_assert(always_false<T>, "没有为该类型定义打印器");
-    static column_type type = column_type::null;
-    return type;
-  }
+  const column_type operator()() const;
 };
 
 template <typename T, typename Tuple>

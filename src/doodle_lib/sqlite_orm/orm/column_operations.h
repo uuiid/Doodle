@@ -95,7 +95,7 @@ struct column_operations {
   // to sql operator
   std::string to_sql(const storage& s) const {
     auto column_name = s.template get_column_name<T>(*ptr_shared_, false);
-    return fmt::format(fmt_str_, column_name);
+    return fmt::vformat(fmt_str_, fmt::make_format_args(column_name));
   }
   // 创建bind参数
   void bind(sqlite_stmt& stmt) const {
