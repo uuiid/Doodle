@@ -19,6 +19,7 @@ struct insert_t {
 
   std::vector<std::string> columns_;
   std::vector<storage_column_variant> values_;
+  std::int32_t batch_size_{1};
   std::shared_ptr<column_operations_base_t> wheres_;
 
   std::string into_table_name_;
@@ -48,9 +49,7 @@ struct insert_t {
           columns_.push_back(l_column.ptr_.name_);
           values_.push_back(
               std::visit(
-                  [&in_column](auto&& column_ptr) -> storage_column_variant {
-                    return in_column.obj_.*(column_ptr);
-                  },
+                  [&in_column](auto&& column_ptr) -> storage_column_variant { return in_column.obj_.*(column_ptr); },
                   l_column.ptr_.ptr_
               )
           );
@@ -62,6 +61,38 @@ struct insert_t {
     (l_iter_fun(in_columns), ...);
     return *this;
   }
+  template <typename T>
+  insert_t& set_range(std::vector<T>&& values) {
+    if (values.empty()) return *this;  // 如果没有值，直接返回
+    if (values.size() > 100)
+      throw std::runtime_error("set_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
+
+    using value_type    = std::decay_t<T>;
+    using Table         = value_type;
+    auto l_table_cloums = s_->template get_table_columns<Table>();
+    column_info<Table> l_primary_key_{};
+    for (const auto& l_column : l_table_cloums) {
+      if (l_column.primary_key_) {  // 跳过主键列
+        l_primary_key_ = l_column;
+        continue;
+      }
+      columns_.push_back(l_column.ptr_.name_);
+    }
+    for (const auto& value : values) {
+      for (const auto& l_column : l_table_cloums) {
+        if (l_column.primary_key_) continue;  // 跳过主键列
+        values_.push_back(
+            std::visit(
+                [&value](auto&& column_ptr) -> storage_column_variant { return value.*(column_ptr); },
+                l_column.ptr_.ptr_
+            )
+        );
+      }
+    }
+    batch_size_ = static_cast<std::int32_t>(values.size());
+    return *this;
+  }
+
   template <typename T>
     requires(is_column_operations_specialization_v<T>)
   insert_t& where(T&& condition_fun) {
