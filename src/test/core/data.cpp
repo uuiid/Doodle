@@ -104,14 +104,19 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   l_reg.finalize();
   l_reg.open();
   l_reg.sync_schema();
+  auto l_uuid = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
+  insert(l_reg).into<asset_type>().set(c(&asset_type::uuid_id_) = l_uuid, c(&asset_type::name_) = "test")();
+  insert(l_reg)
+      .into<entity>()
+      .set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "tset", c(&entity::entity_type_id_) = l_uuid)();
 
-  insert(l_reg).into<entity>().set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "tset")();
-
-  for (auto&& row : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
-                        .from<entity>()
-                        .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
-                        .where(c(&entity::name_) == "test")
-                        .order_by (&entity::uuid_id_)()) {
+  for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
+                                          .from<entity>()
+                                          .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+                                          .where(c(&entity::name_) == "test")
+                                          .order_by (&entity::uuid_id_)()) {
+    fmt::print("uuid_id: {}\n", uuid_id);
+    fmt::print("asset_type name: {}\n", asset_type.name_);
   }
 }
 

@@ -17,7 +17,6 @@
 #include <variant>
 #include <vector>
 
-
 namespace doodle::orm {
 
 template <typename T>
@@ -104,6 +103,9 @@ void storage::reg_foreign_key(
   l_fk.on_delete_ = on_delete;
   l_fk.on_update_ = on_update;
   l_self_table.foreign_keys_.push_back(std::move(l_fk));
+  // 生成索引以优化外键约束的性能
+  reg_index<T>(fmt::format("idx_{}_{}", l_self_table.name_, l_fk.ptr_), in_ptr);
+  reg_index<T2>(fmt::format("idx_{}_{}", l_ref_table.name_, l_fk.ref_ptr_), in_ref_ptr);
 }
 template <typename T>
 void storage::reg_index(std::string&& in_name, auto T::* in_ptr) {
