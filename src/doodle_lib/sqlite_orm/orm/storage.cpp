@@ -37,9 +37,10 @@ std::int32_t sqlite_stmt::bind(const storage_column_variant& value) {
 
 void sqlite_stmt::step() {
   auto l_r = sqlite3_step(stmt_);
-
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
+
+std::int32_t sqlite_stmt::step_not_throw() { return sqlite3_step(stmt_); }
 
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 

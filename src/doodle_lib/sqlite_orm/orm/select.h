@@ -135,7 +135,7 @@ struct select_result_type_iterator {
   void next() {
     if (is_end_ || !stmt_) return is_end_ = true, void();
 
-    const auto l_rc = sqlite3_step(stmt_->stmt_);
+    const auto l_rc = stmt_->step_not_throw();
     if (l_rc == SQLITE_ROW) return is_end_ = false, void();
     if (l_rc == SQLITE_DONE) return is_end_ = true, void();
 

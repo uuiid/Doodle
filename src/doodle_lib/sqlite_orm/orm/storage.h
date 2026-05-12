@@ -177,6 +177,7 @@ struct sqlite_stmt {
 
   std::int32_t bind(const storage_column_variant& value);
   void step();
+  std::int32_t step_not_throw();
 };
 
 class storage {

@@ -41,8 +41,8 @@ select_result_type<TableColumns...>& select_result_type<TableColumns...>::operat
   auto l_sql      = select_t::to_sql(*s_);
   auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
   l_stmt_ptr->prepare(*s_, l_sql);
-  if (wheres_) {
-    wheres_->bind(*l_stmt_ptr);
+  for (const auto& val : wheres_->get_value_variants()) {
+    l_stmt_ptr->bind(*val);
   }
   stmt_ = std::move(l_stmt_ptr);
   return *this;
