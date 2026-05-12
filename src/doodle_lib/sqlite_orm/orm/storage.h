@@ -45,7 +45,8 @@ struct foreign_key_info {
 
 struct index_info {
   std::string name_;
-  std::string ptr_{};
+  std::string table_name_;
+  std::string column_name_;
 };
 
 struct unique_index_info {

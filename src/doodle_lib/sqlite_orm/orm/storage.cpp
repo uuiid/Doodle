@@ -68,6 +68,12 @@ void storage::sync_schema() {
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
     l_stmt.step();
   }
+  for (const auto& index : indexes_) {
+    auto l_create_index_sql =
+        fmt::format("CREATE INDEX IF NOT EXISTS {} ON {} ({})", index.name_, index.table_name_, index.column_name_);
+    auto l_stmt = sqlite_stmt(*this, l_create_index_sql);
+    l_stmt.step();
+  }
 }
 
 storage::~storage() { ::sqlite3_close_v2(db_); }

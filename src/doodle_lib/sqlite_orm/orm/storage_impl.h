@@ -6,15 +6,12 @@
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include <atomic>
 #include <map>
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
-#include <type_traits>
 #include <typeindex>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace doodle::orm {
@@ -114,8 +111,9 @@ void storage::reg_index(std::string&& in_name, auto T::* in_ptr) {
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   index_info l_index{};
-  l_index.name_ = std::move(in_name);
-  l_index.ptr_  = l_table.find_column_info(in_ptr).ptr_.name_;
+  l_index.name_        = std::move(in_name);
+  l_index.table_name_  = l_table.name_;
+  l_index.column_name_ = l_table.find_column_info(in_ptr).ptr_.name_;
   indexes_.push_back(std::move(l_index));
 }
 template <typename T>
