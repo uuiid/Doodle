@@ -8,7 +8,6 @@
 #include <functional>
 #include <memory>
 
-
 namespace doodle::orm {
 namespace detail {
 template <typename T>
@@ -89,6 +88,7 @@ struct update_t {
     };
 
     (l_iter_fun(in_columns), ...);
+    return *this;
   }
 
   void operator()();

@@ -8,6 +8,7 @@
 #include "doodle_lib/core/core_set.h"
 #include "doodle_lib/core/global_function.h"
 #include "doodle_lib/http_client/kitsu_client.h"
+#include "doodle_lib/sqlite_orm/orm/update.h"
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/http_client_core.h>
 #include <doodle_lib/http_client/kitsu_client.h>
@@ -110,6 +111,15 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .into<entity>()
       .set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "test", c(&entity::entity_type_id_) = l_uuid)();
 
+  for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
+                                          .from<entity>()
+                                          .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+                                          .where(c(&entity::name_) == "test")
+                                          .order_by (&entity::uuid_id_)()) {
+    BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
+    BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
+  }
+  update<asset_type>(l_reg).set(c(&asset_type::name_) = "updated_name").where(c(&asset_type::uuid_id_) == l_uuid)();
   for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
