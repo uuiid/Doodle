@@ -192,6 +192,8 @@ class storage {
 
   friend struct sqlite_stmt;
   friend struct select_t;
+  friend struct insert_t;
+  friend struct update_t;
 
   std::atomic_bool finalized_{false};
   FSys::path db_path_;
