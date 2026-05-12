@@ -43,6 +43,8 @@ struct update_base_t {
     from_table_type_index_ = std::type_index{typeid(FromTable)};
     return *this;
   }
+
+  void operator()(storage& s);
 };
 
 struct update_object_t {
@@ -59,6 +61,7 @@ struct update_object_t {
     wheres_.bind_fun_ = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
     return *this;
   }
+  void operator()(storage& s);
 };
 
 using update_t = update_base_t;

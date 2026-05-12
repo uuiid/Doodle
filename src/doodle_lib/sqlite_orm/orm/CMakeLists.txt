@@ -15,4 +15,5 @@ target_sources(
         storage.cpp
         column_operations.cpp
         select.cpp
+        update.cpp
 )
