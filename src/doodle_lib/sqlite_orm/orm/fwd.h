@@ -145,9 +145,8 @@ template <typename Table>
 struct object_t {
   using table_type = Table;
   table_type obj_;
-  const storage* s_{nullptr};
   object_t() = default;
-  explicit object_t(const table_type& obj, const storage& s) : obj_(obj), s_(std::addressof(s)) {}
+  explicit object_t(const table_type& obj) : obj_(obj) {}
   operator std::type_index() const { return std::type_index{typeid(Table)}; }
 };
 
@@ -156,8 +155,8 @@ auto object() {
   return object_t<Table>{};
 }
 template <typename Table>
-auto object(const Table& obj, const storage& s) {
-  return object_t<Table>{obj, s};
+auto object(const Table& obj) {
+  return object_t<Table>{obj};
 }
 
 template <typename T>
