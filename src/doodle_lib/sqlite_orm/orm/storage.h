@@ -223,9 +223,6 @@ class storage {
   template <typename T>
   const std::vector<column_info<T>>& get_table_columns() const;
 
-  template <typename T>
-  auto operator()(T&& in_sql) -> decltype(in_sql(std::declval<storage&>()));
-
  private:
   template <typename T, typename T2>
   void reg_foreign_key(

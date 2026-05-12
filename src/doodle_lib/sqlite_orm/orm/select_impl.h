@@ -37,13 +37,13 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
 }
 
 template <typename... TableColumns>
-select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()(storage& s) {
-  auto l_sql      = select_t::to_sql(s);
+select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()() {
+  auto l_sql      = select_t::to_sql(*s_);
   auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
-  l_stmt_ptr->prepare(s, l_sql);
-  wheres_.bind(*l_stmt_ptr);
-
-  s_    = &s;
+  l_stmt_ptr->prepare(*s_, l_sql);
+  if (wheres_) {
+    wheres_->bind(*l_stmt_ptr);
+  }
   stmt_ = std::move(l_stmt_ptr);
   return *this;
 }

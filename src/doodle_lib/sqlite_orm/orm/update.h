@@ -69,7 +69,7 @@ struct update_base_t {
 using update_t = update_base_t;
 
 template <typename... TableColumns>
-auto update(TableColumns... in_columns) {
+auto update(storage& s, TableColumns... in_columns) {
   static_assert(sizeof...(TableColumns) > 0, "至少需要更新一个列");
   update_t l_update{};
   auto l_iter_fun = [&l_update](auto&& in_column) {

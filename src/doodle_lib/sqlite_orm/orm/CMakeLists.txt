@@ -5,6 +5,7 @@ target_sources(
         fwd.h
         select.h
         update.h
+        insert.h
         orm.h   
         sqlite_statement.h
         

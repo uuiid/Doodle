@@ -124,12 +124,6 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
 }
 
 template <typename T>
-
-auto storage::operator()(T&& in_sql) -> decltype(in_sql(std::declval<storage&>())) {
-  return in_sql(*this);
-}
-
-template <typename T>
 template <typename RefTable>
 table_info<T>& table_info<T>::add_foreign_key(
     std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete,

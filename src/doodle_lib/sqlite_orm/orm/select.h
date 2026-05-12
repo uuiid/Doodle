@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "sqlite_orm/orm/column_operations.h"
 #include <fmt/format.h>
 #include <functional>
 #include <iterator>
@@ -13,7 +14,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace doodle::orm {
@@ -66,10 +66,11 @@ struct select_t {
   std::function<std::vector<std::string>(const storage&)> get_column_names_fun_;
   std::type_index from_table_type_index_{typeid(void)};
   std::vector<join_info_t> joins_;
-  where_info_t wheres_;
+  std::shared_ptr<column_operations_base_t> wheres_;
   std::vector<order_by_info_t> order_bys_;
   std::optional<std::size_t> limit_;
   std::optional<std::size_t> offset_;
+  storage* s_{nullptr};
 
  public:
   template <typename FromTable>
@@ -97,10 +98,7 @@ struct select_t {
     requires(is_column_operations_specialization_v<T>)
   select_t& where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
-    wheres_.condition_fun_   = [l_condition_fun_ptr](const storage& s) {
-      return fmt::format("WHERE {}", l_condition_fun_ptr->to_sql(s));
-    };
-    wheres_.bind_fun_ = [l_condition_fun_ptr](sqlite_stmt& stmt) { l_condition_fun_ptr->bind(stmt); };
+    wheres_                  = l_condition_fun_ptr;
     return *this;
   }
   template <typename T>
@@ -240,15 +238,14 @@ struct select_result_type : select_t {
   }
   auto end() const { return iterator_type{}; }
 
-  select_result_type& operator()(storage& s);
+  select_result_type& operator()();
 };
 
-// 将select(&Table::column1, &Table::column2, object<Table2>()) 转换为
-// select_t<uuid, std::string, Table2>
 template <typename... TableColumns>
-auto select(TableColumns... in_columns) -> select_result_type<detail::select_arg_type_t<TableColumns>...> {
+auto select(storage& s, TableColumns... in_columns) -> select_result_type<detail::select_arg_type_t<TableColumns>...> {
   static_assert(sizeof...(TableColumns) > 0, "至少需要选择一个列");
   select_result_type<detail::select_arg_type_t<TableColumns>...> l_ret{};
+  l_ret.s_                    = &s;
   l_ret.get_column_names_fun_ = [columns = std::make_tuple(in_columns...)](const storage& s) {
     std::vector<std::string> column_names;
     auto l_iter_fun = [&s, &column_names](auto&& column) {

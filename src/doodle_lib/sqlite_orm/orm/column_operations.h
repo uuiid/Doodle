@@ -4,6 +4,7 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "fwd.h"
 #include <functional>
 #include <memory>
 #include <string>
@@ -16,37 +17,53 @@ enum class compare_operator {
   or_,
 
 };
-// and 运算符
-struct operator_compare_t {
-  compare_operator op_;
-  std::function<std::string(const storage&)> left_;
-  std::function<std::string(const storage&)> right_;
-  std::function<void(sqlite_stmt&)> bind_left_;
-  std::function<void(sqlite_stmt&)> bind_right_;
 
-  std::string to_sql(const storage& s) const;
-  void bind(sqlite_stmt& stmt) const;
+struct column_operations_base_t {
+ protected:
+  column_operations_base_t() = default;
+
+ public:
+  // to sql operator
+  virtual std::string to_sql(const storage& s) const                                             = 0;
+  // 创建bind参数
+  virtual void bind(sqlite_stmt& stmt) const                                                     = 0;
+  virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
+};
+
+// and 运算符
+struct operator_compare_t : public column_operations_base_t {
+  struct data_impl {
+    compare_operator op_;
+    std::shared_ptr<column_operations_base_t> left_;
+    std::shared_ptr<column_operations_base_t> right_;
+    std::vector<std::shared_ptr<storage_column_variant>> cached_variants_;
+  };
+  std::shared_ptr<data_impl> data_impl_ptr_;
+  operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
+
+
+
+  std::string to_sql(const storage& s) const override;
+  void bind(sqlite_stmt& stmt) const override;
+  const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override;
+
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
   operator_compare_t operator&&(operator_compare_t&& other) const {
     operator_compare_t compare{};
-    auto l_self_ptr     = std::make_shared<operator_compare_t>(std::move(*this));
-    auto l_other_ptr    = std::make_shared<operator_compare_t>(other);
-    compare.op_         = compare_operator::and_;
-    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
-    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
-    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
-    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    auto l_self_ptr             = std::make_shared<operator_compare_t>(std::move(*this));
+    auto l_other_ptr            = std::make_shared<operator_compare_t>(other);
+    compare.data_impl_ptr_->op_ = compare_operator::and_;
+    compare.data_impl_ptr_->left_ = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
   operator_compare_t operator||(operator_compare_t&& other) const {
     operator_compare_t compare{};
     auto l_self_ptr     = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr    = std::make_shared<operator_compare_t>(other);
-    compare.op_         = compare_operator::or_;
-    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
-    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
-    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
-    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    compare.data_impl_ptr_->op_ = compare_operator::or_;
+    compare.data_impl_ptr_->left_ = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
   // operator &&, || column_operations
@@ -56,11 +73,9 @@ struct operator_compare_t {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
     operator_compare_t compare{};
-    compare.op_         = compare_operator::and_;
-    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
-    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
-    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
-    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    compare.data_impl_ptr_->op_ = compare_operator::and_;
+    compare.data_impl_ptr_->left_ = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
   template <typename U>
@@ -69,37 +84,42 @@ struct operator_compare_t {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
     operator_compare_t compare{};
-    compare.op_         = compare_operator::or_;
-    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
-    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
-    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
-    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    compare.data_impl_ptr_->op_ = compare_operator::or_;
+    compare.data_impl_ptr_->left_ = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
 };
 
 template <typename T>
-struct column_operations {
+struct column_operations : column_operations_base_t {
   using column_ptr_type = table_columns_t<T>;
-  std::shared_ptr<column_ptr_type> ptr_shared_;
 
  private:
-  mutable std::string fmt_str_;
+  struct data_impl {
+    std::shared_ptr<column_ptr_type> ptr_shared_;
+    std::string fmt_str_;
+    std::vector<std::shared_ptr<storage_column_variant>> value_variant_;
+  };
+  std::shared_ptr<data_impl> data_impl_ptr_;
 
  public:
-  mutable std::vector<std::shared_ptr<storage_column_variant>> value_variant_;
-
-  explicit column_operations(auto T::* in_ptr) : ptr_shared_(std::make_shared<column_ptr_type>(in_ptr)) {}
-  explicit column_operations(const column_ptr_type& in_column)
-      : ptr_shared_(std::make_shared<column_ptr_type>(in_column)) {}
-  // to sql operator
-  std::string to_sql(const storage& s) const {
-    auto column_name = s.template get_column_name<T>(*ptr_shared_, false);
-    return fmt::vformat(fmt_str_, fmt::make_format_args(column_name));
+  explicit column_operations(auto T::* in_ptr) : data_impl_ptr_(std::make_shared<data_impl>()) {
+    data_impl_ptr_->ptr_shared_ = std::make_shared<column_ptr_type>(in_ptr);
   }
-  // 创建bind参数
-  void bind(sqlite_stmt& stmt) const {
-    for (const auto& value : value_variant_) {
+  explicit column_operations(const column_ptr_type& in_column) : data_impl_ptr_(std::make_shared<data_impl>()) {
+    data_impl_ptr_->ptr_shared_ = std::make_shared<column_ptr_type>(in_column);
+  }
+  const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override {
+    return data_impl_ptr_->value_variant_;
+  }
+  std::string to_sql(const storage& s) const override {
+    auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, false);
+    return fmt::vformat(data_impl_ptr_->fmt_str_, fmt::make_format_args(column_name));
+  }
+
+  void bind(sqlite_stmt& stmt) const override {
+    for (const auto& value : data_impl_ptr_->value_variant_) {
       std::visit(
           [&stmt](auto&& arg) {
             sqlite_statement_binder<std::decay_t<decltype(arg)>>{}.bind(stmt.stmt_, stmt.get_bind_index(), arg);
@@ -113,16 +133,16 @@ struct column_operations {
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   column_operations operator=(U&& value) const {
-    fmt_str_ = "{} = ?";
+    data_impl_ptr_->fmt_str_ = "{} = ?";
     if constexpr (std::is_convertible_v<U, std::string>) {
-      value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
     } else {
-      value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     }
     return *this;
   }
   column_operations operator=(std::nullptr_t) const {
-    fmt_str_ = "{} = NULL";
+    data_impl_ptr_->fmt_str_ = "{} = NULL";
     return *this;
   }
 
@@ -131,21 +151,21 @@ struct column_operations {
   auto operator==(U&& value) const {
     // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
     if constexpr (std::is_convertible_v<U, std::string>) {
-      value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
     } else {
-      value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     }
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator!=(U&& value) const {
-    fmt_str_ = "{} != ?";
+    data_impl_ptr_->fmt_str_ = "{} != ?";
     // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
     if constexpr (std::is_convertible_v<U, std::string>) {
-      value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
     } else {
-      value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     }
     return *this;
   }
@@ -153,40 +173,40 @@ struct column_operations {
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator>(U&& value) const {
-    fmt_str_ = "{} > ?";
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    data_impl_ptr_->fmt_str_ = "{} > ?";
+    data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator<(U&& value) const {
-    fmt_str_ = "{} < ?";
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    data_impl_ptr_->fmt_str_ = "{} < ?";
+    data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator>=(U&& value) const {
-    fmt_str_ = "{} >= ?";
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    data_impl_ptr_->fmt_str_ = "{} >= ?";
+    data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator<=(U&& value) const {
-    fmt_str_ = "{} <= ?";
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+    data_impl_ptr_->fmt_str_ = "{} <= ?";
+    data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   // operator !
   auto operator!() const {
-    fmt_str_ = "NOT ({})";
+    data_impl_ptr_->fmt_str_ = "NOT ({})";
     return *this;
   }
   // operator like
   auto like(std::string_view pattern) const {
-    fmt_str_ = "{} LIKE ?";
-    value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{pattern}));
+    data_impl_ptr_->fmt_str_ = "{} LIKE ?";
+    data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{pattern}));
     return *this;
   }
   // operator in
@@ -195,12 +215,13 @@ struct column_operations {
   auto in(const Container& values) const {
     auto l_size = std::ranges::distance(values);
     if (l_size == 0) {
-      fmt_str_ = "{} IN (NULL)";
+      data_impl_ptr_->fmt_str_ = "{} IN (NULL)";
       return *this;
     }
     std::vector<char> placeholders(l_size, '?');
-    fmt_str_ = fmt::format("{{}} IN ({})", fmt::join(placeholders, ", "));
-    for (const auto& value : values) value_variant_.push_back(std::make_shared<storage_column_variant>(value));
+    data_impl_ptr_->fmt_str_ = fmt::format("{{}} IN ({})", fmt::join(placeholders, ", "));
+    for (const auto& value : values)
+      data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(value));
 
     return *this;
   }
@@ -212,12 +233,9 @@ struct column_operations {
     auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
     operator_compare_t compare{};
-    compare.op_         = compare_operator::and_;
-    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
-    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
-
-    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
-    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    compare.data_impl_ptr_->op_    = compare_operator::and_;
+    compare.data_impl_ptr_->left_  = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
   template <typename U>
@@ -226,12 +244,9 @@ struct column_operations {
     auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
     operator_compare_t compare{};
-    compare.op_         = compare_operator::or_;
-    compare.left_       = [l_self_ptr](const storage& s) { return l_self_ptr->to_sql(s); };
-    compare.right_      = [l_other_ptr](const storage& s) { return l_other_ptr->to_sql(s); };
-
-    compare.bind_left_  = [l_self_ptr](sqlite_stmt& stmt) { l_self_ptr->bind(stmt); };
-    compare.bind_right_ = [l_other_ptr](sqlite_stmt& stmt) { l_other_ptr->bind(stmt); };
+    compare.data_impl_ptr_->op_    = compare_operator::or_;
+    compare.data_impl_ptr_->left_  = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
 };
