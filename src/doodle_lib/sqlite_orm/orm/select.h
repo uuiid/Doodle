@@ -64,7 +64,7 @@ struct select_t {
   };
 
   // 结果类型
-  std::function<std::vector<std::string>(const storage&)> get_column_names_fun_;
+  std::vector<std::string> column_names_;
   std::type_index from_table_type_index_{typeid(void)};
   std::vector<join_info_t> joins_;
   std::shared_ptr<column_operations_base_t> wheres_;
@@ -246,28 +246,23 @@ template <typename... TableColumns>
 auto select(storage& s, TableColumns... in_columns) -> select_result_type<detail::select_arg_type_t<TableColumns>...> {
   static_assert(sizeof...(TableColumns) > 0, "至少需要选择一个列");
   select_result_type<detail::select_arg_type_t<TableColumns>...> l_ret{};
-  l_ret.s_                    = &s;
-  l_ret.get_column_names_fun_ = [columns = std::make_tuple(in_columns...)](const storage& s) {
-    std::vector<std::string> column_names;
-    auto l_iter_fun = [&s, &column_names](auto&& column) {
-      // 处理每个参数
-      // 如果是成员指针，获取列名
-      if constexpr (std::is_member_pointer_v<std::decay_t<decltype(column)>>) {
-        column_names.push_back(s.get_column_name(column));
-      } else if constexpr (std::is_same_v<
-                               std::decay_t<decltype(column)>, object_t<detail::select_arg_type_t<decltype(column)>>>) {
-        // 如果是object<Table>，获取表的所有列名
-        using table_type        = detail::select_arg_type_t<decltype(column)>;
-        auto table_column_names = s.get_table_column_names<table_type>();
-        column_names.insert(column_names.end(), table_column_names.begin(), table_column_names.end());
-      } else {
-        static_assert(always_false<decltype(column)>, "不支持的参数类型");
-      }
-    };
-
-    std::apply([&](auto&&... column) { (l_iter_fun(column), ...); }, columns);
-    return column_names;
+  l_ret.s_        = &s;
+  auto l_iter_fun = [&s, &l_ret](auto&& column) {
+    // 处理每个参数
+    // 如果是成员指针，获取列名
+    if constexpr (std::is_member_pointer_v<std::decay_t<decltype(column)>>) {
+      l_ret.column_names_.push_back(s.get_column_name(column));
+    } else if constexpr (std::is_same_v<
+                             std::decay_t<decltype(column)>, object_t<detail::select_arg_type_t<decltype(column)>>>) {
+      // 如果是object<Table>，获取表的所有列名
+      using table_type        = detail::select_arg_type_t<decltype(column)>;
+      auto table_column_names = s.get_table_column_names<table_type>();
+      l_ret.column_names_.insert(l_ret.column_names_.end(), table_column_names.begin(), table_column_names.end());
+    } else {
+      static_assert(always_false<decltype(column)>, "不支持的参数类型");
+    }
   };
+  (l_iter_fun(in_columns), ...);
   return l_ret;
 }
 
