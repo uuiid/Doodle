@@ -199,7 +199,7 @@ struct column_operations {
       return *this;
     }
     std::vector<char> placeholders(l_size, '?');
-    fmt_str_ = fmt::format("{} IN ({})", "{}", fmt::join(placeholders, ", "));
+    fmt_str_ = fmt::format("{{}} IN ({})", fmt::join(placeholders, ", "));
     for (const auto& value : values) value_variant_.push_back(std::make_shared<storage_column_variant>(value));
 
     return *this;
