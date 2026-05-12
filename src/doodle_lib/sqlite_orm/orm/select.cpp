@@ -15,14 +15,9 @@ std::string select_t::to_sql(const storage& s) const {
         " {} {} ON {} = {}", join.type_, join.join_table_name_, join.condition_.first, join.condition_.second
     );
   }
-  std::vector<std::string> l_order_by_clauses;
-  l_order_by_clauses.reserve(order_bys_.size());
-  for (const auto& order_by : order_bys_) {
-    l_order_by_clauses.push_back(order_by(s));
-  }
-  std::string l_order_by_sql =
-      l_order_by_clauses.empty() ? "" : fmt::format(" ORDER BY {}", fmt::join(l_order_by_clauses, ", "));
-  std::string l_limit_sql = limit_ ? fmt::format(" LIMIT {}", *limit_) : "";
+
+  std::string l_order_by_sql = order_bys_.empty() ? "" : fmt::format(" ORDER BY {}", fmt::join(order_bys_, ", "));
+  std::string l_limit_sql    = limit_ ? fmt::format(" LIMIT {}", *limit_) : "";
   l_limit_sql += offset_ ? fmt::format(" OFFSET {}", *offset_) : "";
 
   std::string l_sql = fmt::format(
