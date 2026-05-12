@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace doodle::orm {
 namespace detail {
@@ -37,10 +38,13 @@ struct update_t {
   friend update_t update(storage& s);
 
   std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
-  std::type_index from_table_type_index_{typeid(void)};
+  std::string from_table_name_;
 
   std::shared_ptr<column_operations_base_t> wheres_;
   storage* s_{nullptr};
+  std::shared_ptr<sqlite_stmt> stmt_;
+
+  std::vector<std::shared_ptr<storage_column_variant>> bind_variants_{};
 
  public:
   template <typename T>
@@ -52,7 +56,7 @@ struct update_t {
   }
   template <typename FromTable>
   update_t& from() {
-    from_table_type_index_ = std::type_index{typeid(FromTable)};
+    from_table_name_ = s_->get_table_name<FromTable>();
     return *this;
   }
 
@@ -91,7 +95,8 @@ struct update_t {
     return *this;
   }
 
-  void operator()();
+  update_t& operator()() &;
+  update_t operator()() &&;
 };
 
 template <typename... TableColumns>

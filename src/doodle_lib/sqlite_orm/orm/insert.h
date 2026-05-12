@@ -7,6 +7,7 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include "fwd.h"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,7 @@ struct insert_t {
   friend auto insert(storage& s) -> insert_t;
 
   std::vector<std::string> columns_;
-  std::vector<storage_column_variant> values_;
+  std::vector<std::shared_ptr<storage_column_variant>> values_;
   std::int32_t batch_size_{1};
   std::shared_ptr<column_operations_base_t> wheres_;
 
@@ -36,10 +37,8 @@ struct insert_t {
         const auto& value_variants = in_column.get_value_variants();
         if (value_variants.size() != 1)
           throw std::runtime_error("Only single value is supported for column operations in insert set");
+        values_.push_back(value_variants.front());
 
-        for (const auto& v : value_variants) {
-          values_.push_back(*v);
-        }
       } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
         using Table         = column_or_struct_type;
         auto l_table_cloums = s_->template get_table_columns<Table>();
@@ -48,10 +47,10 @@ struct insert_t {
           if (l_column.primary_key_) continue;  // 跳过主键列
           columns_.push_back(l_column.ptr_.name_);
           values_.push_back(
-              std::visit(
+              std::make_shared<storage_column_variant>(std::visit(
                   [&in_column](auto&& column_ptr) -> storage_column_variant { return in_column.obj_.*(column_ptr); },
                   l_column.ptr_.ptr_
-              )
+              ))
           );
         }
       } else {

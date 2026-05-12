@@ -20,7 +20,7 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
       for (auto&& table_column_ptr : s_->get_table_columns<column_or_struct_type>()) {
         std::visit(
             [&](auto&& column_ptr) {
-              using column_type = member_type_t<std::decay_t<decltype(column_ptr)>>;
+              using column_type     = member_type_t<std::decay_t<decltype(column_ptr)>>;
               in_column.*column_ptr = stmt_->get_column_value<column_type>(l_column_index++);
             },
             table_column_ptr.ptr_.ptr_
@@ -48,13 +48,7 @@ select_result_type<TableColumns...>& select_result_type<TableColumns...>::operat
 
 template <typename... TableColumns>
 select_result_type<TableColumns...> select_result_type<TableColumns...>::operator()() && {
-  auto l_sql      = select_t::to_sql(*s_);
-  auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
-  l_stmt_ptr->prepare(*s_, l_sql);
-  for (const auto& val : wheres_->get_value_variants()) {
-    l_stmt_ptr->bind(*val);
-  }
-  stmt_ = std::move(l_stmt_ptr);
+  (void)operator()();
   return std::move(*this);
 }
 

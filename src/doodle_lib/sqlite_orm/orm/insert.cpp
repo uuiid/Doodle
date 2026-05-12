@@ -17,7 +17,7 @@ insert_t& insert_t::operator()() {
     stmt_->prepare(*s_, l_sql);
   }
   for (size_t i = 0; i < values_.size(); ++i) {
-    stmt_->bind(values_[i]);
+    stmt_->bind(*values_[i]);
   }
   stmt_->step();
   return *this;

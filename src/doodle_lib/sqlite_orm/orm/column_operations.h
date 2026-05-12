@@ -23,7 +23,7 @@ struct column_operations_base_t {
 
  public:
   // to sql operator
-  virtual std::string to_sql(const storage& s) const                                             = 0;
+  virtual std::string to_sql(const storage& s, bool include_table_name) const                    = 0;
   // 创建bind参数
   virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
   virtual std::string get_column_name(const storage& s) const                                    = 0;
@@ -40,7 +40,7 @@ struct operator_compare_t : public column_operations_base_t {
   std::shared_ptr<data_impl> data_impl_ptr_;
   operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
 
-  std::string to_sql(const storage& s) const override;
+  std::string to_sql(const storage& s, bool include_table_name) const override;
   const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override;
   std::string get_column_name(const storage& s) const override {
     // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
@@ -116,8 +116,8 @@ struct column_operations : column_operations_base_t {
     return data_impl_ptr_->value_variant_;
   }
 
-  std::string to_sql(const storage& s) const override {
-    auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, true);
+  std::string to_sql(const storage& s, bool include_table_name) const override {
+    auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, include_table_name);
     return fmt::vformat(data_impl_ptr_->fmt_str_, fmt::make_format_args(column_name));
   }
 

@@ -3,10 +3,10 @@
 #include <fmt/format.h>
 
 namespace doodle::orm {
-std::string operator_compare_t::to_sql(const storage& s) const {
+std::string operator_compare_t::to_sql(const storage& s, bool include_table_name) const {
   return fmt::format(
-      "({} {} {})", data_impl_ptr_->left_->to_sql(s), static_cast<int>(data_impl_ptr_->op_),
-      data_impl_ptr_->right_->to_sql(s)
+      "({} {} {})", data_impl_ptr_->left_->to_sql(s, include_table_name), data_impl_ptr_->op_,
+      data_impl_ptr_->right_->to_sql(s, include_table_name)
   );
 }
 
