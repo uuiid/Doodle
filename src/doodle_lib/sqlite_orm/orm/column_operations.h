@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -83,7 +84,7 @@ struct column_operations {
   std::shared_ptr<column_ptr_type> ptr_shared_;
 
  private:
-  mutable std::function<std::string(const storage&)> to_sql_;
+  mutable std::string fmt_str_;
 
  public:
   mutable std::vector<std::shared_ptr<storage_column_variant>> value_variant_;
@@ -93,10 +94,8 @@ struct column_operations {
       : ptr_shared_(std::make_shared<column_ptr_type>(in_column)) {}
   // to sql operator
   std::string to_sql(const storage& s) const {
-    if (!to_sql_) {
-      throw std::runtime_error("No operation specified for this column");
-    }
-    return to_sql_(s);
+    auto column_name = s.template get_column_name<T>(*ptr_shared_, false);
+    return fmt::format(fmt_str_, column_name);
   }
   // 创建bind参数
   void bind(sqlite_stmt& stmt) const {
@@ -114,9 +113,7 @@ struct column_operations {
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   column_operations operator=(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} = ?", s.template get_column_name<T>(*ptr, false));
-    };
+    fmt_str_ = "{} = ?";
     if constexpr (std::is_convertible_v<U, std::string>) {
       value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
     } else {
@@ -125,18 +122,13 @@ struct column_operations {
     return *this;
   }
   column_operations operator=(std::nullptr_t) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} = NULL", s.template get_column_name<T>(*ptr, false));
-    };
+    fmt_str_ = "{} = NULL";
     return *this;
   }
 
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator==(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} == ?", s.template get_column_name<T>(*ptr));
-    };
     // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
     if constexpr (std::is_convertible_v<U, std::string>) {
       value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
@@ -148,9 +140,7 @@ struct column_operations {
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator!=(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} != ?", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "{} != ?";
     // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
     if constexpr (std::is_convertible_v<U, std::string>) {
       value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
@@ -163,51 +153,39 @@ struct column_operations {
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator>(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} > ?", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "{} > ?";
     value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator<(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} < ?", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "{} < ?";
     value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator>=(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} >= ?", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "{} >= ?";
     value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator<=(U&& value) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} <= ?", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "{} <= ?";
     value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   // operator !
   auto operator!() const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("NOT {}", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "NOT ({})";
     return *this;
   }
   // operator like
   auto like(std::string_view pattern) const {
-    to_sql_ = [ptr = ptr_shared_](const storage& s) {
-      return fmt::format("{} LIKE ?", s.template get_column_name<T>(*ptr));
-    };
+    fmt_str_ = "{} LIKE ?";
     value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{pattern}));
     return *this;
   }
@@ -217,15 +195,11 @@ struct column_operations {
   auto in(const Container& values) const {
     auto l_size = std::ranges::distance(values);
     if (l_size == 0) {
-      to_sql_ = [ptr = ptr_shared_](const storage& s) {
-        return fmt::format("{} IN (NULL)", s.template get_column_name<T>(*ptr));
-      };
+      fmt_str_ = "{} IN (NULL)";
       return *this;
     }
-    to_sql_ = [ptr = ptr_shared_, l_size](const storage& s) {
-      std::vector<char> placeholders(l_size, '?');
-      return fmt::format("{} IN ({})", s.template get_column_name<T>(*ptr), fmt::join(placeholders, ", "));
-    };
+    std::vector<char> placeholders(l_size, '?');
+    fmt_str_ = fmt::format("{} IN ({})", "{}", fmt::join(placeholders, ", "));
     for (const auto& value : values) value_variant_.push_back(std::make_shared<storage_column_variant>(value));
 
     return *this;
