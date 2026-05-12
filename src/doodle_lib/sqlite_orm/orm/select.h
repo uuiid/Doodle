@@ -63,6 +63,7 @@ struct select_t {
   std::optional<std::size_t> limit_;
   std::optional<std::size_t> offset_;
   storage* s_{nullptr};
+  std::shared_ptr<sqlite_stmt> stmt_;
 
  public:
   template <typename FromTable>
@@ -180,8 +181,6 @@ struct select_result_type : select_t {
   using difference_type   = std::ptrdiff_t;
   using pointer           = const value_type*;
   using reference         = const value_type&;
-
-  std::shared_ptr<sqlite_stmt> stmt_;
 
   template <typename Table>
   auto from() {
