@@ -128,7 +128,6 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} = NULL", s.template get_column_name<T>(*ptr, false));
     };
-    bind_ = nullptr;
     return *this;
   }
 
