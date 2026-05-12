@@ -3,8 +3,8 @@
 
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 
-#include "sqlite_orm/orm/column_operations.h"
 #include <functional>
 #include <memory>
 

@@ -5,6 +5,7 @@
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/entity_type.h"
 
+#include "doodle_lib/core/core_set.h"
 #include "doodle_lib/core/global_function.h"
 #include "doodle_lib/http_client/kitsu_client.h"
 #include <doodle_lib/core/app_base.h>
@@ -103,6 +104,8 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   l_reg.finalize();
   l_reg.open();
   l_reg.sync_schema();
+
+  insert(l_reg).into<entity>().set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "tset");
 
   for (auto&& row : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
                         .from<entity>()
