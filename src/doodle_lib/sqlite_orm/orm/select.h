@@ -17,16 +17,6 @@
 #include <vector>
 
 namespace doodle::orm {
-template <typename Table>
-struct object_t {
-  using table_type = Table;
-  operator std::type_index() const { return std::type_index{typeid(Table)}; }
-};
-
-template <typename Table>
-auto object() {
-  return object_t<Table>{};
-}
 namespace detail {
 template <typename T>
 struct select_arg_type {

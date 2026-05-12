@@ -151,6 +151,32 @@ using member_type_t = typename member_type<T>::ptr_type;
 template <typename T>
 using member_class_type_t = typename member_type<T>::class_type;
 
+template <typename Table>
+struct object_t {
+  using table_type = Table;
+  table_type obj_;
+  const storage* s_{nullptr};
+  object_t() = default;
+  explicit object_t(const table_type& obj, const storage& s) : obj_(obj), s_(std::addressof(s)) {}
+  operator std::type_index() const { return std::type_index{typeid(Table)}; }
+};
+
+template <typename Table>
+auto object() {
+  return object_t<Table>{};
+}
+template <typename Table>
+auto object(const Table& obj, const storage& s) {
+  return object_t<Table>{obj, s};
+}
+
+template <typename T>
+struct is_object_specialization : std::false_type {};
+template <typename T>
+struct is_object_specialization<object_t<T>> : std::true_type {};
+template <typename T>
+inline constexpr bool is_object_specialization_v = is_object_specialization<std::remove_cvref_t<T>>::value;
+
 }  // namespace doodle::orm
 
 namespace fmt {
