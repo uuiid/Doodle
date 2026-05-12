@@ -34,7 +34,6 @@ using update_arg_type_t = typename update_arg_type<std::decay_t<T>>::type;
 struct update_t {
  private:
   friend class storage;
-  template <typename... TableColumns>
   friend update_t update(storage& s);
 
   std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
@@ -99,9 +98,7 @@ struct update_t {
   update_t operator()() &&;
 };
 
-template <typename... TableColumns>
-update_t update(storage& s) {
-  static_assert(sizeof...(TableColumns) > 0, "至少需要更新一个列");
+inline update_t update(storage& s) {
   update_t l_update{};
   l_update.s_ = &s;
   return l_update;

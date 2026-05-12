@@ -119,7 +119,10 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
   }
-  update<asset_type>(l_reg).set(c(&asset_type::name_) = "updated_name").where(c(&asset_type::uuid_id_) == l_uuid)();
+  update(l_reg)
+      .from<asset_type>()
+      .set(c(&asset_type::name_) = "updated_name")
+      .where(c(&asset_type::uuid_id_) == l_uuid)();
   for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
