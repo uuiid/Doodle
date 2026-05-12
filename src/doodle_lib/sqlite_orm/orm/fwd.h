@@ -16,6 +16,19 @@ struct select_t;
 template <typename...>
 inline constexpr bool always_false = false;
 
+// 将 storage_column_types 转换为 std::variant<std::int64_t, std::double_t, std::string, uuid,
+// chrono::system_zoned_time, nlohmann::json, FSys::path>
+template <typename Tuple>
+struct tuple_to_variant;
+template <typename... Ts>
+struct tuple_to_variant<std::tuple<Ts...>> {
+  using type = std::variant<Ts...>;
+};
+
+template <typename Tuple>
+using tuple_to_variant_t     = typename tuple_to_variant<Tuple>::type;
+using storage_column_variant = tuple_to_variant_t<storage_column_types>;
+
 template <typename Table, typename Tuple>
 struct tuple_to_table_member_variant;
 template <typename Table, typename... Ts>
@@ -137,11 +150,6 @@ template <typename T>
 using member_type_t = typename member_type<T>::ptr_type;
 template <typename T>
 using member_class_type_t = typename member_type<T>::class_type;
-
-
-
-
-
 
 }  // namespace doodle::orm
 

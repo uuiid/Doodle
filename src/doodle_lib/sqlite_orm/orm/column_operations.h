@@ -86,23 +86,25 @@ struct column_operations {
   mutable std::function<std::string(const storage&)> to_sql_;
   mutable std::function<void(sqlite_stmt&)> bind_;
   template <typename U>
-  void set_bind(U&& value) const {
-    bind_ = [value = std::forward<U>(value)](sqlite_stmt& stmt) {
+  void set_bind() const {
+    bind_ = [value = value_variant_](sqlite_stmt& stmt) {
       sqlite_statement_binder<std::decay_t<U>> binder;
-      binder.bind(stmt.stmt_, stmt.get_bind_index(), value);
+      binder.bind(stmt.stmt_, stmt.get_bind_index(), std::get<std::decay_t<U>>(*value[0]));
     };
   }
   template <typename U>
-  void set_bind(U&& value, std::size_t in_size) const {
-    bind_ = [value = std::forward<U>(value), in_size](sqlite_stmt& stmt) {
+  void set_bind(std::size_t in_size) const {
+    bind_ = [value = value_variant_, in_size](sqlite_stmt& stmt) {
       sqlite_statement_binder<std::decay_t<U>> binder;
       for (std::size_t i = 0; i < in_size; ++i) {
-        binder.bind(stmt.stmt_, stmt.get_bind_index(), value);
+        binder.bind(stmt.stmt_, stmt.get_bind_index(), std::get<std::decay_t<U>>(*value[i]));
       }
     };
   }
 
  public:
+  mutable std::vector<std::shared_ptr<storage_column_variant>> value_variant_;
+
   explicit column_operations(auto T::* in_ptr) : ptr_shared_(std::make_shared<column_ptr_type>(in_ptr)) {}
   explicit column_operations(const column_ptr_type& in_column)
       : ptr_shared_(std::make_shared<column_ptr_type>(in_column)) {}
@@ -121,7 +123,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} = ?", s.template get_column_name<T>(*ptr, false));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   column_operations operator=(std::nullptr_t) const {
@@ -143,7 +146,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} == ?", s.template get_column_name<T>(*ptr));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
@@ -152,7 +156,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} != ?", s.template get_column_name<T>(*ptr));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   // operator >, <, >=, <=
@@ -162,7 +167,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} > ?", s.template get_column_name<T>(*ptr));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
@@ -171,7 +177,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} < ?", s.template get_column_name<T>(*ptr));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
@@ -180,7 +187,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} >= ?", s.template get_column_name<T>(*ptr));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
@@ -189,7 +197,8 @@ struct column_operations {
     to_sql_ = [ptr = ptr_shared_](const storage& s) {
       return fmt::format("{} <= ?", s.template get_column_name<T>(*ptr));
     };
-    set_bind(std::forward<U>(value));
+    set_bind<std::decay_t<U>>();
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
     return *this;
   }
   // operator !
@@ -205,6 +214,7 @@ struct column_operations {
       return fmt::format("{} LIKE ?", s.template get_column_name<T>(*ptr));
     };
     set_bind(std::string{pattern});
+    value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{pattern}));
     return *this;
   }
   // operator in
@@ -222,7 +232,9 @@ struct column_operations {
       std::vector<char> placeholders(l_size, '?');
       return fmt::format("{} IN ({})", s.template get_column_name<T>(*ptr), fmt::join(placeholders, ", "));
     };
-    set_bind(values, l_size);
+    set_bind<std::decay_t<typename Container::value_type>>(l_size);
+    for (const auto& value : values) value_variant_.push_back(std::make_shared<storage_column_variant>(value));
+
     return *this;
   }
 
