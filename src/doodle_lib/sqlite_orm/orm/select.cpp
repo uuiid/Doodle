@@ -29,7 +29,7 @@ std::string select_t::to_sql(const storage& s) const {
   l_limit_sql += offset_ ? fmt::format(" OFFSET {}", *offset_) : "";
 
   std::string l_sql = fmt::format(
-      "SELECT {} FROM {}{} {}{}{}", fmt::join(get_column_names_fun_(s), ", "), s.get_table_name(from_table_type_index_),
+      "SELECT {} FROM {}{} {}{}{}", fmt::join(column_names_, ", "), s.get_table_name(from_table_type_index_),
       l_join_sql, wheres_ ? fmt::format("WHERE {}", wheres_->to_sql(s)) : "", l_order_by_sql, l_limit_sql
   );
   return l_sql;
