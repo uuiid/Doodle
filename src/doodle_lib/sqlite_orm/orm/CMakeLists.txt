@@ -17,4 +17,5 @@ target_sources(
         column_operations.cpp
         select.cpp
         update.cpp
+        insert.cpp
 )

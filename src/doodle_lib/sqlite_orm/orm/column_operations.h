@@ -28,6 +28,7 @@ struct column_operations_base_t {
   // 创建bind参数
   virtual void bind(sqlite_stmt& stmt) const                                                     = 0;
   virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
+  virtual std::string get_column_name(const storage& s) const;
 };
 
 // and 运算符
@@ -41,28 +42,32 @@ struct operator_compare_t : public column_operations_base_t {
   std::shared_ptr<data_impl> data_impl_ptr_;
   operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
 
-
-
   std::string to_sql(const storage& s) const override;
   void bind(sqlite_stmt& stmt) const override;
   const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override;
+  std::string get_column_name(const storage& s) const override {
+    // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
+    throw std::runtime_error(
+        "operator_compare_t does not represent a specific column and cannot generate a column name"
+    );
+  }
 
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
   operator_compare_t operator&&(operator_compare_t&& other) const {
     operator_compare_t compare{};
-    auto l_self_ptr             = std::make_shared<operator_compare_t>(std::move(*this));
-    auto l_other_ptr            = std::make_shared<operator_compare_t>(other);
-    compare.data_impl_ptr_->op_ = compare_operator::and_;
-    compare.data_impl_ptr_->left_ = l_self_ptr;
+    auto l_self_ptr                = std::make_shared<operator_compare_t>(std::move(*this));
+    auto l_other_ptr               = std::make_shared<operator_compare_t>(other);
+    compare.data_impl_ptr_->op_    = compare_operator::and_;
+    compare.data_impl_ptr_->left_  = l_self_ptr;
     compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
   operator_compare_t operator||(operator_compare_t&& other) const {
     operator_compare_t compare{};
-    auto l_self_ptr     = std::make_shared<operator_compare_t>(std::move(*this));
-    auto l_other_ptr    = std::make_shared<operator_compare_t>(other);
-    compare.data_impl_ptr_->op_ = compare_operator::or_;
-    compare.data_impl_ptr_->left_ = l_self_ptr;
+    auto l_self_ptr                = std::make_shared<operator_compare_t>(std::move(*this));
+    auto l_other_ptr               = std::make_shared<operator_compare_t>(other);
+    compare.data_impl_ptr_->op_    = compare_operator::or_;
+    compare.data_impl_ptr_->left_  = l_self_ptr;
     compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
@@ -73,8 +78,8 @@ struct operator_compare_t : public column_operations_base_t {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
     operator_compare_t compare{};
-    compare.data_impl_ptr_->op_ = compare_operator::and_;
-    compare.data_impl_ptr_->left_ = l_self_ptr;
+    compare.data_impl_ptr_->op_    = compare_operator::and_;
+    compare.data_impl_ptr_->left_  = l_self_ptr;
     compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
@@ -84,8 +89,8 @@ struct operator_compare_t : public column_operations_base_t {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
     operator_compare_t compare{};
-    compare.data_impl_ptr_->op_ = compare_operator::or_;
-    compare.data_impl_ptr_->left_ = l_self_ptr;
+    compare.data_impl_ptr_->op_    = compare_operator::or_;
+    compare.data_impl_ptr_->left_  = l_self_ptr;
     compare.data_impl_ptr_->right_ = l_other_ptr;
     return compare;
   }
@@ -113,6 +118,7 @@ struct column_operations : column_operations_base_t {
   const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override {
     return data_impl_ptr_->value_variant_;
   }
+
   std::string to_sql(const storage& s) const override {
     auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, false);
     return fmt::vformat(data_impl_ptr_->fmt_str_, fmt::make_format_args(column_name));
@@ -127,6 +133,10 @@ struct column_operations : column_operations_base_t {
           *value
       );
     }
+  }
+
+  std::string get_column_name(const storage& s) const override {
+    return s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, false);
   }
 
   // 赋值操作符，生成SQL片段和绑定函数

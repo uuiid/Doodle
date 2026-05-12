@@ -24,8 +24,26 @@ void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
+
+std::int32_t sqlite_stmt::bind(const storage_column_variant& value) {
+  return std::visit(
+      [this](auto&& arg) -> std::int32_t {
+        using T = std::decay_t<decltype(arg)>;
+        return sqlite_statement_binder<T>{}.bind(stmt_, get_bind_index(), arg);
+      },
+      value
+  );
+}
+
+void sqlite_stmt::step() {
+  auto l_r = sqlite3_step(stmt_);
+
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+}
+
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void storage::open(FSys::path in_path, std::int32_t in_flags) {
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = std::move(in_path);
@@ -46,7 +64,7 @@ void storage::sync_schema() {
     l_sql.insert(l_sql.end(), l_foreign_keys.begin(), l_foreign_keys.end());
     auto l_create_table_sql = fmt::format("CREATE TABLE IF NOT EXISTS {} ({})", table->name_, fmt::join(l_sql, ", "));
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
-    DOODLE_ORM_ERROR_SQLITE3(sqlite3_step(l_stmt.stmt_), db_);
+    l_stmt.step();
   }
 }
 
@@ -70,8 +88,6 @@ std::string storage::get_table_name(std::type_index in_type_index) const {
   auto l_table_index = type_to_table_index_.at(in_type_index);
   return tables_[l_table_index]->name_;
 }
-
- 
 
 }  // namespace orm
 

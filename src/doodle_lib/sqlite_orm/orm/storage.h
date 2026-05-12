@@ -174,6 +174,9 @@ struct sqlite_stmt {
   void prepare(storage& db, const std::string& sql);
   std::int32_t get_bind_index();
   std::int64_t get_column_count() const;
+
+  std::int32_t bind(const storage_column_variant& value);
+  void step();
 };
 
 class storage {
