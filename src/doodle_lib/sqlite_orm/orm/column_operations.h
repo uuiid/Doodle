@@ -26,7 +26,7 @@ struct column_operations_base_t {
   virtual std::string to_sql(const storage& s) const                                             = 0;
   // 创建bind参数
   virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
-  virtual std::string get_column_name(const storage& s) const;
+  virtual std::string get_column_name(const storage& s) const                                    = 0;
 };
 
 // and 运算符

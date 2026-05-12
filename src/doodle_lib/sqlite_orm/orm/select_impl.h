@@ -15,15 +15,13 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
   auto l_iter_fun             = [this, &l_column_index](auto&& in_column) {
     using column_or_struct_type = std::decay_t<decltype(in_column)>;
     if constexpr (is_in_tuple_v<column_or_struct_type, storage_column_types>) {
-      sqlite_statement_extractor<column_or_struct_type> l_extractor{};
-      in_column = l_extractor.extract(stmt_->stmt_, l_column_index++);
+      in_column = stmt_->get_column_value<column_or_struct_type>(l_column_index++);
     } else {
       for (auto&& table_column_ptr : s_->get_table_columns<column_or_struct_type>()) {
         std::visit(
             [&](auto&& column_ptr) {
               using column_type = member_type_t<std::decay_t<decltype(column_ptr)>>;
-              sqlite_statement_extractor<column_type> l_extractor{};
-              in_column.*column_ptr = l_extractor.extract(stmt_->stmt_, l_column_index++);
+              in_column.*column_ptr = stmt_->get_column_value<column_type>(l_column_index++);
             },
             table_column_ptr.ptr_.ptr_
         );

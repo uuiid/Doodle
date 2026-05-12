@@ -36,7 +36,9 @@ struct insert_t {
         if (value_variants.size() != 1)
           throw std::runtime_error("Only single value is supported for column operations in insert set");
 
-        values_.insert(values_.end(), value_variants.begin(), value_variants.end());
+        for (const auto& v : value_variants) {
+          values_.push_back(*v);
+        }
       } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
         using Table         = column_or_struct_type;
         auto l_table_cloums = s_->template get_table_columns<Table>();

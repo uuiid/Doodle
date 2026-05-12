@@ -4,7 +4,9 @@
 
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
+#include <spdlog/spdlog.h>
 #include <sqlite3.h>
+
 
 namespace doodle::orm {
 // 这里定义了 sqlite_statement_binder, sqlite_statement_extractor, sqlite_statement_printer
@@ -172,7 +174,6 @@ struct sqlite_statement_extractor<FSys::path> : sqlite_statement_extractor<std::
 };
 template <>
 struct sqlite_statement_printer<FSys::path> : sqlite_statement_printer<std::string> {};
-
 
 // std::chrono::zoned_time
 template <typename Duration>

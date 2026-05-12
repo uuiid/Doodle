@@ -1,6 +1,7 @@
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
+#include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
@@ -8,6 +9,7 @@
 #include <sqlite3.h>
 #include <string>
 #include <vector>
+
 
 namespace doodle {
 namespace orm {
@@ -41,6 +43,10 @@ void sqlite_stmt::step() {
 }
 
 std::int32_t sqlite_stmt::step_not_throw() { return sqlite3_step(stmt_); }
+
+storage_column_variant sqlite_stmt::get_column_value(int columnIndex) const {
+  return sqlite_statement_extractor<storage_column_variant>{}.extract(stmt_, columnIndex);
+}
 
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
