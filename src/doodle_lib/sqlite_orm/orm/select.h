@@ -2,10 +2,10 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include "sqlite_orm/orm/column_operations.h"
 #include <fmt/format.h>
 #include <functional>
 #include <iterator>
@@ -15,6 +15,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 
 namespace doodle::orm {
 namespace detail {
