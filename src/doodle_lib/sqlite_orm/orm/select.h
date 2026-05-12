@@ -65,7 +65,7 @@ struct select_t {
 
   // 结果类型
   std::vector<std::string> column_names_;
-  std::type_index from_table_type_index_{typeid(void)};
+  std::string from_table_name_;
   std::vector<join_info_t> joins_;
   std::shared_ptr<column_operations_base_t> wheres_;
   std::vector<order_by_info_t> order_bys_;
@@ -76,7 +76,7 @@ struct select_t {
  public:
   template <typename FromTable>
   select_t& from() {
-    from_table_type_index_ = std::type_index{typeid(FromTable)};
+    from_table_name_ = s_->get_table_name<FromTable>();
     return *this;
   }
 

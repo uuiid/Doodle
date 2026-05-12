@@ -235,6 +235,10 @@ class storage {
   void reg_unique_index(std::string&& in_name, auto... in_ptrs);
 
   std::string get_table_name(std::type_index in_type_index) const;
+  template <typename T>
+  std::string get_table_name() const {
+    return get_table_name(std::type_index(typeid(T)));
+  }
 };
 
 struct where_info_t {
