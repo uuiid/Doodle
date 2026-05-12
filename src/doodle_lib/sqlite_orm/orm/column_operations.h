@@ -145,6 +145,7 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!is_column_operations_specialization_v<U>)
   auto operator==(U&& value) const {
+    data_impl_ptr_->fmt_str_ = "{} == ?";
     // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
     if constexpr (std::is_convertible_v<U, std::string>) {
       data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
