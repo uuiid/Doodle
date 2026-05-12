@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   l_reg.open();
   l_reg.sync_schema();
 
-  insert(l_reg).into<entity>().set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "tset");
+  insert(l_reg).into<entity>().set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "tset")();
 
   for (auto&& row : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
                         .from<entity>()
