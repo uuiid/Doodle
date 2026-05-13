@@ -14,7 +14,7 @@ namespace doodle {
 namespace orm {
 
 std::int32_t sqlite_stmt::get_bind_index() {
-  bind_index_++;
+  ++bind_index_;
   return bind_index_;
 }
 void sqlite_stmt::prepare(storage& s, const std::string& sql) {

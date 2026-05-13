@@ -27,6 +27,8 @@ update_t& update_t::operator()() & {
       auto& variants = col_op->get_value_variants();
       bind_variants_.insert(bind_variants_.end(), variants.begin(), variants.end());
     }
+    auto& where_variants = wheres_->get_value_variants();
+    bind_variants_.insert(bind_variants_.end(), where_variants.begin(), where_variants.end());
   }
 
   for (const auto& val : wheres_->get_value_variants()) {
