@@ -172,10 +172,11 @@ struct column_operations_base_t {
 
  public:
   // to sql operator
-  virtual std::string to_sql(const storage& s, bool include_table_name) const                    = 0;
+  virtual std::string to_sql(const storage& s, bool include_table_name) const                                   = 0;
   // 创建bind参数
-  virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
-  virtual std::string get_column_name(const storage& s) const                                    = 0;
+  // 收集bind参数
+  virtual void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const = 0;
+  virtual std::string get_column_name(const storage& s) const                                                   = 0;
 };
 
 }  // namespace doodle::orm

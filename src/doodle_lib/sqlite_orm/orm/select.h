@@ -64,6 +64,8 @@ struct select_t {
   storage* s_{nullptr};
   std::shared_ptr<sqlite_stmt> stmt_;
 
+  std::vector<std::shared_ptr<storage_column_variant>> bind_variants_{};
+
  public:
   template <typename FromTable>
   select_t& from() {
@@ -104,7 +106,7 @@ struct select_t {
 
   std::string to_sql(const storage& s) const;
 
-  std::vector<std::shared_ptr<storage_column_variant>> get_bind_variants() const;
+  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const;
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {

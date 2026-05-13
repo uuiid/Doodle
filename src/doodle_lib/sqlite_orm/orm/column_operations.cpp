@@ -10,17 +10,10 @@ std::string operator_compare_t::to_sql(const storage& s, bool include_table_name
   );
 }
 
-const std::vector<std::shared_ptr<storage_column_variant>>& operator_compare_t::get_value_variants() const {
-  if (data_impl_ptr_->cached_variants_.empty()) {
-    const auto& left_variants  = data_impl_ptr_->left_->get_value_variants();
-    const auto& right_variants = data_impl_ptr_->right_->get_value_variants();
-    data_impl_ptr_->cached_variants_.insert(
-        data_impl_ptr_->cached_variants_.end(), left_variants.begin(), left_variants.end()
-    );
-    data_impl_ptr_->cached_variants_.insert(
-        data_impl_ptr_->cached_variants_.end(), right_variants.begin(), right_variants.end()
-    );
-  }
-  return data_impl_ptr_->cached_variants_;
+void operator_compare_t::collect_bind_variants(
+    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
+) const {
+  data_impl_ptr_->left_->collect_bind_variants(bind_variants);
+  data_impl_ptr_->right_->collect_bind_variants(bind_variants);
 }
 }  // namespace doodle::orm

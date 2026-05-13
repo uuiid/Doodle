@@ -30,7 +30,7 @@ struct operator_compare_t : public column_operations_base_t {
   operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
 
   std::string to_sql(const storage& s, bool include_table_name) const override;
-  const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override;
+  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
   std::string get_column_name(const storage& s) const override {
     // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
     throw std::runtime_error(
@@ -102,8 +102,12 @@ struct column_operations : column_operations_base_t {
   explicit column_operations(const column_ptr_type& in_column) : data_impl_ptr_(std::make_shared<data_impl>()) {
     data_impl_ptr_->ptr_shared_ = std::make_shared<column_ptr_type>(in_column);
   }
-  const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const override {
-    return data_impl_ptr_->value_variant_;
+
+  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
+    bind_variants.insert(
+        bind_variants.end(), data_impl_ptr_->value_variant_.begin(), data_impl_ptr_->value_variant_.end()
+    );
+    if (data_impl_ptr_->subquery_ptr_) data_impl_ptr_->subquery_ptr_->collect_bind_variants(bind_variants);
   }
 
   std::string to_sql(const storage& s, bool include_table_name) const override {
@@ -222,11 +226,6 @@ struct column_operations : column_operations_base_t {
   auto in(const select_t& subquery) const {
     data_impl_ptr_->fmt_str_      = "{} IN ({})";
     data_impl_ptr_->subquery_ptr_ = std::make_shared<select_t>(subquery);
-    data_impl_ptr_->value_variant_.clear();  // 清空之前的绑定参数，使用子查询的绑定参数
-    auto subquery_variants = subquery.get_bind_variants();
-    data_impl_ptr_->value_variant_.insert(
-        data_impl_ptr_->value_variant_.end(), subquery_variants.begin(), subquery_variants.end()
-    );
     return *this;
   }
 

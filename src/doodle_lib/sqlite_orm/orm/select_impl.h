@@ -6,7 +6,6 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-
 namespace doodle::orm {
 template <typename T>
   requires(is_column_operations_specialization_v<T>)
@@ -45,13 +44,15 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
 
 template <typename... TableColumns>
 select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()() & {
-  auto l_sql      = select_t::to_sql(*s_);
-  auto l_stmt_ptr = std::make_shared<sqlite_stmt>();
-  l_stmt_ptr->prepare(*s_, l_sql);
-  for (const auto& val : wheres_->get_value_variants()) {
-    l_stmt_ptr->bind(*val);
+  if (!stmt_) {
+    auto l_sql = select_t::to_sql(*s_);
+    stmt_      = std::make_shared<sqlite_stmt>();
+    stmt_->prepare(*s_, l_sql);
+    wheres_->collect_bind_variants(bind_variants_);
   }
-  stmt_ = std::move(l_stmt_ptr);
+  for (const auto& val : bind_variants_) {
+    stmt_->bind(*val);
+  }
   return *this;
 }
 

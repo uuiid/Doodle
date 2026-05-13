@@ -7,7 +7,6 @@
 
 #include <fmt/format.h>
 
-
 namespace doodle::orm {
 
 std::string select_t::to_sql(const storage& s) const {
@@ -29,12 +28,9 @@ std::string select_t::to_sql(const storage& s) const {
   return l_sql;
 }
 
-std::vector<std::shared_ptr<storage_column_variant>> select_t::get_bind_variants() const {
-  std::vector<std::shared_ptr<storage_column_variant>> bind_variants;
+void select_t::collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const {
   if (wheres_) {
-    const auto& where_variants = wheres_->get_value_variants();
-    bind_variants.insert(bind_variants.end(), where_variants.begin(), where_variants.end());
+    wheres_->collect_bind_variants(bind_variants);
   }
-  return bind_variants;
 }
 }  // namespace doodle::orm

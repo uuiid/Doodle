@@ -34,11 +34,8 @@ struct insert_t {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       if constexpr (is_column_operations_specialization_v<column_or_struct_type>) {
         columns_.push_back(in_column.get_column_name(*s_));
-        const auto& value_variants = in_column.get_value_variants();
-        if (value_variants.size() != 1)
-          throw std::runtime_error("Only single value is supported for column operations in insert set");
-        values_.push_back(value_variants.front());
-
+        in_column.collect_bind_variants(values_);
+        
       } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
         using Table         = column_or_struct_type;
         auto l_table_cloums = s_->template get_table_columns<Table>();

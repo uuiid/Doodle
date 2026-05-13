@@ -24,11 +24,9 @@ update_t& update_t::operator()() & {
     stmt_->prepare(*s_, l_sql);
     bind_variants_.clear();
     for (const auto& col_op : column_operations_) {
-      auto& variants = col_op->get_value_variants();
-      bind_variants_.insert(bind_variants_.end(), variants.begin(), variants.end());
+      col_op->collect_bind_variants(bind_variants_);
     }
-    auto& where_variants = wheres_->get_value_variants();
-    bind_variants_.insert(bind_variants_.end(), where_variants.begin(), where_variants.end());
+    wheres_->collect_bind_variants(bind_variants_);
   }
 
   for (const auto& val : bind_variants_) stmt_->bind(*val);
