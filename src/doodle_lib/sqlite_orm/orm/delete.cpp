@@ -12,7 +12,7 @@ delete_t& delete_t::operator()() {
     stmt_->prepare(*s_, l_sql);
     wheres_->collect_bind_variants(bind_variants_);
   }
-  stmt_->reset_bind_index();
+  stmt_->reset_bind();
   for (const auto& val : bind_variants_) stmt_->bind(*val);
   return *this;
 }
