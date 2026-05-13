@@ -105,19 +105,22 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   l_reg.finalize();
   l_reg.open();
   l_reg.sync_schema();
-  auto l_uuid = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
+  auto l_uuid           = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
+  auto l_entity_uuid_id = core_set::get_set().get_uuid();
   insert(l_reg).into<asset_type>().set(c(&asset_type::uuid_id_) = l_uuid, c(&asset_type::name_) = "test")();
   insert(l_reg)
       .into<entity>()
-      .set(c(&entity::uuid_id_) = core_set::get_set().get_uuid(), c(&entity::name_) = "test", c(&entity::entity_type_id_) = l_uuid)();
+      .set(c(&entity::uuid_id_) = l_entity_uuid_id, c(&entity::name_) = "test", c(&entity::entity_type_id_) = l_uuid)();
 
   for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
-                                          .order_by(&entity::uuid_id_)()) {
+                                          .order_by (&entity::uuid_id_)()) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
+    BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
+    BOOST_TEST_CHECK(asset_type.name_ == "test");
   }
   update(l_reg)
       .from<asset_type>()
@@ -127,9 +130,11 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
-                                          .order_by(&entity::uuid_id_)()) {
+                                          .order_by (&entity::uuid_id_)()) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
+    BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
+    BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
   }
 }
 
