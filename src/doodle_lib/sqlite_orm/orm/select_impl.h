@@ -50,6 +50,7 @@ select_result_type<TableColumns...>& select_result_type<TableColumns...>::operat
     stmt_->prepare(*s_, l_sql);
     wheres_->collect_bind_variants(bind_variants_);
   }
+  stmt_->reset_bind_index();
   for (const auto& val : bind_variants_) {
     stmt_->bind(*val);
   }

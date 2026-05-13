@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   l_install_1();
   for (auto& entity : l_install_entities) {
     entity.uuid_id_        = core_set::get_set().get_uuid();
-    entity.name_           = fmt::format("updated_{}", entity.name_);
+    entity.name_           = fmt::format("updated_{}", entity.uuid_id_);
     entity.entity_type_id_ = l_uuid;
   }
   l_install_1.rebind_range(l_install_entities)();

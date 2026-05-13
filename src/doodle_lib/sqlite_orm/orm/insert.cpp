@@ -16,6 +16,7 @@ insert_t& insert_t::operator()() {
     stmt_      = std::make_shared<sqlite_stmt>();
     stmt_->prepare(*s_, l_sql);
   }
+  stmt_->reset_bind_index();
   for (size_t i = 0; i < values_.size(); ++i) {
     stmt_->bind(*values_[i]);
   }

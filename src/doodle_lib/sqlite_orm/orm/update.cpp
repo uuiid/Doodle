@@ -28,7 +28,7 @@ update_t& update_t::operator()() & {
     }
     wheres_->collect_bind_variants(bind_variants_);
   }
-
+  stmt_->reset_bind_index();
   for (const auto& val : bind_variants_) stmt_->bind(*val);
 
   stmt_->step();
