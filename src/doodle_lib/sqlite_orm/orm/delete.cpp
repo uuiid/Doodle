@@ -3,11 +3,15 @@
 #include <doodle_lib/sqlite_orm/orm/delete.h>
 
 namespace doodle::orm {
-delete_t& delete_t::operator()() {
+std::string delete_t::to_sql() const {
   if (!wheres_) throw std::runtime_error("WHERE condition is required for DELETE operation");
 
+  auto l_sql = fmt::format("DELETE FROM {} WHERE {}", from_table_name_, wheres_->to_sql(*s_, false));
+  return l_sql;
+}
+delete_t& delete_t::operator()() {
   if (!stmt_) {
-    auto l_sql = fmt::format("DELETE FROM {} WHERE {}", from_table_name_, wheres_->to_sql(*s_, false));
+    auto l_sql = to_sql();
     stmt_      = std::make_shared<sqlite_stmt>();
     stmt_->prepare(*s_, l_sql);
     wheres_->collect_bind_variants(bind_variants_);

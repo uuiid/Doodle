@@ -132,6 +132,7 @@ struct insert_t {
   }
 
   insert_t& operator()();
+  std::string to_sql() const;
 };
 
 inline auto insert(storage& s) -> insert_t {

@@ -7,6 +7,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace doodle::orm {
@@ -93,6 +94,8 @@ struct update_t {
     (l_iter_fun(in_columns), ...);
     return *this;
   }
+
+  std::string to_sql() const;
 
   update_t& operator()() &;
   update_t operator()() &&;

@@ -12,6 +12,9 @@ struct select_result_type_iterator;
 
 class storage;
 struct select_t;
+struct delete_t;
+struct update_t;
+struct insert_t;
 
 template <typename...>
 inline constexpr bool always_false = false;

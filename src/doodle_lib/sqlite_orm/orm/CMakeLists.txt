@@ -20,4 +20,5 @@ target_sources(
         update.cpp
         insert.cpp
         delete.cpp
+        create_trigger.cpp
 )

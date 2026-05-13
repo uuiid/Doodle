@@ -33,6 +33,8 @@ struct delete_t {
   }
 
   delete_t& operator()();
+
+  std::string to_sql() const;
 };
 inline delete_t delete_from(storage& s) {
   delete_t l_delete{};
