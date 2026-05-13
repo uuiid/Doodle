@@ -89,6 +89,15 @@ void storage::sync_schema() {
     auto l_stmt = sqlite_stmt(*this, l_create_unique_index_sql);
     l_stmt.step();
   }
+  for (const auto& l_trigger : triggers_) {
+    auto l_create_trigger_sql = fmt::format(
+        "CREATE TRIGGER IF NOT EXISTS {} {} {} {} ON {} BEGIN {} END;", l_trigger->name_, l_trigger->timing_,
+        l_trigger->event_, l_trigger->columns_.empty() ? "" : fmt::format("({})", fmt::join(l_trigger->columns_, ", ")),
+        l_trigger->table_name_, l_trigger->statement_
+    );
+    auto l_stmt = sqlite_stmt(*this, l_create_trigger_sql);
+    l_stmt.step();
+  }
 }
 
 storage::~storage() { ::sqlite3_close_v2(db_); }

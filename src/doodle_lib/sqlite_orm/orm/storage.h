@@ -12,8 +12,8 @@
 #include <map>
 #include <memory>
 #include <sqlite3.h>
-#include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <typeindex>
 #include <utility>
@@ -246,6 +246,19 @@ struct table_info : table_info_base {
   }
 };
 
+enum class trigger_timing { before, after, instead_of };
+
+enum class trigger_event { insert, update, delete_ };
+
+struct trigger_info {
+  std::string name_;
+  trigger_timing timing_;             // BEFORE, AFTER, INSTEAD OF
+  trigger_event event_;               // INSERT, UPDATE, DELETE
+  std::vector<std::string> columns_;  // 仅针对 UPDATE 事件
+  std::string table_name_;
+  std::string statement_;
+};
+
 struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
   sqlite3* db_{nullptr};
@@ -274,6 +287,7 @@ class storage {
   std::vector<unique_index_info> unique_indexes_;
 
   std::map<std::type_index, std::size_t> type_to_table_index_;
+  std::vector<std::shared_ptr<trigger_info>> triggers_;
 
   template <typename T>
   friend struct table_info;
@@ -355,3 +369,46 @@ struct where_info_t {
 }  // namespace orm
 
 }  // namespace doodle
+
+namespace fmt {
+template <>
+struct formatter<doodle::orm::trigger_timing> : formatter<std::string_view> {
+  static std::string_view to_string(doodle::orm::trigger_timing timing) {
+    switch (timing) {
+      case doodle::orm::trigger_timing::before:
+        return "BEFORE";
+      case doodle::orm::trigger_timing::after:
+        return "AFTER";
+      case doodle::orm::trigger_timing::instead_of:
+        return "INSTEAD OF";
+      default:
+        throw std::runtime_error("Invalid trigger timing");
+    }
+  }
+
+  template <typename FormatContext>
+  auto format(doodle::orm::trigger_timing timing, FormatContext& ctx) const {
+    return formatter<std::string_view>::format(to_string(timing), ctx);
+  }
+};
+template <>
+struct formatter<doodle::orm::trigger_event> : formatter<std::string_view> {
+  static std::string_view to_string(doodle::orm::trigger_event event) {
+    switch (event) {
+      case doodle::orm::trigger_event::insert:
+        return "INSERT";
+      case doodle::orm::trigger_event::update:
+        return "UPDATE";
+      case doodle::orm::trigger_event::delete_:
+        return "DELETE";
+      default:
+        throw std::runtime_error("Invalid trigger event");
+    }
+  }
+
+  template <typename FormatContext>
+  auto format(doodle::orm::trigger_event event, FormatContext& ctx) const {
+    return formatter<std::string_view>::format(to_string(event), ctx);
+  }
+};
+}  // namespace fmt
