@@ -23,6 +23,7 @@
 #include <ratio>
 #include <sqlite_orm/sqlite_orm.h>
 #include <utility>
+#include <vector>
 
 BOOST_AUTO_TEST_SUITE(data)
 BOOST_AUTO_TEST_CASE(http_client) {
@@ -136,6 +137,10 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
     BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
   }
+  std::vector<entity> l_install_entities{
+      50, entity{.uuid_id_ = core_set::get_set().get_uuid(), .name_ = "install_entity_1", .entity_type_id_ = l_uuid}
+  };
+  insert(l_reg).into<entity>().set_range(l_install_entities)();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
