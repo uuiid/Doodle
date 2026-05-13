@@ -10,7 +10,7 @@ namespace doodle::orm {
 
 insert_t& insert_t::operator()() {
   if (!stmt_) {
-    auto l_values = fmt::format("({})", fmt::join(std::vector<std::string>(values_.size() / batch_size_, "?"), ", "));
+    auto l_values = fmt::format("({})", fmt::join(std::vector<std::string>(columns_.size(), "?"), ", "));
     if (batch_size_ > 1) l_values = fmt::format("{}", fmt::join(std::vector<std::string>(batch_size_, l_values), ", "));
     auto l_sql = fmt::format("INSERT INTO {} ({}) VALUES {}", into_table_name_, fmt::join(columns_, ", "), l_values);
     stmt_      = std::make_shared<sqlite_stmt>();
