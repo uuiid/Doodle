@@ -74,6 +74,15 @@ void storage::sync_schema() {
     auto l_stmt = sqlite_stmt(*this, l_create_index_sql);
     l_stmt.step();
   }
+  for (const auto& unique_index : unique_indexes_) {
+    std::vector<std::string> column_names;
+    auto l_create_unique_index_sql = fmt::format(
+        "CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})", unique_index.name_, unique_index.table_name_,
+        fmt::join(unique_index.ptrs_, ", ")
+    );
+    auto l_stmt = sqlite_stmt(*this, l_create_unique_index_sql);
+    l_stmt.step();
+  }
 }
 
 storage::~storage() { ::sqlite3_close_v2(db_); }

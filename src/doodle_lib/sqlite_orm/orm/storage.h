@@ -50,12 +50,9 @@ struct index_info {
 };
 
 struct unique_index_info {
-  struct table_and_column {
-    std::string table_;
-    std::string column_;
-  };
   std::string name_;
-  std::vector<table_and_column> ptrs_;
+  std::string table_name_;
+  std::vector<std::string> ptrs_;
 };
 
 struct not_null {};

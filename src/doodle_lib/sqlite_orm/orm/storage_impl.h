@@ -123,11 +123,9 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   unique_index_info l_unique_index{};
-  l_unique_index.name_ = std::move(in_name);
-  ((l_unique_index.ptrs_.push_back(
-       unique_index_info::table_and_column{l_table.name_, l_table.find_column_info(in_ptrs).ptr_.name_}
-   )),
-   ...);
+  l_unique_index.name_       = std::move(in_name);
+  l_unique_index.table_name_ = l_table.name_;
+  ((l_unique_index.ptrs_.push_back(l_table.find_column_info(in_ptrs).ptr_.name_)), ...);
   unique_indexes_.push_back(std::move(l_unique_index));
 }
 
