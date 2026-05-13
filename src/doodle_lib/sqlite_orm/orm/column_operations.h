@@ -222,6 +222,11 @@ struct column_operations : column_operations_base_t {
   auto in(const select_t& subquery) const {
     data_impl_ptr_->fmt_str_      = "{} IN ({})";
     data_impl_ptr_->subquery_ptr_ = std::make_shared<select_t>(subquery);
+    data_impl_ptr_->value_variant_.clear();  // 清空之前的绑定参数，使用子查询的绑定参数
+    auto subquery_variants = subquery.get_bind_variants();
+    data_impl_ptr_->value_variant_.insert(
+        data_impl_ptr_->value_variant_.end(), subquery_variants.begin(), subquery_variants.end()
+    );
     return *this;
   }
 
