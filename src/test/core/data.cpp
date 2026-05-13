@@ -137,9 +137,12 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
     BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
   }
-  std::vector<entity> l_install_entities{
-      50, entity{.uuid_id_ = core_set::get_set().get_uuid(), .name_ = "install_entity_1", .entity_type_id_ = l_uuid}
-  };
+  std::vector<entity> l_install_entities(50);
+  for (int i = 0; i < 50; ++i) {
+    l_install_entities[i].uuid_id_        = core_set::get_set().get_uuid();
+    l_install_entities[i].name_           = fmt::format("install_entity_{}", i + 1);
+    l_install_entities[i].entity_type_id_ = l_uuid;
+  }
   insert(l_reg).into<entity>().set_range(l_install_entities)();
 }
 
