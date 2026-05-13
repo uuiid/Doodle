@@ -76,8 +76,7 @@ struct table_info_base {
   std::vector<std::function<void(storage&)>> to_register_;
   std::vector<foreign_key_info> foreign_keys_;
 
-  virtual ~table_info_base()                                     = default;
-  virtual std::vector<std::string> get_column_create_sql() const = 0;
+  virtual ~table_info_base() = default;
   std::vector<std::string> get_foreign_key_create_sql() const {
     std::vector<std::string> l_sqls;
     for (const auto& fk : foreign_keys_) {
@@ -105,8 +104,8 @@ struct table_fts_info : table_info_base {
   std::string content_rowid_{};
 
   table_fts_info<T>& content(const std::string& content_table, const std::string& content_rowid) {
-    content_table_   = content_table;
-    content_rowid_   = content_rowid;
+    content_table_ = content_table;
+    content_rowid_ = content_rowid;
     return *this;
   }
   table_fts_info<T>& tokenizer(const std::string& tokenizer) {
@@ -152,26 +151,7 @@ struct table_fts_info : table_info_base {
     columns_.push_back(std::move(l_column));
     return *this;
   }
-  std::vector<std::string> get_column_create_sql() const override {
-    std::vector<std::string> l_column_sqls;
-    for (const auto& column : columns_) {
-      std::string l_sql = fmt::format("{} {}", column.ptr_.name_, column.type_);
-      if (column.primary_key_) {
-        l_sql += " PRIMARY KEY";
-      }
-      if (column.autoincrement_) {
-        l_sql += " AUTOINCREMENT";
-      }
-      if (column.not_null_) {
-        l_sql += " NOT NULL";
-      }
-      if (column.unindexed_) {
-        l_sql += " UNINDEXED";
-      }
-      l_column_sqls.push_back(std::move(l_sql));
-    }
-    return l_column_sqls;
-  }
+
   std::string get_table_create_sql() const override {
     std::vector<std::string> l_column_sqls;
     for (const auto& column : columns_) {
@@ -245,23 +225,6 @@ struct table_info : table_info_base {
   table_info& add_index(std::string&& in_name, auto T::* in_ptr);
   table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
 
-  std::vector<std::string> get_column_create_sql() const override {
-    std::vector<std::string> l_column_sqls;
-    for (const auto& column : columns_) {
-      std::string l_sql = fmt::format("{} {}", column.ptr_.name_, column.type_);
-      if (column.primary_key_) {
-        l_sql += " PRIMARY KEY";
-      }
-      if (column.autoincrement_) {
-        l_sql += " AUTOINCREMENT";
-      }
-      if (column.not_null_) {
-        l_sql += " NOT NULL";
-      }
-      l_column_sqls.push_back(std::move(l_sql));
-    }
-    return l_column_sqls;
-  }
   std::string get_table_create_sql() const override {
     std::vector<std::string> l_column_sqls;
     for (const auto& column : columns_) {
