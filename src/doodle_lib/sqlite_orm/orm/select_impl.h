@@ -44,22 +44,13 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
 
 template <typename... TableColumns>
 select_result_type<TableColumns...>& select_result_type<TableColumns...>::operator()() & {
-  if (!stmt_) {
-    auto l_sql = select_t::to_sql(*s_);
-    stmt_      = std::make_shared<sqlite_stmt>();
-    stmt_->prepare(*s_, l_sql);
-    wheres_->collect_bind_variants(bind_variants_);
-  }
-  stmt_->reset_bind();
-  for (const auto& val : bind_variants_) {
-    stmt_->bind(*val);
-  }
+  run();
   return *this;
 }
 
 template <typename... TableColumns>
 select_result_type<TableColumns...> select_result_type<TableColumns...>::operator()() && {
-  (void)operator()();
+  run();
   return std::move(*this);
 }
 

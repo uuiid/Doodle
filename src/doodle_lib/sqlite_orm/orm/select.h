@@ -66,6 +66,8 @@ struct select_t {
 
   std::vector<std::shared_ptr<storage_column_variant>> bind_variants_{};
 
+  void run();
+
  public:
   template <typename FromTable>
   select_t& from() {
