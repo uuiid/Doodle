@@ -143,7 +143,23 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
     l_install_entities[i].name_           = fmt::format("install_entity_{}", i + 1);
     l_install_entities[i].entity_type_id_ = l_uuid;
   }
-  insert(l_reg).into<entity>().set_range(l_install_entities)();
+  auto l_install_1 = insert(l_reg).into<entity>().set_range(l_install_entities);
+  l_install_1();
+  for (auto& entity : l_install_entities) {
+    entity.uuid_id_        = core_set::get_set().get_uuid();
+    entity.name_           = fmt::format("updated_{}", entity.name_);
+    entity.entity_type_id_ = l_uuid;
+  }
+  l_install_1.rebind_range(l_install_entities)();
+
+  for (auto&& [name, uuid_id, asset_type] : select(l_reg, &entity::name_, &entity::uuid_id_, object_t<asset_type>())
+                                                .from<entity>()
+                                                .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+                                                .where(c(&entity::name_).like("updated_%"))
+                                                .order_by (&entity::uuid_id_)()) {
+    BOOST_TEST_CHECK(name.starts_with("updated_"));
+    BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

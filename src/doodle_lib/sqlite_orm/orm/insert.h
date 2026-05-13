@@ -69,12 +69,8 @@ struct insert_t {
     using value_type    = std::decay_t<T>::value_type;
     using Table         = value_type;
     auto l_table_cloums = s_->template get_table_columns<Table>();
-    column_info<Table> l_primary_key_{};
     for (const auto& l_column : l_table_cloums) {
-      if (l_column.primary_key_) {  // 跳过主键列
-        l_primary_key_ = l_column;
-        continue;
-      }
+      if (l_column.primary_key_) continue;
       columns_.push_back(l_column.ptr_.name_);
     }
     for (const auto& value : values) {
@@ -91,6 +87,34 @@ struct insert_t {
       }
     }
     batch_size_ = static_cast<std::int32_t>(values.size());
+    return *this;
+  }
+  // 重新bing range参数
+  template <typename T>
+    requires(std::ranges::range<T>)
+  auto& rebind_range(T&& values) {
+    if (values.empty()) return *this;  // 如果没有值，直接返回
+    if (values.size() > 100)
+      throw std::runtime_error("rebind_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
+    if (values.size() != batch_size_) throw std::runtime_error("rebind_range中的值数量必须与set_range时一致");
+
+    using value_type    = std::decay_t<T>::value_type;
+    using Table         = value_type;
+    auto l_table_cloums = s_->template get_table_columns<Table>();
+    values_.clear();
+    for (const auto& value : values) {
+      for (const auto& l_column : l_table_cloums) {
+        if (l_column.primary_key_) continue;  // 跳过主键列
+        values_.push_back(
+            std::make_shared<storage_column_variant>(std::visit(
+                [&value](auto&& column_ptr) -> storage_column_variant {
+                  return storage_column_variant{value.*(column_ptr)};
+                },
+                l_column.ptr_.ptr_
+            ))
+        );
+      }
+    }
     return *this;
   }
 
