@@ -2,7 +2,6 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
@@ -87,11 +86,8 @@ struct select_t {
 
   template <typename T>
     requires(is_column_operations_specialization_v<T>)
-  select_t& where(T&& condition_fun) {
-    auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
-    wheres_                  = l_condition_fun_ptr;
-    return *this;
-  }
+  select_t& where(T&& condition_fun);
+
   template <typename T>
   select_t& order_by(auto T::* in_column_fun, bool ascending = true) {
     order_bys_.push_back(s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
@@ -107,6 +103,8 @@ struct select_t {
   }
 
   std::string to_sql(const storage& s) const;
+
+  std::vector<std::shared_ptr<storage_column_variant>> get_bind_variants() const;
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {

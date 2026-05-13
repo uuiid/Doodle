@@ -166,6 +166,18 @@ struct is_object_specialization<object_t<T>> : std::true_type {};
 template <typename T>
 inline constexpr bool is_object_specialization_v = is_object_specialization<std::remove_cvref_t<T>>::value;
 
+struct column_operations_base_t {
+ protected:
+  column_operations_base_t() = default;
+
+ public:
+  // to sql operator
+  virtual std::string to_sql(const storage& s, bool include_table_name) const                    = 0;
+  // 创建bind参数
+  virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
+  virtual std::string get_column_name(const storage& s) const                                    = 0;
+};
+
 }  // namespace doodle::orm
 
 namespace fmt {

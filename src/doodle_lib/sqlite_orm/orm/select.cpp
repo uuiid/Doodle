@@ -1,10 +1,12 @@
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <fmt/format.h>
+
 
 namespace doodle::orm {
 
@@ -27,4 +29,12 @@ std::string select_t::to_sql(const storage& s) const {
   return l_sql;
 }
 
+std::vector<std::shared_ptr<storage_column_variant>> select_t::get_bind_variants() const {
+  std::vector<std::shared_ptr<storage_column_variant>> bind_variants;
+  if (wheres_) {
+    const auto& where_variants = wheres_->get_value_variants();
+    bind_variants.insert(bind_variants.end(), where_variants.begin(), where_variants.end());
+  }
+  return bind_variants;
+}
 }  // namespace doodle::orm

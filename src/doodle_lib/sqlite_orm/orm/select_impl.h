@@ -1,11 +1,20 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+
 namespace doodle::orm {
+template <typename T>
+  requires(is_column_operations_specialization_v<T>)
+select_t& select_t::where(T&& condition_fun) {
+  auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
+  wheres_                  = l_condition_fun_ptr;
+  return *this;
+}
 
 template <typename... TableColumns>
 typename select_result_type_iterator<TableColumns...>::type select_result_type_iterator<TableColumns...>::get() const {

@@ -2,6 +2,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
+#include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <functional>
@@ -15,18 +16,6 @@ enum class compare_operator {
   and_,
   or_,
 
-};
-
-struct column_operations_base_t {
- protected:
-  column_operations_base_t() = default;
-
- public:
-  // to sql operator
-  virtual std::string to_sql(const storage& s, bool include_table_name) const                    = 0;
-  // 创建bind参数
-  virtual const std::vector<std::shared_ptr<storage_column_variant>>& get_value_variants() const = 0;
-  virtual std::string get_column_name(const storage& s) const                                    = 0;
 };
 
 // and 运算符
@@ -102,6 +91,7 @@ struct column_operations : column_operations_base_t {
     std::shared_ptr<column_ptr_type> ptr_shared_;
     std::string fmt_str_;
     std::vector<std::shared_ptr<storage_column_variant>> value_variant_;
+    std::shared_ptr<select_t> subquery_ptr_;
   };
   std::shared_ptr<data_impl> data_impl_ptr_;
 
@@ -117,6 +107,12 @@ struct column_operations : column_operations_base_t {
   }
 
   std::string to_sql(const storage& s, bool include_table_name) const override {
+    if (data_impl_ptr_->subquery_ptr_) {
+      return fmt::format(
+          "{} IN ({})", s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, include_table_name),
+          data_impl_ptr_->subquery_ptr_->to_sql(s)
+      );
+    }
     auto column_name = s.template get_column_name<T>(*data_impl_ptr_->ptr_shared_, include_table_name);
     return fmt::vformat(data_impl_ptr_->fmt_str_, fmt::make_format_args(column_name));
   }
@@ -220,6 +216,12 @@ struct column_operations : column_operations_base_t {
     for (const auto& value : values)
       data_impl_ptr_->value_variant_.push_back(std::make_shared<storage_column_variant>(value));
 
+    return *this;
+  }
+  // operator in with subquery
+  auto in(const select_t& subquery) const {
+    data_impl_ptr_->fmt_str_      = "{} IN ({})";
+    data_impl_ptr_->subquery_ptr_ = std::make_shared<select_t>(subquery);
     return *this;
   }
 
