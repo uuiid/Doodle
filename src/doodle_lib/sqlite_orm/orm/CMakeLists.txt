@@ -6,6 +6,7 @@ target_sources(
         select.h
         update.h
         insert.h
+        delete.h
         orm.h   
         sqlite_statement.h
         
@@ -18,4 +19,5 @@ target_sources(
         select.cpp
         update.cpp
         insert.cpp
+        delete.cpp
 )
