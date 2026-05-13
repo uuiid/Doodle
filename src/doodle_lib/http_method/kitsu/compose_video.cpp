@@ -27,6 +27,7 @@
 
 #include <boost/asio/post.hpp>
 
+#include "core/core_set.h"
 #include <algorithm>
 #include <chrono>
 #include <filesystem>
@@ -49,6 +50,7 @@ struct compose_video_impl_t {
   std::shared_ptr<preview_file> preview_file_;
   preview_file target_preview_file_;
   std::shared_ptr<progress_data> progress_data_;
+  std::shared_ptr<http_connection_guard> connection_guard_{std::make_shared<http_connection_guard>()};
 
   explicit compose_video_impl_t(
       FSys::path in_path, std::size_t in_fps, cv::Size in_size, std::shared_ptr<preview_file> in_preview_file,
@@ -243,6 +245,7 @@ struct run_actions_playlists_preview_files_create_review {
 
     std::shared_ptr<preview_file> review_preview_file_{};
     progress_data_ptr progress_data_{};
+    http_connection_guard connection_guard_{};
   };
   std::shared_ptr<data> data_ptr_;
 
@@ -421,6 +424,7 @@ struct actions_tasks_create_review_run {
   struct data {
     logger_ptr logger_{};
     actions_tasks_create_review_args args_{};
+    http_connection_guard connection_guard_{};
   };
   std::shared_ptr<data> data_ptr_;
 

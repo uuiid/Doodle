@@ -10,7 +10,6 @@
 #include <memory>
 #include <string>
 
-
 namespace doodle {
 
 /**
@@ -79,6 +78,11 @@ class DOODLELIB_API core_set : public boost::noncopyable {
   // 这里是序列化的代码
   friend void to_json(nlohmann::json& j, const core_set& p);
   friend void from_json(const nlohmann::json& j, core_set& p);
+};
+
+struct http_connection_guard {
+  http_connection_guard() { core_set::get_set().http_connection_count_.fetch_add(1, std::memory_order_relaxed); }
+  ~http_connection_guard() { core_set::get_set().http_connection_count_.fetch_sub(1, std::memory_order_relaxed); }
 };
 
 void to_json(nlohmann::json& j, const core_set& p);

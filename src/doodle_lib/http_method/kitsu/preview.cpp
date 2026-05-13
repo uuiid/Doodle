@@ -39,7 +39,6 @@
 #include <tuple>
 #include <vector>
 
-
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
     session_data_ptr in_handle
@@ -339,6 +338,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
     boost::asio::post(
         g_pool_strand(),
         [l_new_path, fps = l_prj.fps_, l_preview_file, size = cv::Size{l_prj_size.first, l_prj_size.second}]() {
+          http_connection_guard l_connection_guard{};
           preview::handle_video_file(
               l_new_path, fps, size, l_preview_file,
               std::make_shared<progress_data>(l_preview_file->uuid_id_, "preview-video:process")
@@ -482,68 +482,12 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   std::vector<preview_file> l_ret = sqlite_select::get_preview_files_by_entity_id(entity_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
-struct data_fix_preview_files_thumbnails_run_t {
-  std::shared_ptr<doodle::detail::add_watermark_t> watermark_adder_;
-  void operator()() {
-    auto l_sql      = get_sqlite_database();
-    auto l_previews = l_sql.get_all<preview_file>();
-    watermark_adder_ =
-        std::make_shared<doodle::detail::add_watermark_t>(l_sql.get_all<doodle::organisation>().front().name_, 150);
-    auto& l_ctx       = g_ctx().get<kitsu_ctx_t>();
-    const auto l_size = cv::Size{100, 100};
-    SPDLOG_LOGGER_INFO(g_logger_ctrl().get_long_task(), "开始修正");
-    for (auto&& l_preview : l_previews) {
-      try {
-        if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(l_preview.uuid_id_),
-            l_path2     = g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(l_preview.uuid_id_);
-            FSys::exists(l_path) && !FSys::exists(l_path2)) {
-          if (auto l_p = l_path2.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-          (*watermark_adder_)(l_path, l_path2, {1920, 1080});
-          SPDLOG_LOGGER_INFO(
-              g_logger_ctrl().get_long_task(), "修复预览文件原始图片水印, preview_file_id {}", l_preview.uuid_id_
-          );
-        }
-        if (auto l_path = g_ctx().get<kitsu_ctx_t>().get_pictures_preview_file(l_preview.uuid_id_),
-            l_path2     = g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_preview_file(l_preview.uuid_id_);
-            FSys::exists(l_path) && !FSys::exists(l_path2)) {
-          if (auto l_p = l_path2.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-          (*watermark_adder_)(l_path, l_path2, {1920, 1080});
-          SPDLOG_LOGGER_INFO(
-              g_logger_ctrl().get_long_task(), "修复预览文件预览图片水印, preview_file_id {}", l_preview.uuid_id_
-          );
-          auto l_target_path = l_ctx.get_pictures_thumbnails_square_file(l_preview.uuid_id_);
-          if (!FSys::exists(l_target_path)) {
-            auto l_image = cv::imread(l_path.generic_string());
-            if (l_image.empty()) {
-              SPDLOG_ERROR("无法读取图片文件: {}", l_path.generic_string());
-              continue;
-            }
-            cv::resize(l_image, l_image, l_size, 0, 0);
-            if (auto l_p = l_target_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-            cv::imwrite(l_target_path.generic_string(), l_image);
-            SPDLOG_LOGGER_WARN(
-                g_logger_ctrl().get_long_task(), "已修复预览文件缩略图: {}", l_target_path.generic_string()
-            );
-          }
-        }
-      } catch (...) {
-        SPDLOG_LOGGER_ERROR(
-            g_logger_ctrl().get_long_task(), "修复预览文件缩略图时发生错误, preview_file_id {} {}", l_preview.uuid_id_,
-            boost::current_exception_diagnostic_information()
-        );
-        continue;
-      }
-    }
-    SPDLOG_LOGGER_INFO(g_logger_ctrl().get_long_task(), "修正完成");
-  }
-};
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_fix_preview_files_thumbnails, post) {
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始投递修复预览缩略图任务", person_.person_.email_,
       person_.person_.get_full_name()
   );
-  boost::asio::post(g_pool_strand(), data_fix_preview_files_thumbnails_run_t{});
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 已投递修复预览缩略图任务", person_.person_.email_,

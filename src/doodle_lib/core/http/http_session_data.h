@@ -80,10 +80,7 @@ class session_data : public std::enable_shared_from_this<session_data> {
   template <typename T>
   auto set_response_file_header(T& in_res, const FSys::path& in_path, const http_header_ctrl& in_http_header_ctrl);
   //  http 计数守卫
-  struct http_connection_guard {
-    http_connection_guard() { core_set::get_set().http_connection_count_.fetch_add(1, std::memory_order_relaxed); }
-    ~http_connection_guard() { core_set::get_set().http_connection_count_.fetch_sub(1, std::memory_order_relaxed); }
-  } http_connection_guard_{};
+  http_connection_guard http_connection_guard_{};
 
  public:
   session_data() = default;
