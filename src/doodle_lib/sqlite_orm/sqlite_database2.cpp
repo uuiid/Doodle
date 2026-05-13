@@ -45,7 +45,7 @@ std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
   auto l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ai_studios = l_sql.impl_->storage_any_.select(
-      columns(object<ai_studio>(), object<ai_studio_person_role_link>()),
+      columns(object<ai_studio>(), object<ai_studio_person_role_link>()), from<ai_studio>(),
       left_join<ai_studio_person_role_link>(
           on(c(&ai_studio_person_role_link::ai_studio_id_) == c(&ai_studio::uuid_id_))
       )
