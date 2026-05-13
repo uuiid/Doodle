@@ -13,6 +13,15 @@
 namespace doodle {
 namespace orm {
 
+void sqlite_stmt::reset_bind() {
+  if (bind_index_ == 0) return;  // 如果绑定索引已经是初始值，则不需要重置
+  bind_index_ = 0;
+  auto l_r    = sqlite3_reset(stmt_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  l_r = sqlite3_clear_bindings(stmt_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+}
+
 std::int32_t sqlite_stmt::get_bind_index() {
   ++bind_index_;
   return bind_index_;

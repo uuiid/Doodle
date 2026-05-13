@@ -256,7 +256,7 @@ struct sqlite_stmt {
   ~sqlite_stmt();
   void prepare(storage& db, const std::string& sql);
   // 重置绑定参数索引，以便重用 sqlite_stmt 对象执行多次 SQL 语句
-  void reset_bind_index() { bind_index_ = 0; }
+  void reset_bind();
   std::int32_t get_bind_index();
   std::int64_t get_column_count() const;
 
