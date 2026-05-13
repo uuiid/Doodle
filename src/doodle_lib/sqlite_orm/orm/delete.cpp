@@ -10,9 +10,8 @@ delete_t& delete_t::operator()() {
     auto l_sql = fmt::format("DELETE FROM {} WHERE {}", from_table_name_, wheres_->to_sql(*s_, false));
     stmt_      = std::make_shared<sqlite_stmt>();
     stmt_->prepare(*s_, l_sql);
-    for (const auto& val : wheres_->get_value_variants()) {
-      bind_variants_.push_back(val);
-    }
+    auto& bind_variants = wheres_->get_value_variants();
+    bind_variants_.insert(bind_variants_.end(), bind_variants.begin(), bind_variants.end());
   }
   for (const auto& val : bind_variants_) stmt_->bind(*val);
   return *this;
