@@ -31,9 +31,8 @@ update_t& update_t::operator()() & {
     bind_variants_.insert(bind_variants_.end(), where_variants.begin(), where_variants.end());
   }
 
-  for (const auto& val : wheres_->get_value_variants()) {
-    stmt_->bind(*val);
-  }
+  for (const auto& val : bind_variants_) stmt_->bind(*val);
+
   stmt_->step();
   return *this;
 }
