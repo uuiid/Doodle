@@ -39,7 +39,7 @@ std::string storage::get_column_name(auto T::* in_ptr, bool add_table_name) cons
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_ptr);
-  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_) : l_column.ptr_.name_;
+  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
 }
 template <typename T>
 std::string storage::get_column_name(const table_columns_t<T>& in_column, bool add_table_name) const {
@@ -49,7 +49,7 @@ std::string storage::get_column_name(const table_columns_t<T>& in_column, bool a
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
-  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.ptr_.name_) : l_column.ptr_.name_;
+  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
 }
 
 template <typename T>
@@ -60,7 +60,7 @@ std::vector<std::string> storage::get_table_column_names() const {
   auto& l_table      = static_cast<table_info<T>&>(*tables_[l_table_index]);
   std::vector<std::string> column_names;
   for (const auto& column : l_table.columns_) {
-    column_names.push_back(fmt::format(R"("{}"."{}")", l_table.name_, column.ptr_.name_));
+    column_names.push_back(fmt::format(R"("{}"."{}")", l_table.name_, column.name_));
   }
   return column_names;
 }
@@ -94,9 +94,9 @@ void storage::reg_foreign_key(
   auto& l_ref_table       = static_cast<table_info<T2>&>(*tables_[l_ref_table_index]);
   foreign_key_info l_fk{};
   l_fk.name_      = std::move(in_name);
-  l_fk.ptr_       = l_self_table.find_column_info(in_ptr).ptr_.name_;
+  l_fk.ptr_       = l_self_table.find_column_info(in_ptr).name_;
   l_fk.ref_table_ = l_ref_table.name_;
-  l_fk.ref_ptr_   = l_ref_table.find_column_info(in_ref_ptr).ptr_.name_;
+  l_fk.ref_ptr_   = l_ref_table.find_column_info(in_ref_ptr).name_;
   l_fk.on_delete_ = on_delete;
   l_fk.on_update_ = on_update;
   l_self_table.foreign_keys_.push_back(std::move(l_fk));
@@ -113,7 +113,7 @@ void storage::reg_index(std::string&& in_name, auto T::* in_ptr) {
   index_info l_index{};
   l_index.name_        = std::move(in_name);
   l_index.table_name_  = l_table.name_;
-  l_index.column_name_ = l_table.find_column_info(in_ptr).ptr_.name_;
+  l_index.column_name_ = l_table.find_column_info(in_ptr).name_;
   indexes_.push_back(std::move(l_index));
 }
 template <typename T>
@@ -125,7 +125,7 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
   unique_index_info l_unique_index{};
   l_unique_index.name_       = std::move(in_name);
   l_unique_index.table_name_ = l_table.name_;
-  ((l_unique_index.ptrs_.push_back(l_table.find_column_info(in_ptrs).ptr_.name_)), ...);
+  ((l_unique_index.ptrs_.push_back(l_table.find_column_info(in_ptrs).name_)), ...);
   unique_indexes_.push_back(std::move(l_unique_index));
 }
 
