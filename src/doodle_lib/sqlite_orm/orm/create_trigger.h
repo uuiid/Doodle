@@ -60,9 +60,9 @@ struct create_trigger_t {
   create_trigger_t& begin() { return *this; }
   create_trigger_t& end() { return *this; }
 
-  create_trigger_t& statement(update_t&& in_statement);
-  create_trigger_t& statement(delete_t&& in_statement);
-  create_trigger_t& statement(insert_t&& in_statement);
+  create_trigger_t& statement(const update_t& in_statement);
+  create_trigger_t& statement(const delete_t& in_statement);
+  create_trigger_t& statement(const insert_t& in_statement);
 
   };
 
