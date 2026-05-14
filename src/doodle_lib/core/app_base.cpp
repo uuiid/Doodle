@@ -128,7 +128,6 @@ void app_base::stop_app(std::int32_t in_exit_code) {
 
   exit_code = in_exit_code;
   on_cancel.emit();
-  facets_.clear();
   spdlog::apply_all([](const std::shared_ptr<spdlog::logger>& in_ptr) { in_ptr->flush(); });
   g_io_context().stop();
   while (g_io_context().poll_one() != 0) {
