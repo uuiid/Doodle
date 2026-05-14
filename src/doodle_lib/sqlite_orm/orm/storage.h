@@ -17,7 +17,6 @@
 #include <type_traits>
 #include <typeindex>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace doodle {
