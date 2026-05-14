@@ -73,6 +73,29 @@ std::int32_t sqlite_stmt::step_not_throw() { return sqlite3_step(stmt_); }
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+storage::transaction_guard::transaction_guard(storage& s) : s_(s) { s_.begin_transaction(); }
+void storage::transaction_guard::commit() {
+  if (committed_) throw std::runtime_error("Transaction already committed");
+  s_.commit_transaction();
+  committed_ = true;
+}
+void storage::transaction_guard::rollback() {
+  if (committed_) throw std::runtime_error("Transaction already committed");
+  s_.rollback_transaction();
+  committed_ = true;
+}
+storage::transaction_guard::~transaction_guard() {
+  if (!committed_) {
+    try {
+      s_.rollback_transaction();
+    } catch (const std::exception& e) {
+      // 在析构函数中抛出异常是危险的，因为它可能在栈展开过程中被调用
+      // 这里我们选择捕获异常并记录日志，而不是让异常传播
+      SPDLOG_ERROR("Failed to rollback transaction in destructor: {}", e.what());
+    }
+  }
+}
+
 storage::storage(FSys::path in_path, std::int32_t in_flags) { open(std::move(in_path), in_flags); }
 
 void storage::open(FSys::path in_path, std::int32_t in_flags) {
@@ -148,6 +171,21 @@ std::string storage::get_table_name(std::type_index in_type_index) const {
   auto l_table_index = type_to_table_index_.at(in_type_index);
   return tables_[l_table_index]->name_;
 }
+
+void storage::begin_transaction() {
+  auto l_stmt = sqlite_stmt{*this, "BEGIN TRANSACTION;"};
+  l_stmt.step();
+}
+
+void storage::commit_transaction() {
+  auto l_stmt = sqlite_stmt{*this, "COMMIT;"};
+  l_stmt.step();
+}
+void storage::rollback_transaction() {
+  auto l_stmt = sqlite_stmt{*this, "ROLLBACK;"};
+  l_stmt.step();
+}
+storage::transaction_guard storage::transaction() { return transaction_guard{*this}; }
 
 }  // namespace orm
 

@@ -213,6 +213,22 @@ class storage {
   template <typename T>
   std::string get_table_name() const;
 
+  // 事务相关
+  void begin_transaction();
+  void commit_transaction();
+  void rollback_transaction();
+
+  struct transaction_guard {
+    storage& s_;
+    bool committed_{false};
+    explicit transaction_guard(storage& s);
+    void commit();
+    void rollback();
+    ~transaction_guard();
+  };
+
+  transaction_guard transaction();
+
  private:
   template <typename T, typename T2>
   void reg_foreign_key(
