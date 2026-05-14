@@ -30,6 +30,7 @@ struct alias_column_info_t : public base_column_info_t {
   template <typename T>
   explicit alias_column_info_t(auto T::* in_ptr, std::string table_alias_name)
       : ptr_(in_ptr), table_alias_name_(std::move(table_alias_name)) {}
+  // 生成 SQL 时，别名列必须包含表别名以避免歧义
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
 };

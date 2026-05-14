@@ -128,7 +128,7 @@ struct column_operations : column_operations_base_t {
       if (subquery_ptr_) subquery_ptr_->collect_bind_variants(bind_variants);
     }
   };
-  // NEW.uuid = OLD.uuid   NEW.name != OLD.name
+  // NEW.uuid = OLD.uuid   NEW.name != OLD.name 别名比较, 必须包含表名以避免歧义
   struct to_str_compare_t : to_str_base_t {
     std::string fmt_str_;
 
