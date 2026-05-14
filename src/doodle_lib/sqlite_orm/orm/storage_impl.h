@@ -6,6 +6,7 @@
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <sqlite_orm/sqlite_orm.h>
@@ -23,6 +24,147 @@ T sqlite_stmt::get_column_value(int columnIndex) const {
 }
 
 template <typename T>
+table_fts_info<T>& table_fts_info<T>::content(const std::string& content_table, const std::string& content_rowid) {
+  content_table_ = content_table;
+  content_rowid_ = content_rowid;
+  return *this;
+}
+
+template <typename T>
+table_fts_info<T>& table_fts_info<T>::tokenizer(const std::string& tokenizer) {
+  tokenizer_ = tokenizer;
+  return *this;
+}
+
+template <typename T>
+typename table_fts_info<T>::column_info_fts_t& table_fts_info<T>::find_column_info(auto T::* in_ptr) {
+  auto l_iter = std::find_if(columns_.begin(), columns_.end(), [in_ptr](const column_info_fts_t& in_column) {
+    return in_column.ptr_ == column_ptr_type{in_ptr};
+  });
+  if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given member pointer");
+
+  return *l_iter;
+}
+
+template <typename T>
+typename table_fts_info<T>::column_info_fts_t&
+table_fts_info<T>::find_column_info(const table_columns_t<T>& in_column) {
+  auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info_fts_t& in_col) {
+    return in_col.ptr_ == in_column;
+  });
+  if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given column pointer");
+
+  return *l_iter;
+}
+
+template <typename T>
+table_fts_info<T>& table_fts_info<T>::add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
+  column_info_fts_t l_column;
+  l_column.name_ = std::move(in_name);
+  l_column.ptr_  = in_ptr;
+  // 解析 in_options
+  (([&]() {
+     if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
+       l_column.not_null_ = true;
+     } else if constexpr (std::is_same_v<decltype(in_options), decltype(primary_key())>) {
+       l_column.primary_key_ = true;
+     } else if constexpr (std::is_same_v<decltype(in_options), decltype(autoincrement())>) {
+       l_column.autoincrement_ = true;
+     }
+   }()),
+   ...);
+  // 根据成员变量类型推断 column_type
+  using member_type = std::remove_reference_t<std::remove_pointer_t<member_type_t<decltype(in_ptr)>>>;
+  l_column.type_    = sqlite_statement_printer<member_type>{}();
+  columns_.push_back(std::move(l_column));
+  return *this;
+}
+
+template <typename T>
+std::string table_fts_info<T>::get_table_create_sql() const {
+  std::vector<std::string> l_column_sqls;
+  for (const auto& column : columns_) {
+    std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
+    if (column.unindexed_) {
+      l_sql += " UNINDEXED";
+    }
+    l_column_sqls.push_back(std::move(l_sql));
+  }
+  if (!content_table_.empty()) l_column_sqls.push_back(fmt::format("CONTENT={}", content_table_));
+
+  if (!content_rowid_.empty()) l_column_sqls.push_back(fmt::format("CONTENT_ROWID={}", content_rowid_));
+
+  if (!tokenizer_.empty()) l_column_sqls.push_back(fmt::format("TOKENIZER={}", tokenizer_));
+  return fmt::format("CREATE VIRTUAL TABLE IF NOT EXISTS {} USING fts5 ({})", name_, fmt::join(l_column_sqls, ", "));
+}
+
+template <typename T>
+column_info<T>& table_info<T>::find_column_info(auto T::* in_ptr) {
+  auto l_iter = std::find_if(columns_.begin(), columns_.end(), [in_ptr](const column_info<T>& in_column) {
+    return in_column.ptr_ == column_ptr_type{in_ptr};
+  });
+  if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given member pointer");
+
+  return *l_iter;
+}
+
+template <typename T>
+column_info<T>& table_info<T>::find_column_info(const table_columns_t<T>& in_column) {
+  auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info<T>& in_col) {
+    return in_col.ptr_ == in_column;
+  });
+  if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given column pointer");
+
+  return *l_iter;
+}
+
+template <typename T>
+table_info<T>& table_info<T>::add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
+  column_info<T> l_column;
+  l_column.name_ = std::move(in_name);
+  l_column.ptr_  = in_ptr;
+  // 解析 in_options
+  (([&]() {
+     if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
+       l_column.not_null_ = true;
+     } else if constexpr (std::is_same_v<decltype(in_options), decltype(primary_key())>) {
+       l_column.primary_key_ = true;
+     } else if constexpr (std::is_same_v<decltype(in_options), decltype(autoincrement())>) {
+       l_column.autoincrement_ = true;
+     } else if constexpr (std::is_same_v<decltype(in_options), decltype(unindexed())>) {
+       l_column.unindexed_ = true;
+     }
+   }()),
+   ...);
+  // 根据成员变量类型推断 column_type
+  using member_type = std::remove_reference_t<std::remove_pointer_t<member_type_t<decltype(in_ptr)>>>;
+  l_column.type_    = sqlite_statement_printer<member_type>{}();
+  columns_.push_back(std::move(l_column));
+  return *this;
+}
+
+template <typename T>
+std::string table_info<T>::get_table_create_sql() const {
+  std::vector<std::string> l_column_sqls;
+  for (const auto& column : columns_) {
+    std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
+    if (column.primary_key_) {
+      l_sql += " PRIMARY KEY";
+    }
+    if (column.autoincrement_) {
+      l_sql += " AUTOINCREMENT";
+    }
+    if (column.not_null_) {
+      l_sql += " NOT NULL";
+    }
+    l_column_sqls.push_back(std::move(l_sql));
+  }
+  auto l_fk_sqls = get_foreign_key_create_sql();
+  l_column_sqls.insert(l_column_sqls.end(), l_fk_sqls.begin(), l_fk_sqls.end());
+  return fmt::format("CREATE TABLE IF NOT EXISTS {} ({})", name_, fmt::join(l_column_sqls, ", "));
+}
+
+template <typename T>
 table_info<T>& storage::reg_table(std::string&& in_name) {
   auto l_table                               = std::make_shared<table_info<T>>();
   l_table->name_                             = std::move(in_name);
@@ -30,6 +172,11 @@ table_info<T>& storage::reg_table(std::string&& in_name) {
   type_to_table_index_[l_table->type_index_] = tables_.size();
   tables_.push_back(std::move(l_table));
   return static_cast<table_info<T>&>(*tables_.back());
+}
+
+template <typename T>
+std::string storage::get_table_name() const {
+  return get_table_name(std::type_index(typeid(T)));
 }
 template <typename T>
 std::string storage::get_column_name(auto T::* in_ptr, bool add_table_name) const {

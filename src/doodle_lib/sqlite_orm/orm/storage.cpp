@@ -4,7 +4,6 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
-#include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include <fmt/format.h>
 #include <sqlite3.h>
@@ -13,6 +12,24 @@
 
 namespace doodle {
 namespace orm {
+
+on_delete::on_delete(foreign_key_action action) : action_(action) {}
+
+on_update::on_update(foreign_key_action action) : action_(action) {}
+
+std::vector<std::string> table_info_base::get_foreign_key_create_sql() const {
+  std::vector<std::string> l_sqls;
+  for (const auto& fk : foreign_keys_) {
+    std::string l_sql = fmt::format(
+        "FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", fk.ptr_, fk.ref_table_, fk.ref_ptr_,
+        fk.on_delete_, fk.on_update_
+    );
+    l_sqls.push_back(std::move(l_sql));
+  }
+  return l_sqls;
+}
+
+sqlite_stmt::sqlite_stmt(storage& db, const std::string& sql) { prepare(db, sql); }
 
 void sqlite_stmt::reset_bind() {
   if (bind_index_ == 0) return;  // 如果绑定索引已经是初始值，则不需要重置
@@ -56,6 +73,8 @@ std::int32_t sqlite_stmt::step_not_throw() { return sqlite3_step(stmt_); }
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+storage::storage(FSys::path in_path, std::int32_t in_flags) { open(std::move(in_path), in_flags); }
+
 void storage::open(FSys::path in_path, std::int32_t in_flags) {
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = std::move(in_path);
@@ -68,6 +87,8 @@ void storage::open(FSys::path in_path, std::int32_t in_flags) {
   l_r = ::sqlite3_extended_result_codes(db_, 1);
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
+
+void storage::open() { open({}); }
 
 create_trigger_t storage::create_trigger(std::string in_name) {
   auto l_trigger_info = std::make_shared<trigger_info>();
