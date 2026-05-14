@@ -49,7 +49,7 @@ struct create_trigger_t {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       if constexpr (std::is_member_pointer_v<std::decay_t<decltype(in_column)>>) {
-        info_->columns_.push_back(s_->get_column_name(in_column));
+        info_->columns_.push_back(s_->get_column_name(in_column, false));
       } else {
         static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
       }
@@ -63,7 +63,6 @@ struct create_trigger_t {
   create_trigger_t& statement(const update_t& in_statement);
   create_trigger_t& statement(const delete_t& in_statement);
   create_trigger_t& statement(const insert_t& in_statement);
-
-  };
+};
 
 }  // namespace doodle::orm

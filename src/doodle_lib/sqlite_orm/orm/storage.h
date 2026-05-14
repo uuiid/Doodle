@@ -405,7 +405,7 @@ struct formatter<doodle::orm::trigger_event> : formatter<std::string_view> {
       case doodle::orm::trigger_event::insert:
         return "INSERT";
       case doodle::orm::trigger_event::update:
-        return "UPDATE";
+        return "UPDATE OF";
       case doodle::orm::trigger_event::delete_:
         return "DELETE";
       default:

@@ -91,6 +91,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid", &entity::uuid_id_)
       .add_column("name", &entity::name_)
+      .add_column("code", &entity::code_)
       .add_column("entity_type_id", &entity::entity_type_id_)
       .add_foreign_key(
           "entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, orm::foreign_key_action::cascade
@@ -112,7 +113,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .begin()
       .statement(update(l_reg)
                      .from<entity>()
-                     .set(c(&entity::name_) = "updated_name")
+                     .set(c(&entity::code_) = new_(&entity::code_))
                      .where(c(new_(&entity::entity_type_id_)) == old_(&asset_type::uuid_id_)))
       .end();
 
@@ -144,6 +145,16 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
+                                          .order_by (&entity::uuid_id_)()) {
+    BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
+    BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
+    BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
+    BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
+  }
+  for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
+                                          .from<entity>()
+                                          .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+                                          .where(c(&entity::code_) == "updated_name")
                                           .order_by (&entity::uuid_id_)()) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
