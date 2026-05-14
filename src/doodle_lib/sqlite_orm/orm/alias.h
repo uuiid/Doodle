@@ -1,32 +1,54 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column.h>
+
 #include <string>
 
 namespace doodle::orm {
-template <typename Table, typename ValueType>
-struct column_alias_t {
-  using column_ptr_type = ValueType Table::*;
-  column_ptr_type ptr_;
+// template <typename Table, typename ValueType>
+// struct column_alias_t {
+//   using column_ptr_type = ValueType Table::*;
+//   column_ptr_type ptr_;
+//   std::string table_alias_name_;
+// };
+// // 检查是否是 column_alias_t<T, ValueType> 的特化
+// template <typename T>
+// struct is_column_alias_specialization : std::false_type {};
+// template <typename Table, typename ValueType>
+// struct is_column_alias_specialization<column_alias_t<Table, ValueType>> : std::true_type {};
+// template <typename T>
+// inline constexpr bool is_column_alias_specialization_v =
+// is_column_alias_specialization<std::remove_cvref_t<T>>::value;
+// 运行时别名
+template <typename Table>
+struct alias_column_info_t : public base_column_info_t {
+  table_columns_t<Table> ptr_;
   std::string table_alias_name_;
+
+  template <typename T>
+  explicit alias_column_info_t(auto T::* in_ptr) : ptr_(in_ptr) {}
+  std::string get_column_name(const storage& s, bool include_table_name) const override;
+  std::string get_table_name(const storage& s) const override;
 };
-// 检查是否是 column_alias_t<T, ValueType> 的特化
+
+// 检查是否是 alias_column_info_t<T> 的特化
 template <typename T>
-struct is_column_alias_specialization : std::false_type {};
-template <typename Table, typename ValueType>
-struct is_column_alias_specialization<column_alias_t<Table, ValueType>> : std::true_type {};
+struct is_alias_column_info_specialization : std::false_type {};
+template <typename Table>
+struct is_alias_column_info_specialization<alias_column_info_t<Table>> : std::true_type {};
 template <typename T>
-inline constexpr bool is_column_alias_specialization_v = is_column_alias_specialization<std::remove_cvref_t<T>>::value;
+inline constexpr bool is_alias_column_info_specialization_v =
+    is_alias_column_info_specialization<std::remove_cvref_t<T>>::value;
 
 template <typename Table>
 struct alias_t {
   std::string table_name_;
   using table_type = Table;
   template <typename ValueType>
-  column_alias_t<Table, ValueType> operator->*(ValueType Table::* column_alias) const {
+  alias_column_info_t<Table> operator->*(ValueType Table::* column_alias) const {
     if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
-
-    return column_alias_t<Table, ValueType>{column_alias, table_name_};
+    return alias_column_info_t<Table>{column_alias, table_name_};
   }
 };
 
@@ -53,12 +75,12 @@ alias_t<Table> OLD_ALIAS() {
 }
 
 template <typename Table, typename ValueType>
-column_alias_t<Table, ValueType> new_(ValueType Table::* column_alias) {
-  return column_alias_t<Table, ValueType>{column_alias, "NEW"};
+alias_column_info_t<Table> new_(ValueType Table::* column_alias) {
+  return alias_column_info_t<Table>{column_alias, "NEW"};
 }
 template <typename Table, typename ValueType>
-column_alias_t<Table, ValueType> old_(ValueType Table::* column_alias) {
-  return column_alias_t<Table, ValueType>{column_alias, "OLD"};
+alias_column_info_t<Table> old_(ValueType Table::* column_alias) {
+  return alias_column_info_t<Table>{column_alias, "OLD"};
 }
 
 }  // namespace doodle::orm

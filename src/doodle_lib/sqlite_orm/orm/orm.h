@@ -2,7 +2,10 @@
 
 // clang-format off
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
+#include <doodle_lib/sqlite_orm/orm/column.h>
+#include <doodle_lib/sqlite_orm/orm/alias.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
+
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <doodle_lib/sqlite_orm/orm/select.h>
@@ -15,4 +18,5 @@
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 #include <doodle_lib/sqlite_orm/orm/select_impl.h>
 #include <doodle_lib/sqlite_orm/orm/column_impl.h>
+#include <doodle_lib/sqlite_orm/orm/alias_impl.h>
 // clang-format on

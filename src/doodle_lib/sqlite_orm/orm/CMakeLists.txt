@@ -11,6 +11,7 @@ target_sources(
         orm.h   
         sqlite_statement.h
         
+        alias_impl.h
         storage_impl.h
         select_impl.h
         column_impl.h
