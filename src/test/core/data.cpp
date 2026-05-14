@@ -110,12 +110,10 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .update_of(&entity::name_)
       .on("entity")
       .begin()
-      .statement(
-          update(l_reg)
-              .from<entity>()
-              .set(c(&entity::name_) = "updated_name")
-              .where(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))
-      )
+      .statement(update(l_reg)
+                     .from<entity>()
+                     .set(c(&entity::name_) = "updated_name")
+                     .where(c(new_(&entity::entity_type_id_)) == old_(&asset_type::uuid_id_)))
       .end();
 
   l_reg.finalize();

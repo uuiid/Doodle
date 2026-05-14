@@ -28,7 +28,8 @@ struct alias_column_info_t : public base_column_info_t {
   std::string table_alias_name_;
 
   template <typename T>
-  explicit alias_column_info_t(auto T::* in_ptr) : ptr_(in_ptr) {}
+  explicit alias_column_info_t(auto T::* in_ptr, std::string table_alias_name)
+      : ptr_(in_ptr), table_alias_name_(std::move(table_alias_name)) {}
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
 };
@@ -76,7 +77,7 @@ alias_t<Table> OLD_ALIAS() {
 }
 
 template <typename Table, typename ValueType>
-column_operations new_(ValueType Table::* column_alias);
+alias_column_info_t<Table> new_(ValueType Table::* column_alias);
 template <typename Table, typename ValueType>
-column_operations old_(ValueType Table::* column_alias);
+alias_column_info_t<Table> old_(ValueType Table::* column_alias);
 }  // namespace doodle::orm
