@@ -2,16 +2,16 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/alias.h>
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include "column.h"
-#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
 
 namespace doodle::orm {
 enum class compare_operator {
