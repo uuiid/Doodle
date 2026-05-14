@@ -6,6 +6,7 @@
 #include <string>
 
 namespace doodle::orm {
+struct column_operations;
 // template <typename Table, typename ValueType>
 // struct column_alias_t {
 //   using column_ptr_type = ValueType Table::*;
@@ -75,12 +76,7 @@ alias_t<Table> OLD_ALIAS() {
 }
 
 template <typename Table, typename ValueType>
-alias_column_info_t<Table> new_(ValueType Table::* column_alias) {
-  return alias_column_info_t<Table>{column_alias, "NEW"};
-}
+column_operations new_(ValueType Table::* column_alias);
 template <typename Table, typename ValueType>
-alias_column_info_t<Table> old_(ValueType Table::* column_alias) {
-  return alias_column_info_t<Table>{column_alias, "OLD"};
-}
-
+column_operations old_(ValueType Table::* column_alias);
 }  // namespace doodle::orm
