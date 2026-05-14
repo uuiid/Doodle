@@ -89,7 +89,6 @@ struct select_t {
   }
 
   template <typename T>
-    requires(is_column_operations_specialization_v<T>)
   select_t& where(T&& condition_fun);
 
   template <typename T>
@@ -195,7 +194,6 @@ struct select_result_type : select_t {
     return *this;
   }
   template <typename T>
-    requires(is_column_operations_specialization_v<T>)
   auto where(T&& condition_fun) {
     select_t::where(std::forward<T>(condition_fun));
     return *this;

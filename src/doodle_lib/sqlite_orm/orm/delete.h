@@ -20,7 +20,6 @@ struct delete_t {
 
  public:
   template <typename T>
-    requires(is_column_operations_specialization_v<T>)
   delete_t& where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
     wheres_                  = l_condition_fun_ptr;

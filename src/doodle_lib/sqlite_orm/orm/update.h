@@ -48,7 +48,6 @@ struct update_t {
 
  public:
   template <typename T>
-    requires(is_column_operations_specialization_v<T>)
   update_t& where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
     wheres_                  = l_condition_fun_ptr;
@@ -64,7 +63,7 @@ struct update_t {
   update_t& set(TableColumns&&... in_columns) {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
-      if constexpr (is_column_operations_specialization_v<column_or_struct_type>) {
+      if constexpr (std::is_base_of_v<column_operations, column_or_struct_type>) {
         auto col_ptr =
             std::make_shared<std::decay_t<decltype(in_column)>>(std::forward<decltype(in_column)>(in_column));
         column_operations_.push_back(col_ptr);
@@ -77,15 +76,14 @@ struct update_t {
             l_primary_key_ = l_column;
             continue;
           }
-          auto col_ptr = std::make_shared<column_operations<Table>>(
-              std::forward<decltype(l_column.ptr_.ptr_)>(l_column.ptr_.ptr_)
-          );
+          auto col_ptr =
+              std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_.ptr_)>(l_column.ptr_.ptr_));
           *col_ptr = in_column.obj_.*(l_column.ptr_.ptr_);
 
           column_operations_.push_back(col_ptr);
         }
         from<Table>();
-        where(column_operations<Table>{l_primary_key_.ptr_.ptr_} == in_column.obj_.*(l_primary_key_.ptr_.ptr_));
+        where(column_operations{l_primary_key_.ptr_.ptr_} == in_column.obj_.*(l_primary_key_.ptr_.ptr_));
       } else {
         static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
       }

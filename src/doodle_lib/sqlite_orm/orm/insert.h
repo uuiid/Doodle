@@ -32,7 +32,7 @@ struct insert_t {
   insert_t& set(TableColumns&&... in_columns) {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
-      if constexpr (is_column_operations_specialization_v<column_or_struct_type>) {
+      if constexpr (std::is_base_of_v<column_operations, column_or_struct_type>) {
         columns_.push_back(in_column.get_column_name(*s_));
         in_column.collect_bind_variants(values_);
 
@@ -119,7 +119,6 @@ struct insert_t {
   }
 
   template <typename T>
-    requires(is_column_operations_specialization_v<T>)
   insert_t& where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
     wheres_                  = l_condition_fun_ptr;

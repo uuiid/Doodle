@@ -46,5 +46,6 @@ struct column_info_t : public base_column_info_t {
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
 };
+using column_info_ptr = std::shared_ptr<base_column_info_t>;
 
 }  // namespace doodle::orm

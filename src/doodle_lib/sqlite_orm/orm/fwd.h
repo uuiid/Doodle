@@ -21,16 +21,6 @@ struct create_trigger_t;
 template <typename...>
 inline constexpr bool always_false = false;
 
-
-template <typename T>
-struct column_operations;
-
-template <typename T>
-struct is_column_operations_specialization : std::false_type {};
-
-template <typename T>
-struct is_column_operations_specialization<column_operations<T>> : std::true_type {};
-
 template <typename T>
 struct sqlite_statement_binder {
   std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) const;
@@ -39,10 +29,6 @@ template <typename T>
 struct sqlite_statement_extractor {
   T extract(sqlite3_stmt* stmt, int columnIndex) const;
 };
-
-template <typename T>
-inline constexpr bool is_column_operations_specialization_v =
-    is_column_operations_specialization<std::remove_cvref_t<T>>::value;
 
 #define DOODLE_ORM_ERROR_SQLITE3(error_code, sqlite3_ptr)                                         \
   switch (error_code) {                                                                           \
@@ -53,7 +39,6 @@ inline constexpr bool is_column_operations_specialization_v =
     default:                                                                                      \
       throw sqlite_orm_exception(fmt::format("{}: {}", error_code, sqlite3_errmsg(sqlite3_ptr))); \
   }
-
 
 enum class column_type {
   null,
