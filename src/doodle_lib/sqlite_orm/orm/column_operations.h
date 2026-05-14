@@ -185,9 +185,9 @@ struct column_operations : column_operations_base_t {
   column_operations operator=(U&& value) const {
     auto l_ptr = std::make_shared<to_str_value_t>("{} = ?");
     if constexpr (std::is_convertible_v<U, std::string>) {
-      l_ptr->value_variant_.push_back(std::make_shared<storage_column_variant>(std::string{value}));
+      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
     } else {
-      l_ptr->value_variant_.push_back(std::make_shared<storage_column_variant>(std::forward<U>(value)));
+      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
     }
     data_impl_ptr_->compare_column_ptr_ = l_ptr;
     return *this;
