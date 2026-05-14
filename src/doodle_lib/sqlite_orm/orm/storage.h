@@ -24,17 +24,11 @@ namespace doodle {
 
 namespace orm {
 template <typename T>
-struct name_and_type_ptr {
+struct column_info {
+  using column_ptr_type = table_columns_t<T>;
+
   std::string name_;
   table_columns_t<T> ptr_;
-
-  using column_type = table_columns_t<T>;
-};
-template <typename T>
-struct column_info {
-  using column_ptr_type = name_and_type_ptr<T>::column_type;
-
-  name_and_type_ptr<T> ptr_{};
   bool not_null_{false};
   bool primary_key_{};
   bool autoincrement_{};
@@ -121,7 +115,7 @@ struct table_fts_info : table_info_base {
 
   column_info_fts_t& find_column_info(auto T::* in_ptr) {
     auto l_iter = std::find_if(columns_.begin(), columns_.end(), [in_ptr](const column_info_fts_t& in_column) {
-      return in_column.ptr_.ptr_ == column_ptr_type{in_ptr};
+      return in_column.ptr_ == column_ptr_type{in_ptr};
     });
     if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given member pointer");
 
@@ -129,7 +123,7 @@ struct table_fts_info : table_info_base {
   }
   column_info_fts_t& find_column_info(const table_columns_t<T>& in_column) {
     auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info_fts_t& in_col) {
-      return in_col.ptr_.ptr_ == in_column;
+      return in_col.ptr_ == in_column;
     });
     if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given column pointer");
 
@@ -138,8 +132,8 @@ struct table_fts_info : table_info_base {
 
   table_fts_info<T>& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
     column_info_fts_t l_column;
-    l_column.ptr_.name_ = std::move(in_name);
-    l_column.ptr_.ptr_  = in_ptr;
+    l_column.name_ = std::move(in_name);
+    l_column.ptr_  = in_ptr;
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
@@ -161,7 +155,7 @@ struct table_fts_info : table_info_base {
   std::string get_table_create_sql() const override {
     std::vector<std::string> l_column_sqls;
     for (const auto& column : columns_) {
-      std::string l_sql = fmt::format("{} {}", column.ptr_.name_, column.type_);
+      std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
       if (column.unindexed_) {
         l_sql += " UNINDEXED";
       }
@@ -183,7 +177,7 @@ struct table_info : table_info_base {
 
   column_info<T>& find_column_info(auto T::* in_ptr) {
     auto l_iter = std::find_if(columns_.begin(), columns_.end(), [in_ptr](const column_info<T>& in_column) {
-      return in_column.ptr_.ptr_ == column_ptr_type{in_ptr};
+      return in_column.ptr_ == column_ptr_type{in_ptr};
     });
     if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given member pointer");
 
@@ -191,7 +185,7 @@ struct table_info : table_info_base {
   }
   column_info<T>& find_column_info(const table_columns_t<T>& in_column) {
     auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info<T>& in_col) {
-      return in_col.ptr_.ptr_ == in_column;
+      return in_col.ptr_ == in_column;
     });
     if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given column pointer");
 
@@ -200,8 +194,8 @@ struct table_info : table_info_base {
 
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
     column_info<T> l_column;
-    l_column.ptr_.name_ = std::move(in_name);
-    l_column.ptr_.ptr_  = in_ptr;
+    l_column.name_ = std::move(in_name);
+    l_column.ptr_  = in_ptr;
     // 解析 in_options
     (([&]() {
        if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
@@ -234,7 +228,7 @@ struct table_info : table_info_base {
   std::string get_table_create_sql() const override {
     std::vector<std::string> l_column_sqls;
     for (const auto& column : columns_) {
-      std::string l_sql = fmt::format("{} {}", column.ptr_.name_, column.type_);
+      std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
       if (column.primary_key_) {
         l_sql += " PRIMARY KEY";
       }

@@ -30,7 +30,7 @@ typename select_result_type_iterator<TableColumns...>::type select_result_type_i
               using column_type     = member_type_t<std::decay_t<decltype(column_ptr)>>;
               in_column.*column_ptr = stmt_->get_column_value<column_type>(l_column_index++);
             },
-            table_column_ptr.ptr_.ptr_
+            table_column_ptr.ptr_
         );
       }
     }

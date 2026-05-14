@@ -76,14 +76,13 @@ struct update_t {
             l_primary_key_ = l_column;
             continue;
           }
-          auto col_ptr =
-              std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_.ptr_)>(l_column.ptr_.ptr_));
-          *col_ptr = in_column.obj_.*(l_column.ptr_.ptr_);
+          auto col_ptr = std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_)>(l_column.ptr_));
+          *col_ptr     = in_column.obj_.*(l_column.ptr_);
 
           column_operations_.push_back(col_ptr);
         }
         from<Table>();
-        where(column_operations{l_primary_key_.ptr_.ptr_} == in_column.obj_.*(l_primary_key_.ptr_.ptr_));
+        where(column_operations{l_primary_key_.ptr_} == in_column.obj_.*(l_primary_key_.ptr_));
       } else {
         static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
       }

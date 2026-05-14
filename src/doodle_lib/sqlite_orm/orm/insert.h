@@ -49,7 +49,7 @@ struct insert_t {
                   [&in_column](auto&& column_ptr) -> storage_column_variant {
                     return storage_column_variant{in_column.obj_.*(column_ptr)};
                   },
-                  l_column.ptr_.ptr_
+                  l_column.ptr_
               ))
           );
         }
@@ -82,7 +82,7 @@ struct insert_t {
                 [&value](auto&& column_ptr) -> storage_column_variant {
                   return storage_column_variant{value.*(column_ptr)};
                 },
-                l_column.ptr_.ptr_
+                l_column.ptr_
             ))
         );
       }
@@ -111,7 +111,7 @@ struct insert_t {
                 [&value](auto&& column_ptr) -> storage_column_variant {
                   return storage_column_variant{value.*(column_ptr)};
                 },
-                l_column.ptr_.ptr_
+                l_column.ptr_
             ))
         );
       }
