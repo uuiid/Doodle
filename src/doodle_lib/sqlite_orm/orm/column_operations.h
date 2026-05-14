@@ -134,6 +134,7 @@ struct column_operations : column_operations_base_t {
   // NEW.uuid = OLD.uuid   NEW.name != OLD.name
   struct to_str_compare_t : to_str_base_t {
     std::string fmt_str_;
+
     std::shared_ptr<column_operations_base_t> other_column_ptr_;
     explicit to_str_compare_t(std::string fmt_str, std::shared_ptr<column_operations_base_t> other_column_ptr)
         : fmt_str_(std::move(fmt_str)), other_column_ptr_(std::move(other_column_ptr)) {}
@@ -177,20 +178,15 @@ struct column_operations : column_operations_base_t {
 
   // 赋值操作符，生成SQL片段和绑定函数
   template <typename U>
+    requires(!is_column_operations_specialization_v<U>)
   column_operations operator=(U&& value) const {
-    if constexpr (!is_column_operations_specialization_v<std::decay_t<U>>) {
-      auto l_ptr = std::make_shared<to_str_value_t>("{} = ?");
-      if constexpr (std::is_convertible_v<U, std::string>) {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
-      } else {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
-      }
-      data_impl_ptr_->to_str_ptr_ = l_ptr;
+    auto l_ptr = std::make_shared<to_str_value_t>("{} = ?");
+    if constexpr (std::is_convertible_v<U, std::string>) {
+      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
     } else {
-      auto l_other_column_ptr     = std::make_shared<std::decay_t<U>>(std::forward<U>(value));
-      auto l_ptr                  = std::make_shared<to_str_compare_t>("{} = {}", l_other_column_ptr);
-      data_impl_ptr_->to_str_ptr_ = l_ptr;
+      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
     }
+    data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }
   column_operations operator=(std::nullptr_t) const {
