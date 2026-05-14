@@ -154,17 +154,11 @@ struct column_operations : column_operations_base_t {
 
  public:
   template <typename T>
-  explicit column_operations(auto T::* in_ptr) : data_impl_ptr_(std::make_shared<data_impl>()) {
-    data_impl_ptr_->ptr_shared_ = std::make_shared<column_info_ptr::element_type>(in_ptr);
-  }
+  explicit column_operations(auto T::* in_ptr);
   template <typename T>
-  explicit column_operations(const table_columns_t<T>& in_column) : data_impl_ptr_(std::make_shared<data_impl>()) {
-    data_impl_ptr_->ptr_shared_ = std::make_shared<column_info_ptr::element_type>(in_column);
-  }
+  explicit column_operations(const table_columns_t<T>& in_column);
   template <typename T>
-  explicit column_operations(const alias_column_info_t<T>& in_column) : data_impl_ptr_(std::make_shared<data_impl>()) {
-    data_impl_ptr_->ptr_shared_ = std::make_shared<column_info_ptr::element_type>(in_column);
-  }
+  explicit column_operations(const alias_column_info_t<T>& in_column);
 
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
     data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
