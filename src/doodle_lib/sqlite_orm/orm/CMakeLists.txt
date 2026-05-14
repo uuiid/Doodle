@@ -1,6 +1,7 @@
 target_sources(
         doodle_lib
         PUBLIC
+        column.h
         storage.h
         fwd.h
         select.h
@@ -12,7 +13,8 @@ target_sources(
         
         storage_impl.h
         select_impl.h
-
+        column_impl.h
+        
         PRIVATE
         storage.cpp
         column_operations.cpp

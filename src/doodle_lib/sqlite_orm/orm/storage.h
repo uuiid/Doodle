@@ -23,7 +23,13 @@
 namespace doodle {
 
 namespace orm {
+template <typename T>
+struct name_and_type_ptr {
+  std::string name_;
+  table_columns_t<T> ptr_;
 
+  using column_type = table_columns_t<T>;
+};
 template <typename T>
 struct column_info {
   using column_ptr_type = name_and_type_ptr<T>::column_type;

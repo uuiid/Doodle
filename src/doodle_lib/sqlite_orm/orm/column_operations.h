@@ -169,7 +169,7 @@ struct column_operations : column_operations_base_t {
   }
 
   std::string to_sql(const storage& s, bool include_table_name) const override {
-    data_impl_ptr_->to_str_ptr_->to_sql(*data_impl_ptr_->ptr_shared_, s, include_table_name);
+    return data_impl_ptr_->to_str_ptr_->to_sql(*data_impl_ptr_->ptr_shared_, s, include_table_name);
   }
 
   std::string get_column_name(const storage& s) const override {

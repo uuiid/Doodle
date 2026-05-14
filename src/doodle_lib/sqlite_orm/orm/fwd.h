@@ -1,12 +1,13 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
+
 typedef struct sqlite3_stmt sqlite3_stmt;
 
 namespace doodle::orm {
-using storage_column_types =
-    std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;
+
 template <typename... TableColumns>
 struct select_result_type_iterator;
 
@@ -17,32 +18,9 @@ struct update_t;
 struct insert_t;
 struct create_trigger_t;
 
-
 template <typename...>
 inline constexpr bool always_false = false;
 
-// 将 storage_column_types 转换为 std::variant<std::int64_t, std::double_t, std::string, uuid,
-// chrono::system_zoned_time, nlohmann::json, FSys::path>
-template <typename Tuple>
-struct tuple_to_variant;
-template <typename... Ts>
-struct tuple_to_variant<std::tuple<Ts...>> {
-  using type = std::variant<Ts...>;
-};
-
-template <typename Tuple>
-using tuple_to_variant_t     = typename tuple_to_variant<Tuple>::type;
-using storage_column_variant = tuple_to_variant_t<storage_column_types>;
-
-template <typename Table, typename Tuple>
-struct tuple_to_table_member_variant;
-template <typename Table, typename... Ts>
-struct tuple_to_table_member_variant<Table, std::tuple<Ts...>> {
-  using type = std::variant<Ts Table::*...>;
-};
-
-template <typename Table>
-using table_columns_t = typename tuple_to_table_member_variant<Table, storage_column_types>::type;
 
 template <typename T>
 struct column_operations;
@@ -76,13 +54,7 @@ inline constexpr bool is_column_operations_specialization_v =
       throw sqlite_orm_exception(fmt::format("{}: {}", error_code, sqlite3_errmsg(sqlite3_ptr))); \
   }
 
-template <typename T>
-struct name_and_type_ptr {
-  std::string name_;
-  table_columns_t<T> ptr_;
 
-  using column_type = table_columns_t<T>;
-};
 enum class column_type {
   null,
   integer,
