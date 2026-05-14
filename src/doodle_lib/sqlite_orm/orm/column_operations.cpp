@@ -3,6 +3,10 @@
 #include <fmt/format.h>
 
 namespace doodle::orm {
+
+// operator_compare_t
+operator_compare_t::operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
+
 std::string operator_compare_t::to_sql(const storage& s, bool include_table_name) const {
   return fmt::format(
       "({} {} {})", data_impl_ptr_->left_->to_sql(s, include_table_name), data_impl_ptr_->op_,
@@ -16,4 +20,141 @@ void operator_compare_t::collect_bind_variants(
   data_impl_ptr_->left_->collect_bind_variants(bind_variants);
   data_impl_ptr_->right_->collect_bind_variants(bind_variants);
 }
+
+std::string operator_compare_t::get_column_name(const storage& /*s*/) const {
+  // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
+  throw std::runtime_error(
+      "operator_compare_t does not represent a specific column and cannot generate a column name"
+  );
+}
+
+operator_compare_t operator_compare_t::operator&&(operator_compare_t&& other) const {
+  operator_compare_t compare{};
+  auto l_self_ptr                = std::make_shared<operator_compare_t>(std::move(*this));
+  auto l_other_ptr               = std::make_shared<operator_compare_t>(other);
+  compare.data_impl_ptr_->op_    = compare_operator::and_;
+  compare.data_impl_ptr_->left_  = l_self_ptr;
+  compare.data_impl_ptr_->right_ = l_other_ptr;
+  return compare;
+}
+
+operator_compare_t operator_compare_t::operator||(operator_compare_t&& other) const {
+  operator_compare_t compare{};
+  auto l_self_ptr                = std::make_shared<operator_compare_t>(std::move(*this));
+  auto l_other_ptr               = std::make_shared<operator_compare_t>(other);
+  compare.data_impl_ptr_->op_    = compare_operator::or_;
+  compare.data_impl_ptr_->left_  = l_self_ptr;
+  compare.data_impl_ptr_->right_ = l_other_ptr;
+  return compare;
+}
+
+// column_operations::to_str_value_t
+column_operations::to_str_value_t::to_str_value_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
+
+std::string column_operations::to_str_value_t::to_str(
+    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+) const {
+  auto l_column_name = in_ptr->get_column_name(s, include_table_name);
+  return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
+}
+
+void column_operations::to_str_value_t::collect_bind_variants(
+    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
+) const {
+  if (value_variant_) bind_variants.push_back(value_variant_);
+}
+
+// column_operations::to_str_value_list_t
+column_operations::to_str_value_list_t::to_str_value_list_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
+
+std::string column_operations::to_str_value_list_t::to_str(
+    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+) const {
+  auto l_column_name = in_ptr->get_column_name(s, include_table_name);
+  return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
+}
+
+void column_operations::to_str_value_list_t::collect_bind_variants(
+    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
+) const {
+  bind_variants.insert(bind_variants.end(), value_variants_.begin(), value_variants_.end());
+}
+
+// column_operations::to_str_subquery_t
+column_operations::to_str_subquery_t::to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr)
+    : subquery_ptr_(std::move(subquery_ptr)) {}
+
+std::string column_operations::to_str_subquery_t::to_str(
+    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+) const {
+  auto l_column_name = in_ptr->get_column_name(s, include_table_name);
+  return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s));
+}
+
+void column_operations::to_str_subquery_t::collect_bind_variants(
+    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
+) const {
+  if (subquery_ptr_) subquery_ptr_->collect_bind_variants(bind_variants);
+}
+
+// column_operations::to_str_compare_t
+column_operations::to_str_compare_t::to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr)
+    : fmt_str_(std::move(fmt_str)), other_column_ptr_(std::move(other_column_ptr)) {}
+
+std::string column_operations::to_str_compare_t::to_str(
+    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+) const {
+  auto l_column_name       = in_ptr->get_column_name(s, include_table_name);
+  auto l_other_column_name = other_column_ptr_->get_column_name(s, include_table_name);
+  return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name, l_other_column_name));
+}
+
+void column_operations::to_str_compare_t::collect_bind_variants(
+    std::vector<std::shared_ptr<storage_column_variant>>& /*bind_variants*/
+) const {
+  // 不需要绑定参数，因为比较的值来自于另一个列，而不是用户输入的值
+}
+
+// column_operations public methods
+column_info_ptr column_operations::get_column_info_ptr() const { return data_impl_ptr_->ptr_shared_; }
+
+void column_operations::collect_bind_variants(
+    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
+) const {
+  data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
+}
+
+std::string column_operations::to_sql(const storage& s, bool include_table_name) const {
+  return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, include_table_name);
+}
+
+std::string column_operations::get_column_name(const storage& s) const {
+  return data_impl_ptr_->ptr_shared_->get_column_name(s, true);
+}
+
+column_operations column_operations::operator=(std::nullptr_t) const {
+  auto l_ptr                  = std::make_shared<to_str_value_t>("{} = NULL");
+  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  return *this;
+}
+
+column_operations column_operations::operator!() const {
+  auto l_ptr                  = std::make_shared<to_str_value_t>("NOT ({})");
+  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  return *this;
+}
+
+column_operations column_operations::like(std::string_view pattern) const {
+  auto l_ptr                  = std::make_shared<to_str_value_t>("{} LIKE ?");
+  l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::string{pattern});
+  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  return *this;
+}
+
+column_operations column_operations::in(const select_t& subquery) const {
+  auto l_ptr                  = std::make_shared<to_str_subquery_t>(std::make_shared<select_t>(subquery));
+  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  return *this;
+}
+
 }  // namespace doodle::orm
