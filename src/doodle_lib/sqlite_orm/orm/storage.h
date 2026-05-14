@@ -164,13 +164,11 @@ class storage {
   std::vector<std::shared_ptr<table_info_base>> tables_;
   std::vector<index_info> indexes_;
   std::vector<unique_index_info> unique_indexes_;
-
   std::map<std::type_index, std::size_t> type_to_table_index_;
   std::vector<std::shared_ptr<trigger_info>> triggers_;
 
   template <typename T>
   friend struct table_info;
-
   friend struct sqlite_stmt;
   friend struct select_t;
   friend struct insert_t;
