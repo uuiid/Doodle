@@ -1,6 +1,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/alias.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
@@ -131,13 +132,13 @@ struct column_operations : column_operations_base_t {
   struct to_str_compare_t : to_str_base_t {
     std::string fmt_str_;
 
-    std::shared_ptr<column_operations_base_t> other_column_ptr_;
-    explicit to_str_compare_t(std::string fmt_str, std::shared_ptr<column_operations_base_t> other_column_ptr)
+    column_info_ptr other_column_ptr_;
+    explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr)
         : fmt_str_(std::move(fmt_str)), other_column_ptr_(std::move(other_column_ptr)) {}
 
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override {
       auto l_column_name       = in_ptr->get_column_name(s, include_table_name);
-      auto l_other_column_name = other_column_ptr_->get_column_name(s);
+      auto l_other_column_name = other_column_ptr_->get_column_name(s, include_table_name);
       return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name, l_other_column_name));
     }
     void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
@@ -177,21 +178,21 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   column_operations operator=(U&& value) const {
-    auto l_ptr = std::make_shared<to_str_value_t>("{} = ?");
-    if constexpr (std::is_convertible_v<U, std::string>) {
-      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+
     } else {
-      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      auto l_ptr = std::make_shared<to_str_value_t>("{} = ?");
+      if constexpr (std::is_convertible_v<U, std::string>) {
+        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
+      } else {
+        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      }
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }
-  // column_operations operator=(column_operations&& other_column) const {
-  //   auto l_ptr =
-  //       std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<column_operations>(std::move(other_column)));
-  //   data_impl_ptr_->to_str_ptr_ = l_ptr;
-  //   return *this;
-  // }
 
   column_operations operator=(std::nullptr_t) const {
     auto l_ptr                  = std::make_shared<to_str_value_t>("{} = NULL");
@@ -202,60 +203,90 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator==(U&& value) const {
-    auto l_ptr = std::make_shared<to_str_value_t>("{} == ?");
-    // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
-    if constexpr (std::is_convertible_v<U, std::string>) {
-      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} == {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
     } else {
-      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      auto l_ptr = std::make_shared<to_str_value_t>("{} == ?");
+      // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
+      if constexpr (std::is_convertible_v<U, std::string>) {
+        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
+      } else {
+        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      }
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator!=(U&& value) const {
-    auto l_ptr = std::make_shared<to_str_value_t>("{} != ?");
-    // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
-    if constexpr (std::is_convertible_v<U, std::string>) {
-      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} != {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
     } else {
-      l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      auto l_ptr = std::make_shared<to_str_value_t>("{} != ?");
+      // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
+      if constexpr (std::is_convertible_v<U, std::string>) {
+        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
+      } else {
+        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      }
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }
   // operator >, <, >=, <=
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator>(U&& value) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} > ?");
-    l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} > {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+    } else {
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} > ?");
+      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
+    }
     return *this;
   }
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator<(U&& value) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} < ?");
-    l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} < {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+    } else {
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} < ?");
+      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
+    }
     return *this;
   }
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator>=(U&& value) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} >= ?");
-    l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} >= {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+    } else {
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} >= ?");
+      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
+    }
     return *this;
   }
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator<=(U&& value) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} <= ?");
-    l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
+    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+      data_impl_ptr_->to_str_ptr_ =
+          std::make_shared<to_str_compare_t>("{} <= {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+    } else {
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} <= ?");
+      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
+    }
     return *this;
   }
   // operator !
