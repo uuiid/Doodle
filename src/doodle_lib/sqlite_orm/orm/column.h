@@ -41,8 +41,7 @@ template <typename Table>
 struct column_info_t : public base_column_info_t {
   table_columns_t<Table> ptr_;
 
-  template <typename T>
-  explicit column_info_t(auto T::* in_ptr) : ptr_(in_ptr) {}
+  explicit column_info_t(auto Table::* in_ptr) : ptr_(in_ptr) {}
   explicit column_info_t(const table_columns_t<Table>& in_column) : ptr_(in_column) {}
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
