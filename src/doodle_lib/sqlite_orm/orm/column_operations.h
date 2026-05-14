@@ -29,36 +29,16 @@ struct operator_compare_t : public column_operations_base_t {
     std::vector<std::shared_ptr<storage_column_variant>> cached_variants_;
   };
   std::shared_ptr<data_impl> data_impl_ptr_;
-  operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
+  operator_compare_t();
 
   std::string to_sql(const storage& s, bool include_table_name) const override;
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
-  std::string get_column_name(const storage& s) const override {
-    // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
-    throw std::runtime_error(
-        "operator_compare_t does not represent a specific column and cannot generate a column name"
-    );
-  }
+  std::string get_column_name(const storage& s) const override;
 
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
-  operator_compare_t operator&&(operator_compare_t&& other) const {
-    operator_compare_t compare{};
-    auto l_self_ptr                = std::make_shared<operator_compare_t>(std::move(*this));
-    auto l_other_ptr               = std::make_shared<operator_compare_t>(other);
-    compare.data_impl_ptr_->op_    = compare_operator::and_;
-    compare.data_impl_ptr_->left_  = l_self_ptr;
-    compare.data_impl_ptr_->right_ = l_other_ptr;
-    return compare;
-  }
-  operator_compare_t operator||(operator_compare_t&& other) const {
-    operator_compare_t compare{};
-    auto l_self_ptr                = std::make_shared<operator_compare_t>(std::move(*this));
-    auto l_other_ptr               = std::make_shared<operator_compare_t>(other);
-    compare.data_impl_ptr_->op_    = compare_operator::or_;
-    compare.data_impl_ptr_->left_  = l_self_ptr;
-    compare.data_impl_ptr_->right_ = l_other_ptr;
-    return compare;
-  }
+  operator_compare_t operator&&(operator_compare_t&& other) const;
+  operator_compare_t operator||(operator_compare_t&& other) const;
+
   // operator &&, || column_operations
   template <typename U>
   operator_compare_t operator&&(U&& other) const {
@@ -92,58 +72,31 @@ struct column_operations : column_operations_base_t {
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
     std::shared_ptr<storage_column_variant> value_variant_;
-    explicit to_str_value_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
-
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override {
-      auto l_column_name = in_ptr->get_column_name(s, include_table_name);
-      return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
-    }
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
-      if (value_variant_) bind_variants.push_back(value_variant_);
-    }
+    explicit to_str_value_t(std::string fmt_str);
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
+    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
   };
   struct to_str_value_list_t : to_str_base_t {
     std::string fmt_str_;
     std::vector<std::shared_ptr<storage_column_variant>> value_variants_;
-    explicit to_str_value_list_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
-
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override {
-      auto l_column_name = in_ptr->get_column_name(s, include_table_name);
-      return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
-    }
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
-      bind_variants.insert(bind_variants.end(), value_variants_.begin(), value_variants_.end());
-    }
+    explicit to_str_value_list_t(std::string fmt_str);
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
+    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
   };
 
   struct to_str_subquery_t : to_str_base_t {
     std::shared_ptr<select_t> subquery_ptr_;
-    explicit to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr) : subquery_ptr_(std::move(subquery_ptr)) {}
-
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override {
-      auto l_column_name = in_ptr->get_column_name(s, include_table_name);
-      return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s));
-    }
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
-      if (subquery_ptr_) subquery_ptr_->collect_bind_variants(bind_variants);
-    }
+    explicit to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr);
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
+    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
   };
   // NEW.uuid = OLD.uuid   NEW.name != OLD.name 别名比较, 必须包含表名以避免歧义
   struct to_str_compare_t : to_str_base_t {
     std::string fmt_str_;
-
     column_info_ptr other_column_ptr_;
-    explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr)
-        : fmt_str_(std::move(fmt_str)), other_column_ptr_(std::move(other_column_ptr)) {}
-
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override {
-      auto l_column_name       = in_ptr->get_column_name(s, include_table_name);
-      auto l_other_column_name = other_column_ptr_->get_column_name(s, include_table_name);
-      return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name, l_other_column_name));
-    }
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
-      // 不需要绑定参数，因为比较的值来自于另一个列，而不是用户输入的值
-    }
+    explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr);
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
+    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
   };
 
   struct data_impl {
@@ -160,19 +113,13 @@ struct column_operations : column_operations_base_t {
   template <typename T>
   explicit column_operations(const alias_column_info_t<T>& in_column);
 
-  column_info_ptr get_column_info_ptr() const { return data_impl_ptr_->ptr_shared_; }
+  column_info_ptr get_column_info_ptr() const;
 
-  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
-    data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
-  }
+  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
 
-  std::string to_sql(const storage& s, bool include_table_name) const override {
-    return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, include_table_name);
-  }
+  std::string to_sql(const storage& s, bool include_table_name) const override;
 
-  std::string get_column_name(const storage& s) const override {
-    return data_impl_ptr_->ptr_shared_->get_column_name(s, true);
-  }
+  std::string get_column_name(const storage& s) const override;
 
   // 赋值操作符，生成SQL片段和绑定函数
   template <typename U>
@@ -194,11 +141,7 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
 
-  column_operations operator=(std::nullptr_t) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} = NULL");
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
-    return *this;
-  }
+  column_operations operator=(std::nullptr_t) const;
 
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
@@ -290,18 +233,9 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
   // operator !
-  auto operator!() const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("NOT ({})");
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
-    return *this;
-  }
+  column_operations operator!() const;
   // operator like
-  auto like(std::string_view pattern) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} LIKE ?");
-    l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::string{pattern});
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
-    return *this;
-  }
+  column_operations like(std::string_view pattern) const;
   // operator in
   template <typename Container>
     requires std::ranges::range<Container> && (!std::is_same_v<std::decay_t<Container>, std::string>)
@@ -319,11 +253,7 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
   // operator in with subquery
-  auto in(const select_t& subquery) const {
-    auto l_ptr                  = std::make_shared<to_str_subquery_t>(std::make_shared<select_t>(subquery));
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
-    return *this;
-  }
+  column_operations in(const select_t& subquery) const;
 
   // operator and, or
   template <typename U>
