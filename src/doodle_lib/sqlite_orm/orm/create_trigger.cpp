@@ -5,15 +5,15 @@
 
 namespace doodle::orm {
 create_trigger_t& create_trigger_t::statement(const update_t& in_statement) {
-  info_->statement_ = std::move(in_statement.to_sql());
+  info_->statement_ = std::move(in_statement.to_sql(true));
   return *this;
 }
 create_trigger_t& create_trigger_t::statement(const delete_t& in_statement) {
-  info_->statement_ = std::move(in_statement.to_sql());
+  info_->statement_ = std::move(in_statement.to_sql(true));
   return *this;
 }
 create_trigger_t& create_trigger_t::statement(const insert_t& in_statement) {
-  info_->statement_ = std::move(in_statement.to_sql());
+  info_->statement_ = std::move(in_statement.to_sql(true));
   return *this;
 }
 }  // namespace doodle::orm

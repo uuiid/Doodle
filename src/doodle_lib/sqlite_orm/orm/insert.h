@@ -2,6 +2,7 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
@@ -18,7 +19,7 @@ struct insert_t {
 
   friend auto insert(storage& s) -> insert_t;
 
-  std::vector<std::string> columns_;
+  std::vector<column_info_ptr> columns_;
   std::vector<std::shared_ptr<storage_column_variant>> values_;
   std::int32_t batch_size_{1};
   std::shared_ptr<column_operations_base_t> wheres_;
@@ -33,7 +34,7 @@ struct insert_t {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       if constexpr (std::is_base_of_v<column_operations, column_or_struct_type>) {
-        columns_.push_back(in_column.get_column_name(*s_));
+        columns_.push_back(in_column.get_column_info_ptr());
         in_column.collect_bind_variants(values_);
 
       } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
@@ -42,7 +43,7 @@ struct insert_t {
         column_info<Table> l_primary_key_{};
         for (const auto& l_column : l_table_cloums) {
           if (l_column.primary_key_) continue;  // 跳过主键列
-          columns_.push_back(l_column.ptr_.name_);
+          columns_.push_back(std::make_shared<column_info_t<Table>>(l_column.ptr_));
           values_.push_back(
               std::make_shared<storage_column_variant>(std::visit(
                   [&in_column](auto&& column_ptr) -> storage_column_variant {
@@ -71,7 +72,7 @@ struct insert_t {
     auto l_table_cloums = s_->template get_table_columns<Table>();
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;
-      columns_.push_back(l_column.ptr_.name_);
+      columns_.push_back(std::make_shared<column_info_t<Table>>(l_column.ptr_));
     }
     for (const auto& value : values) {
       for (const auto& l_column : l_table_cloums) {
@@ -131,7 +132,7 @@ struct insert_t {
   }
 
   insert_t& operator()();
-  std::string to_sql() const;
+  std::string to_sql(bool in_include_table_name) const;
 };
 
 inline auto insert(storage& s) -> insert_t {

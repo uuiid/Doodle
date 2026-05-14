@@ -160,6 +160,8 @@ struct column_operations : column_operations_base_t {
   template <typename T>
   explicit column_operations(const alias_column_info_t<T>& in_column);
 
+  column_info_ptr get_column_info_ptr() const { return data_impl_ptr_->ptr_shared_; }
+
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override {
     data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
   }
