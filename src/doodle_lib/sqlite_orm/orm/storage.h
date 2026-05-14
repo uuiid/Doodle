@@ -318,6 +318,7 @@ class storage {
   table_info<T>& reg_table(std::string&& in_name);
   template <typename T>
   table_info<T>& reg_virtual_table(std::string&& in_name);
+  create_trigger_t create_trigger(std::string in_name);
 
   storage& finalize();
 

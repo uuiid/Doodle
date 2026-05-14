@@ -1,4 +1,5 @@
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
+#include <doodle_lib/sqlite_orm/orm/create_trigger.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
@@ -66,6 +67,12 @@ void storage::open(FSys::path in_path, std::int32_t in_flags) {
   // 启用扩展错误码，以便在发生错误时获取更详细的错误信息
   l_r = ::sqlite3_extended_result_codes(db_, 1);
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+}
+
+create_trigger_t storage::create_trigger(std::string in_name) {
+  auto l_trigger_info = std::make_shared<trigger_info>();
+  auto& l_trigger     = triggers_.emplace_back(l_trigger_info);
+  return create_trigger_t{std::move(in_name), l_trigger_info, this};
 }
 
 void storage::sync_schema() {

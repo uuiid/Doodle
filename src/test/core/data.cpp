@@ -103,6 +103,21 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("id", &asset_type::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid", &asset_type::uuid_id_)
       .add_column("name", &asset_type::name_);
+
+  auto l_trigger = l_reg.create_trigger("update_entity_name_on_asset_type_name_update");
+
+  l_trigger.after()
+      .update_of(&entity::name_)
+      .on("entity")
+      .begin()
+      .statement(
+          update(l_reg)
+              .from<entity>()
+              .set(c(&entity::name_) = "updated_name")
+              .where(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))
+      )
+      .end();
+
   l_reg.finalize();
   l_reg.open();
   l_reg.sync_schema();

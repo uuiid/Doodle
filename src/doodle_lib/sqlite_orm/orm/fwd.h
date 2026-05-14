@@ -15,6 +15,8 @@ struct select_t;
 struct delete_t;
 struct update_t;
 struct insert_t;
+struct create_trigger_t;
+
 
 template <typename...>
 inline constexpr bool always_false = false;
