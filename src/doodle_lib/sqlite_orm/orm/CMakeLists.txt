@@ -2,6 +2,7 @@ target_sources(
         doodle_lib
         PUBLIC
         column.h
+        all_macro.h
         storage.h
         fwd.h
         select.h
