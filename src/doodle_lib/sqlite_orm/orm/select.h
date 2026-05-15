@@ -248,8 +248,10 @@ struct select_t {
   };
 
   // 提取tuple的类型并返回一个可迭代的结果类型
-  template <typename TableColumnsTuple>
-  result_type_t_helper<TableColumnsTuple>::type get_result() {
+  template <is_tuple_of_columns TableColumnsTuple>
+  result_type_t_helper<TableColumnsTuple>::type get_result(TableColumnsTuple&& in_columns_tuple) {
+    // 避免未使用参数的编译警告
+    (void)in_columns_tuple;
     run();
     return typename result_type_t_helper<TableColumnsTuple>::type{*this};
   }

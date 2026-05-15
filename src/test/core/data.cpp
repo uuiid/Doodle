@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
                                           .order_by(&entity::uuid_id_)
-                                          .get_result<decltype(l_select_columns)>()) {
+                                          .get_result(l_select_columns)) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
