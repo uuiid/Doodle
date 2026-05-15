@@ -110,8 +110,8 @@ struct column_operations : column_operations_base_t {
   explicit column_operations(auto T::* in_ptr);
   template <typename T>
   explicit column_operations(const table_columns_t<T>& in_column);
-  template <typename T>
-  explicit column_operations(const alias_column_info_t<T>& in_column);
+  template <typename Table, typename ValueType>
+  explicit column_operations(const alias_column_info_t<Table, ValueType>& in_column);
 
   column_info_ptr get_column_info_ptr() const;
 
@@ -283,8 +283,8 @@ template <typename T>
 auto c(auto T::* in_ptr) {
   return column_operations{in_ptr};
 }
-template <typename T>
-auto c(const alias_column_info_t<T>& in_column) {
+template <typename Table, typename ValueType>
+auto c(const alias_column_info_t<Table, ValueType>& in_column) {
   return column_operations{in_column};
 }
 }  // namespace doodle::orm

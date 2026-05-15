@@ -6,24 +6,24 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 namespace doodle::orm {
-template <typename Table>
-std::string alias_column_info_t<Table>::get_column_name(const storage& s, bool include_table_name) const {
+template <typename Table, typename ValueType>
+std::string alias_column_info_t<Table, ValueType>::get_column_name(const storage& s, bool include_table_name) const {
   auto l_column_name = s.get_column_name<Table>(ptr_, false);
   // if (include_table_name) {
   return fmt::format("{}.{}", table_alias_name_, l_column_name);
   // }
   // return l_column_name;
 }
-template <typename Table>
-std::string alias_column_info_t<Table>::get_table_name(const storage& s) const {
+template <typename Table, typename ValueType>
+std::string alias_column_info_t<Table, ValueType>::get_table_name(const storage& s) const {
   return table_alias_name_;
 }
 template <typename Table, typename ValueType>
-alias_column_info_t<Table> new_(ValueType Table::* column_alias) {
-  return alias_column_info_t<Table>{column_alias, "NEW"};
+alias_column_info_t<Table, ValueType> new_(ValueType Table::* column_alias) {
+  return alias_column_info_t<Table, ValueType>{column_alias, "NEW"};
 }
 template <typename Table, typename ValueType>
-alias_column_info_t<Table> old_(ValueType Table::* column_alias) {
-  return alias_column_info_t<Table>{column_alias, "OLD"};
+alias_column_info_t<Table, ValueType> old_(ValueType Table::* column_alias) {
+  return alias_column_info_t<Table, ValueType>{column_alias, "OLD"};
 }
 }  // namespace doodle::orm

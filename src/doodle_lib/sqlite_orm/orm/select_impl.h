@@ -27,13 +27,14 @@ select_t& select_t::columns_(TableColumns... in_columns) {
       column_names_.push_back(std::make_shared<column_info_t<class_type_t<column_type>>>(in_column));
     } else if constexpr (is_object_specialization_v<column_type>) {
       // 如果是object<Table>，获取表的所有列名
-      using table_type        = class_type_t<column_type>;
-      auto table_column_names = s_->get_table_column_names<table_type>();
-      for (auto& column_name : table_column_names) {
+      using table_type = class_type_t<column_type>;
+      for (auto& column_name : s_->get_table_column_names<table_type>()) {
         column_names_.push_back(std::make_shared<column_info_t<table_type>>(column_name));
       }
     } else if constexpr (is_alias_column_info_specialization_v<column_type>) {
-      column_names_.push_back(std::make_shared<alias_column_info_t<class_type_t<column_type>>>());
+      column_names_.push_back(
+          std::make_shared<alias_column_info_t<class_type_t<column_type>, class_attr_type_t<column_type>>>(in_column)
+      );
     } else {
       static_assert(always_false<column_type>, "不支持的参数类型");
     }
@@ -50,9 +51,10 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   const auto l_max_column     = stmt_->get_column_count();
   auto l_iter_fun             = [this, &l_column_index](auto&& in_column) {
     using column_or_struct_type = std::decay_t<decltype(in_column)>;
-    if constexpr (is_in_tuple_v<column_or_struct_type, storage_column_types>) {
+    if constexpr ((std::is_member_pointer_v<column_type> || is_alias_column_info_specialization_v<column_type>) &&
+                  is_in_tuple_v<column_or_struct_type, storage_column_types>) {
       in_column = stmt_->get_column_value<column_or_struct_type>(l_column_index++);
-    } else {
+    } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
       for (auto&& table_column_ptr : s_->get_table_columns<column_or_struct_type>()) {
         std::visit(
             [&](auto&& column_ptr) {
@@ -62,6 +64,8 @@ select_t::result_type_iterator<TableColumns...>::get() const {
             table_column_ptr.ptr_
         );
       }
+    } else {
+      static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
     }
   };
 
