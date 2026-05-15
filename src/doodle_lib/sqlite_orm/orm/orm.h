@@ -1,3 +1,4 @@
+#include <doodle_lib/sqlite_orm/orm/all_macro.h>
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 
 // clang-format off

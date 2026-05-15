@@ -73,6 +73,12 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
   l_sql.select(&entity::uuid_id_, from<entity>(), where(l_dynamic_where));
 }
 BOOST_AUTO_TEST_CASE(mu_sqlorm_type_id) { using namespace doodle::orm; }
+
+DOODLE_SELECT_VALUE(
+    test_struct, (&doodle::entity::uuid_id_, uuid_id), (&doodle::entity::name_, name_),
+    (&doodle::entity::entity_type_id_, entity_type_id_)
+);
+
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
   using namespace doodle::orm;
