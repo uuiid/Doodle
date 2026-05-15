@@ -51,21 +51,18 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   const auto l_max_column     = stmt_->get_column_count();
   auto l_iter_fun             = [this, &l_column_index](auto&& in_column) {
     using column_or_struct_type = std::decay_t<decltype(in_column)>;
-    if constexpr ((std::is_member_pointer_v<column_type> || is_alias_column_info_specialization_v<column_type>) &&
-                  is_in_tuple_v<column_or_struct_type, storage_column_types>) {
+    if constexpr (is_in_tuple_v<column_or_struct_type, storage_column_types>) {
       in_column = stmt_->get_column_value<column_or_struct_type>(l_column_index++);
-    } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
+    } else /* if constexpr (is_object_specialization_v<column_or_struct_type>) */ {
       for (auto&& table_column_ptr : s_->get_table_columns<column_or_struct_type>()) {
         std::visit(
             [&](auto&& column_ptr) {
-              using column_type     = class_attr_type_t<std::decay_t<decltype(column_ptr)>>;
-              in_column.*column_ptr = stmt_->get_column_value<column_type>(l_column_index++);
+              using column_type     = std::decay_t<decltype(column_ptr)>;
+              in_column.*column_ptr = stmt_->get_column_value<class_attr_type_t<column_type>>(l_column_index++);
             },
             table_column_ptr.ptr_
         );
       }
-    } else {
-      static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
     }
   };
 
