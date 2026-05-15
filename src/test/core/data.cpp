@@ -95,9 +95,14 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("uuid", &entity::uuid_id_)
       .add_column("name", &entity::name_)
       .add_column("code", &entity::code_)
+      .add_column("parent_id", &entity::parent_id_)
       .add_column("entity_type_id", &entity::entity_type_id_)
       .add_foreign_key(
           "entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, orm::foreign_key_action::cascade
+      )
+      .add_foreign_key(
+          "parent_id", &entity::parent_id_, &entity::uuid_id_, orm::foreign_key_action::cascade,
+          orm::foreign_key_action::cascade
       )
       .add_index("entity_uuid_id_index", &entity::uuid_id_)
       .add_unique_index("entity_name_unique_index", &entity::name_);
@@ -135,7 +140,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
        auto&& [uuid_id, asset_type, shot_name] : l_s.select_.from<entity>()
                                                      .columns(l_s.columns_tuple_)
                                                      .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
-                                                     .join(l_shot, l_shot->*&entity::parent_id_, &entity::uuid_id_)
+                                                     .join(l_shot, l_shot->*&entity::parent_id_, &entity::uuid_id_, join_type::left)
                                                      .where(c(&entity::name_) == "test")
                                                      .order_by (&entity::uuid_id_)(l_s.columns_tuple_)) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
