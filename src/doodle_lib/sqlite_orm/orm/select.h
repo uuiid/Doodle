@@ -84,6 +84,7 @@ struct select_t {
   void run();
 
  public:
+  explicit select_t(storage& s) : s_(&s) {}
   template <typename FromTable>
   select_t& from() {
     from_table_name_ = s_->get_table_name<FromTable>();
@@ -265,14 +266,24 @@ struct select_t {
 };
 
 inline select_t select(storage& s) {
-  select_t l_ret{};
-  l_ret.s_ = &s;
+  select_t l_ret{s};
   return l_ret;
 }
+template <typename... TableColumns>
+struct select_and_columns_helper {
+  select_t select_;
+  std::tuple<TableColumns...> columns_tuple_;
+
+  select_and_columns_helper(select_t select) : select_(std::move(select)) {}
+  
+  auto operator()() { return select_(columns_tuple_); }
+};
 
 template <typename... TableColumns>
-auto make_select_column(TableColumns... in_columns) -> std::tuple<TableColumns...> {
-  return std::make_tuple(in_columns...);
+select_and_columns_helper<TableColumns...> make_select_column(storage& s, TableColumns... in_columns) {
+  select_and_columns_helper<TableColumns...> l_helper{select_t{s}};
+  l_helper.columns_tuple_ = std::make_tuple(in_columns...);
+  return l_helper;
 }
 
 }  // namespace doodle::orm
