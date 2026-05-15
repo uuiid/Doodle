@@ -160,6 +160,11 @@ struct sqlite_stmt {
   T get_column_value(int columnIndex) const;
 };
 
+template <typename T>
+struct table_info_t : public table_info_base_t {
+  virtual std::string get_table_name(const storage& s) const override;
+};
+
 class storage {
   std::vector<std::shared_ptr<table_info_base>> tables_;
   std::vector<index_info> indexes_;

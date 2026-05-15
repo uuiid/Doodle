@@ -31,4 +31,11 @@ void alias_column_info_t<Table, ValueType>::set_value(const sqlite_stmt& stmt, i
   using value_type                     = typename alias_column_info_t<Table, ValueType>::value_type;
   *static_cast<value_type*>(out_value) = stmt.get_column_value<value_type>(columnIndex);
 }
+
+template <typename Table>
+std::string alias_t<Table>::get_table_name(const storage& s) const {
+  if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
+  return fmt::format("{} AS {}", s.get_table_name<Table>(), table_name_);
+}
+
 }  // namespace doodle::orm

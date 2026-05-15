@@ -17,6 +17,11 @@
 namespace doodle::orm {
 
 template <typename T>
+std::string table_info_t<T>::get_table_name(const storage& s) const {
+  return s.get_table_name<T>();
+}
+
+template <typename T>
 T sqlite_stmt::get_column_value(int columnIndex) const {
   sqlite_statement_extractor<T> l_extractor{};
   return l_extractor.extract(stmt_, columnIndex);
@@ -46,8 +51,9 @@ typename table_fts_info<T>::column_info_fts_t& table_fts_info<T>::find_column_in
 }
 
 template <typename T>
-typename table_fts_info<T>::column_info_fts_t&
-table_fts_info<T>::find_column_info(const table_columns_t<T>& in_column) {
+typename table_fts_info<T>::column_info_fts_t& table_fts_info<T>::find_column_info(
+    const table_columns_t<T>& in_column
+) {
   auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info_fts_t& in_col) {
     return in_col.ptr_ == in_column;
   });

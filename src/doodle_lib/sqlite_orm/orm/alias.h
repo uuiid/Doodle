@@ -63,14 +63,18 @@ column_info_ptr make_column_info_ptr(const alias_column_info_t<Table, ValueType>
 }
 
 template <typename Table>
-struct alias_t {
+struct alias_t : public table_info_base_t {
   std::string table_name_;
-  using table_type = Table;
+
+  explicit alias_t(std::string table_alias_name) : table_name_(std::move(table_alias_name)) {}
+  virtual ~alias_t() = default;
+  using table_type   = Table;
   template <typename ValueType>
   alias_column_info_t<Table, ValueType> operator->*(ValueType Table::* column_alias) const {
     if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
     return alias_column_info_t<Table, ValueType>{column_alias, table_name_};
   }
+  std::string get_table_name(const storage& s) const override;
 };
 
 // 检查是否是 alias<T> 的特化

@@ -153,6 +153,12 @@ struct column_operations_base_t {
   virtual std::string get_column_name(const storage& s) const                                                   = 0;
 };
 
+// 运行是表基类, 可以获取表名称
+struct table_info_base_t {
+  virtual ~table_info_base_t()                               = default;
+  virtual std::string get_table_name(const storage& s) const = 0;
+};
+using table_info_base_ptr = std::shared_ptr<table_info_base_t>;
 }  // namespace doodle::orm
 
 namespace fmt {

@@ -135,6 +135,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
        auto&& [uuid_id, asset_type, shot_name] : l_s.select_.from<entity>()
                                                      .columns(l_s.columns_tuple_)
                                                      .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+                                                     .join(l_shot, l_shot->*&entity::parent_id_, &entity::uuid_id_)
                                                      .where(c(&entity::name_) == "test")
                                                      .order_by (&entity::uuid_id_)(l_s.columns_tuple_)) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
