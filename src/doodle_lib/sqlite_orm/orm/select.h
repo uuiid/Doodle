@@ -39,9 +39,7 @@ struct select_t {
   friend select_t select(storage& s);
 
   struct join_info_t {
-    std::string join_table_name_;
     join_type type_{join_type::inner};
-    std::pair<std::string, std::string> condition_;
     column_info_ptr self_column_info_;
     column_info_ptr join_column_info_;
   };
@@ -77,10 +75,15 @@ struct select_t {
     )
   {
     // using JoinTableType = typename std::decay_t<decltype(JoinTable::table_type)>;
+    using JoinTableType = class_type_t<std::decay_t<decltype(in_ptr)>>;
+    using RefTableType  = class_type_t<std::decay_t<decltype(in_ref_ptr)>>;
+    if (s_->get_table_name<JoinTableType>() != from_table_name_ &&
+        s_->get_table_name<RefTableType>() == from_table_name_) {
+      std::swap(in_ptr, in_ref_ptr);
+    }
+
     join_info_t join_info{};
-    join_info.join_table_name_  = s_->get_table_name<JoinTable>();
     join_info.type_             = in_join_type;
-    join_info.condition_        = {s_->get_column_name(in_ptr), s_->get_column_name(in_ref_ptr)};
     join_info.self_column_info_ = std::make_shared<column_info_t<class_type_t<std::decay_t<decltype(in_ptr)>>>>(in_ptr);
     join_info.join_column_info_ =
         std::make_shared<column_info_t<class_type_t<std::decay_t<decltype(in_ref_ptr)>>>>(in_ref_ptr);
@@ -139,7 +142,7 @@ struct select_t {
         : select_(&in_select), is_end_(false), cache_(std::make_shared<value_type>()) {
       next();
     }
-    
+
     ~result_type_iterator() = default;
 
     // 从sqlite_stmt中提取数据并转换为type类型

@@ -16,7 +16,7 @@ std::string alias_column_info_t<Table, ValueType>::get_column_name(const storage
 }
 template <typename Table, typename ValueType>
 std::string alias_column_info_t<Table, ValueType>::get_table_name(const storage& s) const {
-  return table_alias_name_;
+  return fmt::format("{} AS {}", s.get_table_name<Table>(), table_alias_name_);
 }
 template <typename Table, typename ValueType>
 alias_column_info_t<Table, ValueType> new_(ValueType Table::* column_alias) {
