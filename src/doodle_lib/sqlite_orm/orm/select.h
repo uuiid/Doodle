@@ -109,8 +109,8 @@ struct select_t {
   std::string to_sql(const storage& s) const;
 
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const;
-  template <typename TableColumnsStruct>
-  select_t& select(TableColumnsStruct&& in_struct) {
+  template <typename... TableColumns>
+  select_t& select(TableColumns... in_columns) {
     auto l_iter_fun = [this](auto&& column) {
       // 处理每个参数
       // 如果是成员指针，获取列名
@@ -126,8 +126,7 @@ struct select_t {
         static_assert(always_false<decltype(column)>, "不支持的参数类型");
       }
     };
-    auto l_columns = in_struct.get_select_value();
-    std::apply([&](auto&&... column) { (l_iter_fun(column), ...); }, l_columns);
+    (l_iter_fun(in_columns), ...);
     return *this;
   };
 };
