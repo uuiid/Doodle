@@ -8,6 +8,7 @@
 #include "doodle_lib/core/core_set.h"
 #include "doodle_lib/core/global_function.h"
 #include "doodle_lib/http_client/kitsu_client.h"
+#include "doodle_lib/sqlite_orm/orm/select.h"
 #include "doodle_lib/sqlite_orm/orm/update.h"
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/http_client_core.h>
@@ -128,8 +129,8 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .into<entity>()
       .set(c(&entity::uuid_id_) = l_entity_uuid_id, c(&entity::name_) = "test", c(&entity::entity_type_id_) = l_uuid)();
   auto l_select_columns = make_select_column(&entity::uuid_id_, object_t<asset_type>());
-  for (auto&& [uuid_id, asset_type] : select(l_reg)
-                                          .columns(l_select_columns)
+  for (auto l_s = select(l_reg);
+       auto&& [uuid_id, asset_type] : l_s.columns(l_select_columns)
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
