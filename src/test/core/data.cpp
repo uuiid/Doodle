@@ -74,11 +74,6 @@ BOOST_AUTO_TEST_CASE(sqlite_orm_dynamic_where) {
 }
 BOOST_AUTO_TEST_CASE(mu_sqlorm_type_id) { using namespace doodle::orm; }
 
-DOODLE_SELECT_VALUE(
-    test_struct, (&doodle::entity::uuid_id_, uuid_id), (&doodle::entity::name_, name_),
-    (&doodle::entity::entity_type_id_, entity_type_id_)
-);
-
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
   using namespace doodle::orm;
@@ -92,6 +87,10 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   //           &entity::entity_type_id_, &asset_type::uuid_id_, orm::on_delete(orm::foreign_key_action::cascade)
   //       );
   //   ;
+  DOODLE_SELECT_VALUE(
+      test_struct, (&doodle::entity::uuid_id_, uuid_id), (&doodle::entity::name_, name_),
+      (&doodle::entity::entity_type_id_, entity_type_id_)
+  );
 
   l_reg.reg_table<entity>("entity")
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())

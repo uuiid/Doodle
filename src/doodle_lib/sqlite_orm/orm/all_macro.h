@@ -13,10 +13,13 @@
 #define DOODLE_SELECT_VALUE_FIELD_DECL_(r, data, elem) \
   decltype(BOOST_PP_TUPLE_ELEM(2, 0, elem)) BOOST_PP_TUPLE_ELEM(2, 1, elem);
 
-#define DOODLE_SELECT_VALUE(struct_name, ...)                                                              \
-  struct struct_name {                                                                                     \
-    constexpr static auto select_value = std::make_tuple(                                                  \
-        BOOST_PP_SEQ_FOR_EACH_I(DOODLE_SELECT_VALUE_TUPLE_ELEM_, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
-    );                                                                                                     \
-    BOOST_PP_SEQ_FOR_EACH(DOODLE_SELECT_VALUE_FIELD_DECL_, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))       \
+#define DOODLE_SELECT_VALUE(struct_name, ...)                                                                \
+  struct struct_name {                                                                                       \
+    auto get_select_value() {                                                                                \
+      constexpr static auto select_value = std::make_tuple(                                                  \
+          BOOST_PP_SEQ_FOR_EACH_I(DOODLE_SELECT_VALUE_TUPLE_ELEM_, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
+      );                                                                                                     \
+      return select_value;                                                                                   \
+    }                                                                                                        \
+    BOOST_PP_SEQ_FOR_EACH(DOODLE_SELECT_VALUE_FIELD_DECL_, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))         \
   };
