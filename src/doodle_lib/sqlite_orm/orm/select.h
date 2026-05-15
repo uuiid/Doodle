@@ -234,12 +234,6 @@ struct select_t {
     auto end() const { return iterator_type{}; }
   };
 
-  template <typename... TableColumns>
-  result_type_t<TableColumns...> operator()() & {
-    run();
-    return result_type_t<TableColumns...>{*this};
-  }
-
   template <typename TableColumnsTuple>
   struct result_type_t_helper;
   template <typename... TableColumns>
@@ -249,11 +243,17 @@ struct select_t {
 
   // 提取tuple的类型并返回一个可迭代的结果类型
   template <is_tuple_of_columns TableColumnsTuple>
-  result_type_t_helper<TableColumnsTuple>::type get_result(TableColumnsTuple&& in_columns_tuple) {
+  result_type_t_helper<std::decay_t<TableColumnsTuple>>::type get_result(TableColumnsTuple&& in_columns_tuple) {
     // 避免未使用参数的编译警告
     (void)in_columns_tuple;
     run();
-    return typename result_type_t_helper<TableColumnsTuple>::type{*this};
+    return typename result_type_t_helper<std::decay_t<TableColumnsTuple>>::type{*this};
+  }
+  template <is_tuple_of_columns TableColumnsTuple>
+  result_type_t_helper<std::decay_t<TableColumnsTuple>>::type operator()(TableColumnsTuple&& in_columns_tuple) & {
+    (void)in_columns_tuple;
+    run();
+    return typename result_type_t_helper<std::decay_t<TableColumnsTuple>>::type{*this};
   }
 };
 template <typename... TableColumns>
