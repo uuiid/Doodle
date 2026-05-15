@@ -28,8 +28,8 @@ select_t& select_t::columns_(TableColumns... in_columns) {
     } else if constexpr (is_object_specialization_v<column_type>) {
       // 如果是object<Table>，获取表的所有列名
       using table_type = class_type_t<column_type>;
-      for (auto& column_name : s_->get_table_column_names<table_type>()) {
-        column_names_.push_back(std::make_shared<column_info_t<table_type>>(column_name));
+      for (const auto& table_column : s_->get_table_columns<table_type>()) {
+        column_names_.push_back(std::make_shared<column_info_t<table_type>>(table_column.ptr_));
       }
     } else if constexpr (is_alias_column_info_specialization_v<column_type>) {
       column_names_.push_back(

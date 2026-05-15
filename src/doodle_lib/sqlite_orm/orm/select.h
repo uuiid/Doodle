@@ -231,14 +231,14 @@ struct select_and_columns_helper {
   select_t select_;
   std::tuple<TableColumns...> columns_tuple_;
 
-  select_and_columns_helper(select_t select) : select_(std::move(select)) {}
+  template <typename... InColumns>
+  select_and_columns_helper(select_t select, InColumns&&... in_columns)
+      : select_(std::move(select)), columns_tuple_(std::forward<InColumns>(in_columns)...) {}
 };
 
 template <typename... TableColumns>
 select_and_columns_helper<TableColumns...> make_select_column(storage& s, TableColumns... in_columns) {
-  select_and_columns_helper<TableColumns...> l_helper{select_t{s}};
-  l_helper.columns_tuple_ = std::make_tuple(in_columns...);
-  return l_helper;
+  return select_and_columns_helper<TableColumns...>{select_t{s}, std::forward<TableColumns>(in_columns)...};
 }
 
 }  // namespace doodle::orm
