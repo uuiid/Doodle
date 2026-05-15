@@ -15,7 +15,7 @@
 
 #define DOODLE_SELECT_VALUE(struct_name, ...)                                                                \
   struct struct_name {                                                                                       \
-    auto get_select_value() {                                                                                \
+    static auto get_select_value() {                                                                         \
       constexpr static auto select_value = std::make_tuple(                                                  \
           BOOST_PP_SEQ_FOR_EACH_I(DOODLE_SELECT_VALUE_TUPLE_ELEM_, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__)) \
       );                                                                                                     \
