@@ -127,12 +127,14 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   insert(l_reg)
       .into<entity>()
       .set(c(&entity::uuid_id_) = l_entity_uuid_id, c(&entity::name_) = "test", c(&entity::entity_type_id_) = l_uuid)();
-
-  for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
+  auto l_select_columns = make_select_column(&entity::uuid_id_, object_t<asset_type>());
+  for (auto&& [uuid_id, asset_type] : select(l_reg)
+                                          .columns(l_select_columns)
                                           .from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
-                                          .order_by (&entity::uuid_id_)()) {
+                                          .order_by(&entity::uuid_id_)
+                                          .get_result<decltype(l_select_columns)>()) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);

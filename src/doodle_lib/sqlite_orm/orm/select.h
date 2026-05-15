@@ -39,6 +39,20 @@ using select_arg_type_t = typename select_arg_type<std::decay_t<T>>::type;
 
 template <typename... TableColumns>
 struct select_result_type;
+template <typename TableColumnsTuple>
+concept is_tuple_of_columns = requires(TableColumnsTuple t) {
+  std::tuple_size_v<std::decay_t<TableColumnsTuple>>;
+  // std::apply(
+  //     [](auto&&... columns) {
+  //       ((std::is_member_pointer_v<std::decay_t<decltype(columns)>> ||
+  //         std::is_same_v<
+  //             std::decay_t<decltype(columns)>,
+  //             object_t<detail::select_arg_type_t<std::decay_t<decltype(columns)>>>>) &&
+  //        ...);
+  //     },
+  //     t
+  // );
+};
 
 struct select_t {
  protected:
@@ -110,7 +124,7 @@ struct select_t {
 
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const;
   template <typename... TableColumns>
-  select_t& select(TableColumns... in_columns) {
+  select_t& columns_(TableColumns... in_columns) {
     auto l_iter_fun = [this](auto&& column) {
       // 处理每个参数
       // 如果是成员指针，获取列名
@@ -129,24 +143,14 @@ struct select_t {
     (l_iter_fun(in_columns), ...);
     return *this;
   };
+
   // 约束TableColumnsTuple 必须是一个tuple, 并且tuple的元素必须是成员指针或者object<Table>
-  template <typename TableColumnsTuple>
-  select_t& select(const TableColumnsTuple& in_columns_tuple)
-    requires requires {
-      std::tuple_size_v<TableColumnsTuple>;
-      std::apply(
-          [](auto&&... columns) {
-            ((std::is_member_pointer_v<std::decay_t<decltype(columns)>> ||
-              std::is_same_v<
-                  std::decay_t<decltype(columns)>,
-                  object_t<detail::select_arg_type_t<std::decay_t<decltype(columns)>>>>) &&
-             ...);
-          },
-          in_columns_tuple
-      );
-    }
-  {
-    std::apply([this](auto&&... columns) { select(columns...); }, in_columns_tuple);
+  template <is_tuple_of_columns TableColumnsTuple>
+  select_t& columns(TableColumnsTuple&& in_columns_tuple) {
+    std::apply(
+        [this](auto&&... columns) { columns_(std::forward<decltype(columns)>(columns)...); },
+        std::forward<TableColumnsTuple>(in_columns_tuple)
+    );
     return *this;
   }
 
@@ -234,6 +238,20 @@ struct select_t {
   result_type_t<TableColumns...> operator()() & {
     run();
     return result_type_t<TableColumns...>{*this};
+  }
+
+  template <typename TableColumnsTuple>
+  struct result_type_t_helper;
+  template <typename... TableColumns>
+  struct result_type_t_helper<std::tuple<TableColumns...>> {
+    using type = result_type_t<TableColumns...>;
+  };
+
+  // 提取tuple的类型并返回一个可迭代的结果类型
+  template <typename TableColumnsTuple>
+  result_type_t_helper<TableColumnsTuple>::type get_result() {
+    run();
+    return typename result_type_t_helper<TableColumnsTuple>::type{*this};
   }
 };
 template <typename... TableColumns>
