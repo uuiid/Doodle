@@ -143,21 +143,21 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .from<asset_type>()
       .set(c(&asset_type::name_) = "updated_name")
       .where(c(&asset_type::uuid_id_) == l_uuid)();
-  for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
-                                          .from<entity>()
+  for (auto l_s = select(l_reg);
+       auto&& [uuid_id, asset_type] : l_s.from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::name_) == "test")
-                                          .order_by (&entity::uuid_id_)()) {
+                                          .order_by (&entity::uuid_id_)(&entity::uuid_id_, object_t<asset_type>())) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
     BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
   }
-  for (auto&& [uuid_id, asset_type] : select(l_reg, &entity::uuid_id_, object_t<asset_type>())
-                                          .from<entity>()
+  for (auto l_s = select(l_reg);
+       auto&& [uuid_id, asset_type] : l_s.from<entity>()
                                           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
                                           .where(c(&entity::code_) == "updated_name")
-                                          .order_by (&entity::uuid_id_)()) {
+                                          .order_by (&entity::uuid_id_)(&entity::uuid_id_, object_t<asset_type>())) {
     BOOST_TEST_MESSAGE(fmt::format("uuid_id: {}", uuid_id));
     BOOST_TEST_MESSAGE(fmt::format("asset_type name: {}", asset_type.name_));
     BOOST_TEST_CHECK(uuid_id == l_entity_uuid_id);
@@ -178,11 +178,12 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   }
   l_install_1.rebind_range(l_install_entities)();
 
-  for (auto&& [name, uuid_id, asset_type] : select(l_reg, &entity::name_, &entity::uuid_id_, object_t<asset_type>())
-                                                .from<entity>()
-                                                .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
-                                                .where(c(&entity::name_).like("updated_%"))
-                                                .order_by (&entity::uuid_id_)()) {
+  for (auto l_s = select(l_reg);
+       auto&& [name, uuid_id, asset_type] :
+       l_s.from<entity>()
+           .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+           .where(c(&entity::name_).like("updated_%"))
+           .order_by (&entity::uuid_id_)(&entity::name_, &entity::uuid_id_, object_t<asset_type>())) {
     BOOST_TEST_CHECK(name.starts_with("updated_"));
     BOOST_TEST_CHECK(asset_type.name_ == "updated_name");
   }
