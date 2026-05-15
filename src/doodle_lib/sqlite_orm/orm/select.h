@@ -131,30 +131,28 @@ struct select_t {
     using difference_type   = std::ptrdiff_t;
     using pointer           = const value_type*;
     using reference         = const value_type&;
-
-    storage* s_;
-    std::shared_ptr<sqlite_stmt> stmt_;
+    select_t* select_;
     bool is_end_{true};
     mutable std::shared_ptr<value_type> cache_;
-
-    explicit result_type_iterator(storage& s, const std::shared_ptr<sqlite_stmt>& stmt)
-        : s_(&s), stmt_(stmt), is_end_(false), cache_(std::make_shared<value_type>()) {
+    result_type_iterator() = default;
+    explicit result_type_iterator(select_t& in_select)
+        : select_(&in_select), is_end_(false), cache_(std::make_shared<value_type>()) {
       next();
     }
-    result_type_iterator()  = default;
+    
     ~result_type_iterator() = default;
 
     // 从sqlite_stmt中提取数据并转换为type类型
     type get() const;
     void next() {
-      if (is_end_ || !stmt_) return is_end_ = true, void();
+      if (is_end_ || !select_->stmt_) return is_end_ = true, void();
 
-      const auto l_rc = stmt_->step_not_throw();
+      const auto l_rc = select_->stmt_->step_not_throw();
       if (l_rc == SQLITE_ROW) return is_end_ = false, void();
       if (l_rc == SQLITE_DONE) return is_end_ = true, void();
 
       is_end_ = true;
-      DOODLE_ORM_ERROR_SQLITE3(l_rc, stmt_->db_);
+      DOODLE_ORM_ERROR_SQLITE3(l_rc, select_->stmt_->db_);
     }
 
     reference operator*() const {
@@ -178,7 +176,7 @@ struct select_t {
 
     bool operator==(const iterator_type& rhs) const {
       if (is_end_ && rhs.is_end_) return true;
-      return s_ == rhs.s_ && stmt_.get() == rhs.stmt_.get() && is_end_ == rhs.is_end_;
+      return select_ == rhs.select_ && is_end_ == rhs.is_end_;
     }
 
     bool operator!=(const iterator_type& rhs) const { return !(*this == rhs); }
@@ -191,12 +189,12 @@ struct select_t {
 
     auto begin() {
       if (!select_.s_ || !select_.stmt_) return end();
-      return iterator_type{*select_.s_, select_.stmt_};
+      return iterator_type{select_};
     }
     auto end() { return iterator_type{}; }
     auto begin() const {
       if (!select_.s_ || !select_.stmt_) return end();
-      return iterator_type{*select_.s_, select_.stmt_};
+      return iterator_type{select_};
     }
     auto end() const { return iterator_type{}; }
   };
