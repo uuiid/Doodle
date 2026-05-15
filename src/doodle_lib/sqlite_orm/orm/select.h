@@ -69,10 +69,7 @@ struct select_t {
   }
   template <typename FromTable>
   select_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
-    requires(
-        (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_info_specialization_v<decltype(in_ptr)>) &&
-        (std::is_member_pointer_v<decltype(in_ref_ptr)> || is_alias_column_info_specialization_v<decltype(in_ref_ptr)>)
-    )
+    requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
   {
     join_info_t join_info{};
     join_info.type_ = in_join_type;
