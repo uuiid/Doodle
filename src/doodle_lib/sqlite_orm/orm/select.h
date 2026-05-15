@@ -129,6 +129,26 @@ struct select_t {
     (l_iter_fun(in_columns), ...);
     return *this;
   };
+  // 约束TableColumnsTuple 必须是一个tuple, 并且tuple的元素必须是成员指针或者object<Table>
+  template <typename TableColumnsTuple>
+  select_t& select(const TableColumnsTuple& in_columns_tuple)
+    requires requires {
+      std::tuple_size_v<TableColumnsTuple>;
+      std::apply(
+          [](auto&&... columns) {
+            ((std::is_member_pointer_v<std::decay_t<decltype(columns)>> ||
+              std::is_same_v<
+                  std::decay_t<decltype(columns)>,
+                  object_t<detail::select_arg_type_t<std::decay_t<decltype(columns)>>>>) &&
+             ...);
+          },
+          in_columns_tuple
+      );
+    }
+  {
+    std::apply([this](auto&&... columns) { select(columns...); }, in_columns_tuple);
+    return *this;
+  }
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
@@ -276,6 +296,11 @@ inline select_t select(storage& s) {
   select_t l_ret{};
   l_ret.s_ = &s;
   return l_ret;
+}
+
+template <typename... TableColumns>
+auto make_select_column(TableColumns... in_columns) -> std::tuple<TableColumns...> {
+  return std::make_tuple(in_columns...);
 }
 
 }  // namespace doodle::orm
