@@ -87,10 +87,6 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   //           &entity::entity_type_id_, &asset_type::uuid_id_, orm::on_delete(orm::foreign_key_action::cascade)
   //       );
   //   ;
-  DOODLE_SELECT_VALUE(
-      test_struct, (&doodle::entity::uuid_id_, uuid_id), (doodle::entity, name_),
-      (&doodle::entity::entity_type_id_, entity_type_id_)
-  );
 
   l_reg.reg_table<entity>("entity")
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
