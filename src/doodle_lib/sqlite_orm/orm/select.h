@@ -149,6 +149,40 @@ struct select_t {
     std::apply([this](auto&&... columns) { select(columns...); }, in_columns_tuple);
     return *this;
   }
+
+  template <typename... TableColumns>
+  struct result_type_iterator {
+    using type              = std::tuple<detail::select_arg_type_t<std::decay_t<TableColumns>>...>;
+
+    using iterator_type     = select_result_type_iterator<TableColumns...>;
+    using iterator_category = std::input_iterator_tag;
+    using value_type        = type;
+    using difference_type   = std::ptrdiff_t;
+    using pointer           = const value_type*;
+    using reference         = const value_type&;
+  };
+  template <typename... TableColumns>
+  struct result_type_t {
+    select_t& select_;
+    using type              = std::tuple<detail::select_arg_type_t<std::decay_t<TableColumns>>...>;
+    using iterator_type     = result_type_iterator<TableColumns...>;
+    using iterator_category = std::input_iterator_tag;
+    using value_type        = type;
+    using difference_type   = std::ptrdiff_t;
+    using pointer           = const value_type*;
+    using reference         = const value_type&;
+
+    auto begin() {
+      if (!select_.s_ || !select_.stmt_) return end();
+      return iterator_type{*select_.s_, select_.stmt_};
+    }
+    auto end() { return iterator_type{}; }
+    auto begin() const {
+      if (!select_.s_ || !select_.stmt_) return end();
+      return iterator_type{*select_.s_, select_.stmt_};
+    }
+    auto end() const { return iterator_type{}; }
+  };
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
