@@ -257,10 +257,10 @@ struct select_t {
   }
 
   template <typename... TableColumns>
-  select_result_type<TableColumns...> operator()(TableColumns&&... in_columns) {
+  result_type_t<TableColumns...> operator()(TableColumns&&... in_columns) {
     columns_(std::forward<TableColumns>(in_columns)...);
     run();
-    return select_result_type<TableColumns...>{*this};
+    return result_type_t<TableColumns...>{*this};
   }
 };
 template <typename... TableColumns>
