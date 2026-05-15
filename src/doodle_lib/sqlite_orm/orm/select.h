@@ -250,10 +250,17 @@ struct select_t {
     return typename result_type_t_helper<std::decay_t<TableColumnsTuple>>::type{*this};
   }
   template <is_tuple_of_columns TableColumnsTuple>
-  result_type_t_helper<std::decay_t<TableColumnsTuple>>::type operator()(TableColumnsTuple&& in_columns_tuple) & {
+  result_type_t_helper<std::decay_t<TableColumnsTuple>>::type operator()(TableColumnsTuple&& in_columns_tuple) {
     (void)in_columns_tuple;
     run();
     return typename result_type_t_helper<std::decay_t<TableColumnsTuple>>::type{*this};
+  }
+
+  template <typename... TableColumns>
+  select_result_type<TableColumns...> operator()(TableColumns&&... in_columns) {
+    columns_(std::forward<TableColumns>(in_columns)...);
+    run();
+    return select_result_type<TableColumns...>{*this};
   }
 };
 template <typename... TableColumns>
