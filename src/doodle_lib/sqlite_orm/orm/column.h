@@ -7,8 +7,9 @@
 namespace doodle::orm {
 class storage;
 struct sqlite_stmt;
-using storage_column_types =
-    std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;
+using storage_column_types = std::tuple<
+    std::int64_t, std::int32_t, bool, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json,
+    FSys::path>;
 
 // 将 storage_column_types 转换为 std::variant<std::int64_t, std::double_t, std::string, uuid,
 // chrono::system_zoned_time, nlohmann::json, FSys::path>

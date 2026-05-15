@@ -71,6 +71,20 @@ void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zM
     l_logger->error(fmt::format("{} {}", iErrCode, zMsg));
 }
 }  // namespace
+
+void sqlite_database::regs_all() {
+  using namespace orm;
+  reg_table<organisation>("organisation")
+      .add_column("id", &organisation::id_, primary_key(), autoincrement())
+      .add_column("uuid", &organisation::uuid_id_, not_null(), unique())
+      .add_column("name", &organisation::name_, not_null())
+      .add_column("hours_by_day", &organisation::hours_by_day_, not_null())
+      .add_column("has_avatar", &organisation::has_avatar_)
+      .add_column("use_original_file_name", &organisation::use_original_file_name_)
+
+      ;
+}
+
 void sqlite_database::load(const FSys::path& in_path) {
   static std::once_flag l_flag{};
   std::call_once(l_flag, [this]() {

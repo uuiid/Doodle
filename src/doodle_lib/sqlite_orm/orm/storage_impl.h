@@ -162,6 +162,9 @@ std::string table_info<T>::get_table_create_sql() const {
     if (column.not_null_) {
       l_sql += " NOT NULL";
     }
+    if (column.unique_) {
+      l_sql += " UNIQUE";
+    }
     l_column_sqls.push_back(std::move(l_sql));
   }
   auto l_fk_sqls = get_foreign_key_create_sql();

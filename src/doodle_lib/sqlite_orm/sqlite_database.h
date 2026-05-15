@@ -8,6 +8,7 @@
 #include <doodle_core/metadata/scan_data_t.h>
 
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/sqlite_orm/orm/orm.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
@@ -54,7 +55,7 @@ struct database_t;
 namespace doodle {
 
 struct sqlite_database_impl;
-class sqlite_database {
+class sqlite_database : public orm::storage {
   logger_ptr logger_;
 
  public:
@@ -65,6 +66,9 @@ class sqlite_database {
  public:
   sqlite_database()  = default;
   ~sqlite_database() = default;
+
+  void regs_all();
+
   /**
    * 这回调函数用于加载数据库,  并且将数据库中的id分配到 sql_id 池中,  以便后续操作,
    * @warning 只有这里会分配id,  之后的操作不会分配, 只会查找id是否为 0 作为插入和更新的依据,

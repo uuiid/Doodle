@@ -31,6 +31,7 @@ struct column_info {
   bool not_null_{false};
   bool primary_key_{};
   bool autoincrement_{};
+  bool unique_{};
   column_type type_{column_type::null};
 };
 
@@ -59,6 +60,7 @@ struct not_null {};
 struct primary_key {};
 struct autoincrement {};
 struct unindexed {};
+struct unique {};
 
 struct on_delete {
   foreign_key_action action_;
