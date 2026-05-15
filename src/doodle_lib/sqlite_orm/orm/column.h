@@ -1,8 +1,12 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <memory>
+#include <variant>
+
 namespace doodle::orm {
 class storage;
+struct sqlite_stmt;
 using storage_column_types =
     std::tuple<std::int64_t, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json, FSys::path>;
 
@@ -29,11 +33,21 @@ struct tuple_to_table_member_variant<Table, std::tuple<Ts...>> {
 template <typename Table>
 using table_columns_t = typename tuple_to_table_member_variant<Table, storage_column_types>::type;
 
+// 是否是 table_columns_t<Table> 的特化
+// template <typename T>
+// struct is_table_columns_specialization : std::false_type {};
+// template <typename Table>
+// struct is_table_columns_specialization<table_columns_t<Table>> : std::true_type {};
+// template <typename T>
+// inline constexpr bool is_table_columns_specialization_v =
+//     is_table_columns_specialization<std::remove_cvref_t<T>>::value;
+
 // 运行时列信息
 struct base_column_info_t {
-  virtual ~base_column_info_t()                                                        = default;
-  virtual std::string get_column_name(const storage& s, bool include_table_name) const = 0;
-  virtual std::string get_table_name(const storage& s) const                           = 0;
+  virtual ~base_column_info_t()                                                           = default;
+  virtual std::string get_column_name(const storage& s, bool include_table_name) const    = 0;
+  virtual std::string get_table_name(const storage& s) const                              = 0;
+  virtual void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const = 0;
 };
 
 // 基本的列信息，包含列名和成员指针
@@ -45,6 +59,7 @@ struct column_info_t : public base_column_info_t {
   explicit column_info_t(const table_columns_t<Table>& in_column) : ptr_(in_column) {}
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
 };
 using column_info_ptr = std::shared_ptr<base_column_info_t>;
 

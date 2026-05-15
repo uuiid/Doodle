@@ -26,4 +26,9 @@ template <typename Table, typename ValueType>
 alias_column_info_t<Table, ValueType> old_(ValueType Table::* column_alias) {
   return alias_column_info_t<Table, ValueType>{column_alias, "OLD"};
 }
+template <typename Table, typename ValueType>
+void alias_column_info_t<Table, ValueType>::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+  using value_type                     = typename alias_column_info_t<Table, ValueType>::value_type;
+  *static_cast<value_type*>(out_value) = stmt.get_column_value<value_type>(columnIndex);
+}
 }  // namespace doodle::orm

@@ -37,6 +37,7 @@ struct alias_column_info_t : public base_column_info_t {
   // 生成 SQL 时，别名列必须包含表别名以避免歧义
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
 };
 
 // 检查是否是 alias_column_info_t<T> 的特化
@@ -55,6 +56,11 @@ struct class_attr_type<alias_column_info_t<Table, ValueType>> {
   using class_type  = Table;
   using result_type = ValueType;
 };
+
+template <typename Table, typename ValueType>
+column_info_ptr make_column_info_ptr(const alias_column_info_t<Table, ValueType>& column) {
+  return std::make_shared<alias_column_info_t<Table, ValueType>>(column);
+}
 
 template <typename Table>
 struct alias_t {
