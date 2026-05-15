@@ -89,19 +89,23 @@ template <typename T, typename Tuple>
 inline constexpr bool is_in_tuple_v = is_in_tuple<T, Tuple>::value;
 
 template <typename T>
-struct member_type;  // 主模板：不定义，仅用于特化
+struct class_attr_type;  // 主模板：不定义，仅用于特化
 
 // 特化：数据成员指针 (T C::*)
 template <typename C, typename T>
-struct member_type<T C::*> {
-  using ptr_type   = T;
-  using class_type = C;
+struct class_attr_type<T C::*> {
+  using ptr_type    = T;
+  using class_type  = C;
+  using result_type = T;
 };
+
 // 辅助别名
 template <typename T>
-using member_type_t = typename member_type<T>::ptr_type;
+using class_attr_type_t = typename class_attr_type<T>::ptr_type;
 template <typename T>
-using member_class_type_t = typename member_type<T>::class_type;
+using class_type_t = typename class_attr_type<T>::class_type;
+template <typename T>
+using class_result_type_t = typename class_attr_type<T>::result_type;
 
 template <typename Table>
 struct object_t {
@@ -120,6 +124,14 @@ template <typename Table>
 auto object(const Table& obj) {
   return object_t<Table>{obj};
 }
+
+// 特化：object<Table>
+template <typename Table>
+struct class_attr_type<object_t<Table>> {
+  using ptr_type    = void;  // object<Table> 不对应具体成员指针，因此使用 void 占位
+  using class_type  = Table;
+  using result_type = Table;
+};
 
 template <typename T>
 struct is_object_specialization : std::false_type {};

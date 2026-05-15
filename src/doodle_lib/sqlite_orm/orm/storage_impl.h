@@ -73,7 +73,7 @@ table_fts_info<T>& table_fts_info<T>::add_column(std::string&& in_name, auto T::
    }()),
    ...);
   // 根据成员变量类型推断 column_type
-  using member_type = std::remove_reference_t<std::remove_pointer_t<member_type_t<decltype(in_ptr)>>>;
+  using member_type = std::remove_reference_t<std::remove_pointer_t<class_attr_type_t<decltype(in_ptr)>>>;
   l_column.type_    = sqlite_statement_printer<member_type>{}();
   columns_.push_back(std::move(l_column));
   return *this;
@@ -136,7 +136,7 @@ table_info<T>& table_info<T>::add_column(std::string&& in_name, auto T::* in_ptr
    }()),
    ...);
   // 根据成员变量类型推断 column_type
-  using member_type = std::remove_reference_t<std::remove_pointer_t<member_type_t<decltype(in_ptr)>>>;
+  using member_type = std::remove_reference_t<std::remove_pointer_t<class_attr_type_t<decltype(in_ptr)>>>;
   l_column.type_    = sqlite_statement_printer<member_type>{}();
   columns_.push_back(std::move(l_column));
   return *this;

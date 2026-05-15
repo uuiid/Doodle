@@ -5,7 +5,6 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include "sqlite_orm/orm/column.h"
 #include <fmt/format.h>
 #include <functional>
 #include <iterator>
@@ -17,38 +16,16 @@
 #include <vector>
 
 namespace doodle::orm {
-namespace detail {
-template <typename T>
-struct select_arg_type {
-  using type = std::decay_t<T>;
-};
-
-template <typename C, typename T>
-struct select_arg_type<T C::*> {
-  using type = std::decay_t<T>;
-};
-
-template <typename Table>
-struct select_arg_type<object_t<Table>> {
-  using type = Table;
-};
-
-template <typename T>
-using select_arg_type_t = typename select_arg_type<std::decay_t<T>>::type;
-
-}  // namespace detail
-
 template <typename... TableColumns>
 struct select_result_type;
 template <typename TableColumnsTuple>
 concept is_tuple_of_columns = requires(TableColumnsTuple t) {
+  // using columns_tuple_type = std::decay_t<TableColumnsTuple>;
   std::tuple_size_v<std::decay_t<TableColumnsTuple>>;
   // std::apply(
   //     [](auto&&... columns) {
   //       ((std::is_member_pointer_v<std::decay_t<decltype(columns)>> ||
-  //         std::is_same_v<
-  //             std::decay_t<decltype(columns)>,
-  //             object_t<detail::select_arg_type_t<std::decay_t<decltype(columns)>>>>) &&
+  //         is_object_specialization_v<std::decay_t<decltype(columns)>>) &&
   //        ...);
   //     },
   //     t
@@ -60,9 +37,6 @@ struct select_t {
   friend class storage;
   friend select_t select(storage& s);
 
-  template <typename... TableColumns>
-  friend auto select(storage& s, TableColumns... in_columns)
-      -> select_result_type<detail::select_arg_type_t<TableColumns>...>;
   struct join_info_t {
     std::string join_table_name_;
     join_type type_{join_type::inner};
@@ -140,7 +114,7 @@ struct select_t {
 
   template <typename... TableColumns>
   struct result_type_iterator {
-    using type              = std::tuple<detail::select_arg_type_t<std::decay_t<TableColumns>>...>;
+    using type              = std::tuple<class_result_type_t<std::decay_t<TableColumns>>...>;
 
     using iterator_type     = result_type_iterator<TableColumns...>;
     using iterator_category = std::input_iterator_tag;
@@ -203,7 +177,7 @@ struct select_t {
   template <typename... TableColumns>
   struct result_type_t {
     select_t& select_;
-    using type          = std::tuple<detail::select_arg_type_t<std::decay_t<TableColumns>>...>;
+    using type          = std::tuple<class_result_type_t<std::decay_t<TableColumns>>...>;
     using iterator_type = result_type_iterator<TableColumns...>;
 
     auto begin() {

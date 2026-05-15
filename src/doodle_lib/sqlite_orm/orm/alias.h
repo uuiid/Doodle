@@ -2,6 +2,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/column.h>
+#include <doodle_lib/sqlite_orm/orm/fwd.h>
 
 #include <string>
 
@@ -43,6 +44,14 @@ struct is_alias_column_info_specialization<alias_column_info_t<Table>> : std::tr
 template <typename T>
 inline constexpr bool is_alias_column_info_specialization_v =
     is_alias_column_info_specialization<std::remove_cvref_t<T>>::value;
+
+// 特化：alias_column_info_t<Table>
+template <typename Table>
+struct class_attr_type<alias_column_info_t<Table>> {
+  using ptr_type   = void;  // alias_column_info_t<Table> 不对应具体成员指针，因此使用 void 占位
+  using class_type = Table;
+  using result_type  = Table;
+};
 
 template <typename Table>
 struct alias_t {
