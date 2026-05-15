@@ -275,8 +275,6 @@ struct select_and_columns_helper {
   std::tuple<TableColumns...> columns_tuple_;
 
   select_and_columns_helper(select_t select) : select_(std::move(select)) {}
-  
-  auto operator()() { return select_(columns_tuple_); }
 };
 
 template <typename... TableColumns>
