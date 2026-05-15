@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "sqlite_orm/orm/column.h"
 #include <fmt/format.h>
 #include <functional>
 #include <iterator>
@@ -69,7 +70,7 @@ struct select_t {
   };
 
   // 结果类型
-  std::vector<std::string> column_names_;
+  std::vector<column_info_ptr> column_names_;
   std::string from_table_name_;
   std::vector<join_info_t> joins_;
   std::shared_ptr<column_operations_base_t> wheres_;
@@ -125,25 +126,7 @@ struct select_t {
 
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const;
   template <typename... TableColumns>
-  select_t& columns_(TableColumns... in_columns) {
-    auto l_iter_fun = [this](auto&& column) {
-      // 处理每个参数
-      // 如果是成员指针，获取列名
-      if constexpr (std::is_member_pointer_v<std::decay_t<decltype(column)>>) {
-        column_names_.push_back(s_->get_column_name(column));
-      } else if constexpr (std::is_same_v<
-                               std::decay_t<decltype(column)>, object_t<detail::select_arg_type_t<decltype(column)>>>) {
-        // 如果是object<Table>，获取表的所有列名
-        using table_type        = detail::select_arg_type_t<decltype(column)>;
-        auto table_column_names = s_->get_table_column_names<table_type>();
-        column_names_.insert(column_names_.end(), table_column_names.begin(), table_column_names.end());
-      } else {
-        static_assert(always_false<decltype(column)>, "不支持的参数类型");
-      }
-    };
-    (l_iter_fun(in_columns), ...);
-    return *this;
-  };
+  select_t& columns_(TableColumns... in_columns);
 
   // 约束TableColumnsTuple 必须是一个tuple, 并且tuple的元素必须是成员指针或者object<Table>
   template <is_tuple_of_columns TableColumnsTuple>

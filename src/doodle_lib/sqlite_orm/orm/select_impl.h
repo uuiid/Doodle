@@ -1,10 +1,14 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/alias.h>
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+
+#include <memory>
 
 namespace doodle::orm {
 template <typename T>
@@ -13,6 +17,30 @@ select_t& select_t::where(T&& condition_fun) {
   wheres_                  = l_condition_fun_ptr;
   return *this;
 }
+template <typename... TableColumns>
+select_t& select_t::columns_(TableColumns... in_columns) {
+  auto l_iter_fun = [this](auto&& in_column) {
+    // 处理每个参数
+    // 如果是成员指针，获取列名
+    using column_type = std::decay_t<decltype(in_column)>;
+    if constexpr (std::is_member_pointer_v<column_type>) {
+      column_names_.push_back(std::make_shared<column_info_t<member_class_type_t<column_type>>>(in_column));
+    } else if constexpr (std::is_same_v<column_type, object_t<detail::select_arg_type_t<column_type>>>) {
+      // 如果是object<Table>，获取表的所有列名
+      using table_type        = detail::select_arg_type_t<column_type>;
+      auto table_column_names = s_->get_table_column_names<table_type>();
+      for (auto& column_name : table_column_names) {
+        column_names_.push_back(std::make_shared<column_info_t<table_type>>(column_name));
+      }
+    } else if constexpr (is_alias_column_info_specialization_v<column_type>) {
+      column_names_.push_back(std::make_shared<alias_column_info_t<typename column_type::table_type>>());
+    } else {
+      static_assert(always_false<column_type>, "不支持的参数类型");
+    }
+  };
+  (l_iter_fun(in_columns), ...);
+  return *this;
+};
 
 template <typename... TableColumns>
 typename select_t::result_type_iterator<TableColumns...>::type

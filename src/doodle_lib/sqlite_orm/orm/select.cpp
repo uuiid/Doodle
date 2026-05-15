@@ -10,6 +10,10 @@
 namespace doodle::orm {
 
 std::string select_t::to_sql(const storage& s) const {
+  std::vector<std::string> l_column_names_str{};
+  for (const auto& column_name_ptr : column_names_)
+    l_column_names_str.push_back(column_name_ptr->get_column_name(s, true));
+
   std::string l_join_sql;
   for (const auto& join : joins_) {
     l_join_sql += fmt::format(
@@ -22,7 +26,7 @@ std::string select_t::to_sql(const storage& s) const {
   l_limit_sql += offset_ ? fmt::format(" OFFSET {}", *offset_) : "";
 
   std::string l_sql = fmt::format(
-      "SELECT {} FROM {}{} {}{}{}", fmt::join(column_names_, ", "), from_table_name_, l_join_sql,
+      "SELECT {} FROM {}{} {}{}{}", fmt::join(l_column_names_str, ", "), from_table_name_, l_join_sql,
       wheres_ ? fmt::format("WHERE {}", wheres_->to_sql(s, true)) : "", l_order_by_sql, l_limit_sql
   );
   return l_sql;
