@@ -43,6 +43,7 @@ struct select_result_type;
 struct select_t {
  protected:
   friend class storage;
+  friend select_t select(storage& s);
 
   template <typename... TableColumns>
   friend auto select(storage& s, TableColumns... in_columns)
@@ -108,6 +109,27 @@ struct select_t {
   std::string to_sql(const storage& s) const;
 
   void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const;
+  template <typename TableColumnsStruct>
+  select_t& select(TableColumnsStruct&& in_struct) {
+    auto l_iter_fun = [this](auto&& column) {
+      // 处理每个参数
+      // 如果是成员指针，获取列名
+      if constexpr (std::is_member_pointer_v<std::decay_t<decltype(column)>>) {
+        column_names_.push_back(s_->get_column_name(column));
+      } else if constexpr (std::is_same_v<
+                               std::decay_t<decltype(column)>, object_t<detail::select_arg_type_t<decltype(column)>>>) {
+        // 如果是object<Table>，获取表的所有列名
+        using table_type        = detail::select_arg_type_t<decltype(column)>;
+        auto table_column_names = s_->get_table_column_names<table_type>();
+        column_names_.insert(column_names_.end(), table_column_names.begin(), table_column_names.end());
+      } else {
+        static_assert(always_false<decltype(column)>, "不支持的参数类型");
+      }
+    };
+    auto l_columns = in_struct.get_select_value();
+    std::apply([&](auto&&... column) { (l_iter_fun(column), ...); }, l_columns);
+    return *this;
+  };
 };
 template <typename... TableColumns>
 struct select_result_type_iterator {
@@ -248,6 +270,12 @@ auto select(storage& s, TableColumns... in_columns) -> select_result_type<detail
     }
   };
   (l_iter_fun(in_columns), ...);
+  return l_ret;
+}
+
+inline select_t select(storage& s) {
+  select_t l_ret{};
+  l_ret.s_ = &s;
   return l_ret;
 }
 

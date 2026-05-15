@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   //       );
   //   ;
   DOODLE_SELECT_VALUE(
-      test_struct, (&doodle::entity::uuid_id_, uuid_id), (&doodle::entity::name_, name_),
+      test_struct, (&doodle::entity::uuid_id_, uuid_id), (doodle::entity, name_),
       (&doodle::entity::entity_type_id_, entity_type_id_)
   );
 

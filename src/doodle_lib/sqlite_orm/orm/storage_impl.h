@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <map>
 #include <memory>
-#include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <typeindex>
 #include <utility>

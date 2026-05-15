@@ -21,5 +21,6 @@
       );                                                                                                     \
       return select_value;                                                                                   \
     }                                                                                                        \
+    using select_tuple_type = decltype(get_select_value());                                                  \
     BOOST_PP_SEQ_FOR_EACH(DOODLE_SELECT_VALUE_FIELD_DECL_, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))         \
   };
