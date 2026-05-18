@@ -74,22 +74,948 @@ void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zM
 
 void sqlite_database::regs_all() {
   using namespace orm;
-  reg_table<organisation>("organisation")
-      .add_column("id", &organisation::id_, primary_key(), autoincrement())
-      .add_column("uuid", &organisation::uuid_id_, not_null(), unique())
-      .add_column("name", &organisation::name_, not_null())
-      .add_column("hours_by_day", &organisation::hours_by_day_, not_null())
-      .add_column("has_avatar", &organisation::has_avatar_)
-      .add_column("use_original_file_name", &organisation::use_original_file_name_)
-      .add_column("timesheets_locked", &organisation::timesheets_locked_)
-      .add_column("format_duration_in_hours", &organisation::format_duration_in_hours_)
-      .add_column("hd_by_default", &organisation::hd_by_default_)
-      .add_column("chat_token_slack", &organisation::chat_token_slack_)
-      .add_column("chat_webhook_mattermost", &organisation::chat_webhook_mattermost_)
-      .add_column("chat_token_discord", &organisation::chat_token_discord_)
-      .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_);
+  reg_table<seedance2::assets_entity_item>("seedance2_assets_entity_item")
+    .add_column("id", &seedance2::assets_entity_item::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &seedance2::assets_entity_item::uuid_id_, unique(), not_null())
+    .add_column("parent_id", &seedance2::assets_entity_item::parent_id_, not_null())
+    .add_column("file_extension", &seedance2::assets_entity_item::file_extension_)
+    .add_foreign_key(
+      "parent_id", &seedance2::assets_entity_item::parent_id_, &seedance2::assets_entity::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_index("seedance2_assets_entity_item_uuid_id_index", &seedance2::assets_entity_item::uuid_id_)
+    .add_index("seedance2_assets_entity_item_parent_id_index", &seedance2::assets_entity_item::parent_id_);
 
-  ;
+  reg_table<seedance2::assets_entity>("seedance2_assets_entity")
+    .add_column("id", &seedance2::assets_entity::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &seedance2::assets_entity::uuid_id_, unique(), not_null())
+    .add_column("name", &seedance2::assets_entity::name_, not_null())
+    .add_column("description", &seedance2::assets_entity::description_)
+    .add_column("group_id", &seedance2::assets_entity::group_id_, not_null())
+    .add_column("user_id", &seedance2::assets_entity::user_id_)
+    .add_column("preview_id", &seedance2::assets_entity::preview_id_)
+    .add_column("ai_studio_id", &seedance2::assets_entity::ai_studio_id_, not_null())
+    .add_column("created_at", &seedance2::assets_entity::created_at_)
+    .add_column("updated_at", &seedance2::assets_entity::updated_at_)
+    .add_foreign_key(
+      "group_id", &seedance2::assets_entity::group_id_, &seedance2::assets_group::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "user_id", &seedance2::assets_entity::user_id_, &person::uuid_id_, foreign_key_action::set_null
+    )
+    .add_foreign_key(
+      "ai_studio_id", &seedance2::assets_entity::ai_studio_id_, &ai_studio::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "preview_id", &seedance2::assets_entity::preview_id_, &seedance2::assets_entity_item::uuid_id_,
+      foreign_key_action::set_null
+    )
+    .add_index("seedance2_assets_entity_group_id_index", &seedance2::assets_entity::group_id_)
+    .add_index("seedance2_assets_entity_uuid_id_index", &seedance2::assets_entity::uuid_id_)
+    .add_index("seedance2_assets_entity_user_id_index", &seedance2::assets_entity::user_id_)
+    .add_index("seedance2_assets_entity_studio_id_index", &seedance2::assets_entity::ai_studio_id_);
+
+  reg_table<seedance2::assets_group>("seedance2_assets_group")
+    .add_column("id", &seedance2::assets_group::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &seedance2::assets_group::uuid_id_, unique(), not_null())
+    .add_column("label", &seedance2::assets_group::label_)
+    .add_column("user_id", &seedance2::assets_group::user_id_)
+    .add_column("ai_studio_id", &seedance2::assets_group::ai_studio_id_)
+    .add_column("created_at", &seedance2::assets_group::created_at_)
+    .add_index("seedance2_group_uuid_id_index", &seedance2::assets_group::uuid_id_);
+
+  reg_table<seedance2::task>("seedance2_task")
+    .add_column("id", &seedance2::task::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &seedance2::task::uuid_id_, unique(), not_null())
+    .add_column("user_id", &seedance2::task::user_id_)
+    .add_column("status", &seedance2::task::status_)
+    .add_column("data_request", &seedance2::task::data_request_)
+    .add_column("file_extension", &seedance2::task::file_extension_)
+    .add_column("data_response", &seedance2::task::data_response_)
+    .add_column("ai_studio_id", &seedance2::task::ai_studio_id_)
+    .add_column("task_id", &seedance2::task::task_id_)
+    .add_column("created_at", &seedance2::task::created_at_)
+    .add_column("ended_at", &seedance2::task::ended_at_)
+    .add_column("shot_uuid_id", &seedance2::task::shot_uuid_id_)
+    .add_column("archived", &seedance2::task::archived_)
+    .add_foreign_key(
+      "shot_uuid_id", &seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null
+    )
+    .add_index("seedance2_task_user_id_index", &seedance2::task::user_id_)
+    .add_index("seedance2_task_uuid_id_index", &seedance2::task::uuid_id_)
+    .add_index("seedance2_task_ai_studio_id_index", &seedance2::task::ai_studio_id_);
+
+  reg_table<ai_studio_person_role_link>("ai_studio_person_role_link")
+    .add_column("id", &ai_studio_person_role_link::id_, primary_key(), autoincrement())
+    .add_column("ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, not_null())
+    .add_column("person_id", &ai_studio_person_role_link::person_id_, not_null())
+    .add_foreign_key(
+      "ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, &ai_studio::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "person_id", &ai_studio_person_role_link::person_id_, &person::uuid_id_, foreign_key_action::cascade
+    );
+
+  reg_table<ai_studio>("ai_studio")
+    .add_column("id", &ai_studio::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &ai_studio::uuid_id_, unique(), not_null())
+    .add_column("name", &ai_studio::name_, not_null())
+    .add_column("color", &ai_studio::color_)
+    .add_column("app_key", &ai_studio::app_key_)
+    .add_column("app_secret", &ai_studio::app_secret_)
+    .add_column("archived", &ai_studio::archived_);
+
+  reg_table<outsource_studio_authorization>("outsource_studio_authorization")
+    .add_column("id", &outsource_studio_authorization::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &outsource_studio_authorization::uuid_id_, unique(), not_null())
+    .add_column("studio_id", &outsource_studio_authorization::studio_id_, not_null())
+    .add_column("entity_id", &outsource_studio_authorization::entity_id_, not_null())
+    .add_foreign_key(
+      "studio_id", &outsource_studio_authorization::studio_id_, &studio::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "entity_id", &outsource_studio_authorization::entity_id_, &entity::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_unique_index(
+      "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
+      &outsource_studio_authorization::entity_id_
+    )
+    .add_index("outsource_studio_authorization_studio_id_index", &outsource_studio_authorization::studio_id_)
+    .add_index("outsource_studio_authorization_entity_id_index", &outsource_studio_authorization::entity_id_);
+
+  reg_table<ai_image_metadata>("ai_image_metadata")
+    .add_column("id", &ai_image_metadata::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &ai_image_metadata::uuid_id_, unique(), not_null())
+    .add_column("prompt", &ai_image_metadata::prompt_)
+    .add_column("task_id", &ai_image_metadata::task_id_)
+    .add_column("category", &ai_image_metadata::category_, null())
+    .add_column("extension", &ai_image_metadata::extension_, null())
+    .add_column("width", &ai_image_metadata::width_)
+    .add_column("height", &ai_image_metadata::height_)
+    .add_column("created_at", &ai_image_metadata::created_at_)
+    .add_column("author", &ai_image_metadata::author_)
+    .add_foreign_key("author", &ai_image_metadata::author_, &person::uuid_id_, foreign_key_action::cascade);
+
+  reg_table<playlist_shot>("playlist_shot")
+    .add_column("id", &playlist_shot::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &playlist_shot::uuid_id_, unique(), not_null())
+    .add_column("playlist_id", &playlist_shot::playlist_id_, not_null())
+    .add_column("entity_id", &playlist_shot::entity_id_, not_null())
+    .add_column("preview_id", &playlist_shot::preview_id_)
+    .add_column("order_index", &playlist_shot::order_index_)
+    .add_foreign_key("playlist_id", &playlist_shot::playlist_id_, &playlist::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("entity_id", &playlist_shot::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "preview_id", &playlist_shot::preview_id_, &preview_file::uuid_id_, foreign_key_action::cascade
+    )
+    .add_unique_index(
+      "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_
+    )
+    .add_index("playlist_shot_playlist_id_index", &playlist_shot::playlist_id_)
+    .add_index("playlist_shot_entity_id_index", &playlist_shot::entity_id_)
+    .add_index("playlist_shot_preview_id_index", &playlist_shot::preview_id_);
+
+  reg_table<playlist>("playlist")
+    .add_column("id", &playlist::id_, primary_key(), autoincrement())
+    .add_column("uuid_id", &playlist::uuid_id_, unique(), not_null())
+    .add_column("name", &playlist::name_, not_null())
+    .add_column("project_id", &playlist::project_id_)
+    .add_column("episode_id", &playlist::episodes_id_)
+    .add_column("task_type_id", &playlist::task_type_id_)
+    .add_column("for_client", &playlist::for_client_)
+    .add_column("for_entity", &playlist::for_entity_)
+    .add_column("is_for_all", &playlist::is_for_all_)
+    .add_column("created_at", &playlist::created_at_)
+    .add_column("updated_at", &playlist::updated_at_)
+    .add_foreign_key("project_id", &playlist::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("episode_id", &playlist::episodes_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "task_type_id", &playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
+    )
+    .add_unique_index("playlist_uc", &playlist::name_, &playlist::project_id_, &playlist::episodes_id_)
+    .add_index("playlist_project_id_index", &playlist::project_id_)
+    .add_index("playlist_episode_id_index", &playlist::episodes_id_)
+    .add_index("playlist_task_type_id_index", &playlist::task_type_id_);
+
+  reg_table<server_task_info>("server_task_info_tab")
+    .add_column("id", &server_task_info::id_, primary_key())
+    .add_column("uuid_id", &server_task_info::uuid_id_, unique(), not_null())
+    .add_column("command", &server_task_info::command_)
+    .add_column("status", &server_task_info::status_)
+    .add_column("name", &server_task_info::name_)
+    .add_column("source_computer", &server_task_info::source_computer_)
+    .add_column("submitter", &server_task_info::submitter_)
+    .add_column("submit_time", &server_task_info::submit_time_)
+    .add_column("priority", &server_task_info::priority_)
+    .add_column("run_time", &server_task_info::run_time_)
+    .add_column("end_time", &server_task_info::end_time_)
+    .add_column("run_computer_id", &server_task_info::run_computer_id_)
+    .add_column("task_id", &server_task_info::task_id_)
+    .add_column("type", &server_task_info::type_)
+    .add_column("run_time_info", &server_task_info::run_time_info_)
+    .add_foreign_key("submitter", &server_task_info::submitter_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "run_computer_id", &server_task_info::run_computer_id_, &computer::uuid_id_, foreign_key_action::set_null
+    )
+    .add_foreign_key("task_id", &server_task_info::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+    .add_index("server_task_info_tab_uuid_id_idx", &server_task_info::uuid_id_);
+
+  reg_table<computer>("computer")
+    .add_column("id", &computer::id_, primary_key())
+    .add_column("uuid_id", &computer::uuid_id_, unique(), not_null())
+    .add_column("hardware_id", &computer::hardware_id_, unique(), not_null())
+    .add_column("name", &computer::name_, not_null())
+    .add_column("status", &computer::status_)
+    .add_column("last_heartbeat_time", &computer::last_heartbeat_time_)
+    .add_column("bot_uuid", &computer::bot_uuid_)
+    .add_foreign_key("bot_uuid", &computer::bot_uuid_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_index("computer_tab_uuid_id_index", &computer::uuid_id_);
+
+  reg_table<assets_file_helper::link_parent_t>("assets_link_parent_t")
+    .add_column("id", &assets_file_helper::link_parent_t::id_, primary_key())
+    .add_column("assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_, not_null())
+    .add_column("assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, not_null())
+    .add_foreign_key(
+      "assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_,
+      &assets_helper::database_t::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, &assets_file_helper::database_t::uuid_id_,
+      foreign_key_action::cascade
+    );
+
+  reg_table<assets_file_helper::database_t>("assets_file_tab_2")
+    .add_column("id", &assets_file_helper::database_t::id_, primary_key())
+    .add_column("uuid_id", &assets_file_helper::database_t::uuid_id_, unique(), not_null())
+    .add_column("label", &assets_file_helper::database_t::label_)
+    .add_column("path", &assets_file_helper::database_t::path_)
+    .add_column("notes", &assets_file_helper::database_t::notes_)
+    .add_column("active", &assets_file_helper::database_t::active_)
+    .add_column("has_thumbnail", &assets_file_helper::database_t::has_thumbnail_, default_value(false))
+    .add_column("extension", &assets_file_helper::database_t::extension_, default_value(".png"s))
+    .add_index("assets_file_tab_uuid_id_index_2", &assets_file_helper::database_t::uuid_id_);
+
+  reg_table<assets_helper::database_t>("assets_tab")
+    .add_column("id", &assets_helper::database_t::id_, primary_key())
+    .add_column("uuid_id", &assets_helper::database_t::uuid_id_, unique(), not_null())
+    .add_column("label", &assets_helper::database_t::label_, not_null())
+    .add_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
+    .add_column("order", &assets_helper::database_t::order_, default_value(0), not_null())
+    .add_index("assets_tab_uuid_id_index", &assets_helper::database_t::uuid_id_)
+    .add_index("assets_tab_label", &assets_helper::database_t::label_);
+
+  reg_table<attendance_helper::database_t>("attendance_tab")
+    .add_column("id", &attendance_helper::database_t::id_, primary_key())
+    .add_column("uuid_id", &attendance_helper::database_t::uuid_id_, unique(), not_null())
+    .add_column("start_time", &attendance_helper::database_t::start_time_)
+    .add_column("end_time", &attendance_helper::database_t::end_time_)
+    .add_column("remark", &attendance_helper::database_t::remark_)
+    .add_column("att_enum", &attendance_helper::database_t::type_)
+    .add_column("create_date", &attendance_helper::database_t::create_date_)
+    .add_column("update_time", &attendance_helper::database_t::update_time_)
+    .add_column("dingding_id", &attendance_helper::database_t::dingding_id_)
+    .add_column("person_id", &attendance_helper::database_t::person_id_)
+    .add_foreign_key(
+      "person_id", &attendance_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
+    )
+    .add_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_)
+    .add_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_);
+
+  reg_table<work_xlsx_task_info_helper::database_t>("work_xlsx_task_info_tab")
+    .add_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key())
+    .add_column("uuid_id", &work_xlsx_task_info_helper::database_t::uuid_id_, unique(), not_null())
+    .add_column("start_time", &work_xlsx_task_info_helper::database_t::start_time_)
+    .add_column("end_time", &work_xlsx_task_info_helper::database_t::end_time_)
+    .add_column("duration", &work_xlsx_task_info_helper::database_t::duration_)
+    .add_column("remark", &work_xlsx_task_info_helper::database_t::remark_)
+    .add_column("user_remark", &work_xlsx_task_info_helper::database_t::user_remark_)
+    .add_column("year_month", &work_xlsx_task_info_helper::database_t::year_month_)
+    .add_column("person_id", &work_xlsx_task_info_helper::database_t::person_id_)
+    .add_column("kitsu_task_ref_id", &work_xlsx_task_info_helper::database_t::kitsu_task_ref_id_)
+    .add_column("season", &work_xlsx_task_info_helper::database_t::season_)
+    .add_column("episode", &work_xlsx_task_info_helper::database_t::episode_)
+    .add_column("name", &work_xlsx_task_info_helper::database_t::name_)
+    .add_column("grade", &work_xlsx_task_info_helper::database_t::grade_)
+    .add_column("project_id", &work_xlsx_task_info_helper::database_t::project_id_)
+    .add_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_)
+    .add_foreign_key(
+      "person_id", &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_);
+
+  reg_table<attachment_file>("attachment_file")
+    .add_column("id", &attachment_file::id_, primary_key(), autoincrement())
+    .add_column("uuid", &attachment_file::uuid_id_, unique(), not_null())
+    .add_column("name", &attachment_file::name_)
+    .add_column("size", &attachment_file::size_)
+    .add_column("extension", &attachment_file::extension_)
+    .add_column("mimetype", &attachment_file::mimetype_)
+    .add_column("comment_id", &attachment_file::comment_id_)
+    .add_column("chat_message_id", &attachment_file::chat_message_id_)
+    .add_foreign_key("comment_id", &attachment_file::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+    .add_index("attachment_file_comment_id_index", &attachment_file::comment_id_)
+    .add_index("attachment_file_chat_message_id_index", &attachment_file::chat_message_id_);
+
+  reg_table<subscription>("subscription")
+    .add_column("id", &subscription::id_, primary_key(), autoincrement())
+    .add_column("uuid", &subscription::uuid_id_, unique(), not_null())
+    .add_column("person_id", &subscription::person_id_, not_null())
+    .add_column("task_id", &subscription::task_id_)
+    .add_column("entity_id", &subscription::entity_id_)
+    .add_column("task_type_id", &subscription::task_type_id_)
+    .add_foreign_key("person_id", &subscription::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("task_id", &subscription::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("entity_id", &subscription::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "task_type_id", &subscription::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
+    )
+    .add_unique_index(
+      "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
+    )
+    .add_unique_index("subscription_task_uc", &subscription::person_id_, &subscription::task_id_)
+    .add_index("subscription_person_id_index", &subscription::person_id_)
+    .add_index("subscription_task_id_index", &subscription::task_id_)
+    .add_index("subscription_entity_id_index", &subscription::entity_id_)
+    .add_index("subscription_task_type_id_index", &subscription::task_type_id_);
+
+  reg_table<assignees_table>("assignations")
+    .add_column("id", &assignees_table::id_, primary_key(), autoincrement())
+    .add_column("person_id", &assignees_table::person_id_, not_null())
+    .add_column("task_id", &assignees_table::task_id_, not_null())
+    .add_foreign_key("person_id", &assignees_table::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("task_id", &assignees_table::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+    .add_index("assignations_task_id_index", &assignees_table::task_id_);
+
+  reg_table<comment_preview_link>("comment_preview_link")
+    .add_column("id", &comment_preview_link::id_, primary_key(), autoincrement())
+    .add_column("comment_id", &comment_preview_link::comment_id_)
+    .add_column("preview_file_id", &comment_preview_link::preview_file_id_)
+    .add_foreign_key("comment_id", &comment_preview_link::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "preview_file_id", &comment_preview_link::preview_file_id_, &preview_file::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_index("comment_preview_link_comment_id_index", &comment_preview_link::comment_id_)
+    .add_index("comment_preview_link_preview_file_id_index", &comment_preview_link::preview_file_id_);
+
+  reg_table<preview_file>("preview_file")
+    .add_column("id", &preview_file::id_, primary_key(), autoincrement())
+    .add_column("uuid", &preview_file::uuid_id_, unique(), not_null())
+    .add_column("name", &preview_file::name_, unique())
+    .add_column("original_name", &preview_file::original_name_)
+    .add_column("revision", &preview_file::revision_)
+    .add_column("position", &preview_file::position_)
+    .add_column("extension", &preview_file::extension_)
+    .add_column("description", &preview_file::description_)
+    .add_column("path", &preview_file::path_)
+    .add_column("source", &preview_file::source_)
+    .add_column("file_size", &preview_file::file_size_)
+    .add_column("status", &preview_file::status_)
+    .add_column("validation_status", &preview_file::validation_status_)
+    .add_column("annotations", &preview_file::annotations_)
+    .add_column("width", &preview_file::width_)
+    .add_column("height", &preview_file::height_)
+    .add_column("duration", &preview_file::duration_)
+    .add_column("task_id", &preview_file::task_id_)
+    .add_column("shotgun_id", &preview_file::shotgun_id_)
+    .add_column("person_id", &preview_file::person_id_)
+    .add_column("source_file_id", &preview_file::source_file_id_)
+    .add_column("is_movie", &preview_file::is_movie_)
+    .add_column("url", &preview_file::url_)
+    .add_column("uploaded_movie_url", &preview_file::uploaded_movie_url_)
+    .add_column("uploaded_movie_name", &preview_file::uploaded_movie_name_)
+    .add_column("created_at", &preview_file::created_at_)
+    .add_column("updated_at", &preview_file::updated_at_)
+    .add_foreign_key("task_id", &preview_file::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("person_id", &preview_file::person_id_, &person::uuid_id_, foreign_key_action::set_null)
+    .add_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_)
+    .add_index("preview_file_task_id_index", &preview_file::task_id_)
+    .add_index("preview_file_person_id_index", &preview_file::person_id_);
+
+  reg_table<notification>("notification_2")
+    .add_column("id", &notification::id_, primary_key(), autoincrement())
+    .add_column("uuid", &notification::uuid_id_, unique(), not_null())
+    .add_column("read", &notification::read_)
+    .add_column("change", &notification::change_)
+    .add_column("type", &notification::type_)
+    .add_column("person_id", &notification::person_id_, not_null())
+    .add_column("author_id", &notification::author_id_, not_null())
+    .add_column("comment_id", &notification::comment_id_)
+    .add_column("task_id", &notification::task_id_, not_null())
+    .add_column("reply_id", &notification::reply_id_)
+    .add_column("created_at", &notification::created_at_)
+    .add_foreign_key("person_id", &notification::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("author_id", &notification::author_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("comment_id", &notification::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("task_id", &notification::task_id_, &task::uuid_id_, foreign_key_action::cascade);
+
+  reg_table<comment_mentions>("comment_mentions")
+    .add_column("id", &comment_mentions::id_, primary_key(), autoincrement())
+    .add_column("comment_id", &comment_mentions::comment_id_)
+    .add_column("person_id", &comment_mentions::person_id_)
+    .add_foreign_key("comment_id", &comment_mentions::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("person_id", &comment_mentions::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_index("comment_mentions_comment_id_index", &comment_mentions::comment_id_)
+    .add_index("comment_mentions_person_id_index", &comment_mentions::person_id_);
+
+  reg_table<comment_department_mentions>("comment_department_mentions")
+    .add_column("id", &comment_department_mentions::id_, primary_key(), autoincrement())
+    .add_column("comment_id", &comment_department_mentions::comment_id_)
+    .add_column("department_id", &comment_department_mentions::department_id_)
+    .add_foreign_key(
+      "comment_id", &comment_department_mentions::comment_id_, &comment::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "department_id", &comment_department_mentions::department_id_, &department::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_index("comment_department_mentions_comment_id_index", &comment_department_mentions::comment_id_)
+    .add_index("comment_department_mentions_department_id_index", &comment_department_mentions::department_id_);
+
+  reg_table<comment_acknoledgments>("comment_acknoledgments")
+    .add_column("id", &comment_acknoledgments::id_, primary_key(), autoincrement())
+    .add_column("comment_id", &comment_acknoledgments::comment_id_)
+    .add_column("person_id", &comment_acknoledgments::person_id_)
+    .add_foreign_key(
+      "comment_id", &comment_acknoledgments::comment_id_, &comment::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "person_id", &comment_acknoledgments::person_id_, &person::uuid_id_, foreign_key_action::cascade
+    )
+    .add_index("comment_acknoledgments_comment_id_index", &comment_acknoledgments::comment_id_)
+    .add_index("comment_acknoledgments_person_id_index", &comment_acknoledgments::person_id_);
+
+  reg_table<comment>("comment")
+    .add_column("id", &comment::id_, primary_key(), autoincrement())
+    .add_column("uuid", &comment::uuid_id_, unique(), not_null())
+    .add_column("shotgun_id", &comment::shotgun_id_)
+    .add_column("object_id", &comment::object_id_, not_null())
+    .add_column("object_type", &comment::object_type_, not_null())
+    .add_column("text", &comment::text_)
+    .add_column("data", &comment::data_)
+    .add_column("replies", &comment::replies_)
+    .add_column("checklist", &comment::checklist_)
+    .add_column("pinned", &comment::pinned_)
+    .add_column("links", &comment::links)
+    .add_column("created_at", &comment::created_at_)
+    .add_column("updated_at", &comment::updated_at_)
+    .add_column("task_status_id", &comment::task_status_id_)
+    .add_column("person_id", &comment::person_id_, not_null())
+    .add_column("editor_id", &comment::editor_id_)
+    .add_column("preview_file_id", &comment::preview_file_id_)
+    .add_foreign_key(
+      "task_status_id", &comment::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key("person_id", &comment::person_id_, &person::uuid_id_, foreign_key_action::set_null)
+    .add_foreign_key("editor_id", &comment::editor_id_, &person::uuid_id_, foreign_key_action::set_null)
+    .add_foreign_key(
+      "preview_file_id", &comment::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
+    )
+    .add_index("comment_task_status_id_index", &comment::task_status_id_)
+    .add_index("comment_person_id_index", &comment::person_id_)
+    .add_index("comment_editor_id_index", &comment::editor_id_)
+    .add_index("comment_preview_file_id_index", &comment::preview_file_id_)
+    .add_index("comment_object_id_index", &comment::object_id_)
+    .add_index("comment_object_type_index", &comment::object_type_);
+
+  reg_table<task>("task")
+    .add_column("id", &task::id_, primary_key(), autoincrement())
+    .add_column("uuid", &task::uuid_id_, unique(), not_null())
+    .add_column("name", &task::name_)
+    .add_column("description", &task::description_)
+    .add_column("priority", &task::priority_)
+    .add_column("difficulty", &task::difficulty_)
+    .add_column("duration", &task::duration_)
+    .add_column("estimation", &task::estimation_)
+    .add_column("completion_rate", &task::completion_rate_)
+    .add_column("retake_count", &task::retake_count_)
+    .add_column("sort_order", &task::sort_order_)
+    .add_column("start_date", &task::start_date_)
+    .add_column("due_date", &task::due_date_)
+    .add_column("real_start_date", &task::real_start_date_)
+    .add_column("end_date", &task::end_date_)
+    .add_column("done_date", &task::done_date_)
+    .add_column("last_comment_date", &task::last_comment_date_)
+    .add_column("nb_assets_ready", &task::nb_assets_ready_)
+    .add_column("data", &task::data_)
+    .add_column("shotgun_id", &task::shotgun_id_)
+    .add_column("last_preview_file_id", &task::last_preview_file_id_)
+    .add_column("nb_drawings", &task::nb_drawings_)
+    .add_column("created_at", &task::created_at_)
+    .add_column("updated_at", &task::updated_at_)
+    .add_column("project_id", &task::project_id_)
+    .add_column("task_type_id", &task::task_type_id_)
+    .add_column("task_status_id", &task::task_status_id_)
+    .add_column("entity_id", &task::entity_id_)
+    .add_column("assigner_id", &task::assigner_id_)
+    .add_foreign_key("project_id", &task::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("task_type_id", &task::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "task_status_id", &task::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key("entity_id", &task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("assigner_id", &task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
+    .add_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_)
+    .add_index("task_project_id_index", &task::project_id_)
+    .add_index("task_task_type_id_index", &task::task_type_id_)
+    .add_index("task_task_status_id_index", &task::task_status_id_)
+    .add_index("task_entity_id_index", &task::entity_id_)
+    .add_index("task_assigner_id_index", &task::assigner_id_);
+
+  reg_table<entity_link>("entity_link")
+    .add_column("id", &entity_link::id_, primary_key(), autoincrement())
+    .add_column("uuid", &entity_link::uuid_id_, unique(), not_null())
+    .add_column("entity_in_id", &entity_link::entity_in_id_)
+    .add_column("entity_out_id", &entity_link::entity_out_id_)
+    .add_column("data", &entity_link::data_)
+    .add_column("nb_occurences", &entity_link::nb_occurences_)
+    .add_column("label", &entity_link::label_)
+    .add_foreign_key("entity_in_id", &entity_link::entity_in_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "entity_out_id", &entity_link::entity_out_id_, &entity::uuid_id_, foreign_key_action::cascade
+    );
+
+  reg_table<entity_concept_link>("entity_concept_link")
+    .add_column("id", &entity_concept_link::id_, primary_key(), autoincrement())
+    .add_column("entity_in_id", &entity_concept_link::entity_id_)
+    .add_column("entity_out_id", &entity_concept_link::entity_out_id_)
+    .add_foreign_key("entity_in_id", &entity_concept_link::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "entity_out_id", &entity_concept_link::entity_out_id_, &entity::uuid_id_, foreign_key_action::cascade
+    );
+
+  reg_table<entity_shot_extend>("entity_shot_extend")
+    .add_column("id", &entity_shot_extend::id_, primary_key(), autoincrement())
+    .add_column("uuid", &entity_shot_extend::uuid_id_, unique(), not_null())
+    .add_column("entity_id", &entity_shot_extend::entity_id_)
+    .add_column("frame_in", &entity_shot_extend::frame_in_)
+    .add_column("frame_out", &entity_shot_extend::frame_out_)
+    .add_foreign_key("entity_id", &entity_shot_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_index("entity_shot_extend_entity_id_idx", &entity_shot_extend::entity_id_);
+
+  reg_table<entity_asset_extend>("entity_asset_extend")
+    .add_column("id", &entity_asset_extend::id_, primary_key(), autoincrement())
+    .add_column("uuid", &entity_asset_extend::uuid_id_, unique(), not_null())
+    .add_column("entity_id", &entity_asset_extend::entity_id_, not_null())
+    .add_column("ji_shu_lie", &entity_asset_extend::ji_shu_lie_)
+    .add_column("deng_ji", &entity_asset_extend::deng_ji_)
+    .add_column("gui_dang", &entity_asset_extend::gui_dang_)
+    .add_column("bian_hao", &entity_asset_extend::bian_hao_)
+    .add_column("pin_yin_ming_cheng", &entity_asset_extend::pin_yin_ming_cheng_)
+    .add_column("ban_ben", &entity_asset_extend::ban_ben_)
+    .add_column("ji_du", &entity_asset_extend::ji_du_)
+    .add_column("kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_)
+    .add_column("chang_ci", &entity_asset_extend::chang_ci_)
+    .add_foreign_key("entity_id", &entity_asset_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_index("entity_asset_extend_entity_id_idx", &entity_asset_extend::entity_id_);
+
+  reg_table<entity>("entity")
+    .add_column("id", &entity::id_, primary_key(), autoincrement())
+    .add_column("uuid", &entity::uuid_id_, unique(), not_null())
+    .add_column("name", &entity::name_)
+    .add_column("code", &entity::code_)
+    .add_column("description", &entity::description_)
+    .add_column("shotgun_id", &entity::shotgun_id_)
+    .add_column("canceled", &entity::canceled_)
+    .add_column("nb_frames", &entity::nb_frames_)
+    .add_column("nb_entities_out", &entity::nb_entities_out_)
+    .add_column("is_casting_standby", &entity::is_casting_standby_)
+    .add_column("is_shared", &entity::is_shared_)
+    .add_column("status", &entity::status_)
+    .add_column("project_id", &entity::project_id_, not_null())
+    .add_column("entity_type_id", &entity::entity_type_id_, not_null())
+    .add_column("parent_id", &entity::parent_id_)
+    .add_column("source_id", &entity::source_id_)
+    .add_column("preview_file_id", &entity::preview_file_id_)
+    .add_column("ready_for", &entity::ready_for_)
+    .add_column("created_by", &entity::created_by_)
+    .add_foreign_key("project_id", &entity::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "preview_file_id", &entity::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
+    )
+    .add_foreign_key("ready_for", &entity::ready_for_, &task_type::uuid_id_, foreign_key_action::set_null)
+    .add_foreign_key("created_by", &entity::created_by_, &person::uuid_id_, foreign_key_action::set_null)
+    .add_foreign_key("parent_id", &entity::parent_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("source_id", &entity::source_id_, &entity::uuid_id_, foreign_key_action::cascade)
+    .add_index("ix_entity_project_id", &entity::project_id_)
+    .add_index("ix_entity_entity_type_id", &entity::entity_type_id_)
+    .add_index("ix_entity_parent_id", &entity::parent_id_)
+    .add_index("ix_entity_source_id", &entity::source_id_)
+    .add_unique_index("entity_uc", &entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_);
+
+  reg_table<task_type_asset_type_link>("task_type_asset_type_link")
+    .add_column("id", &task_type_asset_type_link::id_, primary_key(), autoincrement())
+    .add_column("asset_type_id", &task_type_asset_type_link::asset_type_id_, not_null())
+    .add_column("task_type_id", &task_type_asset_type_link::task_type_id_, not_null())
+    .add_foreign_key(
+      "asset_type_id", &task_type_asset_type_link::asset_type_id_, &asset_type::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "task_type_id", &task_type_asset_type_link::task_type_id_, &task_type::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_unique_index(
+      "task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_,
+      &task_type_asset_type_link::asset_type_id_
+    )
+    .add_index("task_type_asset_type_link_task_type_id_index", &task_type_asset_type_link::task_type_id_)
+    .add_index("task_type_asset_type_link_asset_type_id_index", &task_type_asset_type_link::asset_type_id_);
+
+  reg_table<project_person_link>("project_person_link")
+    .add_column("id", &project_person_link::id_, primary_key(), autoincrement())
+    .add_column("project_id", &project_person_link::project_id_, not_null())
+    .add_column("person_id", &project_person_link::person_id_, not_null())
+    .add_column("shotgun_id", &project_person_link::shotgun_id_)
+    .add_foreign_key("project_id", &project_person_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key("person_id", &project_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_index("project_person_link_project_id_index", &project_person_link::project_id_)
+    .add_index("project_person_link_person_id_index", &project_person_link::person_id_);
+
+  reg_table<project_task_type_link>("project_task_type_link")
+    .add_column("id", &project_task_type_link::id_, primary_key(), autoincrement())
+    .add_column("uuid", &project_task_type_link::uuid_id_, unique(), not_null())
+    .add_column("project_id", &project_task_type_link::project_id_, not_null())
+    .add_column("task_type_id", &project_task_type_link::task_type_id_, not_null())
+    .add_column("priority", &project_task_type_link::priority_)
+    .add_foreign_key("project_id", &project_task_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "task_type_id", &project_task_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
+    )
+    .add_unique_index(
+      "project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_
+    )
+    .add_index("project_task_type_link_project_id_index", &project_task_type_link::project_id_)
+    .add_index("project_task_type_link_task_type_id_index", &project_task_type_link::task_type_id_);
+
+  reg_table<project_task_status_link>("project_task_status_link")
+    .add_column("id", &project_task_status_link::id_, primary_key(), autoincrement())
+    .add_column("uuid", &project_task_status_link::uuid_id_, unique(), not_null())
+    .add_column("project_id", &project_task_status_link::project_id_, not_null())
+    .add_column("task_status_id", &project_task_status_link::task_status_id_, not_null())
+    .add_column("priority", &project_task_status_link::priority_)
+    .add_column("roles_for_board", &project_task_status_link::roles_for_board_)
+    .add_foreign_key(
+      "project_id", &project_task_status_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "task_status_id", &project_task_status_link::task_status_id_, &task_status::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_unique_index(
+      "project_task_status_link_uc", &project_task_status_link::project_id_,
+      &project_task_status_link::task_status_id_
+    )
+    .add_index("project_task_status_link_project_id_index", &project_task_status_link::project_id_)
+    .add_index("project_task_status_link_task_status_id_index", &project_task_status_link::task_status_id_);
+
+  reg_table<project_asset_type_link>("project_asset_type_link")
+    .add_column("id", &project_asset_type_link::id_, primary_key(), autoincrement())
+    .add_column("project_id", &project_asset_type_link::project_id_, not_null())
+    .add_column("asset_type_id", &project_asset_type_link::asset_type_id_, not_null())
+    .add_foreign_key("project_id", &project_asset_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "asset_type_id", &project_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade
+    );
+
+  reg_table<project_status_automation_link>("project_status_automation_link")
+    .add_column("id", &project_status_automation_link::id_, primary_key(), autoincrement())
+    .add_column("project_id", &project_status_automation_link::project_id_, not_null())
+    .add_column("status_automation_id", &project_status_automation_link::status_automation_id_, not_null())
+    .add_foreign_key(
+      "project_id", &project_status_automation_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "status_automation_id", &project_status_automation_link::status_automation_id_, &status_automation::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_index(
+      "project_status_automation_link_project_id_index", &project_status_automation_link::project_id_
+    )
+    .add_index(
+      "project_status_automation_link_status_automation_id_index",
+      &project_status_automation_link::status_automation_id_
+    );
+
+  reg_table<project_preview_background_file_link>("project_preview_background_file_link")
+    .add_column("id", &project_preview_background_file_link::id_, primary_key(), autoincrement())
+    .add_column("project_id", &project_preview_background_file_link::project_id_, not_null())
+    .add_column("preview_background_file_id", &project_preview_background_file_link::preview_background_file_id_, not_null())
+    .add_foreign_key(
+      "project_id", &project_preview_background_file_link::project_id_, &project::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "preview_background_file_id", &project_preview_background_file_link::preview_background_file_id_,
+      &preview_background_file::uuid_id_, foreign_key_action::cascade
+    );
+
+  reg_table<project>("project")
+    .add_column("id", &project::id_, primary_key(), autoincrement())
+    .add_column("uuid", &project::uuid_id_, not_null(), unique())
+    .add_column("name", &project::name_, not_null())
+    .add_column("code", &project::code_)
+    .add_column("description", &project::description_)
+    .add_column("shotgun_id", &project::shotgun_id_)
+    .add_column("file_tree", &project::file_tree_)
+    .add_column("data", &project::data_)
+    .add_column("has_avatar", &project::has_avatar_)
+    .add_column("fps", &project::fps_)
+    .add_column("ratio", &project::ratio_)
+    .add_column("resolution", &project::resolution_)
+    .add_column("production_type", &project::production_type_)
+    .add_column("production_style", &project::production_style_)
+    .add_column("start_date", &project::start_date_)
+    .add_column("end_date", &project::end_date_)
+    .add_column("man_days", &project::man_days_)
+    .add_column("nb_episodes", &project::nb_episodes_)
+    .add_column("episode_span", &project::episode_span_)
+    .add_column("max_retakes", &project::max_retakes_)
+    .add_column("is_clients_isolated", &project::is_clients_isolated_)
+    .add_column("is_preview_download_allowed", &project::is_preview_download_allowed_)
+    .add_column("is_set_preview_automated", &project::is_set_preview_automated_)
+    .add_column("homepage", &project::homepage_)
+    .add_column("is_publish_default_for_artists", &project::is_publish_default_for_artists_)
+    .add_column("hd_bitrate_compression", &project::hd_bitrate_compression_)
+    .add_column("ld_bitrate_compression", &project::ld_bitrate_compression_)
+    .add_column("project_status_id", &project::project_status_id_)
+    .add_column("default_preview_background_file_id", &project::default_preview_background_file_id_)
+    .add_column("path", &project::path_)
+    .add_column("en_str", &project::en_str_)
+    .add_column("auto_upload_path", &project::auto_upload_path_)
+    .add_column("production_category", &project::production_category_)
+    .add_column("short_name", &project::short_name_)
+    .add_column("asset_root_path", &project::asset_root_path_, default_value(""))
+    .add_foreign_key(
+      "project_status_id", &project::project_status_id_, &project_status::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "default_preview_background_file_id", &project::default_preview_background_file_id_,
+      &preview_background_file::uuid_id_, foreign_key_action::set_null
+    );
+
+  reg_table<metadata_descriptor_department_link>("metadata_descriptor_department_link")
+    .add_column("id", &metadata_descriptor_department_link::id_, primary_key(), autoincrement())
+    .add_column("metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_)
+    .add_column("department_id", &metadata_descriptor_department_link::department_uuid_)
+    .add_foreign_key(
+      "metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_,
+      &metadata_descriptor::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "department_id", &metadata_descriptor_department_link::department_uuid_, &department::uuid_id_,
+      foreign_key_action::cascade
+    );
+
+  reg_table<metadata_descriptor>("metadata_descriptor")
+    .add_column("id", &metadata_descriptor::id_, primary_key(), autoincrement())
+    .add_column("uuid", &metadata_descriptor::uuid_id_, not_null(), unique())
+    .add_column("name", &metadata_descriptor::name_, not_null())
+    .add_column("entity_type", &metadata_descriptor::entity_type_, not_null())
+    .add_column("project_id", &metadata_descriptor::project_uuid_, not_null())
+    .add_column("data_type", &metadata_descriptor::data_type_, not_null())
+    .add_column("field_name", &metadata_descriptor::field_name_, not_null())
+    .add_column("choices", &metadata_descriptor::choices_)
+    .add_column("for_client", &metadata_descriptor::for_client_);
+
+  reg_table<project_status>("project_status")
+    .add_column("id", &project_status::id_, primary_key(), autoincrement())
+    .add_column("uuid", &project_status::uuid_id_, not_null(), unique())
+    .add_column("name", &project_status::name_, not_null(), unique())
+    .add_column("color", &project_status::color_, not_null());
+
+  reg_table<person_department_link>("department_link")
+    .add_column("id", &person_department_link::id_, primary_key(), autoincrement())
+    .add_column("person_id", &person_department_link::person_id_)
+    .add_column("department_id", &person_department_link::department_id_)
+    .add_foreign_key("person_id", &person_department_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+    .add_foreign_key(
+      "department_id", &person_department_link::department_id_, &department::uuid_id_, foreign_key_action::cascade
+    )
+    .add_index("department_link_person_id_index", &person_department_link::person_id_)
+    .add_index("department_link_department_id_index", &person_department_link::department_id_)
+    .add_unique_index("department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_);
+
+  reg_table<person>("person")
+    .add_column("id", &person::id_, primary_key(), autoincrement())
+    .add_column("uuid", &person::uuid_id_, not_null(), unique())
+    .add_column("first_name", &person::first_name_)
+    .add_column("last_name", &person::last_name_)
+    .add_column("email", &person::email_)
+    .add_column("phone", &person::phone_)
+    .add_column("contract_type", &person::contract_type_)
+    .add_column("active", &person::active_)
+    .add_column("archived", &person::archived_)
+    .add_column("last_presence", &person::last_presence_)
+    .add_column("password", &person::password_)
+    .add_column("desktop_login", &person::desktop_login_)
+    .add_column("login_failed_attemps", &person::login_failed_attemps_)
+    .add_column("last_login_failed", &person::last_login_failed_)
+    .add_column("totp_enabled", &person::totp_enabled_)
+    .add_column("totp_secret", &person::totp_secret_)
+    .add_column("email_otp_enabled", &person::email_otp_enabled_)
+    .add_column("email_otp_secret", &person::email_otp_secret_)
+    .add_column("fido_enabled", &person::fido_enabled_)
+    .add_column("fido_credentials", &person::fido_credentials_)
+    .add_column("otp_recovery_codes", &person::otp_recovery_codes_)
+    .add_column("preferred_two_factor_authentication", &person::preferred_two_factor_authentication_)
+    .add_column("shotgun_id", &person::shotgun_id_, unique())
+    .add_column("timezone", &person::timezone_)
+    .add_column("locale", &person::locale_)
+    .add_column("data", &person::data_)
+    .add_column("role", &person::role_)
+    .add_column("has_avatar", &person::has_avatar_)
+    .add_column("notifications_enabled", &person::notifications_enabled_)
+    .add_column("notifications_slack_enabled", &person::notifications_slack_enabled_)
+    .add_column("notifications_slack_userid", &person::notifications_slack_userid_)
+    .add_column("notifications_mattermost_enabled", &person::notifications_mattermost_enabled_)
+    .add_column("notifications_mattermost_userid", &person::notifications_mattermost_userid_)
+    .add_column("notifications_discord_enabled", &person::notifications_discord_enabled_)
+    .add_column("notifications_discord_userid", &person::notifications_discord_userid_)
+    .add_column("is_bot", &person::is_bot_)
+    .add_column("jti", &person::jti_, unique(), null())
+    .add_column("expiration_date", &person::expiration_date_)
+    .add_column("studio_id", &person::studio_id_)
+    .add_column("is_generated_from_ldap", &person::is_generated_from_ldap_)
+    .add_column("ldap_uid", &person::ldap_uid_, unique(), null())
+    .add_column("dingding_id", &person::dingding_id_)
+    .add_foreign_key("studio_id", &person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null);
+
+  reg_table<preview_background_file>("preview_background_file")
+    .add_column("id", &preview_background_file::id_, primary_key(), autoincrement())
+    .add_column("uuid", &preview_background_file::uuid_id_, not_null(), unique())
+    .add_column("name", &preview_background_file::name_, not_null())
+    .add_column("archived", &preview_background_file::archived_)
+    .add_column("is_default", &preview_background_file::is_default_)
+    .add_column("original_name", &preview_background_file::original_name_)
+    .add_column("extension", &preview_background_file::extension_)
+    .add_column("file_size", &preview_background_file::file_size_)
+    .add_index("preview_background_file_uuid_id_index", &preview_background_file::uuid_id_)
+    .add_index("preview_background_file_is_default_index", &preview_background_file::is_default_);
+
+  reg_table<status_automation>("status_automation")
+    .add_column("id", &status_automation::id_, primary_key(), autoincrement())
+    .add_column("uuid", &status_automation::uuid_id_, not_null(), unique())
+    .add_column("entity_type", &status_automation::entity_type_)
+    .add_column("in_task_type_id", &status_automation::in_task_type_id_)
+    .add_column("in_task_status_id", &status_automation::in_task_status_id_)
+    .add_column("out_field_type", &status_automation::out_field_type_)
+    .add_column("out_task_type_id", &status_automation::out_task_type_id_)
+    .add_column("out_task_status_id", &status_automation::out_task_status_id_)
+    .add_column("import_last_revision", &status_automation::import_last_revision_)
+    .add_column("archived", &status_automation::archived_)
+    .add_foreign_key(
+      "in_task_type_id", &status_automation::in_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "in_task_status_id", &status_automation::in_task_status_id_, &task_status::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "out_task_type_id", &status_automation::out_task_type_id_, &task_type::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_foreign_key(
+      "out_task_status_id", &status_automation::out_task_status_id_, &task_status::uuid_id_,
+      foreign_key_action::cascade
+    )
+    .add_index("status_automation_in_task_type_id_index", &status_automation::in_task_type_id_)
+    .add_index("status_automation_in_task_status_id_index", &status_automation::in_task_status_id_)
+    .add_index("status_automation_out_task_type_id_index", &status_automation::out_task_type_id_)
+    .add_index("status_automation_out_task_status_id_index", &status_automation::out_task_status_id_);
+
+  reg_table<task_type>("task_type")
+    .add_column("id", &task_type::id_, primary_key(), autoincrement())
+    .add_column("uuid", &task_type::uuid_id_, not_null(), unique())
+    .add_column("name", &task_type::name_, not_null())
+    .add_column("short_name", &task_type::short_name_)
+    .add_column("description", &task_type::description_)
+    .add_column("color", &task_type::color_)
+    .add_column("priority", &task_type::priority_)
+    .add_column("for_entity", &task_type::for_entity_)
+    .add_column("allow_timelog", &task_type::allow_timelog_)
+    .add_column("archived", &task_type::archived_)
+    .add_column("shotgun_id", &task_type::shotgun_id_)
+    .add_column("department_id", &task_type::department_id_)
+    .add_foreign_key(
+      "department_id", &task_type::department_id_, &department::uuid_id_, foreign_key_action::set_null
+    )
+    .add_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_)
+    .add_index("task_type_department_id_index", &task_type::department_id_);
+
+  reg_table<department>("department")
+    .add_column("id", &department::id_, primary_key(), autoincrement())
+    .add_column("uuid", &department::uuid_id_, not_null(), unique())
+    .add_column("name", &department::name_, not_null())
+    .add_column("color", &department::color_, not_null())
+    .add_column("archived", &department::archived_)
+    .add_index("department_uuid_id_index", &department::uuid_id_);
+
+  reg_table<task_status>("task_status")
+    .add_column("id", &task_status::id_, primary_key(), autoincrement())
+    .add_column("uuid", &task_status::uuid_id_, not_null(), unique())
+    .add_column("name", &task_status::name_, not_null())
+    .add_column("archived", &task_status::archived_)
+    .add_column("short_name", &task_status::short_name_, not_null())
+    .add_column("description", &task_status::description_)
+    .add_column("color", &task_status::color_, not_null())
+    .add_column("priority", &task_status::priority_)
+    .add_column("is_done", &task_status::is_done_)
+    .add_column("is_artist_allowed", &task_status::is_artist_allowed_)
+    .add_column("is_client_allowed", &task_status::is_client_allowed_)
+    .add_column("is_retake", &task_status::is_retake_)
+    .add_column("is_feedback_request", &task_status::is_feedback_request_)
+    .add_column("is_default", &task_status::is_default_)
+    .add_column("shotgun_id", &task_status::shotgun_id_)
+    .add_column("for_concept", &task_status::for_concept_)
+    .add_index("task_status_uuid_id_index", &task_status::uuid_id_)
+    .add_index("task_status_name_index", &task_status::name_)
+    .add_index("task_status_short_name_index", &task_status::short_name_)
+    .add_index("task_status_is_done_index", &task_status::is_done_)
+    .add_index("task_status_is_default_index", &task_status::is_default_)
+    .add_index("task_status_feedback_request_index", &task_status::is_feedback_request_);
+
+  reg_table<asset_type>("asset_type")
+    .add_column("id", &asset_type::id_, primary_key(), autoincrement())
+    .add_column("uuid", &asset_type::uuid_id_, not_null(), unique())
+    .add_column("name", &asset_type::name_, not_null(), unique())
+    .add_column("short_name", &asset_type::short_name_)
+    .add_column("description", &asset_type::description_)
+    .add_column("archived", &asset_type::archived_);
+
+  reg_table<studio>("studio")
+    .add_column("id", &studio::id_, primary_key(), autoincrement())
+    .add_column("uuid", &studio::uuid_id_, not_null(), unique())
+    .add_column("name", &studio::name_, not_null(), unique())
+    .add_column("color", &studio::color_, not_null())
+    .add_column("app_key", &studio::app_key_)
+    .add_column("app_secret", &studio::app_secret_)
+    .add_column("archived", &studio::archived_);
+
+  reg_table<organisation>("organisation")
+    .add_column("id", &organisation::id_, primary_key(), autoincrement())
+    .add_column("uuid", &organisation::uuid_id_, not_null(), unique())
+    .add_column("name", &organisation::name_, not_null())
+    .add_column("hours_by_day", &organisation::hours_by_day_, not_null())
+    .add_column("has_avatar", &organisation::has_avatar_)
+    .add_column("use_original_file_name", &organisation::use_original_file_name_)
+    .add_column("timesheets_locked", &organisation::timesheets_locked_)
+    .add_column("format_duration_in_hours", &organisation::format_duration_in_hours_)
+    .add_column("hd_by_default", &organisation::hd_by_default_)
+    .add_column("chat_token_slack", &organisation::chat_token_slack_)
+    .add_column("chat_webhook_mattermost", &organisation::chat_webhook_mattermost_)
+    .add_column("chat_token_discord", &organisation::chat_token_discord_)
+    .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_)
+    .add_index("organisation_tab_uuid_id_index", &organisation::uuid_id_);
 }
 
 void sqlite_database::load(const FSys::path& in_path) {
