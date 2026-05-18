@@ -1,66 +1,65 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <any>
+#include <functional>
 #include <memory>
-#include <variant>
+#include <typeindex>
 
 namespace doodle::orm {
 class storage;
 struct sqlite_stmt;
-using storage_column_types = std::tuple<
-    std::int64_t, std::int32_t, bool, std::double_t, std::string, uuid, chrono::system_zoned_time, nlohmann::json,
-    FSys::path>;
-
-// 将 storage_column_types 转换为 std::variant<std::int64_t, std::double_t, std::string, uuid,
-// chrono::system_zoned_time, nlohmann::json, FSys::path>
-template <typename Tuple>
-struct tuple_to_variant;
-template <typename... Ts>
-struct tuple_to_variant<std::tuple<Ts...>> {
-  using type = std::variant<Ts...>;
-};
-
-template <typename Tuple>
-using tuple_to_variant_t     = typename tuple_to_variant<Tuple>::type;
-using storage_column_variant = tuple_to_variant_t<storage_column_types>;
-
-template <typename Table, typename Tuple>
-struct tuple_to_table_member_variant;
-template <typename Table, typename... Ts>
-struct tuple_to_table_member_variant<Table, std::tuple<Ts...>> {
-  using type = std::variant<Ts Table::*...>;
-};
-
-template <typename Table>
-using table_columns_t = typename tuple_to_table_member_variant<Table, storage_column_types>::type;
-
-// 是否是 table_columns_t<Table> 的特化
-// template <typename T>
-// struct is_table_columns_specialization : std::false_type {};
-// template <typename Table>
-// struct is_table_columns_specialization<table_columns_t<Table>> : std::true_type {};
-// template <typename T>
-// inline constexpr bool is_table_columns_specialization_v =
-//     is_table_columns_specialization<std::remove_cvref_t<T>>::value;
-
 // 运行时列信息
 struct base_column_info_t {
-  virtual ~base_column_info_t()                                                           = default;
-  virtual std::string get_column_name(const storage& s, bool include_table_name) const    = 0;
-  virtual std::string get_table_name(const storage& s) const                              = 0;
-  virtual void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const = 0;
+  virtual ~base_column_info_t()                                                                  = default;
+  virtual std::string get_column_name(const storage& s, bool include_table_name) const           = 0;
+  virtual std::string get_table_name(const storage& s) const                                     = 0;
+  virtual void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const        = 0;
+  virtual void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const = 0;
+};
+
+struct table_columns_t {
+  std::type_index table_type_index_{typeid(void)};
+  std::any any_value_{};
+  std::function<bool(const table_columns_t&)> equals_{};
+  std::function<void(const sqlite_stmt&, int, void*)> set_value_{};
+  std::function<void(const sqlite_stmt&, int, void*)> set_struct_value_{};
+
+  table_columns_t() = default;
+
+  template <typename ValueType, typename Table>
+  explicit table_columns_t(ValueType Table::* in_ptr);
+
+  template <typename ValueType, typename Table>
+  bool is(ValueType Table::* in_ptr) const {
+    if (any_value_.type() != typeid(ValueType Table::*)) return false;
+    auto l_ptr = std::any_cast<ValueType Table::*>(any_value_);
+    return l_ptr && l_ptr == in_ptr;
+  }
+
+  bool operator==(const table_columns_t& other) const { return equals_ && equals_(other); }
+
+  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+    if (!set_value_) throw std::runtime_error("Column setter is not initialized");
+    set_value_(stmt, columnIndex, out_value);
+  }
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+    if (!set_struct_value_) throw std::runtime_error("Struct column setter is not initialized");
+    set_struct_value_(stmt, columnIndex, out_value);
+  }
 };
 
 // 基本的列信息，包含列名和成员指针
-template <typename Table>
-struct column_info_t : public base_column_info_t {
-  table_columns_t<Table> ptr_;
 
-  explicit column_info_t(auto Table::* in_ptr) : ptr_(in_ptr) {}
-  explicit column_info_t(const table_columns_t<Table>& in_column) : ptr_(in_column) {}
+struct column_info_t : public base_column_info_t {
+  table_columns_t ptr_;
+  template <typename ValueType, typename Table>
+  explicit column_info_t(ValueType Table::* in_ptr) : ptr_(in_ptr) {}
+  explicit column_info_t(const table_columns_t& in_column) : ptr_(in_column) {}
   std::string get_column_name(const storage& s, bool include_table_name) const override;
   std::string get_table_name(const storage& s) const override;
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
 };
 using column_info_ptr = std::shared_ptr<base_column_info_t>;
 

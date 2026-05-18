@@ -13,6 +13,63 @@
 namespace doodle {
 namespace orm {
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+table_fts_info& table_fts_info::content(const std::string& content_table, const std::string& content_rowid) {
+  content_table_ = content_table;
+  content_rowid_ = content_rowid;
+  return *this;
+}
+
+table_fts_info& table_fts_info::tokenizer(const std::string& tokenizer) {
+  tokenizer_ = tokenizer;
+  return *this;
+}
+
+std::string table_fts_info::get_table_create_sql() const {
+  std::vector<std::string> l_column_sqls;
+  for (std::size_t i = 0; i < columns_.size(); ++i) {
+    const auto& column = columns_[i];
+    std::string l_sql  = fmt::format("{} {}", column.name_, column.type_);
+    if (unindexed_columns_[i]) {
+      l_sql += " UNINDEXED";
+    }
+    l_column_sqls.push_back(std::move(l_sql));
+  }
+  if (!content_table_.empty()) l_column_sqls.push_back(fmt::format("CONTENT={}", content_table_));
+
+  if (!content_rowid_.empty()) l_column_sqls.push_back(fmt::format("CONTENT_ROWID={}", content_rowid_));
+
+  if (!tokenizer_.empty()) l_column_sqls.push_back(fmt::format("TOKENIZER={}", tokenizer_));
+  return fmt::format("CREATE VIRTUAL TABLE IF NOT EXISTS {} USING fts5 ({})", name_, fmt::join(l_column_sqls, ", "));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string table_info::get_table_create_sql() const {
+  std::vector<std::string> l_column_sqls;
+  for (const auto& column : columns_) {
+    std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
+    if (column.primary_key_) {
+      l_sql += " PRIMARY KEY";
+    }
+    if (column.autoincrement_) {
+      l_sql += " AUTOINCREMENT";
+    }
+    if (column.not_null_) {
+      l_sql += " NOT NULL";
+    }
+    if (column.unique_) {
+      l_sql += " UNIQUE";
+    }
+    l_column_sqls.push_back(std::move(l_sql));
+  }
+  auto l_fk_sqls = get_foreign_key_create_sql();
+  l_column_sqls.insert(l_column_sqls.end(), l_fk_sqls.begin(), l_fk_sqls.end());
+  return fmt::format("CREATE TABLE IF NOT EXISTS {} ({})", name_, fmt::join(l_column_sqls, ", "));
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 on_delete::on_delete(foreign_key_action action) : action_(action) {}
 
 on_update::on_update(foreign_key_action action) : action_(action) {}
@@ -52,16 +109,6 @@ void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
-
-std::int32_t sqlite_stmt::bind(const storage_column_variant& value) {
-  return std::visit(
-      [this](auto&& arg) -> std::int32_t {
-        using T = std::decay_t<decltype(arg)>;
-        return sqlite_statement_binder<T>{}.bind(stmt_, get_bind_index(), arg);
-      },
-      value
-  );
-}
 
 void sqlite_stmt::step() {
   auto l_r = sqlite3_step(stmt_);

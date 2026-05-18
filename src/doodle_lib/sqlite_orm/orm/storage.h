@@ -22,12 +22,11 @@
 namespace doodle {
 
 namespace orm {
-template <typename T>
 struct column_info {
-  using column_ptr_type = table_columns_t<T>;
+  using column_ptr_type = table_columns_t;
 
   std::string name_;
-  table_columns_t<T> ptr_;
+  table_columns_t ptr_;
   bool not_null_{false};
   bool primary_key_{};
   bool autoincrement_{};
@@ -76,52 +75,49 @@ struct table_info_base {
   std::type_index type_index_{typeid(void)};
   std::vector<std::function<void(storage&)>> to_register_;
   std::vector<foreign_key_info> foreign_keys_;
+  std::vector<column_info> columns_;
 
   virtual ~table_info_base() = default;
   std::vector<std::string> get_foreign_key_create_sql() const;
   virtual std::string get_table_create_sql() const = 0;
-};
-template <typename T>
-struct table_fts_info : table_info_base {
-  struct column_info_fts_t : column_info<T> {
-    bool unindexed_{false};
-  };
 
-  std::vector<column_info_fts_t> columns_;
-  using column_ptr_type = typename column_info<T>::column_ptr_type;
+  template <typename T>
+  column_info& find_column_info(auto T::* in_ptr);
+  column_info& find_column_info(const table_columns_t& in_column);
+};
+
+struct table_fts_info : table_info_base {
+  std::vector<bool> unindexed_columns_;
+  using column_ptr_type = typename column_info::column_ptr_type;
 
   std::string tokenizer_{};
   std::string content_table_{};
   std::string content_rowid_{};
 
-  table_fts_info<T>& content(const std::string& content_table, const std::string& content_rowid);
-  table_fts_info<T>& tokenizer(const std::string& tokenizer);
+  table_fts_info& content(const std::string& content_table, const std::string& content_rowid);
+  table_fts_info& tokenizer(const std::string& tokenizer);
 
-  column_info_fts_t& find_column_info(auto T::* in_ptr);
-  column_info_fts_t& find_column_info(const table_columns_t<T>& in_column);
-
-  table_fts_info<T>& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
+  template <typename T>
+  table_fts_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
 
   std::string get_table_create_sql() const override;
 };
 
-template <typename T>
 struct table_info : table_info_base {
-  std::vector<column_info<T>> columns_;
-  using column_ptr_type = typename column_info<T>::column_ptr_type;
+  using column_ptr_type = typename column_info::column_ptr_type;
 
-  column_info<T>& find_column_info(auto T::* in_ptr);
-  column_info<T>& find_column_info(const table_columns_t<T>& in_column);
-
+  template <typename T>
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
-  template <typename RefTable>
+  template <typename T, typename RefTable>
   table_info& add_foreign_key(
       std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr,
       foreign_key_action on_delete = foreign_key_action::no_action,
       foreign_key_action on_update = foreign_key_action::no_action
   );
 
+  template <typename T>
   table_info& add_index(std::string&& in_name, auto T::* in_ptr);
+  template <typename T>
   table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
 
   std::string get_table_create_sql() const override;
@@ -154,12 +150,13 @@ struct sqlite_stmt {
   std::int32_t get_bind_index();
   std::int64_t get_column_count() const;
 
-  std::int32_t bind(const storage_column_variant& value);
   void step();
   std::int32_t step_not_throw();
 
   template <typename T>
   T get_column_value(int columnIndex) const;
+  template <typename T>
+  std::int32_t bind(T&& value);
 };
 
 template <typename T>
@@ -174,7 +171,6 @@ class storage {
   std::map<std::type_index, std::size_t> type_to_table_index_;
   std::vector<std::shared_ptr<trigger_info>> triggers_;
 
-  template <typename T>
   friend struct table_info;
   friend struct sqlite_stmt;
   friend struct select_t;
@@ -197,9 +193,9 @@ class storage {
   void sync_schema();
 
   template <typename T>
-  table_info<T>& reg_table(std::string&& in_name);
+  table_info& reg_table(std::string&& in_name);
   template <typename T>
-  table_info<T>& reg_virtual_table(std::string&& in_name);
+  table_info& reg_virtual_table(std::string&& in_name);
   create_trigger_t create_trigger(std::string in_name);
 
   storage& finalize();
@@ -209,14 +205,14 @@ class storage {
 
   template <typename T>
   std::string get_column_name(auto T::* in_ptr, bool add_table_name = true) const;
-  template <typename T>
-  std::string get_column_name(const table_columns_t<T>& in_column, bool add_table_name = true) const;
+  std::string get_column_name(const table_columns_t& in_column, bool add_table_name = true) const;
   template <typename T>
   std::vector<std::string> get_table_column_names() const;
   template <typename T>
-  const std::vector<column_info<T>>& get_table_columns() const;
+  const std::vector<column_info>& get_table_columns() const;
   template <typename T>
   std::string get_table_name() const;
+  std::string get_table_name(std::type_index in_type_index) const;
 
   // 事务相关
   void begin_transaction();
@@ -244,8 +240,6 @@ class storage {
   void reg_index(std::string&& in_name, auto T::* in_ptr);
   template <typename T>
   void reg_unique_index(std::string&& in_name, auto... in_ptrs);
-
-  std::string get_table_name(std::type_index in_type_index) const;
 };
 
 }  // namespace orm

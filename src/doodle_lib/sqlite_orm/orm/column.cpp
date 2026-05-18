@@ -1,0 +1,17 @@
+#include <doodle_lib/sqlite_orm/orm/column.h>
+#include <doodle_lib/sqlite_orm/orm/fwd.h>
+#include <doodle_lib/sqlite_orm/orm/storage.h>
+
+namespace doodle::orm {
+std::string column_info_t::get_column_name(const storage& s, bool include_table_name) const {
+  return s.get_column_name(ptr_, include_table_name);
+}
+std::string column_info_t::get_table_name(const storage& s) const { return s.get_table_name(ptr_.table_type_index_); }
+
+void column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+  ptr_.set_value(stmt, columnIndex, out_value);
+}
+void column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+  ptr_.set_struct_value(stmt, columnIndex, out_value);
+}
+}  // namespace doodle::orm

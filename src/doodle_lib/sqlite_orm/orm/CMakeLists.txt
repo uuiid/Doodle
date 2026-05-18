@@ -25,4 +25,5 @@ target_sources(
         insert.cpp
         delete.cpp
         create_trigger.cpp
+        column.cpp
 )
