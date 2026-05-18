@@ -209,6 +209,12 @@ void storage::reg_index(std::string&& in_name, auto T::* in_ptr) {
   l_index.name_        = std::move(in_name);
   l_index.table_name_  = l_table.name_;
   l_index.column_name_ = l_table.find_column_info(in_ptr).name_;
+  if (std::ranges::find_if(indexes_, [&](const index_info& in_index) {
+        return in_index.table_name_ == l_index.table_name_ && in_index.column_name_ == l_index.column_name_;
+      }) != indexes_.end()) {
+    SPDLOG_WARN("Index on {}.{} already exists, skipping index creation", l_table.name_, l_index.column_name_);
+    return;  // 已经存在相同的索引，无需重复创建
+  }
   indexes_.push_back(std::move(l_index));
 }
 template <typename T>
@@ -221,6 +227,15 @@ void storage::reg_unique_index(std::string&& in_name, auto... in_ptrs) {
   l_unique_index.name_       = std::move(in_name);
   l_unique_index.table_name_ = l_table.name_;
   ((l_unique_index.ptrs_.push_back(l_table.find_column_info(in_ptrs).name_)), ...);
+  if (std::ranges::find_if(unique_indexes_, [&](const unique_index_info& in_index) {
+        return in_index.table_name_ == l_unique_index.table_name_ && in_index.ptrs_ == l_unique_index.ptrs_;
+      }) != unique_indexes_.end()) {
+    SPDLOG_WARN(
+        "Unique index on {}.{} already exists, skipping index creation", l_table.name_,
+        fmt::join(l_unique_index.ptrs_, ", ")
+    );
+    return;  // 已经存在相同的唯一索引，无需重复创建
+  }
   unique_indexes_.push_back(std::move(l_unique_index));
 }
 
