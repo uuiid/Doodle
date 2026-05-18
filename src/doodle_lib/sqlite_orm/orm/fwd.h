@@ -1,7 +1,6 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
 
 typedef struct sqlite3_stmt sqlite3_stmt;
@@ -16,6 +15,7 @@ struct select_t;
 struct delete_t;
 struct update_t;
 struct insert_t;
+struct sqlite_stmt;
 struct create_trigger_t;
 
 template <typename...>
@@ -143,7 +143,13 @@ inline constexpr bool is_object_specialization_v = is_object_specialization<std:
 struct bind_value_collector_t {
   struct bind_value_t {
     std::any value_;
-    std::function<void(sqlite3_stmt* stmt, int index)> bind_fun_;
+    std::function<void(sqlite_stmt& stmt, int index)> bind_fun_;
+
+    template <typename T>
+    explicit bind_value_t(T&& value);
+    bind_value_t() = default;
+    // to bool
+    operator bool() const { return bind_fun_ != nullptr; }
   };
   std::vector<bind_value_t> bind_values_;
 };

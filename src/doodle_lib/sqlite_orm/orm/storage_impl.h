@@ -6,6 +6,7 @@
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "fwd.h"
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -15,6 +16,24 @@
 #include <vector>
 
 namespace doodle::orm {
+template <typename T>
+bind_value_collector_t::bind_value_t::bind_value_t(T&& value) {
+  // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
+  if constexpr (std::is_convertible_v<T, std::string>) {
+    value_    = std::string(std::forward<T>(value));
+    bind_fun_ = [this](sqlite_stmt& stmt, int index) {
+      using actual_type = std::string;
+      stmt.bind<actual_type>(index, std::any_cast<actual_type>(value_));
+    };
+  } else {
+    using value_type = std::decay_t<T>;
+    value_           = std::forward<T>(value);
+    bind_fun_        = [this](sqlite_stmt& stmt, int index) {
+      using actual_type = value_type;
+      stmt.bind<actual_type>(index, std::any_cast<actual_type>(value_));
+    };
+  }
+}
 
 template <typename T>
 column_info& table_info_base::find_column_info(auto T::* in_ptr) {
@@ -27,14 +46,15 @@ column_info& table_info_base::find_column_info(auto T::* in_ptr) {
 }
 
 template <typename T>
-std::string table_info_t<T>::get_table_name(const storage& s) const {
-  return s.get_table_name<T>();
-}
-
-template <typename T>
 T sqlite_stmt::get_column_value(int columnIndex) const {
   sqlite_statement_extractor<T> l_extractor{};
   return l_extractor.extract(stmt_, columnIndex);
+}
+template <typename T>
+void sqlite_stmt::bind(std::int32_t in_index, T&& in_value) {
+  sqlite_statement_binder<T> l_binder{};
+  auto l_rt = l_binder.bind(stmt_, in_index, std::forward<T>(in_value));
+  DOODLE_ORM_ERROR_SQLITE3(l_rt, db_);
 }
 
 template <typename T>

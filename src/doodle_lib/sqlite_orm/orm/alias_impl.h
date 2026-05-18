@@ -21,15 +21,15 @@ void alias_column_info_t ::set_struct_value(const sqlite_stmt& stmt, int columnI
 }
 
 template <typename Table, typename ValueType>
-alias_column_info_t new_(ValueType Table::* column_alias) {
-  return alias_column_info_t{column_alias, "NEW"};
+alias_column_t<Table, ValueType> new_(ValueType Table::* column_alias) {
+  return alias_column_t<Table, ValueType>{column_alias, "NEW"};
 }
 template <typename Table, typename ValueType>
-alias_column_info_t old_(ValueType Table::* column_alias) {
-  return alias_column_info_t{column_alias, "OLD"};
+alias_column_t<Table, ValueType> old_(ValueType Table::* column_alias) {
+  return alias_column_t<Table, ValueType>{column_alias, "OLD"};
 }
 
-std::string alias_t ::get_table_name(const storage& s) const {
+std::string alias_info_t::get_table_name(const storage& s) const {
   if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
   return fmt::format("{} AS {}", s.get_table_name(table_type_index_), table_name_);
 }

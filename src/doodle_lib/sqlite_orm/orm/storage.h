@@ -1,6 +1,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
 #include <boost/pfr.hpp>
@@ -18,6 +19,7 @@
 #include <typeindex>
 #include <utility>
 #include <vector>
+
 
 namespace doodle {
 
@@ -156,11 +158,13 @@ struct sqlite_stmt {
   template <typename T>
   T get_column_value(int columnIndex) const;
   template <typename T>
-  std::int32_t bind(T&& value);
+  void bind(std::int32_t in_index, T&& in_value);
 };
 
-template <typename T>
 struct table_info_t : public table_info_base_t {
+  std::type_index type_index_{typeid(void)};
+  template <typename T>
+  explicit table_info_t(T&&) : type_index_(typeid(T)) {}
   virtual std::string get_table_name(const storage& s) const override;
 };
 

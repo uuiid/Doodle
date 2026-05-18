@@ -14,18 +14,14 @@ std::string operator_compare_t::to_sql(const storage& s, bool include_table_name
   );
 }
 
-void operator_compare_t::collect_bind_variants(
-    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
-) const {
+void operator_compare_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   data_impl_ptr_->left_->collect_bind_variants(bind_variants);
   data_impl_ptr_->right_->collect_bind_variants(bind_variants);
 }
 
 std::string operator_compare_t::get_column_name(const storage& /*s*/) const {
   // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
-  throw std::runtime_error(
-      "operator_compare_t does not represent a specific column and cannot generate a column name"
-  );
+  throw std::runtime_error("operator_compare_t does not represent a specific column and cannot generate a column name");
 }
 
 operator_compare_t operator_compare_t::operator&&(operator_compare_t&& other) const {
@@ -58,10 +54,8 @@ std::string column_operations::to_str_value_t::to_str(
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
 }
 
-void column_operations::to_str_value_t::collect_bind_variants(
-    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
-) const {
-  if (value_variant_) bind_variants.push_back(value_variant_);
+void column_operations::to_str_value_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  if (value_variant_) bind_variants.bind_values_.push_back(value_variant_);
 }
 
 // column_operations::to_str_value_list_t
@@ -74,10 +68,8 @@ std::string column_operations::to_str_value_list_t::to_str(
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
 }
 
-void column_operations::to_str_value_list_t::collect_bind_variants(
-    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
-) const {
-  bind_variants.insert(bind_variants.end(), value_variants_.begin(), value_variants_.end());
+void column_operations::to_str_value_list_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  bind_variants.bind_values_.insert(bind_variants.bind_values_.end(), value_variants_.begin(), value_variants_.end());
 }
 
 // column_operations::to_str_subquery_t
@@ -91,9 +83,7 @@ std::string column_operations::to_str_subquery_t::to_str(
   return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s));
 }
 
-void column_operations::to_str_subquery_t::collect_bind_variants(
-    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
-) const {
+void column_operations::to_str_subquery_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   if (subquery_ptr_) subquery_ptr_->collect_bind_variants(bind_variants);
 }
 
@@ -110,17 +100,23 @@ std::string column_operations::to_str_compare_t::to_str(
 }
 
 void column_operations::to_str_compare_t::collect_bind_variants(
-    std::vector<std::shared_ptr<storage_column_variant>>& /*bind_variants*/
+    bind_value_collector_t& /*bind_variants*/
 ) const {
   // 不需要绑定参数，因为比较的值来自于另一个列，而不是用户输入的值
+}
+
+column_operations::column_operations(const table_columns_t& in_column) : data_impl_ptr_(std::make_shared<data_impl>()) {
+  data_impl_ptr_->ptr_shared_ = std::make_shared<column_info_t>(in_column);
+};
+column_operations::column_operations(const alias_column_info_t& in_column)
+    : data_impl_ptr_(std::make_shared<data_impl>()) {
+  data_impl_ptr_->ptr_shared_ = std::make_shared<alias_column_info_t>(in_column);
 }
 
 // column_operations public methods
 column_info_ptr column_operations::get_column_info_ptr() const { return data_impl_ptr_->ptr_shared_; }
 
-void column_operations::collect_bind_variants(
-    std::vector<std::shared_ptr<storage_column_variant>>& bind_variants
-) const {
+void column_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
 }
 
@@ -146,7 +142,7 @@ column_operations column_operations::operator!() const {
 
 column_operations column_operations::like(std::string_view pattern) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} LIKE ?");
-  l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::string{pattern});
+  l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::string(pattern)};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
   return *this;
 }

@@ -70,14 +70,14 @@ struct column_operations : column_operations_base_t {
   };
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
-    bind_value_collector_t value_variant_;
+    bind_value_collector_t::bind_value_t value_variant_;
     explicit to_str_value_t(std::string fmt_str);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   struct to_str_value_list_t : to_str_base_t {
     std::string fmt_str_;
-    bind_value_collector_t value_variants_;
+    std::vector<bind_value_collector_t::bind_value_t> value_variants_;
     explicit to_str_value_list_t(std::string fmt_str);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
@@ -107,10 +107,8 @@ struct column_operations : column_operations_base_t {
  public:
   template <typename T>
   explicit column_operations(auto T::* in_ptr);
-  template <typename T>
-  explicit column_operations(const table_columns_t<T>& in_column);
-  template <typename Table, typename ValueType>
-  explicit column_operations(const alias_column_info_t<Table, ValueType>& in_column);
+  explicit column_operations(const table_columns_t& in_column);
+  explicit column_operations(const alias_column_info_t& in_column);
 
   column_info_ptr get_column_info_ptr() const;
 
@@ -124,20 +122,15 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   column_operations operator=(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
-
+          std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
-      auto l_ptr = std::make_shared<to_str_value_t>("{} = ?");
-      if constexpr (std::is_convertible_v<U, std::string>) {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
-      } else {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
-      }
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
+      return *this;
     }
-    return *this;
   }
 
   column_operations operator=(std::nullptr_t) const;
@@ -145,17 +138,12 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator==(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} == {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+          std::make_shared<to_str_compare_t>("{} == {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
-      auto l_ptr = std::make_shared<to_str_value_t>("{} == ?");
-      // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
-      if constexpr (std::is_convertible_v<U, std::string>) {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
-      } else {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
-      }
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -163,17 +151,13 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator!=(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} != {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+          std::make_shared<to_str_compare_t>("{} != {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
-      auto l_ptr = std::make_shared<to_str_value_t>("{} != ?");
-      // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
-      if constexpr (std::is_convertible_v<U, std::string>) {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::string{value});
-      } else {
-        l_ptr->value_variant_ = std::make_shared<storage_column_variant>(std::forward<U>(value));
-      }
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} != ?");
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -182,12 +166,12 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator>(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} > {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+          std::make_shared<to_str_compare_t>("{} > {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} > ?");
-      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -195,12 +179,12 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator<(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} < {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+          std::make_shared<to_str_compare_t>("{} < {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} < ?");
-      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -208,12 +192,12 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator>=(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} >= {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+          std::make_shared<to_str_compare_t>("{} >= {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} >= ?");
-      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -221,12 +205,12 @@ struct column_operations : column_operations_base_t {
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator<=(U&& value) const {
-    if constexpr (is_alias_column_info_specialization_v<std::decay_t<U>>) {
+    if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
-          std::make_shared<to_str_compare_t>("{} <= {}", std::make_shared<std::decay_t<U>>(std::forward<U>(value)));
+          std::make_shared<to_str_compare_t>("{} <= {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} <= ?");
-      l_ptr->value_variant_       = std::make_shared<storage_column_variant>(std::forward<U>(value));
+      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -247,7 +231,7 @@ struct column_operations : column_operations_base_t {
     }
     std::vector<char> placeholders(l_size, '?');
     auto l_ptr = std::make_shared<to_str_value_list_t>(fmt::format("{{}} IN ({})", fmt::join(placeholders, ", ")));
-    for (const auto& value : values) l_ptr->value_variants_.push_back(std::make_shared<storage_column_variant>(value));
+    for (const auto& value : values) l_ptr->value_variants_.push_back(bind_value_collector_t::bind_value_t{value});
     data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }
@@ -282,10 +266,7 @@ template <typename T>
 auto c(auto T::* in_ptr) {
   return column_operations{in_ptr};
 }
-template <typename Table, typename ValueType>
-auto c(const alias_column_info_t<Table, ValueType>& in_column) {
-  return column_operations{in_column};
-}
+inline auto c(const alias_column_info_t& in_column) { return column_operations{in_column}; }
 }  // namespace doodle::orm
 
 namespace fmt {

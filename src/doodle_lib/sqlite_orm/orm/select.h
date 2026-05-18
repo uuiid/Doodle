@@ -7,7 +7,6 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <fmt/format.h>
-#include <functional>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -72,30 +71,31 @@ struct select_t {
     requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
   {
     join_info_t join_info{};
-    join_info.type_ = in_join_type;
-    join_info.join_table_info_ =
-        std::make_shared<table_info_t<FromTable>>();  // 这里假设所有表都注册了，如果没有注册会在运行时抛出异常
-    join_info.self_column_info_ = std::make_shared<column_info_t<class_type_t<std::decay_t<decltype(in_ptr)>>>>(in_ptr);
-    join_info.join_column_info_ =
-        std::make_shared<column_info_t<class_type_t<std::decay_t<decltype(in_ref_ptr)>>>>(in_ref_ptr);
+    join_info.type_            = in_join_type;
+    join_info.join_table_info_ = std::make_shared<table_info_t>(
+        std::declval<FromTable>()
+    );  // 这里假设所有表都注册了，如果没有注册会在运行时抛出异常
+    join_info.self_column_info_ = std::make_shared<column_info_t>(in_ptr);
+    join_info.join_column_info_ = std::make_shared<column_info_t>(in_ref_ptr);
     joins_.push_back(std::move(join_info));
     return *this;
   }
   template <typename JoinTable>
   select_t& join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
     requires(
-        (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_info_specialization_v<decltype(in_ptr)>) &&
-        (std::is_member_pointer_v<decltype(in_ref_ptr)> ||
-         is_alias_column_info_specialization_v<decltype(in_ref_ptr)>) &&
-        is_alias_specialization_v<JoinTable>
+        (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ptr)>>) &&
+        (std::is_member_pointer_v<decltype(in_ref_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>) &&
+
+        (is_alias_column_t_v<std::decay_t<decltype(in_ptr)>> ||
+         is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>) &&
+        is_alias_t_v<JoinTable>
     )
   {
     auto l_create_column_info_ptr = [](auto&& column) -> column_info_ptr {
-      if constexpr (is_alias_column_info_specialization_v<std::decay_t<decltype(column)>>) {
-        return std::make_shared<std::decay_t<decltype(column)>>(std::forward<decltype(column)>(column));
+      if constexpr (is_alias_column_t_v<std::decay_t<decltype(column)>>) {
+        return std::make_shared<alias_column_info_t>(std::forward<decltype(column)>(column));
       } else {
-        using ColumnTableType = class_type_t<std::decay_t<decltype(column)>>;
-        return std::make_shared<column_info_t<ColumnTableType>>(std::forward<decltype(column)>(column));
+        return std::make_shared<column_info_t>(std::forward<decltype(column)>(column));
       }
     };
 

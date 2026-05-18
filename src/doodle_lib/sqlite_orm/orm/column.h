@@ -1,6 +1,8 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/fwd.h>
+
 #include <any>
 #include <functional>
 #include <memory>
@@ -24,6 +26,7 @@ struct table_columns_t {
   std::function<bool(const table_columns_t&)> equals_{};
   std::function<void(const sqlite_stmt&, int, void*)> set_value_{};
   std::function<void(const sqlite_stmt&, int, void*)> set_struct_value_{};
+  std::function<bind_value_collector_t::bind_value_t(const void*)> get_bind_value_{};
 
   table_columns_t() = default;
 
@@ -38,7 +41,11 @@ struct table_columns_t {
   }
 
   bool operator==(const table_columns_t& other) const { return equals_ && equals_(other); }
-
+  template <typename Table>
+  bind_value_collector_t::bind_value_t get_value(const Table& obj) const {
+    if (!get_bind_value_) throw std::runtime_error("Get bind value function is not initialized");
+    return get_bind_value_(&obj);
+  }
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
     if (!set_value_) throw std::runtime_error("Column setter is not initialized");
     set_value_(stmt, columnIndex, out_value);

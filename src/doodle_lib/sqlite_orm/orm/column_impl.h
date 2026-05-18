@@ -24,7 +24,13 @@ table_columns_t::table_columns_t(ValueType Table::* in_ptr)
         using struct_type  = std::decay_t<Table>;
         auto& struct_ref   = *static_cast<struct_type*>(out_value);
         struct_ref.*in_ptr = stmt.get_column_value<ValueType>(columnIndex);
-      }) {}
+      }),
+      get_bind_value_([in_ptr](const void* struct_ptr) -> bind_value_collector_t::bind_value_t {
+        using struct_type = std::decay_t<Table>;
+        auto& struct_ref  = *static_cast<const struct_type*>(struct_ptr);
+        return bind_value_collector_t::bind_value_t{struct_ref.*in_ptr};
+      })
 
+{}
 
 }  // namespace doodle::orm
