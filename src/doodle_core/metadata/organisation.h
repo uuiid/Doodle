@@ -13,7 +13,7 @@ struct DOODLE_CORE_API organisation {
   bool has_avatar_;
   bool use_original_file_name_;
   bool timesheets_locked_;
-  std::optional<bool> format_duration_in_hours_;
+  bool format_duration_in_hours_;
   bool hd_by_default_;
   std::string chat_token_slack_;
   std::string chat_webhook_mattermost_;

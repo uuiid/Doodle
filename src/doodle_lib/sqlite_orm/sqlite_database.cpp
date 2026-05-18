@@ -81,8 +81,15 @@ void sqlite_database::regs_all() {
       .add_column("hours_by_day", &organisation::hours_by_day_, not_null())
       .add_column("has_avatar", &organisation::has_avatar_)
       .add_column("use_original_file_name", &organisation::use_original_file_name_)
+      .add_column("timesheets_locked", &organisation::timesheets_locked_)
+      .add_column("format_duration_in_hours", &organisation::format_duration_in_hours_)
+      .add_column("hd_by_default", &organisation::hd_by_default_)
+      .add_column("chat_token_slack", &organisation::chat_token_slack_)
+      .add_column("chat_webhook_mattermost", &organisation::chat_webhook_mattermost_)
+      .add_column("chat_token_discord", &organisation::chat_token_discord_)
+      .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_);
 
-      ;
+  ;
 }
 
 void sqlite_database::load(const FSys::path& in_path) {
