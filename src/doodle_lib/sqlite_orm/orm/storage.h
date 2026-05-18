@@ -124,7 +124,7 @@ struct table_info : table_info_base {
   template <typename T>
   table_info& add_index(std::string&& in_name, auto T::* in_ptr);
   template <typename T>
-  table_info& add_unique_index(std::string&& in_name, auto... in_ptrs);
+  table_info& add_unique_index(std::string&& in_name, auto T::*... in_ptrs);
 
   std::string get_table_create_sql() const override;
 };

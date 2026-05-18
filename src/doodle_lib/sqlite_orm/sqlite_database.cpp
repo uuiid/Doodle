@@ -173,10 +173,10 @@ void sqlite_database::regs_all() {
       .add_foreign_key(
           "entity_id", &outsource_studio_authorization::entity_id_, &entity::uuid_id_, foreign_key_action::cascade
       )
-      // .add_unique_index(
-      //   "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
-      //   &outsource_studio_authorization::entity_id_
-      // )
+      .add_unique_index(
+          "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
+          &outsource_studio_authorization::entity_id_
+      )
       .add_index("outsource_studio_authorization_studio_id_index", &outsource_studio_authorization::studio_id_)
       .add_index("outsource_studio_authorization_entity_id_index", &outsource_studio_authorization::entity_id_);
 
@@ -203,9 +203,9 @@ void sqlite_database::regs_all() {
       .add_foreign_key("playlist_id", &playlist_shot::playlist_id_, &playlist::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("entity_id", &playlist_shot::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("preview_id", &playlist_shot::preview_id_, &preview_file::uuid_id_, foreign_key_action::cascade)
-      // .add_unique_index(
-      //     "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_
-      // )
+      .add_unique_index(
+          "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_
+      )
       .add_index("playlist_shot_playlist_id_index", &playlist_shot::playlist_id_)
       .add_index("playlist_shot_entity_id_index", &playlist_shot::entity_id_)
       .add_index("playlist_shot_preview_id_index", &playlist_shot::preview_id_);
@@ -225,7 +225,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key("project_id", &playlist::project_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("episode_id", &playlist::episodes_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("task_type_id", &playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      // .add_unique_index("playlist_uc", &playlist::name_, &playlist::project_id_, &playlist::episodes_id_)
+      .add_unique_index("playlist_uc", &playlist::name_, &playlist::project_id_, &playlist::episodes_id_)
       .add_index("playlist_project_id_index", &playlist::project_id_)
       .add_index("playlist_episode_id_index", &playlist::episodes_id_)
       .add_index("playlist_task_type_id_index", &playlist::task_type_id_);
@@ -361,11 +361,10 @@ void sqlite_database::regs_all() {
       .add_foreign_key("task_id", &subscription::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("entity_id", &subscription::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("task_type_id", &subscription::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      // .add_unique_index(
-      //     "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_,
-      //     &subscription::entity_id_
-      // )
-      // .add_unique_index("subscription_task_uc", &subscription::person_id_, &subscription::task_id_)
+      .add_unique_index(
+          "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
+      )
+      .add_unique_index("subscription_task_uc", &subscription::person_id_, &subscription::task_id_)
       .add_index("subscription_person_id_index", &subscription::person_id_)
       .add_index("subscription_task_id_index", &subscription::task_id_)
       .add_index("subscription_entity_id_index", &subscription::entity_id_)
@@ -423,7 +422,7 @@ void sqlite_database::regs_all() {
       .add_column("updated_at", &preview_file::updated_at_)
       .add_foreign_key("task_id", &preview_file::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("person_id", &preview_file::person_id_, &person::uuid_id_, foreign_key_action::set_null)
-      // .add_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_)
+      .add_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_)
       .add_index("preview_file_task_id_index", &preview_file::task_id_)
       .add_index("preview_file_person_id_index", &preview_file::person_id_);
 
@@ -544,7 +543,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key("task_status_id", &task::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("entity_id", &task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key("assigner_id", &task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
-      // .add_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_)
+      .add_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_)
       .add_index("task_project_id_index", &task::project_id_)
       .add_index("task_task_type_id_index", &task::task_type_id_)
       .add_index("task_task_status_id_index", &task::task_status_id_)
@@ -629,10 +628,9 @@ void sqlite_database::regs_all() {
       .add_index("ix_entity_entity_type_id", &entity::entity_type_id_)
       .add_index("ix_entity_parent_id", &entity::parent_id_)
       .add_index("ix_entity_source_id", &entity::source_id_)
-      // .add_unique_index(
-      //     "entity_uc", &entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_
-      // )
-      ;
+      .add_unique_index(
+          "entity_uc", &entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_
+      );
 
   reg_table<task_type_asset_type_link>("task_type_asset_type_link")
       .add_column("id", &task_type_asset_type_link::id_, primary_key(), autoincrement())
@@ -645,10 +643,10 @@ void sqlite_database::regs_all() {
       .add_foreign_key(
           "task_type_id", &task_type_asset_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
       )
-      // .add_unique_index(
-      //     "task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_,
-      //     &task_type_asset_type_link::asset_type_id_
-      // )
+      .add_unique_index(
+          "task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_,
+          &task_type_asset_type_link::asset_type_id_
+      )
       .add_index("task_type_asset_type_link_task_type_id_index", &task_type_asset_type_link::task_type_id_)
       .add_index("task_type_asset_type_link_asset_type_id_index", &task_type_asset_type_link::asset_type_id_);
 
@@ -674,9 +672,9 @@ void sqlite_database::regs_all() {
       .add_foreign_key(
           "task_type_id", &project_task_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
       )
-      // .add_unique_index(
-      //     "project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_
-      // )
+      .add_unique_index(
+          "project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_
+      )
       .add_index("project_task_type_link_project_id_index", &project_task_type_link::project_id_)
       .add_index("project_task_type_link_task_type_id_index", &project_task_type_link::task_type_id_);
 
@@ -694,10 +692,10 @@ void sqlite_database::regs_all() {
           "task_status_id", &project_task_status_link::task_status_id_, &task_status::uuid_id_,
           foreign_key_action::cascade
       )
-      // .add_unique_index(
-      //     "project_task_status_link_uc", &project_task_status_link::project_id_,
-      //     &project_task_status_link::task_status_id_
-      // )
+      .add_unique_index(
+          "project_task_status_link_uc", &project_task_status_link::project_id_,
+          &project_task_status_link::task_status_id_
+      )
       .add_index("project_task_status_link_project_id_index", &project_task_status_link::project_id_)
       .add_index("project_task_status_link_task_status_id_index", &project_task_status_link::task_status_id_);
 
@@ -828,10 +826,9 @@ void sqlite_database::regs_all() {
       )
       .add_index("department_link_person_id_index", &person_department_link::person_id_)
       .add_index("department_link_department_id_index", &person_department_link::department_id_)
-      // .add_unique_index(
-      //     "department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_
-      // )
-      ;
+      .add_unique_index(
+          "department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_
+      );
 
   reg_table<person>("person")
       .add_column("id", &person::id_, primary_key(), autoincrement())
@@ -934,7 +931,7 @@ void sqlite_database::regs_all() {
       .add_column("shotgun_id", &task_type::shotgun_id_)
       .add_column("department_id", &task_type::department_id_)
       .add_foreign_key("department_id", &task_type::department_id_, &department::uuid_id_, foreign_key_action::set_null)
-      // .add_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_)
+      .add_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_)
       .add_index("task_type_department_id_index", &task_type::department_id_);
 
   reg_table<department>("department")

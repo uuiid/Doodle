@@ -242,7 +242,7 @@ table_info& table_info::add_index(std::string&& in_name, auto T::* in_ptr) {
   return *this;
 }
 template <typename T>
-table_info& table_info::add_unique_index(std::string&& in_name, auto... in_ptrs) {
+table_info& table_info::add_unique_index(std::string&& in_name, auto T::*... in_ptrs) {
   to_register_.push_back([name_ = std::move(in_name), in_ptrs...](storage& s) mutable {
     s.reg_unique_index<T>(std::move(name_), in_ptrs...);
   });
