@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "fwd.h"
 #include <fmt/format.h>
 
 namespace doodle::orm {
@@ -33,7 +34,7 @@ std::string select_t::to_sql(const storage& s) const {
   return l_sql;
 }
 
-void select_t::collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const {
+void select_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   if (wheres_) {
     wheres_->collect_bind_variants(bind_variants);
   }
@@ -46,8 +47,6 @@ void select_t::run() {
     wheres_->collect_bind_variants(bind_variants_);
   }
   stmt_->reset_bind();
-  for (const auto& val : bind_variants_) {
-    stmt_->bind(*val);
-  }
+  for (const auto& val : bind_variants_.bind_values_) val.bind(*stmt_);
 }
 }  // namespace doodle::orm

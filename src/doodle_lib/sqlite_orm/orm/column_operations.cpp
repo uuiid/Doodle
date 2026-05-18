@@ -128,6 +128,13 @@ std::string column_operations::get_column_name(const storage& s) const {
   return data_impl_ptr_->ptr_shared_->get_column_name(s, true);
 }
 
+column_operations column_operations::operator=(bind_value_collector_t::bind_value_t&& value) const {
+  auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
+  l_ptr->value_variant_       = std::move(value);
+  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  return *this;
+}
+
 column_operations column_operations::operator=(std::nullptr_t) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} = NULL");
   data_impl_ptr_->to_str_ptr_ = l_ptr;

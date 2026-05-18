@@ -15,7 +15,8 @@ std::string insert_t::to_sql(bool in_include_table_name) const {
   for (const auto& col_info_ptr : columns_) {
     l_column_names.push_back(col_info_ptr->get_column_name(*s_, in_include_table_name));
   }
-  auto l_sql = fmt::format("INSERT INTO {} ({}) VALUES {}", into_table_name_, fmt::join(l_column_names, ", "), l_values);
+  auto l_sql =
+      fmt::format("INSERT INTO {} ({}) VALUES {}", into_table_name_, fmt::join(l_column_names, ", "), l_values);
   return l_sql;
 }
 
@@ -26,9 +27,7 @@ insert_t& insert_t::operator()() {
     stmt_->prepare(*s_, l_sql);
   }
   stmt_->reset_bind();
-  for (size_t i = 0; i < values_.size(); ++i) {
-    stmt_->bind(*values_[i]);
-  }
+  for (const auto& val : values_.bind_values_) val.bind(*stmt_);
   stmt_->step();
   return *this;
 }

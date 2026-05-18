@@ -162,7 +162,7 @@ struct sqlite_stmt {
   template <typename T>
   T get_column_value(int columnIndex) const;
   template <typename T>
-  void bind(std::int32_t in_index, T&& in_value);
+  void bind(T&& in_value);
 };
 
 struct table_info_t : public table_info_base_t {

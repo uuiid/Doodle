@@ -16,7 +16,7 @@ struct delete_t {
   std::shared_ptr<column_operations_base_t> wheres_;
   storage* s_{nullptr};
   std::shared_ptr<sqlite_stmt> stmt_;
-  std::vector<std::shared_ptr<storage_column_variant>> bind_variants_{};
+  bind_value_collector_t bind_variants_{};
 
  public:
   template <typename T>

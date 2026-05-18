@@ -13,6 +13,12 @@
 namespace doodle {
 namespace orm {
 /////////////////////////////////////////////////////////////////////////////////////////////////
+void bind_value_collector_t::bind_value_t::bind(sqlite_stmt& stmt) const {
+  if (!bind_fun_) throw std::runtime_error("No bind function available for this value");
+  bind_fun_(stmt);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string table_info_t ::get_table_name(const storage& s) const { return s.get_table_name(type_index_); }
 

@@ -43,7 +43,7 @@ struct update_t {
   storage* s_{nullptr};
   std::shared_ptr<sqlite_stmt> stmt_;
 
-  std::vector<std::shared_ptr<storage_column_variant>> bind_variants_{};
+  bind_value_collector_t bind_variants_{};
 
  public:
   template <typename T>
@@ -69,14 +69,14 @@ struct update_t {
       } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
         using Table         = column_or_struct_type;
         auto l_table_cloums = s_->template get_table_columns<Table>();
-        column_info<Table> l_primary_key_{};
+        column_info l_primary_key_{};
         for (const auto& l_column : l_table_cloums) {
           if (l_column.primary_key_) {  // 主键不更新
             l_primary_key_ = l_column;
             continue;
           }
           auto col_ptr = std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_)>(l_column.ptr_));
-          *col_ptr     = in_column.obj_.*(l_column.ptr_);
+          *col_ptr     = l_column.ptr_.get_value(in_column.obj_);
 
           column_operations_.push_back(col_ptr);
         }

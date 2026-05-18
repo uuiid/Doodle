@@ -25,14 +25,14 @@ update_t& update_t::operator()() & {
     auto l_sql = to_sql(false);
     stmt_      = std::make_shared<sqlite_stmt>();
     stmt_->prepare(*s_, l_sql);
-    bind_variants_.clear();
+    bind_variants_.bind_values_.clear();
     for (const auto& col_op : column_operations_) {
       col_op->collect_bind_variants(bind_variants_);
     }
     wheres_->collect_bind_variants(bind_variants_);
   }
   stmt_->reset_bind();
-  for (const auto& val : bind_variants_) stmt_->bind(*val);
+  for (const auto& val : bind_variants_.bind_values_) val.bind(*stmt_);
 
   stmt_->step();
   return *this;

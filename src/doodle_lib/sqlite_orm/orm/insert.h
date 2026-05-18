@@ -20,7 +20,7 @@ struct insert_t {
   friend auto insert(storage& s) -> insert_t;
 
   std::vector<column_info_ptr> columns_;
-  std::vector<bind_value_collector_t::bind_value_t> values_;
+  bind_value_collector_t values_;
   std::int32_t batch_size_{1};
   std::shared_ptr<column_operations_base_t> wheres_;
 
@@ -44,7 +44,7 @@ struct insert_t {
         for (const auto& l_column : l_table_cloums) {
           if (l_column.primary_key_) continue;  // 跳过主键列
           columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));
-          values_.push_back(l_column.ptr_.get_value(in_column.obj_));
+          values_.bind_values_.push_back(l_column.ptr_.get_value(in_column.obj_));
         }
       } else {
         static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
@@ -70,7 +70,7 @@ struct insert_t {
     for (const auto& value : values) {
       for (const auto& l_column : l_table_cloums) {
         if (l_column.primary_key_) continue;  // 跳过主键列
-        values_.push_back(l_column.ptr_.get_value(value));
+        values_.bind_values_.push_back(l_column.ptr_.get_value(value));
       }
     }
     batch_size_ = static_cast<std::int32_t>(values.size());
@@ -88,11 +88,11 @@ struct insert_t {
     using value_type    = std::decay_t<T>::value_type;
     using Table         = value_type;
     auto l_table_cloums = s_->template get_table_columns<Table>();
-    values_.clear();
+    values_.bind_values_.clear();
     for (const auto& value : values) {
       for (const auto& l_column : l_table_cloums) {
         if (l_column.primary_key_) continue;  // 跳过主键列
-        values_.push_back(l_column.ptr_.get_value(value));
+        values_.bind_values_.push_back(l_column.ptr_.get_value(value));
       }
     }
     return *this;

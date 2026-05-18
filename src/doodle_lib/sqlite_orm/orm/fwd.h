@@ -143,13 +143,15 @@ inline constexpr bool is_object_specialization_v = is_object_specialization<std:
 struct bind_value_collector_t {
   struct bind_value_t {
     std::any value_;
-    std::function<void(sqlite_stmt& stmt, int index)> bind_fun_;
+    std::function<void(sqlite_stmt& stmt)> bind_fun_;
 
     template <typename T>
     explicit bind_value_t(T&& value);
     bind_value_t() = default;
     // to bool
     operator bool() const { return bind_fun_ != nullptr; }
+
+    void bind(sqlite_stmt& stmt) const;
   };
   std::vector<bind_value_t> bind_values_;
 };

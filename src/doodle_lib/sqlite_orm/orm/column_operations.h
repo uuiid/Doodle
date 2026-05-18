@@ -7,6 +7,7 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "fwd.h"
 #include <memory>
 #include <string>
 #include <utility>
@@ -133,6 +134,7 @@ struct column_operations : column_operations_base_t {
     }
   }
 
+  column_operations operator=(bind_value_collector_t::bind_value_t&& value) const;
   column_operations operator=(std::nullptr_t) const;
 
   template <typename U>
