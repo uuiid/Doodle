@@ -62,7 +62,7 @@ class SCharacterEditorViewport : public SEditorViewport, public ICommonEditorVie
 
  protected:
   virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
-  virtual TSharedPtr<SWidget> MakeViewportToolbar() override;
+  virtual TSharedPtr<SWidget> BuildViewportToolbar() override;
 
  private:
   TSharedPtr<FEditorViewportClient> LevelViewportClient;

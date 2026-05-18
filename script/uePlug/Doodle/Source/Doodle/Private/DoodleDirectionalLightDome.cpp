@@ -94,7 +94,7 @@ ADoodleDirectionalLightDome::ADoodleDirectionalLightDome()
         tmp_light1->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
         tmp_light1->SetWorldLocation(tmp_pos);
         tmp_light1->SetWorldRotation(tmp_pos.Rotation());
-        tmp_pos.Rotation();
+        (void)tmp_pos.ToOrientationRotator();
 
         if (tmp_pos.Z < -0.1) {
           tmp_light1->SetIntensity(0.05);
