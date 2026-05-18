@@ -265,6 +265,6 @@ TSharedRef<FEditorViewportClient> SCharacterEditorViewport::MakeEditorViewportCl
   return LevelViewportClient.ToSharedRef();
 }
 
-TSharedPtr<SWidget> SCharacterEditorViewport::MakeViewportToolbar() {
+TSharedPtr<SWidget> SCharacterEditorViewport::BuildViewportToolbar() {
   return SNew(SCharacterEditorViewportToolBar, SharedThis(this)).Cursor(EMouseCursor::Default);
 }

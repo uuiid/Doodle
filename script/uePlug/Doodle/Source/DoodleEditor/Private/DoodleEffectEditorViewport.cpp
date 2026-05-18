@@ -117,7 +117,7 @@ TSharedRef<FEditorViewportClient> DoodleEffectEditorViewport::MakeEditorViewport
     return ViewportClient.ToSharedRef();
 }
 
-TSharedPtr<SWidget> DoodleEffectEditorViewport::MakeViewportToolbar() 
+TSharedPtr<SWidget> DoodleEffectEditorViewport::BuildViewportToolbar() 
 {
     return SNew(DoodleEffectEditorViewportToolBar, SharedThis(this)).Cursor(EMouseCursor::Default);
 }

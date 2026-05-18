@@ -77,8 +77,6 @@ void FDoodleVariantMenuExtension::AddNewMenu(FMenuBuilder& builder, UDoodleVaria
                 // NOTE 设置点击触发的函数
                 FUIAction(FExecuteAction::CreateLambda([&, VObject, e, TempActor]()
                 {
-                    VObject->AllVaraint[e.Key];
-                    //----------------------
                     ASkeletalMeshActor* L_Mesh = Cast<ASkeletalMeshActor>(TempActor);
                     TArray<FSkeletalMaterial> TempList = VObject->AllVaraint[e.Key].Variants;
                     for (int i = 0;i < TempList.Num();i++)
