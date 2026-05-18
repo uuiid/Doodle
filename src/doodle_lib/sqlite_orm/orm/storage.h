@@ -20,7 +20,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle {
 
 namespace orm {
@@ -34,6 +33,7 @@ struct column_info {
   bool autoincrement_{};
   bool unique_{};
   column_type type_{column_type::null};
+  std::string default_value_{};
 };
 
 struct foreign_key_info {
@@ -62,6 +62,10 @@ struct primary_key {};
 struct autoincrement {};
 struct unindexed {};
 struct unique {};
+struct default_value {
+  std::string value_;
+  explicit default_value(std::string value);
+};
 
 struct on_delete {
   foreign_key_action action_;

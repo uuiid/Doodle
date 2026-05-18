@@ -1,6 +1,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
@@ -61,7 +62,7 @@ template <typename T>
 table_fts_info& table_fts_info::add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
   column_info l_column;
   l_column.name_    = std::move(in_name);
-  l_column.ptr_     = in_ptr;
+  l_column.ptr_     = table_columns_t{in_ptr};
   bool is_unindexed = false;
   // 解析 in_options
   (([&]() {
@@ -90,7 +91,7 @@ template <typename T>
 table_info& table_info::add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options) {
   column_info l_column;
   l_column.name_ = std::move(in_name);
-  l_column.ptr_  = in_ptr;
+  l_column.ptr_  = table_columns_t{in_ptr};
   // 解析 in_options
   (([&]() {
      if constexpr (std::is_same_v<decltype(in_options), decltype(not_null())>) {
@@ -101,6 +102,8 @@ table_info& table_info::add_column(std::string&& in_name, auto T::* in_ptr, auto
        l_column.autoincrement_ = true;
      } else if constexpr (std::is_same_v<decltype(in_options), decltype(unique())>) {
        l_column.unique_ = true;
+     } else if constexpr (std::is_same_v<decltype(in_options), decltype(default_value(""))>) {
+       l_column.default_value_ = in_options.value_;
      }
    }()),
    ...);
