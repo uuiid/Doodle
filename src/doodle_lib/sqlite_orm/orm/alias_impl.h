@@ -2,40 +2,36 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/alias.h>
-#include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 namespace doodle::orm {
-template <typename Table, typename ValueType>
-std::string alias_column_info_t<Table, ValueType>::get_column_name(const storage& s, bool include_table_name) const {
-  auto l_column_name = s.get_column_name<Table>(ptr_, false);
-  // if (include_table_name) {
+std::string alias_column_info_t::get_column_name(const storage& s, bool include_table_name) const {
+  auto l_column_name = s.get_column_name(ptr_, false);
   return fmt::format("{}.{}", table_alias_name_, l_column_name);
-  // }
-  // return l_column_name;
 }
-template <typename Table, typename ValueType>
-std::string alias_column_info_t<Table, ValueType>::get_table_name(const storage& s) const {
-  return fmt::format("{} AS {}", s.get_table_name<Table>(), table_alias_name_);
-}
-template <typename Table, typename ValueType>
-alias_column_info_t<Table, ValueType> new_(ValueType Table::* column_alias) {
-  return alias_column_info_t<Table, ValueType>{column_alias, "NEW"};
-}
-template <typename Table, typename ValueType>
-alias_column_info_t<Table, ValueType> old_(ValueType Table::* column_alias) {
-  return alias_column_info_t<Table, ValueType>{column_alias, "OLD"};
-}
-template <typename Table, typename ValueType>
-void alias_column_info_t<Table, ValueType>::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
-  using value_type                     = typename alias_column_info_t<Table, ValueType>::value_type;
-  *static_cast<value_type*>(out_value) = stmt.get_column_value<value_type>(columnIndex);
+std::string alias_column_info_t::get_table_name(const storage& s) const {
+  return fmt::format("{} AS {}", s.get_table_name(ptr_.table_type_index_), table_alias_name_);
 }
 
-template <typename Table>
-std::string alias_t<Table>::get_table_name(const storage& s) const {
+void alias_column_info_t ::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+  ptr_.set_value(stmt, columnIndex, out_value);
+}
+void alias_column_info_t ::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
+  ptr_.set_struct_value(stmt, columnIndex, out_value);
+}
+
+template <typename Table, typename ValueType>
+alias_column_info_t new_(ValueType Table::* column_alias) {
+  return alias_column_info_t{column_alias, "NEW"};
+}
+template <typename Table, typename ValueType>
+alias_column_info_t old_(ValueType Table::* column_alias) {
+  return alias_column_info_t{column_alias, "OLD"};
+}
+
+std::string alias_t ::get_table_name(const storage& s) const {
   if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
-  return fmt::format("{} AS {}", s.get_table_name<Table>(), table_name_);
+  return fmt::format("{} AS {}", s.get_table_name(table_type_index_), table_name_);
 }
 
 }  // namespace doodle::orm

@@ -20,7 +20,7 @@ struct insert_t {
   friend auto insert(storage& s) -> insert_t;
 
   std::vector<column_info_ptr> columns_;
-  std::vector<std::shared_ptr<storage_column_variant>> values_;
+  bind_value_collector_t values_;
   std::int32_t batch_size_{1};
   std::shared_ptr<column_operations_base_t> wheres_;
 

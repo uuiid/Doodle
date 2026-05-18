@@ -12,7 +12,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle::orm {
 enum class compare_operator {
   and_,
@@ -26,13 +25,13 @@ struct operator_compare_t : public column_operations_base_t {
     compare_operator op_;
     std::shared_ptr<column_operations_base_t> left_;
     std::shared_ptr<column_operations_base_t> right_;
-    std::vector<std::shared_ptr<storage_column_variant>> cached_variants_;
+    bind_value_collector_t cached_variants_;
   };
   std::shared_ptr<data_impl> data_impl_ptr_;
   operator_compare_t();
 
   std::string to_sql(const storage& s, bool include_table_name) const override;
-  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   std::string get_column_name(const storage& s) const override;
 
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
@@ -67,28 +66,28 @@ struct column_operations : column_operations_base_t {
   struct to_str_base_t {
     ~to_str_base_t()                                                                                     = default;
     virtual std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const = 0;
-    virtual void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const = 0;
+    virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const                      = 0;
   };
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
-    std::shared_ptr<storage_column_variant> value_variant_;
+    bind_value_collector_t value_variant_;
     explicit to_str_value_t(std::string fmt_str);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
+    void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   struct to_str_value_list_t : to_str_base_t {
     std::string fmt_str_;
-    std::vector<std::shared_ptr<storage_column_variant>> value_variants_;
+    bind_value_collector_t value_variants_;
     explicit to_str_value_list_t(std::string fmt_str);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
+    void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
   struct to_str_subquery_t : to_str_base_t {
     std::shared_ptr<select_t> subquery_ptr_;
     explicit to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
+    void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   // NEW.uuid = OLD.uuid   NEW.name != OLD.name 别名比较, 必须包含表名以避免歧义
   struct to_str_compare_t : to_str_base_t {
@@ -96,7 +95,7 @@ struct column_operations : column_operations_base_t {
     column_info_ptr other_column_ptr_;
     explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
-    void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
+    void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
   struct data_impl {
@@ -115,7 +114,7 @@ struct column_operations : column_operations_base_t {
 
   column_info_ptr get_column_info_ptr() const;
 
-  void collect_bind_variants(std::vector<std::shared_ptr<storage_column_variant>>& bind_variants) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 
   std::string to_sql(const storage& s, bool include_table_name) const override;
 
