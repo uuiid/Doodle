@@ -17,6 +17,16 @@
 namespace doodle {
 namespace orm {
 /////////////////////////////////////////////////////////////////////////////////////////////////
+column_info& table_info_base::find_column_info(const table_columns_t& in_column) {
+  auto l_iter = std::find_if(columns_.begin(), columns_.end(), [&in_column](const column_info& in_column_) {
+    return in_column_.ptr_ == in_column;
+  });
+  if (l_iter == columns_.end()) throw std::runtime_error("Column not found for the given member pointer");
+
+  return *l_iter;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
 void bind_value_collector_t::bind_value_t::bind(sqlite_stmt& stmt) const {
   if (!bind_fun_) throw std::runtime_error("No bind function available for this value");
   bind_fun_(*this, stmt);

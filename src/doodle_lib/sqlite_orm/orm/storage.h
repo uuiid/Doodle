@@ -187,7 +187,7 @@ class storage : public boost::noncopyable {
 
    private:
     storage& s_;
-    explicit pragma_t(storage& s);
+    explicit pragma_t(storage& s) : s_(s) {};
     friend struct storage;
   };
   friend struct table_info;
