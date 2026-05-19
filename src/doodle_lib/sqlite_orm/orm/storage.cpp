@@ -345,6 +345,7 @@ void storage::rollback_transaction() {
   l_stmt.step();
 }
 storage::transaction_guard storage::transaction() { return transaction_guard{*this}; }
+storage::pragma_t& storage::pragma() { return pragma_; }
 
 std::string storage::get_column_name(const table_columns_t& in_column, bool add_table_name) const {
   auto l_type_index = in_column.table_type_index_;
