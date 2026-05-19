@@ -1,9 +1,10 @@
 #include "column_operations.h"
 
+#include <doodle_lib/sqlite_orm/orm/bind_value.h>
+#include <doodle_lib/sqlite_orm/orm/bind_value_impl.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include <fmt/format.h>
-
 
 namespace doodle::orm {
 
