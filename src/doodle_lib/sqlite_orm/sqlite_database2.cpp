@@ -42,7 +42,7 @@
 namespace doodle::sqlite_select {
 
 std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ai_studios = l_sql.impl_->storage_any_.select(
       columns(object<ai_studio>(), object<ai_studio_person_role_link>()), from<ai_studio>(),
@@ -63,7 +63,7 @@ std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
 }
 
 std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
 
   auto l_task = l_sql.impl_->storage_any_.select(
@@ -86,7 +86,7 @@ std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
   return {};
 }
 uuid get_ai_studio_uuid_for_person(const uuid& in_person_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_vec = l_sql.impl_->storage_any_.get_all<ai_studio_person_role_link>(
       where(c(&ai_studio_person_role_link::person_id_) == in_person_id)
@@ -95,7 +95,7 @@ uuid get_ai_studio_uuid_for_person(const uuid& in_person_id) {
 }
 // 获取任务分配的人(连接表)
 std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_task_id, uuid in_person_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<assignees_table>(
       where(c(&assignees_table::task_id_) == in_task_id && c(&assignees_table::person_id_) == in_person_id)
@@ -103,14 +103,14 @@ std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_ta
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<assignees_table>{std::nullopt};
 }
 std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret =
       l_sql.impl_->storage_any_.select(&assignees_table::id_, where(c(&assignees_table::task_id_) == in_task_id));
   return l_ret;
 }
 std::vector<sd2::task> get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::task>(
       where(c(&sd2::task::ai_studio_id_) == in_ai_studio_id) && !c(&sd2::task::archived_)
@@ -119,7 +119,7 @@ std::vector<sd2::task> get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) 
 }
 
 std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::task>(
       where(c(&sd2::task::user_id_) == in_person_id) && !c(&sd2::task::archived_)
@@ -127,7 +127,7 @@ std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id) {
   return l_vec;
 }
 std::vector<sd2::assets_group> get_sd2_assets_group_for_ai_studio(const uuid& in_ai_studio_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::assets_group>(
       where(c(&sd2::assets_group::ai_studio_id_) == in_ai_studio_id)
@@ -136,7 +136,7 @@ std::vector<sd2::assets_group> get_sd2_assets_group_for_ai_studio(const uuid& in
 }
 
 std::size_t get_sd2_assets_count_for_assets_group(const uuid& in_assets_group_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_size = l_sql.impl_->storage_any_.count<sd2::assets_entity>(
       where(c(&sd2::assets_entity::group_id_) == in_assets_group_id)
@@ -146,7 +146,7 @@ std::size_t get_sd2_assets_count_for_assets_group(const uuid& in_assets_group_id
 std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_and_ai_studio(
     const uuid& in_group_id, const uuid& in_ai_studio_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_entities = l_sql.impl_->storage_any_.select(
       columns(object<sd2::assets_entity>(), object<sd2::assets_entity_item>()),
@@ -171,7 +171,7 @@ std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_an
 std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
     const uuid& in_ai_studio_id, const std::string& keyword
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_vec = l_sql.impl_->storage_any_.get_all<sd2::assets_entity>(
       where(like(&sd2::assets_entity::name_, keyword) && c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id)
@@ -188,7 +188,7 @@ bool entity_has_simulation_asset(const uuid& in_entity_id) {
 std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
     const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
 
   constexpr auto shot     = "shot"_alias.for_<entity>();
@@ -212,7 +212,7 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entit
   return l_assets;
 }
 std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
@@ -224,7 +224,7 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entit
 std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity(
     const std::vector<uuid>& in_entity_ids
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
@@ -238,7 +238,7 @@ std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
 get_sequence_casting_for_project_and_person_and_sequence(
     const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id, const std::vector<uuid>& in_shot_ids
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
@@ -273,7 +273,7 @@ get_sequence_casting_for_project_and_person_and_sequence(
 }
 std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
 get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   constexpr auto asset = "asset"_alias.for_<entity>();
   auto l_r             = l_sql.impl_->storage_any_.select(
@@ -296,7 +296,7 @@ get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const
 }
 
 std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == in_entity_id));
@@ -304,7 +304,7 @@ std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) 
   return l_ret;
 }
 std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(in(&entity_link::entity_in_id_, in_entity_id)));
@@ -314,7 +314,7 @@ std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& i
 std::vector<std::tuple<entity_link, std::string, std::string, uuid, uuid, uuid, uuid>> get_sequence_casting_for_entity(
     const uuid& in_entity_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(
@@ -330,7 +330,7 @@ std::vector<std::tuple<entity_link, std::string, std::string, uuid, uuid, uuid, 
 }
 std::vector<std::tuple<entity, outsource_studio_authorization, entity_asset_extend, entity_shot_extend>>
 get_entity_and_outsource_studio_authorization_by_project_id(const uuid& in_project_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_rows = l_sql.impl_->storage_any_.iterate(select(
       columns(
@@ -355,7 +355,7 @@ get_entity_and_outsource_studio_authorization_by_project_id(const uuid& in_proje
 std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset_extend_by_shot_id(
     const uuid& in_shot_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
@@ -376,7 +376,7 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset
   return l_assets;
 }
 std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<preview_file>(
       join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
@@ -389,7 +389,7 @@ std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_i
   return l_ret;
 }
 std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<entity_asset_extend>(
       where(c(&entity_asset_extend::entity_id_) == in_entity_id)
@@ -397,26 +397,26 @@ std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uu
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<entity_asset_extend>{std::nullopt};
 }
 std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid& in_entity_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret =
       l_sql.impl_->storage_any_.get_all<entity_shot_extend>(where(c(&entity_shot_extend::entity_id_) == in_entity_id));
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<entity_shot_extend>{std::nullopt};
 }
 std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardware_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == in_hardware_id));
   return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<computer>{std::nullopt};
 }
 std::vector<uuid> get_comment_object_ids_by_comment_id(const uuid& in_comment_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == in_comment_id));
   return l_ret;
 }
 std::vector<uuid> get_task_project_ids_by_task_id(const uuid& in_task_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.select(&task::project_id_, where(c(&task::uuid_id_) == in_task_id));
   return l_ret;
@@ -424,7 +424,7 @@ std::vector<uuid> get_task_project_ids_by_task_id(const uuid& in_task_id) {
 std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_person_id(
     const uuid& in_comment_id, const uuid& in_person_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret = l_sql.impl_->storage_any_.select(
       &comment_acknoledgments::id_, where(
@@ -435,14 +435,14 @@ std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_pers
   return l_ret;
 }
 std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_comment_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ret =
       l_sql.impl_->storage_any_.get_all<attachment_file>(where(c(&attachment_file::comment_id_) == in_comment_id));
   return l_ret;
 }
 std::vector<playlist> get_playlist_by_task_type_and_project::operator()() const {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_order = dynamic_order_by(l_sql.impl_->storage_any_);
   switch (order_by_) {
@@ -472,7 +472,7 @@ std::vector<playlist> get_playlist_by_task_type_and_project::operator()() const 
 std::vector<std::tuple<preview_file, uuid, uuid>> get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(
     const std::vector<uuid>& in_entity_ids
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_result = l_sql.impl_->storage_any_.select(
       columns(object<preview_file>(true), &task::task_type_id_, &task::entity_id_),
@@ -488,7 +488,7 @@ std::vector<std::tuple<preview_file, uuid, uuid>> get_preview_files_and_task_typ
   return l_result;
 }
 std::size_t count_playlist_shots_by_playlist_shot_id(const uuid& in_playlist_shot_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_count =
       l_sql.impl_->storage_any_.count<playlist_shot>(where(c(&playlist_shot::playlist_id_) == in_playlist_shot_id));
@@ -497,7 +497,7 @@ std::size_t count_playlist_shots_by_playlist_shot_id(const uuid& in_playlist_sho
 std::vector<std::tuple<preview_file, uuid, std::string>> get_preview_files_and_entity_id_and_entity_name_by_sequence_id(
     const uuid& in_sequence_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
 
   constexpr auto sequence = "sequence"_alias.for_<entity>();
@@ -525,7 +525,7 @@ get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_tas
     const uuid& in_task_status_id, const std::optional<notification_type>& in_notification_type,
     const std::optional<bool>& in_read
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_row = l_sql.impl_->storage_any_.select(
       columns(
@@ -556,7 +556,7 @@ get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_tas
 }
 
 std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_row = l_sql.impl_->storage_any_.select(
       &comment_mentions::person_id_, where(c(&comment_mentions::comment_id_) == in_comment_id)
@@ -564,7 +564,7 @@ std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_c
   return l_row;
 }
 std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_row = l_sql.impl_->storage_any_.select(
       &comment_department_mentions::department_id_, where(c(&comment_department_mentions::comment_id_) == in_comment_id)
@@ -575,7 +575,7 @@ std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(c
 std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
     const uuid& in_entity_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_preview_files = l_sql.impl_->storage_any_.get_all<preview_file>(
       join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
@@ -590,7 +590,7 @@ std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_t
   return !l_preview_files.empty() ? std::optional{l_preview_files.front()} : std::optional<preview_file>{std::nullopt};
 }
 std::vector<attachment_file> get_attachment_files_by_comment_id_and_task_id(const uuid& in_task_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   using namespace sqlite_orm;
   auto l_attachment_files = l_sql.impl_->storage_any_.get_all<attachment_file>(where(
@@ -600,7 +600,7 @@ std::vector<attachment_file> get_attachment_files_by_comment_id_and_task_id(cons
   return l_attachment_files;
 }
 std::vector<std::tuple<uuid, std::string>> get_project_ids_and_names() {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_projects = l_sql.impl_->storage_any_.select(columns(&project::uuid_id_, &project::name_));
   return l_projects;
@@ -617,7 +617,7 @@ std::vector<std::tuple<
     std::string           // project::name_
     >>
 get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std::vector<uuid>& in_task_ids) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_row = l_sql.impl_->storage_any_.select(
       columns(
@@ -640,7 +640,7 @@ get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std
 std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
     const uuid& in_person_id, const chrono::local_days& in_year_month
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ids = l_sql.impl_->storage_any_.select(
       &work_xlsx_task_info_helper::database_t::id_,
@@ -654,7 +654,7 @@ std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person
 std::vector<std::tuple<project, std::string>> get_projects_and_status_name_by_project_name(
     const std::string& in_project_name
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_projects = l_sql.impl_->storage_any_.select(
       columns(object<project>(true), &project_status::name_), from<project>(),
@@ -666,7 +666,7 @@ std::vector<std::tuple<project, std::string>> get_projects_and_status_name_by_pr
 std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
     const uuid& in_project_id, const uuid& in_person_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ids = l_sql.impl_->storage_any_.select(
       &project_person_link::id_,
@@ -679,7 +679,7 @@ std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
 std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_status_id(
     const uuid& in_project_id, const uuid& in_status_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_ids = l_sql.impl_->storage_any_.select(
       &project_status_automation_link::id_,
@@ -693,7 +693,7 @@ std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_s
 std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
     const uuid& in_person_id, bool in_is_admin, bool in_is_shared
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
   auto l_dynamic_where     = dynamic_where(l_sql.impl_->storage_any_);
@@ -712,7 +712,7 @@ std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
 std::vector<entity_fts> search_entities_fts_by_keyword(
     const std::string& in_keyword, const uuid& in_project_id, const std::int64_t in_limit, const std::int64_t in_offset
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
   auto l_t                = l_sql.get_temporal_type_ids();
@@ -731,7 +731,7 @@ std::vector<std::tuple<entity, task, entity_asset_extend, asset_type, uuid>>
 make_with_tasks_sql_result_t::operator()() const {
   using namespace sqlite_orm;
 
-  auto l_sql               = get_sqlite_database();
+  auto& l_sql               = get_sqlite_database();
   auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
 
   auto l_dynamic_where     = dynamic_where(l_sql.impl_->storage_any_);
@@ -814,7 +814,7 @@ make_with_tasks_sql_result_t::operator()() const {
 actions_projects_casting_copy_select get_actions_projects_casting_copy_select(
     const uuid& in_source_project_id, const uuid& in_target_project_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   actions_projects_casting_copy_select l_ret{};
   constexpr auto shot     = "shot"_alias.for_<entity>();
@@ -837,7 +837,7 @@ actions_projects_sequences_casting_ue_assembly_harvest_select_t
 actions_projects_sequences_casting_ue_assembly_harvest_select_t::get(
     const uuid& in_project_id, const uuid& in_sequence_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
@@ -884,7 +884,7 @@ get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
     const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset,
     std::int32_t in_limit
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_outsource_select = select(
       &outsource_studio_authorization::entity_id_,
@@ -940,7 +940,7 @@ bool task_exit_by_entity_id_and_task_type_id(const uuid& in_entity_id, const uui
 }
 
 std::vector<sd2_select_task_t> get_tasks_and_entity_for_ai_studio(const uuid& in_ai_studio_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(object<sd2::task>(true), object<entity>(true), object<task>(true), object<entity_shot_extend>(true)),
@@ -957,7 +957,7 @@ std::vector<sd2_select_task_t> get_tasks_and_entity_for_ai_studio(const uuid& in
 }
 
 std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_person_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.select(
       columns(object<sd2::task>(true), object<entity>(true), object<task>(true), object<entity_shot_extend>(true)),
@@ -973,7 +973,7 @@ std::vector<sd2_select_task_t> get_tasks_and_entity_for_person(const uuid& in_pe
   return l_result;
 }
 std::vector<sd2::task> get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_r = l_sql.impl_->storage_any_.get_all<sd2::task>(
       where(c(&sd2::task::shot_uuid_id_) == in_task_id && c(&sd2::task::ai_studio_id_) == in_ai_studio_id)
