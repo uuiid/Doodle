@@ -246,4 +246,42 @@ template <typename T>
   requires std::is_enum_v<T>
 struct sqlite_statement_printer<T> : sqlite_statement_printer<std::string_view> {};
 
+// std::vector<T> T 是枚举类特化
+template <typename T>
+  requires std::is_enum_v<T>
+struct sqlite_statement_binder<std::vector<T>> : sqlite_statement_binder<std::string> {
+  std::string enum_array_to_string(const std::vector<T>& t) {
+    std::string l_ret = fmt::format("[{}]", fmt::join(t, ", "));
+    return l_ret;
+  }
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const std::vector<T>& value) const {
+    auto l_str = enum_array_to_string(value);
+    return sqlite_statement_binder<std::string>::bind(stmt, index, l_str);
+  }
+};
+template <typename T>
+  requires std::is_enum_v<T>
+struct sqlite_statement_extractor<std::vector<T>> : sqlite_statement_extractor<std::string> {
+  std::vector<T> string_to_enum_array(const std::string& t) {
+    std::vector<T> l_ret;
+    if (t.empty() || t.size() <= 2) return l_ret;
+    std::string_view l_value{++t.begin(), --t.end()};
+    auto l_begin = l_value.begin();
+    while (l_begin != l_value.end()) {
+      auto l_end = std::find(l_begin, l_value.end(), ',');
+      l_ret.emplace_back(magic_enum::enum_cast<T>(std::string_view{l_begin, l_end}).value());
+      if (l_end == l_value.end()) break;
+      l_begin = l_end + 2;
+    }
+    return l_ret;
+  }
+  std::vector<T> extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    return string_to_enum_array<T>(l_str);
+  }
+};
+
+template <typename T>
+  requires std::is_enum_v<T>
+struct sqlite_statement_printer<std::vector<T>> : sqlite_statement_printer<std::string> {};
 }  // namespace doodle::orm
