@@ -26,4 +26,5 @@ target_sources(
         delete.cpp
         create_trigger.cpp
         column.cpp
+        alias.cpp
 )
