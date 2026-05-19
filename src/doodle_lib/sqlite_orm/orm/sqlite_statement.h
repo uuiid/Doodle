@@ -250,7 +250,7 @@ struct sqlite_statement_printer<T> : sqlite_statement_printer<std::string_view> 
 template <typename T>
   requires std::is_enum_v<T>
 struct sqlite_statement_binder<std::vector<T>> : sqlite_statement_binder<std::string> {
-  std::string enum_array_to_string(const std::vector<T>& t) {
+  static std::string enum_array_to_string(const std::vector<T>& t) {
     std::string l_ret = fmt::format("[{}]", fmt::join(t, ", "));
     return l_ret;
   }
