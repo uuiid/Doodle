@@ -21,13 +21,19 @@ struct create_trigger_t;
 template <typename...>
 inline constexpr bool always_false = false;
 
-template <typename T>
+template <typename T, typename Enable = void>
 struct sqlite_statement_binder {
-  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) const;
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) const {
+    static_assert(always_false<T>, "No binder defined for this type");
+    return 0;
+  }
 };
-template <typename T>
+template <typename T, typename Enable = void>
 struct sqlite_statement_extractor {
-  T extract(sqlite3_stmt* stmt, int columnIndex) const;
+  T extract(sqlite3_stmt* stmt, int columnIndex) const {
+    static_assert(always_false<T>, "No extractor defined for this type");
+    return T{};
+  }
 };
 
 #define DOODLE_ORM_ERROR_SQLITE3(error_code, sqlite3_ptr)                                         \
@@ -74,9 +80,12 @@ enum class join_type {
   full,
 };
 
-template <typename T>
+template <typename T, typename Enable = void>
 struct sqlite_statement_printer {
-  const column_type operator()() const;
+  const column_type operator()() const {
+    static_assert(always_false<T>, "No printer defined for this type");
+    return column_type::null;
+  }
 };
 
 template <typename T>
