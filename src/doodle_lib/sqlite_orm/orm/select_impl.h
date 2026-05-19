@@ -50,7 +50,7 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   constexpr auto l_num_result = std::tuple_size_v<std::tuple<TableColumns...>>;
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
   std::array<bool, l_num_result> is_object_array{is_object_specialization_v<std::decay_t<TableColumns>>...};
-  auto l_iter_fun = [this, &l_column_index, &l_tuple_index](auto&& in_column) {
+  auto l_iter_fun = [this, &l_column_index, &l_tuple_index, &is_object_array](auto&& in_column) {
     // select_->column_names_[l_column_index]->set_value(*select_->stmt_, l_column_index, &in_column);
     using column_or_struct_type = std::decay_t<decltype(in_column)>;
     if (!is_object_array[l_tuple_index]) {

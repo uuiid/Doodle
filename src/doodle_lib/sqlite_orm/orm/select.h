@@ -71,10 +71,8 @@ struct select_t {
     requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
   {
     join_info_t join_info{};
-    join_info.type_            = in_join_type;
-    join_info.join_table_info_ = std::make_shared<table_info_t>(
-        std::declval<FromTable>()
-    );  // 这里假设所有表都注册了，如果没有注册会在运行时抛出异常
+    join_info.type_             = in_join_type;
+    join_info.join_table_info_  = std::make_shared<table_info_t>(typeid(FromTable));
     join_info.self_column_info_ = std::make_shared<column_info_t>(in_ptr);
     join_info.join_column_info_ = std::make_shared<column_info_t>(in_ref_ptr);
     joins_.push_back(std::move(join_info));
