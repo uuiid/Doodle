@@ -9,6 +9,7 @@
 
 #include "fwd.h"
 #include <memory>
+#include <range/v3/view/unique.hpp>
 #include <string>
 #include <utility>
 #include <vector>
@@ -108,6 +109,9 @@ struct column_operations : column_operations_base_t {
  public:
   template <typename T>
   explicit column_operations(auto T::* in_ptr);
+  template <typename T>
+    requires(is_alias_column_t_v<std::decay_t<T>>)
+  explicit column_operations(T&& in_alias_column);
   explicit column_operations(const table_columns_t& in_column);
   explicit column_operations(const alias_column_info_t& in_column);
 
@@ -248,7 +252,11 @@ template <typename T>
 auto c(auto T::* in_ptr) {
   return column_operations{in_ptr};
 }
-inline auto c(const alias_column_info_t& in_column) { return column_operations{in_column}; }
+template <typename T>
+  requires is_alias_column_t_v<T>
+inline auto c(T&& in_column) {
+  return column_operations{std::forward<T>(in_column)};
+}
 }  // namespace doodle::orm
 
 namespace fmt {
