@@ -284,4 +284,28 @@ struct sqlite_statement_extractor<std::vector<T>> : sqlite_statement_extractor<s
 template <typename T>
   requires std::is_enum_v<T>
 struct sqlite_statement_printer<std::vector<T>> : sqlite_statement_printer<std::string> {};
+
+// std::optional<T> 特化
+template <typename T>
+struct sqlite_statement_binder<std::optional<T>> {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const std::optional<T>& value) const {
+    if (value.has_value()) {
+      return sqlite_statement_binder<T>{}.bind(stmt, index, *value);
+    } else {
+      return sqlite3_bind_null(stmt, index);
+    }
+  }
+};
+template <typename T>
+struct sqlite_statement_extractor<std::optional<T>> {
+  std::optional<T> extract(sqlite3_stmt* stmt, int columnIndex) const {
+    if (sqlite3_column_type(stmt, columnIndex) == SQLITE_NULL) {
+      return std::nullopt;
+    } else {
+      return sqlite_statement_extractor<T>{}.extract(stmt, columnIndex);
+    }
+  }
+};
+template <typename T>
+struct sqlite_statement_printer<std::optional<T>> : sqlite_statement_printer<T> {};
 }  // namespace doodle::orm
