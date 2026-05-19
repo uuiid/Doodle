@@ -57,6 +57,8 @@ struct sqlite_statement_printer<T> {
 template <>
 struct sqlite_statement_binder<std::string> {
   std::int32_t bind(sqlite3_stmt* stmt, int index, const std::string& value) const {
+    if (value.empty()) return sqlite3_bind_null(stmt, index);
+
     return sqlite3_bind_text(stmt, index, value.c_str(), value.size(), SQLITE_TRANSIENT);
   }
 };
@@ -64,6 +66,8 @@ struct sqlite_statement_binder<std::string> {
 template <>
 struct sqlite_statement_binder<std::string_view> {
   std::int32_t bind(sqlite3_stmt* stmt, int index, const std::string_view& value) const {
+    if (value.empty()) return sqlite3_bind_null(stmt, index);
+
     return sqlite3_bind_text(stmt, index, value.data(), value.size(), SQLITE_TRANSIENT);
   }
 };
@@ -95,6 +99,7 @@ struct sqlite_statement_printer<std::string_view> {
 template <>
 struct sqlite_statement_binder<const char*> {
   std::int32_t bind(sqlite3_stmt* stmt, int index, const char* value) const {
+    if (!value) return sqlite3_bind_null(stmt, index);
     return sqlite3_bind_text(stmt, index, value, -1, SQLITE_TRANSIENT);
   }
 };
@@ -308,4 +313,26 @@ struct sqlite_statement_extractor<std::optional<T>> {
 };
 template <typename T>
 struct sqlite_statement_printer<std::optional<T>> : sqlite_statement_printer<T> {};
+
+// std::vector<std::string> 特化
+template <>
+struct sqlite_statement_binder<std::vector<std::string>> : sqlite_statement_binder<std::string> {
+  int bind(sqlite3_stmt* stmt, int index, const std::vector<std::string>& value) const {
+    nlohmann::json nlohmann_json{};
+    nlohmann_json = value;
+    return sqlite_statement_binder<std::string>::bind(stmt, index, nlohmann_json.dump());
+  }
+};
+template <>
+struct sqlite_statement_extractor<std::vector<std::string>> : sqlite_statement_extractor<std::string> {
+  std::vector<std::string> extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    if (l_str.empty()) return {};
+    nlohmann::json l_json = nlohmann::json::parse(l_str);
+    return l_json.is_null() ? std::vector<std::string>{} : l_json.get<std::vector<std::string>>();
+  }
+};
+template <>
+struct sqlite_statement_printer<std::vector<std::string>> : sqlite_statement_printer<std::string> {};
+
 }  // namespace doodle::orm
