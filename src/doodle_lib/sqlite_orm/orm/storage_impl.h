@@ -141,15 +141,7 @@ std::string storage::get_column_name(auto T::* in_ptr, bool add_table_name) cons
   return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
 }
 
-std::string storage::get_column_name(const table_columns_t& in_column, bool add_table_name) const {
-  auto l_type_index = in_column.table_type_index_;
-  if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
 
-  auto l_table_index = type_to_table_index_.at(l_type_index);
-  auto& l_table      = static_cast<table_info&>(*tables_[l_table_index]);
-  auto& l_column     = l_table.find_column_info(in_column);
-  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
-}
 
 template <typename T>
 std::vector<std::string> storage::get_table_column_names() const {
