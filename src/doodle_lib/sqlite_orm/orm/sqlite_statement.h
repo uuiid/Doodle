@@ -262,7 +262,7 @@ struct sqlite_statement_binder<std::vector<T>> : sqlite_statement_binder<std::st
 template <typename T>
   requires std::is_enum_v<T>
 struct sqlite_statement_extractor<std::vector<T>> : sqlite_statement_extractor<std::string> {
-  std::vector<T> string_to_enum_array(const std::string& t) {
+  static std::vector<T> string_to_enum_array(const std::string& t) {
     std::vector<T> l_ret;
     if (t.empty() || t.size() <= 2) return l_ret;
     std::string_view l_value{++t.begin(), --t.end()};
@@ -277,7 +277,7 @@ struct sqlite_statement_extractor<std::vector<T>> : sqlite_statement_extractor<s
   }
   std::vector<T> extract(sqlite3_stmt* stmt, int columnIndex) const {
     const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
-    return string_to_enum_array<T>(l_str);
+    return string_to_enum_array(l_str);
   }
 };
 
