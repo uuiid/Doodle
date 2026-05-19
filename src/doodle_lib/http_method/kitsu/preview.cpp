@@ -475,7 +475,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_ent = l_sql.get_by_uuid<entity>(entity_id_);
   person_.check_in_project(l_ent.project_id_);
   person_.check_not_outsourcer();

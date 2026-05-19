@@ -427,7 +427,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   std::int32_t l_page{1};
   uuid l_task_type_id{};
   sqlite_select::get_playlist_by_task_type_and_project::order_by_enum l_order_by{};

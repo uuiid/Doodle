@@ -29,7 +29,7 @@ namespace doodle::http {
 namespace {
 template <typename Where, typename OrderBy>
 auto get_todo_fun(Where&& in_where, OrderBy&& in_order_by) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   auto l_task = l_sql.impl_->storage_any_.select(
       columns(
@@ -323,7 +323,7 @@ struct data_tasks_open_tasks_get_args {
 
   std::vector<open_tasks_get_t> get() {
     std::vector<open_tasks_get_t> l_ret{};
-    auto l_sql = get_sqlite_database();
+    auto& l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     constexpr auto sequence = "sequence"_alias.for_<entity>();
     constexpr auto episode  = "episode"_alias.for_<entity>();

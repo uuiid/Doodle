@@ -334,7 +334,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get
   co_return in_handle->make_msg(l_json);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   person_.check_delete_access(l_ass->project_id_);
   bool l_force{};
@@ -365,7 +365,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets_cast_i
   co_return in_handle->make_msg(nlohmann::json::array());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   bool l_is_shared{};
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "is_shared") l_is_shared = true;

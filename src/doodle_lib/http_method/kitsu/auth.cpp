@@ -108,7 +108,7 @@ void auth_reset_password::init() {
 boost::asio::awaitable<boost::beast::http::message_generator> auth_reset_password::post(session_data_ptr in_handle) {
   auto l_email = in_handle->get_json()["email"].get<std::string>();
   default_logger_raw()->info("重置密码 {}", l_email);
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   person l_person;
   try {
     l_person = l_sql.get_person_for_email(l_email);

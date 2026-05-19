@@ -74,7 +74,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   auto l_values = std::make_shared<std::vector<assets_helper::database_t>>(
       in_handle->get_json().get<std::vector<assets_helper::database_t>>()
   );
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   for (auto&& l_value : *l_values) {
     check_data(l_value);
     l_value.id_ = l_sql.uuid_to_id<assets_helper::database_t>(l_value.uuid_id_);

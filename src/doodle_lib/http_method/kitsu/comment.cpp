@@ -184,7 +184,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始批量创建评论", person_.person_.email_,
@@ -258,7 +258,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comments_ack::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始评论 {} 点赞/取消点赞", person_.person_.email_,

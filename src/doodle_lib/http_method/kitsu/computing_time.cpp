@@ -97,7 +97,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
   l_task_ids.reserve(in_data.size());
   for (auto&& l_item : in_data)
     if (!l_item.kitsu_task_ref_id_.is_nil()) l_task_ids.emplace_back(l_item.kitsu_task_ref_id_);
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
   for (auto&& [uuid, name] : sqlite_select::get_project_ids_and_names()) l_project_name_map.emplace(uuid, name);
 

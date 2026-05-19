@@ -33,7 +33,7 @@ namespace {
 std::shared_ptr<server_task_info> make_server_task_info_from_json(
     const nlohmann::json& in_json, const uuid& person_id, const uuid& task_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   auto l_ptr = std::make_shared<server_task_info>();
   in_json.get_to(*l_ptr);

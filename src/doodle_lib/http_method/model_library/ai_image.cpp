@@ -27,7 +27,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> ai_image::post(ses
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> ai_image_instance::delete_(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   co_await l_sql.remove<ai_image_metadata>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = id_);
 }

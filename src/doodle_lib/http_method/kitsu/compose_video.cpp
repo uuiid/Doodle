@@ -287,7 +287,7 @@ struct run_actions_playlists_preview_files_create_review {
     FSys::rename(l_out_backup_path, l_out_path);
     // 删除临时文件
     FSys::remove(l_tmp);
-    auto l_sql = get_sqlite_database();
+    auto& l_sql = get_sqlite_database();
     // 更新预览文件信息
     cv::Size size_{data_ptr_->size_.width, data_ptr_->size_.height};
     auto l_prj =

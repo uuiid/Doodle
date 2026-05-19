@@ -34,7 +34,7 @@ struct project_all_get_result_t : project {
 };
 
 auto select_project_all_get_result(const std::string& in_name) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   std::vector<project_all_get_result_t> l_list{};
   using namespace sqlite_orm;
   for (auto&& [l_prj, l_status_name] : sqlite_select::get_projects_and_status_name_by_project_name(in_name)) {
@@ -327,7 +327,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
     session_data_ptr in_handle
 ) {
   person_.check_project_manager(project_id_);
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 从项目 {} 移除成员 {}", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, person_id_
@@ -345,7 +345,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_type_links::post(session_data_ptr in_handle) {
   auto l_args = in_handle->get_json().get<project_task_type_link>();
   person_.check_project_manager(l_args.project_id_);
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 任务类型关联 task_type_id {} priority {}",
@@ -400,7 +400,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_instance, delete_) {
   person_.check_project_manager(project_id_);
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 从项目 {} 移除状态自动化 {}", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, status_automation_id_

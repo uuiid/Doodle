@@ -46,7 +46,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   l_job.get_last_line_log(g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_));
   co_return in_handle->make_msg(nlohmann::json{} = l_job);
@@ -84,7 +84,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   // 运行中, 并且小于 24 小时的无法删除
   auto l_now = chrono::system_clock::now();

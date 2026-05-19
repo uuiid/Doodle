@@ -25,7 +25,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
   person_.check_producer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_vec = sqlite_select::ai_studio_and_link_t_get_all();
   co_return in_handle->make_msg(nlohmann::json{} = l_vec);
 }
@@ -46,14 +46,14 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, delete_) {
   person_.check_producer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   l_sql.uuid_to_id<ai_studio>(id_);
   co_await l_sql.remove<ai_studio>(id_);
   co_return in_handle->make_msg_204();
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post) {
   person_.check_producer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   l_sql.uuid_to_id<person>(person_id_);
   if (l_sql.is_person_ai_studio_connected(person_id_, ai_studio_id_)) co_return in_handle->make_msg_204();
 
@@ -66,7 +66,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, post
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance_person_instance, delete_) {
   person_.check_producer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   l_sql.uuid_to_id<person>(person_id_);
   if (!l_sql.is_person_ai_studio_connected(person_id_, ai_studio_id_)) co_return in_handle->make_msg_204();
 

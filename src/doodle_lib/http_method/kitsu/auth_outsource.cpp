@@ -42,7 +42,7 @@ struct entity_outsource_studio_authorization : entity {
   }
 
   static std::vector<entity_outsource_studio_authorization> get(const uuid& in_project_id) {
-    auto l_sql = get_sqlite_database();
+    auto& l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     std::vector<entity_outsource_studio_authorization> l_ret{};
     auto l_row = sqlite_select::get_entity_and_outsource_studio_authorization_by_project_id(in_project_id);
@@ -111,7 +111,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, delete_)
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 实体外包授权 {}", person_.person_.email_,
       person_.person_.get_full_name(), authorization_id_
   );
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   co_await l_sql.remove<outsource_studio_authorization>(authorization_id_);
   co_return in_handle->make_msg_204();
 }

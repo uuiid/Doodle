@@ -200,7 +200,7 @@ struct make_shots_with_tasks_result_t {
     std::vector<shots_with_tasks_result> l_ret{};
     std::map<uuid, std::size_t> l_shots_ids{};
     std::set<uuid> l_tasks_ids;
-    auto l_sql = get_sqlite_database();
+    auto& l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     auto l_subscriptions_for_user = l_sql.get_person_subscriptions(person_, project_id_, entity_type_id_);
 
@@ -381,7 +381,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_ent = l_sql.get_by_uuid<entity>(id_);
   auto l_ext = l_sql.get_entity_shot_extend(id_);
   nlohmann::json l_result;

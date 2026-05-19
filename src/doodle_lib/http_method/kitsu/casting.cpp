@@ -167,7 +167,7 @@ struct data_project_asset_types_casting_result_map {
 data_project_asset_types_casting_result_map get_asset_type_casting(
     const uuid& in_project_id, const uuid& in_asset_type_id
 ) {
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   data_project_asset_types_casting_result_map l_result{};
   using namespace sqlite_orm;
   constexpr auto asset = "asset"_alias.for_<entity>();
@@ -234,7 +234,7 @@ struct get_casting_t {
         project_id_(in_project_id) {}
 
   static std::vector<get_casting_t> get(const uuid& in_entity_id) {
-    auto l_sql = get_sqlite_database();
+    auto& l_sql = get_sqlite_database();
     using namespace sqlite_orm;
     auto l_r = sqlite_select::get_sequence_casting_for_entity(in_entity_id);
     std::vector<get_casting_t> l_ret{};
@@ -271,7 +271,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     session_data_ptr in_handle
 ) {
   person_.check_in_project(project_id_);
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_ent = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
@@ -502,7 +502,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembly_harvest, post) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_seq = l_sql.get_by_uuid<entity>(id_);
   auto l_prj = l_sql.get_by_uuid<project>(project_id_);
   episodes l_episodes{l_seq};
