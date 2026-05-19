@@ -5,6 +5,7 @@
 #include "sqlite_database.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/attendance.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/group.h"
 #include "doodle_core/metadata/seedance2/task.h"
@@ -37,6 +38,8 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include "orm/fwd.h"
+#include "sqlite_orm/orm/select.h"
 #include "sqlite_orm/orm/storage.h"
 #include <cstddef>
 #include <optional>
@@ -955,11 +958,13 @@ boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const chrono::local_days& in_data
 ) {
-  using namespace sqlite_orm;
-  return impl_->storage_any_.get_all<attendance_helper::database_t>(where(
+  using namespace orm;
+  auto l_select = make_select_column(*this, object<attendance_helper::database_t>());
+  l_select.select_.from<attendance_helper::database_t>().where(
       c(&attendance_helper::database_t::person_id_) == in_person_id &&
       c(&attendance_helper::database_t::create_date_) == in_data
-  ));
+  );
+  return l_select.select_(l_select.columns_tuple_).to_vector();
 }
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const std::vector<chrono::local_days>& in_data

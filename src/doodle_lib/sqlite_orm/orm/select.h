@@ -141,9 +141,19 @@ struct select_t {
     return *this;
   }
 
+  // 辅助类模板, 如果传入的模板参数个数是 1 个, 则直接返回该类型, 否则返回一个 tuple 包裹的类型
+  template <typename... TableColumns>
+  struct class_result_type {
+    using type = std::conditional_t<
+        sizeof...(TableColumns) == 1,
+        class_result_type_t<std::decay_t<std::tuple_element_t<0, std::tuple<TableColumns...>>>>,
+        std::tuple<class_result_type_t<std::decay_t<TableColumns>>...>>;
+  };
+  template <typename... TableColumns>
+  using result_type = typename class_result_type<TableColumns...>::type;
   template <typename... TableColumns>
   struct result_type_iterator {
-    using type              = std::tuple<class_result_type_t<std::decay_t<TableColumns>>...>;
+    using type              = result_type<TableColumns...>;
 
     using iterator_type     = result_type_iterator<TableColumns...>;
     using iterator_category = std::input_iterator_tag;
@@ -204,7 +214,7 @@ struct select_t {
   template <typename... TableColumns>
   struct result_type_t {
     select_t& select_;
-    using type          = std::tuple<class_result_type_t<std::decay_t<TableColumns>>...>;
+    using type          = result_type<TableColumns...>;
     using iterator_type = result_type_iterator<TableColumns...>;
 
     auto begin() {
@@ -217,6 +227,15 @@ struct select_t {
       return iterator_type{select_};
     }
     auto end() const { return iterator_type{}; }
+
+    // to vector
+    std::vector<type> to_vector() {
+      std::vector<type> l_result{};
+      for (auto& item : *this) {
+        l_result.push_back(item);
+      }
+      return l_result;
+    }
   };
 
   template <typename TableColumnsTuple>
