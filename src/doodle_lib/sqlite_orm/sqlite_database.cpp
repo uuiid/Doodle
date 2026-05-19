@@ -272,7 +272,7 @@ void sqlite_database::regs_all() {
       .add_column("uuid_id", &assets_helper::database_t::uuid_id_, unique(), not_null())
       .add_column("label", &assets_helper::database_t::label_, not_null())
       .add_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
-      .add_column("order", &assets_helper::database_t::order_, default_value(0), not_null())
+      .add_column("order", &assets_helper::database_t::order_, default_value("0"s), not_null())
       .add_index("assets_tab_label", &assets_helper::database_t::label_);
 
   reg_table<attendance_helper::database_t>("attendance_tab")
