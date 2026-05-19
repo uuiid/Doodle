@@ -134,8 +134,8 @@ struct column_operations : column_operations_base_t {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
       l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
-      return *this;
     }
+    return *this;
   }
 
   column_operations operator=(bind_value_collector_t::bind_value_t&& value) const;
