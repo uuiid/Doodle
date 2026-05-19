@@ -23,6 +23,9 @@
 namespace doodle {
 
 namespace orm {
+
+enum class journal_mode_t { delete_, truncate, persist, memory, wal, off };
+
 struct column_info {
   using column_ptr_type = table_columns_t;
 
@@ -162,7 +165,7 @@ struct sqlite_stmt {
   template <typename T>
   T get_column_value(int columnIndex) const;
   template <typename T>
-  void bind(T&& in_value);
+  void bind(const T& in_value);
 };
 
 struct table_info_t : public table_info_base_t {
@@ -190,6 +193,23 @@ class storage {
 
   sqlite3* db_{nullptr};
 
+  struct pragma_t {
+    void synchronous(std::int32_t in_sync);
+    void journal_mode(journal_mode_t in_mode);
+    void recursive_triggers(bool in_recursive);
+    void foreign_keys(bool in_foreign_keys);
+    void locking_mode(bool in_exclusive);
+
+    void run(std::string_view in_pragma_sql, bool in_value);
+    void run(std::string_view in_pragma_sql, std::string_view in_value);
+
+   private:
+    storage& s_;
+    explicit pragma_t(storage& s);
+    friend struct storage;
+  };
+  pragma_t pragma_{*this};
+
  public:
   storage() = default;
   explicit storage(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
@@ -199,6 +219,9 @@ class storage {
   void open();
 
   void sync_schema();
+  pragma_t& pragma();
+
+  fts5_api* get_fts5_api() const;
 
   template <typename T>
   table_info& reg_table(std::string&& in_name);

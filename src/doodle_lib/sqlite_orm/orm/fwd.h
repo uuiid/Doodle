@@ -79,15 +79,6 @@ struct sqlite_statement_printer {
   const column_type operator()() const;
 };
 
-template <typename T, typename Tuple>
-struct is_in_tuple : std::false_type {};
-
-template <typename T, typename... Ts>
-struct is_in_tuple<T, std::tuple<Ts...>> : std::disjunction<std::is_same<T, Ts>...> {};
-
-template <typename T, typename Tuple>
-inline constexpr bool is_in_tuple_v = is_in_tuple<T, Tuple>::value;
-
 template <typename T>
 struct class_attr_type;  // 主模板：不定义，仅用于特化
 
@@ -143,7 +134,8 @@ inline constexpr bool is_object_specialization_v = is_object_specialization<std:
 struct bind_value_collector_t {
   struct bind_value_t {
     std::any value_;
-    std::function<void(sqlite_stmt& stmt)> bind_fun_;
+    // 这个类是可复制的, 因此需要确保 bind_fun_ 的复制行为正确, 因此, 不可以捕获 this指针, 直接在参数中传递需要的值
+    std::function<void(const bind_value_collector_t::bind_value_t&, sqlite_stmt& stmt)> bind_fun_;
 
     template <typename T>
     explicit bind_value_t(T&& value);

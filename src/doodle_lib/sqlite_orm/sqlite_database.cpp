@@ -37,6 +37,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include "sqlite_orm/orm/storage.h"
 #include <cstddef>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -65,10 +66,6 @@ auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
   std::map<decltype(std::declval<T>().*in_attr), T*> l_ret{};
   for (auto&& l_item : in) l_ret.emplace(l_item.*in_attr, &l_item);
   return l_ret;
-}
-void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {
-  if (auto l_logger = static_cast<spdlog::logger*>(pArg); l_logger)
-    l_logger->error(fmt::format("{} {}", iErrCode, zMsg));
 }
 }  // namespace
 
@@ -933,34 +930,17 @@ void sqlite_database::regs_all() {
 }
 
 void sqlite_database::load(const FSys::path& in_path) {
-  static std::once_flag l_flag{};
-  std::call_once(l_flag, [this]() {
-    this->logger_ = std::make_shared<spdlog::async_logger>(
-        "sqlite",
-        spdlog::sinks_init_list{
-            g_logger_ctrl().rotating_file_sink_
-#ifndef NDEBUG
-            ,
-            g_logger_ctrl().debug_sink_
-#endif
-        },
-        spdlog::thread_pool()
-    );
-    sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, this->logger_.get());
-  });
-
-  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
-  impl_       = std::make_shared<sqlite_database_impl>(in_path);
-  tokenizer::register_jieba_tokenizer(impl_->get_fts5_api());
-  for (auto&& i : l_list) {
-    i->upgrade(impl_);
-  }
-  impl_->storage_any_.pragma.synchronous(1);
-  impl_->storage_any_.pragma.recursive_triggers(1);
-  impl_->storage_any_.pragma.journal_mode(sqlite_orm::journal_mode::WAL);
-  // 使用原始句柄运行 optimize 命令，sqlite_orm 没有提供接口
-  sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
-  if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize=0x10002;", nullptr, nullptr, nullptr);
+  // auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
+  // tokenizer::register_jieba_tokenizer(get_fts5_api());
+  // for (auto&& i : l_list) {
+  //   i->upgrade(impl_);
+  // }
+  open(in_path);
+  pragma().foreign_keys(true);
+  pragma().synchronous(1);
+  pragma().recursive_triggers(true);
+  pragma().journal_mode(orm::journal_mode_t::wal);
+  // pragma().optimize(0x10002);
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SQLITE_THREAD_2()

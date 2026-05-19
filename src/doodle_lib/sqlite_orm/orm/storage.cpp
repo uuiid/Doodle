@@ -5,9 +5,13 @@
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include <boost/scope/scope_exit.hpp>
+
 #include <fmt/format.h>
+#include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace doodle {
@@ -15,7 +19,7 @@ namespace orm {
 /////////////////////////////////////////////////////////////////////////////////////////////////
 void bind_value_collector_t::bind_value_t::bind(sqlite_stmt& stmt) const {
   if (!bind_fun_) throw std::runtime_error("No bind function available for this value");
-  bind_fun_(stmt);
+  bind_fun_(*this, stmt);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,7 +158,19 @@ storage::transaction_guard::~transaction_guard() {
 
 storage::storage(FSys::path in_path, std::int32_t in_flags) { open(std::move(in_path), in_flags); }
 
+namespace {
+void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {
+  if (auto l_logger = static_cast<spdlog::logger*>(pArg); l_logger)
+    l_logger->error(fmt::format("{} {}", iErrCode, zMsg));
+}
+}  // namespace
+
 void storage::open(FSys::path in_path, std::int32_t in_flags) {
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, []() {
+    sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, spdlog::default_logger_raw());
+  });
+
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = std::move(in_path);
   db_path_.make_preferred();
@@ -173,6 +189,25 @@ create_trigger_t storage::create_trigger(std::string in_name) {
   auto l_trigger_info = std::make_shared<trigger_info>();
   auto& l_trigger     = triggers_.emplace_back(l_trigger_info);
   return create_trigger_t{std::move(in_name), l_trigger_info, this};
+}
+
+fts5_api* storage::get_fts5_api() const {
+  DOODLE_CHICK(db_ != nullptr, "Database not opened");
+  fts5_api* pRet      = nullptr;
+  sqlite3_stmt* pStmt = nullptr;
+  boost::scope::scope_exit stmt_guard([&]() {
+    if (pStmt) sqlite3_finalize(pStmt);
+  });
+
+  if (SQLITE_OK == sqlite3_prepare_v2(db_, "SELECT fts5(?1)", -1, &pStmt, nullptr)) {
+    sqlite3_bind_pointer(pStmt, 1, (void*)&pRet, "fts5_api_ptr", nullptr);
+    sqlite3_step(pStmt);
+  } else {
+    auto l_msg = sqlite3_errmsg(db_);
+    SPDLOG_ERROR("Failed to prepare statement: {}", l_msg);
+    throw_exception(doodle_error{l_msg});
+  }
+  return pRet;
 }
 
 void storage::sync_schema() {
@@ -205,6 +240,34 @@ void storage::sync_schema() {
     auto l_stmt = sqlite_stmt(*this, l_create_trigger_sql);
     l_stmt.step();
   }
+}
+
+void storage::pragma_t::synchronous(std::int32_t in_sync) {
+  if (in_sync < 0 || in_sync > 2) throw std::invalid_argument("Invalid synchronous value, must be 0, 1, or 2");
+  run("synchronous", in_sync);
+}
+void storage::pragma_t::journal_mode(journal_mode_t in_mode) {
+  static const std::map<journal_mode_t, std::string_view> mode_to_str{
+      {journal_mode_t::delete_, "DELETE"}, {journal_mode_t::truncate, "TRUNCATE"}, {journal_mode_t::persist, "PERSIST"},
+      {journal_mode_t::memory, "MEMORY"},  {journal_mode_t::wal, "WAL"},           {journal_mode_t::off, "OFF"},
+  };
+  if (!mode_to_str.contains(in_mode)) throw std::invalid_argument("Invalid journal mode");
+  run("journal_mode", mode_to_str.at(in_mode));
+}
+void storage::pragma_t::recursive_triggers(bool in_recursive) { run("recursive_triggers", in_recursive); }
+void storage::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys", in_foreign_keys); }
+void storage::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
+
+void storage::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
+  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
+  auto l_stmt = sqlite_stmt(s_, l_sql);
+  l_stmt.step();
+}
+
+void storage::pragma_t::run(std::string_view in_pragma_sql, std::string_view in_value) {
+  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_stmt = sqlite_stmt(s_, l_sql);
+  l_stmt.step();
 }
 
 storage::~storage() { ::sqlite3_close_v2(db_); }

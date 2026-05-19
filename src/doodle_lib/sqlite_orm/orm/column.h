@@ -23,6 +23,7 @@ struct base_column_info_t {
 struct table_columns_t {
   std::type_index table_type_index_{typeid(void)};
   std::any any_value_{};
+  // 这个类是可复制的, 因此需要确保 std::function 的复制行为正确, 因此, 不可以捕获 this指针
   std::function<bool(const table_columns_t&)> equals_{};
   std::function<void(const sqlite_stmt&, int, void*)> set_value_{};
   std::function<void(const sqlite_stmt&, int, void*)> set_struct_value_{};

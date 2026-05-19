@@ -9,9 +9,11 @@
 
 #include "fwd.h"
 #include <algorithm>
+#include <any>
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <typeindex>
 #include <utility>
 #include <vector>
@@ -22,16 +24,18 @@ bind_value_collector_t::bind_value_t::bind_value_t(T&& value) {
   // 如果是 char* 或 const char*，需要转换为 std::string 存储在 variant 中，否则会有生命周期问题
   if constexpr (std::is_convertible_v<T, std::string>) {
     value_    = std::string(std::forward<T>(value));
-    bind_fun_ = [this](sqlite_stmt& stmt) {
+    bind_fun_ = [](const bind_value_collector_t::bind_value_t& self, sqlite_stmt& stmt) {
       using actual_type = std::string;
-      stmt.bind<actual_type>(std::any_cast<actual_type>(value_));
+      auto& str_value   = std::any_cast<const actual_type&>(self.value_);
+      stmt.bind<actual_type>(str_value);
     };
   } else {
     using value_type = std::decay_t<T>;
     value_           = std::forward<T>(value);
-    bind_fun_        = [this](sqlite_stmt& stmt) {
+    bind_fun_        = [](const bind_value_collector_t::bind_value_t& self, sqlite_stmt& stmt) {
       using actual_type = value_type;
-      stmt.bind<actual_type>(std::any_cast<actual_type>(value_));
+      auto& value_ref   = std::any_cast<const actual_type&>(self.value_);
+      stmt.bind<actual_type>(value_ref);
     };
   }
 }
@@ -52,9 +56,9 @@ T sqlite_stmt::get_column_value(int columnIndex) const {
   return l_extractor.extract(stmt_, columnIndex);
 }
 template <typename T>
-void sqlite_stmt::bind(T&& in_value) {
+void sqlite_stmt::bind(const T& in_value) {
   sqlite_statement_binder<T> l_binder{};
-  auto l_rt = l_binder.bind(stmt_, get_bind_index(), std::forward<T>(in_value));
+  auto l_rt = l_binder.bind(stmt_, get_bind_index(), in_value);
   DOODLE_ORM_ERROR_SQLITE3(l_rt, db_);
 }
 
