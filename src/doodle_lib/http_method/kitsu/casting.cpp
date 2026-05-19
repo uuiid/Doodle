@@ -409,7 +409,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
       g_logger_ctrl().get_http(), "用户 {}({}) 开始替换 Casting project_id {} item_count {}", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, l_list.size()
   );
-  auto l_sql                                               = get_sqlite_database();
+  auto& l_sql                                               = get_sqlite_database();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
   auto l_shot_linke = sqlite_select::get_entity_link_by_entity_id(
@@ -457,7 +457,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
   auto l_arg = in_handle->get_json().get<actions_projects_casting_copy_arg>();
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto l_sql                  = get_sqlite_database();
+  auto& l_sql                  = get_sqlite_database();
 
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   {

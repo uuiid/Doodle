@@ -100,7 +100,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 ) {
   person_.check_supervisor();
   auto l_uuid = boost::lexical_cast<uuid>(id_);
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
   SPDLOG_LOGGER_WARN(

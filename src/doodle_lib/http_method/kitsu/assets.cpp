@@ -71,7 +71,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .source_id_      = l_data.source_id,
       .created_by_     = person_.person_.uuid_id_,
   });
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   co_await l_sql.install(l_entity);
   nlohmann::json l_json_ret{};
   l_json_ret = *l_entity;
@@ -280,7 +280,7 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   auto l_rows = l_data();
   std::vector<with_tasks_get_result_t> l_ret{};
 
-  auto l_sql                    = get_sqlite_database();
+  auto& l_sql                    = get_sqlite_database();
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(l_data.person_, l_data.project_id_, {});
 
   l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));

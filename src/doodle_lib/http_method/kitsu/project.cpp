@@ -58,7 +58,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
   co_return in_handle->make_msg(l_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::put(session_data_ptr in_handle) {
-  auto l_sql     = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -77,7 +77,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
@@ -299,7 +299,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team::post(session_data_ptr in_handle) {
   person_.check_project_manager(id_);
   auto l_add_team = in_handle->get_json()["person_id"].get<uuid>();
-  auto l_sql      = get_sqlite_database();
+  auto& l_sql      = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始向项目 {} 添加成员 {}", person_.person_.email_,
@@ -374,7 +374,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
     session_data_ptr in_handle
 ) {
   person_.check_project_manager(id_);
-  auto l_sql                   = get_sqlite_database();
+  auto& l_sql                   = get_sqlite_database();
   auto l_ptr                   = std::make_shared<project_status_automation_link>();
   l_ptr->project_id_           = id_;
   l_ptr->status_automation_id_ = in_handle->get_json().at("status_automation_id").get<uuid>();

@@ -20,7 +20,7 @@ namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, get) {
   person_.check_not_outsourcer();
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_all<server_task_info>();
   for (auto& l_job : l_jobs) {
     if (l_job.status_ == server_task_info_status::failed)
@@ -53,7 +53,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   person_.check_not_outsourcer();
-  auto l_sql     = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_job     = l_sql.get_by_uuid<server_task_info>(job_id_);
   auto l_json    = in_handle->get_json();
   auto l_job_ptr = std::make_shared<server_task_info>(l_job);

@@ -97,7 +97,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_thumbnail
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_originals_preview_files_download::get(
     session_data_ptr in_handle
 ) {
-  auto l_sql        = get_sqlite_database();
+  auto& l_sql        = get_sqlite_database();
   auto l_pre_file   = l_sql.get_by_uuid<preview_file>(id_);
   FSys::path l_path = person_.is_outsourcer() ? g_ctx().get<kitsu_ctx_t>().get_outsource_pictures_original_file(id_)
                                               : g_ctx().get<kitsu_ctx_t>().get_pictures_original_file(id_);

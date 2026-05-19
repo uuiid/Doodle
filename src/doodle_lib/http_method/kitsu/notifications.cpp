@@ -168,7 +168,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
-  auto l_sql        = get_sqlite_database();
+  auto& l_sql        = get_sqlite_database();
   auto l_not        = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   const bool l_read = in_handle->get_json().value<bool>("read", false);
 

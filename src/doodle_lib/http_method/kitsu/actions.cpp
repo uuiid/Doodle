@@ -30,7 +30,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
     session_data_ptr in_handle
 ) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());

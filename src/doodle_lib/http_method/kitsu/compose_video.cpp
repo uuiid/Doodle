@@ -130,7 +130,7 @@ struct compose_video_impl_t {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_file = in_handle->get_file();
   DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "必须上传视频文件");
-  auto l_sql          = get_sqlite_database();
+  auto& l_sql          = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
   auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_project      = l_sql.get_by_uuid<project>(l_task.project_id_);
@@ -301,7 +301,7 @@ struct run_actions_playlists_preview_files_create_review {
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review, post) {
-  auto l_sql           = get_sqlite_database();
+  auto& l_sql           = get_sqlite_database();
   auto l_playlist      = l_sql.get_by_uuid<playlist>(playlist_id_);
   auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
   auto l_preview_file  = l_sql.get_by_uuid<preview_file>(preview_file_id_);

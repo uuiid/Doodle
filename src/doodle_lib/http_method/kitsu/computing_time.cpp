@@ -481,7 +481,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
   );
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  auto l_sql       = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_ids       = sqlite_select::get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
       l_user.uuid_id_, chrono::local_days{year_month_ / 1}
   );

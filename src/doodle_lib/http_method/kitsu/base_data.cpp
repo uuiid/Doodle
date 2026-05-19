@@ -39,7 +39,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments::get(s
 }
 boost::asio::awaitable<boost::beast::http::message_generator> departments_instance::put(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql            = get_sqlite_database();
+  auto& l_sql            = get_sqlite_database();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -63,7 +63,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> studios::get(sessi
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_studio = std::make_shared<studio>();
   in_handle->get_json().get_to(*l_studio);
   DOODLE_CHICK(!l_studio->name_.empty(), "工作室名称不可为空");
@@ -80,7 +80,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_studio = l_sql.get_by_uuid<studio>(id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_, person_.person_.get_full_name(),
@@ -91,7 +91,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
-  auto l_sql        = get_sqlite_database();
+  auto& l_sql        = get_sqlite_database();
   auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -131,7 +131,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> status_automations
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   person_.check_admin();
-  auto l_sql               = get_sqlite_database();
+  auto& l_sql               = get_sqlite_database();
   auto l_status_automation = std::make_shared<status_automation>();
   in_handle->get_json().get_to(*l_status_automation);
   SPDLOG_LOGGER_WARN(
@@ -150,7 +150,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql            = get_sqlite_database();
+  auto& l_sql            = get_sqlite_database();
   auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -182,7 +182,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>();
   in_handle->get_json().get_to(*l_status);
   SPDLOG_LOGGER_WARN(
@@ -200,7 +200,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_i
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
 
   SPDLOG_LOGGER_WARN(

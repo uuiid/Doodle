@@ -167,7 +167,7 @@ void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) 
 }
 void http_jwt_fun::http_jwt_t::check_task_status_access(const uuid& in_target_status_id) const {
   if (person_.role_ != person_role_type::user) return;
-  auto l_sql   = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_stats = l_sql.get_by_uuid<task_status>(in_target_status_id);
   if (l_stats.is_artist_allowed_) return;
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});

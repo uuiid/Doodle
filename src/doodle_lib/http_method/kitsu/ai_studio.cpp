@@ -15,7 +15,7 @@
 
 namespace doodle::http {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
-  auto l_sql       = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_json      = in_handle->get_json();
   auto l_ai_studio = std::make_shared<ai_studio>();
   l_json.get_to(*l_ai_studio);
@@ -31,13 +31,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, get) {
   person_.check_producer();
-  auto l_sql       = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_ai_studio = l_sql.get_by_uuid<ai_studio>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
   person_.check_producer();
-  auto l_sql       = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_ai_studio = std::make_shared<ai_studio>(l_sql.get_by_uuid<ai_studio>(id_));
   auto l_json      = in_handle->get_json();
   l_json.get_to(*l_ai_studio);

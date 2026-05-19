@@ -35,7 +35,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
 
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
 
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
 
   if (in_comment->task_status_id_.is_nil()) in_comment->task_status_id_ = l_task->task_status_id_;
@@ -220,7 +220,7 @@ struct actions_tasks_modify_date_comment_time_arg {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modify_date_comment::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -312,7 +312,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(session_data_ptr in_handle) {
-  auto l_sql     = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_comment = l_sql.get_by_uuid<comment>(id_);
 
   nlohmann::json l_json{};
@@ -322,7 +322,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment::delete_(session_data_ptr in_handle) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_delete_access(l_task->project_id_);
   SPDLOG_LOGGER_WARN(
@@ -344,7 +344,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment::dele
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(session_data_ptr in_handle) {
   auto l_json    = in_handle->get_json();
-  auto l_sql     = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
 
   SPDLOG_LOGGER_WARN(

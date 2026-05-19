@@ -29,7 +29,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
   l_entity->group_id_     = group_id_;
   l_entity->user_id_      = person_.person_.uuid_id_;
   l_entity->ai_studio_id_ = person_.get_ai_studio_id();
-  auto l_sql              = get_sqlite_database();
+  auto& l_sql              = get_sqlite_database();
   co_await l_sql.install(l_entity);
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
@@ -42,13 +42,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, get) {
   );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, get) {
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_entity = l_sql.get_by_uuid<sd2::assets_entity>(entity_id_);
   DOODLE_CHICK_HTTP(l_entity.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   co_return in_handle->make_msg(nlohmann::json{} = l_entity);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, put) {
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_entity = std::make_shared<sd2::assets_entity>(l_sql.get_by_uuid<sd2::assets_entity>(entity_id_));
   DOODLE_CHICK_HTTP(l_entity->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_entity->uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");
@@ -59,7 +59,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, put)
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, delete_) {
-  auto l_sql    = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_entity = l_sql.get_by_uuid<sd2::assets_entity>(entity_id_);
   DOODLE_CHICK_HTTP(l_entity.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_entity.uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");

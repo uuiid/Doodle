@@ -99,7 +99,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
   auto l_task = std::make_shared<sd2::task>();
@@ -151,7 +151,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
@@ -165,7 +165,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_shot_task_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
   auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task.ai_studio_id_);
@@ -180,7 +180,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
   DOODLE_CHICK_HTTP(l_task->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
   l_task->archived_ = true;
@@ -189,7 +189,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
@@ -199,7 +199,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 

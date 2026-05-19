@@ -80,7 +80,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
-  auto l_sql        = get_sqlite_database();
+  auto& l_sql        = get_sqlite_database();
   auto l_old_person = l_sql.get_by_uuid<person>(id_);
   auto l_person     = std::make_shared<person>(l_old_person);
   auto l_json       = in_handle->get_json();
@@ -118,7 +118,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
-  auto l_sql               = get_sqlite_database();
+  auto& l_sql               = get_sqlite_database();
   auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
   auto l_json              = in_handle->get_json();
   const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
@@ -129,7 +129,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
-  auto l_sql                 = get_sqlite_database();
+  auto& l_sql                 = get_sqlite_database();
   auto l_person              = std::make_shared<person>(l_sql.get_by_uuid<person>(person_.person_.uuid_id_));
   auto l_json                = in_handle->get_json();
   const auto& l_old_password = l_json.at("old_password").get_ref<const std::string&>();

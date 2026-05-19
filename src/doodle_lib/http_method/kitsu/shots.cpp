@@ -323,7 +323,7 @@ struct data_project_shots_args {
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::post(session_data_ptr in_handle) {
   auto l_args = in_handle->get_json().get<data_project_shots_args>();
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取镜头 name {} sequence_id {}",
@@ -393,7 +393,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_shot::get(ses
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_task_types_shots_create_tasks::post(
     session_data_ptr in_handle
 ) {
-  auto l_sql       = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
 
@@ -451,7 +451,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   co_return in_handle->make_msg(nlohmann::json{} = l_results);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_shot::delete_(session_data_ptr in_handle) {
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_shot = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(
           (l_shot->created_by_ == person_.person_.uuid_id_ &&
@@ -518,7 +518,7 @@ struct name_all_t : sqlite_orm::alias_tag {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, post) {
   auto l_args = in_handle->get_json().get<actions_projects_shots_import_frame_range_args>();
-  auto l_sql  = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 导入镜头帧范围", person_.person_.email_,
