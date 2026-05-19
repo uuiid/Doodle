@@ -128,7 +128,7 @@ std::string column_operations::get_column_name(const storage& s) const {
   return data_impl_ptr_->ptr_shared_->get_column_name(s, true);
 }
 
-column_operations column_operations::operator=(bind_value_collector_t::bind_value_t&& value) const {
+column_operations column_operations::operator=(bind_value_t&& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
   l_ptr->value_variant_       = std::move(value);
   data_impl_ptr_->to_str_ptr_ = l_ptr;
@@ -149,7 +149,7 @@ column_operations column_operations::operator!() const {
 
 column_operations column_operations::like(std::string_view pattern) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} LIKE ?");
-  l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::string(pattern)};
+  l_ptr->value_variant_       = bind_value_t{std::string(pattern)};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
   return *this;
 }

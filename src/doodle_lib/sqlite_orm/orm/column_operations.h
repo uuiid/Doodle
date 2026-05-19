@@ -72,14 +72,14 @@ struct column_operations : column_operations_base_t {
   };
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
-    bind_value_collector_t::bind_value_t value_variant_;
+    bind_value_t value_variant_;
     explicit to_str_value_t(std::string fmt_str);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   struct to_str_value_list_t : to_str_base_t {
     std::string fmt_str_;
-    std::vector<bind_value_collector_t::bind_value_t> value_variants_;
+    std::vector<bind_value_t> value_variants_;
     explicit to_str_value_list_t(std::string fmt_str);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
@@ -132,13 +132,13 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
   }
 
-  column_operations operator=(bind_value_collector_t::bind_value_t&& value) const;
+  column_operations operator=(bind_value_t&& value) const;
   column_operations operator=(std::nullptr_t) const;
 
   template <typename U>
@@ -149,7 +149,7 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} == {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -162,7 +162,7 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} != {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} != ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
 
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
@@ -177,7 +177,7 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} > {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} > ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -190,7 +190,7 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} < {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} < ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -203,7 +203,7 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} >= {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} >= ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -216,7 +216,7 @@ struct column_operations : column_operations_base_t {
           std::make_shared<to_str_compare_t>("{} <= {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} <= ?");
-      l_ptr->value_variant_       = bind_value_collector_t::bind_value_t{std::forward<U>(value)};
+      l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
       data_impl_ptr_->to_str_ptr_ = l_ptr;
     }
     return *this;
@@ -237,7 +237,7 @@ struct column_operations : column_operations_base_t {
     }
     std::vector<char> placeholders(l_size, '?');
     auto l_ptr = std::make_shared<to_str_value_list_t>(fmt::format("{{}} IN ({})", fmt::join(placeholders, ", ")));
-    for (const auto& value : values) l_ptr->value_variants_.push_back(bind_value_collector_t::bind_value_t{value});
+    for (const auto& value : values) l_ptr->value_variants_.push_back(bind_value_t{value});
     data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }

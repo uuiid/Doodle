@@ -27,7 +27,7 @@ column_info& table_info_base::find_column_info(const table_columns_t& in_column)
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
-void bind_value_collector_t::bind_value_t::bind(sqlite_stmt& stmt) const {
+void bind_value_t::bind(sqlite_stmt& stmt) const {
   if (!bind_fun_) throw std::runtime_error("No bind function available for this value");
   bind_fun_(*this, stmt);
 }
