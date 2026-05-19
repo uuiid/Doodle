@@ -101,7 +101,7 @@ struct select_t {
 
     join_info_t join_info{};
     join_info.type_             = in_join_type;
-    join_info.join_table_info_  = std::make_shared<std::decay_t<JoinTable>>(std::forward<JoinTable>(join_table));
+    join_info.join_table_info_  = std::make_shared<alias_info_t>(std::forward<JoinTable>(join_table));
     join_info.self_column_info_ = l_create_column_info_ptr(in_ptr);
     join_info.join_column_info_ = l_create_column_info_ptr(in_ref_ptr);
     joins_.push_back(std::move(join_info));
