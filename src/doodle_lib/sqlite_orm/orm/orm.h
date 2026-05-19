@@ -20,5 +20,6 @@
 #include <doodle_lib/sqlite_orm/orm/select_impl.h>
 #include <doodle_lib/sqlite_orm/orm/column_impl.h>
 #include <doodle_lib/sqlite_orm/orm/alias_impl.h>
+#include <doodle_lib/sqlite_orm/orm/bind_value_impl.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations_impl.h>
 // clang-format on

@@ -3,6 +3,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/alias.h>
+#include <doodle_lib/sqlite_orm/orm/bind_value.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
@@ -14,6 +15,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 
 namespace doodle::orm {
 template <typename... TableColumns>

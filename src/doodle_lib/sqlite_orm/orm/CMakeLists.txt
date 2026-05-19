@@ -8,6 +8,7 @@ target_sources(
         select.h
         update.h
         insert.h
+        bind_value.h
         delete.h
         orm.h   
         sqlite_statement.h
@@ -16,6 +17,7 @@ target_sources(
         storage_impl.h
         select_impl.h
         column_impl.h
+        bind_value_impl.h
         
         PRIVATE
         storage.cpp
@@ -27,4 +29,5 @@ target_sources(
         create_trigger.cpp
         column.cpp
         alias.cpp
+        bind_value.cpp
 )
