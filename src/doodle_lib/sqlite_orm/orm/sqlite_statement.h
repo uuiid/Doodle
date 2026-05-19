@@ -158,6 +158,31 @@ struct sqlite_statement_printer<std::chrono::time_point<Clock, Duration>> {
     }
   }
 };
+// chrono::duration特化
+template <typename Rep, typename Period>
+struct sqlite_statement_binder<std::chrono::duration<Rep, Period>> : sqlite_statement_binder<Rep> {
+  int bind(sqlite3_stmt* stmt, int index, const std::chrono::duration<Rep, Period>& value) const {
+    return sqlite_statement_binder<Rep>::bind(stmt, index, value.count());
+  }
+};
+template <typename Rep, typename Period>
+struct sqlite_statement_extractor<std::chrono::duration<Rep, Period>> : sqlite_statement_extractor<Rep> {
+  std::chrono::duration<Rep, Period> extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_value = sqlite_statement_extractor<Rep>::extract(stmt, columnIndex);
+    return std::chrono::duration<Rep, Period>{l_value};
+  }
+};
+template <typename Rep, typename Period>
+struct sqlite_statement_printer<std::chrono::duration<Rep, Period>> {
+  const column_type operator()() const {
+    if constexpr (std::is_floating_point_v<Rep>) {
+      return column_type::real;
+    } else if constexpr (std::is_integral_v<Rep>) {
+      return column_type::integer;
+    }
+    return column_type::null;
+  }
+};
 
 // nlohmann::json特化
 template <>
