@@ -38,9 +38,6 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
-#include "orm/fwd.h"
-#include "sqlite_orm/orm/select.h"
-#include "sqlite_orm/orm/storage.h"
 #include <cstddef>
 #include <optional>
 #include <spdlog/spdlog.h>
