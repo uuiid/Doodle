@@ -241,28 +241,8 @@ struct column_operations : column_operations_base_t {
   column_operations in(const select_t& subquery) const;
 
   // operator and, or
-  template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
-  auto operator&&(U&& other) const {
-    auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
-    auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
-    operator_compare_t compare{};
-    compare.data_impl_ptr_->op_    = compare_operator::and_;
-    compare.data_impl_ptr_->left_  = l_self_ptr;
-    compare.data_impl_ptr_->right_ = l_other_ptr;
-    return compare;
-  }
-  template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
-  auto operator||(U&& other) const {
-    auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
-    auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
-    operator_compare_t compare{};
-    compare.data_impl_ptr_->op_    = compare_operator::or_;
-    compare.data_impl_ptr_->left_  = l_self_ptr;
-    compare.data_impl_ptr_->right_ = l_other_ptr;
-    return compare;
-  }
+  operator_compare_t operator&&(column_operations&& other) const;
+  operator_compare_t operator||(column_operations&& other) const;
 };
 template <typename T>
 auto c(auto T::* in_ptr) {

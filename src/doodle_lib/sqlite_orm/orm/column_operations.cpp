@@ -159,5 +159,23 @@ column_operations column_operations::in(const select_t& subquery) const {
   data_impl_ptr_->to_str_ptr_ = l_ptr;
   return *this;
 }
+operator_compare_t column_operations::operator&&(column_operations&& other) const {
+  operator_compare_t compare{};
+  auto l_self_ptr                = std::make_shared<column_operations>(std::move(*this));
+  auto l_other_ptr               = std::make_shared<column_operations>(other);
+  compare.data_impl_ptr_->op_    = compare_operator::and_;
+  compare.data_impl_ptr_->left_  = l_self_ptr;
+  compare.data_impl_ptr_->right_ = l_other_ptr;
+  return compare;
+}
+operator_compare_t column_operations::operator||(column_operations&& other) const {
+  operator_compare_t compare{};
+  auto l_self_ptr                = std::make_shared<column_operations>(std::move(*this));
+  auto l_other_ptr               = std::make_shared<column_operations>(other);
+  compare.data_impl_ptr_->op_    = compare_operator::or_;
+  compare.data_impl_ptr_->left_  = l_self_ptr;
+  compare.data_impl_ptr_->right_ = l_other_ptr;
+  return compare;
+}
 
 }  // namespace doodle::orm
