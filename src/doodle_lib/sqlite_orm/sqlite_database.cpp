@@ -944,10 +944,10 @@ void sqlite_database::load(const FSys::path& in_path) {
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SQLITE_THREAD_2()
-  sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
-  if (db_handle) sqlite3_wal_checkpoint_v2(db_handle, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
-  if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
-  impl_->storage_any_.backup_to(in_path.generic_string());
+  // sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
+  // if (db_handle) sqlite3_wal_checkpoint_v2(db_handle, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
+  // if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
+  backup_to(in_path);
   // impl_->storage_any_.vacuum();
   DOODLE_TO_SELF();
 }

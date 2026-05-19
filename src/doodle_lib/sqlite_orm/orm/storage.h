@@ -175,24 +175,7 @@ struct table_info_t : public table_info_base_t {
   virtual std::string get_table_name(const storage& s) const override;
 };
 
-class storage {
-  std::vector<std::shared_ptr<table_info_base>> tables_;
-  std::vector<index_info> indexes_;
-  std::vector<unique_index_info> unique_indexes_;
-  std::map<std::type_index, std::size_t> type_to_table_index_;
-  std::vector<std::shared_ptr<trigger_info>> triggers_;
-
-  friend struct table_info;
-  friend struct sqlite_stmt;
-  friend struct select_t;
-  friend struct insert_t;
-  friend struct update_t;
-
-  std::atomic_bool finalized_{false};
-  FSys::path db_path_;
-
-  sqlite3* db_{nullptr};
-
+class storage : public boost::noncopyable {
   struct pragma_t {
     void synchronous(std::int32_t in_sync);
     void journal_mode(journal_mode_t in_mode);
@@ -208,14 +191,43 @@ class storage {
     explicit pragma_t(storage& s);
     friend struct storage;
   };
+  friend struct table_info;
+  friend struct sqlite_stmt;
+  friend struct select_t;
+  friend struct insert_t;
+  friend struct update_t;
+
+  struct backup_t {
+   private:
+    sqlite3_backup* backup_{nullptr};
+    sqlite3* dest_db_{nullptr};
+    sqlite3* src_db_{nullptr};
+
+   public:
+    explicit backup_t(sqlite3* dest_db, sqlite3* src_db);
+    std::int32_t step(int pages = -1);
+    ~backup_t();
+  };
+
+  std::vector<std::shared_ptr<table_info_base>> tables_;
+  std::vector<index_info> indexes_;
+  std::vector<unique_index_info> unique_indexes_;
+  std::map<std::type_index, std::size_t> type_to_table_index_;
+  std::vector<std::shared_ptr<trigger_info>> triggers_;
+
+  std::atomic_bool finalized_{false};
+  FSys::path db_path_;
+
+  sqlite3* db_{nullptr};
   pragma_t pragma_{*this};
 
+ protected:
  public:
   storage() = default;
   explicit storage(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
   ~storage();
 
-  void open(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+  virtual void open(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
   void open();
 
   void sync_schema();
@@ -230,6 +242,12 @@ class storage {
   create_trigger_t create_trigger(std::string in_name);
 
   storage& finalize();
+
+  backup_t backup(const FSys::path& dest_path);
+  void backup_to(const FSys::path& dest_path) {
+    auto backup = this->backup(dest_path);
+    backup.step(-1);
+  }
 
   template <typename T>
   bool has_reg_table();

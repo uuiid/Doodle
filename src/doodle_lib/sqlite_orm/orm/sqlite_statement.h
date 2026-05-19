@@ -6,7 +6,7 @@
 
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
-
+#include <string_view>
 
 namespace doodle::orm {
 // 这里定义了 sqlite_statement_binder, sqlite_statement_extractor, sqlite_statement_printer
@@ -62,6 +62,13 @@ struct sqlite_statement_binder<std::string> {
 };
 
 template <>
+struct sqlite_statement_binder<std::string_view> {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const std::string_view& value) const {
+    return sqlite3_bind_text(stmt, index, value.data(), value.size(), SQLITE_TRANSIENT);
+  }
+};
+
+template <>
 struct sqlite_statement_extractor<std::string> {
   std::string extract(sqlite3_stmt* stmt, int columnIndex) const {
     const unsigned char* text = sqlite3_column_text(stmt, columnIndex);
@@ -76,6 +83,14 @@ struct sqlite_statement_printer<std::string> {
     return type;
   }
 };
+template <>
+struct sqlite_statement_printer<std::string_view> {
+  const column_type operator()() const {
+    static column_type type = column_type::text;
+    return type;
+  }
+};
+
 // char* 特化
 template <>
 struct sqlite_statement_binder<const char*> {
@@ -206,4 +221,29 @@ struct sqlite_statement_extractor<std::chrono::zoned_time<Duration>> : sqlite_st
 };
 template <typename Duration>
 struct sqlite_statement_printer<std::chrono::zoned_time<Duration>> : sqlite_statement_printer<std::string> {};
+
+// 枚举类特化
+template <typename T>
+  requires std::is_enum_v<T>
+struct sqlite_statement_binder<T> : sqlite_statement_binder<std::string_view> {
+  std::int32_t bind(sqlite3_stmt* stmt, int index, const T& value) const {
+    auto l_str = magic_enum::enum_name(value);
+    return sqlite_statement_binder<std::string_view>::bind(stmt, index, l_str);
+  }
+};
+template <typename T>
+  requires std::is_enum_v<T>
+struct sqlite_statement_extractor<T> : sqlite_statement_extractor<std::string> {
+  T extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    if (l_str.empty()) return static_cast<T>(0);
+    auto l_opt = magic_enum::enum_cast<T>(l_str);
+    if (!l_opt) throw std::runtime_error(fmt::format("Failed to parse enum value from string: {}", l_str));
+    return *l_opt;
+  }
+};
+template <typename T>
+  requires std::is_enum_v<T>
+struct sqlite_statement_printer<T> : sqlite_statement_printer<std::string_view> {};
+
 }  // namespace doodle::orm
