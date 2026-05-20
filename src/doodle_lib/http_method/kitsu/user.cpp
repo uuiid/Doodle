@@ -24,6 +24,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "kitsu_reg_url.h"
+#include "sqlite_orm/orm/column_operations.h"
 #include "sqlite_orm/orm/count.h"
 #include "sqlite_orm/orm/fwd.h"
 #include "sqlite_orm/orm/select.h"
@@ -46,7 +47,29 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
     l_select.join<project_person_link>(&project::uuid_id_, &project_person_link::project_id_)
         .where(c(&project_person_link::person_id_) == in_user.person_.uuid_id_ && c(&project_status::name_) == "Open");
   }
-  for (auto&& project : l_select()) l_projects.push_back(project_with_extra_data{project});
+  for (auto&& l_project : l_select()) l_projects.push_back(project_with_extra_data{l_project});
+  for (auto& l_project : l_projects) {
+    l_project.team_ = select(l_sql)
+                          .columns(&project_person_link::person_id_)
+                          .from<project_person_link>()
+                          .where(c(&project_person_link::project_id_) == l_project.uuid_id_)()
+                          .to_vector();
+    l_project.asset_types_ = select(l_sql)
+                                 .columns(&project_asset_type_link::asset_type_id_)
+                                 .from<project_asset_type_link>()
+                                 .where(c(&project_asset_type_link::project_id_) == l_project.uuid_id_)()
+                                 .to_vector();
+    l_project.task_statuses_ = select(l_sql)
+                                   .columns(&project_task_status_link::task_status_id_)
+                                   .from<project_task_status_link>()
+                                   .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
+                                   .to_vector();
+    l_project.task_types_ = select(l_sql)
+                                .columns(&project_task_type_link::task_type_id_)
+                                .from<project_task_type_link>()
+                                .where(c(&project_task_type_link::project_id_) == l_project.uuid_id_)()
+                                .to_vector();
+  }
 
   return l_projects;
 }
