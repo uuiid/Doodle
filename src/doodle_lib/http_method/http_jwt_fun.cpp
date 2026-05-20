@@ -135,21 +135,20 @@ bool http_jwt_fun::http_jwt_t::is_manager() const {
           person_.role_ == person_role_type::admin);
 }
 
+bool http_jwt_fun::http_jwt_t::is_supervisor() const {
+  return !person_.uuid_id_.is_nil() &&
+         (person_.role_ == person_role_type::supervisor || person_.role_ == person_role_type::manager ||
+          person_.role_ == person_role_type::producer || person_.role_ == person_role_type::admin);
+}
+
 void http_jwt_fun::http_jwt_t::check_supervisor() const {
-  if (!person_.uuid_id_.is_nil() &&
-      (person_.role_ == person_role_type::supervisor || person_.role_ == person_role_type::manager ||
-       person_.role_ == person_role_type::producer || person_.role_ == person_role_type::admin))
-    return;
+  if (is_supervisor()) return;
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 
 void http_jwt_fun::http_jwt_t::check_user() const {
-  if (!person_.uuid_id_.is_nil() &&
-      (person_.role_ == person_role_type::user || person_.role_ == person_role_type::supervisor ||
-       person_.role_ == person_role_type::manager || person_.role_ == person_role_type::producer ||
-       person_.role_ == person_role_type::admin))
-    return;
+  if (!person_.uuid_id_.is_nil() && (person_.role_ == person_role_type::user || is_supervisor())) return;
 
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
@@ -167,7 +166,7 @@ void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) 
 }
 void http_jwt_fun::http_jwt_t::check_task_status_access(const uuid& in_target_status_id) const {
   if (person_.role_ != person_role_type::user) return;
-  auto& l_sql   = get_sqlite_database();
+  auto& l_sql  = get_sqlite_database();
   auto l_stats = l_sql.get_by_uuid<task_status>(in_target_status_id);
   if (l_stats.is_artist_allowed_) return;
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
