@@ -48,30 +48,33 @@ struct select_t {
     column_info_ptr join_column_info_;
   };
 
-  // 结果类型
-  std::vector<column_info_ptr> column_names_;
-  std::string from_table_name_;
-  std::vector<join_info_t> joins_;
-  std::shared_ptr<column_operations_base_t> wheres_;
-  std::vector<std::string> order_bys_;
-  std::optional<std::size_t> limit_;
-  std::optional<std::size_t> offset_;
-  storage* s_{nullptr};
-  std::shared_ptr<sqlite_stmt> stmt_;
+  struct impl_t {
+    // 结果类型
+    std::vector<column_info_ptr> column_names_;
+    std::string from_table_name_;
+    std::vector<join_info_t> joins_;
+    std::shared_ptr<column_operations_base_t> wheres_;
+    std::vector<std::string> order_bys_;
+    std::optional<std::size_t> limit_;
+    std::optional<std::size_t> offset_;
+    storage* s_{nullptr};
+    std::shared_ptr<sqlite_stmt> stmt_;
+    bind_value_collector_t bind_variants_{};
+  };
 
-  bind_value_collector_t bind_variants_{};
+  std::shared_ptr<impl_t> impl_;
 
   void run();
 
  public:
-  explicit select_t(storage& s) : s_(&s) {}
+  explicit select_t(storage& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = &s; }
   template <typename FromTable>
-  select_t& from();
+  select_t from();
   template <typename FromTable>
-  select_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
+  select_t join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
     requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>));
   template <typename JoinTable>
-  select_t& join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
+  select_t join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
     requires(
         (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ptr)>>) &&
         (std::is_member_pointer_v<decltype(in_ref_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>) &&
@@ -82,16 +85,16 @@ struct select_t {
     );
 
   template <typename T>
-  select_t& where(T&& condition_fun);
+  select_t where(T&& condition_fun);
 
   template <typename T>
-  select_t& order_by(auto T::* in_column_fun, bool ascending = true);
-  select_t& limit(std::size_t count) {
-    limit_ = count;
+  select_t order_by(auto T::* in_column_fun, bool ascending = true);
+  select_t limit(std::size_t count) {
+    impl_->limit_ = count;
     return *this;
   }
-  select_t& offset(std::size_t count) {
-    offset_ = count;
+  select_t offset(std::size_t count) {
+    impl_->offset_ = count;
     return *this;
   }
 

@@ -16,13 +16,13 @@ namespace doodle::orm {
 // select_t 模板方法实现
 
 template <typename FromTable>
-select_t& select_t::from() {
-  from_table_name_ = s_->get_table_name<FromTable>();
+select_t select_t::from() {
+  impl_->from_table_name_ = impl_->s_->get_table_name<FromTable>();
   return *this;
 }
 
 template <typename FromTable>
-select_t& select_t::join(auto in_ptr, auto in_ref_ptr, join_type in_join_type)
+select_t select_t::join(auto in_ptr, auto in_ref_ptr, join_type in_join_type)
   requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
 {
   join_info_t join_info{};
@@ -30,12 +30,12 @@ select_t& select_t::join(auto in_ptr, auto in_ref_ptr, join_type in_join_type)
   join_info.join_table_info_  = std::make_shared<table_info_t>(typeid(FromTable));
   join_info.self_column_info_ = std::make_shared<column_info_t>(in_ptr);
   join_info.join_column_info_ = std::make_shared<column_info_t>(in_ref_ptr);
-  joins_.push_back(std::move(join_info));
+  impl_->joins_.push_back(std::move(join_info));
   return *this;
 }
 
 template <typename JoinTable>
-select_t& select_t::join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type)
+select_t select_t::join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type)
   requires(
       (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ptr)>>) &&
       (std::is_member_pointer_v<decltype(in_ref_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>) &&
@@ -58,13 +58,13 @@ select_t& select_t::join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, j
   join_info.join_table_info_  = std::make_shared<alias_info_t>(std::forward<JoinTable>(join_table));
   join_info.self_column_info_ = l_create_column_info_ptr(in_ptr);
   join_info.join_column_info_ = l_create_column_info_ptr(in_ref_ptr);
-  joins_.push_back(std::move(join_info));
+  impl_->joins_.push_back(std::move(join_info));
   return *this;
 }
 
 template <typename T>
-select_t& select_t::order_by(auto T::* in_column_fun, bool ascending) {
-  order_bys_.push_back(s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
+select_t select_t::order_by(auto T::* in_column_fun, bool ascending) {
+  impl_->order_bys_.push_back(impl_->s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
   return *this;
 }
 
@@ -78,14 +78,14 @@ select_t::result_type_iterator<TableColumns...>::result_type_iterator(select_t& 
 
 template <typename... TableColumns>
 void select_t::result_type_iterator<TableColumns...>::next() {
-  if (is_end_ || !select_->stmt_) return is_end_ = true, void();
+  if (is_end_ || !select_->impl_->stmt_) return is_end_ = true, void();
 
-  const auto l_rc = select_->stmt_->step_not_throw();
+  const auto l_rc = select_->impl_->stmt_->step_not_throw();
   if (l_rc == SQLITE_ROW) return is_end_ = false, void();
   if (l_rc == SQLITE_DONE) return is_end_ = true, void();
 
   is_end_ = true;
-  DOODLE_ORM_ERROR_SQLITE3(l_rc, select_->stmt_->db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_rc, select_->impl_->stmt_->db_);
 }
 
 template <typename... TableColumns>
@@ -132,7 +132,7 @@ bool select_t::result_type_iterator<TableColumns...>::operator!=(const iterator_
 
 template <typename... TableColumns>
 select_t::result_type_t<TableColumns...>::iterator_type select_t::result_type_t<TableColumns...>::begin() {
-  if (!select_.s_ || !select_.stmt_) return end();
+  if (!select_.impl_->s_ || !select_.impl_->stmt_) return end();
   return iterator_type{select_};
 }
 
@@ -143,7 +143,7 @@ select_t::result_type_t<TableColumns...>::iterator_type select_t::result_type_t<
 
 template <typename... TableColumns>
 select_t::result_type_t<TableColumns...>::iterator_type select_t::result_type_t<TableColumns...>::begin() const {
-  if (!select_.s_ || !select_.stmt_) return end();
+  if (!select_.impl_->s_ || !select_.impl_->stmt_) return end();
   return iterator_type{select_};
 }
 
@@ -237,7 +237,7 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   type result{};
   std::int32_t l_column_index = 0;
   std::int32_t l_tuple_index  = 0;
-  const auto l_max_column     = select_->stmt_->get_column_count();
+  const auto l_max_column     = select_->impl_->stmt_->get_column_count();
   constexpr auto l_num_result = std::tuple_size_v<std::tuple<TableColumns...>>;
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
   std::array<bool, l_num_result> is_object_array{is_object_specialization_v<std::decay_t<TableColumns>>...};
@@ -245,11 +245,12 @@ select_t::result_type_iterator<TableColumns...>::get() const {
     // select_->column_names_[l_column_index]->set_value(*select_->stmt_, l_column_index, &in_column);
     using column_or_struct_type = std::decay_t<decltype(in_column)>;
     if (!is_object_array[l_tuple_index]) {
-      select_->column_names_[l_column_index]->set_value(*select_->stmt_, l_column_index, &in_column);
+      select_->impl_->column_names_[l_column_index]->set_value(*select_->impl_->stmt_, l_column_index, &in_column);
       l_column_index++;
     } else /* if constexpr (is_object_specialization_v<column_or_struct_type>) */ {
-      for (auto&& table_column_ptr : select_->s_->get_table_columns<column_or_struct_type>())
-        select_->column_names_[l_column_index]->set_struct_value(*select_->stmt_, l_column_index, &in_column),
+      for (auto&& table_column_ptr : select_->impl_->s_->get_table_columns<column_or_struct_type>())
+        select_->impl_->column_names_[l_column_index]
+            ->set_struct_value(*select_->impl_->stmt_, l_column_index, &in_column),
             l_column_index++;
     }
     l_tuple_index++;
@@ -264,9 +265,9 @@ select_t::result_type_iterator<TableColumns...>::get() const {
 }
 
 template <typename T>
-select_t& select_t::where(T&& condition_fun) {
+select_t select_t::where(T&& condition_fun) {
   auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
-  wheres_                  = l_condition_fun_ptr;
+  impl_->wheres_           = l_condition_fun_ptr;
   return *this;
 }
 
@@ -277,16 +278,16 @@ select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns)
     // 如果是成员指针，获取列名
     using column_type = std::decay_t<decltype(in_column)>;
     if constexpr (std::is_member_pointer_v<column_type>) {
-      column_names_.push_back(std::make_shared<column_info_t>(in_column));
+      impl_->column_names_.push_back(std::make_shared<column_info_t>(in_column));
     } else if constexpr (is_object_specialization_v<column_type>) {
       // 如果是object<Table>，获取表的所有列名
       using table_type = class_type_t<column_type>;
-      for (const auto& table_column : s_->get_table_columns<table_type>())
-        column_names_.push_back(std::make_shared<column_info_t>(table_column.ptr_));
+      for (const auto& table_column : impl_->s_->get_table_columns<table_type>())
+        impl_->column_names_.push_back(std::make_shared<column_info_t>(table_column.ptr_));
     } else if constexpr (is_alias_column_t_v<column_type>) {
-      column_names_.push_back(std::make_shared<alias_column_info_t>(in_column));
+      impl_->column_names_.push_back(std::make_shared<alias_column_info_t>(in_column));
     } else if constexpr (is_count_t_v<column_type>) {
-      column_names_.push_back(std::make_shared<count_column_info_t>(std::move(in_column)));
+      impl_->column_names_.push_back(std::make_shared<count_column_info_t>(std::move(in_column)));
     }
 
     else {
