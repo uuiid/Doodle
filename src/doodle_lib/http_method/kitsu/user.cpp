@@ -24,13 +24,10 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "kitsu_reg_url.h"
-#include "sqlite_orm/orm/column_operations.h"
-#include "sqlite_orm/orm/count.h"
-#include "sqlite_orm/orm/fwd.h"
-#include "sqlite_orm/orm/select.h"
 #include <core/http/http_function.h>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <string>
+
 
 namespace doodle::http {
 namespace {
