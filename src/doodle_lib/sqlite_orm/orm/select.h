@@ -235,6 +235,15 @@ struct select_t {
       }
       return l_result;
     }
+    // to single value, 如果结果集有多于1行, 则抛出异常
+    type to_single() {
+      auto l_iter = begin();
+      if (l_iter == end()) throw std::runtime_error("No rows returned");
+      type l_result = *l_iter;
+      ++l_iter;
+      if (l_iter != end()) throw std::runtime_error("More than one row returned");
+      return l_result;
+    }
   };
 
   template <typename TableColumnsTuple>

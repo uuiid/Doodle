@@ -26,8 +26,8 @@ inline constexpr bool is_count_t_v = is_count_t<std::decay_t<T>>::value;
 // struct class_attr_type count_t 的模板特化
 template <typename... Column>
 struct class_attr_type<count_t<Column...>> {
-  using ptr_type    = std::int64_t;   
-  using class_type  = void;          // count_t 不对应具体类类型，因此使用 void 占位
+  using ptr_type    = std::int64_t;
+  using class_type  = void;  // count_t 不对应具体类类型，因此使用 void 占位
   using result_type = std::int64_t;
 };
 
@@ -42,5 +42,10 @@ struct count_column_info_t : public base_column_info_t {
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
 };
+
+template <typename... Column>
+count_t<Column...> count(Column&&... columns) {
+  return count_t<Column...>(std::make_tuple(std::forward<Column>(columns)...));
+}
 
 }  // namespace doodle::orm

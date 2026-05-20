@@ -2,6 +2,7 @@
 // Created by TD on 24-8-21.
 //
 
+#include "doodle_core/metadata/notification.h"
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -22,6 +23,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "kitsu_reg_url.h"
+#include "sqlite_orm/orm/count.h"
 #include <core/http/http_function.h>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <string>
@@ -29,11 +31,18 @@
 namespace doodle::http {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
-  auto& l_sql                       = get_sqlite_database();
-  l_ret["asset_types"]              = l_sql.get_asset_types_not_temporal_type();
-  l_ret["custom_actions"]           = nlohmann::json::value_t::array;
-  l_ret["departments"]              = l_sql.get_all<department>();
-  l_ret["notification_count"]       = l_sql.get_notification_count(person_.person_.uuid_id_);
+  auto& l_sql             = get_sqlite_database();
+  l_ret["asset_types"]    = l_sql.get_asset_types_not_temporal_type();
+  l_ret["custom_actions"] = nlohmann::json::value_t::array;
+  l_ret["departments"]    = l_sql.get_all<department>();
+  {
+    using namespace orm;
+    auto l_notifications = make_select_column(l_sql, count(&notification::uuid_id_));
+    l_notifications.select_.columns(l_notifications.columns_tuple_)
+        .from<notification>()
+        .where(c(&notification::person_id_) == person_.person_.uuid_id_);
+    l_ret["notification_count"] = l_notifications.select_(l_notifications.columns_tuple_).to_single();
+  }
   l_ret["persons"]                  = l_sql.get_all<person>();
   l_ret["project_status"]           = l_sql.get_all<project_status>();
   l_ret["preview_background_files"] = nlohmann::json::value_t::array;
@@ -80,7 +89,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
-  auto& l_sql        = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_old_person = l_sql.get_by_uuid<person>(id_);
   auto l_person     = std::make_shared<person>(l_old_person);
   auto l_json       = in_handle->get_json();
@@ -118,7 +127,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
-  auto& l_sql               = get_sqlite_database();
+  auto& l_sql              = get_sqlite_database();
   auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
   auto l_json              = in_handle->get_json();
   const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
@@ -129,7 +138,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
-  auto& l_sql                 = get_sqlite_database();
+  auto& l_sql                = get_sqlite_database();
   auto l_person              = std::make_shared<person>(l_sql.get_by_uuid<person>(person_.person_.uuid_id_));
   auto l_json                = in_handle->get_json();
   const auto& l_old_password = l_json.at("old_password").get_ref<const std::string&>();
