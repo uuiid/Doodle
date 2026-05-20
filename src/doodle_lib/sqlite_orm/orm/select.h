@@ -33,6 +33,9 @@ concept is_tuple_of_columns = requires(TableColumnsTuple t) {
   // );
 };
 
+template <typename... Columns>
+struct select_template_t;
+
 struct select_t {
  protected:
   friend class storage;
@@ -128,7 +131,7 @@ struct select_t {
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const;
   template <typename... TableColumns>
-  select_t& columns_(TableColumns... in_columns);
+  select_template_t<TableColumns...>& columns_(TableColumns... in_columns);
 
   // 约束TableColumnsTuple 必须是一个tuple, 并且tuple的元素必须是成员指针或者object<Table>
   template <is_tuple_of_columns TableColumnsTuple>
@@ -245,41 +248,65 @@ struct select_t {
       return l_result;
     }
   };
-
-  template <typename TableColumnsTuple>
-  struct result_type_t_helper;
-  template <typename... TableColumns>
-  struct result_type_t_helper<std::tuple<TableColumns...>> {
-    using type = result_type_t<TableColumns...>;
-  };
-
-  // 提取tuple的类型并返回一个可迭代的结果类型
-  template <is_tuple_of_columns TableColumnsTuple>
-  result_type_t_helper<std::decay_t<TableColumnsTuple>>::type get_result(TableColumnsTuple&& in_columns_tuple) {
-    // 避免未使用参数的编译警告
-    (void)in_columns_tuple;
-    run();
-    return typename result_type_t_helper<std::decay_t<TableColumnsTuple>>::type{*this};
-  }
-  template <is_tuple_of_columns TableColumnsTuple>
-  result_type_t_helper<std::decay_t<TableColumnsTuple>>::type operator()(TableColumnsTuple&& in_columns_tuple) {
-    (void)in_columns_tuple;
-    run();
-    return typename result_type_t_helper<std::decay_t<TableColumnsTuple>>::type{*this};
-  }
-
-  template <typename... TableColumns>
-  result_type_t<TableColumns...> operator()(TableColumns&&... in_columns) {
-    columns_(std::forward<TableColumns>(in_columns)...);
-    run();
-    return result_type_t<TableColumns...>{*this};
-  }
 };
 
 inline select_t select(storage& s) {
   select_t l_ret{s};
   return l_ret;
 }
+
+template <typename... Columns>
+struct select_template_t : public select_t {
+  // 这个类的作用是为了支持在编译期就确定结果类型的select, 通过模板参数传入列信息, 从而在编译期就能推断出结果类型,
+  // 避免了运行时的类型推断开销
+  using select_t::select_t;
+  template <typename FormTable>
+  select_template_t& from() {
+    select_t::from<FormTable>();
+    return *this;
+  }
+  template <typename FromTable>
+  select_template_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner) {
+    select_t::join(in_ptr, in_ref_ptr, in_join_type);
+    return *this;
+  }
+  template <typename JoinTable>
+  select_template_t& join(
+      JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner
+  ) {
+    select_t::join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, in_join_type);
+    return *this;
+  }
+  template <typename T>
+  select_template_t& where(T&& condition_fun) {
+    select_t::where(std::forward<T>(condition_fun));
+    return *this;
+  }
+  template <typename T>
+  select_template_t& order_by(auto T::* in_column_fun, bool ascending = true) {
+    select_t::order_by(in_column_fun, ascending);
+    return *this;
+  }
+  select_template_t& limit(std::size_t count) {
+    select_t::limit(count);
+    return *this;
+  }
+  select_template_t& offset(std::size_t count) {
+    select_t::offset(count);
+    return *this;
+  }
+  template <typename... TableColumns>
+  select_template_t& columns(TableColumns... in_columns) {
+    select_t::columns_(in_columns...);
+    return *this;
+  }
+
+  auto operator()() {
+    run();
+    return result_type<Columns...>{*this};
+  }
+};
+
 template <typename... TableColumns>
 struct select_and_columns_helper {
   select_t select_;

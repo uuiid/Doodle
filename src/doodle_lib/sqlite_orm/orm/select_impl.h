@@ -20,7 +20,7 @@ select_t& select_t::where(T&& condition_fun) {
   return *this;
 }
 template <typename... TableColumns>
-select_t& select_t::columns_(TableColumns... in_columns) {
+select_template_t<TableColumns...>& select_t::columns_(TableColumns... in_columns) {
   auto l_iter_fun = [this](auto&& in_column) {
     // 处理每个参数
     // 如果是成员指针，获取列名
@@ -43,7 +43,7 @@ select_t& select_t::columns_(TableColumns... in_columns) {
     }
   };
   (l_iter_fun(in_columns), ...);
-  return *this;
+  return select_template_t<TableColumns...>{*this};
 };
 
 template <typename... TableColumns>
