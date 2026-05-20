@@ -166,20 +166,11 @@ select_t::result_type_t<TableColumns...>::to_vector() {
   }
   return l_result;
 }
-template <typename... TableColumns>
-template <typename T>
-  requires(result_vector_value_constructible<
-           sizeof...(TableColumns) == 1, T, typename select_t::result_type_t<TableColumns...>::type>)
-std::vector<T> select_t::result_type_t<TableColumns...>::to_vector() {
-  std::vector<T> l_result{};
-  for (auto& item : *this) {
-    if constexpr (sizeof...(TableColumns) == 1)
-      l_result.push_back(T{item});
-    else
-      l_result.push_back(std::make_from_tuple<T>(item));
-  }
-  return l_result;
-}
+// template <typename... TableColumns>
+// template <typename T>
+//   requires(result_vector_value_constructible<
+//            sizeof...(TableColumns) == 1, T, typename select_t::result_type_t<TableColumns...>::type>)
+// std::vector<T> select_t::result_type_t<TableColumns...>::to_vector()
 
 template <typename... TableColumns>
 typename select_t::result_type_t<TableColumns...>::type select_t::result_type_t<TableColumns...>::to_single() {

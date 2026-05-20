@@ -7,7 +7,6 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include "sqlite_orm/orm/column.h"
 #include <concepts>
 #include <fmt/format.h>
 #include <iterator>
@@ -178,7 +177,16 @@ struct select_t::result_type_t {
   // 单列时 T 必须可以直接从 type 构造; 多列时必须可以通过 std::make_from_tuple 构造
   template <typename T>
     requires(result_vector_value_constructible<sizeof...(TableColumns) == 1, T, type>)
-  std::vector<T> to_vector();
+  std::vector<T> to_vector() {
+    std::vector<T> l_result{};
+    for (auto& item : *this) {
+      if constexpr (sizeof...(TableColumns) == 1)
+        l_result.push_back(T{item});
+      else
+        l_result.push_back(std::make_from_tuple<T>(item));
+    }
+    return l_result;
+  }
   // to single value, 如果结果集有多于1行, 则抛出异常
   type to_single();
 };
