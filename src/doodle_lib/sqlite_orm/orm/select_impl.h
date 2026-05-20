@@ -67,6 +67,11 @@ select_t select_t::order_by(auto T::* in_column_fun, bool ascending) {
   impl_->order_bys_.push_back(impl_->s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
   return *this;
 }
+template <typename... TableColumns>
+select_t select_t::group_by(auto TableColumns::*... in_columns) {
+  impl_->group_bys_ = {std::make_shared<column_info_t>(in_columns)...};
+  return *this;
+}
 
 // result_type_iterator 模板方法实现
 
@@ -163,9 +168,8 @@ select_t::result_type_t<TableColumns...>::to_vector() {
 }
 template <typename... TableColumns>
 template <typename T>
-  requires(result_vector_value_constructible<sizeof...(TableColumns) == 1,
-           T,
-           typename select_t::result_type_t<TableColumns...>::type>)
+  requires(result_vector_value_constructible<
+           sizeof...(TableColumns) == 1, T, typename select_t::result_type_t<TableColumns...>::type>)
 std::vector<T> select_t::result_type_t<TableColumns...>::to_vector() {
   std::vector<T> l_result{};
   for (auto& item : *this) {
@@ -191,14 +195,14 @@ typename select_t::result_type_t<TableColumns...>::type select_t::result_type_t<
 
 template <typename... Columns>
 template <typename FormTable>
-select_template_t<Columns...>& select_template_t<Columns...>::from() {
+select_template_t<Columns...> select_template_t<Columns...>::from() {
   select_t::from<FormTable>();
   return *this;
 }
 
 template <typename... Columns>
 template <typename FromTable>
-select_template_t<Columns...>& select_template_t<Columns...>::join(
+select_template_t<Columns...> select_template_t<Columns...>::join(
     auto in_ptr, auto in_ref_ptr, join_type in_join_type
 ) {
   select_t::join<FromTable>(in_ptr, in_ref_ptr, in_join_type);
@@ -207,7 +211,7 @@ select_template_t<Columns...>& select_template_t<Columns...>::join(
 
 template <typename... Columns>
 template <typename JoinTable>
-select_template_t<Columns...>& select_template_t<Columns...>::join(
+select_template_t<Columns...> select_template_t<Columns...>::join(
     JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type
 ) {
   select_t::join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, in_join_type);
@@ -216,27 +220,33 @@ select_template_t<Columns...>& select_template_t<Columns...>::join(
 
 template <typename... Columns>
 template <typename T>
-select_template_t<Columns...>& select_template_t<Columns...>::where(T&& condition_fun) {
+select_template_t<Columns...> select_template_t<Columns...>::where(T&& condition_fun) {
   select_t::where(std::forward<T>(condition_fun));
   return *this;
 }
 
 template <typename... Columns>
 template <typename T>
-select_template_t<Columns...>& select_template_t<Columns...>::order_by(auto T::* in_column_fun, bool ascending) {
+select_template_t<Columns...> select_template_t<Columns...>::order_by(auto T::* in_column_fun, bool ascending) {
   select_t::order_by(in_column_fun, ascending);
   return *this;
 }
 
 template <typename... Columns>
-select_template_t<Columns...>& select_template_t<Columns...>::limit(std::size_t count) {
+select_template_t<Columns...> select_template_t<Columns...>::limit(std::size_t count) {
   select_t::limit(count);
   return *this;
 }
 
 template <typename... Columns>
-select_template_t<Columns...>& select_template_t<Columns...>::offset(std::size_t count) {
+select_template_t<Columns...> select_template_t<Columns...>::offset(std::size_t count) {
   select_t::offset(count);
+  return *this;
+}
+template <typename... Columns>
+template <typename... TableColumns>
+select_template_t<Columns...> select_template_t<Columns...>::group_by(auto TableColumns::*... in_columns) {
+  select_t::group_by(in_columns...);
   return *this;
 }
 

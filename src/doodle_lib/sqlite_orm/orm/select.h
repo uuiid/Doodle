@@ -7,13 +7,14 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include <fmt/format.h>
+#include "sqlite_orm/orm/column.h"
 #include <concepts>
+#include <fmt/format.h>
 #include <iterator>
 #include <memory>
 #include <optional>
-#include <tuple>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -39,8 +40,8 @@ struct select_template_t;
 
 template <bool IsSingleColumn, typename T, typename Source>
 concept result_vector_value_constructible =
-  (IsSingleColumn && std::constructible_from<T, Source>) ||
-  (!IsSingleColumn && requires(Source&& source) { std::make_from_tuple<T>(std::forward<Source>(source)); });
+    (IsSingleColumn && std::constructible_from<T, Source>) ||
+    (!IsSingleColumn && requires(Source&& source) { std::make_from_tuple<T>(std::forward<Source>(source)); });
 
 struct select_t {
  protected:
@@ -63,6 +64,7 @@ struct select_t {
     std::vector<std::string> order_bys_;
     std::optional<std::size_t> limit_;
     std::optional<std::size_t> offset_;
+    std::vector<column_info_ptr> group_bys_;
     storage* s_{nullptr};
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
@@ -103,6 +105,8 @@ struct select_t {
     impl_->offset_ = count;
     return *this;
   }
+  template <typename... TableColumns>
+  select_t group_by(auto TableColumns::*... in_columns);
 
   std::string to_sql(const storage& s) const;
 
@@ -191,19 +195,22 @@ struct select_template_t : public select_t {
   using select_t::select_t;
   explicit select_template_t(select_t&& select) : select_t(std::move(select)) {}
   template <typename FormTable>
-  select_template_t& from();
+  select_template_t from();
   template <typename FromTable>
-  select_template_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner);
+  select_template_t join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner);
   template <typename JoinTable>
-  select_template_t& join(
+  select_template_t join(
       JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner
   );
   template <typename T>
-  select_template_t& where(T&& condition_fun);
+  select_template_t where(T&& condition_fun);
   template <typename T>
-  select_template_t& order_by(auto T::* in_column_fun, bool ascending = true);
-  select_template_t& limit(std::size_t count);
-  select_template_t& offset(std::size_t count);
+  select_template_t order_by(auto T::* in_column_fun, bool ascending = true);
+  select_template_t limit(std::size_t count);
+  select_template_t offset(std::size_t count);
+  template <typename... TableColumns>
+  select_template_t group_by(auto TableColumns::*... in_columns);
+
   result_type_t<Columns...> operator()();
 };
 
