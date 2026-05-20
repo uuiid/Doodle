@@ -9,7 +9,6 @@
 #include <memory>
 #include <typeindex>
 
-
 namespace doodle::orm {
 class storage;
 struct sqlite_stmt;
@@ -44,6 +43,9 @@ struct table_columns_t {
   }
 
   bool operator==(const table_columns_t& other) const { return equals_ && equals_(other); }
+  // bool operator
+  operator bool() const { return any_value_.has_value(); }
+
   template <typename Table>
   bind_value_t get_value(const Table& obj) const {
     if (!get_bind_value_) throw std::runtime_error("Get bind value function is not initialized");

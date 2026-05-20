@@ -4,11 +4,9 @@
 
 namespace doodle::orm {
 std::string count_column_info_t::get_column_name(const storage& s, bool include_table_name) const {
-  std::vector<std::string> column_names;
-  for (const auto& column_info : column_infos_) {
-    column_names.push_back(s.get_column_name(column_info, include_table_name));
-  }
-  return fmt::format("COUNT({})", fmt::join(column_names, ", "));
+  if (!column_infos_) return "COUNT(*)";
+
+  return fmt::format("COUNT({})", s.get_column_name(column_infos_, include_table_name));
 }
 
 std::string count_column_info_t::get_table_name(const storage& /*s*/) const {
