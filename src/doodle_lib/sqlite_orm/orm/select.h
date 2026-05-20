@@ -210,6 +210,23 @@ struct select_template_t : public select_t {
   select_template_t join(
       JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner
   );
+
+  template <typename FormTable>
+  select_template_t left_outer_join(auto in_ptr, auto in_ref_ptr) {
+    return join<FormTable>(in_ptr, in_ref_ptr, join_type::left);
+  }
+  template <typename JoinTable>
+  select_template_t left_outer_join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr) {
+    return join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, join_type::left);
+  }
+  template <typename FormTable>
+  select_template_t right_outer_join(auto in_ptr, auto in_ref_ptr) {
+    return join<FormTable>(in_ptr, in_ref_ptr, join_type::right);
+  }
+  template <typename JoinTable>
+  select_template_t right_outer_join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr) {
+    return join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, join_type::right);
+  }
   template <typename T>
   select_template_t where(T&& condition_fun);
   template <typename T>
