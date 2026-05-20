@@ -8,10 +8,11 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <fmt/format.h>
+#include <concepts>
 #include <iterator>
 #include <memory>
 #include <optional>
-#include <stdexcept>
+#include <tuple>
 #include <string>
 #include <utility>
 #include <vector>
@@ -35,6 +36,11 @@ concept is_tuple_of_columns = requires(TableColumnsTuple t) {
 
 template <typename... Columns>
 struct select_template_t;
+
+template <bool IsSingleColumn, typename T, typename Source>
+concept result_vector_value_constructible =
+  (IsSingleColumn && std::constructible_from<T, Source>) ||
+  (!IsSingleColumn && requires(Source&& source) { std::make_from_tuple<T>(std::forward<Source>(source)); });
 
 struct select_t {
  protected:
@@ -165,6 +171,10 @@ struct select_t::result_type_t {
 
   // to vector
   std::vector<type> to_vector();
+  // 单列时 T 必须可以直接从 type 构造; 多列时必须可以通过 std::make_from_tuple 构造
+  template <typename T>
+    requires(result_vector_value_constructible<sizeof...(TableColumns) == 1, T, type>)
+  std::vector<T> to_vector();
   // to single value, 如果结果集有多于1行, 则抛出异常
   type to_single();
 };

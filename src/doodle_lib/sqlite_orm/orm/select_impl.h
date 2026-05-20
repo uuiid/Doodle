@@ -161,6 +161,21 @@ select_t::result_type_t<TableColumns...>::to_vector() {
   }
   return l_result;
 }
+template <typename... TableColumns>
+template <typename T>
+  requires(result_vector_value_constructible<sizeof...(TableColumns) == 1,
+           T,
+           typename select_t::result_type_t<TableColumns...>::type>)
+std::vector<T> select_t::result_type_t<TableColumns...>::to_vector() {
+  std::vector<T> l_result{};
+  for (auto& item : *this) {
+    if constexpr (sizeof...(TableColumns) == 1)
+      l_result.push_back(T{item});
+    else
+      l_result.push_back(std::make_from_tuple<T>(item));
+  }
+  return l_result;
+}
 
 template <typename... TableColumns>
 typename select_t::result_type_t<TableColumns...>::type select_t::result_type_t<TableColumns...>::to_single() {
@@ -249,8 +264,9 @@ select_t::result_type_iterator<TableColumns...>::get() const {
       l_column_index++;
     } else /* if constexpr (is_object_specialization_v<column_or_struct_type>) */ {
       for (auto&& table_column_ptr : select_->impl_->s_->get_table_columns<column_or_struct_type>())
-        select_->impl_->column_names_[l_column_index]
-            ->set_struct_value(*select_->impl_->stmt_, l_column_index, &in_column),
+        select_->impl_->column_names_[l_column_index]->set_struct_value(
+            *select_->impl_->stmt_, l_column_index, &in_column
+        ),
             l_column_index++;
     }
     l_tuple_index++;
