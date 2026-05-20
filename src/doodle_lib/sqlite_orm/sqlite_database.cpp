@@ -1001,10 +1001,12 @@ person sqlite_database::get_person_for_email(const std::string& in_email) {
   return l_p;
 }
 std::vector<uuid> sqlite_database::get_temporal_type_ids() {
-  return impl_->storage_any_.select(
-      &asset_type::uuid_id_,
-      sqlite_orm::where(sqlite_orm::in(&asset_type::name_, {"Episode", "Sequence", "Shot", "Edit", "Scene", "Concept"}))
-  );
+  using namespace orm;
+  auto l_select = select(*this)
+                      .columns(&asset_type::uuid_id_)
+                      .from<asset_type>()
+                      .where(c(&asset_type::name_).in({"Episode", "Sequence", "Shot", "Edit", "Scene", "Concept"}));
+  return l_select().to_vector();
 }
 
 std::vector<project> sqlite_database::get_person_projects(const person& in_user) {

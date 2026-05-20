@@ -2,13 +2,14 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/alias.h>
+#include <doodle_lib/sqlite_orm/orm/bind_value.h>
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
-#include <doodle_lib/sqlite_orm/orm/bind_value.h>
 
 #include "fwd.h"
+#include <initializer_list>
 #include <memory>
 #include <range/v3/view/unique.hpp>
 #include <string>
@@ -228,7 +229,7 @@ struct column_operations : column_operations_base_t {
   column_operations like(std::string_view pattern) const;
   // operator in
   template <typename Container>
-    requires std::ranges::range<Container> && (!std::is_same_v<std::decay_t<Container>, std::string>)
+    requires std::ranges::range<std::decay_t<Container>> && (!std::is_same_v<std::decay_t<Container>, std::string>)
   auto in(const Container& values) const {
     auto l_size = std::ranges::distance(values);
     if (l_size == 0) {
@@ -241,6 +242,11 @@ struct column_operations : column_operations_base_t {
     for (const auto& value : values) l_ptr->value_variants_.push_back(bind_value_t{value});
     data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
+  }
+  // operator in with initializer_list
+  template <typename T>
+  column_operations in(std::initializer_list<T> values) const {
+    return in<std::initializer_list<T>>(values);
   }
   // operator in with subquery
   column_operations in(const select_t& subquery) const;
