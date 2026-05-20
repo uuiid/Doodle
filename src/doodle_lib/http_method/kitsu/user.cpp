@@ -90,7 +90,34 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                                         .from<project_task_status_link>()
                                         .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
                                         .to_vector();
-    
+    l_project.episodes_ = select(l_sql)
+                              .columns(&entity_asset_extend::ji_shu_lie_, count())
+                              .from<entity_asset_extend>()
+                              .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                              .where(c(&entity::project_id_) == l_project.uuid_id_)
+                              .group_by(&entity_asset_extend::ji_shu_lie_)()
+                              .to_vector<project_with_extra_data::project_int>();
+    l_project.seasons_ = select(l_sql)
+                             .columns(&entity_asset_extend::ji_du_, count())
+                             .from<entity_asset_extend>()
+                             .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                             .where(c(&entity::project_id_) == l_project.uuid_id_)
+                             .group_by(&entity_asset_extend::ji_du_)()
+                             .to_vector<project_with_extra_data::project_int>();
+    l_project.levels_ = select(l_sql)
+                            .columns(&entity_asset_extend::deng_ji_, count())
+                            .from<entity_asset_extend>()
+                            .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                            .where(c(&entity::project_id_) == l_project.uuid_id_)
+                            .group_by(&entity_asset_extend::deng_ji_)()
+                            .to_vector<project_with_extra_data::project_str>();
+    l_project.scenes_ = select(l_sql)
+                            .columns(&entity_asset_extend::gui_dang_, count())
+                            .from<entity_asset_extend>()
+                            .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                            .where(c(&entity::project_id_) == l_project.uuid_id_)
+                            .group_by(&entity_asset_extend::gui_dang_)()
+                            .to_vector<project_with_extra_data::project_int>();
   }
 
   return l_projects;
