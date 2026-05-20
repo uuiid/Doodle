@@ -285,7 +285,7 @@ select_template_t<TableColumns...>  select_t::columns(TableColumns... in_columns
     } else if constexpr (is_alias_column_t_v<column_type>) {
       column_names_.push_back(std::make_shared<alias_column_info_t>(in_column));
     } else if constexpr (is_count_t_v<column_type>) {
-      column_names_.push_back(std::make_shared<count_column_info_t>(in_column));
+      column_names_.push_back(std::make_shared<count_column_info_t>(std::move(in_column)));
     }
 
     else {
