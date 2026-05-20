@@ -69,6 +69,28 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                                 .from<project_task_type_link>()
                                 .where(c(&project_task_type_link::project_id_) == l_project.uuid_id_)()
                                 .to_vector();
+    l_project.status_automations_ = select(l_sql)
+                                        .columns(&project_status_automation_link::status_automation_id_)
+                                        .from<project_status_automation_link>()
+                                        .where(c(&project_status_automation_link::project_id_) == l_project.uuid_id_)()
+                                        .to_vector();
+    l_project.preview_background_files_ =
+        select(l_sql)
+            .columns(&project_preview_background_file_link::preview_background_file_id_)
+            .from<project_preview_background_file_link>()
+            .where(c(&project_preview_background_file_link::project_id_) == l_project.uuid_id_)()
+            .to_vector();
+    l_project.task_types_priority_ = select(l_sql)
+                                         .columns(object<project_task_type_link>())
+                                         .from<project_task_type_link>()
+                                         .where(c(&project_task_type_link::project_id_) == l_project.uuid_id_)()
+                                         .to_vector();
+    l_project.task_statuses_link_ = select(l_sql)
+                                        .columns(object<project_task_status_link>())
+                                        .from<project_task_status_link>()
+                                        .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
+                                        .to_vector();
+    
   }
 
   return l_projects;
