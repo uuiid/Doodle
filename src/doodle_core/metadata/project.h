@@ -294,7 +294,7 @@ struct project_with_extra_data : project {
     std::int32_t count_;
     explicit project_int(std::tuple<std::optional<std::int32_t>, std::int32_t> in_tuple)
         : number_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
-    explicit project_int(std::optional<std::int32_t> in_number, std::int32_t in_count)
+    explicit project_int(std::optional<std::int32_t> in_number, std::int64_t in_count)
         : number_(in_number), count_(in_count) {}
     // to json
     friend void to_json(nlohmann::json& j, const project_int& p) {
@@ -312,7 +312,7 @@ struct project_with_extra_data : project {
     std::int32_t count_;
     explicit project_str(std::tuple<std::string, std::int32_t> in_tuple)
         : name_(std::get<0>(in_tuple)), count_(std::get<1>(in_tuple)) {}
-    explicit project_str(std::string in_name, std::int32_t in_count) : name_(std::move(in_name)), count_(in_count) {}
+    explicit project_str(std::string in_name, std::int64_t in_count) : name_(std::move(in_name)), count_(in_count) {}
     friend void to_json(nlohmann::json& j, const project_str& p) {
       j["name"]  = p.name_;
       j["count"] = p.count_;
