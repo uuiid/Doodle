@@ -16,7 +16,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle::orm {
 template <typename... TableColumns>
 struct select_result_type;

@@ -12,12 +12,14 @@ target_sources(
         delete.h
         orm.h   
         sqlite_statement.h
+        count.h
         
         alias_impl.h
         storage_impl.h
         select_impl.h
         column_impl.h
         bind_value_impl.h
+        count_impl.h
         
         PRIVATE
         storage.cpp
@@ -30,4 +32,5 @@ target_sources(
         column.cpp
         alias.cpp
         bind_value.cpp
+        count.cpp
 )

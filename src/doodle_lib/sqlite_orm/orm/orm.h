@@ -8,6 +8,7 @@
 #include <doodle_lib/sqlite_orm/orm/bind_value.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/column.h>
+#include <doodle_lib/sqlite_orm/orm/count.h>
 #include <doodle_lib/sqlite_orm/orm/create_trigger.h>
 #include <doodle_lib/sqlite_orm/orm/delete.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
@@ -19,6 +20,7 @@
 #include <doodle_lib/sqlite_orm/orm/alias_impl.h>
 #include <doodle_lib/sqlite_orm/orm/bind_value_impl.h>
 #include <doodle_lib/sqlite_orm/orm/column_impl.h>
+#include <doodle_lib/sqlite_orm/orm/count_impl.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations_impl.h>
 #include <doodle_lib/sqlite_orm/orm/select_impl.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>

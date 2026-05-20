@@ -8,6 +8,8 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
+#include "fwd.h"
+#include "sqlite_orm/orm/count.h"
 #include <memory>
 
 namespace doodle::orm {
@@ -32,7 +34,11 @@ select_t& select_t::columns_(TableColumns... in_columns) {
         column_names_.push_back(std::make_shared<column_info_t>(table_column.ptr_));
     } else if constexpr (is_alias_column_t_v<column_type>) {
       column_names_.push_back(std::make_shared<alias_column_info_t>(in_column));
-    } else {
+    } else if constexpr (is_count_t_v<column_type>) {
+      column_names_.push_back(std::make_shared<count_column_info_t>(in_column));
+    }
+
+    else {
       static_assert(always_false<column_type>, "不支持的参数类型");
     }
   };
