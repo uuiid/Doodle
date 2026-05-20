@@ -185,8 +185,7 @@ template <typename... Columns>
 template <typename FromTable>
 select_template_t<Columns...>& select_template_t<Columns...>::join(
     auto in_ptr, auto in_ref_ptr, join_type in_join_type
-) {
-  select_t::join(in_ptr, in_ref_ptr, in_join_type);
+  select_t::join<FromTable>(in_ptr, in_ref_ptr, in_join_type);
   return *this;
 }
 
