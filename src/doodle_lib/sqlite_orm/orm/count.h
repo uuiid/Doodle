@@ -5,8 +5,6 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
-#include <vector>
-
 namespace doodle::orm {
 
 template <typename Column>
