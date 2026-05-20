@@ -185,6 +185,7 @@ template <typename... Columns>
 template <typename FromTable>
 select_template_t<Columns...>& select_template_t<Columns...>::join(
     auto in_ptr, auto in_ref_ptr, join_type in_join_type
+) {
   select_t::join<FromTable>(in_ptr, in_ref_ptr, in_join_type);
   return *this;
 }
@@ -270,7 +271,7 @@ select_t& select_t::where(T&& condition_fun) {
 }
 
 template <typename... TableColumns>
-select_template_t<TableColumns...>  select_t::columns(TableColumns... in_columns) {
+select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns) {
   auto l_iter_fun = [this](auto&& in_column) {
     // 处理每个参数
     // 如果是成员指针，获取列名
