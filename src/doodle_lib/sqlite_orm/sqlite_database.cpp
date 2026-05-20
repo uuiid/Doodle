@@ -1010,43 +1010,16 @@ std::vector<uuid> sqlite_database::get_temporal_type_ids() {
 }
 
 std::vector<project> sqlite_database::get_person_projects(const person& in_user) {
-  std::vector<project> l_result;
-  auto l_ids = impl_->storage_any_.get_all<project>(
-      sqlite_orm::join<project_status>(
-          sqlite_orm::on(sqlite_orm::c(&project_status::uuid_id_) == sqlite_orm::c(&project::project_status_id_))
-      ),
-      sqlite_orm::join<project_person_link>(
-          sqlite_orm::on(sqlite_orm::c(&project_person_link::project_id_) == sqlite_orm::c(&project::uuid_id_))
-      ),
-      sqlite_orm::where(
-          sqlite_orm::c(&project_person_link::person_id_) == in_user.uuid_id_ &&
-          sqlite_orm::in(&project_status::name_, {"Active", "open", "Open"})
-      )
-  );
-  l_result.reserve(l_ids.size());
-  for (auto&& l_id : l_ids) l_result.emplace_back(l_id);
-  return l_result;
-}
-std::vector<project_and_status_t> sqlite_database::get_project_and_status(const person& in_user) {
-  using namespace sqlite_orm;
-  static constexpr auto sql_orm_project_and_status_t = sqlite_orm::struct_<project_and_status_t>(
-      &project::uuid_id_, &project::name_, &project::code_, &project::description_, &project::shotgun_id_,
-      &project::file_tree_, &project::data_, &project::has_avatar_, &project::fps_, &project::ratio_,
-      &project::resolution_, &project::production_type_, &project::production_style_, &project::start_date_,
-      &project::end_date_, &project::man_days_, &project::nb_episodes_, &project::episode_span_, &project::max_retakes_,
-      &project::is_clients_isolated_, &project::is_preview_download_allowed_, &project::is_set_preview_automated_,
-      &project::homepage_, &project::is_publish_default_for_artists_, &project::hd_bitrate_compression_,
-      &project::ld_bitrate_compression_, &project::project_status_id_, &project::default_preview_background_file_id_,
-      &project_status::name_
-  );
-  auto l_r = impl_->storage_any_.select(
-      sql_orm_project_and_status_t,
-      join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_))),
-      join<project_person_link>(on(c(&project_person_link::project_id_) == c(&project::uuid_id_))),
-      where(in_user.uuid_id_.is_nil() || c(&project_person_link::person_id_) == in_user.uuid_id_)
-  );
-  return l_r;
-}
+  using namespace orm;
+  auto l_select = select(*this).columns(object<project>()).from<project>();
+  l_select.join<project_status>(&project::project_status_id_, &project_status::uuid_id_)
+      .join<project_person_link>(&project::uuid_id_, &project_person_link::project_id_)
+      .where(
+          c(&project_person_link::person_id_) == in_user.uuid_id_ &&
+          c(&project_status::name_).in({"Active", "open", "Open"})
+      );
+  return l_select().to_vector();
+} 
 
 std::vector<get_comments_t> sqlite_database::get_comments(const uuid& in_task_id) {
   using namespace sqlite_orm;

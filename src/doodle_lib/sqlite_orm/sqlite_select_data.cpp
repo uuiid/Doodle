@@ -86,38 +86,6 @@ void to_json(nlohmann::json& j, const todo_t& p) {
   }
 }
 
-void to_json(nlohmann::json& j, const project_and_status_t& p) {
-  j["id"]                                 = p.uuid_id_;
-  j["name"]                               = p.name_;
-  j["code"]                               = p.code_;
-  j["description"]                        = p.description_;
-  j["shotgun_id"]                         = p.shotgun_id_;
-  j["file_tree"]                          = p.file_tree_;
-  j["data"]                               = p.data_;
-  j["has_avatar"]                         = p.has_avatar_;
-  j["fps"]                                = p.fps_;
-  j["ratio"]                              = p.ratio_;
-  j["resolution"]                         = p.resolution_;
-  j["production_type"]                    = p.production_type_;
-  j["production_style"]                   = p.production_style_;
-  j["start_date"]                         = p.start_date_;
-  j["end_date"]                           = p.end_date_;
-  j["man_days"]                           = p.man_days_;
-  j["nb_episodes"]                        = p.nb_episodes_;
-  j["episode_span"]                       = p.episode_span_;
-  j["max_retakes"]                        = p.max_retakes_;
-  j["is_clients_isolated"]                = p.is_clients_isolated_;
-  j["is_preview_download_allowed"]        = p.is_preview_download_allowed_;
-  j["is_set_preview_automated"]           = p.is_set_preview_automated_;
-  j["homepage"]                           = p.homepage_;
-  j["is_publish_default_for_artists"]     = p.is_publish_default_for_artists_;
-  j["hd_bitrate_compression"]             = p.hd_bitrate_compression_;
-  j["ld_bitrate_compression"]             = p.ld_bitrate_compression_;
-  j["project_status_id"]                  = p.project_status_id_;
-  j["default_preview_background_file_id"] = p.default_preview_background_file_id_;
-  j["project_status_name"]                = p.project_status_name_;
-}
-
 void to_json(nlohmann::json& j, const get_comments_t::person_t& p) {
   j["id"]         = p.uuid_id_;
   j["first_name"] = p.first_name_;

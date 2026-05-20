@@ -178,42 +178,6 @@ struct todo_t {
   friend void to_json(nlohmann::json& j, const todo_t& p);
 };
 
-struct project_and_status_t {
-  decltype(project::uuid_id_) uuid_id_;
-  decltype(project::name_) name_;
-  decltype(project::code_) code_;
-  decltype(project::description_) description_;
-  decltype(project::shotgun_id_) shotgun_id_;
-  decltype(project::file_tree_) file_tree_;
-  decltype(project::data_) data_;
-  decltype(project::has_avatar_) has_avatar_;
-  decltype(project::fps_) fps_;
-  decltype(project::ratio_) ratio_;
-  decltype(project::resolution_) resolution_;
-  decltype(project::production_type_) production_type_;
-  decltype(project::production_style_) production_style_;
-  decltype(project::start_date_) start_date_;
-  decltype(project::end_date_) end_date_;
-  decltype(project::man_days_) man_days_;
-  decltype(project::nb_episodes_) nb_episodes_;
-  decltype(project::episode_span_) episode_span_;
-  decltype(project::max_retakes_) max_retakes_;
-  decltype(project::is_clients_isolated_) is_clients_isolated_;
-  decltype(project::is_preview_download_allowed_) is_preview_download_allowed_;
-  decltype(project::is_set_preview_automated_) is_set_preview_automated_;
-  decltype(project::homepage_) homepage_;
-  decltype(project::is_publish_default_for_artists_) is_publish_default_for_artists_;
-  decltype(project::hd_bitrate_compression_) hd_bitrate_compression_;
-  decltype(project::ld_bitrate_compression_) ld_bitrate_compression_;
-  decltype(project::project_status_id_) project_status_id_;
-
-  decltype(project::default_preview_background_file_id_) default_preview_background_file_id_;
-  decltype(project_status::name_) project_status_name_;
-
-  // to json
-  friend void to_json(nlohmann::json& j, const project_and_status_t& p);
-};
-
 struct get_comments_t {
   decltype(comment::uuid_id_) uuid_id_;
   decltype(comment::shotgun_id_) shotgun_id_;

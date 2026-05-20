@@ -25,7 +25,6 @@ enum class server_task_info_type;
 struct asset_type;
 class server_task_info;
 struct todo_t;
-struct project_and_status_t;
 struct get_comments_t;
 struct task_status;
 struct assets_and_tasks_t;
@@ -143,9 +142,6 @@ class sqlite_database : public orm::storage {
   person get_person_for_email(const std::string& in_email);
   /// 获取用户所在的团队对应的项目
   std::vector<project> get_person_projects(const person& in_user);
-
-  /// 获取项目和对应的项目状态
-  std::vector<project_and_status_t> get_project_and_status(const person& in_user);
 
   std::vector<get_comments_t> get_comments(const uuid& in_task_id);
   std::optional<project_task_type_link> get_project_task_type_link(
