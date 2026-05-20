@@ -140,7 +140,6 @@ class sqlite_database : public orm::storage {
       const uuid& in_person_id, const chrono::local_days& in_data
   );
 
-  std::int32_t get_notification_count(const uuid& in_user_id);
   std::vector<project_with_extra_data> get_project_for_user(const person& in_user);
 
   person get_person_for_email(const std::string& in_email);

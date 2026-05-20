@@ -987,11 +987,6 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
   return l_select().to_vector();
 }
 
-std::int32_t sqlite_database::get_notification_count(const uuid& in_user_id) {
-  using namespace sqlite_orm;
-  return impl_->storage_any_.count<notification>(where(c(&notification::person_id_) == in_user_id));
-}
-
 std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const person& in_user) {
   using namespace sqlite_orm;
   std::vector<project_with_extra_data> l_projects{};

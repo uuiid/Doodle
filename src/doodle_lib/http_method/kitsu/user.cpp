@@ -3,6 +3,7 @@
 //
 
 #include "doodle_core/metadata/notification.h"
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -24,20 +25,42 @@
 
 #include "kitsu_reg_url.h"
 #include "sqlite_orm/orm/count.h"
+#include "sqlite_orm/orm/fwd.h"
 #include "sqlite_orm/orm/select.h"
 #include <core/http/http_function.h>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <string>
 
 namespace doodle::http {
+namespace {
+std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::http_jwt_t& in_user) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  std::vector<project_with_extra_data> l_projects{};
+  auto l_select = select(l_sql).columns(object<project>());
+  l_select.from<project>();
+  l_select.join<project_status>(&project::project_status_id_, &project_status::uuid_id_);
+  if (in_user.is_admin()) {
+    l_select.where(c(&project_status::name_) == "Open");
+  } else {
+    l_select.join<project_person_link>(&project::uuid_id_, &project_person_link::project_id_)
+        .where(c(&project_person_link::person_id_) == in_user.person_.uuid_id_ && c(&project_status::name_) == "Open");
+  }
+  for (auto&& project : l_select()) l_projects.push_back(project_with_extra_data{project});
+
+  return l_projects;
+}
+
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
+  using namespace orm;
   auto& l_sql             = get_sqlite_database();
   l_ret["asset_types"]    = l_sql.get_asset_types_not_temporal_type();
   l_ret["custom_actions"] = nlohmann::json::value_t::array;
   l_ret["departments"]    = l_sql.get_all<department>();
   {
-    using namespace orm;
     auto l_notifications = select(l_sql).columns(count(&notification::uuid_id_));
     l_notifications.from<notification>().where(c(&notification::person_id_) == person_.person_.uuid_id_);
     l_ret["notification_count"] = l_notifications().to_single();
@@ -45,7 +68,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   l_ret["persons"]                  = l_sql.get_all<person>();
   l_ret["project_status"]           = l_sql.get_all<project_status>();
   l_ret["preview_background_files"] = nlohmann::json::value_t::array;
-  l_ret["projects"]                 = l_sql.get_project_for_user(person_.person_);
+  l_ret["projects"]                 = get_project_for_user(person_);
   l_ret["status_automations"]       = l_sql.get_all<status_automation>();
   l_ret["studios"]                  = l_sql.get_all<studio>();
   l_ret["task_status"]              = l_sql.get_all<task_status>();
