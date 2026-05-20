@@ -6,6 +6,7 @@
 
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/attendance.h"
+#include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/group.h"
 #include "doodle_core/metadata/seedance2/task.h"
@@ -38,6 +39,9 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include "core/global_function.h"
+#include "orm/fwd.h"
+#include "sqlite_orm/orm/column_operations.h"
 #include "sqlite_orm/orm/select.h"
 #include <cstddef>
 #include <optional>
@@ -987,113 +991,14 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
   return l_select().to_vector();
 }
 
-std::vector<project_with_extra_data> sqlite_database::get_project_for_user(const person& in_user) {
-  using namespace sqlite_orm;
-  std::vector<project_with_extra_data> l_projects{};
-  if (in_user.role_ == person_role_type::admin) {
-    auto l_t = impl_->storage_any_.get_all<project>(
-        join<project_status>(on(c(&project_status::uuid_id_) == c(&project::project_status_id_))),
-        where(in(&project_status::name_, {"Active", "open", "Open"}))
-    );
-    l_projects = l_t | ranges::views::transform([](const project& in) { return project_with_extra_data{in}; }) |
-                 ranges::to_vector;
-  } else {
-    auto l_t   = get_person_projects(in_user);
-    l_projects = l_t | ranges::views::transform([](const project& in) { return project_with_extra_data{in}; }) |
-                 ranges::to_vector;
-  }
-  auto l_descriptors = impl_->storage_any_.get_all<metadata_descriptor>();
-  {
-    auto l_departments = impl_->storage_any_.select(&department::uuid_id_);
-    for (auto&& i : l_descriptors) {
-      i.department_ = l_departments;
-    }
-  }
-  for (auto&& i : l_projects) {
-    auto l_project_person_link =
-        impl_->storage_any_.get_all<project_person_link>(where(c(&project_person_link::project_id_) == i.uuid_id_));
-    i.team_ = l_project_person_link |
-              ranges::views::transform([](const project_person_link& in) { return in.person_id_; }) | ranges::to_vector;
-    auto l_asset_type_link = impl_->storage_any_.get_all<project_asset_type_link>(
-        where(c(&project_asset_type_link::project_id_) == i.uuid_id_)
-    );
-    i.asset_types_ = l_asset_type_link |
-                     ranges::views::transform([](const project_asset_type_link& in) { return in.asset_type_id_; }) |
-                     ranges::to_vector;
-    auto l_task_status_link = impl_->storage_any_.get_all<project_task_status_link>(
-        where(c(&project_task_status_link::project_id_) == i.uuid_id_)
-    );
-    i.task_statuses_ = l_task_status_link |
-                       ranges::views::transform([](const project_task_status_link& in) { return in.task_status_id_; }) |
-                       ranges::to_vector;
-    auto l_task_type_link = impl_->storage_any_.get_all<project_task_type_link>(
-        where(c(&project_task_type_link::project_id_) == i.uuid_id_)
-    );
-    i.task_types_ = l_task_type_link |
-                    ranges::views::transform([](const project_task_type_link& in) { return in.task_type_id_; }) |
-                    ranges::to_vector;
-    auto l_status_automations = impl_->storage_any_.get_all<project_status_automation_link>(
-        where(c(&project_status_automation_link::project_id_) == i.uuid_id_)
-    );
-    i.status_automations_ =
-        l_status_automations |
-        ranges::views::transform([](const project_status_automation_link& in) { return in.status_automation_id_; }) |
-        ranges::to_vector;
-    auto l_preview_background_files = impl_->storage_any_.get_all<project_preview_background_file_link>(
-        where(c(&project_preview_background_file_link::project_id_) == i.uuid_id_)
-    );
-    i.preview_background_files_ = l_preview_background_files |
-                                  ranges::views::transform([](const project_preview_background_file_link& in) {
-                                    return in.preview_background_file_id_;
-                                  }) |
-                                  ranges::to_vector;
-
-    i.descriptors_ =
-        l_descriptors |
-        ranges::views::filter([&](const metadata_descriptor& in) { return in.project_uuid_ == i.uuid_id_; }) |
-        ranges::to_vector;
-    i.task_types_priority_ = l_task_type_link;
-    i.task_statuses_link_  = l_task_status_link;
-
-    // 获取集数统计
-    auto l_episodes        = impl_->storage_any_.select(
-        columns(&entity_asset_extend::ji_shu_lie_, count()),
-        join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_), group_by(&entity_asset_extend::ji_shu_lie_)
-    );
-    i.episodes_.reserve(l_episodes.size());
-    for (const auto& d : l_episodes) i.episodes_.emplace_back(d);
-    // 获取季度统计
-    auto l_seasons = impl_->storage_any_.select(
-        columns(&entity_asset_extend::ji_du_, count()),
-        join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_), group_by(&entity_asset_extend::ji_du_)
-    );
-    i.seasons_.reserve(l_seasons.size());
-    for (const auto& d : l_seasons) i.seasons_.emplace_back(d);
-    // 获取等级统计
-    auto l_levels = impl_->storage_any_.select(
-        columns(&entity_asset_extend::deng_ji_, count()),
-        join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_), group_by(&entity_asset_extend::deng_ji_)
-    );
-    i.levels_.reserve(l_levels.size());
-    for (const auto& d : l_levels) i.levels_.emplace_back(d);
-    // 获取场次统计
-    auto l_scenes = impl_->storage_any_.select(
-        columns(&entity_asset_extend::chang_ci_, count()),
-        join<entity>(on(c(&entity::uuid_id_) == c(&entity_asset_extend::entity_id_))),
-        where(c(&entity::project_id_) == i.uuid_id_), group_by(&entity_asset_extend::chang_ci_)
-    );
-    i.scenes_.reserve(l_scenes.size());
-    for (const auto& d : l_scenes) i.scenes_.emplace_back(d);
-  }
-  return l_projects;
-}
 person sqlite_database::get_person_for_email(const std::string& in_email) {
-  auto l_p = impl_->storage_any_.get_all<person>(sqlite_orm::where(sqlite_orm::c(&person::email_) == in_email));
-  if (l_p.empty()) throw_exception(doodle_error{"未知的用户"});
-  return l_p.front();
+  using namespace orm;
+  auto l_p = select(get_sqlite_database())
+                 .columns(object<person>())
+                 .from<person>()
+                 .where(c(&person::email_) == in_email)()
+                 .to_single();
+  return l_p;
 }
 std::vector<uuid> sqlite_database::get_temporal_type_ids() {
   return impl_->storage_any_.select(

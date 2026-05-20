@@ -140,8 +140,6 @@ class sqlite_database : public orm::storage {
       const uuid& in_person_id, const chrono::local_days& in_data
   );
 
-  std::vector<project_with_extra_data> get_project_for_user(const person& in_user);
-
   person get_person_for_email(const std::string& in_email);
   /// 获取用户所在的团队对应的项目
   std::vector<project> get_person_projects(const person& in_user);
