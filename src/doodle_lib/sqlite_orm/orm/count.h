@@ -51,7 +51,7 @@ struct count_column_info_t : public base_column_info_t {
 
 template <typename Column>
 count_t<Column> count(Column&& columns) {
-  return count_t<Column>(std::make_tuple(std::forward<Column>(columns)));
+  return count_t<Column>{std::forward<Column>(columns)};
 }
 inline count_t<void> count() { return count_t<void>(); }
 }  // namespace doodle::orm
