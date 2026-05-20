@@ -66,22 +66,10 @@ struct select_t {
  public:
   explicit select_t(storage& s) : s_(&s) {}
   template <typename FromTable>
-  select_t& from() {
-    from_table_name_ = s_->get_table_name<FromTable>();
-    return *this;
-  }
+  select_t& from();
   template <typename FromTable>
   select_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
-    requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
-  {
-    join_info_t join_info{};
-    join_info.type_             = in_join_type;
-    join_info.join_table_info_  = std::make_shared<table_info_t>(typeid(FromTable));
-    join_info.self_column_info_ = std::make_shared<column_info_t>(in_ptr);
-    join_info.join_column_info_ = std::make_shared<column_info_t>(in_ref_ptr);
-    joins_.push_back(std::move(join_info));
-    return *this;
-  }
+    requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>));
   template <typename JoinTable>
   select_t& join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
     requires(
@@ -91,33 +79,13 @@ struct select_t {
         (is_alias_column_t_v<std::decay_t<decltype(in_ptr)>> ||
          is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>) &&
         is_alias_t_v<JoinTable>
-    )
-  {
-    auto l_create_column_info_ptr = [](auto&& column) -> column_info_ptr {
-      if constexpr (is_alias_column_t_v<std::decay_t<decltype(column)>>) {
-        return std::make_shared<alias_column_info_t>(std::forward<decltype(column)>(column));
-      } else {
-        return std::make_shared<column_info_t>(std::forward<decltype(column)>(column));
-      }
-    };
-
-    join_info_t join_info{};
-    join_info.type_             = in_join_type;
-    join_info.join_table_info_  = std::make_shared<alias_info_t>(std::forward<JoinTable>(join_table));
-    join_info.self_column_info_ = l_create_column_info_ptr(in_ptr);
-    join_info.join_column_info_ = l_create_column_info_ptr(in_ref_ptr);
-    joins_.push_back(std::move(join_info));
-    return *this;
-  }
+    );
 
   template <typename T>
   select_t& where(T&& condition_fun);
 
   template <typename T>
-  select_t& order_by(auto T::* in_column_fun, bool ascending = true) {
-    order_bys_.push_back(s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
-    return *this;
-  }
+  select_t& order_by(auto T::* in_column_fun, bool ascending = true);
   select_t& limit(std::size_t count) {
     limit_ = count;
     return *this;
@@ -131,17 +99,7 @@ struct select_t {
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const;
   template <typename... TableColumns>
-  select_template_t<TableColumns...>& columns_(TableColumns... in_columns);
-
-  // 约束TableColumnsTuple 必须是一个tuple, 并且tuple的元素必须是成员指针或者object<Table>
-  template <is_tuple_of_columns TableColumnsTuple>
-  select_t& columns(TableColumnsTuple&& in_columns_tuple) {
-    std::apply(
-        [this](auto&&... columns) { columns_(std::forward<decltype(columns)>(columns)...); },
-        std::forward<TableColumnsTuple>(in_columns_tuple)
-    );
-    return *this;
-  }
+  select_template_t<TableColumns...> columns(TableColumns... in_columns);
 
   // 辅助类模板, 如果传入的模板参数个数是 1 个, 则直接返回该类型, 否则返回一个 tuple 包裹的类型
   template <typename... TableColumns>
@@ -167,51 +125,25 @@ struct select_t {
     bool is_end_{true};
     mutable std::shared_ptr<value_type> cache_;
     result_type_iterator() = default;
-    explicit result_type_iterator(select_t& in_select)
-        : select_(&in_select), is_end_(false), cache_(std::make_shared<value_type>()) {
-      next();
-    }
+    explicit result_type_iterator(select_t& in_select);
 
     ~result_type_iterator() = default;
 
     // 从sqlite_stmt中提取数据并转换为type类型
     type get() const;
-    void next() {
-      if (is_end_ || !select_->stmt_) return is_end_ = true, void();
+    void next();
 
-      const auto l_rc = select_->stmt_->step_not_throw();
-      if (l_rc == SQLITE_ROW) return is_end_ = false, void();
-      if (l_rc == SQLITE_DONE) return is_end_ = true, void();
+    reference operator*() const;
 
-      is_end_ = true;
-      DOODLE_ORM_ERROR_SQLITE3(l_rc, select_->stmt_->db_);
-    }
+    pointer operator->() const;
 
-    reference operator*() const {
-      if (is_end_) throw std::out_of_range("Dereferencing end iterator");
-      *cache_ = get();
-      return *cache_;
-    }
+    iterator_type& operator++();
 
-    pointer operator->() const { return std::addressof(operator*()); }
+    iterator_type operator++(int);
 
-    iterator_type& operator++() {
-      next();
-      return *this;
-    }
+    bool operator==(const iterator_type& rhs) const;
 
-    iterator_type operator++(int) {
-      iterator_type l_old{*this};
-      ++(*this);
-      return l_old;
-    }
-
-    bool operator==(const iterator_type& rhs) const {
-      if (is_end_ && rhs.is_end_) return true;
-      return select_ == rhs.select_ && is_end_ == rhs.is_end_;
-    }
-
-    bool operator!=(const iterator_type& rhs) const { return !(*this == rhs); }
+    bool operator!=(const iterator_type& rhs) const;
   };
   template <typename... TableColumns>
   struct result_type_t {
@@ -219,34 +151,15 @@ struct select_t {
     using type          = result_type<TableColumns...>;
     using iterator_type = result_type_iterator<TableColumns...>;
 
-    auto begin() {
-      if (!select_.s_ || !select_.stmt_) return end();
-      return iterator_type{select_};
-    }
-    auto end() { return iterator_type{}; }
-    auto begin() const {
-      if (!select_.s_ || !select_.stmt_) return end();
-      return iterator_type{select_};
-    }
-    auto end() const { return iterator_type{}; }
+    iterator_type begin();
+    iterator_type end();
+    iterator_type begin() const;
+    iterator_type end() const;
 
     // to vector
-    std::vector<type> to_vector() {
-      std::vector<type> l_result{};
-      for (auto& item : *this) {
-        l_result.push_back(item);
-      }
-      return l_result;
-    }
+    std::vector<type> to_vector();
     // to single value, 如果结果集有多于1行, 则抛出异常
-    type to_single() {
-      auto l_iter = begin();
-      if (l_iter == end()) throw std::runtime_error("No rows returned");
-      type l_result = *l_iter;
-      ++l_iter;
-      if (l_iter != end()) throw std::runtime_error("More than one row returned");
-      return l_result;
-    }
+    type to_single();
   };
 };
 
@@ -260,51 +173,22 @@ struct select_template_t : public select_t {
   // 这个类的作用是为了支持在编译期就确定结果类型的select, 通过模板参数传入列信息, 从而在编译期就能推断出结果类型,
   // 避免了运行时的类型推断开销
   using select_t::select_t;
+  explicit select_template_t(select_t&& select) : select_t(std::move(select)) {}
   template <typename FormTable>
-  select_template_t& from() {
-    select_t::from<FormTable>();
-    return *this;
-  }
+  select_template_t& from();
   template <typename FromTable>
-  select_template_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner) {
-    select_t::join(in_ptr, in_ref_ptr, in_join_type);
-    return *this;
-  }
+  select_template_t& join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner);
   template <typename JoinTable>
   select_template_t& join(
       JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner
-  ) {
-    select_t::join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, in_join_type);
-    return *this;
-  }
+  );
   template <typename T>
-  select_template_t& where(T&& condition_fun) {
-    select_t::where(std::forward<T>(condition_fun));
-    return *this;
-  }
+  select_template_t& where(T&& condition_fun);
   template <typename T>
-  select_template_t& order_by(auto T::* in_column_fun, bool ascending = true) {
-    select_t::order_by(in_column_fun, ascending);
-    return *this;
-  }
-  select_template_t& limit(std::size_t count) {
-    select_t::limit(count);
-    return *this;
-  }
-  select_template_t& offset(std::size_t count) {
-    select_t::offset(count);
-    return *this;
-  }
-  template <typename... TableColumns>
-  select_template_t& columns(TableColumns... in_columns) {
-    select_t::columns_(in_columns...);
-    return *this;
-  }
-
-  auto operator()() {
-    run();
-    return result_type<Columns...>{*this};
-  }
+  select_template_t& order_by(auto T::* in_column_fun, bool ascending = true);
+  select_template_t& limit(std::size_t count);
+  select_template_t& offset(std::size_t count);
+  result_type_t<Columns...> operator()();
 };
 
 template <typename... TableColumns>

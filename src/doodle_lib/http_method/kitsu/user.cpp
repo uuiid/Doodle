@@ -24,6 +24,7 @@
 
 #include "kitsu_reg_url.h"
 #include "sqlite_orm/orm/count.h"
+#include "sqlite_orm/orm/select.h"
 #include <core/http/http_function.h>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <string>
@@ -37,11 +38,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   l_ret["departments"]    = l_sql.get_all<department>();
   {
     using namespace orm;
-    auto l_notifications = make_select_column(l_sql, count(&notification::uuid_id_));
-    l_notifications.select_.columns(l_notifications.columns_tuple_)
-        .from<notification>()
-        .where(c(&notification::person_id_) == person_.person_.uuid_id_);
-    l_ret["notification_count"] = l_notifications.select_(l_notifications.columns_tuple_).to_single();
+    auto l_notifications = select(l_sql).columns(count(&notification::uuid_id_));
+    l_notifications.from<notification>().where(c(&notification::person_id_) == person_.person_.uuid_id_);
+    l_ret["notification_count"] = l_notifications().to_single();
   }
   l_ret["persons"]                  = l_sql.get_all<person>();
   l_ret["project_status"]           = l_sql.get_all<project_status>();

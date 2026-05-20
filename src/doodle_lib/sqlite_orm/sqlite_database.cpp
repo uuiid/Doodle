@@ -38,6 +38,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include "sqlite_orm/orm/select.h"
 #include <cstddef>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -956,40 +957,34 @@ std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const chrono::local_days& in_data
 ) {
   using namespace orm;
-  auto l_select = make_select_column(*this, object<attendance_helper::database_t>());
-  l_select.select_.columns(l_select.columns_tuple_)
-      .from<attendance_helper::database_t>()
-      .where(
-          c(&attendance_helper::database_t::person_id_) == in_person_id &&
-          c(&attendance_helper::database_t::create_date_) == in_data
-      );
-  return l_select.select_(l_select.columns_tuple_).to_vector();
+  auto l_select = select(*this).columns(object<attendance_helper::database_t>());
+  l_select.from<attendance_helper::database_t>().where(
+      c(&attendance_helper::database_t::person_id_) == in_person_id &&
+      c(&attendance_helper::database_t::create_date_) == in_data
+  );
+  return l_select().to_vector();
 }
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const std::vector<chrono::local_days>& in_data
 ) {
   using namespace orm;
-  auto l_select = make_select_column(*this, object<attendance_helper::database_t>());
-  l_select.select_.columns(l_select.columns_tuple_)
-      .from<attendance_helper::database_t>()
-      .where(
-          c(&attendance_helper::database_t::person_id_) == in_person_id &&
-          c(&attendance_helper::database_t::create_date_).in(in_data)
-      );
-  return l_select.select_(l_select.columns_tuple_).to_vector();
+  auto l_select = select(*this).columns(object<attendance_helper::database_t>());
+  l_select.from<attendance_helper::database_t>().where(
+      c(&attendance_helper::database_t::person_id_) == in_person_id &&
+      c(&attendance_helper::database_t::create_date_).in(in_data)
+  );
+  return l_select().to_vector();
 }
 std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xlsx_task_info(
     const uuid& in_person_id, const chrono::local_days& in_data
 ) {
   using namespace orm;
-  auto l_select = make_select_column(*this, object<work_xlsx_task_info_helper::database_t>());
-  l_select.select_.columns(l_select.columns_tuple_)
-      .from<work_xlsx_task_info_helper::database_t>()
-      .where(
-          c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
-          c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
-      );
-  return l_select.select_(l_select.columns_tuple_).to_vector();
+  auto l_select = select(*this).columns(object<work_xlsx_task_info_helper::database_t>());
+  l_select.from<work_xlsx_task_info_helper::database_t>().where(
+      c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
+      c(&work_xlsx_task_info_helper::database_t::year_month_) == in_data
+  );
+  return l_select().to_vector();
 }
 
 std::int32_t sqlite_database::get_notification_count(const uuid& in_user_id) {
