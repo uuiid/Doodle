@@ -149,21 +149,24 @@ struct select_t {
     bool operator!=(const iterator_type& rhs) const;
   };
   template <typename... TableColumns>
-  struct result_type_t {
-    select_t& select_;
-    using type          = result_type<TableColumns...>;
-    using iterator_type = result_type_iterator<TableColumns...>;
+  struct result_type_t;
+};
 
-    iterator_type begin();
-    iterator_type end();
-    iterator_type begin() const;
-    iterator_type end() const;
+template <typename... TableColumns>
+struct select_t::result_type_t {
+  select_t select_;
+  using type          = result_type<TableColumns...>;
+  using iterator_type = result_type_iterator<TableColumns...>;
 
-    // to vector
-    std::vector<type> to_vector();
-    // to single value, 如果结果集有多于1行, 则抛出异常
-    type to_single();
-  };
+  iterator_type begin();
+  iterator_type end();
+  iterator_type begin() const;
+  iterator_type end() const;
+
+  // to vector
+  std::vector<type> to_vector();
+  // to single value, 如果结果集有多于1行, 则抛出异常
+  type to_single();
 };
 
 inline select_t select(storage& s) {
