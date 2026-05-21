@@ -167,7 +167,6 @@ class sqlite_database : public orm::storage {
       const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
   );
 
- 
   std::set<uuid> get_notification_recipients(const task& in_task);
   std::set<uuid> get_mentioned_people(const uuid& project_id, const comment& in_comment_id);
   std::vector<status_automation> get_project_status_automations(const uuid& in_project_uuid);
@@ -216,8 +215,8 @@ class sqlite_database : public orm::storage {
       const uuid& in_task_type_id, const uuid& in_asset_type_id
   );
   boost::asio::awaitable<void> remove_task_type_asset_type_link_by_asset_type(const uuid& in_asset_type_id);
-  uuid get_project_status_open() const;
-  uuid get_project_status_closed() const;
+  uuid get_project_status_open();
+  uuid get_project_status_closed();
 
   // 获取 项目中实体数量
   std::size_t get_project_entity_count(const uuid& in_project_id);
@@ -233,9 +232,9 @@ class sqlite_database : public orm::storage {
   // 更新计算机状态
   boost::asio::awaitable<void> update_computer_status(const uuid& in_computer_id, computer_status in_status);
   // 检查人员和ai工作室是否有连接
-  bool is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id) const;
+  bool is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id);
   std::optional<ai_studio_person_role_link> get_ai_studio_person_role_link(
       const uuid& in_person_id, const uuid& in_ai_studio_id
-  ) const;
+  )  ;
 };
 }  // namespace doodle

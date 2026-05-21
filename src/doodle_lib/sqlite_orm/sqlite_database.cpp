@@ -6,6 +6,7 @@
 
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/attendance.h"
+#include "doodle_core/metadata/notification.h"
 #include "doodle_core/metadata/person.h"
 #include "doodle_core/metadata/seedance2/assets_entity_item.h"
 #include "doodle_core/metadata/seedance2/group.h"
@@ -43,6 +44,7 @@
 #include "orm/fwd.h"
 #include "sqlite_orm/orm/column_operations.h"
 #include "sqlite_orm/orm/select.h"
+#include "sqlite_orm/orm/update.h"
 #include <cstddef>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -1409,157 +1411,191 @@ std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
 }
 
 std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entity_in_id, const uuid& in_asset_id) {
-  using namespace sqlite_orm;
-  auto l_list = impl_->storage_any_.get_all<entity_link>(
-      where(c(&entity_link::entity_in_id_) == in_entity_in_id && c(&entity_link::entity_out_id_) == in_asset_id)
-  );
-  if (l_list.empty()) return {};
-  return l_list.front();
+  using namespace orm;
+  return select(*this)
+      .columns(object<entity_link>())
+      .from<entity_link>()
+      .where(c(&entity_link::entity_in_id_) == in_entity_in_id && c(&entity_link::entity_out_id_) == in_asset_id)()
+      .to_optional();
 }
 
 boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
   DOODLE_TO_SQLITE_THREAD_2();
-  using namespace sqlite_orm;
-
-  auto l_g = impl_->storage_any_.transaction_guard();
-  impl_->storage_any_.update_all(
-      set(c(&notification::read_) = true),
-      where(c(&notification::person_id_) == in_user_id && c(&notification::read_) == false)
-  );
+  using namespace orm;
+  auto l_g = transaction();
+  orm::update(*this)
+      .from<notification>()
+      .set(c(&notification::read_) = true)
+      .where(c(&notification::person_id_) == in_user_id && c(&notification::read_) == false)();
   l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
 
 std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
-  using namespace sqlite_orm;
-  auto l_t =
-      impl_->storage_any_.get_all<entity_asset_extend>(where(c(&entity_asset_extend::entity_id_) == in_entity_id));
-  if (l_t.empty()) return std::nullopt;
-  return l_t.front();
+  using namespace orm;
+  return select(*this)
+      .columns(object<entity_asset_extend>())
+      .from<entity_asset_extend>()
+      .where(c(&entity_asset_extend::entity_id_) == in_entity_id)()
+      .to_optional();
 }
 
 std::optional<entity_shot_extend> sqlite_database::get_entity_shot_extend(const uuid& in_entity_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<entity_shot_extend>(where(c(&entity_shot_extend::entity_id_) == in_entity_id));
-  if (l_t.empty()) return std::nullopt;
-  return l_t.front();
+  using namespace orm;
+  return select(*this)
+      .columns(object<entity_shot_extend>())
+      .from<entity_shot_extend>()
+      .where(c(&entity_shot_extend::entity_id_) == in_entity_id)()
+      .to_optional();
 }
 
 std::vector<playlist_shot> sqlite_database::get_playlist_shot_entity(const uuid& in_playlist_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<playlist_shot>(
-      where(c(&playlist_shot::playlist_id_) == in_playlist_id), order_by(&playlist_shot::order_index_)
-  );
-  return l_t;
+  using namespace orm;
+  return select(*this)
+      .columns(object<playlist_shot>())
+      .from<playlist_shot>()
+      .where(c(&playlist_shot::playlist_id_) == in_playlist_id)
+      .order_by(&playlist_shot::order_index_)()
+      .to_vector();
 }
 boost::asio::awaitable<void> sqlite_database::remove_playlist_shot_for_playlist(const uuid& in_playlist_id) {
-  using namespace sqlite_orm;
+  using namespace orm;
   DOODLE_TO_SQLITE_THREAD_2();
-  impl_->storage_any_.remove_all<playlist_shot>(where(c(&playlist_shot::playlist_id_) == in_playlist_id));
+  auto l_g = transaction();
+  delete_from(*this).from<playlist_shot>().where(c(&playlist_shot::playlist_id_) == in_playlist_id)();
+  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
 std::optional<task_type_asset_type_link> sqlite_database::get_task_type_asset_type_link(
     const uuid& in_task_type_id, const uuid& in_asset_type_id
 ) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<task_type_asset_type_link>(where(
-      c(&task_type_asset_type_link::task_type_id_) == in_task_type_id &&
-      c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id
-  ));
-  if (l_t.empty()) return std::nullopt;
-  return l_t.front();
+  using namespace orm;
+
+  return select(*this)
+      .columns(object<task_type_asset_type_link>())
+      .from<task_type_asset_type_link>()
+      .where(c(&task_type_asset_type_link::task_type_id_) == in_task_type_id && c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)()
+      .to_optional();
 }
 boost::asio::awaitable<void> sqlite_database::remove_task_type_asset_type_link_by_asset_type(
     const uuid& in_asset_type_id
 ) {
-  using namespace sqlite_orm;
+  using namespace orm;
+
   DOODLE_TO_SQLITE_THREAD_2();
-  impl_->storage_any_.remove_all<task_type_asset_type_link>(
-      where(c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)
-  );
+  auto l_g = transaction();
+  delete_from(*this)
+      .from<task_type_asset_type_link>()
+      .where(c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)();
+  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
 
-uuid sqlite_database::get_project_status_open() const {
-  using namespace sqlite_orm;
-  auto l_list = impl_->storage_any_.get_all<project_status>(where(c(&project_status::name_) == "Open"));
-  if (l_list.empty()) throw_exception(doodle_error{"Open状态不存在"});
-  return l_list.front().uuid_id_;
+uuid sqlite_database::get_project_status_open() {
+  using namespace orm;
+  return select(*this)
+      .columns(&project_status::uuid_id_)
+      .from<project_status>()
+      .where(c(&project_status::name_) == "Open")()
+      .to_single();
 }
 
-uuid sqlite_database::get_project_status_closed() const {
-  using namespace sqlite_orm;
-  auto l_list = impl_->storage_any_.get_all<project_status>(where(c(&project_status::name_) == "Closed"));
-  if (l_list.empty()) throw_exception(doodle_error{"Closed状态不存在"});
-  return l_list.front().uuid_id_;
+uuid sqlite_database::get_project_status_closed() {
+  using namespace orm;
+  return select(*this)
+      .columns(&project_status::uuid_id_)
+      .from<project_status>()
+      .where(c(&project_status::name_) == "Closed")()
+      .to_single();
 }
 
 std::size_t sqlite_database::get_project_entity_count(const uuid& in_project_id) {
-  using namespace sqlite_orm;
-  return impl_->storage_any_.count<entity>(where(in_project_id.is_nil() || c(&entity::project_id_) == in_project_id));
+  using namespace orm;
+  auto l_select = select(*this).columns(count(&entity::id_)).from<entity>();
+  if (!in_project_id.is_nil()) l_select.where(c(&entity::project_id_) == in_project_id);
+  return l_select().to_single();
 }
 
 bool sqlite_database::is_entity_outsourced(
     const uuid& in_entity_id, const uuid& in_studio_id, const uuid& in_parent_id
 ) {
-  using namespace sqlite_orm;
+  using namespace orm;
+
+  auto l_select =
+      select(*this).columns(count(&outsource_studio_authorization::id_)).from<outsource_studio_authorization>();
+
   std::vector<uuid> l_entity_ids{};
   l_entity_ids.push_back(in_entity_id);
   if (!in_parent_id.is_nil()) l_entity_ids.push_back(in_parent_id);
-  auto l_r = impl_->storage_any_.count<outsource_studio_authorization>(where(
-      c(&outsource_studio_authorization::studio_id_) == in_studio_id &&
-      in(&outsource_studio_authorization::entity_id_, l_entity_ids)
-  ));
-  return l_r > 0;
+
+  return l_select
+             .where(c(&outsource_studio_authorization::studio_id_) == in_studio_id && c(&outsource_studio_authorization::entity_id_).in(l_entity_ids))()
+             .to_single() > 0;
 }
 
 boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid& in_sequence_id) {
   DOODLE_TO_SQLITE_THREAD_2();
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  impl_->storage_any_.remove_all<entity_link>(where(
-      in(&entity_link::id_,
-         select(
-             &entity_link::id_, join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-             join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-             where(c(sequence->*&entity::uuid_id_) == in_sequence_id)
-         ))
-  ));
+  using namespace orm;
+  auto l_g        = transaction();
+  auto l_shot     = alias<entity>("shot");
+  auto l_sequence = alias<entity>("sequence");
+  delete_from(*this)
+      .from<entity_link>()
+
+      .where(c(&entity_link::id_)
+                 .in(
+                     select(*this)
+                         .columns(&entity_link::id_)
+                         .from<entity_link>()
+                         .join(l_shot, &entity_link::entity_in_id_, l_shot->*&entity::uuid_id_)
+                         .join(l_sequence, l_shot->*&entity::parent_id_, l_sequence->*&entity::uuid_id_)
+                         .where(c(l_sequence->*&entity::uuid_id_) == in_sequence_id)
+
+                 ))();
+
+  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
 
 std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<server_task_info>(
-      where(c(&server_task_info::status_) == server_task_info_status::submitted),
-      multi_order_by(order_by(&server_task_info::priority_).desc(), order_by(&server_task_info::submit_time_))
-  );
-  return l_t;
+  using namespace orm;
+
+  return select(*this)
+      .columns(object<server_task_info>())
+      .from<server_task_info>()
+      .where(c(&server_task_info::status_) == server_task_info_status::submitted)
+      .order_by(&server_task_info::priority_, false)
+      .order_by(&server_task_info::submit_time_)()
+      .to_vector();
 }
 
 entity_asset_extend sqlite_database::get_entity_shot_extend_by_task(const uuid& in_shot_id) {
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_assets           = impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(
-          in(&entity::uuid_id_,
-                       select(
-                 &entity_link::entity_out_id_, from<entity_link>(),
-                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                 where(c(shot->*&entity::uuid_id_) == in_shot_id)
-             )) &&
-          !c(&entity::canceled_) && c(&entity::entity_type_id_) == asset_type::get_ground_id()
-      )
-  );
+  using namespace orm;
+  auto l_shot     = alias<entity>("shot");
+  auto l_sequence = alias<entity>("sequence");
+  auto l_assets   = select(*this)
+                      .columns(object<entity>(), object<entity_asset_extend>())
+                      .from<entity>()
+                      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                      .where(
+                          c(&entity::uuid_id_)
+                              .in(
+                                  select(*this)
+                                      .columns(&entity_link::entity_out_id_)
+                                      .from<entity_link>()
+
+                                      .join(l_shot, &entity_link::entity_in_id_, l_shot->*&entity::uuid_id_)
+                                      .join(l_sequence, l_shot->*&entity::parent_id_, l_sequence->*&entity::uuid_id_)
+                                      .where(c(l_shot->*&entity::uuid_id_) == in_shot_id)
+
+                              ) &&
+                          !c(&entity::canceled_) && c(&entity::entity_type_id_) == asset_type::get_ground_id()
+                      )().to_vector();
+
   DOODLE_CHICK(l_assets.size() == 1, "错误, 找个了 {} 个对应的地编资产", l_assets.size());
   auto& [shot_entity, shot_extend] = l_assets.front();
   return {shot_extend};
@@ -1568,31 +1604,32 @@ boost::asio::awaitable<void> sqlite_database::update_computer_status(
     const uuid& in_computer_id, computer_status in_status
 ) {
   DOODLE_TO_SQLITE_THREAD_2();
-  using namespace sqlite_orm;
-  impl_->storage_any_.update_all(
-      set(c(&computer::status_) = in_status), where(c(&computer::uuid_id_) == in_computer_id)
-  );
+  using namespace orm;
+  orm::update(*this)
+      .from<computer>()
+      .set(c(&computer::status_) = in_status)
+      .where(c(&computer::uuid_id_) == in_computer_id)();
   DOODLE_TO_SELF();
 }
 
-bool sqlite_database::is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id) const {
-  using namespace sqlite_orm;
-  auto l_r = impl_->storage_any_.count<ai_studio_person_role_link>(where(
-      c(&ai_studio_person_role_link::person_id_) == in_person_id &&
-      c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id
-  ));
-  return l_r > 0;
+bool sqlite_database::is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id) {
+  using namespace orm;
+
+  return select(*this)
+             .columns(count(&ai_studio_person_role_link::id_))
+             .from<ai_studio_person_role_link>()
+             .where(c(&ai_studio_person_role_link::person_id_) == in_person_id && c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id)()
+             .to_single() > 0;
 }
 std::optional<ai_studio_person_role_link> sqlite_database::get_ai_studio_person_role_link(
     const uuid& in_person_id, const uuid& in_ai_studio_id
-) const {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<ai_studio_person_role_link>(where(
-      c(&ai_studio_person_role_link::person_id_) == in_person_id &&
-      c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id
-  ));
-  if (l_t.empty()) return std::nullopt;
-  return l_t.front();
+) {
+  using namespace orm;
+  return select(*this)
+      .columns(object<ai_studio_person_role_link>())
+      .from<ai_studio_person_role_link>()
+      .where(c(&ai_studio_person_role_link::person_id_) == in_person_id && c(&ai_studio_person_role_link::ai_studio_id_) == in_ai_studio_id)()
+      .to_optional();
 }
 
 }  // namespace doodle
