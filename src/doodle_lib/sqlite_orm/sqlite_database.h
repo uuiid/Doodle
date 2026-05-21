@@ -167,9 +167,7 @@ class sqlite_database : public orm::storage {
       const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
   );
 
-  std::vector<entities_and_tasks_t> get_entities_and_tasks(
-      const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id
-  );
+ 
   std::set<uuid> get_notification_recipients(const task& in_task);
   std::set<uuid> get_mentioned_people(const uuid& project_id, const comment& in_comment_id);
   std::vector<status_automation> get_project_status_automations(const uuid& in_project_uuid);

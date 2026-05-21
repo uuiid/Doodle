@@ -196,6 +196,9 @@ struct select_t::result_type_t {
     }
     return l_result;
   }
+  // to set
+  std::set<type> to_set();
+
   // to single value, 如果结果集有多于1行, 则抛出异常
   type to_single();
   // to optional

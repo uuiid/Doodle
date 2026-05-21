@@ -176,6 +176,15 @@ select_t::result_type_t<TableColumns...>::to_vector() {
   }
   return l_result;
 }
+template <typename... TableColumns>
+std::set<typename select_t::result_type_t<TableColumns...>::type> select_t::result_type_t<TableColumns...>::to_set() {
+  std::set<type> l_result{};
+  for (auto& item : *this) {
+    l_result.insert(item);
+  }
+  return l_result;
+}
+
 // template <typename... TableColumns>
 // template <typename T>
 //   requires(result_vector_value_constructible<

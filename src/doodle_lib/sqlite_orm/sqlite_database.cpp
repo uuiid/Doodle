@@ -1047,135 +1047,62 @@ std::optional<project_task_status_link> sqlite_database::get_project_task_status
 std::optional<project_asset_type_link> sqlite_database::get_project_asset_type_link(
     const uuid& in_project_id, const uuid& in_asset_type_uuid
 ) {
-  
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<project_asset_type_link>(where(
-      c(&project_asset_type_link::project_id_) == in_project_id &&
-      c(&project_asset_type_link::asset_type_id_) == in_asset_type_uuid
-  ));
-  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+  using namespace orm;
+  return select(*this)
+      .columns(object<project_asset_type_link>())
+      .from<project_asset_type_link>()
+      .where(c(&project_asset_type_link::project_id_) == in_project_id && c(&project_asset_type_link::asset_type_id_) == in_asset_type_uuid)()
+      .to_optional();
 }
 bool sqlite_database::is_person_in_project(const person& in_person, const uuid& in_project_id) {
   return is_person_in_project(in_person.uuid_id_, in_project_id);
 }
 bool sqlite_database::is_person_in_project(const uuid& in_person, const uuid& in_project_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.count<project_person_link>(
-      where(c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person)
-  );
-  return l_t > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&project_person_link::id_))
+             .from<project_person_link>()
+             .where(c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person)()
+             .to_single() > 0;
 }
 
 bool sqlite_database::is_task_exist(const uuid& in_entity_id, const uuid& in_task_type_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.count<task>(
-      where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id)
-  );
-  return l_t > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&task::id_))
+             .from<task>()
+             .where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id)()
+             .to_single() > 0;
 }
 task_status sqlite_database::get_task_status_by_name(const std::string& in_name) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<task_status>(where(c(&task_status::name_) == in_name));
-  if (l_t.empty()) throw_exception(doodle_error{"未知的任务状态 {}", in_name});
-  return l_t.front();
+  using namespace orm;
+  return select(*this)
+      .columns(object<task_status>())
+      .from<task_status>()
+      .where(c(&task_status::name_) == in_name)()
+      .to_single();
 }
 
 std::set<uuid> sqlite_database::get_person_subscriptions(
     const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
 ) {
-  using namespace sqlite_orm;
-  std::vector<subscription> l_t{};
-  l_t = impl_->storage_any_.get_all<subscription>(
-      join<task>(on(c(&subscription::task_id_) == c(&task::uuid_id_))),
-      join<entity>(on(c(&entity::id_) == c(&task::entity_id_))),
-      where(
-          c(&subscription::person_id_) == in_person.uuid_id_ &&
-          (!in_project_id.is_nil() && c(&task::project_id_) == in_project_id) &&
-          (!in_asset_type_uuid.is_nil() && c(&entity::entity_type_id_) == in_asset_type_uuid) &&
-          (in_asset_type_uuid.is_nil() && in(&entity::entity_type_id_, get_temporal_type_ids()))
-      )
-  );
-  std::set<uuid> l_result;
-  for (auto&& i : l_t) l_result.insert(i.task_id_);
-  return l_result;
-}
+  using namespace orm;
 
-std::vector<entities_and_tasks_t> sqlite_database::get_entities_and_tasks(
-    const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id
-) {
-  std::vector<entities_and_tasks_t> l_ret{};
-  using namespace sqlite_orm;
-  auto l_subscriptions_for_user = get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
-  auto l_rows                   = impl_->storage_any_.select(
-      columns(
-          &entity::uuid_id_, &entity::name_, &entity::status_, &entity::uuid_id_, &entity::description_,
-          &entity::preview_file_id_, &entity::canceled_, &task::uuid_id_, &task::estimation_, &task::end_date_,
-          &task::due_date_, &task::done_date_, &task::duration_, &task::last_comment_date_,
-          &task::last_preview_file_id_, &task::priority_, &task::real_start_date_, &task::retake_count_,
-          &task::start_date_, &task::difficulty_, &task::task_status_id_, &task::task_type_id_,
-          &assignees_table::person_id_
-      ),
-      join<task>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
-      left_outer_join<assignees_table>(on(c(&assignees_table::task_id_) == c(&task::uuid_id_))),
-      where(
-          (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-          (in_entity_type_id.is_nil() || c(&entity::entity_type_id_) == in_entity_type_id)
-      )
-  );
-  std::map<uuid, entities_and_tasks_t> l_entities_and_tasks_map{};
-  std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [
+  dynamic_column_operations l_dynamic_column_operations{};
+  l_dynamic_column_operations.add_condition(c(&subscription::person_id_) == in_person.uuid_id_);
+  if (!in_project_id.is_nil()) l_dynamic_column_operations.add_condition(c(&task::project_id_) == in_project_id);
+  if (!in_asset_type_uuid.is_nil())
+    l_dynamic_column_operations.add_condition(c(&entity::entity_type_id_) == in_asset_type_uuid);
+  else
+    l_dynamic_column_operations.add_condition(c(&entity::entity_type_id_).in(get_temporal_type_ids()));
 
-           uuid_id_, name_, status_, episode_id_, description_, preview_file_id_, canceled_, task_id_, estimation_,
-           end_date_, due_date_, done_date_, duration_, last_comment_date_, last_preview_file_id_, priority_,
-           real_start_date_, retake_count_, start_date_, difficulty_, task_status_id_, task_type_id_, person_id_
-
-  ] : l_rows) {
-    if (!l_entities_and_tasks_map.contains(uuid_id_)) {
-      l_entities_and_tasks_map.emplace(
-          uuid_id_, entities_and_tasks_t{
-                        .uuid_id_         = uuid_id_,
-                        .name_            = name_,
-                        .status_          = status_,
-                        .episode_id_      = episode_id_,
-                        .description_     = description_,
-                        .preview_file_id_ = preview_file_id_,
-                        .canceled_        = canceled_,
-
-                    }
-      );
-    }
-    if (!task_id_.is_nil()) {
-      if (!l_task_id_set.contains(task_id_)) {
-        l_entities_and_tasks_map[episode_id_].tasks_.emplace_back(
-            entities_and_tasks_t::task_t{
-                .uuid_id_              = task_id_,
-                .estimation_           = estimation_,
-                .entity_id_            = episode_id_,
-                .end_date_             = end_date_,
-                .due_date_             = due_date_,
-                .done_date_            = done_date_,
-                .duration_             = duration_,
-                .last_comment_date_    = last_comment_date_,
-                .last_preview_file_id_ = last_preview_file_id_,
-                .priority_             = priority_,
-                .real_start_date_      = real_start_date_,
-                .retake_count_         = retake_count_,
-                .start_date_           = start_date_,
-                .difficulty_           = difficulty_,
-                .task_status_id_       = task_status_id_,
-                .task_type_id_         = task_type_id_,
-                .is_subscribed_        = l_subscriptions_for_user.contains(task_id_),
-            }
-        );
-        l_task_id_set.emplace(task_id_, l_entities_and_tasks_map[episode_id_].tasks_.size() - 1);
-      }
-      if (!person_id_.is_nil())
-        l_entities_and_tasks_map[episode_id_].tasks_[l_task_id_set.at(task_id_)].assigners_.emplace_back(person_id_);
-    }
-  }
-  l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
-  return l_ret;
+  return select(*this)
+      .columns(&subscription::task_id_)
+      .from<subscription>()
+      .join<task>(&subscription::task_id_, &task::uuid_id_)
+      .join<entity>(&task::entity_id_, &entity::uuid_id_)
+      .where(l_dynamic_column_operations)()
+      .to_set();
 }
 
 asset_type sqlite_database::get_entity_type_by_name(const std::string& in_name) {
