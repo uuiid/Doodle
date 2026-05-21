@@ -5,6 +5,7 @@
 #include <doodle_core/metadata/entity.h>
 #include <doodle_core/metadata/notification.h>
 #include <doodle_core/metadata/project.h>
+#include <doodle_core/metadata/subscription.h>
 #include <doodle_core/metadata/task.h>
 
 #include <doodle_lib/core/cache_manger.h>
@@ -12,19 +13,16 @@
 #include <doodle_lib/core/http/json_body.h>
 #include <doodle_lib/http_method/kitsu.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-#include "core/global_function.h"
-#include "sqlite_orm/orm/count.h"
-#include "sqlite_orm/orm/select.h"
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <tuple>
 #include <vector>
+
 
 namespace doodle::http {
 
