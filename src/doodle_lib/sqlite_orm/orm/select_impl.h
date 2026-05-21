@@ -64,9 +64,19 @@ select_t select_t::join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, jo
 
 template <typename T>
 select_t select_t::order_by(auto T::* in_column_fun, bool ascending) {
-  impl_->order_bys_.push_back(impl_->s_->get_column_name(in_column_fun) + (ascending ? "" : " DESC"));
+  impl_->order_bys_.push_back(
+      {std::make_shared<column_info_t>(std::forward<decltype(in_column_fun)>(in_column_fun)), ascending}
+  );
   return *this;
 }
+
+template <typename T>
+  requires is_alias_column_t_v<std::decay_t<T>>
+select_t select_t::order_by(T&& alias_column, bool ascending) {
+  impl_->order_bys_.push_back({std::make_shared<alias_column_info_t>(std::forward<T>(alias_column)), ascending});
+  return *this;
+}
+
 template <typename... TableColumns>
 select_t select_t::group_by(auto TableColumns::*... in_columns) {
   impl_->group_bys_ = {std::make_shared<column_info_t>(in_columns)...};

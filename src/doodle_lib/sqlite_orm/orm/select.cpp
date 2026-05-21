@@ -35,8 +35,17 @@ std::string select_t::to_sql(const storage& s) const {
       l_group_by_sql = fmt::format(" GROUP BY {}", fmt::join(l_group_by_column_names, ", "));
   }
 
-  std::string l_order_by_sql =
-      impl_->order_bys_.empty() ? "" : fmt::format(" ORDER BY {}", fmt::join(impl_->order_bys_, ", "));
+  std::string l_order_by_sql{};
+  {
+    std::vector<std::string> l_order_by_column_names{};
+    for (const auto& order_by : impl_->order_bys_) {
+      std::string column_name = order_by.column_info_->get_column_name(s, true);
+      if (!order_by.ascending_) column_name += " DESC";
+      l_order_by_column_names.push_back(std::move(column_name));
+    }
+    if (!l_order_by_column_names.empty())
+      l_order_by_sql = fmt::format(" ORDER BY {}", fmt::join(l_order_by_column_names, ", "));
+  }
   std::string l_limit_sql = impl_->limit_ ? fmt::format(" LIMIT {}", *impl_->limit_) : "";
   l_limit_sql += impl_->offset_ ? fmt::format(" OFFSET {}", *impl_->offset_) : "";
 

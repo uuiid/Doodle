@@ -53,6 +53,10 @@ struct select_t {
     column_info_ptr self_column_info_;
     column_info_ptr join_column_info_;
   };
+  struct order_by_info_t {
+    column_info_ptr column_info_;
+    bool ascending_{true};
+  };
 
   struct impl_t {
     // 结果类型
@@ -60,7 +64,7 @@ struct select_t {
     std::string from_table_name_;
     std::vector<join_info_t> joins_;
     std::shared_ptr<column_operations_base_t> wheres_;
-    std::vector<std::string> order_bys_;
+    std::vector<order_by_info_t> order_bys_;
     std::optional<std::size_t> limit_;
     std::optional<std::size_t> offset_;
     std::vector<column_info_ptr> group_bys_;
@@ -96,6 +100,11 @@ struct select_t {
 
   template <typename T>
   select_t order_by(auto T::* in_column_fun, bool ascending = true);
+  // 别名的 order by
+  template <typename T>
+    requires is_alias_column_t_v<std::decay_t<T>>
+  select_t order_by(T&& alias_column, bool ascending = true);
+
   select_t limit(std::size_t count) {
     impl_->limit_ = count;
     return *this;
@@ -231,6 +240,7 @@ struct select_template_t : public select_t {
   select_template_t where(T&& condition_fun);
   template <typename T>
   select_template_t order_by(auto T::* in_column_fun, bool ascending = true);
+
   select_template_t limit(std::size_t count);
   select_template_t offset(std::size_t count);
   template <typename... TableColumns>
