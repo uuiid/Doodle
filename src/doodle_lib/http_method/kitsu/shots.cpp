@@ -205,7 +205,7 @@ auto make_shots_with_tasks_result(
   auto& l_sql          = get_sqlite_database();
   auto sequence        = alias<entity>("sequence");
   auto episode         = alias<entity>("episode");
-  
+
   auto l_dynamic_query = dynamic_column_operations{};
   l_dynamic_query.add_condition(c(&entity::entity_type_id_) == l_entity_type_id_);
   if (in_person.role_ == person_role_type::outsource) {
@@ -324,12 +324,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
         http_request_error{boost::beast::http::status::bad_request, "未知的序列 id " + to_string(l_args.sequence_id_)}
     );
 
-  if (auto l_list = select(l_sql)
-                        .columns(object<entity>())
-                        .from<entity>()
-                        .where(c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ &&
-                               c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_shot_type_id)()
-                        .to_vector<entity>();
+  if (auto l_list =
+          select(l_sql)
+              .columns(object<entity>())
+              .from<entity>()
+              .where(c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ && c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_shot_type_id)()
+              .to_vector<entity>();
       !l_list.empty())
     co_return in_handle->make_msg(nlohmann::json{} = l_list.front());
 
@@ -379,6 +379,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   auto& l_sql      = get_sqlite_database();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_shots;
+  auto l_shot_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_;
+
+  using namespace doodle::orm;
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 批量创建镜头任务 task_type_id {}", person_.person_.email_,
@@ -390,25 +393,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
       if (auto l_shot = l_sql.get_by_uuid<entity>(i); l_shot.project_id_ == project_id_)
         l_shots.emplace_back(std::move(l_shot));
   } else {
-    using namespace sqlite_orm;
     uuid l_id{};
     for (auto&& [key, value, has] : in_handle->url_.params())
       if (key == "id" && has) l_id = from_uuid_str(value);
-    l_shots = l_sql.impl_->storage_any_.get_all<entity>(where(
-        c(&entity::project_id_) == project_id_ &&
-        c(&entity::entity_type_id_) ==
-            l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_ &&
-        (l_id.is_nil() || c(&entity::uuid_id_) == l_id)
-    ));
+    auto l_select = select(l_sql).columns(object<entity>()).from<entity>();
+    if (!l_id.is_nil())
+      l_select = l_select.where(
+          c(&entity::uuid_id_) == l_id && c(&entity::project_id_) == project_id_ &&
+          c(&entity::entity_type_id_) == l_shot_type_id
+      );
+    else
+      l_select =
+          l_select.where(c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_shot_type_id);
+
+    l_shots = l_select().to_vector<entity>();
   }
   std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
   std::vector<actions_projects_task_types_create_tasks_result> l_results{};
   auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
   for (auto&& l_enit : l_shots) {
-    using namespace sqlite_orm;
-    if (l_sql.impl_->storage_any_.count<task>(
-            where(c(&task::entity_id_) == l_enit.uuid_id_) && c(&task::task_type_id_) == task_type_id_
-        ))
+    if (select(l_sql)
+            .columns(count(&task::uuid_id_))
+            .from<task>()
+            .where(c(&task::entity_id_) == l_enit.uuid_id_ && c(&task::task_type_id_) == task_type_id_)()
+            .to_single() > 0)
       continue;  // 已经存在任务
     auto& l_task = l_tasks->emplace_back(
         task{
