@@ -143,7 +143,6 @@ class sqlite_database : public orm::storage {
   /// 获取用户所在的团队对应的项目
   std::vector<project> get_person_projects(const person& in_user);
 
-  std::vector<get_comments_t> get_comments(const uuid& in_task_id);
   std::optional<project_task_type_link> get_project_task_type_link(
       const uuid& in_project_id, const uuid& in_task_type_id
   );
