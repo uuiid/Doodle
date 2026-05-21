@@ -331,63 +331,61 @@ struct data_tasks_open_tasks_get_args {
   std::vector<open_tasks_get_t> get() {
     std::vector<open_tasks_get_t> l_ret{};
     auto& l_sql = get_sqlite_database();
-    using namespace sqlite_orm;
-    constexpr auto sequence = "sequence"_alias.for_<entity>();
-    constexpr auto episode  = "episode"_alias.for_<entity>();
-    for (auto &&[task, l_entity_asset_extend,project_name, project_has_avatar,
+    using namespace orm;
+    auto sequence = alias<entity>("sequence");
+    auto episode  = alias<entity>("episode");
+    for (auto&& [task, l_entity_asset_extend, project_name, project_has_avatar,
 
-      entity_uuid_id, entity_name, entity_description, entity_preview_file_id, entity_canceled,
-      entity_project_id, entity_source_id,
+                entity_uuid_id, entity_name, entity_description, entity_preview_file_id, entity_canceled,
+                entity_source_id,
 
-      sequence_name,
+                sequence_name,
 
-      episode_uuid_id, episode_name,
+                episode_uuid_id, episode_name,
 
-      asset_type_name,
+                asset_type_name,
 
-      task_type_name, task_type_for_entity, task_type_color,
+                task_type_name, task_type_for_entity, task_type_color,
 
-      task_status_name, task_status_color, task_status_short_name
-    ] : l_sql.impl_->storage_any_.select(columns(
+                task_status_name, task_status_color, task_status_short_name] :
+         select(l_sql)
+             .columns(
 
-             object<task>(true), object<entity_asset_extend>(true), &project::name_, &project::has_avatar_,
+                 object<task>(), object<entity_asset_extend>(), &project::name_, &project::has_avatar_,
 
-             &entity::uuid_id_, &entity::name_, &entity::description_, &entity::preview_file_id_, &entity::canceled_,
-             &entity::project_id_, &entity::source_id_,
+                 &entity::uuid_id_, &entity::name_, &entity::description_, &entity::preview_file_id_,
+                 &entity::canceled_, &entity::source_id_,
 
-             sequence->*&entity::name_,
+                 sequence->*&entity::name_,
 
-             episode->*&entity::uuid_id_, episode->*&entity::name_,
+                 episode->*&entity::uuid_id_, episode->*&entity::name_,
 
-             &asset_type::name_,
+                 &asset_type::name_,
 
-             &task_type::name_, &task_type::for_entity_, &task_type::color_,
+                 &task_type::name_, &task_type::for_entity_, &task_type::color_,
 
-             &task_status::name_, &task_status::color_, &task_status::short_name_
+                 &task_status::name_, &task_status::color_, &task_status::short_name_
 
-         ),
-         from<task>(),
-        join<task_type>(on(c(&task_type::uuid_id_) == c(&task::task_type_id_))),
-        join<task_status>(on(c(&task_status::uuid_id_) == c(&task::task_status_id_))),
-        join<entity>(on(c(&entity::uuid_id_) == c(&task::entity_id_))),
-        join<asset_type>(on(c(&asset_type::uuid_id_) == c(&entity::entity_type_id_))),
-        join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))),
-        join<project_status>(on(c(&project_status::uuid_id_) == c(&project::project_status_id_))),
-        left_outer_join<sequence>(on(c(sequence->*&entity::uuid_id_) == c(&entity::parent_id_))),
-        left_outer_join<episode>(on(c(episode->*&entity::uuid_id_) == c(sequence->*&entity::parent_id_))),
-        left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-        where(
-        (
-        (c(&task::start_date_) >= start_time_ && c(&task::start_date_) <= end_time_) ||
-        (c(&task::end_date_) >= start_time_ && c(&task::end_date_) <= end_time_)
-        ) &&
-          in(&task::uuid_id_,
-            select(&assignees_table::task_id_, from<assignees_table>(), where(c(&assignees_table::person_id_) == person_id_)))
-        ),
-        multi_order_by(order_by(&project::name_), order_by(episode->*&entity::name_), order_by(sequence->*&entity::name_),
-          order_by(&asset_type::name_),      order_by(&task_type::name_))
-
-         )) {
+             )
+             .from<task>()
+             .join<task_type>(&task::task_type_id_, &task_type::uuid_id_)
+             .join<task_status>(&task::task_status_id_, &task_status::uuid_id_)
+             .join<entity>(&task::entity_id_, &entity::uuid_id_)
+             .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+             .join<project>(&task::project_id_, &project::uuid_id_)
+             .join<project_status>(&project::project_status_id_, &project_status::uuid_id_)
+             .join<assignees_table>(&task::uuid_id_, &assignees_table::task_id_)
+             .left_outer_join(sequence, sequence->*&entity::uuid_id_, &entity::parent_id_)
+             .left_outer_join(episode, episode->*&entity::uuid_id_, sequence->*&entity::parent_id_)
+             .left_outer_join<entity_asset_extend>(&entity::uuid_id_, &entity_asset_extend::entity_id_)
+             .where(
+                 ((c(&task::start_date_) >= start_time_ && c(&task::start_date_) <= end_time_) ||
+                  (c(&task::end_date_) >= start_time_ && c(&task::end_date_) <= end_time_)) &&
+                 c(&assignees_table::person_id_) == person_id_
+             )
+             .order_by(&project::name_)
+             .order_by(&asset_type::name_)
+             .order_by(&task_type::name_)()) {
       l_ret.emplace_back(
           open_tasks_get_t{
               .task_                   = task,
@@ -420,10 +418,11 @@ struct data_tasks_open_tasks_get_args {
       );
     }
     for (auto l_item : l_ret) {
-      l_item.task_.assignees_ = l_sql.impl_->storage_any_.select(
-          &assignees_table::person_id_, from<assignees_table>(),
-          where(c(&assignees_table::task_id_) == l_item.task_.uuid_id_)
-      );
+      l_item.task_.assignees_ = select(l_sql)
+                                    .columns(&assignees_table::person_id_)
+                                    .from<assignees_table>()
+                                    .where(c(&assignees_table::task_id_) == l_item.task_.uuid_id_)()
+                                    .to_vector();
     }
     return l_ret;
   }
