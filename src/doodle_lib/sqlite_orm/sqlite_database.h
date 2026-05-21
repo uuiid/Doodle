@@ -274,15 +274,63 @@ class sqlite_database : public orm::storage {
   }
 
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data);
+  boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+
+    auto l_g = transaction();
+    for (auto i = 0; i < in_data.size();) {
+      auto l_end = std::min(i + g_step_size, in_data.size());
+      std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
+      using namespace orm;
+      delete_from(*this).from<T>().where(c(&T::id_).in(l_v))();
+      i = l_end;
+    }
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::vector<std::int32_t>& in_data);
+  boost::asio::awaitable<void> remove(const std::vector<std::int32_t>& in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+
+    auto l_g = transaction();
+    for (auto i = 0; i < in_data.size();) {
+      auto l_end = std::min(i + g_step_size, in_data.size());
+      std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
+      using namespace orm;
+      delete_from(*this).from<T>().where(c(&T::id_).in(l_v))();
+      i = l_end;
+    }
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::int64_t& in_data);
+  boost::asio::awaitable<void> remove(const std::int64_t& in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+    using namespace orm;
+    delete_from(*this).from<T>().where(c(&T::id_) == in_data)();
+    DOODLE_TO_SELF();
+  }
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::vector<uuid>& in_data);
+  boost::asio::awaitable<void> remove(const std::vector<uuid>& in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+    auto l_g = transaction();
+    for (auto i = 0; i < in_data.size();) {
+      auto l_end = std::min(i + g_step_size, in_data.size());
+      std::vector<uuid> l_v{in_data.begin() + i, in_data.begin() + l_end};
+      using namespace orm;
+      delete_from(*this).from<T>().where(c(&T::uuid_id_).in(l_v))();
+      i = l_end;
+    }
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
   template <typename T>
-  boost::asio::awaitable<void> remove(const uuid& in_data);
+  boost::asio::awaitable<void> remove(const uuid& in_data) {
+    DOODLE_TO_SQLITE_THREAD();
+    using namespace orm;
+    delete_from(*this).from<T>().where(c(&T::uuid_id_) == in_data)();
+    DOODLE_TO_SELF();
+  }
 
   boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
 
