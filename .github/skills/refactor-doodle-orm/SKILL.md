@@ -72,6 +72,91 @@ Produce a safe, staged migration from `sqlite_orm` usage to a first-party `doodl
    - Run relevant Boost tests and migration-specific tests.
    - Produce a migration summary: changed API, known differences, and follow-up tasks.
 
+## Database Query Conversion Examples
+
+Goal: when migrating query code, prefer examples that exercise most methods in `select_template_t` so behavior parity is easier to verify.
+
+Method coverage target in examples:
+- `from<>()`
+- `join<FromTable>(...)`
+- `join(JoinTable&&, ...)`
+- `left_outer_join<FromTable>(...)`
+- `left_outer_join(JoinTable&&, ...)`
+- `right_outer_join<FromTable>(...)`
+- `right_outer_join(JoinTable&&, ...)`
+- `where(...)`
+- `order_by(...)`
+- `group_by(...)`
+- `limit(...)`
+- `offset(...)`
+- `operator()()`
+
+### Example A: Main chain conversion (recommended baseline)
+
+```cpp
+// After migration: doodle::orm query using most core fluent methods.
+auto rows = doodle::orm::select(db)
+                .columns(&shot::id, &shot::name, &project::code)
+                .from<shot>()
+                .join<project>(&shot::project_id, &project::id)
+                .where(eq(&project::active, true) && gt(&shot::frame_count, 100))
+                .order_by(&shot::id, true)
+                .group_by(&shot::id, &project::code)
+                .limit(200)
+                .offset(0)
+                ()
+                .to_vector();
+```
+
+### Example B: Alias join + left outer join overload coverage
+
+```cpp
+auto sh = alias<shot>("sh");
+auto tk = alias<task>("tk");
+
+auto rows = doodle::orm::select(db)
+                .columns(sh->*&shot::id, tk->*&task::status)
+                .from<shot>()
+                // join(JoinTable&&, ...)
+                .join(tk, sh->*&shot::id, tk->*&task::shot_id)
+                // left_outer_join<FromTable>(...)
+                .left_outer_join<user>(&task::owner_id, &user::id)
+                // left_outer_join(JoinTable&&, ...)
+                .left_outer_join(tk, sh->*&shot::id, tk->*&task::shot_id)
+                .where(is_not_null(tk->*&task::status))
+                .order_by(&shot::id, false)
+                .limit(100)
+                .offset(50)
+                ()
+                .to_vector();
+```
+
+### Example C: Right join overload coverage + single row extraction
+
+```cpp
+auto pr = alias<project>("pr");
+
+auto one = doodle::orm::select(db)
+               .columns(&project::id, &project::code)
+               .from<project>()
+               // right_outer_join<FromTable>(...)
+               .right_outer_join<shot>(&project::id, &shot::project_id)
+               // right_outer_join(JoinTable&&, ...)
+               .right_outer_join(pr, pr->*&project::id, &shot::project_id)
+               .where(eq(&project::archived, false))
+               .order_by(&project::id, true)
+               .group_by(&project::id, &project::code)
+               .limit(1)
+               .offset(0)
+               ()
+               .to_single();
+```
+
+Validation note for these examples:
+- Keep each migrated query in the explicitly declared scope only.
+- If runtime SQL differs, compare generated SQL and bind parameters before changing business logic.
+- Preserve exception semantics: query failures must throw, not silently return status flags.
+
 ## Decision Points
 - If query semantics are hard to prove equivalent:
   - Add characterization tests first, then migrate.
