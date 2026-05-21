@@ -240,6 +240,9 @@ struct select_template_t : public select_t {
   select_template_t where(T&& condition_fun);
   template <typename T>
   select_template_t order_by(auto T::* in_column_fun, bool ascending = true);
+  template <typename T>
+    requires is_alias_column_t_v<std::decay_t<T>>
+  select_template_t order_by(T&& alias_column, bool ascending = true);
 
   select_template_t limit(std::size_t count);
   select_template_t offset(std::size_t count);

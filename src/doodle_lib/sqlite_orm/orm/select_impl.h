@@ -232,6 +232,12 @@ select_template_t<Columns...> select_template_t<Columns...>::order_by(auto T::* 
   select_t::order_by(in_column_fun, ascending);
   return *this;
 }
+template <typename... Columns>
+template <typename T>
+  requires is_alias_column_t_v<std::decay_t<T>>
+select_template_t<Columns...> select_template_t<Columns...>::order_by(T&& alias_column, bool ascending) {
+  select_t::order_by(std::forward<T>(alias_column), ascending);
+}
 
 template <typename... Columns>
 select_template_t<Columns...> select_template_t<Columns...>::limit(std::size_t count) {
