@@ -198,6 +198,8 @@ struct select_t::result_type_t {
   }
   // to single value, 如果结果集有多于1行, 则抛出异常
   type to_single();
+  // to optional
+  std::optional<type> to_optional();
 };
 
 inline select_t select(storage& s) {

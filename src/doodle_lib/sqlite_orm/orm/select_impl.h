@@ -191,6 +191,16 @@ typename select_t::result_type_t<TableColumns...>::type select_t::result_type_t<
   if (l_iter != end()) throw std::runtime_error("More than one row returned");
   return l_result;
 }
+template <typename... TableColumns>
+std::optional<typename select_t::result_type_t<TableColumns...>::type>
+select_t::result_type_t<TableColumns...>::to_optional() {
+  auto l_iter = begin();
+  if (l_iter == end()) return std::nullopt;
+  type l_result = *l_iter;
+  // ++l_iter;
+  // if (l_iter != end()) throw std::runtime_error("More than one row returned");
+  return l_result;
+}
 
 // select_template_t 模板方法实现
 
