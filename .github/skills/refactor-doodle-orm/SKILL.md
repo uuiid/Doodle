@@ -93,6 +93,24 @@ Method coverage target in examples:
 
 ### Example A: Main chain conversion (recommended baseline)
 
+Old sqlite_orm style (reference for migration diff):
+
+```cpp
+// Before migration: typical sqlite_orm style.
+auto rows = storage.select(
+   columns(&shot::id, &shot::name, &project::code),
+   from<shot>(),
+   inner_join<project>(on(c(&shot::project_id) == &project::id)),
+   where(c(&project::active) == true and c(&shot::frame_count) > 100),
+   group_by(&shot::id, &project::code),
+   order_by(&shot::id).asc(),
+   limit(200),
+   offset(0)
+);
+```
+
+Migrated doodle::orm style:
+
 ```cpp
 // After migration: doodle::orm query using most core fluent methods.
 auto rows = doodle::orm::select(db)
@@ -109,6 +127,28 @@ auto rows = doodle::orm::select(db)
 ```
 
 ### Example B: Alias join + left outer join overload coverage
+
+Old sqlite_orm style with multi-table aliases (reference for migration diff):
+
+```cpp
+// Before migration: sqlite_orm alias join style (multi-table).
+constexpr auto sh = "sh"_alias.for_<shot>();
+constexpr auto tk = "tk"_alias.for_<task>();
+constexpr auto us = "us"_alias.for_<user>();
+
+auto rows = storage.select(
+   columns(sh->*&shot::id, tk->*&task::status, us->*&user::name),
+   from<sh>(),
+   join<tk>(on(sh->*&shot::id == tk->*&task::shot_id)),
+   left_join<us>(on(tk->*&task::owner_id == us->*&user::id)),
+   where(is_not_null(tk->*&task::status)),
+   order_by(sh->*&shot::id).desc(),
+   limit(100),
+   offset(50)
+);
+```
+
+Migrated doodle::orm style:
 
 ```cpp
 auto sh = alias<shot>("sh");
