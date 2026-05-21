@@ -1247,29 +1247,31 @@ auto mix_preview_file_revisions(const std::vector<preview_files_for_entity_t>& i
 std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_preview_files_for_entity(
     const uuid& in_entity_id
 ) {
-  using namespace sqlite_orm;
+  using namespace orm;
+
   std::map<uuid, std::vector<preview_files_for_entity_t>> l_ret{};
 
-  auto l_t = impl_->storage_any_.select(
-      columns(
-          &task::uuid_id_, &task_type::uuid_id_, &preview_file::uuid_id_, &preview_file::revision_,
-          &preview_file::position_, &preview_file::original_name_, &preview_file::extension_, &preview_file::width_,
-          &preview_file::height_, &preview_file::duration_, &preview_file::status_, &preview_file::source_,
-          &preview_file::annotations_, &preview_file::created_at_
-      ),
-      // from<task>(),
-      join<preview_file>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-      where(c(&task::entity_id_) == in_entity_id),
-      multi_order_by(
-          order_by(&task_type::priority_).desc(), order_by(&task_type::name_),
-          order_by(&preview_file::revision_).desc(), order_by(&preview_file::created_at_)
-      )
-  );
-  std::map<uuid, std::vector<preview_files_for_entity_t>> l_select{};
+  auto l_select =
+      select(*this)
+          .columns(
+              &task::uuid_id_, &task_type::uuid_id_, &preview_file::uuid_id_, &preview_file::revision_,
+              &preview_file::position_, &preview_file::original_name_, &preview_file::extension_, &preview_file::width_,
+              &preview_file::height_, &preview_file::duration_, &preview_file::status_, &preview_file::source_,
+              &preview_file::annotations_, &preview_file::created_at_
+          )
+          .from<task>()
+          .join<preview_file>(&task::uuid_id_, &preview_file::task_id_)
+          .join<task_type>(&task::task_type_id_, &task_type::uuid_id_)
+          .where(c(&task::entity_id_) == in_entity_id)
+          .order_by(&task_type::priority_, false)
+          .order_by(&task_type::name_)
+          .order_by(&preview_file::revision_, false)
+          .order_by(&preview_file::created_at_);
+
+  std::map<uuid, std::vector<preview_files_for_entity_t>> l_select_t{};
   for (auto&& [task_id, task_type_id, preview_id, revision, position, original_name, extension, width, height, duration, status, source_, annotations, created_at] :
-       l_t) {
-    l_select[task_id].emplace_back(
+       l_select()) {
+    l_select_t[task_id].emplace_back(
         preview_files_for_entity_t{
             .uuid_id_       = preview_id,
             .revision_      = revision,
@@ -1289,8 +1291,8 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
     );
   }
 
-  for (auto&& keys : l_select | ranges::views::keys) {
-    auto l_preview_files = l_select[keys];
+  for (auto&& keys : l_select_t | ranges::views::keys) {
+    auto l_preview_files = l_select_t[keys];
     if (l_preview_files.empty()) continue;
     auto l_task_type_id   = l_preview_files.front().task_type_id_;
     auto l_pres           = mix_preview_file_revisions(l_preview_files);
@@ -1299,75 +1301,105 @@ std::map<uuid, std::vector<preview_files_for_entity_t>> sqlite_database::get_pre
   return l_ret;
 }
 std::optional<preview_file> sqlite_database::get_preview_file_for_comment(const uuid& in_comment_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<comment_preview_link>(
-      where(c(&comment_preview_link::comment_id_) == in_comment_id), limit(1)
-  );
-  if (l_t.empty()) return std::nullopt;
-  return impl_->get_by_uuid<preview_file>(l_t.front().preview_file_id_);
+  using namespace orm;
+  return select(*this)
+      .columns(object<preview_file>())
+      .from<preview_file>()
+      .where(c(&preview_file::uuid_id_)
+                 .in(select(*this)
+                         .columns(&comment_preview_link::preview_file_id_)
+                         .from<comment_preview_link>()
+                         .where(c(&comment_preview_link::comment_id_) == in_comment_id)
+                         .limit(1)))
+
+          ()
+      .to_optional();
 }
 
 bool sqlite_database::is_task_assigned_to_person(const uuid& in_task, const uuid& in_person) {
-  using namespace sqlite_orm;
-  auto l_r = impl_->storage_any_.count<assignees_table>(
-      where(c(&assignees_table::task_id_) == in_task && c(&assignees_table::person_id_) == in_person)
-  );
-  return l_r > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&assignees_table::id_))
+             .from<assignees_table>()
+             .where(c(&assignees_table::task_id_) == in_task && c(&assignees_table::person_id_) == in_person)()
+             .to_single() > 0;
 }
 std::int64_t sqlite_database::get_next_preview_revision(const uuid& in_task_id) {
-  using namespace sqlite_orm;
-  auto l_values = impl_->storage_any_.select(
-      &preview_file::revision_, where(c(&preview_file::task_id_) == in_task_id),
-      order_by(&preview_file::revision_).desc()
-  );
-  return l_values.empty() ? 1 : l_values.front() + 1;
+  using namespace orm;
+  return select(*this)
+             .columns(&preview_file::revision_)
+             .from<preview_file>()
+             .where(c(&preview_file::task_id_) == in_task_id)
+             .order_by(&preview_file::revision_, false)
+             .limit(1)()
+             .to_optional()
+             .value_or(0) +
+         1;
 }
 bool sqlite_database::has_preview_file(const uuid& in_comment) {
-  using namespace sqlite_orm;
-  auto l_r =
-      impl_->storage_any_.count<comment_preview_link>(where(c(&comment_preview_link::comment_id_) == in_comment));
-  return l_r > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&comment_preview_link::id_))
+             .from<comment_preview_link>()
+             .where(c(&comment_preview_link::comment_id_) == in_comment)()
+             .to_single() > 0;
 }
 std::int64_t sqlite_database::get_next_position(const uuid& in_task_id, const std::int64_t& in_revision) {
-  using namespace sqlite_orm;
+  using namespace orm;
 
-  auto l_r = impl_->storage_any_.count<preview_file>(
-      where(c(&preview_file::task_id_) == in_task_id && c(&preview_file::revision_) == in_revision)
-  );
+  auto l_r = select(*this)
+                 .columns(count(&preview_file::id_))
+                 .from<preview_file>()
+                 .where(c(&preview_file::task_id_) == in_task_id && c(&preview_file::revision_) == in_revision)()
+                 .to_single();
   return l_r + 1;
 }
 std::int64_t sqlite_database::get_preview_revision(const uuid& in_comment) {
-  using namespace sqlite_orm;
+  using namespace orm;
+  return select(*this)
+      .columns(&preview_file::revision_)
+      .from<preview_file>()
+      .where(c(&preview_file::uuid_id_)
+                 .in(select(*this)
+                         .columns(&comment_preview_link::preview_file_id_)
+                         .from<comment_preview_link>()
+                         .where(c(&comment_preview_link::comment_id_) == in_comment)
+                         .limit(1)))
 
-  auto l_r = impl_->storage_any_.get_all<comment_preview_link>(
-      where(c(&comment_preview_link::comment_id_) == in_comment), limit(1)
-  );
-  if (l_r.empty()) return 0;
-  return impl_->get_by_uuid<preview_file>(l_r.front().preview_file_id_).revision_;
+          ()
+      .to_optional()
+      .value_or(0);
 }
 
 std::optional<comment> sqlite_database::get_last_comment(const uuid& in_task_id) {
-  using namespace sqlite_orm;
-  auto l_r = impl_->storage_any_.get_all<comment>(
-      where(c(&comment::object_id_) == in_task_id), order_by(&comment::created_at_).desc(), limit(1)
-  );
-  if (l_r.empty()) return std::nullopt;
-  return l_r.front();
+  using namespace orm;
+  return select(*this)
+      .columns(object<comment>())
+      .from<comment>()
+      .where(c(&comment::object_id_) == in_task_id)
+      .order_by(&comment::created_at_, false)
+      .limit(1)()
+      .to_optional();
 }
 std::vector<task> sqlite_database::get_tasks_for_entity(const uuid& in_asset_id) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<task>(where(c(&task::entity_id_) == in_asset_id));
-  return l_t;
+  using namespace orm;
+  return select(*this).columns(object<task>()).from<task>().where(c(&task::entity_id_) == in_asset_id)().to_vector();
 }
 
 std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
-  using namespace sqlite_orm;
-  auto l_te            = get_temporal_type_ids();
-  auto l_t             = impl_->storage_any_.get_all<asset_type>(where(not_in(&asset_type::uuid_id_, l_te)));
+  using namespace orm;
+  auto l_te = get_temporal_type_ids();
+  auto l_t  = select(*this)
+                 .columns(object<asset_type>())
+                 .from<asset_type>()
+                 .where(c(&asset_type::uuid_id_).not_in(l_te))()
+                 .to_vector();
+  auto l_ass_type_link = select(*this)
+                             .columns(object<task_type_asset_type_link>())
+                             .from<task_type_asset_type_link>()
+                             .where(c(&task_type_asset_type_link::asset_type_id_).not_in(l_te))()
+                             .to_vector();
 
-  auto l_ass_type_link = impl_->storage_any_.get_all<task_type_asset_type_link>(
-      where(not_in(&task_type_asset_type_link::asset_type_id_, l_te))
-  );
   std::map<uuid, std::vector<uuid>> l_ass_type_link_map{};
   for (auto& i : l_ass_type_link) l_ass_type_link_map[i.asset_type_id_].push_back(i.task_type_id_);
   for (auto& i : l_t) {
