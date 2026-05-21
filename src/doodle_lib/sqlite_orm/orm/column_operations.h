@@ -89,6 +89,7 @@ struct column_operations : column_operations_base_t {
 
   struct to_str_subquery_t : to_str_base_t {
     std::shared_ptr<select_t> subquery_ptr_;
+    bool is_not_in_{false};  // 标记是 IN 还是 NOT IN
     explicit to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr);
     std::string to_str(column_info_ptr& in_ptr, const storage& s, bool include_table_name) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
@@ -250,6 +251,30 @@ struct column_operations : column_operations_base_t {
   }
   // operator in with subquery
   column_operations in(const select_t& subquery) const;
+
+  // operator not in with Container
+  template <typename Container>
+    requires std::ranges::range<std::decay_t<Container>> && (!std::is_same_v<std::decay_t<Container>, std::string>)
+  auto not_in(const Container& values) const {
+    auto l_size = std::ranges::distance(values);
+    if (l_size == 0) {
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} NOT IN (NULL)");
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
+      return *this;
+    }
+    std::vector<char> placeholders(l_size, '?');
+    auto l_ptr = std::make_shared<to_str_value_list_t>(fmt::format("{{}} NOT IN ({})", fmt::join(placeholders, ", ")));
+    for (const auto& value : values) l_ptr->value_variants_.push_back(bind_value_t{value});
+    data_impl_ptr_->to_str_ptr_ = l_ptr;
+    return *this;
+  }
+  // operator not in with initializer_list
+  template <typename T>
+  column_operations not_in(std::initializer_list<T> values) const {
+    return not_in<std::initializer_list<T>>(values);
+  }
+  // operator not in with subquery
+  column_operations not_in(const select_t& subquery) const;
 
   // operator and, or
   operator_compare_t operator&&(column_operations&& other) const;

@@ -85,7 +85,11 @@ std::string column_operations::to_str_subquery_t::to_str(
     column_info_ptr& in_ptr, const storage& s, bool include_table_name
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, include_table_name);
-  return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s));
+  if (is_not_in_) {
+    return fmt::format("{} NOT IN ({})", l_column_name, subquery_ptr_->to_sql(s));
+  } else {
+    return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s));
+  }
 }
 
 void column_operations::to_str_subquery_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
@@ -164,6 +168,14 @@ column_operations column_operations::in(const select_t& subquery) const {
   data_impl_ptr_->to_str_ptr_ = l_ptr;
   return *this;
 }
+
+column_operations column_operations::not_in(const select_t& subquery) const {
+  auto l_ptr                  = std::make_shared<to_str_subquery_t>(std::make_shared<select_t>(subquery));
+  l_ptr->is_not_in_           = true;  // 设置 NOT IN 标志
+  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  return *this;
+}
+
 operator_compare_t column_operations::operator&&(column_operations&& other) const {
   operator_compare_t compare{};
   auto l_self_ptr                = std::make_shared<column_operations>(std::move(*this));
