@@ -47,7 +47,17 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
   // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
-  person_ = {l_sql.get_by_uuid<person>(l_uuid)};
+  {
+    using namespace orm;
+    auto l_person =
+        select(l_sql).columns(object<person>()).from<person>().where(c(&person::uuid_id_) == l_uuid)().to_single();
+    l_person.departments_ = select(l_sql)
+                                .columns(&person_department_link::department_id_)
+                                .from<person_department_link>()
+                                .where(c(&person_department_link::person_id_) == l_person.uuid_id_)()
+                                .to_vector();
+    person_ = {l_person};
+  }
 
   if (!person_.person_.active_)
     throw_exception(

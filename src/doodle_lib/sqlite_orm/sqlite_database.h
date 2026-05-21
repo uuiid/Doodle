@@ -80,19 +80,34 @@ class sqlite_database : public orm::storage {
   boost::asio::awaitable<void> backup(FSys::path in_path);
 
   template <typename T>
-  std::vector<T> get_all();
+  std::vector<T> get_all() {
+    using namespace orm;
+    return select(*this).columns(object<T>()).template from<T>()();
+  }
 
   template <typename T>
-  std::int64_t uuid_to_id(const uuid& in_uuid);
+  std::int64_t uuid_to_id(const uuid& in_uuid) {
+    using namespace orm;
+    return select(*this).columns(&T::id_).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_single();
+  }
 
   template <typename T>
-  uuid id_to_uuid(std::int64_t in_id);
+  uuid id_to_uuid(std::int64_t in_id) {
+    using namespace orm;
+    return select(*this).columns(&T::uuid_id_).template from<T>().where(c(&T::id_) == in_id)().to_single();
+  }
 
   template <typename T>
-  T get_by_uuid(const uuid& in_uuid);
+  T get_by_uuid(const uuid& in_uuid) {
+    using namespace orm;
+    return select(*this).columns(object<T>()).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_single();
+  }
 
   template <typename T>
-  boost::asio::awaitable<void> install(const std::shared_ptr<T>& in_data);
+  boost::asio::awaitable<void> install(const std::shared_ptr<T>& in_data) {
+    using namespace orm;
+    
+  }
   template <typename T>
   boost::asio::awaitable<void> update(const std::shared_ptr<T>& in_data);
   template <typename T>

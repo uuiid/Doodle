@@ -31,7 +31,6 @@
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/metadata/working_file.h>
 
-#include "doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h"
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
@@ -52,29 +51,10 @@
 #include <sqlite_orm/sqlite_orm.h>
 
 // clang-format off
-#include <doodle_lib/sqlite_orm/sqlite_database1.cpp>
 #include <doodle_lib/sqlite_orm/sqlite_database2.cpp>
 // clang-format on
 
 namespace doodle {
-
-namespace {
-template <typename T, typename Attr_Ptr>
-auto get_struct_attribute_vector(const std::vector<T>& in, const Attr_Ptr& in_attr)
-    -> std::vector<decltype(std::declval<T>().*in_attr)> {
-  std::vector<decltype(std::declval<T>().*in_attr)> ret;
-  ret.reserve(in.size());
-  for (auto&& l_item : in) ret.emplace_back(l_item.*in_attr);
-  return ret;
-}
-template <typename T, typename Attr_Ptr>
-auto get_struct_attribute_map(std::vector<T>& in, const Attr_Ptr& in_attr)
-    -> std::map<decltype(std::declval<T>().*in_attr), T*> {
-  std::map<decltype(std::declval<T>().*in_attr), T*> l_ret{};
-  for (auto&& l_item : in) l_ret.emplace(l_item.*in_attr, &l_item);
-  return l_ret;
-}
-}  // namespace
 
 void sqlite_database::regs_all() {
   using namespace orm;
