@@ -43,6 +43,7 @@ struct DOODLE_CORE_API task {
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
   uuid shot_uuid_id_;  // 内部使用的UUID，对应镜头中的uuid_id_
+  std::int64_t completion_tokens_{};
 
   // 归档
   bool archived_;

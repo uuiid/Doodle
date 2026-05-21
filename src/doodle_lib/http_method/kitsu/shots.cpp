@@ -4,6 +4,7 @@
 
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity.h"
+#include "doodle_core/metadata/task.h"
 #include <doodle_core/metadata/person.h>
 #include <doodle_core/metadata/working_file.h>
 
@@ -183,6 +184,7 @@ struct make_shots_with_tasks_result_t {
   uuid project_id_;
   std::vector<uuid> episode_id_;
   std::vector<uuid> sequence_id_;
+  std::vector<uuid> person_id_;
   std::int32_t offset_{};
   std::int32_t limit_{300};
 
@@ -266,6 +268,7 @@ struct make_shots_with_tasks_result_t {
       if (key == "sequence_id" && has) sequence_id_.emplace_back(from_uuid_str(value));
       if (key == "offset" && has) offset_ = std::stoi(value);
       if (key == "limit" && has) limit_ = std::stoi(value);
+      if (key == "person_id" && has) person_id_.emplace_back(from_uuid_str(value));
     }
   }
   auto operator()() {
@@ -288,6 +291,7 @@ struct make_shots_with_tasks_result_t {
     if (!project_id_.is_nil()) l_dynamic_query.push_back(c(&entity::project_id_) == project_id_);
     if (!episode_id_.empty()) l_dynamic_query.push_back(in(episode->*&entity::uuid_id_, episode_id_));
     if (!sequence_id_.empty()) l_dynamic_query.push_back(in(sequence->*&entity::uuid_id_, sequence_id_));
+    if (!person_id_.empty()) l_dynamic_query.push_back(in(&assignees_table::person_id_, person_id_));
     return get_shots_with_tasks(std::move(l_dynamic_query));
   }
 };
