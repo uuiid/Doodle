@@ -7,12 +7,14 @@
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/scan_data_t.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 
 #include <boost/asio/awaitable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
+#include "sqlite_orm/orm/insert.h"
 #include <optional>
 #include <vector>
 
@@ -56,6 +58,9 @@ namespace doodle {
 struct sqlite_database_impl;
 class sqlite_database : public orm::storage {
   logger_ptr logger_;
+  using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
+  strand_type strand_{boost::asio::make_strand(g_io_context())};
+  static constexpr std::size_t g_step_size{100};
 
  public:
   std::shared_ptr<sqlite_database_impl> impl_;
@@ -86,7 +91,7 @@ class sqlite_database : public orm::storage {
   }
 
   template <typename T>
-  std::int64_t uuid_to_id(const uuid& in_uuid) {
+  std::int64_t uuid_to_id(uuid in_uuid) {
     using namespace orm;
     return select(*this).columns(&T::id_).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_single();
   }
@@ -98,22 +103,103 @@ class sqlite_database : public orm::storage {
   }
 
   template <typename T>
-  T get_by_uuid(const uuid& in_uuid) {
+  T get_by_uuid(uuid in_uuid) {
     using namespace orm;
     return select(*this).columns(object<T>()).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_single();
   }
+#define DOODLE_TO_SQLITE_THREAD()                                     \
+  DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
+  auto this_executor = co_await boost::asio::this_coro::executor;     \
+  co_await boost::asio::dispatch(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
+#define DOODLE_TO_SQLITE_THREAD_2()                                   \
+  DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
+  auto this_executor = co_await boost::asio::this_coro::executor;     \
+  co_await boost::asio::dispatch(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));
+
+  /// 测试成员字段 uuid_id_ 是否存在，以及是否是 uuid 类型
+  template <typename T, typename = void>
+  struct has_uuid_id_impl : std::false_type {};
+
+  template <typename T>
+  struct has_uuid_id_impl<T, std::enable_if_t<std::is_same_v<uuid, decltype(std::declval<T>().uuid_id_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_uuid_id = has_uuid_id_impl<T>::value;
+  /// 测试成员字段 created_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
+  template <typename T, typename = void>
+  struct has_created_at_impl : std::false_type {};
+
+  template <typename T>
+  struct has_created_at_impl<
+      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().created_at_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_created_at = has_created_at_impl<T>::value;
+  /// 测试成员字段 updated_at_ 是否存在，以及是否是 chrono::system_zoned_time 类型
+  template <typename T, typename = void>
+  struct has_updated_at_impl : std::false_type {};
+
+  template <typename T>
+  struct has_updated_at_impl<
+      T, std::enable_if_t<std::is_same_v<chrono::system_zoned_time, decltype(std::declval<T>().updated_at_)>>>
+      : std::true_type {};
+
+  template <typename T>
+  static constexpr bool has_updated_at = has_updated_at_impl<T>::value;
 
   template <typename T>
   boost::asio::awaitable<void> install(const std::shared_ptr<T>& in_data) {
     using namespace orm;
-    
+    DOODLE_CHICK(in_data, "不可传入空指针");
+    if constexpr (has_uuid_id<T>) {
+      DOODLE_CHICK(in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 不为空");
+      in_data->uuid_id_ = core_set::get_set().get_uuid();
+    }
+    DOODLE_CHICK(in_data->id_ == 0, "必须传入id为0的新实体");
+
+    if constexpr (has_created_at<T>)
+      in_data->created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    if constexpr (has_updated_at<T>)
+      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    DOODLE_TO_SQLITE_THREAD();
+    install_unsafe<T>(in_data);
+    DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> update(const std::shared_ptr<T>& in_data);
+  boost::asio::awaitable<void> update(const std::shared_ptr<T>& in_data) {
+    DOODLE_CHICK(in_data, "不可传入空指针");
+    if constexpr (has_uuid_id<T>) {
+      DOODLE_CHICK(!in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 为空");
+      in_data->id_ = uuid_to_id<T>(in_data->uuid_id_);
+    }
+    DOODLE_CHICK(in_data->id_ != 0, "不可传入空指针");
+
+    if constexpr (has_updated_at<T>)
+      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    DOODLE_TO_SQLITE_THREAD();
+    update_unsafe<T>(in_data);
+    DOODLE_TO_SELF();
+  }
   template <typename T>
-  void install_sync(const std::shared_ptr<T>& in_data);
+  void install_unsafe(std::shared_ptr<T> in_data) {
+    auto l_g = transaction();
+    using namespace orm;
+    in_data->id_ = orm::insert(*this).into<T>().values(*in_data)();
+    l_g.commit();
+  }
+
   template <typename T>
-  void update_sync(const std::shared_ptr<T>& in_data);
+  void update_unsafe(std::shared_ptr<T> in_data) {
+    auto l_g = transaction();
+    using namespace orm;
+    orm::update(*this).from<T>().set(object<T>(*in_data)).where(c(&T::id_) == in_data->id_)();
+    l_g.commit();
+  }
   /**
    *
    * @tparam T 任意优化类别
@@ -121,13 +207,71 @@ class sqlite_database : public orm::storage {
    * @return 插入的id(不包含更新的id)
    */
   template <typename T>
-  boost::asio::awaitable<void> install_range(const std::shared_ptr<std::vector<T>>& in_data);
+  boost::asio::awaitable<void> install_range(const std::shared_ptr<std::vector<T>>& in_data) {
+    DOODLE_CHICK(in_data, "不可传入空指针");
+    auto l_id_is_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ == 0; });
+    DOODLE_CHICK(l_id_is_zero, "传入的数据实体 id_ 必须全部为0");
+    if constexpr (has_uuid_id<T>)
+      for (auto& in_ : *in_data) in_.uuid_id_ = core_set::get_set().get_uuid();
+
+    if constexpr (has_created_at<T>)
+      for (auto& in_ : *in_data)
+        in_.created_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+    if constexpr (has_updated_at<T>)
+      for (auto& in_ : *in_data)
+        in_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    DOODLE_TO_SQLITE_THREAD();
+
+    auto l_g    = transaction();
+    auto l_size = in_data->size();
+    using namespace orm;
+    auto l_insert = orm::insert(*this).into<T>();
+    for (std::size_t i = 0; i < l_size;) {
+      auto l_end = std::min(i + g_step_size, l_size);
+      if (i == 0)
+        l_insert.set_range(ranges::subrange(*in_data, i, l_end))();
+      else
+        l_insert.rebind_range(ranges::subrange(*in_data, i, l_end))();
+      i = l_end;
+    }
+    l_g.commit();
+    DOODLE_TO_SELF();
+
+    if constexpr (has_uuid_id<T>) {
+      std::map<uuid, std::int64_t> l_id_map{};
+      std::vector<uuid> l_uuids = *in_data | ranges::views::transform([](const auto& in_) { return in_.uuid_id_; }) |
+                                  ranges::to<std::vector<uuid>>();
+
+      for (auto&& [key, val] :
+           select(*this).columns(&T::id_, &T::uuid_id_).template from<T>().where(c(&T::uuid_id_).in(l_uuids))()) {
+        l_id_map[val] = key;
+      }
+      for (std::size_t i = 0; i < l_size; ++i) {
+        (*in_data)[i].id_ = l_id_map[(*in_data)[i].uuid_id_];
+      }
+    }
+  }
   template <typename T>
-  boost::asio::awaitable<void> install_range(std::vector<T>* in_data);
-  template <typename T>
-  boost::asio::awaitable<void> update_range(const std::shared_ptr<std::vector<T>>& in_data);
-  template <typename T>
-  boost::asio::awaitable<void> update_range(std::vector<T>* in_data);
+  boost::asio::awaitable<void> update_range(const std::shared_ptr<std::vector<T>>& in_data) {
+    DOODLE_CHICK(in_data, "不可传入空指针");
+    auto l_id_not_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ != 0; });
+    DOODLE_CHICK(l_id_not_zero, "传入的数据实体 id_ 不可为0");
+
+    if constexpr (has_updated_at<T>)
+      for (auto& in_ : *in_data)
+        in_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
+
+    DOODLE_TO_SQLITE_THREAD();
+    auto l_g      = transaction();
+    auto l_size   = in_data->size();
+    auto l_update = orm::update(*this).from<T>();
+    for (auto&& i : *in_data) {
+      l_update.set(object<T>(i));
+    }
+    l_g.commit();
+    DOODLE_TO_SELF();
+  }
 
   template <typename T>
   boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data);

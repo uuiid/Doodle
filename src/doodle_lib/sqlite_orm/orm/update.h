@@ -59,36 +59,34 @@ struct update_t {
   }
 
   template <typename... TableColumns>
+    requires((std::is_base_of_v<column_operations, std::decay_t<TableColumns>> && ...))
   update_t& set(TableColumns&&... in_columns) {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
-      if constexpr (std::is_base_of_v<column_operations, column_or_struct_type>) {
-        auto col_ptr =
-            std::make_shared<std::decay_t<decltype(in_column)>>(std::forward<decltype(in_column)>(in_column));
-        column_operations_.push_back(col_ptr);
-      } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
-        using Table         = column_or_struct_type;
-        auto l_table_cloums = s_->template get_table_columns<Table>();
-        column_info l_primary_key_{};
-        for (const auto& l_column : l_table_cloums) {
-          if (l_column.primary_key_) {  // 主键不更新
-            l_primary_key_ = l_column;
-            continue;
-          }
-          auto col_ptr = std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_)>(l_column.ptr_));
-          *col_ptr     = l_column.ptr_.get_value(in_column.obj_);
-
-          column_operations_.push_back(col_ptr);
-        }
-        from<Table>();
-        where(column_operations{l_primary_key_.ptr_} == in_column.obj_.*(l_primary_key_.ptr_));
-      } else {
-        static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
-      }
+      auto col_ptr = std::make_shared<std::decay_t<decltype(in_column)>>(std::forward<decltype(in_column)>(in_column));
+      column_operations_.push_back(col_ptr);
     };
-
     (l_iter_fun(in_columns), ...);
     return *this;
+  }
+  template <typename T>
+    requires is_object_specialization_v<std::decay_t<T>>
+  update_t& set(T&& in_object) {
+    using Table         = class_type_t<std::decay_t<T>>;
+    auto l_table_cloums = s_->template get_table_columns<Table>();
+    column_info l_primary_key_{};
+    for (const auto& l_column : l_table_cloums) {
+      if (l_column.primary_key_) {  // 主键不更新
+        l_primary_key_ = l_column;
+        continue;
+      }
+      auto col_ptr = std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_)>(l_column.ptr_));
+      *col_ptr     = l_column.ptr_.get_value(in_object.obj_);
+
+      column_operations_.push_back(col_ptr);
+    }
+    from<Table>();
+    where(column_operations{l_primary_key_.ptr_} == in_object.obj_.*(l_primary_key_.ptr_));
   }
 
   std::string to_sql(bool in_include_table_name) const;
