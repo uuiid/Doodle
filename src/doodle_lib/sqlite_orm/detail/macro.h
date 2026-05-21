@@ -79,11 +79,7 @@ std::vector<T> string_to_enum_array(const std::string& t) {
     }                                                                                                              \
   };
 
-#define DOODLE_GET_BY_PARENT_ID_SQL(class_name)                                                \
-  template <>                                                                                  \
-  std::vector<class_name> sqlite_database::get_by_parent_id<class_name>(const uuid& in_uuid) { \
-    return impl_->get_by_parent_id<class_name>(in_uuid);                                       \
-  }
+
 
 #define DOODLE_UUID_TO_ID(class_name)                                         \
   template <>                                                                 \

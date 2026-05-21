@@ -1451,11 +1451,7 @@ struct sqlite_database_impl {
     DOODLE_TO_SELF();
   }
 
-  template <typename T>
-  std::vector<T> get_by_parent_id(const uuid& in_id) {
-    using namespace sqlite_orm;
-    return storage_any_.get_all<T>(sqlite_orm::where(sqlite_orm::c(&T::uuid_parent_) == in_id));
-  }
+
 };
 
 }  // namespace doodle

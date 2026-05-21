@@ -125,8 +125,6 @@ class sqlite_database : public orm::storage {
   template <typename T>
   boost::asio::awaitable<void> remove(const uuid& in_data);
 
-  template <typename T>
-  std::vector<T> get_by_parent_id(const uuid& in_id);
   boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
 
   std::vector<attendance_helper::database_t> get_attendance(
@@ -235,6 +233,6 @@ class sqlite_database : public orm::storage {
   bool is_person_ai_studio_connected(const uuid& in_person_id, const uuid& in_ai_studio_id);
   std::optional<ai_studio_person_role_link> get_ai_studio_person_role_link(
       const uuid& in_person_id, const uuid& in_ai_studio_id
-  )  ;
+  );
 };
 }  // namespace doodle

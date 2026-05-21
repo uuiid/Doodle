@@ -35,8 +35,6 @@
 
 
 namespace doodle {
-DOODLE_GET_BY_PARENT_ID_SQL(assets_helper::database_t);
-
 DOODLE_UUID_TO_ID(assets_file_helper::database_t)
 DOODLE_UUID_TO_ID(assets_helper::database_t)
 DOODLE_UUID_TO_ID(person)
