@@ -310,23 +310,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       person_.person_.email_, person_.person_.get_full_name(), project_id_, l_args.name_, l_args.sequence_id_
   );
 
-  using namespace sqlite_orm;
+  using namespace doodle::orm;
+  auto l_sequence_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_;
+  auto l_shot_type_id     = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_;
+
   if (!l_args.sequence_id_.is_nil() &&
-      l_sql.impl_->storage_any_.count<entity>(where(
-          c(&entity::uuid_id_) == l_args.sequence_id_ &&
-          c(&entity::entity_type_id_) ==
-              l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
-      )) == 0)
+      select(l_sql)
+              .columns(count(&entity::uuid_id_))
+              .from<entity>()
+              .where(c(&entity::uuid_id_) == l_args.sequence_id_ && c(&entity::entity_type_id_) == l_sequence_type_id)()
+              .to_single() == 0)
     throw_exception(
         http_request_error{boost::beast::http::status::bad_request, "未知的序列 id " + to_string(l_args.sequence_id_)}
     );
 
-  if (auto l_list = l_sql.impl_->storage_any_.get_all<entity>(where(
-          c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ &&
-          c(&entity::parent_id_) == project_id_ &&
-          c(&entity::entity_type_id_) ==
-              l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_
-      ));
+  if (auto l_list = select(l_sql)
+                        .columns(object<entity>())
+                        .from<entity>()
+                        .where(c(&entity::name_) == l_args.name_ && c(&entity::parent_id_) == l_args.sequence_id_ &&
+                               c(&entity::project_id_) == project_id_ && c(&entity::entity_type_id_) == l_shot_type_id)()
+                        .to_vector<entity>();
       !l_list.empty())
     co_return in_handle->make_msg(nlohmann::json{} = l_list.front());
 
@@ -335,7 +338,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots
       .description_    = l_args.description_,
       .nb_frames_      = l_args.nb_frames_,
       .project_id_     = project_id_,
-      .entity_type_id_ = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot}).uuid_id_,
+      .entity_type_id_ = l_shot_type_id,
       .parent_id_      = l_args.sequence_id_,
       .created_by_     = person_.person_.uuid_id_
   });
