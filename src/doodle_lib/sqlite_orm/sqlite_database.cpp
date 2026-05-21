@@ -1106,77 +1106,79 @@ std::set<uuid> sqlite_database::get_person_subscriptions(
 }
 
 asset_type sqlite_database::get_entity_type_by_name(const std::string& in_name) {
-  using namespace sqlite_orm;
-  auto l_e = impl_->storage_any_.get_all<asset_type>(where(c(&asset_type::name_) == in_name));
-  if (l_e.empty()) throw_exception(doodle_error{"未知的实体类型 {}", in_name});
-  return l_e.front();
+  using namespace orm;
+  return select(*this)
+      .columns(object<asset_type>())
+      .from<asset_type>()
+      .where(c(&asset_type::name_) == in_name)()
+      .to_single();
 }
 
 std::vector<person> sqlite_database::get_project_persons(const uuid& in_project_uuid) {
-  using namespace sqlite_orm;
-  return impl_->storage_any_.get_all<person>(
-      join<project_person_link>(on(c(&project_person_link::person_id_) == c(&person::uuid_id_))),
-      where(c(&project_person_link::project_id_) == in_project_uuid)
-  );
+  using namespace orm;
+  return select(*this)
+      .columns(object<person>())
+      .from<person>()
+      .join<project_person_link>(&person::uuid_id_, &project_person_link::person_id_)
+      .where(c(&project_person_link::project_id_) == in_project_uuid)()
+      .to_vector();
 }
 
 std::set<uuid> sqlite_database::get_notification_recipients(const task& in_task) {
-  using namespace sqlite_orm;
-
-  auto l_uuid_task =
-      impl_->storage_any_.select(&subscription::uuid_id_, where(c(&subscription::task_id_) == in_task.uuid_id_));
-  if (impl_->uuid_to_id<entity>(in_task.uuid_id_))
-    if (auto l_entt = impl_->get_by_uuid<entity>(in_task.entity_id_); !l_entt.project_id_.is_nil())
-      l_uuid_task |= ranges::actions::push_back(impl_->storage_any_.select(
-          &subscription::uuid_id_, where(
-                                       c(&subscription::task_type_id_) == in_task.task_type_id_ &&
-                                       c(&subscription::entity_id_) == l_entt.project_id_
-                                   )
-      ));
-  l_uuid_task |= ranges::actions::push_back(
-      impl_->storage_any_.select(&assignees_table::person_id_, where(c(&assignees_table::task_id_) == in_task.uuid_id_))
-  );
-
-  return l_uuid_task | ranges::to<std::set<uuid>>();
+  using namespace orm;
+  auto l_recipients = select(*this)
+                          .columns(&subscription::person_id_)
+                          .from<subscription>()
+                          .where(c(&subscription::task_id_) == in_task.uuid_id_)()
+                          .to_set();
+  if (uuid_to_id<entity>(in_task.uuid_id_))
+    if (auto l_entt = get_by_uuid<entity>(in_task.entity_id_); !l_entt.project_id_.is_nil()) {
+      auto l_project_recipients =
+          select(*this)
+              .columns(&subscription::person_id_)
+              .from<subscription>()
+              .join<task>(&subscription::task_id_, &task::uuid_id_)
+              .where(c(&subscription::task_type_id_) == in_task.task_type_id_ && c(&subscription::entity_id_) == l_entt.project_id_)();
+      l_recipients.insert(l_project_recipients.begin(), l_project_recipients.end());
+    }
+  return l_recipients;
 }
 std::set<uuid> sqlite_database::get_mentioned_people(const uuid& in_project_id, const comment& in_comment_id) {
-  using namespace sqlite_orm;
-
-  auto l_mentions = in_comment_id.mentions_;
-  for (auto&& i : in_comment_id.department_mentions_)
-    l_mentions |= ranges::actions::push_back(impl_->storage_any_.select(
-        &person::uuid_id_,
-        join<person_department_link>(on(c(&person_department_link::person_id_) == c(&person::uuid_id_))),
-        join<project_person_link>(on(c(&project_person_link::person_id_) == c(&person::uuid_id_))),
-        where(c(&project_person_link::project_id_) == in_project_id && c(&person_department_link::department_id_) == i)
-
-    ));
-  return l_mentions | ranges::to<std::set<uuid>>();
+  using namespace orm;
+  return select(*this)
+      .columns(&person::uuid_id_)
+      .from<person>()
+      .join<project_person_link>(&person::uuid_id_, &project_person_link::person_id_)
+      .join<person_department_link>(&person::uuid_id_, &person_department_link::person_id_)
+      .where(c(&project_person_link::project_id_) == in_project_id && c(&person_department_link::department_id_).in(in_comment_id.mentions_))()
+      .to_set();
 }
 
 std::vector<status_automation> sqlite_database::get_project_status_automations(const uuid& in_project_uuid) {
-  using namespace sqlite_orm;
-  return impl_->storage_any_.get_all<status_automation>(
-      join<project_status_automation_link>(
-          on(c(&project_status_automation_link::status_automation_id_) == c(&status_automation::uuid_id_))
-      ),
-      where(c(&project_status_automation_link::project_id_) == in_project_uuid)
-  );
+  using namespace orm;
+  return select(*this)
+      .columns(object<status_automation>())
+      .from<status_automation>()
+      .join<project_status_automation_link>(
+          &project_status_automation_link::status_automation_id_, &status_automation::uuid_id_
+      )
+      .where(c(&project_status_automation_link::project_id_) == in_project_uuid)()
+      .to_vector();
 }
 
 std::map<uuid, std::int32_t> sqlite_database::get_task_type_priority_map(
     const uuid& in_project, const std::string& in_for_entity
 ) {
-  using namespace sqlite_orm;
-
-  auto l_t = impl_->storage_any_.select(
-      columns(&project_task_type_link::uuid_id_, &project_task_type_link::priority_),
-      join<task_type>(on(c(&project_task_type_link::task_type_id_) == c(&task_type::uuid_id_))),
-      where(c(&project_task_type_link::project_id_) == in_project && c(&task_type::for_entity_) == in_for_entity)
-  );
+  using namespace orm;
+  auto l_t =
+      select(*this)
+          .columns(&project_task_type_link::task_type_id_, &project_task_type_link::priority_)
+          .from<project_task_type_link>()
+          .join<task_type>(&project_task_type_link::task_type_id_, &task_type::uuid_id_)
+          .where(c(&project_task_type_link::project_id_) == in_project && c(&task_type::for_entity_) == in_for_entity);
 
   std::map<uuid, std::int32_t> l_ret{};
-  for (auto&& [key, value] : l_t) {
+  for (auto&& [key, value] : l_t()) {
     l_ret[key] = value.value_or(0);
   }
   return l_ret;
@@ -1185,45 +1187,48 @@ std::map<uuid, std::int32_t> sqlite_database::get_task_type_priority_map(
 std::optional<task> sqlite_database::get_tasks_for_entity_and_task_type(
     const uuid& in_entity_id, const uuid& in_task_type_id
 ) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<task>(
-      where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id)
-  );
-  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+  using namespace orm;
+  return select(*this)
+      .columns(object<task>())
+      .from<task>()
+      .where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id)()
+      .to_optional();
 }
 
 bool sqlite_database::has_assets_tree_assets_link(const uuid& in_uuid) {
-  using namespace sqlite_orm;
-
-  return impl_->storage_any_.count<assets_file_helper::link_parent_t>(
-             where(c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_uuid)
-         ) > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&assets_file_helper::link_parent_t::id_))
+             .from<assets_file_helper::link_parent_t>()
+             .where(c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_uuid)()
+             .to_single() > 0;
 }
 bool sqlite_database::has_assets_tree_assets_link(const uuid& in_label_uuid, const uuid& in_asset_uuid) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.count<assets_file_helper::link_parent_t>(where(
-      c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_label_uuid &&
-      c(&assets_file_helper::link_parent_t::assets_uuid_) == in_asset_uuid
-  ));
-  return l_t > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&assets_file_helper::link_parent_t::id_))
+             .from<assets_file_helper::link_parent_t>()
+             .where(c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_label_uuid && c(&assets_file_helper::link_parent_t::assets_uuid_) == in_asset_uuid)()
+             .to_single() > 0;
 }
 assets_file_helper::link_parent_t sqlite_database::get_assets_tree_assets_link(
     const uuid& in_label_uuid, const uuid& in_asset_uuid
 ) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<assets_file_helper::link_parent_t>(where(
-      c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_label_uuid &&
-      c(&assets_file_helper::link_parent_t::assets_uuid_) == in_asset_uuid
-  ));
-  if (l_t.empty()) throw_exception(doodle_error{"未知的标签资产链接 {} {}", in_label_uuid, in_asset_uuid});
-  return l_t.front();
+  using namespace orm;
+
+  return select(*this)
+      .columns(object<assets_file_helper::link_parent_t>())
+      .from<assets_file_helper::link_parent_t>()
+      .where(c(&assets_file_helper::link_parent_t::assets_type_uuid_) == in_label_uuid && c(&assets_file_helper::link_parent_t::assets_uuid_) == in_asset_uuid)()
+      .to_single();
 }
 bool sqlite_database::has_assets_tree_child(const uuid& in_label_uuid) {
-  using namespace sqlite_orm;
-  auto l_r = impl_->storage_any_.count<assets_helper::database_t>(
-      where(c(&assets_helper::database_t::uuid_parent_) == in_label_uuid)
-  );
-  return l_r > 0;
+  using namespace orm;
+  return select(*this)
+             .columns(count(&assets_helper::database_t::uuid_parent_))
+             .from<assets_helper::database_t>()
+             .where(c(&assets_helper::database_t::uuid_parent_) == in_label_uuid)()
+             .to_single() > 0;
 }
 auto mix_preview_file_revisions(const std::vector<preview_files_for_entity_t>& in_t) {
   std::map<std::int32_t, preview_files_for_entity_t> l_map{};
