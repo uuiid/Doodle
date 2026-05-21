@@ -283,7 +283,7 @@ select_t::result_type_iterator<TableColumns...>::get() const {
 
 template <typename T>
 select_t select_t::where(T&& condition_fun) {
-  auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
+  auto l_condition_fun_ptr = std::make_shared<std::decay_t<T>>(std::forward<T>(condition_fun));
   impl_->wheres_           = l_condition_fun_ptr;
   return *this;
 }
