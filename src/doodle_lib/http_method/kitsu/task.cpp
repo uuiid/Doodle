@@ -17,6 +17,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include "core/global_function.h"
+#include "sqlite_orm/orm/count.h"
 #include "sqlite_orm/orm/select.h"
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -146,9 +147,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
   l_tasks->reserve(l_task_ids.size());
   l_assignees_table->reserve(l_task_ids.size());
   l_notifications->reserve(l_task_ids.size());
-  using namespace sqlite_orm;
-  auto l_tasks_get = l_sql.impl_->storage_any_.get_all<task>(where(in(&task::uuid_id_, l_task_ids)));
-  for (auto&& l_task : l_tasks_get) {
+  using namespace orm;
+
+  for (auto&& l_task : select(l_sql).columns(object<task>()).from<task>().where(c(&task::uuid_id_).in(l_task_ids))()) {
     person_.check_task_department_access(l_task, person_.person_);
     // 这里需要检查一下, 是否已经将任务分配给了这个人
     if (l_sql.is_task_assigned_to_person(l_task.uuid_id_, l_person_data.uuid_id_)) continue;
@@ -454,15 +455,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
   auto l_task_status = l_sql.get_by_uuid<task_status>(l_task.task_status_id_);
   auto l_entity      = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_asset_type  = l_sql.get_by_uuid<asset_type>(l_entity.entity_type_id_);
-  using namespace sqlite_orm;
+  using namespace doodle::orm;
+  // 判断是否订阅
   auto l_is_subscribed =
-      l_sql.impl_->storage_any_.count(
-          &subscription::uuid_id_, from<subscription>(),
-          where(c(&subscription::task_id_) == id_ && c(&subscription::person_id_) == person_.person_.uuid_id_)
-      ) > 0;
-  auto l_assignees = l_sql.impl_->storage_any_.select(
-      object<person>(true), from<person>(), where(in(&person::uuid_id_, l_task.assignees_))
-  );
+      doodle::orm::select(l_sql)
+          .columns(count(&subscription::uuid_id_))
+          .from<subscription>()
+          .where(c(&subscription::task_id_) == id_ && c(&subscription::person_id_) == person_.person_.uuid_id_)()
+          .to_single() > 0;
+
+  // 查询 assignees
+  auto l_assignees = doodle::orm::select(l_sql)
+                         .columns(object<person>())
+                         .from<person>()
+                         .where(c(&person::uuid_id_).in(l_task.assignees_))()
+                         .to_vector<person>();
   nlohmann::json l_ret{};
   l_ret = l_task;
   l_ret.update(
