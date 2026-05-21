@@ -5,7 +5,9 @@
 #include "doodle_core/doodle_core_fwd.h"
 #include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/task.h"
+#include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/person.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/working_file.h>
 
 #include <doodle_lib/core/global_function.h>
@@ -14,7 +16,6 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/kitsu/kitsu_result.h>
-#include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
 #include <doodle_lib/sqlite_orm/orm/alias.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -27,6 +28,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
+
 
 namespace doodle::http {
 namespace {
@@ -497,16 +499,6 @@ struct actions_projects_shots_import_frame_range_args {
     j.at("shots").get_to(p.shots_);
   }
 };
-namespace {
-struct name_all_t : sqlite_orm::alias_tag {
-  static const std::string& get() {
-    static const std::string res = "name_all";
-    return res;
-  }
-};
-
-}  // namespace
-
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, post) {
   auto l_args = in_handle->get_json().get<actions_projects_shots_import_frame_range_args>();
   auto& l_sql = get_sqlite_database();
@@ -516,7 +508,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
       person_.person_.get_full_name(), project_id_
   );
   auto l_project = l_sql.get_by_uuid<project>(project_id_);
-  using namespace sqlite_orm;
+  using namespace doodle::orm;
   std::vector<std::string> l_shot_names;
   for (auto&& l_shot : l_args.shots_)
     if (!l_shot.name_.empty() && l_shot.name_.starts_with(l_project.code_))
@@ -533,16 +525,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_import_frame_range, po
   for (auto&& l_shot : l_args.shots_)
     l_shot_name_to_frame_range.emplace(l_shot.name_.substr(l_project.code_.size() + 1), &l_shot);
 
-  auto sequence                            = "sequence"_alias.for_<entity>();
-  constexpr orm_column_alias auto name_all = name_all_t{};
-  auto l_list                              = l_sql.impl_->storage_any_.select(
-      columns(conc(sequence->*&entity::name_, conc("_", &entity::name_)) >>= name_all, &entity::uuid_id_),
-      from<entity>(), join<sequence>(on(c(&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      where(c(&entity::project_id_) == project_id_ && in(sqlite_orm::get<name_all>(), l_shot_names))
-  );
+  auto sequence = alias<entity>("sequence");
+  auto l_list   = select(l_sql)
+                    .columns(sequence->*&entity::name_, &entity::name_, &entity::uuid_id_)
+                    .from<entity>()
+                    .join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
+                    .where(c(&entity::project_id_) == project_id_);
+
   auto l_shot_ext_instasll = std::make_shared<std::vector<entity_shot_extend>>();
   auto l_shot_ext_update   = std::make_shared<std::vector<entity_shot_extend>>();
-  for (auto&& [l_shot_name, l_shot_id] : l_list) {
+  for (auto&& [l_sequence_name, l_entity_name, l_shot_id] : l_list()) {
+    std::string l_shot_name = l_sequence_name + "_" + l_entity_name;
     if (l_shot_name_to_frame_range.contains(l_shot_name)) {
       auto&& l_frame_range = l_shot_name_to_frame_range[l_shot_name];
       auto l_shot_extend   = l_sql.get_entity_shot_extend(l_shot_id);
