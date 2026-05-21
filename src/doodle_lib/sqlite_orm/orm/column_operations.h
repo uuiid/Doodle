@@ -255,6 +255,21 @@ struct column_operations : column_operations_base_t {
   operator_compare_t operator&&(column_operations&& other) const;
   operator_compare_t operator||(column_operations&& other) const;
 };
+
+// 动态查询
+struct dynamic_column_operations : column_operations_base_t {
+  std::vector<std::shared_ptr<column_operations_base_t>> operations_;
+  dynamic_column_operations();
+  std::string to_sql(const storage& s, bool include_table_name) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+  std::string get_column_name(const storage& s) const override;
+
+  template <typename T>
+  void add_condition(T&& condition) {
+    operations_.push_back(std::make_shared<std::decay_t<T>>(std::forward<T>(condition)));
+  }
+};
+
 template <typename T>
 auto c(auto T::* in_ptr) {
   return column_operations{in_ptr};

@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include <fmt/format.h>
+#include <vector>
 
 namespace doodle::orm {
 
@@ -180,6 +181,29 @@ operator_compare_t column_operations::operator||(column_operations&& other) cons
   compare.data_impl_ptr_->left_  = l_self_ptr;
   compare.data_impl_ptr_->right_ = l_other_ptr;
   return compare;
+}
+
+dynamic_column_operations::dynamic_column_operations() = default;
+std::string dynamic_column_operations::to_sql(const storage& s, bool include_table_name) const {
+  std::vector<std::string> l_sql_parts{};
+  for (const auto& operation : operations_) {
+    l_sql_parts.push_back(fmt::format("({})", operation->to_sql(s, include_table_name)));
+  }
+
+  return l_sql_parts.empty()
+             ? "TRUE"
+             : fmt::format("({})", fmt::join(l_sql_parts, " AND "));  // 如果没有条件，返回一个永远为真的条件
+}
+void dynamic_column_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  for (const auto& operation : operations_) {
+    operation->collect_bind_variants(bind_variants);
+  }
+}
+std::string dynamic_column_operations::get_column_name(const storage& /*s*/) const {
+  // 直接抛出异常，因为 dynamic_column_operations 不代表一个具体的列，无法生成列名
+  throw std::runtime_error(
+      "dynamic_column_operations does not represent a specific column and cannot generate a column name"
+  );
 }
 
 }  // namespace doodle::orm
