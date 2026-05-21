@@ -1024,28 +1024,30 @@ std::vector<project> sqlite_database::get_person_projects(const person& in_user)
 std::optional<project_task_type_link> sqlite_database::get_project_task_type_link(
     const uuid& in_project_id, const uuid& in_task_type_id
 ) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<project_task_type_link>(where(
-      c(&project_task_type_link::project_id_) == in_project_id &&
-      c(&project_task_type_link::task_type_id_) == in_task_type_id
-  ));
-  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+  // Migrated from sqlite_orm to doodle::orm
+  using namespace orm;
+  return select(*this)
+      .columns(object<project_task_type_link>())
+      .from<project_task_type_link>()
+      .where(c(&project_task_type_link::project_id_) == in_project_id && c(&project_task_type_link::task_type_id_) == in_task_type_id)()
+      .to_optional();
 }
 
 std::optional<project_task_status_link> sqlite_database::get_project_task_status_link(
     const uuid& in_project_id, const uuid& in_task_status_uuid
 ) {
-  using namespace sqlite_orm;
-  auto l_t = impl_->storage_any_.get_all<project_task_status_link>(where(
-      c(&project_task_status_link::project_id_) == in_project_id &&
-      c(&project_task_status_link::task_status_id_) == in_task_status_uuid
-  ));
-  return l_t.empty() ? std::nullopt : std::make_optional(l_t.front());
+  using namespace orm;
+  return select(*this)
+      .columns(object<project_task_status_link>())
+      .from<project_task_status_link>()
+      .where(c(&project_task_status_link::project_id_) == in_project_id && c(&project_task_status_link::task_status_id_) == in_task_status_uuid)()
+      .to_optional();
 }
 
 std::optional<project_asset_type_link> sqlite_database::get_project_asset_type_link(
     const uuid& in_project_id, const uuid& in_asset_type_uuid
 ) {
+  
   using namespace sqlite_orm;
   auto l_t = impl_->storage_any_.get_all<project_asset_type_link>(where(
       c(&project_asset_type_link::project_id_) == in_project_id &&
