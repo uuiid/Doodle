@@ -49,6 +49,19 @@ std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_an
   }
   return l_result;
 }
+
+std::vector<sd2::assets_entity> search_sd2_assets_entity_for_ai_studio(
+    const uuid& in_ai_studio_id, const std::string& keyword
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<sd2::assets_entity>())
+      .from<sd2::assets_entity>()
+      .where(c(&sd2::assets_entity::name_).like(keyword) && c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id)()
+      .to_vector();
+}
+
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
@@ -106,7 +119,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_search, get) {
 
   l_key = fmt::format("%{}%", l_key);
   co_return in_handle->make_msg(
-      nlohmann::json{} = sqlite_select::search_sd2_assets_entity_for_ai_studio(person_.get_ai_studio_id(), l_key)
+      nlohmann::json{} = search_sd2_assets_entity_for_ai_studio(person_.get_ai_studio_id(), l_key)
   );
 }
 

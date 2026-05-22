@@ -30,6 +30,66 @@
 
 namespace doodle::http {
 
+namespace {
+bool entity_has_simulation_asset(const uuid& in_entity_id) {
+  using namespace orm;
+  auto& l_sql = get_sqlite_database();
+  return select(l_sql)
+             .columns(count(&task::id_))
+             .from<task>()
+             .where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_simulation_id())()
+             .to_single() > 0;
+}
+
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity_sql(
+    const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+
+  auto shot        = alias<entity>("shot");
+  auto sequence    = alias<entity>("sequence");
+  auto l_sub_where = dynamic_column_operations{};
+  if (!in_shot_id.is_nil()) l_sub_where.add_condition(c(shot->*&entity::uuid_id_) == in_shot_id);
+  if (!in_sequence_id.is_nil()) l_sub_where.add_condition(c(sequence->*&entity::uuid_id_) == in_sequence_id);
+
+  return select(l_sql)
+      .columns(object<entity>(), object<entity_asset_extend>())
+      .from<entity>()
+      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .where(c(&entity::uuid_id_)
+                 .in(select(l_sql)
+                         .columns(&entity_link::entity_out_id_)
+                         .from<entity_link>()
+                         .join(shot, &entity_link::entity_in_id_, shot->*&entity::uuid_id_)
+                         .join(sequence, shot->*&entity::parent_id_, sequence->*&entity::uuid_id_)
+                         .where(l_sub_where)))()
+      .to_vector();
+}
+
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity_sql(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity>(), object<entity_asset_extend>())
+      .from<entity>()
+      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .where(c(&entity::uuid_id_) == in_entity_id)()
+      .to_vector();
+}
+std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity_sql(
+    const std::vector<uuid>& in_entity_ids
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity>(), object<entity_asset_extend>())
+      .from<entity>()
+      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .where(c(&entity::uuid_id_).in(in_entity_ids))()
+      .to_vector();
+}
+}  // namespace
 std::vector<working_file_and_link> create_character_working_files(
     const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
 ) {
@@ -58,7 +118,7 @@ std::vector<working_file_and_link> create_character_working_files(
           in_entity, in_entity_asset_extend
       }
   );
-  if (sqlite_select::entity_has_simulation_asset(in_entity.uuid_id_)) {
+  if (entity_has_simulation_asset(in_entity.uuid_id_)) {
     l_working_files.emplace_back(
         working_file_and_link{
             working_file{
@@ -156,7 +216,7 @@ std::vector<working_file_and_link> create_prop_working_files(
           in_entity, in_entity_asset_extend
       }
   );
-  if (sqlite_select::entity_has_simulation_asset(in_entity.uuid_id_))
+  if (entity_has_simulation_asset(in_entity.uuid_id_))
     l_working_files.emplace_back(
         working_file_and_link{
             working_file{
@@ -235,7 +295,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
 
   std::vector<working_file_and_link> l_working_files{};
 
-  auto l_assets = sqlite_select::get_working_files_for_entity(in_project_id, in_shot_id, in_sequence_id);
+  auto l_assets = get_working_files_for_entity_sql(in_project_id, in_shot_id, in_sequence_id);
   auto l_prj    = l_sql.get_by_uuid<project>(in_project_id);
   for (auto&& [l_entity, l_entity_asset_extend] : l_assets) {
     auto l_begin = l_working_files.size();
@@ -292,7 +352,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_wor
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_entity_ = l_sql.get_by_uuid<entity>(id_);
   auto l_prj     = l_sql.get_by_uuid<project>(l_entity_.project_id_);
-  auto l_r       = sqlite_select::get_working_files_for_entity(id_);
+  auto l_r       = get_working_files_for_entity_sql(id_);
   std::vector<working_file_and_link> l_working_files{};
   if (auto&& [l_entity, l_entity_asset_extend] = l_r.front();
       l_entity.entity_type_id_ == asset_type::get_character_id()) {
@@ -337,7 +397,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   );
 
   using namespace sqlite_orm;
-  auto l_r = sqlite_select::get_working_files_for_entity(l_entity_ids);
+  auto l_r = get_working_files_for_entity_sql(l_entity_ids);
   std::vector<working_file_and_link> l_working_files{};
   for (auto&& [l_entity, l_entity_asset_extend] : l_r) {
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
