@@ -41,27 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ai_studios = l_sql.impl_->storage_any_.select(
-      columns(object<ai_studio>(), object<ai_studio_person_role_link>()), from<ai_studio>(),
-      left_join<ai_studio_person_role_link>(
-          on(c(&ai_studio_person_role_link::ai_studio_id_) == c(&ai_studio::uuid_id_))
-      )
-  );
-  std::vector<ai_studio_and_link_t> l_result;
-  std::map<uuid, std::size_t> l_map{};
-  for (auto&& [ai_studio, link] : l_ai_studios) {
-    if (!l_map.contains(ai_studio.uuid_id_)) {
-      l_result.emplace_back(ai_studio);
-      l_map[ai_studio.uuid_id_] = l_result.size() - 1;
-    }
-    if (!link.ai_studio_id_.is_nil()) l_result[l_map[ai_studio.uuid_id_]].link_.push_back(link);
-  }
-  return l_result;
-}
-
 std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
@@ -731,7 +710,7 @@ std::vector<std::tuple<entity, task, entity_asset_extend, asset_type, uuid>>
 make_with_tasks_sql_result_t::operator()() const {
   using namespace sqlite_orm;
 
-  auto& l_sql               = get_sqlite_database();
+  auto& l_sql              = get_sqlite_database();
   auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
 
   auto l_dynamic_where     = dynamic_where(l_sql.impl_->storage_any_);

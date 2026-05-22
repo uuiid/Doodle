@@ -14,8 +14,30 @@
 #include <vector>
 
 namespace doodle::http {
+
+std::vector<ai_studio_and_link_t> ai_studio_and_link_t_get_all() {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_ai_studios = select(l_sql)
+                          .columns(object<ai_studio>(), object<ai_studio_person_role_link>())
+                          .from<ai_studio>()
+                          .left_outer_join<ai_studio_person_role_link>(
+                              &ai_studio::uuid_id_, &ai_studio_person_role_link::ai_studio_id_
+                          );
+  std::vector<ai_studio_and_link_t> l_result;
+  std::map<uuid, std::size_t> l_map{};
+  for (auto&& [ai_studio, link] : l_ai_studios()) {
+    if (!l_map.contains(ai_studio.uuid_id_)) {
+      l_result.emplace_back(ai_studio);
+      l_map[ai_studio.uuid_id_] = l_result.size() - 1;
+    }
+    if (!link.ai_studio_id_.is_nil()) l_result[l_map[ai_studio.uuid_id_]].link_.push_back(link);
+  }
+  return l_result;
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
-  auto& l_sql       = get_sqlite_database();
+  auto& l_sql      = get_sqlite_database();
   auto l_json      = in_handle->get_json();
   auto l_ai_studio = std::make_shared<ai_studio>();
   l_json.get_to(*l_ai_studio);
@@ -26,18 +48,18 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio, get) {
   person_.check_producer();
   auto& l_sql = get_sqlite_database();
-  auto l_vec = sqlite_select::ai_studio_and_link_t_get_all();
+  auto l_vec  = ai_studio_and_link_t_get_all();
   co_return in_handle->make_msg(nlohmann::json{} = l_vec);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, get) {
   person_.check_producer();
-  auto& l_sql       = get_sqlite_database();
+  auto& l_sql      = get_sqlite_database();
   auto l_ai_studio = l_sql.get_by_uuid<ai_studio>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ai_studio);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_ai_studio_instance, put) {
   person_.check_producer();
-  auto& l_sql       = get_sqlite_database();
+  auto& l_sql      = get_sqlite_database();
   auto l_ai_studio = std::make_shared<ai_studio>(l_sql.get_by_uuid<ai_studio>(id_));
   auto l_json      = in_handle->get_json();
   l_json.get_to(*l_ai_studio);
