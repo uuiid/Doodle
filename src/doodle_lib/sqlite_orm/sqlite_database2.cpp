@@ -41,58 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<std::tuple<uuid, std::string>> get_project_ids_and_names() {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_projects = l_sql.impl_->storage_any_.select(columns(&project::uuid_id_, &project::name_));
-  return l_projects;
-}
-std::vector<std::tuple<
-    uuid,                 // task::uuid_id_
-    std::string,          // task::name_
-    uuid,                 // task::last_preview_file_id_
-    uuid,                 // entity::uuid_id_
-    std::string,          // entity::name_
-    uuid,                 // task_type::uuid_id_
-    entity_asset_extend,  // entity_asset_extend
-    uuid,                 // project::uuid_id_
-    std::string           // project::name_
-    >>
-get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std::vector<uuid>& in_task_ids) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_row = l_sql.impl_->storage_any_.select(
-      columns(
-          &task::uuid_id_, &task::name_, &task::last_preview_file_id_,
-
-          &entity::uuid_id_, &entity::name_, &task_type::uuid_id_,
-
-          object<entity_asset_extend>(true),
-
-          &project::uuid_id_, &project::name_
-
-      ),
-      from<task>(), join<entity>(on(c(&task::entity_id_) == c(&entity::uuid_id_))),
-      join<task_type>(on(c(&task_type::uuid_id_) == c(&task::task_type_id_))),
-      left_outer_join<entity_asset_extend>(on(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_)),
-      join<project>(on(c(&project::uuid_id_) == c(&task::project_id_))), where(in(&task::uuid_id_, in_task_ids))
-  );
-  return l_row;
-}
-std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
-    const uuid& in_person_id, const chrono::local_days& in_year_month
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ids = l_sql.impl_->storage_any_.select(
-      &work_xlsx_task_info_helper::database_t::id_,
-      where(
-          c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
-          c(&work_xlsx_task_info_helper::database_t::year_month_) == in_year_month
-      )
-  );
-  return l_ids;
-}
 std::vector<std::tuple<project, std::string>> get_projects_and_status_name_by_project_name(
     const std::string& in_project_name
 ) {

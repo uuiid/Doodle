@@ -25,6 +25,42 @@
 
 namespace doodle::http {
 namespace {
+auto get_project_ids_and_names() {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql).columns(&project::uuid_id_, &project::name_).from<project>()();
+}
+auto get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std::vector<uuid>& in_task_ids) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(
+          &task::uuid_id_, &task::name_, &task::last_preview_file_id_, &entity::uuid_id_, &entity::name_,
+          &task_type::uuid_id_, object<entity_asset_extend>(), &project::uuid_id_, &project::name_
+      )
+      .from<task>()
+      .join<entity>(&task::entity_id_, &entity::uuid_id_)
+      .join<task_type>(&task::task_type_id_, &task_type::uuid_id_)
+      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .join<project>(&task::project_id_, &project::uuid_id_)
+      .where(c(&task::uuid_id_).in(in_task_ids))();
+}
+
+std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
+    const uuid& in_person_id, const chrono::local_days& in_year_month
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+    .columns(&work_xlsx_task_info_helper::database_t::id_)
+    .from<work_xlsx_task_info_helper::database_t>()
+    .where(
+      c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
+      c(&work_xlsx_task_info_helper::database_t::year_month_) == in_year_month
+    )()
+    .to_vector();
+}
+
 struct work_xlsx_task_info_helper_t {
   decltype(task::uuid_id_) task_id_;
   decltype(task::name_) task_name_;
@@ -99,7 +135,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
     if (!l_item.kitsu_task_ref_id_.is_nil()) l_task_ids.emplace_back(l_item.kitsu_task_ref_id_);
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
-  for (auto&& [uuid, name] : sqlite_select::get_project_ids_and_names()) l_project_name_map.emplace(uuid, name);
+  for (auto&& [uuid, name] : get_project_ids_and_names()) l_project_name_map.emplace(uuid, name);
 
   // 先加载自定义task
   for (auto&& l_item : in_data) {
@@ -134,7 +170,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
 
            project_uuid_, project_name_
 
-  ] : sqlite_select::get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(l_task_ids)) {
+  ] : get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(l_task_ids)) {
     l_ret.emplace_back(
         work_xlsx_task_info_helper_t{
             .task_id_                   = task_id_,
@@ -481,8 +517,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
   );
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  auto& l_sql       = get_sqlite_database();
-  auto l_ids       = sqlite_select::get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
+  auto& l_sql      = get_sqlite_database();
+  auto l_ids       = get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
       l_user.uuid_id_, chrono::local_days{year_month_ / 1}
   );
   co_await l_sql.remove<work_xlsx_task_info_helper::database_t>(l_ids);
