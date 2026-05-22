@@ -132,8 +132,7 @@ struct data_user_notifications_get_result {
   }
 };
 
-std::vector<std::tuple<notification, entity, comment, uuid, std::string, uuid, uuid>>
-get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
+auto get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
     const uuid& in_person_id, const std::optional<chrono::system_zoned_time>& in_after,
     const std::optional<chrono::system_zoned_time>& in_before, const uuid& in_task_type_id,
     const uuid& in_task_status_id, const std::optional<notification_type>& in_notification_type,
@@ -164,7 +163,25 @@ get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_tas
       .left_outer_join<subscription>(
           on(c(&subscription::task_id_) == c(&task::uuid_id_) && c(&subscription::person_id_) == in_person_id)
       )
-      .where(l_where)()
+      .where(l_where)();
+}
+
+std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(&comment_mentions::person_id_)
+      .from<comment_mentions>()
+      .where(c(&comment_mentions::comment_id_) == in_comment_id)()
+      .to_vector();
+}
+std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(&comment_department_mentions::department_id_)
+      .from<comment_department_mentions>()
+      .where(c(&comment_department_mentions::comment_id_) == in_comment_id)()
       .to_vector();
 }
 
@@ -186,9 +203,8 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
            in_args.notification_type_, in_args.read_
        )) {
     auto l_preview_file_id = l_sql.get_preview_file_for_comment(l_comment.uuid_id_).value_or(preview_file{}).uuid_id_;
-    l_comment.mentions_    = sqlite_select::get_comment_mentions_person_ids_by_comment_id(l_comment.uuid_id_);
-    l_comment.department_mentions_ =
-        sqlite_select::get_comment_department_mentions_department_ids_by_comment_id(l_comment.uuid_id_);
+    l_comment.mentions_    = get_comment_mentions_person_ids_by_comment_id(l_comment.uuid_id_);
+    l_comment.department_mentions_ = get_comment_department_mentions_department_ids_by_comment_id(l_comment.uuid_id_);
     l_ret.emplace_back(
         l_notification, l_entity, l_comment, project_id, project_name, task_type_id, subscription_id, l_preview_file_id
 

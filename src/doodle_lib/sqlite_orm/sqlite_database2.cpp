@@ -41,23 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_row = l_sql.impl_->storage_any_.select(
-      &comment_mentions::person_id_, where(c(&comment_mentions::comment_id_) == in_comment_id)
-  );
-  return l_row;
-}
-std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_row = l_sql.impl_->storage_any_.select(
-      &comment_department_mentions::department_id_, where(c(&comment_department_mentions::comment_id_) == in_comment_id)
-  );
-  return l_row;
-}
-
 std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
     const uuid& in_entity_id
 ) {
