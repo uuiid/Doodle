@@ -23,7 +23,6 @@
 #include <doodle_lib/http_method/seed_email.h>
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
-#include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 #include <boost/asio/post.hpp>
 
@@ -125,12 +124,47 @@ struct compose_video_impl_t {
   }
 };
 
+std::optional<preview_file> get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
+    const uuid& in_entity_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<preview_file>())
+      .from<preview_file>()
+      .join<task>(&preview_file::task_id_, &task::uuid_id_)
+      .where(
+          c(&task::entity_id_) == in_entity_id &&
+          c(&task::task_type_id_)
+              .in(std::vector<uuid>{
+                  task_type::get_simulation_task_id(),
+                  task_type::get_lighting_id(),
+                  task_type::get_animation_id(),
+              }) &&
+          c(&preview_file::source_) == preview_file_source_enum::auto_light_generate
+      )
+      .order_by(&preview_file::created_at_, false)
+      .limit(1)()
+      .to_optional();
+}
+std::vector<attachment_file> get_attachment_files_by_comment_id_and_task_id(const uuid& in_task_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_comment_ids =
+      select(l_sql).columns(&comment::uuid_id_).from<comment>().where(c(&comment::object_id_) == in_task_id);
+  return select(l_sql)
+      .columns(object<attachment_file>())
+      .from<attachment_file>()
+      .where(c(&attachment_file::comment_id_).in(l_comment_ids))()
+      .to_vector();
+}
+
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_file = in_handle->get_file();
   DOODLE_CHICK_HTTP(!l_file.empty() && FSys::exists(l_file), bad_request, "必须上传视频文件");
-  auto& l_sql          = get_sqlite_database();
+  auto& l_sql         = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
   auto l_task         = l_sql.get_by_uuid<task>(l_preview_file.task_id_);
   auto l_project      = l_sql.get_by_uuid<project>(l_task.project_id_);
@@ -146,9 +180,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   {
     using namespace sqlite_orm;
     auto l_preview_files =
-        sqlite_select::get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(
-            l_task.entity_id_
-        );
+        get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(l_task.entity_id_);
     if (!l_preview_files.has_value()) {
       auto l_preview_file_ptr     = std::make_shared<preview_file>();
       *l_preview_file_ptr         = std::move(l_preview_file);
@@ -301,7 +333,7 @@ struct run_actions_playlists_preview_files_create_review {
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review, post) {
-  auto& l_sql           = get_sqlite_database();
+  auto& l_sql          = get_sqlite_database();
   auto l_playlist      = l_sql.get_by_uuid<playlist>(playlist_id_);
   auto l_playlist_shot = l_sql.get_playlist_shot_entity(playlist_id_);
   auto l_preview_file  = l_sql.get_by_uuid<preview_file>(preview_file_id_);
@@ -319,7 +351,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_playlists_preview_files_create_review
       l_playlist_shot.size(), l_arg.add_subtitle_, l_arg.add_dubbing_, l_arg.add_name_, l_arg.add_head_tail_,
       l_arg.add_watermark_, l_arg.add_time_code_
   );
-  auto l_attachment_files = sqlite_select::get_attachment_files_by_comment_id_and_task_id(l_task.uuid_id_);
+  auto l_attachment_files = get_attachment_files_by_comment_id_and_task_id(l_task.uuid_id_);
   // 反转 l_attachment_files
   std::reverse(l_attachment_files.begin(), l_attachment_files.end());
   auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_);
