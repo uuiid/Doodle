@@ -41,12 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardware_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.get_all<computer>(where(c(&computer::hardware_id_) == in_hardware_id));
-  return !l_ret.empty() ? std::optional{l_ret.front()} : std::optional<computer>{std::nullopt};
-}
 std::vector<uuid> get_comment_object_ids_by_comment_id(const uuid& in_comment_id) {
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
