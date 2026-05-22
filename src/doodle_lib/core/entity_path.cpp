@@ -23,7 +23,6 @@
 #include <fmt/format.h>
 #include <lru_cache_policy.hpp>
 #include <range/v3/view/filter.hpp>
-#include <sqlite_orm/sqlite_orm.h>
 #include <string>
 
 namespace doodle {
@@ -54,6 +53,34 @@ FSys::path get_entity_character_model_maya_path(const project& in_prj_, const en
   );
 }
 namespace {
+std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+
+  auto l_task_id = select(l_sql)
+                       .columns(&task::uuid_id_)
+                       .from<task>()
+                       .where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == task_type::get_binding_id())
+                       .limit(1)()
+                       .to_optional();
+  if (!l_task_id) return {};
+
+  return select(l_sql)
+      .columns(&person::last_name_)
+      .from<person>()
+      .where(
+          c(&person::uuid_id_)
+              .in(select(l_sql)
+                      .columns(&assignees_table::person_id_)
+                      .from<assignees_table>()
+                      .where(c(&assignees_table::task_id_) == *l_task_id)
+                      .limit(1))
+      )
+      .limit(1)()
+      .to_optional()
+      .value_or(std::string{});
+}
+
 class cache_manger_user : public boost::noncopyable {
   template <typename Key, typename Value>
   using lru_cache_t = typename caches::fixed_sized_cache<Key, Value, caches::LRUCachePolicy>;
@@ -79,8 +106,7 @@ class cache_manger_user : public boost::noncopyable {
         l_value.second && l_value.first->time_point_ + 300s > std::chrono::system_clock::now()) {
       return l_value.first->user_abbreviation_;
     } else {
-      using namespace sqlite_orm;
-      auto l_user = sqlite_select::get_rig_person_last_name_for_entity(id);
+      auto l_user = get_rig_person_last_name_for_entity(id);
       std::string l_user_abbreviation{};
       if (!l_user.empty()) {
         l_user_abbreviation.reserve(8);
