@@ -20,6 +20,7 @@ struct insert_t;
 struct sqlite_stmt;
 struct create_trigger_t;
 struct bind_value_collector_t;
+struct on_operations;
 
 template <typename...>
 inline constexpr bool always_false = false;

@@ -26,10 +26,9 @@ select_t select_t::join(auto in_ptr, auto in_ref_ptr, join_type in_join_type)
   requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
 {
   join_info_t join_info{};
-  join_info.type_             = in_join_type;
-  join_info.join_table_info_  = std::make_shared<table_info_t>(typeid(FromTable));
-  join_info.self_column_info_ = std::make_shared<column_info_t>(in_ptr);
-  join_info.join_column_info_ = std::make_shared<column_info_t>(in_ref_ptr);
+  join_info.type_            = in_join_type;
+  join_info.join_table_info_ = std::make_shared<table_info_t>(typeid(FromTable));
+  join_info.on_condition_    = std::make_shared<on_operations>(on(c(in_ptr) == c(in_ref_ptr)));
   impl_->joins_.push_back(std::move(join_info));
   return *this;
 }
@@ -45,19 +44,31 @@ select_t select_t::join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, jo
       is_alias_t_v<JoinTable>
   )
 {
-  auto l_create_column_info_ptr = [](auto&& column) -> column_info_ptr {
-    if constexpr (is_alias_column_t_v<std::decay_t<decltype(column)>>) {
-      return std::make_shared<alias_column_info_t>(std::forward<decltype(column)>(column));
-    } else {
-      return std::make_shared<column_info_t>(std::forward<decltype(column)>(column));
-    }
-  };
-
   join_info_t join_info{};
-  join_info.type_             = in_join_type;
-  join_info.join_table_info_  = std::make_shared<alias_info_t>(std::forward<JoinTable>(join_table));
-  join_info.self_column_info_ = l_create_column_info_ptr(in_ptr);
-  join_info.join_column_info_ = l_create_column_info_ptr(in_ref_ptr);
+  join_info.type_            = in_join_type;
+  join_info.join_table_info_ = std::make_shared<alias_info_t>(std::forward<JoinTable>(join_table));
+  join_info.on_condition_    = std::make_shared<on_operations>(on(c(in_ptr) == c(in_ref_ptr)));
+  impl_->joins_.push_back(std::move(join_info));
+  return *this;
+}
+
+template <typename FromTable>
+select_t select_t::join(const on_operations& in_on, join_type in_join_type) {
+  join_info_t join_info{};
+  join_info.on_condition_    = std::make_shared<on_operations>(in_on);
+  join_info.join_table_info_ = std::make_shared<table_info_t>(typeid(FromTable));
+  join_info.type_            = in_join_type;
+  impl_->joins_.push_back(std::move(join_info));
+  return *this;
+}
+template <typename JoinTable>
+select_t select_t::join(JoinTable&& join_table, const on_operations& in_on, join_type in_join_type)
+  requires is_alias_t_v<JoinTable>
+{
+  join_info_t join_info{};
+  join_info.on_condition_    = std::make_shared<on_operations>(in_on);
+  join_info.join_table_info_ = std::make_shared<alias_info_t>(std::forward<JoinTable>(join_table));
+  join_info.type_            = in_join_type;
   impl_->joins_.push_back(std::move(join_info));
   return *this;
 }

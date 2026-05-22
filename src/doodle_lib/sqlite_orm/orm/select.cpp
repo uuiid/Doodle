@@ -21,9 +21,7 @@ std::string select_t::to_sql(const storage& s) const {
   std::string l_join_sql;
   for (const auto& join : impl_->joins_) {
     l_join_sql += fmt::format(
-        " {} {} ON {} = {}", join.type_, join.join_table_info_->get_table_name(*impl_->s_),
-        join.self_column_info_->get_column_name(*impl_->s_, true),
-        join.join_column_info_->get_column_name(*impl_->s_, true)
+        " {} {} {}", join.type_, join.join_table_info_->get_table_name(*impl_->s_), join.on_condition_->to_sql(s, true)
     );
   }
   std::string l_group_by_sql{};

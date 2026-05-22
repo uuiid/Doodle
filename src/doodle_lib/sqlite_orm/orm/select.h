@@ -52,6 +52,7 @@ struct select_t {
     table_info_base_ptr join_table_info_;
     column_info_ptr self_column_info_;
     column_info_ptr join_column_info_;
+    std::shared_ptr<on_operations> on_condition_;
   };
   struct order_by_info_t {
     column_info_ptr column_info_;
@@ -94,6 +95,11 @@ struct select_t {
          is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>) &&
         is_alias_t_v<JoinTable>
     );
+  template <typename FromTable>
+  select_t join(const on_operations& in_on, join_type in_join_type = join_type::inner);
+  template <typename JoinTable>
+  select_t join(JoinTable&& join_table, const on_operations& in_on, join_type in_join_type = join_type::inner)
+    requires is_alias_t_v<JoinTable>;
 
   template <typename T>
   select_t where(T&& condition_fun);
@@ -224,6 +230,18 @@ struct select_template_t : public select_t {
   select_template_t join(
       JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner
   );
+  template <typename FromTable>
+  select_template_t join(const on_operations& in_on, join_type in_join_type = join_type::inner) {
+    select_t::join(in_on, in_join_type);
+    return *this;
+  }
+  template <typename JoinTable>
+  select_template_t join(JoinTable&& join_table, const on_operations& in_on, join_type in_join_type = join_type::inner)
+    requires is_alias_t_v<std::decay_t<JoinTable>>
+  {
+    select_t::join(std::forward<JoinTable>(join_table), in_on, in_join_type);
+    return *this;
+  }
 
   template <typename FormTable>
   select_template_t left_outer_join(auto in_ptr, auto in_ref_ptr) {
@@ -234,6 +252,14 @@ struct select_template_t : public select_t {
     return join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, join_type::left);
   }
   template <typename FormTable>
+  select_template_t left_outer_join(const on_operations& in_on) {
+    return join<FormTable>(in_on, join_type::left);
+  }
+  template <typename JoinTable>
+  select_template_t left_outer_join(JoinTable&& join_table, const on_operations& in_on) {
+    return join(std::forward<JoinTable>(join_table), in_on, join_type::left);
+  }
+  template <typename FormTable>
   select_template_t right_outer_join(auto in_ptr, auto in_ref_ptr) {
     return join<FormTable>(in_ptr, in_ref_ptr, join_type::right);
   }
@@ -241,6 +267,15 @@ struct select_template_t : public select_t {
   select_template_t right_outer_join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr) {
     return join(std::forward<JoinTable>(join_table), in_ptr, in_ref_ptr, join_type::right);
   }
+  template <typename FormTable>
+  select_template_t right_outer_join(const on_operations& in_on) {
+    return join<FormTable>(in_on, join_type::right);
+  }
+  template <typename JoinTable>
+  select_template_t right_outer_join(JoinTable&& join_table, const on_operations& in_on) {
+    return join(std::forward<JoinTable>(join_table), in_on, join_type::right);
+  }
+
   template <typename T>
   select_template_t where(T&& condition_fun);
   template <typename T>
