@@ -41,29 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset_extend_by_shot_id(
-    const uuid& in_shot_id
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_assets           = l_sql.impl_->storage_any_.select(
-      columns(object<entity>(true), object<entity_asset_extend>(true)), from<entity>(),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(
-          in(&entity::uuid_id_,
-                       select(
-                 &entity_link::entity_out_id_, from<entity_link>(),
-                 join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-                 join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-                 where(c(shot->*&entity::uuid_id_) == in_shot_id)
-             )) &&
-          !c(&entity::canceled_)
-      )
-  );
-  return l_assets;
-}
 std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_id) {
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;

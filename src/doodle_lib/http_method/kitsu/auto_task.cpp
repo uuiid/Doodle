@@ -47,6 +47,31 @@
 
 namespace doodle::http {
 namespace {
+
+std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset_extend_by_shot_id(
+    const uuid& in_shot_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto shot     = alias<entity>("shot");
+  auto sequence = alias<entity>("sequence");
+  return select(l_sql)
+    .columns(object<entity>(), object<entity_asset_extend>())
+    .from<entity>()
+    .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+    .where(
+      c(&entity::uuid_id_)
+        .in(select(l_sql)
+            .columns(&entity_link::entity_out_id_)
+            .from<entity_link>()
+            .join(shot, &entity_link::entity_in_id_, shot->*&entity::uuid_id_)
+            .join(sequence, shot->*&entity::parent_id_, sequence->*&entity::uuid_id_)
+            .where(c(shot->*&entity::uuid_id_) == in_shot_id)) &&
+      c(&entity::canceled_) != true
+    )()
+    .to_vector();
+}
+
 struct sim_map_anim {
   std::size_t to_fbx_idx_{};
   std::size_t to_abc_idx_{};
@@ -82,7 +107,7 @@ auto check_multiple_scene(auto& in_vector) {
 
 namespace auto_task {
 import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_project_id, const uuid& in_shot_id) {
-  auto& l_sql         = get_sqlite_database();
+  auto& l_sql        = get_sqlite_database();
   auto l_shot_task   = l_sql.get_by_uuid<task>(in_shot_id);
   auto l_shot_entity = l_sql.get_by_uuid<entity>(l_shot_task.entity_id_);
   if (l_shot_entity.parent_id_.is_nil())
@@ -400,7 +425,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_rig_sk::get(
     session_data_ptr in_handle
 ) {
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<task>(task_id_);
   if (l_task.task_type_id_ != task_type::get_binding_id() && l_task.task_type_id_ != task_type::get_simulation_id())
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "只有绑定任务才支持导出 rig sk");
@@ -530,7 +555,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_export_anim_fbx::get(
     session_data_ptr in_handle
 ) {
-  auto& l_sql            = get_sqlite_database();
+  auto& l_sql           = get_sqlite_database();
   auto l_task           = l_sql.get_by_uuid<task>(task_id_);
   auto l_proj           = l_sql.get_by_uuid<project>(l_task.project_id_);
   auto l_entity         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
@@ -556,7 +581,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync::get(session_data_ptr in_handle) {
-  auto& l_sql            = get_sqlite_database();
+  auto& l_sql           = get_sqlite_database();
   auto l_task           = l_sql.get_by_uuid<task>(task_id_);
   auto l_shot_entity    = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_shot_entity.parent_id_);
@@ -702,7 +727,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_assets_update_ue, get) {
   std::vector<FSys::path> l_paths;
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_task   = l_sql.get_by_uuid<task>(task_id_);
   auto l_entity = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
@@ -716,7 +741,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_assets_update_ue, get) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_tasks_sync_export_anim_fbx, get) {
   exe_warp::folder_watcher_anim_fbx::watch_arg l_arg{};
-  auto& l_sql            = get_sqlite_database();
+  auto& l_sql           = get_sqlite_database();
   auto l_task           = l_sql.get_by_uuid<task>(task_id_);
   auto l_entity         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_episode_entity = l_sql.get_by_uuid<entity>(l_entity.parent_id_);
