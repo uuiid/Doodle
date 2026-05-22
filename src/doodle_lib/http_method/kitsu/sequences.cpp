@@ -3,6 +3,7 @@
 //
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/entity_type.h>
+#include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/working_file.h>
 
 #include <doodle_lib/core/socket_io/broadcast.h>
@@ -15,6 +16,79 @@
 
 namespace doodle::http {
 namespace {
+
+struct get_get_entities_and_tasks_select_t {
+  std::vector<std::tuple<entity, task, uuid>> entity_and_task_and_person_id_;
+  std::vector<std::tuple<uuid, std::int32_t>> sequence_and_cout_;
+
+  static get_get_entities_and_tasks_select_t get(
+      const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
+      std::int32_t in_limit = 300
+  );
+};
+get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
+    const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset,
+    std::int32_t in_limit
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_outsource_select = select(l_sql)
+                                .columns(&outsource_studio_authorization::entity_id_)
+                                .from<outsource_studio_authorization>()
+                                .where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_);
+
+
+  auto l_where = dynamic_column_operations{};
+  l_where.add_condition(c(&entity::entity_type_id_) == in_entity_type_id);
+  if (!in_project_id.is_nil()) l_where.add_condition(c(&entity::project_id_) == in_project_id);
+  if (in_person.role_ == person_role_type::outsource)
+    l_where.add_condition(c(&entity::uuid_id_).in(l_outsource_select));
+
+  auto l_rows = select(l_sql)
+                    .columns(object<entity>(), object<task>(), &assignees_table::person_id_)
+                    .from<entity>()
+                    .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
+                    .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
+                    .where(l_where)
+                    .order_by(&entity::name_)
+                    .offset(in_offset)
+                    .limit(in_limit)()
+                    .to_vector();
+  auto l_cout = select(l_sql)
+                    .columns(&entity::parent_id_, count(&entity::parent_id_))
+                    .from<entity>()
+                    .where(c(&entity::project_id_) == in_project_id)
+                    .group_by(&entity::parent_id_)()
+                    .to_vector<std::tuple<uuid, std::int32_t>>();
+  return get_get_entities_and_tasks_select_t{.entity_and_task_and_person_id_ = l_rows, .sequence_and_cout_ = l_cout};
+}
+
+std::vector<entity> get_entity_by_episode_id_and_project_id_and_name(
+    const uuid& type_id_, const uuid& in_episode_id, const uuid& in_project_id, const std::string& in_name
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+
+  auto l_dynamic_where = dynamic_column_operations{};
+  if (!in_name.empty()) l_dynamic_where.add_condition(c(&entity::name_) == in_name);
+  if (!in_project_id.is_nil()) l_dynamic_where.add_condition(c(&entity::project_id_) == in_project_id);
+  if (!in_episode_id.is_nil()) l_dynamic_where.add_condition(c(&entity::parent_id_) == in_episode_id);
+  DOODLE_CHICK(!type_id_.is_nil(), "类别id不可空")
+  l_dynamic_where.add_condition(c(&entity::entity_type_id_) == type_id_);
+
+  return select(l_sql).columns(object<entity>()).from<entity>().where(l_dynamic_where)().to_vector();
+}
+bool task_exit_by_entity_id_and_task_type_id(const uuid& in_entity_id, const uuid& in_task_type_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_count = select(l_sql)
+                     .columns(count(&task::id_))
+                     .from<task>()
+                     .where(c(&task::entity_id_) == in_entity_id && c(&task::task_type_id_) == in_task_type_id)()
+                     .to_single();
+  return l_count > 0;
+}
+
 struct sequences_with_tasks_result {
   sequences_with_tasks_result() = default;
 
@@ -130,10 +204,9 @@ auto get_get_entities_and_tasks(
 
   std::vector<sequences_with_tasks_result> l_ret{};
 
-  auto l_row = sqlite_select::get_get_entities_and_tasks_select_t::get(
-      in_person, in_project_id, in_entity_type_id, in_offset, in_limit
-  );
-  auto& l_sql                    = get_sqlite_database();
+  auto l_row =
+      get_get_entities_and_tasks_select_t::get(in_person, in_project_id, in_entity_type_id, in_offset, in_limit);
+  auto& l_sql                   = get_sqlite_database();
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
 
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
@@ -214,7 +287,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
       g_logger_ctrl().get_http(), "用户 {}({}) 开始在项目 {} 创建/获取序列 name {} episode_id {}",
       person_.person_.email_, person_.person_.get_full_name(), id_, l_args.name_, l_args.episode_id_
   );
-  auto l_row = sqlite_select::get_entity_by_episode_id_and_project_id_and_name(
+  auto l_row = get_entity_by_episode_id_and_project_id_and_name(
       l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, l_args.episode_id_, id_,
       l_args.name_
   );
@@ -245,21 +318,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   person_.check_in_project(id_);
   auto& l_sql = get_sqlite_database();
 
-  auto l_row  = sqlite_select::get_entity_by_episode_id_and_project_id_and_name(
+  auto l_row  = get_entity_by_episode_id_and_project_id_and_name(
       l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, {}, id_, {}
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_row);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_data);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::delete_(
     session_data_ptr in_handle
 ) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_sequence = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(l_sequence->created_by_ == person_.person_.uuid_id_ &&
         l_sql.is_person_in_project(person_.person_.uuid_id_, l_sequence->project_id_)))
@@ -298,7 +371,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 ) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto& l_sql          = get_sqlite_database();
+  auto& l_sql         = get_sqlite_database();
   auto l_task_type    = l_sql.get_by_uuid<task_type>(task_type_id_);
   auto l_type_name    = std::string{magic_enum::enum_name(entity_type_)};
   l_type_name.front() = std::toupper(l_type_name.front());
@@ -317,9 +390,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
         l_entities.emplace_back(std::move(l_ent));
   } else {
     auto l_episode_id = l_json.value("episode_id", uuid{});
-    auto l_entities   = sqlite_select::get_entity_by_episode_id_and_project_id_and_name(
-        l_entity_type.uuid_id_, l_episode_id, project_id_, {}
-    );
+    auto l_entities =
+        get_entity_by_episode_id_and_project_id_and_name(l_entity_type.uuid_id_, l_episode_id, project_id_, {});
   }
   std::shared_ptr<std::vector<task>> l_tasks = std::make_shared<std::vector<task>>();
   auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
@@ -327,8 +399,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
   std::vector<actions_projects_task_types_create_tasks_result> l_result{};
   for (auto&& l_enit : l_entities) {
     using namespace sqlite_orm;
-    if (sqlite_select::task_exit_by_entity_id_and_task_type_id(l_enit.uuid_id_, task_type_id_))
-      continue;  // 已经存在任务
+    if (task_exit_by_entity_id_and_task_type_id(l_enit.uuid_id_, task_type_id_)) continue;  // 已经存在任务
     auto& l_task = l_tasks->emplace_back(
         task{
             .name_           = "main",
