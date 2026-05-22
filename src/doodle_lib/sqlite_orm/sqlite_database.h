@@ -14,7 +14,6 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
-#include "sqlite_orm/orm/insert.h"
 #include <optional>
 #include <vector>
 
@@ -55,7 +54,6 @@ struct database_t;
 }  // namespace doodle
 namespace doodle {
 
-struct sqlite_database_impl;
 class sqlite_database : public orm::storage {
   logger_ptr logger_;
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
@@ -63,8 +61,6 @@ class sqlite_database : public orm::storage {
   static constexpr std::size_t g_step_size{100};
 
  public:
-  std::shared_ptr<sqlite_database_impl> impl_;
-
   std::vector<uuid> get_temporal_type_ids();
 
  public:
@@ -111,7 +107,7 @@ class sqlite_database : public orm::storage {
   DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
   auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::dispatch(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
-#define DOODLE_TO_SQLITE_THREAD_2()                                   \
+#define DOODLE_TO_SQLITE_THREAD()                                   \
   DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
   auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::dispatch(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));

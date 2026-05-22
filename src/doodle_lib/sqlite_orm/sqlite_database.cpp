@@ -35,24 +35,17 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/detail/sqlite_database_impl.h>
+#include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
-#include "core/global_function.h"
-#include "orm/fwd.h"
-#include "sqlite_orm/orm/column_operations.h"
-#include "sqlite_orm/orm/select.h"
-#include "sqlite_orm/orm/update.h"
 #include <cstddef>
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 
-// clang-format off
-#include <doodle_lib/sqlite_orm/sqlite_database2.cpp>
-// clang-format on
 
 namespace doodle {
 
@@ -930,7 +923,7 @@ void sqlite_database::load(const FSys::path& in_path) {
   // pragma().optimize(0x10002);
 }
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
-  DOODLE_TO_SQLITE_THREAD_2()
+  DOODLE_TO_SQLITE_THREAD()
   // sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
   // if (db_handle) sqlite3_wal_checkpoint_v2(db_handle, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
   // if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
@@ -1400,7 +1393,7 @@ std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entit
 }
 
 boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
-  DOODLE_TO_SQLITE_THREAD_2();
+  DOODLE_TO_SQLITE_THREAD();
   using namespace orm;
   auto l_g = transaction();
   orm::update(*this)
@@ -1441,7 +1434,7 @@ std::vector<playlist_shot> sqlite_database::get_playlist_shot_entity(const uuid&
 }
 boost::asio::awaitable<void> sqlite_database::remove_playlist_shot_for_playlist(const uuid& in_playlist_id) {
   using namespace orm;
-  DOODLE_TO_SQLITE_THREAD_2();
+  DOODLE_TO_SQLITE_THREAD();
   auto l_g = transaction();
   delete_from(*this).from<playlist_shot>().where(c(&playlist_shot::playlist_id_) == in_playlist_id)();
   l_g.commit();
@@ -1464,7 +1457,7 @@ boost::asio::awaitable<void> sqlite_database::remove_task_type_asset_type_link_b
 ) {
   using namespace orm;
 
-  DOODLE_TO_SQLITE_THREAD_2();
+  DOODLE_TO_SQLITE_THREAD();
   auto l_g = transaction();
   delete_from(*this)
       .from<task_type_asset_type_link>()
@@ -1517,7 +1510,7 @@ bool sqlite_database::is_entity_outsourced(
 }
 
 boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid& in_sequence_id) {
-  DOODLE_TO_SQLITE_THREAD_2();
+  DOODLE_TO_SQLITE_THREAD();
   using namespace orm;
   auto l_g        = transaction();
   auto l_shot     = alias<entity>("shot");
@@ -1583,7 +1576,7 @@ entity_asset_extend sqlite_database::get_entity_shot_extend_by_task(const uuid& 
 boost::asio::awaitable<void> sqlite_database::update_computer_status(
     const uuid& in_computer_id, computer_status in_status
 ) {
-  DOODLE_TO_SQLITE_THREAD_2();
+  DOODLE_TO_SQLITE_THREAD();
   using namespace orm;
   orm::update(*this)
       .from<computer>()
