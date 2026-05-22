@@ -288,8 +288,124 @@ struct with_tasks_get_result_t {
     j["chang_ci"]            = p.chang_ci_;
   }
 };
+
+struct make_with_tasks_sql_result_t {
+  person& person_;
+  uuid id_;
+  uuid project_id_;
+  std::int32_t offset_{0};
+  std::int32_t limit_{300};
+  std::vector<uuid> entity_type_id_;
+  std::vector<std::int32_t> ji_du_filter_;
+  bool ji_du_filter_is_null{false};
+  std::vector<std::int32_t> ji_shu_lie_filter_;
+  bool ji_shu_lie_filter_is_null{false};
+  std::vector<uuid> task_status_id_filter_;
+  std::vector<uuid> person_id_filter_;
+  std::string search_key_;
+  std::vector<std::int32_t> scenes_;
+  bool scenes_is_null{false};
+  auto operator()() const {
+    using namespace orm;
+
+    auto& l_sql              = get_sqlite_database();
+    auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
+
+    auto l_dynamic_where     = dynamic_column_operations{};
+    l_dynamic_where.add_condition(c(&entity::entity_type_id_).not_in(l_temporal_type_ids));
+    if (person_.role_ == person_role_type::outsource)
+      l_dynamic_where.add_condition(
+          c(&entity::uuid_id_)
+              .in(select(l_sql)
+                      .columns(&outsource_studio_authorization::entity_id_)
+                      .from<outsource_studio_authorization>()
+                      .where(c(&outsource_studio_authorization::studio_id_) == person_.studio_id_))
+      );
+    if (!id_.is_nil()) {
+      l_dynamic_where.add_condition(c(&entity::uuid_id_) == id_);
+    } else {
+      if (!project_id_.is_nil()) l_dynamic_where.add_condition(c(&entity::project_id_) == project_id_);
+      if (!entity_type_id_.empty()) l_dynamic_where.add_condition(c(&entity::entity_type_id_).in(entity_type_id_));
+      if (!ji_du_filter_.empty() && ji_du_filter_is_null)
+        l_dynamic_where.add_condition(
+            c(&entity_asset_extend::ji_du_).in(ji_du_filter_) || c(&entity_asset_extend::ji_du_) == nullptr
+        );
+      else if (!ji_du_filter_.empty())
+        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_du_).in(ji_du_filter_));
+      else if (ji_du_filter_is_null)
+        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_du_) == nullptr);
+
+      if (!ji_shu_lie_filter_.empty() && ji_shu_lie_filter_is_null)
+        l_dynamic_where.add_condition(
+            c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_) ||
+            c(&entity_asset_extend::ji_shu_lie_) == nullptr
+        );
+      else if (!ji_shu_lie_filter_.empty())
+        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));
+      else if (ji_shu_lie_filter_is_null)
+        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_) == nullptr);
+
+      if (!task_status_id_filter_.empty())
+        l_dynamic_where.add_condition(c(&task::task_status_id_).in(task_status_id_filter_));
+      if (!person_id_filter_.empty())
+        l_dynamic_where.add_condition(c(&assignees_table::person_id_).in(person_id_filter_));
+      auto l_t = l_sql.get_temporal_type_ids();
+
+      if (!search_key_.empty()) {
+        if (search_key_.starts_with("name_:"))
+          l_dynamic_where.add_condition(c(&entity::name_).like(fmt::format("%{}%", search_key_.substr(6))));
+        else if (search_key_.starts_with("description_:"))
+          l_dynamic_where.add_condition(c(&entity::description_).like(fmt::format("%{}%", search_key_.substr(13))));
+        else if (search_key_.starts_with("bian_hao_:"))
+          l_dynamic_where.add_condition(
+              c(&entity_asset_extend::bian_hao_).like(fmt::format("%{}%", search_key_.substr(10)))
+          );
+        else if (search_key_.starts_with("pin_yin_ming_cheng_:"))
+          l_dynamic_where.add_condition(
+              c(&entity_asset_extend::pin_yin_ming_cheng_).like(fmt::format("%{}%", search_key_.substr(20)))
+          );
+        else
+          l_dynamic_where.add_condition(c(&entity::uuid_id_)
+                                            .in(select(l_sql)
+                                                    .columns(&entity_fts::entity_id_)
+                                                    .from<entity_fts>()
+                                                    .where(
+                                                        match(search_key_) &&
+                                                        c(&entity_fts::entity_type_id_).not_in(l_t) &&
+                                                        c(&entity_fts::project_id_) == project_id_
+                                                    )
+                                                    .order_by(rank())));
+      }
+      if (!scenes_.empty() && scenes_is_null)
+        l_dynamic_where.add_condition(
+            c(&entity_asset_extend::chang_ci_).in(scenes_) || c(&entity_asset_extend::chang_ci_) == nullptr
+        );
+      else if (!scenes_.empty())
+        l_dynamic_where.add_condition(c(&entity_asset_extend::chang_ci_).in(scenes_));
+      else if (scenes_is_null)
+        l_dynamic_where.add_condition(c(&entity_asset_extend::chang_ci_) == nullptr);
+    }
+
+    return select(l_sql)
+        .columns(
+            object<entity>(), object<task>(), object<entity_asset_extend>(), object<asset_type>(),
+            &assignees_table::person_id_
+        )
+        .from<entity>()
+        .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+        .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
+        .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
+        .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+        .where(l_dynamic_where)
+        .order_by(&asset_type::name_)
+        .order_by(&entity::name_)
+        .offset(offset_)
+        .limit(limit_)();
+  }
+};
+
 auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_url, const uuid& in_id) {
-  sqlite_select::make_with_tasks_sql_result_t l_data{in_person, in_id};
+  make_with_tasks_sql_result_t l_data{in_person, in_id};
   for (auto&& l_i : in_url.params()) {
     if (l_i.has_value && l_i.key == "entity_type_id") l_data.entity_type_id_.emplace_back(from_uuid_str(l_i.value));
     if (l_i.has_value && l_i.key == "ji_du") {
@@ -318,7 +434,6 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
         l_data.scenes_is_null = true;
     }
   }
-  auto l_rows = l_data();
   std::vector<with_tasks_get_result_t> l_ret{};
 
   auto& l_sql                   = get_sqlite_database();
@@ -327,7 +442,7 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));
   std::map<uuid, std::size_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_rows) {
+  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_data()) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
       l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
       l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);

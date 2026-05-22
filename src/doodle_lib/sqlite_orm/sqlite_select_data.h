@@ -509,24 +509,6 @@ std::vector<entity_fts> search_entities_fts_by_keyword(
     const std::string& in_keyword, const uuid& in_project_id, const std::int64_t in_limit, const std::int64_t in_offset
 );
 
-struct make_with_tasks_sql_result_t {
-  person& person_;
-  uuid id_;
-  uuid project_id_;
-  std::int32_t offset_{0};
-  std::int32_t limit_{300};
-  std::vector<uuid> entity_type_id_;
-  std::vector<std::int32_t> ji_du_filter_;
-  bool ji_du_filter_is_null{false};
-  std::vector<std::int32_t> ji_shu_lie_filter_;
-  bool ji_shu_lie_filter_is_null{false};
-  std::vector<uuid> task_status_id_filter_;
-  std::vector<uuid> person_id_filter_;
-  std::string search_key_;
-  std::vector<std::int32_t> scenes_;
-  bool scenes_is_null{false};
-  std::vector<std::tuple<entity, task, entity_asset_extend, asset_type, uuid>> operator()() const;
-};
 
 struct actions_projects_casting_copy_select {
   std::vector<entity_link> source_casting_;
