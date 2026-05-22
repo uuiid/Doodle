@@ -54,6 +54,28 @@ struct fmt::formatter<doodle::http::actions_projects_casting_replace_arg> : fmt:
 namespace doodle::http {
 namespace {
 
+std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity_link>())
+      .from<entity_link>()
+      .where(c(&entity_link::entity_in_id_) == in_entity_id)()
+      .to_vector();
+}
+std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity_link>())
+      .from<entity_link>()
+      .where(c(&entity_link::entity_in_id_).in(in_entity_id))()
+      .to_vector();
+}
+
+
 auto get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
@@ -348,8 +370,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
   std::vector<std::function<void()>> l_delay_events{};
   auto l_seq        = l_sql.get_by_uuid<entity>(l_ent->parent_id_);
 
-  auto l_shot_links = sqlite_select::get_entity_link_by_entity_id(entity_id_);
-  auto l_seq_links  = sqlite_select::get_entity_link_by_entity_id(l_seq.uuid_id_);
+  auto l_shot_links = get_entity_link_by_entity_id(entity_id_);
+  auto l_seq_links  = get_entity_link_by_entity_id(l_seq.uuid_id_);
 
   auto l_list       = in_handle->get_json().get<std::vector<entity_link>>();
   for (auto&& i : l_list) {
@@ -475,7 +497,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
   auto& l_sql                                              = get_sqlite_database();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
-  auto l_shot_linke = sqlite_select::get_entity_link_by_entity_id(
+  auto l_shot_linke = get_entity_link_by_entity_id(
       l_list | ranges::views::transform(&actions_projects_casting_replace_arg::entity_id_) | ranges::to_vector
   );
   for (auto&& i : l_list) {

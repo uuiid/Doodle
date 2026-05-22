@@ -42,22 +42,6 @@
 namespace doodle::sqlite_select {
 
 
-std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
-
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(c(&entity_link::entity_in_id_) == in_entity_id));
-
-  return l_ret;
-}
-std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
-
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.get_all<entity_link>(where(in(&entity_link::entity_in_id_, in_entity_id)));
-
-  return l_ret;
-}
 std::vector<std::tuple<entity_link, std::string, std::string, uuid, uuid, uuid, uuid>> get_sequence_casting_for_entity(
     const uuid& in_entity_id
 ) {
