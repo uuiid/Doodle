@@ -29,6 +29,32 @@
 
 namespace doodle::http {
 namespace {
+
+std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
+    const uuid& in_person_id, bool in_is_admin, bool in_is_shared
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
+  auto l_dynamic_where     = dynamic_column_operations{};
+  l_dynamic_where.add_condition(c(&entity::entity_type_id_).not_in(l_temporal_type_ids));
+  if (!in_is_admin) {
+    auto l_project_ids =
+        select(l_sql).columns(&project_person_link::project_id_).from<project_person_link>().where(
+            c(&project_person_link::person_id_) == in_person_id
+        );
+    l_dynamic_where.add_condition(c(&entity::project_id_).in(l_project_ids));
+  }
+  l_dynamic_where.add_condition(c(&entity::is_shared_) == in_is_shared);
+
+  return select(l_sql).columns(object<entity>()).from<entity>().where(l_dynamic_where)().to_vector();
+}
+std::vector<entity_fts> search_entities_fts_by_keyword(
+    const std::string& in_keyword, const uuid& in_project_id, const std::int64_t in_limit, const std::int64_t in_offset
+) {
+  return sqlite_select::search_entities_fts_by_keyword(in_keyword, in_project_id, in_limit, in_offset);
+}
+
 struct projects_assets_new_post_data {
   nlohmann::json data;
   std::string description;
@@ -71,7 +97,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .source_id_      = l_data.source_id,
       .created_by_     = person_.person_.uuid_id_,
   });
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   co_await l_sql.install(l_entity);
   nlohmann::json l_json_ret{};
   l_json_ret = *l_entity;
@@ -280,7 +306,7 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   auto l_rows = l_data();
   std::vector<with_tasks_get_result_t> l_ret{};
 
-  auto& l_sql                    = get_sqlite_database();
+  auto& l_sql                   = get_sqlite_database();
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(l_data.person_, l_data.project_id_, {});
 
   l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));
@@ -335,7 +361,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
   auto& l_sql = get_sqlite_database();
-  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
+  auto l_ass  = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   person_.check_delete_access(l_ass->project_id_);
   bool l_force{};
   for (auto&& l_i : in_handle->url_.params()) {
