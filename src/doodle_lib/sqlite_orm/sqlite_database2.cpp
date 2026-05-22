@@ -42,43 +42,6 @@
 namespace doodle::sqlite_select {
 
 std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
-get_sequence_casting_for_project_and_person_and_sequence(
-    const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id, const std::vector<uuid>& in_shot_ids
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_outsource_select = select(
-      &outsource_studio_authorization::entity_id_,
-      where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_)
-  );
-
-  auto l_r = l_sql.impl_->storage_any_.select(
-      columns(
-          object<entity_link>(true), &entity::name_, &entity::preview_file_id_, &entity::project_id_, &asset_type::name_
-      ),
-      from<entity_link>(), join<shot>(on(c(&entity_link::entity_in_id_) == c(shot->*&entity::uuid_id_))),
-      join<sequence>(on(c(shot->*&entity::parent_id_) == c(sequence->*&entity::uuid_id_))),
-      join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
-      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-      where(
-          c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-          (in_sequence_id.is_nil() || c(sequence->*&entity::uuid_id_) == in_sequence_id) &&
-          (in_shot_ids.empty() || in(shot->*&entity::uuid_id_, in_shot_ids)) &&                                //
-          (in_person.role_ != person_role_type::outsource || (                                                 //
-                                                                 in(&entity::uuid_id_, l_outsource_select) ||  //
-                                                                 in(sequence->*&entity::uuid_id_, l_outsource_select)
-                                                             ))
-      ),
-      multi_order_by(
-          order_by(sequence->*&entity::name_), order_by(shot->*&entity::name_), order_by(&asset_type::name_),
-          order_by(&entity::name_)
-      )
-  );
-  return l_r;
-}
-std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
 get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
