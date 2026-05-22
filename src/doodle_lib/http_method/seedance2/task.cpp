@@ -21,7 +21,6 @@
 
 #include "http_method/kitsu.h"
 #include "reg.h"
-#include "sqlite_orm/sqlite_select_data.h"
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/opencv.hpp>
@@ -51,6 +50,16 @@ std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id) {
       .columns(object<sd2::task>())
       .from<sd2::task>()
       .where(c(&sd2::task::user_id_) == in_person_id && !c(&sd2::task::archived_))()
+      .to_vector();
+}
+
+std::vector<sd2::task> get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<sd2::task>())
+      .from<sd2::task>()
+      .where(c(&sd2::task::shot_uuid_id_) == in_task_id && c(&sd2::task::ai_studio_id_) == in_ai_studio_id && !c(&sd2::task::archived_))()
       .to_vector();
 }
 
@@ -177,9 +186,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_shot_task_instance, get) {
-  co_return in_handle->make_msg(
-      nlohmann::json{} = sqlite_select::get_task_for_shot_task_id(id_, person_.get_ai_studio_id())
-  );
+  co_return in_handle->make_msg(nlohmann::json{} = get_task_for_shot_task_id(id_, person_.get_ai_studio_id()));
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
