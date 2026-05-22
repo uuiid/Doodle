@@ -12,7 +12,6 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-
 namespace doodle::http {
 namespace {
 struct actions_tasks_clear_assignation_put_args {
@@ -25,12 +24,33 @@ struct actions_tasks_clear_assignation_put_args {
   }
 };
 
+// 获取任务分配的人(连接表)
+std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_task_id, uuid in_person_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<assignees_table>())
+      .from<assignees_table>()
+      .where(c(&assignees_table::task_id_) == in_task_id && c(&assignees_table::person_id_) == in_person_id)
+      .limit(1)()
+      .to_optional();
+}
+std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(&assignees_table::id_)
+      .from<assignees_table>()
+      .where(c(&assignees_table::task_id_) == in_task_id)()
+      .to_vector();
+}
+
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clear_assignation::put(
     session_data_ptr in_handle
 ) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());
@@ -43,10 +63,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
   );
   for (auto&& l_i : l_args.task_id_)
     if (!l_args.person_id_.is_nil()) {
-      if (auto l_assign = sqlite_select::get_task_assignees_for_task_and_person(l_i, l_args.person_id_); l_assign)
+      if (auto l_assign = get_task_assignees_for_task_and_person(l_i, l_args.person_id_); l_assign)
         co_await get_sqlite_database().remove<assignees_table>(l_assign.value().id_);
     } else {
-      co_await get_sqlite_database().remove<assignees_table>(sqlite_select::get_task_assignees_ids_for_task(l_i));
+      co_await get_sqlite_database().remove<assignees_table>(get_task_assignees_ids_for_task(l_i));
     }
 
   SPDLOG_LOGGER_WARN(

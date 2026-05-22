@@ -229,8 +229,23 @@ void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) co
   if (!l_sql.is_person_in_project(person_, in_project_id))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
+
+namespace {
+uuid get_ai_studio_uuid_for_person(const uuid& in_person_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(&ai_studio_person_role_link::ai_studio_id_)
+      .from<ai_studio_person_role_link>()
+      .where(c(&ai_studio_person_role_link::person_id_) == in_person_id)
+      .limit(1)()
+      .to_optional()
+      .value_or(uuid{});
+}
+}  // namespace
+
 uuid http_jwt_fun::http_jwt_t::get_ai_studio_id() const {
-  auto l_uuid = sqlite_select::get_ai_studio_uuid_for_person(person_.uuid_id_);
+  auto l_uuid = get_ai_studio_uuid_for_person(person_.uuid_id_);
   DOODLE_CHICK(!l_uuid.is_nil(), "人员没有所属的 ai 配置");
   return l_uuid;
 }
