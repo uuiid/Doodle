@@ -20,7 +20,37 @@
 #include <vector>
 
 namespace doodle::http::seedance2 {
+
 namespace sd2 = doodle::seedance2;
+namespace {
+
+std::vector<assets_entity_and_item> get_assets_entity_and_item_all_for_person_and_ai_studio(
+    const uuid& in_group_id, const uuid& in_ai_studio_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_entities =
+      select(l_sql)
+          .columns(object<sd2::assets_entity>(), object<sd2::assets_entity_item>())
+          .from<sd2::assets_entity>()
+          .left_outer_join<sd2::assets_entity_item>(&sd2::assets_entity_item::parent_id_, &sd2::assets_entity::uuid_id_)
+          .where(
+              c(&sd2::assets_entity::group_id_) == in_group_id &&
+              c(&sd2::assets_entity::ai_studio_id_) == in_ai_studio_id
+          );
+  std::vector<assets_entity_and_item> l_result{};
+  std::map<uuid, std::size_t> l_map{};
+  for (auto&& [entity, item] : l_entities()) {
+    if (!l_map.contains(entity.uuid_id_)) {
+      l_result.emplace_back(entity);
+      l_map[entity.uuid_id_] = l_result.size() - 1;
+    }
+    if (!item.uuid_id_.is_nil()) l_result[l_map[entity.uuid_id_]].items_.push_back(item);
+  }
+  return l_result;
+}
+}  // namespace
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
   auto l_json   = in_handle->get_json();
   auto l_entity = std::make_shared<sd2::assets_entity>();
@@ -29,7 +59,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
   l_entity->group_id_     = group_id_;
   l_entity->user_id_      = person_.person_.uuid_id_;
   l_entity->ai_studio_id_ = person_.get_ai_studio_id();
-  auto& l_sql              = get_sqlite_database();
+  auto& l_sql             = get_sqlite_database();
   co_await l_sql.install(l_entity);
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
@@ -37,18 +67,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_entity, get) {
   co_return in_handle->make_msg(
-      nlohmann::json{} =
-          sqlite_select::get_assets_entity_and_item_all_for_person_and_ai_studio(group_id_, person_.get_ai_studio_id())
+      nlohmann::json{} = get_assets_entity_and_item_all_for_person_and_ai_studio(group_id_, person_.get_ai_studio_id())
   );
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, get) {
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_entity = l_sql.get_by_uuid<sd2::assets_entity>(entity_id_);
   DOODLE_CHICK_HTTP(l_entity.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   co_return in_handle->make_msg(nlohmann::json{} = l_entity);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, put) {
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_entity = std::make_shared<sd2::assets_entity>(l_sql.get_by_uuid<sd2::assets_entity>(entity_id_));
   DOODLE_CHICK_HTTP(l_entity->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_entity->uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");
@@ -59,7 +88,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, put)
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_instance, delete_) {
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_entity = l_sql.get_by_uuid<sd2::assets_entity>(entity_id_);
   DOODLE_CHICK_HTTP(l_entity.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_entity.uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");
