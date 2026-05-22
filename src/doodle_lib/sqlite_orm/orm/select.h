@@ -232,7 +232,7 @@ struct select_template_t : public select_t {
   );
   template <typename FromTable>
   select_template_t join(const on_operations& in_on, join_type in_join_type = join_type::inner) {
-    select_t::join(in_on, in_join_type);
+    select_t::join<FromTable>(in_on, in_join_type);
     return *this;
   }
   template <typename JoinTable>

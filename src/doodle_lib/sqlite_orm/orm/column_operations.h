@@ -20,7 +20,10 @@ namespace doodle::orm {
 enum class compare_operator {
   and_,
   or_,
-
+  // == operators
+  equal,
+  // != operators
+  not_equal,
 };
 
 // and 运算符
@@ -44,6 +47,7 @@ struct operator_compare_t : public column_operations_base_t {
 
   // operator &&, || column_operations
   template <typename U>
+    requires(std::is_base_of_v<column_operations, std::decay_t<U>>)
   operator_compare_t operator&&(U&& other) const {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
@@ -54,6 +58,7 @@ struct operator_compare_t : public column_operations_base_t {
     return compare;
   }
   template <typename U>
+    requires(std::is_base_of_v<column_operations, std::decay_t<U>>)
   operator_compare_t operator||(U&& other) const {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
@@ -172,6 +177,17 @@ struct column_operations : column_operations_base_t {
     data_impl_ptr_->to_str_ptr_ = l_ptr;
     return *this;
   }
+  template <typename U>
+    requires(std::is_base_of_v<column_operations, std::decay_t<U>>)
+  auto operator==(U&& other) const {
+    auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
+    auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
+    operator_compare_t compare{};
+    compare.data_impl_ptr_->op_    = compare_operator::equal;  // 这里使用 EQUAL 来连接两个条件
+    compare.data_impl_ptr_->left_  = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
+    return compare;
+  }
 
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
@@ -187,6 +203,18 @@ struct column_operations : column_operations_base_t {
     }
     return *this;
   }
+  template <typename U>
+    requires(std::is_base_of_v<column_operations, std::decay_t<U>>)
+  auto operator!=(U&& other) const {
+    auto l_self_ptr  = std::make_shared<column_operations>(std::move(*this));
+    auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
+    operator_compare_t compare{};
+    compare.data_impl_ptr_->op_    = compare_operator::not_equal;  // 这里使用 NOT_EQUAL 来连接两个条件
+    compare.data_impl_ptr_->left_  = l_self_ptr;
+    compare.data_impl_ptr_->right_ = l_other_ptr;
+    return compare;
+  }
+
   // operator >, <, >=, <=
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
@@ -353,6 +381,12 @@ struct formatter<doodle::orm::compare_operator> {
         break;
       case doodle::orm::compare_operator::or_:
         name = "OR";
+        break;
+      case doodle::orm::compare_operator::equal:
+        name = "==";
+        break;
+      case doodle::orm::compare_operator::not_equal:
+        name = "!=";
         break;
     }
     format_to(ctx.out(), "{}", name);
