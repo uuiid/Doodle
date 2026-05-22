@@ -27,10 +27,10 @@ Produce a safe, staged migration from `sqlite_orm` usage to a first-party `doodl
 - No external interface compatibility retention is required. Legacy external APIs can be replaced directly.
 
 ## Procedure
-1. Baseline and map current usage.
+1. Map current usage (no start-of-task build).
    - Locate all `sqlite_orm` includes, namespaces, type aliases, and query builders in scope.
    - Capture current behavior contracts: schema creation, joins, filters, ordering, null handling, transactions, exceptions/error codes.
-   - Record compile/test baseline before any changes.
+   - Do not run compile/test baseline at the beginning; defer build/test to migration batches and final gates.
 
 2. Define migration strategy.
     - Use direct rewrite as default.
@@ -213,7 +213,7 @@ Validation note for these examples:
 - Error handling is exception-based, consistent, and documented.
 
 ## Completion Checklist
-- Baseline captured and compared.
+- Current usage and behavior contracts mapped.
 - Target `doodle::orm` API documented in code.
 - Explicit scope is recorded from the conversation.
 - Direct rewrite path is recorded (or explicit exception documented).
