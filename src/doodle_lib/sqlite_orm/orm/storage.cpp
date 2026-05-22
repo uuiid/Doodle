@@ -356,6 +356,9 @@ std::string storage::get_column_name(const table_columns_t& in_column, bool add_
   auto& l_column     = l_table.find_column_info(in_column);
   return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
 }
+
+std::int64_t storage::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_); }
+
 }  // namespace orm
 
 }  // namespace doodle

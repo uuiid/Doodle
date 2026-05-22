@@ -80,13 +80,14 @@ struct update_t {
         l_primary_key_ = l_column;
         continue;
       }
-      auto col_ptr = std::make_shared<column_operations>(std::forward<decltype(l_column.ptr_)>(l_column.ptr_));
+      auto col_ptr = std::make_shared<column_operations>(l_column.ptr_);
       *col_ptr     = l_column.ptr_.get_value(in_object.obj_);
 
       column_operations_.push_back(col_ptr);
     }
     from<Table>();
-    where(column_operations{l_primary_key_.ptr_} == in_object.obj_.*(l_primary_key_.ptr_));
+    where(column_operations{l_primary_key_.ptr_} == l_primary_key_.ptr_.get_value(in_object.obj_));
+    return *this;
   }
 
   std::string to_sql(bool in_include_table_name) const;

@@ -20,7 +20,7 @@ std::string insert_t::to_sql(bool in_include_table_name) const {
   return l_sql;
 }
 
-insert_t& insert_t::operator()() {
+std::int64_t insert_t::operator()() {
   if (!stmt_) {
     auto l_sql = to_sql(false);
     stmt_      = std::make_shared<sqlite_stmt>();
@@ -29,7 +29,7 @@ insert_t& insert_t::operator()() {
   stmt_->reset_bind();
   for (const auto& val : values_.bind_values_) val.bind(*stmt_);
   stmt_->step();
-  return *this;
+  return s_->get_last_insert_rowid();
 }
 
 }  // namespace doodle::orm

@@ -277,6 +277,7 @@ class storage : public boost::noncopyable {
   };
 
   transaction_guard transaction();
+  std::int64_t get_last_insert_rowid() const;
 
  private:
   template <typename T, typename T2>

@@ -87,7 +87,7 @@ class sqlite_database : public orm::storage {
   template <typename T>
   std::vector<T> get_all() {
     using namespace orm;
-    return select(*this).columns(object<T>()).template from<T>()();
+    return select(*this).columns(object<T>()).template from<T>()().to_vector();
   }
 
   template <typename T>
@@ -187,10 +187,8 @@ class sqlite_database : public orm::storage {
   }
   template <typename T>
   void install_unsafe(std::shared_ptr<T> in_data) {
-    auto l_g = transaction();
     using namespace orm;
-    in_data->id_ = orm::insert(*this).into<T>().values(*in_data)();
-    l_g.commit();
+    in_data->id_ = orm::insert(*this).into<T>().values(object<T>(*in_data))();
   }
 
   template <typename T>
@@ -227,13 +225,14 @@ class sqlite_database : public orm::storage {
     auto l_size = in_data->size();
     using namespace orm;
     auto l_insert = orm::insert(*this).into<T>();
-    for (std::size_t i = 0; i < l_size;) {
-      auto l_end = std::min(i + g_step_size, l_size);
-      if (i == 0)
-        l_insert.set_range(ranges::subrange(*in_data, i, l_end))();
-      else
-        l_insert.rebind_range(ranges::subrange(*in_data, i, l_end))();
-      i = l_end;
+    bool first    = true;
+    for (auto&& view : *in_data | ranges::views::chunk(g_step_size)) {
+      if (first) {
+        l_insert.set_range(view)();
+        first = false;
+      } else {
+        l_insert.rebind_range(view)();
+      }
     }
     l_g.commit();
     DOODLE_TO_SELF();
@@ -267,6 +266,7 @@ class sqlite_database : public orm::storage {
     auto l_size   = in_data->size();
     auto l_update = orm::update(*this).from<T>();
     for (auto&& i : *in_data) {
+      using namespace orm;
       l_update.set(object<T>(i));
     }
     l_g.commit();

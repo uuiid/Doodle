@@ -30,13 +30,13 @@ struct insert_t {
 
  public:
   template <typename... TableColumns>
+    requires((std::is_base_of_v<column_operations, std::decay_t<TableColumns>> && ...))
   insert_t& set(TableColumns&&... in_columns) {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
+      columns_.push_back(in_column.get_column_info_ptr());
+      in_column.collect_bind_variants(values_);
       if constexpr (std::is_base_of_v<column_operations, column_or_struct_type>) {
-        columns_.push_back(in_column.get_column_info_ptr());
-        in_column.collect_bind_variants(values_);
-
       } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
         using Table         = column_or_struct_type;
         auto l_table_cloums = s_->template get_table_columns<Table>();
@@ -54,13 +54,27 @@ struct insert_t {
     return *this;
   }
   template <typename T>
+    requires is_object_specialization_v<std::decay_t<T>>
+  insert_t& values(T&& in_object) {
+    using Table         = class_type_t<std::decay_t<T>>;
+    auto l_table_cloums = s_->template get_table_columns<Table>();
+
+    for (const auto& l_column : l_table_cloums) {
+      if (l_column.primary_key_) continue;  // 跳过主键列
+      columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));
+      values_.bind_values_.push_back(l_column.ptr_.get_value(in_object.obj_));
+    }
+    return *this;
+  }
+
+  template <typename T>
     requires(std::ranges::range<T>)
   insert_t& set_range(T&& values) {
     if (values.empty()) return *this;  // 如果没有值，直接返回
     if (values.size() > 100)
       throw std::runtime_error("set_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
 
-    using value_type    = std::decay_t<T>::value_type;
+    using value_type    = std::ranges::range_value_t<std::decay_t<T>>;
     using Table         = value_type;
     auto l_table_cloums = s_->template get_table_columns<Table>();
     for (const auto& l_column : l_table_cloums) {
@@ -85,7 +99,7 @@ struct insert_t {
       throw std::runtime_error("rebind_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
     if (values.size() != batch_size_) throw std::runtime_error("rebind_range中的值数量必须与set_range时一致");
 
-    using value_type    = std::decay_t<T>::value_type;
+    using value_type    = std::ranges::range_value_t<std::decay_t<T>>;
     using Table         = value_type;
     auto l_table_cloums = s_->template get_table_columns<Table>();
     values_.bind_values_.clear();
@@ -110,7 +124,7 @@ struct insert_t {
     return *this;
   }
 
-  insert_t& operator()();
+  std::int64_t operator()();
   std::string to_sql(bool in_include_table_name) const;
 };
 

@@ -150,6 +150,10 @@ struct column_operations : column_operations_base_t {
     if constexpr (is_alias_column_t_v<std::decay_t<U>>) {
       data_impl_ptr_->to_str_ptr_ =
           std::make_shared<to_str_compare_t>("{} == {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
+    } else if constexpr (std::is_same_v<std::decay_t<U>, bind_value_t>) {
+      auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
+      l_ptr->value_variant_       = value;
+      data_impl_ptr_->to_str_ptr_ = l_ptr;
     } else {
       auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
       l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
@@ -157,6 +161,7 @@ struct column_operations : column_operations_base_t {
     }
     return *this;
   }
+
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>>)
   auto operator!=(U&& value) const {
