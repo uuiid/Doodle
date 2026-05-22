@@ -152,6 +152,103 @@ auto get_sequence_casting_for_project_and_person_and_sequence(
       .order_by(&asset_type::name_)
       .order_by(&entity::name_)();
 }
+struct actions_projects_casting_copy_select {
+  std::vector<entity_link> source_casting_;
+  std::vector<entity> source_shots_;
+  std::vector<entity> target_shots_;
+};
+
+actions_projects_casting_copy_select get_actions_projects_casting_copy_select(
+    const uuid& in_source_project_id, const uuid& in_target_project_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  actions_projects_casting_copy_select l_ret{};
+  auto shot             = alias<entity>("shot");
+  auto sequence         = alias<entity>("sequence");
+  l_ret.source_casting_ = select(l_sql)
+                              .columns(object<entity_link>())
+                              .from<entity_link>()
+                              .join(shot, &entity_link::entity_in_id_, shot->*&entity::uuid_id_)
+                              .join(sequence, shot->*&entity::parent_id_, sequence->*&entity::uuid_id_)
+                              .where(c(sequence->*&entity::uuid_id_) == in_source_project_id)()
+                              .to_vector();
+  // 查找 shot
+  l_ret.source_shots_ = select(l_sql)
+                            .columns(object<entity>())
+                            .from<entity>()
+                            .where(c(&entity::parent_id_) == in_source_project_id && c(&entity::canceled_) != true)()
+                            .to_vector();
+  l_ret.target_shots_ = select(l_sql)
+                            .columns(object<entity>())
+                            .from<entity>()
+                            .where(c(&entity::parent_id_) == in_target_project_id && c(&entity::canceled_) != true)()
+                            .to_vector();
+  return l_ret;
+}
+
+struct actions_projects_sequences_casting_ue_assembly_harvest_select_t {
+  std::vector<std::tuple<entity_asset_extend, uuid /*entity::entity_type_id_*/>> ass_all_{};
+  std::vector<std::tuple<entity, entity_shot_extend>> shot_and_ext_{};
+  std::vector<std::tuple<entity_link, entity_asset_extend, uuid /*entity::entity_type_id_*/>> ass_link{};
+
+  static actions_projects_sequences_casting_ue_assembly_harvest_select_t get(
+      const uuid& in_project_id, const uuid& in_sequence_id
+  );
+};
+
+actions_projects_sequences_casting_ue_assembly_harvest_select_t
+actions_projects_sequences_casting_ue_assembly_harvest_select_t::get(
+    const uuid& in_project_id, const uuid& in_sequence_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto shot     = alias<entity>("shot");
+  auto sequence = alias<entity>("sequence");
+  // 直接获取当集资产, 后续不使用数据库进行匹配, 人工匹配
+  auto l_ass_all          = select(l_sql)
+           .columns(object<entity_asset_extend>(), &entity::entity_type_id_)
+           .from<entity_asset_extend>()
+           .join<entity>(&entity::uuid_id_, &entity_asset_extend::entity_id_)
+           .where(
+             c(&entity::project_id_) == in_project_id &&
+             c(&entity_asset_extend::entity_id_)
+               .in(select(l_sql)
+                   .columns(&entity_link::entity_out_id_)
+                   .from<entity_link>()
+                   .join(shot, &entity_link::entity_in_id_, shot->*&entity::uuid_id_)
+                   .join(sequence, shot->*&entity::parent_id_, sequence->*&entity::uuid_id_)
+                   .where(
+                     c(sequence->*&entity::uuid_id_) == in_sequence_id &&
+                     c(shot->*&entity::canceled_) != true
+                   ))
+           )()
+           .to_vector();
+
+  std::vector<uuid> l_ass_shot_ids{};
+  auto l_shot_and_ext = select(l_sql)
+                            .columns(object<entity>(), object<entity_shot_extend>())
+                            .from<entity>()
+                            .join<entity_shot_extend>(&entity::uuid_id_, &entity_shot_extend::entity_id_)
+                            .join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
+                            .where(c(sequence->*&entity::uuid_id_) == in_sequence_id && c(&entity::canceled_) != true)()
+                            .to_vector();
+  for (auto&& [l_shot, l_shot_ext] : l_shot_and_ext) {
+    l_ass_shot_ids.emplace_back(l_shot.uuid_id_);
+  }
+
+  // 查询所有的子镜头和用到的资产
+  auto l_ass_link = select(l_sql)
+                        .columns(object<entity_link>(), object<entity_asset_extend>(), &entity::entity_type_id_)
+                        .from<entity_link>()
+                        .join<entity>(&entity::uuid_id_, &entity_link::entity_out_id_)
+                        .join<entity_asset_extend>(&entity::uuid_id_, &entity_asset_extend::entity_id_)
+                        .where(c(&entity_link::entity_in_id_).in(l_ass_shot_ids))()
+                        .to_vector();
+  return actions_projects_sequences_casting_ue_assembly_harvest_select_t{
+      .ass_all_ = l_ass_all, .shot_and_ext_ = l_shot_and_ext, .ass_link = l_ass_link
+  };
+}
 
 struct data_project_sequences_casting_result {
   explicit data_project_sequences_casting_result(
@@ -335,8 +432,6 @@ struct get_casting_t {
         project_id_(in_project_id) {}
 
   static std::vector<get_casting_t> get(const uuid& in_entity_id) {
-    auto& l_sql = get_sqlite_database();
-    using namespace sqlite_orm;
     auto l_r = get_sequence_casting_for_entity(in_entity_id);
     std::vector<get_casting_t> l_ret{};
     for (auto&& l_v : l_r) {
@@ -562,8 +657,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
 
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   {
-    auto l_row =
-        sqlite_select::get_actions_projects_casting_copy_select(l_arg.source_sequence_id_, l_arg.target_sequence_id_);
+    auto l_row = get_actions_projects_casting_copy_select(l_arg.source_sequence_id_, l_arg.target_sequence_id_);
 
     std::map<uuid, uuid> l_shot_id_map{};
     std::map<std::string, entity*> l_target_shot_name_map{};
@@ -725,7 +819,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembl
     }
   };
 
-  auto l_row = sqlite_select::actions_projects_sequences_casting_ue_assembly_harvest_select_t::get(project_id_, id_);
+  auto l_row = actions_projects_sequences_casting_ue_assembly_harvest_select_t::get(project_id_, id_);
 
   std::map<std::string, std::size_t> l_ass_all_map{};
   for (auto i = 0; i < l_row.ass_all_.size(); ++i) {
