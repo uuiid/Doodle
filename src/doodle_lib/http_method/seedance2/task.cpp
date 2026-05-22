@@ -2,6 +2,7 @@
 
 #include "doodle_core/exception/exception.h"
 #include "doodle_core/metadata/person.h"
+#include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/assets_entity.h>
 #include <doodle_core/metadata/seedance2/assets_entity_item.h>
@@ -26,6 +27,7 @@
 #include <opencv2/opencv.hpp>
 #include <regex>
 #include <spdlog/spdlog.h>
+
 
 #define DOODLE_SEED2
 
