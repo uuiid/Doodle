@@ -21,6 +21,43 @@
 namespace doodle::http {
 
 namespace {
+
+auto get_projects_and_status_name_by_project_name(const std::string& in_project_name) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_select = select(l_sql)
+                      .columns(object<project>(), &project_status::name_)
+                      .from<project>()
+                      .join<project_status>(&project::project_status_id_, &project_status::uuid_id_)
+                      .order_by(&project_status::name_);
+
+  if (in_project_name.empty()) return l_select();
+
+  return l_select.where(c(&project::name_) == in_project_name)();
+}
+std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
+    const uuid& in_project_id, const uuid& in_person_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(&project_person_link::id_)
+      .from<project_person_link>()
+      .where(c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person_id)()
+      .to_optional();
+}
+std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_status_id(
+    const uuid& in_project_id, const uuid& in_status_id
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(&project_status_automation_link::id_)
+      .from<project_status_automation_link>()
+      .where(c(&project_status_automation_link::project_id_) == in_project_id && c(&project_status_automation_link::status_automation_id_) == in_status_id)()
+      .to_optional();
+}
+
 struct project_all_get_result_t : project {
   explicit project_all_get_result_t(const project& p, const std::string& in_status_name) : project(p) {
     project_status_name = in_status_name;
@@ -37,7 +74,7 @@ auto select_project_all_get_result(const std::string& in_name) {
   auto& l_sql = get_sqlite_database();
   std::vector<project_all_get_result_t> l_list{};
   using namespace sqlite_orm;
-  for (auto&& [l_prj, l_status_name] : sqlite_select::get_projects_and_status_name_by_project_name(in_name)) {
+  for (auto&& [l_prj, l_status_name] : get_projects_and_status_name_by_project_name(in_name)) {
     l_list.emplace_back(project_all_get_result_t(l_prj, l_status_name));
   }
   return l_list;
@@ -58,7 +95,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
   co_return in_handle->make_msg(l_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::put(session_data_ptr in_handle) {
-  auto& l_sql     = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -77,7 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
@@ -299,7 +336,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team::post(session_data_ptr in_handle) {
   person_.check_project_manager(id_);
   auto l_add_team = in_handle->get_json()["person_id"].get<uuid>();
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始向项目 {} 添加成员 {}", person_.person_.email_,
@@ -335,8 +372,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
 
   using namespace sqlite_orm;
 
-  if (auto l_id = sqlite_select::get_project_person_id_by_project_id_and_person_id(project_id_, person_id_);
-      l_id.has_value()) {
+  if (auto l_id = get_project_person_id_by_project_id_and_person_id(project_id_, person_id_); l_id.has_value()) {
     co_await l_sql.remove<project_person_link>(l_id.value());
     socket_io::broadcast(socket_io::project_update_broadcast_t{.project_id_ = project_id_});
   }
@@ -374,7 +410,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
     session_data_ptr in_handle
 ) {
   person_.check_project_manager(id_);
-  auto& l_sql                   = get_sqlite_database();
+  auto& l_sql                  = get_sqlite_database();
   auto l_ptr                   = std::make_shared<project_status_automation_link>();
   l_ptr->project_id_           = id_;
   l_ptr->status_automation_id_ = in_handle->get_json().at("status_automation_id").get<uuid>();
@@ -406,9 +442,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_inst
       person_.person_.get_full_name(), project_id_, status_automation_id_
   );
   using namespace sqlite_orm;
-  if (auto l_id = sqlite_select::get_project_status_automation_id_by_project_id_and_status_id(
-          project_id_, status_automation_id_
-      );
+  if (auto l_id = get_project_status_automation_id_by_project_id_and_status_id(project_id_, status_automation_id_);
       l_id.has_value()) {
     co_await l_sql.remove<project_status_automation_link>(l_id.value());
   }

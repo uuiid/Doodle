@@ -41,45 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<std::tuple<project, std::string>> get_projects_and_status_name_by_project_name(
-    const std::string& in_project_name
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_projects = l_sql.impl_->storage_any_.select(
-      columns(object<project>(true), &project_status::name_), from<project>(),
-      join<project_status>(on(c(&project::project_status_id_) == c(&project_status::uuid_id_))),
-      where(in_project_name.empty() || c(&project::name_) == in_project_name), order_by(&project_status::name_)
-  );
-  return l_projects;
-}
-std::optional<std::int64_t> get_project_person_id_by_project_id_and_person_id(
-    const uuid& in_project_id, const uuid& in_person_id
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ids = l_sql.impl_->storage_any_.select(
-      &project_person_link::id_,
-      where(
-          c(&project_person_link::project_id_) == in_project_id && c(&project_person_link::person_id_) == in_person_id
-      )
-  );
-  return !l_ids.empty() ? std::optional{l_ids.front()} : std::optional<std::int64_t>{std::nullopt};
-}
-std::optional<std::int64_t> get_project_status_automation_id_by_project_id_and_status_id(
-    const uuid& in_project_id, const uuid& in_status_id
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ids = l_sql.impl_->storage_any_.select(
-      &project_status_automation_link::id_,
-      where(
-          c(&project_status_automation_link::project_id_) == in_project_id &&
-          c(&project_status_automation_link::status_automation_id_) == in_status_id
-      )
-  );
-  return !l_ids.empty() ? std::optional{l_ids.front()} : std::optional<std::int64_t>{std::nullopt};
-}
 std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
     const uuid& in_person_id, bool in_is_admin, bool in_is_shared
 ) {
