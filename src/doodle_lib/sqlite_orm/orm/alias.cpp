@@ -21,4 +21,10 @@ void alias_column_info_t ::set_value(const sqlite_stmt& stmt, int columnIndex, v
 void alias_column_info_t ::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
   ptr_.set_struct_value(stmt, columnIndex, out_value);
 }
+
+std::string rank_info_t::get_column_name(const storage& s, bool include_table_name) const { return "rank"; }
+std::string rank_info_t::get_table_name(const storage& s) const { return ""; }
+void rank_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
+void rank_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
+
 }  // namespace doodle::orm

@@ -21,6 +21,7 @@
 #include <boost/hana.hpp>
 #include <boost/url/url.hpp>
 
+#include "sqlite_orm/orm/select.h"
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
@@ -39,10 +40,10 @@ std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
   auto l_dynamic_where     = dynamic_column_operations{};
   l_dynamic_where.add_condition(c(&entity::entity_type_id_).not_in(l_temporal_type_ids));
   if (!in_is_admin) {
-    auto l_project_ids =
-        select(l_sql).columns(&project_person_link::project_id_).from<project_person_link>().where(
-            c(&project_person_link::person_id_) == in_person_id
-        );
+    auto l_project_ids = select(l_sql)
+                             .columns(&project_person_link::project_id_)
+                             .from<project_person_link>()
+                             .where(c(&project_person_link::person_id_) == in_person_id);
     l_dynamic_where.add_condition(c(&entity::project_id_).in(l_project_ids));
   }
   l_dynamic_where.add_condition(c(&entity::is_shared_) == in_is_shared);
@@ -52,7 +53,21 @@ std::vector<entity> get_entities_by_person_id_and_is_admin_and_is_shared(
 std::vector<entity_fts> search_entities_fts_by_keyword(
     const std::string& in_keyword, const uuid& in_project_id, const std::int64_t in_limit, const std::int64_t in_offset
 ) {
-  return sqlite_select::search_entities_fts_by_keyword(in_keyword, in_project_id, in_limit, in_offset);
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto l_t = l_sql.get_temporal_type_ids();
+
+  return select(l_sql)
+      .columns(object<entity_fts>())
+      .from<entity_fts>()
+      .where(
+          match(in_keyword) && c(&entity_fts::entity_type_id_).not_in(l_t) &&
+          c(&entity_fts::project_id_) == in_project_id
+      )
+      .order_by(rank())
+      .offset(in_offset)
+      .limit(in_limit)()
+      .to_vector();
 }
 
 struct projects_assets_new_post_data {

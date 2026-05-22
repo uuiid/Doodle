@@ -87,10 +87,20 @@ struct alias_info_t : public table_info_base_t {
   std::string get_table_name(const storage& s) const override;
 };
 
+// fts5 rank
+
+struct rank_info_t : public base_column_info_t {
+  std::string get_column_name(const storage& s, bool include_table_name) const override;
+  std::string get_table_name(const storage& s) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+};
+
 template <typename Table>
 alias_t<Table> alias(std::string table_alias_name) {
   return alias_t<Table>{std::move(table_alias_name)};
 }
+inline rank_info_t rank() { return rank_info_t{}; }
 
 template <typename Table, typename ValueType>
 alias_column_t<Table, ValueType> new_(ValueType Table::* column_alias);

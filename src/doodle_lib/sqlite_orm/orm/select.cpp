@@ -12,6 +12,10 @@
 #include <vector>
 
 namespace doodle::orm {
+select_t select_t::order_by(const rank_info_t& rank_column, bool ascending) {
+  impl_->order_bys_.push_back(order_by_info_t{std::make_shared<rank_info_t>(rank_column), ascending});
+  return *this;
+}
 
 std::string select_t::to_sql(const storage& s) const {
   std::vector<std::string> l_column_names_str{};

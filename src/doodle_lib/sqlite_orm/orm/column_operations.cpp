@@ -234,5 +234,35 @@ std::string on_operations::get_column_name(const storage& /*s*/) const {
   throw std::runtime_error("on_operations does not represent a specific column and cannot generate a column name");
 }
 
+match_operations::match_operations(std::string pattern) : pattern_(std::move(pattern)) {}
+std::string match_operations::to_sql(const storage& s, bool include_table_name) const {
+  auto column_name = get_column_name(s);
+  return fmt::format("MATCH ?", column_name);
+}
+void match_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  bind_variants.bind_values_.push_back(pattern_);
+}
+std::string match_operations::get_column_name(const storage& s) const {
+  throw std::runtime_error("match_operations does not represent a specific column and cannot generate a column name");
+}
+
+operator_compare_t match_operations::operator&&(column_operations&& other) const {
+  operator_compare_t compare{};
+  auto l_self_ptr                = std::make_shared<match_operations>(std::move(*this));
+  auto l_other_ptr               = std::make_shared<column_operations>(std::move(other));
+  compare.data_impl_ptr_->op_    = compare_operator::and_;
+  compare.data_impl_ptr_->left_  = l_self_ptr;
+  compare.data_impl_ptr_->right_ = l_other_ptr;
+  return compare;
+}
+operator_compare_t match_operations::operator||(column_operations&& other) const {
+  operator_compare_t compare{};
+  auto l_self_ptr                = std::make_shared<match_operations>(std::move(*this));
+  auto l_other_ptr               = std::make_shared<column_operations>(std::move(other));
+  compare.data_impl_ptr_->op_    = compare_operator::or_;
+  compare.data_impl_ptr_->left_  = l_self_ptr;
+  compare.data_impl_ptr_->right_ = l_other_ptr;
+  return compare;
+}
 
 }  // namespace doodle::orm

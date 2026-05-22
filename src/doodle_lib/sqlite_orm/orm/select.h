@@ -110,6 +110,7 @@ struct select_t {
   template <typename T>
     requires is_alias_column_t_v<std::decay_t<T>>
   select_t order_by(T&& alias_column, bool ascending = true);
+  select_t order_by(const rank_info_t& rank_column, bool ascending = true);
 
   select_t limit(std::size_t count) {
     impl_->limit_ = count;
@@ -283,6 +284,11 @@ struct select_template_t : public select_t {
   template <typename T>
     requires is_alias_column_t_v<std::decay_t<T>>
   select_template_t order_by(T&& alias_column, bool ascending = true);
+
+  select_template_t order_by(const rank_info_t& rank_column, bool ascending = true) {
+    select_t::order_by(rank_column, ascending);
+    return *this;
+  }
 
   select_template_t limit(std::size_t count);
   select_template_t offset(std::size_t count);

@@ -47,7 +47,7 @@ struct operator_compare_t : public column_operations_base_t {
 
   // operator &&, || column_operations
   template <typename U>
-    requires(std::is_base_of_v<column_operations, std::decay_t<U>>)
+    requires(std::is_base_of_v<column_operations_base_t, std::decay_t<U>>)
   operator_compare_t operator&&(U&& other) const {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
@@ -58,7 +58,7 @@ struct operator_compare_t : public column_operations_base_t {
     return compare;
   }
   template <typename U>
-    requires(std::is_base_of_v<column_operations, std::decay_t<U>>)
+    requires(std::is_base_of_v<column_operations_base_t, std::decay_t<U>>)
   operator_compare_t operator||(U&& other) const {
     auto l_self_ptr  = std::make_shared<operator_compare_t>(std::move(*this));
     auto l_other_ptr = std::make_shared<std::decay_t<U>>(std::forward<U>(other));
@@ -351,10 +351,27 @@ struct on_operations : column_operations_base_t {
   std::string get_column_name(const storage& s) const override;
 };
 
+// fts5 MATCH
+struct match_operations : column_operations_base_t {
+  bind_value_t pattern_;
+  match_operations(std::string pattern);
+  std::string to_sql(const storage& s, bool include_table_name) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+  std::string get_column_name(const storage& s) const override;
+
+  // operator and, or
+  operator_compare_t operator&&(column_operations&& other) const;
+  operator_compare_t operator||(column_operations&& other) const;
+};
+
+
+
 template <typename T>
 auto on(T&& condition) {
   return on_operations(std::forward<T>(condition));
 }
+
+inline match_operations match(std::string pattern) { return match_operations(std::move(pattern)); }
 
 template <typename T>
 auto c(auto T::* in_ptr) {
