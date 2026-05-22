@@ -40,11 +40,28 @@
 #include <vector>
 
 namespace doodle::http {
+namespace {
+std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<preview_file>())
+      .from<preview_file>()
+      .join<task>(&preview_file::task_id_, &task::uuid_id_)
+      .join<task_type>(&task::task_type_id_, &task_type::uuid_id_)
+      .where(c(&task::entity_id_) == in_entity_id)
+      .order_by(&task_type::name_)
+      .order_by(&preview_file::revision_, false)
+      .order_by(&preview_file::position_)()
+      .to_vector();
+}
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_add_preview::post(
     session_data_ptr in_handle
 ) {
   person_.check_task_action_access(task_id_);
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
 
   auto l_comment  = l_sql.get_by_uuid<comment>(comment_id_);
   auto l_task     = l_sql.get_by_uuid<task>(task_id_);
@@ -117,7 +134,7 @@ cv::Size save_variants(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存变体图片时输入图片为空");
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
   auto l_now  = std::chrono::steady_clock::now();
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
   auto l_watermarked_image = l_add_watermark(in_image, {1920, 1080});
   std::array g_variants{
@@ -151,7 +168,7 @@ cv::Size save_watermarked_image(const cv::Mat& in_image, const uuid& in_id) {
   DOODLE_CHICK(!in_image.empty(), "保存加水印图片时输入图片为空");
 
   auto& l_ctx = g_ctx().get<kitsu_ctx_t>();
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_path = l_ctx.get_outsource_pictures_original_file(in_id);
   if (auto l_p = l_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
   doodle::detail::add_watermark_t l_add_watermark{l_sql.get_all<organisation>().front().name_, 150};
@@ -292,7 +309,7 @@ image_info_t convert_to_png(const FSys::path& in_path) {
 
 }  // namespace preview
 boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_files::post(session_data_ptr in_handle) {
-  auto& l_sql          = get_sqlite_database();
+  auto& l_sql         = get_sqlite_database();
   auto l_preview_file = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(id_));
   if (!l_preview_file->original_name_.empty())
     throw_exception(
@@ -386,7 +403,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> pictures_preview_f
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comments_preview_files::post(
     session_data_ptr in_handle
 ) {
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_task_action_access(*l_task);
   auto l_comment          = std::make_shared<comment>(l_sql.get_by_uuid<comment>(comment_id_));
@@ -444,7 +461,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_files_set_main_preview::put(
     session_data_ptr in_handle
 ) {
-  auto& l_sql          = get_sqlite_database();
+  auto& l_sql         = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(id_);
 
   std::int32_t l_frame_number{-1};
@@ -476,10 +493,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities_preview_files, get) {
   auto& l_sql = get_sqlite_database();
-  auto l_ent = l_sql.get_by_uuid<entity>(entity_id_);
+  auto l_ent  = l_sql.get_by_uuid<entity>(entity_id_);
   person_.check_in_project(l_ent.project_id_);
   person_.check_not_outsourcer();
-  std::vector<preview_file> l_ret = sqlite_select::get_preview_files_by_entity_id(entity_id_);
+  std::vector<preview_file> l_ret = get_preview_files_by_entity_id(entity_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 

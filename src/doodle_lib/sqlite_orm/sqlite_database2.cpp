@@ -41,19 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<preview_file> get_preview_files_by_entity_id(const uuid& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.get_all<preview_file>(
-      join<task>(on(c(&preview_file::task_id_) == c(&task::uuid_id_))),
-      join<task_type>(on(c(&task::task_type_id_) == c(&task_type::uuid_id_))),
-      where(c(&task::entity_id_) == in_entity_id),
-      multi_order_by(
-          order_by(&task_type::name_), order_by(&preview_file::revision_).desc(), order_by(&preview_file::position_)
-      )
-  );
-  return l_ret;
-}
 std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uuid& in_entity_id) {
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
