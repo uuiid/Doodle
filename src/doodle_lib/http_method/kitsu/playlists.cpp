@@ -19,10 +19,91 @@
 #include <vector>
 
 namespace doodle::http {
+namespace {
+enum class get_playlist_order_by {
+  create_at,
+  name,
+  update_at,
+};
+
+std::vector<playlist> get_playlist_by_task_type_and_project(
+    const get_playlist_order_by in_order_by, const uuid& in_project_id, const uuid& in_task_type_id,
+    const std::int32_t in_page
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  std::int32_t l_offset = (in_page - 1) * 20;
+
+  auto l_where          = dynamic_column_operations{};
+  l_where.add_condition(c(&playlist::project_id_) == in_project_id);
+  if (!in_task_type_id.is_nil()) l_where.add_condition(c(&playlist::task_type_id_) == in_task_type_id);
+  auto l_select = select(l_sql).columns(object<playlist>()).from<playlist>().where(l_where);
+  switch (in_order_by) {
+    case get_playlist_order_by::create_at:
+      l_select.order_by(&playlist::created_at_, false);
+    case get_playlist_order_by::name:
+      l_select.order_by(&playlist::name_);
+    case get_playlist_order_by::update_at:
+    default:
+      l_select.order_by(&playlist::updated_at_, false);
+  }
+  return l_select.limit(20).offset(l_offset)().to_vector();
+}
+
+auto get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(const std::vector<uuid>& in_entity_ids) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<preview_file>(), &task::task_type_id_, &task::entity_id_)
+      .from<preview_file>()
+      .join<task>(&preview_file::task_id_, &task::uuid_id_)
+      .join<task_type>(&task::task_type_id_, &task_type::uuid_id_)
+      .where(c(&task::entity_id_).in(in_entity_ids))
+      .order_by(&task_type::priority_, false)
+      .order_by(&task_type::name_)
+      .order_by(&preview_file::revision_, false)
+      .order_by(&preview_file::position_)
+      .order_by(&preview_file::created_at_)();
+}
+std::size_t count_playlist_shots_by_playlist_shot_id(const uuid& in_playlist_shot_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(count(&playlist_shot::uuid_id_))
+      .from<playlist_shot>()
+      .where(c(&playlist_shot::playlist_id_) == in_playlist_shot_id)()
+      .to_single();
+}
+
+auto get_preview_files_and_entity_id_and_entity_name_by_sequence_id(const uuid& in_sequence_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+
+  auto sequence = alias<entity>("sequence");
+  auto l_where  = dynamic_column_operations{};
+  l_where.add_condition(c(sequence->*&entity::uuid_id_) == in_sequence_id);
+  l_where.add_condition(c(&preview_file::source_)
+                            .in(std::vector<preview_file_source_enum>{
+                                preview_file_source_enum::auto_light_generate,
+                                preview_file_source_enum::vfx_review,
+                            }));
+
+  return select(l_sql)
+      .columns(object<preview_file>(), &entity::uuid_id_, &entity::name_)
+      .from<preview_file>()
+      .join<task>(&preview_file::task_id_, &task::uuid_id_)
+      .join<entity>(&task::entity_id_, &entity::uuid_id_)
+      .join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
+      .where(l_where)
+      .order_by(&preview_file::created_at_, false)();
+}
+
+}  // namespace
+
 boost::asio::awaitable<boost::beast::http::message_generator> playlists_entities_preview_files::get(
     session_data_ptr in_handle
 ) {
-  auto& l_sql     = get_sqlite_database();
+  auto& l_sql    = get_sqlite_database();
   auto l_entt_id = l_sql.get_by_uuid<entity>(id_);
   person_.check_not_outsourcer();
   person_.check_in_project(l_entt_id.project_id_);
@@ -49,7 +130,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_preview_fi
     session_data_ptr in_handle
 ) {
   person_.check_not_outsourcer();
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_prev = std::make_shared<preview_file>(l_sql.get_by_uuid<preview_file>(preview_file_id_));
   auto l_task = l_sql.get_by_uuid<task>(l_prev->task_id_);
   person_.check_in_project(l_task.project_id_);
@@ -345,7 +426,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 ) {
   person_.check_not_outsourcer();
   person_.check_in_project(project_id_);
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_task_ids = in_handle->get_json().value("task_ids", std::vector<uuid>{});
   bool l_is_sort{};
   for (auto&& [key, value, has] : in_handle->url_.params())
@@ -427,35 +508,29 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_playlists::get(session_data_ptr in_handle) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto& l_sql = get_sqlite_database();
   std::int32_t l_page{1};
   uuid l_task_type_id{};
-  sqlite_select::get_playlist_by_task_type_and_project::order_by_enum l_order_by{};
+  auto l_order_by = get_playlist_order_by::update_at;
   for (auto&& [key, value, has] : in_handle->url_.params()) {
     if (key == "page" && has) l_page = std::clamp(std::stoi(value), 1, INT32_MAX);
     if (key == "task_type_id" && has) l_task_type_id = from_uuid_str(value);
     if (key == "order_by" && has) {
       if (value == "created_at")
-        l_order_by = sqlite_select::get_playlist_by_task_type_and_project::order_by_enum::create_at;
+        l_order_by = get_playlist_order_by::create_at;
       else if (value == "name")
-        l_order_by = sqlite_select::get_playlist_by_task_type_and_project::order_by_enum::name;
+        l_order_by = get_playlist_order_by::name;
       else
-        l_order_by = sqlite_select::get_playlist_by_task_type_and_project::order_by_enum::update_at;
+        l_order_by = get_playlist_order_by::update_at;
     }
   }
 
   co_return in_handle->make_msg(
-      nlohmann::json{} = sqlite_select::get_playlist_by_task_type_and_project{
-          .order_by_     = l_order_by,
-          .project_id_   = project_id_,
-          .task_type_id_ = l_task_type_id,
-          .page_         = l_page,
-      }()
+      nlohmann::json{} = get_playlist_by_task_type_and_project(l_order_by, project_id_, l_task_type_id, l_page)
   );
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_playlists::post(session_data_ptr in_handle) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = std::make_shared<playlist>();
   in_handle->get_json().get_to(*l_playlist);
   person_.check_in_project(l_playlist->project_id_);
@@ -617,7 +692,7 @@ struct playlist_shot_t : playlist {
 };
 
 auto get_playlist_shot_entity(const playlist& in_playlist) {
-  auto& l_sql                 = get_sqlite_database();
+  auto& l_sql                = get_sqlite_database();
   const auto l_playlist_shot = l_sql.get_playlist_shot_entity(in_playlist.uuid_id_);
   std::vector<uuid> l_entity_ids{};
   std::map<uuid, const playlist_shot*> l_playlist_shot_map{};
@@ -639,7 +714,7 @@ auto get_playlist_shot_entity(const playlist& in_playlist) {
 
   using namespace sqlite_orm;
   for (auto&& [l_preview_file, l_task_type_id, l_entity_id] :
-       sqlite_select::get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(l_entity_ids)) {
+       get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(l_entity_ids)) {
     DOODLE_CHICK(
         l_playlist_shot_map.contains(l_entity_id),
         fmt::format("Preview file's entity {} is not in playlist {}", l_entity_id, in_playlist.uuid_id_)
@@ -659,12 +734,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_playl
 ) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
   co_return in_handle->make_msg(nlohmann::json{} = get_playlist_shot_entity(l_playlist));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_instance::put(session_data_ptr in_handle) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(id_));
   person_.check_in_project(l_playlist->project_id_);
   person_.check_not_outsourcer();
@@ -688,7 +763,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_playlists_ins
   co_return in_handle->make_msg(l_ret);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = l_sql.get_by_uuid<playlist>(id_);
   person_.check_in_project(l_playlist.project_id_);
   person_.check_not_outsourcer();
@@ -702,7 +777,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance, delete_) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = std::make_shared<playlist>(l_sql.get_by_uuid<playlist>(playlist_id_));
   auto l_entity   = l_sql.get_by_uuid<entity>(entity_id_);
   person_.check_in_project(l_playlist->project_id_);
@@ -718,7 +793,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   l_playlist_shot->entity_id_   = l_entity.uuid_id_;
   using namespace sqlite_orm;
   if (l_playlist_shot->order_index_ <= 0)  // 如果没有指定顺序，则放在最后
-    l_playlist_shot->order_index_ = sqlite_select::count_playlist_shots_by_playlist_shot_id(playlist_id_) * 100;
+    l_playlist_shot->order_index_ = count_playlist_shots_by_playlist_shot_id(playlist_id_) * 100;
   co_await l_sql.install(l_playlist_shot);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
@@ -729,7 +804,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
   person_.check_in_project(l_playlist.project_id_);
   person_.check_not_outsourcer();
@@ -753,7 +828,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, put) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_playlist_shot);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_shots, delete_) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_playlist = l_sql.get_by_uuid<playlist>(playlist_id_);
   person_.check_in_project(l_playlist.project_id_);
   person_.check_not_outsourcer();
@@ -778,11 +853,11 @@ struct get_sequence_shots_preview_t : boost::less_than_comparable<get_sequence_s
   bool operator==(const get_sequence_shots_preview_t& other) const { return name_ == other.name_; }
 };
 auto get_sequence_shots_preview(const uuid& in_sequence_id) {
-  auto l_shots = sqlite_select::get_preview_files_and_entity_id_and_entity_name_by_sequence_id(in_sequence_id);
   std::set<uuid> l_set;
   std::vector<get_sequence_shots_preview_t> l_result;
 
-  for (auto&& [l_preview_file, l_entity_id, l_entity_name] : l_shots) {
+  for (auto&& [l_preview_file, l_entity_id, l_entity_name] :
+       get_preview_files_and_entity_id_and_entity_name_by_sequence_id(in_sequence_id)) {
     if (!l_set.contains(l_entity_id)) {
       l_set.emplace(l_entity_id);
       l_result.push_back(get_sequence_shots_preview_t{l_entity_id, l_preview_file, l_entity_name});
@@ -795,7 +870,7 @@ auto get_sequence_shots_preview(const uuid& in_sequence_id) {
 }
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_sequences_create_review_playlists, post) {
-  auto& l_sql      = get_sqlite_database();
+  auto& l_sql     = get_sqlite_database();
   auto l_sequence = l_sql.get_by_uuid<entity>(sequence_id_);
   person_.check_in_project(l_sequence.project_id_);
   person_.check_not_outsourcer();
