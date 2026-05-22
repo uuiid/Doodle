@@ -54,6 +54,23 @@ struct fmt::formatter<doodle::http::actions_projects_casting_replace_arg> : fmt:
 namespace doodle::http {
 namespace {
 
+auto get_sequence_casting_for_entity(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(
+          object<entity_link>(), &entity::name_, &asset_type::name_, &entity::ready_for_, &entity::source_id_,
+          &entity::preview_file_id_, &entity::project_id_
+      )
+      .from<entity_link>()
+      .join<entity>(&entity_link::entity_out_id_, &entity::uuid_id_)
+      .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+      .where(c(&entity_link::entity_in_id_) == in_entity_id && c(&entity::canceled_) != true)
+      .order_by(&asset_type::name_)
+      .order_by(&entity::name_)()
+      .to_vector();
+}
+
 std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) {
   auto& l_sql = get_sqlite_database();
 
@@ -74,7 +91,6 @@ std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& i
       .where(c(&entity_link::entity_in_id_).in(in_entity_id))()
       .to_vector();
 }
-
 
 auto get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
   auto& l_sql = get_sqlite_database();
@@ -321,7 +337,7 @@ struct get_casting_t {
   static std::vector<get_casting_t> get(const uuid& in_entity_id) {
     auto& l_sql = get_sqlite_database();
     using namespace sqlite_orm;
-    auto l_r = sqlite_select::get_sequence_casting_for_entity(in_entity_id);
+    auto l_r = get_sequence_casting_for_entity(in_entity_id);
     std::vector<get_casting_t> l_ret{};
     for (auto&& l_v : l_r) {
       l_ret.push_back(std::make_from_tuple<get_casting_t>(l_v));
