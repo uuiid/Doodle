@@ -41,38 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<uuid> get_comment_object_ids_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.select(&comment::object_id_, where(c(&comment::uuid_id_) == in_comment_id));
-  return l_ret;
-}
-std::vector<uuid> get_task_project_ids_by_task_id(const uuid& in_task_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.select(&task::project_id_, where(c(&task::uuid_id_) == in_task_id));
-  return l_ret;
-}
-std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_person_id(
-    const uuid& in_comment_id, const uuid& in_person_id
-) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ret = l_sql.impl_->storage_any_.select(
-      &comment_acknoledgments::id_, where(
-                                        c(&comment_acknoledgments::comment_id_) == in_comment_id &&
-                                        c(&comment_acknoledgments::person_id_) == in_person_id
-                                    )
-  );
-  return l_ret;
-}
-std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_ret =
-      l_sql.impl_->storage_any_.get_all<attachment_file>(where(c(&attachment_file::comment_id_) == in_comment_id));
-  return l_ret;
-}
 std::vector<playlist> get_playlist_by_task_type_and_project::operator()() const {
   auto& l_sql = get_sqlite_database();
   using namespace sqlite_orm;
