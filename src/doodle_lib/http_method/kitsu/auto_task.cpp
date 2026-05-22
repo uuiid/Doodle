@@ -251,7 +251,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     }
   }
 
-  auto l_assets = sqlite_select::get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
+  auto l_assets = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
   FSys::path l_scene_ue_path{"D:/sy_magic/ue_projects/"};  // 默认路径
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
 
@@ -592,7 +592,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   using namespace sqlite_orm;
   constexpr auto shot     = "shot"_alias.for_<entity>();
   constexpr auto sequence = "sequence"_alias.for_<entity>();
-  auto l_assets           = sqlite_select::get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
+  auto l_assets           = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};
   auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
