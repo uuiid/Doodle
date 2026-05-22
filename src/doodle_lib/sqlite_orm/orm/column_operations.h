@@ -162,8 +162,10 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && !is_alias_column_t_v<std::decay_t<U>> &&
-             !std::is_same_v<std::decay_t<U>, bind_value_t>)
+    requires(
+        !std::is_base_of_v<column_operations, std::decay_t<U>> && !is_alias_column_t_v<std::decay_t<U>> &&
+        !std::is_same_v<std::decay_t<U>, bind_value_t>
+    )
   auto operator==(U&& value) const {
     auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
     l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
@@ -308,6 +310,23 @@ struct dynamic_column_operations : column_operations_base_t {
     operations_.push_back(std::make_shared<std::decay_t<T>>(std::forward<T>(condition)));
   }
 };
+
+struct on_operations : column_operations_base_t {
+  std::shared_ptr<column_operations_base_t> expr_;
+  on_operations();
+  template <typename T>
+    requires std::derived_from<std::decay_t<T>, column_operations_base_t>
+  on_operations(T&& condition) : expr_(std::make_shared<std::decay_t<T>>(std::forward<T>(condition))) {}
+
+  std::string to_sql(const storage& s, bool include_table_name) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+  std::string get_column_name(const storage& s) const override;
+};
+
+template <typename T>
+auto on(T&& condition) {
+  return on_operations(std::forward<T>(condition));
+}
 
 template <typename T>
 auto c(auto T::* in_ptr) {

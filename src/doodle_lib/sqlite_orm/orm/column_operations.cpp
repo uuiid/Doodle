@@ -218,4 +218,21 @@ std::string dynamic_column_operations::get_column_name(const storage& /*s*/) con
   );
 }
 
+on_operations::on_operations() = default;
+std::string on_operations::to_sql(const storage& s, bool include_table_name) const {
+  if (expr_) {
+    return fmt::format("ON {}", expr_->to_sql(s, include_table_name));
+  } else {
+    return "ON 1=1";  // 默认返回一个永远为真的条件
+  }
+}
+void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  if (expr_) expr_->collect_bind_variants(bind_variants);
+}
+std::string on_operations::get_column_name(const storage& /*s*/) const {
+  // 直接抛出异常，因为 on_operations 不代表一个具体的列，无法生成列名
+  throw std::runtime_error("on_operations does not represent a specific column and cannot generate a column name");
+}
+
+
 }  // namespace doodle::orm
