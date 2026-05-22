@@ -51,47 +51,4 @@ target_sources(
         ai_studio.cpp
         jobs.cpp
 )
-
-# 这个文件夹中所有的源文件都要使用限制池构建
-set_source_files_properties(
-        actions.cpp
-        assets.cpp
-        attachment_files.cpp
-        auth_outsource.cpp
-        auth.cpp
-        auto_task.cpp
-        base_data.cpp
-        casting.cpp
-        comment.cpp
-        compose_video.cpp
-        computers.cpp
-        computing_time.cpp
-        config.cpp
-        distributed_task.cpp
-        entities.cpp
-        ai_studio.cpp
-        epiboly.cpp
-        file_status.cpp
-        jobs.cpp
-        kitsu_front_end.cpp
-        kitsu_reg_url.cpp
-        login.cpp
-        metadata_descriptors.cpp
-        movies.cpp
-        notifications.cpp
-        output_types.cpp
-        pictures.cpp
-        playlists.cpp
-        preview.cpp
-        project.cpp
-        schedule_items.cpp
-        sequences.cpp
-        shots.cpp
-        task.cpp
-        time.cpp
-        user.cpp
-        working_file.cpp
-        
-        TARGET_DIRECTORY doodle_lib
-        PROPERTIES JOB_POOL_COMPILE sql_query_pool
-)
+ 

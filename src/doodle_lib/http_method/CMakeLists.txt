@@ -24,11 +24,4 @@ add_subdirectory(local)
 add_subdirectory(other)
 add_subdirectory(seedance2)
 # add_subdirectory1(ai)
-
-set_source_files_properties(
-        dingding_attendance.cpp
-        computer_reg_data.cpp
-
-        TARGET_DIRECTORY doodle_lib
-        PROPERTIES JOB_POOL_COMPILE sql_query_pool
-)
+ 

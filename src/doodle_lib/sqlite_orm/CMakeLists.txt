@@ -13,11 +13,3 @@ target_sources(
 add_subdirectory(detail)
 add_subdirectory(tokenizer)
 add_subdirectory(orm)
-
-set_source_files_properties(
-        sqlite_database.cpp
-        sqlite_select_data.cpp
-        sqlite_upgrade.cpp
-        TARGET_DIRECTORY doodle_lib
-        PROPERTIES JOB_POOL_COMPILE sql_query_pool
-)
