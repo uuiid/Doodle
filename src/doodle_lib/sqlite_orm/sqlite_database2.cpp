@@ -41,30 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<std::tuple<entity, outsource_studio_authorization, entity_asset_extend, entity_shot_extend>>
-get_entity_and_outsource_studio_authorization_by_project_id(const uuid& in_project_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  auto l_rows = l_sql.impl_->storage_any_.iterate(select(
-      columns(
-          object<entity>(true), object<outsource_studio_authorization>(true), object<entity_asset_extend>(true),
-          object<entity_shot_extend>(true)
-      ),
-      from<entity>(),
-      left_outer_join<outsource_studio_authorization>(
-          on(c(&outsource_studio_authorization::entity_id_) == c(&entity::uuid_id_))
-      ),
-      left_outer_join<entity_asset_extend>(on(c(&entity_asset_extend::entity_id_) == c(&entity::uuid_id_))),
-      left_outer_join<entity_shot_extend>(on(c(&entity_shot_extend::entity_id_) == c(&entity::uuid_id_))),
-      where(c(&entity::project_id_) == in_project_id), order_by(&entity::name_)
-  ));
-  std::vector<std::tuple<entity, outsource_studio_authorization, entity_asset_extend, entity_shot_extend>> l_result{};
-  l_result.reserve(l_sql.get_project_entity_count(in_project_id));
-  for (auto&& [l_entity, l_authorization, l_entity_asset_extend, l_entity_shot_extend] : l_rows)
-    l_result.emplace_back(l_entity, l_authorization, l_entity_asset_extend, l_entity_shot_extend);
-
-  return l_result;
-}
 std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset_extend_by_shot_id(
     const uuid& in_shot_id
 ) {
