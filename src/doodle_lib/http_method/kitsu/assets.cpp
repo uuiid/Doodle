@@ -411,9 +411,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets::get(s
   for (auto&& [key, value, has] : in_handle->url_.params())
     if (key == "is_shared") l_is_shared = true;
 
-  auto l_entt = sqlite_select::get_entities_by_person_id_and_is_admin_and_is_shared(
-      person_.person_.uuid_id_, person_.is_admin(), l_is_shared
-  );
+  auto l_entt =
+      get_entities_by_person_id_and_is_admin_and_is_shared(person_.person_.uuid_id_, person_.is_admin(), l_is_shared);
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
 struct actions_projects_search_arg_t {
@@ -431,8 +430,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_search, post) {
   person_.check_not_outsourcer();
   auto l_arg = in_handle->get_json().get<actions_projects_search_arg_t>();
   co_return in_handle->make_msg(
-      nlohmann::json{} =
-          sqlite_select::search_entities_fts_by_keyword(l_arg.query_, project_id_, l_arg.limit_, l_arg.offset_)
+      nlohmann::json{} = search_entities_fts_by_keyword(l_arg.query_, project_id_, l_arg.limit_, l_arg.offset_)
   );
 }
 }  // namespace doodle::http
