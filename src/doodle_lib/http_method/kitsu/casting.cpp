@@ -54,6 +54,28 @@ struct fmt::formatter<doodle::http::actions_projects_casting_replace_arg> : fmt:
 namespace doodle::http {
 namespace {
 
+auto get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  auto asset   = alias<entity>("asset");
+  auto l_where = dynamic_column_operations{};
+  l_where.add_condition(c(&entity::canceled_) != true);
+  if (!in_project_id.is_nil()) l_where.add_condition(c(&entity::project_id_) == in_project_id);
+  if (!in_asset_type_id.is_nil()) l_where.add_condition(c(&entity::entity_type_id_) == in_asset_type_id);
+
+  return select(l_sql)
+      .columns(
+          object<entity_link>(), &entity::name_, &entity::preview_file_id_, &entity::project_id_, &asset_type::name_
+      )
+      .from<entity_link>()
+      .join(asset, &entity_link::entity_in_id_, asset->*&entity::uuid_id_)
+      .join<entity>(&entity_link::entity_out_id_, &entity::uuid_id_)
+      .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
+      .where(l_where)
+      .order_by(&asset_type::name_)
+      .order_by(&entity::name_)();
+}
+
 auto get_sequence_casting_for_project_and_person_and_sequence(
     const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id, const std::vector<uuid>& in_shot_ids
 ) {
@@ -213,7 +235,7 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
   using namespace sqlite_orm;
   constexpr auto asset = "asset"_alias.for_<entity>();
   for (auto&& [ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_] :
-       sqlite_select::get_sequence_casting_for_project_and_asset_type(in_project_id, in_asset_type_id)) {
+       get_sequence_casting_for_project_and_asset_type(in_project_id, in_asset_type_id)) {
     l_result.maps[ent_link.entity_in_id_].emplace_back(
         data_project_asset_types_casting_result{
             ent_link, entity_name_, entity_name_, asset_type_name_, entity_preview_file_id_

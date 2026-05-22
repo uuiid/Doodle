@@ -41,29 +41,6 @@
 
 namespace doodle::sqlite_select {
 
-std::vector<std::tuple<entity_link, std::string, uuid, uuid, std::string>>
-get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
-  auto& l_sql = get_sqlite_database();
-  using namespace sqlite_orm;
-  constexpr auto asset = "asset"_alias.for_<entity>();
-  auto l_r             = l_sql.impl_->storage_any_.select(
-
-      columns(
-          object<entity_link>(true), &entity::name_, &entity::preview_file_id_, &entity::project_id_, &asset_type::name_
-      ),
-      from<entity_link>(),  //
-      join<asset>(on(c(&entity_link::entity_in_id_) == c(asset->*&entity::uuid_id_))),
-      join<entity>(on(c(&entity_link::entity_out_id_) == c(&entity::uuid_id_))),
-      join<asset_type>(on(c(&entity::entity_type_id_) == c(&asset_type::uuid_id_))),
-      where(
-          c(&entity::canceled_) != true && (in_project_id.is_nil() || c(&entity::project_id_) == in_project_id) &&
-          (in_asset_type_id.is_nil() || c(&entity::entity_type_id_) == in_asset_type_id)
-      ),
-      multi_order_by(order_by(&asset_type::name_), order_by(&entity::name_))
-
-  );
-  return l_r;
-}
 
 std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) {
   auto& l_sql = get_sqlite_database();
