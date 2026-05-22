@@ -302,7 +302,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
       person_.person_.get_full_name(), comment_id_
   );
 
-  using namespace sqlite_orm;
   auto l_task_id = get_comment_object_ids_by_comment_id(comment_id_);
 
   if (l_task_id.empty())
