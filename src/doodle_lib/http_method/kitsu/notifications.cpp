@@ -131,6 +131,43 @@ struct data_user_notifications_get_result {
     j["subscription_id"]           = p.subscription_id_;
   }
 };
+
+std::vector<std::tuple<notification, entity, comment, uuid, std::string, uuid, uuid>>
+get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
+    const uuid& in_person_id, const std::optional<chrono::system_zoned_time>& in_after,
+    const std::optional<chrono::system_zoned_time>& in_before, const uuid& in_task_type_id,
+    const uuid& in_task_status_id, const std::optional<notification_type>& in_notification_type,
+    const std::optional<bool>& in_read
+) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+
+  auto l_where = dynamic_column_operations{};
+  l_where.add_condition(c(&notification::person_id_) == in_person_id);
+  if (in_after) l_where.add_condition(c(&notification::created_at_) > *in_after);
+  if (in_before) l_where.add_condition(c(&notification::created_at_) < *in_before);
+  if (!in_task_type_id.is_nil()) l_where.add_condition(c(&task::task_type_id_) == in_task_type_id);
+  if (!in_task_status_id.is_nil()) l_where.add_condition(c(&comment::task_status_id_) == in_task_status_id);
+  if (in_notification_type) l_where.add_condition(c(&notification::type_) == *in_notification_type);
+  if (in_read) l_where.add_condition(c(&notification::read_) == *in_read);
+
+  return select(l_sql)
+      .columns(
+          object<notification>(), object<entity>(), object<comment>(), &project::uuid_id_, &project::name_,
+          &task::task_type_id_, &subscription::uuid_id_
+      )
+      .from<notification>()
+      .join<task>(&notification::task_id_, &task::uuid_id_)
+      .join<project>(&task::project_id_, &project::uuid_id_)
+      .left_outer_join<entity>(&task::entity_id_, &entity::uuid_id_)
+      .left_outer_join<comment>(&notification::comment_id_, &comment::uuid_id_)
+      .left_outer_join<subscription>(
+          on(c(&subscription::task_id_) == c(&task::uuid_id_) && c(&subscription::person_id_) == in_person_id)
+      )
+      .where(l_where)()
+      .to_vector();
+}
+
 auto get_last_notifications_query(const uuid& in_person_id, const data_user_notifications_get_args& in_args) {
   using namespace sqlite_orm;
   if (in_person_id.is_nil())
@@ -138,16 +175,16 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
   auto& l_sql = get_sqlite_database();
   std::vector<data_user_notifications_get_result> l_ret{};
   // constexpr auto author = "author"_alias.for_<person>();
-  auto l_row = sqlite_select::
-      get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
-          in_person_id, in_args.after_, in_args.before_, in_args.task_type_id_, in_args.task_status_id_,
-          in_args.notification_type_, in_args.read_
-      );
+
   for (auto&& [
 
            l_notification, l_entity, l_comment, project_id, project_name, task_type_id, subscription_id
 
-  ] : l_row) {
+  ] :
+       get_notifications_and_entity_and_comment_and_project_id_and_project_name_and_task_id_and_task_name_by_person_id(
+           in_person_id, in_args.after_, in_args.before_, in_args.task_type_id_, in_args.task_status_id_,
+           in_args.notification_type_, in_args.read_
+       )) {
     auto l_preview_file_id = l_sql.get_preview_file_for_comment(l_comment.uuid_id_).value_or(preview_file{}).uuid_id_;
     l_comment.mentions_    = sqlite_select::get_comment_mentions_person_ids_by_comment_id(l_comment.uuid_id_);
     l_comment.department_mentions_ =
@@ -168,7 +205,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
-  auto& l_sql        = get_sqlite_database();
+  auto& l_sql       = get_sqlite_database();
   auto l_not        = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   const bool l_read = in_handle->get_json().value<bool>("read", false);
 
