@@ -9,14 +9,35 @@
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
 namespace doodle::http {
-namespace {}
+namespace {
+std::optional<entity_asset_extend> get_entity_asset_extend_by_entity_id(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity_asset_extend>())
+      .from<entity_asset_extend>()
+      .where(c(&entity_asset_extend::entity_id_) == in_entity_id)
+      .limit(1)()
+      .to_optional();
+}
+std::optional<entity_shot_extend> get_entity_shot_extend_by_entity_id(const uuid& in_entity_id) {
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  return select(l_sql)
+      .columns(object<entity_shot_extend>())
+      .from<entity_shot_extend>()
+      .where(c(&entity_shot_extend::entity_id_) == in_entity_id)
+      .limit(1)()
+      .to_optional();
+}
+}  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entities, get) {
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_entt = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_entt);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put(session_data_ptr in_handle) {
-  auto& l_sql  = get_sqlite_database();
+  auto& l_sql = get_sqlite_database();
   auto l_entt = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   auto l_json = in_handle->get_json();
 
@@ -32,8 +53,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   if (entity_asset_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
     auto l_ext_ptr = std::make_shared<entity_asset_extend>();
-    if (auto l_list_ext = sqlite_select::get_entity_asset_extend_by_entity_id(l_entt->uuid_id_);
-        l_list_ext.has_value()) {
+    if (auto l_list_ext = get_entity_asset_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
       co_await l_sql.update(l_ext_ptr);
@@ -47,8 +67,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entities::put
   if (entity_shot_extend::has_extend_data(l_json)) {
     using namespace sqlite_orm;
     auto l_ext_ptr = std::make_shared<entity_shot_extend>();
-    if (auto l_list_ext = sqlite_select::get_entity_shot_extend_by_entity_id(l_entt->uuid_id_);
-        l_list_ext.has_value()) {
+    if (auto l_list_ext = get_entity_shot_extend_by_entity_id(l_entt->uuid_id_); l_list_ext.has_value()) {
       *l_ext_ptr = l_list_ext.value();
       l_json.get_to(*l_ext_ptr);
       co_await l_sql.update(l_ext_ptr);
