@@ -6,8 +6,8 @@ namespace doodle::orm {
 // 序列化 sql 上下文标准
 class to_sql_ctx {
  public:
-  enum to_sql_ctx_e {  // 这些上下文会影响 column_operations 中 operator=, operator== 等操作符生成的 SQL
-                       // 片段中是否是bind参数，还是直接使用值
+  enum to_sql_ctx_e : std::int64_t {  // 这些上下文会影响 column_operations 中 operator=, operator== 等操作符生成的 SQL
+                                      // 片段中是否是bind参数，还是直接使用值
     select_sql              = 1 << 0,
     insert_sql              = 1 << 1,
     update_sql              = 1 << 2,
