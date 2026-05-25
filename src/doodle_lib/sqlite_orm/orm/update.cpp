@@ -15,10 +15,10 @@ std::string update_t::to_sql(to_sql_ctx ctx) const {
 
   std::vector<std::string> l_set_clauses;
   for (const auto& col_op : column_operations_) {
-    l_set_clauses.push_back(col_op->to_sql(*s_, ctx));
+    l_set_clauses.push_back(col_op->to_sql(*s_, l_ctx));
   }
   auto l_sql = fmt::format(
-      "UPDATE {} SET {} WHERE {}", from_table_name_, fmt::join(l_set_clauses, ", "), wheres_->to_sql(*s_, ctx)
+      "UPDATE {} SET {} WHERE {}", from_table_name_, fmt::join(l_set_clauses, ", "), wheres_->to_sql(*s_, l_ctx)
   );
   return l_sql;
 }
