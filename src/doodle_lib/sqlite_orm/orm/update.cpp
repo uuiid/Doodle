@@ -8,21 +8,22 @@
 #include <vector>
 
 namespace doodle::orm {
-std::string update_t::to_sql(bool in_include_table_name) const {
+std::string update_t::to_sql(to_sql_ctx ctx) const {
   if (!wheres_) throw std::runtime_error("WHERE condition is required for UPDATE operation");
 
   std::vector<std::string> l_set_clauses;
   for (const auto& col_op : column_operations_) {
-    l_set_clauses.push_back(col_op->to_sql(*s_, in_include_table_name));
+    l_set_clauses.push_back(col_op->to_sql(*s_, ctx));
   }
   auto l_sql = fmt::format(
-      "UPDATE {} SET {} WHERE {}", from_table_name_, fmt::join(l_set_clauses, ", "), wheres_->to_sql(*s_, true)
+      "UPDATE {} SET {} WHERE {}", from_table_name_, fmt::join(l_set_clauses, ", "), wheres_->to_sql(*s_, ctx)
   );
   return l_sql;
 }
 update_t& update_t::operator()() & {
   if (!stmt_) {
-    auto l_sql = to_sql(false);
+    to_sql_ctx l_ctx{.ctx_ = to_sql_ctx::update_sql};
+    auto l_sql = to_sql(l_ctx);
     stmt_      = std::make_shared<sqlite_stmt>();
     stmt_->prepare(*s_, l_sql);
     bind_variants_.bind_values_.clear();

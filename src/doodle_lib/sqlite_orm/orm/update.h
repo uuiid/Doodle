@@ -90,7 +90,7 @@ struct update_t {
     return *this;
   }
 
-  std::string to_sql(bool in_include_table_name) const;
+  std::string to_sql(to_sql_ctx ctx) const;
 
   update_t& operator()() &;
   update_t operator()() &&;

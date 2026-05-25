@@ -347,14 +347,14 @@ void storage::rollback_transaction() {
 storage::transaction_guard storage::transaction() { return transaction_guard{*this}; }
 storage::pragma_t& storage::pragma() { return pragma_; }
 
-std::string storage::get_column_name(const table_columns_t& in_column, bool add_table_name) const {
+std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ctx ctx) const {
   auto l_type_index = in_column.table_type_index_;
   if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
 
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
-  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
+  return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
 }
 
 std::int64_t storage::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_); }

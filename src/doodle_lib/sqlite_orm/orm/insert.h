@@ -125,7 +125,7 @@ struct insert_t {
   }
 
   std::int64_t operator()();
-  std::string to_sql(bool in_include_table_name) const;
+  std::string to_sql(to_sql_ctx in_ctx) const;
 };
 
 inline auto insert(storage& s) -> insert_t {

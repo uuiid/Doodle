@@ -3,8 +3,8 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 namespace doodle::orm {
-std::string column_info_t::get_column_name(const storage& s, bool include_table_name) const {
-  return s.get_column_name(ptr_, include_table_name);
+std::string column_info_t::get_column_name(const storage& s, to_sql_ctx ctx) const {
+  return s.get_column_name(ptr_, ctx);
 }
 std::string column_info_t::get_table_name(const storage& s) const { return s.get_table_name(ptr_.table_type_index_); }
 

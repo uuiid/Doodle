@@ -33,7 +33,7 @@ struct delete_t {
 
   delete_t& operator()();
 
-  std::string to_sql(bool in_include_table_name) const;
+  std::string to_sql(to_sql_ctx ctx) const;
 };
 inline delete_t delete_from(storage& s) {
   delete_t l_delete{};

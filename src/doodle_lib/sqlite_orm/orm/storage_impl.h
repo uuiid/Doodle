@@ -19,7 +19,6 @@
 
 namespace doodle::orm {
 
-
 template <typename T>
 column_info& table_info_base::find_column_info(auto T::* in_ptr) {
   auto l_iter = std::find_if(columns_.begin(), columns_.end(), [in_ptr](const column_info& in_column) {
@@ -111,17 +110,15 @@ std::string storage::get_table_name() const {
   return get_table_name(std::type_index(typeid(T)));
 }
 template <typename T>
-std::string storage::get_column_name(auto T::* in_ptr, bool add_table_name) const {
+std::string storage::get_column_name(auto T::* in_ptr, to_sql_ctx ctx) const {
   auto l_type_index = std::type_index(typeid(T));
   if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
 
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_ptr);
-  return add_table_name ? fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_) : l_column.name_;
+  return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
 }
-
-
 
 template <typename T>
 std::vector<std::string> storage::get_table_column_names() const {

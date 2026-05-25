@@ -252,8 +252,8 @@ class storage : public boost::noncopyable {
   bool has_reg_table();
 
   template <typename T>
-  std::string get_column_name(auto T::* in_ptr, bool add_table_name = true) const;
-  std::string get_column_name(const table_columns_t& in_column, bool add_table_name = true) const;
+  std::string get_column_name(auto T::* in_ptr, to_sql_ctx ctx) const;
+  std::string get_column_name(const table_columns_t& in_column, to_sql_ctx ctx) const;
   template <typename T>
   std::vector<std::string> get_table_column_names() const;
   template <typename T>

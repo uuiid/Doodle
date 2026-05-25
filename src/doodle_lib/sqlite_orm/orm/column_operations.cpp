@@ -12,10 +12,9 @@ namespace doodle::orm {
 // operator_compare_t
 operator_compare_t::operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
 
-std::string operator_compare_t::to_sql(const storage& s, bool include_table_name) const {
+std::string operator_compare_t::to_sql(const storage& s, to_sql_ctx ctx) const {
   return fmt::format(
-      "({} {} {})", data_impl_ptr_->left_->to_sql(s, include_table_name), data_impl_ptr_->op_,
-      data_impl_ptr_->right_->to_sql(s, include_table_name)
+      "({} {} {})", data_impl_ptr_->left_->to_sql(s, ctx), data_impl_ptr_->op_, data_impl_ptr_->right_->to_sql(s, ctx)
   );
 }
 
@@ -24,7 +23,7 @@ void operator_compare_t::collect_bind_variants(bind_value_collector_t& bind_vari
   data_impl_ptr_->right_->collect_bind_variants(bind_variants);
 }
 
-std::string operator_compare_t::get_column_name(const storage& /*s*/) const {
+std::string operator_compare_t::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
   // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
   throw std::runtime_error("operator_compare_t does not represent a specific column and cannot generate a column name");
 }
@@ -52,10 +51,8 @@ operator_compare_t operator_compare_t::operator||(operator_compare_t&& other) co
 // column_operations::to_str_value_t
 column_operations::to_str_value_t::to_str_value_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
 
-std::string column_operations::to_str_value_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, bool include_table_name
-) const {
-  auto l_column_name = in_ptr->get_column_name(s, include_table_name);
+std::string column_operations::to_str_value_t::to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const {
+  auto l_column_name = in_ptr->get_column_name(s, ctx);
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
 }
 
@@ -67,9 +64,9 @@ void column_operations::to_str_value_t::collect_bind_variants(bind_value_collect
 column_operations::to_str_value_list_t::to_str_value_list_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
 
 std::string column_operations::to_str_value_list_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+    column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx
 ) const {
-  auto l_column_name = in_ptr->get_column_name(s, include_table_name);
+  auto l_column_name = in_ptr->get_column_name(s, ctx);
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
 }
 
@@ -82,13 +79,13 @@ column_operations::to_str_subquery_t::to_str_subquery_t(std::shared_ptr<select_t
     : subquery_ptr_(std::move(subquery_ptr)) {}
 
 std::string column_operations::to_str_subquery_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+    column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx
 ) const {
-  auto l_column_name = in_ptr->get_column_name(s, include_table_name);
+  auto l_column_name = in_ptr->get_column_name(s, ctx);
   if (is_not_in_) {
-    return fmt::format("{} NOT IN ({})", l_column_name, subquery_ptr_->to_sql(s));
+    return fmt::format("{} NOT IN ({})", l_column_name, subquery_ptr_->to_sql(ctx));
   } else {
-    return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s));
+    return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(ctx));
   }
 }
 
@@ -101,10 +98,10 @@ column_operations::to_str_compare_t::to_str_compare_t(std::string fmt_str, colum
     : fmt_str_(std::move(fmt_str)), other_column_ptr_(std::move(other_column_ptr)) {}
 
 std::string column_operations::to_str_compare_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, bool include_table_name
+    column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx
 ) const {
-  auto l_column_name       = in_ptr->get_column_name(s, include_table_name);
-  auto l_other_column_name = other_column_ptr_->get_column_name(s, include_table_name);
+  auto l_column_name       = in_ptr->get_column_name(s, ctx);
+  auto l_other_column_name = other_column_ptr_->get_column_name(s, ctx);
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name, l_other_column_name));
 }
 
@@ -129,12 +126,12 @@ void column_operations::collect_bind_variants(bind_value_collector_t& bind_varia
   data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
 }
 
-std::string column_operations::to_sql(const storage& s, bool include_table_name) const {
-  return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, include_table_name);
+std::string column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
+  return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, ctx);
 }
 
-std::string column_operations::get_column_name(const storage& s) const {
-  return data_impl_ptr_->ptr_shared_->get_column_name(s, true);
+std::string column_operations::get_column_name(const storage& s, to_sql_ctx ctx) const {
+  return data_impl_ptr_->ptr_shared_->get_column_name(s, ctx);
 }
 
 column_operations column_operations::operator=(bind_value_t&& value) const {
@@ -196,10 +193,10 @@ operator_compare_t column_operations::operator||(column_operations&& other) cons
 }
 
 dynamic_column_operations::dynamic_column_operations() = default;
-std::string dynamic_column_operations::to_sql(const storage& s, bool include_table_name) const {
+std::string dynamic_column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   std::vector<std::string> l_sql_parts{};
   for (const auto& operation : operations_) {
-    l_sql_parts.push_back(fmt::format("({})", operation->to_sql(s, include_table_name)));
+    l_sql_parts.push_back(fmt::format("({})", operation->to_sql(s, ctx)));
   }
 
   return l_sql_parts.empty()
@@ -211,7 +208,7 @@ void dynamic_column_operations::collect_bind_variants(bind_value_collector_t& bi
     operation->collect_bind_variants(bind_variants);
   }
 }
-std::string dynamic_column_operations::get_column_name(const storage& /*s*/) const {
+std::string dynamic_column_operations::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
   // 直接抛出异常，因为 dynamic_column_operations 不代表一个具体的列，无法生成列名
   throw std::runtime_error(
       "dynamic_column_operations does not represent a specific column and cannot generate a column name"
@@ -219,9 +216,9 @@ std::string dynamic_column_operations::get_column_name(const storage& /*s*/) con
 }
 
 on_operations::on_operations() = default;
-std::string on_operations::to_sql(const storage& s, bool include_table_name) const {
+std::string on_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   if (expr_) {
-    return fmt::format("ON {}", expr_->to_sql(s, include_table_name));
+    return fmt::format("ON {}", expr_->to_sql(s, ctx));
   } else {
     return "ON 1=1";  // 默认返回一个永远为真的条件
   }
@@ -229,20 +226,20 @@ std::string on_operations::to_sql(const storage& s, bool include_table_name) con
 void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   if (expr_) expr_->collect_bind_variants(bind_variants);
 }
-std::string on_operations::get_column_name(const storage& /*s*/) const {
+std::string on_operations::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
   // 直接抛出异常，因为 on_operations 不代表一个具体的列，无法生成列名
   throw std::runtime_error("on_operations does not represent a specific column and cannot generate a column name");
 }
 
 match_operations::match_operations(std::string pattern) : pattern_(std::move(pattern)) {}
-std::string match_operations::to_sql(const storage& s, bool include_table_name) const {
-  auto column_name = get_column_name(s);
+std::string match_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
+  auto column_name = get_column_name(s, ctx);
   return fmt::format("MATCH ?", column_name);
 }
 void match_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   bind_variants.bind_values_.push_back(pattern_);
 }
-std::string match_operations::get_column_name(const storage& s) const {
+std::string match_operations::get_column_name(const storage& s, to_sql_ctx ctx) const {
   throw std::runtime_error("match_operations does not represent a specific column and cannot generate a column name");
 }
 

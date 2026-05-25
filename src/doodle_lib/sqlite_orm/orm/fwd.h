@@ -83,6 +83,25 @@ enum class join_type {
   right,
   full,
 };
+// 序列化 sql 上下文标准
+class to_sql_ctx {
+ public:
+  enum to_sql_ctx_e {  // 这些上下文会影响 column_operations 中 operator=, operator== 等操作符生成的 SQL
+                       // 片段中是否是bind参数，还是直接使用值
+    select_sql,
+    insert_sql,
+    update_sql,
+    delete_sql,
+
+    // 这些上下文会传递给 column_operations 中的 to_sql 函数，以便生成不同的 SQL 片段
+    create_trigger_sql,
+    create_unique_index_sql,
+    create_index_sql,
+    create_table_sql,
+  };
+  to_sql_ctx_e ctx_{select_sql};
+  bool is_bind_param_{true};  // 是否生成 bind 参数，还是直接使用值
+};
 
 template <typename T, typename Enable = void>
 struct sqlite_statement_printer {
@@ -150,11 +169,11 @@ struct column_operations_base_t {
 
  public:
   // to sql operator
-  virtual std::string to_sql(const storage& s, bool include_table_name) const     = 0;
+  virtual std::string to_sql(const storage& s, to_sql_ctx ctx) const              = 0;
   // 创建bind参数
   // 收集bind参数
   virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const = 0;
-  virtual std::string get_column_name(const storage& s) const                     = 0;
+  virtual std::string get_column_name(const storage& s, to_sql_ctx ctx) const     = 0;
 };
 
 // 运行是表基类, 可以获取表名称

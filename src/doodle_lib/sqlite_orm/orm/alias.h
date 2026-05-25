@@ -67,7 +67,7 @@ struct alias_column_info_t : public base_column_info_t {
       : ptr_(in_column.column_ptr_), table_alias_name_(in_column.table_alias_name_) {}
 
   // 生成 SQL 时，别名列必须包含表别名以避免歧义
-  std::string get_column_name(const storage& s, bool include_table_name) const override;
+  std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
   std::string get_table_name(const storage& s) const override;
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
@@ -90,7 +90,7 @@ struct alias_info_t : public table_info_base_t {
 // fts5 rank
 
 struct rank_info_t : public base_column_info_t {
-  std::string get_column_name(const storage& s, bool include_table_name) const override;
+  std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
   std::string get_table_name(const storage& s) const override;
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
