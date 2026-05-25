@@ -93,6 +93,7 @@ table_info& table_info::add_column(std::string&& in_name, auto T::* in_ptr, auto
    ...);
   // 根据成员变量类型推断 column_type
   using member_type = std::remove_reference_t<std::remove_pointer_t<class_attr_type_t<decltype(in_ptr)>>>;
+  l_column.type_    = sqlite_statement_printer<member_type>{}();
   columns_.push_back(std::move(l_column));
   return *this;
 }
