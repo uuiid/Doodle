@@ -1133,8 +1133,6 @@ inline auto make_storage_doodle(const std::string& in_path, sqlite_database_impl
 }
 using sqlite_orm_type = decltype(make_storage_doodle("", nullptr));
 
-sqlite_orm_type make_storage_doodle_impl(const std::string& in_path, sqlite_database_impl* impl);
-
 }  // namespace details
 struct sqlite_database_impl {
   using sqlite_orm_type = details::sqlite_orm_type;
@@ -1145,13 +1143,10 @@ struct sqlite_database_impl {
   using strand_type_ptr = std::shared_ptr<strand_type>;
   strand_type strand_;
   void* raw_sqlite_handle_{nullptr};
-  sqlite_orm_type storage_any_;
+  //   sqlite_orm_type storage_any_;
   FSys::path db_path_;
   explicit sqlite_database_impl(const FSys::path& in_path)
-      : strand_(boost::asio::make_strand(g_io_context())),
-        raw_sqlite_handle_(nullptr),
-        storage_any_(std::move(details::make_storage_doodle_impl(in_path.generic_string(), this))),
-        db_path_(in_path) {}
+      : strand_(boost::asio::make_strand(g_io_context())), raw_sqlite_handle_(nullptr), db_path_(in_path) {}
 
   void sync_schema() try {
     storage_any_.open_forever();
@@ -1168,7 +1163,7 @@ struct sqlite_database_impl {
     default_logger_raw()->error("数据库初始化错误 {}", boost::current_exception_diagnostic_information());
   }
 
-#define DOODLE_TO_SQLITE_THREAD()                                   \
+#define DOODLE_TO_SQLITE_THREAD()                                     \
   DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
   auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::dispatch(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));

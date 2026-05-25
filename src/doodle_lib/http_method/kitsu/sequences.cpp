@@ -19,7 +19,7 @@ namespace {
 
 struct get_get_entities_and_tasks_select_t {
   std::vector<std::tuple<entity, task, uuid>> entity_and_task_and_person_id_;
-  std::vector<std::tuple<uuid, std::int32_t>> sequence_and_cout_;
+  std::vector<std::tuple<uuid, std::int64_t>> sequence_and_cout_;
 
   static get_get_entities_and_tasks_select_t get(
       const person& in_person, const uuid& in_project_id, const uuid& in_entity_type_id, std::int32_t in_offset = 0,
@@ -36,7 +36,6 @@ get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
                                 .columns(&outsource_studio_authorization::entity_id_)
                                 .from<outsource_studio_authorization>()
                                 .where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_);
-
 
   auto l_where = dynamic_column_operations{};
   l_where.add_condition(c(&entity::entity_type_id_) == in_entity_type_id);
@@ -59,7 +58,7 @@ get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
                     .from<entity>()
                     .where(c(&entity::project_id_) == in_project_id)
                     .group_by(&entity::parent_id_)()
-                    .to_vector<std::tuple<uuid, std::int32_t>>();
+                    .to_vector();
   return get_get_entities_and_tasks_select_t{.entity_and_task_and_person_id_ = l_rows, .sequence_and_cout_ = l_cout};
 }
 
