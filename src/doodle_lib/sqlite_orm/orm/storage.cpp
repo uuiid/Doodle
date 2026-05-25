@@ -168,7 +168,6 @@ storage::transaction_guard::~transaction_guard() {
   }
 }
 
-storage::storage(FSys::path in_path, std::int32_t in_flags) { open(std::move(in_path), in_flags); }
 
 namespace {
 void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {

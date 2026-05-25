@@ -197,13 +197,15 @@ class storage : public boost::noncopyable {
   pragma_t pragma_{*this};
 
  protected:
+  virtual void open_(FSys::path in_path, std::int32_t in_flags);
+
  public:
   storage() = default;
-  explicit storage(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
   ~storage();
 
-  virtual void open(FSys::path in_path, std::int32_t in_flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+  void open(FSys::path in_path, std::int32_t in_flags);
   void open();
+  void open(const FSys::path& in_path);
 
   void sync_schema();
   pragma_t& pragma();

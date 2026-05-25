@@ -60,6 +60,14 @@ class sqlite_database : public orm::storage {
   strand_type strand_{boost::asio::make_strand(g_io_context())};
   static constexpr std::size_t g_step_size{100};
 
+  /**
+   * 这回调函数用于加载数据库,  并且将数据库中的id分配到 sql_id 池中,  以便后续操作,
+   * @warning 只有这里会分配id,  之后的操作不会分配, 只会查找id是否为 0 作为插入和更新的依据,
+   * 并且在插入id的时候会自动更新为实际id
+   * @param in_path 输入的数据库路径
+   */
+  virtual void open_(FSys::path in_path, std::int32_t in_flags) override;
+
  public:
   std::vector<uuid> get_temporal_type_ids();
 
@@ -68,14 +76,6 @@ class sqlite_database : public orm::storage {
   ~sqlite_database() = default;
 
   void regs_all();
-
-  /**
-   * 这回调函数用于加载数据库,  并且将数据库中的id分配到 sql_id 池中,  以便后续操作,
-   * @warning 只有这里会分配id,  之后的操作不会分配, 只会查找id是否为 0 作为插入和更新的依据,
-   * 并且在插入id的时候会自动更新为实际id
-   * @param in_path 输入的数据库路径
-   */
-  void load(const FSys::path& in_path);
 
   /// 备份数据库
   boost::asio::awaitable<void> backup(FSys::path in_path);

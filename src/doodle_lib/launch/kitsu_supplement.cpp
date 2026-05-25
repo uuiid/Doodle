@@ -155,7 +155,7 @@ bool kitsu_supplement_main::init() {
       l_args.port_ = 0;
     l_set.set_root("D:/sy_maigc");
     // 打开内存数据库
-    l_set.database_->load("");
+    l_set.database_->open();
 
     // 初始化授权上下文
     g_ctx().emplace<authorization>(l_set.authorize_);
@@ -178,7 +178,7 @@ bool kitsu_supplement_main::init() {
     g_ctx().emplace<http::kitsu_ctx_t>(
         l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
     );
-    l_set.database_->load(l_args.db_path_);
+    l_set.database_->open(l_args.db_path_);
     // 初始化授权上下文
     g_ctx().emplace<authorization>(l_set.authorize_);
     // 初始化路由
@@ -192,7 +192,7 @@ bool kitsu_supplement_main::init() {
   cv::setNumThreads(::GetActiveProcessorCount(0));
 
   // 初始化数据库
-  l_set.database_->load(l_args.db_path_);
+  l_set.database_->open(l_args.db_path_);
 
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);

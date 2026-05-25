@@ -834,19 +834,20 @@ void sqlite_database::regs_all() {
       .add_index("organisation_tab_uuid_id_index", &organisation::uuid_id_);
 }
 
-void sqlite_database::load(const FSys::path& in_path) {
+void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   // auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
   // tokenizer::register_jieba_tokenizer(get_fts5_api());
   // for (auto&& i : l_list) {
   //   i->upgrade(impl_);
   // }
-  open(in_path);
+  storage::open_(in_path, in_flags);
   pragma().foreign_keys(true);
   pragma().synchronous(1);
   pragma().recursive_triggers(true);
   pragma().journal_mode(orm::journal_mode_t::wal);
   // pragma().optimize(0x10002);
 }
+
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SQLITE_THREAD()
   // sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
