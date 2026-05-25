@@ -348,22 +348,13 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
-  switch (ctx.ctx_) {
-    case to_sql_ctx::create_index_sql:
-    case to_sql_ctx::create_trigger_sql:
-    case to_sql_ctx::create_unique_index_sql:
-    case to_sql_ctx::create_table_sql:
-    case to_sql_ctx::insert_sql:
-    case to_sql_ctx::alias_sql:
-    case to_sql_ctx::update_sql:
-      return fmt::format(R"("{}")", l_column.name_);
-    case to_sql_ctx::select_sql:
-    case to_sql_ctx::delete_sql:
-    case to_sql_ctx::where_sql:
-      return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
-    default:
-      throw std::runtime_error("Invalid to_sql context");
-  }
+
+  if (ctx.ctx_ & to_sql_ctx::create_trigger_sql && ctx.ctx_ & to_sql_ctx::where_sql)
+    return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
+
+  if (ctx.ctx_ & to_sql_ctx::select_sql || ctx.ctx_ & to_sql_ctx::where_sql || ctx.ctx_ & to_sql_ctx::delete_sql)
+    return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
+  return fmt::format(R"("{}")", l_column.name_);
 }
 
 std::int64_t storage::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_); }

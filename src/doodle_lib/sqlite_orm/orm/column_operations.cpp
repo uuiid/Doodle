@@ -14,7 +14,7 @@ operator_compare_t::operator_compare_t() : data_impl_ptr_(std::make_shared<data_
 
 std::string operator_compare_t::to_sql(const storage& s, to_sql_ctx ctx) const {
   auto l_ctx = ctx;
-  l_ctx.ctx_ = to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
+  l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   return fmt::format(
       "({} {} {})", data_impl_ptr_->left_->to_sql(s, l_ctx), data_impl_ptr_->op_,
       data_impl_ptr_->right_->to_sql(s, l_ctx)
@@ -139,7 +139,7 @@ void column_operations::collect_bind_variants(bind_value_collector_t& bind_varia
 
 std::string column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   auto l_ctx = ctx;
-  l_ctx.ctx_ = to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
+  l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, l_ctx);
 }
 
@@ -208,7 +208,7 @@ operator_compare_t column_operations::operator||(column_operations&& other) cons
 dynamic_column_operations::dynamic_column_operations() = default;
 std::string dynamic_column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   auto l_ctx = ctx;
-  l_ctx.ctx_ = to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
+  l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   std::vector<std::string> l_sql_parts{};
   for (const auto& operation : operations_) {
     l_sql_parts.push_back(fmt::format("({})", operation->to_sql(s, l_ctx)));
@@ -233,7 +233,7 @@ void dynamic_column_operations::collect_bind_variants(bind_value_collector_t& bi
 on_operations::on_operations() = default;
 std::string on_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   auto l_ctx = ctx;
-  l_ctx.ctx_ = to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
+  l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   if (expr_) {
     return fmt::format("ON {}", expr_->to_sql(s, l_ctx));
   } else {
