@@ -10,6 +10,8 @@
 namespace doodle::orm {
 std::string update_t::to_sql(to_sql_ctx ctx) const {
   if (!wheres_) throw std::runtime_error("WHERE condition is required for UPDATE operation");
+  auto l_ctx = ctx;
+  l_ctx.ctx_ |= to_sql_ctx::update_sql;  // 强制使用 update_sql 上下文，以确保生成正确的 SQL 片段格式
 
   std::vector<std::string> l_set_clauses;
   for (const auto& col_op : column_operations_) {

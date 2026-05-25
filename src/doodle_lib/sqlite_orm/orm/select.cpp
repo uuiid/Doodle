@@ -18,22 +18,24 @@ select_t select_t::order_by(const rank_info_t& rank_column, bool ascending) {
 }
 
 std::string select_t::to_sql(to_sql_ctx in_ctx) const {
+  auto l_ctx = in_ctx;
+  l_ctx.ctx_ |= to_sql_ctx::select_sql;  // 强制使用 select_sql 上下文，以确保生成正确的 SQL 片段格式
   std::vector<std::string> l_column_names_str{};
   for (const auto& column_name_ptr : impl_->column_names_)
-    l_column_names_str.push_back(column_name_ptr->get_column_name(*impl_->s_, in_ctx));
+    l_column_names_str.push_back(column_name_ptr->get_column_name(*impl_->s_, l_ctx));
 
   std::string l_join_sql;
   for (const auto& join : impl_->joins_) {
     l_join_sql += fmt::format(
         " {} {} {}", join.type_, join.join_table_info_->get_table_name(*impl_->s_),
-        join.on_condition_->to_sql(*impl_->s_, in_ctx)
+        join.on_condition_->to_sql(*impl_->s_, l_ctx)
     );
   }
   std::string l_group_by_sql{};
   {
     std::vector<std::string> l_group_by_column_names{};
     for (const auto& group_by_column : impl_->group_bys_)
-      l_group_by_column_names.push_back(group_by_column->get_column_name(*impl_->s_, in_ctx));
+      l_group_by_column_names.push_back(group_by_column->get_column_name(*impl_->s_, l_ctx));
     if (!l_group_by_column_names.empty())
       l_group_by_sql = fmt::format(" GROUP BY {}", fmt::join(l_group_by_column_names, ", "));
   }
@@ -42,7 +44,7 @@ std::string select_t::to_sql(to_sql_ctx in_ctx) const {
   {
     std::vector<std::string> l_order_by_column_names{};
     for (const auto& order_by : impl_->order_bys_) {
-      std::string column_name = order_by.column_info_->get_column_name(*impl_->s_, in_ctx);
+      std::string column_name = order_by.column_info_->get_column_name(*impl_->s_, l_ctx);
       if (!order_by.ascending_) column_name += " DESC";
       l_order_by_column_names.push_back(std::move(column_name));
     }
@@ -56,7 +58,7 @@ std::string select_t::to_sql(to_sql_ctx in_ctx) const {
       "SELECT {col} FROM {tab} {join} {where} {group_by} {order_by} {limit}",
       fmt::arg("col", fmt::join(l_column_names_str, ", ")), fmt::arg("tab", impl_->from_table_name_),
       fmt::arg("join", l_join_sql),
-      fmt::arg("where", impl_->wheres_ ? fmt::format("WHERE {}", impl_->wheres_->to_sql(*impl_->s_, in_ctx)) : ""),
+      fmt::arg("where", impl_->wheres_ ? fmt::format("WHERE {}", impl_->wheres_->to_sql(*impl_->s_, l_ctx)) : ""),
       fmt::arg("group_by", l_group_by_sql), fmt::arg("order_by", l_order_by_sql), fmt::arg("limit", l_limit_sql)
   );
   return l_sql;
