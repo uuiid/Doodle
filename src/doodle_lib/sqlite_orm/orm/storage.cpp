@@ -126,7 +126,11 @@ void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   if (stmt_) throw std::runtime_error("Statement already prepared");
   bind_index_ = 0;
   db_         = s.db_;
-  auto l_r    = sqlite3_prepare_v2(db_, sql.c_str(), sql.size(), &stmt_, nullptr);
+#ifndef NDEBUG
+  SPDLOG_DEBUG("Preparing SQL statement: {}", sql);
+#endif
+
+  auto l_r = sqlite3_prepare_v2(db_, sql.c_str(), sql.size(), &stmt_, nullptr);
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
