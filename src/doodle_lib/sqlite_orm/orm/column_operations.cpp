@@ -23,10 +23,11 @@ void operator_compare_t::collect_bind_variants(bind_value_collector_t& bind_vari
   data_impl_ptr_->right_->collect_bind_variants(bind_variants);
 }
 
-std::string operator_compare_t::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
-  // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
-  throw std::runtime_error("operator_compare_t does not represent a specific column and cannot generate a column name");
-}
+// std::string operator_compare_t::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
+//   // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
+//   throw std::runtime_error("operator_compare_t does not represent a specific column and cannot generate a column
+//   name");
+// }
 
 operator_compare_t operator_compare_t::operator&&(operator_compare_t&& other) const {
   operator_compare_t compare{};
@@ -130,9 +131,9 @@ std::string column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, ctx);
 }
 
-std::string column_operations::get_column_name(const storage& s, to_sql_ctx ctx) const {
-  return data_impl_ptr_->ptr_shared_->get_column_name(s, ctx);
-}
+// std::string column_operations::get_column_name(const storage& s, to_sql_ctx ctx) const {
+//   return data_impl_ptr_->ptr_shared_->get_column_name(s, ctx);
+// }
 
 column_operations column_operations::operator=(bind_value_t&& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
@@ -208,12 +209,12 @@ void dynamic_column_operations::collect_bind_variants(bind_value_collector_t& bi
     operation->collect_bind_variants(bind_variants);
   }
 }
-std::string dynamic_column_operations::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
-  // 直接抛出异常，因为 dynamic_column_operations 不代表一个具体的列，无法生成列名
-  throw std::runtime_error(
-      "dynamic_column_operations does not represent a specific column and cannot generate a column name"
-  );
-}
+// std::string dynamic_column_operations::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
+//   // 直接抛出异常，因为 dynamic_column_operations 不代表一个具体的列，无法生成列名
+//   throw std::runtime_error(
+//       "dynamic_column_operations does not represent a specific column and cannot generate a column name"
+//   );
+// }
 
 on_operations::on_operations() = default;
 std::string on_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
@@ -226,22 +227,23 @@ std::string on_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
 void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   if (expr_) expr_->collect_bind_variants(bind_variants);
 }
-std::string on_operations::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
-  // 直接抛出异常，因为 on_operations 不代表一个具体的列，无法生成列名
-  throw std::runtime_error("on_operations does not represent a specific column and cannot generate a column name");
-}
+// std::string on_operations::get_column_name(const storage& /*s*/, to_sql_ctx ctx) const {
+//   // 直接抛出异常，因为 on_operations 不代表一个具体的列，无法生成列名
+//   throw std::runtime_error("on_operations does not represent a specific column and cannot generate a column name");
+// }
 
 match_operations::match_operations(std::string pattern) : pattern_(std::move(pattern)) {}
 std::string match_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
-  auto column_name = get_column_name(s, ctx);
-  return fmt::format("MATCH ?", column_name);
+  // auto column_name = get_column_name(s, ctx);
+  return "MATCH ?";  // MATCH 操作符的 SQL 片段，具体的列名会在绑定参数时处理
 }
 void match_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   bind_variants.bind_values_.push_back(pattern_);
 }
-std::string match_operations::get_column_name(const storage& s, to_sql_ctx ctx) const {
-  throw std::runtime_error("match_operations does not represent a specific column and cannot generate a column name");
-}
+// std::string match_operations::get_column_name(const storage& s, to_sql_ctx ctx) const {
+//   throw std::runtime_error("match_operations does not represent a specific column and cannot generate a column
+//   name");
+// }
 
 operator_compare_t match_operations::operator&&(column_operations&& other) const {
   operator_compare_t compare{};
