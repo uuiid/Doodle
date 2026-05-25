@@ -349,6 +349,8 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
   auto& l_table      = static_cast<table_info&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
 
+  if (ctx.ctx_ & to_sql_ctx::alias_sql) return fmt::format(R"("{}")", l_column.name_);
+
   if (ctx.ctx_ & to_sql_ctx::create_trigger_sql && ctx.ctx_ & to_sql_ctx::where_sql)
     return fmt::format(R"("{}")", l_table.name_, l_column.name_);
 
