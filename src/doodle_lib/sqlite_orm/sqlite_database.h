@@ -107,10 +107,6 @@ class sqlite_database : public orm::storage {
   DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
   auto this_executor = co_await boost::asio::this_coro::executor;     \
   co_await boost::asio::dispatch(boost::asio::bind_executor(strand_, boost::asio::use_awaitable));
-#define DOODLE_TO_SQLITE_THREAD()                                   \
-  DOODLE_CHICK(!core_set::get_set().read_only_mode_, "只读不可保存"); \
-  auto this_executor = co_await boost::asio::this_coro::executor;     \
-  co_await boost::asio::dispatch(boost::asio::bind_executor(impl_->strand_, boost::asio::use_awaitable));
 
   /// 测试成员字段 uuid_id_ 是否存在，以及是否是 uuid 类型
   template <typename T, typename = void>
