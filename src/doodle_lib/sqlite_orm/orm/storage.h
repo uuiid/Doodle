@@ -138,9 +138,9 @@ enum class trigger_event { insert, update, delete_ };
 
 struct trigger_info {
   std::string name_;
-  trigger_timing timing_;             // BEFORE, AFTER, INSTEAD OF
-  trigger_event event_;               // INSERT, UPDATE, DELETE
-  std::vector<std::string> columns_;  // 仅针对 UPDATE 事件
+  trigger_timing timing_;                 // BEFORE, AFTER, INSTEAD OF
+  trigger_event event_;                   // INSERT, UPDATE, DELETE
+  std::vector<column_info_ptr> columns_;  // 仅针对 UPDATE 事件
   std::string table_name_;
   std::string statement_;
 };
@@ -212,7 +212,7 @@ class storage : public boost::noncopyable {
   std::vector<index_info> indexes_;
   std::vector<unique_index_info> unique_indexes_;
   std::map<std::type_index, std::size_t> type_to_table_index_;
-  std::vector<std::shared_ptr<trigger_info>> triggers_;
+  std::vector<std::shared_ptr<create_trigger_t>> triggers_;
 
   std::atomic_bool finalized_{false};
   FSys::path db_path_;

@@ -1,6 +1,7 @@
 #pragma once
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
@@ -12,11 +13,9 @@ namespace doodle::orm {
 
 struct create_trigger_t {
   std::shared_ptr<trigger_info> info_;
-  storage* s_{nullptr};
 
  public:
-  explicit create_trigger_t(std::string in_name, std::shared_ptr<trigger_info> info, storage* s)
-      : info_(std::move(info)), s_(s) {
+  explicit create_trigger_t(std::string in_name) : info_(std::make_shared<trigger_info>()) {
     info_->name_ = std::move(in_name);
   }
   create_trigger_t& before() {
@@ -49,7 +48,7 @@ struct create_trigger_t {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       if constexpr (std::is_member_pointer_v<std::decay_t<decltype(in_column)>>) {
-        info_->columns_.push_back(s_->get_column_name(in_column, false));
+        info_->columns_.push_back(std::make_shared<column_info_t>(in_column));
       } else {
         static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
       }
@@ -63,6 +62,8 @@ struct create_trigger_t {
   create_trigger_t& statement(const update_t& in_statement);
   create_trigger_t& statement(const delete_t& in_statement);
   create_trigger_t& statement(const insert_t& in_statement);
+
+  std::string to_sql(storage& s, to_sql_ctx ctx) const;
 };
 
 }  // namespace doodle::orm

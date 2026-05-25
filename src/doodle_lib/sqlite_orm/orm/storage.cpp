@@ -214,9 +214,9 @@ void storage::open(FSys::path in_path, std::int32_t in_flags) {
 void storage::open() { open({}); }
 
 create_trigger_t storage::create_trigger(std::string in_name) {
-  auto l_trigger_info = std::make_shared<trigger_info>();
-  auto& l_trigger     = triggers_.emplace_back(l_trigger_info);
-  return create_trigger_t{std::move(in_name), l_trigger_info, this};
+  auto l_trigger = std::make_shared<create_trigger_t>(std::move(in_name));
+  triggers_.emplace_back(l_trigger);
+  return *l_trigger;
 }
 
 fts5_api* storage::get_fts5_api() const {
@@ -260,12 +260,8 @@ void storage::sync_schema() {
     l_stmt.step();
   }
   for (const auto& l_trigger : triggers_) {
-    auto l_create_trigger_sql = fmt::format(
-        "CREATE TRIGGER IF NOT EXISTS {} {} {} {} ON {} BEGIN {}; END;", l_trigger->name_, l_trigger->timing_,
-        l_trigger->event_, fmt::format("{}", fmt::join(l_trigger->columns_, ", ")), l_trigger->table_name_,
-        l_trigger->statement_
-    );
-    auto l_stmt = sqlite_stmt(*this, l_create_trigger_sql);
+    auto l_create_trigger_sql = l_trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
+    auto l_stmt               = sqlite_stmt(*this, l_create_trigger_sql);
     l_stmt.step();
   }
 }
