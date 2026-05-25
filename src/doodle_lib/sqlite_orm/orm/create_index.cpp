@@ -13,6 +13,7 @@ std::string create_index_base_t::to_sql(storage& s, to_sql_ctx ctx) const {
         "idx_{}_{}_{}", info_->table_name_->get_table_name(s), fmt::join(l_column_names_str, "_"),
         info_->unique_ ? "unique" : "index"
     );
+  boost::algorithm::replace_all(info_->name_, "\"", "");
   std::string l_create_index_sql = fmt::format(
       "CREATE {}INDEX IF NOT EXISTS {} ON {}({})", info_->unique_ ? "UNIQUE " : "", info_->name_,
       info_->table_name_->get_table_name(s), fmt::join(l_column_names_str, ", ")
