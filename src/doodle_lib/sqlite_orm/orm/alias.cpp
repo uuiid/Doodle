@@ -8,7 +8,9 @@ std::string alias_info_t::get_table_name(const storage& s) const {
 }
 
 std::string alias_column_info_t::get_column_name(const storage& s, to_sql_ctx ctx) const {
-  auto l_column_name = s.get_column_name(ptr_, ctx);
+  auto l_ctx         = ctx;
+  l_ctx.ctx_         = to_sql_ctx::alias_sql;  // 强制使用 alias_sql 上下文，以确保生成正确的列名格式
+  auto l_column_name = s.get_column_name(ptr_, l_ctx);
   return fmt::format("{}.{}", table_alias_name_, l_column_name);
 }
 std::string alias_column_info_t::get_table_name(const storage& s) const {

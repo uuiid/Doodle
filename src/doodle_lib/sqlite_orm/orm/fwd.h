@@ -99,6 +99,8 @@ class to_sql_ctx {
     create_unique_index_sql,
     create_index_sql,
     create_table_sql,
+    // 别名上下文
+    alias_sql,
   };
   to_sql_ctx_e ctx_{select_sql};
   bool is_bind_param_{true};  // 是否生成 bind 参数，还是直接使用值
