@@ -101,6 +101,8 @@ class to_sql_ctx {
     create_table_sql,
     // 别名上下文
     alias_sql,
+    // where 条件上下文
+    where_sql,
   };
   to_sql_ctx_e ctx_{select_sql};
   bool is_bind_param_{true};  // 是否生成 bind 参数，还是直接使用值

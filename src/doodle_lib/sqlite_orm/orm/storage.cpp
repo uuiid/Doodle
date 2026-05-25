@@ -351,10 +351,11 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
     case to_sql_ctx::create_table_sql:
     case to_sql_ctx::insert_sql:
     case to_sql_ctx::alias_sql:
+    case to_sql_ctx::update_sql:
       return fmt::format(R"("{}")", l_column.name_);
     case to_sql_ctx::select_sql:
-    case to_sql_ctx::update_sql:
     case to_sql_ctx::delete_sql:
+    case to_sql_ctx::where_sql:
       return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
     default:
       throw std::runtime_error("Invalid to_sql context");
