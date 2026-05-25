@@ -139,7 +139,9 @@ void column_operations::collect_bind_variants(bind_value_collector_t& bind_varia
 
 std::string column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
   auto l_ctx = ctx;
-  l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
+  if (!data_impl_ptr_->is_set_operation_) {
+    l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
+  }
   return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, l_ctx);
 }
 
@@ -148,15 +150,17 @@ std::string column_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
 // }
 
 column_operations column_operations::operator=(bind_value_t&& value) const {
-  auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
-  l_ptr->value_variant_       = std::move(value);
-  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  auto l_ptr                        = std::make_shared<to_str_value_t>("{} = ?");
+  l_ptr->value_variant_             = std::move(value);
+  data_impl_ptr_->to_str_ptr_       = l_ptr;
+  data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
   return *this;
 }
 
 column_operations column_operations::operator=(std::nullptr_t) const {
-  auto l_ptr                  = std::make_shared<to_str_value_t>("{} = NULL");
-  data_impl_ptr_->to_str_ptr_ = l_ptr;
+  auto l_ptr                        = std::make_shared<to_str_value_t>("{} = NULL");
+  data_impl_ptr_->to_str_ptr_       = l_ptr;
+  data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
   return *this;
 }
 
