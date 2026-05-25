@@ -250,7 +250,7 @@ void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants)
 
 match_operations::match_operations(std::string pattern) : pattern_(std::move(pattern)) {}
 std::string match_operations::to_sql(const storage& s, to_sql_ctx ctx) const {
-  // auto column_name = get_column_name(s, ctx);
+  // auto column_name = (s, ctx);
   return "MATCH ?";  // MATCH 操作符的 SQL 片段，具体的列名会在绑定参数时处理
 }
 void match_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {

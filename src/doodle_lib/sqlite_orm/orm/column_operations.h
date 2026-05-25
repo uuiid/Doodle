@@ -39,7 +39,7 @@ struct operator_compare_t : public column_operations_base_t {
 
   std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, to_sql_ctx ctx) const override;
 
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
   operator_compare_t operator&&(operator_compare_t&& other) const;
@@ -137,7 +137,7 @@ struct column_operations : column_operations_base_t {
 
   std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
 
-  // std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, to_sql_ctx ctx) const override;
 
   // 赋值操作符，生成SQL片段和绑定函数
   template <typename U>
@@ -361,7 +361,7 @@ struct dynamic_column_operations : column_operations_base_t {
   dynamic_column_operations();
   std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, to_sql_ctx ctx) const override;
 
   template <typename T>
   void add_condition(T&& condition) {
@@ -378,7 +378,7 @@ struct on_operations : column_operations_base_t {
 
   std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, to_sql_ctx ctx) const override;
 };
 
 // fts5 MATCH
@@ -387,7 +387,7 @@ struct match_operations : column_operations_base_t {
   match_operations(std::string pattern);
   std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, to_sql_ctx ctx) const override;
 
   // operator and, or
   operator_compare_t operator&&(column_operations&& other) const;
