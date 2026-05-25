@@ -112,12 +112,19 @@ void column_operations::to_str_compare_t::collect_bind_variants(
   // 不需要绑定参数，因为比较的值来自于另一个列，而不是用户输入的值
 }
 
+std::string column_operations::column_to_str::to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const {
+  auto l_column_name = in_ptr->get_column_name(s, ctx);
+  return l_column_name;
+}
+
 column_operations::column_operations(const table_columns_t& in_column) : data_impl_ptr_(std::make_shared<data_impl>()) {
   data_impl_ptr_->ptr_shared_ = std::make_shared<column_info_t>(in_column);
+  data_impl_ptr_->to_str_ptr_ = std::make_shared<column_to_str>();
 };
 column_operations::column_operations(const alias_column_info_t& in_column)
     : data_impl_ptr_(std::make_shared<data_impl>()) {
   data_impl_ptr_->ptr_shared_ = std::make_shared<alias_column_info_t>(in_column);
+  data_impl_ptr_->to_str_ptr_ = std::make_shared<column_to_str>();
 }
 
 // column_operations public methods

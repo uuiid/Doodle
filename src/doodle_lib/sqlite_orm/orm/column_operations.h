@@ -108,6 +108,14 @@ struct column_operations : column_operations_base_t {
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
+  struct column_to_str : to_str_base_t {
+    explicit column_to_str() = default;
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const override;
+    void collect_bind_variants(bind_value_collector_t& /*bind_variants*/) const override {
+      // column_to_str 不包含绑定参数，因此不需要收集
+    }
+  };
+
   struct data_impl {
     column_info_ptr ptr_shared_;
     std::shared_ptr<to_str_base_t> to_str_ptr_;
