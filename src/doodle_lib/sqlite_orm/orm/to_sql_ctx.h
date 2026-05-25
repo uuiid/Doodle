@@ -2,9 +2,6 @@
 
 #include <doodle_core/doodle_core_fwd.h>
 
-#include <doodle_lib/sqlite_orm/orm/fwd.h>
-
-
 namespace doodle::orm {
 // 序列化 sql 上下文标准
 class to_sql_ctx {
@@ -29,12 +26,32 @@ class to_sql_ctx {
   to_sql_ctx_e ctx_{select_sql};
   // namespace magic_enum::bitwise_operators;
   bool is_bind_param_{true};  // 是否生成 bind 参数，还是直接使用值
-  // 枚举运算符重载
-  to_sql_ctx& operator|(to_sql_ctx_e other) {
-    ctx_ = static_cast<to_sql_ctx_e>(static_cast<int>(ctx_) | static_cast<int>(other));
-    return *this;
-  }
-
 };
+
+// to_sql_ctx_e 位运算符重载
+inline to_sql_ctx::to_sql_ctx_e operator|(to_sql_ctx::to_sql_ctx_e lhs, to_sql_ctx::to_sql_ctx_e rhs) {
+  return static_cast<to_sql_ctx::to_sql_ctx_e>(static_cast<int>(lhs) | static_cast<int>(rhs));
+}
+inline to_sql_ctx::to_sql_ctx_e operator&(to_sql_ctx::to_sql_ctx_e lhs, to_sql_ctx::to_sql_ctx_e rhs) {
+  return static_cast<to_sql_ctx::to_sql_ctx_e>(static_cast<int>(lhs) & static_cast<int>(rhs));
+}
+inline to_sql_ctx::to_sql_ctx_e operator^(to_sql_ctx::to_sql_ctx_e lhs, to_sql_ctx::to_sql_ctx_e rhs) {
+  return static_cast<to_sql_ctx::to_sql_ctx_e>(static_cast<int>(lhs) ^ static_cast<int>(rhs));
+}
+inline to_sql_ctx::to_sql_ctx_e operator~(to_sql_ctx::to_sql_ctx_e e) {
+  return static_cast<to_sql_ctx::to_sql_ctx_e>(~static_cast<int>(e));
+}
+inline to_sql_ctx::to_sql_ctx_e& operator|=(to_sql_ctx::to_sql_ctx_e& lhs, to_sql_ctx::to_sql_ctx_e rhs) {
+  lhs = static_cast<to_sql_ctx::to_sql_ctx_e>(static_cast<int>(lhs) | static_cast<int>(rhs));
+  return lhs;
+}
+inline to_sql_ctx::to_sql_ctx_e& operator&=(to_sql_ctx::to_sql_ctx_e& lhs, to_sql_ctx::to_sql_ctx_e rhs) {
+  lhs = static_cast<to_sql_ctx::to_sql_ctx_e>(static_cast<int>(lhs) & static_cast<int>(rhs));
+  return lhs;
+}
+inline to_sql_ctx::to_sql_ctx_e& operator^=(to_sql_ctx::to_sql_ctx_e& lhs, to_sql_ctx::to_sql_ctx_e rhs) {
+  lhs = static_cast<to_sql_ctx::to_sql_ctx_e>(static_cast<int>(lhs) ^ static_cast<int>(rhs));
+  return lhs;
+}
 
 }  // namespace doodle::orm
