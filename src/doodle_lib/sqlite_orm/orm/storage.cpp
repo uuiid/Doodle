@@ -13,6 +13,7 @@
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
+#include <sys/stat.h>
 #include <vector>
 
 namespace doodle {
@@ -197,6 +198,35 @@ storage::backup_t::~backup_t() {
   if (backup_) sqlite3_backup_finish(backup_);
 }
 
+sqlite3* storage::only_open_db() {
+  // 立即打开数据库连接，确保在注册表结构时数据库已经打开
+  auto l_str    = db_path_.generic_string();
+  sqlite3* l_db = nullptr;
+  auto l_r      = ::sqlite3_open_v2(l_str.c_str(), &l_db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, l_db);
+  // 启用扩展错误码，以便在发生错误时获取更详细的错误信息
+  l_r = ::sqlite3_extended_result_codes(l_db, 1);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, l_db);
+  return l_db;
+}
+
+sqlite3* storage::get_thread_db() {
+  auto l_thread_id = std::this_thread::get_id();
+  static thread_local std::once_flag l_thread_db_flag{};
+  std::call_once(l_thread_db_flag, [&]() {
+    // 确保每个线程只初始化一次数据库连接
+    if (!thread_db_map_.contains(l_thread_id)) {
+      auto l_r = thread_db_map_.try_emplace(l_thread_id, only_open_db());
+      if (!l_r) throw std::runtime_error("Failed to emplace thread-specific database connection");
+    }
+  });
+
+  sqlite3* l_db;
+  thread_db_map_.visit(l_thread_id, [&l_db](auto& thread_db) mutable { l_db = thread_db.second; });
+  if (!l_db) throw std::runtime_error("Failed to get thread-specific database connection");
+  return l_db;
+}
+
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   static std::once_flag l_flag{};
   std::call_once(l_flag, []() {
@@ -204,15 +234,8 @@ void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   });
 
   if (in_path.empty()) in_path = ":memory:";
-  db_path_ = std::move(in_path);
-  db_path_.make_preferred();
-  auto l_str = db_path_.generic_string();
-  // 立即打开数据库连接，确保在注册表结构时数据库已经打开
-  auto l_r   = ::sqlite3_open_v2(l_str.c_str(), &db_, in_flags, nullptr);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
-  // 启用扩展错误码，以便在发生错误时获取更详细的错误信息
-  l_r = ::sqlite3_extended_result_codes(db_, 1);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  db_path_ = in_path.generic_string();
+  db_      = only_open_db();
 }
 
 void storage::open(const FSys::path& in_path) { open_(in_path, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE); }
@@ -306,7 +329,14 @@ void storage::pragma_t::run(std::string_view in_pragma_sql, std::string_view in_
   l_stmt.step();
 }
 
-storage::~storage() { ::sqlite3_close_v2(db_); }
+storage::~storage() {
+  ::sqlite3_close_v2(db_);
+  thread_db_map_.visit_all([](auto& thread_db) {
+    if (thread_db.second) {
+      ::sqlite3_close_v2(thread_db.second);
+    }
+  });
+}
 
 storage& storage::finalize() {
   if (finalized_) return *this;

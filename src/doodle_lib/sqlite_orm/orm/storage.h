@@ -4,6 +4,8 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
+#include <boost/unordered/concurrent_flat_map.hpp>
+
 #include <atomic>
 #include <fmt/format.h>
 #include <functional>
@@ -12,8 +14,19 @@
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <typeindex>
 #include <vector>
+
+namespace boost {
+// 为 std::thread::id 提供哈希函数
+template <>
+struct hash<std::thread::id> {
+  std::size_t operator()(const std::thread::id& id) const noexcept {
+    return std::hash<std::thread::id>{}(id);
+  }
+};
+}  // namespace boost
 
 namespace doodle {
 
@@ -195,8 +208,13 @@ class storage : public boost::noncopyable {
 
   sqlite3* db_{nullptr};
   pragma_t pragma_{*this};
+  // 每个线程对应一个 sqlite3 连接，以避免多线程访问同一个连接导致的竞争问题
+  boost::unordered::concurrent_flat_map<std::thread::id, sqlite3*> thread_db_map_;
 
  protected:
+  sqlite3* only_open_db();
+
+  sqlite3* get_thread_db();
   virtual void open_(FSys::path in_path, std::int32_t in_flags);
 
  public:
