@@ -12,6 +12,14 @@
 namespace doodle::orm {
 
 struct create_trigger_t {
+  struct trigger_info {
+    std::string name_;
+    trigger_timing timing_;                 // BEFORE, AFTER, INSTEAD OF
+    trigger_event event_;                   // INSERT, UPDATE, DELETE
+    std::vector<column_info_ptr> columns_;  // 仅针对 UPDATE 事件
+    std::string table_name_;
+    std::string statement_;
+  };
   std::shared_ptr<trigger_info> info_;
 
  public:

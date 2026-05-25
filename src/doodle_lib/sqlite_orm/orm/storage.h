@@ -27,7 +27,6 @@ namespace orm {
 enum class journal_mode_t { delete_, truncate, persist, memory, wal, off };
 
 struct column_info {
-  using column_ptr_type = table_columns_t;
 
   std::string name_;
   table_columns_t ptr_;
@@ -97,7 +96,7 @@ struct table_info_base {
 
 struct table_fts_info : table_info_base {
   std::vector<bool> unindexed_columns_;
-  using column_ptr_type = typename column_info::column_ptr_type;
+  using column_ptr_type = table_columns_t;
 
   std::string tokenizer_{};
   std::string content_table_{};
@@ -113,7 +112,7 @@ struct table_fts_info : table_info_base {
 };
 
 struct table_info : table_info_base {
-  using column_ptr_type = typename column_info::column_ptr_type;
+  using column_ptr_type = table_columns_t;
 
   template <typename T>
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
@@ -135,15 +134,6 @@ struct table_info : table_info_base {
 enum class trigger_timing { before, after, instead_of };
 
 enum class trigger_event { insert, update, delete_ };
-
-struct trigger_info {
-  std::string name_;
-  trigger_timing timing_;                 // BEFORE, AFTER, INSTEAD OF
-  trigger_event event_;                   // INSERT, UPDATE, DELETE
-  std::vector<column_info_ptr> columns_;  // 仅针对 UPDATE 事件
-  std::string table_name_;
-  std::string statement_;
-};
 
 struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
@@ -168,11 +158,7 @@ struct sqlite_stmt {
   void bind(const T& in_value);
 };
 
-struct table_info_t : public table_info_base_t {
-  std::type_index type_index_{typeid(void)};
-  explicit table_info_t(std::type_index in_type_index) : type_index_(in_type_index) {}
-  virtual std::string get_table_name(const storage& s) const override;
-};
+
 
 class storage : public boost::noncopyable {
   struct pragma_t {

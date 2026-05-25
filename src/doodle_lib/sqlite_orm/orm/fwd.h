@@ -21,6 +21,7 @@ struct sqlite_stmt;
 struct create_trigger_t;
 struct bind_value_collector_t;
 struct on_operations;
+struct create_index_base_t;
 
 template <typename...>
 inline constexpr bool always_false = false;

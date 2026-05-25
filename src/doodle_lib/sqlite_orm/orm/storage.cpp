@@ -30,10 +30,6 @@ column_info& table_info_base::find_column_info(const table_columns_t& in_column)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string table_info_t ::get_table_name(const storage& s) const { return s.get_table_name(type_index_); }
-
-/////////////////////////////////////////////////////////////////////////////////////////////////
-
 table_fts_info& table_fts_info::content(const std::string& content_table, const std::string& content_rowid) {
   content_table_ = content_table;
   content_rowid_ = content_rowid;
