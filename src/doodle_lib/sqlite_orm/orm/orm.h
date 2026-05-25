@@ -16,6 +16,12 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/update.h>
+#include <doodle_lib/sqlite_orm/orm/table_info.h>
+#include <doodle_lib/sqlite_orm/orm/create_index.h>
+
+
+
+
 
 #include <doodle_lib/sqlite_orm/orm/alias_impl.h>
 #include <doodle_lib/sqlite_orm/orm/bind_value_impl.h>
