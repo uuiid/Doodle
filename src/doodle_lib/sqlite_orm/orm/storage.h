@@ -4,9 +4,6 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
-#include <boost/pfr.hpp>
-#include <boost/pfr/core_name.hpp>
-
 #include <atomic>
 #include <fmt/format.h>
 #include <functional>
@@ -15,9 +12,7 @@
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <typeindex>
-#include <utility>
 #include <vector>
 
 namespace doodle {
@@ -27,7 +22,6 @@ namespace orm {
 enum class journal_mode_t { delete_, truncate, persist, memory, wal, off };
 
 struct column_info {
-
   std::string name_;
   table_columns_t ptr_;
   bool not_null_{false};
@@ -40,9 +34,9 @@ struct column_info {
 
 struct foreign_key_info {
   std::string name_;
-  std::string ptr_{};
-  std::string ref_table_;
-  std::string ref_ptr_{};
+  column_info_ptr ptr_{};
+  table_info_base_ptr ref_table_;
+  column_info_ptr ref_ptr_{};
   foreign_key_action on_delete_{foreign_key_action::no_action};
   foreign_key_action on_update_{foreign_key_action::no_action};
 };
@@ -84,10 +78,11 @@ struct table_info_base {
   std::vector<std::function<void(storage&)>> to_register_;
   std::vector<foreign_key_info> foreign_keys_;
   std::vector<column_info> columns_;
+  std::vector<std::shared_ptr<create_index_base_t>> indexes_;
 
   virtual ~table_info_base() = default;
-  std::vector<std::string> get_foreign_key_create_sql() const;
-  virtual std::string get_table_create_sql() const = 0;
+  std::vector<std::string> get_foreign_key_create_sql(storage& s, to_sql_ctx ctx) const;
+  virtual std::string to_sql(storage& s, to_sql_ctx ctx) const = 0;
 
   template <typename T>
   column_info& find_column_info(auto T::* in_ptr);
@@ -108,7 +103,7 @@ struct table_fts_info : table_info_base {
   template <typename T>
   table_fts_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
 
-  std::string get_table_create_sql() const override;
+  std::string to_sql(storage& s, to_sql_ctx ctx) const override;
 };
 
 struct table_info : table_info_base {
@@ -127,8 +122,9 @@ struct table_info : table_info_base {
   table_info& add_index(std::string&& in_name, auto T::* in_ptr);
   template <typename T>
   table_info& add_unique_index(std::string&& in_name, auto T::*... in_ptrs);
+  table_info& add_index(const create_index_base_t& index);
 
-  std::string get_table_create_sql() const override;
+  std::string to_sql(storage& s, to_sql_ctx ctx) const override;
 };
 
 enum class trigger_timing { before, after, instead_of };
@@ -157,8 +153,6 @@ struct sqlite_stmt {
   template <typename T>
   void bind(const T& in_value);
 };
-
-
 
 class storage : public boost::noncopyable {
   struct pragma_t {
@@ -195,8 +189,6 @@ class storage : public boost::noncopyable {
   };
 
   std::vector<std::shared_ptr<table_info_base>> tables_;
-  std::vector<index_info> indexes_;
-  std::vector<unique_index_info> unique_indexes_;
   std::map<std::type_index, std::size_t> type_to_table_index_;
   std::vector<std::shared_ptr<create_trigger_t>> triggers_;
 
@@ -240,8 +232,7 @@ class storage : public boost::noncopyable {
   template <typename T>
   std::string get_column_name(auto T::* in_ptr, to_sql_ctx ctx) const;
   std::string get_column_name(const table_columns_t& in_column, to_sql_ctx ctx) const;
-  template <typename T>
-  std::vector<std::string> get_table_column_names() const;
+
   template <typename T>
   const std::vector<column_info>& get_table_columns() const;
   template <typename T>
@@ -264,17 +255,6 @@ class storage : public boost::noncopyable {
 
   transaction_guard transaction();
   std::int64_t get_last_insert_rowid() const;
-
- private:
-  template <typename T, typename T2>
-  void reg_foreign_key(
-      std::string&& in_name, auto T::* in_ptr, auto T2::* in_ref_ptr, foreign_key_action on_delete,
-      foreign_key_action on_update
-  );
-  template <typename T>
-  void reg_index(std::string&& in_name, auto T::* in_ptr);
-  template <typename T>
-  void reg_unique_index(std::string&& in_name, auto... in_ptrs);
 };
 
 }  // namespace orm

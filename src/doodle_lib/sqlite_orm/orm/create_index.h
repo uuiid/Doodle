@@ -26,9 +26,14 @@ struct create_index_base_t {
   std::string to_sql(storage& s, to_sql_ctx ctx) const;
 
   template <typename Table>
-  create_index_base_t on(auto Table::*... in_ptr) {
+  create_index_base_t table() {
     info_->table_name_ = std::make_shared<table_info_t>(typeid(Table));
-    auto l_iter_fun    = [this](auto&& in_column) {
+    return *this;
+  }
+
+  template <typename Table>
+  create_index_base_t on(auto Table::*... in_ptr) {
+    auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       if constexpr (std::is_member_pointer_v<std::decay_t<decltype(in_column)>>) {
         info_->column_names_.push_back(std::make_shared<column_info_t>(in_column));
@@ -51,5 +56,18 @@ struct create_index_base_t {
     return *this;
   }
 };
+template <typename Table>
+create_index_base_t create_index(std::string name) {
+  create_index_base_t l_index(std::move(name));
+  l_index.table<Table>();
+  return l_index;
+}
+template <typename Table>
+create_index_base_t create_unique_index(std::string name) {
+  create_index_base_t index(std::move(name));
+  index.table<Table>();
+  index.unique();
+  return index;
+}
 
 }  // namespace doodle::orm

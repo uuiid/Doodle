@@ -1,4 +1,5 @@
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
+#include <doodle_lib/sqlite_orm/orm/create_index.h>
 #include <doodle_lib/sqlite_orm/orm/create_trigger.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
@@ -41,7 +42,7 @@ table_fts_info& table_fts_info::tokenizer(const std::string& tokenizer) {
   return *this;
 }
 
-std::string table_fts_info::get_table_create_sql() const {
+std::string table_fts_info::to_sql(storage& s, to_sql_ctx ctx) const {
   std::vector<std::string> l_column_sqls;
   for (std::size_t i = 0; i < columns_.size(); ++i) {
     const auto& column = columns_[i];
@@ -61,7 +62,12 @@ std::string table_fts_info::get_table_create_sql() const {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string table_info::get_table_create_sql() const {
+table_info& table_info::add_index(const create_index_base_t& in_index) {
+  indexes_.push_back(std::make_shared<create_index_base_t>(in_index));
+  return *this;
+}
+
+std::string table_info::to_sql(storage& s, to_sql_ctx ctx) const {
   std::vector<std::string> l_column_sqls;
   for (const auto& column : columns_) {
     std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
@@ -79,7 +85,7 @@ std::string table_info::get_table_create_sql() const {
     }
     l_column_sqls.push_back(std::move(l_sql));
   }
-  auto l_fk_sqls = get_foreign_key_create_sql();
+  auto l_fk_sqls = get_foreign_key_create_sql(s, ctx);
   l_column_sqls.insert(l_column_sqls.end(), l_fk_sqls.begin(), l_fk_sqls.end());
   return fmt::format("CREATE TABLE IF NOT EXISTS {} ({})", name_, fmt::join(l_column_sqls, ", "));
 }
@@ -89,12 +95,12 @@ on_delete::on_delete(foreign_key_action action) : action_(action) {}
 
 on_update::on_update(foreign_key_action action) : action_(action) {}
 
-std::vector<std::string> table_info_base::get_foreign_key_create_sql() const {
+std::vector<std::string> table_info_base::get_foreign_key_create_sql(storage& s, to_sql_ctx ctx) const {
   std::vector<std::string> l_sqls;
   for (const auto& fk : foreign_keys_) {
     std::string l_sql = fmt::format(
-        "FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", fk.ptr_, fk.ref_table_, fk.ref_ptr_,
-        fk.on_delete_, fk.on_update_
+        "FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", fk.ptr_->get_column_name(s, ctx),
+        fk.ref_table_->get_table_name(s), fk.ref_ptr_->get_column_name(s, ctx), fk.on_delete_, fk.on_update_
     );
     l_sqls.push_back(std::move(l_sql));
   }
@@ -236,24 +242,16 @@ fts5_api* storage::get_fts5_api() const {
 
 void storage::sync_schema() {
   for (const auto& table : tables_) {
-    auto l_create_table_sql = table->get_table_create_sql();
+    auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
     l_stmt.step();
   }
-  for (const auto& index : indexes_) {
-    auto l_create_index_sql =
-        fmt::format("CREATE INDEX IF NOT EXISTS {} ON {} ({})", index.name_, index.table_name_, index.column_name_);
-    auto l_stmt = sqlite_stmt(*this, l_create_index_sql);
-    l_stmt.step();
-  }
-  for (const auto& unique_index : unique_indexes_) {
-    std::vector<std::string> column_names;
-    auto l_create_unique_index_sql = fmt::format(
-        "CREATE UNIQUE INDEX IF NOT EXISTS {} ON {} ({})", unique_index.name_, unique_index.table_name_,
-        fmt::join(unique_index.ptrs_, ", ")
-    );
-    auto l_stmt = sqlite_stmt(*this, l_create_unique_index_sql);
-    l_stmt.step();
+  for (const auto& table : tables_) {
+    for (const auto& index : table->indexes_) {
+      auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      auto l_stmt             = sqlite_stmt(*this, l_create_index_sql);
+      l_stmt.step();
+    }
   }
   for (const auto& l_trigger : triggers_) {
     auto l_create_trigger_sql = l_trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
@@ -346,7 +344,20 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
   auto l_table_index = type_to_table_index_.at(l_type_index);
   auto& l_table      = static_cast<table_info&>(*tables_[l_table_index]);
   auto& l_column     = l_table.find_column_info(in_column);
-  return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
+  switch (ctx.ctx_) {
+    case to_sql_ctx::create_index_sql:
+    case to_sql_ctx::create_trigger_sql:
+    case to_sql_ctx::create_unique_index_sql:
+    case to_sql_ctx::create_table_sql:
+      return fmt::format(R"("{}")", l_column.name_);
+    case to_sql_ctx::select_sql:
+    case to_sql_ctx::update_sql:
+    case to_sql_ctx::delete_sql:
+    case to_sql_ctx::insert_sql:
+      return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
+    default:
+      throw std::runtime_error("Invalid to_sql context");
+  }
 }
 
 std::int64_t storage::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_); }
