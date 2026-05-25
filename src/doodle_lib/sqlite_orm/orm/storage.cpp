@@ -350,7 +350,7 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
   auto& l_column     = l_table.find_column_info(in_column);
 
   if (ctx.ctx_ & to_sql_ctx::create_trigger_sql && ctx.ctx_ & to_sql_ctx::where_sql)
-    return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
+    return fmt::format(R"("{}")", l_table.name_, l_column.name_);
 
   if (ctx.ctx_ & to_sql_ctx::select_sql || ctx.ctx_ & to_sql_ctx::where_sql || ctx.ctx_ & to_sql_ctx::delete_sql)
     return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
