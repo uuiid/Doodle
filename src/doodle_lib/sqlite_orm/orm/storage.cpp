@@ -351,10 +351,11 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
 
   if (ctx.ctx_ & to_sql_ctx::alias_sql) return fmt::format(R"("{}")", l_column.name_);
 
-  if (ctx.ctx_ & to_sql_ctx::create_trigger_sql && ctx.ctx_ & to_sql_ctx::where_sql)
-    return fmt::format(R"("{}")", l_table.name_, l_column.name_);
+  if ((ctx.ctx_ & to_sql_ctx::insert_sql || ctx.ctx_ & to_sql_ctx::update_sql || ctx.ctx_ & to_sql_ctx::delete_sql) &&
+      !(ctx.ctx_ & to_sql_ctx::where_sql))
+    return fmt::format(R"("{}")", l_column.name_);
 
-  if (ctx.ctx_ & to_sql_ctx::select_sql || ctx.ctx_ & to_sql_ctx::where_sql || ctx.ctx_ & to_sql_ctx::delete_sql)
+  if (ctx.ctx_ & to_sql_ctx::select_sql || ctx.ctx_ & to_sql_ctx::where_sql)
     return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
   return fmt::format(R"("{}")", l_column.name_);
 }
