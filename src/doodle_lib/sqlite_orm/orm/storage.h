@@ -33,7 +33,6 @@ struct column_info {
 };
 
 struct foreign_key_info {
-  std::string name_;
   column_info_ptr ptr_{};
   table_info_base_ptr ref_table_;
   column_info_ptr ref_ptr_{};
@@ -113,8 +112,7 @@ struct table_info : table_info_base {
   table_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
   template <typename T, typename RefTable>
   table_info& add_foreign_key(
-      std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr,
-      foreign_key_action on_delete = foreign_key_action::no_action,
+      auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete = foreign_key_action::no_action,
       foreign_key_action on_update = foreign_key_action::no_action
   );
 

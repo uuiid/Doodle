@@ -97,12 +97,9 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_column("code", &entity::code_)
       .add_column("parent_id", &entity::parent_id_)
       .add_column("entity_type_id", &entity::entity_type_id_)
+      .add_foreign_key(&entity::entity_type_id_, &asset_type::uuid_id_, orm::foreign_key_action::cascade)
       .add_foreign_key(
-          "entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, orm::foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "parent_id", &entity::parent_id_, &entity::uuid_id_, orm::foreign_key_action::cascade,
-          orm::foreign_key_action::cascade
+          &entity::parent_id_, &entity::uuid_id_, orm::foreign_key_action::cascade, orm::foreign_key_action::cascade
       )
       .add_index("entity_uuid_id_index", &entity::uuid_id_)
       .add_unique_index("entity_name_unique_index", &entity::name_);

@@ -46,7 +46,6 @@
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
 
-
 namespace doodle {
 
 void sqlite_database::regs_all() {
@@ -57,8 +56,7 @@ void sqlite_database::regs_all() {
       .add_column("parent_id", &seedance2::assets_entity_item::parent_id_, not_null())
       .add_column("file_extension", &seedance2::assets_entity_item::file_extension_)
       .add_foreign_key(
-          "parent_id", &seedance2::assets_entity_item::parent_id_, &seedance2::assets_entity::uuid_id_,
-          foreign_key_action::cascade
+          &seedance2::assets_entity_item::parent_id_, &seedance2::assets_entity::uuid_id_, foreign_key_action::cascade
       );
 
   reg_table<seedance2::assets_entity>("seedance2_assets_entity")
@@ -73,16 +71,12 @@ void sqlite_database::regs_all() {
       .add_column("created_at", &seedance2::assets_entity::created_at_)
       .add_column("updated_at", &seedance2::assets_entity::updated_at_)
       .add_foreign_key(
-          "group_id", &seedance2::assets_entity::group_id_, &seedance2::assets_group::uuid_id_,
-          foreign_key_action::cascade
+          &seedance2::assets_entity::group_id_, &seedance2::assets_group::uuid_id_, foreign_key_action::cascade
       )
-      .add_foreign_key("user_id", &seedance2::assets_entity::user_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::assets_entity::user_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::assets_entity::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(
-          "ai_studio_id", &seedance2::assets_entity::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "preview_id", &seedance2::assets_entity::preview_id_, &seedance2::assets_entity_item::uuid_id_,
-          foreign_key_action::set_null
+          &seedance2::assets_entity::preview_id_, &seedance2::assets_entity_item::uuid_id_, foreign_key_action::set_null
       );
 
   reg_table<seedance2::assets_group>("seedance2_assets_group")
@@ -107,20 +101,16 @@ void sqlite_database::regs_all() {
       .add_column("ended_at", &seedance2::task::ended_at_)
       .add_column("shot_uuid_id", &seedance2::task::shot_uuid_id_)
       .add_column("archived", &seedance2::task::archived_)
-      .add_foreign_key("shot_uuid_id", &seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key("user_id", &seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_index("seedance2_task_uuid_id_index", &seedance2::task::uuid_id_);
 
   reg_table<ai_studio_person_role_link>("ai_studio_person_role_link")
       .add_column("id", &ai_studio_person_role_link::id_, primary_key(), autoincrement())
       .add_column("ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, not_null())
       .add_column("person_id", &ai_studio_person_role_link::person_id_, not_null())
-      .add_foreign_key(
-          "ai_studio_id", &ai_studio_person_role_link::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "person_id", &ai_studio_person_role_link::person_id_, &person::uuid_id_, foreign_key_action::cascade
-      );
+      .add_foreign_key(&ai_studio_person_role_link::ai_studio_id_, &ai_studio::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&ai_studio_person_role_link::person_id_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<ai_studio>("ai_studio")
       .add_column("id", &ai_studio::id_, primary_key(), autoincrement())
@@ -136,12 +126,8 @@ void sqlite_database::regs_all() {
       .add_column("uuid_id", &outsource_studio_authorization::uuid_id_, unique(), not_null())
       .add_column("studio_id", &outsource_studio_authorization::studio_id_, not_null())
       .add_column("entity_id", &outsource_studio_authorization::entity_id_, not_null())
-      .add_foreign_key(
-          "studio_id", &outsource_studio_authorization::studio_id_, &studio::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "entity_id", &outsource_studio_authorization::entity_id_, &entity::uuid_id_, foreign_key_action::cascade
-      )
+      .add_foreign_key(&outsource_studio_authorization::studio_id_, &studio::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&outsource_studio_authorization::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
           &outsource_studio_authorization::entity_id_
@@ -158,7 +144,7 @@ void sqlite_database::regs_all() {
       .add_column("height", &ai_image_metadata::height_)
       .add_column("created_at", &ai_image_metadata::created_at_)
       .add_column("author", &ai_image_metadata::author_)
-      .add_foreign_key("author", &ai_image_metadata::author_, &person::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&ai_image_metadata::author_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<playlist_shot>("playlist_shot")
       .add_column("id", &playlist_shot::id_, primary_key(), autoincrement())
@@ -167,9 +153,9 @@ void sqlite_database::regs_all() {
       .add_column("entity_id", &playlist_shot::entity_id_, not_null())
       .add_column("preview_id", &playlist_shot::preview_id_)
       .add_column("order_index", &playlist_shot::order_index_)
-      .add_foreign_key("playlist_id", &playlist_shot::playlist_id_, &playlist::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("entity_id", &playlist_shot::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("preview_id", &playlist_shot::preview_id_, &preview_file::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&playlist_shot::playlist_id_, &playlist::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&playlist_shot::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&playlist_shot::preview_id_, &preview_file::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_
       );
@@ -186,9 +172,9 @@ void sqlite_database::regs_all() {
       .add_column("is_for_all", &playlist::is_for_all_)
       .add_column("created_at", &playlist::created_at_)
       .add_column("updated_at", &playlist::updated_at_)
-      .add_foreign_key("project_id", &playlist::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("episode_id", &playlist::episodes_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_type_id", &playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&playlist::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&playlist::episodes_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
       .add_unique_index("playlist_uc", &playlist::name_, &playlist::project_id_, &playlist::episodes_id_);
 
   reg_table<server_task_info>("server_task_info_tab")
@@ -207,11 +193,9 @@ void sqlite_database::regs_all() {
       .add_column("task_id", &server_task_info::task_id_)
       .add_column("type", &server_task_info::type_)
       .add_column("run_time_info", &server_task_info::run_time_info_)
-      .add_foreign_key("submitter", &server_task_info::submitter_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(
-          "run_computer_id", &server_task_info::run_computer_id_, &computer::uuid_id_, foreign_key_action::set_null
-      )
-      .add_foreign_key("task_id", &server_task_info::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&server_task_info::submitter_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&server_task_info::run_computer_id_, &computer::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&server_task_info::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_index("server_task_info_tab_uuid_id_idx", &server_task_info::uuid_id_);
 
   reg_table<computer>("computer")
@@ -222,18 +206,18 @@ void sqlite_database::regs_all() {
       .add_column("status", &computer::status_)
       .add_column("last_heartbeat_time", &computer::last_heartbeat_time_)
       .add_column("bot_uuid", &computer::bot_uuid_)
-      .add_foreign_key("bot_uuid", &computer::bot_uuid_, &person::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&computer::bot_uuid_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<assets_file_helper::link_parent_t>("assets_link_parent_t")
       .add_column("id", &assets_file_helper::link_parent_t::id_, primary_key())
       .add_column("assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_, not_null())
       .add_column("assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, not_null())
       .add_foreign_key(
-          "assets_type_uuid", &assets_file_helper::link_parent_t::assets_type_uuid_,
-          &assets_helper::database_t::uuid_id_, foreign_key_action::cascade
+          &assets_file_helper::link_parent_t::assets_type_uuid_, &assets_helper::database_t::uuid_id_,
+          foreign_key_action::cascade
       )
       .add_foreign_key(
-          "assets_uuid", &assets_file_helper::link_parent_t::assets_uuid_, &assets_file_helper::database_t::uuid_id_,
+          &assets_file_helper::link_parent_t::assets_uuid_, &assets_file_helper::database_t::uuid_id_,
           foreign_key_action::cascade
       );
 
@@ -266,9 +250,7 @@ void sqlite_database::regs_all() {
       .add_column("update_time", &attendance_helper::database_t::update_time_)
       .add_column("dingding_id", &attendance_helper::database_t::dingding_id_)
       .add_column("person_id", &attendance_helper::database_t::person_id_)
-      .add_foreign_key(
-          "person_id", &attendance_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
-      )
+      .add_foreign_key(&attendance_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade)
       .add_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_)
       .add_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_);
 
@@ -290,8 +272,7 @@ void sqlite_database::regs_all() {
       .add_column("project_id", &work_xlsx_task_info_helper::database_t::project_id_)
       .add_column("project_name", &work_xlsx_task_info_helper::database_t::project_name_)
       .add_foreign_key(
-          "person_id", &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_,
-          foreign_key_action::cascade
+          &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
       )
       .add_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_);
 
@@ -304,7 +285,7 @@ void sqlite_database::regs_all() {
       .add_column("mimetype", &attachment_file::mimetype_)
       .add_column("comment_id", &attachment_file::comment_id_)
       .add_column("chat_message_id", &attachment_file::chat_message_id_)
-      .add_foreign_key("comment_id", &attachment_file::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&attachment_file::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
       .add_index("attachment_file_chat_message_id_index", &attachment_file::chat_message_id_);
 
   reg_table<subscription>("subscription")
@@ -314,10 +295,10 @@ void sqlite_database::regs_all() {
       .add_column("task_id", &subscription::task_id_)
       .add_column("entity_id", &subscription::entity_id_)
       .add_column("task_type_id", &subscription::task_type_id_)
-      .add_foreign_key("person_id", &subscription::person_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_id", &subscription::task_id_, &task::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("entity_id", &subscription::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_type_id", &subscription::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&subscription::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&subscription::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&subscription::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&subscription::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
       )
@@ -327,20 +308,15 @@ void sqlite_database::regs_all() {
       .add_column("id", &assignees_table::id_, primary_key(), autoincrement())
       .add_column("person_id", &assignees_table::person_id_, not_null())
       .add_column("task_id", &assignees_table::task_id_, not_null())
-      .add_foreign_key("person_id", &assignees_table::person_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_id", &assignees_table::task_id_, &task::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&assignees_table::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&assignees_table::task_id_, &task::uuid_id_, foreign_key_action::cascade);
 
   reg_table<comment_preview_link>("comment_preview_link")
       .add_column("id", &comment_preview_link::id_, primary_key(), autoincrement())
       .add_column("comment_id", &comment_preview_link::comment_id_)
       .add_column("preview_file_id", &comment_preview_link::preview_file_id_)
-      .add_foreign_key(
-          "comment_id", &comment_preview_link::comment_id_, &comment::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "preview_file_id", &comment_preview_link::preview_file_id_, &preview_file::uuid_id_,
-          foreign_key_action::cascade
-      );
+      .add_foreign_key(&comment_preview_link::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&comment_preview_link::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::cascade);
 
   reg_table<preview_file>("preview_file")
       .add_column("id", &preview_file::id_, primary_key(), autoincrement())
@@ -370,8 +346,8 @@ void sqlite_database::regs_all() {
       .add_column("uploaded_movie_name", &preview_file::uploaded_movie_name_)
       .add_column("created_at", &preview_file::created_at_)
       .add_column("updated_at", &preview_file::updated_at_)
-      .add_foreign_key("task_id", &preview_file::task_id_, &task::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("person_id", &preview_file::person_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&preview_file::task_id_, &task::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&preview_file::person_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_);
 
   reg_table<notification>("notification_2")
@@ -386,40 +362,33 @@ void sqlite_database::regs_all() {
       .add_column("task_id", &notification::task_id_, not_null())
       .add_column("reply_id", &notification::reply_id_)
       .add_column("created_at", &notification::created_at_)
-      .add_foreign_key("person_id", &notification::person_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("author_id", &notification::author_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("comment_id", &notification::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_id", &notification::task_id_, &task::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&notification::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&notification::author_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&notification::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&notification::task_id_, &task::uuid_id_, foreign_key_action::cascade);
 
   reg_table<comment_mentions>("comment_mentions")
       .add_column("id", &comment_mentions::id_, primary_key(), autoincrement())
       .add_column("comment_id", &comment_mentions::comment_id_)
       .add_column("person_id", &comment_mentions::person_id_)
-      .add_foreign_key("comment_id", &comment_mentions::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("person_id", &comment_mentions::person_id_, &person::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&comment_mentions::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&comment_mentions::person_id_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<comment_department_mentions>("comment_department_mentions")
       .add_column("id", &comment_department_mentions::id_, primary_key(), autoincrement())
       .add_column("comment_id", &comment_department_mentions::comment_id_)
       .add_column("department_id", &comment_department_mentions::department_id_)
+      .add_foreign_key(&comment_department_mentions::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(
-          "comment_id", &comment_department_mentions::comment_id_, &comment::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "department_id", &comment_department_mentions::department_id_, &department::uuid_id_,
-          foreign_key_action::cascade
+          &comment_department_mentions::department_id_, &department::uuid_id_, foreign_key_action::cascade
       );
 
   reg_table<comment_acknoledgments>("comment_acknoledgments")
       .add_column("id", &comment_acknoledgments::id_, primary_key(), autoincrement())
       .add_column("comment_id", &comment_acknoledgments::comment_id_)
       .add_column("person_id", &comment_acknoledgments::person_id_)
-      .add_foreign_key(
-          "comment_id", &comment_acknoledgments::comment_id_, &comment::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "person_id", &comment_acknoledgments::person_id_, &person::uuid_id_, foreign_key_action::cascade
-      );
+      .add_foreign_key(&comment_acknoledgments::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&comment_acknoledgments::person_id_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<comment>("comment")
       .add_column("id", &comment::id_, primary_key(), autoincrement())
@@ -439,15 +408,11 @@ void sqlite_database::regs_all() {
       .add_column("person_id", &comment::person_id_, not_null())
       .add_column("editor_id", &comment::editor_id_)
       .add_column("preview_file_id", &comment::preview_file_id_)
-      .add_foreign_key("task_status_id", &comment::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("person_id", &comment::person_id_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key("editor_id", &comment::editor_id_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key(
-          "preview_file_id", &comment::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
-      )
-      .add_foreign_key(
-          "comment_object_id_object_type_fk", &comment::object_id_, &entity::uuid_id_, foreign_key_action::cascade
-      )
+      .add_foreign_key(&comment::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&comment::person_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&comment::editor_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&comment::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&comment::object_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_index("comment_object_type_index", &comment::object_type_);
 
   reg_table<task>("task")
@@ -480,11 +445,11 @@ void sqlite_database::regs_all() {
       .add_column("task_status_id", &task::task_status_id_)
       .add_column("entity_id", &task::entity_id_)
       .add_column("assigner_id", &task::assigner_id_)
-      .add_foreign_key("project_id", &task::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_type_id", &task::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("task_status_id", &task::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("entity_id", &task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("assigner_id", &task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&task::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&task::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&task::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_);
 
   reg_table<entity_link>("entity_link")
@@ -495,17 +460,15 @@ void sqlite_database::regs_all() {
       .add_column("data", &entity_link::data_)
       .add_column("nb_occurences", &entity_link::nb_occurences_)
       .add_column("label", &entity_link::label_)
-      .add_foreign_key("entity_in_id", &entity_link::entity_in_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("entity_out_id", &entity_link::entity_out_id_, &entity::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&entity_link::entity_in_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity_link::entity_out_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
   reg_table<entity_concept_link>("entity_concept_link")
       .add_column("id", &entity_concept_link::id_, primary_key(), autoincrement())
       .add_column("entity_in_id", &entity_concept_link::entity_id_)
       .add_column("entity_out_id", &entity_concept_link::entity_out_id_)
-      .add_foreign_key("entity_in_id", &entity_concept_link::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(
-          "entity_out_id", &entity_concept_link::entity_out_id_, &entity::uuid_id_, foreign_key_action::cascade
-      );
+      .add_foreign_key(&entity_concept_link::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity_concept_link::entity_out_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
   reg_table<entity_shot_extend>("entity_shot_extend")
       .add_column("id", &entity_shot_extend::id_, primary_key(), autoincrement())
@@ -513,7 +476,7 @@ void sqlite_database::regs_all() {
       .add_column("entity_id", &entity_shot_extend::entity_id_)
       .add_column("frame_in", &entity_shot_extend::frame_in_)
       .add_column("frame_out", &entity_shot_extend::frame_out_)
-      .add_foreign_key("entity_id", &entity_shot_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&entity_shot_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
   reg_table<entity_asset_extend>("entity_asset_extend")
       .add_column("id", &entity_asset_extend::id_, primary_key(), autoincrement())
@@ -528,7 +491,7 @@ void sqlite_database::regs_all() {
       .add_column("ji_du", &entity_asset_extend::ji_du_)
       .add_column("kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_)
       .add_column("chang_ci", &entity_asset_extend::chang_ci_)
-      .add_foreign_key("entity_id", &entity_asset_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&entity_asset_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
   reg_table<entity>("entity")
       .add_column("id", &entity::id_, primary_key(), autoincrement())
@@ -550,15 +513,13 @@ void sqlite_database::regs_all() {
       .add_column("preview_file_id", &entity::preview_file_id_)
       .add_column("ready_for", &entity::ready_for_)
       .add_column("created_by", &entity::created_by_)
-      .add_foreign_key("project_id", &entity::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("entity_type_id", &entity::entity_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(
-          "preview_file_id", &entity::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null
-      )
-      .add_foreign_key("ready_for", &entity::ready_for_, &task_type::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key("created_by", &entity::created_by_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_foreign_key("parent_id", &entity::parent_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("source_id", &entity::source_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity::entity_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&entity::ready_for_, &task_type::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&entity::created_by_, &person::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&entity::parent_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity::source_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "entity_uc", &entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_
       );
@@ -567,13 +528,8 @@ void sqlite_database::regs_all() {
       .add_column("id", &task_type_asset_type_link::id_, primary_key(), autoincrement())
       .add_column("asset_type_id", &task_type_asset_type_link::asset_type_id_, not_null())
       .add_column("task_type_id", &task_type_asset_type_link::task_type_id_, not_null())
-      .add_foreign_key(
-          "asset_type_id", &task_type_asset_type_link::asset_type_id_, &asset_type::uuid_id_,
-          foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "task_type_id", &task_type_asset_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
-      )
+      .add_foreign_key(&task_type_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&task_type_asset_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_,
           &task_type_asset_type_link::asset_type_id_
@@ -584,8 +540,8 @@ void sqlite_database::regs_all() {
       .add_column("project_id", &project_person_link::project_id_, not_null())
       .add_column("person_id", &project_person_link::person_id_, not_null())
       .add_column("shotgun_id", &project_person_link::shotgun_id_)
-      .add_foreign_key("project_id", &project_person_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key("person_id", &project_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&project_person_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&project_person_link::person_id_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<project_task_type_link>("project_task_type_link")
       .add_column("id", &project_task_type_link::id_, primary_key(), autoincrement())
@@ -593,12 +549,8 @@ void sqlite_database::regs_all() {
       .add_column("project_id", &project_task_type_link::project_id_, not_null())
       .add_column("task_type_id", &project_task_type_link::task_type_id_, not_null())
       .add_column("priority", &project_task_type_link::priority_)
-      .add_foreign_key(
-          "project_id", &project_task_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "task_type_id", &project_task_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
-      )
+      .add_foreign_key(&project_task_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&project_task_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_
       );
@@ -610,13 +562,8 @@ void sqlite_database::regs_all() {
       .add_column("task_status_id", &project_task_status_link::task_status_id_, not_null())
       .add_column("priority", &project_task_status_link::priority_)
       .add_column("roles_for_board", &project_task_status_link::roles_for_board_)
-      .add_foreign_key(
-          "project_id", &project_task_status_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "task_status_id", &project_task_status_link::task_status_id_, &task_status::uuid_id_,
-          foreign_key_action::cascade
-      )
+      .add_foreign_key(&project_task_status_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&project_task_status_link::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
       .add_unique_index(
           "project_task_status_link_uc", &project_task_status_link::project_id_,
           &project_task_status_link::task_status_id_
@@ -626,22 +573,16 @@ void sqlite_database::regs_all() {
       .add_column("id", &project_asset_type_link::id_, primary_key(), autoincrement())
       .add_column("project_id", &project_asset_type_link::project_id_, not_null())
       .add_column("asset_type_id", &project_asset_type_link::asset_type_id_, not_null())
-      .add_foreign_key(
-          "project_id", &project_asset_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "asset_type_id", &project_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade
-      );
+      .add_foreign_key(&project_asset_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&project_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade);
 
   reg_table<project_status_automation_link>("project_status_automation_link")
       .add_column("id", &project_status_automation_link::id_, primary_key(), autoincrement())
       .add_column("project_id", &project_status_automation_link::project_id_, not_null())
       .add_column("status_automation_id", &project_status_automation_link::status_automation_id_, not_null())
+      .add_foreign_key(&project_status_automation_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(
-          "project_id", &project_status_automation_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "status_automation_id", &project_status_automation_link::status_automation_id_, &status_automation::uuid_id_,
+          &project_status_automation_link::status_automation_id_, &status_automation::uuid_id_,
           foreign_key_action::cascade
       );
 
@@ -652,12 +593,11 @@ void sqlite_database::regs_all() {
           "preview_background_file_id", &project_preview_background_file_link::preview_background_file_id_, not_null()
       )
       .add_foreign_key(
-          "project_id", &project_preview_background_file_link::project_id_, &project::uuid_id_,
-          foreign_key_action::cascade
+          &project_preview_background_file_link::project_id_, &project::uuid_id_, foreign_key_action::cascade
       )
       .add_foreign_key(
-          "preview_background_file_id", &project_preview_background_file_link::preview_background_file_id_,
-          &preview_background_file::uuid_id_, foreign_key_action::cascade
+          &project_preview_background_file_link::preview_background_file_id_, &preview_background_file::uuid_id_,
+          foreign_key_action::cascade
       );
 
   reg_table<project>("project")
@@ -696,12 +636,10 @@ void sqlite_database::regs_all() {
       .add_column("production_category", &project::production_category_)
       .add_column("short_name", &project::short_name_)
       .add_column("asset_root_path", &project::asset_root_path_, default_value(""))
+      .add_foreign_key(&project::project_status_id_, &project_status::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(
-          "project_status_id", &project::project_status_id_, &project_status::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "default_preview_background_file_id", &project::default_preview_background_file_id_,
-          &preview_background_file::uuid_id_, foreign_key_action::set_null
+          &project::default_preview_background_file_id_, &preview_background_file::uuid_id_,
+          foreign_key_action::set_null
       );
 
   reg_table<metadata_descriptor_department_link>("metadata_descriptor_department_link")
@@ -709,12 +647,11 @@ void sqlite_database::regs_all() {
       .add_column("metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_)
       .add_column("department_id", &metadata_descriptor_department_link::department_uuid_)
       .add_foreign_key(
-          "metadata_descriptor_id", &metadata_descriptor_department_link::metadata_descriptor_uuid_,
-          &metadata_descriptor::uuid_id_, foreign_key_action::cascade
+          &metadata_descriptor_department_link::metadata_descriptor_uuid_, &metadata_descriptor::uuid_id_,
+          foreign_key_action::cascade
       )
       .add_foreign_key(
-          "department_id", &metadata_descriptor_department_link::department_uuid_, &department::uuid_id_,
-          foreign_key_action::cascade
+          &metadata_descriptor_department_link::department_uuid_, &department::uuid_id_, foreign_key_action::cascade
       );
 
   reg_table<metadata_descriptor>("metadata_descriptor")
@@ -738,10 +675,8 @@ void sqlite_database::regs_all() {
       .add_column("id", &person_department_link::id_, primary_key(), autoincrement())
       .add_column("person_id", &person_department_link::person_id_)
       .add_column("department_id", &person_department_link::department_id_)
-      .add_foreign_key("person_id", &person_department_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_foreign_key(
-          "department_id", &person_department_link::department_id_, &department::uuid_id_, foreign_key_action::cascade
-      )
+      .add_foreign_key(&person_department_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&person_department_link::department_id_, &department::uuid_id_, foreign_key_action::cascade)
 
       .add_unique_index(
           "department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_
@@ -790,7 +725,7 @@ void sqlite_database::regs_all() {
       .add_column("is_generated_from_ldap", &person::is_generated_from_ldap_)
       .add_column("ldap_uid", &person::ldap_uid_, unique())
       .add_column("dingding_id", &person::dingding_id_)
-      .add_foreign_key("studio_id", &person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null);
+      .add_foreign_key(&person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null);
 
   reg_table<preview_background_file>("preview_background_file")
       .add_column("id", &preview_background_file::id_, primary_key(), autoincrement())
@@ -814,20 +749,10 @@ void sqlite_database::regs_all() {
       .add_column("out_task_status_id", &status_automation::out_task_status_id_)
       .add_column("import_last_revision", &status_automation::import_last_revision_)
       .add_column("archived", &status_automation::archived_)
-      .add_foreign_key(
-          "in_task_type_id", &status_automation::in_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "in_task_status_id", &status_automation::in_task_status_id_, &task_status::uuid_id_,
-          foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "out_task_type_id", &status_automation::out_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade
-      )
-      .add_foreign_key(
-          "out_task_status_id", &status_automation::out_task_status_id_, &task_status::uuid_id_,
-          foreign_key_action::cascade
-      );
+      .add_foreign_key(&status_automation::in_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&status_automation::in_task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&status_automation::out_task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&status_automation::out_task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade);
 
   reg_table<task_type>("task_type")
       .add_column("id", &task_type::id_, primary_key(), autoincrement())
@@ -842,7 +767,7 @@ void sqlite_database::regs_all() {
       .add_column("archived", &task_type::archived_)
       .add_column("shotgun_id", &task_type::shotgun_id_)
       .add_column("department_id", &task_type::department_id_)
-      .add_foreign_key("department_id", &task_type::department_id_, &department::uuid_id_, foreign_key_action::set_null)
+      .add_foreign_key(&task_type::department_id_, &department::uuid_id_, foreign_key_action::set_null)
       .add_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_);
 
   reg_table<department>("department")

@@ -132,11 +132,9 @@ const std::vector<column_info>& storage::get_table_columns() const {
 
 template <typename T, typename RefTable>
 table_info& table_info::add_foreign_key(
-    std::string&& in_name, auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete,
-    foreign_key_action on_update
+    auto T::* in_ptr, auto RefTable::* in_ref_ptr, foreign_key_action on_delete, foreign_key_action on_update
 ) {
   foreign_key_info l_fk{};
-  l_fk.name_      = std::move(in_name);
   l_fk.ptr_       = std::make_shared<column_info_t>(in_ptr);
   l_fk.ref_table_ = std::make_shared<table_info_t>(typeid(RefTable));
   l_fk.ref_ptr_   = std::make_shared<column_info_t>(in_ref_ptr);
