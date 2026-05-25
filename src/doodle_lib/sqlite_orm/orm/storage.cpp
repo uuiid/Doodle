@@ -168,7 +168,6 @@ storage::transaction_guard::~transaction_guard() {
   }
 }
 
-
 namespace {
 void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {
   if (auto l_logger = static_cast<spdlog::logger*>(pArg); l_logger)
@@ -198,7 +197,7 @@ storage::backup_t::~backup_t() {
   if (backup_) sqlite3_backup_finish(backup_);
 }
 
-void storage::open(FSys::path in_path, std::int32_t in_flags) {
+void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   static std::once_flag l_flag{};
   std::call_once(l_flag, []() {
     sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, spdlog::default_logger_raw());
@@ -216,7 +215,11 @@ void storage::open(FSys::path in_path, std::int32_t in_flags) {
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 
-void storage::open() { open({}); }
+void storage::open(const FSys::path& in_path) { open_(in_path, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE); }
+
+void storage::open(FSys::path in_path, std::int32_t in_flags) { open_(in_path, in_flags); }
+
+void storage::open() { open_({}, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE); }
 
 create_trigger_t storage::create_trigger(std::string in_name) {
   auto l_trigger = std::make_shared<create_trigger_t>(std::move(in_name));
