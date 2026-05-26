@@ -170,6 +170,8 @@ class storage : public boost::noncopyable {
     void recursive_triggers(bool in_recursive);
     void foreign_keys(bool in_foreign_keys);
     void locking_mode(bool in_exclusive);
+    std::int32_t user_version();
+    void user_version(std::int32_t version);
 
     void run(std::string_view in_pragma_sql, bool in_value);
     void run(std::string_view in_pragma_sql, std::string_view in_value);

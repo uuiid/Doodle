@@ -6,14 +6,14 @@
 
 #include <doodle_lib/doodle_lib_fwd.h>
 namespace doodle {
-struct sqlite_database_impl;
+class sqlite_database;
 }
 namespace doodle::details {
 
 class sqlite_upgrade {
  public:
-  virtual ~sqlite_upgrade()                                                  = default;
-  virtual void upgrade(const std::shared_ptr<sqlite_database_impl>& in_data) = 0;
+  virtual ~sqlite_upgrade()                      = default;
+  virtual void upgrade(sqlite_database& in_data) = 0;
 };
 
 std::shared_ptr<sqlite_upgrade> upgrade_init(const FSys::path& in_db_path);

@@ -1,3 +1,4 @@
+#include "storage.h"
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/create_index.h>
 #include <doodle_lib/sqlite_orm/orm/create_trigger.h>
@@ -318,6 +319,13 @@ void storage::pragma_t::journal_mode(journal_mode_t in_mode) {
 void storage::pragma_t::recursive_triggers(bool in_recursive) { run("recursive_triggers", in_recursive); }
 void storage::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys", in_foreign_keys); }
 void storage::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
+void storage::pragma_t::user_version(std::int32_t version) { run("user_version", version); }
+std::int32_t storage::pragma_t::user_version() {
+  sqlite_stmt l_stmt{};
+  l_stmt.prepare(s_, "PRAGMA user_version;");
+  l_stmt.step();
+  return l_stmt.get_column_value<std::int32_t>(0);
+}
 
 void storage::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
   auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
