@@ -270,6 +270,7 @@ fts5_api* storage::get_fts5_api() const {
 }
 
 void storage::sync_schema() {
+  auto l_transaction = transaction();
   for (const auto& table : tables_) {
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
