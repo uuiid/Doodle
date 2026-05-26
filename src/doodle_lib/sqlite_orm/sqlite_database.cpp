@@ -513,7 +513,12 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&entity::created_by_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&entity::parent_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&entity::source_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(&entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_);
+      .add_unique_index(&entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_)
+      .add_index(
+          create_unique_index<entity>()
+              .on(&entity::name_, &entity::project_id_, &entity::entity_type_id_)
+              .where(c(&entity::parent_id_) == nullptr)
+      );
 
   reg_table<task_type_asset_type_link>("task_type_asset_type_link")
       .add_column("id", &task_type_asset_type_link::id_, primary_key(), autoincrement())

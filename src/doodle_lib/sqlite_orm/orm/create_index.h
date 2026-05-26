@@ -6,7 +6,6 @@
 #include <memory>
 #include <string>
 
-
 namespace doodle::orm {
 struct create_index_base_t {
   struct impl {
@@ -51,9 +50,7 @@ struct create_index_base_t {
     bool operator<=(const index_info& other) const { return !(other < *this); }
     bool operator>=(const index_info& other) const { return !(*this < other); }
   };
-  explicit create_index_base_t(std::string in_name) : info_(std::make_shared<impl>()) {
-    info_->name_ = std::move(in_name);
-  }
+  create_index_base_t() : info_(std::make_shared<impl>()) {}
 
   ~create_index_base_t() = default;
   std::string to_sql(storage& s, to_sql_ctx ctx) const;
@@ -92,14 +89,14 @@ struct create_index_base_t {
   index_info get_index_info(storage& s, to_sql_ctx ctx) const;
 };
 template <typename Table>
-create_index_base_t create_index(std::string name) {
-  create_index_base_t l_index(std::move(name));
+create_index_base_t create_index() {
+  create_index_base_t l_index{};
   l_index.table<Table>();
   return l_index;
 }
 template <typename Table>
-create_index_base_t create_unique_index(std::string name) {
-  create_index_base_t index(std::move(name));
+create_index_base_t create_unique_index() {
+  create_index_base_t index{};
   index.table<Table>();
   index.unique();
   return index;
