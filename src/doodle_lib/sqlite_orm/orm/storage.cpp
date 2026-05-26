@@ -394,6 +394,27 @@ std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ct
 
 std::int64_t storage::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_); }
 
+void storage::drop_table(const std::string& table_name) {
+  auto l_sql  = fmt::format("DROP TABLE IF EXISTS {}", table_name);
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
+void storage::drop_index(const std::string& index_name) {
+  auto l_sql  = fmt::format("DROP INDEX IF EXISTS {}", index_name);
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
+void storage::drop_trigger(const std::string& trigger_name) {
+  auto l_sql  = fmt::format("DROP TRIGGER IF EXISTS {}", trigger_name);
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
+void storage::drop_view(const std::string& view_name) {
+  auto l_sql  = fmt::format("DROP VIEW IF EXISTS {}", view_name);
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
+
 }  // namespace orm
 
 }  // namespace doodle

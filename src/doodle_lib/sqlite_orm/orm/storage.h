@@ -22,9 +22,7 @@ namespace boost {
 // 为 std::thread::id 提供哈希函数
 template <>
 struct hash<std::thread::id> {
-  std::size_t operator()(const std::thread::id& id) const noexcept {
-    return std::hash<std::thread::id>{}(id);
-  }
+  std::size_t operator()(const std::thread::id& id) const noexcept { return std::hash<std::thread::id>{}(id); }
 };
 }  // namespace boost
 
@@ -273,6 +271,15 @@ class storage : public boost::noncopyable {
 
   transaction_guard transaction();
   std::int64_t get_last_insert_rowid() const;
+
+  // 删除表
+  void drop_table(const std::string& table_name);
+  // 删除索引
+  void drop_index(const std::string& index_name);
+  // 删除触发器
+  void drop_trigger(const std::string& trigger_name);
+  // 删除view
+  void drop_view(const std::string& view_name);
 };
 
 }  // namespace orm

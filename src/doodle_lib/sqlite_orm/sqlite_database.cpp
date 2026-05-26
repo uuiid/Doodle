@@ -845,6 +845,9 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   pragma().synchronous(1);
   pragma().recursive_triggers(true);
   pragma().journal_mode(orm::journal_mode_t::wal);
+
+  regs_all();
+
   // pragma().optimize(0x10002);
 }
 
