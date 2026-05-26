@@ -14,6 +14,7 @@
 #include <boost/asio/awaitable.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
 
+#include "sqlite_orm/orm/delete.h"
 #include <optional>
 #include <vector>
 
@@ -89,13 +90,20 @@ class sqlite_database : public orm::storage {
   template <typename T>
   std::int64_t uuid_to_id(uuid in_uuid) {
     using namespace orm;
-    return select(*this).columns(&T::id_).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_optional().value_or(0);
+    return select(*this).columns(&T::id_).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_optional().value_or(
+        0
+    );
   }
 
   template <typename T>
   uuid id_to_uuid(std::int64_t in_id) {
     using namespace orm;
-    return select(*this).columns(&T::uuid_id_).template from<T>().where(c(&T::id_) == in_id)().to_optional().value_or(uuid{});
+    return select(*this)
+        .columns(&T::uuid_id_)
+        .template from<T>()
+        .where(c(&T::id_) == in_id)()
+        .to_optional()
+        .value_or(uuid{});
   }
 
   template <typename T>
@@ -337,6 +345,8 @@ class sqlite_database : public orm::storage {
     delete_from(*this).from<T>().where(c(&T::uuid_id_) == in_data)();
     DOODLE_TO_SELF();
   }
+
+  boost::asio::awaitable<void> remove(orm::delete_t in_delete);
 
   boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
 

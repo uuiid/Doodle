@@ -845,6 +845,12 @@ boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
   DOODLE_TO_SELF();
 }
 
+boost::asio::awaitable<void> sqlite_database::remove(orm::delete_t in_delete) {
+  DOODLE_TO_SQLITE_THREAD()
+  in_delete();
+  DOODLE_TO_SELF();
+}
+
 std::vector<attendance_helper::database_t> sqlite_database::get_attendance(
     const uuid& in_person_id, const chrono::local_days& in_data
 ) {

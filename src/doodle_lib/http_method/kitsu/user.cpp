@@ -24,10 +24,10 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "kitsu_reg_url.h"
+#include "sqlite_orm/orm/select.h"
 #include <core/http/http_function.h>
 #include <jwt-cpp/traits/nlohmann-json/traits.h>
 #include <string>
-
 
 namespace doodle::http {
 namespace {
@@ -192,6 +192,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
   }
 
   co_await l_sql.update(l_person);
+  if (l_old_person.departments_ != l_person->departments_) {
+    using namespace orm;
+    co_await l_sql.remove(
+        orm::delete_from(l_sql).from<person_department_link>().where(
+            c(&person_department_link::person_id_) == l_person->uuid_id_
+        )
+    );
+    std::shared_ptr<std::vector<person_department_link>> l_person_deps =
+        std::make_shared<std::vector<person_department_link>>();
+    for (auto&& l_dep : l_person->departments_) {
+      l_person_deps->emplace_back(person_department_link{.person_id_ = l_person->uuid_id_, .department_id_ = l_dep});
+    }
+    co_await l_sql.install_range(l_person_deps);
+  }
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成更新用户 person_id {} email {}", person_.person_.email_,
@@ -203,7 +217,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
 
   if (l_json.contains("expiration_date")) {
     auto& l_ctx           = g_ctx().get<kitsu_ctx_t>();
-
     l_ret["access_token"] = jwt::create()
                                 .set_payload_claim("identity_type", jwt::claim{"person"s})
                                 .set_issued_at(chrono::system_clock::now())
