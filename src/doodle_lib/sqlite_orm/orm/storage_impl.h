@@ -142,8 +142,8 @@ table_info& table_info::add_foreign_key(
   l_fk.on_update_ = on_update;
   foreign_keys_.push_back(std::move(l_fk));
   // 生成索引以优化外键约束的性能
-  add_index<T>("", in_ptr);
-  add_index<RefTable>("", in_ref_ptr);
+  add_index<T>(in_ptr);
+  add_index<RefTable>(in_ref_ptr);
   return *this;
 }
 template <typename T>
