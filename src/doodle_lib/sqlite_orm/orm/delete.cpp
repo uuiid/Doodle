@@ -20,6 +20,7 @@ delete_t& delete_t::operator()() {
   }
   stmt_->reset_bind();
   for (const auto& val : bind_variants_.bind_values_) val.bind(*stmt_);
+  stmt_->step();
   return *this;
 }
 }  // namespace doodle::orm
