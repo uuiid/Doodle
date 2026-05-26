@@ -33,47 +33,51 @@ using update_arg_type_t = typename update_arg_type<std::decay_t<T>>::type;
 
 struct update_t {
  private:
+  struct update_state_t {
+    std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
+    std::string from_table_name_;
+    std::shared_ptr<column_operations_base_t> wheres_;
+    storage* s_{nullptr};
+    std::shared_ptr<sqlite_stmt> stmt_;
+    bind_value_collector_t bind_variants_{};
+  };
+
   friend class storage;
   friend update_t update(storage& s);
 
-  std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
-  std::string from_table_name_;
-
-  std::shared_ptr<column_operations_base_t> wheres_;
-  storage* s_{nullptr};
-  std::shared_ptr<sqlite_stmt> stmt_;
-
-  bind_value_collector_t bind_variants_{};
+  std::shared_ptr<update_state_t> state_;
 
  public:
+  update_t() : state_(std::make_shared<update_state_t>()) {}
+
   template <typename T>
-  update_t& where(T&& condition_fun) {
+  update_t where(T&& condition_fun) {
     auto l_condition_fun_ptr = std::make_shared<T>(std::forward<T>(condition_fun));
-    wheres_                  = l_condition_fun_ptr;
+    state_->wheres_          = l_condition_fun_ptr;
     return *this;
   }
   template <typename FromTable>
-  update_t& from() {
-    from_table_name_ = s_->get_table_name<FromTable>();
+  update_t from() {
+    state_->from_table_name_ = state_->s_->get_table_name<FromTable>();
     return *this;
   }
 
   template <typename... TableColumns>
     requires((std::is_base_of_v<column_operations, std::decay_t<TableColumns>> && ...))
-  update_t& set(TableColumns&&... in_columns) {
+  update_t set(TableColumns&&... in_columns) {
     auto l_iter_fun = [this](auto&& in_column) {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       auto col_ptr = std::make_shared<std::decay_t<decltype(in_column)>>(std::forward<decltype(in_column)>(in_column));
-      column_operations_.push_back(col_ptr);
+      state_->column_operations_.push_back(col_ptr);
     };
     (l_iter_fun(in_columns), ...);
     return *this;
   }
   template <typename T>
     requires is_object_specialization_v<std::decay_t<T>>
-  update_t& set(T&& in_object) {
+  update_t set(T&& in_object) {
     using Table         = class_type_t<std::decay_t<T>>;
-    auto l_table_cloums = s_->template get_table_columns<Table>();
+    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
     column_info l_primary_key_{};
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) {  // 主键不更新
@@ -83,7 +87,7 @@ struct update_t {
       auto col_ptr = std::make_shared<column_operations>(l_column.ptr_);
       *col_ptr     = l_column.ptr_.get_value(in_object.obj_);
 
-      column_operations_.push_back(col_ptr);
+      state_->column_operations_.push_back(col_ptr);
     }
     from<Table>();
     where(column_operations{l_primary_key_.ptr_} == l_primary_key_.ptr_.get_value(in_object.obj_));
@@ -92,13 +96,12 @@ struct update_t {
 
   std::string to_sql(to_sql_ctx ctx) const;
 
-  update_t& operator()() &;
-  update_t operator()() &&;
+  update_t operator()();
 };
 
 inline update_t update(storage& s) {
   update_t l_update{};
-  l_update.s_ = &s;
+  l_update.state_->s_ = &s;
   return l_update;
 }
 }  // namespace doodle::orm
