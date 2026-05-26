@@ -43,6 +43,7 @@ struct table_columns_t {
   }
 
   bool operator==(const table_columns_t& other) const { return equals_ && equals_(other); }
+  bool operator!=(const table_columns_t& other) const { return !(*this == other); }
   // bool operator
   operator bool() const { return any_value_.has_value(); }
 

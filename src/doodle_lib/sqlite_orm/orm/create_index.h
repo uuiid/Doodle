@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+
 namespace doodle::orm {
 struct create_index_base_t {
   struct impl {
@@ -18,6 +19,38 @@ struct create_index_base_t {
   std::shared_ptr<impl> info_;
 
  public:
+  struct index_info {
+    std::string name_;
+    std::string table_name_;
+    std::vector<std::string> column_names_;
+    bool unique_{false};
+    bool has_condition_{false};
+    bool operator==(const index_info& other) const {
+      if (table_name_ != other.table_name_) return false;
+      if (column_names_.size() != other.column_names_.size()) return false;
+      for (size_t i = 0; i < column_names_.size(); ++i) {
+        if (column_names_[i] != other.column_names_[i]) return false;
+      }
+      if (unique_ != other.unique_) return false;
+      if (has_condition_ != other.has_condition_) return false;
+      return true;
+    }
+    bool operator!=(const index_info& other) const { return !(*this == other); }
+
+    bool operator<(const index_info& other) const {
+      if (table_name_ != other.table_name_) return table_name_ < other.table_name_;
+      if (column_names_.size() != other.column_names_.size()) return column_names_.size() < other.column_names_.size();
+      for (size_t i = 0; i < column_names_.size(); ++i) {
+        if (column_names_[i] != other.column_names_[i]) return column_names_[i] < other.column_names_[i];
+      }
+      if (unique_ != other.unique_) return unique_ < other.unique_;
+      if (has_condition_ != other.has_condition_) return has_condition_ < other.has_condition_;
+      return false;
+    }
+    bool operator>(const index_info& other) const { return other < *this; }
+    bool operator<=(const index_info& other) const { return !(other < *this); }
+    bool operator>=(const index_info& other) const { return !(*this < other); }
+  };
   explicit create_index_base_t(std::string in_name) : info_(std::make_shared<impl>()) {
     info_->name_ = std::move(in_name);
   }
@@ -55,6 +88,8 @@ struct create_index_base_t {
     info_->on_condition_     = l_condition_fun_ptr;
     return *this;
   }
+
+  index_info get_index_info(storage& s, to_sql_ctx ctx) const;
 };
 template <typename Table>
 create_index_base_t create_index(std::string name) {

@@ -10,14 +10,15 @@
 
 #include <boost/scope/scope_exit.hpp>
 
+#include "sqlite_orm/orm/create_index.h"
 #include <fmt/format.h>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
 #include <sys/stat.h>
 #include <vector>
-
 
 namespace doodle {
 namespace orm {
@@ -279,8 +280,15 @@ void storage::sync_schema() {
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
     l_stmt.step();
   }
+  std::set<create_index_base_t::index_info> l_existing_indexes;
   for (const auto& table : tables_) {
     for (const auto& index : table->indexes_) {
+      auto l_index_info = index->get_index_info(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      if (l_existing_indexes.contains(l_index_info)) {
+        SPDLOG_DEBUG("Index already exists, skipping creation: {}", l_index_info.name_);
+        // 已经存在相同的索引，无需创建
+        continue;
+      }
       auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
       auto l_stmt             = sqlite_stmt(*this, l_create_index_sql);
       l_stmt.step();
