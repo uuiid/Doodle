@@ -27,7 +27,7 @@ std::string create_trigger_t::to_sql(storage& s, to_sql_ctx ctx) const {
   }
   auto l_create_trigger_sql = fmt::format(
       "CREATE TRIGGER IF NOT EXISTS {} {} {} {} ON {} BEGIN {}; END;", info_->name_, info_->timing_, info_->event_,
-      fmt::format("{}", fmt::join(l_column_names_str, ", ")), info_->table_name_, info_->statement_
+      fmt::format("{}", fmt::join(l_column_names_str, ", ")), info_->table_name_->get_table_name(s), info_->statement_
   );
   return l_create_trigger_sql;
 }

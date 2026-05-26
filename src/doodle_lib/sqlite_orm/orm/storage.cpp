@@ -352,17 +352,6 @@ storage::~storage() {
   });
 }
 
-storage& storage::finalize() {
-  if (finalized_) return *this;
-  finalized_ = true;
-  for (auto& table : tables_) {
-    for (auto& func : table->to_register_) {
-      func(*this);
-    }
-  }
-
-  return *this;
-}
 std::string storage::get_table_name(std::type_index in_type_index) const {
   if (!type_to_table_index_.contains(in_type_index)) {
     throw std::runtime_error("Table not found for the given type");

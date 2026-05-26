@@ -4,6 +4,7 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/table_info.h>
 
 #include <memory>
 #include <string>
@@ -17,7 +18,7 @@ struct create_trigger_t {
     trigger_timing timing_;                 // BEFORE, AFTER, INSTEAD OF
     trigger_event event_;                   // INSERT, UPDATE, DELETE
     std::vector<column_info_ptr> columns_;  // 仅针对 UPDATE 事件
-    std::string table_name_;
+    table_info_base_ptr table_name_;
     std::string statement_;
   };
   std::shared_ptr<trigger_info> info_;
@@ -38,8 +39,9 @@ struct create_trigger_t {
     info_->timing_ = trigger_timing::instead_of;
     return *this;
   }
-  create_trigger_t& on(std::string in_table_name) {
-    info_->table_name_ = std::move(in_table_name);
+  template <typename Table>
+  create_trigger_t& on() {
+    info_->table_name_ = std::make_shared<table_info_t>(typeid(Table));
     return *this;
   }
   create_trigger_t& delete_() {

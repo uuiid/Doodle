@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
 
   l_trigger.after()
       .update_of(&entity::name_)
-      .on("entity")
+      .on<entity>()
       .begin()
       .statement(update(l_reg)
                      .from<entity>()
@@ -122,7 +122,6 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
                      .where(c(new_(&entity::entity_type_id_)) == old_(&asset_type::uuid_id_)))
       .end();
 
-  l_reg.finalize();
   l_reg.open();
   l_reg.sync_schema();
   auto l_uuid           = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");

@@ -40,6 +40,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include "sqlite_orm/orm/update.h"
 #include <cstddef>
 #include <optional>
 #include <spdlog/spdlog.h>
@@ -820,16 +821,55 @@ void sqlite_database::regs_all() {
       .add_index(&organisation::uuid_id_);
 
   reg_virtual_table<entity_fts>("entity_fts")
-      .add_column("uuid_id_", &entity_fts::entity_id_, unindexed())
-      .add_column("name_", &entity_fts::name_)
-      .add_column("description_", &entity_fts::description_)
-      .add_column("project_id_", &entity_fts::project_id_, unindexed())
-      .add_column("entity_type_id_", &entity_fts::entity_type_id_, unindexed())
-      .add_column("parent_id_", &entity_fts::parent_id_, unindexed())
+      .add_column("uuid", &entity_fts::entity_id_, unindexed())
+      .add_column("name", &entity_fts::name_)
+      .add_column("description", &entity_fts::description_)
+      .add_column("project_id", &entity_fts::project_id_, unindexed())
+      .add_column("entity_type_id", &entity_fts::entity_type_id_, unindexed())
+      .add_column("parent_id", &entity_fts::parent_id_, unindexed())
       .tokenizer("jieba")
       .content<entity>();
-
-  finalize();
+  create_trigger("entity_fts_delete_trigger")
+      .before()
+      .delete_()
+      .on<entity>()
+      .begin()
+      .statement(
+          orm::delete_from(*this).from<entity_fts>().where(c(&entity_fts::entity_id_) == old_(&entity::uuid_id_))
+      )
+      .end();
+  create_trigger("entity_fts_insert_trigger")
+      .after()
+      .insert()
+      .on<entity>()
+      .begin()
+      .statement(
+          orm::insert(*this).into<entity_fts>().set(
+              c(&entity_fts::entity_id_) = new_(&entity::uuid_id_), c(&entity_fts::name_) = new_(&entity::name_),
+              c(&entity_fts::description_)    = new_(&entity::description_),
+              c(&entity_fts::project_id_)     = new_(&entity::project_id_),
+              c(&entity_fts::entity_type_id_) = new_(&entity::entity_type_id_),
+              c(&entity_fts::parent_id_)      = new_(&entity::parent_id_)
+          )
+      )
+      .end();
+  create_trigger("entity_fts_update_trigger")
+      .before()
+      .update_of(
+          &entity::name_, &entity::description_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_
+      )
+      .on<entity>()
+      .begin()
+      .statement(
+          orm::update(*this)
+              .from<entity_fts>()
+              .set(
+                  c(&entity_fts::name_)        = new_(&entity::name_),
+                  c(&entity_fts::description_) = new_(&entity::description_)
+              )
+              .where(c(&entity_fts::entity_id_) == old_(&entity::uuid_id_))
+      )
+      .end();
 }
 
 void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {

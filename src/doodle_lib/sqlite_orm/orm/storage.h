@@ -85,7 +85,6 @@ struct on_update {
 struct table_info_base {
   std::string name_;
   std::type_index type_index_{typeid(void)};
-  std::vector<std::function<void(storage&)>> to_register_;
   std::vector<foreign_key_info> foreign_keys_;
   std::vector<column_info> columns_;
   std::vector<std::shared_ptr<create_index_base_t>> indexes_;
@@ -110,7 +109,7 @@ struct table_fts_info : table_info_base {
   table_fts_info& content();
   template <typename Table, typename ValueType>
   table_fts_info& content_id(ValueType Table::* in_rowid_ptr);
-  
+
   table_fts_info& tokenizer(const std::string& tokenizer);
 
   template <typename T>
@@ -238,8 +237,6 @@ class storage : public boost::noncopyable {
   template <typename T>
   table_fts_info& reg_virtual_table(std::string&& in_name);
   create_trigger_t create_trigger(std::string in_name);
-
-  storage& finalize();
 
   backup_t backup(const FSys::path& dest_path);
   void backup_to(const FSys::path& dest_path) {

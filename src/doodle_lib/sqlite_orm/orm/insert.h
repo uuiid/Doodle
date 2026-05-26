@@ -41,19 +41,6 @@ struct insert_t {
       using column_or_struct_type = std::decay_t<decltype(in_column)>;
       state_->columns_.push_back(in_column.get_column_info_ptr());
       in_column.collect_bind_variants(state_->values_);
-      if constexpr (std::is_base_of_v<column_operations, column_or_struct_type>) {
-      } else if constexpr (is_object_specialization_v<column_or_struct_type>) {
-        using Table         = column_or_struct_type;
-        auto l_table_cloums = state_->s_->template get_table_columns<Table>();
-
-        for (const auto& l_column : l_table_cloums) {
-          if (l_column.primary_key_) continue;  // 跳过主键列
-          state_->columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));
-          state_->values_.bind_values_.push_back(l_column.ptr_.get_value(in_column.obj_));
-        }
-      } else {
-        static_assert(always_false<column_or_struct_type>, "不支持的参数类型");
-      }
     };
     (l_iter_fun(in_columns), ...);
     return *this;
