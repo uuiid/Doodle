@@ -45,17 +45,18 @@ std::string table_fts_info::to_sql(storage& s, to_sql_ctx ctx) const {
   std::vector<std::string> l_column_sqls;
   for (std::size_t i = 0; i < columns_.size(); ++i) {
     const auto& column = columns_[i];
-    std::string l_sql  = fmt::format("{} {}", column.name_, column.type_);
+    std::string l_sql  = column.name_;
     if (unindexed_columns_[i]) {
       l_sql += " UNINDEXED";
     }
     l_column_sqls.push_back(std::move(l_sql));
   }
-  if (content_table_) l_column_sqls.push_back(fmt::format("CONTENT={}", content_table_->get_table_name(s)));
+  if (content_table_) l_column_sqls.push_back(fmt::format(R"(CONTENT="{}")", content_table_->get_table_name(s)));
 
-  if (content_rowid_) l_column_sqls.push_back(fmt::format("CONTENT_ROWID={}", content_rowid_->get_column_name(s, ctx)));
+  if (content_rowid_)
+    l_column_sqls.push_back(fmt::format(R"(CONTENT_ROWID="{}")", content_rowid_->get_column_name(s, ctx)));
 
-  if (!tokenizer_.empty()) l_column_sqls.push_back(fmt::format("TOKENIZER={}", tokenizer_));
+  if (!tokenizer_.empty()) l_column_sqls.push_back(fmt::format(R"(TOKENIZER="{}")", tokenizer_));
   return fmt::format("CREATE VIRTUAL TABLE IF NOT EXISTS {} USING fts5 ({})", name_, fmt::join(l_column_sqls, ", "));
 }
 
