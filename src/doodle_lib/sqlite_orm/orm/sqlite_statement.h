@@ -108,6 +108,7 @@ struct sqlite_statement_binder<const char*> {
 template <>
 struct sqlite_statement_binder<uuid> {
   std::int32_t bind(sqlite3_stmt* stmt, int index, const uuid& value) const {
+    if (value.is_nil()) return sqlite3_bind_null(stmt, index);
     return sqlite3_bind_blob(stmt, index, value.data(), value.size(), SQLITE_TRANSIENT);
   }
 };
