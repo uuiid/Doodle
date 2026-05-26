@@ -83,7 +83,6 @@ struct on_update {
 };
 
 struct table_info_base {
-  
   std::string name_;
   std::type_index type_index_{typeid(void)};
   std::vector<std::function<void(storage&)>> to_register_;
@@ -129,9 +128,9 @@ struct table_info : table_info_base {
   );
 
   template <typename T>
-  table_info& add_index(std::string&& in_name, auto T::* in_ptr);
+  table_info& add_index(auto T::* in_ptr);
   template <typename T>
-  table_info& add_unique_index(std::string&& in_name, auto T::*... in_ptrs);
+  table_info& add_unique_index(auto T::*... in_ptrs);
   table_info& add_index(const create_index_base_t& index);
 
   std::string to_sql(storage& s, to_sql_ctx ctx) const override;

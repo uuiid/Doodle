@@ -103,7 +103,7 @@ void sqlite_database::regs_all() {
       .add_column("archived", &seedance2::task::archived_)
       .add_foreign_key(&seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_index("seedance2_task_uuid_id_index", &seedance2::task::uuid_id_);
+      .add_index(&seedance2::task::uuid_id_);
 
   reg_table<ai_studio_person_role_link>("ai_studio_person_role_link")
       .add_column("id", &ai_studio_person_role_link::id_, primary_key(), autoincrement())
@@ -128,10 +128,7 @@ void sqlite_database::regs_all() {
       .add_column("entity_id", &outsource_studio_authorization::entity_id_, not_null())
       .add_foreign_key(&outsource_studio_authorization::studio_id_, &studio::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&outsource_studio_authorization::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "outsource_studio_authorization_uc", &outsource_studio_authorization::studio_id_,
-          &outsource_studio_authorization::entity_id_
-      );
+      .add_unique_index(&outsource_studio_authorization::studio_id_, &outsource_studio_authorization::entity_id_);
 
   reg_table<ai_image_metadata>("ai_image_metadata")
       .add_column("id", &ai_image_metadata::id_, primary_key(), autoincrement())
@@ -156,9 +153,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&playlist_shot::playlist_id_, &playlist::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&playlist_shot::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&playlist_shot::preview_id_, &preview_file::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "playlist_shot_uc", &playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_
-      );
+      .add_unique_index(&playlist_shot::playlist_id_, &playlist_shot::entity_id_, &playlist_shot::preview_id_);
 
   reg_table<playlist>("playlist")
       .add_column("id", &playlist::id_, primary_key(), autoincrement())
@@ -175,7 +170,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&playlist::project_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&playlist::episodes_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&playlist::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index("playlist_uc", &playlist::name_, &playlist::project_id_, &playlist::episodes_id_);
+      .add_unique_index(&playlist::name_, &playlist::project_id_, &playlist::episodes_id_);
 
   reg_table<server_task_info>("server_task_info_tab")
       .add_column("id", &server_task_info::id_, primary_key())
@@ -196,7 +191,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&server_task_info::submitter_, &person::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&server_task_info::run_computer_id_, &computer::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&server_task_info::task_id_, &task::uuid_id_, foreign_key_action::cascade)
-      .add_index("server_task_info_tab_uuid_id_idx", &server_task_info::uuid_id_);
+      .add_index(&server_task_info::uuid_id_);
 
   reg_table<computer>("computer")
       .add_column("id", &computer::id_, primary_key())
@@ -237,7 +232,7 @@ void sqlite_database::regs_all() {
       .add_column("label", &assets_helper::database_t::label_, not_null())
       .add_column("parent_uuid", &assets_helper::database_t::uuid_parent_)
       .add_column("order", &assets_helper::database_t::order_, default_value("0"s), not_null())
-      .add_index("assets_tab_label", &assets_helper::database_t::label_);
+      .add_index(&assets_helper::database_t::label_);
 
   reg_table<attendance_helper::database_t>("attendance_tab")
       .add_column("id", &attendance_helper::database_t::id_, primary_key())
@@ -251,8 +246,8 @@ void sqlite_database::regs_all() {
       .add_column("dingding_id", &attendance_helper::database_t::dingding_id_)
       .add_column("person_id", &attendance_helper::database_t::person_id_)
       .add_foreign_key(&attendance_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade)
-      .add_index("attendance_tab_uuid_id_index", &attendance_helper::database_t::uuid_id_)
-      .add_index("attendance_tab_create_date_index", &attendance_helper::database_t::create_date_);
+      .add_index(&attendance_helper::database_t::uuid_id_)
+      .add_index(&attendance_helper::database_t::create_date_);
 
   reg_table<work_xlsx_task_info_helper::database_t>("work_xlsx_task_info_tab")
       .add_column("id", &work_xlsx_task_info_helper::database_t::id_, primary_key())
@@ -274,7 +269,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(
           &work_xlsx_task_info_helper::database_t::person_id_, &person::uuid_id_, foreign_key_action::cascade
       )
-      .add_index("work_xlsx_task_info_tab_year_month_index", &work_xlsx_task_info_helper::database_t::year_month_);
+      .add_index(&work_xlsx_task_info_helper::database_t::year_month_);
 
   reg_table<attachment_file>("attachment_file")
       .add_column("id", &attachment_file::id_, primary_key(), autoincrement())
@@ -286,7 +281,7 @@ void sqlite_database::regs_all() {
       .add_column("comment_id", &attachment_file::comment_id_)
       .add_column("chat_message_id", &attachment_file::chat_message_id_)
       .add_foreign_key(&attachment_file::comment_id_, &comment::uuid_id_, foreign_key_action::cascade)
-      .add_index("attachment_file_chat_message_id_index", &attachment_file::chat_message_id_);
+      .add_index(&attachment_file::chat_message_id_);
 
   reg_table<subscription>("subscription")
       .add_column("id", &subscription::id_, primary_key(), autoincrement())
@@ -299,10 +294,8 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&subscription::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&subscription::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&subscription::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "subscription_entity_uc", &subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_
-      )
-      .add_unique_index("subscription_task_uc", &subscription::person_id_, &subscription::task_id_);
+      .add_unique_index(&subscription::person_id_, &subscription::task_type_id_, &subscription::entity_id_)
+      .add_unique_index(&subscription::person_id_, &subscription::task_id_);
 
   reg_table<assignees_table>("assignations")
       .add_column("id", &assignees_table::id_, primary_key(), autoincrement())
@@ -348,7 +341,7 @@ void sqlite_database::regs_all() {
       .add_column("updated_at", &preview_file::updated_at_)
       .add_foreign_key(&preview_file::task_id_, &task::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&preview_file::person_id_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_unique_index("preview_file_uc", &preview_file::name_, &preview_file::task_id_, &preview_file::revision_);
+      .add_unique_index(&preview_file::name_, &preview_file::task_id_, &preview_file::revision_);
 
   reg_table<notification>("notification_2")
       .add_column("id", &notification::id_, primary_key(), autoincrement())
@@ -413,7 +406,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&comment::editor_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&comment::preview_file_id_, &preview_file::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&comment::object_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_index("comment_object_type_index", &comment::object_type_);
+      .add_index(&comment::object_type_);
 
   reg_table<task>("task")
       .add_column("id", &task::id_, primary_key(), autoincrement())
@@ -450,7 +443,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&task::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&task::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&task::assigner_id_, &person::uuid_id_, foreign_key_action::set_null)
-      .add_unique_index("task_uc", &task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_);
+      .add_unique_index(&task::name_, &task::project_id_, &task::task_type_id_, &task::entity_id_);
 
   reg_table<entity_link>("entity_link")
       .add_column("id", &entity_link::id_, primary_key(), autoincrement())
@@ -520,9 +513,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&entity::created_by_, &person::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&entity::parent_id_, &entity::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&entity::source_id_, &entity::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "entity_uc", &entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_
-      );
+      .add_unique_index(&entity::name_, &entity::project_id_, &entity::entity_type_id_, &entity::parent_id_);
 
   reg_table<task_type_asset_type_link>("task_type_asset_type_link")
       .add_column("id", &task_type_asset_type_link::id_, primary_key(), autoincrement())
@@ -530,10 +521,7 @@ void sqlite_database::regs_all() {
       .add_column("task_type_id", &task_type_asset_type_link::task_type_id_, not_null())
       .add_foreign_key(&task_type_asset_type_link::asset_type_id_, &asset_type::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&task_type_asset_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "task_type_asset_type_link_uc", &task_type_asset_type_link::task_type_id_,
-          &task_type_asset_type_link::asset_type_id_
-      );
+      .add_unique_index(&task_type_asset_type_link::task_type_id_, &task_type_asset_type_link::asset_type_id_);
 
   reg_table<project_person_link>("project_person_link")
       .add_column("id", &project_person_link::id_, primary_key(), autoincrement())
@@ -551,9 +539,7 @@ void sqlite_database::regs_all() {
       .add_column("priority", &project_task_type_link::priority_)
       .add_foreign_key(&project_task_type_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&project_task_type_link::task_type_id_, &task_type::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "project_task_type_link_uc", &project_task_type_link::project_id_, &project_task_type_link::task_type_id_
-      );
+      .add_unique_index(&project_task_type_link::project_id_, &project_task_type_link::task_type_id_);
 
   reg_table<project_task_status_link>("project_task_status_link")
       .add_column("id", &project_task_status_link::id_, primary_key(), autoincrement())
@@ -564,10 +550,7 @@ void sqlite_database::regs_all() {
       .add_column("roles_for_board", &project_task_status_link::roles_for_board_)
       .add_foreign_key(&project_task_status_link::project_id_, &project::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&project_task_status_link::task_status_id_, &task_status::uuid_id_, foreign_key_action::cascade)
-      .add_unique_index(
-          "project_task_status_link_uc", &project_task_status_link::project_id_,
-          &project_task_status_link::task_status_id_
-      );
+      .add_unique_index(&project_task_status_link::project_id_, &project_task_status_link::task_status_id_);
 
   reg_table<project_asset_type_link>("project_asset_type_link")
       .add_column("id", &project_asset_type_link::id_, primary_key(), autoincrement())
@@ -678,9 +661,7 @@ void sqlite_database::regs_all() {
       .add_foreign_key(&person_department_link::person_id_, &person::uuid_id_, foreign_key_action::cascade)
       .add_foreign_key(&person_department_link::department_id_, &department::uuid_id_, foreign_key_action::cascade)
 
-      .add_unique_index(
-          "department_link_uc", &person_department_link::person_id_, &person_department_link::department_id_
-      );
+      .add_unique_index(&person_department_link::person_id_, &person_department_link::department_id_);
 
   reg_table<person>("person")
       .add_column("id", &person::id_, primary_key(), autoincrement())
@@ -736,7 +717,7 @@ void sqlite_database::regs_all() {
       .add_column("original_name", &preview_background_file::original_name_)
       .add_column("extension", &preview_background_file::extension_)
       .add_column("file_size", &preview_background_file::file_size_)
-      .add_index("preview_background_file_is_default_index", &preview_background_file::is_default_);
+      .add_index(&preview_background_file::is_default_);
 
   reg_table<status_automation>("status_automation")
       .add_column("id", &status_automation::id_, primary_key(), autoincrement())
@@ -768,7 +749,7 @@ void sqlite_database::regs_all() {
       .add_column("shotgun_id", &task_type::shotgun_id_)
       .add_column("department_id", &task_type::department_id_)
       .add_foreign_key(&task_type::department_id_, &department::uuid_id_, foreign_key_action::set_null)
-      .add_unique_index("task_type_uc", &task_type::name_, &task_type::for_entity_, &task_type::department_id_);
+      .add_unique_index(&task_type::name_, &task_type::for_entity_, &task_type::department_id_);
 
   reg_table<department>("department")
       .add_column("id", &department::id_, primary_key(), autoincrement())
@@ -794,11 +775,11 @@ void sqlite_database::regs_all() {
       .add_column("is_default", &task_status::is_default_)
       .add_column("shotgun_id", &task_status::shotgun_id_)
       .add_column("for_concept", &task_status::for_concept_)
-      .add_index("task_status_name_index", &task_status::name_)
-      .add_index("task_status_short_name_index", &task_status::short_name_)
-      .add_index("task_status_is_done_index", &task_status::is_done_)
-      .add_index("task_status_is_default_index", &task_status::is_default_)
-      .add_index("task_status_feedback_request_index", &task_status::is_feedback_request_);
+      .add_index(&task_status::name_)
+      .add_index(&task_status::short_name_)
+      .add_index(&task_status::is_done_)
+      .add_index(&task_status::is_default_)
+      .add_index(&task_status::is_feedback_request_);
 
   reg_table<asset_type>("asset_type")
       .add_column("id", &asset_type::id_, primary_key(), autoincrement())
@@ -831,7 +812,7 @@ void sqlite_database::regs_all() {
       .add_column("chat_webhook_mattermost", &organisation::chat_webhook_mattermost_)
       .add_column("chat_token_discord", &organisation::chat_token_discord_)
       .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_)
-      .add_index("organisation_tab_uuid_id_index", &organisation::uuid_id_);
+      .add_index(&organisation::uuid_id_);
 
   finalize();
 }

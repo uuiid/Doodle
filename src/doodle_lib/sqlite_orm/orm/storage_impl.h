@@ -147,15 +147,15 @@ table_info& table_info::add_foreign_key(
   return *this;
 }
 template <typename T>
-table_info& table_info::add_index(std::string&& in_name, auto T::* in_ptr) {
-  auto l_index = create_index<T>(std::move(in_name));
+table_info& table_info::add_index(auto T::* in_ptr) {
+  auto l_index = create_index<T>("");
   l_index.on(in_ptr);
   add_index(std::move(l_index));
   return *this;
 }
 template <typename T>
-table_info& table_info::add_unique_index(std::string&& in_name, auto T::*... in_ptrs) {
-  auto l_index = create_unique_index<T>(std::move(in_name));
+table_info& table_info::add_unique_index(auto T::*... in_ptrs) {
+  auto l_index = create_unique_index<T>("");
   l_index.on(std::forward<decltype(in_ptrs)>(in_ptrs)...);
   add_index(std::move(l_index));
   return *this;

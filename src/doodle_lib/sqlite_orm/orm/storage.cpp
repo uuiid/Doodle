@@ -288,6 +288,7 @@ void storage::sync_schema() {
     auto l_stmt               = sqlite_stmt(*this, l_create_trigger_sql);
     l_stmt.step();
   }
+  l_transaction.commit();
 }
 
 storage::backup_t storage::backup(const FSys::path& dest_path) {
