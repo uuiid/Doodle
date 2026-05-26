@@ -284,6 +284,8 @@ class storage : public boost::noncopyable {
   void drop_view(const std::string& view_name);
   // vacuum数据库
   void vacuum();
+  // 运行任意SQL
+  void exec(std::string_view sql);
 };
 
 }  // namespace orm

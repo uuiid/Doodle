@@ -439,6 +439,10 @@ void storage::vacuum() {
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
+void storage::exec(std::string_view sql) {
+  auto l_stmt = sqlite_stmt(*this, std::string(sql));
+  l_stmt.step();
+}
 }  // namespace orm
 
 }  // namespace doodle
