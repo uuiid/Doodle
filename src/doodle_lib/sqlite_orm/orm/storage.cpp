@@ -1,4 +1,5 @@
 #include "storage.h"
+
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/create_index.h>
 #include <doodle_lib/sqlite_orm/orm/create_trigger.h>
@@ -16,6 +17,7 @@
 #include <string_view>
 #include <sys/stat.h>
 #include <vector>
+
 
 namespace doodle {
 namespace orm {
@@ -424,7 +426,11 @@ void storage::drop_view(const std::string& view_name) {
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
-
+void storage::vacuum() {
+  auto l_sql  = "VACUUM;";
+  auto l_stmt = sqlite_stmt(*this, l_sql);
+  l_stmt.step();
+}
 }  // namespace orm
 
 }  // namespace doodle

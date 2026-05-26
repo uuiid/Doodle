@@ -88,22 +88,22 @@ struct upgrade_init_t : sqlite_upgrade {
     DOODLE_ASSET_TYPE(concept, Concept)
     DOODLE_ASSET_TYPE(episode, Episode)
 #undef DOODLE_ASSET_TYPE
-#define DOODLE_TASK_TYPE(name, sql_name)                                  \
-  if (in_data.uuid_to_id<task_type>(task_type::get_##name##_id()) == 0) { \
-    auto l_s       = std::make_shared<task_type>();                       \
-    l_s->uuid_id_  = task_type::get_##name##_id();                        \
-    l_s->name_     = #sql_name;                                           \
-    l_s->archived_ = true;                                                \
-    l_s->color_    = "#999999";                                           \
-    in_data.install_unsafe<task_type>(l_s);                               \
-  }
-    DOODLE_TASK_TYPE(original_painting, 原画)
-    DOODLE_TASK_TYPE(character, 角色)
-    DOODLE_TASK_TYPE(ground_model, 地编模型)
-    DOODLE_TASK_TYPE(binding, 绑定)
-    DOODLE_TASK_TYPE(simulation, 解算资产)
-    DOODLE_TASK_TYPE(effect_asset, 特效资产)
-#undef DOODLE_TASK_TYPE
+// #define DOODLE_TASK_TYPE(name, sql_name)                                  \
+//   if (in_data.uuid_to_id<task_type>(task_type::get_##name##_id()) == 0) { \
+//     auto l_s       = std::make_shared<task_type>();                       \
+//     l_s->uuid_id_  = task_type::get_##name##_id();                        \
+//     l_s->name_     = #sql_name;                                           \
+//     l_s->archived_ = true;                                                \
+//     l_s->color_    = "#999999";                                           \
+//     in_data.install_unsafe<task_type>(l_s);                               \
+//   }
+//     DOODLE_TASK_TYPE(original_painting, 原画)
+//     DOODLE_TASK_TYPE(character, 角色)
+//     DOODLE_TASK_TYPE(ground_model, 地编模型)
+//     DOODLE_TASK_TYPE(binding, 绑定)
+//     DOODLE_TASK_TYPE(simulation, 解算资产)
+//     DOODLE_TASK_TYPE(effect_asset, 特效资产)
+// #undef DOODLE_TASK_TYPE
   }
 };  // namespace doodle::details
 
@@ -237,6 +237,7 @@ struct upgrade_2_t : sqlite_upgrade {
     in_data.drop_index("task_status_feedback_request_index");
     in_data.drop_index("organisation_tab_uuid_id_index");
     l_g.commit();
+    in_data.vacuum();
   }
   ~upgrade_2_t() override = default;
 };
