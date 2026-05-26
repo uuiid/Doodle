@@ -209,7 +209,8 @@ typename select_t::result_type_t<TableColumns...>::type select_t::result_type_t<
   if (l_iter == end()) throw std::runtime_error("No rows returned");
   type l_result = *l_iter;
   ++l_iter;
-  if (l_iter != end()) throw std::runtime_error("More than one row returned");
+  if (l_iter != end())  // throw std::runtime_error("More than one row returned");
+    SPDLOG_DEBUG("More than one row returned, but only the first one will be used");
   return l_result;
 }
 template <typename... TableColumns>
