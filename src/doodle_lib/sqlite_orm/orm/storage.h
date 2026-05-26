@@ -83,6 +83,7 @@ struct on_update {
 };
 
 struct table_info_base {
+  
   std::string name_;
   std::type_index type_index_{typeid(void)};
   std::vector<std::function<void(storage&)>> to_register_;
