@@ -3,13 +3,18 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
 namespace doodle::orm {
+template <typename T>
+concept char_pointer = std::is_pointer_v<T> && std::same_as<char, std::remove_cv_t<std::remove_pointer_t<T>>>;
 struct bind_value_t {
   std::any value_;
   // 这个类是可复制的, 因此需要确保 bind_fun_ 的复制行为正确, 因此, 不可以捕获 this指针, 直接在参数中传递需要的值
   std::function<void(const bind_value_t&, sqlite_stmt& stmt)> bind_fun_;
 
   template <typename T>
-    requires(!std::same_as<std::remove_cvref_t<T>, bind_value_t>)
+    requires(!std::same_as<std::remove_cvref_t<T>, bind_value_t> && !char_pointer<T>)
+  explicit bind_value_t(T&& value);
+  template <typename T>
+    requires char_pointer<T>
   explicit bind_value_t(T&& value);
   bind_value_t()                               = default;
   bind_value_t(const bind_value_t&)            = default;
