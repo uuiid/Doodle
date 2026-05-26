@@ -829,9 +829,9 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   pragma().recursive_triggers(true);
   pragma().journal_mode(orm::journal_mode_t::wal);
 
+  tokenizer::register_jieba_tokenizer(get_fts5_api());
   regs_all();
   sync_schema();
-  tokenizer::register_jieba_tokenizer(get_fts5_api());
   auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
   for (auto&& i : l_list) {
     i->upgrade(*this);
