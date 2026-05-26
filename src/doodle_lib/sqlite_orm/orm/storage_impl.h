@@ -97,6 +97,19 @@ table_info& table_info::add_column(std::string&& in_name, auto T::* in_ptr, auto
   columns_.push_back(std::move(l_column));
   return *this;
 }
+
+template <typename Table, typename ValueType>
+table_fts_info& table_fts_info::content_id(ValueType Table::* in_rowid_ptr) {
+  content_table_ = std::make_shared<table_info_t>(typeid(Table));
+  content_rowid_ = std::make_shared<column_info_t>(in_rowid_ptr);
+  return *this;
+}
+template <typename Table>
+table_fts_info& table_fts_info::content() {
+  content_table_ = std::make_shared<table_info_t>(typeid(Table));
+  return *this;
+}
+
 template <typename T>
 table_info& storage::reg_table(std::string&& in_name) {
   auto l_table                               = std::make_shared<table_info>();
@@ -105,6 +118,15 @@ table_info& storage::reg_table(std::string&& in_name) {
   type_to_table_index_[l_table->type_index_] = tables_.size();
   tables_.push_back(std::move(l_table));
   return static_cast<table_info&>(*tables_.back());
+}
+template <typename T>
+table_fts_info& storage::reg_virtual_table(std::string&& in_name) {
+  auto l_table                               = std::make_shared<table_fts_info>();
+  l_table->name_                             = std::move(in_name);
+  l_table->type_index_                       = std::type_index(typeid(T));
+  type_to_table_index_[l_table->type_index_] = tables_.size();
+  tables_.push_back(std::move(l_table));
+  return static_cast<table_fts_info&>(*tables_.back());
 }
 
 template <typename T>

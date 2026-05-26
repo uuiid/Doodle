@@ -104,10 +104,13 @@ struct table_fts_info : table_info_base {
   using column_ptr_type = table_columns_t;
 
   std::string tokenizer_{};
-  std::string content_table_{};
-  std::string content_rowid_{};
-
-  table_fts_info& content(const std::string& content_table, const std::string& content_rowid);
+  table_info_base_ptr content_table_{};
+  column_info_ptr content_rowid_{};
+  template <typename Table>
+  table_fts_info& content();
+  template <typename Table, typename ValueType>
+  table_fts_info& content_id(ValueType Table::* in_rowid_ptr);
+  
   table_fts_info& tokenizer(const std::string& tokenizer);
 
   template <typename T>
@@ -233,7 +236,7 @@ class storage : public boost::noncopyable {
   template <typename T>
   table_info& reg_table(std::string&& in_name);
   template <typename T>
-  table_info& reg_virtual_table(std::string&& in_name);
+  table_fts_info& reg_virtual_table(std::string&& in_name);
   create_trigger_t create_trigger(std::string in_name);
 
   storage& finalize();

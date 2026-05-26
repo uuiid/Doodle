@@ -819,6 +819,16 @@ void sqlite_database::regs_all() {
       .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_)
       .add_index(&organisation::uuid_id_);
 
+  reg_virtual_table<entity_fts>("entity_fts")
+      .add_column("uuid_id_", &entity_fts::entity_id_, unindexed())
+      .add_column("name_", &entity_fts::name_)
+      .add_column("description_", &entity_fts::description_)
+      .add_column("project_id_", &entity_fts::project_id_, unindexed())
+      .add_column("entity_type_id_", &entity_fts::entity_type_id_, unindexed())
+      .add_column("parent_id_", &entity_fts::parent_id_, unindexed())
+      .tokenizer("jieba")
+      .content<entity>();
+
   finalize();
 }
 
@@ -831,7 +841,7 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
 
   tokenizer::register_jieba_tokenizer(get_fts5_api());
   regs_all();
-//   sync_schema();
+  //   sync_schema();
   auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
   for (auto&& i : l_list) {
     i->upgrade(*this);

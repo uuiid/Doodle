@@ -236,6 +236,14 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data.drop_index("task_status_is_default_index");
       in_data.drop_index("task_status_feedback_request_index");
       in_data.drop_index("organisation_tab_uuid_id_index");
+      in_data.drop_view("entity_asset_view");
+      in_data.drop_trigger("entity_fts_insert_trigger2");
+      in_data.drop_trigger("entity_fts_update_trigger2");
+      in_data.drop_trigger("entity_fts_delete_trigger2");
+      in_data.drop_trigger("entity_fts_insert_trigger");
+      in_data.drop_trigger("entity_fts_update_trigger");
+      in_data.drop_trigger("entity_fts_delete_trigger");
+      in_data.drop_table("entity_fts");
       l_g.commit();
       in_data.vacuum();
 

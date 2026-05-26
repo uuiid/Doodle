@@ -36,12 +36,6 @@ column_info& table_info_base::find_column_info(const table_columns_t& in_column)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-table_fts_info& table_fts_info::content(const std::string& content_table, const std::string& content_rowid) {
-  content_table_ = content_table;
-  content_rowid_ = content_rowid;
-  return *this;
-}
-
 table_fts_info& table_fts_info::tokenizer(const std::string& tokenizer) {
   tokenizer_ = tokenizer;
   return *this;
@@ -57,9 +51,9 @@ std::string table_fts_info::to_sql(storage& s, to_sql_ctx ctx) const {
     }
     l_column_sqls.push_back(std::move(l_sql));
   }
-  if (!content_table_.empty()) l_column_sqls.push_back(fmt::format("CONTENT={}", content_table_));
+  if (content_table_) l_column_sqls.push_back(fmt::format("CONTENT={}", content_table_->get_table_name(s)));
 
-  if (!content_rowid_.empty()) l_column_sqls.push_back(fmt::format("CONTENT_ROWID={}", content_rowid_));
+  if (content_rowid_) l_column_sqls.push_back(fmt::format("CONTENT_ROWID={}", content_rowid_->get_column_name(s, ctx)));
 
   if (!tokenizer_.empty()) l_column_sqls.push_back(fmt::format("TOKENIZER={}", tokenizer_));
   return fmt::format("CREATE VIRTUAL TABLE IF NOT EXISTS {} USING fts5 ({})", name_, fmt::join(l_column_sqls, ", "));
