@@ -101,8 +101,8 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_foreign_key(
           &entity::parent_id_, &entity::uuid_id_, orm::foreign_key_action::cascade, orm::foreign_key_action::cascade
       )
-      .add_index("entity_uuid_id_index", &entity::uuid_id_)
-      .add_unique_index("entity_name_unique_index", &entity::name_);
+      .add_index(&entity::uuid_id_)
+      .add_unique_index(&entity::name_);
   ;
 
   l_reg.reg_table<asset_type>("asset_type")
