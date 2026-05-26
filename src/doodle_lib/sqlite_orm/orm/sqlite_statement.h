@@ -189,6 +189,7 @@ struct sqlite_statement_printer<std::chrono::duration<Rep, Period>> {
 template <>
 struct sqlite_statement_binder<nlohmann::json> : sqlite_statement_binder<std::string> {
   int bind(sqlite3_stmt* stmt, int index, const nlohmann::json& value) const {
+    if (value.is_null()) return sqlite3_bind_null(stmt, index);
     auto l_json_str = value.dump();
     return sqlite_statement_binder<std::string>::bind(stmt, index, l_json_str);
   }
@@ -207,6 +208,7 @@ struct sqlite_statement_printer<nlohmann::json> : sqlite_statement_printer<std::
 template <>
 struct sqlite_statement_binder<FSys::path> : sqlite_statement_binder<std::string> {
   int bind(sqlite3_stmt* stmt, int index, const FSys::path& value) const {
+    if (value.empty()) return sqlite3_bind_null(stmt, index);
     auto l_path_str = value.generic_string();
     return sqlite_statement_binder<std::string>::bind(stmt, index, l_path_str);
   }
@@ -215,7 +217,7 @@ template <>
 struct sqlite_statement_extractor<FSys::path> : sqlite_statement_extractor<std::string> {
   FSys::path extract(sqlite3_stmt* stmt, int columnIndex) const {
     const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
-    return FSys::path{l_str};
+    return l_str.empty() ? FSys::path{} : FSys::path{l_str};
   }
 };
 template <>
@@ -344,6 +346,7 @@ struct sqlite_statement_printer<std::optional<T>> : sqlite_statement_printer<T> 
 template <>
 struct sqlite_statement_binder<std::vector<std::string>> : sqlite_statement_binder<std::string> {
   int bind(sqlite3_stmt* stmt, int index, const std::vector<std::string>& value) const {
+    if (value.empty()) return sqlite3_bind_null(stmt, index);
     nlohmann::json nlohmann_json{};
     nlohmann_json = value;
     return sqlite_statement_binder<std::string>::bind(stmt, index, nlohmann_json.dump());
