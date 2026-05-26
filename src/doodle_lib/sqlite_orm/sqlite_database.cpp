@@ -818,11 +818,6 @@ void sqlite_database::regs_all() {
 }
 
 void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
-  // auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
-  // tokenizer::register_jieba_tokenizer(get_fts5_api());
-  // for (auto&& i : l_list) {
-  //   i->upgrade(impl_);
-  // }
   storage::open_(in_path, in_flags);
   pragma().foreign_keys(true);
   pragma().synchronous(1);
@@ -830,6 +825,11 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   pragma().journal_mode(orm::journal_mode_t::wal);
 
   regs_all();
+  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
+  tokenizer::register_jieba_tokenizer(get_fts5_api());
+  for (auto&& i : l_list) {
+    i->upgrade(*this);
+  }
   sync_schema();
 
   // pragma().optimize(0x10002);
