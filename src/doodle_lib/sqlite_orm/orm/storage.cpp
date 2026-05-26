@@ -71,7 +71,7 @@ table_info& table_info::add_index(const create_index_base_t& in_index) {
 std::string table_info::to_sql(storage& s, to_sql_ctx ctx) const {
   std::vector<std::string> l_column_sqls;
   for (const auto& column : columns_) {
-    std::string l_sql = fmt::format("{} {}", column.name_, column.type_);
+    std::string l_sql = fmt::format(R"("{}" {})", column.name_, column.type_);
     if (column.primary_key_) {
       l_sql += " PRIMARY KEY";
     }

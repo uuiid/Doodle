@@ -832,6 +832,8 @@ void sqlite_database::regs_all() {
       .add_column("chat_token_discord", &organisation::chat_token_discord_)
       .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_)
       .add_index("organisation_tab_uuid_id_index", &organisation::uuid_id_);
+
+  finalize();
 }
 
 void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
@@ -847,6 +849,7 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   pragma().journal_mode(orm::journal_mode_t::wal);
 
   regs_all();
+  sync_schema();
 
   // pragma().optimize(0x10002);
 }
