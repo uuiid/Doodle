@@ -825,12 +825,12 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   pragma().journal_mode(orm::journal_mode_t::wal);
 
   regs_all();
-  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
+  sync_schema();
   tokenizer::register_jieba_tokenizer(get_fts5_api());
+  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
-  sync_schema();
 
   // pragma().optimize(0x10002);
 }

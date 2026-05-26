@@ -89,13 +89,13 @@ class sqlite_database : public orm::storage {
   template <typename T>
   std::int64_t uuid_to_id(uuid in_uuid) {
     using namespace orm;
-    return select(*this).columns(&T::id_).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_single();
+    return select(*this).columns(&T::id_).template from<T>().where(c(&T::uuid_id_) == in_uuid)().to_optional().value_or(0);
   }
 
   template <typename T>
   uuid id_to_uuid(std::int64_t in_id) {
     using namespace orm;
-    return select(*this).columns(&T::uuid_id_).template from<T>().where(c(&T::id_) == in_id)().to_single();
+    return select(*this).columns(&T::uuid_id_).template from<T>().where(c(&T::id_) == in_id)().to_optional().value_or(uuid{});
   }
 
   template <typename T>
