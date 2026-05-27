@@ -160,6 +160,16 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
   in_task->ended_at_ = chrono::system_clock::now();
 
 #ifdef DOODLE_SEED2
+  if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("usage") &&
+      in_task->data_response_.at("usage").contains("completion_tokens")) {
+    auto l_completion_tokens = in_task->data_response_.at("usage").at("completion_tokens").get<std::int64_t>();
+    auto l_person            = get_sqlite_database().get_by_uuid<person>(in_task->user_id_);
+    co_await set_remaining_tokens_for_person(l_person, l_completion_tokens - in_task->completion_tokens_);
+  } else {
+    // 任务失败或者其他状态，返还 token
+    auto l_person = get_sqlite_database().get_by_uuid<person>(in_task->user_id_);
+    co_await set_remaining_tokens_for_person(l_person, in_task->completion_tokens_);
+  }
 
   if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("content") &&
       in_task->data_response_.at("content").contains("video_url")) {
@@ -196,6 +206,9 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
 }  // namespace
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
+  if (get_remaining_tokens_for_person(person_.person_) <= 0)
+    throw_exception(doodle_error{"当日可用token数量不足，请联系管理员"});
+
   auto& l_sql = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
@@ -211,6 +224,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
 #ifdef DOODLE_SEED2
   l_task->task_id_ = co_await l_client->run_task(l_task->data_request_);  // 异步运行任务，不等待结果
 #endif
+  co_await set_remaining_tokens_for_person(person_.person_, -l_task->completion_tokens_);
   // 查找 以https://或者http://开头的url，并替换host部分为空
   static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
   for (auto&& l_value : l_task->data_request_.at("content")) {
