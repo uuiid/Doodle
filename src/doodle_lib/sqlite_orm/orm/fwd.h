@@ -158,6 +158,7 @@ struct column_operations_base_t {
   virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const = 0;
   // virtual std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const     = 0;
 };
+using column_operations_ptr = std::shared_ptr<column_operations_base_t>;
 
 // 运行是表基类, 可以获取表名称
 struct table_info_base_t {

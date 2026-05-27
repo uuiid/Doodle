@@ -107,13 +107,22 @@ struct column_operations : column_operations_base_t {
     std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
-
+  // 这里的 column_to_str 主要是将 column_operations 转换为对应的列名称，用于生成 SQL 片段
   struct column_to_str : to_str_base_t {
     explicit column_to_str() = default;
     std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& /*bind_variants*/) const override {
       // column_to_str 不包含绑定参数，因此不需要收集
     }
+  };
+  // 使用表达式转换
+  struct to_str_expr_t : to_str_base_t {
+    std::string fmt_str_;
+    column_operations_ptr left_;
+    explicit to_str_expr_t(std::string fmt_str, column_operations_ptr left)
+        : fmt_str_(std::move(fmt_str)), left_(std::move(left)) {}
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
   struct data_impl {
@@ -162,6 +171,7 @@ struct column_operations : column_operations_base_t {
 
   column_operations operator=(bind_value_t&& value) const;
   column_operations operator=(std::nullptr_t) const;
+  column_operations operator=(const column_operations& other) const;
 
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && is_alias_column_t_v<std::decay_t<U>>)
@@ -360,6 +370,13 @@ struct column_operations : column_operations_base_t {
   // operator and, or
   operator_compare_t operator&&(column_operations&& other) const;
   operator_compare_t operator||(column_operations&& other) const;
+
+  // + - * / % 等算术运算符
+  column_operations operator+(const std::int64_t& value) const;
+  column_operations operator-(const std::int64_t& value) const;
+  column_operations operator*(const std::int64_t& value) const;
+  column_operations operator/(const std::int64_t& value) const;
+  column_operations operator%(const std::int64_t& value) const;
 };
 
 // 动态查询
