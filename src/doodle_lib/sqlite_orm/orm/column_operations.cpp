@@ -181,9 +181,8 @@ column_operations column_operations::operator=(std::nullptr_t) const {
   data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
   return *this;
 }
-column_operations column_operations::operator=(const column_operations& other) const {
-  auto l_other_ptr                  = std::make_shared<column_operations>(other);
-  auto l_to_str                     = std::make_shared<to_str_expr_t>("{} = {}", l_other_ptr);
+column_operations column_operations::operator=(const expression_t& other) const {
+  auto l_to_str                     = std::make_shared<to_str_expr_t>("{} = {}", other.column_op_);
   data_impl_ptr_->to_str_ptr_       = l_to_str;
   data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
   return *this;
@@ -240,35 +239,35 @@ operator_compare_t column_operations::operator||(column_operations&& other) cons
   compare.data_impl_ptr_->right_ = l_other_ptr;
   return compare;
 }
-column_operations column_operations::operator+(const std::int64_t& value) const {
+expression_t column_operations::operator+(const std::int64_t& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} + ?");
   l_ptr->value_variant_       = bind_value_t{value};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
-  return *this;
+  return expression_t{std::make_shared<column_operations>(*this)};
 }
-column_operations column_operations::operator-(const std::int64_t& value) const {
+expression_t column_operations::operator-(const std::int64_t& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} - ?");
   l_ptr->value_variant_       = bind_value_t{value};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
-  return *this;
+  return expression_t{std::make_shared<column_operations>(*this)};
 }
-column_operations column_operations::operator*(const std::int64_t& value) const {
+expression_t column_operations::operator*(const std::int64_t& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} * ?");
   l_ptr->value_variant_       = bind_value_t{value};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
-  return *this;
+  return expression_t{std::make_shared<column_operations>(*this)};
 }
-column_operations column_operations::operator/(const std::int64_t& value) const {
+expression_t column_operations::operator/(const std::int64_t& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} / ?");
   l_ptr->value_variant_       = bind_value_t{value};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
-  return *this;
+  return expression_t{std::make_shared<column_operations>(*this)};
 }
-column_operations column_operations::operator%(const std::int64_t& value) const {
+expression_t column_operations::operator%(const std::int64_t& value) const {
   auto l_ptr                  = std::make_shared<to_str_value_t>("{} % ?");
   l_ptr->value_variant_       = bind_value_t{value};
   data_impl_ptr_->to_str_ptr_ = l_ptr;
-  return *this;
+  return expression_t{std::make_shared<column_operations>(*this)};
 }
 
 dynamic_column_operations::dynamic_column_operations() = default;

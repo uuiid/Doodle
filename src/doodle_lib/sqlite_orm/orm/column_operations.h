@@ -69,6 +69,10 @@ struct operator_compare_t : public column_operations_base_t {
     return compare;
   }
 };
+// 表达式类辅助, 消除 column_operations 中 operator= 成为自身复制函数的歧义
+struct expression_t {
+  std::shared_ptr<column_operations> column_op_;
+};
 
 struct column_operations : column_operations_base_t {
  private:
@@ -171,7 +175,7 @@ struct column_operations : column_operations_base_t {
 
   column_operations operator=(bind_value_t&& value) const;
   column_operations operator=(std::nullptr_t) const;
-  column_operations operator=(const column_operations& other) const;
+  column_operations operator=(const expression_t& other) const;
 
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && is_alias_column_t_v<std::decay_t<U>>)
@@ -372,11 +376,11 @@ struct column_operations : column_operations_base_t {
   operator_compare_t operator||(column_operations&& other) const;
 
   // + - * / % 等算术运算符
-  column_operations operator+(const std::int64_t& value) const;
-  column_operations operator-(const std::int64_t& value) const;
-  column_operations operator*(const std::int64_t& value) const;
-  column_operations operator/(const std::int64_t& value) const;
-  column_operations operator%(const std::int64_t& value) const;
+  expression_t operator+(const std::int64_t& value) const;
+  expression_t operator-(const std::int64_t& value) const;
+  expression_t operator*(const std::int64_t& value) const;
+  expression_t operator/(const std::int64_t& value) const;
+  expression_t operator%(const std::int64_t& value) const;
 };
 
 // 动态查询
