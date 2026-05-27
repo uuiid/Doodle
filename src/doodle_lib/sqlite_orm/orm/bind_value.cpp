@@ -14,7 +14,7 @@ bind_value_t::bind_value_t(column_info_ptr column_info) {
   };
   to_string_fun_ = [](const bind_value_t& self, storage& in_storage, const to_sql_ctx& ctx) {
     auto& col_info_ptr = std::any_cast<const column_info_ptr&>(self.value_);
-    return fmt::format("Column({})", col_info_ptr->get_column_name(in_storage, ctx));
+    return fmt::format("{}", col_info_ptr->get_column_name(in_storage, ctx));
   };
 }
 
