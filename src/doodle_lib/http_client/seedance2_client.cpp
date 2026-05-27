@@ -66,19 +66,27 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::
   auto l_url_path                     = std::regex_replace(in_file_url, l_url_regex, "");
   auto l_ip                           = in_file_url.substr(0, in_file_url.size() - l_url_path.size());
   http_client_ptr_t l_http_client_ptr = std::make_shared<http_client_t>(std::move(l_ip), *core_set::get_set().ctx_ptr);
-
   boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url_path, 11};
   req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
   req.set(boost::beast::http::field::accept, "application/json");
   req.set(boost::beast::http::field::host, l_http_client_ptr->server_ip_);
   req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
-  boost::beast::http::response<boost::beast::http::file_body> l_res{};
-  auto l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".mp4");
-  boost::system::error_code l_ec{};
-  l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
-  if (l_ec) throw_exception(http_request_error{boost::beast::http::status::internal_server_error, l_ec.message()});
-  co_await l_http_client_ptr->read_and_write(req, l_res, boost::asio::use_awaitable);
-  DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
+  FSys::path l_path;
+  for (int i = 0; i < 3; ++i)  // 最多重试3次
+    try {
+      boost::beast::http::response<boost::beast::http::file_body> l_res{};
+      l_path = core_set::get_set().get_cache_root("http") / (core_set::get_set().get_uuid_str() + ".mp4");
+      boost::system::error_code l_ec{};
+      l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
+      if (l_ec) throw_exception(http_request_error{boost::beast::http::status::internal_server_error, l_ec.message()});
+      co_await l_http_client_ptr->read_and_write(req, l_res, boost::asio::use_awaitable);
+      DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
+      break;  // 成功下载，跳出循环
+    } catch (const std::exception& e) {
+      if (i == 2)  // 最后一次重试失败，抛出异常
+        throw_exception(http_request_error{boost::beast::http::status::internal_server_error, e.what()});
+    }
+
   co_return l_path;
 }
 
