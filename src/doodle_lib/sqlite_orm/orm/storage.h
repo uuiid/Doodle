@@ -177,6 +177,7 @@ class storage : public boost::noncopyable {
 
     void run(std::string_view in_pragma_sql, bool in_value);
     void run(std::string_view in_pragma_sql, std::string_view in_value);
+    void run(std::string_view in_pragma_sql, std::int32_t in_value);
 
    private:
     storage& s_;
