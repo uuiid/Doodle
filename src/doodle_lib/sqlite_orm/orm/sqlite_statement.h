@@ -371,4 +371,28 @@ struct sqlite_statement_extractor<std::vector<std::string>> : sqlite_statement_e
 template <>
 struct sqlite_statement_printer<std::vector<std::string>> : sqlite_statement_printer<std::string> {};
 
+// chrono::year_month_day 特化
+template <>
+struct sqlite_statement_binder<std::chrono::year_month_day> : sqlite_statement_binder<std::string> {
+  int bind(sqlite3_stmt* stmt, int index, const std::chrono::year_month_day& value) const {
+    auto l_str = fmt::format("{:04}-{:02}-{:02}", static_cast<int>(value.year()), static_cast<unsigned>(value.month()),
+                             static_cast<unsigned>(value.day()));
+    return sqlite_statement_binder<std::string>::bind(stmt, index, l_str);
+  }
+};
+template <>
+struct sqlite_statement_extractor<std::chrono::year_month_day> : sqlite_statement_extractor<std::string> {
+  std::chrono::year_month_day extract(sqlite3_stmt* stmt, int columnIndex) const {
+    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
+    std::istringstream l_istr{l_str};
+    std::chrono::year_month_day l_value;
+    if (l_istr >> parse("%F", l_value)) {
+      return l_value;
+    } else {
+      throw std::runtime_error(fmt::format("Failed to parse year_month_day from string: {}", l_str));
+    }
+  }
+};
+template <>
+struct sqlite_statement_printer<std::chrono::year_month_day> : sqlite_statement_printer<std::string> {};
 }  // namespace doodle::orm
