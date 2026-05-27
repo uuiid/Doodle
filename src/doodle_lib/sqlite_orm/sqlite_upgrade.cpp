@@ -42,13 +42,8 @@ struct upgrade_init_t : sqlite_upgrade {
   explicit upgrade_init_t(const FSys::path& in_path) {}
 
   static void full_fts_sync(sqlite_database& in_data) {
-    auto l_g = in_data.transaction();
     using namespace orm;
-    insert(in_data).into<entity_fts>().set();
-    // in_data->storage_any_.insert(
-    //     into<entity_fts>(), columns(entity_fts_hidden::any_field), values(std::make_tuple("rebuild"))
-    // );
-    l_g.commit();
+    insert(in_data).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild")();
   }
 
   void upgrade(sqlite_database& in_data) override {
@@ -127,10 +122,10 @@ struct upgrade_2_t : sqlite_upgrade {
     //   in_data->storage_any_.pragma.user_version(g_current_version);
     // }
 
-    // if (in_data->storage_any_.pragma.user_version() == 2) {
-    //   upgrade_init_t::full_fts_sync(in_data);
-    //   in_data->storage_any_.pragma.user_version(g_current_version);
-    // }
+    if (in_data.pragma().user_version() == 2) {
+      upgrade_init_t::full_fts_sync(in_data);
+      in_data.pragma().user_version(g_current_version);
+    }
 
     // if (in_data->storage_any_.pragma.user_version() == 3) {
     //   in_data->storage_any_.pragma.user_version(g_current_version);
