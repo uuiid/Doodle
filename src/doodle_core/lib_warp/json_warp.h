@@ -17,6 +17,7 @@
 #include <entt/entt.hpp>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <optional>
 
 // partial specialization (full specialization works too)
@@ -240,3 +241,16 @@ struct [[maybe_unused]] adl_serializer<std::variant<Types...>> {
 }  // namespace nlohmann
 
 #include <doodle_core/lib_warp/detail/bit_set.h>
+
+namespace fmt {
+// nlohmann::json using fmt to string
+// NLOHMANN_BASIC_JSON_TPL_DECLARATION
+template <>
+struct formatter<nlohmann::json> : formatter<std::string_view> {
+  template <typename FormatContext>
+  auto format(const nlohmann::json& in_json, FormatContext& ctx) {
+    auto l_str = in_json.dump();
+    return formatter<std::string_view>::format(l_str, ctx);
+  }
+};
+}  // namespace fmt
