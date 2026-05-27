@@ -112,6 +112,7 @@ struct DOODLE_CORE_API person {
   // 自定义属性
   // 钉钉id
   std::string dingding_id_;
+  std::int64_t max_completion_tokens_{500'0000};  // 当日任务消耗的最大token数量 
 
   std::string get_full_name() const {
     return !first_name_.empty() && !last_name_.empty() ? first_name_ + ' ' + last_name_ : first_name_ + last_name_;

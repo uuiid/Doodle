@@ -111,9 +111,18 @@ void sqlite_database::regs_all() {
       .add_column("ended_at", &seedance2::task::ended_at_)
       .add_column("shot_uuid_id", &seedance2::task::shot_uuid_id_)
       .add_column("archived", &seedance2::task::archived_)
+      .add_column("completion_tokens", &seedance2::task::completion_tokens_)
       .add_foreign_key(&seedance2::task::shot_uuid_id_, &task::uuid_id_, foreign_key_action::set_null)
       .add_foreign_key(&seedance2::task::user_id_, &person::uuid_id_, foreign_key_action::set_null)
       .add_index(&seedance2::task::uuid_id_);
+
+  reg_table<seedance2::task_person_token>("seedance2_task_person_token")
+      .add_column("id", &seedance2::task_person_token::id_, primary_key(), autoincrement())
+      .add_column("uuid_id", &seedance2::task_person_token::uuid_id_, unique(), not_null())
+      .add_column("person_id", &seedance2::task_person_token::person_id_, not_null())
+      .add_column("remaining_tokens", &seedance2::task_person_token::remaining_tokens_, not_null())
+      .add_column("token_usage_date", &seedance2::task_person_token::token_usage_date_, not_null())
+      .add_foreign_key(&seedance2::task_person_token::person_id_, &person::uuid_id_, foreign_key_action::cascade);
 
   reg_table<ai_studio_person_role_link>("ai_studio_person_role_link")
       .add_column("id", &ai_studio_person_role_link::id_, primary_key(), autoincrement())
@@ -721,6 +730,7 @@ void sqlite_database::regs_all() {
       .add_column("is_generated_from_ldap", &person::is_generated_from_ldap_)
       .add_column("ldap_uid", &person::ldap_uid_, unique())
       .add_column("dingding_id", &person::dingding_id_)
+      .add_column("max_completion_tokens", &person::max_completion_tokens_)
       .add_foreign_key(&person::studio_id_, &studio::uuid_id_, foreign_key_action::set_null);
 
   reg_table<preview_background_file>("preview_background_file")

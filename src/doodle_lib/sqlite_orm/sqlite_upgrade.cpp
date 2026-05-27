@@ -126,14 +126,15 @@ struct upgrade_2_t : sqlite_upgrade {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
     }
-    
+
     if (in_data.pragma().user_version() == 4) {
-      in_data.drop_trigger("entity_fts_insert_trigger");
-      in_data.drop_trigger("entity_fts_update_trigger");
+      auto l_g = in_data.transaction();
+      in_data.exec(R"(alter table seedance2_task
+    add completion_tokens integer default 200000 not null;)");
+      in_data.exec(R"(alter table person
+    add max_completion_tokens integer;)");
+      l_g.commit();
       in_data.sync_schema();
-      
-      upgrade_init_t::full_fts_sync(in_data);
-      in_data.pragma().user_version(g_current_version);
     }
 
     in_data.pragma().user_version(g_current_version);

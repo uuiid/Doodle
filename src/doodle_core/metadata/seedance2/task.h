@@ -42,25 +42,26 @@ struct DOODLE_CORE_API task {
   chrono::system_zoned_time created_at_{chrono::current_zone(), chrono::system_clock::now()};
   chrono::system_zoned_time ended_at_{chrono::current_zone(), chrono::system_clock::now()};
 
-  uuid shot_uuid_id_;  // 内部使用的UUID，对应镜头中的uuid_id_
-  std::int64_t completion_tokens_{};
+  uuid shot_uuid_id_;                        // 内部使用的UUID，对应镜头中的uuid_id_
+  std::int64_t completion_tokens_{20'0000};  // 任务完成所需的token数量，默认为20万，具体数值可根据实际情况调整
 
   // 归档
   bool archived_;
   // to json
   friend void to_json(nlohmann::json& j, const task& p) {
-    j["id"]             = p.uuid_id_;
-    j["user_id"]        = p.user_id_;
-    j["status"]         = p.status_;
-    j["data_request"]   = p.data_request_;
-    j["file_extension"] = p.file_extension_;
-    j["data_response"]  = p.data_response_;
-    j["ai_studio_id"]   = p.ai_studio_id_;
+    j["id"]                = p.uuid_id_;
+    j["user_id"]           = p.user_id_;
+    j["status"]            = p.status_;
+    j["data_request"]      = p.data_request_;
+    j["file_extension"]    = p.file_extension_;
+    j["data_response"]     = p.data_response_;
+    j["ai_studio_id"]      = p.ai_studio_id_;
 
-    j["created_at"]     = p.created_at_;
-    j["ended_at"]       = p.ended_at_;
-    j["archived"]       = p.archived_;
-    j["shot_uuid_id"]   = p.shot_uuid_id_;
+    j["created_at"]        = p.created_at_;
+    j["ended_at"]          = p.ended_at_;
+    j["archived"]          = p.archived_;
+    j["shot_uuid_id"]      = p.shot_uuid_id_;
+    j["completion_tokens"] = p.completion_tokens_;
   }
   friend void from_json(const nlohmann::json& j, task& p) {
     if (j.contains("data_request")) j.at("data_request").get_to(p.data_request_);
@@ -68,6 +69,13 @@ struct DOODLE_CORE_API task {
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
     if (j.contains("shot_uuid_id")) j.at("shot_uuid_id").get_to(p.shot_uuid_id_);
   }
+};
+// 统计每日任务消耗的token数量, 以及每日剩余可用token数量
+struct DOODLE_CORE_API task_person_token {
+  DOODLE_BASE_FIELDS();
+  uuid person_id_;
+  std::int64_t remaining_tokens_;            // 剩余可用token数量
+  chrono::year_month_day token_usage_date_;  // token 使用日期
 };
 
 }  // namespace doodle::seedance2
