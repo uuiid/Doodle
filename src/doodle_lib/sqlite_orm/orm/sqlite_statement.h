@@ -75,6 +75,7 @@ struct sqlite_statement_binder<std::string_view> {
 template <>
 struct sqlite_statement_extractor<std::string> {
   std::string extract(sqlite3_stmt* stmt, int columnIndex) const {
+    if (sqlite3_column_type(stmt, columnIndex) == SQLITE_NULL) return {};
     const unsigned char* text = sqlite3_column_text(stmt, columnIndex);
     return text ? reinterpret_cast<const char*>(text) : "";
   }
@@ -243,6 +244,12 @@ struct sqlite_statement_extractor<std::chrono::zoned_time<Duration>> : sqlite_st
     std::istringstream l_istr{l_str};
     std::chrono::time_point<std::chrono::system_clock, Duration> l_value =
         std::chrono::time_point_cast<Duration>(std::chrono::system_clock::now());
+    if (l_str.empty()) {
+      // auto l_name = sqlite3_column_name(stmt, columnIndex);
+      // auto l_type = sqlite3_column_type(stmt, columnIndex);
+      // SPDLOG_WARN("Extracted empty string for column '{}' of type '{}' , returning current time", l_name ? l_name : "unknown", l_type);
+      return std::chrono::zoned_time{std::chrono::current_zone(), l_value};
+    }
     if (l_istr >> parse("%F %T", l_value))
       ;
     else if (l_istr.clear(), l_istr.str(l_str), l_istr >> parse("%F", l_value))
