@@ -126,10 +126,15 @@ struct upgrade_2_t : sqlite_upgrade {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
     }
-
-    // if (in_data->storage_any_.pragma.user_version() == 3) {
-    //   in_data->storage_any_.pragma.user_version(g_current_version);
-    // }
+    
+    if (in_data.pragma().user_version() == 4) {
+      in_data.drop_trigger("entity_fts_insert_trigger");
+      in_data.drop_trigger("entity_fts_update_trigger");
+      in_data.sync_schema();
+      
+      upgrade_init_t::full_fts_sync(in_data);
+      in_data.pragma().user_version(g_current_version);
+    }
 
     in_data.pragma().user_version(g_current_version);
   }
