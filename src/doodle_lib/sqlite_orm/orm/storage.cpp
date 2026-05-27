@@ -193,8 +193,8 @@ std::int32_t storage::backup_t::step(int pages) {
   return l_r;
 }
 storage::backup_t::~backup_t() {
-  if (dest_db_) sqlite3_close_v2(dest_db_);
   if (backup_) sqlite3_backup_finish(backup_);
+  if (dest_db_) sqlite3_close_v2(dest_db_);
 }
 
 sqlite3* storage::only_open_db() {
