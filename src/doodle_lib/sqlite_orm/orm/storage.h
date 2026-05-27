@@ -155,6 +155,7 @@ struct sqlite_stmt {
   void reset_bind();
   std::int32_t get_bind_index();
   std::int64_t get_column_count() const;
+  bool column_is_null(int columnIndex) const;
 
   void step();
   std::int32_t step_not_throw();

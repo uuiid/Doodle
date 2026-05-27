@@ -134,6 +134,9 @@ void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
 }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
+bool sqlite_stmt::column_is_null(int columnIndex) const {
+  return sqlite3_column_type(stmt_, columnIndex) == SQLITE_NULL;
+}
 
 void sqlite_stmt::step() {
   auto l_r = sqlite3_step(stmt_);

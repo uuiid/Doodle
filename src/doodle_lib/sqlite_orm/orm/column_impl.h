@@ -18,9 +18,11 @@ table_columns_t::table_columns_t(ValueType Table::* in_ptr)
         return l_ptr && l_ptr == in_ptr;
       }),
       set_value_([](const sqlite_stmt& stmt, int columnIndex, void* out_value) {
+        if (stmt.column_is_null(columnIndex)) return;  // 如果是NULL，不修改输出值，保持原有值不变
         *static_cast<ValueType*>(out_value) = stmt.get_column_value<ValueType>(columnIndex);
       }),
       set_struct_value_([in_ptr](const sqlite_stmt& stmt, int columnIndex, void* out_value) {
+        if (stmt.column_is_null(columnIndex)) return;  // 如果是NULL，不修改输出值，保持原有值不变
         using struct_type  = std::decay_t<Table>;
         auto& struct_ref   = *static_cast<struct_type*>(out_value);
         struct_ref.*in_ptr = stmt.get_column_value<ValueType>(columnIndex);
