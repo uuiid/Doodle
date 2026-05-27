@@ -34,20 +34,20 @@ auto get_todo_post_process(std::vector<todo_t>& in_todos) {
       in_todos | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
 
   {
-    std::map<uuid, const comment*> l_map_comm;
+    std::map<uuid, comment> l_map_comm;
     for (auto&& i : select(l_sql)
                         .columns(object<comment>())
                         .from<comment>()
                         .where(c(&comment::object_id_).in(l_task_ids))
                         .order_by (&comment::created_at_)()) {
-      if (!l_map_comm.contains(i.object_id_)) l_map_comm[i.object_id_] = &i;
+      if (!l_map_comm.contains(i.object_id_)) l_map_comm[i.object_id_] = i;
     }
 
     for (auto& i : in_todos) {
       if (l_map_comm.contains(i.uuid_id_)) {
         auto&& l_c = l_map_comm.at(i.uuid_id_);
         i.last_comment_ =
-            todo_t::comment_t{.text_ = l_c->text_, .date_ = l_c->created_at_, .person_id_ = l_c->person_id_};
+            todo_t::comment_t{.text_ = l_c.text_, .date_ = l_c.created_at_, .person_id_ = l_c.person_id_};
       }
     }
   }
@@ -72,6 +72,7 @@ auto get_todo_fun() {
           &task_type::name_, &task_type::for_entity_, &task_type::color_, &task_status::name_, &task_status::color_,
           &task_status::short_name_, object<entity_asset_extend>()
       )
+      .from<task>()
       .join<project>(&task::project_id_, &project::uuid_id_)
       .join<task_type>(&task::task_type_id_, &task_type::uuid_id_)
       .join<task_status>(&task::task_status_id_, &task_status::uuid_id_)
