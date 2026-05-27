@@ -13,6 +13,7 @@
 #include <memory>
 #include <range/v3/view/unique.hpp>
 #include <string>
+#include <typeindex>
 #include <utility>
 #include <vector>
 
@@ -73,9 +74,9 @@ struct operator_compare_t : public column_operations_base_t {
 struct column_operations : column_operations_base_t {
  private:
   struct to_str_base_t {
-    ~to_str_base_t()                                                                            = default;
+    ~to_str_base_t()                                                                                   = default;
     virtual std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const = 0;
-    virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const             = 0;
+    virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const                    = 0;
   };
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
@@ -145,16 +146,16 @@ struct column_operations : column_operations_base_t {
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && is_alias_column_t_v<std::decay_t<U>>)
   column_operations operator=(U&& value) const {
     data_impl_ptr_->to_str_ptr_ =
-    std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
+        std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
     return *this;
   }
   template <typename U>
     requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && !is_alias_column_t_v<std::decay_t<U>>)
   column_operations operator=(U&& value) const {
-    auto l_ptr                  = std::make_shared<to_str_value_t>("{} = ?");
-    l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
-    data_impl_ptr_->to_str_ptr_ = l_ptr;
+    auto l_ptr                        = std::make_shared<to_str_value_t>("{} = ?");
+    l_ptr->value_variant_             = bind_value_t{std::forward<U>(value)};
+    data_impl_ptr_->to_str_ptr_       = l_ptr;
     data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
     return *this;
   }
@@ -387,7 +388,8 @@ struct on_operations : column_operations_base_t {
 // fts5 MATCH
 struct match_operations : column_operations_base_t {
   bind_value_t pattern_;
-  match_operations(std::string pattern);
+  table_info_base_ptr table_info_ptr_;
+  match_operations(std::type_index in_table_index, std::string pattern);
   std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   // std::string (const storage& s, const to_sql_ctx& ctx) const override;
@@ -401,8 +403,10 @@ template <typename T>
 auto on(T&& condition) {
   return on_operations(std::forward<T>(condition));
 }
-
-inline match_operations match(std::string pattern) { return match_operations(std::move(pattern)); }
+template <typename Table>
+match_operations match(std::string pattern) {
+  return match_operations(typeid(Table), std::move(pattern));
+}
 
 template <typename T>
 auto c(auto T::* in_ptr) {

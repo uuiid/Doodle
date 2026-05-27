@@ -61,7 +61,7 @@ std::vector<entity_fts> search_entities_fts_by_keyword(
       .columns(object<entity_fts>())
       .from<entity_fts>()
       .where(
-          match(in_keyword) && c(&entity_fts::entity_type_id_).not_in(l_t) &&
+          match<entity_fts>(in_keyword) && c(&entity_fts::entity_type_id_).not_in(l_t) &&
           c(&entity_fts::project_id_) == in_project_id
       )
       .order_by(rank())
@@ -370,7 +370,7 @@ struct make_with_tasks_sql_result_t {
                                                     .columns(&entity_fts::entity_id_)
                                                     .from<entity_fts>()
                                                     .where(
-                                                        match(search_key_) &&
+                                                        match<entity_fts>(search_key_) &&
                                                         c(&entity_fts::entity_type_id_).not_in(l_t) &&
                                                         c(&entity_fts::project_id_) == project_id_
                                                     )

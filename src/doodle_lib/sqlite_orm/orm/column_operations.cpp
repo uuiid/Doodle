@@ -255,10 +255,12 @@ void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants)
 //   throw std::runtime_error("on_operations does not represent a specific column and cannot generate a column name");
 // }
 
-match_operations::match_operations(std::string pattern) : pattern_(std::move(pattern)) {}
+match_operations::match_operations(std::type_index in_table_index, std::string pattern)
+    : pattern_(std::move(pattern)), table_info_ptr_(std::make_shared<table_info_t>(in_table_index)) {}
 std::string match_operations::to_sql(const storage& s, const to_sql_ctx& ctx) const {
   // auto column_name = (s, ctx);
-  return "MATCH ?";  // MATCH 操作符的 SQL 片段，具体的列名会在绑定参数时处理
+  auto l_table_name = table_info_ptr_->get_table_name(s);
+  return fmt::format(R"("{}" MATCH ?)", l_table_name);  // MATCH 操作符的
 }
 void match_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
   bind_variants.bind_values_.push_back(pattern_);
