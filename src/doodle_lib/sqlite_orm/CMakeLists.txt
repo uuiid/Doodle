@@ -10,6 +10,5 @@ target_sources(
         sqlite_select_data.cpp
         sqlite_upgrade.cpp
 )
-add_subdirectory(detail)
 add_subdirectory(tokenizer)
 add_subdirectory(orm)
