@@ -181,6 +181,25 @@ void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zM
 }
 }  // namespace
 
+namespace {
+// 表 sqlite_master 对应的结构体，用于查询数据库对象是否存在
+struct sqlite_master_entry {
+  std::string type;
+  std::string name;
+  std::string tbl_name;
+  std::int32_t rootpage;
+  std::string sql;
+};
+
+void reg_sqlite_master_entry(storage& s) {
+  s.reg_table<sqlite_master_entry>("sqlite_master")
+      .add_column("type", &sqlite_master_entry::type)
+      .add_column("name", &sqlite_master_entry::name)
+      .add_column("tbl_name", &sqlite_master_entry::tbl_name)
+      .add_column("rootpage", &sqlite_master_entry::rootpage)
+      .add_column("sql", &sqlite_master_entry::sql);
+}
+}  // namespace
 storage::backup_t::backup_t(sqlite3* dest_db, sqlite3* src_db) : dest_db_(dest_db), src_db_(src_db) {}
 std::int32_t storage::backup_t::step(int pages) {
   if (!backup_) {
@@ -275,6 +294,8 @@ fts5_api* storage::get_fts5_api() const {
 }
 
 void storage::sync_schema() {
+  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
+
   auto l_transaction = transaction();
   for (const auto& table : tables_) {
     if (table_exists(table->name_)) {
@@ -444,26 +465,6 @@ void storage::drop_view(const std::string& view_name) {
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
-
-namespace {
-// 表 sqlite_master 对应的结构体，用于查询数据库对象是否存在
-struct sqlite_master_entry {
-  std::string type;
-  std::string name;
-  std::string tbl_name;
-  std::int32_t rootpage;
-  std::string sql;
-};
-
-void reg_sqlite_master_entry(storage& s) {
-  s.reg_table<sqlite_master_entry>("sqlite_master")
-      .add_column("type", &sqlite_master_entry::type)
-      .add_column("name", &sqlite_master_entry::name)
-      .add_column("tbl_name", &sqlite_master_entry::tbl_name)
-      .add_column("rootpage", &sqlite_master_entry::rootpage)
-      .add_column("sql", &sqlite_master_entry::sql);
-}
-}  // namespace
 
 bool storage::table_exists(const std::string& table_name) {
   if (table_name.empty()) throw std::invalid_argument("Table name cannot be empty");
