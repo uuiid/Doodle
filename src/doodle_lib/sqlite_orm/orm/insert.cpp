@@ -5,15 +5,29 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
 #include <fmt/format.h>
+#include <string>
+#include <vector>
 
 namespace doodle::orm {
 
 std::string insert_t::to_sql(to_sql_ctx in_ctx) const {
   auto l_ctx = in_ctx;
-  l_ctx.ctx_ |= to_sql_ctx::insert_sql;  // 强制使用 insert_sql 上下文，以确保生成正确的 SQL 片段格式
-  auto l_values = fmt::format("({})", fmt::join(std::vector<std::string>(state_->columns_.size(), "?"), ", "));
-  if (state_->batch_size_ > 1)
-    l_values = fmt::format("{}", fmt::join(std::vector<std::string>(state_->batch_size_, l_values), ", "));
+  std::string l_values{};
+  if (l_ctx.ctx_ & to_sql_ctx::insert_sql) {
+    l_values = fmt::format("({})", fmt::join(std::vector<std::string>(state_->columns_.size(), "?"), ", "));
+    if (state_->batch_size_ > 1)
+      l_values = fmt::format("{}", fmt::join(std::vector<std::string>(state_->batch_size_, l_values), ", "));
+  } else if (l_ctx.ctx_ & to_sql_ctx::create_trigger_sql) {
+    if (state_->batch_size_ > 1) throw std::runtime_error("Batch insert is not supported in trigger statement");
+    std::vector<std::string> l_bind_values_strs{};
+    for (const auto& bind_value : state_->values_.bind_values_)
+      l_bind_values_strs.push_back(bind_value.to_string(*state_->s_, l_ctx));
+
+    l_values = fmt::format("({})", fmt::join(l_bind_values_strs, ", "));
+  } else {
+    throw std::runtime_error("Unsupported SQL context for insert_t::to_sql");
+  }
+
   std::vector<std::string> l_column_names{};
   for (const auto& col_info_ptr : state_->columns_) {
     l_column_names.push_back(col_info_ptr->get_column_name(*state_->s_, l_ctx));
