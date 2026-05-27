@@ -1,5 +1,6 @@
 #include <doodle_lib/sqlite_orm/orm/alias.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/table_info.h>
 
 namespace doodle::orm {
 std::string alias_info_t::get_table_name(const storage& s) const {
@@ -28,5 +29,16 @@ std::string rank_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx
 std::string rank_info_t::get_table_name(const storage& s) const { return ""; }
 void rank_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 void rank_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
+
+any_column_info_t::any_column_info_t(std::type_index in_table_index)
+    : table_info_ptr_(std::make_shared<table_info_t>(in_table_index)) {}
+
+std::string any_column_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
+  auto l_table_name = table_info_ptr_->get_table_name(s);
+  return l_table_name;
+}
+std::string any_column_info_t::get_table_name(const storage& s) const { return table_info_ptr_->get_table_name(s); }
+void any_column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
+void any_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 
 }  // namespace doodle::orm

@@ -106,4 +106,18 @@ template <typename Table, typename ValueType>
 alias_column_t<Table, ValueType> new_(ValueType Table::* column_alias);
 template <typename Table, typename ValueType>
 alias_column_t<Table, ValueType> old_(ValueType Table::* column_alias);
+
+// fts5 any column
+struct any_column_info_t : public base_column_info_t {
+  table_info_base_ptr table_info_ptr_;
+  explicit any_column_info_t(std::type_index in_table_index);
+  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string get_table_name(const storage& s) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+};
+template <typename Table>
+auto any_column() {
+  return any_column_info_t(typeid(Table));
+}
 }  // namespace doodle::orm

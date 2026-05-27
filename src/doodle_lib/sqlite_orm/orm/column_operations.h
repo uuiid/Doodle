@@ -8,7 +8,6 @@
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 
-#include "fwd.h"
 #include <initializer_list>
 #include <memory>
 #include <range/v3/view/unique.hpp>
@@ -132,6 +131,7 @@ struct column_operations : column_operations_base_t {
   explicit column_operations(T&& in_alias_column);
   explicit column_operations(const table_columns_t& in_column);
   explicit column_operations(const alias_column_info_t& in_column);
+  explicit column_operations(any_column_info_t in_any_column);
 
   column_info_ptr get_column_info_ptr() const;
 
@@ -354,6 +354,9 @@ struct column_operations : column_operations_base_t {
   // operator not in with subquery
   column_operations not_in(const select_t& subquery) const;
 
+  // fts5 match 语法
+  column_operations match(std::string pattern) const;
+
   // operator and, or
   operator_compare_t operator&&(column_operations&& other) const;
   operator_compare_t operator||(column_operations&& other) const;
@@ -385,27 +388,9 @@ struct on_operations : column_operations_base_t {
   // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 };
 
-// fts5 MATCH
-struct match_operations : column_operations_base_t {
-  bind_value_t pattern_;
-  table_info_base_ptr table_info_ptr_;
-  match_operations(std::type_index in_table_index, std::string pattern);
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
-  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
-
-  // operator and, or
-  operator_compare_t operator&&(column_operations&& other) const;
-  operator_compare_t operator||(column_operations&& other) const;
-};
-
 template <typename T>
 auto on(T&& condition) {
   return on_operations(std::forward<T>(condition));
-}
-template <typename Table>
-match_operations match(std::string pattern) {
-  return match_operations(typeid(Table), std::move(pattern));
 }
 
 template <typename T>
@@ -414,9 +399,10 @@ auto c(auto T::* in_ptr) {
 }
 template <typename T>
   requires is_alias_column_t_v<T>
-inline auto c(T&& in_column) {
+auto c(T&& in_column) {
   return column_operations{std::forward<T>(in_column)};
 }
+inline auto c(any_column_info_t in_any_column) { return column_operations{std::move(in_any_column)}; }
 }  // namespace doodle::orm
 
 namespace fmt {

@@ -3,6 +3,7 @@
 //
 //
 
+#include "doodle_core/metadata/entity.h"
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project_status.h>
@@ -41,12 +42,13 @@ struct upgrade_init_t : sqlite_upgrade {
   explicit upgrade_init_t(const FSys::path& in_path) {}
 
   static void full_fts_sync(sqlite_database& in_data) {
-    // auto l_g                = in_data->storage_any_.transaction_guard();
-    // using entity_fts_hidden = fts5::hidden_fields_of<entity_fts>;
+    auto l_g = in_data.transaction();
+    using namespace orm;
+    insert(in_data).into<entity_fts>().set();
     // in_data->storage_any_.insert(
     //     into<entity_fts>(), columns(entity_fts_hidden::any_field), values(std::make_tuple("rebuild"))
     // );
-    // l_g.commit();
+    l_g.commit();
   }
 
   void upgrade(sqlite_database& in_data) override {
