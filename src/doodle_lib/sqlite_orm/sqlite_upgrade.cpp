@@ -141,9 +141,10 @@ struct upgrade_2_t : sqlite_upgrade {
         for (auto&& [l_uuid, l_res] : orm::select_t(in_data)
                                           .columns(&seedance2::task::uuid_id_, &seedance2::task::data_response_)
                                           .from<seedance2::task>()()) {
+          l_task_tokens.emplace_back(l_uuid, 0);
           if (l_res.is_null()) continue;
           if (!l_res.contains("usage") || !l_res.at("usage").contains("completion_tokens")) continue;
-          l_task_tokens.emplace_back(l_uuid, l_res.at("usage").at("completion_tokens").get<std::int64_t>());
+          l_task_tokens.back() = std::make_tuple(l_uuid, l_res.at("usage").at("completion_tokens").get<std::int64_t>());
         }
         for (auto&& [l_uuid, l_tokens] : l_task_tokens)
           orm::update(in_data)

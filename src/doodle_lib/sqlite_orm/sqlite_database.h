@@ -347,6 +347,7 @@ class sqlite_database : public orm::storage {
   }
 
   boost::asio::awaitable<void> remove(orm::delete_t in_delete);
+  boost::asio::awaitable<void> update(orm::update_t in_update);
 
   boost::asio::awaitable<void> mark_all_notifications_as_read(uuid in_user_id);
 
