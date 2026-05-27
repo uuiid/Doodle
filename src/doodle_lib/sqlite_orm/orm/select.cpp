@@ -17,7 +17,7 @@ select_t select_t::order_by(const rank_info_t& rank_column, bool ascending) {
   return *this;
 }
 
-std::string select_t::to_sql(to_sql_ctx in_ctx) const {
+std::string select_t::to_sql(const to_sql_ctx& in_ctx) const {
   auto l_ctx = in_ctx;
   l_ctx.ctx_ |= to_sql_ctx::select_sql;  // 强制使用 select_sql 上下文，以确保生成正确的 SQL 片段格式
   std::vector<std::string> l_column_names_str{};

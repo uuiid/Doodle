@@ -20,7 +20,7 @@ create_trigger_t& create_trigger_t::statement(const insert_t& in_statement) {
   return *this;
 }
 
-std::string create_trigger_t::to_sql(storage& s, to_sql_ctx ctx) const {
+std::string create_trigger_t::to_sql(storage& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_column_names_str{};
   for (const auto& column_name_ptr : info_->columns_) {
     l_column_names_str.push_back(column_name_ptr->get_column_name(s, ctx));

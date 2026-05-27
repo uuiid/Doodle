@@ -124,7 +124,7 @@ struct select_t {
   template <typename... TableColumns>
   select_t group_by(auto TableColumns::*... in_columns);
 
-  std::string to_sql(to_sql_ctx in_ctx) const;
+  std::string to_sql(const to_sql_ctx& in_ctx) const;
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const;
   template <typename... TableColumns>

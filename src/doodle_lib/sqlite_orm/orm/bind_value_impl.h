@@ -14,7 +14,7 @@ bind_value_t::bind_value_t(T&& value) {
     auto& value_ref   = std::any_cast<const actual_type&>(self.value_);
     stmt.bind<actual_type>(value_ref);
   };
-  to_string_fun_ = [](const bind_value_t& self, storage& in_storage, to_sql_ctx ctx) {
+  to_string_fun_ = [](const bind_value_t& self, storage& in_storage, const to_sql_ctx& ctx) {
     using actual_type = value_type;
     auto& value_ref   = std::any_cast<const actual_type&>(self.value_);
     return fmt::to_string(value_ref);
@@ -30,7 +30,7 @@ bind_value_t::bind_value_t(T&& value) {
     auto& str_value   = std::any_cast<const actual_type&>(self.value_);
     stmt.bind<actual_type>(str_value);
   };
-  to_string_fun_ = [](const bind_value_t& self, storage& in_storage, to_sql_ctx ctx) {
+  to_string_fun_ = [](const bind_value_t& self, storage& in_storage, const to_sql_ctx& ctx) {
     using actual_type = std::string;
     auto& str_value   = std::any_cast<const actual_type&>(self.value_);
     return str_value;

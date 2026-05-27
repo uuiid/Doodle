@@ -43,7 +43,7 @@ struct count_column_info_t : public base_column_info_t {
     column_infos_ = table_columns_t(count.columns_tuple_);
   }
   explicit count_column_info_t(count_t<void>&&) {}  // 处理 count() 的情况, 没有列信息
-  std::string get_column_name(const storage& s, to_sql_ctx ctx) const override;
+  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
   std::string get_table_name(const storage& s) const override;
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;

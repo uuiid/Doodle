@@ -90,8 +90,8 @@ struct table_info_base {
   std::vector<std::shared_ptr<create_index_base_t>> indexes_;
 
   virtual ~table_info_base() = default;
-  std::vector<std::string> get_foreign_key_create_sql(storage& s, to_sql_ctx ctx) const;
-  virtual std::string to_sql(storage& s, to_sql_ctx ctx) const = 0;
+  std::vector<std::string> get_foreign_key_create_sql(storage& s, const to_sql_ctx& ctx) const;
+  virtual std::string to_sql(storage& s, const to_sql_ctx& ctx) const = 0;
 
   template <typename T>
   column_info& find_column_info(auto T::* in_ptr);
@@ -115,7 +115,7 @@ struct table_fts_info : table_info_base {
   template <typename T>
   table_fts_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
 
-  std::string to_sql(storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(storage& s, const to_sql_ctx& ctx) const override;
 };
 
 struct table_info : table_info_base {
@@ -135,7 +135,7 @@ struct table_info : table_info_base {
   table_info& add_unique_index(auto T::*... in_ptrs);
   table_info& add_index(const create_index_base_t& index);
 
-  std::string to_sql(storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(storage& s, const to_sql_ctx& ctx) const override;
 };
 
 enum class trigger_timing { before, after, instead_of };
@@ -248,8 +248,8 @@ class storage : public boost::noncopyable {
   bool has_reg_table();
 
   template <typename T>
-  std::string get_column_name(auto T::* in_ptr, to_sql_ctx ctx) const;
-  std::string get_column_name(const table_columns_t& in_column, to_sql_ctx ctx) const;
+  std::string get_column_name(auto T::* in_ptr, const to_sql_ctx& ctx) const;
+  std::string get_column_name(const table_columns_t& in_column, const to_sql_ctx& ctx) const;
 
   template <typename T>
   const std::vector<column_info>& get_table_columns() const;

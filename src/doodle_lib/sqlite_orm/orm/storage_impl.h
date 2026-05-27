@@ -134,7 +134,7 @@ std::string storage::get_table_name() const {
   return get_table_name(std::type_index(typeid(T)));
 }
 template <typename T>
-std::string storage::get_column_name(auto T::* in_ptr, to_sql_ctx ctx) const {
+std::string storage::get_column_name(auto T::* in_ptr, const to_sql_ctx& ctx) const {
   return get_column_name(table_columns_t{in_ptr}, ctx);
 }
 

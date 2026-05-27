@@ -41,7 +41,7 @@ table_fts_info& table_fts_info::tokenizer(const std::string& tokenizer) {
   return *this;
 }
 
-std::string table_fts_info::to_sql(storage& s, to_sql_ctx ctx) const {
+std::string table_fts_info::to_sql(storage& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_column_sqls;
   for (std::size_t i = 0; i < columns_.size(); ++i) {
     const auto& column = columns_[i];
@@ -67,7 +67,7 @@ table_info& table_info::add_index(const create_index_base_t& in_index) {
   return *this;
 }
 
-std::string table_info::to_sql(storage& s, to_sql_ctx ctx) const {
+std::string table_info::to_sql(storage& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_column_sqls;
   for (const auto& column : columns_) {
     std::string l_sql = fmt::format(R"("{}" {})", column.name_, column.type_);
@@ -95,7 +95,7 @@ on_delete::on_delete(foreign_key_action action) : action_(action) {}
 
 on_update::on_update(foreign_key_action action) : action_(action) {}
 
-std::vector<std::string> table_info_base::get_foreign_key_create_sql(storage& s, to_sql_ctx ctx) const {
+std::vector<std::string> table_info_base::get_foreign_key_create_sql(storage& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_sqls;
   for (const auto& fk : foreign_keys_) {
     std::string l_sql = fmt::format(
@@ -377,7 +377,7 @@ void storage::rollback_transaction() {
 storage::transaction_guard storage::transaction() { return transaction_guard{*this}; }
 storage::pragma_t& storage::pragma() { return pragma_; }
 
-std::string storage::get_column_name(const table_columns_t& in_column, to_sql_ctx ctx) const {
+std::string storage::get_column_name(const table_columns_t& in_column, const to_sql_ctx& ctx) const {
   auto l_type_index = in_column.table_type_index_;
   if (!type_to_table_index_.contains(l_type_index)) throw std::runtime_error("Table not found for the given type");
 

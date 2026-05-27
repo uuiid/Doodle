@@ -10,7 +10,7 @@
 
 namespace doodle::orm {
 
-std::string insert_t::to_sql(to_sql_ctx in_ctx) const {
+std::string insert_t::to_sql(const to_sql_ctx& in_ctx) const {
   auto l_ctx = in_ctx;
   std::string l_values{};
   if (l_ctx.ctx_ & to_sql_ctx::insert_sql) {
@@ -39,7 +39,7 @@ std::string insert_t::to_sql(to_sql_ctx in_ctx) const {
 
 std::int64_t insert_t::operator()() {
   if (!state_->stmt_) {
-    to_sql_ctx l_ctx{.ctx_ = to_sql_ctx::insert_sql};
+    const to_sql_ctx l_ctx{.ctx_ = to_sql_ctx::insert_sql};
     auto l_sql    = to_sql(l_ctx);
     state_->stmt_ = std::make_shared<sqlite_stmt>();
     state_->stmt_->prepare(*state_->s_, l_sql);

@@ -94,7 +94,7 @@ struct update_t {
     return *this;
   }
 
-  std::string to_sql(to_sql_ctx ctx) const;
+  std::string to_sql(const to_sql_ctx& ctx) const;
 
   update_t operator()();
 };

@@ -5,7 +5,7 @@
 
 
 namespace doodle::orm {
-std::string create_index_base_t::to_sql(storage& s, to_sql_ctx ctx) const {
+std::string create_index_base_t::to_sql(storage& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_column_names_str{};
   for (const auto& column_name_ptr : info_->column_names_) {
     l_column_names_str.push_back(column_name_ptr->get_column_name(s, ctx));
@@ -26,7 +26,7 @@ std::string create_index_base_t::to_sql(storage& s, to_sql_ctx ctx) const {
   return l_create_index_sql;
 }
 
-create_index_base_t::index_info create_index_base_t::get_index_info(storage& s, to_sql_ctx ctx) const {
+create_index_base_t::index_info create_index_base_t::get_index_info(storage& s, const to_sql_ctx& ctx) const {
   index_info info{};
   info.name_          = info_->name_;
   info.table_name_    = info_->table_name_->get_table_name(s);

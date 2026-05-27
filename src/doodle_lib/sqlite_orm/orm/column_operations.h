@@ -37,9 +37,9 @@ struct operator_compare_t : public column_operations_base_t {
   std::shared_ptr<data_impl> data_impl_ptr_;
   operator_compare_t();
 
-  std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
   operator_compare_t operator&&(operator_compare_t&& other) const;
@@ -74,21 +74,21 @@ struct column_operations : column_operations_base_t {
  private:
   struct to_str_base_t {
     ~to_str_base_t()                                                                            = default;
-    virtual std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const = 0;
+    virtual std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const = 0;
     virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const             = 0;
   };
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
     bind_value_t value_variant_;
     explicit to_str_value_t(std::string fmt_str);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   struct to_str_value_list_t : to_str_base_t {
     std::string fmt_str_;
     std::vector<bind_value_t> value_variants_;
     explicit to_str_value_list_t(std::string fmt_str);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
@@ -96,7 +96,7 @@ struct column_operations : column_operations_base_t {
     std::shared_ptr<select_t> subquery_ptr_;
     bool is_not_in_{false};  // 标记是 IN 还是 NOT IN
     explicit to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   // NEW.uuid = OLD.uuid   NEW.name != OLD.name 别名比较, 必须包含表名以避免歧义
@@ -104,13 +104,13 @@ struct column_operations : column_operations_base_t {
     std::string fmt_str_;
     column_info_ptr other_column_ptr_;
     explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
   struct column_to_str : to_str_base_t {
     explicit column_to_str() = default;
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& /*bind_variants*/) const override {
       // column_to_str 不包含绑定参数，因此不需要收集
     }
@@ -136,9 +136,9 @@ struct column_operations : column_operations_base_t {
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 
-  std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
 
-  // std::string (const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 
   // 赋值操作符，生成SQL片段和绑定函数
   template <typename U>
@@ -362,9 +362,9 @@ struct column_operations : column_operations_base_t {
 struct dynamic_column_operations : column_operations_base_t {
   std::vector<std::shared_ptr<column_operations_base_t>> operations_;
   dynamic_column_operations();
-  std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 
   template <typename T>
   void add_condition(T&& condition) {
@@ -379,18 +379,18 @@ struct on_operations : column_operations_base_t {
     requires std::derived_from<std::decay_t<T>, column_operations_base_t>
   on_operations(T&& condition) : expr_(std::make_shared<std::decay_t<T>>(std::forward<T>(condition))) {}
 
-  std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 };
 
 // fts5 MATCH
 struct match_operations : column_operations_base_t {
   bind_value_t pattern_;
   match_operations(std::string pattern);
-  std::string to_sql(const storage& s, to_sql_ctx ctx) const override;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, to_sql_ctx ctx) const override;
+  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 
   // operator and, or
   operator_compare_t operator&&(column_operations&& other) const;

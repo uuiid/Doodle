@@ -152,11 +152,11 @@ struct column_operations_base_t {
 
  public:
   // to sql operator
-  virtual std::string to_sql(const storage& s, to_sql_ctx ctx) const              = 0;
+  virtual std::string to_sql(const storage& s, const to_sql_ctx& ctx) const              = 0;
   // 创建bind参数
   // 收集bind参数
   virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const = 0;
-  // virtual std::string get_column_name(const storage& s, to_sql_ctx ctx) const     = 0;
+  // virtual std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const     = 0;
 };
 
 // 运行是表基类, 可以获取表名称
