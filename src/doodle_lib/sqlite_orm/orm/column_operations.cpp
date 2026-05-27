@@ -4,6 +4,7 @@
 #include <doodle_lib/sqlite_orm/orm/bind_value_impl.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
+#include "sqlite_orm/orm/bind_value.h"
 #include <fmt/format.h>
 #include <vector>
 
@@ -109,10 +110,8 @@ std::string column_operations::to_str_compare_t::to_str(
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name, l_other_column_name));
 }
 
-void column_operations::to_str_compare_t::collect_bind_variants(
-    bind_value_collector_t& /*bind_variants*/
-) const {
-  // 不需要绑定参数，因为比较的值来自于另一个列，而不是用户输入的值
+void column_operations::to_str_compare_t::collect_bind_variants(bind_value_collector_t& in_bind_variants) const {
+  in_bind_variants.bind_values_.push_back(bind_value_t{other_column_ptr_});
 }
 
 std::string column_operations::column_to_str::to_str(column_info_ptr& in_ptr, const storage& s, to_sql_ctx ctx) const {
