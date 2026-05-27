@@ -4,9 +4,11 @@
 #include <doodle_lib/sqlite_orm/orm/create_index.h>
 #include <doodle_lib/sqlite_orm/orm/create_trigger.h>
 #include <doodle_lib/sqlite_orm/orm/exception.h>
+#include <doodle_lib/sqlite_orm/orm/orm.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
 #include <doodle_lib/sqlite_orm/orm/sqlite_statement.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include <boost/scope/scope_exit.hpp>
 
@@ -22,6 +24,7 @@
 
 namespace doodle {
 namespace orm {
+
 /////////////////////////////////////////////////////////////////////////////////////////////////
 default_value::default_value(std::string value) : value_(std::move(value)) {}
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,6 +277,10 @@ fts5_api* storage::get_fts5_api() const {
 void storage::sync_schema() {
   auto l_transaction = transaction();
   for (const auto& table : tables_) {
+    if (table_exists(table->name_)) {
+      SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
+      continue;
+    }
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
     l_stmt.step();
@@ -287,12 +294,23 @@ void storage::sync_schema() {
         // 已经存在相同的索引，无需创建
         continue;
       }
+      if (index_exists(l_index_info.name_)) {
+        SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
+        l_existing_indexes.insert(l_index_info);
+        continue;
+      }
+
       auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
       auto l_stmt             = sqlite_stmt(*this, l_create_index_sql);
       l_stmt.step();
     }
   }
   for (const auto& l_trigger : triggers_) {
+    if (trigger_exists(l_trigger->info_->name_)) {
+      SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
+      continue;
+    }
+
     auto l_create_trigger_sql = l_trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
     auto l_stmt               = sqlite_stmt(*this, l_create_trigger_sql);
     l_stmt.step();
@@ -426,6 +444,62 @@ void storage::drop_view(const std::string& view_name) {
   auto l_stmt = sqlite_stmt(*this, l_sql);
   l_stmt.step();
 }
+
+namespace {
+// 表 sqlite_master 对应的结构体，用于查询数据库对象是否存在
+struct sqlite_master_entry {
+  std::string type;
+  std::string name;
+  std::string tbl_name;
+  std::int32_t rootpage;
+  std::string sql;
+};
+
+void reg_sqlite_master_entry(storage& s) {
+  s.reg_table<sqlite_master_entry>("sqlite_master")
+      .add_column("type", &sqlite_master_entry::type)
+      .add_column("name", &sqlite_master_entry::name)
+      .add_column("tbl_name", &sqlite_master_entry::tbl_name)
+      .add_column("rootpage", &sqlite_master_entry::rootpage)
+      .add_column("sql", &sqlite_master_entry::sql);
+}
+}  // namespace
+
+bool storage::table_exists(const std::string& table_name) {
+  if (table_name.empty()) throw std::invalid_argument("Table name cannot be empty");
+  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
+  return select(*this)
+      .columns(&sqlite_master_entry::name)
+      .from<sqlite_master_entry>()
+      .where(c(&sqlite_master_entry::type) == "table" && c(&sqlite_master_entry::name) == table_name)()
+      .to_optional()
+      .has_value();
+}
+
+bool storage::index_exists(const std::string& index_name) {
+  if (index_name.empty()) throw std::invalid_argument("Index name cannot be empty");
+  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
+
+  return select(*this)
+      .columns(&sqlite_master_entry::name)
+      .from<sqlite_master_entry>()
+      .where(c(&sqlite_master_entry::type) == "index" && c(&sqlite_master_entry::name) == index_name)()
+      .to_optional()
+      .has_value();
+}
+
+bool storage::trigger_exists(const std::string& trigger_name) {
+  if (trigger_name.empty()) throw std::invalid_argument("Trigger name cannot be empty");
+  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
+
+  return select(*this)
+      .columns(&sqlite_master_entry::name)
+      .from<sqlite_master_entry>()
+      .where(c(&sqlite_master_entry::type) == "trigger" && c(&sqlite_master_entry::name) == trigger_name)()
+      .to_optional()
+      .has_value();
+}
+
 void storage::vacuum() {
   auto l_sql  = "VACUUM;";
   auto l_stmt = sqlite_stmt(*this, l_sql);

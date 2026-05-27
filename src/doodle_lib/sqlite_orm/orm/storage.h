@@ -284,6 +284,12 @@ class storage : public boost::noncopyable {
   void drop_trigger(const std::string& trigger_name);
   // 删除view
   void drop_view(const std::string& view_name);
+  // 检查表是否存在
+  bool table_exists(const std::string& table_name);
+  // 检查索引是否存在
+  bool index_exists(const std::string& index_name);
+  // 检查触发器是否存在
+  bool trigger_exists(const std::string& trigger_name);
   // vacuum数据库
   void vacuum();
   // 运行任意SQL
