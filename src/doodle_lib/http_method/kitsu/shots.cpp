@@ -29,7 +29,6 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <vector>
 
-
 namespace doodle::http {
 namespace {
 struct shots_with_tasks_result {
@@ -208,6 +207,7 @@ auto make_shots_with_tasks_result(
   auto sequence        = alias<entity>("sequence");
   auto episode         = alias<entity>("episode");
 
+  l_entity_type_id_ = in_entity_type_id;
   auto l_dynamic_query = dynamic_column_operations{};
   l_dynamic_query.add_condition(c(&entity::entity_type_id_) == l_entity_type_id_);
   if (in_person.role_ == person_role_type::outsource) {
