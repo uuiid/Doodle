@@ -260,6 +260,7 @@ WHERE id IN (
     WHERE rn > 1
 );)");
       in_data.sync_schema();
+      upgrade_init_t::full_fts_sync(in_data);
     }
     in_data.pragma().user_version(g_current_version);
   }
