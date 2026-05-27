@@ -7,6 +7,7 @@
 #include <doodle_core/metadata/assets_file.h>
 #include <doodle_core/metadata/entity_type.h>
 #include <doodle_core/metadata/project_status.h>
+#include <doodle_core/metadata/seedance2/task.h>
 #include <doodle_core/metadata/task_type.h>
 
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
@@ -14,6 +15,7 @@
 
 #include <boost/hana/ext/std/tuple.hpp>
 
+#include "sqlite_orm/orm/select.h"
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -133,6 +135,22 @@ struct upgrade_2_t : sqlite_upgrade {
     add completion_tokens integer default 200000 not null;)");
       in_data.exec(R"(alter table person
     add max_completion_tokens integer;)");
+      std::vector<std::tuple<uuid, std::int64_t>> l_task_tokens;
+      {
+        using namespace orm;
+        for (auto&& [l_uuid, l_res] : orm::select_t(in_data)
+                                          .columns(&seedance2::task::uuid_id_, &seedance2::task::data_response_)
+                                          .from<seedance2::task>()()) {
+          if (l_res.is_null()) continue;
+          if (!l_res.contains("usage") || !l_res.at("usage").contains("completion_tokens")) continue;
+          l_task_tokens.emplace_back(l_uuid, l_res.at("usage").at("completion_tokens").get<std::int64_t>());
+        }
+        for (auto&& [l_uuid, l_tokens] : l_task_tokens)
+          orm::update(in_data)
+              .from<seedance2::task>()
+              .set(c(&seedance2::task::completion_tokens_) = l_tokens)
+              .where(c(&seedance2::task::uuid_id_) = l_uuid)();
+      }
       l_g.commit();
       in_data.sync_schema();
     }

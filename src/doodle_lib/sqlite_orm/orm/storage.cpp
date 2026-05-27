@@ -302,6 +302,10 @@ void storage::sync_schema() {
       SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
+    if (table->name_ == "sqlite_master")
+      // sqlite_master 是 SQLite 内部表，不能创建
+      continue;
+
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
     l_stmt.step();
