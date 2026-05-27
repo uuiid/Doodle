@@ -1,7 +1,9 @@
 #include "doodle_core/metadata/task.h"
 
 #include "doodle_core/exception/exception.h"
+#include "doodle_core/metadata/entity.h"
 #include "doodle_core/metadata/person.h"
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/metadata/ai_studio.h>
 #include <doodle_core/metadata/kitsu_ctx_t.h>
 #include <doodle_core/metadata/seedance2/assets_entity.h>
@@ -28,41 +30,55 @@
 #include <regex>
 #include <spdlog/spdlog.h>
 
-
 #define DOODLE_SEED2
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 
 namespace {
-std::vector<sd2::task> get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
+// task 扩展数据
+struct task_extend : sd2::task {
+  uuid project_id_;
+  explicit task_extend(const sd2::task& in_task, const uuid& in_project_id)
+      : sd2::task(in_task), project_id_(in_project_id) {}
+  // to json
+  friend void to_json(nlohmann::json& j, const task_extend& p) {
+    to_json(j, static_cast<const sd2::task&>(p));
+    j["project_id"] = p.project_id_;
+  }
+};
+
+auto get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-      .columns(object<sd2::task>())
+      .columns(object<sd2::task>(), &entity::project_id_)
       .from<sd2::task>()
+      .left_outer_join<entity>(&entity::uuid_id_, &sd2::task::shot_uuid_id_)
       .where(c(&sd2::task::ai_studio_id_) == in_ai_studio_id && !c(&sd2::task::archived_))()
-      .to_vector();
+      .to_vector<task_extend>();
 }
 
-std::vector<sd2::task> get_sd2_tasks_for_person(const uuid& in_person_id) {
+auto get_sd2_tasks_for_person(const uuid& in_person_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-      .columns(object<sd2::task>())
+      .columns(object<sd2::task>(), &entity::project_id_)
       .from<sd2::task>()
+      .left_outer_join<entity>(&entity::uuid_id_, &sd2::task::shot_uuid_id_)
       .where(c(&sd2::task::user_id_) == in_person_id && !c(&sd2::task::archived_))()
-      .to_vector();
+      .to_vector<task_extend>();
 }
 
-std::vector<sd2::task> get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
+auto get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-      .columns(object<sd2::task>())
+      .columns(object<sd2::task>(), &entity::project_id_)
       .from<sd2::task>()
+      .left_outer_join<entity>(&entity::uuid_id_, &sd2::task::shot_uuid_id_)
       .where(c(&sd2::task::shot_uuid_id_) == in_task_id && c(&sd2::task::ai_studio_id_) == in_ai_studio_id && !c(&sd2::task::archived_))()
-      .to_vector();
+      .to_vector<task_extend>();
 }
 
 constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};
