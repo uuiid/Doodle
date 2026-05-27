@@ -84,36 +84,50 @@ auto get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_
 std::int64_t get_remaining_tokens_for_person(const person& in_person) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
-  auto l_tokens = select(l_sql)
-                      .columns(&sd2::task_person_token::remaining_tokens_)
-                      .from<sd2::task_person_token>()
-                      .where(c(&sd2::task_person_token::person_id_) == in_person.uuid_id_)()
-                      .to_optional();
+  chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
+  auto l_tokens =
+      select(l_sql)
+          .columns(&sd2::task_person_token::remaining_tokens_)
+          .from<sd2::task_person_token>()
+          .where(c(&sd2::task_person_token::person_id_) == in_person.uuid_id_ && c(&sd2::task_person_token::token_usage_date_) == l_today)()
+          .to_optional();
   if (l_tokens) return l_tokens.value();
   return in_person.max_completion_tokens_;
 }
 // 设置当日人员剩余可使用的 token 数量
 boost::asio::awaitable<void> set_remaining_tokens_for_person(const person& in_person, std::int64_t in_tokens) {
+  if (in_tokens == 0) co_return;
   auto& l_sql = get_sqlite_database();
   using namespace orm;
-  auto l_token_record = select(l_sql)
-                            .columns(object<sd2::task_person_token>())
-                            .from<sd2::task_person_token>()
-                            .where(c(&sd2::task_person_token::person_id_) == in_person.uuid_id_)()
-                            .to_optional();
-  if (l_token_record) {
-    co_await l_sql.update(
-        orm::update(l_sql)
-            .from<sd2::task_person_token>()
-            .set(c(&sd2::task_person_token::remaining_tokens_) = in_tokens)
-            .where(c(&sd2::task_person_token::person_id_) == in_person.uuid_id_)
-    );
-  } else {
+  chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
+
+  auto l_token_record =
+      select(l_sql)
+          .columns(object<sd2::task_person_token>())
+          .from<sd2::task_person_token>()
+          .where(c(&sd2::task_person_token::person_id_) == in_person.uuid_id_ && c(&sd2::task_person_token::token_usage_date_) == l_today)()
+          .to_optional();
+  if (!l_token_record) {
     auto l_new_record               = std::make_shared<sd2::task_person_token>();
     l_new_record->person_id_        = in_person.uuid_id_;
     l_new_record->remaining_tokens_ = in_tokens;
     co_await l_sql.install(l_new_record);
   }
+
+  co_await l_sql.update(
+      orm::update(l_sql)
+          .from<sd2::task_person_token>()
+          .set(
+              c(&sd2::task_person_token::remaining_tokens_) =
+                  in_tokens > 0 ? c(&sd2::task_person_token::remaining_tokens_) + in_tokens
+                                : c(&sd2::task_person_token::remaining_tokens_) - in_tokens
+          )
+          .where(
+              c(&sd2::task_person_token::person_id_) == in_person.uuid_id_ &&
+              c(&sd2::task_person_token::token_usage_date_) == l_today
+          )
+  );
+
   co_return;
 }
 
