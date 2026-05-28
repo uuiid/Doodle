@@ -2,14 +2,14 @@
 // Created by TD on 24-10-15.
 //
 
-#include <doodle_core/metadata/label.h>
 #include <doodle_core/metadata/assets.h>
 #include <doodle_core/metadata/assets_file.h>
+#include <doodle_core/metadata/label.h>
 #include <doodle_core/metadata/user.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <doodle_lib/core/http/http_function.h>
 #include <doodle_lib/http_method/kitsu.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -22,7 +22,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     http::session_data_ptr in_handle
 ) {
   person_.check_user();
-  auto l_list = get_sqlite_database().get_all<assets_file_helper::database_t>();
+  using namespace orm;
+  auto& l_sql = get_sqlite_database();
+  auto l_list = select(l_sql)
+                    .columns(object<assets_file_helper::database_t>())
+                    .from<assets_file_helper::database_t>()()
+                    .to_vector();
+
+  auto l_link_list = select(l_sql)
+                         .columns(object<assets_file_helper::link_parent_t>())
+                         .from<assets_file_helper::link_parent_t>()()
+                         .to_vector();
+  std::unordered_map<uuid, std::vector<uuid>> l_link_map{};
+  for (auto&& i : l_link_list) l_link_map[i.assets_uuid_].push_back(i.assets_type_uuid_);
+  for (auto&& i : l_list) i.uuid_parents_ = l_link_map[i.uuid_id_];
+  
   nlohmann::json l_json{};
   l_json = l_list;
   co_return in_handle->make_msg(l_json);
