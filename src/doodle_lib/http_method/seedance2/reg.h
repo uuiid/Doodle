@@ -12,6 +12,10 @@
 #include <core/http/http_function.h>
 
 namespace doodle::http::seedance2 {
+// 设置当日人员剩余可使用的 token 数量
+boost::asio::awaitable<void> set_remaining_tokens_for_person(const person& in_person, std::int64_t in_tokens);
+// 获取当日人员可以使用的 token 数量
+std::int64_t get_remaining_tokens_for_person(const person& in_person);
 // /api/user/seedance2/task
 DOODLE_HTTP_JWT_FUN(user_seedance2_task)
 DOODLE_HTTP_FUN_OVERRIDE(post)
@@ -108,6 +112,16 @@ DOODLE_HTTP_FUN_END()
 // /api/seedance2/animation/waiting.mp4
 DOODLE_HTTP_JWT_FUN(seedance2_animation_waiting)
 DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/tokens
+DOODLE_HTTP_JWT_FUN(seedance2_tokens)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
+// /api/seedance2/tokens/person/{person_id}
+DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_instance)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(put)
+uuid person_id_{};
 DOODLE_HTTP_FUN_END()
 
 }  // namespace doodle::http::seedance2

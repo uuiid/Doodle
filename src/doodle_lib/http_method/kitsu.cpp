@@ -337,8 +337,12 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       ))
       .reg_t<seedance2::seedance2_shot_task_instance>("/api/seedance2/shot/task/{}"_url(
         &seedance2::seedance2_shot_task_instance::id_
-  ))
-      
+      ))
+      .reg_t<seedance2::seedance2_tokens>("/api/seedance2/tokens"_url)
+      .reg_t<seedance2::seedance2_tokens_person_instance>("/api/seedance2/tokens/person/{}"_url(
+        &seedance2::seedance2_tokens_person_instance::person_id_
+      ))
+
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
