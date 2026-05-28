@@ -128,6 +128,7 @@ struct upgrade_2_t : sqlite_upgrade {
           l_b = false;
         } else {
           l_update.get_bind_variants().bind_values_.back() = bind_value_t{l_person_id};
+          l_update();
         }
       l_g.commit();
     }
