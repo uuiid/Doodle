@@ -123,5 +123,8 @@ DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_OVERRIDE(put)
 uuid person_id_{};
 DOODLE_HTTP_FUN_END()
-
+// /api/seedance2/tokens/person/all
+DOODLE_HTTP_JWT_FUN(seedance2_tokens_person_all)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http::seedance2

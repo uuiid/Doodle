@@ -76,6 +76,13 @@ struct DOODLE_CORE_API task_person_token {
   uuid person_id_;
   std::int64_t remaining_tokens_;            // 剩余可用token数量
   chrono::year_month_day token_usage_date_;  // token 使用日期
+  // to json
+  friend void to_json(nlohmann::json& j, const task_person_token& p) {
+    j["id"]               = p.uuid_id_;
+    j["person_id"]        = p.person_id_;
+    j["remaining_tokens"] = p.remaining_tokens_;
+    j["token_usage_date"] = p.token_usage_date_;
+  }
 };
 
 }  // namespace doodle::seedance2

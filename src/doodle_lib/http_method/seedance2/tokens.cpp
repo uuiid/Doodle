@@ -78,4 +78,17 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
   );  // 计算差值进行更新
   co_return in_handle->make_msg(nlohmann::json{{"remaining_tokens", get_remaining_tokens_for_person(l_others_person)}});
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
+  person_.check_producer();
+  auto& l_sql = get_sqlite_database();
+  using namespace orm;
+  chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
+  nlohmann::json l_result        = select(l_sql)
+                                .columns(object<sd2::task_person_token>())
+                                .from<sd2::task_person_token>()
+                                .where(c(&sd2::task_person_token::token_usage_date_) == l_today)()
+                                .to_vector();
+  co_return in_handle->make_msg(l_result);
+}
 }  // namespace doodle::http::seedance2

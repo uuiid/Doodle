@@ -342,6 +342,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_tokens_person_instance>("/api/seedance2/tokens/person/{}"_url(
         &seedance2::seedance2_tokens_person_instance::person_id_
       ))
+      .reg<seedance2::seedance2_tokens_person_all>("/api/seedance2/tokens/person/all"_url)
 
 
       // 最后注册nodejs前端
