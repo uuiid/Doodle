@@ -136,13 +136,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   }
   {
     auto l_persons = l_sql.get_all<person>();
-    
+    std::unordered_map<uuid, person*> l_person_map{};
     for (auto&& l_person : l_persons) {
-      l_person.departments_ = select(l_sql)
-                                  .columns(&person_department_link::department_id_)
-                                  .from<person_department_link>()
-                                  .where(c(&person_department_link::person_id_) == l_person.uuid_id_)()
-                                  .to_vector();
+      l_person_map[l_person.uuid_id_] = &l_person;
+    }
+    std::vector<uuid> l_person_ids{};
+    for (auto&& [l_dep_id, l_person] :
+         select(l_sql)
+             .columns(&person_department_link::department_id_, &person_department_link::person_id_)
+             .from<person_department_link>()
+             .where(c(&person_department_link::person_id_).in(l_person_ids))()) {
+      l_person_map[l_person]->departments_.push_back(l_dep_id);
     }
     l_ret["persons"] = l_persons;
   }
