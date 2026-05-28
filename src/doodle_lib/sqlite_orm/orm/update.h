@@ -115,6 +115,8 @@ struct update_t {
     return *this;
   }
 
+  bind_value_collector_t& get_bind_variants() { return state_->bind_variants_; }
+
   std::string to_sql(const to_sql_ctx& ctx) const;
 
   update_t operator()();

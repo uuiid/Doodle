@@ -15,6 +15,7 @@
 
 #include <boost/hana/ext/std/tuple.hpp>
 
+#include "sqlite_orm/orm/bind_value.h"
 #include "sqlite_orm/orm/select.h"
 #include <filesystem>
 #include <memory>
@@ -109,21 +110,6 @@ struct upgrade_init_t : sqlite_upgrade {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
   void upgrade(sqlite_database& in_data) override {
-    // if (in_data->storage_any_.pragma.user_version() == 1) {
-    //   in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger");
-    //   in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger");
-    //   in_data->storage_any_.drop_trigger_if_exists("entity_fts_delete_trigger");
-    //   in_data->storage_any_.drop_trigger_if_exists("entity_fts_insert_trigger2");
-    //   in_data->storage_any_.drop_trigger_if_exists("entity_fts_update_trigger2");
-    //   in_data->storage_any_.drop_trigger_if_exists("entity_fts_delete_trigger2");
-    //   in_data->storage_any_.drop_table_if_exists("entity_fts");
-    //   in_data->storage_any_.drop_view_if_exists("entity_asset_view");
-
-    //   in_data->sync_schema();
-    //   upgrade_init_t::full_fts_sync(in_data);
-    //   in_data->storage_any_.pragma.user_version(g_current_version);
-    // }
-
     if (in_data.pragma().user_version() == 2) {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
@@ -132,6 +118,18 @@ struct upgrade_2_t : sqlite_upgrade {
     if (in_data.pragma().user_version() == 5) {
       in_data.drop_table("seedance2_task_person_token");
       in_data.sync_schema();
+      using namespace orm;
+      auto l_person_ids = select(in_data).columns(&person::uuid_id_).from<person>()().to_vector();
+      auto l_g          = in_data.transaction();
+      auto l_update     = update(in_data).from<person>().set(c(&person::max_completion_tokens_) = 500'0000);
+      for (auto l_b = true; auto&& l_person_id : l_person_ids)
+        if (l_b) {
+          l_update.where(c(&person::uuid_id_) == l_person_id)();
+          l_b = false;
+        } else {
+          l_update.get_bind_variants().bind_values_.back() = bind_value_t{l_person_id};
+        }
+      l_g.commit();
     }
 
     in_data.pragma().user_version(g_current_version);
