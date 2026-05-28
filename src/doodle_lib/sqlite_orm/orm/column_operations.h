@@ -73,6 +73,11 @@ struct operator_compare_t : public column_operations_base_t {
 struct expression_t {
   std::shared_ptr<column_operations> column_op_;
 };
+// 约束, 可以用于 bind_value_t 构造
+template <typename T>
+concept is_bindable_value =
+    !std::is_base_of_v<column_operations, std::decay_t<T>> && !is_alias_column_t_v<std::decay_t<T>> &&
+    !std::is_same_v<std::decay_t<T>, expression_t> && !std::is_same_v<std::decay_t<T>, bind_value_t>;
 
 struct column_operations : column_operations_base_t {
  private:
@@ -156,7 +161,7 @@ struct column_operations : column_operations_base_t {
 
   // 赋值操作符，生成SQL片段和绑定函数
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && is_alias_column_t_v<std::decay_t<U>>)
+    requires(is_alias_column_t_v<std::decay_t<U>>)
   column_operations operator=(U&& value) const {
     data_impl_ptr_->to_str_ptr_ =
         std::make_shared<to_str_compare_t>("{} = {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
@@ -164,7 +169,7 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && !is_alias_column_t_v<std::decay_t<U>>)
+    requires(is_bindable_value<U>)
   column_operations operator=(U&& value) const {
     auto l_ptr                        = std::make_shared<to_str_value_t>("{} = ?");
     l_ptr->value_variant_             = bind_value_t{std::forward<U>(value)};
@@ -178,14 +183,14 @@ struct column_operations : column_operations_base_t {
   column_operations operator=(const expression_t& other) const;
 
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && is_alias_column_t_v<std::decay_t<U>>)
+    requires(is_alias_column_t_v<std::decay_t<U>>)
   auto operator==(U&& value) const {
     data_impl_ptr_->to_str_ptr_ =
         std::make_shared<to_str_compare_t>("{} == {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && std::is_same_v<std::decay_t<U>, bind_value_t>)
+    requires(std::is_same_v<std::decay_t<U>, bind_value_t>)
   auto operator==(U&& value) const {
     auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
     l_ptr->value_variant_       = value;
@@ -193,10 +198,7 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
   template <typename U>
-    requires(
-        !std::is_base_of_v<column_operations, std::decay_t<U>> && !is_alias_column_t_v<std::decay_t<U>> &&
-        !std::is_same_v<std::decay_t<U>, bind_value_t>
-    )
+    requires(is_bindable_value<U>)
   auto operator==(U&& value) const {
     auto l_ptr                  = std::make_shared<to_str_value_t>("{} == ?");
     l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
@@ -221,14 +223,14 @@ struct column_operations : column_operations_base_t {
   }
 
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && is_alias_column_t_v<std::decay_t<U>>)
+    requires(is_alias_column_t_v<std::decay_t<U>>)
   auto operator!=(U&& value) const {
     data_impl_ptr_->to_str_ptr_ =
         std::make_shared<to_str_compare_t>("{} != {}", std::make_shared<alias_column_info_t>(std::forward<U>(value)));
     return *this;
   }
   template <typename U>
-    requires(!std::is_base_of_v<column_operations, std::decay_t<U>> && std::is_same_v<std::decay_t<U>, bind_value_t>)
+    requires(std::is_same_v<std::decay_t<U>, bind_value_t>)
   auto operator!=(U&& value) const {
     auto l_ptr                  = std::make_shared<to_str_value_t>("{} != ?");
     l_ptr->value_variant_       = value;
@@ -236,10 +238,7 @@ struct column_operations : column_operations_base_t {
     return *this;
   }
   template <typename U>
-    requires(
-        !std::is_base_of_v<column_operations, std::decay_t<U>> && !is_alias_column_t_v<std::decay_t<U>> &&
-        !std::is_same_v<std::decay_t<U>, bind_value_t>
-    )
+    requires(is_bindable_value<U>)
   auto operator!=(U&& value) const {
     auto l_ptr                  = std::make_shared<to_str_value_t>("{} != ?");
     l_ptr->value_variant_       = bind_value_t{std::forward<U>(value)};
