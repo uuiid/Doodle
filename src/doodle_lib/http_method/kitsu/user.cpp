@@ -136,6 +136,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   }
   {
     auto l_persons = l_sql.get_all<person>();
+    
     for (auto&& l_person : l_persons) {
       l_person.departments_ = select(l_sql)
                                   .columns(&person_department_link::department_id_)
