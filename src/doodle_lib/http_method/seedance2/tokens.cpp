@@ -83,12 +83,33 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
   person_.check_producer();
   auto& l_sql = get_sqlite_database();
   using namespace orm;
+
+  std::map<uuid, std::int64_t> l_result_map{};
+  for (const auto& [person_id, max_tokens] : select(l_sql)
+                                                 .columns(&person::uuid_id_, &person::max_completion_tokens_)
+                                                 .from<person>()
+                                                 .where(c(&person::archived_) == false)()) {
+    l_result_map[person_id] = max_tokens;
+  }
+
   chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
-  nlohmann::json l_result        = select(l_sql)
-                                .columns(object<sd2::task_person_token>())
-                                .from<sd2::task_person_token>()
-                                .where(c(&sd2::task_person_token::token_usage_date_) == l_today)()
-                                .to_vector();
-  co_return in_handle->make_msg(l_result);
+  auto l_result                  = select(l_sql)
+                      .columns(object<sd2::task_person_token>())
+                      .from<sd2::task_person_token>()
+                      .where(c(&sd2::task_person_token::token_usage_date_) == l_today)()
+                      .to_vector();
+  for (auto& item : l_result)
+    if (l_result_map.contains(item.person_id_)) l_result_map.erase(item.person_id_);
+  for (const auto& [person_id, max_tokens] : l_result_map) {
+    l_result.push_back(
+        sd2::task_person_token{
+            .person_id_        = person_id,
+            .remaining_tokens_ = max_tokens,
+            .token_usage_date_ = l_today,
+        }
+    );
+  }
+
+  co_return in_handle->make_msg(nlohmann::json{} = l_result);
 }
 }  // namespace doodle::http::seedance2
