@@ -94,6 +94,27 @@ struct update_t {
     return *this;
   }
 
+  template <typename T>
+    requires is_object_specialization_v<std::decay_t<T>>
+  update_t rebind(T&& in_object) {
+    using Table         = class_type_t<std::decay_t<T>>;
+    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
+    if (l_table_cloums.size() != state_->bind_variants_.bind_values_.size())
+      throw std::runtime_error("列数量与绑定变量数量不匹配，无法使用 re_set 更新");
+
+    column_info l_primary_key_{};
+    for (auto l_i = 0; const auto& l_column : l_table_cloums) {
+      if (l_column.primary_key_) {  // 主键不更新
+        l_primary_key_ = l_column;
+        continue;
+      }
+      auto col_ptr                               = std::make_shared<column_operations>(l_column.ptr_);
+      state_->bind_variants_.bind_values_[l_i++] = l_column.ptr_.get_value(in_object.obj_);
+    }
+    state_->bind_variants_.bind_values_.back() = l_primary_key_.ptr_.get_value(in_object.obj_);
+    return *this;
+  }
+
   std::string to_sql(const to_sql_ctx& ctx) const;
 
   update_t operator()();

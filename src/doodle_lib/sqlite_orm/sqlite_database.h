@@ -150,7 +150,7 @@ class sqlite_database : public orm::storage {
   static constexpr bool has_updated_at = has_updated_at_impl<T>::value;
 
   template <typename T>
-  boost::asio::awaitable<void> install(const std::shared_ptr<T>& in_data) {
+  boost::asio::awaitable<void> install(std::shared_ptr<T> in_data) {
     using namespace orm;
     DOODLE_CHICK(in_data, "不可传入空指针");
     if constexpr (has_uuid_id<T>) {
@@ -170,7 +170,7 @@ class sqlite_database : public orm::storage {
     DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> update(const std::shared_ptr<T>& in_data) {
+  boost::asio::awaitable<void> update(std::shared_ptr<T> in_data) {
     DOODLE_CHICK(in_data, "不可传入空指针");
     if constexpr (has_uuid_id<T>) {
       DOODLE_CHICK(!in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 为空");
@@ -219,8 +219,9 @@ class sqlite_database : public orm::storage {
    * @return 插入的id(不包含更新的id)
    */
   template <typename T>
-  boost::asio::awaitable<void> install_range(const std::shared_ptr<std::vector<T>>& in_data) {
+  boost::asio::awaitable<void> install_range(std::shared_ptr<std::vector<T>> in_data) {
     DOODLE_CHICK(in_data, "不可传入空指针");
+    if (in_data->empty()) co_return;
     auto l_id_is_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ == 0; });
     DOODLE_CHICK(l_id_is_zero, "传入的数据实体 id_ 必须全部为0");
     if constexpr (has_uuid_id<T>)
@@ -266,8 +267,9 @@ class sqlite_database : public orm::storage {
     }
   }
   template <typename T>
-  boost::asio::awaitable<void> update_range(const std::shared_ptr<std::vector<T>>& in_data) {
+  boost::asio::awaitable<void> update_range(std::shared_ptr<std::vector<T>> in_data) {
     DOODLE_CHICK(in_data, "不可传入空指针");
+    if (in_data->empty()) co_return;
     auto l_id_not_zero = std::ranges::all_of(*in_data, [](const auto& in_) { return in_.id_ != 0; });
     DOODLE_CHICK(l_id_not_zero, "传入的数据实体 id_ 不可为0");
 
@@ -276,21 +278,24 @@ class sqlite_database : public orm::storage {
         in_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     DOODLE_TO_SQLITE_THREAD();
-    auto l_g      = transaction();
-    auto l_size   = in_data->size();
+    auto l_g = transaction();
+    using namespace orm;
     auto l_update = orm::update(*this).from<T>();
-    for (auto&& i : *in_data) {
-      using namespace orm;
-      l_update.set(object<T>(i));
+    for (auto l_is_begin = true; auto&& i : *in_data) {
+      if (l_is_begin) {
+        l_is_begin = false;
+        l_update.set(object<T>(i))();
+      } else
+        l_update.rebind(object<T>(i))();
     }
     l_g.commit();
     DOODLE_TO_SELF();
   }
 
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::vector<std::int64_t>& in_data) {
+  boost::asio::awaitable<void> remove(std::vector<std::int64_t> in_data) {
     DOODLE_TO_SQLITE_THREAD();
-
+    if (in_data.empty()) co_return;
     auto l_g = transaction();
     for (auto i = 0; i < in_data.size();) {
       auto l_end = std::min(i + g_step_size, in_data.size());
@@ -303,9 +308,9 @@ class sqlite_database : public orm::storage {
     DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::vector<std::int32_t>& in_data) {
+  boost::asio::awaitable<void> remove(std::vector<std::int32_t> in_data) {
     DOODLE_TO_SQLITE_THREAD();
-
+    if (in_data.empty()) co_return;
     auto l_g = transaction();
     for (auto i = 0; i < in_data.size();) {
       auto l_end = std::min(i + g_step_size, in_data.size());
@@ -318,15 +323,16 @@ class sqlite_database : public orm::storage {
     DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::int64_t& in_data) {
+  boost::asio::awaitable<void> remove(std::int64_t in_data) {
     DOODLE_TO_SQLITE_THREAD();
     using namespace orm;
     delete_from(*this).from<T>().where(c(&T::id_) == in_data)();
     DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> remove(const std::vector<uuid>& in_data) {
+  boost::asio::awaitable<void> remove(std::vector<uuid> in_data) {
     DOODLE_TO_SQLITE_THREAD();
+    if (in_data.empty()) co_return;
     auto l_g = transaction();
     for (auto i = 0; i < in_data.size();) {
       auto l_end = std::min(i + g_step_size, in_data.size());
@@ -339,7 +345,7 @@ class sqlite_database : public orm::storage {
     DOODLE_TO_SELF();
   }
   template <typename T>
-  boost::asio::awaitable<void> remove(const uuid& in_data) {
+  boost::asio::awaitable<void> remove(uuid in_data) {
     DOODLE_TO_SQLITE_THREAD();
     using namespace orm;
     delete_from(*this).from<T>().where(c(&T::uuid_id_) == in_data)();
