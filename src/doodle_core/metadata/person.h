@@ -168,6 +168,7 @@ struct DOODLE_CORE_API person {
     if (j.contains("ldap_uid")) j.at("ldap_uid").get_to(p.ldap_uid_);
     if (j.contains("departments")) j.at("departments").get_to(p.departments_);
     if (j.contains("studio_id")) j.at("studio_id").get_to(p.studio_id_);
+    if (j.contains("max_completion_tokens")) j.at("max_completion_tokens").get_to(p.max_completion_tokens_);
   }
   // from json
   friend void to_json(nlohmann::json& j, const person& p) {
