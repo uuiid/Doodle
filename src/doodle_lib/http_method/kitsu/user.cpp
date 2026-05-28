@@ -134,7 +134,17 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
     l_notifications.from<notification>().where(c(&notification::person_id_) == person_.person_.uuid_id_);
     l_ret["notification_count"] = l_notifications().to_single();
   }
-  l_ret["persons"]                  = l_sql.get_all<person>();
+  {
+    auto l_persons = l_sql.get_all<person>();
+    for (auto&& l_person : l_persons) {
+      l_person.departments_ = select(l_sql)
+                                  .columns(&person_department_link::department_id_)
+                                  .from<person_department_link>()
+                                  .where(c(&person_department_link::person_id_) == l_person.uuid_id_)()
+                                  .to_vector();
+    }
+    l_ret["persons"] = l_persons;
+  }
   l_ret["project_status"]           = l_sql.get_all<project_status>();
   l_ret["preview_background_files"] = nlohmann::json::value_t::array;
   l_ret["projects"]                 = get_project_for_user(person_);
