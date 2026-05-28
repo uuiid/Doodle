@@ -25,7 +25,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 5;
+constexpr std::size_t g_current_version = 6;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -129,30 +129,8 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data.pragma().user_version(g_current_version);
     }
 
-    if (in_data.pragma().user_version() == 4) {
-      auto l_g = in_data.transaction();
-      in_data.exec(R"(alter table seedance2_task
-    add completion_tokens integer default 200000 not null;)");
-      in_data.exec(R"(alter table person
-    add max_completion_tokens integer;)");
-      std::vector<std::tuple<uuid, std::int64_t>> l_task_tokens;
-      {
-        using namespace orm;
-        for (auto&& [l_uuid, l_res] : orm::select_t(in_data)
-                                          .columns(&seedance2::task::uuid_id_, &seedance2::task::data_response_)
-                                          .from<seedance2::task>()()) {
-          l_task_tokens.emplace_back(l_uuid, 0);
-          if (l_res.is_null()) continue;
-          if (!l_res.contains("usage") || !l_res.at("usage").contains("completion_tokens")) continue;
-          l_task_tokens.back() = std::make_tuple(l_uuid, l_res.at("usage").at("completion_tokens").get<std::int64_t>());
-        }
-        for (auto&& [l_uuid, l_tokens] : l_task_tokens)
-          orm::update(in_data)
-              .from<seedance2::task>()
-              .set(c(&seedance2::task::completion_tokens_) = l_tokens)
-              .where(c(&seedance2::task::uuid_id_) = l_uuid)();
-      }
-      l_g.commit();
+    if (in_data.pragma().user_version() == 5) {
+      in_data.drop_table("seedance2_task_person_token");
       in_data.sync_schema();
     }
 
