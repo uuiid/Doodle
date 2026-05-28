@@ -109,11 +109,11 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                             .group_by(&entity_asset_extend::deng_ji_)()
                             .to_vector<project_with_extra_data::project_str>();
     l_project.scenes_ = select(l_sql)
-                            .columns(&entity_asset_extend::gui_dang_, count())
+                            .columns(&entity_asset_extend::chang_ci_, count())
                             .from<entity_asset_extend>()
                             .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
                             .where(c(&entity::project_id_) == l_project.uuid_id_)
-                            .group_by(&entity_asset_extend::gui_dang_)()
+                            .group_by(&entity_asset_extend::chang_ci_)()
                             .to_vector<project_with_extra_data::project_int>();
   }
 
