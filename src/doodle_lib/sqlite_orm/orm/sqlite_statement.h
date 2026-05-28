@@ -4,6 +4,8 @@
 
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
+#include <__msvc_chrono.hpp>
+#include <chrono>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <string_view>
@@ -247,7 +249,8 @@ struct sqlite_statement_extractor<std::chrono::zoned_time<Duration>> : sqlite_st
     if (l_str.empty()) {
       // auto l_name = sqlite3_column_name(stmt, columnIndex);
       // auto l_type = sqlite3_column_type(stmt, columnIndex);
-      // SPDLOG_WARN("Extracted empty string for column '{}' of type '{}' , returning current time", l_name ? l_name : "unknown", l_type);
+      // SPDLOG_WARN("Extracted empty string for column '{}' of type '{}' , returning current time", l_name ? l_name :
+      // "unknown", l_type);
       return std::chrono::zoned_time{std::chrono::current_zone(), l_value};
     }
     if (l_istr >> parse("%F %T", l_value))
@@ -373,26 +376,20 @@ struct sqlite_statement_printer<std::vector<std::string>> : sqlite_statement_pri
 
 // chrono::year_month_day 特化
 template <>
-struct sqlite_statement_binder<std::chrono::year_month_day> : sqlite_statement_binder<std::string> {
+struct sqlite_statement_binder<std::chrono::year_month_day> : sqlite_statement_binder<std::int64_t> {
   int bind(sqlite3_stmt* stmt, int index, const std::chrono::year_month_day& value) const {
-    auto l_str = fmt::format("{:04}-{:02}-{:02}", static_cast<int>(value.year()), static_cast<unsigned>(value.month()),
-                             static_cast<unsigned>(value.day()));
-    return sqlite_statement_binder<std::string>::bind(stmt, index, l_str);
+    std::chrono::sys_days l_days{value};
+    return sqlite_statement_binder<std::int64_t>::bind(stmt, index, l_days.time_since_epoch().count());
   }
 };
 template <>
-struct sqlite_statement_extractor<std::chrono::year_month_day> : sqlite_statement_extractor<std::string> {
+struct sqlite_statement_extractor<std::chrono::year_month_day> : sqlite_statement_extractor<std::int64_t> {
   std::chrono::year_month_day extract(sqlite3_stmt* stmt, int columnIndex) const {
-    const auto l_str = sqlite_statement_extractor<std::string>::extract(stmt, columnIndex);
-    std::istringstream l_istr{l_str};
-    std::chrono::year_month_day l_value;
-    if (l_istr >> parse("%F", l_value)) {
-      return l_value;
-    } else {
-      throw std::runtime_error(fmt::format("Failed to parse year_month_day from string: {}", l_str));
-    }
+    const auto l_days = sqlite_statement_extractor<std::int64_t>::extract(stmt, columnIndex);
+    std::chrono::sys_days l_days_{std::chrono::days{l_days}};
+    return std::chrono::year_month_day{l_days_};
   }
 };
 template <>
-struct sqlite_statement_printer<std::chrono::year_month_day> : sqlite_statement_printer<std::string> {};
+struct sqlite_statement_printer<std::chrono::year_month_day> : sqlite_statement_printer<std::int64_t> {};
 }  // namespace doodle::orm
