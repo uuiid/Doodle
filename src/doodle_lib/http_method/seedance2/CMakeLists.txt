@@ -9,5 +9,6 @@ target_sources(
         assets_entity.cpp
         group.cpp
         task.cpp
+        tokens.cpp
 )
 
