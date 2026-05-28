@@ -23,7 +23,8 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const person& in_pe
   if (!l_token_record) {
     auto l_new_record               = std::make_shared<sd2::task_person_token>();
     l_new_record->person_id_        = in_person.uuid_id_;
-    l_new_record->remaining_tokens_ = in_tokens;
+    l_new_record->remaining_tokens_ = in_person.max_completion_tokens_;
+    l_new_record->token_usage_date_ = l_today;
     co_await l_sql.install(l_new_record);
   }
 
