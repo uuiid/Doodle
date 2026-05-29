@@ -231,6 +231,7 @@ auto get_get_entities_and_tasks(
     }
   }
   for (auto&& [l_entity_id, l_count] : l_row.sequence_and_cout_) {
+    if (!l_entities_and_tasks_map.contains(l_entity_id)) continue;
     l_entities_and_tasks_map[l_entity_id].shot_count_ = l_count;
   }
   l_ret = l_entities_and_tasks_map | ranges::views::values | ranges::to_vector;
