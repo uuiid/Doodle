@@ -45,9 +45,8 @@ auto get_todo_post_process(std::vector<todo_t>& in_todos) {
 
     for (auto& i : in_todos) {
       if (l_map_comm.contains(i.uuid_id_)) {
-        auto&& l_c = l_map_comm.at(i.uuid_id_);
-        i.last_comment_ =
-            todo_t::comment_t{.text_ = l_c.text_, .date_ = l_c.created_at_, .person_id_ = l_c.person_id_};
+        auto&& l_c      = l_map_comm.at(i.uuid_id_);
+        i.last_comment_ = todo_t::comment_t{.text_ = l_c.text_, .date_ = l_c.created_at_, .person_id_ = l_c.person_id_};
       }
     }
   }
@@ -658,6 +657,11 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::g
   auto l_entity      = l_sql.get_by_uuid<entity>(l_task.entity_id_);
   auto l_asset_type  = l_sql.get_by_uuid<asset_type>(l_entity.entity_type_id_);
   using namespace doodle::orm;
+  l_task.assignees_ = select(l_sql)
+                          .columns(&assignees_table::person_id_)
+                          .from<assignees_table>()
+                          .where(c(&assignees_table::task_id_) == id_)()
+                          .to_vector();
   // 判断是否订阅
   auto l_is_subscribed =
       doodle::orm::select(l_sql)
