@@ -67,9 +67,7 @@ boost::asio::awaitable<void> add_remaining_tokens_for_person(const person& in_pe
       orm::update(l_sql)
           .from<sd2::task_person_token>()
           .set(
-              c(&sd2::task_person_token::remaining_tokens_) =
-                  in_tokens > 0 ? c(&sd2::task_person_token::remaining_tokens_) + in_tokens
-                                : c(&sd2::task_person_token::remaining_tokens_) - in_tokens
+              c(&sd2::task_person_token::remaining_tokens_) = c(&sd2::task_person_token::remaining_tokens_) + in_tokens
           )
           .where(
               c(&sd2::task_person_token::person_id_) == in_person.uuid_id_ &&
