@@ -182,7 +182,7 @@ column_operations column_operations::operator=(std::nullptr_t) const {
   return *this;
 }
 column_operations column_operations::operator=(const expression_t& other) const {
-  auto l_to_str                     = std::make_shared<to_str_expr_t>("{} = {}", other.column_op_);
+  auto l_to_str                     = std::make_shared<to_str_expr_t>("{} = ({})", other.column_op_);
   data_impl_ptr_->to_str_ptr_       = l_to_str;
   data_impl_ptr_->is_set_operation_ = true;  // 标记为 SET 操作
   return *this;

@@ -13,7 +13,7 @@
 
 namespace doodle::http::seedance2 {
 // 设置当日人员剩余可使用的 token 数量
-boost::asio::awaitable<void> set_remaining_tokens_for_person(const person& in_person, std::int64_t in_tokens);
+boost::asio::awaitable<void> add_remaining_tokens_for_person(const person& in_person, std::int64_t in_tokens);
 // 获取当日人员可以使用的 token 数量
 std::int64_t get_remaining_tokens_for_person(const person& in_person);
 // /api/user/seedance2/task
