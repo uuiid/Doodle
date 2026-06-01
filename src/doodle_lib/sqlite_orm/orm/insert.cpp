@@ -14,15 +14,10 @@ void insert_t::prepare(storage& s, const to_sql_ctx& ctx) {
   auto l_sql    = to_sql(s, ctx);
   state_->stmt_ = std::make_shared<sqlite_stmt>();
   state_->stmt_->prepare(s, l_sql);
-  state_->values_.bind_values_.clear();
   collect_bind_variants(state_->values_);
 }
 
-void insert_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
-  bind_variants.bind_values_.insert(
-      bind_variants.bind_values_.end(), state_->values_.bind_values_.begin(), state_->values_.bind_values_.end()
-  );
-}
+void insert_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {}
 
 std::string insert_t::to_sql(const storage& s, const to_sql_ctx& in_ctx) const {
   auto l_ctx = in_ctx;
