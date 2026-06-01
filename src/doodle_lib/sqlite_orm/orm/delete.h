@@ -8,7 +8,7 @@
 
 namespace doodle::orm {
 
-struct delete_t {
+struct delete_t : public statement_info_base_t {
  private:
   struct delete_state_t {
     std::string from_table_name_;
@@ -39,7 +39,9 @@ struct delete_t {
 
   delete_t operator()();
 
-  std::string to_sql(const to_sql_ctx& ctx) const;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  void prepare(storage& s, const to_sql_ctx& ctx) override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 inline delete_t delete_from(storage& s) {
   delete_t l_delete{};

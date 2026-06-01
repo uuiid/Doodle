@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/to_sql_ctx.h>
 
 #include <concepts>
+#include <memory>
 
 typedef struct sqlite3_stmt sqlite3_stmt;
 
@@ -19,6 +20,7 @@ struct delete_t;
 struct update_t;
 struct insert_t;
 struct sqlite_stmt;
+struct subquery_alias_info_t;
 struct create_trigger_t;
 struct bind_value_collector_t;
 struct on_operations;
@@ -165,6 +167,12 @@ struct table_info_base_t : public orm_base {
   virtual ~table_info_base_t() = default;
 };
 using table_info_base_ptr = std::shared_ptr<table_info_base_t>;
+
+// 数据库 select update delete insert 语句 基类
+struct statement_info_base_t : public orm_base {
+  virtual ~statement_info_base_t() = default;
+  virtual void prepare(storage& s, const to_sql_ctx& ctx) = 0;
+};
 }  // namespace doodle::orm
 
 namespace fmt {

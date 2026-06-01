@@ -10,7 +10,21 @@
 
 namespace doodle::orm {
 
-std::string insert_t::to_sql(const to_sql_ctx& in_ctx) const {
+void insert_t::prepare(storage& s, const to_sql_ctx& ctx) {
+  auto l_sql    = to_sql(s, ctx);
+  state_->stmt_ = std::make_shared<sqlite_stmt>();
+  state_->stmt_->prepare(s, l_sql);
+  state_->values_.bind_values_.clear();
+  collect_bind_variants(state_->values_);
+}
+
+void insert_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  bind_variants.bind_values_.insert(
+      bind_variants.bind_values_.end(), state_->values_.bind_values_.begin(), state_->values_.bind_values_.end()
+  );
+}
+
+std::string insert_t::to_sql(const storage& s, const to_sql_ctx& in_ctx) const {
   auto l_ctx = in_ctx;
   std::string l_values{};
   if (l_ctx.ctx_ & to_sql_ctx::insert_sql) {
@@ -38,12 +52,7 @@ std::string insert_t::to_sql(const to_sql_ctx& in_ctx) const {
 }
 
 std::int64_t insert_t::operator()() {
-  if (!state_->stmt_) {
-    const to_sql_ctx l_ctx{.ctx_ = to_sql_ctx::insert_sql};
-    auto l_sql    = to_sql(l_ctx);
-    state_->stmt_ = std::make_shared<sqlite_stmt>();
-    state_->stmt_->prepare(*state_->s_, l_sql);
-  }
+  if (!state_->stmt_) prepare(*state_->s_, to_sql_ctx{.ctx_ = to_sql_ctx::insert_sql});
 
   state_->stmt_->reset_bind();
   for (const auto& val : state_->values_.bind_values_) val.bind(*state_->stmt_);

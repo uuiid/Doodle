@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace doodle::orm {
-struct insert_t {
+struct insert_t : public statement_info_base_t {
  private:
   struct insert_state_t {
     std::vector<column_info_ptr> columns_;
@@ -119,7 +119,9 @@ struct insert_t {
   }
 
   std::int64_t operator()();
-  std::string to_sql(const to_sql_ctx& in_ctx) const;
+  std::string to_sql(const storage& s, const to_sql_ctx& in_ctx) const override;
+  void prepare(storage& s, const to_sql_ctx& ctx) override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 
 inline auto insert(storage& s) -> insert_t {

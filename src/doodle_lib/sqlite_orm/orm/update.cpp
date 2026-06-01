@@ -8,7 +8,25 @@
 #include <vector>
 
 namespace doodle::orm {
-std::string update_t::to_sql(const to_sql_ctx& ctx) const {
+
+void update_t::prepare(storage& s, const to_sql_ctx& ctx) {
+  auto l_sql    = to_sql(s, ctx);
+  state_->stmt_ = std::make_shared<sqlite_stmt>();
+  state_->stmt_->prepare(s, l_sql);
+  state_->bind_variants_.bind_values_.clear();
+  collect_bind_variants(state_->bind_variants_);
+}
+
+void update_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  for (const auto& col_op : state_->column_operations_) {
+    col_op->collect_bind_variants(bind_variants);
+  }
+  if (state_->wheres_) {
+    state_->wheres_->collect_bind_variants(bind_variants);
+  }
+}
+
+std::string update_t::to_sql(const storage& s, const to_sql_ctx& ctx) const {
   if (!state_->wheres_) throw std::runtime_error("WHERE condition is required for UPDATE operation");
   auto l_ctx = ctx;
 
@@ -25,14 +43,7 @@ std::string update_t::to_sql(const to_sql_ctx& ctx) const {
 update_t update_t::operator()() {
   if (!state_->stmt_) {
     const to_sql_ctx l_ctx{.ctx_ = to_sql_ctx::update_sql};
-    auto l_sql    = to_sql(l_ctx);
-    state_->stmt_ = std::make_shared<sqlite_stmt>();
-    state_->stmt_->prepare(*state_->s_, l_sql);
-    state_->bind_variants_.bind_values_.clear();
-    for (const auto& col_op : state_->column_operations_) {
-      col_op->collect_bind_variants(state_->bind_variants_);
-    }
-    state_->wheres_->collect_bind_variants(state_->bind_variants_);
+    prepare(*state_->s_, l_ctx);
   }
   state_->stmt_->reset_bind();
   for (const auto& val : state_->bind_variants_.bind_values_) val.bind(*state_->stmt_);

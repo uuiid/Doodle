@@ -8,6 +8,7 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/table_info.h>
 
+#include "fwd.h"
 #include <concepts>
 #include <fmt/format.h>
 #include <iterator>
@@ -19,21 +20,6 @@
 #include <vector>
 
 namespace doodle::orm {
-template <typename... TableColumns>
-struct select_result_type;
-template <typename TableColumnsTuple>
-concept is_tuple_of_columns = requires(TableColumnsTuple t) {
-  // using columns_tuple_type = std::decay_t<TableColumnsTuple>;
-  std::tuple_size_v<std::decay_t<TableColumnsTuple>>;
-  // std::apply(
-  //     [](auto&&... columns) {
-  //       ((std::is_member_pointer_v<std::decay_t<decltype(columns)>> ||
-  //         is_object_specialization_v<std::decay_t<decltype(columns)>>) &&
-  //        ...);
-  //     },
-  //     t
-  // );
-};
 
 template <typename... Columns>
 struct select_template_t;
@@ -43,7 +29,7 @@ concept result_vector_value_constructible =
     (IsSingleColumn && std::constructible_from<T, Source>) ||
     (!IsSingleColumn && requires(Source&& source) { std::make_from_tuple<T>(std::forward<Source>(source)); });
 
-struct select_t : public orm_base {
+struct select_t : public statement_info_base_t {
  protected:
   friend class storage;
   friend select_t select(storage& s);
@@ -83,6 +69,9 @@ struct select_t : public orm_base {
   explicit select_t(storage& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = &s; }
   template <typename FromTable>
   select_t from();
+
+  select_t from(subquery_alias_info_t subquery_alias_info);
+
   template <typename FromTable>
   select_t join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
     requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>));
@@ -124,9 +113,10 @@ struct select_t : public orm_base {
   template <typename... TableColumns>
   select_t group_by(auto TableColumns::*... in_columns);
 
-  std::string to_sql(const storage& s, const to_sql_ctx& in_ctx) const;
+  std::string to_sql(const storage& s, const to_sql_ctx& in_ctx) const override;
+  void prepare(storage& s, const to_sql_ctx& ctx) override;
 
-  void collect_bind_variants(bind_value_collector_t& bind_variants) const;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   template <typename... TableColumns>
   select_template_t<TableColumns...> columns(TableColumns... in_columns);
 

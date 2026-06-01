@@ -19,7 +19,7 @@ struct create_trigger_t {
     trigger_event event_;                   // INSERT, UPDATE, DELETE
     std::vector<column_info_ptr> columns_;  // 仅针对 UPDATE 事件
     table_info_base_ptr table_name_;
-    std::string statement_;
+    std::shared_ptr<statement_info_base_t> statement_;
   };
   std::shared_ptr<trigger_info> info_;
 

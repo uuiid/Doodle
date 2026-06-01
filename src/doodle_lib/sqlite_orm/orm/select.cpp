@@ -1,5 +1,6 @@
 #include <doodle_core/doodle_core_fwd.h>
 
+#include <doodle_lib/sqlite_orm/orm/alias_subquery.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
@@ -12,6 +13,12 @@
 #include <vector>
 
 namespace doodle::orm {
+
+select_t select_t::from(subquery_alias_info_t subquery_alias_info) {
+  impl_->from_table_name_ = std::make_shared<subquery_alias_info_t>(std::move(subquery_alias_info));
+  return *this;
+}
+
 select_t select_t::order_by(const rank_info_t& rank_column, bool ascending) {
   impl_->order_bys_.push_back(order_by_info_t{std::make_shared<rank_info_t>(rank_column), ascending});
   return *this;
@@ -69,14 +76,16 @@ void select_t::collect_bind_variants(bind_value_collector_t& bind_variants) cons
     impl_->wheres_->collect_bind_variants(bind_variants);
   }
 }
+
+void select_t::prepare(storage& s, const to_sql_ctx& ctx) {
+  auto l_sql   = to_sql(*impl_->s_, ctx);
+  impl_->stmt_ = std::make_shared<sqlite_stmt>();
+  impl_->stmt_->prepare(*impl_->s_, l_sql);
+  collect_bind_variants(impl_->bind_variants_);
+}
 void select_t::run() {
   if (!impl_->stmt_) {
-    auto l_sql   = to_sql(*impl_->s_, to_sql_ctx{.ctx_ = to_sql_ctx::select_sql});
-    impl_->stmt_ = std::make_shared<sqlite_stmt>();
-    impl_->stmt_->prepare(*impl_->s_, l_sql);
-    if (impl_->wheres_) {
-      impl_->wheres_->collect_bind_variants(impl_->bind_variants_);
-    }
+    prepare(*impl_->s_, to_sql_ctx{.ctx_ = to_sql_ctx::select_sql});
   }
   impl_->stmt_->reset_bind();
   for (const auto& val : impl_->bind_variants_.bind_values_) val.bind(*impl_->stmt_);

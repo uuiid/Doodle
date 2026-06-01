@@ -31,7 +31,7 @@ using update_arg_type_t = typename update_arg_type<std::decay_t<T>>::type;
 
 }  // namespace detail
 
-struct update_t {
+struct update_t : public statement_info_base_t {
  private:
   struct update_state_t {
     std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
@@ -116,8 +116,10 @@ struct update_t {
   }
 
   bind_value_collector_t& get_bind_variants() { return state_->bind_variants_; }
+  void prepare(storage& s, const to_sql_ctx& ctx) override;
 
-  std::string to_sql(const to_sql_ctx& ctx) const;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
 
   update_t operator()();
 };
