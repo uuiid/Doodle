@@ -15,8 +15,7 @@ struct sqlite_stmt;
 // 运行时列信息
 struct base_column_info_t {
   virtual ~base_column_info_t()                                                                  = default;
-  virtual std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const                    = 0;
-  virtual std::string get_table_name(const storage& s) const                                     = 0;
+  virtual std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const             = 0;
   virtual void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const        = 0;
   virtual void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const = 0;
 };
@@ -70,7 +69,6 @@ struct column_info_t : public base_column_info_t {
   explicit column_info_t(ValueType Table::* in_ptr) : ptr_(in_ptr) {}
   explicit column_info_t(const table_columns_t& in_column) : ptr_(in_column) {}
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
-  std::string get_table_name(const storage& s) const override;
   void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
 };

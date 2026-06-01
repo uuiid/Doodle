@@ -6,7 +6,6 @@ namespace doodle::orm {
 std::string column_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
   return s.get_column_name(ptr_, ctx);
 }
-std::string column_info_t::get_table_name(const storage& s) const { return s.get_table_name(ptr_.table_type_index_); }
 
 void column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
   ptr_.set_value(stmt, columnIndex, out_value);

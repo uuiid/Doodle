@@ -21,9 +21,6 @@ std::string alias_column_info_t::get_column_name(const storage& s, const to_sql_
   auto l_column_name = s.get_column_name(ptr_, l_ctx);
   return fmt::format("{}.{}", table_alias_name_, l_column_name);
 }
-std::string alias_column_info_t::get_table_name(const storage& s) const {
-  return fmt::format("{} AS {}", s.get_table_name(ptr_.table_type_index_), table_alias_name_);
-}
 
 void alias_column_info_t ::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {
   ptr_.set_value(stmt, columnIndex, out_value);
@@ -33,7 +30,6 @@ void alias_column_info_t ::set_struct_value(const sqlite_stmt& stmt, int columnI
 }
 
 std::string rank_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const { return "rank"; }
-std::string rank_info_t::get_table_name(const storage& s) const { return ""; }
 void rank_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 void rank_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 
@@ -44,7 +40,6 @@ std::string any_column_info_t::get_column_name(const storage& s, const to_sql_ct
   auto l_table_name = table_info_ptr_->to_sql(s, ctx);
   return l_table_name;
 }
-std::string any_column_info_t::get_table_name(const storage& s) const { return table_info_ptr_->to_sql(s, to_sql_ctx{}); }
 void any_column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 void any_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 
