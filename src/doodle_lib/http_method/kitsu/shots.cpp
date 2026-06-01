@@ -207,12 +207,14 @@ auto make_shots_with_tasks_result(
   auto sequence        = alias<entity>("sequence");
   auto episode         = alias<entity>("episode");
 
-  l_entity_type_id_ = in_entity_type_id;
+  l_entity_type_id_    = in_entity_type_id;
   auto l_dynamic_query = dynamic_column_operations{};
   l_dynamic_query.add_condition(c(&entity::entity_type_id_) == l_entity_type_id_);
   if (in_person.role_ == person_role_type::outsource) {
-    auto l_outsource_select =
-        select(l_sql).where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_);
+    auto l_outsource_select = select(l_sql)
+                                  .columns(&outsource_studio_authorization::entity_id_)
+                                  .from<outsource_studio_authorization>()
+                                  .where(c(&outsource_studio_authorization::studio_id_) == in_person.studio_id_);
     ;
     l_dynamic_query.add_condition(
         c(&entity::uuid_id_).in(l_outsource_select) || c(sequence->*&entity::uuid_id_).in(l_outsource_select) ||
