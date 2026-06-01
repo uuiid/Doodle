@@ -251,7 +251,7 @@ class sqlite_database : public orm::storage {
           l_insert.rebind_range(view)();
         } catch (const rebind_range_size_mismatch_exception& e) {
           SPDLOG_LOGGER_ERROR(logger_, "安装范围失败: {}", e.what());
-          l_insert.set_range(view)();
+          orm::insert(*this).into<T>().set_range(view)();
         }
       }
     }
