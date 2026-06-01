@@ -57,7 +57,6 @@ struct database_t;
 namespace doodle {
 
 class sqlite_database : public orm::storage {
-  logger_ptr logger_;
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
   strand_type strand_{boost::asio::make_strand(g_io_context())};
   static constexpr std::size_t g_step_size{100};
@@ -250,7 +249,7 @@ class sqlite_database : public orm::storage {
         try {
           l_insert.rebind_range(view)();
         } catch (const rebind_range_size_mismatch_exception& e) {
-          SPDLOG_LOGGER_ERROR(logger_, "安装范围失败: {}", e.what());
+          SPDLOG_ERROR("安装范围失败: {}", e.what());
           orm::insert(*this).into<T>().set_range(view)();
         }
       }
