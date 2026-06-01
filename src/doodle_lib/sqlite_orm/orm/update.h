@@ -115,7 +115,6 @@ struct update_t : public statement_info_base_t {
     return *this;
   }
 
-  bind_value_collector_t& get_bind_variants() { return state_->bind_variants_; }
   void prepare(storage& s, const to_sql_ctx& ctx) override;
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;

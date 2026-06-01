@@ -115,24 +115,6 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data.pragma().user_version(g_current_version);
     }
 
-    if (in_data.pragma().user_version() == 5) {
-      in_data.drop_table("seedance2_task_person_token");
-      in_data.sync_schema();
-      using namespace orm;
-      auto l_person_ids = select(in_data).columns(&person::uuid_id_).from<person>()().to_vector();
-      auto l_g          = in_data.transaction();
-      auto l_update     = update(in_data).from<person>().set(c(&person::max_completion_tokens_) = 500'0000);
-      for (auto l_b = true; auto&& l_person_id : l_person_ids)
-        if (l_b) {
-          l_update.where(c(&person::uuid_id_) == l_person_id)();
-          l_b = false;
-        } else {
-          l_update.get_bind_variants().bind_values_.back() = bind_value_t{l_person_id};
-          l_update();
-        }
-      l_g.commit();
-    }
-
     in_data.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
