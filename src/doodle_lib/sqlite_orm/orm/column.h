@@ -17,6 +17,13 @@ template <typename T, typename BaseClass>
 struct result_column_info_t : public BaseClass {
   using value_type = T;
 };
+// 是 result_column_info_t 的特化
+template <typename T>
+struct is_result_column_info_t : std::false_type {};
+template <typename T, typename BaseClass>
+struct is_result_column_info_t<result_column_info_t<T, BaseClass>> : std::true_type {};
+template <typename T>
+inline constexpr bool is_result_column_info_t_v = is_result_column_info_t<std::remove_cvref_t<T>>::value;
 
 // 运行时列信息
 struct base_column_info_t {
