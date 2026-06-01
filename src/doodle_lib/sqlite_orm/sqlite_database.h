@@ -16,6 +16,7 @@
 
 #include "sqlite_orm/orm/delete.h"
 #include <optional>
+#include <stdexcept>
 #include <vector>
 
 namespace doodle {
@@ -246,7 +247,12 @@ class sqlite_database : public orm::storage {
         l_insert.set_range(view)();
         first = false;
       } else {
-        l_insert.rebind_range(view)();
+        try {
+          l_insert.rebind_range(view)();
+        } catch (const rebind_range_size_mismatch_exception& e) {
+          DOODLE_LOG_ERROR(logger_, "批量插入失败: {}", e.what());
+          l_insert.set_range(view)();
+        }
       }
     }
     l_g.commit();

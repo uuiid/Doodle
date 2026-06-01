@@ -66,8 +66,10 @@ struct insert_t {
     if (values.size() > 100)
       throw std::runtime_error("set_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
 
-    using value_type    = std::ranges::range_value_t<std::decay_t<T>>;
-    using Table         = value_type;
+    using value_type = std::ranges::range_value_t<std::decay_t<T>>;
+    using Table      = value_type;
+    state_->values_.bind_values_.clear();
+    state_->columns_.clear();
     auto l_table_cloums = state_->s_->template get_table_columns<Table>();
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;
@@ -89,7 +91,7 @@ struct insert_t {
     if (values.empty()) return *this;  // 如果没有值，直接返回
     if (values.size() > 100)
       throw std::runtime_error("rebind_range中的值太多, 目前最多只支持100个值, 以避免超出SQLite的参数限制");
-    if (values.size() != state_->batch_size_) throw std::runtime_error("rebind_range中的值数量必须与set_range时一致");
+    if (values.size() != state_->batch_size_) throw rebind_range_size_mismatch_exception();
 
     using value_type    = std::ranges::range_value_t<std::decay_t<T>>;
     using Table         = value_type;
