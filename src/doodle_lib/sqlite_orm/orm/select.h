@@ -216,6 +216,7 @@ struct select_template_t : public select_t {
   explicit select_template_t(select_t&& select) : select_t(std::move(select)) {}
   template <typename FormTable>
   select_template_t from();
+  select_template_t from(subquery_alias_info_t subquery_alias_info);
   template <typename FromTable>
   select_template_t join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner);
   template <typename JoinTable>

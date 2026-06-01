@@ -2,6 +2,7 @@
 #include <doodle_core/doodle_core_fwd.h>
 
 #include <doodle_lib/sqlite_orm/orm/alias.h>
+#include <doodle_lib/sqlite_orm/orm/alias_subquery.h>
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/count.h>
@@ -233,6 +234,11 @@ select_template_t<Columns...> select_template_t<Columns...>::from() {
   return *this;
 }
 
+template <typename... Columns>
+select_template_t<Columns...> select_template_t<Columns...>::from(subquery_alias_info_t subquery_alias_info) {
+  select_t::from(subquery_alias_info);
+  return *this;
+}
 template <typename... Columns>
 template <typename FromTable>
 select_template_t<Columns...> select_template_t<Columns...>::join(
