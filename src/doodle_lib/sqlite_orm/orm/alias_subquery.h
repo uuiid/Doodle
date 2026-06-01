@@ -16,4 +16,8 @@ struct subquery_alias_info_t : public table_info_base_t {
   std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
+
+inline subquery_alias_info_t alias(const std::string& alias_name, const select_t& subquery) {
+  return subquery_alias_info_t{alias_name, subquery};
+}
 }  // namespace doodle::orm
