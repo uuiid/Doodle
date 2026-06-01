@@ -3,9 +3,16 @@
 #include <doodle_lib/sqlite_orm/orm/table_info.h>
 
 namespace doodle::orm {
-std::string alias_info_t::get_table_name(const storage& s) const {
+// std::string alias_info_t::get_table_name(const storage& s) const {
+//   if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
+//   return fmt::format("{} AS {}", s.get_table_name(table_type_index_), table_name_);
+// }
+std::string alias_info_t::to_sql(const storage& s, const to_sql_ctx& ctx) const {
   if (table_name_.empty()) throw std::runtime_error("Table name is required for alias");
   return fmt::format("{} AS {}", s.get_table_name(table_type_index_), table_name_);
+}
+void alias_info_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  // 别名表本身不包含绑定值，但它可能包含子查询等复杂结构，未来可以在这里处理
 }
 
 std::string alias_column_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
@@ -34,10 +41,10 @@ any_column_info_t::any_column_info_t(std::type_index in_table_index)
     : table_info_ptr_(std::make_shared<table_info_t>(in_table_index)) {}
 
 std::string any_column_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
-  auto l_table_name = table_info_ptr_->get_table_name(s);
+  auto l_table_name = table_info_ptr_->to_sql(s, ctx);
   return l_table_name;
 }
-std::string any_column_info_t::get_table_name(const storage& s) const { return table_info_ptr_->get_table_name(s); }
+std::string any_column_info_t::get_table_name(const storage& s) const { return table_info_ptr_->to_sql(s, to_sql_ctx{}); }
 void any_column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 void any_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const {}
 

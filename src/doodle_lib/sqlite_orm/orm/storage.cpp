@@ -54,7 +54,7 @@ std::string table_fts_info::to_sql(storage& s, const to_sql_ctx& ctx) const {
     }
     l_column_sqls.push_back(std::move(l_sql));
   }
-  if (content_table_) l_column_sqls.push_back(fmt::format(R"(content='{}')", content_table_->get_table_name(s)));
+  if (content_table_) l_column_sqls.push_back(fmt::format(R"(content='{}')", content_table_->to_sql(s, ctx)));
 
   if (content_rowid_)
     l_column_sqls.push_back(fmt::format(R"(content_rowid='{}')", content_rowid_->get_column_name(s, ctx)));
@@ -103,7 +103,7 @@ std::vector<std::string> table_info_base::get_foreign_key_create_sql(storage& s,
   for (const auto& fk : foreign_keys_) {
     std::string l_sql = fmt::format(
         "FOREIGN KEY({}) REFERENCES {}({}) ON DELETE {} ON UPDATE {}", fk.ptr_->get_column_name(s, ctx),
-        fk.ref_table_->get_table_name(s), fk.ref_ptr_->get_column_name(s, ctx), fk.on_delete_, fk.on_update_
+        fk.ref_table_->to_sql(s, ctx), fk.ref_ptr_->get_column_name(s, ctx), fk.on_delete_, fk.on_update_
     );
     l_sqls.push_back(std::move(l_sql));
   }

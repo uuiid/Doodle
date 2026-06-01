@@ -146,24 +146,23 @@ struct is_object_specialization<object_t<T>> : std::true_type {};
 template <typename T>
 inline constexpr bool is_object_specialization_v = is_object_specialization<std::remove_cvref_t<T>>::value;
 
-struct column_operations_base_t {
+struct orm_base {
  protected:
-  column_operations_base_t() = default;
+  orm_base() = default;
 
  public:
-  // to sql operator
-  virtual std::string to_sql(const storage& s, const to_sql_ctx& ctx) const              = 0;
-  // 创建bind参数
-  // 收集bind参数
+  virtual ~orm_base()                                                             = default;
+  virtual std::string to_sql(const storage& s, const to_sql_ctx& ctx) const       = 0;
   virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const = 0;
-  // virtual std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const     = 0;
 };
+
+struct column_operations_base_t : public orm_base {};
+
 using column_operations_ptr = std::shared_ptr<column_operations_base_t>;
 
 // 运行是表基类, 可以获取表名称
-struct table_info_base_t {
-  virtual ~table_info_base_t()                               = default;
-  virtual std::string get_table_name(const storage& s) const = 0;
+struct table_info_base_t : public orm_base {
+  virtual ~table_info_base_t() = default;
 };
 using table_info_base_ptr = std::shared_ptr<table_info_base_t>;
 }  // namespace doodle::orm

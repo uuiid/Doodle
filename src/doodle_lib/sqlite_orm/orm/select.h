@@ -43,7 +43,7 @@ concept result_vector_value_constructible =
     (IsSingleColumn && std::constructible_from<T, Source>) ||
     (!IsSingleColumn && requires(Source&& source) { std::make_from_tuple<T>(std::forward<Source>(source)); });
 
-struct select_t {
+struct select_t : public orm_base {
  protected:
   friend class storage;
   friend select_t select(storage& s);
@@ -63,7 +63,7 @@ struct select_t {
   struct impl_t {
     // 结果类型
     std::vector<column_info_ptr> column_names_;
-    std::string from_table_name_;
+    table_info_base_ptr from_table_name_;
     std::vector<join_info_t> joins_;
     std::shared_ptr<column_operations_base_t> wheres_;
     std::vector<order_by_info_t> order_bys_;
@@ -124,7 +124,7 @@ struct select_t {
   template <typename... TableColumns>
   select_t group_by(auto TableColumns::*... in_columns);
 
-  std::string to_sql(const to_sql_ctx& in_ctx) const;
+  std::string to_sql(const storage& s, const to_sql_ctx& in_ctx) const;
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const;
   template <typename... TableColumns>

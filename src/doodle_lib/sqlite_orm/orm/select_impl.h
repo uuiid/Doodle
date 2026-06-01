@@ -18,7 +18,7 @@ namespace doodle::orm {
 
 template <typename FromTable>
 select_t select_t::from() {
-  impl_->from_table_name_ = impl_->s_->get_table_name<FromTable>();
+  impl_->from_table_name_ = std::make_shared<table_info_t>(typeid(FromTable));
   return *this;
 }
 

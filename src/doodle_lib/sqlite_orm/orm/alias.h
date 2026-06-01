@@ -84,7 +84,10 @@ struct alias_info_t : public table_info_base_t {
       : table_name_(std::move(in_alias.table_name_)), table_type_index_(typeid(Table)) {}
   virtual ~alias_info_t() = default;
 
-  std::string get_table_name(const storage& s) const override;
+  // std::string get_table_name(const storage& s) const override;
+
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 
 // fts5 rank
@@ -120,7 +123,5 @@ template <typename Table>
 auto any_column() {
   return any_column_info_t(typeid(Table));
 }
-
-
 
 }  // namespace doodle::orm

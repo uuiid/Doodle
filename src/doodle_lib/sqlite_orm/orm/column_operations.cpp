@@ -90,9 +90,9 @@ std::string column_operations::to_str_subquery_t::to_str(
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, ctx);
   if (is_not_in_) {
-    return fmt::format("{} NOT IN ({})", l_column_name, subquery_ptr_->to_sql(ctx));
+    return fmt::format("{} NOT IN ({})", l_column_name, subquery_ptr_->to_sql(s, ctx));
   } else {
-    return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(ctx));
+    return fmt::format("{} IN ({})", l_column_name, subquery_ptr_->to_sql(s, ctx));
   }
 }
 
