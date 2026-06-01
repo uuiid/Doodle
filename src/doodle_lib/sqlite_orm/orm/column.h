@@ -12,6 +12,12 @@
 namespace doodle::orm {
 class storage;
 struct sqlite_stmt;
+// 选择时传递列类型的专用模板类
+template <typename T, typename BaseClass>
+struct result_column_info_t : public BaseClass {
+  using value_type = T;
+};
+
 // 运行时列信息
 struct base_column_info_t {
   virtual ~base_column_info_t()                                                                  = default;
