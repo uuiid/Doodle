@@ -4,7 +4,6 @@
 #include <doodle_lib/sqlite_orm/orm/exception.h>
 #include <doodle_lib/sqlite_orm/orm/to_sql_ctx.h>
 
-#include <concepts>
 #include <memory>
 
 typedef struct sqlite3_stmt sqlite3_stmt;
