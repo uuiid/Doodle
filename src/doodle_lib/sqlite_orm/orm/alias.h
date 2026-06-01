@@ -120,4 +120,7 @@ template <typename Table>
 auto any_column() {
   return any_column_info_t(typeid(Table));
 }
+
+
+
 }  // namespace doodle::orm

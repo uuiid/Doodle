@@ -15,6 +15,7 @@ target_sources(
         count.h
         create_index.h
         table_info.h
+        alias_subquery.h
         
         alias_impl.h
         storage_impl.h
@@ -37,4 +38,5 @@ target_sources(
         count.cpp
         create_index.cpp
         table_info.cpp
+        alias_subquery.cpp
 )
