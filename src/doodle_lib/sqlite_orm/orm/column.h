@@ -7,7 +7,9 @@
 #include <any>
 #include <functional>
 #include <memory>
+#include <type_traits>
 #include <typeindex>
+#include <utility>
 
 namespace doodle::orm {
 class storage;
@@ -18,6 +20,11 @@ struct result_column_info_t : public BaseClass {
   using value_type = Value;
   using table_type = Table;
   using base_class_type = BaseClass;
+
+  result_column_info_t() = default;
+  template <typename... Args>
+    requires(std::is_constructible_v<BaseClass, Args...>)
+  explicit result_column_info_t(Args&&... args) : BaseClass(std::forward<Args>(args)...) {}
 };
 // 是 result_column_info_t 的特化
 template <typename T>
@@ -29,9 +36,17 @@ inline constexpr bool is_result_column_info_t_v = is_result_column_info_t<std::r
 
 // 特化：class_attr_type
 template <typename Table, typename Value, typename BaseClass>
+  requires(!std::is_void_v<Table>)
 struct class_attr_type<result_column_info_t<Table, Value, BaseClass>> {
   using ptr_type    = Value Table::*;
   using class_type  = Table;  // result_column_info_t 不对应具体类，因此使用 void 占位
+  using result_type = Value;
+};
+
+template <typename Value, typename BaseClass>
+struct class_attr_type<result_column_info_t<void, Value, BaseClass>> {
+  using ptr_type    = void;
+  using class_type  = void;
   using result_type = Value;
 };
 
