@@ -13,17 +13,27 @@ namespace doodle::orm {
 class storage;
 struct sqlite_stmt;
 // 选择时传递列类型的专用模板类
-template <typename T, typename BaseClass>
+template <typename Table, typename Value, typename BaseClass>
 struct result_column_info_t : public BaseClass {
-  using value_type = T;
+  using value_type = Value;
+  using table_type = Table;
+  using base_class_type = BaseClass;
 };
 // 是 result_column_info_t 的特化
 template <typename T>
 struct is_result_column_info_t : std::false_type {};
-template <typename T, typename BaseClass>
-struct is_result_column_info_t<result_column_info_t<T, BaseClass>> : std::true_type {};
+template <typename Table, typename Value, typename BaseClass>
+struct is_result_column_info_t<result_column_info_t<Table, Value, BaseClass>> : std::true_type {};
 template <typename T>
 inline constexpr bool is_result_column_info_t_v = is_result_column_info_t<std::remove_cvref_t<T>>::value;
+
+// 特化：class_attr_type
+template <typename Table, typename Value, typename BaseClass>
+struct class_attr_type<result_column_info_t<Table, Value, BaseClass>> {
+  using ptr_type    = Value Table::*;
+  using class_type  = Table;  // result_column_info_t 不对应具体类，因此使用 void 占位
+  using result_type = Value;
+};
 
 // 运行时列信息
 struct base_column_info_t {
