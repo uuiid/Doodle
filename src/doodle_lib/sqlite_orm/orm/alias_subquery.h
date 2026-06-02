@@ -17,8 +17,12 @@ struct subquery_alias_info_t : public table_info_base_t {
   std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   template <typename Table, typename ValueType>
-  alias_column_info_t operator->*(ValueType Table::* in_column_alias) {
-    return alias_column_info_t{in_column_alias, alias_name_};
+  result_column_info_t<Table, ValueType, alias_column_info_t> operator->*(ValueType Table::* in_column_alias) {
+    return result_column_info_t<Table, ValueType, alias_column_info_t>{in_column_alias, alias_name_};
+  }
+  template <typename Table>
+  result_column_info_t<Table, void, alias_info_t> object() {
+    return result_column_info_t<Table, void, alias_info_t>{alias_name_, typeid(Table)};
   }
 };
 

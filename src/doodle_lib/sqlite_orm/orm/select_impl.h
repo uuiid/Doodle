@@ -343,28 +343,49 @@ select_t select_t::where(T&& condition_fun) {
   return *this;
 }
 
+// 获取列信息
+template <typename Table, typename Value>
+void get_column_info(
+    const storage& s, Value Table::* column_ptr, std::vector<std::shared_ptr<base_column_info_t>>& column_infos
+)
+  requires std::is_member_pointer_v<decltype(column_ptr)>
+{
+  column_infos.push_back(std::make_shared<column_info_t>(column_ptr));
+}
+template <typename T>
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+  requires is_object_specialization_v<std::decay_t<T>>
+{
+  using Table = class_type_t<std::decay_t<T>>;
+  for (const auto& table_column : s.get_table_columns<Table>())
+    column_infos.push_back(std::make_shared<column_info_t>(table_column.ptr_));
+}
+template <typename T>
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+  requires is_alias_column_t_v<std::decay_t<T>>
+{
+  column_infos.push_back(std::make_shared<alias_column_info_t>(std::forward<T>(alias_column)));
+}
+template <typename T>
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+  requires is_count_t_v<std::decay_t<T>>
+{
+  column_infos.push_back(std::make_shared<count_column_info_t>(std::forward<T>(alias_column)));
+}
+template <typename T>
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+  requires(is_alias_t_v<std::decay_t<T>>)
+
+{
+  using Table = class_type_t<std::decay_t<T>>;
+  for (const auto& table_column : s.get_table_columns<Table>())
+    column_infos.push_back(std::make_shared<alias_column_info_t>(table_column.ptr_, alias_column.table_name_));
+}
+
 template <typename... TableColumns>
 select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns) {
   auto l_iter_fun = [this](auto&& in_column) {
-    // 处理每个参数
-    // 如果是成员指针，获取列名
-    using column_type = std::decay_t<decltype(in_column)>;
-    if constexpr (std::is_member_pointer_v<column_type>) {
-      impl_->column_names_.push_back(std::make_shared<column_info_t>(in_column));
-    } else if constexpr (is_object_specialization_v<column_type>) {
-      // 如果是object<Table>，获取表的所有列名
-      using table_type = class_type_t<column_type>;
-      for (const auto& table_column : impl_->s_->get_table_columns<table_type>())
-        impl_->column_names_.push_back(std::make_shared<column_info_t>(table_column.ptr_));
-    } else if constexpr (is_alias_column_t_v<column_type>) {
-      impl_->column_names_.push_back(std::make_shared<alias_column_info_t>(in_column));
-    } else if constexpr (is_count_t_v<column_type>) {
-      impl_->column_names_.push_back(std::make_shared<count_column_info_t>(std::move(in_column)));
-    }
-
-    else {
-      static_assert(always_false<column_type>, "不支持的参数类型");
-    }
+    get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
   };
   (l_iter_fun(in_columns), ...);
   return select_template_t<TableColumns...>{std::move(*this)};

@@ -17,6 +17,8 @@ struct alias_column_info_t : public base_column_info_t {
   template <typename Table, typename ValueType>
   explicit alias_column_info_t(ValueType Table::* in_ptr, std::string table_alias_name)
       : ptr_(in_ptr), table_alias_name_(std::move(table_alias_name)) {}
+  explicit alias_column_info_t(const table_columns_t& column_info, std::string table_alias_name)
+      : ptr_(column_info), table_alias_name_(std::move(table_alias_name)) {}
 
   // 生成 SQL 时，别名列必须包含表别名以避免歧义
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;

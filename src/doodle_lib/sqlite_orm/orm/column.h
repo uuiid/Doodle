@@ -17,9 +17,9 @@ struct sqlite_stmt;
 // 选择时传递列类型的专用模板类
 template <typename Table, typename Value, typename BaseClass>
 struct result_column_info_t : public BaseClass {
-  using value_type = Value;
-  using table_type = Table;
-  using base_class_type = BaseClass;
+  using value_type       = Value;
+  using table_type       = Table;
+  using base_class_type  = BaseClass;
 
   result_column_info_t() = default;
   template <typename... Args>
@@ -36,7 +36,7 @@ inline constexpr bool is_result_column_info_t_v = is_result_column_info_t<std::r
 
 // 特化：class_attr_type
 template <typename Table, typename Value, typename BaseClass>
-  requires(!std::is_void_v<Table>)
+  requires(!std::is_void_v<Table> && !std::is_void_v<Value>)
 struct class_attr_type<result_column_info_t<Table, Value, BaseClass>> {
   using ptr_type    = Value Table::*;
   using class_type  = Table;  // result_column_info_t 不对应具体类，因此使用 void 占位
@@ -48,6 +48,13 @@ struct class_attr_type<result_column_info_t<void, Value, BaseClass>> {
   using ptr_type    = void;
   using class_type  = void;
   using result_type = Value;
+};
+
+template <typename Table, typename BaseClass>
+struct class_attr_type<result_column_info_t<Table, void, BaseClass>> {
+  using ptr_type    = void;
+  using class_type  = Table;
+  using result_type = void;
 };
 
 // 运行时列信息
