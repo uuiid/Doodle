@@ -128,7 +128,7 @@ std::int32_t sqlite_stmt::get_bind_index() {
 void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   if (stmt_) throw std::runtime_error("Statement already prepared");
   bind_index_ = 0;
-  db_         = s.db_;
+  db_         = s.get_thread_db();
 #ifndef NDEBUG
   SPDLOG_DEBUG("Preparing SQL statement: {}", sql);
 #endif
