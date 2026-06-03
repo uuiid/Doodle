@@ -45,13 +45,17 @@ struct select_t : public statement_info_base_t {
     column_info_ptr column_info_;
     bool ascending_{true};
   };
-
+  struct column_meat_t {
+    bool is_value_type_{false};
+    std::size_t column_index_begin{0};  // 在 column_names_ 中的索引
+    std::size_t column_index_end{0};    // 在 column_names_ 中的索引
+  };
   struct impl_t {
     // 结果类型
     std::vector<column_info_ptr> column_names_;
-    std::vector<std::pair<std::size_t, std::size_t>>
-        column_index_ranges_;  // 每个 column_names_ 中的列在结果中的索引范围，范围是 [first, second)，如果 second ==
-                               // first + 1，则表示该列是单列，否则表示该列是多列（例如一个对象的多个属性）
+    // 每个 column_names_ 中的列在结果中的索引范围，范围是 [first, second)，如果 second ==
+    // first + 1，则表示该列是单列，否则表示该列是多列（例如一个对象的多个属性）
+    std::vector<column_meat_t> column_index_ranges_;
     table_info_base_ptr from_table_name_;
     std::vector<join_info_t> joins_;
     std::shared_ptr<column_operations_base_t> wheres_;

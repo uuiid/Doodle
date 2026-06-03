@@ -317,58 +317,19 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   const auto l_name_count     = select_.impl_->column_names_.size();
 
   if (l_range_count != l_num_result) {
-    throw std::runtime_error(fmt::format(
-        "select result mapping mismatch: range_count={} result_count={}", l_range_count, l_num_result
-    ));
+    throw std::runtime_error(
+        fmt::format("select result mapping mismatch: range_count={} result_count={}", l_range_count, l_num_result)
+    );
   }
-
-  std::size_t l_expected_columns = 0;
-  for (const auto& [l_begin, l_end] : select_.impl_->column_index_ranges_) {
-    if (l_begin > l_end || l_end > l_name_count) {
-      throw std::runtime_error(fmt::format(
-          "select column range out of bounds: [{}, {}) with column_names_size={}", l_begin, l_end, l_name_count
-      ));
-    }
-    l_expected_columns += l_end - l_begin;
-  }
-  if (l_expected_columns != static_cast<std::size_t>(l_max_column)) {
-    throw std::runtime_error(fmt::format(
-        "select sqlite column count mismatch: expected={} actual={}", l_expected_columns, l_max_column
-    ));
-  }
-
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
-  auto l_iter_fun             = [this, &l_tuple_index, &l_column_index](auto&& in_column) {
-    if (l_tuple_index >= static_cast<std::int32_t>(select_.impl_->column_index_ranges_.size())) {
-      throw std::runtime_error(fmt::format(
-          "select tuple index out of bounds: tuple_index={} ranges_size={}",
-          l_tuple_index,
-          select_.impl_->column_index_ranges_.size()
-      ));
-    }
-
-    auto l_range       = select_.impl_->column_index_ranges_[l_tuple_index];
-    bool is_value_type = l_range.second == l_range.first + 1;
+  auto l_iter_fun = [this, &l_tuple_index, &l_column_index, &l_get_value_type_index](auto&& in_column) {
+    auto l_range             = select_.impl_->column_index_ranges_[l_tuple_index];
+    const auto l_target_type = std::type_index(typeid(std::remove_cvref_t<decltype(in_column)>));
     // 多列，说明是一个object<Table>，需要从多列中构造出一个Table对象
-    for (std::size_t i = l_range.first; i < l_range.second; ++i) {
-      if (i >= select_.impl_->column_names_.size()) {
-        throw std::runtime_error(fmt::format(
-            "select column index out of bounds: column_index={} column_names_size={}",
-            i,
-            select_.impl_->column_names_.size()
-        ));
-      }
-      if (l_column_index >= select_.impl_->stmt_->get_column_count()) {
-        throw std::runtime_error(fmt::format(
-            "sqlite stmt column index out of bounds: stmt_column_index={} stmt_column_count={}",
-            l_column_index,
-            select_.impl_->stmt_->get_column_count()
-        ));
-      }
-
-      if (is_value_type)
+    for (std::size_t i = l_range.column_index_begin; i < l_range.column_index_end; ++i) {
+      if (l_range.is_value_type_) {
         select_.impl_->column_names_[i]->set_value(*select_.impl_->stmt_, l_column_index, &in_column);
-      else
+      } else
         select_.impl_->column_names_[i]->set_struct_value(*select_.impl_->stmt_, l_column_index, &in_column);
       l_column_index++;
     }
@@ -393,51 +354,56 @@ select_t select_t::where(T&& condition_fun) {
 
 // 获取列信息
 template <typename Table, typename Value>
-void get_column_info(
+bool get_column_info(
     const storage& s, Value Table::* column_ptr, std::vector<std::shared_ptr<base_column_info_t>>& column_infos
 )
   requires std::is_member_pointer_v<decltype(column_ptr)>
 {
   column_infos.push_back(std::make_shared<column_info_t>(column_ptr));
+  return true;
 }
 template <typename T>
-void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires is_object_specialization_v<std::decay_t<T>>
 {
   using Table = class_type_t<std::decay_t<T>>;
   for (const auto& table_column : s.get_table_columns<Table>())
     column_infos.push_back(std::make_shared<column_info_t>(table_column.ptr_));
+  return false;
 }
 template <typename T>
-void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires is_alias_column_t_v<std::decay_t<T>>
 {
   column_infos.push_back(std::make_shared<alias_column_info_t>(std::forward<T>(alias_column)));
+  return true;
 }
 template <typename T>
-void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires is_count_t_v<std::decay_t<T>>
 {
   column_infos.push_back(std::make_shared<count_column_info_t>(std::forward<T>(alias_column)));
+  return true;
 }
 template <typename T>
-void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires(is_alias_t_v<std::decay_t<T>>)
 
 {
   using Table = class_type_t<std::decay_t<T>>;
   for (const auto& table_column : s.get_table_columns<Table>())
     column_infos.push_back(std::make_shared<alias_column_info_t>(table_column.ptr_, alias_column.table_name_));
+  return false;
 }
 
 template <typename... TableColumns>
 select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns) {
   std::size_t l_column_index = 0;
   auto l_iter_fun            = [this, &l_column_index](auto&& in_column) {
-    auto l_begin = impl_->column_names_.size();
-    get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
-    auto l_end = impl_->column_names_.size();
-    impl_->column_index_ranges_.emplace_back(l_begin, l_end);
+    auto l_begin  = impl_->column_names_.size();
+    auto is_value = get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
+    auto l_end    = impl_->column_names_.size();
+    impl_->column_index_ranges_.emplace_back(is_value, l_begin, l_end);
   };
   (l_iter_fun(in_columns), ...);
   return select_template_t<TableColumns...>{std::move(*this)};

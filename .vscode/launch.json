@@ -25,6 +25,23 @@
             }
         },
         {
+            "name": "Doodle_release",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Ninja_release/bin/doodle_kitsu_supplement.exe",
+            "args": [
+                "--config=${workspaceFolder}/build/my_debug_server.json"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/Ninja_release/bin",
+            "visualizerFile": "${workspaceFolder}/stl.natvis",
+            "presentation": {
+                "hidden": false,
+                "group": "main",
+                "order": 1
+            }
+        },
+        {
             "name": "Doodle_debug_local",
             "type": "cppvsdbg",
             "request": "launch",
