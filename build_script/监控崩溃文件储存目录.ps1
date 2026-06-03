@@ -40,11 +40,11 @@ function Send-Notification {
 }
 
 # 初始化：记录现有文件，避免启动时立即通知
-Write-Host "开始监控文件夹：$FolderPath (间隔 5 分钟)" -ForegroundColor Green
+Write-Host "开始监控文件夹：$FolderPath (间隔 1 分钟)" -ForegroundColor Green
 
 # 主循环
 while ($true) {
-  Start-Sleep -Seconds 300
+  Start-Sleep -Seconds 60
 
   # 再次确保文件夹存在（防止监控过程中被删除）
   if (-not (Test-Path -Path $FolderPath -PathType Container)) {
@@ -62,7 +62,7 @@ while ($true) {
     $fileNames = $newFiles | ForEach-Object { Split-Path $_ -Leaf }
     $summary = "发现 $($newFiles.Count) 个新文件：`n" + ($fileNames -join "`n")
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $summary" -ForegroundColor Cyan
-    Send-Notification -Message $summary
+    New-BurntToastNotification -Text "文件夹监控通知", $summary
   }
   else {
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] 未发现新文件" -ForegroundColor Gray
