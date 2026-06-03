@@ -322,7 +322,7 @@ select_t::result_type_iterator<TableColumns...>::get() const {
     );
   }
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
-  auto l_iter_fun = [this, &l_tuple_index, &l_column_index, &l_get_value_type_index](auto&& in_column) {
+  auto l_iter_fun = [this, &l_tuple_index, &l_column_index](auto&& in_column) {
     auto l_range             = select_.impl_->column_index_ranges_[l_tuple_index];
     const auto l_target_type = std::type_index(typeid(std::remove_cvref_t<decltype(in_column)>));
     // 多列，说明是一个object<Table>，需要从多列中构造出一个Table对象
