@@ -41,7 +41,6 @@ while ($true) {
       Start-Sleep -Seconds 2
     }
     Write-Host "文件夹已恢复: $FolderPath" -ForegroundColor Green
-    # 恢复后重新读取文件列表，避免历史干扰
     continue
   }
   $newFiles = Get-ChildItem -Path $FolderPath -File -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName
