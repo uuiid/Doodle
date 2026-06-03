@@ -107,13 +107,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
                                                                  : attendance_helper::att_enum::leave;
     default_logger_raw()->info("考勤数据 {} {}", l_obj.begin_time_, l_obj.end_time_);
     switch (l_type) {
-      case attendance_helper::att_enum::overtime:
-        l_duration      = chrono::ceil<chrono::hours>(l_clock_overtime(l_obj.begin_time_, l_obj.end_time_));
+      case attendance_helper::att_enum::overtime: // 加班按照不满1小时直接舍弃
+        l_duration      = chrono::floor<chrono::hours>(l_clock_overtime(l_obj.begin_time_, l_obj.end_time_));
         l_obj.end_time_ = l_clock_overtime.next_time(
             l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
         );
         break;
-      case attendance_helper::att_enum::leave:
+      case attendance_helper::att_enum::leave: // 请假按照不满1小时按照1小时计算
         l_duration      = chrono::ceil<chrono::hours>(l_clock_leave(l_obj.begin_time_, l_obj.end_time_));
         l_obj.end_time_ = l_clock_leave.next_time(
             l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
