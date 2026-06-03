@@ -890,7 +890,9 @@ void sqlite_database::regs_all() {
       )
       .end();
 }
-
+void sqlite_database::register_custom_extension(sqlite3* in_sqlite) {
+  tokenizer::register_jieba_tokenizer(get_fts5_api(in_sqlite));
+}
 void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   storage::open_(in_path, in_flags);
   pragma().foreign_keys(true);
@@ -898,7 +900,6 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   pragma().recursive_triggers(true);
   pragma().journal_mode(orm::journal_mode_t::wal);
 
-  tokenizer::register_jieba_tokenizer(get_fts5_api());
   regs_all();
   //   sync_schema();
   auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};

@@ -231,6 +231,7 @@ sqlite3* storage::only_open_db() {
   // 启用扩展错误码，以便在发生错误时获取更详细的错误信息
   l_r = ::sqlite3_extended_result_codes(l_db, 1);
   DOODLE_ORM_ERROR_SQLITE3(l_r, l_db);
+  register_custom_extension(l_db);
   return l_db;
 }
 
@@ -274,19 +275,20 @@ create_trigger_t storage::create_trigger(std::string in_name) {
   return *l_trigger;
 }
 
-fts5_api* storage::get_fts5_api() const {
-  DOODLE_CHICK(db_ != nullptr, "Database not opened");
+fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) const {
+  if (!in_sqlite) in_sqlite = db_;  // 如果没有传入 sqlite3*，则使用默认的数据库连接
+  DOODLE_CHICK(in_sqlite != nullptr, "Database not opened");
   fts5_api* pRet      = nullptr;
   sqlite3_stmt* pStmt = nullptr;
   boost::scope::scope_exit stmt_guard([&]() {
     if (pStmt) sqlite3_finalize(pStmt);
   });
 
-  if (SQLITE_OK == sqlite3_prepare_v2(db_, "SELECT fts5(?1)", -1, &pStmt, nullptr)) {
+  if (SQLITE_OK == sqlite3_prepare_v2(in_sqlite, "SELECT fts5(?1)", -1, &pStmt, nullptr)) {
     sqlite3_bind_pointer(pStmt, 1, (void*)&pRet, "fts5_api_ptr", nullptr);
     sqlite3_step(pStmt);
   } else {
-    auto l_msg = sqlite3_errmsg(db_);
+    auto l_msg = sqlite3_errmsg(in_sqlite);
     SPDLOG_ERROR("Failed to prepare statement: {}", l_msg);
     throw_exception(doodle_error{l_msg});
   }
@@ -403,6 +405,7 @@ storage::~storage() {
     }
   });
 }
+void storage::register_custom_extension(sqlite3* in_sqlite) {}
 
 std::string storage::get_table_name(std::type_index in_type_index) const {
   if (!type_to_table_index_.contains(in_type_index)) {

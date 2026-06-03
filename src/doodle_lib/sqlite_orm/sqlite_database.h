@@ -67,7 +67,8 @@ class sqlite_database : public orm::storage {
    * 并且在插入id的时候会自动更新为实际id
    * @param in_path 输入的数据库路径
    */
-  virtual void open_(FSys::path in_path, std::int32_t in_flags) override;
+  void open_(FSys::path in_path, std::int32_t in_flags) override;
+  void register_custom_extension(sqlite3* in_sqlite) override;
 
  public:
   std::vector<uuid> get_temporal_type_ids();

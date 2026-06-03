@@ -220,6 +220,8 @@ class storage : public boost::noncopyable {
 
   sqlite3* get_thread_db();
   virtual void open_(FSys::path in_path, std::int32_t in_flags);
+  // 注册自定义扩展
+  virtual void register_custom_extension(sqlite3* in_sqlite);
 
  public:
   storage() = default;
@@ -232,7 +234,7 @@ class storage : public boost::noncopyable {
   void sync_schema();
   pragma_t& pragma();
 
-  fts5_api* get_fts5_api() const;
+  fts5_api* get_fts5_api(sqlite3* in_sqlite) const;
 
   template <typename T>
   table_info& reg_table(std::string&& in_name);
