@@ -70,6 +70,7 @@ struct select_t : public statement_info_base_t {
 
  public:
   explicit select_t(storage& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = &s; }
+  select_t() = default;
   template <typename FromTable>
   select_t from();
 
