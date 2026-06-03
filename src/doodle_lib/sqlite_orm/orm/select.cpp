@@ -75,6 +75,7 @@ void select_t::collect_bind_variants(bind_value_collector_t& bind_variants) cons
   if (impl_->wheres_) {
     impl_->wheres_->collect_bind_variants(bind_variants);
   }
+  impl_->from_table_name_->collect_bind_variants(bind_variants);
 }
 
 void select_t::prepare(storage& s, const to_sql_ctx& ctx) {

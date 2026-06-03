@@ -49,6 +49,9 @@ struct select_t : public statement_info_base_t {
   struct impl_t {
     // 结果类型
     std::vector<column_info_ptr> column_names_;
+    std::vector<std::pair<std::size_t, std::size_t>>
+        column_index_ranges_;  // 每个 column_names_ 中的列在结果中的索引范围，范围是 [first, second)，如果 second ==
+                               // first + 1，则表示该列是单列，否则表示该列是多列（例如一个对象的多个属性）
     table_info_base_ptr from_table_name_;
     std::vector<join_info_t> joins_;
     std::shared_ptr<column_operations_base_t> wheres_;
@@ -74,7 +77,10 @@ struct select_t : public statement_info_base_t {
 
   template <typename FromTable>
   select_t join(auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
-    requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>));
+    requires(
+        (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ptr)>>) &&
+        (std::is_member_pointer_v<decltype(in_ref_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>)
+    );
   template <typename JoinTable>
   select_t join(JoinTable&& join_table, auto in_ptr, auto in_ref_ptr, join_type in_join_type = join_type::inner)
     requires(

@@ -21,8 +21,8 @@ struct subquery_alias_info_t : public table_info_base_t {
     return result_column_info_t<Table, ValueType, alias_column_info_t>{in_column_alias, alias_name_};
   }
   template <typename Table>
-  result_column_info_t<Table, void, alias_info_t> object() {
-    return result_column_info_t<Table, void, alias_info_t>{alias_name_, typeid(Table)};
+  result_column_info_t<Table, Table, alias_info_t> object() {
+    return result_column_info_t<Table, Table, alias_info_t>{alias_name_, typeid(Table)};
   }
 };
 

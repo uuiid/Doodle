@@ -25,7 +25,10 @@ select_t select_t::from() {
 
 template <typename FromTable>
 select_t select_t::join(auto in_ptr, auto in_ref_ptr, join_type in_join_type)
-  requires((std::is_member_pointer_v<decltype(in_ptr)>) && (std::is_member_pointer_v<decltype(in_ref_ptr)>))
+  requires(
+      (std::is_member_pointer_v<decltype(in_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ptr)>>) &&
+      (std::is_member_pointer_v<decltype(in_ref_ptr)> || is_alias_column_t_v<std::decay_t<decltype(in_ref_ptr)>>)
+  )
 {
   join_info_t join_info{};
   join_info.type_            = in_join_type;
@@ -311,20 +314,18 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   const auto l_max_column     = select_->impl_->stmt_->get_column_count();
   constexpr auto l_num_result = std::tuple_size_v<std::tuple<TableColumns...>>;
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
-  std::array<bool, l_num_result> is_object_array{is_object_specialization_v<std::decay_t<TableColumns>>...};
-  auto l_iter_fun = [this, &l_column_index, &l_tuple_index, &is_object_array](auto&& in_column) {
-    // select_->column_names_[l_column_index]->set_value(*select_->stmt_, l_column_index, &in_column);
-    using column_or_struct_type = std::decay_t<decltype(in_column)>;
-    if (!is_object_array[l_tuple_index]) {
-      select_->impl_->column_names_[l_column_index]->set_value(*select_->impl_->stmt_, l_column_index, &in_column);
+  auto l_iter_fun             = [this, &l_tuple_index, &l_column_index](auto&& in_column) {
+    auto l_range       = select_->impl_->column_index_ranges_[l_tuple_index];
+    bool is_value_type = l_range.second == l_range.first + 1;
+    // 多列，说明是一个object<Table>，需要从多列中构造出一个Table对象
+    for (std::size_t i = l_range.first; i < l_range.second; ++i) {
+      if (is_value_type)
+        select_->impl_->column_names_[i]->set_value(*select_->impl_->stmt_, l_column_index, &in_column);
+      else
+        select_->impl_->column_names_[i]->set_struct_value(*select_->impl_->stmt_, l_column_index, &in_column);
       l_column_index++;
-    } else /* if constexpr (is_object_specialization_v<column_or_struct_type>) */ {
-      for (auto&& table_column_ptr : select_->impl_->s_->get_table_columns<column_or_struct_type>())
-        select_->impl_->column_names_[l_column_index]->set_struct_value(
-            *select_->impl_->stmt_, l_column_index, &in_column
-        ),
-            l_column_index++;
     }
+
     l_tuple_index++;
   };
   if constexpr (l_num_result == 1) {
@@ -384,8 +385,12 @@ void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared
 
 template <typename... TableColumns>
 select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns) {
-  auto l_iter_fun = [this](auto&& in_column) {
+  std::size_t l_column_index = 0;
+  auto l_iter_fun            = [this, &l_column_index](auto&& in_column) {
+    auto l_begin = impl_->column_names_.size();
     get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
+    auto l_end = impl_->column_names_.size();
+    impl_->column_index_ranges_.emplace_back(l_begin, l_end);
   };
   (l_iter_fun(in_columns), ...);
   return select_template_t<TableColumns...>{std::move(*this)};
