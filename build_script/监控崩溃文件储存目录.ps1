@@ -27,18 +27,6 @@ while (-not (Test-Path -Path $FolderPath -PathType Container)) {
 }
 Write-Host "文件夹已找到: $FolderPath" -ForegroundColor Green
 
-# 发送通知函数（弹窗，3秒后自动关闭）
-function Send-Notification {
-  param([string]$Message)
-  try {
-    $wsh = New-Object -ComObject Wscript.Shell
-    $wsh.Popup($Message, 3, "文件夹监控通知", 64) | Out-Null
-  }
-  catch {
-    Write-Warning "发送通知失败：$_"
-  }
-}
-
 # 初始化：记录现有文件，避免启动时立即通知
 Write-Host "开始监控文件夹：$FolderPath (间隔 1 分钟)" -ForegroundColor Green
 
