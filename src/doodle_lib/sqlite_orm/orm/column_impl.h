@@ -18,18 +18,14 @@ table_columns_t::table_columns_t(ValueType Table::* in_ptr)
         return l_ptr && l_ptr == in_ptr;
       }),
       set_value_([](const sqlite_stmt& stmt, int columnIndex, void* out_value) {
-        if (stmt.column_is_null(columnIndex))
-          *static_cast<ValueType*>(out_value) = ValueType{};  // 如果是NULL，设置为ValueType的默认值
-        else
-          *static_cast<ValueType*>(out_value) = stmt.get_column_value<ValueType>(columnIndex);
+        if (stmt.column_is_null(columnIndex)) return;  // 如果是NULL，不设置值，保持out_value的原值不变
+        *static_cast<ValueType*>(out_value) = stmt.get_column_value<ValueType>(columnIndex);
       }),
       set_struct_value_([in_ptr](const sqlite_stmt& stmt, int columnIndex, void* out_value) {
         using struct_type = std::decay_t<Table>;
         auto& struct_ref  = *static_cast<struct_type*>(out_value);
-        if (stmt.column_is_null(columnIndex))
-          struct_ref.*in_ptr = ValueType{};  // 如果是NULL，设置为ValueType的默认值
-        else
-          struct_ref.*in_ptr = stmt.get_column_value<ValueType>(columnIndex);
+        if (stmt.column_is_null(columnIndex)) return;  // 如果是NULL，不设置值，保持struct_ref的原值不变
+        struct_ref.*in_ptr = stmt.get_column_value<ValueType>(columnIndex);
       }),
       get_bind_value_([in_ptr](const void* struct_ptr) -> bind_value_t {
         using struct_type = std::decay_t<Table>;
