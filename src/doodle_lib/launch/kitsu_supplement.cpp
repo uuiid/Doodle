@@ -193,7 +193,8 @@ bool kitsu_supplement_main::init() {
 
   // 初始化数据库
   l_set.database_->open(l_args.db_path_);
-
+  //  初始化钉钉上下文
+  g_ctx().emplace<dingding::dingding_company>();
   // 初始化 ssl
   auto l_ssl_ctx = std::make_shared<boost::asio::ssl::context>(boost::asio::ssl::context::tlsv12_client);
   facets_.emplace_back(l_ssl_ctx);
