@@ -619,7 +619,7 @@ struct data_tasks_open_tasks_get_args {
           }
       );
     }
-    for (auto l_item : l_ret) {
+    for (auto&& l_item : l_ret) {
       l_item.task_.assignees_ = select(l_sql)
                                     .columns(&assignees_table::person_id_)
                                     .from<assignees_table>()
