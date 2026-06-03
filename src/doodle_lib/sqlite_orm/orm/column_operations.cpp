@@ -309,4 +309,21 @@ void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants)
   if (expr_) expr_->collect_bind_variants(bind_variants);
 }
 
+exists_operations::exists_operations() = default;
+exists_operations::exists_operations(std::shared_ptr<select_t> subquery_ptr) : subquery_ptr_(std::move(subquery_ptr)) {}
+std::string exists_operations::to_sql(const storage& s, const to_sql_ctx& ctx) const {
+  auto l_ctx = ctx;
+  l_ctx.ctx_ &= ~to_sql_ctx::where_sql;  // 清除 where_sql 上下文标志,
+  l_ctx.ctx_ |= to_sql_ctx::select_sql;  // 使用 select_sql 上下文以确保生成正确的 SQL 片段格式
+
+  if (subquery_ptr_) {
+    return fmt::format("EXISTS ({})", subquery_ptr_->to_sql(s, l_ctx));
+  } else {
+    return "EXISTS (SELECT 1)";  // 默认返回一个永远为真的 EXISTS 条件
+  }
+}
+void exists_operations::collect_bind_variants(bind_value_collector_t& bind_variants) const {
+  if (subquery_ptr_) subquery_ptr_->collect_bind_variants(bind_variants);
+}
+
 }  // namespace doodle::orm

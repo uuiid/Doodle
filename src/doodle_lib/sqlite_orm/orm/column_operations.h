@@ -402,8 +402,18 @@ struct on_operations : column_operations_base_t {
 
   std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
 };
+
+// exists 语法
+struct exists_operations : column_operations_base_t {
+  std::shared_ptr<select_t> subquery_ptr_;
+  exists_operations();
+  explicit exists_operations(std::shared_ptr<select_t> subquery_ptr);
+  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
+};
+
+inline auto exists(const select_t& subquery) { return exists_operations(std::make_shared<select_t>(subquery)); }
 
 template <typename T>
 auto on(T&& condition) {
