@@ -313,12 +313,59 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   std::int32_t l_tuple_index  = 0;
   const auto l_max_column     = select_.impl_->stmt_->get_column_count();
   constexpr auto l_num_result = std::tuple_size_v<std::tuple<TableColumns...>>;
+  const auto l_range_count    = select_.impl_->column_index_ranges_.size();
+  const auto l_name_count     = select_.impl_->column_names_.size();
+
+  if (l_range_count != l_num_result) {
+    throw std::runtime_error(fmt::format(
+        "select result mapping mismatch: range_count={} result_count={}", l_range_count, l_num_result
+    ));
+  }
+
+  std::size_t l_expected_columns = 0;
+  for (const auto& [l_begin, l_end] : select_.impl_->column_index_ranges_) {
+    if (l_begin > l_end || l_end > l_name_count) {
+      throw std::runtime_error(fmt::format(
+          "select column range out of bounds: [{}, {}) with column_names_size={}", l_begin, l_end, l_name_count
+      ));
+    }
+    l_expected_columns += l_end - l_begin;
+  }
+  if (l_expected_columns != static_cast<std::size_t>(l_max_column)) {
+    throw std::runtime_error(fmt::format(
+        "select sqlite column count mismatch: expected={} actual={}", l_expected_columns, l_max_column
+    ));
+  }
+
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
   auto l_iter_fun             = [this, &l_tuple_index, &l_column_index](auto&& in_column) {
+    if (l_tuple_index >= static_cast<std::int32_t>(select_.impl_->column_index_ranges_.size())) {
+      throw std::runtime_error(fmt::format(
+          "select tuple index out of bounds: tuple_index={} ranges_size={}",
+          l_tuple_index,
+          select_.impl_->column_index_ranges_.size()
+      ));
+    }
+
     auto l_range       = select_.impl_->column_index_ranges_[l_tuple_index];
     bool is_value_type = l_range.second == l_range.first + 1;
     // 多列，说明是一个object<Table>，需要从多列中构造出一个Table对象
     for (std::size_t i = l_range.first; i < l_range.second; ++i) {
+      if (i >= select_.impl_->column_names_.size()) {
+        throw std::runtime_error(fmt::format(
+            "select column index out of bounds: column_index={} column_names_size={}",
+            i,
+            select_.impl_->column_names_.size()
+        ));
+      }
+      if (l_column_index >= select_.impl_->stmt_->get_column_count()) {
+        throw std::runtime_error(fmt::format(
+            "sqlite stmt column index out of bounds: stmt_column_index={} stmt_column_count={}",
+            l_column_index,
+            select_.impl_->stmt_->get_column_count()
+        ));
+      }
+
       if (is_value_type)
         select_.impl_->column_names_[i]->set_value(*select_.impl_->stmt_, l_column_index, &in_column);
       else
