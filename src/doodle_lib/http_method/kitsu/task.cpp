@@ -634,7 +634,7 @@ struct data_tasks_open_tasks_get_args {
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_tasks::get(session_data_ptr in_handle) {
   data_tasks_open_tasks_get_args l_args{};
   l_args.parse_args(in_handle->url_.params());
-
+  
   co_return in_handle->make_msg(nlohmann::json{} = l_args.get());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::delete_(session_data_ptr in_handle) {

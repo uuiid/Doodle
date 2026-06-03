@@ -137,41 +137,44 @@ struct select_t : public statement_info_base_t {
   template <typename... TableColumns>
   using result_type = typename class_result_type<TableColumns...>::type;
   template <typename... TableColumns>
-  struct result_type_iterator {
-    using type              = result_type<TableColumns...>;
-
-    using iterator_type     = result_type_iterator<TableColumns...>;
-    using iterator_category = std::input_iterator_tag;
-    using value_type        = type;
-    using difference_type   = std::ptrdiff_t;
-    using pointer           = value_type*;
-    using reference         = value_type&;
-    select_t* select_;
-    bool is_end_{true};
-    mutable std::shared_ptr<value_type> cache_;
-    result_type_iterator() = default;
-    explicit result_type_iterator(select_t& in_select);
-
-    ~result_type_iterator() = default;
-
-    // 从sqlite_stmt中提取数据并转换为type类型
-    type get() const;
-    void next();
-
-    reference operator*() const;
-
-    pointer operator->() const;
-
-    iterator_type& operator++();
-
-    iterator_type operator++(int);
-
-    bool operator==(const iterator_type& rhs) const;
-
-    bool operator!=(const iterator_type& rhs) const;
-  };
+  struct result_type_iterator;
   template <typename... TableColumns>
   struct result_type_t;
+};
+
+template <typename... TableColumns>
+struct select_t::result_type_iterator {
+  using type              = result_type<TableColumns...>;
+
+  using iterator_type     = result_type_iterator<TableColumns...>;
+  using iterator_category = std::input_iterator_tag;
+  using value_type        = type;
+  using difference_type   = std::ptrdiff_t;
+  using pointer           = value_type*;
+  using reference         = value_type&;
+  select_t select_;
+  bool is_end_{true};
+  mutable std::shared_ptr<value_type> cache_;
+  result_type_iterator() = default;
+  explicit result_type_iterator(select_t in_select);
+
+  ~result_type_iterator() = default;
+
+  // 从sqlite_stmt中提取数据并转换为type类型
+  type get() const;
+  void next();
+
+  reference operator*() const;
+
+  pointer operator->() const;
+
+  iterator_type& operator++();
+
+  iterator_type operator++(int);
+
+  bool operator==(const iterator_type& rhs) const;
+
+  bool operator!=(const iterator_type& rhs) const;
 };
 
 template <typename... TableColumns>

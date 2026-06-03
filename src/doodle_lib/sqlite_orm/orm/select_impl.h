@@ -102,21 +102,21 @@ select_t select_t::group_by(auto TableColumns::*... in_columns) {
 // result_type_iterator 模板方法实现
 
 template <typename... TableColumns>
-select_t::result_type_iterator<TableColumns...>::result_type_iterator(select_t& in_select)
-    : select_(&in_select), is_end_(false), cache_(std::make_shared<value_type>()) {
+select_t::result_type_iterator<TableColumns...>::result_type_iterator(select_t in_select)
+    : select_(in_select), is_end_(false), cache_(std::make_shared<value_type>()) {
   next();
 }
 
 template <typename... TableColumns>
 void select_t::result_type_iterator<TableColumns...>::next() {
-  if (is_end_ || !select_->impl_->stmt_) return is_end_ = true, void();
+  if (is_end_ || !select_.impl_->stmt_) return is_end_ = true, void();
 
-  const auto l_rc = select_->impl_->stmt_->step_not_throw();
+  const auto l_rc = select_.impl_->stmt_->step_not_throw();
   if (l_rc == SQLITE_ROW) return is_end_ = false, void();
   if (l_rc == SQLITE_DONE) return is_end_ = true, void();
 
   is_end_ = true;
-  DOODLE_ORM_ERROR_SQLITE3(l_rc, select_->impl_->stmt_->db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_rc, select_.impl_->stmt_->db_);
 }
 
 template <typename... TableColumns>
@@ -151,7 +151,7 @@ select_t::result_type_iterator<TableColumns...>::operator++(int) {
 template <typename... TableColumns>
 bool select_t::result_type_iterator<TableColumns...>::operator==(const iterator_type& rhs) const {
   if (is_end_ && rhs.is_end_) return true;
-  return select_ == rhs.select_ && is_end_ == rhs.is_end_;
+  return select_.impl_ == rhs.select_.impl_ && is_end_ == rhs.is_end_;
 }
 
 template <typename... TableColumns>
@@ -311,18 +311,18 @@ select_t::result_type_iterator<TableColumns...>::get() const {
   type result{};
   std::int32_t l_column_index = 0;
   std::int32_t l_tuple_index  = 0;
-  const auto l_max_column     = select_->impl_->stmt_->get_column_count();
+  const auto l_max_column     = select_.impl_->stmt_->get_column_count();
   constexpr auto l_num_result = std::tuple_size_v<std::tuple<TableColumns...>>;
   // 生成一个编译期的bool数组，表示每个TableColumn是否是object<Table>
   auto l_iter_fun             = [this, &l_tuple_index, &l_column_index](auto&& in_column) {
-    auto l_range       = select_->impl_->column_index_ranges_[l_tuple_index];
+    auto l_range       = select_.impl_->column_index_ranges_[l_tuple_index];
     bool is_value_type = l_range.second == l_range.first + 1;
     // 多列，说明是一个object<Table>，需要从多列中构造出一个Table对象
     for (std::size_t i = l_range.first; i < l_range.second; ++i) {
       if (is_value_type)
-        select_->impl_->column_names_[i]->set_value(*select_->impl_->stmt_, l_column_index, &in_column);
+        select_.impl_->column_names_[i]->set_value(*select_.impl_->stmt_, l_column_index, &in_column);
       else
-        select_->impl_->column_names_[i]->set_struct_value(*select_->impl_->stmt_, l_column_index, &in_column);
+        select_.impl_->column_names_[i]->set_struct_value(*select_.impl_->stmt_, l_column_index, &in_column);
       l_column_index++;
     }
 
