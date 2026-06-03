@@ -327,7 +327,8 @@ select_t::result_type_iterator<TableColumns...>::get() const {
     const auto l_target_type = std::type_index(typeid(std::remove_cvref_t<decltype(in_column)>));
     // 多列，说明是一个object<Table>，需要从多列中构造出一个Table对象
     for (std::size_t i = l_range.column_index_begin; i < l_range.column_index_end; ++i) {
-      if (l_range.is_value_type_) {
+      if (l_range.is_value_type_) {  /// @warning 单列，直接转换为结果类型, 这里无法使用 brgin - end == 1
+                                     /// 来判断是否是单列，现象是会直接崩溃, 原因未知
         select_.impl_->column_names_[i]->set_value(*select_.impl_->stmt_, l_column_index, &in_column);
       } else
         select_.impl_->column_names_[i]->set_struct_value(*select_.impl_->stmt_, l_column_index, &in_column);
