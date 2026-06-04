@@ -399,8 +399,8 @@ bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared
 
 template <typename... TableColumns>
 select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns) {
-  std::size_t l_column_index = 0;
-  auto l_iter_fun            = [this, &l_column_index](auto&& in_column) {
+  impl_->column_names_.clear();
+  auto l_iter_fun = [this](auto&& in_column) {
     auto l_begin  = impl_->column_names_.size();
     auto is_value = get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
     auto l_end    = impl_->column_names_.size();
