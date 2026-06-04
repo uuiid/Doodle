@@ -22,22 +22,22 @@ table_columns_t::table_columns_t(ValueType Table::* in_ptr)
         if (!out_value.has_value()) throw std::runtime_error("Output value is not initialized");
         if (out_value.type() != typeid(ValueType*)) throw std::runtime_error("Output value type mismatch");
 
-        *std::any_cast<ValueType*>(&out_value) = stmt.get_column_value<ValueType>(columnIndex);
+        *std::any_cast<ValueType*>(out_value) = stmt.get_column_value<ValueType>(columnIndex);
       }),
       set_struct_value_([in_ptr](const sqlite_stmt& stmt, int columnIndex, std::any out_value) {
         if (stmt.column_is_null(columnIndex)) return;  // 如果是NULL，不设置值，保持struct_ref的原值不变
         if (!out_value.has_value()) throw std::runtime_error("Output struct pointer is not initialized");
-        if (out_value.type() != typeid(void*)) throw std::runtime_error("Output struct pointer type mismatch");
+        using struct_type = std::decay_t<Table>;
+        if (out_value.type() != typeid(struct_type*)) throw std::runtime_error("Output struct pointer type mismatch");
 
-        using struct_type  = std::decay_t<Table>;
-        auto& struct_ref   = *std::any_cast<struct_type*>(&out_value);
+        auto& struct_ref   = *std::any_cast<struct_type*>(out_value);
         struct_ref.*in_ptr = stmt.get_column_value<ValueType>(columnIndex);
       }),
       get_bind_value_([in_ptr](const std::any& struct_ptr) -> bind_value_t {
         if (!struct_ptr.has_value()) throw std::runtime_error("Struct pointer is not initialized");
-        if (struct_ptr.type() != typeid(void*)) throw std::runtime_error("Struct pointer type mismatch");
         using struct_type = std::decay_t<Table>;
-        auto& struct_ref  = *std::any_cast<struct_type*>(&struct_ptr);
+        if (struct_ptr.type() != typeid(const struct_type*)) throw std::runtime_error("Struct pointer type mismatch");
+        auto& struct_ref = *std::any_cast<const struct_type*>(struct_ptr);
         return bind_value_t{struct_ref.*in_ptr};
       })
 
