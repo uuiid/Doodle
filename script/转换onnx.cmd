@@ -1,0 +1,1 @@
+optimum-cli export onnx -m D:\ai_mod\.cache\huggingface\hub\models--McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\snapshots\31474e395ada192e8ed1586db6be79fb3b70c9c0 --library transformers --task feature-extraction --trust-remote-code  D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp   
