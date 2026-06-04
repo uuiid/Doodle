@@ -22,15 +22,15 @@ std::string alias_column_info_t::get_column_name(const storage& s, const to_sql_
   return fmt::format("{}.{}", table_alias_name_, l_column_name);
 }
 
-void alias_column_info_t ::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {
-  ptr_.set_value(stmt, columnIndex, out_value);
-}
+// void alias_column_info_t ::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {
+//   ptr_.set_value(stmt, columnIndex, out_value);
+// }
 void alias_column_info_t ::set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {
   ptr_.set_struct_value(stmt, columnIndex, out_value);
 }
 
 std::string rank_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const { return "rank"; }
-void rank_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
+// void rank_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
 void rank_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
 
 any_column_info_t::any_column_info_t(std::type_index in_table_index)
@@ -40,7 +40,7 @@ std::string any_column_info_t::get_column_name(const storage& s, const to_sql_ct
   auto l_table_name = table_info_ptr_->to_sql(s, ctx);
   return l_table_name;
 }
-void any_column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
+// void any_column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
 void any_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
 
 }  // namespace doodle::orm

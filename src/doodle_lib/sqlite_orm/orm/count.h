@@ -12,7 +12,7 @@ struct count_column_info_t : public base_column_info_t {
   explicit count_column_info_t(table_columns_t count) : column_infos_(std::move(count)) {}
   count_column_info_t() = default;
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
-  void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
+  // void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 
