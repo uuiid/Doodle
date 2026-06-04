@@ -46,7 +46,7 @@ struct select_t : public statement_info_base_t {
     bool ascending_{true};
   };
   struct column_meat_t {
-    bool is_value_type_{false};
+    // bool is_value_type_{false};
     std::size_t column_index_begin{0};  // 在 column_names_ 中的索引
     std::size_t column_index_end{0};    // 在 column_names_ 中的索引
   };

@@ -355,56 +355,56 @@ select_t select_t::where(T&& condition_fun) {
 
 // 获取列信息
 template <typename Table, typename Value>
-bool get_column_info(
+void get_column_info(
     const storage& s, Value Table::* column_ptr, std::vector<std::shared_ptr<base_column_info_t>>& column_infos
 )
   requires std::is_member_pointer_v<decltype(column_ptr)>
 {
   column_infos.push_back(std::make_shared<column_info_t>(column_ptr));
-  return true;
+  // return true;
 }
 template <typename T>
-bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires is_object_specialization_v<std::decay_t<T>>
 {
   using Table = class_type_t<std::decay_t<T>>;
   for (const auto& table_column : s.get_table_columns<Table>())
     column_infos.push_back(std::make_shared<column_info_t>(table_column.ptr_));
-  return false;
+  // return false;
 }
 template <typename T>
-bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires is_alias_column_t_v<std::decay_t<T>>
 {
   column_infos.push_back(std::make_shared<alias_column_info_t>(std::forward<T>(alias_column)));
-  return true;
+  // return true;
 }
 template <typename T>
-bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires is_count_t_v<std::decay_t<T>>
 {
   column_infos.push_back(std::make_shared<count_column_info_t>(std::forward<T>(alias_column)));
-  return true;
+  // return true;
 }
 template <typename T>
-bool get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
+void get_column_info(const storage& s, T&& alias_column, std::vector<std::shared_ptr<base_column_info_t>>& column_infos)
   requires(is_alias_t_v<std::decay_t<T>>)
 
 {
   using Table = class_type_t<std::decay_t<T>>;
   for (const auto& table_column : s.get_table_columns<Table>())
     column_infos.push_back(std::make_shared<alias_column_info_t>(table_column.ptr_, alias_column.table_name_));
-  return false;
+  // return false;
 }
 
 template <typename... TableColumns>
 select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns) {
   impl_->column_names_.clear();
   auto l_iter_fun = [this](auto&& in_column) {
-    auto l_begin  = impl_->column_names_.size();
-    auto is_value = get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
-    auto l_end    = impl_->column_names_.size();
-    impl_->column_index_ranges_.emplace_back(is_value, l_begin, l_end);
+    auto l_begin = impl_->column_names_.size();
+    get_column_info(*impl_->s_, std::forward<decltype(in_column)>(in_column), impl_->column_names_);
+    auto l_end = impl_->column_names_.size();
+    impl_->column_index_ranges_.emplace_back(l_begin, l_end);
   };
   (l_iter_fun(in_columns), ...);
   return select_template_t<TableColumns...>{*this};
