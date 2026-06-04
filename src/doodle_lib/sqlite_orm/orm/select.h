@@ -227,7 +227,7 @@ struct select_template_t : public select_t {
   // 这个类的作用是为了支持在编译期就确定结果类型的select, 通过模板参数传入列信息, 从而在编译期就能推断出结果类型,
   // 避免了运行时的类型推断开销
   using select_t::select_t;
-  explicit select_template_t(select_t&& select) : select_t(std::move(select)) {}
+  explicit select_template_t(select_t select) : select_t(std::move(select)) {}
   template <typename FormTable>
   select_template_t from();
   select_template_t from(subquery_alias_info_t subquery_alias_info);
