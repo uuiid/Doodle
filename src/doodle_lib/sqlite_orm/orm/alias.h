@@ -22,8 +22,8 @@ struct alias_column_info_t : public base_column_info_t {
 
   // 生成 SQL 时，别名列必须包含表别名以避免歧义
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
-  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
-  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 template <typename T>
 inline constexpr bool is_alias_column_t_v = std::is_base_of_v<alias_column_info_t, std::remove_cvref_t<T>>;
@@ -56,8 +56,8 @@ inline constexpr bool is_alias_t_v = std::is_base_of_v<alias_info_t, std::remove
 
 struct rank_info_t : public base_column_info_t {
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
-  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
-  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 
 template <typename Table>
@@ -76,8 +76,8 @@ struct any_column_info_t : public base_column_info_t {
   table_info_base_ptr table_info_ptr_;
   explicit any_column_info_t(std::type_index in_table_index);
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
-  void set_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
-  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, void* out_value) const override;
+  void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 template <typename Table>
 auto any_column() {
