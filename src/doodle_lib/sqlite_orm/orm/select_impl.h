@@ -407,7 +407,7 @@ select_template_t<TableColumns...> select_t::columns(TableColumns... in_columns)
     impl_->column_index_ranges_.emplace_back(is_value, l_begin, l_end);
   };
   (l_iter_fun(in_columns), ...);
-  return select_template_t<TableColumns...>{std::move(*this)};
+  return select_template_t<TableColumns...>{*this};
 }
 
 }  // namespace doodle::orm
