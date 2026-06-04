@@ -35,6 +35,7 @@
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/winapi/error_codes.hpp>
 
+#include "core/global_function.h"
 #include "http_content_type.h"
 #include <cryptopp/adler32.h>
 #include <cryptopp/filters.h>
@@ -151,10 +152,12 @@ boost::asio::awaitable<void> session_data::run() {
       logger_->log(log_loc(), level::err, "回复错误 {}", e.what());
       l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(e.code_status_(), e.what()));
     } catch (...) {
-      logger_->log(log_loc(), level::err, "回复错误 {}", boost::current_exception_diagnostic_information());
-      l_gen = std::make_unique<boost::beast::http::message_generator>(make_error_code_msg(
-          boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
-      ));
+      auto l_err_str = boost::current_exception_diagnostic_information();
+      logger_->log(log_loc(), level::err, "回复错误 {}", l_err_str);
+      SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), l_err_str);
+      l_gen = std::make_unique<boost::beast::http::message_generator>(
+          make_error_code_msg(boost::beast::http::status::internal_server_error, l_err_str)
+      );
     }
     if (!l_gen) co_return logger_->error("回复生成器为空 {}", url_);
 
