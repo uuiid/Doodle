@@ -290,6 +290,7 @@ std::tuple<cv::Size, double, FSys::path> handle_video_file(
           .preview_file_id_ = in_preview_file->uuid_id_, .status_ = in_preview_file->status_
       }
   );
+  if (in_progress_data) in_progress_data->complete();
 
   return std::make_tuple(l_high_size, l_duration, l_high_file_path);
 }

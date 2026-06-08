@@ -52,4 +52,10 @@ progress_data& progress_data::operator++() {
   return *this;
 }
 
+void progress_data::complete() {
+  progress_rational_ = 1;
+  // 发送事件
+  progress_update_broadcast_t broadcast{namespace_, event_name_, boost::rational_cast<std::double_t>(progress_rational_), uuid_id_};
+  socket_io::broadcast(broadcast);
+}
 }  // namespace doodle

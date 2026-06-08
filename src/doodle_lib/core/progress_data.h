@@ -37,6 +37,9 @@ class progress_data {
 
   // 重载 ++ 运算符，每调用一次表示完成了一步
   progress_data& operator++();
+
+  // end
+  void complete();
 };
 using progress_data_ptr = std::shared_ptr<progress_data>;
 
