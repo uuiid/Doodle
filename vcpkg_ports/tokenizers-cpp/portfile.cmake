@@ -1,9 +1,11 @@
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO mlc-ai/tokenizers-cpp
-    REF "v${VERSION}"
-    SHA512 c319b2c063ed81e380a4a375bf3432ae7cd70558b59818655c54fd9b0cf6f03cdddd72845a76b455bf4cc0ea05aef0b0917ea2cc8135fd4539e890fc5afc7431
+    REF c586c52f93f7b060753bd2388eb96a105cb7374d
+    SHA512 8976bd30881b100dc0eb83a3cd02d2c1c97f593b64a74add17dc67ef2e9678a03fc00387f322a97f746084061e6b6b1f652247110249f021e9a83c9468e90e68
     HEAD_REF main
+    PATCHES
+        0001-fix-sub-mod-add-install.patch
 )
 
 # tokenizers-cpp needs Rust (cargo) to build its C binding library.
@@ -12,8 +14,6 @@ vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
     OPTIONS
         -DMLC_ENABLE_SENTENCEPIECE_TOKENIZER=OFF
-        -DSPM_ENABLE_SHARED=OFF
-        -DSPM_ENABLE_TCMALLOC=OFF
 )
 
 vcpkg_cmake_install()

@@ -104,7 +104,8 @@
       ]
     },
     "dnacalib",
-    "crashpad"
+    "crashpad",
+    "tokenizers-cpp"
   ],
   "vcpkg-configuration": {
     "overlay-ports": [

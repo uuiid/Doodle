@@ -1,0 +1,154 @@
+From c53e46014a4a579b186d4d71ac0bf87ce8cf899d Mon Sep 17 00:00:00 2001
+From: uuiid <957714080@qq.com>
+Date: Mon, 8 Jun 2026 16:06:22 +0800
+Subject: [PATCH] fix sub-mod add install
+
+---
+ CMakeLists.txt                      | 92 ++++++++++++++++++++++-------
+ cmake/tokenizers_cppConfig.cmake.in |  5 ++
+ 2 files changed, 77 insertions(+), 20 deletions(-)
+ create mode 100644 cmake/tokenizers_cppConfig.cmake.in
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d39999b..0eef0c3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ set(CMAKE_CXX_EXTENSIONS OFF)
+ 
+ include(FetchContent)
++include(GNUInstallDirs)
++include(CMakePackageConfigHelpers)
+ 
+ set(TOKENIZERS_CPP_MSVC_RUNTIME_LIBRARY "" CACHE STRING "MSVC runtime library setting (One of MT or MD)")
+ 
+@@ -120,8 +122,7 @@ endif ()
+ get_filename_component(TOKENIZERS_CPP_ROOT ${CMAKE_CURRENT_LIST_FILE} DIRECTORY)
+ set(TOKENIZERS_CPP_CARGO_SOURCE_PATH ${TOKENIZERS_CPP_ROOT}/rust)
+ 
+-option(MSGPACK_USE_BOOST "Use Boost libraried" OFF)
+-add_subdirectory(msgpack)
++find_package(msgpack-cxx REQUIRED)
+ 
+ option(MLC_ENABLE_SENTENCEPIECE_TOKENIZER "Enable SentencePiece tokenizer" ON)
+ 
+@@ -168,35 +169,86 @@ add_custom_command(
+ 
+ set(
+   TOKENIZER_CPP_SRCS
+-  src/sentencepiece_tokenizer.cc
+   src/huggingface_tokenizer.cc
+   src/rwkv_world_tokenizer.cc
+ )
++if (MLC_ENABLE_SENTENCEPIECE_TOKENIZER)
++    list(APPEND TOKENIZER_CPP_SRCS src/sentencepiece_tokenizer.cc)
++endif ()
+ add_library(tokenizers_cpp STATIC ${TOKENIZER_CPP_SRCS})
+-target_include_directories(tokenizers_cpp PRIVATE sentencepiece/src)
+ target_include_directories(tokenizers_cpp PRIVATE msgpack/include)
+-target_include_directories(tokenizers_cpp PUBLIC ${TOKENIZERS_CPP_INCLUDE})
++target_include_directories(
++  tokenizers_cpp
++  PUBLIC
++    $<BUILD_INTERFACE:${TOKENIZERS_CPP_INCLUDE}>
++    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++)
+ if (MLC_ENABLE_SENTENCEPIECE_TOKENIZER STREQUAL "ON")
+     target_compile_definitions(tokenizers_cpp PUBLIC MLC_ENABLE_SENTENCEPIECE_TOKENIZER)
+ endif ()
+-target_link_libraries(tokenizers_cpp PRIVATE msgpack-cxx)
++target_link_libraries(tokenizers_cpp PRIVATE $<BUILD_INTERFACE:msgpack-cxx>)
+ 
+ # sentencepiece config
+-option(SPM_ENABLE_SHARED "override sentence piece config" OFF)
+-option(SPM_ENABLE_TCMALLOC "" OFF)
+-# provide macro if it does not exist in cmake system
+-# it is OK to skip those since we do not provide these apps in the ios
+-# instead just link to the sentencepiece directly
+-if (CMAKE_SYSTEM_NAME STREQUAL "iOS")
+-  macro (set_xcode_property TARGET XCODE_PROPERTY XCODE_VALUE)
+-      set_property (TARGET ${TARGET} PROPERTY
+-          XCODE_ATTRIBUTE_${XCODE_PROPERTY} ${XCODE_VALUE})
+-  endmacro (set_xcode_property)
+-endif()
+-add_subdirectory(sentencepiece sentencepiece EXCLUDE_FROM_ALL)
++if (MLC_ENABLE_SENTENCEPIECE_TOKENIZER)
++    find_package(sentencepiece REQUIRED)
++endif ()
+ 
+ add_library(tokenizers_c INTERFACE ${TOKENIZERS_RUST_LIB})
+ target_link_libraries(tokenizers_c INTERFACE ${TOKENIZERS_RUST_LIB} ${TOKENIZERS_C_LINK_LIBS})
+ 
+-target_link_libraries(tokenizers_cpp PRIVATE tokenizers_c sentencepiece-static ${TOKENIZERS_CPP_LINK_LIBS})
+-target_include_directories(tokenizers_cpp PUBLIC ${TOKENIZERS_CPP_INCLUDE})
++target_link_libraries(
++  tokenizers_cpp
++  PRIVATE
++    $<BUILD_INTERFACE:tokenizers_c>
++    ${TOKENIZERS_CPP_LINK_LIBS}
++)
++if (MLC_ENABLE_SENTENCEPIECE_TOKENIZER)
++    target_link_libraries(tokenizers_cpp PRIVATE $<BUILD_INTERFACE:sentencepiece::sentencepiece-static>)
++endif ()
++
++install(
++  TARGETS tokenizers_cpp
++  EXPORT tokenizers_cppTargets
++  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
++  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
++)
++
++install(
++  DIRECTORY ${TOKENIZERS_CPP_INCLUDE}/
++  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
++)
++
++set(TOKENIZERS_CPP_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/tokenizers_cpp")
++
++install(
++  EXPORT tokenizers_cppTargets
++  FILE tokenizers_cppTargets.cmake
++  NAMESPACE tokenizers_cpp::
++  DESTINATION ${TOKENIZERS_CPP_INSTALL_CMAKEDIR}
++)
++
++configure_package_config_file(
++  ${CMAKE_CURRENT_LIST_DIR}/cmake/tokenizers_cppConfig.cmake.in
++  ${CMAKE_CURRENT_BINARY_DIR}/tokenizers_cppConfig.cmake
++  INSTALL_DESTINATION ${TOKENIZERS_CPP_INSTALL_CMAKEDIR}
++)
++
++set(TOKENIZERS_CPP_PACKAGE_VERSION "0.1.0")
++if(DEFINED PROJECT_VERSION AND NOT PROJECT_VERSION STREQUAL "")
++  set(TOKENIZERS_CPP_PACKAGE_VERSION "${PROJECT_VERSION}")
++endif()
++
++write_basic_package_version_file(
++  ${CMAKE_CURRENT_BINARY_DIR}/tokenizers_cppConfigVersion.cmake
++  VERSION ${TOKENIZERS_CPP_PACKAGE_VERSION}
++  COMPATIBILITY SameMajorVersion
++)
++
++install(
++  FILES
++    ${CMAKE_CURRENT_BINARY_DIR}/tokenizers_cppConfig.cmake
++    ${CMAKE_CURRENT_BINARY_DIR}/tokenizers_cppConfigVersion.cmake
++  DESTINATION ${TOKENIZERS_CPP_INSTALL_CMAKEDIR}
++)
+diff --git a/cmake/tokenizers_cppConfig.cmake.in b/cmake/tokenizers_cppConfig.cmake.in
+new file mode 100644
+index 0000000..ef2c7a4
+--- /dev/null
++++ b/cmake/tokenizers_cppConfig.cmake.in
+@@ -0,0 +1,5 @@
++@PACKAGE_INIT@
++
++include("${CMAKE_CURRENT_LIST_DIR}/tokenizers_cppTargets.cmake")
++
++check_required_components(tokenizers_cpp)
+\ No newline at end of file
+-- 
+2.53.0.windows.1
+
