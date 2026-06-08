@@ -24,7 +24,10 @@
 #include <doodle_lib/long_task/connect_video.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/consign.hpp>
 #include <boost/asio/post.hpp>
+#include <boost/core/noncopyable.hpp>
 
 #include "core/core_set.h"
 #include <algorithm>
@@ -35,6 +38,7 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/videoio.hpp>
 #include <sqlite_orm/sqlite_orm.h>
+#include <string>
 #include <vector>
 
 namespace doodle::http {
@@ -42,7 +46,7 @@ namespace doodle::http {
 namespace {
 // 先合成视频, 再生成预览
 
-struct compose_video_impl_t {
+struct compose_video_impl_t : public std::enable_shared_from_this<compose_video_impl_t> {
   FSys::path path_;
   std::size_t fps_;
   cv::Size size_;
@@ -62,7 +66,7 @@ struct compose_video_impl_t {
         target_preview_file_(std::move(in_target_preview_file)),
         progress_data_(std::make_shared<progress_data>(preview_file_->uuid_id_, "preview-video:process")) {}
 
-  void operator()() {
+  void operator()() try {
     progress_data_->set_total_steps(2);
     auto l_now             = std::chrono::steady_clock::now();
     auto& l_ctx            = g_ctx().get<kitsu_ctx_t>();
@@ -121,6 +125,27 @@ struct compose_video_impl_t {
     );
 
     preview::handle_video_file(l_new_path, fps_, size_, preview_file_, progress_data_);
+  } catch (...) {
+    preview_file_->status_ = preview_file_statuses::broken;
+    auto l_str             = boost::current_exception_diagnostic_information();
+    boost::asio::co_spawn(
+        g_io_context(), update_preview_file_and_create_comment(l_str),
+        boost::asio::consign(boost::asio::detached, shared_from_this())
+    );
+  }
+
+  boost::asio::awaitable<void> update_preview_file_and_create_comment(std::string in_error_msg) {
+    auto& l_sql = get_sqlite_database();
+    co_await l_sql.update(preview_file_);
+
+    if (auto l_comm = l_sql.get_last_comment(target_preview_file_.task_id_); l_comm) {
+      auto l_comm_ptr      = std::make_shared<comment>(*l_comm);
+      l_comm_ptr->uuid_id_ = {};
+      l_comm_ptr->id_      = {};
+      l_comm_ptr->text_ += fmt::format("视频合成失败 {}", in_error_msg);
+      l_comm_ptr->person_id_ = preview_file_->person_id_;
+      co_await l_sql.update(l_comm_ptr);
+    }
   }
 };
 
@@ -227,10 +252,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
   auto l_preview_file_ptr       = std::make_shared<preview_file>(l_preview_file);
   co_await l_sql.update(l_preview_file_ptr);
 
-  compose_video_impl_t l_compose_video_impl(
+  auto l_compose_video_impl = std::make_shared<compose_video_impl_t>(
       l_file, l_project.fps_, cv::Size{l_prj_size.first, l_prj_size.second}, l_preview_file_ptr, l_target_preview_file
   );
-  boost::asio::post(g_pool_strand(), l_compose_video_impl);
+  boost::asio::post(g_pool_strand(), [l_compose_video_impl]() { (*l_compose_video_impl)(); });
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(),
@@ -283,7 +308,7 @@ struct run_actions_playlists_preview_files_create_review {
 
   run_actions_playlists_preview_files_create_review() : data_ptr_(std::make_shared<data>()) {}
 
-  void operator()() {
+  void operator()() try {
     data_ptr_->progress_data_ =
         std::make_shared<progress_data>(data_ptr_->review_preview_file_->uuid_id_, "preview-video:process");
     data_ptr_->progress_data_->set_total_steps(3);
@@ -327,6 +352,28 @@ struct run_actions_playlists_preview_files_create_review {
     preview::handle_video_file(l_out_path, l_prj.fps_, size_, data_ptr_->review_preview_file_);
 
     SPDLOG_LOGGER_INFO(data_ptr_->logger_, "生成评审视频完成 {}", l_out_path);
+  } catch (...) {
+    auto l_str = boost::current_exception_diagnostic_information();
+    SPDLOG_LOGGER_ERROR(data_ptr_->logger_, "生成评审视频失败: {}", l_str);
+    boost::asio::co_spawn(
+        g_io_context(), update_preview_file_and_create_comment(l_str),
+        boost::asio::consign(boost::asio::detached, *this)
+    );
+  }
+
+  boost::asio::awaitable<void> update_preview_file_and_create_comment(std::string in_error_msg) {
+    auto& l_sql                              = get_sqlite_database();
+    data_ptr_->review_preview_file_->status_ = preview_file_statuses::broken;
+    co_await l_sql.update(data_ptr_->review_preview_file_);
+
+    if (auto l_comm = l_sql.get_last_comment(data_ptr_->review_preview_file_->task_id_); l_comm) {
+      auto l_comm_ptr      = std::make_shared<comment>(*l_comm);
+      l_comm_ptr->uuid_id_ = {};
+      l_comm_ptr->id_      = {};
+      l_comm_ptr->text_ += fmt::format("生成评审视频失败 {}", in_error_msg);
+      l_comm_ptr->person_id_ = data_ptr_->review_preview_file_->person_id_;
+      co_await l_sql.update(l_comm_ptr);
+    }
   }
 };
 
