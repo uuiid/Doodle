@@ -24,6 +24,11 @@ DOODLE_HTTP_FUN_END()
 DOODLE_HTTP_JWT_FUN(data_projects)
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
+// /api/data/preview-files/{preview_file_id}
+DOODLE_HTTP_JWT_FUN(data_preview_files)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+uuid preview_file_id_{};
+DOODLE_HTTP_FUN_END()
 // /api/data/projects/{}/settings/task-types
 DOODLE_HTTP_JWT_FUN(data_project_settings_task_types)
 DOODLE_HTTP_FUN_OVERRIDE(post)
