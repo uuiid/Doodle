@@ -11,7 +11,7 @@ ForEach-Object {
   }
 }
 Pop-Location
-write-host "`nVisual Studio 2010 Command Prompt variables set." -ForegroundColor Yellow
+write-host "`nVisual Studio Command Prompt variables set." -ForegroundColor Yellow
 $env:chcp = 65001
 $env:VSLANG = 1033
 $DoodleRoot = Convert-Path "$PSScriptRoot/../..";

@@ -105,7 +105,14 @@
     },
     "dnacalib",
     "crashpad",
-    "tokenizers-cpp"
+    "tokenizers-cpp",
+    {
+      "name": "onnxruntime",
+      "default-features": false,
+      "features": [
+        "core"
+      ]
+    }
   ],
   "vcpkg-configuration": {
     "overlay-ports": [
