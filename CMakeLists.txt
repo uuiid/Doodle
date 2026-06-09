@@ -113,8 +113,6 @@ find_package(caches CONFIG REQUIRED)
 find_package(mailio CONFIG REQUIRED)
 # 寻找bit7z
 find_package(unofficial-bit7z CONFIG REQUIRED)
-# 寻找 libtorch
-# find_package(Torch CONFIG REQUIRED)
 # 寻找 mimalloc
 find_package(mimalloc CONFIG REQUIRED)
 # 寻找 ffmpeg和包装
@@ -123,6 +121,8 @@ find_package(avcpp CONFIG REQUIRED)
 find_package(cgal CONFIG REQUIRED)
 # 异常捕获库
 find_package(crashpad CONFIG REQUIRED)
+# 分词器
+find_package(tokenizers_cpp CONFIG REQUIRED)
 
 # Debug 模式下启用测试
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

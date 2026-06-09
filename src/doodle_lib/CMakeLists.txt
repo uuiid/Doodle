@@ -94,6 +94,7 @@ target_link_libraries(doodle_lib
         crashpad::crashpad
         #        OpenSSL::applink
         TBB::tbb
+        tokenizers_cpp::tokenizers_cpp
 )
 
 

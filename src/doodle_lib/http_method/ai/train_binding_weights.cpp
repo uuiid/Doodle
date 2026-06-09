@@ -6,9 +6,14 @@
 #include <filesystem>
 #include <spdlog/spdlog.h>
 #include <vector>
-
+#include <tokenizers_cpp.h>
 namespace doodle::http {
 namespace {
+// 运行分词器
+void run_tokenizer(const std::string& in_text) {
+
+}
+
 struct ai_train_binding_weights_post_args {
   std::vector<FSys::path> input_path_{};
   FSys::path output_path_{};
