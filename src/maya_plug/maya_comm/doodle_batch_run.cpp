@@ -184,6 +184,7 @@ class cloth_sim_run {
   FSys::path camera_path_{};
   FSys::path out_path_file_;
   maya_out_arg out_arg_{};
+  bool save_file_{};
 
   void replace_ref_file() {
     display_info("开始替换引用");
@@ -213,6 +214,23 @@ class cloth_sim_run {
       in_handle->add_field(l_ref_h);         /// 添加场力
     }
   }
+
+  void save_file() {
+    if (save_file_) return display_info("已经保存过文件了, 不重复保存");
+    /// \brief 在这里我们保存引用
+    auto k_save_file = maya_file_io::work_path("ma");
+    if (!FSys::exists(k_save_file)) FSys::create_directories(k_save_file);
+
+    k_save_file /= maya_file_io::get_current_path().filename();
+    try {
+      maya_file_io::save_file(k_save_file);
+      display_info("保存文件到 {}", k_save_file);
+    } catch (const std::runtime_error& error) {
+      display_error("无法保存文件 {} : {}", k_save_file, error.what());
+    }
+    save_file_ = true;
+  }
+
   void sim() {
     display_info("开始解算");
 
@@ -227,19 +245,7 @@ class cloth_sim_run {
       in_handle->set_cache_folder(l_ref_h, true);  /// 设置缓存文件夹
     });
 
-    /// \brief 在这里我们保存引用
-    auto k_save_file = maya_file_io::work_path("ma");
-    if (!FSys::exists(k_save_file)) {
-      FSys::create_directories(k_save_file);
-    }
-
-    k_save_file /= maya_file_io::get_current_path().filename();
-    try {
-      maya_file_io::save_file(k_save_file);
-      display_info("保存文件到 {}", k_save_file);
-    } catch (const std::runtime_error& error) {
-      display_error("无法保存文件 {} : {}", k_save_file, error.what());
-    }
+    save_file();  // 保存一次文件, 避免解算过程中丢失之前的修改
     const MTime k_end_time = MAnimControl::maxTime();
     for (auto&& i = t_post_time_; i <= k_end_time; ++i) {
       maya_chick(MAnimControl::setCurrentTime(i));
@@ -323,6 +329,8 @@ class cloth_sim_run {
       FSys::ofstream{out_path_file_} << l_json.dump(4);
     } else
       display_info("导出文件 {}", l_json.dump(4));
+
+    save_file();
   }
 };
 
