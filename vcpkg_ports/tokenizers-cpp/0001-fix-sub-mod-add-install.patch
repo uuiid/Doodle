@@ -1,16 +1,16 @@
-From c53e46014a4a579b186d4d71ac0bf87ce8cf899d Mon Sep 17 00:00:00 2001
+From 004fe44b4f1c4943ee507f22d9999c47c7249861 Mon Sep 17 00:00:00 2001
 From: uuiid <957714080@qq.com>
-Date: Mon, 8 Jun 2026 16:06:22 +0800
-Subject: [PATCH] fix sub-mod add install
+Date: Tue, 9 Jun 2026 16:06:20 +0800
+Subject: [PATCH] fix sub mod add install
 
 ---
- CMakeLists.txt                      | 92 ++++++++++++++++++++++-------
- cmake/tokenizers_cppConfig.cmake.in |  5 ++
- 2 files changed, 77 insertions(+), 20 deletions(-)
+ CMakeLists.txt                      | 122 ++++++++++++++++++++++------
+ cmake/tokenizers_cppConfig.cmake.in |   5 ++
+ 2 files changed, 104 insertions(+), 23 deletions(-)
  create mode 100644 cmake/tokenizers_cppConfig.cmake.in
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d39999b..0eef0c3 100644
+index d39999b..68ba2ed 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,8 +32,21 @@ index d39999b..0eef0c3 100644
  
  option(MLC_ENABLE_SENTENCEPIECE_TOKENIZER "Enable SentencePiece tokenizer" ON)
  
-@@ -168,35 +169,86 @@ add_custom_command(
+@@ -160,43 +161,118 @@ add_custom_command(
+   ${CARGO_EXTRA_ENVS}
+   RUSTFLAGS="${TOKENIZERS_CPP_RUST_FLAGS}"
+   ${CARGO_EXECUTABLE} build ${TOKENIZERS_CPP_CARGO_FLAGS}
+-  WORKING_DIRECTORY ${TOKENIZERS_CPP_CARGO_SOURCE_PATH}
+-  POST_BUILD COMMAND
++  COMMAND
+   ${CMAKE_COMMAND} -E copy
+   ${TOKENIZERS_RUST_LIB} "${CMAKE_CURRENT_BINARY_DIR}"
++  WORKING_DIRECTORY ${TOKENIZERS_CPP_CARGO_SOURCE_PATH}
+ )
  
++# Custom target to actually trigger the Rust cargo build via the custom command above
++add_custom_target(tokenizers_generate ALL DEPENDS ${TOKENIZERS_RUST_LIB})
++
  set(
    TOKENIZER_CPP_SRCS
 -  src/sentencepiece_tokenizer.cc
@@ -70,21 +83,38 @@ index d39999b..0eef0c3 100644
 -      set_property (TARGET ${TARGET} PROPERTY
 -          XCODE_ATTRIBUTE_${XCODE_PROPERTY} ${XCODE_VALUE})
 -  endmacro (set_xcode_property)
--endif()
--add_subdirectory(sentencepiece sentencepiece EXCLUDE_FROM_ALL)
 +if (MLC_ENABLE_SENTENCEPIECE_TOKENIZER)
 +    find_package(sentencepiece REQUIRED)
 +endif ()
- 
- add_library(tokenizers_c INTERFACE ${TOKENIZERS_RUST_LIB})
- target_link_libraries(tokenizers_c INTERFACE ${TOKENIZERS_RUST_LIB} ${TOKENIZERS_C_LINK_LIBS})
- 
--target_link_libraries(tokenizers_cpp PRIVATE tokenizers_c sentencepiece-static ${TOKENIZERS_CPP_LINK_LIBS})
--target_include_directories(tokenizers_cpp PUBLIC ${TOKENIZERS_CPP_INCLUDE})
++
++add_library(tokenizers_c INTERFACE)
++target_link_directories(tokenizers_c INTERFACE
++  $<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
++)
++target_link_libraries(tokenizers_c INTERFACE
++  $<BUILD_INTERFACE:${TOKENIZERS_RUST_LIB}>
++  $<INSTALL_INTERFACE:tokenizers_c.lib>
++  ${TOKENIZERS_C_LINK_LIBS}
++)
++target_include_directories(tokenizers_c INTERFACE
++  $<BUILD_INTERFACE:${TOKENIZERS_CPP_INCLUDE}>
++  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++)
++
++add_dependencies(tokenizers_cpp tokenizers_generate)
++
++# Install the Rust-built tokenizers_c library alongside the CMake export target
++install(
++  FILES ${TOKENIZERS_RUST_LIB}
++  DESTINATION ${CMAKE_INSTALL_LIBDIR}
++  OPTIONAL
++)
++
 +target_link_libraries(
 +  tokenizers_cpp
-+  PRIVATE
++  PUBLIC
 +    $<BUILD_INTERFACE:tokenizers_c>
++    $<INSTALL_INTERFACE:tokenizers_cpp::tokenizers_c>
 +    ${TOKENIZERS_CPP_LINK_LIBS}
 +)
 +if (MLC_ENABLE_SENTENCEPIECE_TOKENIZER)
@@ -92,7 +122,7 @@ index d39999b..0eef0c3 100644
 +endif ()
 +
 +install(
-+  TARGETS tokenizers_cpp
++  TARGETS tokenizers_cpp tokenizers_c
 +  EXPORT tokenizers_cppTargets
 +  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 +  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -123,14 +153,19 @@ index d39999b..0eef0c3 100644
 +set(TOKENIZERS_CPP_PACKAGE_VERSION "0.1.0")
 +if(DEFINED PROJECT_VERSION AND NOT PROJECT_VERSION STREQUAL "")
 +  set(TOKENIZERS_CPP_PACKAGE_VERSION "${PROJECT_VERSION}")
-+endif()
-+
+ endif()
+-add_subdirectory(sentencepiece sentencepiece EXCLUDE_FROM_ALL)
+ 
+-add_library(tokenizers_c INTERFACE ${TOKENIZERS_RUST_LIB})
+-target_link_libraries(tokenizers_c INTERFACE ${TOKENIZERS_RUST_LIB} ${TOKENIZERS_C_LINK_LIBS})
 +write_basic_package_version_file(
 +  ${CMAKE_CURRENT_BINARY_DIR}/tokenizers_cppConfigVersion.cmake
 +  VERSION ${TOKENIZERS_CPP_PACKAGE_VERSION}
 +  COMPATIBILITY SameMajorVersion
 +)
-+
+ 
+-target_link_libraries(tokenizers_cpp PRIVATE tokenizers_c sentencepiece-static ${TOKENIZERS_CPP_LINK_LIBS})
+-target_include_directories(tokenizers_cpp PUBLIC ${TOKENIZERS_CPP_INCLUDE})
 +install(
 +  FILES
 +    ${CMAKE_CURRENT_BINARY_DIR}/tokenizers_cppConfig.cmake
