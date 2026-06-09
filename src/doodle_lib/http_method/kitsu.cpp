@@ -24,7 +24,7 @@
 #include <doodle_lib/platform/win/register_file_type.h>
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 
-// #include <doodle_lib/http_method/ai/ai_main.h>
+#include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
@@ -373,7 +373,7 @@ http_route_ptr create_kitsu_local_route() {
         .reg_t<local::task_instance_generate_uesk_file>(
             "/api/doodle/task/{}/generate_uesk_file"_url(&local::task_instance_generate_uesk_file::id_)
         )
-        // .reg_t<ai_train_binding_weights>("/api/doodle/ai/train-binding-weights"_url)
+        .reg_t<ai_train_animation>("/api/doodle/ai/animation/train"_url)
         .reg_t<local::actions_projects_shots_export_anim_fbx_local>(
             "/api/actions/projects/{}/shots/{}/export-anim-fbx"_url(
                 &local::actions_projects_shots_export_anim_fbx_local::project_id_,

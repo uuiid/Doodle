@@ -8,6 +8,8 @@ namespace doodle::http {
 
 // /api/doodle/ai/animation/train
 DOODLE_HTTP_FUN(ai_train_animation)
+struct impl;
+std::shared_ptr<impl> impl_ptr_;
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
