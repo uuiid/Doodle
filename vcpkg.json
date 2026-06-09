@@ -108,10 +108,7 @@
     "tokenizers-cpp",
     {
       "name": "onnxruntime",
-      "default-features": false,
-      "features": [
-        "core"
-      ]
+      "default-features": true
     }
   ],
   "vcpkg-configuration": {
