@@ -23,5 +23,5 @@ add_subdirectory(model_library)
 add_subdirectory(local)
 add_subdirectory(other)
 add_subdirectory(seedance2)
-# add_subdirectory1(ai)
+add_subdirectory(ai)
  

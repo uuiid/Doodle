@@ -6,9 +6,8 @@
 
 namespace doodle::http {
 
-// /api/doodle/ai/train-binding-weights
-DOODLE_HTTP_FUN(ai_train_binding_weights)
+// /api/doodle/ai/animation/train
+DOODLE_HTTP_FUN(ai_train_animation)
 DOODLE_HTTP_FUN_OVERRIDE(post)
-DOODLE_HTTP_FUN_OVERRIDE(put)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
