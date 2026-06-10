@@ -17,6 +17,10 @@
 #include <sstream>
 #include <tl/expected.hpp>
 
+namespace Ort {
+class Env;
+}
+
 namespace boost::asio {
 class io_context;
 class thread_pool;
@@ -35,6 +39,7 @@ DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_str
 DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
 DOODLELIB_API std::size_t get_hardware_concurrency();
 DOODLELIB_API sqlite_database& get_sqlite_database();
+DOODLELIB_API Ort::Env& get_ort_env();
 template <class... Ts>
 struct overloaded : Ts... {
   using Ts::operator()...;

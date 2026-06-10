@@ -64,6 +64,8 @@ class DOODLELIB_API core_set : public boost::noncopyable {
 
   std::shared_ptr<http::computers_assign_task> computers_assign_task_ptr_{};
   std::shared_ptr<boost::asio::ssl::context> ctx_ptr;
+  // onnxruntime env
+  std::shared_ptr<void> ort_env_ptr_;
 
  private:
   // 用户名称

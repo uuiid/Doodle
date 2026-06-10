@@ -70,6 +70,8 @@ doodle_lib::~doodle_lib() {
   }
   core_set::get_set().computers_assign_task_ptr_.reset();
   core_set::get_set().database_.reset();
+  core_set::get_set().ctx_ptr.reset();
+  core_set::get_set().ort_env_ptr_.reset();
   ptr.reset();
 }
 
@@ -87,10 +89,14 @@ std::size_t get_hardware_concurrency() {
       boost::numeric_cast<std::size_t>(std::thread::hardware_concurrency())
   );
 }
-DOODLELIB_API sqlite_database& get_sqlite_database() {
+sqlite_database& get_sqlite_database() {
   auto& db = core_set::get_set().database_;
   DOODLE_CHICK(db, "错误: 数据库未打开")
   return *db;
 }
-
+Ort::Env& get_ort_env() {
+  auto& env = core_set::get_set().ort_env_ptr_;
+  DOODLE_CHICK(env, "错误: ONNX Runtime 环境未初始化")
+  return *std::static_pointer_cast<Ort::Env>(env);
+}
 }  // namespace doodle
