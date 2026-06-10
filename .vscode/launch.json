@@ -49,7 +49,7 @@
             "args": [
                 "--config=${workspaceFolder}/build/debug_server.json",
                 "--local",
-                "--port=50026"
+                "--port=50024"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",
@@ -68,7 +68,7 @@
             "args": [
                 "--config=${workspaceFolder}/build/debug_server.json",
                 "--epiboly",
-                "--port=50026"
+                "--port=50024"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/build/Ninja_debug/bin",

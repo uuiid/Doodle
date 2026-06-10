@@ -118,26 +118,66 @@ struct llm2vec_tokenizer {
     tokenizer_ = create_tokenizer(in_tokenizer_json_path);
   }
 
-  // 分两步：先包装 instruction，再分流分割处理
-  tokenize_result tokenize(const std::string& instruction, const std::string& text) {
-    auto l_text = prepare_for_tokenization(instruction, text);
-    std::string l_text2{};
-    std::string l_original_texts{};
-
-    {
-      std::vector<std::string> l_texts{};
-      boost::algorithm::split(l_texts, l_text, boost::algorithm::is_any_of(separator_));
-      l_text2          = l_texts.size() > 1 ? l_texts[1] : std::string{};
-      l_original_texts = fmt::to_string(fmt::join(l_texts, ""));
+  /// @brief 对输入做 instruction 包装（对应 Python prepare_for_tokenization）
+  /// LLM2Vec 编码模式使用 指令-文本 配对结构，通过 !@#$%^&*() 分隔符将指令和文本分开
+  /// 输出格式: "<|start_header_id|>user<|end_header_id|>\n\n{instruction} !@#$%^&*(){text}<|eot_id|>"
+  std::string prepare_for_tokenization(const std::string& instruction, const std::string& text) {
+    if (instruction.empty()) {
+      return fmt::format("<|start_header_id|>user<|end_header_id|>\n\n{}{}<|eot_id|>", separator_, text);
     }
+    return fmt::format("<|start_header_id|>user<|end_header_id|>\n\n{} {}{}<|eot_id|>", instruction, separator_, text);
   }
 
-  // 对输入做 instruction 包装（对应 prepare_for_tokenization）
-  // LLM2Vec 的编码模式使用 指令-文本 配对 结构, 通过 !@#$%^&*() 分隔符将指令和文本分开, 以确保分词器正确识别文本部分
-  // meta-llama/Meta-Llama-3-8B-Instruct 分词器需要继续添加关键字 "<|start_header_id|>user<|end_header_id|>\n\n" +
-  // text.strip() + "<|eot_id|>"
-  std::string prepare_for_tokenization(const std::string& instruction, const std::string& text) {
-    return fmt::format("<|start_header_id|>user<|end_header_id|>\n\n{}{}{}<|eot_id|>", instruction, text, separator_);
+  /// @brief 两步分词：对应 Python LLM2Vec.tokenize()
+  /// 1) 对完整文本（含 instruction）用 add_special_tokens=true 分词
+  /// 2) 对纯文本部分用 add_special_tokens=false 分词
+  /// 3) 生成 embed_mask（右对齐标记文本部分位置）
+  /// 注意：Python padding=True 是动态 padding 到 batch 最长的序列，不是到 max_length
+  /// 此处单序列时不做 padding，由上层调用方统一做 batch padding
+  tokenize_result tokenize(const std::string& instruction, const std::string& text) {
+    // 构建完整文本：<|start_header_id|>user<|end_header_id|>\n\n{instruction} !@#$%^&*(){text}<|eot_id|>
+    auto l_text = prepare_for_tokenization(instruction, text);
+
+    // Python 用 str.split("!@#$%^&*()") 以完整字符串为分隔符拆分
+    // 不能用 boost::is_any_of（那是按单个字符拆分）
+    const auto sep_pos = l_text.find(separator_);
+    std::string l_text2{};
+    std::string l_original_texts{};
+    if (sep_pos != std::string::npos) {
+      l_text2          = l_text.substr(sep_pos + separator_.size());                     // 分隔符之后 → 文本部分
+      l_original_texts = l_text.substr(0, sep_pos) + l_text.substr(sep_pos + separator_.size());  // 去掉分隔符的完整文本
+    } else {
+      l_original_texts = l_text;
+    }
+
+    // === 第一次分词：完整文本，带特殊 token（对应 Python: tokenizer(original_texts, add_special_tokens=True)）===
+    auto full_ids = tokenizer_->encode(l_original_texts, true);
+
+    // === 第二次分词：仅文本部分，不加特殊 token（对应 Python: tokenizer([t], add_special_tokens=False)）===
+    auto text_ids = tokenizer_->encode(l_text2, false);
+
+    // 从右侧截断到 max_length
+    if (full_ids.size() > max_length_) full_ids.resize(max_length_);
+    if (text_ids.size() > max_length_) text_ids.resize(max_length_);
+
+    // Python 对单序列不做 padding，只输出实际长度
+    tokenize_result result{};
+    result.seq_len = full_ids.size();
+    result.input_ids.assign(full_ids.begin(), full_ids.end());
+    result.attention_mask.resize(full_ids.size(), 1);  // 无 padding，全是 1
+    result.embed_mask.resize(full_ids.size(), 0);
+
+    // 生成 embed_mask：文本 token 右对齐标记
+    // Python 对应: e_m[-len(ids["input_ids"][0]):] = 1
+    const size_t text_len = (std::min)(text_ids.size(), full_ids.size());
+    if (text_len > 0) {
+      const size_t text_start = full_ids.size() - text_len;
+      for (size_t i = text_start; i < full_ids.size(); ++i) {
+        result.embed_mask[i] = 1;
+      }
+    }
+
+    return result;
   }
 };
 
@@ -147,7 +187,10 @@ void run_tokenizer(const FSys::path& in_tokenizer_json_path, const std::string& 
 
   llm2vec_tokenizer tokenizer{in_tokenizer_json_path};
   auto result = tokenizer.tokenize("", in_text);
-  SPDLOG_INFO("Tokens: {}", fmt::join(result.input_ids, ","));
+  SPDLOG_INFO(
+      "input_ids: [{}],\n attention_mask: [{}],\n embed_mask: [{}]", fmt::join(result.input_ids, ","),
+      fmt::join(result.attention_mask, ","), fmt::join(result.embed_mask, ",")
+  );
 }
 
 struct ai_train_binding_weights_post_args {
