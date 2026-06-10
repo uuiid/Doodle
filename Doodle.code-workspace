@@ -3,6 +3,10 @@
 		{
 			"path": ".",
 			"name": "doodleMain"
+		},
+		{
+			"path": "external/kimodo",
+			"name": "kimodo"
 		}
 	],
 	"settings": {
