@@ -359,9 +359,11 @@ struct LLM2Vec {
     if (input_names_.size() > 2) {
       position_ids.assign(static_cast<std::size_t>(seq_len), 0);
       for (std::int64_t i = 0; i < seq_len; ++i) position_ids[static_cast<std::size_t>(i)] = i;
-      ort_inputs.push_back(Ort::Value::CreateTensor<std::int64_t>(
-          memory_info, position_ids.data(), position_ids.size(), input_shape.data(), input_shape.size()
-      ));
+      ort_inputs.push_back(
+          Ort::Value::CreateTensor<std::int64_t>(
+              memory_info, position_ids.data(), position_ids.size(), input_shape.data(), input_shape.size()
+          )
+      );
     }
     // Step 4: 运行模型推理
     std::vector<Ort::Value> ort_outputs;
@@ -396,20 +398,6 @@ struct LLM2Vec {
   }
 };
 
-// 运行分词器
-void run_tokenizer(
-    const FSys::path& in_tokenizer_json_path, const FSys::path& in_llm2vec_path, const std::string& in_text
-) {
-  if (in_text.empty()) return SPDLOG_INFO("Input text is empty, skipping tokenization.");
-
-  LLM2Vec l_model{in_llm2vec_path, in_tokenizer_json_path};
-  auto embedding = l_model("", in_text);
-  // SPDLOG_INFO(
-  //     "Generated embedding of size {} for input text '{}' [{}]", embedding.size(), in_text,
-  //     fmt::join(embedding, ",")
-  // );
-}
-
 struct ai_train_binding_weights_post_args {
   std::string text_{};
 
@@ -420,17 +408,31 @@ struct ai_train_binding_weights_post_args {
 };
 
 }  // namespace
+
+struct ai_train_animation::impl {
+  LLM2Vec model_;
+  impl()
+      : model_(
+            R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\model.onnx)",
+            R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\tokenizer.json)"
+        ) {}
+
+  void run(const std::string& text) {
+    auto embedding = model_("", text);
+    SPDLOG_INFO(
+        "Generated embedding of size {} for input text '{}' [{}]", embedding.size(), text, fmt::join(embedding, ",")
+    );
+  }
+};
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
+#ifndef NDEBUG
   init_ort_env();
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
-  boost::asio::post(g_io_context(), [l_args]() {
-#ifndef NDEBUG
-    run_tokenizer(
-        "D:\\ai_mod\\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\\tokenizer.json",
-        "D:\\ai_mod\\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\\model.onnx", l_args.text_
-    );
+  std::once_flag l_tokenizer_flag{};
+  std::call_once(l_tokenizer_flag, [&]() { impl_ptr_ = std::make_shared<impl>(); });
+  boost::asio::post(g_io_context(), [this, l_args]() { impl_ptr_->run(l_args.text_); });
 #endif
-  });
   co_return in_handle->make_msg(nlohmann::json{});
 }
 
