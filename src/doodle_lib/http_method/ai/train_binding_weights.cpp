@@ -348,10 +348,21 @@ struct LLM2Vec {
     );
 
     std::vector<Ort::Value> ort_inputs;
-    ort_inputs.reserve(2);
+    ort_inputs.reserve(input_names_.size());
     ort_inputs.push_back(std::move(input_ids_tensor));
     ort_inputs.push_back(std::move(attn_mask_tensor));
-    // Ort::IoBinding l_io_binding{};
+
+    // 部分 ONNX 导出包含 position_ids 输入（Llama 等模型的 rotary embedding 需要）
+    // 生成 position_ids: [0, 1, 2, ..., seq_len-1] shape {1, seq_len}
+    // 注意：position_ids 必须在此作用域保持存活直至 Run 完成
+    std::vector<std::int64_t> position_ids;
+    if (input_names_.size() > 2) {
+      position_ids.assign(static_cast<std::size_t>(seq_len), 0);
+      for (std::int64_t i = 0; i < seq_len; ++i) position_ids[static_cast<std::size_t>(i)] = i;
+      ort_inputs.push_back(Ort::Value::CreateTensor<std::int64_t>(
+          memory_info, position_ids.data(), position_ids.size(), input_shape.data(), input_shape.size()
+      ));
+    }
     // Step 4: 运行模型推理
     std::vector<Ort::Value> ort_outputs;
     try {
