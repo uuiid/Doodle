@@ -393,6 +393,10 @@ void run_tokenizer(
 
   LLM2Vec l_model{in_llm2vec_path, in_tokenizer_json_path};
   auto embedding = l_model("", in_text);
+  SPDLOG_INFO(
+      "Generated embedding of size {} for input text '{}' [{}]", embedding.size(), in_text,
+      fmt::join(embedding, ",")
+  );
 }
 
 struct ai_train_binding_weights_post_args {
