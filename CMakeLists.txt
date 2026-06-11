@@ -123,6 +123,8 @@ find_package(cgal CONFIG REQUIRED)
 find_package(crashpad CONFIG REQUIRED)
 # 分词器
 find_package(tokenizers_cpp CONFIG REQUIRED)
+# onnxruntime
+find_package(onnxruntime CONFIG REQUIRED)
 
 # Debug 模式下启用测试
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")

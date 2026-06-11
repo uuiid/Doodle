@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <tokenizers_c.h>
@@ -14,6 +15,21 @@
 
 namespace doodle::http {
 namespace {
+// 初始化 onnxruntime 环境
+void _init_ort_env() {
+  try {
+    auto env                         = std::make_shared<Ort::Env>(ORT_LOGGING_LEVEL_WARNING, "doodle_ort");
+    core_set::get_set().ort_env_ptr_ = env;
+    SPDLOG_INFO("ONNX Runtime 环境初始化成功");
+  } catch (const Ort::Exception& e) {
+    SPDLOG_ERROR("ONNX Runtime 环境初始化失败: {}", e.what());
+  }
+}
+void init_ort_env() {
+  static std::once_flag l_flag{};
+  std::call_once(l_flag, []() { _init_ort_env(); });
+}
+
 // 我们自己包装的分词器，基于 tokenizers 库，适配 LLM2Vec 的编码模式
 struct hf_tokenizer {
  private:
@@ -136,7 +152,7 @@ struct llm2vec_tokenizer {
   /// 此处单序列时不做 padding，由上层调用方统一做 batch padding
   tokenize_result tokenize(const std::string& instruction, const std::string& text) {
     // 构建完整文本：<|start_header_id|>user<|end_header_id|>\n\n{instruction} !@#$%^&*(){text}<|eot_id|>
-    auto l_text = prepare_for_tokenization(instruction, text);
+    auto l_text        = prepare_for_tokenization(instruction, text);
 
     // Python 用 str.split("!@#$%^&*()") 以完整字符串为分隔符拆分
     // 不能用 boost::is_any_of（那是按单个字符拆分）
@@ -144,8 +160,9 @@ struct llm2vec_tokenizer {
     std::string l_text2{};
     std::string l_original_texts{};
     if (sep_pos != std::string::npos) {
-      l_text2          = l_text.substr(sep_pos + separator_.size());                     // 分隔符之后 → 文本部分
-      l_original_texts = l_text.substr(0, sep_pos) + l_text.substr(sep_pos + separator_.size());  // 去掉分隔符的完整文本
+      l_text2 = l_text.substr(sep_pos + separator_.size());  // 分隔符之后 → 文本部分
+      l_original_texts =
+          l_text.substr(0, sep_pos) + l_text.substr(sep_pos + separator_.size());  // 去掉分隔符的完整文本
     } else {
       l_original_texts = l_text;
     }
@@ -181,6 +198,23 @@ struct llm2vec_tokenizer {
   }
 };
 
+// 对应python LLM2V:ec 模型
+struct LLM2Vec {
+  std::unique_ptr<llm2vec_tokenizer> tokenizer_;
+  FSys::path model_path_;
+  FSys::path tokenizer_json_path_;
+  explicit LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer_json_path)
+      : model_path_(in_model_path), tokenizer_json_path_(in_tokenizer_json_path) {
+    tokenizer_ = std::make_unique<llm2vec_tokenizer>(tokenizer_json_path_);
+  }
+
+  std::vector<std::float_t> operator()(const std::string& instruction, const std::string& text) {
+    auto tokenized = tokenizer_->tokenize(instruction, text);
+    // 这里我们先只测试分词，后续会加上模型推理部分
+    return {};
+  }
+};
+
 // 运行分词器
 void run_tokenizer(const FSys::path& in_tokenizer_json_path, const std::string& in_text) {
   if (in_text.empty()) return SPDLOG_INFO("Input text is empty, skipping tokenization.");
@@ -204,6 +238,7 @@ struct ai_train_binding_weights_post_args {
 
 }  // namespace
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
+  init_ort_env();
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
   boost::asio::post(g_io_context(), [l_args]() {
 #ifndef NDEBUG
