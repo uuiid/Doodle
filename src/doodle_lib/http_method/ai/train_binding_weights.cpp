@@ -3,9 +3,11 @@
 #include <boost/asio/post.hpp>
 
 #include "ai_main.h"
+#include <array>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <mutex>
 #include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -198,33 +200,199 @@ struct llm2vec_tokenizer {
   }
 };
 
-// 对应python LLM2V:ec 模型
+// 对应 python LLM2Vec 模型
+// 调用链: operator() → tokenize → ONNX Run → apply_pooling → return embedding
 struct LLM2Vec {
   std::unique_ptr<llm2vec_tokenizer> tokenizer_;
   FSys::path model_path_;
   FSys::path tokenizer_json_path_;
+
+  // Pooling 配置（对应 Python pooling_mode / skip_instruction）
+  std::string pooling_mode_{"mean"};
+  bool skip_instruction_{true};
+
+  // ONNX Runtime session
+  std::unique_ptr<Ort::Session> session_;
+  std::vector<std::string> input_names_;
+  std::vector<std::string> output_names_;
+  std::vector<const char*> input_names_raw_;
+  std::vector<const char*> output_names_raw_;
+  std::once_flag session_init_flag_;
+
   explicit LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer_json_path)
       : model_path_(in_model_path), tokenizer_json_path_(in_tokenizer_json_path) {
     tokenizer_ = std::make_unique<llm2vec_tokenizer>(tokenizer_json_path_);
   }
 
-  std::vector<std::float_t> operator()(const std::string& instruction, const std::string& text) {
+ private:
+  /// @brief 延迟初始化 ONNX session（线程安全，仅执行一次）
+  void init_session() {
+    Ort::SessionOptions session_options;
+    // session_options.SetIntraOpNumThreads(1);
+    session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+    session_ = std::make_unique<Ort::Session>(get_ort_env(), model_path_.wstring().c_str(), session_options);
+
+    Ort::AllocatorWithDefaultOptions allocator;
+    const size_t num_inputs  = session_->GetInputCount();
+    const size_t num_outputs = session_->GetOutputCount();
+
+    input_names_.resize(num_inputs);
+    input_names_raw_.resize(num_inputs);
+    for (size_t i = 0; i < num_inputs; ++i) {
+      auto name           = session_->GetInputNameAllocated(i, allocator);
+      input_names_[i]     = name.get();
+      input_names_raw_[i] = input_names_[i].c_str();
+    }
+
+    output_names_.resize(num_outputs);
+    output_names_raw_.resize(num_outputs);
+    for (size_t i = 0; i < num_outputs; ++i) {
+      auto name            = session_->GetOutputNameAllocated(i, allocator);
+      output_names_[i]     = name.get();
+      output_names_raw_[i] = output_names_[i].c_str();
+    }
+  }
+
+  /// @brief 对模型输出做 pooling（对应 Python LLM2Vec.get_pooling）
+  /// @param tokenized 分词结果（含 embed_mask）
+  /// @param output_data ONNX 输出的 last_hidden_state 数据指针
+  /// @param seq_len 序列长度
+  /// @param hidden_size 隐藏层维度
+  /// @return pooling 后的 embedding 向量
+  std::vector<float_t> apply_pooling(
+      const llm2vec_tokenizer::tokenize_result& tokenized, const float* output_data, std::int64_t seq_len,
+      std::int64_t hidden_size
+  ) const {
+    std::vector<float_t> result(hidden_size, 0.0f);
+
+    // 确定实际参与 pooling 的 token 范围（对应 Python _skip_instruction）
+    std::int64_t valid_len = seq_len;
+    std::int64_t start     = 0;
+    if (skip_instruction_) {
+      // embed_mask == 1 表示文本 token（右对齐），0 表示 instruction token
+      valid_len = 0;
+      for (auto m : tokenized.embed_mask)
+        if (m > 0) ++valid_len;
+      start = seq_len - valid_len;
+    }
+
+    if (valid_len <= 0) {
+      SPDLOG_WARN("No valid tokens for pooling after skip_instruction");
+      return result;
+    }
+
+    // ---- pooling_modes（对应 Python get_pooling 各分支） ----
+    if (pooling_mode_ == "mean") {
+      // mean pooling：对所有有效 token 的 hidden_state 取平均
+      for (std::int64_t i = start; i < seq_len; ++i) {
+        for (std::int64_t j = 0; j < hidden_size; ++j) {
+          result[j] += output_data[i * hidden_size + j];
+        }
+      }
+      for (auto& v : result) v /= static_cast<float_t>(valid_len);
+
+    } else if (pooling_mode_ == "weighted_mean") {
+      // weighted mean pooling：位置越靠后权重越大
+      for (std::int64_t i = start; i < seq_len; ++i) {
+        const float_t weight =
+            static_cast<float_t>(i - start + 1) / static_cast<float_t>(valid_len * (valid_len + 1) / 2);
+        for (std::int64_t j = 0; j < hidden_size; ++j) {
+          result[j] += output_data[i * hidden_size + j] * weight;
+        }
+      }
+
+    } else if (pooling_mode_ == "eos_token" || pooling_mode_ == "last_token") {
+      // 取最后一个 token 的 hidden_state
+      for (std::int64_t j = 0; j < hidden_size; ++j) {
+        result[j] = output_data[(seq_len - 1) * hidden_size + j];
+      }
+
+    } else {
+      SPDLOG_WARN("Unsupported pooling_mode '{}', falling back to mean", pooling_mode_);
+      for (std::int64_t i = start; i < seq_len; ++i) {
+        for (std::int64_t j = 0; j < hidden_size; ++j) {
+          result[j] += output_data[i * hidden_size + j];
+        }
+      }
+      for (auto& v : result) v /= static_cast<float_t>(valid_len);
+    }
+
+    return result;
+  }
+
+ public:
+  /// @brief 执行完整推理管线：tokenize → ONNX Run → pooling
+  /// @return embedding 向量（维度 = hidden_size）
+  std::vector<float_t> operator()(const std::string& instruction, const std::string& text) {
+    // Step 1: 分词（由 llm2vec_tokenizer 完成 instruction 包装 + 两步分词 + embed_mask）
     auto tokenized = tokenizer_->tokenize(instruction, text);
-    // 这里我们先只测试分词，后续会加上模型推理部分
-    return {};
+    if (tokenized.input_ids.empty()) {
+      SPDLOG_WARN("Tokenization returned empty input_ids");
+      return {};
+    }
+
+    // Step 2: 延迟初始化 ONNX session
+    std::call_once(session_init_flag_, &LLM2Vec::init_session, this);
+
+    // Step 3: 创建 ONNX Runtime 输入 tensor
+    const std::int64_t seq_len = static_cast<std::int64_t>(tokenized.input_ids.size());
+    const std::array<std::int64_t, 2> input_shape{1, seq_len};
+    auto memory_info      = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+
+    auto input_ids_tensor = Ort::Value::CreateTensor<std::int64_t>(
+        memory_info, tokenized.input_ids.data(), tokenized.input_ids.size(), input_shape.data(), input_shape.size()
+    );
+    auto attn_mask_tensor = Ort::Value::CreateTensor<std::int64_t>(
+        memory_info, tokenized.attention_mask.data(), tokenized.attention_mask.size(), input_shape.data(),
+        input_shape.size()
+    );
+
+    std::vector<Ort::Value> ort_inputs;
+    ort_inputs.reserve(2);
+    ort_inputs.push_back(std::move(input_ids_tensor));
+    ort_inputs.push_back(std::move(attn_mask_tensor));
+    // Ort::IoBinding l_io_binding{};
+    // Step 4: 运行模型推理
+    std::vector<Ort::Value> ort_outputs;
+    try {
+      ort_outputs = session_->Run(
+          Ort::RunOptions{nullptr}, input_names_raw_.data(), ort_inputs.data(), ort_inputs.size(),
+          output_names_raw_.data(), output_names_.size()
+      );
+    } catch (const Ort::Exception& e) {
+      SPDLOG_ERROR("ONNX Runtime inference failed: {}", e.what());
+      return {};
+    }
+
+    if (ort_outputs.empty()) {
+      SPDLOG_ERROR("ONNX Runtime returned no outputs");
+      return {};
+    }
+
+    // Step 5: 解析输出 shape
+    auto type_info    = ort_outputs[0].GetTensorTypeAndShapeInfo();
+    auto output_shape = type_info.GetShape();
+    if (output_shape.size() != 3) {
+      SPDLOG_ERROR("Unexpected ONNX output shape rank: {}", output_shape.size());
+      return {};
+    }
+    const std::int64_t hidden_size = output_shape[2];
+
+    // Step 6: 获取 last_hidden_state 数据并执行 pooling
+    float* output_data             = ort_outputs[0].GetTensorMutableData<float>();
+
+    return apply_pooling(tokenized, output_data, seq_len, hidden_size);
   }
 };
 
 // 运行分词器
-void run_tokenizer(const FSys::path& in_tokenizer_json_path, const std::string& in_text) {
+void run_tokenizer(
+    const FSys::path& in_tokenizer_json_path, const FSys::path& in_llm2vec_path, const std::string& in_text
+) {
   if (in_text.empty()) return SPDLOG_INFO("Input text is empty, skipping tokenization.");
 
-  llm2vec_tokenizer tokenizer{in_tokenizer_json_path};
-  auto result = tokenizer.tokenize("", in_text);
-  SPDLOG_INFO(
-      "input_ids: [{}],\n attention_mask: [{}],\n embed_mask: [{}]", fmt::join(result.input_ids, ","),
-      fmt::join(result.attention_mask, ","), fmt::join(result.embed_mask, ",")
-  );
+  LLM2Vec l_model{in_llm2vec_path, in_tokenizer_json_path};
+  auto embedding = l_model("", in_text);
 }
 
 struct ai_train_binding_weights_post_args {
@@ -242,7 +410,10 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
   boost::asio::post(g_io_context(), [l_args]() {
 #ifndef NDEBUG
-    run_tokenizer("D:\\ai_mod\\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\\tokenizer.json", l_args.text_);
+    run_tokenizer(
+        "D:\\ai_mod\\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\\tokenizer.json",
+        "D:\\ai_mod\\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\\model.onnx", l_args.text_
+    );
 #endif
   });
   co_return in_handle->make_msg(nlohmann::json{});
