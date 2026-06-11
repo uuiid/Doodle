@@ -18,7 +18,7 @@
 #include <tl/expected.hpp>
 
 namespace Ort {
-class Env;
+struct Env;
 }
 
 namespace boost::asio {

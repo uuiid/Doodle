@@ -29,7 +29,7 @@ void _init_ort_env() {
 }
 void init_ort_env() {
   static std::once_flag l_flag{};
-  std::call_once(l_flag, []() { _init_ort_env(); });
+  std::call_once(l_flag, &_init_ort_env);
 }
 
 // 我们自己包装的分词器，基于 tokenizers 库，适配 LLM2Vec 的编码模式
