@@ -1,3 +1,5 @@
+#include "doodle_core/exception/exception.h"
+
 #include <doodle_lib/core/global_function.h>
 
 #include <boost/asio/post.hpp>
@@ -367,9 +369,10 @@ struct LLM2Vec {
       return SPDLOG_ERROR("ONNX Runtime inference failed: {}", e.what()), std::vector<float_t>{};
     }
 
-    // Step 5: 获取输出（ORT 自动分配内存，不再使用预绑定的空 Value）
+    // Step 5: 获取输出（ORT 自动分配内存）
     auto ort_outputs = io_binding_->GetOutputValues();
     if (ort_outputs.empty()) return SPDLOG_ERROR("ONNX Runtime returned no outputs"), std::vector<float_t>{};
+    DOODLE_CHICK(ort_outputs.size() == 1, "Expected exactly one output from ONNX Runtime, got {}", ort_outputs.size());
 
     // Step 6: 解析输出 shape
     auto type_info    = ort_outputs[0].GetTensorTypeAndShapeInfo();
