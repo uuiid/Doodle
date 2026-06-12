@@ -3,10 +3,12 @@
 #include <boost/asio/post.hpp>
 
 #include "ai_main.h"
+#include <algorithm>
 #include <array>
 #include <filesystem>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <memory>
 #include <mutex>
 #include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
@@ -213,10 +215,11 @@ struct LLM2Vec {
 
   // ONNX Runtime session
   std::unique_ptr<Ort::Session> session_;
+  std::unique_ptr<Ort::IoBinding> io_binding_;
   std::vector<std::string> input_names_;
   std::vector<std::string> output_names_;
-  std::vector<const char*> input_names_raw_;
-  std::vector<const char*> output_names_raw_;
+  std::vector<Ort::Value> outputs_;
+
   std::once_flag session_init_flag_;
 
   explicit LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer_json_path)
@@ -230,27 +233,18 @@ struct LLM2Vec {
     Ort::SessionOptions session_options;
     // session_options.SetIntraOpNumThreads(1);
     session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-    session_ = std::make_unique<Ort::Session>(get_ort_env(), model_path_.wstring().c_str(), session_options);
-
-    Ort::AllocatorWithDefaultOptions allocator;
-    const size_t num_inputs  = session_->GetInputCount();
-    const size_t num_outputs = session_->GetOutputCount();
-
-    input_names_.resize(num_inputs);
-    input_names_raw_.resize(num_inputs);
-    for (size_t i = 0; i < num_inputs; ++i) {
-      auto name           = session_->GetInputNameAllocated(i, allocator);
-      input_names_[i]     = name.get();
-      input_names_raw_[i] = input_names_[i].c_str();
-    }
-
-    output_names_.resize(num_outputs);
-    output_names_raw_.resize(num_outputs);
-    for (size_t i = 0; i < num_outputs; ++i) {
-      auto name            = session_->GetOutputNameAllocated(i, allocator);
-      output_names_[i]     = name.get();
-      output_names_raw_[i] = output_names_[i].c_str();
-    }
+    session_      = std::make_unique<Ort::Session>(get_ort_env(), model_path_.wstring().c_str(), session_options);
+    input_names_  = session_->GetInputNames();
+    output_names_ = session_->GetOutputNames();
+    io_binding_   = std::make_unique<Ort::IoBinding>(*session_);
+    for (const auto& name : output_names_)
+      io_binding_->BindOutput(
+          name.c_str(), outputs_.emplace_back(nullptr)
+      );  // 预绑定输出，后续 Run 时直接使用 outputs_ 存储结果
+    SPDLOG_INFO(
+        "ONNX Runtime session 初始化成功，输入: [{}], 输出: [{}]", fmt::join(input_names_, ","),
+        fmt::join(output_names_, ",")
+    );
   }
 
   /// @brief 对模型输出做 pooling（对应 Python LLM2Vec.get_pooling）
@@ -347,19 +341,19 @@ struct LLM2Vec {
         input_shape.size()
     );
 
-    std::vector<Ort::Value> ort_inputs;
-    ort_inputs.reserve(input_names_.size());
-    ort_inputs.push_back(std::move(input_ids_tensor));
-    ort_inputs.push_back(std::move(attn_mask_tensor));
+    io_binding_->BindInput("input_ids", input_ids_tensor);
+    io_binding_->BindInput("attention_mask", attn_mask_tensor);
 
     // 部分 ONNX 导出包含 position_ids 输入（Llama 等模型的 rotary embedding 需要）
     // 生成 position_ids: [0, 1, 2, ..., seq_len-1] shape {1, seq_len}
     // 注意：position_ids 必须在此作用域保持存活直至 Run 完成
     std::vector<std::int64_t> position_ids;
-    if (input_names_.size() > 2) {
+    if (std::find_if(input_names_.begin(), input_names_.end(), [](const std::string& name) {
+          return name == "position_ids" || name == "position_ids_1";
+        }) != input_names_.end()) {
       position_ids.assign(static_cast<std::size_t>(seq_len), 0);
-      for (std::int64_t i = 0; i < seq_len; ++i) position_ids[static_cast<std::size_t>(i)] = i;
-      ort_inputs.push_back(
+      io_binding_->BindInput(
+          "position_ids",
           Ort::Value::CreateTensor<std::int64_t>(
               memory_info, position_ids.data(), position_ids.size(), input_shape.data(), input_shape.size()
           )
@@ -368,22 +362,19 @@ struct LLM2Vec {
     // Step 4: 运行模型推理
     std::vector<Ort::Value> ort_outputs;
     try {
-      ort_outputs = session_->Run(
-          Ort::RunOptions{nullptr}, input_names_raw_.data(), ort_inputs.data(), ort_inputs.size(),
-          output_names_raw_.data(), output_names_.size()
-      );
+      session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
     } catch (const Ort::Exception& e) {
       SPDLOG_ERROR("ONNX Runtime inference failed: {}", e.what());
       return {};
     }
 
-    if (ort_outputs.empty()) {
+    if (outputs_.empty()) {
       SPDLOG_ERROR("ONNX Runtime returned no outputs");
       return {};
     }
 
     // Step 5: 解析输出 shape
-    auto type_info    = ort_outputs[0].GetTensorTypeAndShapeInfo();
+    auto type_info    = outputs_[0].GetTensorTypeAndShapeInfo();
     auto output_shape = type_info.GetShape();
     if (output_shape.size() != 3) {
       SPDLOG_ERROR("Unexpected ONNX output shape rank: {}", output_shape.size());
@@ -392,7 +383,7 @@ struct LLM2Vec {
     const std::int64_t hidden_size = output_shape[2];
 
     // Step 6: 获取 last_hidden_state 数据并执行 pooling
-    float* output_data             = ort_outputs[0].GetTensorMutableData<float>();
+    float* output_data             = outputs_[0].GetTensorMutableData<float>();
 
     return apply_pooling(tokenized, output_data, seq_len, hidden_size);
   }
