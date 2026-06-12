@@ -381,7 +381,7 @@ struct LLM2Vec {
     const std::int64_t hidden_size = output_shape[2];
 
     // Step 7: 获取 last_hidden_state 数据并执行 pooling
-    float* output_data             = ort_outputs[0].GetTensorMutableData<float>();
+    float* output_data             = ort_outputs[0].GetTensorMutableData<std::float_t>();
 
     return apply_pooling(tokenized, output_data, seq_len, hidden_size);
   }
