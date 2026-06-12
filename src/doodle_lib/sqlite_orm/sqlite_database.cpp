@@ -488,6 +488,7 @@ void sqlite_database::regs_all() {
       .add_column("entity_id", &entity_shot_extend::entity_id_)
       .add_column("frame_in", &entity_shot_extend::frame_in_)
       .add_column("frame_out", &entity_shot_extend::frame_out_)
+      .add_column("ai_type", &entity_shot_extend::ai_type_, default_value("none"s), not_null())
       .add_foreign_key(&entity_shot_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
   reg_table<entity_asset_extend>("entity_asset_extend")

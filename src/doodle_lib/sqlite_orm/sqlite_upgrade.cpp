@@ -26,7 +26,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 6;
+constexpr std::size_t g_current_version = 7;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -113,6 +113,11 @@ struct upgrade_2_t : sqlite_upgrade {
     if (in_data.pragma().user_version() == 2) {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
+    }
+
+    if (in_data.pragma().user_version() == 6) {
+      in_data.exec(R"(alter table entity_shot_extend
+add ai_type text default 'none' not null;)");
     }
 
     in_data.pragma().user_version(g_current_version);
