@@ -12,6 +12,7 @@
 #include <fmt/ranges.h>
 #include <memory>
 #include <mutex>
+#include <numeric>
 #include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
 #include <string>
@@ -267,10 +268,9 @@ struct LLM2Vec {
     std::int64_t start     = 0;
     if (skip_instruction_) {
       // embed_mask == 1 表示文本 token（右对齐），0 表示 instruction token
-      valid_len = 0;
-      for (auto m : tokenized.embed_mask)
-        if (m > 0) ++valid_len;
-      start = seq_len - valid_len;
+      // 相加得到文本 token 的数量，从右侧开始数，跳过 instruction token，只对文本 token 做 pooling
+      valid_len = std::reduce(tokenized.embed_mask.begin(), tokenized.embed_mask.end());
+      start = seq_len - valid_len;  // 从右侧开始数，跳过 instruction token，只对文本 token 做 pooling
     }
 
     if (valid_len <= 0) {
@@ -375,16 +375,16 @@ struct LLM2Vec {
     DOODLE_CHICK(ort_outputs.size() == 1, "Expected exactly one output from ONNX Runtime, got {}", ort_outputs.size());
 
     // Step 6: 解析输出 shape
-    auto type_info    = ort_outputs[0].GetTensorTypeAndShapeInfo();
+    auto type_info    = ort_outputs.front().GetTensorTypeAndShapeInfo();
     auto output_shape = type_info.GetShape();
     if (output_shape.size() != 3) {
       SPDLOG_ERROR("Unexpected ONNX output shape rank: {}", output_shape.size());
       return {};
     }
-    const std::int64_t hidden_size = output_shape[2];
+    const std::int64_t hidden_size = output_shape.back();
 
     // Step 7: 获取 last_hidden_state 数据并执行 pooling
-    float* output_data             = ort_outputs[0].GetTensorMutableData<std::float_t>();
+    float* output_data             = ort_outputs.front().GetTensorMutableData<std::float_t>();
 
     return apply_pooling(tokenized, output_data, seq_len, hidden_size);
   }
