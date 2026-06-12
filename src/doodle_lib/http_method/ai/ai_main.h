@@ -10,6 +10,7 @@ namespace doodle::http {
 DOODLE_HTTP_FUN(ai_train_animation)
 struct impl;
 std::shared_ptr<impl> impl_ptr_;
+ai_train_animation();
 DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http

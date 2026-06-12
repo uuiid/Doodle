@@ -15,6 +15,7 @@
 #include <string>
 #include <tokenizers_c.h>
 #include <tokenizers_cpp.h>
+#include <utility>
 #include <vector>
 
 namespace doodle::http {
@@ -222,6 +223,7 @@ struct LLM2Vec {
 
   std::once_flag session_init_flag_;
 
+  LLM2Vec() = default;
   explicit LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer_json_path)
       : model_path_(in_model_path), tokenizer_json_path_(in_tokenizer_json_path) {
     tokenizer_ = std::make_unique<llm2vec_tokenizer>(tokenizer_json_path_);
@@ -397,27 +399,28 @@ struct ai_train_binding_weights_post_args {
 }  // namespace
 
 struct ai_train_animation::impl {
-  LLM2Vec model_;
-  impl()
-      : model_(
-            R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\model.onnx)",
-            R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\tokenizer.json)"
-        ) {}
-
+  std::shared_ptr<LLM2Vec> model_{};
+  impl() = default;
+  std::once_flag init_flag_;
+  void init() {
+    model_ = std::make_shared<LLM2Vec>(
+        R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\model.onnx)",
+        R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\tokenizer.json)"
+    );
+  }
   void run(const std::string& text) {
-    auto embedding = model_("", text);
+    std::call_once(init_flag_, &impl::init, this);
+    auto embedding = (*model_)("", text);
     SPDLOG_INFO(
         "Generated embedding of size {} for input text '{}' [{}]", embedding.size(), text, fmt::join(embedding, ",")
     );
   }
 };
-
+ai_train_animation::ai_train_animation() : impl_ptr_(std::make_shared<impl>()) {}
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ai_train_animation, post) {
 #ifndef NDEBUG
   init_ort_env();
   auto l_args = in_handle->get_json().get<ai_train_binding_weights_post_args>();
-  std::once_flag l_tokenizer_flag{};
-  std::call_once(l_tokenizer_flag, [&]() { impl_ptr_ = std::make_shared<impl>(); });
   boost::asio::post(g_io_context(), [this, l_args]() { impl_ptr_->run(l_args.text_); });
 #endif
   co_return in_handle->make_msg(nlohmann::json{});
