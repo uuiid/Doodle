@@ -362,16 +362,12 @@ struct LLM2Vec {
     // Step 4: 运行模型推理
     std::vector<Ort::Value> ort_outputs;
     try {
-      session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
+      // session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
     } catch (const Ort::Exception& e) {
-      SPDLOG_ERROR("ONNX Runtime inference failed: {}", e.what());
-      return {};
+      return SPDLOG_ERROR("ONNX Runtime inference failed: {}", e.what()), std::vector<float_t>{};
     }
 
-    if (outputs_.empty()) {
-      SPDLOG_ERROR("ONNX Runtime returned no outputs");
-      return {};
-    }
+    if (outputs_.empty()) return SPDLOG_ERROR("ONNX Runtime returned no outputs"), std::vector<float_t>{};
 
     // Step 5: 解析输出 shape
     auto type_info    = outputs_[0].GetTensorTypeAndShapeInfo();
