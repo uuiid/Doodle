@@ -219,7 +219,7 @@ struct LLM2Vec {
   std::unique_ptr<Ort::IoBinding> io_binding_;
   std::vector<std::string> input_names_;
   std::vector<std::string> output_names_;
-  std::vector<Ort::Value> outputs_;
+  Ort::MemoryInfo memory_info_{Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)};
 
   std::once_flag session_init_flag_;
 
@@ -239,10 +239,9 @@ struct LLM2Vec {
     input_names_  = session_->GetInputNames();
     output_names_ = session_->GetOutputNames();
     io_binding_   = std::make_unique<Ort::IoBinding>(*session_);
-    for (const auto& name : output_names_)
-      io_binding_->BindOutput(
-          name.c_str(), outputs_.emplace_back(nullptr)
-      );  // 预绑定输出，后续 Run 时直接使用 outputs_ 存储结果
+    // 绑定输出到 CPU memory，让 ONNX Runtime 自动分配输出 tensor，避免传空 OrtValue* 导致空指针崩溃
+    for (const auto& name : output_names_) io_binding_->BindOutput(name.c_str(), memory_info_);
+
     SPDLOG_INFO(
         "ONNX Runtime session 初始化成功，输入: [{}], 输出: [{}]", fmt::join(input_names_, ","),
         fmt::join(output_names_, ",")
@@ -362,17 +361,18 @@ struct LLM2Vec {
       );
     }
     // Step 4: 运行模型推理
-    std::vector<Ort::Value> ort_outputs;
     try {
-      // session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
+      session_->Run(Ort::RunOptions{nullptr}, *io_binding_);
     } catch (const Ort::Exception& e) {
       return SPDLOG_ERROR("ONNX Runtime inference failed: {}", e.what()), std::vector<float_t>{};
     }
 
-    if (outputs_.empty()) return SPDLOG_ERROR("ONNX Runtime returned no outputs"), std::vector<float_t>{};
+    // Step 5: 获取输出（ORT 自动分配内存，不再使用预绑定的空 Value）
+    auto ort_outputs = io_binding_->GetOutputValues();
+    if (ort_outputs.empty()) return SPDLOG_ERROR("ONNX Runtime returned no outputs"), std::vector<float_t>{};
 
-    // Step 5: 解析输出 shape
-    auto type_info    = outputs_[0].GetTensorTypeAndShapeInfo();
+    // Step 6: 解析输出 shape
+    auto type_info    = ort_outputs[0].GetTensorTypeAndShapeInfo();
     auto output_shape = type_info.GetShape();
     if (output_shape.size() != 3) {
       SPDLOG_ERROR("Unexpected ONNX output shape rank: {}", output_shape.size());
@@ -380,8 +380,8 @@ struct LLM2Vec {
     }
     const std::int64_t hidden_size = output_shape[2];
 
-    // Step 6: 获取 last_hidden_state 数据并执行 pooling
-    float* output_data             = outputs_[0].GetTensorMutableData<float>();
+    // Step 7: 获取 last_hidden_state 数据并执行 pooling
+    float* output_data             = ort_outputs[0].GetTensorMutableData<float>();
 
     return apply_pooling(tokenized, output_data, seq_len, hidden_size);
   }
