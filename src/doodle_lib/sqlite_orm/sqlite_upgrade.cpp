@@ -79,11 +79,6 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data.pragma().user_version(g_current_version);
     }
 
-    if (in_data.pragma().user_version() == 6) {
-      in_data.exec(R"(alter table entity_shot_extend
-add ai_type text default 'none' not null;)");
-    }
-
     in_data.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
