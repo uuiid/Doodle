@@ -49,8 +49,12 @@ struct database_t {
   uuid uuid_parent_{};
   std::int32_t order_{};
 
-  constexpr static uuid get_lable_id();
-  constexpr static std::array<database_t, 1> get_all_constant();
+  constexpr static uuid get_lable_id() {
+    return uuid{{0x01, 0x96, 0xeb, 0x9d, 0x5d, 0xc0, 0x72, 0x7d, 0x8a, 0x75, 0x1b, 0x05, 0xde, 0xa8, 0x49, 0x4d}};
+  }
+  constexpr static std::array<database_t, 1> get_all_constant() {
+    return {assets_helper::database_t{.uuid_id_ = get_lable_id(), .label_ = "标签", .uuid_parent_ = {}, .order_ = 0}};
+  }
 
   friend void to_json(nlohmann::json& j, const database_t& v) {
     j["id"]        = v.uuid_id_;
