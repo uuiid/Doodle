@@ -186,6 +186,7 @@ auto make_shots_with_tasks_result(
     const person& in_person, const uuid& in_entity_type_id, const boost::urls::url& in_url
 ) {
   uuid l_entity_type_id_;
+  std::vector<uuid> l_entity_type_ids_{};
   uuid l_project_id_;
   std::vector<uuid> l_episode_id_;
   std::vector<uuid> l_sequence_id_;

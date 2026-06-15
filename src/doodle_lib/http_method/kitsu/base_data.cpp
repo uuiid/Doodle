@@ -181,6 +181,26 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
   );
   co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
 }
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
+  person_.check_admin();
+  auto l_args = std::make_shared<asset_type>(in_handle->get_json().get<asset_type>());
+  co_await get_sqlite_database().install(l_args);
+  auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
+
+  for (auto&& l_task_type_id : l_args->task_types_) {
+    l_task_type_asset_type_link_list->emplace_back(
+        task_type_asset_type_link{
+            .asset_type_id_ = l_args->uuid_id_,
+            .task_type_id_  = l_task_type_id,
+        }
+    );
+  }
+  if (!l_task_type_asset_type_link_list->empty())
+    co_await get_sqlite_database().install_range(l_task_type_asset_type_link_list);
+  co_return in_handle->make_msg(nlohmann::json{} = *l_args);
+}
+
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
   person_.check_admin();
   auto& l_sql   = get_sqlite_database();

@@ -17,24 +17,24 @@
 #include <doodle_lib/core/socket_io.h>
 #include <doodle_lib/core/socket_io/socket_io_ctx.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/dingding_attendance.h>
 #include <doodle_lib/http_method/kitsu/computing_time.h>
-#include <doodle_lib/http_method/model_library/model_library.h>
-#include <doodle_lib/http_method/seedance2/reg.h>
-#include <doodle_lib/platform/win/register_file_type.h>
-#include <doodle_lib/sqlite_orm/sqlite_database.h>
-
-#include <doodle_lib/http_method/ai/ai_main.h>
 #include <doodle_lib/http_method/kitsu/epiboly.h>
 #include <doodle_lib/http_method/kitsu/kitsu_front_end.h>
 #include <doodle_lib/http_method/kitsu/kitsu_reg_url.h>
 #include <doodle_lib/http_method/local/local.h>
+#include <doodle_lib/http_method/model_library/model_library.h>
 #include <doodle_lib/http_method/other/other.h>
+#include <doodle_lib/http_method/seedance2/reg.h>
 #include <doodle_lib/http_method/tool_version.h>
 #include <doodle_lib/http_method/up_file.h>
+#include <doodle_lib/platform/win/register_file_type.h>
+#include <doodle_lib/sqlite_orm/sqlite_database.h>
 
 #include "kitsu/kitsu_reg_url.h"
 #include "seedance2/reg.h"
+
 
 namespace doodle::http {
 
@@ -213,6 +213,7 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<actions_projects_casting_replace>("/api/actions/projects/{}/casting/replace"_url(&actions_projects_casting_replace::project_id_))
       .reg_t<actions_projects_casting_copy>("/api/actions/projects/{}/casting/copy"_url(&actions_projects_casting_copy::project_id_))
       .reg_t<data_entity_types_instance>("/api/data/entity-types/{}"_url(&data_entity_types_instance::id_))
+      .reg_t<data_entity_types>("/api/data/entity-types"_url)
       .reg_t<model_library::ai_image>("/api/doodle/ai_image"_url)
       .reg_t<model_library::ai_image_instance>("/api/doodle/ai_image/{}"_url(&model_library::ai_image_instance::id_))
       .reg_t<data_project_settings_status_automations>("/api/data/projects/{}/settings/status-automations"_url(&data_project_settings_status_automations::id_))
