@@ -403,7 +403,7 @@ class sqlite_database : public orm::storage {
     return get_person_subscriptions(in_person.uuid_id_, in_project_id, {in_asset_type_uuid});
   }
   std::set<uuid> get_person_subscriptions(
-      const uuid& in_person, const uuid& in_project_id, const std::vector<uuid>& in_asset_type_uuid
+      const uuid& in_person_id, const uuid& in_project_id, const std::vector<uuid>& in_asset_type_uuid
   );
 
   std::set<uuid> get_notification_recipients(const task& in_task);
