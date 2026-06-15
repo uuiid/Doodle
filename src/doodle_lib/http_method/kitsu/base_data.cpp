@@ -182,6 +182,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
   co_return in_handle->make_msg(nlohmann::json{} = *l_asset_type_ptr);
 }
 
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
+  person_.check_admin();
+  auto& l_sql       = get_sqlite_database();
+  auto l_asset_type = l_sql.get_by_uuid<asset_type>(id_);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 删除资产类型 {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_asset_type.name_
+  );
+  co_await l_sql.remove<asset_type>(l_asset_type.uuid_id_);
+  co_return in_handle->make_msg_204();
+}
+
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
   person_.check_admin();
   auto l_args = std::make_shared<asset_type>(in_handle->get_json().get<asset_type>());

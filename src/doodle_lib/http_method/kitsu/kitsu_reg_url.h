@@ -666,6 +666,7 @@ DOODLE_HTTP_FUN_END()
 // /api/data/entity-types/{id}
 DOODLE_HTTP_JWT_FUN(data_entity_types_instance)
 DOODLE_HTTP_FUN_OVERRIDE(put)
+DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid id_{};
 DOODLE_HTTP_FUN_END()
 // /api/data/entity-types
