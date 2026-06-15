@@ -1058,15 +1058,15 @@ task_status sqlite_database::get_task_status_by_name(const std::string& in_name)
 }
 
 std::set<uuid> sqlite_database::get_person_subscriptions(
-    const person& in_person, const uuid& in_project_id, const uuid& in_asset_type_uuid
+    const person& in_person, const uuid& in_project_id, const std::vector<uuid>& in_asset_type_uuid
 ) {
   using namespace orm;
 
   dynamic_column_operations l_dynamic_column_operations{};
   l_dynamic_column_operations.add_condition(c(&subscription::person_id_) == in_person.uuid_id_);
   if (!in_project_id.is_nil()) l_dynamic_column_operations.add_condition(c(&task::project_id_) == in_project_id);
-  if (!in_asset_type_uuid.is_nil())
-    l_dynamic_column_operations.add_condition(c(&entity::entity_type_id_) == in_asset_type_uuid);
+  if (!in_asset_type_uuid.empty())
+    l_dynamic_column_operations.add_condition(c(&entity::entity_type_id_).in(in_asset_type_uuid));
   else
     l_dynamic_column_operations.add_condition(c(&entity::entity_type_id_).in(get_temporal_type_ids()));
 
