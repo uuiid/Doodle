@@ -107,19 +107,19 @@ struct DOODLE_CORE_API asset_type {
 constexpr std::array<asset_type, 12> asset_type::get_all_constant() {
   // clang-format off
   return {
-      asset_type{.uuid_id_ = get_shot_id(), .name_ = "Shot", .short_name_ = "Shot", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_episode_id(), .name_ = "Episode", .short_name_ = "Episode", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_sequence_id(), .name_ = "Sequence", .short_name_ = "Sequence", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_concept_id(), .name_ = "Concept", .short_name_ = "Concept", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_edit_id(), .name_ = "Edit", .short_name_ = "Edit", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_scene_id(), .name_ = "Scene", .short_name_ = "Scene", .description_ = "", .task_types_ = {}, .archived_ = true},
+      asset_type{.uuid_id_ = get_shot_id(),     .name_ = "Shot",     .short_name_ = "Shot", },
+      asset_type{.uuid_id_ = get_episode_id(),  .name_ = "Episode",  .short_name_ = "Episode", },
+      asset_type{.uuid_id_ = get_sequence_id(), .name_ = "Sequence", .short_name_ = "Sequence", },
+      asset_type{.uuid_id_ = get_concept_id(),  .name_ = "Concept",  .short_name_ = "Concept", },
+      asset_type{.uuid_id_ = get_edit_id(),     .name_ = "Edit",     .short_name_ = "Edit", },
+      asset_type{.uuid_id_ = get_scene_id(),    .name_ = "Scene",    .short_name_ = "Scene", },
 
-      asset_type{.uuid_id_ = get_character_id(), .name_ = "角色", .short_name_ = "角色", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_ground_id(), .name_ = "场景", .short_name_ = "场景", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_prop_id(), .name_ = "道具", .short_name_ = "道具", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_effect_id(), .name_ = "特效", .short_name_ = "特效", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_ai_id(), .name_ = "AI", .short_name_ = "AI", .description_ = "", .task_types_ = {}, .archived_ = true},
-      asset_type{.uuid_id_ = get_half_ai_id(), .name_ = "半AI", .short_name_ = "半AI", .description_ = "", .task_types_ = {}, .archived_ = true},
+      asset_type{.uuid_id_ = get_character_id(), .name_ = "角色", .short_name_ = "角色", },
+      asset_type{.uuid_id_ = get_ground_id(),    .name_ = "场景", .short_name_ = "场景", },
+      asset_type{.uuid_id_ = get_prop_id(),      .name_ = "道具", .short_name_ = "道具", },
+      asset_type{.uuid_id_ = get_effect_id(),    .name_ = "特效", .short_name_ = "特效", },
+      asset_type{.uuid_id_ = get_ai_id(),        .name_ = "AI",   .short_name_ = "AI", },
+      asset_type{.uuid_id_ = get_half_ai_id(),   .name_ = "半AI", .short_name_ = "半AI", },
   };
   // clang-format on
 }

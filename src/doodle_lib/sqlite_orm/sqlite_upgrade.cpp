@@ -71,9 +71,6 @@ struct upgrade_2_t : sqlite_upgrade {
           .uuid_id_     = asset_type::get_half_ai_id(),
           .name_        = "半AI",
           .short_name_  = "半AI",
-          .description_ = "",
-          .task_types_  = {},
-          .archived_    = true
       });
       in_data.install_unsafe<asset_type>(l_s);
     }
