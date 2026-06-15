@@ -120,13 +120,30 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
   return l_projects;
 }
 
+auto get_asset_types() {
+  auto& l_sql = get_sqlite_database();
+
+  using namespace orm;
+  auto l_t = select(l_sql).columns(object<asset_type>()).from<asset_type>()().to_vector();
+
+  auto l_ass_type_link =
+      select(l_sql).columns(object<task_type_asset_type_link>()).from<task_type_asset_type_link>()().to_vector();
+
+  std::map<uuid, std::vector<uuid>> l_ass_type_link_map{};
+  for (auto& i : l_ass_type_link) l_ass_type_link_map[i.asset_type_id_].push_back(i.task_type_id_);
+  for (auto& i : l_t) {
+    i.task_types_ = l_ass_type_link_map[i.uuid_id_];
+  }
+  return l_t;
+}
+
 }  // namespace
 
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
   using namespace orm;
   auto& l_sql             = get_sqlite_database();
-  l_ret["asset_types"]    = l_sql.get_asset_types_not_temporal_type();
+  l_ret["asset_types"]    = get_asset_types();
   l_ret["custom_actions"] = nlohmann::json::value_t::array;
   l_ret["departments"]    = l_sql.get_all<department>();
   {
