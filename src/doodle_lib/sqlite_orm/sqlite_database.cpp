@@ -55,6 +55,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <vector>
 
 namespace doodle {
 
@@ -975,12 +976,8 @@ person sqlite_database::get_person_for_email(const std::string& in_email) {
   return l_p;
 }
 std::vector<uuid> sqlite_database::get_temporal_type_ids() {
-  using namespace orm;
-  auto l_select = select(*this)
-                      .columns(&asset_type::uuid_id_)
-                      .from<asset_type>()
-                      .where(c(&asset_type::name_).in({"Episode", "Sequence", "Shot", "Edit", "Scene", "Concept"}));
-  return l_select().to_vector();
+  return std::vector{asset_type::get_episode_id(), asset_type::get_sequence_id(), asset_type::get_shot_id(),
+                     asset_type::get_edit_id(),    asset_type::get_scene_id(),    asset_type::get_concept_id()};
 }
 
 std::vector<project> sqlite_database::get_person_projects(const person& in_user) {
@@ -1358,28 +1355,6 @@ std::optional<comment> sqlite_database::get_last_comment(const uuid& in_task_id)
 std::vector<task> sqlite_database::get_tasks_for_entity(const uuid& in_asset_id) {
   using namespace orm;
   return select(*this).columns(object<task>()).from<task>().where(c(&task::entity_id_) == in_asset_id)().to_vector();
-}
-
-std::vector<asset_type> sqlite_database::get_asset_types_not_temporal_type() {
-  using namespace orm;
-  auto l_te = get_temporal_type_ids();
-  auto l_t  = select(*this)
-                 .columns(object<asset_type>())
-                 .from<asset_type>()
-                 .where(c(&asset_type::uuid_id_).not_in(l_te))()
-                 .to_vector();
-  auto l_ass_type_link = select(*this)
-                             .columns(object<task_type_asset_type_link>())
-                             .from<task_type_asset_type_link>()
-                             .where(c(&task_type_asset_type_link::asset_type_id_).not_in(l_te))()
-                             .to_vector();
-
-  std::map<uuid, std::vector<uuid>> l_ass_type_link_map{};
-  for (auto& i : l_ass_type_link) l_ass_type_link_map[i.asset_type_id_].push_back(i.task_type_id_);
-  for (auto& i : l_t) {
-    i.task_types_ = l_ass_type_link_map[i.uuid_id_];
-  }
-  return l_t;
 }
 
 std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entity_in_id, const uuid& in_asset_id) {
