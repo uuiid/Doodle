@@ -73,7 +73,12 @@ struct DOODLE_CORE_API asset_type {
     // 6461808e-5fc6-4182-b99a-44b7855249ed
     return {{0x64, 0x61, 0x80, 0x8e, 0x5f, 0xc6, 0x41, 0x82, 0xb9, 0x9a, 0x44, 0xb7, 0x85, 0x52, 0x49, 0xed}};
   }
-  constexpr static std::array<asset_type, 10> get_all_constant();
+  // 半AI资产
+  constexpr static uuid get_half_ai_id() {
+    // 9c966068-cde6-433e-9a2c-b7235739716b
+    return {{0x9c, 0x96, 0x60, 0x68, 0xcd, 0xe6, 0x43, 0x3e, 0x9a, 0x2c, 0xb7, 0x23, 0x57, 0x39, 0x71, 0x6b}};
+  }
+  constexpr static std::array<asset_type, 12> get_all_constant();
 
   // from json
   template <typename BasicJsonType>
@@ -99,7 +104,7 @@ struct DOODLE_CORE_API asset_type {
   }
 };
 
-constexpr std::array<asset_type, 10> asset_type::get_all_constant() {
+constexpr std::array<asset_type, 12> asset_type::get_all_constant() {
   // clang-format off
   return {
       asset_type{.uuid_id_ = get_shot_id(), .name_ = "Shot", .short_name_ = "Shot", .description_ = "", .task_types_ = {}, .archived_ = true},
@@ -113,6 +118,8 @@ constexpr std::array<asset_type, 10> asset_type::get_all_constant() {
       asset_type{.uuid_id_ = get_ground_id(), .name_ = "场景", .short_name_ = "场景", .description_ = "", .task_types_ = {}, .archived_ = true},
       asset_type{.uuid_id_ = get_prop_id(), .name_ = "道具", .short_name_ = "道具", .description_ = "", .task_types_ = {}, .archived_ = true},
       asset_type{.uuid_id_ = get_effect_id(), .name_ = "特效", .short_name_ = "特效", .description_ = "", .task_types_ = {}, .archived_ = true},
+      asset_type{.uuid_id_ = get_ai_id(), .name_ = "AI", .short_name_ = "AI", .description_ = "", .task_types_ = {}, .archived_ = true},
+      asset_type{.uuid_id_ = get_half_ai_id(), .name_ = "半AI", .short_name_ = "半AI", .description_ = "", .task_types_ = {}, .archived_ = true},
   };
   // clang-format on
 }

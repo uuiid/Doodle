@@ -30,18 +30,6 @@ constexpr std::size_t g_current_version = 7;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
-  // 755c9edd-9481-4145-ab43-21491bdf2739
-  static constexpr uuid g_open_id{
-      {0x75, 0x5c, 0x9e, 0xdd, 0x94, 0x81, 0x41, 0x45, 0xab, 0x43, 0x21, 0x49, 0x1b, 0xdf, 0x27, 0x39}
-  };
-  // 0196eb9d5dc0727d8a751b05dea8494d
-  static constexpr uuid g_lable_id{
-      {0x01, 0x96, 0xeb, 0x9d, 0x5d, 0xc0, 0x72, 0x7d, 0x8a, 0x75, 0x1b, 0x05, 0xde, 0xa8, 0x49, 0x4d}
-  };
-  // 5159f210-7ec8-40e3-b8c9-2a06d0b4b116
-  static constexpr uuid g_closed_id{
-      {0x51, 0x59, 0xf2, 0x10, 0x7e, 0xc8, 0x40, 0xe3, 0xb8, 0xc9, 0x2a, 0x06, 0xd0, 0xb4, 0xb1, 0x16}
-  };
   explicit upgrade_init_t(const FSys::path& in_path) {}
 
   static void full_fts_sync(sqlite_database& in_data) {
@@ -77,6 +65,17 @@ struct upgrade_2_t : sqlite_upgrade {
     if (in_data.pragma().user_version() == 2) {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
+    }
+    if (in_data.pragma().user_version() == 6) {
+      auto l_s = std::make_shared<asset_type>(asset_type{
+          .uuid_id_     = asset_type::get_half_ai_id(),
+          .name_        = "半AI",
+          .short_name_  = "半AI",
+          .description_ = "",
+          .task_types_  = {},
+          .archived_    = true
+      });
+      in_data.install_unsafe<asset_type>(l_s);
     }
 
     in_data.pragma().user_version(g_current_version);
