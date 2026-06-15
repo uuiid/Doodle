@@ -48,6 +48,10 @@ struct database_t {
   /// 这个数据不在数据库中
   uuid uuid_parent_{};
   std::int32_t order_{};
+
+  constexpr static uuid get_lable_id();
+  constexpr static std::array<database_t, 1> get_all_constant();
+
   friend void to_json(nlohmann::json& j, const database_t& v) {
     j["id"]        = v.uuid_id_;
     j["label"]     = v.label_;

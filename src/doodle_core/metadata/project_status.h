@@ -15,6 +15,11 @@ struct DOODLE_CORE_API project_status {
   std::string name_;
   std::string color_;
 
+  constexpr static uuid get_open_id();
+  constexpr static uuid get_closed_id();
+  // 获取所以的常量项目状态
+  constexpr static std::array<project_status, 2> get_all_constant();
+
   // from json
   friend void from_json(const nlohmann::json& j, project_status& p) {
     j.at("name").get_to(p.name_);
