@@ -26,6 +26,7 @@
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <string>
 #include <sys/stat.h>
 #include <vector>
 
@@ -148,10 +149,11 @@ namespace {
 struct with_tasks_get_result_t {
   with_tasks_get_result_t() = default;
   explicit with_tasks_get_result_t(
-      const entity& in_entity, const entity_asset_extend& in_asset_extend, const asset_type& in_asset_type
+      const entity& in_entity, const entity_asset_extend& in_asset_extend, const asset_type& in_asset_type,
+      const std::string& in_sequence_name
   )
       : uuid_id_(in_entity.uuid_id_),
-        name_(in_entity.name_),
+        name_(create_name(in_entity.name_, in_sequence_name)),
         preview_file_id_(in_entity.preview_file_id_),
         description_(in_entity.description_),
         asset_type_name_(in_asset_type.name_),
@@ -195,6 +197,12 @@ struct with_tasks_get_result_t {
   decltype(entity_asset_extend::ji_du_) ji_du_;
   decltype(entity_asset_extend::kai_shi_ji_shu_) kai_shi_ji_shu_;
   decltype(entity_asset_extend::chang_ci_) chang_ci_;
+
+  static std::string create_name(const std::string& in_entity_name, const std::string& in_sequence_name) {
+    if (!in_sequence_name.empty()) return fmt::format("{}_{}", in_sequence_name, in_entity_name);
+
+    return in_entity_name;
+  }
 
   struct task_t {
     task_t() = default;
@@ -386,17 +394,19 @@ struct make_with_tasks_sql_result_t {
       else if (scenes_is_null)
         l_dynamic_where.add_condition(c(&entity_asset_extend::chang_ci_) == nullptr);
     }
-
+    auto sequence = alias<entity>("sequence");
+    auto episode  = alias<entity>("episode");
     return select(l_sql)
         .columns(
             object<entity>(), object<task>(), object<entity_asset_extend>(), object<asset_type>(),
-            &assignees_table::person_id_
+            &assignees_table::person_id_, sequence->*&entity::name_
         )
         .from<entity>()
         .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
         .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
         .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
         .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+        .left_outer_join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
         .where(l_dynamic_where)
         .order_by(&asset_type::name_)
         .order_by(&entity::name_)
@@ -443,9 +453,9 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));
   std::map<uuid, std::size_t> l_entities_and_tasks_map{};
   std::map<uuid, std::size_t> l_task_id_set{};
-  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id] : l_data()) {
+  for (auto&& [l_entity, l_task, l_entity_asset_extend, l_asset_type, l_person_id, l_sequence_name] : l_data()) {
     if (!l_entities_and_tasks_map.contains(l_entity.uuid_id_)) {
-      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type});
+      l_ret.emplace_back(with_tasks_get_result_t{l_entity, l_entity_asset_extend, l_asset_type, l_sequence_name});
       l_entities_and_tasks_map.emplace(l_entity.uuid_id_, l_ret.size() - 1);
     }
     if (!l_task.uuid_id_.is_nil()) {

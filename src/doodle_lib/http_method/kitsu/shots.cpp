@@ -182,11 +182,8 @@ struct shots_with_tasks_result {
   }
 };
 
-auto make_shots_with_tasks_result(
-    const person& in_person, const uuid& in_entity_type_id, const boost::urls::url& in_url
-) {
-  uuid l_entity_type_id_;
-  std::vector<uuid> l_entity_type_ids_{};
+auto make_shots_with_tasks_result(const person& in_person, const boost::urls::url& in_url) {
+  std::vector<uuid> l_entity_type_ids_{asset_type::get_shot_id(), asset_type::get_ai_id()};
   uuid l_project_id_;
   std::vector<uuid> l_episode_id_;
   std::vector<uuid> l_sequence_id_;
@@ -208,9 +205,8 @@ auto make_shots_with_tasks_result(
   auto sequence        = alias<entity>("sequence");
   auto episode         = alias<entity>("episode");
 
-  l_entity_type_id_    = in_entity_type_id;
   auto l_dynamic_query = dynamic_column_operations{};
-  l_dynamic_query.add_condition(c(&entity::entity_type_id_) == l_entity_type_id_);
+  l_dynamic_query.add_condition(c(&entity::entity_type_id_).in(l_entity_type_ids_));
   if (in_person.role_ == person_role_type::outsource) {
     auto l_outsource_select = select(l_sql)
                                   .columns(&outsource_studio_authorization::entity_id_)
@@ -231,7 +227,7 @@ auto make_shots_with_tasks_result(
   std::vector<shots_with_tasks_result> l_ret{};
   std::map<uuid, std::size_t> l_shots_ids{};
   std::set<uuid> l_tasks_ids;
-  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, l_project_id_, l_entity_type_id_);
+  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person.uuid_id_, l_project_id_, l_entity_type_ids_);
 
   // 迁移到 doodle::orm 的查询
   auto l_result                 = doodle::orm::select(l_sql)
@@ -243,8 +239,8 @@ auto make_shots_with_tasks_result(
                       .from<entity>()
                       .join<project>(&entity::project_id_, &project::uuid_id_, join_type::inner)
                       .left_outer_join<entity_shot_extend>(&entity_shot_extend::entity_id_, &entity::uuid_id_)
-                      .join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_, join_type::inner)
-                      .join(episode, sequence->*&entity::uuid_id_, episode->*&entity::uuid_id_, join_type::inner)
+                      .left_outer_join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
+                      .left_outer_join(episode, sequence->*&entity::uuid_id_, episode->*&entity::uuid_id_)
                       .left_outer_join<task>(&task::entity_id_, &entity::uuid_id_)
                       .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
                       .where(l_dynamic_query)
@@ -279,12 +275,9 @@ auto make_shots_with_tasks_result(
 
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> data_shots_with_tasks::get(session_data_ptr in_handle) {
-  auto& l_sql    = get_sqlite_database();
-  auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_shot});
+  auto& l_sql = get_sqlite_database();
 
-  co_return in_handle->make_msg(
-      nlohmann::json{} = make_shots_with_tasks_result(person_.person_, l_type_id.uuid_id_, in_handle->url_)
-  );
+  co_return in_handle->make_msg(nlohmann::json{} = make_shots_with_tasks_result(person_.person_, in_handle->url_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_shots::get(session_data_ptr in_handle) {
   co_return in_handle->make_msg_204();
