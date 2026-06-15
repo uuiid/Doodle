@@ -53,57 +53,21 @@ struct upgrade_init_t : sqlite_upgrade {
     if (in_data.pragma().user_version() != 0) return;
     in_data.sync_schema();
     in_data.pragma().user_version(g_current_version);
-    if (in_data.uuid_to_id<assets_helper::database_t>(g_lable_id) == 0) {
-      auto l_label      = std::make_shared<assets_helper::database_t>();
-      l_label->uuid_id_ = g_lable_id;
-      l_label->label_   = "标签";
-      in_data.install_unsafe<assets_helper::database_t>(l_label);
-    }
-    if (in_data.uuid_to_id<project_status>(g_open_id) == 0) {
-      auto l_s      = std::make_shared<project_status>();
-      l_s->uuid_id_ = g_open_id;
-      l_s->name_    = "Open";
-      l_s->color_   = "#000000";
-      in_data.install_unsafe<project_status>(l_s);
-    }
-    if (in_data.uuid_to_id<project_status>(g_closed_id) == 0) {
-      auto l_s      = std::make_shared<project_status>();
-      l_s->uuid_id_ = g_closed_id;
-      l_s->name_    = "Closed";
-      l_s->color_   = "#000000";
-      in_data.install_unsafe<project_status>(l_s);
-    }
-#define DOODLE_ASSET_TYPE(name, sql_name)                                   \
-  if (in_data.uuid_to_id<asset_type>(asset_type::get_##name##_id()) == 0) { \
-    auto l_s       = std::make_shared<asset_type>();                        \
-    l_s->uuid_id_  = asset_type::get_##name##_id();                         \
-    l_s->name_     = #sql_name;                                             \
-    l_s->archived_ = true;                                                  \
-    in_data.install_unsafe<asset_type>(l_s);                                \
+
+#define DOODLE_ASSET_TYPE(class_name)                      \
+  for (const auto& v : class_name::get_all_constant()) {   \
+    if (in_data.uuid_to_id<class_name>(v.uuid_id_) == 0) { \
+      auto l_s = std::make_shared<class_name>(v);          \
+      in_data.install_unsafe<class_name>(l_s);             \
+    }                                                      \
   }
-    DOODLE_ASSET_TYPE(scene, Scene)
-    DOODLE_ASSET_TYPE(sequence, Sequence)
-    DOODLE_ASSET_TYPE(shot, Shot)
-    DOODLE_ASSET_TYPE(edit, Edit)
-    DOODLE_ASSET_TYPE(concept, Concept)
-    DOODLE_ASSET_TYPE(episode, Episode)
+
+    DOODLE_ASSET_TYPE(project_status)
+    DOODLE_ASSET_TYPE(assets_helper::database_t)
+    DOODLE_ASSET_TYPE(asset_type)
+    DOODLE_ASSET_TYPE(task_type)
+
 #undef DOODLE_ASSET_TYPE
-    // #define DOODLE_TASK_TYPE(name, sql_name)                                  \
-//   if (in_data.uuid_to_id<task_type>(task_type::get_##name##_id()) == 0) { \
-//     auto l_s       = std::make_shared<task_type>();                       \
-//     l_s->uuid_id_  = task_type::get_##name##_id();                        \
-//     l_s->name_     = #sql_name;                                           \
-//     l_s->archived_ = true;                                                \
-//     l_s->color_    = "#999999";                                           \
-//     in_data.install_unsafe<task_type>(l_s);                               \
-//   }
-    //     DOODLE_TASK_TYPE(original_painting, 原画)
-    //     DOODLE_TASK_TYPE(character, 角色)
-    //     DOODLE_TASK_TYPE(ground_model, 地编模型)
-    //     DOODLE_TASK_TYPE(binding, 绑定)
-    //     DOODLE_TASK_TYPE(simulation, 解算资产)
-    //     DOODLE_TASK_TYPE(effect_asset, 特效资产)
-    // #undef DOODLE_TASK_TYPE
   }
 };  // namespace doodle::details
 
