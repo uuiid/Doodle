@@ -59,27 +59,6 @@
 #include <xgen/src/xgrenderer/XgRenderAPIUtils.h>
 namespace doodle::maya_plug {
 
-void creare_curve_test(const XGenRenderAPI::vec3* in_point, std::size_t in_size) {
-  MPointArray l_point_array{};
-  l_point_array.setLength(in_size);
-  MDoubleArray l_double_array{};
-  std::double_t l_konts{boost::numeric_cast<std::double_t>(in_size + 2)};
-  l_double_array.setLength(l_konts);
-  for (auto j = 0; j < in_size; j++) {
-    l_point_array.set(j, in_point[j].x, in_point[j].y, in_point[j].z);
-    l_double_array.set(boost::numeric_cast<std::double_t>(j), j);
-  }
-  l_double_array.set(0.0, 1);
-  l_double_array.set(0.0, 2);
-  l_double_array.set(l_double_array[in_size - 1], in_size);
-  l_double_array.set(l_double_array[in_size - 1], in_size + 1);
-
-  MFnNurbsCurve l_fn{};
-  MStatus l_status{};
-  l_fn.create(l_point_array, l_double_array, 3, MFnNurbsCurve::Form::kOpen, false, false, MObject::kNullObj, &l_status);
-  DOODLE_MAYA_CHICK(l_status);
-}
-
 class xgen_alembic_out {
  public:
   using time_sampling_ptr      = Alembic::AbcCoreAbstract::TimeSamplingPtr;
