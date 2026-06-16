@@ -325,13 +325,12 @@ class xgen_alembic_out {
     guide_curve_data_  = {};
   }
 
-  void write_section(XGenRenderAPI::PrimitiveCache* in_cache) {
+  void write_section(XGenRenderAPI::PrimitiveCache* in_cache, XgPatch* in_patch) {
     // 写入动画
     using namespace XGenRenderAPI;
     if (!in_cache->get(PrimitiveCache::PrimIsSpline)) return;
     auto& l_curve_data = render_curve_data_;
     auto l_inited      = render_init_;
-
     if (!l_inited) {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
@@ -356,8 +355,9 @@ class xgen_alembic_out {
         // U_XS/V_XS 是 XGen 提供的表面根部 UV（每图元一个值，逐顶点展开）
         const bool l_has_uv              = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
                               in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
-        const auto* l_u = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
-        const auto* l_v = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
+        const auto* l_u       = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
+        const auto* l_v       = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
+        const auto* l_face_id = l_has_uv ? in_cache->get(PrimitiveCache::FaceID_XS) : nullptr;
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
@@ -381,7 +381,14 @@ class xgen_alembic_out {
 
           // 将根 UV 展开到每个顶点（kVertexScope）
           if (l_has_uv) {
-            l_curve_data.uvs_.insert(l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]});
+            std::double_t l_u_val{}, l_v_val{};
+            in_patch->evalUV(l_face_id[z], l_u[z], l_v[z], l_u_val, l_v_val);
+            l_curve_data.uvs_.insert(
+                l_curve_data.uvs_.end(), l_store_verts,
+                Alembic::Abc::V2f{
+                    boost::numeric_cast<std::float_t>(l_u_val), boost::numeric_cast<std::float_t>(l_v_val)
+                }
+            );
           }
         }
 
@@ -444,11 +451,12 @@ class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
   std::string ir_render_cam_xform_;
   std::string ir_render_cam_ratio_;
   std::shared_ptr<xgen_alembic_out> o_alembic_out_;
+  XgPatch* xgen_patch_{};
 
  public:
   xgen_abc_export* p_owner;
-  XgenRender(xgen_abc_export* in_owner, const std::shared_ptr<xgen_alembic_out>& in_out)
-      : p_owner{in_owner}, o_alembic_out_(in_out) {
+  XgenRender(xgen_abc_export* in_owner, const std::shared_ptr<xgen_alembic_out>& in_out, XgPatch* in_patch)
+      : p_owner{in_owner}, o_alembic_out_(in_out), xgen_patch_{in_patch} {
     const static auto l_b_camera_ortho{false};
     const static auto l_camera_pos{SgVec3d{-48.4233, 29.8617, -21.2033}};
     const static auto l_camera_fov{54.432224};
@@ -486,7 +494,7 @@ class XgenRender : public XGenRenderAPI::ProceduralCallbacks {
 };
 XgenRender::~XgenRender() = default;
 void XgenRender::flush(const char* in_geom, XGenRenderAPI::PrimitiveCache* in_cache) {
-  o_alembic_out_->write_section(in_cache);
+  o_alembic_out_->write_section(in_cache, xgen_patch_);
 }
 void XgenRender::log(const char* in_str) { p_owner->displayInfo(in_str); }
 bool XgenRender::get(EBoolAttribute in_attr) const {
@@ -644,7 +652,7 @@ MStatus xgen_abc_export::redoIt() {
           continue;
         }
         auto& l_render_           = l_des_render->face_list_.emplace_back(std::make_unique<xgen_render_face>());
-        l_render_->main_render    = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_);
+        l_render_->main_render    = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_, l_ptr);
         auto l_args               = p_i->create_render_args(i, l_des, l_ptr);
         // displayInfo(l_args.c_str());
         l_render_->patch_renderer = std::unique_ptr<XGenRenderAPI::PatchRenderer>{
