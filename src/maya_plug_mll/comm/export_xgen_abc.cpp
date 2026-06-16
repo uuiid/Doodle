@@ -361,29 +361,36 @@ class xgen_alembic_out {
         l_curve_data.uvs_.reserve(l_num_size + l_curve_data.uvs_.size());
         // 获取宽度 width
         l_curve_data.widths_.reserve(l_num_size + l_curve_data.widths_.size());
-        if (auto l_width_size = in_cache->getSize(PrimitiveCache::Widths); l_width_size > 0) {
-          auto l_width = in_cache->get(PrimitiveCache::Widths);
-          for (auto z = 0; z < l_num_size; ++z) l_curve_data.widths_.emplace_back(l_width[z]);
-        } else {
-          auto l_width = in_cache->get(PrimitiveCache::ConstantWidth);
-          for (auto z = 0; z < l_num_size; ++z) l_curve_data.widths_.emplace_back(l_width);
-        }
+        const auto l_const_width         = in_cache->get(PrimitiveCache::ConstantWidth);
+        const bool l_has_per_curve_width = in_cache->getSize(PrimitiveCache::Widths) > 0;
+        const auto* l_per_curve_width    = l_has_per_curve_width ? in_cache->get(PrimitiveCache::Widths) : nullptr;
 
         // 每根曲线一个根部 UV，按 uniform scope 写入到 Alembic 曲线。
-        if (in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
-            in_cache->getSize(PrimitiveCache::V_XS) == l_num_size) {
-          const auto* l_u = in_cache->get(PrimitiveCache::U_XS);
-          const auto* l_v = in_cache->get(PrimitiveCache::V_XS);
-          for (auto z = 0; z < l_num_size; ++z) {
-            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
-          }
-        }
+        const bool l_has_uv              = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
+                              in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
+        const auto* l_u = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
+        const auto* l_v = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
-          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, l_curve_data.points_, l_curve_data.knots_);
-          l_index_off += l_num[z];
-          l_curve_data.vertices_.emplace_back(l_num[z] - 2);
+          const auto l_curve_verts = l_num[z];
+          // 顶点数 <= 2 的曲线无法构成有意义的 cubic 曲线（去掉首尾后 <= 0），
+          // 且负值传入 Alembic 内部会触发 boost::numeric_cast::negative_overflow
+          if (l_curve_verts <= 2) {
+            l_index_off += l_curve_verts;
+            continue;
+          }
+          creare_curve(l_pos + l_index_off + 1, l_curve_verts - 2, l_curve_data.points_, l_curve_data.knots_);
+          l_index_off += l_curve_verts;
+          l_curve_data.vertices_.emplace_back(l_curve_verts - 2);
+          if (l_has_per_curve_width) {
+            l_curve_data.widths_.emplace_back(l_per_curve_width[z]);
+          } else {
+            l_curve_data.widths_.emplace_back(l_const_width);
+          }
+          if (l_has_uv) {
+            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
+          }
         }
 
         break;
@@ -401,19 +408,24 @@ class xgen_alembic_out {
         l_curve_data.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_curve_data.points_.size());
         l_curve_data.uvs_.reserve(l_num_size + l_curve_data.uvs_.size());
 
-        if (in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
-            in_cache->getSize(PrimitiveCache::V_XS) == l_num_size) {
-          const auto* l_u = in_cache->get(PrimitiveCache::U_XS);
-          const auto* l_v = in_cache->get(PrimitiveCache::V_XS);
-          for (auto z = 0; z < l_num_size; ++z) {
-            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
-          }
-        }
+        const bool l_has_uv = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
+                              in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
+        const auto* l_u = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
+        const auto* l_v = l_has_uv ? in_cache->get(PrimitiveCache::V_XS) : nullptr;
 
         std::size_t l_index_off{};
         for (auto z = 0; z < l_num_size; ++z) {
-          creare_curve(l_pos + l_index_off + 1, l_num[z] - 2, l_curve_data.points_);
-          l_index_off += l_num[z];
+          const auto l_curve_verts = l_num[z];
+          // 顶点数 <= 2 的曲线跳过，与首次初始化的跳过逻辑保持一致
+          if (l_curve_verts <= 2) {
+            l_index_off += l_curve_verts;
+            continue;
+          }
+          creare_curve(l_pos + l_index_off + 1, l_curve_verts - 2, l_curve_data.points_);
+          l_index_off += l_curve_verts;
+          if (l_has_uv) {
+            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
+          }
         }
         break;
       }
