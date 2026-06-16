@@ -110,16 +110,16 @@ struct task_type {
 constexpr std::array<task_type, 10> task_type::get_all_constant() {
   // clang-format off
   return {
-      task_type{.uuid_id_ = get_original_painting_id(), .name_ = "原画",    .short_name_ = "原画",      .for_entity_ = "asset", },
-      task_type{.uuid_id_ = get_character_id(),         .name_ = "角色",    .short_name_ = "角色",      .for_entity_ = "asset", },
-      task_type{.uuid_id_ = get_ground_model_id(),      .name_ = "地编模型", .short_name_ = "地编模型",  .for_entity_ = "asset", },
-      task_type{.uuid_id_ = get_binding_id(),           .name_ = "绑定",     .short_name_ = "绑定",     .for_entity_ = "asset", },
-      task_type{.uuid_id_ = get_simulation_id(),        .name_ = "解算资产", .short_name_ = "解算资产",  .for_entity_ = "asset", },
-      task_type{.uuid_id_ = get_effect_asset_id(),      .name_ = "特效资产", .short_name_= "特效资产",   .for_entity_= "asset", },
-      task_type{.uuid_id_ = get_shot_effect_id(),       .name_ = "镜头特效", .short_name_= "镜头特效",   .for_entity_= "shot", },
-      task_type{.uuid_id_ = get_lighting_id(),          .name_ = "灯光",    .short_name_= "灯光",  	  	.for_entity_= "shot", },
-      task_type{.uuid_id_ = get_animation_id(),         .name_ = "动画",    .short_name_= "动画",  	  	.for_entity_= "shot", },
-      task_type{.uuid_id_ = get_simulation_task_id(),   .name_ = "解算任务", .short_name_= "解算任务",   .for_entity_= "shot", },
+      task_type{.uuid_id_ = get_original_painting_id(), .name_ = "原画",    .short_name_ = "原画",      .for_entity_ = "Asset", },
+      task_type{.uuid_id_ = get_character_id(),         .name_ = "角色",    .short_name_ = "角色",      .for_entity_ = "Asset", },
+      task_type{.uuid_id_ = get_ground_model_id(),      .name_ = "地编模型", .short_name_ = "地编模型",  .for_entity_ = "Asset", },
+      task_type{.uuid_id_ = get_binding_id(),           .name_ = "绑定",     .short_name_ = "绑定",     .for_entity_ = "Asset", },
+      task_type{.uuid_id_ = get_simulation_id(),        .name_ = "解算资产", .short_name_ = "解算资产",  .for_entity_ = "Asset", },
+      task_type{.uuid_id_ = get_effect_asset_id(),      .name_ = "特效资产", .short_name_= "特效资产",   .for_entity_= "Asset", },
+      task_type{.uuid_id_ = get_shot_effect_id(),       .name_ = "镜头特效", .short_name_= "镜头特效",   .for_entity_= "Shot", },
+      task_type{.uuid_id_ = get_lighting_id(),          .name_ = "灯光",    .short_name_= "灯光",  	  	.for_entity_= "Shot", },
+      task_type{.uuid_id_ = get_animation_id(),         .name_ = "动画",    .short_name_= "动画",  	  	.for_entity_= "Shot", },
+      task_type{.uuid_id_ = get_simulation_task_id(),   .name_ = "解算任务", .short_name_= "解算任务",   .for_entity_= "Shot", },
   };
   // clang-format on
 };
