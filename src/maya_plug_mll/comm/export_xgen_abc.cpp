@@ -332,17 +332,15 @@ class xgen_alembic_out {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
       for (auto i = 0; i < l_num_samples; i++) {
-        auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
+        auto* l_pos               = in_cache->get(PrimitiveCache::Points, i);
         // auto* l_width         = in_cache->get(PrimitiveCache::Widths);
         // auto l_width_size     = in_cache->getSize(PrimitiveCache::Widths);
 
-        auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
-        const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+        auto l_num                = in_cache->get(PrimitiveCache::NumVertices, i);
+        const auto l_num_size     = in_cache->getSize2(PrimitiveCache::NumVertices, i);
         const auto l_total_points = in_cache->getSize2(PrimitiveCache::Points, i);
         l_curve_data.points_.reserve(l_total_points + l_curve_data.points_.size());
-        l_curve_data.knots_.reserve(
-            l_total_points + l_num_size * 2 + l_curve_data.knots_.size()
-        );
+        l_curve_data.knots_.reserve(l_total_points + l_num_size * 2 + l_curve_data.knots_.size());
         l_curve_data.vertices_.reserve(l_num_size + l_curve_data.vertices_.size());
         l_curve_data.uvs_.reserve(l_total_points + l_curve_data.uvs_.size());
         // 获取宽度 width
@@ -379,9 +377,7 @@ class xgen_alembic_out {
 
           // 将根 UV 展开到每个顶点（kVertexScope），而非 uniform 1 个值对应整条曲线
           if (l_has_uv) {
-            l_curve_data.uvs_.insert(
-                l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]}
-            );
+            l_curve_data.uvs_.insert(l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]});
           }
         }
 
@@ -391,12 +387,12 @@ class xgen_alembic_out {
       auto l_num_samples = in_cache->get(PrimitiveCache::NumMotionSamples);
       // 只采样一次, 不使用运动模糊, 保留迭代, 后期可加入运动模糊
       for (auto i = 0; i < l_num_samples; i++) {
-        auto* l_pos           = in_cache->get(PrimitiveCache::Points, i);
+        auto* l_pos               = in_cache->get(PrimitiveCache::Points, i);
         // auto* l_width         = in_cache->get(PrimitiveCache::Widths);
         // auto l_width_size     = in_cache->getSize(PrimitiveCache::Widths);
 
-        auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
-        const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
+        auto l_num                = in_cache->get(PrimitiveCache::NumVertices, i);
+        const auto l_num_size     = in_cache->getSize2(PrimitiveCache::NumVertices, i);
         const auto l_total_points = in_cache->getSize2(PrimitiveCache::Points, i);
         l_curve_data.points_.reserve(l_total_points + l_curve_data.points_.size());
         l_curve_data.uvs_.reserve(l_total_points + l_curve_data.uvs_.size());
@@ -419,9 +415,7 @@ class xgen_alembic_out {
           l_index_off += l_curve_verts;
           // 将根 UV 展开到每个顶点以匹配 kVertexScope
           if (l_has_uv) {
-            l_curve_data.uvs_.insert(
-                l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]}
-            );
+            l_curve_data.uvs_.insert(l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]});
           }
         }
         break;
@@ -430,11 +424,8 @@ class xgen_alembic_out {
   };
 
   void write_end() {
-    if (render_curve_data_)
-      write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_, Alembic::AbcGeom::kVertexScope);
-    if (guide_curve_data_) {
-      write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_, Alembic::AbcGeom::kVertexScope);
-    }
+    if (render_curve_data_) write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_);
+    if (guide_curve_data_) write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_);
 
     Alembic::Abc::Box3d l_box{};
     for (auto&& i : render_curve_data_.points_) l_box.extendBy(i);
