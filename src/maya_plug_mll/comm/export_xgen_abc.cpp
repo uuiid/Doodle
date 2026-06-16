@@ -162,7 +162,7 @@ class xgen_alembic_out {
       l_curve_sample.setPositions(in_data.points_);
       l_curve_sample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, in_width_scope});
       if (!in_data.uvs_.empty()) {
-        l_curve_sample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample{in_data.uvs_, Alembic::AbcGeom::kUniformScope});
+        l_curve_sample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample{in_data.uvs_, Alembic::AbcGeom::kVertexScope});
       }
       l_curve_sample.setKnots(in_data.knots_);
       in_init = true;
@@ -338,19 +338,20 @@ class xgen_alembic_out {
 
         auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
         const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-        l_curve_data.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_curve_data.points_.size());
+        const auto l_total_points = in_cache->getSize2(PrimitiveCache::Points, i);
+        l_curve_data.points_.reserve(l_total_points + l_curve_data.points_.size());
         l_curve_data.knots_.reserve(
-            in_cache->getSize2(PrimitiveCache::Points, i) + l_num_size * 2 + l_curve_data.knots_.size()
+            l_total_points + l_num_size * 2 + l_curve_data.knots_.size()
         );
         l_curve_data.vertices_.reserve(l_num_size + l_curve_data.vertices_.size());
-        l_curve_data.uvs_.reserve(l_num_size + l_curve_data.uvs_.size());
+        l_curve_data.uvs_.reserve(l_total_points + l_curve_data.uvs_.size());
         // 获取宽度 width
         l_curve_data.widths_.reserve(l_num_size + l_curve_data.widths_.size());
         const auto l_const_width         = in_cache->get(PrimitiveCache::ConstantWidth);
         const bool l_has_per_curve_width = in_cache->getSize(PrimitiveCache::Widths) > 0;
         const auto* l_per_curve_width    = l_has_per_curve_width ? in_cache->get(PrimitiveCache::Widths) : nullptr;
 
-        // 每根曲线一个根部 UV，按 uniform scope 写入到 Alembic 曲线。
+        // 每根曲线一个根部 UV，按 vertex scope 写入到 Alembic 曲线（逐顶点展开以兼容多数 DCC）。
         const bool l_has_uv              = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
                               in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
         const auto* l_u = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
@@ -365,15 +366,21 @@ class xgen_alembic_out {
             l_index_off += l_curve_verts;
             continue;
           }
-          creare_curve(l_pos + l_index_off + 1, l_curve_verts - 2, l_curve_data.points_, l_curve_data.knots_);
+          const auto l_store_verts = l_curve_verts - 2;
+          creare_curve(l_pos + l_index_off + 1, l_store_verts, l_curve_data.points_, l_curve_data.knots_);
           l_index_off += l_curve_verts;
-          l_curve_data.vertices_.emplace_back(l_curve_verts - 2);
+          l_curve_data.vertices_.emplace_back(l_store_verts);
           if (l_has_per_curve_width)
             l_curve_data.widths_.emplace_back(l_per_curve_width[z]);
           else
             l_curve_data.widths_.emplace_back(l_const_width);
 
-          if (l_has_uv) l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
+          // 将根 UV 展开到每个顶点（kVertexScope），而非 uniform 1 个值对应整条曲线
+          if (l_has_uv) {
+            l_curve_data.uvs_.insert(
+                l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]}
+            );
+          }
         }
 
         break;
@@ -388,8 +395,9 @@ class xgen_alembic_out {
 
         auto l_num            = in_cache->get(PrimitiveCache::NumVertices, i);
         const auto l_num_size = in_cache->getSize2(PrimitiveCache::NumVertices, i);
-        l_curve_data.points_.reserve(in_cache->getSize2(PrimitiveCache::Points, i) + l_curve_data.points_.size());
-        l_curve_data.uvs_.reserve(l_num_size + l_curve_data.uvs_.size());
+        const auto l_total_points = in_cache->getSize2(PrimitiveCache::Points, i);
+        l_curve_data.points_.reserve(l_total_points + l_curve_data.points_.size());
+        l_curve_data.uvs_.reserve(l_total_points + l_curve_data.uvs_.size());
 
         const bool l_has_uv = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
                               in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
@@ -404,9 +412,15 @@ class xgen_alembic_out {
             l_index_off += l_curve_verts;
             continue;
           }
-          creare_curve(l_pos + l_index_off + 1, l_curve_verts - 2, l_curve_data.points_);
+          const auto l_store_verts = l_curve_verts - 2;
+          creare_curve(l_pos + l_index_off + 1, l_store_verts, l_curve_data.points_);
           l_index_off += l_curve_verts;
-          if (l_has_uv) l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
+          // 将根 UV 展开到每个顶点以匹配 kVertexScope
+          if (l_has_uv) {
+            l_curve_data.uvs_.insert(
+                l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]}
+            );
+          }
         }
         break;
       }
