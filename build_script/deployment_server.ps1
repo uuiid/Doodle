@@ -30,12 +30,11 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $LogPath = "$env:TEMP\build_$timestamp.log"
-    &robocopy "$Tmp\dist" "$Target\dist" /MIR /unilog+:$LogPath /w:1
+    &robocopy "$Tmp\dist" "$Target\dist" /MIR /w:1
     
     if (!$CopyServer) { return; }
 
     $Kitsu_Ip = "127.0.0.1"
-    Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
     #    Compare-Object -ReferenceObject (Get-Content -Path "D:\tmp\bin\file_association_http.exe") -DifferenceObject (Get-Content -Path "D:\kitsu\bin\file_association_http.exe") $Using:CopyServer
     
     $headers = @{
@@ -44,7 +43,6 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     $Target = "D:"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
-    $LogPath = "$env:TEMP\build_$timestamp.log"
     # 进行数据库升级
     $sqlite_upgrade_script = "D:/sql.sql"
     $database_path = "C:\kitsu_new.database"
@@ -65,6 +63,7 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
             Write-Host "更新服务 $($StoppedServers.Name)"
             &robocopy "$Tmp\bin" "$Target\$($StoppedServers.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
             # 2. 停止旧的服务
+            Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
             # 兼容5.1版本 需要加 -UseBasicParsing
             if ($PSVersionTable.PSVersion.Major -lt 6) {
                 Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers -UseBasicParsing
