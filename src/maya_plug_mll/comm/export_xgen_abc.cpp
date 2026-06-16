@@ -532,7 +532,12 @@ MSyntax xgen_abc_export_syntax() {
 }
 MStatus xgen_abc_export::doIt(const MArgList& in_arg) {
   parse_args(in_arg);
-  return redoIt();
+  try {
+    return redoIt();
+  } catch (...) {
+    displayError(conv::to_ms(boost::current_exception_diagnostic_information()));
+    return MS::kFailure;
+  }
 }
 std::string xgen_abc_export::impl::create_render_args(
     const palette_warp& in_, const XgDescription* in_des, const XgPatch* in_patch
