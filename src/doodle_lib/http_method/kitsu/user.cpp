@@ -179,7 +179,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person::get(session_data_ptr in_handle) {
-  auto l_p = get_sqlite_database().get_all<person>();
+  auto l_p           = get_sqlite_database().get_all<person>();
+  auto l_person_deps = get_sqlite_database().get_all<person_department_link>();
+  std::map<uuid, std::vector<uuid>> l_person_deps_map{};
+  for (auto&& l_person_dep : l_person_deps)
+    l_person_deps_map[l_person_dep.person_id_].push_back(l_person_dep.department_id_);
+  for (auto&& l_person : l_p) {
+    if (l_person_deps_map.contains(l_person.uuid_id_)) l_person.departments_ = l_person_deps_map[l_person.uuid_id_];
+  }
   co_return in_handle->make_msg(nlohmann::json{} = l_p);
 }
 
