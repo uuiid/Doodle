@@ -68,8 +68,9 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
       }
     }
     nlohmann::json l_json{};
-    l_json =
-        import_and_render_ue_ns::import_skin_file{.fbx_file_ = p, .import_dir_ = impl_.import_game_path_.parent_path()};
+    l_json = import_and_render_ue_ns::import_skin_file{
+        .fbx_file_ = p, .import_dir_ = impl_.import_game_path_.parent_path(), .ban_ben_suffix_ = impl_.ban_ben_suffix_
+    };
     auto l_tmp_path = FSys::write_tmp_file("ue_import", l_json.dump(), ".json");
 
     if (l_ue_project.empty()) throw doodle_error{"无法找到UE项目文件 {}", impl_.ue_project_path_};

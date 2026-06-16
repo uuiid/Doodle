@@ -37,6 +37,7 @@ class export_rig_sk_arg : public async_task {
     FSys::path ue_project_path_{};
     std::vector<file_copy_info> ue_asset_copy_path_;  // 需要复制的UE路径
     std::map<std::string, std::string> rename_map_;   // 重命名映射
+    std::string ban_ben_suffix_;                      // 版本后缀, 用于查找材质时, 进行对应的版本转换
     // 是否创建评论
     bool create_task_comment_{false};
 
@@ -47,6 +48,7 @@ class export_rig_sk_arg : public async_task {
       j["ue_project_path"]     = p.ue_project_path_;
       j["ue_asset_copy_path"]  = p.ue_asset_copy_path_;
       j["rename_map"]          = p.rename_map_;
+      j["ban_ben_suffix"]      = p.ban_ben_suffix_;
       j["create_task_comment"] = p.create_task_comment_;
     }
     // from json
@@ -56,6 +58,7 @@ class export_rig_sk_arg : public async_task {
       if (j.contains("ue_project_path")) j.at("ue_project_path").get_to(p.ue_project_path_);
       if (j.contains("ue_asset_copy_path")) j.at("ue_asset_copy_path").get_to(p.ue_asset_copy_path_);
       if (j.contains("rename_map")) j.at("rename_map").get_to(p.rename_map_);
+      if (j.contains("ban_ben_suffix")) j.at("ban_ben_suffix").get_to(p.ban_ben_suffix_);
       if (j.contains("create_task_comment")) j.at("create_task_comment").get_to(p.create_task_comment_);
     }
   };

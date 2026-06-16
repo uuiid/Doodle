@@ -30,9 +30,11 @@ namespace import_and_render_ue_ns {
 struct import_skin_file {
   FSys::path fbx_file_{};
   FSys::path import_dir_{};
+  std::string ban_ben_suffix_;  // 版本后缀, 用于查找材质时, 进行对应的版本转换
   friend void to_json(nlohmann::json& j, const import_skin_file& p) {
     j["fbx_file"]   = p.fbx_file_;
     j["import_dir"] = p.import_dir_;
+    j["ban_ben_suffix"] = p.ban_ben_suffix_;
   }
 };
 void fix_project(const FSys::path& in_project_path);
