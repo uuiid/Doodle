@@ -41,13 +41,6 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     $headers = @{
         "Authorization" = "Bearer $KitsuCookies"
     }
-    # 兼容5.1版本 需要加 -UseBasicParsing
-    if ($PSVersionTable.PSVersion.Major -lt 6) {
-        Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers -UseBasicParsing
-    }
-    else {
-        Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers
-    }
     $Target = "D:"
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
@@ -56,30 +49,45 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     $sqlite_upgrade_script = "D:/sql.sql"
     $database_path = "C:\kitsu_new.database"
     
-    if ((Get-Item -Path $sqlite_upgrade_script).Length -gt 0) {
-        Write-Host "进行数据库升级"
-        &"D:\sqlite3.exe" $database_path ".read $sqlite_upgrade_script"
-        Set-Content -Path $sqlite_upgrade_script -Value $null
-    }
-    # 找到停止的服务
-    $UpdataServers = $false
-    # Get-EventLog -LogName Application -Source nssm -Before ((Get-Date).AddMonths(-3)) | Remove-EventLog -Confirm:$false
+    $CurrentServers = $null;
+    $StoppedServers = $null;
     foreach ($server in (Get-Service "doodle_kitsu_*" | Sort-Object Status)) {
         if ($server.Status -eq "Stopped") {
-            if ((Get-FileHash "$Target\$($server.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
-                Write-Host "更新服务 $($server.Name)"
-                &robocopy "$Tmp\bin" "$Target\$($server.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
-                Start-Service -InputObject $server
-                Set-Service -Name $server.Name -StartupType Automatic
-                $UpdataServers = $true
-            }
+            $StoppedServers = $server;
         }
         else {
-            if ($UpdataServers) {
-                Write-Host "服务 $($server.Name) 未停止 将在 $((Get-Date).AddMinutes(20)) 停止，设置为手动启动"
-                Set-Service -Name $server.Name -StartupType Manual 
-            }
+            $CurrentServers = $server;
         }
+    }
+    if ($CurrentServers -ne $null -and $StoppedServers -ne $null) {
+        if ((Get-FileHash "$Target\$($StoppedServers.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
+            # 1. 更新服务
+            Write-Host "更新服务 $($StoppedServers.Name)"
+            &robocopy "$Tmp\bin" "$Target\$($StoppedServers.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
+            # 2. 停止旧的服务
+            # 兼容5.1版本 需要加 -UseBasicParsing
+            if ($PSVersionTable.PSVersion.Major -lt 6) {
+                Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers -UseBasicParsing
+            }
+            else {
+                Invoke-WebRequest -Uri "http://$Kitsu_Ip/api/doodle/stop-server" -Method Post -Headers $headers
+            }
+            # 3. 升级数据库
+            if ((Get-Item -Path $sqlite_upgrade_script).Length -gt 0) {
+                Write-Host "进行数据库升级"
+                &"D:\sqlite3.exe" $database_path ".read $sqlite_upgrade_script"
+                Set-Content -Path $sqlite_upgrade_script -Value $null
+            }
+            # 4. 启动新的服务
+            Start-Service -InputObject $StoppedServers
+            # 5. 设置旧的服务为手动启动 新的服务为自动启动
+            Set-Service -Name $StoppedServers.Name -StartupType Automatic
+            Set-Service -Name $CurrentServers.Name -StartupType Manual 
+            Write-Host "服务 $($CurrentServers.Name) 未停止 将在 $((Get-Date).AddMinutes(20)) 停止，设置为手动启动"
+        }
+    }
+    else {
+        Write-Host "未找到服务 $($CurrentServers.Name) 或 $($StoppedServers.Name) 请检查服务状态"
     }
 
 }
