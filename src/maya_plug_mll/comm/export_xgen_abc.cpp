@@ -346,7 +346,7 @@ class xgen_alembic_out {
         l_curve_data.vertices_.reserve(l_num_size + l_curve_data.vertices_.size());
         l_curve_data.uvs_.reserve(l_total_points + l_curve_data.uvs_.size());
         // 获取宽度 width
-        l_curve_data.widths_.reserve(l_num_size + l_curve_data.widths_.size());
+        l_curve_data.widths_.reserve(l_total_points + l_curve_data.widths_.size());
         const auto l_const_width         = in_cache->get(PrimitiveCache::ConstantWidth);
         const bool l_has_per_curve_width = in_cache->getSize(PrimitiveCache::Widths) > 0;
         const auto* l_per_curve_width    = l_has_per_curve_width ? in_cache->get(PrimitiveCache::Widths) : nullptr;
@@ -370,10 +370,12 @@ class xgen_alembic_out {
           creare_curve(l_pos + l_index_off + 1, l_store_verts, l_curve_data.points_, l_curve_data.knots_);
           l_index_off += l_curve_verts;
           l_curve_data.vertices_.emplace_back(l_store_verts);
-          if (l_has_per_curve_width)
-            l_curve_data.widths_.emplace_back(l_per_curve_width[z]);
-          else
-            l_curve_data.widths_.emplace_back(l_const_width);
+
+          // 宽度展开到每个顶点（kVertexScope）
+          {
+            const auto l_w = l_has_per_curve_width ? l_per_curve_width[z] : l_const_width;
+            l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_w);
+          }
 
           // 将根 UV 展开到每个顶点（kVertexScope），而非 uniform 1 个值对应整条曲线
           if (l_has_uv) {
@@ -429,7 +431,7 @@ class xgen_alembic_out {
 
   void write_end() {
     if (render_curve_data_)
-      write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_, Alembic::AbcGeom::kUniformScope);
+      write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_, Alembic::AbcGeom::kVertexScope);
     if (guide_curve_data_) {
       write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_, Alembic::AbcGeom::kVertexScope);
     }
