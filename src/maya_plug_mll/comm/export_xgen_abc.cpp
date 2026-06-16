@@ -149,7 +149,10 @@ class xgen_alembic_out {
     }
   }
 
-  void write_curve_sample(curve_data& in_data, const o_curve_ptr& in_curve_ptr, bool& in_init) {
+  void write_curve_sample(
+      curve_data& in_data, const o_curve_ptr& in_curve_ptr, bool& in_init,
+      Alembic::AbcGeom::GeometryScope in_width_scope = Alembic::AbcGeom::kVertexScope
+  ) {
     Alembic::AbcGeom::OCurvesSchema::Sample l_curve_sample{};
     if (!in_init) {
       l_curve_sample.setBasis(Alembic::AbcGeom::kBsplineBasis);
@@ -158,7 +161,7 @@ class xgen_alembic_out {
       l_curve_sample.setCurvesNumVertices(in_data.vertices_);
       l_curve_sample.setPositions(in_data.points_);
       l_curve_sample.setWidths(
-          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, Alembic::AbcGeom::kVertexScope}
+          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, in_width_scope}
       );
       if (!in_data.uvs_.empty()) {
         l_curve_sample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample{in_data.uvs_, Alembic::AbcGeom::kUniformScope});
@@ -417,9 +420,10 @@ class xgen_alembic_out {
   };
 
   void write_end() {
-    if (render_curve_data_) write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_);
+    if (render_curve_data_)
+      write_curve_sample(render_curve_data_, o_render_curve_ptr_, render_init_, Alembic::AbcGeom::kUniformScope);
     if (guide_curve_data_) {
-      write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_);
+      write_curve_sample(guide_curve_data_, o_guide_curve_ptr_, guide_init_, Alembic::AbcGeom::kVertexScope);
     }
 
     Alembic::Abc::Box3d l_box{};
