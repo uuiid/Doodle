@@ -160,9 +160,7 @@ class xgen_alembic_out {
       l_curve_sample.setType(Alembic::AbcGeom::kCubic);
       l_curve_sample.setCurvesNumVertices(in_data.vertices_);
       l_curve_sample.setPositions(in_data.points_);
-      l_curve_sample.setWidths(
-          Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, in_width_scope}
-      );
+      l_curve_sample.setWidths(Alembic::AbcGeom::OFloatGeomParam::Sample{in_data.widths_, in_width_scope});
       if (!in_data.uvs_.empty()) {
         l_curve_sample.setUVs(Alembic::AbcGeom::OV2fGeomParam::Sample{in_data.uvs_, Alembic::AbcGeom::kUniformScope});
       }
@@ -370,14 +368,12 @@ class xgen_alembic_out {
           creare_curve(l_pos + l_index_off + 1, l_curve_verts - 2, l_curve_data.points_, l_curve_data.knots_);
           l_index_off += l_curve_verts;
           l_curve_data.vertices_.emplace_back(l_curve_verts - 2);
-          if (l_has_per_curve_width) {
+          if (l_has_per_curve_width)
             l_curve_data.widths_.emplace_back(l_per_curve_width[z]);
-          } else {
+          else
             l_curve_data.widths_.emplace_back(l_const_width);
-          }
-          if (l_has_uv) {
-            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
-          }
+
+          if (l_has_uv) l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
         }
 
         break;
@@ -410,9 +406,7 @@ class xgen_alembic_out {
           }
           creare_curve(l_pos + l_index_off + 1, l_curve_verts - 2, l_curve_data.points_);
           l_index_off += l_curve_verts;
-          if (l_has_uv) {
-            l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
-          }
+          if (l_has_uv) l_curve_data.uvs_.emplace_back(l_u[z], l_v[z]);
         }
         break;
       }
