@@ -117,6 +117,9 @@ class xgen_alembic_out {
     const auto l_size = l_points->size();
     if (l_size < 2) return;
 
+    const auto l_root_u = boost::numeric_cast<float>(in_guide.u());
+    const auto l_root_v = boost::numeric_cast<float>(in_guide.v());
+
     if (!guide_init_) {
       guide_curve_data_.vertices_.emplace_back(boost::numeric_cast<std::int32_t>(l_size));
 
@@ -134,6 +137,7 @@ class xgen_alembic_out {
                 std::clamp(in_guide.radius(j), 0.0, static_cast<double>(std::numeric_limits<std::float_t>::max()))
             )
         );
+        guide_curve_data_.uvs_.emplace_back(l_root_u, l_root_v);
       }
       guide_curve_data_.knots_[guide_curve_data_.knots_.size() - 2] = guide_curve_data_.knots_.back();
       guide_curve_data_.knots_.emplace_back(guide_curve_data_.knots_.back());
@@ -349,7 +353,7 @@ class xgen_alembic_out {
         const bool l_has_per_curve_width = in_cache->getSize(PrimitiveCache::Widths) > 0;
         const auto* l_per_curve_width    = l_has_per_curve_width ? in_cache->get(PrimitiveCache::Widths) : nullptr;
 
-        // 每根曲线一个根部 UV，按 vertex scope 写入到 Alembic 曲线（逐顶点展开以兼容多数 DCC）。
+        // U_XS/V_XS 是 XGen 提供的表面根部 UV（每图元一个值，逐顶点展开）
         const bool l_has_uv              = in_cache->getSize(PrimitiveCache::U_XS) == l_num_size &&
                               in_cache->getSize(PrimitiveCache::V_XS) == l_num_size;
         const auto* l_u = l_has_uv ? in_cache->get(PrimitiveCache::U_XS) : nullptr;
@@ -375,7 +379,7 @@ class xgen_alembic_out {
             l_curve_data.widths_.insert(l_curve_data.widths_.end(), l_store_verts, l_w);
           }
 
-          // 将根 UV 展开到每个顶点（kVertexScope），而非 uniform 1 个值对应整条曲线
+          // 将根 UV 展开到每个顶点（kVertexScope）
           if (l_has_uv) {
             l_curve_data.uvs_.insert(l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]});
           }
@@ -413,7 +417,7 @@ class xgen_alembic_out {
           const auto l_store_verts = l_curve_verts - 2;
           creare_curve(l_pos + l_index_off + 1, l_store_verts, l_curve_data.points_);
           l_index_off += l_curve_verts;
-          // 将根 UV 展开到每个顶点以匹配 kVertexScope
+          // 将根 UV 展开到每个顶点（kVertexScope）
           if (l_has_uv) {
             l_curve_data.uvs_.insert(l_curve_data.uvs_.end(), l_store_verts, Alembic::Abc::V2f{l_u[z], l_v[z]});
           }
