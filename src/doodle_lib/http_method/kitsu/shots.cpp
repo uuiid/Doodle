@@ -183,7 +183,9 @@ struct shots_with_tasks_result {
 };
 
 auto make_shots_with_tasks_result(const person& in_person, const boost::urls::url& in_url) {
-  std::vector<uuid> l_entity_type_ids_{asset_type::get_shot_id(), asset_type::get_ai_id()};
+  std::vector<uuid> l_entity_type_ids_{
+      asset_type::get_shot_id(), asset_type::get_ai_id(), asset_type::get_half_ai_id()
+  };
   uuid l_project_id_;
   std::vector<uuid> l_episode_id_;
   std::vector<uuid> l_sequence_id_;
