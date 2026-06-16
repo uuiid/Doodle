@@ -26,6 +26,7 @@
 #include <Alembic/AbcGeom/XformOp.h>
 #include <array>
 #include <filesystem>
+#include <limits>
 #include <maya/MAnimControl.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MDagPath.h>
@@ -128,7 +129,11 @@ class xgen_alembic_out {
             boost::numeric_cast<float>(l_pt[2])
         );
         guide_curve_data_.knots_.emplace_back(boost::numeric_cast<std::float_t>(std::max(0, j - 1)));
-        guide_curve_data_.widths_.emplace_back(boost::numeric_cast<std::float_t>(in_guide.radius(j)));
+        guide_curve_data_.widths_.emplace_back(
+            boost::numeric_cast<std::float_t>(
+                std::clamp(in_guide.radius(j), 0.0, static_cast<double>(std::numeric_limits<std::float_t>::max()))
+            )
+        );
       }
       guide_curve_data_.knots_[guide_curve_data_.knots_.size() - 2] = guide_curve_data_.knots_.back();
       guide_curve_data_.knots_.emplace_back(guide_curve_data_.knots_.back());
