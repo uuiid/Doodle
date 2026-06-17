@@ -31,7 +31,7 @@ struct import_skin_file {
   FSys::path fbx_file_{};
   FSys::path import_dir_{};
   std::string ban_ben_suffix_;  // 版本后缀, 用于查找材质时, 进行对应的版本转换
-  std::string skin_path_;       // 对应的骨骼位置, 如果有的话使用同一根骨骼
+  FSys::path skin_path_;        // 对应的骨骼位置, 如果有的话使用同一根骨骼
 
   friend void to_json(nlohmann::json& j, const import_skin_file& p) {
     j["fbx_file"]       = p.fbx_file_;
