@@ -130,38 +130,66 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	FString ImportDirPath = JsonObject->GetStringField(TEXT("import_dir"));
 	ImportPath = ImportDirPath;
 	FString FbxPath = JsonObject->GetStringField(TEXT("fbx_file"));
+	FString L_BanBen_Suffix = JsonObject->HasField(TEXT("ban_ben_suffix"))
+		? JsonObject->GetStringField(TEXT("ban_ben_suffix"))
+		: TEXT("");
 	UAssetImportTask* L_Task = CreateCharacterImportTask(FbxPath, nullptr, false);
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
 
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	AssetTools.ImportAssetTasks(TArray{L_Task});
+	TArray<UObject*> ImportedObjs = L_Task->GetObjects();
 
-	if (TArray<UObject*> ImportedObjs = L_Task->GetObjects(); !ImportedObjs.IsEmpty())
+	if (ImportedObjs.IsEmpty()) return;
+
+	USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
+	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
 	{
-		USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
-		if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
-		{
-			UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
-			TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
-		}
-
-		// 生成 lod
-		if (TmpSkeletalMesh)
-		{
-			static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
-				GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
-			TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
-			FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
-			{
-				FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
-				check(TmpSkeletalMesh);
-
-				FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 3, false, true);
-				TmpSkeletalMesh->PostEditChange();
-				TmpSkeletalMesh->MarkPackageDirty();
-			}
-		}
+		UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
+		TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
 	}
+
+	// 生成 lod
+	if (!TmpSkeletalMesh) return;
+
+	static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
+		GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
+	TmpSkeletalMesh->SetLODSettings(L_Skin_Mesh_Setting);
+
+	FScopedSuspendAlternateSkinWeightPreview ScopedSuspendAlternateSkinnWeightPreview(TmpSkeletalMesh);
+	FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
+	check(TmpSkeletalMesh);
+
+	FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 3, true, false);
+	TmpSkeletalMesh->PostEditChange();
+
+	if (!L_BanBen_Suffix.IsEmpty())
+		for (auto&& L_Mat : TmpSkeletalMesh->GetMaterials())
+		{
+			auto L_Mat_Path = L_Mat.MaterialInterface->GetPathName();
+			// 添加后缀后重新按照路径寻找
+			auto L_New_Path = FPaths::Combine(FPaths::GetPath(L_Mat_Path),
+				FPaths::GetBaseFilename(L_Mat_Path) + L_BanBen_Suffix + FPaths::GetExtension(L_Mat_Path, true) + L_BanBen_Suffix);
+			auto L_New_Material_Object = LoadObject<UMaterialInterface>(TmpSkeletalMesh, L_New_Path);
+			if (!L_New_Material_Object) continue;
+			UMaterial* L_Mat_Object = Cast<UMaterial>(L_New_Material_Object);
+			if (!L_Mat_Object)
+			{
+				UMaterialInstanceConstant* L_Mat_Instance_Object = Cast<UMaterialInstanceConstant>(L_New_Material_Object);
+				L_Mat_Object = L_Mat_Instance_Object->GetMaterial();
+			}
+			if (!L_Mat_Object)
+			{
+				bool L_bHasProperty{true};
+				L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+				L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
+				L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+				L_Mat_Object->PostEditChange();
+			}
+			L_Mat.MaterialSlotName = FName{L_Mat.MaterialSlotName.ToString() + L_BanBen_Suffix};
+			L_Mat.MaterialInterface = L_New_Material_Object;
+		}
+
 
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 }
@@ -181,7 +209,9 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	//--------------------
 	RenderMapPath = JsonObject->GetStringField(TEXT("render_map"));
 	CreateMapPath = JsonObject->GetStringField(TEXT("create_map"));
-	OriginalMapPath = JsonObject->HasField(TEXT("original_map")) ? JsonObject->GetStringField(TEXT("original_map")) : FString{};
+	OriginalMapPath = JsonObject->HasField(TEXT("original_map"))
+		? JsonObject->GetStringField(TEXT("original_map"))
+		: FString{};
 	DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
 	ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
 
@@ -489,9 +519,9 @@ void UDoodleAutoAnimationCommandlet::OnCreateSequence()
 	TheLevelSequence->GetMovieScene()->SetWorkingRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetViewRange((L_Start - 30 - Offset) / Rate, (L_End + 30) / Rate);
 	TheLevelSequence->GetMovieScene()->SetPlaybackRange(TRange<FFrameNumber>{
-		                                                    (L_Start - Offset) * FrameTick,
-		                                                    (L_End + 1) * FrameTick
-	                                                    }, true);
+		(L_Start - Offset) * FrameTick,
+		(L_End + 1) * FrameTick
+	}, true);
 	TheLevelSequence->GetMovieScene()->Modify();
 }
 
@@ -578,34 +608,34 @@ void UDoodleAutoAnimationCommandlet::ClearAllLight()
 void UDoodleAutoAnimationCommandlet::PostProcessVolumeConfig()
 {
 	auto G_SetPostProcessVolume = [](APostProcessVolume* In_PostProcessVolume)
-	{
-		In_PostProcessVolume->Settings.bOverride_BloomIntensity = true;
-		In_PostProcessVolume->Settings.bOverride_AutoExposureMinBrightness = true;
-		In_PostProcessVolume->Settings.bOverride_AutoExposureMaxBrightness = true;
-		In_PostProcessVolume->Settings.bOverride_AutoExposureBias = true;
-		In_PostProcessVolume->Settings.bOverride_LocalExposureDetailStrength = true;
-		In_PostProcessVolume->Settings.bOverride_Sharpen = true;
-		In_PostProcessVolume->Settings.bOverride_ReflectionMethod = true;
-		In_PostProcessVolume->Settings.bOverride_LumenReflectionQuality = true;
-		In_PostProcessVolume->Settings.bOverride_DynamicGlobalIlluminationMethod = true;
-		In_PostProcessVolume->Settings.bOverride_LumenSceneLightingQuality = true;
-		In_PostProcessVolume->Settings.bOverride_LumenSceneDetail = true;
-		In_PostProcessVolume->Settings.bOverride_LumenFinalGatherQuality = true;
-		In_PostProcessVolume->Settings.bOverride_LumenRayLightingMode = true;
-		In_PostProcessVolume->Settings.bOverride_LumenMaxReflectionBounces = true;
-		In_PostProcessVolume->Settings.BloomIntensity = 0.000000;
-		In_PostProcessVolume->Settings.LumenSceneLightingQuality = 2.000000;
-		In_PostProcessVolume->Settings.LumenSceneDetail = 2.000000;
-		In_PostProcessVolume->Settings.LumenFinalGatherQuality = 4.000000;
-		In_PostProcessVolume->Settings.LumenReflectionQuality = 2.000000;
-		In_PostProcessVolume->Settings.LumenRayLightingMode = ELumenRayLightingModeOverride::HitLighting;
-		In_PostProcessVolume->Settings.LumenMaxReflectionBounces = 3;
-		In_PostProcessVolume->Settings.AutoExposureBias = 0.000000;
-		In_PostProcessVolume->Settings.AutoExposureMinBrightness = 1.000000;
-		In_PostProcessVolume->Settings.AutoExposureMaxBrightness = 1.000000;
-		In_PostProcessVolume->Settings.LocalExposureDetailStrength = 1.100000;
-		In_PostProcessVolume->Settings.Sharpen = 1.500000;
-	};
+		{
+			In_PostProcessVolume->Settings.bOverride_BloomIntensity = true;
+			In_PostProcessVolume->Settings.bOverride_AutoExposureMinBrightness = true;
+			In_PostProcessVolume->Settings.bOverride_AutoExposureMaxBrightness = true;
+			In_PostProcessVolume->Settings.bOverride_AutoExposureBias = true;
+			In_PostProcessVolume->Settings.bOverride_LocalExposureDetailStrength = true;
+			In_PostProcessVolume->Settings.bOverride_Sharpen = true;
+			In_PostProcessVolume->Settings.bOverride_ReflectionMethod = true;
+			In_PostProcessVolume->Settings.bOverride_LumenReflectionQuality = true;
+			In_PostProcessVolume->Settings.bOverride_DynamicGlobalIlluminationMethod = true;
+			In_PostProcessVolume->Settings.bOverride_LumenSceneLightingQuality = true;
+			In_PostProcessVolume->Settings.bOverride_LumenSceneDetail = true;
+			In_PostProcessVolume->Settings.bOverride_LumenFinalGatherQuality = true;
+			In_PostProcessVolume->Settings.bOverride_LumenRayLightingMode = true;
+			In_PostProcessVolume->Settings.bOverride_LumenMaxReflectionBounces = true;
+			In_PostProcessVolume->Settings.BloomIntensity = 0.000000;
+			In_PostProcessVolume->Settings.LumenSceneLightingQuality = 2.000000;
+			In_PostProcessVolume->Settings.LumenSceneDetail = 2.000000;
+			In_PostProcessVolume->Settings.LumenFinalGatherQuality = 4.000000;
+			In_PostProcessVolume->Settings.LumenReflectionQuality = 2.000000;
+			In_PostProcessVolume->Settings.LumenRayLightingMode = ELumenRayLightingModeOverride::HitLighting;
+			In_PostProcessVolume->Settings.LumenMaxReflectionBounces = 3;
+			In_PostProcessVolume->Settings.AutoExposureBias = 0.000000;
+			In_PostProcessVolume->Settings.AutoExposureMinBrightness = 1.000000;
+			In_PostProcessVolume->Settings.AutoExposureMaxBrightness = 1.000000;
+			In_PostProcessVolume->Settings.LocalExposureDetailStrength = 1.100000;
+			In_PostProcessVolume->Settings.Sharpen = 1.500000;
+		};
 
 
 	APostProcessVolume* L_PostProcessVolume{};
@@ -698,10 +728,10 @@ void UDoodleAutoAnimationCommandlet::ImportCamera(const FString& InFbxPath) cons
 	UnFbx::FFbxImporter* FbxImporter = UnFbx::FFbxImporter::GetInstance();
 	FbxImporter->ImportFromFile(*InFbxPath, FPaths::GetExtension(InFbxPath));
 	MovieSceneToolHelpers::ImportFBXCameraToExisting(FbxImporter, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map,
-	                                                 false, false);
+		false, false);
 	//---------------------
 	bool bValid = MovieSceneToolHelpers::ImportFBXIfReady(GWorld, TheLevelSequence, L_LevelSequencePlayer, BindingID.GetRelativeSequenceID(), L_Map,
-	                                                      L_ImportFBXSettings, InOutParams);
+		L_ImportFBXSettings, InOutParams);
 	//----------------
 	L_LevelSequencePlayer->Stop();
 	// TempActor->Destroy();
@@ -881,8 +911,12 @@ UAssetImportTask* UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(cons
 	UFbxFactory* K_FBX_F = NewObject<UFbxFactory>(UFbxFactory::StaticClass());
 	K_FBX_F->ImportUI = NewObject<UFbxImportUI>(K_FBX_F);
 	K_FBX_F->ImportUI->Skeleton = InSkeleton;
-	K_FBX_F->ImportUI->MeshTypeToImport = InSkeleton ? FBXIT_Animation : FBXIT_SkeletalMesh;
-	K_FBX_F->ImportUI->OriginalImportType = InSkeleton ? FBXIT_Animation : FBXIT_SkeletalMesh;
+	K_FBX_F->ImportUI->MeshTypeToImport = InSkeleton
+		? FBXIT_Animation
+		: FBXIT_SkeletalMesh;
+	K_FBX_F->ImportUI->OriginalImportType = InSkeleton
+		? FBXIT_Animation
+		: FBXIT_SkeletalMesh;
 	K_FBX_F->ImportUI->bImportAsSkeletal = !InSkeleton;
 	K_FBX_F->ImportUI->bCreatePhysicsAsset = true;
 	K_FBX_F->ImportUI->bImportMesh = !InSkeleton;
@@ -1098,9 +1132,9 @@ void UDoodleAutoAnimationCommandlet::HideMaterials(const ASkeletalMeshActor* InA
 {
 	auto L_Skeleton = InActor->GetSkeletalMeshComponent()->GetSkeletalMeshAsset()->GetSkeleton();
 	if (const auto L_It = ImportFiles.FindByPredicate([L_Skeleton](const FImportFiles2& InFiles2)-> bool
-	{
-		return InFiles2.Skeleton == L_Skeleton;
-	}); L_It)
+		{
+			return InFiles2.Skeleton == L_Skeleton;
+		}); L_It)
 	{
 		const auto L_OP_Mat = LoadObject<UMaterial>(nullptr, TEXT("/Doodle/completely_transparent.completely_transparent"));
 		const auto L_SK = InActor->GetSkeletalMeshComponent();
@@ -1108,9 +1142,9 @@ void UDoodleAutoAnimationCommandlet::HideMaterials(const ASkeletalMeshActor* InA
 		for (auto&& L_Mat : L_It->HideMaterials)
 		{
 			if (const auto L_Slot_It = L_Mats.FindByPredicate([&L_Mat](const FName& In_Mat)-> bool
-			{
-				return In_Mat.ToString() == L_Mat;
-			}); L_Slot_It)
+				{
+					return In_Mat.ToString() == L_Mat;
+				}); L_Slot_It)
 			{
 				L_SK->SetMaterialByName(*L_Slot_It, L_OP_Mat);
 			}
@@ -1444,23 +1478,23 @@ void UDoodleAutoAnimationCommandlet::FixMaterialProperty()
 	TArray<UObject*> L_Save{};
 	UE_LOG(LogTemp, Log, TEXT("开始修正材质参数"));
 	IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
-	{
-		if (FPaths::IsUnderDirectory(InAss.PackageName.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(
-			InAss.PackageName.ToString(), TEXT("/Game/Prop/")))
 		{
-			if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset()))
+			if (FPaths::IsUnderDirectory(InAss.PackageName.ToString(), TEXT("/Game/Character/")) || FPaths::IsUnderDirectory(
+				InAss.PackageName.ToString(), TEXT("/Game/Prop/")))
 			{
-				bool L_bHasProperty{true};
-				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
-				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
-				L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
-				UE_LOG(LogTemp, Log, TEXT("修正材质参数 %s"), *InAss.PackageName.ToString());
+				if (UMaterial* L_Mat = Cast<UMaterial>(InAss.GetAsset()))
+				{
+					bool L_bHasProperty{true};
+					L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+					L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
+					L_Mat->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+					UE_LOG(LogTemp, Log, TEXT("修正材质参数 %s"), *InAss.PackageName.ToString());
 
-				L_Save.Add(L_Mat);
-			};
-		}
-		return true;
-	});
+					L_Save.Add(L_Mat);
+				};
+			}
+			return true;
+		});
 	UE_LOG(LogTemp, Log, TEXT("修正材质参数完成"));
 
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
@@ -1475,10 +1509,10 @@ void UDoodleAutoAnimationCommandlet::FixMaterialParameterCollection()
 	LFilter.bRecursiveClasses = true;
 	LFilter.ClassPaths.Add(UMaterialParameterCollection::StaticClass()->GetClassPathName());
 	IAssetRegistry::Get()->EnumerateAssets(LFilter, [&](const FAssetData& InAss) -> bool
-	{
-		UObject* LObj = InAss.GetAsset();
-		return true;
-	});
+		{
+			UObject* LObj = InAss.GetAsset();
+			return true;
+		});
 }
 
 
