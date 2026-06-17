@@ -129,11 +129,15 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	}
 	FString ImportDirPath = JsonObject->GetStringField(TEXT("import_dir"));
 	ImportPath = ImportDirPath;
-	FString FbxPath = JsonObject->GetStringField(TEXT("fbx_file"));
-	FString L_BanBen_Suffix = JsonObject->HasField(TEXT("ban_ben_suffix"))
+	const FString FbxPath = JsonObject->GetStringField(TEXT("fbx_file"));
+	const FString L_BanBen_Suffix = JsonObject->HasField(TEXT("ban_ben_suffix"))
 		? JsonObject->GetStringField(TEXT("ban_ben_suffix"))
 		: TEXT("");
-	UAssetImportTask* L_Task = CreateCharacterImportTask(FbxPath, nullptr, false);
+	FString L_Skin_Path = JsonObject->HasField(TEXT("skin_path"))
+		? JsonObject->GetStringField(TEXT("skin_path"))
+		: TEXT("");
+	const TObjectPtr<USkeleton> L_Skeleton = LoadObject<USkeleton>(nullptr, *L_BanBen_Suffix);
+	UAssetImportTask* L_Task = CreateCharacterImportTask(FbxPath, L_Skeleton, false);
 	IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
 
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
@@ -145,7 +149,7 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
 	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
 	{
-		UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
+		const UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
 		TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
 	}
 
