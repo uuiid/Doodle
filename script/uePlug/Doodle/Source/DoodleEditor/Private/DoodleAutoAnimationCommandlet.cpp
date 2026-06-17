@@ -119,6 +119,36 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 	return -1;
 }
 
+namespace
+{
+	// 转换材质为对应的版本
+	TObjectPtr<UMaterialInterface> ConvertVersion(const TObjectPtr<UObject> In_Outer, const TObjectPtr<UMaterialInterface>& In_Material,
+	                                              const FString& In_VersionString, bool bSetMaterialUsage = false)
+	{
+		auto L_Mat_Path = In_Material->GetPathName();
+		// 添加后缀后重新按照路径寻找
+		auto L_New_Path = FPaths::Combine(FPaths::GetPath(L_Mat_Path),
+			FPaths::GetBaseFilename(L_Mat_Path) + In_VersionString + FPaths::GetExtension(L_Mat_Path, true) + In_VersionString);
+		auto L_New_Material_Object = LoadObject<UMaterialInterface>(In_Outer, L_New_Path);
+		if (!L_New_Material_Object) return {};
+		UMaterial* L_Mat_Object = Cast<UMaterial>(L_New_Material_Object);
+		if (!L_Mat_Object)
+		{
+			UMaterialInstanceConstant* L_Mat_Instance_Object = Cast<UMaterialInstanceConstant>(L_New_Material_Object);
+			L_Mat_Object = L_Mat_Instance_Object->GetMaterial();
+		}
+		if (!L_Mat_Object && bSetMaterialUsage)
+		{
+			bool L_bHasProperty{true};
+			L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
+			L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
+			L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
+			L_Mat_Object->PostEditChange();
+		}
+		return L_New_Material_Object;
+	}
+}
+
 void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 {
 	TSharedPtr<FJsonObject> JsonObject;
@@ -170,26 +200,8 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	if (!L_BanBen_Suffix.IsEmpty())
 		for (auto&& L_Mat : TmpSkeletalMesh->GetMaterials())
 		{
-			auto L_Mat_Path = L_Mat.MaterialInterface->GetPathName();
-			// 添加后缀后重新按照路径寻找
-			auto L_New_Path = FPaths::Combine(FPaths::GetPath(L_Mat_Path),
-				FPaths::GetBaseFilename(L_Mat_Path) + L_BanBen_Suffix + FPaths::GetExtension(L_Mat_Path, true) + L_BanBen_Suffix);
-			auto L_New_Material_Object = LoadObject<UMaterialInterface>(TmpSkeletalMesh, L_New_Path);
+			auto L_New_Material_Object = ConvertVersion(TmpSkeletalMesh, L_Mat.MaterialInterface, L_BanBen_Suffix, true);
 			if (!L_New_Material_Object) continue;
-			UMaterial* L_Mat_Object = Cast<UMaterial>(L_New_Material_Object);
-			if (!L_Mat_Object)
-			{
-				UMaterialInstanceConstant* L_Mat_Instance_Object = Cast<UMaterialInstanceConstant>(L_New_Material_Object);
-				L_Mat_Object = L_Mat_Instance_Object->GetMaterial();
-			}
-			if (!L_Mat_Object)
-			{
-				bool L_bHasProperty{true};
-				L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_GeometryCache);
-				L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_SkeletalMesh);
-				L_Mat_Object->SetMaterialUsage(L_bHasProperty, EMaterialUsage::MATUSAGE_MorphTargets);
-				L_Mat_Object->PostEditChange();
-			}
 			L_Mat.MaterialSlotName = FName{L_Mat.MaterialSlotName.ToString() + L_BanBen_Suffix};
 			L_Mat.MaterialInterface = L_New_Material_Object;
 		}
@@ -402,7 +414,10 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 			{
 				Mats.Add(JsonMat->AsString());
 			}
-		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, Mats});
+		FString L_BanBenSuffix = Obj->HasField(TEXT("ban_ben_suffix"))
+			? Obj->GetStringField(TEXT("ban_ben_suffix"))
+			: TEXT("");
+		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, Mats, L_BanBenSuffix});
 	}
 
 	//--------------------
@@ -958,7 +973,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 	TArray<UGeometryCache*> GeometryCaches;
 	TArray<UAssetImportTask*> ImportTasks;
 	TArray<UAssetImportTask*> ImportTasksAbc;
-	for (const auto& [Type, Path, Skeleton, HideMaterials] : ImportFiles)
+	TMap<UAssetImportTask*, FString> L_BanBenSuffixes;
+	for (const auto& [Type, Path, Skeleton, HideMaterials, BanBen] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -967,6 +983,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			break;
 		case EImportFilesType2::Geometry:
 			ImportTasksAbc.Add(CreateGeometryImportTask(Path));
+			L_BanBenSuffixes.Add(ImportTasksAbc.Last(), BanBen);
 			break;
 		case EImportFilesType2::Character:
 			ImportTasks.Add(CreateCharacterImportTask(Path, Skeleton));
@@ -1080,6 +1097,17 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				if (ImportedObject->GetClass()->IsChildOf(UGeometryCache::StaticClass()))
 				{
 					UGeometryCache* TempGeometryCache = Cast<UGeometryCache>(ImportedObject);
+					// 重新更改材质
+					if (!L_BanBenSuffixes[Task].IsEmpty())
+					{
+						for (auto&& L_Material : TempGeometryCache->Materials)
+						{
+							if (const auto L_Version_Material = ConvertVersion(TempGeometryCache, L_Material, L_BanBenSuffixes[Task])) L_Material =
+								L_Version_Material;
+						}
+					}
+
+
 					//----------
 					AGeometryCacheActor* L_Actor = TheSequenceWorld->SpawnActor<AGeometryCacheActor>(FVector::ZeroVector, FRotator::ZeroRotator);
 					L_Actor->SetActorLabel(TempGeometryCache->GetName());

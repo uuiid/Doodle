@@ -31,18 +31,21 @@ USTRUCT()
 struct FImportFiles2
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY()
 	EImportFilesType2 Type{EImportFilesType2::Geometry};
-	
+
 	UPROPERTY()
 	FString Path;
-	
+
 	UPROPERTY()
 	TObjectPtr<USkeleton> Skeleton;
-	
+
 	UPROPERTY()
 	TArray<FString> HideMaterials;
+	
+	UPROPERTY()
+	FString BanBenSuffix;
 };
 
 USTRUCT()

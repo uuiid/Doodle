@@ -328,6 +328,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                       : get_entity_character_ue_name(l_asset_extend);
             l_ret.asset_infos_[l_idx].ue_project_dir_ =
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend);
+            l_ret.asset_infos_[l_idx].ban_ben_suffix_ = l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content

@@ -51,18 +51,25 @@ struct run_ue_assembly_asset_info {
   import_ue_type type_;             // 是fbx, 还是 abc
   std::bitset<2> simulation_type_;  // 0: 带布料 1: 带毛发
   FSys::path ue_project_dir_;       // ue项目文件夹路径
+  std::string ban_ben_suffix_;      // 版本后缀, 用于查找材质时, 进行对应的版本转换
 
   // to json
   friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
-    j["path"]      = p.shot_output_path_;
-    j["skin_path"] = p.skin_path_.generic_string();
-    j["type"]      = p.type_;
+    j["path"]            = p.shot_output_path_;
+    j["skin_path"]       = p.skin_path_.generic_string();
+    j["type"]            = p.type_;
+    j["simulation_type"] = p.simulation_type_;
+    j["ue_project_dir"]  = p.ue_project_dir_;
+    j["ban_ben_suffix"]  = p.ban_ben_suffix_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_asset_info& p) {
     j.at("path").get_to(p.shot_output_path_);
     j.at("skin_path").get_to(p.skin_path_);
     j.at("type").get_to(p.type_);
+    if (j.contains("simulation_type")) j.at("simulation_type").get_to(p.simulation_type_);
+    if (j.contains("ue_project_dir")) j.at("ue_project_dir").get_to(p.ue_project_dir_);
+    if (j.contains("ban_ben_suffix")) j.at("ban_ben_suffix").get_to(p.ban_ben_suffix_);
   }
 };
 struct file_copy_info {
