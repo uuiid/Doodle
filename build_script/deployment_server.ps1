@@ -15,8 +15,8 @@ if ($BuildSd2) {
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
-&Robocopy "$DoodleOut" "\\192.168.40.188\Dev\tmp" /MIR /xf "*.zip" /w:1 
-&Robocopy "$DoodleOut" "\\192.168.40.188\Dev\tmp" /s  /w:1 
+&Robocopy "$DoodleOut" "\\192.168.40.188\Dev\tmp" /MIR /xf "*.zip" /w:1 /NDL /NFL
+&Robocopy "$DoodleOut" "\\192.168.40.188\Dev\tmp" /s  /w:1 /NDL /NFL
 
 
 $NewSession = New-ServerPSSession
@@ -30,7 +30,7 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
     $Tmp = "D:\tmp"
     $timestamp = Get-Date -Format o | ForEach-Object { $_ -replace ":", "." }
     $LogPath = "$env:TEMP\build_$timestamp.log"
-    &robocopy "$Tmp\dist" "$Target\dist" /MIR /w:1
+    &robocopy "$Tmp\dist" "$Target\dist" /MIR /w:1 /NDL /NFL
     
     if (!$CopyServer) { return; }
 
@@ -61,7 +61,7 @@ Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -Sc
         if ((Get-FileHash "$Target\$($StoppedServers.Name)\bin\doodle_kitsu_supplement.exe").Hash -ne (Get-FileHash "$Tmp\bin\doodle_kitsu_supplement.exe").Hash) {
             # 1. 更新服务
             Write-Host "更新服务 $($StoppedServers.Name)"
-            &robocopy "$Tmp\bin" "$Target\$($StoppedServers.Name)\bin" /MIR /unilog+:$LogPath /w:1 | Out-Null
+            &robocopy "$Tmp\bin" "$Target\$($StoppedServers.Name)\bin" /MIR /unilog+:$LogPath /w:1 /NDL /NFL | Out-Null
             # 2. 停止旧的服务
             Write-Host "使用 Kitsu http://$Kitsu_Ip/api/doodle/stop-server 进行更新"
             # 兼容5.1版本 需要加 -UseBasicParsing
