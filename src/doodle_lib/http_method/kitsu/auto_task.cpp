@@ -453,11 +453,12 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     auto l_base_name      = l_asset_extends->ban_ben_.empty()
                                 ? l_ue_name.stem().generic_string()
                                 : fmt::format("{}_{}", l_ue_name.stem().generic_string(), l_asset_extends->ban_ben_);
+    l_arg.skin_path_      = conv_ue_game_path(l_ue_name);
     l_arg.ban_ben_suffix_ = l_asset_extends->ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extends->ban_ben_);
     if (!l_is_sim) {
       l_arg.rename_map_.emplace(l_maya_file_name.stem().generic_string(), l_base_name);
     } else {
-      auto l_name        = l_maya_file_name.stem().generic_string();
+      auto l_name = l_maya_file_name.stem().generic_string();
       l_arg.rename_map_.emplace(fmt::format("{}_cloth", l_name), fmt::format("{}_cloth", l_base_name));
       l_arg.rename_map_.emplace(fmt::format("{}_hair", l_name), fmt::format("{}_hair", l_base_name));
       l_arg.rename_map_.emplace(fmt::format("{}_cloth_hair", l_name), fmt::format("{}_cloth_hair", l_base_name));
@@ -485,6 +486,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
           boost::beast::http::status::bad_request,
           fmt::format("未找到道具 {} 对应的 ue 工程文件，无法生成 ue 资产路径", l_asset.name_)
       );
+    l_arg.skin_path_      = conv_ue_game_path(l_ue_name);
 
     auto l_maya_file_name = l_is_sim ? get_entity_simulation_prop_asset_name(*l_asset_extends)
                                      : get_entity_prop_rig_maya_name(*l_asset_extends);
@@ -514,8 +516,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
 
   } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
-    auto l_ue_name = get_entity_ground_ue_sk_name(l_asset_extends->pin_yin_ming_cheng_, l_asset_extends->ban_ben_);
-    auto l_ue_path = get_entity_ground_ue_path(l_prj, *l_asset_extends);
+    auto l_ue_name   = get_entity_ground_ue_sk_name(l_asset_extends->pin_yin_ming_cheng_, l_asset_extends->ban_ben_);
+    auto l_ue_path   = get_entity_ground_ue_path(l_prj, *l_asset_extends);
+    l_arg.skin_path_ = conv_ue_game_path(l_ue_name);
 
     auto l_maya_file_name = get_entity_ground_rig_name(*l_asset_extends);
     if (!l_is_sim) {
