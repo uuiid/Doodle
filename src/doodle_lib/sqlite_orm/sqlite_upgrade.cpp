@@ -16,17 +16,20 @@
 #include <boost/hana/ext/std/tuple.hpp>
 
 #include "sqlite_orm/orm/bind_value.h"
+#include "sqlite_orm/orm/fwd.h"
 #include "sqlite_orm/orm/select.h"
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <string>
 #include <tuple>
+#include <vector>
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 7;
+constexpr std::size_t g_current_version = 8;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -59,6 +62,14 @@ struct upgrade_init_t : sqlite_upgrade {
   }
 };  // namespace doodle::details
 
+namespace {
+struct project_data {
+  std::vector<entity_asset_extend> entity_asset_extends_;
+  std::map<std::string, entity> eps_entities_;
+  std::vector<entity> assets_entities_;
+};
+}  // namespace
+
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
   void upgrade(sqlite_database& in_data) override {
@@ -66,13 +77,33 @@ struct upgrade_2_t : sqlite_upgrade {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
     }
-    if (in_data.pragma().user_version() == 6) {
-      auto l_s = std::make_shared<asset_type>(asset_type{
-          .uuid_id_     = asset_type::get_half_ai_id(),
-          .name_        = "半AI",
-          .short_name_  = "半AI",
-      });
-      in_data.install_unsafe<asset_type>(l_s);
+    if (in_data.pragma().user_version() == 7) {
+      using namespace orm;
+      auto l_entitys = select(in_data)
+                           .columns(object<entity>(), object<entity_asset_extend>())
+                           .from<entity>()
+                           .where(c(&entity::entity_type_id_)
+                                      .in(
+                                          {asset_type::get_shot_id(), asset_type::get_character_id(),
+                                           asset_type::get_prop_id(), asset_type::get_effect_id(),
+                                           asset_type::get_ground_id(), asset_type::get_scene_asset_id()}
+                                      ))
+                           .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)()
+                           .to_vector();
+      std::map<uuid, project_data> l_project_datas{};
+      for (auto&& [l_entity, l_ext] : l_entitys) {
+        if (l_entity.canceled_) continue;
+        if (l_entity.entity_type_id_ == asset_type::get_shot_id()) {
+          l_project_datas[l_entity.project_id_].eps_entities_.emplace(l_entity.name_, l_entity);
+        } else if (l_entity.entity_type_id_ == asset_type::get_character_id() ||
+                   l_entity.entity_type_id_ == asset_type::get_prop_id() ||
+                   l_entity.entity_type_id_ == asset_type::get_effect_id() ||
+                   l_entity.entity_type_id_ == asset_type::get_ground_id() ||
+                   l_entity.entity_type_id_ == asset_type::get_scene_asset_id()) {
+          l_project_datas[l_entity.project_id_].assets_entities_.emplace_back(l_entity);
+          if (l_ext) l_project_datas[l_entity.project_id_].entity_asset_extends_.emplace_back(l_ext);
+        }
+      }
     }
 
     in_data.pragma().user_version(g_current_version);

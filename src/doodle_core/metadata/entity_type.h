@@ -57,6 +57,11 @@ struct DOODLE_CORE_API asset_type {
     // 0e40cd9b-7f50-418b-8322-39c451f49dde
     return {{0x0e, 0x40, 0xcd, 0x9b, 0x7f, 0x50, 0x41, 0x8b, 0x83, 0x22, 0x39, 0xc4, 0x51, 0xf4, 0x9d, 0xde}};
   }
+  // 场景资产
+  constexpr static uuid get_scene_asset_id() {
+    // 2e869265-f7d6-436e-83aa-516eb7d68eae
+    return {{0x2e, 0x86, 0x92, 0x65, 0xf7, 0xd6, 0x43, 0x6e, 0x83, 0xaa, 0x51, 0x6e, 0xb7, 0xd6, 0x8e, 0xae}};
+  }
 
   // 道具
   constexpr static uuid get_prop_id() {
@@ -78,7 +83,7 @@ struct DOODLE_CORE_API asset_type {
     // 9c966068-cde6-433e-9a2c-b7235739716b
     return {{0x9c, 0x96, 0x60, 0x68, 0xcd, 0xe6, 0x43, 0x3e, 0x9a, 0x2c, 0xb7, 0x23, 0x57, 0x39, 0x71, 0x6b}};
   }
-  constexpr static std::array<asset_type, 12> get_all_constant();
+  constexpr static std::array<asset_type, 13> get_all_constant();
 
   // from json
   template <typename BasicJsonType>
@@ -104,7 +109,7 @@ struct DOODLE_CORE_API asset_type {
   }
 };
 
-constexpr std::array<asset_type, 12> asset_type::get_all_constant() {
+constexpr std::array<asset_type, 13> asset_type::get_all_constant() {
   // clang-format off
   return {
       asset_type{.uuid_id_ = get_shot_id(),     .name_ = "Shot",     .short_name_ = "Shot", },
@@ -120,6 +125,7 @@ constexpr std::array<asset_type, 12> asset_type::get_all_constant() {
       asset_type{.uuid_id_ = get_effect_id(),    .name_ = "特效", .short_name_ = "特效", },
       asset_type{.uuid_id_ = get_ai_id(),        .name_ = "AI",   .short_name_ = "AI", },
       asset_type{.uuid_id_ = get_half_ai_id(),   .name_ = "半AI", .short_name_ = "半AI", },
+      asset_type{.uuid_id_ = get_scene_asset_id(), .name_ = "场景资产", .short_name_ = "场景资产", },
   };
   // clang-format on
 }
