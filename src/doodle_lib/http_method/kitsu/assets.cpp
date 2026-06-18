@@ -164,7 +164,7 @@ struct with_tasks_get_result_t {
         is_casting_standby_(in_entity.is_casting_standby_),
         is_shared_(in_entity.is_shared_),
 
-        ji_shu_lie_(in_asset_extend.ji_shu_lie_),
+        ji_shu_lie_(get_ji_shu_lie(in_asset_extend, in_sequence_name)),
         deng_ji_(in_asset_extend.deng_ji_),
         gui_dang_(in_asset_extend.gui_dang_),
         bian_hao_(in_asset_extend.bian_hao_),
@@ -202,6 +202,17 @@ struct with_tasks_get_result_t {
     if (!in_sequence_name.empty()) return fmt::format("{}_{}", in_sequence_name, in_entity_name);
 
     return in_entity_name;
+  }
+  static std::optional<std::int32_t> get_ji_shu_lie(
+      const entity_asset_extend& in_extend, const std::string& in_sequence_name
+  ) {
+    if (in_extend.ji_shu_lie_) return in_extend.ji_shu_lie_;
+    if (in_sequence_name.empty()) return std::nullopt;
+    // 使用 正则 \d+ 提取所有数字
+    const static std::regex l_regex("\\d+");
+    std::smatch l_match;
+    if (!std::regex_search(in_sequence_name, l_match, l_regex)) return std::nullopt;
+    return std::stoi(l_match.str());
   }
 
   struct task_t {
@@ -319,7 +330,8 @@ struct make_with_tasks_sql_result_t {
 
     auto& l_sql              = get_sqlite_database();
     auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
-
+    auto l_sequence          = alias<entity>("sequence");
+    auto l_episode           = alias<entity>("episode");
     auto l_dynamic_where     = dynamic_column_operations{};
     l_dynamic_where.add_condition(c(&entity::entity_type_id_).not_in(l_temporal_type_ids));
     if (person_.role_ == person_role_type::outsource)
@@ -335,23 +347,21 @@ struct make_with_tasks_sql_result_t {
     } else {
       if (!project_id_.is_nil()) l_dynamic_where.add_condition(c(&entity::project_id_) == project_id_);
       if (!entity_type_id_.empty()) l_dynamic_where.add_condition(c(&entity::entity_type_id_).in(entity_type_id_));
-      if (!ji_du_filter_.empty() && ji_du_filter_is_null)
-        l_dynamic_where.add_condition(
-            c(&entity_asset_extend::ji_du_).in(ji_du_filter_) || c(&entity_asset_extend::ji_du_) == nullptr
-        );
-      else if (!ji_du_filter_.empty())
+
+      if (!ji_du_filter_.empty())
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_du_).in(ji_du_filter_));
       else if (ji_du_filter_is_null)
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_du_) == nullptr);
 
-      if (!ji_shu_lie_filter_.empty() && ji_shu_lie_filter_is_null)
-        l_dynamic_where.add_condition(
-            c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_) ||
-            c(&entity_asset_extend::ji_shu_lie_) == nullptr
-        );
-      else if (!ji_shu_lie_filter_.empty())
-        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));
-      else if (ji_shu_lie_filter_is_null)
+      if (!ji_shu_lie_filter_.empty()) {
+        if (ji_shu_lie_filter_.size() == 1)
+          l_dynamic_where.add_condition(
+              c(&entity_asset_extend::ji_shu_lie_) == ji_shu_lie_filter_.front() ||
+              c(l_sequence->*&entity::name_) == fmt::format("EP{:03d}", ji_shu_lie_filter_.front()) 
+          );
+        else
+          l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));
+      } else if (ji_shu_lie_filter_is_null)
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_) == nullptr);
 
       if (!task_status_id_filter_.empty())
@@ -394,19 +404,18 @@ struct make_with_tasks_sql_result_t {
       else if (scenes_is_null)
         l_dynamic_where.add_condition(c(&entity_asset_extend::chang_ci_) == nullptr);
     }
-    auto sequence = alias<entity>("sequence");
-    auto episode  = alias<entity>("episode");
+
     return select(l_sql)
         .columns(
             object<entity>(), object<task>(), object<entity_asset_extend>(), object<asset_type>(),
-            &assignees_table::person_id_, sequence->*&entity::name_
+            &assignees_table::person_id_, l_sequence->*&entity::name_
         )
         .from<entity>()
         .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
         .left_outer_join<task>(&entity::uuid_id_, &task::entity_id_)
         .left_outer_join<assignees_table>(&assignees_table::task_id_, &task::uuid_id_)
         .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-        .left_outer_join(sequence, &entity::parent_id_, sequence->*&entity::uuid_id_)
+        .left_outer_join(l_sequence, &entity::parent_id_, l_sequence->*&entity::uuid_id_)
         .where(l_dynamic_where)
         .order_by(&asset_type::name_)
         .order_by(&entity::name_)
