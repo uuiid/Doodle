@@ -407,17 +407,10 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 			}
 		}
 
-		TArray<FString> Mats;
-		if (Obj->HasField(TEXT("hide_materials")))
-			for (TArray<TSharedPtr<FJsonValue>> JsonMats = Obj->GetArrayField(TEXT("hide_materials")); const TSharedPtr<FJsonValue>& JsonMat :
-			     JsonMats)
-			{
-				Mats.Add(JsonMat->AsString());
-			}
 		FString L_BanBenSuffix = Obj->HasField(TEXT("ban_ben_suffix"))
 			? Obj->GetStringField(TEXT("ban_ben_suffix"))
 			: TEXT("");
-		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, Mats, L_BanBenSuffix});
+		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, L_BanBenSuffix});
 	}
 
 	//--------------------
@@ -974,7 +967,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 	TArray<UAssetImportTask*> ImportTasks;
 	TArray<UAssetImportTask*> ImportTasksAbc;
 	TMap<UAssetImportTask*, FString> L_BanBenSuffixes;
-	for (const auto& [Type, Path, Skeleton, HideMaterials, BanBen] : ImportFiles)
+	for (const auto& [Type, Path, Skeleton, BanBen] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -1038,8 +1031,6 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
 				L_Actor->GetSkeletalMeshComponent()->SetLightingChannels(false, true, false);
 				L_Actor->GetSkeletalMeshComponent()->SetReceivesDecals(false);
-				// 开始隐藏材质
-				HideMaterials(L_Actor);
 
 				//---------------------
 				const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
@@ -1062,8 +1053,6 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				L_Actor2->GetSkeletalMeshComponent()->SetVisibility(false);
 				L_Actor2->GetSkeletalMeshComponent()->SetCastHiddenShadow(true);
 				L_Actor2->GetSkeletalMeshComponent()->SetReceivesDecals(false);
-				// 开始隐藏材质
-				HideMaterials(L_Actor2);
 				const FGuid L_GUID2 = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor2->GetActorLabel(), L_Actor2->GetClass());
 				TheLevelSequence->BindPossessableObject(L_GUID2, *L_Actor2, TheSequenceWorld);
 				UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack2 = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID2);
@@ -1102,8 +1091,9 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 					{
 						for (auto&& L_Material : TempGeometryCache->Materials)
 						{
-							if (const auto L_Version_Material = ConvertVersion(TempGeometryCache, L_Material, L_BanBenSuffixes[Task])) L_Material =
-								L_Version_Material;
+							if (const auto L_Version_Material = ConvertVersion(TempGeometryCache, L_Material, L_BanBenSuffixes[Task]))
+								L_Material =
+									L_Version_Material;
 						}
 					}
 
@@ -1162,26 +1152,26 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 
 void UDoodleAutoAnimationCommandlet::HideMaterials(const ASkeletalMeshActor* InActor) const
 {
-	auto L_Skeleton = InActor->GetSkeletalMeshComponent()->GetSkeletalMeshAsset()->GetSkeleton();
-	if (const auto L_It = ImportFiles.FindByPredicate([L_Skeleton](const FImportFiles2& InFiles2)-> bool
-		{
-			return InFiles2.Skeleton == L_Skeleton;
-		}); L_It)
-	{
-		const auto L_OP_Mat = LoadObject<UMaterial>(nullptr, TEXT("/Doodle/completely_transparent.completely_transparent"));
-		const auto L_SK = InActor->GetSkeletalMeshComponent();
-		auto L_Mats = L_SK->GetMaterialSlotNames();
-		for (auto&& L_Mat : L_It->HideMaterials)
-		{
-			if (const auto L_Slot_It = L_Mats.FindByPredicate([&L_Mat](const FName& In_Mat)-> bool
-				{
-					return In_Mat.ToString() == L_Mat;
-				}); L_Slot_It)
-			{
-				L_SK->SetMaterialByName(*L_Slot_It, L_OP_Mat);
-			}
-		}
-	}
+	// auto L_Skeleton = InActor->GetSkeletalMeshComponent()->GetSkeletalMeshAsset()->GetSkeleton();
+	// if (const auto L_It = ImportFiles.FindByPredicate([L_Skeleton](const FImportFiles2& InFiles2)-> bool
+	// 	{
+	// 		return InFiles2.Skeleton == L_Skeleton;
+	// 	}); L_It)
+	// {
+	// 	const auto L_OP_Mat = LoadObject<UMaterial>(nullptr, TEXT("/Doodle/completely_transparent.completely_transparent"));
+	// 	const auto L_SK = InActor->GetSkeletalMeshComponent();
+	// 	auto L_Mats = L_SK->GetMaterialSlotNames();
+	// 	for (auto&& L_Mat : L_It->HideMaterials)
+	// 	{
+	// 		if (const auto L_Slot_It = L_Mats.FindByPredicate([&L_Mat](const FName& In_Mat)-> bool
+	// 			{
+	// 				return In_Mat.ToString() == L_Mat;
+	// 			}); L_Slot_It)
+	// 		{
+	// 			L_SK->SetMaterialByName(*L_Slot_It, L_OP_Mat);
+	// 		}
+	// 	}
+	// }
 }
 
 void UDoodleAutoAnimationCommandlet::OnBuildCheckCharacter()

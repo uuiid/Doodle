@@ -42,9 +42,6 @@ struct FImportFiles2
 	TObjectPtr<USkeleton> Skeleton;
 
 	UPROPERTY()
-	TArray<FString> HideMaterials;
-	
-	UPROPERTY()
 	FString BanBenSuffix;
 };
 
