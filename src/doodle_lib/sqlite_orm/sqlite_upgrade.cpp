@@ -77,7 +77,7 @@ struct upgrade_2_t : sqlite_upgrade {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
     }
-    if (in_data.pragma().user_version() == 7) {
+    if (in_data.pragma().user_version() == 6) {
       using namespace orm;
       auto l_entitys = select(in_data)
                            .columns(object<entity>(), object<entity_asset_extend>())
