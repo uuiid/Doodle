@@ -328,7 +328,8 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                       : get_entity_character_ue_name(l_asset_extend);
             l_ret.asset_infos_[l_idx].ue_project_dir_ =
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend);
-            l_ret.asset_infos_[l_idx].ban_ben_suffix_ = l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
+            l_ret.asset_infos_[l_idx].ban_ben_suffix_ =
+                l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
@@ -355,9 +356,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
             l_ret.asset_infos_[l_idx].skin_path_ =
                 l_ret.asset_infos_[l_idx].simulation_type_.any()
                     ? get_entity_sim_prop_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
-                    : get_entity_prop_ue_name(
-                          l_asset_extend.bian_hao_, l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_
-                      );
+                    : get_entity_prop_ue_name(l_asset_extend);
             l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend);
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
@@ -388,7 +387,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
           l_ret.asset_infos_[l_idx].skin_path_ =
               l_ret.asset_infos_[l_idx].simulation_type_.any()
                   ? get_entity_sim_ground_ue_sk_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
-                  : get_entity_ground_ue_sk_name(l_asset_extend.pin_yin_ming_cheng_, l_asset_extend.ban_ben_);
+                  : get_entity_ground_ue_sk_name(l_asset_extend);
           l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend);
         }
       }
@@ -517,7 +516,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
 
   } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
-    auto l_ue_name   = get_entity_ground_ue_sk_name(l_asset_extends->pin_yin_ming_cheng_, l_asset_extends->ban_ben_);
+    auto l_ue_name   = get_entity_ground_ue_sk_name(*l_asset_extends);
     auto l_ue_path   = get_entity_ground_ue_path(l_prj, *l_asset_extends);
     l_arg.skin_path_ = conv_ue_game_path(l_ue_name);
 

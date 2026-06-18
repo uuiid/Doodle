@@ -3,6 +3,7 @@
 //
 
 #pragma once
+#include "doodle_core/metadata/project.h"
 #include <doodle_core/metadata/entity.h>
 
 #include <doodle_lib/core/http/http_function.h>
@@ -48,6 +49,8 @@ class up_file_asset_base : public up_file_base {
   std::string bian_hao_{};
   std::string pin_yin_ming_cheng_{};
   std::string version_{};
+  entity_asset_extend entity_asset_extend_{};
+  project project_{};
 
   FSys::path asset_root_path_{};
 

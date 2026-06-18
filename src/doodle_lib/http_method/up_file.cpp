@@ -118,20 +118,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> up_file_base::dele
   co_return in_handle->make_msg_204();
 }
 void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_task   = l_sql.get_by_uuid<task>(id_);
   auto l_extend = l_sql.get_entity_asset_extend(l_task.entity_id_);
   if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
+  entity_asset_extend_ = *l_extend;
 
-  gui_dang_           = l_extend->gui_dang_.value_or(0);
-  kai_shi_ji_shu_     = l_extend->kai_shi_ji_shu_.value_or(0);
-  bian_hao_           = l_extend->bian_hao_;
-  pin_yin_ming_cheng_ = l_extend->pin_yin_ming_cheng_;
-  version_            = l_extend->ban_ben_;
+  gui_dang_            = l_extend->gui_dang_.value_or(0);
+  kai_shi_ji_shu_      = l_extend->kai_shi_ji_shu_.value_or(0);
+  bian_hao_            = l_extend->bian_hao_;
+  pin_yin_ming_cheng_  = l_extend->pin_yin_ming_cheng_;
+  version_             = l_extend->ban_ben_;
 
-  auto l_entity       = l_sql.get_by_uuid<entity>(l_task.entity_id_);
+  auto l_entity        = l_sql.get_by_uuid<entity>(l_task.entity_id_);
 
-  auto l_prj          = l_sql.get_by_uuid<project>(l_entity.project_id_);
+  auto l_prj           = l_sql.get_by_uuid<project>(l_entity.project_id_);
   if (!(
           l_task.task_type_id_ == task_type::get_character_id() ||
           l_task.task_type_id_ == task_type::get_ground_model_id() ||
@@ -143,11 +144,12 @@ void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
   task_type_id_    = l_task.task_type_id_;
   entity_type_id_  = l_entity.entity_type_id_;
   asset_root_path_ = l_prj.asset_root_path_;
+  project_         = l_prj;
 
   root_path_       = l_prj.path_;
 }
 void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
-  auto& l_sql    = get_sqlite_database();
+  auto& l_sql   = get_sqlite_database();
   auto l_task   = l_sql.get_by_uuid<task>(id_);
 
   task_type_id_ = l_task.task_type_id_;
@@ -177,22 +179,22 @@ void up_file_shots_base::query_task_info(session_data_ptr in_handle) {
 FSys::path doodle_data_asset_file_maya::gen_file_path() {
   if (task_type_id_ == task_type::get_binding_id()) {
     if (entity_type_id_ == asset_type::get_character_id())
-      return get_entity_character_rig_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_character_rig_maya_path(project_, entity_asset_extend_);
     if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-      return get_entity_prop_rig_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+      return get_entity_prop_rig_maya_path(project_, entity_asset_extend_);
     if (entity_type_id_ == asset_type::get_ground_id())
-      return get_entity_ground_rig_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_ground_rig_maya_path(project_, entity_asset_extend_);
   }
   if (task_type_id_ == task_type::get_ground_model_id() || task_type_id_ == task_type::get_character_id()) {
     if (entity_type_id_ == asset_type::get_character_id())
-      return get_entity_character_model_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_character_model_maya_path(project_, entity_asset_extend_);
     if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-      return get_entity_prop_model_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+      return get_entity_prop_model_maya_path(project_, entity_asset_extend_);
     if (entity_type_id_ == asset_type::get_ground_id())
-      return get_entity_ground_model_maya_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+      return get_entity_ground_model_maya_path(project_, entity_asset_extend_);
   }
   if (task_type_id_ == task_type::get_simulation_id()) {
-    return get_entity_simulation_asset_path(asset_root_path_);
+    return get_entity_simulation_asset_path(project_);
   }
 
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
@@ -200,21 +202,20 @@ FSys::path doodle_data_asset_file_maya::gen_file_path() {
 
 FSys::path doodle_data_asset_file_ue::gen_file_path() {
   if (entity_type_id_ == asset_type::get_character_id())
-    return get_entity_character_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
+    return get_entity_character_ue_path(project_, entity_asset_extend_);
   if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-    return get_entity_prop_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_);
-  if (entity_type_id_ == asset_type::get_ground_id())
-    return get_entity_ground_ue_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
+    return get_entity_prop_ue_path(project_, entity_asset_extend_);
+  if (entity_type_id_ == asset_type::get_ground_id()) return get_entity_ground_ue_path(project_, entity_asset_extend_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
 FSys::path doodle_data_asset_file_image::gen_file_path() {
   if (entity_type_id_ == asset_type::get_character_id())
-    return get_entity_character_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+    return get_entity_character_image_path(project_, entity_asset_extend_);
   if (entity_type_id_ == asset_type::get_prop_id() || entity_type_id_ == asset_type::get_effect_id())
-    return get_entity_prop_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
+    return get_entity_prop_image_path(project_, entity_asset_extend_);
   if (entity_type_id_ == asset_type::get_ground_id())
-    return get_entity_ground_image_path(asset_root_path_, gui_dang_, kai_shi_ji_shu_, bian_hao_);
+    return get_entity_ground_image_path(project_, entity_asset_extend_);
   throw_exception(http_request_error{boost::beast::http::status::bad_request, "未知的 entity_type 类型"});
 }
 
