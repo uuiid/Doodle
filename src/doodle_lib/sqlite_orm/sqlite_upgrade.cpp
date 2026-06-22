@@ -91,7 +91,7 @@ struct upgrade_2_t : sqlite_upgrade {
     }
     if (in_data.pragma().user_version() == 7) {
       in_data.sync_schema();
-      
+
       using namespace orm;
       in_data.reg_table<entity_asset_extend_old>("entity_asset_extend")
           .add_column("id", &entity_asset_extend_old::id_, primary_key(), autoincrement())
@@ -185,6 +185,7 @@ struct upgrade_2_t : sqlite_upgrade {
       }
 
       l_g.commit();
+      in_data.drop_table("entity_asset_extend");
     }
 
     in_data.pragma().user_version(g_current_version);
