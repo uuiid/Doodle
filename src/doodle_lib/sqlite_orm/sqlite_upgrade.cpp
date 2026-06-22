@@ -89,9 +89,10 @@ struct upgrade_2_t : sqlite_upgrade {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);
     }
-    if (in_data.pragma().user_version() == 6) {
+    if (in_data.pragma().user_version() == 7) {
+      in_data.sync_schema();
+      
       using namespace orm;
-
       in_data.reg_table<entity_asset_extend_old>("entity_asset_extend")
           .add_column("id", &entity_asset_extend_old::id_, primary_key(), autoincrement())
           .add_column("uuid", &entity_asset_extend_old::uuid_id_, unique(), not_null())
