@@ -307,7 +307,7 @@ struct make_with_tasks_sql_result_t {
   std::vector<uuid> entity_type_id_;
   std::vector<std::int32_t> ji_du_filter_;
   bool ji_du_filter_is_null{false};
-  std::vector<std::int32_t> ji_shu_lie_filter_;
+  std::vector<uuid> ji_shu_lie_filter_;
   bool ji_shu_lie_filter_is_null{false};
   std::vector<uuid> task_status_id_filter_;
   std::vector<uuid> person_id_filter_;
@@ -343,13 +343,7 @@ struct make_with_tasks_sql_result_t {
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_du_) == nullptr);
 
       if (!ji_shu_lie_filter_.empty()) {
-        if (ji_shu_lie_filter_.size() == 1)
-          l_dynamic_where.add_condition(
-              c(&entity_asset_extend::ji_shu_lie_) == ji_shu_lie_filter_.front() ||
-              c(l_sequence->*&entity::name_) == fmt::format("EP{:03d}", ji_shu_lie_filter_.front())
-          );
-        else
-          l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));
+        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));
       } else if (ji_shu_lie_filter_is_null)
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_) == nullptr);
 
@@ -425,7 +419,7 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
     }
     if (l_i.has_value && l_i.key == "ji_shu_lie") {
       if (std::isdigit(l_i.value.front()))
-        l_data.ji_shu_lie_filter_.emplace_back(std::stoi(l_i.value));
+        l_data.ji_shu_lie_filter_.emplace_back(from_uuid_str(l_i.value));
       else if (l_i.value == "null")
         l_data.ji_shu_lie_filter_is_null = true;
     }
