@@ -10,6 +10,7 @@
 #include <boost/rational.hpp>
 
 #include <memory>
+#include <variant>
 
 //
 #include <doodle_core/metadata/user.h>
@@ -52,13 +53,10 @@ std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person
   auto& l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
-    .columns(&work_xlsx_task_info_helper::database_t::id_)
-    .from<work_xlsx_task_info_helper::database_t>()
-    .where(
-      c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id &&
-      c(&work_xlsx_task_info_helper::database_t::year_month_) == in_year_month
-    )()
-    .to_vector();
+      .columns(&work_xlsx_task_info_helper::database_t::id_)
+      .from<work_xlsx_task_info_helper::database_t>()
+      .where(c(&work_xlsx_task_info_helper::database_t::person_id_) == in_person_id && c(&work_xlsx_task_info_helper::database_t::year_month_) == in_year_month)()
+      .to_vector();
 }
 
 struct work_xlsx_task_info_helper_t {
@@ -69,7 +67,8 @@ struct work_xlsx_task_info_helper_t {
   decltype(entity::uuid_id_) entity_id_;
   decltype(entity::name_) entity_name_;
 
-  decltype(entity_asset_extend::ji_shu_lie_) entity_ji_shu_lie_;
+  std::variant<decltype(entity_asset_extend::ji_shu_lie_), decltype(work_xlsx_task_info_helper::database_t::episode_)>
+      entity_ji_shu_lie_;
   decltype(entity_asset_extend::deng_ji_) entity_deng_ji_;
   decltype(entity_asset_extend::gui_dang_) entity_gui_dang_;
   decltype(entity_asset_extend::bian_hao_) entity_bian_hao_;

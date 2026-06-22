@@ -55,6 +55,7 @@
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
 #include <sqlite_orm/sqlite_orm.h>
+#include <tuple>
 #include <vector>
 
 namespace doodle {
@@ -491,7 +492,7 @@ void sqlite_database::regs_all() {
       .add_column("frame_out", &entity_shot_extend::frame_out_)
       .add_foreign_key(&entity_shot_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
 
-  reg_table<entity_asset_extend>("entity_asset_extend")
+  reg_table<entity_asset_extend>("entity_asset_extend_2")
       .add_column("id", &entity_asset_extend::id_, primary_key(), autoincrement())
       .add_column("uuid", &entity_asset_extend::uuid_id_, unique(), not_null())
       .add_column("entity_id", &entity_asset_extend::entity_id_, not_null())
@@ -504,7 +505,11 @@ void sqlite_database::regs_all() {
       .add_column("ji_du", &entity_asset_extend::ji_du_)
       .add_column("kai_shi_ji_shu", &entity_asset_extend::kai_shi_ji_shu_)
       .add_column("chang_ci", &entity_asset_extend::chang_ci_)
-      .add_foreign_key(&entity_asset_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
+      .add_foreign_key(&entity_asset_extend::entity_id_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity_asset_extend::ji_shu_lie_, &entity::uuid_id_, foreign_key_action::cascade)
+      .add_foreign_key(&entity_asset_extend::kai_shi_ji_shu_, &entity::uuid_id_, foreign_key_action::cascade)
+
+      ;
 
   reg_table<entity>("entity")
       .add_column("id", &entity::id_, primary_key(), autoincrement())
@@ -1379,13 +1384,24 @@ boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uui
   co_return;
 }
 
-std::optional<entity_asset_extend> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
+std::optional<entity_asset_extend_value> sqlite_database::get_entity_asset_extend(const uuid& in_entity_id) {
   using namespace orm;
-  return select(*this)
-      .columns(object<entity_asset_extend>())
-      .from<entity_asset_extend>()
-      .where(c(&entity_asset_extend::entity_id_) == in_entity_id)()
-      .to_optional();
+
+  auto l_jishu        = alias<entity>("jishu");
+  auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
+  auto l_opt          = select(*this)
+                   .columns(object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
+                   .from<entity_asset_extend>()
+                   .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+                   .left_outer_join(
+                       l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_
+                   )
+                   .where(c(&entity_asset_extend::entity_id_) == in_entity_id)()
+                   .to_optional();
+  if (l_opt) {
+    return std::make_from_tuple<entity_asset_extend_value>(*l_opt);
+  }
+  return std::nullopt;
 }
 
 std::optional<entity_shot_extend> sqlite_database::get_entity_shot_extend(const uuid& in_entity_id) {
@@ -1520,14 +1536,19 @@ std::vector<server_task_info> sqlite_database::get_server_tasks_by_submitted() {
       .to_vector();
 }
 
-entity_asset_extend sqlite_database::get_entity_shot_extend_by_task(const uuid& in_shot_id) {
+entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const uuid& in_shot_id) {
   using namespace orm;
-  auto l_shot     = alias<entity>("shot");
-  auto l_sequence = alias<entity>("sequence");
-  auto l_assets   = select(*this)
-                      .columns(object<entity>(), object<entity_asset_extend>())
-                      .from<entity>()
-                      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+  auto l_shot         = alias<entity>("shot");
+  auto l_sequence     = alias<entity>("sequence");
+  auto l_jishu        = alias<entity>("jishu");
+  auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
+  auto l_assets       = select(*this)
+                         .columns(object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
+                         .from<entity_asset_extend>()
+                         .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+                         .left_outer_join(
+                            l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_
+                          )
                       .where(
                           c(&entity::uuid_id_)
                               .in(
@@ -1544,8 +1565,7 @@ entity_asset_extend sqlite_database::get_entity_shot_extend_by_task(const uuid& 
                       )().to_vector();
 
   DOODLE_CHICK(l_assets.size() == 1, "错误, 找个了 {} 个对应的地编资产", l_assets.size());
-  auto& [shot_entity, shot_extend] = l_assets.front();
-  return {shot_extend};
+  return std::make_from_tuple<entity_asset_extend_value>(l_assets.front());
 }
 boost::asio::awaitable<void> sqlite_database::update_computer_status(
     const uuid& in_computer_id, computer_status in_status

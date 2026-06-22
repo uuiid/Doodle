@@ -43,13 +43,7 @@ class up_file_asset_base : public up_file_base {
  protected:
   uuid task_type_id_{};
   uuid entity_type_id_{};
-
-  std::int32_t gui_dang_{};
-  std::int32_t kai_shi_ji_shu_{};
-  std::string bian_hao_{};
-  std::string pin_yin_ming_cheng_{};
-  std::string version_{};
-  entity_asset_extend entity_asset_extend_{};
+  entity_asset_extend_value entity_asset_extend_{};
   project project_{};
 
   FSys::path asset_root_path_{};

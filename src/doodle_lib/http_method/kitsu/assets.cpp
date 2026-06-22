@@ -164,7 +164,7 @@ struct with_tasks_get_result_t {
         is_casting_standby_(in_entity.is_casting_standby_),
         is_shared_(in_entity.is_shared_),
 
-        ji_shu_lie_(get_ji_shu_lie(in_asset_extend, in_sequence_name)),
+        ji_shu_lie_(in_asset_extend.ji_shu_lie_),
         deng_ji_(in_asset_extend.deng_ji_),
         gui_dang_(in_asset_extend.gui_dang_),
         bian_hao_(in_asset_extend.bian_hao_),
@@ -202,17 +202,6 @@ struct with_tasks_get_result_t {
     if (!in_sequence_name.empty()) return fmt::format("{}_{}", in_sequence_name, in_entity_name);
 
     return in_entity_name;
-  }
-  static std::optional<std::int32_t> get_ji_shu_lie(
-      const entity_asset_extend& in_extend, const std::string& in_sequence_name
-  ) {
-    if (in_extend.ji_shu_lie_) return in_extend.ji_shu_lie_;
-    if (in_sequence_name.empty()) return std::nullopt;
-    // 使用 正则 \d+ 提取所有数字
-    const static std::regex l_regex("\\d+");
-    std::smatch l_match;
-    if (!std::regex_search(in_sequence_name, l_match, l_regex)) return std::nullopt;
-    return std::stoi(l_match.str());
   }
 
   struct task_t {
@@ -357,7 +346,7 @@ struct make_with_tasks_sql_result_t {
         if (ji_shu_lie_filter_.size() == 1)
           l_dynamic_where.add_condition(
               c(&entity_asset_extend::ji_shu_lie_) == ji_shu_lie_filter_.front() ||
-              c(l_sequence->*&entity::name_) == fmt::format("EP{:03d}", ji_shu_lie_filter_.front()) 
+              c(l_sequence->*&entity::name_) == fmt::format("EP{:03d}", ji_shu_lie_filter_.front())
           );
         else
           l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));

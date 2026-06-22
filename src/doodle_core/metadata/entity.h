@@ -99,19 +99,19 @@ struct DOODLE_CORE_API entity_asset_extend {
 
   uuid entity_id_;
 
-  std::optional<std::int32_t> ji_shu_lie_;
+  uuid ji_shu_lie_;  // 集数
   std::string deng_ji_;
-  std::optional<std::int32_t> gui_dang_;
+  std::optional<std::int32_t> gui_dang_;  // 归档(对应季度)
   std::string bian_hao_;
   std::string pin_yin_ming_cheng_;
   std::string ban_ben_;
   std::optional<std::int32_t> ji_du_;
-  std::optional<std::int32_t> kai_shi_ji_shu_;
+  uuid kai_shi_ji_shu_;  // 开始集数 对应集数
   std::optional<std::int32_t> chang_ci_{};
 
   bool is_empty() const {
-    return !ji_shu_lie_ && deng_ji_.empty() && !gui_dang_ && bian_hao_.empty() && pin_yin_ming_cheng_.empty() &&
-           ban_ben_.empty() && !ji_du_ && !kai_shi_ji_shu_ && !chang_ci_;
+    return ji_shu_lie_.is_nil() && deng_ji_.empty() && !gui_dang_ && bian_hao_.empty() && pin_yin_ming_cheng_.empty() &&
+           ban_ben_.empty() && !ji_du_ && kai_shi_ji_shu_.is_nil() && !chang_ci_;
   }
   static bool has_extend_data(const nlohmann::json& j) {
     return j.contains("ji_shu_lie") || j.contains("deng_ji") || j.contains("gui_dang") || j.contains("bian_hao") ||
@@ -133,14 +133,8 @@ struct DOODLE_CORE_API entity_asset_extend {
   }
   // from json
   friend void from_json(const nlohmann::json& j, entity_asset_extend& p) {
-    if (j.contains("ji_shu_lie")) {
-      if (j.at("ji_shu_lie").is_string()) {
-        std::string l_temp;
-        j.at("ji_shu_lie").get_to(l_temp);
-        p.ji_shu_lie_ = std::stoi(l_temp);
-      } else
-        j.at("ji_shu_lie").get_to(p.ji_shu_lie_);
-    }
+    if (j.contains("ji_shu_lie")) j.at("ji_shu_lie").get_to(p.ji_shu_lie_);
+
     if (j.contains("deng_ji")) j.at("deng_ji").get_to(p.deng_ji_);
     if (j.contains("gui_dang")) {
       if (j.at("gui_dang").is_string()) {
@@ -157,6 +151,53 @@ struct DOODLE_CORE_API entity_asset_extend {
     if (j.contains("kai_shi_ji_shu")) j.at("kai_shi_ji_shu").get_to(p.kai_shi_ji_shu_);
     if (j.contains("chang_ci")) j.at("chang_ci").get_to(p.chang_ci_);
   }
+};
+// entity_asset_extend 的值类型, 方便使用
+struct entity_asset_extend_value {
+  entity_asset_extend_value() = default;
+  explicit entity_asset_extend_value(
+      const entity_asset_extend& in_extend_, const std::optional<std::int32_t>& in_ji_shu_lie_value,
+      const std::optional<std::int32_t>& in_kai_shi_ji_shu_value
+  )
+      : entity_id_(in_extend_.entity_id_),
+        ji_shu_lie_(in_ji_shu_lie_value.value_or(0)),
+        deng_ji_(in_extend_.deng_ji_),
+        gui_dang_(in_extend_.gui_dang_),
+        bian_hao_(in_extend_.bian_hao_),
+        pin_yin_ming_cheng_(in_extend_.pin_yin_ming_cheng_),
+        ban_ben_(in_extend_.ban_ben_),
+        ji_du_(in_extend_.ji_du_),
+        kai_shi_ji_shu_(in_kai_shi_ji_shu_value.value_or(0)),
+        chang_ci_(in_extend_.chang_ci_) {}
+
+  explicit entity_asset_extend_value(
+      const entity_asset_extend& in_extend_, const std::string& in_ji_shu_lie_value,
+      const std::string& in_kai_shi_ji_shu_value
+  )
+      : entity_id_(in_extend_.entity_id_),
+        ji_shu_lie_(extract_number_from_name(in_ji_shu_lie_value)),
+        deng_ji_(in_extend_.deng_ji_),
+        gui_dang_(in_extend_.gui_dang_),
+        bian_hao_(in_extend_.bian_hao_),
+        pin_yin_ming_cheng_(in_extend_.pin_yin_ming_cheng_),
+        ban_ben_(in_extend_.ban_ben_),
+        ji_du_(in_extend_.ji_du_),
+        kai_shi_ji_shu_(extract_number_from_name(in_kai_shi_ji_shu_value)),
+        chang_ci_(in_extend_.chang_ci_) {}
+  // 提取名称中的数字
+  static std::int32_t extract_number_from_name(const std::string& in_name);
+
+  uuid entity_id_;
+
+  std::int32_t ji_shu_lie_;  // 集数
+  std::string deng_ji_;
+  std::optional<std::int32_t> gui_dang_;  // 归档(对应季度)
+  std::string bian_hao_;
+  std::string pin_yin_ming_cheng_;
+  std::string ban_ben_;
+  std::optional<std::int32_t> ji_du_;
+  std::int32_t kai_shi_ji_shu_;  // 开始集数 对应集数
+  std::optional<std::int32_t> chang_ci_{};
 };
 
 struct DOODLE_CORE_API entity {

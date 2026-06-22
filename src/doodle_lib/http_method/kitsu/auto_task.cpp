@@ -43,22 +43,27 @@
 #include <range/v3/view/unique.hpp>
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace doodle::http {
 namespace {
 
-std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset_extend_by_shot_id(
-    const uuid& in_shot_id
-) {
+auto get_entity_and_entity_asset_extend_by_shot_id(const uuid& in_shot_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
-  auto shot     = alias<entity>("shot");
-  auto sequence = alias<entity>("sequence");
+  auto shot           = alias<entity>("shot");
+  auto sequence       = alias<entity>("sequence");
+  auto l_jishu        = alias<entity>("jishu");
+  auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
   return select(l_sql)
-    .columns(object<entity>(), object<entity_asset_extend>())
-    .from<entity>()
-    .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .columns(object<entity>(), object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
+      .from<entity>()
+      .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+      .left_outer_join(
+          l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_
+      )
     .where(
       c(&entity::uuid_id_)
         .in(select(l_sql)
@@ -68,8 +73,7 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_entity_and_entity_asset
             .join(sequence, shot->*&entity::parent_id_, sequence->*&entity::uuid_id_)
             .where(c(shot->*&entity::uuid_id_) == in_shot_id)) &&
       c(&entity::canceled_) != true
-    )()
-    .to_vector();
+    )().to_vector();
 }
 
 struct sim_map_anim {
@@ -255,15 +259,18 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   FSys::path l_scene_ue_path{"D:/sy_magic/ue_projects/"};  // 默认路径
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
 
-  auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
+  auto&& [l_scene_asset, l_scene_asset_extend, l_jishu, l_kaishi_jishu] = *check_multiple_scene(l_assets);
   DOODLE_CHICK_HTTP(l_scene_asset_extend.gui_dang_, bad_request, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
   DOODLE_CHICK_HTTP(
-      l_scene_asset_extend.kai_shi_ji_shu_, bad_request, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_
+      !l_scene_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "场景资产 {} 缺少扩展信息 开始集数",
+      l_scene_asset.name_
   );
+  entity_asset_extend_value l_scene_asset_extend_value{l_scene_asset_extend, l_jishu, l_kaishi_jishu};
+
   const auto l_suffix = l_is_simulation_task ? "_JS" : "_DH";
-  auto l_ue_main_map  = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
-                       get_entity_ground_ue_map_name(l_scene_asset_extend);
-  l_ret.original_map_ = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend));
+  auto l_ue_main_map  = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) /
+                       get_entity_ground_ue_map_name(l_scene_asset_extend_value);
+  l_ret.original_map_ = conv_ue_game_path(get_entity_ground_ue_map_name(l_scene_asset_extend_value));
   l_ret.clear_path_ =
       fmt::format("{3}/Shot/ep{1:04}/{0}{1:03}_sc{2:03}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_content);
   l_ret.movie_pipeline_config_ = fmt::format(
@@ -301,11 +308,11 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
   l_ret.ue_asset_path_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
   l_ret.ue_asset_path_.emplace_back(
-      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_content,
       l_scene_ue_path / doodle_config::ue4_content
   );
   l_ret.ue_asset_path_.emplace_back(
-      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_config,
       l_scene_ue_path / doodle_config::ue4_config
   );
 
@@ -315,23 +322,26 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     l_ret.update_ue_path_ = l_scene_ue_path / l_path;
   }
 
-  for (auto&& [l_asset, l_asset_extend] : l_assets) {
+  for (auto&& [l_asset, l_asset_extend, l_jishu, l_kaishi_jishu] : l_assets) {
+    entity_asset_extend_value l_asset_extend_value{l_asset_extend, l_jishu, l_kaishi_jishu};
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
       auto l_key = fmt::format("Ch{}", l_asset_extend.bian_hao_);
       if (l_asset_infos_key_map.contains(l_key)) {
-        if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
+        if (l_asset_extend.gui_dang_ && !l_asset_extend.kai_shi_ji_shu_.is_nil()) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
             if (l_ret.asset_infos_[l_idx].type_ == import_and_render_ue_ns::import_ue_type::char_)
               l_ret.asset_infos_[l_idx].skin_path_ =
                   l_ret.asset_infos_[l_idx].simulation_type_.any()
-                      ? get_entity_sim_character_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
-                      : get_entity_character_ue_name(l_asset_extend);
+                      ? get_entity_sim_character_ue_name(
+                            l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_
+                        )
+                      : get_entity_character_ue_name(l_asset_extend_value);
             l_ret.asset_infos_[l_idx].ue_project_dir_ =
-                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend);
+                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value);
             l_ret.asset_infos_[l_idx].ban_ben_suffix_ =
                 l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
             l_ret.ue_asset_path_.emplace_back(
-                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
+                l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
             );
           }
@@ -351,21 +361,23 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
           l_asset_extend.ban_ben_
       );
       if (l_asset_infos_key_map.contains(l_key)) {
-        if (l_asset_extend.gui_dang_ && l_asset_extend.kai_shi_ji_shu_) {
+        if (l_asset_extend.gui_dang_ && !l_asset_extend.kai_shi_ji_shu_.is_nil()) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
             l_ret.asset_infos_[l_idx].skin_path_ =
                 l_ret.asset_infos_[l_idx].simulation_type_.any()
-                    ? get_entity_sim_prop_ue_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
-                    : get_entity_prop_ue_name(l_asset_extend);
-            l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend);
+                    ? get_entity_sim_prop_ue_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_)
+                    : get_entity_prop_ue_name(l_asset_extend_value);
+            l_ret.asset_infos_[l_idx].ue_project_dir_ =
+                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value);
             l_ret.ue_asset_path_.emplace_back(
-                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
+                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) /
+                    get_entity_prop_ue_public_files_path(),
                 l_scene_ue_path / get_entity_prop_ue_public_files_path()
             );
             l_ret.ue_asset_path_.emplace_back(
-                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) /
-                    get_entity_prop_ue_files_path(l_asset_extend),
-                l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend)
+                l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) /
+                    get_entity_prop_ue_files_path(l_asset_extend_value),
+                l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend_value)
             );
           }
         } else
@@ -386,15 +398,16 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
           l_ret.asset_infos_[l_idx].skin_path_ =
               l_ret.asset_infos_[l_idx].simulation_type_.any()
-                  ? get_entity_sim_ground_ue_sk_name(l_asset_extend, l_ret.asset_infos_[l_idx].simulation_type_)
-                  : get_entity_ground_ue_sk_name(l_asset_extend);
-          l_ret.asset_infos_[l_idx].ue_project_dir_ = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend);
+                  ? get_entity_sim_ground_ue_sk_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_)
+                  : get_entity_ground_ue_sk_name(l_asset_extend_value);
+          l_ret.asset_infos_[l_idx].ue_project_dir_ =
+              l_prj.path_ / get_entity_ground_ue_path(l_prj, l_asset_extend_value);
         }
       }
     }
   }
 
-#ifdef NDEBUG
+  // #ifdef NDEBUG
   for (auto&& l_path : l_ret.ue_asset_path_) {
     DOODLE_CHICK_HTTP(!l_path.from_.empty(), bad_request, "UE 场景可能没有启动器等原因");
     DOODLE_CHICK_HTTP(FSys::exists(l_path.from_), bad_request, "UE 资产源路径不存在: {}", l_path.from_.string())
@@ -408,7 +421,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
     )
   }
-#endif
+  // #endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
     DOODLE_CHICK_HTTP(
@@ -516,9 +529,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_expo
     l_arg.update_ue_path_  = l_ue_scene_path / l_ue_name.parent_path();
 
   } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
-    auto l_ue_name   = get_entity_ground_ue_sk_name(*l_asset_extends);
-    auto l_ue_path   = get_entity_ground_ue_path(l_prj, *l_asset_extends);
-    l_arg.skin_path_ = conv_ue_game_path(l_ue_name);
+    auto l_ue_name        = get_entity_ground_ue_sk_name(*l_asset_extends);
+    auto l_ue_path        = get_entity_ground_ue_path(l_prj, *l_asset_extends);
+    l_arg.skin_path_      = conv_ue_game_path(l_ue_name);
 
     auto l_maya_file_name = get_entity_ground_rig_name(*l_asset_extends);
     if (!l_is_sim) {
@@ -601,14 +614,16 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   auto l_assets           = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};
-  auto&& [l_scene_asset, l_scene_asset_extend] = *check_multiple_scene(l_assets);
+  auto&& [l_scene_asset, l_scene_asset_extend, l_jishu, l_kaishi_jishu] = *check_multiple_scene(l_assets);
   DOODLE_CHICK_HTTP(l_scene_asset_extend.gui_dang_, bad_request, "场景资产 {} 缺少扩展信息 归档", l_scene_asset.name_);
   DOODLE_CHICK_HTTP(
-      l_scene_asset_extend.kai_shi_ji_shu_, bad_request, "场景资产 {} 缺少扩展信息 开始集数", l_scene_asset.name_
+      !l_scene_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "场景资产 {} 缺少扩展信息 开始集数",
+      l_scene_asset.name_
   );
+  entity_asset_extend_value l_scene_asset_extend_value{l_scene_asset_extend, l_jishu, l_kaishi_jishu};
 
-  auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) /
-                       get_entity_ground_ue_map_name(l_scene_asset_extend);
+  auto l_ue_main_map = l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) /
+                       get_entity_ground_ue_map_name(l_scene_asset_extend_value);
   auto&& l_uprj = ue_exe_ns::find_ue_project_file(l_ue_main_map);
   DOODLE_CHICK_HTTP(
       !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
@@ -619,44 +634,49 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   /// 添加场景文件下载
   l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
   l_arg.download_file_list_.emplace_back(
-      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_content,
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_content,
       l_scene_ue_path / doodle_config::ue4_content
   );
   l_arg.download_file_list_.emplace_back(
-      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend) / doodle_config::ue4_config,
+      l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_config,
       l_scene_ue_path / doodle_config::ue4_config
   );
 
-  for (auto&& [l_asset, l_asset_extend] : l_assets) {
+  for (auto&& [l_asset, l_asset_extend, l_jishu, l_kaishi_jishu] : l_assets) {
+    entity_asset_extend_value l_asset_extend_value{l_asset_extend, l_jishu, l_kaishi_jishu};
     if (l_asset.entity_type_id_ == asset_type::get_character_id()) {
       DOODLE_CHICK_HTTP(l_asset_extend.gui_dang_, bad_request, "资产 {} 缺少扩展信息 归档", l_asset.name_);
-      DOODLE_CHICK_HTTP(l_asset_extend.kai_shi_ji_shu_, bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_);
+      DOODLE_CHICK_HTTP(
+          !l_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_
+      );
       l_arg.download_file_list_.emplace_back(
-          l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend) / doodle_config::ue4_content,
+          l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
           l_scene_ue_path / doodle_config::ue4_content
       );
 
     } else if (l_asset.entity_type_id_ == asset_type::get_prop_id() ||
                l_asset.entity_type_id_ == asset_type::get_effect_id()) {
       DOODLE_CHICK_HTTP(l_asset_extend.gui_dang_, bad_request, "资产 {} 缺少扩展信息 归档", l_asset.name_);
-      DOODLE_CHICK_HTTP(l_asset_extend.kai_shi_ji_shu_, bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_);
+      DOODLE_CHICK_HTTP(
+          !l_asset_extend.kai_shi_ji_shu_.is_nil(), bad_request, "资产 {} 缺少扩展信息 开始集数", l_asset.name_
+      );
       // 拼音名称为空时跳过
       if (l_asset_extend.pin_yin_ming_cheng_.empty()) continue;
 
       l_arg.download_file_list_.emplace_back(
-          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_public_files_path(),
+          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) / get_entity_prop_ue_public_files_path(),
           l_scene_ue_path / get_entity_prop_ue_public_files_path()
       );
       l_arg.download_file_list_.emplace_back(
-          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend) / get_entity_prop_ue_files_path(l_asset_extend),
-          l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend)
+          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) / get_entity_prop_ue_files_path(l_asset_extend_value),
+          l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend_value)
       );
 
     } else if (l_asset.entity_type_id_ == asset_type::get_ground_id()) {
     }
   }
   {  // 添加自动灯光生成的文件
-    auto l_root   = l_prj.path_ / get_shots_auto_lighting_upload_path(l_episodes, l_scene_asset_extend);
+    auto l_root   = l_prj.path_ / get_shots_auto_lighting_upload_path(l_episodes, l_scene_asset_extend_value);
     auto l_path_1 = get_shots_auto_lighting_upload_animation_name(l_episodes, l_shot, l_prj.code_);
     auto l_path_2 = get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj.code_);
     l_arg.download_file_list_.emplace_back(l_root / l_path_1, l_scene_ue_path / l_path_1);

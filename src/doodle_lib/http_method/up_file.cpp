@@ -124,12 +124,6 @@ void up_file_asset_base::query_task_info(session_data_ptr in_handle) {
   if (!l_extend) throw_exception(http_request_error{boost::beast::http::status::bad_request, "请求task没有附加元数据"});
   entity_asset_extend_ = *l_extend;
 
-  gui_dang_            = l_extend->gui_dang_.value_or(0);
-  kai_shi_ji_shu_      = l_extend->kai_shi_ji_shu_.value_or(0);
-  bian_hao_            = l_extend->bian_hao_;
-  pin_yin_ming_cheng_  = l_extend->pin_yin_ming_cheng_;
-  version_             = l_extend->ban_ben_;
-
   auto l_entity        = l_sql.get_by_uuid<entity>(l_task.entity_id_);
 
   auto l_prj           = l_sql.get_by_uuid<project>(l_entity.project_id_);

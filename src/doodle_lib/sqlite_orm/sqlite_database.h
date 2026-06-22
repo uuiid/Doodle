@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "doodle_core/metadata/entity.h"
 #include <doodle_core/metadata/project.h>
 #include <doodle_core/metadata/scan_data_t.h>
 
@@ -443,7 +444,7 @@ class sqlite_database : public orm::storage {
 
   std::optional<entity_link> get_entity_link(const uuid& in_entity_in_id, const uuid& in_asset_id);
   /// 获取任务额外数据
-  std::optional<entity_asset_extend> get_entity_asset_extend(const uuid& in_entity_id);
+  std::optional<entity_asset_extend_value> get_entity_asset_extend(const uuid& in_entity_id);
   /// 获取镜头扩展数据
   std::optional<entity_shot_extend> get_entity_shot_extend(const uuid& in_entity_id);
   /// 获取播放序列对应的实体
@@ -467,7 +468,7 @@ class sqlite_database : public orm::storage {
   // 按照计算机id 获取工作
   std::vector<server_task_info> get_server_tasks_by_submitted();
   // 获取镜头任务对应的 场景资产的扩展数据 如果没有, 抛出异常, 大于一个, 抛出异常
-  entity_asset_extend get_entity_shot_extend_by_task(const uuid& in_shot_id);
+  entity_asset_extend_value get_entity_shot_extend_by_task(const uuid& in_shot_id);
   // 更新计算机状态
   boost::asio::awaitable<void> update_computer_status(const uuid& in_computer_id, computer_status in_status);
   // 检查人员和ai工作室是否有连接

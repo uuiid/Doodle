@@ -302,10 +302,6 @@ struct project_with_extra_data : project {
       j["count"] = p.count_;
     }
   };
-  // 集数
-  std::vector<project_int> episodes_;
-  // 季度
-  std::vector<project_int> seasons_;
   // 等级
   struct project_str {
     std::string name_;
@@ -318,6 +314,22 @@ struct project_with_extra_data : project {
       j["count"] = p.count_;
     }
   };
+  struct project_int_uuid : project_str {
+    uuid id_;
+    explicit project_int_uuid(std::tuple<std::string, std::int32_t, uuid> in_tuple)
+        : project_str(std::make_tuple(std::get<0>(in_tuple), std::get<1>(in_tuple))), id_(std::get<2>(in_tuple)) {}
+    explicit project_int_uuid(std::string in_name, std::int64_t in_count, uuid in_id)
+        : project_str(in_name, in_count), id_(in_id) {}
+    // to json
+    friend void to_json(nlohmann::json& j, const project_int_uuid& p) {
+      to_json(j, static_cast<const project_str&>(p));
+      j["id"] = p.id_;
+    }
+  };
+  // 集数
+  std::vector<project_int_uuid> episodes_;
+  // 季度
+  std::vector<project_int> seasons_;
   std::vector<project_str> levels_;
   std::vector<project_int> scenes_;
 

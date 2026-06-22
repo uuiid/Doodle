@@ -32,7 +32,6 @@
 #include "core/global_function.h"
 #include <array>
 #include <atomic>
-#include <core/entity_path.h>
 #include <exception>
 #include <filesystem>
 #include <fmt/format.h>

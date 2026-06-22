@@ -13,11 +13,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 
-#include <boost/hana/ext/std/tuple.hpp>
-
-#include "sqlite_orm/orm/bind_value.h"
-#include "sqlite_orm/orm/fwd.h"
-#include "sqlite_orm/orm/select.h"
+#include "core/core_set.h"
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -25,6 +21,7 @@
 #include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace doodle::details {
@@ -63,11 +60,26 @@ struct upgrade_init_t : sqlite_upgrade {
 };  // namespace doodle::details
 
 namespace {
+struct entity_asset_extend_old {
+  DOODLE_BASE_FIELDS();
+  uuid entity_id_;
+
+  std::optional<std::int32_t> ji_shu_lie_;
+  std::string deng_ji_;
+  std::optional<std::int32_t> gui_dang_;
+  std::string bian_hao_;
+  std::string pin_yin_ming_cheng_;
+  std::string ban_ben_;
+  std::optional<std::int32_t> ji_du_;
+  std::optional<std::int32_t> kai_shi_ji_shu_;
+  std::optional<std::int32_t> chang_ci_{};
+};
 struct project_data {
-  std::vector<entity_asset_extend> entity_asset_extends_;
+  std::vector<std::pair<entity, entity_asset_extend_old>> entity_asset_extends_;
   std::map<std::string, entity> eps_entities_;
   std::vector<entity> assets_entities_;
 };
+
 }  // namespace
 
 struct upgrade_2_t : sqlite_upgrade {
@@ -79,21 +91,38 @@ struct upgrade_2_t : sqlite_upgrade {
     }
     if (in_data.pragma().user_version() == 6) {
       using namespace orm;
-      auto l_entitys = select(in_data)
-                           .columns(object<entity>(), object<entity_asset_extend>())
-                           .from<entity>()
-                           .where(c(&entity::entity_type_id_)
-                                      .in(
-                                          {asset_type::get_shot_id(), asset_type::get_character_id(),
-                                           asset_type::get_prop_id(), asset_type::get_effect_id(),
-                                           asset_type::get_ground_id(), asset_type::get_scene_asset_id()}
-                                      ))
-                           .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)()
-                           .to_vector();
+
+      in_data.reg_table<entity_asset_extend_old>("entity_asset_extend")
+          .add_column("id", &entity_asset_extend_old::id_, primary_key(), autoincrement())
+          .add_column("uuid", &entity_asset_extend_old::uuid_id_, unique(), not_null())
+          .add_column("entity_id", &entity_asset_extend_old::entity_id_, not_null())
+          .add_column("ji_shu_lie", &entity_asset_extend_old::ji_shu_lie_)
+          .add_column("deng_ji", &entity_asset_extend_old::deng_ji_)
+          .add_column("gui_dang", &entity_asset_extend_old::gui_dang_)
+          .add_column("bian_hao", &entity_asset_extend_old::bian_hao_)
+          .add_column("pin_yin_ming_cheng", &entity_asset_extend_old::pin_yin_ming_cheng_)
+          .add_column("ban_ben", &entity_asset_extend_old::ban_ben_)
+          .add_column("ji_du", &entity_asset_extend_old::ji_du_)
+          .add_column("kai_shi_ji_shu", &entity_asset_extend_old::kai_shi_ji_shu_)
+          .add_column("chang_ci", &entity_asset_extend_old::chang_ci_)
+          .add_foreign_key(&entity_asset_extend_old::entity_id_, &entity::uuid_id_, foreign_key_action::cascade);
+
+      auto l_entitys =
+          select(in_data)
+              .columns(object<entity>(), object<entity_asset_extend_old>())
+              .from<entity>()
+              .where(c(&entity::entity_type_id_)
+                         .in(
+                             {asset_type::get_episode_id(), asset_type::get_character_id(), asset_type::get_prop_id(),
+                              asset_type::get_effect_id(), asset_type::get_ground_id(),
+                              asset_type::get_scene_asset_id()}
+                         ))
+              .left_outer_join<entity_asset_extend_old>(&entity_asset_extend_old::entity_id_, &entity::uuid_id_)()
+              .to_vector();
       std::map<uuid, project_data> l_project_datas{};
       for (auto&& [l_entity, l_ext] : l_entitys) {
         if (l_entity.canceled_) continue;
-        if (l_entity.entity_type_id_ == asset_type::get_shot_id()) {
+        if (l_entity.entity_type_id_ == asset_type::get_episode_id()) {
           l_project_datas[l_entity.project_id_].eps_entities_.emplace(l_entity.name_, l_entity);
         } else if (l_entity.entity_type_id_ == asset_type::get_character_id() ||
                    l_entity.entity_type_id_ == asset_type::get_prop_id() ||
@@ -101,9 +130,60 @@ struct upgrade_2_t : sqlite_upgrade {
                    l_entity.entity_type_id_ == asset_type::get_ground_id() ||
                    l_entity.entity_type_id_ == asset_type::get_scene_asset_id()) {
           l_project_datas[l_entity.project_id_].assets_entities_.emplace_back(l_entity);
-          if (l_ext) l_project_datas[l_entity.project_id_].entity_asset_extends_.emplace_back(l_ext);
+          if (l_ext)
+            l_project_datas[l_entity.project_id_].entity_asset_extends_.emplace_back(std::make_pair(l_entity, l_ext));
         }
       }
+      auto l_g                              = in_data.transaction();
+      std::shared_ptr<entity> l_entitys_ptr = std::make_shared<entity>();
+      for (auto&& [l_project_id, l_data] : l_project_datas) {
+        for (auto&& [l_entity, l_entity_ext_] : l_data.entity_asset_extends_) {
+          auto l_eps_name =
+              l_entity_ext_.ji_shu_lie_ ? fmt::format("EP{:03d}", *l_entity_ext_.ji_shu_lie_) : std::string{};
+          auto l_kai_shi_ji_shu =
+              l_entity_ext_.kai_shi_ji_shu_ ? fmt::format("EP{:03d}", *l_entity_ext_.kai_shi_ji_shu_) : std::string{};
+          if (!l_eps_name.empty() && !l_data.eps_entities_.contains(l_eps_name)) {
+            *l_entitys_ptr = entity{
+                .uuid_id_        = core_set::get_set().get_uuid(),
+                .name_           = l_eps_name,
+                .project_id_     = l_project_id,
+                .entity_type_id_ = asset_type::get_episode_id(),
+                .created_by_     = l_entity.created_by_,
+            };
+            in_data.install_unsafe<entity>(l_entitys_ptr);
+            l_data.eps_entities_.emplace(l_eps_name, *l_entitys_ptr);
+          }
+          if (!l_kai_shi_ji_shu.empty() && !l_data.eps_entities_.contains(l_kai_shi_ji_shu)) {
+            *l_entitys_ptr = entity{
+                .uuid_id_        = core_set::get_set().get_uuid(),
+                .name_           = l_kai_shi_ji_shu,
+                .project_id_     = l_project_id,
+                .entity_type_id_ = asset_type::get_episode_id(),
+                .created_by_     = l_entity.created_by_,
+            };
+            in_data.install_unsafe<entity>(l_entitys_ptr);
+            l_data.eps_entities_.emplace(l_kai_shi_ji_shu, *l_entitys_ptr);
+          }
+
+          auto l_entity_ext_new = entity_asset_extend{
+              .uuid_id_            = l_entity_ext_.uuid_id_,
+              .entity_id_          = l_entity.uuid_id_,
+              .ji_shu_lie_         = l_eps_name.empty() ? uuid{} : l_data.eps_entities_.at(l_eps_name).uuid_id_,
+              .deng_ji_            = l_entity_ext_.deng_ji_,
+              .gui_dang_           = l_entity_ext_.gui_dang_,
+              .bian_hao_           = l_entity_ext_.bian_hao_,
+              .pin_yin_ming_cheng_ = l_entity_ext_.pin_yin_ming_cheng_,
+              .ban_ben_            = l_entity_ext_.ban_ben_,
+              .ji_du_              = l_entity_ext_.ji_du_,
+              .kai_shi_ji_shu_ = l_kai_shi_ji_shu.empty() ? uuid{} : l_data.eps_entities_.at(l_kai_shi_ji_shu).uuid_id_,
+              .chang_ci_       = l_entity_ext_.chang_ci_,
+          };
+          auto l_entity_ext_ptr = std::make_shared<entity_asset_extend>(l_entity_ext_new);
+          in_data.install_unsafe<entity_asset_extend>(l_entity_ext_ptr);
+        }
+      }
+
+      l_g.commit();
     }
 
     in_data.pragma().user_version(g_current_version);

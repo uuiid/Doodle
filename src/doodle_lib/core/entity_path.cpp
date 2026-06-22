@@ -27,17 +27,17 @@
 
 namespace doodle {
 
-FSys::path get_entity_character_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_rig_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "Ch/JD{:02d}_{:02d}/Ch{}/Rig", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.bian_hao_
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.bian_hao_
                                     );
 }
 /// 角色模型maya 路径
-FSys::path get_entity_character_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "Ch/JD{:02d}_{:02d}/Ch{}/Mod", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.bian_hao_
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.bian_hao_
                                     );
 }
 
@@ -123,34 +123,34 @@ std::string entity_sim_type_to_string(const std::bitset<2>& sim_type_) {
 
 }  // namespace
 
-FSys::path get_entity_character_rig_maya_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_rig_maya_name(const entity_asset_extend_value& in_extend_) {
   auto l_entity_id = in_extend_.entity_id_;
 
   return fmt::format("Ch{}_rig{}.ma", in_extend_.bian_hao_, g_get_cache_manger_user_abbreviation().get(l_entity_id));
 }
 /// 道具模型maya 绑定路径
-FSys::path get_entity_prop_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_rig_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "Prop/JD{:02d}_{:02d}/{}/Rig", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.pin_yin_ming_cheng_
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.pin_yin_ming_cheng_
                                     );
 }
-FSys::path get_entity_prop_rig_maya_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_rig_maya_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}{}_rig{}.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_,
       g_get_cache_manger_user_abbreviation().get(in_extend_.entity_id_)
   );
 }
-FSys::path get_entity_prop_model_maya_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_model_maya_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}{}.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_
   );
 }
 /// 道具模型maya 路径
-FSys::path get_entity_prop_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "Prop/JD{:02d}_{:02d}/{}", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.pin_yin_ming_cheng_
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.pin_yin_ming_cheng_
                                     );
 }
 /// 场景模型maya 绑定路径
@@ -160,10 +160,10 @@ FSys::path get_entity_ground_rig_maya_path(
 ) {
   return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
 }
-FSys::path get_entity_ground_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_rig_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "BG/JD{:02d}_{:02d}/BG{}/Mod", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.bian_hao_
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.bian_hao_
                                     );
 }
 
@@ -174,10 +174,10 @@ FSys::path get_entity_ground_model_maya_path(
 ) {
   return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}/Mod", gui_dang_, kai_shi_ji_shu_, bian_hao_);
 }
-FSys::path get_entity_ground_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "BG/JD{:02d}_{:02d}/BG{}/Mod", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.bian_hao_
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.bian_hao_
                                     );
 }
 /// 角色模型ue 路径
@@ -188,21 +188,23 @@ FSys::path get_entity_character_ue_path(
   return asset_root_path_ /
          fmt::format("Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
 }
-FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "Ch/JD{:02d}_{:02d}/Ch{}/{}_UE5", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.bian_hao_,
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.bian_hao_,
                                         in_extend_.pin_yin_ming_cheng_
                                     );
 }
 /// 角色模型 ue 名称
-FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_ue_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}/Character/{}/Meshs/SK_Ch{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
       in_extend_.bian_hao_, in_extend_.ban_ben_.empty() ? "" : "_" + in_extend_.ban_ben_
   );
 }
-FSys::path get_entity_sim_character_ue_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
+FSys::path get_entity_sim_character_ue_name(
+    const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_
+) {
   std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
   if (l_sim_type_suffix.empty()) throw doodle_error{"模拟类型必须至少启用一个模拟, {}", in_extend_.bian_hao_};
 
@@ -218,18 +220,18 @@ FSys::path get_entity_prop_ue_path(
   return asset_root_path_ /
          fmt::format("Prop/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", gui_dang_, kai_shi_ji_shu_, gui_dang_, kai_shi_ji_shu_);
 }
-FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return in_prj_.asset_root_path_ / fmt::format(
                                         "Prop/JD{:02d}_{:02d}/JD{:02d}_{:02d}_UE", in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0), in_extend_.gui_dang_.value_or(0),
-                                        in_extend_.kai_shi_ji_shu_.value_or(0)
+                                        in_extend_.kai_shi_ji_shu_, in_extend_.gui_dang_.value_or(0),
+                                        in_extend_.kai_shi_ji_shu_
                                     );
 }
 
 FSys::path get_entity_prop_ue_public_files_path() {
   return FSys::path{doodle_config::ue4_content} / "Prop" / "a_PropPublicFiles";
 }
-FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_ue_files_path(const entity_asset_extend_value& in_extend_) {
   return FSys::path{doodle_config::ue4_content} / "Prop" / in_extend_.pin_yin_ming_cheng_;
 }
 /// 道具模型 ue 名称
@@ -241,13 +243,13 @@ FSys::path get_entity_prop_ue_name(
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_ue_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}/Prop/{}/Mesh/SK_{}{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
       in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
   );
 }
-FSys::path get_entity_sim_prop_ue_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
+FSys::path get_entity_sim_prop_ue_name(const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_) {
   std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
   if (l_sim_type_suffix.empty()) throw doodle_error{"模拟类型必须至少启用一个模拟, {}", in_extend_.pin_yin_ming_cheng_};
 
@@ -264,9 +266,9 @@ FSys::path get_entity_ground_ue_path(
   return asset_root_path_ /
          fmt::format("BG/JD{:02d}_{:02d}/BG{}/{}", gui_dang_, kai_shi_ji_shu_, bian_hao_, pin_yin_ming_cheng_);
 }
-FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return get_entity_ground_ue_path(
-      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_.value_or(0),
+      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_,
       in_extend_.bian_hao_, in_extend_.pin_yin_ming_cheng_
   );
 }
@@ -277,7 +279,7 @@ FSys::path get_entity_ground_ue_map_name(const std::string& pin_yin_ming_cheng_,
       ban_ben_.empty() ? "" : "_", ban_ben_
   );
 }
-FSys::path get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_ue_map_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}/{}/Map/{}{}{}.umap", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
       in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
@@ -285,13 +287,15 @@ FSys::path get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_) 
 }
 
 ///  场景模型 ue sk 名称
-FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}/{}/SK/SK_{}{}{}.uasset", doodle_config::ue4_content, in_extend_.pin_yin_ming_cheng_,
       in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
   );
 }
-FSys::path get_entity_sim_ground_ue_sk_name(const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_) {
+FSys::path get_entity_sim_ground_ue_sk_name(
+    const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_
+) {
   std::string l_sim_type_suffix = entity_sim_type_to_string(sim_type_);
   if (l_sim_type_suffix.empty()) throw doodle_error{"模拟类型必须至少启用一个模拟, {}", in_extend_.pin_yin_ming_cheng_};
   return fmt::format(
@@ -300,12 +304,12 @@ FSys::path get_entity_sim_ground_ue_sk_name(const entity_asset_extend& in_extend
   );
 }
 /// 场景名称 alembic 名称
-FSys::path get_entity_ground_alembic_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_alembic_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}{}{}_Low.abc", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
   );
 }
-FSys::path get_entity_ground_rig_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_rig_name(const entity_asset_extend_value& in_extend_) {
   return fmt::format(
       "{}{}{}_Low.ma", in_extend_.pin_yin_ming_cheng_, in_extend_.ban_ben_.empty() ? "" : "_", in_extend_.ban_ben_
   );
@@ -318,9 +322,9 @@ FSys::path get_entity_character_image_path(
 ) {
   return asset_root_path_ / fmt::format("Ch/JD{:02d}_{:02d}/Ch{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
 }
-FSys::path get_entity_character_image_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_character_image_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return get_entity_character_image_path(
-      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_.value_or(0),
+      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_,
       in_extend_.bian_hao_
   );
 }
@@ -331,9 +335,9 @@ FSys::path get_entity_prop_image_path(
 ) {
   return asset_root_path_ / fmt::format("Prop/JD{:02d}_{:02d}/{}", gui_dang_, kai_shi_ji_shu_, pin_yin_ming_cheng_);
 }
-FSys::path get_entity_prop_image_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_prop_image_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return get_entity_prop_image_path(
-      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_.value_or(0),
+      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_,
       in_extend_.pin_yin_ming_cheng_
   );
 }
@@ -344,18 +348,18 @@ FSys::path get_entity_ground_image_path(
 ) {
   return asset_root_path_ / fmt::format("BG/JD{:02d}_{:02d}/BG{}", gui_dang_, kai_shi_ji_shu_, bian_hao_);
 }
-FSys::path get_entity_ground_image_path(const project& in_prj_, const entity_asset_extend& in_extend_) {
+FSys::path get_entity_ground_image_path(const project& in_prj_, const entity_asset_extend_value& in_extend_) {
   return get_entity_ground_image_path(
-      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_.value_or(0),
+      in_prj_.asset_root_path_, in_extend_.gui_dang_.value_or(0), in_extend_.kai_shi_ji_shu_,
       in_extend_.bian_hao_
   );
 }
 /// 获得解算资产路径
 FSys::path get_entity_simulation_asset_path(const project& in_prj_) { return in_prj_.asset_root_path_ / "CFX"; }
-FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend_value& in_extend_) {
   return get_entity_prop_rig_maya_name(in_extend_).stem().string() + "_cloth.ma";
 }
-FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend& in_extend_) {
+FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend_value& in_extend_) {
   return get_entity_character_rig_maya_name(in_extend_).stem().string() + "_cloth.ma";
 }
 /// 动画镜头maya路径
@@ -411,7 +415,9 @@ FSys::path get_shots_lighting_movie_path(const entity& episode_) {
   return FSys::path{"9_LIGHT"} / "Light_Mp4" / episode_.name_ / "Fix";
 }
 // 自动灯光上传文件夹
-FSys::path get_shots_auto_lighting_upload_path(const episodes& episode_, const entity_asset_extend& ground_extend_) {
+FSys::path get_shots_auto_lighting_upload_path(
+    const episodes& episode_, const entity_asset_extend_value& ground_extend_
+) {
   return FSys::path{"03_Workflow"} / "Shot" / fmt::format("EP{:04}", episode_) / ground_extend_.pin_yin_ming_cheng_;
 }
 FSys::path get_shots_auto_lighting_upload_animation_name(

@@ -7,64 +7,66 @@
 
 #include <bitset>
 #include <filesystem>
+#include <optional>
 #include <string>
 
 namespace doodle {
+
 /// 角色模型maya 绑定路径
-FSys::path get_entity_character_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_character_rig_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 角色模型maya 路径
-FSys::path get_entity_character_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
-FSys::path get_entity_character_rig_maya_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_character_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
+FSys::path get_entity_character_rig_maya_name(const entity_asset_extend_value& in_extend_);
 /// 道具模型maya 绑定路径
-FSys::path get_entity_prop_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
-FSys::path get_entity_prop_rig_maya_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_rig_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
+FSys::path get_entity_prop_rig_maya_name(const entity_asset_extend_value& in_extend_);
 /// 道具模型maya 路径
-FSys::path get_entity_prop_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
-FSys::path get_entity_prop_model_maya_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
+FSys::path get_entity_prop_model_maya_name(const entity_asset_extend_value& in_extend_);
 /// 场景模型maya 绑定路径
-FSys::path get_entity_ground_rig_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_rig_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 
 /// 场景模型maya 路径
-FSys::path get_entity_ground_model_maya_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 角色模型ue 路径
-FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 
 /// 角色模型 ue 名称
-FSys::path get_entity_character_ue_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_character_ue_name(const entity_asset_extend_value& in_extend_);
 FSys::path get_entity_sim_character_ue_name(
-    const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
+    const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
 );
 /// 道具模型ue 路径
-FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 FSys::path get_entity_prop_ue_public_files_path();
-FSys::path get_entity_prop_ue_files_path(const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_ue_files_path(const entity_asset_extend_value& in_extend_);
 /// 道具模型 ue 名称
-FSys::path get_entity_prop_ue_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_ue_name(const entity_asset_extend_value& in_extend_);
 FSys::path get_entity_sim_prop_ue_name(
-    const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
+    const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
 );
 /// 场景模型ue 路径
-FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 场景模型 ue map 名称
-FSys::path get_entity_ground_ue_map_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_ue_map_name(const entity_asset_extend_value& in_extend_);
 ///  场景模型 ue sk 名称
-FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_ue_sk_name(const entity_asset_extend_value& in_extend_);
 FSys::path get_entity_sim_ground_ue_sk_name(
-    const entity_asset_extend& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
+    const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
 );
 /// 场景名称 alembic 名称
-FSys::path get_entity_ground_alembic_name(const entity_asset_extend& in_extend_);
-FSys::path get_entity_ground_rig_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_alembic_name(const entity_asset_extend_value& in_extend_);
+FSys::path get_entity_ground_rig_name(const entity_asset_extend_value& in_extend_);
 /// 角色模型图片 路径
-FSys::path get_entity_character_image_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_character_image_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 道具模型图片 路径
-FSys::path get_entity_prop_image_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_prop_image_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 场景模型图片 路径
-FSys::path get_entity_ground_image_path(const project& in_prj_, const entity_asset_extend& in_extend_);
+FSys::path get_entity_ground_image_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 获得解算资产路径
 FSys::path get_entity_simulation_asset_path(const project& in_prj_);
-FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend& in_extend_);
-FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend& in_extend_);
+FSys::path get_entity_simulation_prop_asset_name(const entity_asset_extend_value& in_extend_);
+FSys::path get_entity_simulation_character_asset_name(const entity_asset_extend_value& in_extend_);
 /// 动画镜头maya路径
 FSys::path get_shots_animation_maya_path(const entity& episode_);
 /// 动画镜头output路径
@@ -91,7 +93,9 @@ FSys::path get_shots_lighting_ue_path(const entity& episode_);
 FSys::path get_shots_effect_movie_path(const entity& episode_);
 FSys::path get_shots_lighting_movie_path(const entity& episode_);
 // 自动灯光上传文件夹
-FSys::path get_shots_auto_lighting_upload_path(const episodes& episode_, const entity_asset_extend& ground_extend_);
+FSys::path get_shots_auto_lighting_upload_path(
+    const episodes& episode_, const entity_asset_extend_value& ground_extend_
+);
 FSys::path get_shots_auto_lighting_upload_animation_name(
     const episodes& episode_, const shot& shot_, const std::string& project_code_
 );

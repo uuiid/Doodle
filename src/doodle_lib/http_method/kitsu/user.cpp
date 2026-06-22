@@ -88,49 +88,28 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                                         .from<project_task_status_link>()
                                         .where(c(&project_task_status_link::project_id_) == l_project.uuid_id_)()
                                         .to_vector();
-    l_project.episodes_ = select(l_sql)
-                              .columns(&entity_asset_extend::ji_shu_lie_, count())
-                              .from<entity_asset_extend>()
-                              .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-                              .where(c(&entity::project_id_) == l_project.uuid_id_)
-                              .group_by(&entity_asset_extend::ji_shu_lie_)()
-                              .to_vector<project_with_extra_data::project_int>();
 
     {
-      std::map<std::int32_t, std::size_t> l_ji_shu_lie_count_map{};
-      for (auto i = 0; i < l_project.episodes_.size(); ++i)
-        l_ji_shu_lie_count_map[l_project.episodes_[i].number_.value_or(-1)] = i;
-      for (auto&& name : select(l_sql)
-                             .columns(&entity::name_)
-                             .from<entity>()
-                             .where(
-                                 c(&entity::project_id_) == l_project.uuid_id_ &&
-                                 c(&entity::uuid_id_)
-                                     .in(select(l_sql)
-                                             .columns(&entity::parent_id_)
-                                             .from<entity>()
-                                             .where(
-                                                 c(&entity::project_id_) == l_project.uuid_id_ &&
-                                                 c(&entity::entity_type_id_)
-                                                     .in({asset_type::get_ai_id(), asset_type::get_half_ai_id()}) &&
-                                                 c(&entity::canceled_) != true &&
-                                                 c(&entity::parent_id_) != nullptr
-                                                   ) 
-                                        )
-                            )
-                        
-                        ()) {
-        // 使用 正则 \d+ 提取所有数字
-        const static std::regex l_regex("\\d+");
-        std::smatch l_match;
-        if (!std::regex_search(name, l_match, l_regex)) continue;
-        auto l_ji_shu_lie = std::stoi(l_match.str());
-        if (!l_ji_shu_lie_count_map.contains(l_ji_shu_lie)) {
-          l_project.episodes_.emplace_back(l_ji_shu_lie, 1);
-          l_ji_shu_lie_count_map[l_ji_shu_lie] = l_project.episodes_.size() - 1;
-        }
+      std::map<uuid, std::size_t> l_entity_map{};
+      for (auto&& [l_uuid, l_name] :
+           select(l_sql)
+               .columns(&entity::uuid_id_, &entity::name_)
+               .from<entity>()
+               .where(c(&entity::project_id_) == l_project.uuid_id_ && c(&entity::entity_type_id_) == asset_type::get_episode_id())()) {
+        l_project.episodes_.emplace_back(project_with_extra_data::project_int_uuid{l_name, 0, l_uuid});
+        l_entity_map[l_uuid] = l_project.episodes_.size() - 1;
+      }
+      // 第二次获取统计
+      for (auto&& [l_entity_id, l_jishu_size] : select(l_sql)
+                                                    .columns(&entity_asset_extend::ji_shu_lie_, count())
+                                                    .from<entity_asset_extend>()
+                                                    .join<entity>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+                                                    .where(c(&entity::project_id_) == l_project.uuid_id_)
+                                                    .group_by (&entity_asset_extend::ji_shu_lie_)()) {
+        if (l_entity_map.contains(l_entity_id)) l_project.episodes_[l_entity_map[l_entity_id]].count_ = l_jishu_size;
       }
     }
+
     l_project.seasons_ = select(l_sql)
                              .columns(&entity_asset_extend::ji_du_, count())
                              .from<entity_asset_extend>()

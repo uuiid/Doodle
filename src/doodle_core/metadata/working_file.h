@@ -5,6 +5,8 @@
 #pragma once
 #include <doodle_core/metadata/base.h>
 #include <doodle_core/metadata/entity.h>
+
+#include "entity.h"
 namespace doodle {
 
 enum class software_enum { maya, unreal_engine, alembic, unreal_engine_sk, maya_sim, maya_rig };
@@ -66,7 +68,7 @@ struct working_file_and_link : working_file {
   std::string bian_hao_;
   std::string ban_ben_;
   explicit working_file_and_link(
-      const working_file& in_working_file, const entity& in_ent, const entity_asset_extend& in_entity_asset_extend
+      const working_file& in_working_file, const entity& in_ent, const entity_asset_extend_value& in_entity_asset_extend
   )
       : working_file(in_working_file),
         entity_id_(in_ent.uuid_id_),

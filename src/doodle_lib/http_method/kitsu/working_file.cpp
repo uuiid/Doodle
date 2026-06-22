@@ -41,22 +41,26 @@ bool entity_has_simulation_asset(const uuid& in_entity_id) {
              .to_single() > 0;
 }
 
-std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity_sql(
-    const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
-) {
+auto get_working_files_for_entity_sql(const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
 
-  auto shot        = alias<entity>("shot");
-  auto sequence    = alias<entity>("sequence");
-  auto l_sub_where = dynamic_column_operations{};
+  auto shot           = alias<entity>("shot");
+  auto sequence       = alias<entity>("sequence");
+  auto l_jishu        = alias<entity>("jishu");
+  auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
+  auto l_sub_where    = dynamic_column_operations{};
   if (!in_shot_id.is_nil()) l_sub_where.add_condition(c(shot->*&entity::uuid_id_) == in_shot_id);
   if (!in_sequence_id.is_nil()) l_sub_where.add_condition(c(sequence->*&entity::uuid_id_) == in_sequence_id);
 
   return select(l_sql)
-      .columns(object<entity>(), object<entity_asset_extend>())
+      .columns(
+          object<entity>(), object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_
+      )
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_)
       .where(c(&entity::uuid_id_)
                  .in(select(l_sql)
                          .columns(&entity_link::entity_out_id_)
@@ -67,31 +71,41 @@ std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entit
       .to_vector();
 }
 
-std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity_sql(const uuid& in_entity_id) {
+auto get_working_files_for_entity_sql(const uuid& in_entity_id) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
+  auto l_jishu        = alias<entity>("jishu");
+  auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
   return select(l_sql)
-      .columns(object<entity>(), object<entity_asset_extend>())
+      .columns(
+          object<entity>(), object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_
+      )
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_)
       .where(c(&entity::uuid_id_) == in_entity_id)()
       .to_vector();
 }
-std::vector<std::tuple<entity, entity_asset_extend>> get_working_files_for_entity_sql(
-    const std::vector<uuid>& in_entity_ids
-) {
+auto get_working_files_for_entity_sql(const std::vector<uuid>& in_entity_ids) {
   auto& l_sql = get_sqlite_database();
   using namespace orm;
+  auto l_jishu        = alias<entity>("jishu");
+  auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
   return select(l_sql)
-      .columns(object<entity>(), object<entity_asset_extend>())
+      .columns(
+          object<entity>(), object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_
+      )
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
+      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_)
       .where(c(&entity::uuid_id_).in(in_entity_ids))()
       .to_vector();
 }
 }  // namespace
 std::vector<working_file_and_link> create_character_working_files(
-    const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
+    const project& in_project, const entity& in_entity, const entity_asset_extend_value& in_entity_asset_extend
 ) {
   std::vector<working_file_and_link> l_working_files{};
   l_working_files.reserve(7);
@@ -174,7 +188,7 @@ std::vector<working_file_and_link> create_character_working_files(
 }
 
 std::vector<working_file_and_link> create_prop_working_files(
-    const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
+    const project& in_project, const entity& in_entity, const entity_asset_extend_value& in_entity_asset_extend
 ) {
   std::vector<working_file_and_link> l_working_files{};
   l_working_files.reserve(3);
@@ -232,7 +246,7 @@ std::vector<working_file_and_link> create_prop_working_files(
   return l_working_files;
 }
 std::vector<working_file_and_link> create_ground_working_files(
-    const project& in_project, const entity& in_entity, const entity_asset_extend& in_entity_asset_extend
+    const project& in_project, const entity& in_entity, const entity_asset_extend_value& in_entity_asset_extend
 ) {
   std::vector<working_file_and_link> l_working_files{};
   l_working_files.reserve(2);
@@ -297,17 +311,21 @@ std::vector<working_file_and_link> get_working_files_for_entity(
 
   auto l_assets = get_working_files_for_entity_sql(in_project_id, in_shot_id, in_sequence_id);
   auto l_prj    = l_sql.get_by_uuid<project>(in_project_id);
-  for (auto&& [l_entity, l_entity_asset_extend] : l_assets) {
+  for (auto&& [l_entity, l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name] : l_assets) {
     auto l_begin = l_working_files.size();
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
-      l_working_files |=
-          ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |= ranges::actions::push_back(create_character_working_files(
+          l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+      ));
     } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
                l_entity.entity_type_id_ == asset_type::get_effect_id()) {
-      l_working_files |= ranges::actions::push_back(create_prop_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |= ranges::actions::push_back(create_prop_working_files(
+          l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+      ));
     } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
-      l_working_files |=
-          ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |= ranges::actions::push_back(create_ground_working_files(
+          l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+      ));
     }
     for (auto i = l_begin; i < l_working_files.size(); ++i) {
       l_working_files[i].entity_type_id_ = l_entity.entity_type_id_;
@@ -354,14 +372,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_wor
   auto l_prj     = l_sql.get_by_uuid<project>(l_entity_.project_id_);
   auto l_r       = get_working_files_for_entity_sql(id_);
   std::vector<working_file_and_link> l_working_files{};
-  if (auto&& [l_entity, l_entity_asset_extend] = l_r.front();
+  if (auto&& [l_entity, l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name] = l_r.front();
       l_entity.entity_type_id_ == asset_type::get_character_id()) {
-    l_working_files = create_character_working_files(l_prj, l_entity, l_entity_asset_extend);
+    l_working_files = create_character_working_files(
+        l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+    );
   } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
              l_entity.entity_type_id_ == asset_type::get_effect_id()) {
-    l_working_files = create_prop_working_files(l_prj, l_entity, l_entity_asset_extend);
+    l_working_files = create_prop_working_files(
+        l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+    );
   } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
-    l_working_files = create_ground_working_files(l_prj, l_entity, l_entity_asset_extend);
+    l_working_files = create_ground_working_files(
+        l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+    );
   }
   for (auto&& i : l_working_files) {
     i.name_      = i.path_.has_extension() ? i.path_.filename().string() : std::string{};
@@ -399,16 +423,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
   using namespace sqlite_orm;
   auto l_r = get_working_files_for_entity_sql(l_entity_ids);
   std::vector<working_file_and_link> l_working_files{};
-  for (auto&& [l_entity, l_entity_asset_extend] : l_r) {
+  for (auto&& [l_entity, l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name] : l_r) {
     if (l_entity.entity_type_id_ == asset_type::get_character_id()) {
-      l_working_files |=
-          ranges::actions::push_back(create_character_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |= ranges::actions::push_back(create_character_working_files(
+          l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+      ));
     } else if (l_entity.entity_type_id_ == asset_type::get_prop_id() ||
                l_entity.entity_type_id_ == asset_type::get_effect_id()) {
-      l_working_files |= ranges::actions::push_back(create_prop_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |= ranges::actions::push_back(create_prop_working_files(
+          l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+      ));
     } else if (l_entity.entity_type_id_ == asset_type::get_ground_id()) {
-      l_working_files |=
-          ranges::actions::push_back(create_ground_working_files(l_prj, l_entity, l_entity_asset_extend));
+      l_working_files |= ranges::actions::push_back(create_ground_working_files(
+          l_prj, l_entity, entity_asset_extend_value{l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name}
+      ));
     }
   }
 
