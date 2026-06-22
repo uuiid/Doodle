@@ -91,11 +91,14 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
 
     {
       std::map<uuid, std::size_t> l_entity_map{};
-      for (auto&& [l_uuid, l_name] :
-           select(l_sql)
-               .columns(&entity::uuid_id_, &entity::name_)
-               .from<entity>()
-               .where(c(&entity::project_id_) == l_project.uuid_id_ && c(&entity::entity_type_id_) == asset_type::get_episode_id())()) {
+      for (auto&& [l_uuid, l_name] : select(l_sql)
+                                         .columns(&entity::uuid_id_, &entity::name_)
+                                         .from<entity>()
+                                         .where(
+                                             c(&entity::project_id_) == l_project.uuid_id_ &&
+                                             c(&entity::entity_type_id_) == asset_type::get_episode_id()
+                                         )
+                                         .order_by (&entity::name_)()) {
         l_project.episodes_.emplace_back(project_with_extra_data::project_int_uuid{l_name, 0, l_uuid});
         l_entity_map[l_uuid] = l_project.episodes_.size() - 1;
       }
