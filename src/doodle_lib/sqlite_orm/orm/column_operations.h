@@ -147,6 +147,7 @@ struct column_operations : column_operations_base_t {
   explicit column_operations(const table_columns_t& in_column);
   explicit column_operations(const alias_column_info_t& in_column);
   explicit column_operations(any_column_info_t in_any_column);
+  explicit column_operations(rowid_column_info_t in_rowid_column);
 
   column_info_ptr get_column_info_ptr() const;
 

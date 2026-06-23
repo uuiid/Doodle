@@ -25,8 +25,6 @@ struct alias_column_info_t : public base_column_info_t {
   // void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
-template <typename T>
-inline constexpr bool is_alias_column_t_v = std::is_base_of_v<alias_column_info_t, std::remove_cvref_t<T>>;
 
 struct alias_info_t : public table_info_base_t {
   std::string table_name_;
@@ -76,12 +74,25 @@ struct any_column_info_t : public base_column_info_t {
   table_info_base_ptr table_info_ptr_;
   explicit any_column_info_t(std::type_index in_table_index);
   std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
-  // void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 template <typename Table>
 auto any_column() {
   return any_column_info_t(typeid(Table));
 }
+// row_id column
+struct rowid_column_info_t : public base_column_info_t {
+  table_info_base_ptr table_info_ptr_;
+  explicit rowid_column_info_t(std::type_index in_table_index);
+  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
+  void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
+};
+template <typename Table>
+auto rowid_column() {
+  return rowid_column_info_t{typeid(Table)};
+}
+template <typename T>
+inline constexpr bool is_alias_column_t_v = std::is_base_of_v<alias_column_info_t, std::remove_cvref_t<T>> ||
+                                            std::is_base_of_v<rowid_column_info_t, std::remove_cvref_t<T>>;
 
 }  // namespace doodle::orm

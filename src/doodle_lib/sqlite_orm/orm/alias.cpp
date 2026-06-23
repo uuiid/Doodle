@@ -43,4 +43,14 @@ std::string any_column_info_t::get_column_name(const storage& s, const to_sql_ct
 // void any_column_info_t::set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
 void any_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {}
 
+rowid_column_info_t::rowid_column_info_t(std::type_index in_table_index)
+    : table_info_ptr_(std::make_shared<table_info_t>(in_table_index)) {}
+std::string rowid_column_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
+  auto l_table_name = table_info_ptr_->to_sql(s, ctx);
+  return fmt::format("{}.rowid", l_table_name);
+}
+void rowid_column_info_t::set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const {
+  // rowid_column_info_t 不需要设置值，因为它是只读的
+}
+
 }  // namespace doodle::orm
