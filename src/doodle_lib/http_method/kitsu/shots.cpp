@@ -183,13 +183,11 @@ struct shots_with_tasks_result {
 };
 
 auto make_shots_with_tasks_result(const person& in_person, const boost::urls::url& in_url) {
-  std::vector<uuid> l_entity_type_ids_{
-      asset_type::get_shot_id(), asset_type::get_ai_id(), asset_type::get_half_ai_id()
-  };
   uuid l_project_id_;
   std::vector<uuid> l_episode_id_;
   std::vector<uuid> l_sequence_id_;
   std::vector<uuid> l_person_id_;
+  std::vector<uuid> l_entity_type_id_;
   std::int32_t l_offset_{};
   std::int32_t l_limit_{300};
 
@@ -197,10 +195,14 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
     if (key == "project_id" && has) l_project_id_ = from_uuid_str(value);
     if (key == "episode_id" && has) l_episode_id_.emplace_back(from_uuid_str(value));
     if (key == "sequence_id" && has) l_sequence_id_.emplace_back(from_uuid_str(value));
+    if (key == "entity_type_id" && has) l_entity_type_id_.emplace_back(from_uuid_str(value));
     if (key == "offset" && has) l_offset_ = std::stoi(value);
     if (key == "limit" && has) l_limit_ = std::stoi(value);
     if (key == "person_id" && has) l_person_id_.emplace_back(from_uuid_str(value));
   }
+  if (l_entity_type_id_.empty())
+    l_entity_type_id_ = {asset_type::get_shot_id(), asset_type::get_ai_id(), asset_type::get_half_ai_id()};
+
   // 构建动态查询条件
   using namespace doodle::orm;
   auto& l_sql          = get_sqlite_database();
@@ -208,7 +210,6 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
   auto episode         = alias<entity>("episode");
 
   auto l_dynamic_query = dynamic_column_operations{};
-  l_dynamic_query.add_condition(c(&entity::entity_type_id_).in(l_entity_type_ids_));
   if (in_person.role_ == person_role_type::outsource) {
     auto l_outsource_select = select(l_sql)
                                   .columns(&outsource_studio_authorization::entity_id_)
@@ -225,11 +226,12 @@ auto make_shots_with_tasks_result(const person& in_person, const boost::urls::ur
   if (!l_episode_id_.empty()) l_dynamic_query.add_condition(c(episode->*&entity::uuid_id_).in(l_episode_id_));
   if (!l_sequence_id_.empty()) l_dynamic_query.add_condition(c(sequence->*&entity::uuid_id_).in(l_sequence_id_));
   if (!l_person_id_.empty()) l_dynamic_query.add_condition(c(&assignees_table::person_id_).in(l_person_id_));
+  if (!l_entity_type_id_.empty()) l_dynamic_query.add_condition(c(&entity::entity_type_id_).in(l_entity_type_id_));
 
   std::vector<shots_with_tasks_result> l_ret{};
   std::map<uuid, std::size_t> l_shots_ids{};
   std::set<uuid> l_tasks_ids;
-  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person.uuid_id_, l_project_id_, l_entity_type_ids_);
+  auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person.uuid_id_, l_project_id_, l_entity_type_id_);
 
   // 迁移到 doodle::orm 的查询
   auto l_result                 = doodle::orm::select(l_sql)
