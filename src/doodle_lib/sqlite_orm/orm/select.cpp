@@ -72,9 +72,9 @@ std::string select_t::to_sql(const storage& s, const to_sql_ctx& in_ctx) const {
 }
 
 void select_t::collect_bind_variants(bind_value_collector_t& bind_variants) const {
-  if (impl_->wheres_) {
-    impl_->wheres_->collect_bind_variants(bind_variants);
-  }
+  for (const auto& join : impl_->joins_) join.on_condition_->collect_bind_variants(bind_variants);
+  if (impl_->wheres_) impl_->wheres_->collect_bind_variants(bind_variants);
+
   impl_->from_table_name_->collect_bind_variants(bind_variants);
 }
 
