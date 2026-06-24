@@ -65,7 +65,7 @@ function fillWorkRow(row, role, numWorkCols) {
 
 function Macro() {
   const sheet = Application.ActiveSheet;
-  const targetRange = sheet.Range("C4:AI34");
+  const targetRange = sheet.Range("C4", Application.Selection);
 
   const targetRows = targetRange.Rows.Count;
   const targetCols = targetRange.Columns.Count;
