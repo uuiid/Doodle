@@ -85,7 +85,7 @@ void get_register_info(kitsu_supplement_args_t& in_args) {
       in_args.deepseek_keys_ = l_value_w | std::ranges::views::transform([](const std::wstring& in) -> std::string {
                                  return conv::utf_to_utf<char>(in);
                                }) |
-                               std::ranges::to<std::vector<std::string>>();
+                               ranges::to<std::vector<std::string>>();
 
       if (auto l_value = l_key.TryGetStringValue(L"ji_meng_access_key_id"); l_value.IsValid())
         in_args.ji_meng_access_key_id_ = conv::utf_to_utf<char>(l_value.GetValue());
