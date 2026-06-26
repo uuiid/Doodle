@@ -1,5 +1,6 @@
 #include "doodle_core/exception/exception.h"
 
+#include <doodle_lib/ai/hf_tokenizer.h>
 #include <doodle_lib/core/global_function.h>
 
 #include <boost/asio/post.hpp>
@@ -16,8 +17,6 @@
 #include <onnxruntime_cxx_api.h>
 #include <spdlog/spdlog.h>
 #include <string>
-#include <tokenizers_c.h>
-#include <tokenizers_cpp.h>
 #include <utility>
 #include <vector>
 
@@ -38,85 +37,7 @@ void init_ort_env() {
   std::call_once(l_flag, &_init_ort_env);
 }
 
-// 我们自己包装的分词器，基于 tokenizers 库，适配 LLM2Vec 的编码模式
-struct hf_tokenizer {
- private:
-  std::unique_ptr<void, void (*)(void*)> handle_{nullptr, [](void* ptr) {
-                                                   if (ptr) tokenizers_free(ptr);
-                                                 }};
-
- public:
-  explicit hf_tokenizer(const std::string& in_tokenizer_json) {
-    auto handle = tokenizers_new_from_str(in_tokenizer_json.data(), in_tokenizer_json.size());
-    if (handle == nullptr) throw std::runtime_error("Failed to create tokenizer from JSON");
-
-    handle_.reset(handle);
-  }
-
-  std::vector<int32_t> encode(const std::string& text, bool add_special_tokens = true) {
-    TokenizerEncodeResult result;
-    tokenizers_encode(handle_.get(), text.data(), text.length(), static_cast<int>(add_special_tokens), &result);
-    std::vector<int32_t> ret(result.token_ids, result.token_ids + result.len);
-    tokenizers_free_encode_results(&result, 1);
-    return ret;
-  }
-  std::vector<std::vector<int32_t>> EncodeBatch(const std::vector<std::string>& texts, bool add_special_tokens = true) {
-    std::vector<const char*> texts_raw;
-    std::vector<size_t> seq_lens;
-    size_t num_seqs = texts.size();
-    texts_raw.reserve(num_seqs);
-    seq_lens.reserve(num_seqs);
-    for (const auto& text : texts) {
-      texts_raw.push_back(text.data());
-      seq_lens.push_back(text.length());
-    }
-    std::vector<TokenizerEncodeResult> results(num_seqs);
-    tokenizers_encode_batch(
-        handle_.get(), texts_raw.data(), seq_lens.data(), texts.size(), static_cast<int>(add_special_tokens),
-        results.data()
-    );
-    std::vector<std::vector<int32_t>> ret;
-    ret.reserve(texts.size());
-    for (size_t i = 0; i < texts.size(); ++i) {
-      ret.push_back(std::vector<int32_t>(results[i].token_ids, results[i].token_ids + results[i].len));
-    }
-    tokenizers_free_encode_results(results.data(), texts.size());
-    return ret;
-  }
-
-  // use i32 to be consistent with sentencepiece
-  std::string Decode(const std::vector<int32_t>& ids, bool skip_special_tokens) {
-    tokenizers_decode(
-        handle_.get(), reinterpret_cast<const uint32_t*>(ids.data()), ids.size(), static_cast<int>(skip_special_tokens)
-    );
-    const char* data;
-    size_t len;
-    tokenizers_get_decode_str(handle_.get(), &data, &len);
-    return std::string(data, len);
-  }
-
-  std::string Decode(const std::vector<int32_t>& ids) { return Decode(ids, false); }
-
-  size_t GetVocabSize() {
-    size_t size;
-    tokenizers_get_vocab_size(handle_.get(), &size);
-    assert(size > 0);
-    return size;
-  }
-
-  std::string IdToToken(int32_t id) {
-    const char* data;
-    size_t len;
-    tokenizers_id_to_token(handle_.get(), static_cast<uint32_t>(id), &data, &len);
-    return std::string(data, len);
-  }
-
-  int32_t TokenToId(const std::string& token) {
-    int32_t id;
-    tokenizers_token_to_id(handle_.get(), token.data(), token.length(), &id);
-    return id;
-  }
-};
+using doodle::hf_tokenizer;
 
 struct llm2vec_tokenizer {
   std::unique_ptr<hf_tokenizer> tokenizer_;

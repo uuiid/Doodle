@@ -36,7 +36,7 @@ add_subdirectory(platform)
 add_subdirectory(sqlite_orm)
 add_subdirectory(time_tool)
 
-# add_subdirectory(ai)
+add_subdirectory(ai)
 
 set_target_properties(doodle_lib
         PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -94,7 +94,7 @@ target_link_libraries(doodle_lib
         crashpad::crashpad
         #        OpenSSL::applink
         TBB::tbb
-        tokenizers_cpp::tokenizers_cpp
+        tokenizers_cpp::tokenizers_c
         onnxruntime::onnxruntime
 )
 
