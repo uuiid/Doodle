@@ -41,7 +41,13 @@
     "tl-expected",
     "bit7z",
     "cppjieba",
-    "mimalloc",
+    {
+      "name": "mimalloc",
+      "default-features": false,
+      "features": [
+        "override"
+      ]
+    },
     "cnpy",
     {
       "name": "sqlite3",

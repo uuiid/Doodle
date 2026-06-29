@@ -2,7 +2,7 @@
 // Created by td_main on 2023/9/11.
 //
 #pragma once
-// #include <mimalloc.h>
+#include <mimalloc.h>
 #ifdef MI_MALLOC_VERSION
 #include <mimalloc-new-delete.h>
 #pragma comment(linker, "/include:mi_version")

@@ -59,8 +59,8 @@ auto get_working_files_for_entity_sql(const uuid& in_project_id, const uuid& in_
       )
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
-      .left_outer_join(l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_jishu, &entity_asset_extend::ji_shu_lie_, l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_kaishi_jishu, &entity_asset_extend::kai_shi_ji_shu_, l_kaishi_jishu->*&entity::uuid_id_)
       .where(c(&entity::uuid_id_)
                  .in(select(l_sql)
                          .columns(&entity_link::entity_out_id_)
@@ -82,8 +82,8 @@ auto get_working_files_for_entity_sql(const uuid& in_entity_id) {
       )
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
-      .left_outer_join(l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_jishu, &entity_asset_extend::ji_shu_lie_, l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_kaishi_jishu, &entity_asset_extend::kai_shi_ji_shu_, l_kaishi_jishu->*&entity::uuid_id_)
       .where(c(&entity::uuid_id_) == in_entity_id)()
       .to_vector();
 }
@@ -98,8 +98,8 @@ auto get_working_files_for_entity_sql(const std::vector<uuid>& in_entity_ids) {
       )
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
-      .left_outer_join(l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_jishu, &entity_asset_extend::ji_shu_lie_, l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_kaishi_jishu, &entity_asset_extend::kai_shi_ji_shu_, l_kaishi_jishu->*&entity::uuid_id_)
       .where(c(&entity::uuid_id_).in(in_entity_ids))()
       .to_vector();
 }

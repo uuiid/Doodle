@@ -1389,15 +1389,14 @@ std::optional<entity_asset_extend_value> sqlite_database::get_entity_asset_exten
 
   auto l_jishu        = alias<entity>("jishu");
   auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
-  auto l_opt          = select(*this)
-                   .columns(object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
-                   .from<entity_asset_extend>()
-                   .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
-                   .left_outer_join(
-                       l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_
-                   )
-                   .where(c(&entity_asset_extend::entity_id_) == in_entity_id)()
-                   .to_optional();
+  auto l_opt =
+      select(*this)
+          .columns(object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
+          .from<entity_asset_extend>()
+          .left_outer_join(l_jishu, &entity_asset_extend::ji_shu_lie_, l_jishu->*&entity::uuid_id_)
+          .left_outer_join(l_kaishi_jishu, &entity_asset_extend::kai_shi_ji_shu_, l_kaishi_jishu->*&entity::uuid_id_)
+          .where(c(&entity_asset_extend::entity_id_) == in_entity_id)()
+          .to_optional();
   if (l_opt) {
     return std::make_from_tuple<entity_asset_extend_value>(*l_opt);
   }
@@ -1545,9 +1544,9 @@ entity_asset_extend_value sqlite_database::get_entity_shot_extend_by_task(const 
   auto l_assets       = select(*this)
                          .columns(object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
                          .from<entity_asset_extend>()
-                         .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+                         .left_outer_join(l_jishu, &entity_asset_extend::ji_shu_lie_, l_jishu->*&entity::uuid_id_)
                          .left_outer_join(
-                            l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_
+                            l_kaishi_jishu, &entity_asset_extend::kai_shi_ji_shu_, l_kaishi_jishu->*&entity::uuid_id_
                           )
                       .where(
                           c(&entity::uuid_id_)

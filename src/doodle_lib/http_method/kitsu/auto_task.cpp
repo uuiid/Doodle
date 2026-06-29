@@ -60,9 +60,9 @@ auto get_entity_and_entity_asset_extend_by_shot_id(const uuid& in_shot_id) {
       .columns(object<entity>(), object<entity_asset_extend>(), l_jishu->*&entity::name_, l_kaishi_jishu->*&entity::name_)
       .from<entity>()
       .left_outer_join<entity_asset_extend>(&entity_asset_extend::entity_id_, &entity::uuid_id_)
-      .left_outer_join(l_jishu, c(&entity_asset_extend::ji_shu_lie_) == l_jishu->*&entity::uuid_id_)
+      .left_outer_join(l_jishu, &entity_asset_extend::ji_shu_lie_, l_jishu->*&entity::uuid_id_)
       .left_outer_join(
-          l_kaishi_jishu, c(&entity_asset_extend::kai_shi_ji_shu_) == l_kaishi_jishu->*&entity::uuid_id_
+          l_kaishi_jishu, &entity_asset_extend::kai_shi_ji_shu_, l_kaishi_jishu->*&entity::uuid_id_
       )
     .where(
       c(&entity::uuid_id_)
@@ -668,7 +668,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
           l_scene_ue_path / get_entity_prop_ue_public_files_path()
       );
       l_arg.download_file_list_.emplace_back(
-          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) / get_entity_prop_ue_files_path(l_asset_extend_value),
+          l_prj.path_ / get_entity_prop_ue_path(l_prj, l_asset_extend_value) /
+              get_entity_prop_ue_files_path(l_asset_extend_value),
           l_scene_ue_path / get_entity_prop_ue_files_path(l_asset_extend_value)
       );
 
