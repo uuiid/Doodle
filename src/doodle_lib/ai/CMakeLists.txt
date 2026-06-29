@@ -4,7 +4,6 @@ target_sources(
         hf_tokenizer.h
         llm2vec_tokenizer.h
         llm2vec.h
-        npy_loader.h
         linear_layer.h
         positional_encoding.h
         timestep_embedder.h
