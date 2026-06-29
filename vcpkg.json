@@ -42,6 +42,7 @@
     "bit7z",
     "cppjieba",
     "mimalloc",
+    "cnpy",
     {
       "name": "sqlite3",
       "default-features": false,

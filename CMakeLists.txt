@@ -125,6 +125,8 @@ find_package(crashpad CONFIG REQUIRED)
 find_package(tokenizers_cpp CONFIG REQUIRED)
 # onnxruntime
 find_package(onnxruntime CONFIG REQUIRED)
+# 寻找 cnpy
+find_package(cnpy CONFIG REQUIRED)
 
 # Debug 模式下启用测试
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
