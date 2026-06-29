@@ -88,54 +88,61 @@ function Macro() {
     rd35: "AN21",
     rd36: "AR34",
     rd37: "AR26",
-  }
-
-
-  const sheet = Application.ActiveSheet;
-  const targetRange = sheet.Range("C4", Application.Selection);
-
-  const targetRows = targetRange.Rows.Count;
-  const targetCols = targetRange.Columns.Count;
-  const numWorkCols = targetCols - 1;
+  };
 
   // 前两个角色之外的随机角色池
   const otherRoles = ["开发", "测试", "运维"];
   // roles 中的 key 顺序，用于排序
   const roleOrder = ["管理", "主程", "开发", "测试", "运维"];
 
-  // 创建目标大小的二维数组
-  const result = new Array(targetRows);
-
-  for (let i = 0; i < targetRows; i++) {
-    result[i] = new Array(targetCols);
-
-    // 第一列：角色分配
-    let role;
-    if (i === 0) {
-      role = "管理";
-    } else if (i === 1) {
-      role = "主程";
-    } else {
-      role = otherRoles[Math.floor(Math.random() * otherRoles.length)];
+  for (const [sheetName, endCell] of Object.entries(sheet_end_map)) {
+    let sheet;
+    try {
+      sheet = Application.Workbooks.Item(1).Sheets(sheetName);
+    } catch (e) {
+      // 如果找不到对应名称的工作表，跳过
+      continue;
     }
-    result[i][0] = role;
 
-    // 其余列：按概率分布填充工作内容
-    fillWorkRow(result[i], role, numWorkCols);
+    const targetRange = sheet.Range("C4", sheet.Range(endCell));
+    const targetRows = targetRange.Rows.Count;
+    const targetCols = targetRange.Columns.Count;
+    const numWorkCols = targetCols - 1;
+
+    // 创建目标大小的二维数组
+    const result = new Array(targetRows);
+
+    for (let i = 0; i < targetRows; i++) {
+      result[i] = new Array(targetCols);
+
+      // 第一列：角色分配
+      let role;
+      if (i === 0) {
+        role = "管理";
+      } else if (i === 1) {
+        role = "主程";
+      } else {
+        role = otherRoles[Math.floor(Math.random() * otherRoles.length)];
+      }
+      result[i][0] = role;
+
+      // 其余列：按概率分布填充工作内容
+      fillWorkRow(result[i], role, numWorkCols);
+    }
+
+    // 对第 3 行起按角色顺序排序
+    const tail = result.slice(2);
+    tail.sort((a, b) => roleOrder.indexOf(a[0]) - roleOrder.indexOf(b[0]));
+    for (let i = 2; i < targetRows; i++) {
+      result[i] = tail[i - 2];
+    }
+
+    // 一次性写入目标区域
+    targetRange.Value2 = result;
+
+    // 设置格式（居中对齐、自动换行）
+    targetRange.HorizontalAlignment = xlHAlignCenter;
+    targetRange.VerticalAlignment = xlVAlignCenter;
+    targetRange.WrapText = true;
   }
-
-  // 对第 3 行起按角色顺序排序
-  const tail = result.slice(2);
-  tail.sort((a, b) => roleOrder.indexOf(a[0]) - roleOrder.indexOf(b[0]));
-  for (let i = 2; i < targetRows; i++) {
-    result[i] = tail[i - 2];
-  }
-
-  // 一次性写入目标区域
-  targetRange.Value2 = result;
-
-  // 设置格式（居中对齐、自动换行）
-  targetRange.HorizontalAlignment = xlHAlignCenter;
-  targetRange.VerticalAlignment = xlVAlignCenter;
-  targetRange.WrapText = true;
 }
