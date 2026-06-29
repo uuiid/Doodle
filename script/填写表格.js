@@ -56,10 +56,71 @@ function fillWorkRow(row, role, numWorkCols) {
     row[col + 1] = workList[currentIdx];
   }
 }
+/**
+ * 填充单个工作表
+ * @param {Sheet} sheet - 目标工作表
+ * @param {string} endCell - 结束单元格（如 "AU20"），起始格固定为 C4
+ */
+function fillSheet(sheet, endCell) {
+  const targetRange = sheet.Range("C4", sheet.Range(endCell));
+  const targetRows = targetRange.Rows.Count;
+  const targetCols = targetRange.Columns.Count;
+  const numWorkCols = targetCols - 1;
+
+  // 前两个角色之外的随机角色池（带权重：运维概率较低）
+  const otherRoles = ["开发", "测试", "开发", "测试", "开发", "测试", "开发", "测试", "运维"];
+  // roles 中的 key 顺序，用于排序
+  const roleOrder = ["管理", "主程", "开发", "测试", "运维"];
+
+  // 创建目标大小的二维数组
+  const result = new Array(targetRows);
+
+  for (let i = 0; i < targetRows; i++) {
+    result[i] = new Array(targetCols);
+
+    // 第一列：角色分配
+    let role;
+    if (i === 0) {
+      role = "管理";
+    } else if (i === 1) {
+      role = "主程";
+    } else {
+      role = otherRoles[Math.floor(Math.random() * otherRoles.length)];
+    }
+    result[i][0] = role;
+
+    // 其余列：按概率分布填充工作内容
+    fillWorkRow(result[i], role, numWorkCols);
+  }
+
+  // 保证"运维"至少出现一次（如果只有2行则无法插入其他角色，跳过）
+  if (targetRows > 2) {
+    const hasYunwei = result.slice(2).some(row => row[0] === "运维");
+    if (!hasYunwei) {
+      // 随机选一个非前两行的位置替换为"运维"
+      const idx = 2 + Math.floor(Math.random() * (targetRows - 2));
+      result[idx][0] = "运维";
+      fillWorkRow(result[idx], "运维", numWorkCols);
+    }
+  }
+
+  // 对第 3 行起按角色顺序排序
+  const tail = result.slice(2);
+  tail.sort((a, b) => roleOrder.indexOf(a[0]) - roleOrder.indexOf(b[0]));
+  for (let i = 2; i < targetRows; i++) {
+    result[i] = tail[i - 2];
+  }
+
+  // 一次性写入目标区域
+  targetRange.Value2 = result;
+
+  // 设置格式（居中对齐、自动换行）
+  targetRange.HorizontalAlignment = xlHAlignCenter;
+  targetRange.VerticalAlignment = xlVAlignCenter;
+  targetRange.WrapText = true;
+}
 
 function Macro() {
-
-
   const sheet_end_map = {
     rd15: "AU20",
     rd16: "AU18",
@@ -89,12 +150,6 @@ function Macro() {
     rd36: "AR34",
     rd37: "AR26",
   };
-
-  // 前两个角色之外的随机角色池（带权重：运维概率较低）
-  const otherRoles = ["开发", "测试", "开发", "测试", "开发", "测试", "开发", "测试", "运维"];
-  // roles 中的 key 顺序，用于排序
-  const roleOrder = ["管理", "主程", "开发", "测试", "运维"];
-
   for (const [sheetName, endCell] of Object.entries(sheet_end_map)) {
     let sheet;
     try {
@@ -104,56 +159,6 @@ function Macro() {
       continue;
     }
 
-    const targetRange = sheet.Range("C4", sheet.Range(endCell));
-    const targetRows = targetRange.Rows.Count;
-    const targetCols = targetRange.Columns.Count;
-    const numWorkCols = targetCols - 1;
-
-    // 创建目标大小的二维数组
-    const result = new Array(targetRows);
-
-    for (let i = 0; i < targetRows; i++) {
-      result[i] = new Array(targetCols);
-
-      // 第一列：角色分配
-      let role;
-      if (i === 0) {
-        role = "管理";
-      } else if (i === 1) {
-        role = "主程";
-      } else {
-        role = otherRoles[Math.floor(Math.random() * otherRoles.length)];
-      }
-      result[i][0] = role;
-
-      // 其余列：按概率分布填充工作内容
-      fillWorkRow(result[i], role, numWorkCols);
-    }
-
-    // 保证"运维"至少出现一次（如果只有2行则无法插入其他角色，跳过）
-    if (targetRows > 2) {
-      const hasYunwei = result.slice(2).some(row => row[0] === "运维");
-      if (!hasYunwei) {
-        // 随机选一个非前两行的位置替换为"运维"
-        const idx = 2 + Math.floor(Math.random() * (targetRows - 2));
-        result[idx][0] = "运维";
-        fillWorkRow(result[idx], "运维", numWorkCols);
-      }
-    }
-
-    // 对第 3 行起按角色顺序排序
-    const tail = result.slice(2);
-    tail.sort((a, b) => roleOrder.indexOf(a[0]) - roleOrder.indexOf(b[0]));
-    for (let i = 2; i < targetRows; i++) {
-      result[i] = tail[i - 2];
-    }
-
-    // 一次性写入目标区域
-    targetRange.Value2 = result;
-
-    // 设置格式（居中对齐、自动换行）
-    targetRange.HorizontalAlignment = xlHAlignCenter;
-    targetRange.VerticalAlignment = xlVAlignCenter;
-    targetRange.WrapText = true;
+    fillSheet(sheet, endCell);
   }
 }
