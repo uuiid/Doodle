@@ -130,6 +130,17 @@ function Macro() {
       fillWorkRow(result[i], role, numWorkCols);
     }
 
+    // 保证"运维"至少出现一次（如果只有2行则无法插入其他角色，跳过）
+    if (targetRows > 2) {
+      const hasYunwei = result.slice(2).some(row => row[0] === "运维");
+      if (!hasYunwei) {
+        // 随机选一个非前两行的位置替换为"运维"
+        const idx = 2 + Math.floor(Math.random() * (targetRows - 2));
+        result[idx][0] = "运维";
+        fillWorkRow(result[idx], "运维", numWorkCols);
+      }
+    }
+
     // 对第 3 行起按角色顺序排序
     const tail = result.slice(2);
     tail.sort((a, b) => roleOrder.indexOf(a[0]) - roleOrder.indexOf(b[0]));
