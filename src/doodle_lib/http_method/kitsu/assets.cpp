@@ -343,7 +343,9 @@ struct make_with_tasks_sql_result_t {
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_du_) == nullptr);
 
       if (!ji_shu_lie_filter_.empty()) {
-        l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_));
+        l_dynamic_where.add_condition(
+            c(&entity_asset_extend::ji_shu_lie_).in(ji_shu_lie_filter_) || c(&entity::parent_id_).in(ji_shu_lie_filter_)
+        );
       } else if (ji_shu_lie_filter_is_null)
         l_dynamic_where.add_condition(c(&entity_asset_extend::ji_shu_lie_) == nullptr);
 
