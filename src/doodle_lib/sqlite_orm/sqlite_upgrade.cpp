@@ -26,7 +26,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 10;
+constexpr std::size_t g_current_version = 11;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -90,7 +90,7 @@ struct upgrade_2_t : sqlite_upgrade {
       in_data.pragma().user_version(g_current_version);
     }
 
-    if (in_data.pragma().user_version() == 9) {
+    if (in_data.pragma().user_version() == 10) {
       in_data.drop_table("entity_asset_extend_2");
       in_data.sync_schema();
 
