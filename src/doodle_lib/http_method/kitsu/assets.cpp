@@ -318,13 +318,10 @@ struct make_with_tasks_sql_result_t {
     using namespace orm;
 
     auto& l_sql              = get_sqlite_database();
-    auto l_temporal_type_ids = std::vector{
-        asset_type::get_episode_id(), asset_type::get_sequence_id(), asset_type::get_edit_id(),
-        asset_type::get_scene_id(), asset_type::get_concept_id()
-    };
-    auto l_sequence      = alias<entity>("sequence");
-    auto l_episode       = alias<entity>("episode");
-    auto l_dynamic_where = dynamic_column_operations{};
+    auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
+    auto l_sequence          = alias<entity>("sequence");
+    auto l_episode           = alias<entity>("episode");
+    auto l_dynamic_where     = dynamic_column_operations{};
     l_dynamic_where.add_condition(c(&entity::entity_type_id_).not_in(l_temporal_type_ids));
     if (person_.role_ == person_role_type::outsource)
       l_dynamic_where.add_condition(
