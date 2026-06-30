@@ -96,7 +96,7 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
                                          .from<entity>()
                                          .where(
                                              c(&entity::project_id_) == l_project.uuid_id_ &&
-                                             c(&entity::entity_type_id_) == asset_type::get_episode_id()
+                                             c(&entity::entity_type_id_) == asset_type::get_sequence_id()
                                          )
                                          .order_by (&entity::name_)()) {
         l_project.episodes_.emplace_back(project_with_extra_data::project_int_uuid{l_name, 0, l_uuid});
