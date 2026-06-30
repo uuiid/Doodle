@@ -102,6 +102,8 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
         l_project.episodes_.emplace_back(project_with_extra_data::project_int_uuid{l_name, 0, l_uuid});
         l_entity_map[l_uuid] = l_project.episodes_.size() - 1;
       }
+      l_entity_map[uuid{}] = l_project.episodes_.size();
+      l_project.episodes_.emplace_back(project_with_extra_data::project_int_uuid{"未分集", 0, uuid{}});
       // 第二次获取统计
       for (auto&& [l_entity_id, l_jishu_size] : select(l_sql)
                                                     .columns(&entity_asset_extend::ji_shu_lie_, count())
