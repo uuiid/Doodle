@@ -114,7 +114,12 @@ struct upgrade_2_t : sqlite_upgrade {
           select(in_data)
               .columns(object<entity>(), object<entity_asset_extend_old>())
               .from<entity>()
-              .where(c(&entity::entity_type_id_).in({asset_type::get_sequence_id(), asset_type::get_ai_id()}))
+              .where(c(&entity::entity_type_id_)
+                         .in(
+                             {asset_type::get_sequence_id(), asset_type::get_character_id(), asset_type::get_prop_id(),
+                              asset_type::get_effect_id(), asset_type::get_ground_id(),
+                              asset_type::get_scene_asset_id(), asset_type::get_ai_id()}
+                         ))
               .left_outer_join<entity_asset_extend_old>(&entity_asset_extend_old::entity_id_, &entity::uuid_id_)()
               .to_vector();
       std::map<uuid, project_data> l_project_datas{};
