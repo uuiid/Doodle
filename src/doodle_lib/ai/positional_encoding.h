@@ -6,10 +6,13 @@
 #include <doodle_core/doodle_core_fwd.h>
 #include <doodle_core/exception/exception.h>
 
+#include <boost/numeric/conversion/cast.hpp>
+
 #include <Eigen/Dense>
 #include <cmath>
 #include <cstdint>
 #include <vector>
+
 
 namespace doodle::ai {
 
@@ -29,23 +32,34 @@ class PositionalEncoding {
   void init(std::int64_t d_model, std::int64_t max_len = 5000) {
     d_model_ = d_model;
     max_len_ = max_len;
+
     pe_.resize(max_len, d_model);
 
-    for (std::int64_t pos = 0; pos < max_len; ++pos) {
-      for (std::int64_t i = 0; i < d_model / 2; ++i) {
-        auto div_term = std::pow(10000.0, -2.0 * static_cast<double>(i) / static_cast<double>(d_model));
-        auto sin_val = static_cast<float>(std::sin(static_cast<double>(pos) * div_term));
-        auto cos_val = static_cast<float>(std::cos(static_cast<double>(pos) * div_term));
+    const std::int64_t half_dim   = d_model / 2;
 
-        if (2 * i < d_model) pe_(pos, 2 * i) = sin_val;
-        if (2 * i + 1 < d_model) pe_(pos, 2 * i + 1) = cos_val;
-      }
+    // 位置向量 [max_len, 1]
+    const Eigen::VectorXf pos_vec = Eigen::VectorXf::LinSpaced(max_len, 0.0f, boost::numeric_cast<float>(max_len - 1));
+
+    // 频率向量 [half_dim, 1]
+    Eigen::VectorXf div_term(half_dim);
+    for (std::int64_t i = 0; i < half_dim; ++i) {
+      div_term(i) = boost::numeric_cast<float>(
+          std::pow(10000.0, -2.0 * boost::numeric_cast<double>(i) / boost::numeric_cast<double>(d_model))
+      );
     }
-    // 如果 d_model 为奇数，补充最后一列
+
+    // angle = position * div_term^T  [max_len, 1] × [1, half_dim] = [max_len, half_dim]
+    const Eigen::MatrixXf angles = pos_vec * div_term.transpose();
+
+    // 交替填充 sin(角度) 和 cos(角度) —— 向量化运算
+    for (std::int64_t i = 0; i < half_dim; ++i) {
+      pe_.col(2 * i)     = angles.col(i).array().sin();
+      pe_.col(2 * i + 1) = angles.col(i).array().cos();
+    }
+
+    // d_model 为奇数时补充零列
     if (d_model % 2 == 1) {
-      for (std::int64_t pos = 0; pos < max_len; ++pos) {
-        pe_(pos, d_model - 1) = 0.0f;
-      }
+      pe_.col(d_model - 1).setZero();
     }
   }
 
@@ -63,9 +77,9 @@ class PositionalEncoding {
   /// @param indices 时间步索引向量（每个值范围 [0, max_len)）
   /// @return [indices.size(), d_model]
   Eigen::MatrixXf lookup(const std::vector<std::int64_t>& indices) const {
-    Eigen::MatrixXf result(static_cast<Eigen::Index>(indices.size()), d_model_);
-    for (Eigen::Index i = 0; i < static_cast<Eigen::Index>(indices.size()); ++i) {
-      result.row(i) = pe_.row(indices[static_cast<std::size_t>(i)]);
+    Eigen::MatrixXf result(boost::numeric_cast<Eigen::Index>(indices.size()), d_model_);
+    for (Eigen::Index i = 0; i < boost::numeric_cast<Eigen::Index>(indices.size()); ++i) {
+      result.row(i) = pe_.row(indices[boost::numeric_cast<std::size_t>(i)]);
     }
     return result;
   }
