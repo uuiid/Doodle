@@ -164,7 +164,7 @@ struct with_tasks_get_result_t {
         is_casting_standby_(in_entity.is_casting_standby_),
         is_shared_(in_entity.is_shared_),
 
-        ji_shu_lie_(in_asset_extend.ji_shu_lie_),
+        ji_shu_lie_(in_asset_extend.ji_shu_lie_.is_nil() ? in_entity.parent_id_ : in_asset_extend.ji_shu_lie_),
         deng_ji_(in_asset_extend.deng_ji_),
         gui_dang_(in_asset_extend.gui_dang_),
         bian_hao_(in_asset_extend.bian_hao_),
