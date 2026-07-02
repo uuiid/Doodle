@@ -176,16 +176,16 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	FString L_Skin_Path = JsonObject->HasField(TEXT("skin_path"))
 		? JsonObject->GetStringField(TEXT("skin_path"))
 		: TEXT("");
-	const TObjectPtr<USkeleton> L_Skeleton = LoadObject<USkeleton>(nullptr, *L_BanBen_Suffix);
+	const TObjectPtr<USkeleton> L_Skeleton = LoadObject<USkeleton>(nullptr, *L_Skin_Path);
 	TArray<UObject*> ImportedObjs = CreateCharacterImportTask(FbxPath, L_Skeleton, false);
 
 	if (ImportedObjs.IsEmpty()) return;
 
 	USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
-	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画
+	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画, 直接抛出异常失败
 	{
-		const UAnimSequence* AnimSeq = Cast<UAnimSequence>(ImportedObjs.Top());
-		TmpSkeletalMesh = AnimSeq->GetSkeleton()->FindCompatibleMesh();
+		UE_LOG(LogTemp, Error, TEXT("导入的FBX文件 %s 没有生成骨骼网格体"), *FbxPath);
+		return;
 	}
 
 	// 生成 lod
