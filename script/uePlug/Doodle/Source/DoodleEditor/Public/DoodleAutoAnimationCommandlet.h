@@ -104,10 +104,10 @@ private:
 	/// 导入fbx中的相机
 	void ImportCamera(const FString& InFbxPath) const;
 	/// 创建几何缓存导入任务
-	UAssetImportTask* CreateGeometryImportTask(const FString& InFbxPath) const;
+	TArray<UObject*> CreateGeometryImportTask(const FString& InFbxPath);
 	/// 创建角色导入任务
-	UAssetImportTask* CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
-	                                            bool bImportAnimations = true) const;
+	TArray<UObject*> CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
+	                                           bool bImportAnimations = true);
 
 	/// 隐藏材质
 	void HideMaterials(const ASkeletalMeshActor* InActor) const;

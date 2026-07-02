@@ -157,7 +157,14 @@ public class doodleEditor : ModuleRules
 				// 导入abc hair需要
 				"HairStrandsCore",
 				"GeometryFramework",
-				"GeometryScriptingCore"
+				"GeometryScriptingCore",
+				// 新版导入文件
+				"InterchangePipelines",
+				"InterchangeImport",
+				"InterchangeCore",
+				"InterchangeEngine",
+				
+				
 			}
 		);
 
