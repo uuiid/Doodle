@@ -67,9 +67,9 @@ public:
 	virtual int32 Main(const FString& Params) override;
 
 
-	void RunAutoLight(const FString& InCondigPath);
-	void RunCheckFiles(const FString& InCondigPath);
-	void ImportRig(const FString& InCondigPath);
+	int RunAutoLight(const FString& InCondigPath);
+	int RunCheckFiles(const FString& InCondigPath);
+	int ImportRig(const FString& InCondigPath);
 
 private:
 	/// 删除资产

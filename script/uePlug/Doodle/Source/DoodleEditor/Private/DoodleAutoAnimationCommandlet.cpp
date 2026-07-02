@@ -110,18 +110,15 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 	//--------------
 	if (const FString& Key = TEXT("Params"); ParamsMap.Contains(Key))
 	{
-		RunAutoLight(ParamsMap[Key]);
-		return 0;
+		return RunAutoLight(ParamsMap[Key]);
 	}
 	if (const FString& Key2 = TEXT("Check"); ParamsMap.Contains(Key2))
 	{
-		RunCheckFiles(ParamsMap[Key2]);
-		return 0;
+		return RunCheckFiles(ParamsMap[Key2]);
 	}
 	if (const FString& Key3 = TEXT("ImportRig"); ParamsMap.Contains(Key3))
 	{
-		ImportRig(ParamsMap[Key3]);
-		return 0;
+		return ImportRig(ParamsMap[Key3]);
 	}
 
 
@@ -159,7 +156,7 @@ namespace
 	}
 }
 
-void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
+int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 {
 	TSharedPtr<FJsonObject> JsonObject;
 	if (FString JsonString; FFileHelper::LoadFileToString(JsonString, *InCondigPath))
@@ -179,17 +176,18 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	const TObjectPtr<USkeleton> L_Skeleton = LoadObject<USkeleton>(nullptr, *L_Skin_Path);
 	TArray<UObject*> ImportedObjs = CreateCharacterImportTask(FbxPath, L_Skeleton, false);
 
-	if (ImportedObjs.IsEmpty()) return;
+	if (ImportedObjs.IsEmpty())
+	{
+		UE_LOG(LogTemp, Error, TEXT("无法找到导入的文件"))
+		return -1;
+	}
 
 	USkeletalMesh* TmpSkeletalMesh{Cast<USkeletalMesh>(ImportedObjs.Top())};
 	if (!TmpSkeletalMesh) // 空, 代表导入的是只有动画, 直接抛出异常失败
 	{
 		UE_LOG(LogTemp, Error, TEXT("导入的FBX文件 %s 没有生成骨骼网格体"), *FbxPath);
-		return;
+		return -1;
 	}
-
-	// 生成 lod
-	if (!TmpSkeletalMesh) return;
 
 	static USkeletalMeshLODSettings* L_Skin_Mesh_Setting = LoadObject<USkeletalMeshLODSettings>(
 		GetTransientPackage(), TEXT("/Doodle/Doodle_LOD_Setting.Doodle_LOD_Setting"));
@@ -213,9 +211,10 @@ void UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 
 
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+	return 0;
 }
 
-void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
+int UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 {
 	FixMaterialParameterCollection();
 
@@ -354,10 +353,11 @@ void UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 	// 创建渲染配置
 	OnSaveReanderConfig();
+	return 0;
 }
 
 
-void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
+int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 {
 	FixMaterialProperty();
 	FixMaterialParameterCollection();
@@ -450,6 +450,7 @@ void UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	CommandletHelpers::TickEngine(TheRenderWorld);
 	//-----------------
 	OnSaveReanderConfig();
+	return 0;
 }
 
 void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
