@@ -26,6 +26,8 @@ struct DOODLE_CORE_API studio {
     if (j.contains("name")) j.at("name").get_to(p.name_);
     if (j.contains("color")) j.at("color").get_to(p.color_);
     if (j.contains("archived")) j.at("archived").get_to(p.archived_);
+    if (j.contains("app_key")) j.at("app_key").get_to(p.app_key_);
+    if (j.contains("app_secret")) j.at("app_secret").get_to(p.app_secret_);
   }
 };
 
