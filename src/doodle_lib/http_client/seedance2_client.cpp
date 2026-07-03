@@ -20,6 +20,7 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
   req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<http::basic_json_body> l_res{};
+  http_client_ptr_->set_timeout(300s);
   try {
     co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
   } catch (...) {
