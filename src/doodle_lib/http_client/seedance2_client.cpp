@@ -20,7 +20,15 @@ boost::asio::awaitable<std::string> seedance2_client::run_task(const nlohmann::j
   req.set(boost::beast::http::field::host, http_client_ptr_->server_ip_);
   req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
   boost::beast::http::response<http::basic_json_body> l_res{};
-  co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
+  try {
+    co_await http_client_ptr_->read_and_write(req, l_res, boost::asio::use_awaitable);
+  } catch (...) {
+    throw_exception(
+        http_request_error{
+            boost::beast::http::status::internal_server_error, boost::current_exception_diagnostic_information()
+        }
+    );
+  }
 
   DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "run_task error: {}", l_res.result());
 
