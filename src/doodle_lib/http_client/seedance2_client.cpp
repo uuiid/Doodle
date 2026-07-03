@@ -2,9 +2,10 @@
 
 #include <doodle_core/exception/exception.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/core/http/json_body.h>
+#include <doodle_lib/lib_warp/boost_fmt_beast.h>
 
-#include "core/core_set.h"
 #include <fmt/format.h>
 
 namespace doodle::http::seedance2 {
@@ -72,14 +73,19 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(std::string
 
   static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
   // https://ark.cn-beijing.volces.com/contents/generations/xxx.mp4 -> /contents/generations/xxx.mp4
-  auto l_url_path                     = std::regex_replace(in_file_url, l_url_regex, "");
-  auto l_ip                           = in_file_url.substr(0, in_file_url.size() - l_url_path.size());
-  http_client_ptr_t l_http_client_ptr = std::make_shared<http_client_t>(std::move(l_ip), *core_set::get_set().ctx_ptr);
+  auto l_url_path = std::regex_replace(in_file_url, l_url_regex, "");
+  auto l_ip       = in_file_url.substr(0, in_file_url.size() - l_url_path.size());
+  http_client_ptr_t l_http_client_ptr =
+      std::make_shared<http_client_t>(std::move(in_file_url), *core_set::get_set().ctx_ptr);
   boost::beast::http::request<boost::beast::http::empty_body> req{boost::beast::http::verb::get, l_url_path, 11};
-  req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
-  req.set(boost::beast::http::field::accept, "application/json");
+  // req.set(boost::beast::http::field::authorization, fmt::format("Bearer {}", token_));
+  req.set(boost::beast::http::field::accept, "*/*");
   req.set(boost::beast::http::field::host, l_http_client_ptr->server_ip_);
-  req.set(boost::beast::http::field::user_agent, std::string(BOOST_BEAST_VERSION_STRING) + " doodle");
+  req.set(boost::beast::http::field::user_agent, "Apifox/1.0.0 (https://apifox.com)");
+  // req.set(boost::beast::http::field::accept_encoding, "gzip, deflate, br");
+  req.keep_alive(true);
+  l_http_client_ptr->body_limit_ = 1024 * 1024 * 1024;  // 1GB
+  l_http_client_ptr->set_timeout(1200s);
   FSys::path l_path;
   for (int i = 0; i < 3; ++i)  // 最多重试3次
     try {
@@ -88,7 +94,6 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(std::string
       boost::system::error_code l_ec{};
       l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
       if (l_ec) throw_exception(http_request_error{boost::beast::http::status::internal_server_error, l_ec.message()});
-      l_http_client_ptr->set_timeout(1200s);
       co_await l_http_client_ptr->read_and_write(req, l_res, boost::asio::use_awaitable);
       DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
       break;  // 成功下载，跳出循环

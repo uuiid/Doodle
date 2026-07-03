@@ -278,7 +278,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_fix, post) {
   auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
   for (auto&& l_task : l_tasks) {
-    if (l_task.created_at_.get_sys_time() - chrono::system_clock::now() > chrono::days{1})
+    if (chrono::system_clock::now() - l_task.created_at_.get_sys_time() > chrono::days{1})
       continue;  // 只修复一天内的任务
     if (l_task.status_ != sd2::task_status::succeeded) continue;
     auto l_file = l_ctx.get_sd2_pictures_task_file(l_task.uuid_id_, l_task.file_extension_);
