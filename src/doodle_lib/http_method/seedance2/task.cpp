@@ -24,6 +24,8 @@
 
 #include "http_method/kitsu.h"
 #include "reg.h"
+#include <__msvc_chrono.hpp>
+#include <chrono>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/opencv.hpp>
@@ -81,7 +83,27 @@ auto get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_
       .to_vector<task_extend>();
 }
 
-constexpr static std::string_view g_sd2_host_url{"https://ark.cn-beijing.volces.com"};
+void video_create_picture(const FSys::path& in_video_path, const uuid& in_task_id) {
+  auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_task_file(in_task_id, ".mp4");
+  auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_task_file(in_task_id);
+  if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+  {
+    // 生成预览文件
+    auto l_video = cv::VideoCapture{in_video_path.generic_string()};
+    // 读取第一帧生成预览文件
+    cv::Mat l_image{};
+    l_video >> l_image;
+    if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
+    auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
+    cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
+
+    if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
+    cv::imwrite(l_file_thumbnail.generic_string(), l_image);
+  }
+  FSys::rename(in_video_path, l_file_picture);
+}
+
 boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::shared_ptr<seedance2_client> in_client) {
   // 每隔5s 查询一次任务状态，直到任务完成或者失败
   boost::asio::steady_timer l_timer{g_io_context()};
@@ -123,26 +145,9 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
 
   if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("content") &&
       in_task->data_response_.at("content").contains("video_url")) {
-    auto l_video_url      = in_task->data_response_.at("content").at("video_url").get<std::string>();
-    auto l_file           = co_await in_client->download_result(l_video_url);
-    auto l_file_picture   = g_ctx().get<kitsu_ctx_t>().get_sd2_pictures_task_file(in_task->uuid_id_, ".mp4");
-    auto l_file_thumbnail = g_ctx().get<kitsu_ctx_t>().get_sd2_thumbnail_task_file(in_task->uuid_id_);
-    if (auto l_p = l_file_picture.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-    if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-    {
-      // 生成预览文件
-      auto l_video = cv::VideoCapture{l_file.generic_string()};
-      // 读取第一帧生成预览文件
-      cv::Mat l_image{};
-      l_video >> l_image;
-      if (l_image.empty()) throw_exception(doodle_error{"视频解码失败"});
-      auto l_resize = std::min(500.0 / l_image.cols, 500.0 / l_image.rows);
-      cv::resize(l_image, l_image, cv::Size(l_image.cols * l_resize, l_image.rows * l_resize));
-
-      if (auto l_p = l_file_thumbnail.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
-      cv::imwrite(l_file_thumbnail.generic_string(), l_image);
-    }
-    FSys::rename(l_file, l_file_picture);
+    auto l_video_url = in_task->data_response_.at("content").at("video_url").get<std::string>();
+    auto l_file      = co_await in_client->download_result(l_video_url);
+    video_create_picture(l_file, in_task->uuid_id_);
   }
 #else
   in_task->status_ = sd2::task_status::succeeded;
@@ -264,5 +269,27 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
   auto l_file = l_ctx.get_sd2_pictures_task_file(id_, l_task.file_extension_);
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "图片或者视频不存在");
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_fix, post) {
+  person_.check_admin();
+  auto& l_sql   = get_sqlite_database();
+  auto l_tasks  = l_sql.get_all<sd2::task>();
+  auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
+  auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);
+  for (auto&& l_task : l_tasks) {
+    if (l_task.created_at_.get_sys_time() - chrono::system_clock::now() > chrono::days{1})
+      continue;  // 只修复一天内的任务
+    if (l_task.status_ != sd2::task_status::succeeded) continue;
+    auto l_file = l_ctx.get_sd2_pictures_task_file(l_task.uuid_id_, l_task.file_extension_);
+    if (FSys::exists(l_file)) continue;
+    auto& l_res = l_task.data_response_;
+    if (!l_res.contains("content")) continue;
+    if (!l_res.at("content").contains("video_url")) continue;
+    auto l_video_url       = l_res.at("content").at("video_url").get<std::string>();
+    auto l_file_downloaded = co_await l_client->download_result(l_video_url);
+    video_create_picture(l_file_downloaded, l_task.uuid_id_);
+  }
+  co_return in_handle->make_msg_204();
 }
 }  // namespace doodle::http::seedance2

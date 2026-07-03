@@ -37,6 +37,6 @@ class seedance2_client : public std::enable_shared_from_this<seedance2_client> {
 
   // 查询任务
   boost::asio::awaitable<nlohmann::json> query_task(const std::string& in_task_id);
-  boost::asio::awaitable<FSys::path> download_result(const std::string& in_file_url);
+  boost::asio::awaitable<FSys::path> download_result(std::string in_file_url);
 };
 }  // namespace doodle::http::seedance2

@@ -67,7 +67,7 @@ boost::asio::awaitable<nlohmann::json> seedance2_client::query_task(const std::s
   co_return l_res.body();
 }
 
-boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::string& in_file_url) {
+boost::asio::awaitable<FSys::path> seedance2_client::download_result(std::string in_file_url) {
   // 解析文件名
 
   static std::regex l_url_regex(R"(https?:\/\/[^\/\s]+)");
@@ -93,6 +93,7 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::
       DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
       break;  // 成功下载，跳出循环
     } catch (const std::exception& e) {
+      logger_->error("download_result error: {}, retrying {}/3", e.what(), i + 1);
       if (i == 2)  // 最后一次重试失败，抛出异常
         throw_exception(http_request_error{boost::beast::http::status::internal_server_error, e.what()});
     }
