@@ -88,6 +88,7 @@ boost::asio::awaitable<FSys::path> seedance2_client::download_result(const std::
       boost::system::error_code l_ec{};
       l_res.body().open(l_path.generic_string().c_str(), boost::beast::file_mode::write, l_ec);
       if (l_ec) throw_exception(http_request_error{boost::beast::http::status::internal_server_error, l_ec.message()});
+      l_http_client_ptr->set_timeout(1200s);
       co_await l_http_client_ptr->read_and_write(req, l_res, boost::asio::use_awaitable);
       DOODLE_CHICK(l_res.result() == boost::beast::http::status::ok, "download_result error: {}", l_res.result());
       break;  // 成功下载，跳出循环
