@@ -46,7 +46,6 @@ public:
 	TSet<FString> BoneNames;
 	USkeleton* SkinObj;
 	FString SkinTag;
-
 };
 
 class ULevelSequence;
@@ -240,7 +239,7 @@ public:
 		FrameTick = TickRate.Numerator / Rate.Numerator;
 	}
 
-	FDoodleParseFileImportData ParseFile{};
+	FDoodleParseFileImportData ParseFileData{};
 
 	FFrameRate TickRate{60000, 1};
 	FFrameRate Rate{25, 1};
@@ -258,7 +257,25 @@ public:
 	{
 	};
 	// 解析文件
-	void ParseFiles(const FString& InString);
+	FDoodleParseFileImportData& ParseFiles(const FString& InPath);
+};
+
+UCLASS()
+class UDoodleLightImport : public UDoodleBaseImport
+{
+	GENERATED_BODY()
+};
+
+UCLASS()
+class UDoodleVfxImport : public UDoodleBaseImport
+{
+	GENERATED_BODY()
+};
+
+UCLASS()
+class UDoodleWbImport : public UDoodleBaseImport
+{
+	GENERATED_BODY()
 };
 
 

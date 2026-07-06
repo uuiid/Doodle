@@ -983,6 +983,43 @@ void UDoodleXgenImport_1::AssembleScene()
 }
 
 
+FDoodleParseFileImportData& UDoodleBaseImport::ParseFiles(const FString& InPath)
+{
+	FString BaseName = FPaths::GetBaseFilename(InPath);
+	if (int32 L_Index = INDEX_NONE; BaseName.FindChar('_', L_Index) != INDEX_NONE)
+		ParseFileData.ProjectName = BaseName.LeftChop(BaseName.Len() - L_Index);
+
+	const FRegexPattern L_Reg_Time_Pattern{LR"(_(\d+)-(\d+))"};
+	FRegexMatcher L_Reg_Time{L_Reg_Time_Pattern, BaseName};
+	ParseFileData.StartTime = {1000};
+	ParseFileData.EndTime = {1001};
+	if (L_Reg_Time.FindNext() && L_Reg_Time.GetEndLimit() > 2)
+	{
+		ParseFileData.StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
+		ParseFileData.EndTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
+	}
+	const FRegexPattern L_Reg_Ep_Pattern{LR"((ep|EP|Ep)_?(\d+))"};
+
+	if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, InPath}; L_Reg_Ep.FindNext())
+	{
+		ParseFileData.Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(2));
+	}
+
+	const FRegexPattern L_Reg_ScPattern{LR"((sc|SC|Sc)_?(\d+)([a-zA-Z])?)"};
+
+	if (FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, InPath}; L_Reg_Sc.FindNext())
+	{
+		ParseFileData.Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(2));
+		if (L_Reg_Sc.GetEndLimit() > 3)
+		{
+			ParseFileData.ShotAb = L_Reg_Sc.GetCaptureGroup(3).ToUpper();
+		}
+	}
+
+	return ParseFileData;
+}
+
+
 class SDoodleImportUiItem final : public SMultiColumnTableRow<SDoodleImportFbxUI::UDoodleBaseImportDataPtrType>
 {
 public:
