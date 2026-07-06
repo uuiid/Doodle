@@ -16,7 +16,7 @@ namespace UnFbx
 class UGeometryCache;
 
 UENUM()
-enum class EImportSuffix : uint8 { Lig = 0, Vfx, End };
+enum class EImportSuffix : uint8 { Lig = 0, Vfx, WB,End };
 
 ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
 
