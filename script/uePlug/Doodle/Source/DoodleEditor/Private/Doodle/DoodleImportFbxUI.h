@@ -16,7 +16,7 @@ namespace UnFbx
 class UGeometryCache;
 
 UENUM()
-enum class EImportSuffix : uint8 { Lig = 0, Vfx, WB,End };
+enum class EImportSuffix : uint8 { Lig = 0, Vfx, WB, End };
 
 ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
 
@@ -47,7 +47,6 @@ public:
 	USkeleton* SkinObj;
 	FString SkinTag;
 
-	static TArray<FDoodleUSkeletonData_1> ListAllSkeletons();
 };
 
 class ULevelSequence;
@@ -214,6 +213,55 @@ public:
 	void AssembleScene() override;
 };
 
+// 基础的导入类
+// Lig 灯光导入
+// Vfx 特效导入
+// WB 地编导入
+
+USTRUCT()
+struct FDoodleParseFileImportData
+{
+	GENERATED_BODY()
+	FString ProjectName;
+	int64 Eps{};
+	int64 Shot{};
+	FString ShotAb{};
+	int32_t StartTime{};
+	int32_t EndTime{};
+};
+
+UCLASS()
+class UDoodleBaseImport : public UObject
+{
+public:
+	GENERATED_BODY()
+	UDoodleBaseImport()
+	{
+		FrameTick = TickRate.Numerator / Rate.Numerator;
+	}
+
+	FDoodleParseFileImportData ParseFile{};
+
+	FFrameRate TickRate{60000, 1};
+	FFrameRate Rate{25, 1};
+	int32 FrameTick{};
+	/// @brief 导入后的路径
+	FString ImportPathDir{};
+	static constexpr FFrameNumber Start{1001};
+
+	virtual FString GetImportPath() const
+	{
+		return {};
+	};
+	// 开始导入
+	virtual void ImportFiles()
+	{
+	};
+	// 解析文件
+	void ParseFiles(const FString& InString);
+};
+
+
 class SDoodleImportFbxUI : public SCompoundWidget, FGCObject
 {
 public:
@@ -244,12 +292,10 @@ public:
 private:
 	FString UserFolderName;
 	/// @brief 导入的列表
-	TSharedPtr<class SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
+	TSharedPtr<SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
 	/// @brief 导入的列表数据
 	TArray<UDoodleBaseImportDataPtrType> ListImportData;
 
-	/// @brief 扫描的骨骼数据
-	TArray<FDoodleUSkeletonData_1> AllSkinObjs;
 
 	/// 导入路径的后缀
 	FString Path_Prefix;
