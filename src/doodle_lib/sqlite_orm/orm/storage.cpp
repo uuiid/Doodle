@@ -1,5 +1,7 @@
 #include "storage.h"
 
+#include <doodle_lib/core/global_function.h>
+#include <doodle_lib/logger/logger.h>
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/create_index.h>
 #include <doodle_lib/sqlite_orm/orm/create_trigger.h>
@@ -13,7 +15,6 @@
 #include <boost/lockfree/detail/uses_optional.hpp>
 #include <boost/scope/scope_exit.hpp>
 
-#include "sqlite_orm/orm/create_index.h"
 #include <fmt/format.h>
 #include <set>
 #include <spdlog/spdlog.h>
@@ -247,19 +248,21 @@ sqlite3* storage::only_open_db() {
 
 sqlite_connection_ptr storage::get_thread_db() {
   sqlite_connection_ptr l_connection{};
-  if (connection_queue_.empty()) {
+  connection_queue_.pop(l_connection);
+  if (!l_connection) {
     l_connection = std::make_shared<sqlite_connection_t>(only_open_db());
-    ++connection_count_;
-    connection_queue_.push(l_connection);
-  }
-  connection_queue_.pop(boost::lockfree::uses_optional);
-  --connection_count_;
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_main_error(), "创建了一个新的线程数据库连接，当前连接数: {}", connection_count_ + 1
+    );
+  } else
+    --connection_count_;
   return l_connection;
 }
 
 void storage::add_thread_db(const sqlite_connection_ptr& in_ptr) {
   ++connection_count_;
-  connection_queue_.push(in_ptr);
+  if (connection_queue_.push(in_ptr))
+    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "抛弃了一个线程数据库连接，因为连接池已满");
 }
 
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {
