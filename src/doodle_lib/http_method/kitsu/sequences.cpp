@@ -12,7 +12,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-#include <sqlite_orm/sqlite_orm.h>
+
 
 namespace doodle::http {
 namespace {
@@ -398,7 +398,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 
   std::vector<actions_projects_task_types_create_tasks_result> l_result{};
   for (auto&& l_enit : l_entities) {
-    using namespace sqlite_orm;
+    ;
     if (task_exit_by_entity_id_and_task_type_id(l_enit.uuid_id_, task_type_id_)) continue;  // 已经存在任务
     auto& l_task = l_tasks->emplace_back(
         task{

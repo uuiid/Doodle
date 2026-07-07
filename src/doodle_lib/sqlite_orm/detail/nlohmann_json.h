@@ -4,7 +4,7 @@
 
 #pragma once
 #include <nlohmann/json.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 namespace sqlite_orm {
 
 template <>

@@ -16,7 +16,7 @@
 #include <fmt/format.h>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <vector>
 
 namespace doodle::http::seedance2 {

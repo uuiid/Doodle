@@ -60,7 +60,7 @@ struct entity_outsource_studio_authorization : entity {
 
   static std::vector<entity_outsource_studio_authorization> get(const uuid& in_project_id) {
     auto& l_sql = get_sqlite_database();
-    using namespace sqlite_orm;
+    ;
     std::vector<entity_outsource_studio_authorization> l_ret{};
 
     std::map<uuid, std::size_t> l_entity_map{};

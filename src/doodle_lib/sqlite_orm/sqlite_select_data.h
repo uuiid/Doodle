@@ -24,7 +24,7 @@
 #include <doodle_lib/doodle_lib_fwd.h>
 
 #include <optional>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <tuple>
 #include <utility>

@@ -6,7 +6,7 @@
 
 #include <boost/scope/scope_exit.hpp>
 
-#include <sqlite_orm/sqlite_orm.h>
+
 namespace doodle::details {}  // namespace doodle::details
 
 namespace doodle {}  // namespace doodle

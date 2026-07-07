@@ -712,7 +712,7 @@ auto get_playlist_shot_entity(const playlist& in_playlist) {
     }
   };
 
-  using namespace sqlite_orm;
+  ;
   for (auto&& [l_preview_file, l_task_type_id, l_entity_id] :
        get_preview_files_and_task_type_id_and_task_entity_id_in_entity_ids(l_entity_ids)) {
     DOODLE_CHICK(
@@ -791,7 +791,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_playlists_instance_entity_instance, post
   l_json.get_to(*l_playlist_shot);
   l_playlist_shot->playlist_id_ = playlist_id_;
   l_playlist_shot->entity_id_   = l_entity.uuid_id_;
-  using namespace sqlite_orm;
+  ;
   if (l_playlist_shot->order_index_ <= 0)  // 如果没有指定顺序，则放在最后
     l_playlist_shot->order_index_ = count_playlist_shots_by_playlist_shot_id(playlist_id_) * 100;
   co_await l_sql.install(l_playlist_shot);

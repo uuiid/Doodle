@@ -37,7 +37,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 #include <opencv2/videoio.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <vector>
 
@@ -203,7 +203,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_preview_files_compose_video, post) {
 
   preview_file l_target_preview_file{};
   {
-    using namespace sqlite_orm;
+    ;
     auto l_preview_files =
         get_preview_files_by_entity_id_and_simulation_task_type_and_lighting_animation(l_task.entity_id_);
     if (!l_preview_files.has_value()) {

@@ -5,7 +5,7 @@
 #pragma once
 
 #include <chrono>
-#include <sqlite_orm/sqlite_orm.h>
+
 namespace sqlite_orm {
 
 template <typename Rep, typename Period>

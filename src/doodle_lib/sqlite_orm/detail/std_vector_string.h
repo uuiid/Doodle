@@ -5,7 +5,7 @@
 #pragma once
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <vector>
 namespace sqlite_orm {

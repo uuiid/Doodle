@@ -21,7 +21,7 @@
 #include <range/v3/range/conversion.hpp>
 #include <spdlog/common.h>
 #include <spdlog/spdlog.h>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -367,8 +367,7 @@ data_project_asset_types_casting_result_map get_asset_type_casting(
 ) {
   auto& l_sql = get_sqlite_database();
   data_project_asset_types_casting_result_map l_result{};
-  using namespace sqlite_orm;
-  constexpr auto asset = "asset"_alias.for_<entity>();
+
   for (auto&& [ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_] :
        get_sequence_casting_for_project_and_asset_type(in_project_id, in_asset_type_id)) {
     l_result.maps[ent_link.entity_in_id_].emplace_back(

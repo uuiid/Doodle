@@ -7,7 +7,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
-#include <sqlite_orm/sqlite_orm.h>
+
 namespace sqlite_orm {
 
 /**

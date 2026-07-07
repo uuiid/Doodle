@@ -25,7 +25,7 @@
 #include "sqlite_orm/orm/select.h"
 #include <optional>
 #include <spdlog/spdlog.h>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <sys/stat.h>
 #include <vector>

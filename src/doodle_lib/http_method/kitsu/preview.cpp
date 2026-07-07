@@ -35,7 +35,7 @@
 #include <opencv2/opencv.hpp>
 #include <spdlog/logger.h>
 #include <spdlog/spdlog.h>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <tuple>
 #include <vector>
 

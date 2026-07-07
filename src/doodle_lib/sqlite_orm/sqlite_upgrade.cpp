@@ -18,7 +18,7 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <tuple>
 #include <utility>

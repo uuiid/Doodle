@@ -26,7 +26,7 @@
 #include <map>
 #include <range/v3/view/unique.hpp>
 #include <spdlog/spdlog.h>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <vector>
 
 namespace doodle::http {

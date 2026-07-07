@@ -186,7 +186,7 @@ std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(c
 }
 
 auto get_last_notifications_query(const uuid& in_person_id, const data_user_notifications_get_args& in_args) {
-  using namespace sqlite_orm;
+  ;
   if (in_person_id.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失查询参数"});
   auto& l_sql = get_sqlite_database();

@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(multi_threaded) {
     std::string m_loc;
   };
 
-  using namespace sqlite_orm;
+  ;
 
   auto storage = make_storage(
       "D:/test.db",
@@ -75,7 +75,7 @@ struct test_2 {
 };
 
 auto l_mk() {
-  using namespace sqlite_orm;
+  ;
   return make_storage(
       "C:/tes.db",  //
       make_table(

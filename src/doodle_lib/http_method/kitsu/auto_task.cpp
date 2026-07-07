@@ -41,10 +41,10 @@
 #include <map>
 #include <memory>
 #include <range/v3/view/unique.hpp>
-#include <sqlite_orm/sqlite_orm.h>
 #include <string>
 #include <tuple>
 #include <vector>
+
 
 namespace doodle::http {
 namespace {
@@ -127,10 +127,6 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
   episodes l_episodes{l_episode_entity};
   shot l_shot{l_shot_entity};
-
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
 
   import_and_render_ue_ns::run_ue_assembly_arg l_ret{};
   l_ret.project_id_   = in_project_id;
@@ -608,9 +604,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
   episodes l_episodes{l_episode_entity};
   auto l_prj = l_sql.get_by_uuid<project>(l_task.project_id_);
 
-  using namespace sqlite_orm;
-  constexpr auto shot     = "shot"_alias.for_<entity>();
-  constexpr auto sequence = "sequence"_alias.for_<entity>();
+
   auto l_assets           = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
   /// 寻找主场景资产, 并生成对应的本地ue资产路径
   task_sync::args l_arg{};

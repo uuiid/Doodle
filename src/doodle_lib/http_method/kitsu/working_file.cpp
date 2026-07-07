@@ -23,7 +23,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <range/v3/action/push_back.hpp>
 #include <range/v3/view/unique.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 #include <vector>
 #include <winsock2.h>
@@ -420,7 +420,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_e
       person_.person_.get_full_name(), id_, l_entity_ids.size()
   );
 
-  using namespace sqlite_orm;
+  ;
   auto l_r = get_working_files_for_entity_sql(l_entity_ids);
   std::vector<working_file_and_link> l_working_files{};
   for (auto&& [l_entity, l_entity_asset_extend, l_jishu_name, l_kaishi_jishu_name] : l_r) {

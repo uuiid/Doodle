@@ -57,7 +57,7 @@
 // clang-format on
 
 #include <range/v3/view/split.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <type_traits>
 
 namespace sqlite_orm {

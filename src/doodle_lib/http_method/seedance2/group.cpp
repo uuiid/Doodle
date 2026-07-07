@@ -82,7 +82,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, delet
   DOODLE_CHICK_HTTP(l_group.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_group.uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");
 
-  using namespace sqlite_orm;
+  ;
   DOODLE_CHICK_HTTP(get_sd2_assets_count_for_assets_group(group_id_) == 0, bad_request, "分组下存在资产，无法删除");
 
   co_await l_sql.remove<sd2::assets_group>(group_id_);

@@ -17,7 +17,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <opencv2/opencv.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 
 namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;

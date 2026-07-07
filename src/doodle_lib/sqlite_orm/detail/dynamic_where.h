@@ -3,7 +3,7 @@
 #include <array>
 #include <functional>
 #include <memory>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <sstream>
 #include <string>
 #include <utility>

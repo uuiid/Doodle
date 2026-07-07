@@ -4,7 +4,7 @@
 
 #pragma once
 #include <filesystem>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <string>
 namespace sqlite_orm {
 

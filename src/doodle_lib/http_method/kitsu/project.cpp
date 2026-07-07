@@ -16,7 +16,7 @@
 
 #include "kitsu_reg_url.h"
 #include <algorithm>
-#include <sqlite_orm/sqlite_orm.h>
+
 
 namespace doodle::http {
 
@@ -73,7 +73,7 @@ struct project_all_get_result_t : project {
 auto select_project_all_get_result(const std::string& in_name) {
   auto& l_sql = get_sqlite_database();
   std::vector<project_all_get_result_t> l_list{};
-  using namespace sqlite_orm;
+  ;
   for (auto&& [l_prj, l_status_name] : get_projects_and_status_name_by_project_name(in_name)) {
     l_list.emplace_back(project_all_get_result_t(l_prj, l_status_name));
   }
@@ -321,7 +321,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team
       person_.person_.get_full_name(), id_, l_add_team
   );
 
-  using namespace sqlite_orm;
+  ;
   if (!l_sql.is_person_in_project(l_add_team, id_)) {
     auto l_team         = std::make_shared<project_person_link>();
     l_team->project_id_ = id_;
@@ -348,7 +348,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_team_
       person_.person_.get_full_name(), project_id_, person_id_
   );
 
-  using namespace sqlite_orm;
+  ;
 
   if (auto l_id = get_project_person_id_by_project_id_and_person_id(project_id_, person_id_); l_id.has_value()) {
     co_await l_sql.remove<project_person_link>(l_id.value());
@@ -419,7 +419,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_settings_status_automations_inst
       g_logger_ctrl().get_http(), "用户 {}({}) 从项目 {} 移除状态自动化 {}", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, status_automation_id_
   );
-  using namespace sqlite_orm;
+  ;
   if (auto l_id = get_project_status_automation_id_by_project_id_and_status_id(project_id_, status_automation_id_);
       l_id.has_value()) {
     co_await l_sql.remove<project_status_automation_link>(l_id.value());

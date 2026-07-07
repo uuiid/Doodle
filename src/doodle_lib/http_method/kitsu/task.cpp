@@ -19,7 +19,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <range/v3/view/unique.hpp>
-#include <sqlite_orm/sqlite_orm.h>
+
 #include <tuple>
 #include <vector>
 

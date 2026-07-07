@@ -102,7 +102,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     computer_                       = std::make_shared<computer>(l_computer_json);
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
     auto& l_sql                     = get_sqlite_database();
-    using namespace sqlite_orm;
+    ;
     if (auto l_db_computer = get_entity_computer_by_hardware_id(computer_->hardware_id_); l_db_computer.has_value()) {
       *computer_         = l_db_computer.value();
       computer_->status_ = l_computer_json.status_;

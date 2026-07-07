@@ -8,7 +8,7 @@
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
-#include <sqlite_orm/sqlite_orm.h>
+
 namespace sqlite_orm {
 
 /**
