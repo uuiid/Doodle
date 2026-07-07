@@ -116,7 +116,7 @@ sqlite_connection_guard_t::sqlite_connection_guard_t(storage& s) : s_(&s), conne
 sqlite_connection_guard_t::~sqlite_connection_guard_t() {
   if (connection_ && s_) {
     // 退回池中
-    s_->connection_queue_.push(connection_);
+    s_->add_thread_db(connection_);
   }
 }
 sqlite_stmt::sqlite_stmt(storage& db, const std::string& sql) { prepare(db, sql); }
@@ -249,10 +249,17 @@ sqlite_connection_ptr storage::get_thread_db() {
   sqlite_connection_ptr l_connection{};
   if (connection_queue_.empty()) {
     l_connection = std::make_shared<sqlite_connection_t>(only_open_db());
+    ++connection_count_;
     connection_queue_.push(l_connection);
   }
   connection_queue_.pop(boost::lockfree::uses_optional);
+  --connection_count_;
   return l_connection;
+}
+
+void storage::add_thread_db(const sqlite_connection_ptr& in_ptr) {
+  ++connection_count_;
+  connection_queue_.push(in_ptr);
 }
 
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {

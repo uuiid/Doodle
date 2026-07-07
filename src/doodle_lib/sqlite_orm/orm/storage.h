@@ -230,11 +230,13 @@ class storage : public boost::noncopyable {
 
   pragma_t pragma_{*this};
   boost::lockfree::stack<sqlite_connection_ptr, boost::lockfree::capacity<1024>> connection_queue_{};
-
+  std::atomic_int32_t connection_count_{0};
  protected:
   sqlite3* only_open_db();
 
   sqlite_connection_ptr get_thread_db();
+  void add_thread_db(const sqlite_connection_ptr& in_ptr);
+
   virtual void open_(FSys::path in_path, std::int32_t in_flags);
   // 注册自定义扩展
   virtual void register_custom_extension(sqlite3* in_sqlite);
