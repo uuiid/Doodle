@@ -14,8 +14,6 @@
 #include <doodle_lib/core/app_base.h>
 #include <doodle_lib/core/http_client_core.h>
 #include <doodle_lib/http_client/kitsu_client.h>
-#include <doodle_lib/sqlite_orm/detail/dynamic_where.h>
-#include <doodle_lib/sqlite_orm/detail/uuid_to_blob.h>
 #include <doodle_lib/sqlite_orm/orm/orm.h>
 
 #include <boost/test/unit_test.hpp>
