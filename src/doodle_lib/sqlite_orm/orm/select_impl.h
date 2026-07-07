@@ -116,7 +116,7 @@ void select_t::result_type_iterator<TableColumns...>::next() {
   if (l_rc == SQLITE_DONE) return is_end_ = true, void();
 
   is_end_ = true;
-  DOODLE_ORM_ERROR_SQLITE3(l_rc, select_.impl_->stmt_->db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_rc, select_.impl_->stmt_->db_.connection_->db_);
 }
 
 template <typename... TableColumns>

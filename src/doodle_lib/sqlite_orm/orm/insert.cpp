@@ -52,7 +52,7 @@ std::int64_t insert_t::operator()() {
   state_->stmt_->reset_bind();
   for (const auto& val : state_->values_.bind_values_) val.bind(*state_->stmt_);
   state_->stmt_->step();
-  return state_->s_->get_last_insert_rowid();
+  return state_->stmt_->get_last_insert_rowid();
 }
 
 }  // namespace doodle::orm

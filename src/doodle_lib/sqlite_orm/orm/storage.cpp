@@ -10,6 +10,7 @@
 #include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
+#include <boost/lockfree/detail/uses_optional.hpp>
 #include <boost/scope/scope_exit.hpp>
 
 #include "sqlite_orm/orm/create_index.h"
@@ -110,15 +111,23 @@ std::vector<std::string> table_info_base::get_foreign_key_create_sql(storage& s,
   return l_sqls;
 }
 
+sqlite_connection_guard_t::sqlite_connection_guard_t(storage& s) : s_(&s), connection_(s.get_thread_db()) {}
+
+sqlite_connection_guard_t::~sqlite_connection_guard_t() {
+  if (connection_ && s_) {
+    // 退回池中
+    s_->connection_queue_.push(connection_);
+  }
+}
 sqlite_stmt::sqlite_stmt(storage& db, const std::string& sql) { prepare(db, sql); }
 
 void sqlite_stmt::reset_bind() {
   if (bind_index_ == 0) return;  // 如果绑定索引已经是初始值，则不需要重置
   bind_index_ = 0;
   auto l_r    = sqlite3_reset(stmt_);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
   l_r = sqlite3_clear_bindings(stmt_);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
 }
 
 std::int32_t sqlite_stmt::get_bind_index() {
@@ -128,13 +137,13 @@ std::int32_t sqlite_stmt::get_bind_index() {
 void sqlite_stmt::prepare(storage& s, const std::string& sql) {
   if (stmt_) throw std::runtime_error("Statement already prepared");
   bind_index_ = 0;
-  db_         = s.get_thread_db();
+  db_         = sqlite_connection_guard_t{s};
 #ifndef NDEBUG
   SPDLOG_DEBUG("Preparing SQL statement: {}", sql);
 #endif
 
-  auto l_r = sqlite3_prepare_v2(db_, sql.c_str(), sql.size(), &stmt_, nullptr);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  auto l_r = sqlite3_prepare_v2(db_.connection_->db_, sql.c_str(), sql.size(), &stmt_, nullptr);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
 }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
 bool sqlite_stmt::column_is_null(int columnIndex) const {
@@ -143,10 +152,11 @@ bool sqlite_stmt::column_is_null(int columnIndex) const {
 
 void sqlite_stmt::step() {
   auto l_r = sqlite3_step(stmt_);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
 }
 
 std::int32_t sqlite_stmt::step_not_throw() { return sqlite3_step(stmt_); }
+std::int64_t sqlite_stmt::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_.connection_->db_); }
 
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
@@ -200,10 +210,10 @@ void reg_sqlite_master_entry(storage& s) {
       .add_column("sql", &sqlite_master_entry::sql);
 }
 }  // namespace
-storage::backup_t::backup_t(sqlite3* dest_db, sqlite3* src_db) : dest_db_(dest_db), src_db_(src_db) {}
+storage::backup_t::backup_t(sqlite3* dest_db, sqlite_connection_guard_t src_db) : dest_db_(dest_db), src_db_(src_db) {}
 std::int32_t storage::backup_t::step(int pages) {
   if (!backup_) {
-    backup_ = sqlite3_backup_init(dest_db_, "main", src_db_, "main");
+    backup_ = sqlite3_backup_init(dest_db_, "main", src_db_.connection_->db_, "main");
     if (!backup_) {
       auto l_msg = sqlite3_errmsg(dest_db_);
       if (dest_db_) sqlite3_close_v2(dest_db_);
@@ -235,21 +245,14 @@ sqlite3* storage::only_open_db() {
   return l_db;
 }
 
-sqlite3* storage::get_thread_db() {
-  auto l_thread_id = std::this_thread::get_id();
-  static thread_local std::once_flag l_thread_db_flag{};
-  std::call_once(l_thread_db_flag, [&]() {
-    // 确保每个线程只初始化一次数据库连接
-    if (!thread_db_map_.contains(l_thread_id)) {
-      auto l_r = thread_db_map_.try_emplace(l_thread_id, only_open_db());
-      if (!l_r) throw std::runtime_error("Failed to emplace thread-specific database connection");
-    }
-  });
-
-  sqlite3* l_db;
-  thread_db_map_.visit(l_thread_id, [&l_db](auto& thread_db) mutable { l_db = thread_db.second; });
-  if (!l_db) throw std::runtime_error("Failed to get thread-specific database connection");
-  return l_db;
+sqlite_connection_ptr storage::get_thread_db() {
+  sqlite_connection_ptr l_connection{};
+  if (connection_queue_.empty()) {
+    l_connection = std::make_shared<sqlite_connection_t>(only_open_db());
+    connection_queue_.push(l_connection);
+  }
+  connection_queue_.pop(boost::lockfree::uses_optional);
+  return l_connection;
 }
 
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {
@@ -260,7 +263,6 @@ void storage::open_(FSys::path in_path, std::int32_t in_flags) {
 
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = in_path.generic_string();
-  db_      = only_open_db();
 }
 
 void storage::open(const FSys::path& in_path) { open_(in_path, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE); }
@@ -275,8 +277,7 @@ create_trigger_t storage::create_trigger(std::string in_name) {
   return *l_trigger;
 }
 
-fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) const {
-  if (!in_sqlite) in_sqlite = db_;  // 如果没有传入 sqlite3*，则使用默认的数据库连接
+fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
   DOODLE_CHICK(in_sqlite != nullptr, "Database not opened");
   fts5_api* pRet      = nullptr;
   sqlite3_stmt* pStmt = nullptr;
@@ -354,7 +355,7 @@ storage::backup_t storage::backup(const FSys::path& dest_path) {
     if (dest_db) sqlite3_close_v2(dest_db);
     throw_exception(doodle_error{fmt::format("Failed to open destination database: {}", l_msg)});
   }
-  return backup_t(dest_db, db_);
+  return backup_t(dest_db, sqlite_connection_guard_t{*this});
 }
 
 void storage::pragma_t::synchronous(std::int32_t in_sync) {
@@ -397,14 +398,7 @@ void storage::pragma_t::run(std::string_view in_pragma_sql, std::int32_t in_valu
   l_stmt.step();
 }
 
-storage::~storage() {
-  ::sqlite3_close_v2(db_);
-  thread_db_map_.visit_all([](auto& thread_db) {
-    if (thread_db.second) {
-      ::sqlite3_close_v2(thread_db.second);
-    }
-  });
-}
+storage::~storage() = default;
 void storage::register_custom_extension(sqlite3* in_sqlite) {}
 
 std::string storage::get_table_name(std::type_index in_type_index) const {
@@ -449,8 +443,6 @@ std::string storage::get_column_name(const table_columns_t& in_column, const to_
     return fmt::format(R"("{}"."{}")", l_table.name_, l_column.name_);
   return fmt::format(R"("{}")", l_column.name_);
 }
-
-std::int64_t storage::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_); }
 
 void storage::drop_table(const std::string& table_name) {
   auto l_sql  = fmt::format("DROP TABLE IF EXISTS {}", table_name);

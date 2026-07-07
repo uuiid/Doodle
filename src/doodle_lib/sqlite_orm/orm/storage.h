@@ -4,6 +4,8 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
+#include <boost/lockfree/lockfree_forward.hpp>
+#include <boost/lockfree/stack.hpp>
 #include <boost/unordered/concurrent_flat_map.hpp>
 
 #include <atomic>
@@ -142,9 +144,23 @@ enum class trigger_timing { before, after, instead_of };
 
 enum class trigger_event { insert, update, delete_ };
 
+struct sqlite_connection_t {
+  sqlite3* db_{nullptr};
+  sqlite_connection_t(sqlite3* in_db) : db_(in_db) {}
+  ~sqlite_connection_t() { sqlite3_close(db_); }
+};
+using sqlite_connection_ptr = std::shared_ptr<sqlite_connection_t>;
+
+struct sqlite_connection_guard_t {
+  storage* s_{nullptr};
+  sqlite_connection_ptr connection_;
+  sqlite_connection_guard_t() = default;
+  explicit sqlite_connection_guard_t(storage& s);
+  ~sqlite_connection_guard_t();
+};
 struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
-  sqlite3* db_{nullptr};
+  sqlite_connection_guard_t db_{};
   std::int32_t bind_index_{0};  // sqlite bind index starts from 1, but we use 0-based index internally
  public:
   sqlite_stmt() = default;
@@ -156,6 +172,7 @@ struct sqlite_stmt {
   std::int32_t get_bind_index();
   std::int64_t get_column_count() const;
   bool column_is_null(int columnIndex) const;
+  std::int64_t get_last_insert_rowid() const;
 
   void step();
   std::int32_t step_not_throw();
@@ -190,15 +207,16 @@ class storage : public boost::noncopyable {
   friend struct select_t;
   friend struct insert_t;
   friend struct update_t;
+  friend struct sqlite_connection_guard_t;
 
   struct backup_t {
    private:
     sqlite3_backup* backup_{nullptr};
     sqlite3* dest_db_{nullptr};
-    sqlite3* src_db_{nullptr};
+    sqlite_connection_guard_t src_db_{};
 
    public:
-    explicit backup_t(sqlite3* dest_db, sqlite3* src_db);
+    explicit backup_t(sqlite3* dest_db, sqlite_connection_guard_t src_db);
     std::int32_t step(int pages = -1);
     ~backup_t();
   };
@@ -210,15 +228,13 @@ class storage : public boost::noncopyable {
   std::atomic_bool finalized_{false};
   FSys::path db_path_;
 
-  sqlite3* db_{nullptr};
   pragma_t pragma_{*this};
-  // 每个线程对应一个 sqlite3 连接，以避免多线程访问同一个连接导致的竞争问题
-  boost::unordered::concurrent_flat_map<std::thread::id, sqlite3*> thread_db_map_;
+  boost::lockfree::stack<sqlite_connection_ptr, boost::lockfree::capacity<1024>> connection_queue_{};
 
  protected:
   sqlite3* only_open_db();
 
-  sqlite3* get_thread_db();
+  sqlite_connection_ptr get_thread_db();
   virtual void open_(FSys::path in_path, std::int32_t in_flags);
   // 注册自定义扩展
   virtual void register_custom_extension(sqlite3* in_sqlite);
@@ -234,7 +250,7 @@ class storage : public boost::noncopyable {
   void sync_schema();
   pragma_t& pragma();
 
-  fts5_api* get_fts5_api(sqlite3* in_sqlite) const;
+  static fts5_api* get_fts5_api(sqlite3* in_sqlite);
 
   template <typename T>
   table_info& reg_table(std::string&& in_name);
@@ -276,7 +292,6 @@ class storage : public boost::noncopyable {
   };
 
   transaction_guard transaction();
-  std::int64_t get_last_insert_rowid() const;
 
   // 删除表
   void drop_table(const std::string& table_name);

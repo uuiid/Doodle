@@ -39,7 +39,7 @@ template <typename T>
 void sqlite_stmt::bind(const T& in_value) {
   sqlite_statement_binder<T> l_binder{};
   auto l_rt = l_binder.bind(stmt_, get_bind_index(), in_value);
-  DOODLE_ORM_ERROR_SQLITE3(l_rt, db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_rt, db_.connection_->db_);
 }
 
 template <typename T>
