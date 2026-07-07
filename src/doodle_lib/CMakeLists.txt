@@ -83,7 +83,7 @@ target_link_libraries(doodle_lib
         #        Microsoft::DirectXTK
         Eigen3::Eigen
         Alembic::Alembic # abc文件读写
-        sqlite_orm::sqlite_orm
+        unofficial::sqlite3::sqlite3
         OpenSSL::SSL
         mailio::mailio
         unofficial::bit7z::bit7z64
