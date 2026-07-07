@@ -126,6 +126,8 @@ find_package(tokenizers_cpp CONFIG REQUIRED)
 find_package(onnxruntime CONFIG REQUIRED)
 # 寻找 cnpy
 find_package(cnpy CONFIG REQUIRED)
+# 数据库
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
 
 # Debug 模式下启用测试
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
