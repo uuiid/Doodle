@@ -12,7 +12,7 @@ bind_value_t::bind_value_t(column_info_ptr column_info) {
         "standalone bind value."
     );
   };
-  to_string_fun_ = [](const bind_value_t& self, storage& in_storage, const to_sql_ctx& ctx) {
+  to_string_fun_ = [](const bind_value_t& self, session& in_storage, const to_sql_ctx& ctx) {
     auto& col_info_ptr = std::any_cast<const column_info_ptr&>(self.value_);
     return fmt::format("{}", col_info_ptr->get_column_name(in_storage, ctx));
   };
@@ -22,7 +22,7 @@ void bind_value_t::bind(sqlite_stmt& stmt) const {
   if (!bind_fun_) throw std::runtime_error("No bind function available for this value");
   bind_fun_(*this, stmt);
 }
-std::string bind_value_t::to_string(storage& in_storage, const to_sql_ctx& ctx) const {
+std::string bind_value_t::to_string(session& in_storage, const to_sql_ctx& ctx) const {
   if (!to_string_fun_) throw std::runtime_error("No to_string function available for this value");
   return to_string_fun_(*this, in_storage, ctx);
 }

@@ -1,9 +1,9 @@
 #include "count.h"
 
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 namespace doodle::orm {
-std::string count_column_info_t::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
+std::string count_column_info_t::get_column_name(const session& s, const to_sql_ctx& ctx) const {
   if (!column_infos_) return "COUNT(*)";
 
   return fmt::format("COUNT({})", s.get_column_name(column_infos_, ctx));

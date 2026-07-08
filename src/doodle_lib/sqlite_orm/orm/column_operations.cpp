@@ -3,6 +3,7 @@
 #include <doodle_lib/sqlite_orm/orm/bind_value.h>
 #include <doodle_lib/sqlite_orm/orm/bind_value_impl.h>
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 #include "sqlite_orm/orm/bind_value.h"
 #include "sqlite_orm/orm/session.h"
