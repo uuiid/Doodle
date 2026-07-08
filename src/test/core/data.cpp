@@ -21,9 +21,9 @@
 #include <boost/test/unit_test_suite.hpp>
 
 #include <ratio>
-
 #include <utility>
 #include <vector>
+
 
 BOOST_AUTO_TEST_SUITE(data)
 BOOST_AUTO_TEST_CASE(http_client) {
@@ -44,11 +44,11 @@ BOOST_AUTO_TEST_CASE(http_client) {
   l_app.run();
 }
 
-
 BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   using namespace doodle;
   using namespace doodle::orm;
-  auto l_reg = orm::storage{};
+  auto l_storage = orm::storage{};
+  auto l_reg     = l_storage.create_session();
   //   auto l_enit_tab = orm::make_table_info<entity>("entity");
   //   using test_t    = std::decay_t<decltype(&entity::name_)>;
   //   l_enit_tab.add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
   //       );
   //   ;
 
-  l_reg.reg_table<entity>("entity")
+  l_storage.reg_table<entity>("entity")
       .add_column("id", &entity::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid", &entity::uuid_id_)
       .add_column("name", &entity::name_)
@@ -74,12 +74,12 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
       .add_unique_index(&entity::name_);
   ;
 
-  l_reg.reg_table<asset_type>("asset_type")
+  l_storage.reg_table<asset_type>("asset_type")
       .add_column("id", &asset_type::id_, orm::primary_key(), orm::autoincrement(), orm::not_null())
       .add_column("uuid", &asset_type::uuid_id_)
       .add_column("name", &asset_type::name_);
 
-  auto l_trigger = l_reg.create_trigger("update_entity_name_on_asset_type_name_update");
+  auto l_trigger = l_storage.create_trigger("update_entity_name_on_asset_type_name_update");
 
   l_trigger.after()
       .update_of(&entity::name_)
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(mu_sqlorm) {
                      .where(c(new_(&entity::entity_type_id_)) == old_(&asset_type::uuid_id_)))
       .end();
 
-  l_reg.open();
-  l_reg.sync_schema();
+  l_storage.open();
+  l_storage.sync_schema();
   auto l_uuid           = from_uuid_str("96a1f1d5-e37d-4f22-90e0-1817468c9c3e");
   auto l_entity_uuid_id = core_set::get_set().get_uuid();
   insert(l_reg).into<asset_type>().set(c(&asset_type::uuid_id_) = l_uuid, c(&asset_type::name_) = "test")();
