@@ -333,6 +333,10 @@ fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
   return pRet;
 }
 
+session storage::create_session() {
+  return session{*this};
+}
+
 void storage::sync_schema() {
 
   auto l_transaction = transaction();

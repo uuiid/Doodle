@@ -14,6 +14,7 @@ template <typename... TableColumns>
 struct select_result_type_iterator;
 
 class storage;
+class session;
 struct select_t;
 struct delete_t;
 struct update_t;

@@ -346,6 +346,7 @@ class storage : public boost::noncopyable {
   void vacuum();
   // 运行任意SQL
   void exec(std::string_view sql);
+  session create_session();
 };
 
 }  // namespace orm
