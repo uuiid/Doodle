@@ -29,7 +29,7 @@ void operator_compare_t::collect_bind_variants(bind_value_collector_t& bind_vari
   data_impl_ptr_->right_->collect_bind_variants(bind_variants);
 }
 
-// std::string operator_compare_t::get_column_name(const storage& /*s*/, const to_sql_ctx& ctx) const {
+// std::string operator_compare_t::get_column_name(const session& /*s*/, const to_sql_ctx& ctx) const {
 //   // 直接抛出异常，因为 operator_compare_t 不代表一个具体的列，无法生成列名
 //   throw std::runtime_error("operator_compare_t does not represent a specific column and cannot generate a column
 //   name");

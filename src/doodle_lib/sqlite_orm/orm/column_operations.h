@@ -83,21 +83,21 @@ struct column_operations : column_operations_base_t {
  private:
   struct to_str_base_t {
     ~to_str_base_t()                                                                                   = default;
-    virtual std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const = 0;
+    virtual std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const = 0;
     virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const                    = 0;
   };
   struct to_str_value_t : to_str_base_t {
     std::string fmt_str_;
     bind_value_t value_variant_;
     explicit to_str_value_t(std::string fmt_str);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   struct to_str_value_list_t : to_str_base_t {
     std::string fmt_str_;
     std::vector<bind_value_t> value_variants_;
     explicit to_str_value_list_t(std::string fmt_str);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
@@ -105,7 +105,7 @@ struct column_operations : column_operations_base_t {
     std::shared_ptr<select_t> subquery_ptr_;
     bool is_not_in_{false};  // 标记是 IN 还是 NOT IN
     explicit to_str_subquery_t(std::shared_ptr<select_t> subquery_ptr);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   // NEW.uuid = OLD.uuid   NEW.name != OLD.name 别名比较, 必须包含表名以避免歧义
@@ -113,13 +113,13 @@ struct column_operations : column_operations_base_t {
     std::string fmt_str_;
     column_info_ptr other_column_ptr_;
     explicit to_str_compare_t(std::string fmt_str, column_info_ptr other_column_ptr);
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
   // 这里的 column_to_str 主要是将 column_operations 转换为对应的列名称，用于生成 SQL 片段
   struct column_to_str : to_str_base_t {
     explicit column_to_str() = default;
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& /*bind_variants*/) const override {
       // column_to_str 不包含绑定参数，因此不需要收集
     }
@@ -130,7 +130,7 @@ struct column_operations : column_operations_base_t {
     column_operations_ptr left_;
     explicit to_str_expr_t(std::string fmt_str, column_operations_ptr left)
         : fmt_str_(std::move(fmt_str)), left_(std::move(left)) {}
-    std::string to_str(column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx) const override;
+    std::string to_str(column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx) const override;
     void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   };
 
