@@ -122,7 +122,7 @@ bool kitsu_supplement_main::init() {
   crashpad_init::get();
   auto& l_set                      = core_set::get_set();
   l_set.computers_assign_task_ptr_ = std::make_shared<http::computers_assign_task>();
-  l_set.database_                  = std::make_shared<sqlite_database>();
+  l_set.database_                  = std::make_shared<sqlite_storage>();
   kitsu_supplement_args_t l_args{
       .port_    = 80,
       .db_path_ = "C:/kitsu_new.database",
