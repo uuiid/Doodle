@@ -4,12 +4,16 @@
 #include "storage.h"
 
 namespace doodle::orm {
-
-session::session(storage& s) : connection_(s.get_thread_db()), s_(&s) {}
-
-session::~session() {
-  if (connection_) s_->add_thread_db(connection_);
+session::session_data::~session_data() {
+  if (connection_ && s_) s_->add_thread_db(connection_);
 }
+
+session::session(storage& s) : data_(std::make_shared<session_data>()) {
+  data_->connection_ = s.get_thread_db();
+  data_->s_          = &s;
+}
+
+ 
 session::transaction_guard session::transaction() { return transaction_guard{*this}; }
 
 void session::drop_table(const std::string& table_name) {
@@ -77,7 +81,7 @@ void session::exec(std::string_view sql) {
   l_stmt.step();
 }
 
-session::transaction_guard::transaction_guard(session& s) : connection_(s.connection_) { begin(); }
+session::transaction_guard::transaction_guard(session& s) : connection_(s.data_->connection_) { begin(); }
 
 void session::transaction_guard::begin() {
   sqlite_stmt l_stmt{};

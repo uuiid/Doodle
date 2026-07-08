@@ -5,16 +5,22 @@
 
 namespace doodle::orm {
 class session {
-  sqlite_connection_ptr connection_;
-  storage* s_{nullptr};
+  struct session_data {
+    sqlite_connection_ptr connection_;
+    storage* s_{nullptr};
+    session_data() = default;
+    ~session_data();
+  };
+  std::shared_ptr<session_data> data_;
   friend struct sqlite_stmt;
+
  public:
   explicit session(storage& s);
-  ~session();
+  ~session()                         = default;
 
   // dis copy
-  session(const session&)            = delete;
-  session& operator=(const session&) = delete;
+  session(const session&)            = default;
+  session& operator=(const session&) = default;
 
   // default move
   session(session&&)                 = default;
@@ -56,25 +62,25 @@ class session {
   // 储存接口
   template <typename T>
   bool has_reg_table() {
-    return s_->has_reg_table<T>();
+    return data_->s_->has_reg_table<T>();
   }
 
   template <typename T>
   std::string get_column_name(auto T::* in_ptr, const to_sql_ctx& ctx) const {
-    return s_->get_column_name(in_ptr, ctx);
+    return data_->s_->get_column_name(in_ptr, ctx);
   }
   std::string get_column_name(const table_columns_t& in_column, const to_sql_ctx& ctx) const {
-    return s_->get_column_name(in_column, ctx);
+    return data_->s_->get_column_name(in_column, ctx);
   }
 
   template <typename T>
   const std::vector<column_info>& get_table_columns() const {
-    return s_->get_table_columns<T>();
+    return data_->s_->get_table_columns<T>();
   }
   template <typename T>
   std::string get_table_name() const {
-    return s_->get_table_name<T>();
+    return data_->s_->get_table_name<T>();
   }
-  std::string get_table_name(std::type_index in_type_index) const { return s_->get_table_name(in_type_index); }
+  std::string get_table_name(std::type_index in_type_index) const { return data_->s_->get_table_name(in_type_index); }
 };
 }  // namespace doodle::orm

@@ -149,7 +149,7 @@ void sqlite_stmt::prepare(const sqlite_connection_ptr& db, const std::string& sq
   auto l_r = sqlite3_prepare_v2(*db, sql.c_str(), sql.size(), &stmt_, nullptr);
   DOODLE_ORM_ERROR_SQLITE3(l_r, (*db));
 }
-void sqlite_stmt::prepare(const session& s, const std::string& sql) { return prepare(s.connection_, sql); }
+void sqlite_stmt::prepare(const session& s, const std::string& sql) { return prepare(s.data_->connection_, sql); }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
 bool sqlite_stmt::column_is_null(int columnIndex) const {
   return sqlite3_column_type(stmt_, columnIndex) == SQLITE_NULL;
