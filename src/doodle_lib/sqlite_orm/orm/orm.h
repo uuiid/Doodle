@@ -19,6 +19,7 @@
 #include <doodle_lib/sqlite_orm/orm/update.h>
 #include <doodle_lib/sqlite_orm/orm/table_info.h>
 #include <doodle_lib/sqlite_orm/orm/create_index.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 
 

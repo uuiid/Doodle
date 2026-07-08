@@ -16,6 +16,7 @@ target_sources(
         create_index.h
         table_info.h
         alias_subquery.h
+        session.h
         
         alias_impl.h
         storage_impl.h
@@ -39,4 +40,5 @@ target_sources(
         create_index.cpp
         table_info.cpp
         alias_subquery.cpp
+        session.cpp
 )
