@@ -3,7 +3,7 @@
 
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 #include <memory>
 #include <string>
@@ -37,13 +37,12 @@ struct update_t : public statement_info_base_t {
     std::vector<std::shared_ptr<column_operations_base_t>> column_operations_;
     std::string from_table_name_;
     std::shared_ptr<column_operations_base_t> wheres_;
-    storage* s_{nullptr};
+    session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
   };
-
-  friend class storage;
-  friend update_t update(storage& s);
+ 
+  friend update_t update(session& s);
 
   std::shared_ptr<update_state_t> state_;
 
@@ -58,7 +57,7 @@ struct update_t : public statement_info_base_t {
   }
   template <typename FromTable>
   update_t from() {
-    state_->from_table_name_ = state_->s_->get_table_name<FromTable>();
+    state_->from_table_name_ = state_->s_.get_table_name<FromTable>();
     return *this;
   }
 
@@ -77,7 +76,7 @@ struct update_t : public statement_info_base_t {
     requires is_object_specialization_v<std::decay_t<T>>
   update_t set(T&& in_object) {
     using Table         = class_type_t<std::decay_t<T>>;
-    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
+    auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     column_info l_primary_key_{};
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) {  // 主键不更新
@@ -98,7 +97,7 @@ struct update_t : public statement_info_base_t {
     requires is_object_specialization_v<std::decay_t<T>>
   update_t rebind(T&& in_object) {
     using Table         = class_type_t<std::decay_t<T>>;
-    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
+    auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     if (l_table_cloums.size() != state_->bind_variants_.bind_values_.size())
       throw std::runtime_error("列数量与绑定变量数量不匹配，无法使用 re_set 更新");
 
@@ -115,17 +114,17 @@ struct update_t : public statement_info_base_t {
     return *this;
   }
 
-  void prepare(storage& s, const to_sql_ctx& ctx) override;
+  void prepare(session& s, const to_sql_ctx& ctx) override;
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
 
   update_t operator()();
 };
 
-inline update_t update(storage& s) {
+inline update_t update(session& s) {
   update_t l_update{};
-  l_update.state_->s_ = &s;
+  l_update.state_->s_ = s;
   return l_update;
 }
 }  // namespace doodle::orm

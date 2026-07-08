@@ -49,7 +49,7 @@ table_fts_info& table_fts_info::tokenizer(const std::string& tokenizer) {
   return *this;
 }
 
-std::string table_fts_info::to_sql(storage& s, const to_sql_ctx& ctx) const {
+std::string table_fts_info::to_sql(session& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_column_sqls;
   for (std::size_t i = 0; i < columns_.size(); ++i) {
     const auto& column = columns_[i];
@@ -75,7 +75,7 @@ table_info& table_info::add_index(const create_index_base_t& in_index) {
   return *this;
 }
 
-std::string table_info::to_sql(storage& s, const to_sql_ctx& ctx) const {
+std::string table_info::to_sql(session& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_column_sqls;
   for (const auto& column : columns_) {
     std::string l_sql = fmt::format(R"("{}" {})", column.name_, column.type_);
@@ -103,7 +103,7 @@ on_delete::on_delete(foreign_key_action action) : action_(action) {}
 
 on_update::on_update(foreign_key_action action) : action_(action) {}
 
-std::vector<std::string> table_info_base::get_foreign_key_create_sql(storage& s, const to_sql_ctx& ctx) const {
+std::vector<std::string> table_info_base::get_foreign_key_create_sql(session& s, const to_sql_ctx& ctx) const {
   std::vector<std::string> l_sqls;
   for (const auto& fk : foreign_keys_) {
     std::string l_sql = fmt::format(
@@ -141,7 +141,7 @@ void sqlite_stmt::prepare(const sqlite_connection_ptr& db, const std::string& sq
   auto l_r = sqlite3_prepare_v2(*db, sql.c_str(), sql.size(), &stmt_, nullptr);
   DOODLE_ORM_ERROR_SQLITE3(l_r, (*db));
 }
-void sqlite_stmt::prepare(const session& s, const std::string& sql) { return prepare(s.data_->connection_, sql); }
+void sqlite_stmt::prepare(const session& s, const std::string& sql) { return prepare(s.get_connection(), sql); }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
 bool sqlite_stmt::column_is_null(int columnIndex) const {
   return sqlite3_column_type(stmt_, columnIndex) == SQLITE_NULL;
@@ -264,11 +264,23 @@ void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   db_path_ = in_path.generic_string();
 }
 
-void storage::open(const FSys::path& in_path) { open_(in_path, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE); }
+void storage::open(const FSys::path& in_path) {
+  boost::scope::scope_exit guard([this]() { is_opened_ = false; });
+  is_opened_ = true;
+  open_(in_path, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+}
 
-void storage::open(FSys::path in_path, std::int32_t in_flags) { open_(in_path, in_flags); }
+void storage::open(FSys::path in_path, std::int32_t in_flags) {
+  boost::scope::scope_exit guard([this]() { is_opened_ = false; });
+  is_opened_ = true;
+  open_(in_path, in_flags);
+}
 
-void storage::open() { open_({}, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE); }
+void storage::open() {
+  boost::scope::scope_exit guard([this]() { is_opened_ = false; });
+  is_opened_ = true;
+  open_({}, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+}
 
 create_trigger_t storage::create_trigger(std::string in_name) {
   auto l_trigger = std::make_shared<create_trigger_t>(std::move(in_name));
@@ -309,14 +321,14 @@ void storage::sync_schema() {
       // sqlite_master 是 SQLite 内部表，不能创建
       continue;
 
-    auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
+    auto l_create_table_sql = table->to_sql(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
     auto l_stmt             = sqlite_stmt{l_session, l_create_table_sql};
     l_stmt.step();
   }
   std::set<create_index_base_t::index_info> l_existing_indexes;
   for (const auto& table : tables_) {
     for (const auto& index : table->indexes_) {
-      auto l_index_info = index->get_index_info(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      auto l_index_info = index->get_index_info(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
       if (l_existing_indexes.contains(l_index_info)) {
         SPDLOG_DEBUG("Index already exists, skipping creation: {}", l_index_info.name_);
         // 已经存在相同的索引，无需创建
@@ -328,7 +340,7 @@ void storage::sync_schema() {
         continue;
       }
 
-      auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
+      auto l_create_index_sql = index->to_sql(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
       auto l_stmt             = sqlite_stmt{l_session, l_create_index_sql};
       l_stmt.step();
     }
@@ -339,7 +351,7 @@ void storage::sync_schema() {
       continue;
     }
 
-    auto l_create_trigger_sql = l_trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
+    auto l_create_trigger_sql = l_trigger->to_sql(l_session, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
     auto l_stmt               = sqlite_stmt{l_session, l_create_trigger_sql};
     l_stmt.step();
   }

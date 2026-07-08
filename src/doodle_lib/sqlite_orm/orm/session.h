@@ -12,10 +12,10 @@ class session {
     ~session_data();
   };
   std::shared_ptr<session_data> data_;
-  friend struct sqlite_stmt;
 
  public:
   explicit session(storage& s);
+  session() : data_(std::make_shared<session_data>()) {}
   ~session()                         = default;
 
   // dis copy
@@ -25,6 +25,8 @@ class session {
   // default move
   session(session&&)                 = default;
   session& operator=(session&&)      = default;
+
+  operator bool() const { return data_ && data_->connection_ && data_->s_; }
 
   struct transaction_guard {
     void begin();
@@ -39,6 +41,7 @@ class session {
   };
 
   transaction_guard transaction();
+  sqlite_connection_ptr get_connection() const;
 
   // 删除表
   void drop_table(const std::string& table_name);

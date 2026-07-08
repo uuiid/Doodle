@@ -6,7 +6,7 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 #include <initializer_list>
 #include <memory>
@@ -37,9 +37,9 @@ struct operator_compare_t : public column_operations_base_t {
   std::shared_ptr<data_impl> data_impl_ptr_;
   operator_compare_t();
 
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
+  // std::string (const session& s, const to_sql_ctx& ctx) const override;
 
   // operator &&, || 需要返回一个新的 operator_compare_t 对象，包含新的 SQL 片段和绑定函数
   operator_compare_t operator&&(operator_compare_t&& other) const;
@@ -153,9 +153,9 @@ struct column_operations : column_operations_base_t {
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
 
-  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
+  // std::string (const session& s, const to_sql_ctx& ctx) const override;
 
   // 赋值操作符，生成SQL片段和绑定函数
   template <typename U>
@@ -384,9 +384,9 @@ struct column_operations : column_operations_base_t {
 struct dynamic_column_operations : column_operations_base_t {
   std::vector<std::shared_ptr<column_operations_base_t>> operations_;
   dynamic_column_operations();
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
-  // std::string (const storage& s, const to_sql_ctx& ctx) const override;
+  // std::string (const session& s, const to_sql_ctx& ctx) const override;
 
   template <typename T>
   void add_condition(T&& condition) {
@@ -401,7 +401,7 @@ struct on_operations : column_operations_base_t {
     requires std::derived_from<std::decay_t<T>, column_operations_base_t>
   on_operations(T&& condition) : expr_(std::make_shared<std::decay_t<T>>(std::forward<T>(condition))) {}
 
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 
@@ -410,7 +410,7 @@ struct exists_operations : column_operations_base_t {
   std::shared_ptr<select_t> subquery_ptr_;
   exists_operations();
   explicit exists_operations(std::shared_ptr<select_t> subquery_ptr);
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 

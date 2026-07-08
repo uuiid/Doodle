@@ -85,8 +85,8 @@ struct table_info_base {
   std::vector<std::shared_ptr<create_index_base_t>> indexes_;
 
   virtual ~table_info_base() = default;
-  std::vector<std::string> get_foreign_key_create_sql(storage& s, const to_sql_ctx& ctx) const;
-  virtual std::string to_sql(storage& s, const to_sql_ctx& ctx) const = 0;
+  std::vector<std::string> get_foreign_key_create_sql(session& s, const to_sql_ctx& ctx) const;
+  virtual std::string to_sql(session& s, const to_sql_ctx& ctx) const = 0;
 
   template <typename T>
   column_info& find_column_info(auto T::* in_ptr);
@@ -110,7 +110,7 @@ struct table_fts_info : table_info_base {
   template <typename T>
   table_fts_info& add_column(std::string&& in_name, auto T::* in_ptr, auto... in_options);
 
-  std::string to_sql(storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(session& s, const to_sql_ctx& ctx) const override;
 };
 
 struct table_info : table_info_base {
@@ -130,7 +130,7 @@ struct table_info : table_info_base {
   table_info& add_unique_index(auto T::*... in_ptrs);
   table_info& add_index(const create_index_base_t& index);
 
-  std::string to_sql(storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(session& s, const to_sql_ctx& ctx) const override;
 };
 
 enum class trigger_timing { before, after, instead_of };
@@ -251,6 +251,7 @@ class storage : public boost::noncopyable {
   pragma_t pragma_{*this};
   boost::lockfree::stack<timed_connection, boost::lockfree::capacity<128>> connection_queue_{};
   std::atomic_char16_t thread_db_count_{0};
+  bool is_opened_{false};
 
  protected:
   sqlite3* only_open_db();
@@ -266,9 +267,9 @@ class storage : public boost::noncopyable {
   storage() = default;
   ~storage();
 
-  void open(FSys::path in_path, std::int32_t in_flags);
-  void open();
-  void open(const FSys::path& in_path);
+  virtual void open(FSys::path in_path, std::int32_t in_flags) final;
+  virtual void open() final;
+  virtual void open(const FSys::path& in_path) final;
 
   void sync_schema();
   pragma_t& pragma();

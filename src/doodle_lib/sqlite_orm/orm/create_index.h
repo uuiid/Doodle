@@ -53,7 +53,7 @@ struct create_index_base_t {
   create_index_base_t() : info_(std::make_shared<impl>()) {}
 
   ~create_index_base_t() = default;
-  std::string to_sql(storage& s, const to_sql_ctx& ctx) const;
+  std::string to_sql(session& s, const to_sql_ctx& ctx) const;
 
   template <typename Table>
   create_index_base_t table() {
@@ -86,7 +86,7 @@ struct create_index_base_t {
     return *this;
   }
 
-  index_info get_index_info(storage& s, const to_sql_ctx& ctx) const;
+  index_info get_index_info(session& s, const to_sql_ctx& ctx) const;
 };
 template <typename Table>
 create_index_base_t create_index() {

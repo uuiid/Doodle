@@ -154,7 +154,7 @@ struct orm_base {
 
  public:
   virtual ~orm_base()                                                             = default;
-  virtual std::string to_sql(const storage& s, const to_sql_ctx& ctx) const       = 0;
+  virtual std::string to_sql(const session& s, const to_sql_ctx& ctx) const       = 0;
   virtual void collect_bind_variants(bind_value_collector_t& bind_variants) const = 0;
 };
 
@@ -171,7 +171,7 @@ using table_info_base_ptr = std::shared_ptr<table_info_base_t>;
 // 数据库 select update delete insert 语句 基类
 struct statement_info_base_t : public orm_base {
   virtual ~statement_info_base_t() = default;
-  virtual void prepare(storage& s, const to_sql_ctx& ctx) = 0;
+  virtual void prepare(session& s, const to_sql_ctx& ctx) = 0;
 };
 }  // namespace doodle::orm
 

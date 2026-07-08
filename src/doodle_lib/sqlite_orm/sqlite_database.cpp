@@ -49,6 +49,7 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 #include <doodle_lib/sqlite_orm/tokenizer/sqlite_jieba.h>
 
+#include "sqlite_orm/orm/session.h"
 #include "sqlite_orm/orm/update.h"
 #include <cstddef>
 #include <optional>
@@ -56,7 +57,6 @@
 #include <sqlite3.h>
 #include <tuple>
 #include <vector>
-
 
 namespace doodle {
 
@@ -854,13 +854,15 @@ void sqlite_database::regs_all() {
       .add_column("parent_id", &entity_fts::parent_id_, unindexed())
       .tokenizer("jieba")
       .content<entity>();
+
+  session l_session{*this};
   create_trigger("entity_fts_delete_trigger")
       .before()
       .delete_()
       .on<entity>()
       .begin()
       .statement(
-          orm::delete_from(*this).from<entity_fts>().where(c(&entity_fts::entity_id_) == old_(&entity::uuid_id_))
+          orm::delete_from(l_session).from<entity_fts>().where(c(&entity_fts::entity_id_) == old_(&entity::uuid_id_))
       )
       .end();
   create_trigger("entity_fts_insert_trigger")
@@ -869,7 +871,7 @@ void sqlite_database::regs_all() {
       .on<entity>()
       .begin()
       .statement(
-          orm::insert(*this).into<entity_fts>().set(
+          orm::insert(l_session).into<entity_fts>().set(
               c(&entity_fts::entity_id_) = new_(&entity::uuid_id_), c(&entity_fts::name_) = new_(&entity::name_),
               c(&entity_fts::description_)    = new_(&entity::description_),
               c(&entity_fts::project_id_)     = new_(&entity::project_id_),
@@ -886,7 +888,7 @@ void sqlite_database::regs_all() {
       .on<entity>()
       .begin()
       .statement(
-          orm::update(*this)
+          orm::update(l_session)
               .from<entity_fts>()
               .set(
                   c(&entity_fts::name_)        = new_(&entity::name_),

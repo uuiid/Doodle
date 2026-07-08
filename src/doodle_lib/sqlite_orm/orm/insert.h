@@ -6,8 +6,8 @@
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
-#include "fwd.h"
 #include <algorithm>
 #include <memory>
 #include <string>
@@ -22,11 +22,11 @@ struct insert_t : public statement_info_base_t {
     std::int32_t batch_size_{1};
     std::shared_ptr<column_operations_base_t> wheres_;
     std::string into_table_name_;
-    storage* s_{nullptr};
+    session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
   };
-  friend class storage;
-  friend auto insert(storage& s) -> insert_t;
+ 
+  friend auto insert(session& s) -> insert_t;
   constexpr static std::int32_t g_max_batch_size_ = 100;  // SQLite的参数限制通常是999，预留一些空间给其他参数
 
   std::shared_ptr<insert_state_t> state_;
@@ -49,7 +49,7 @@ struct insert_t : public statement_info_base_t {
     requires is_object_specialization_v<std::decay_t<T>>
   insert_t values(T&& in_object) {
     using Table         = class_type_t<std::decay_t<T>>;
-    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
+    auto l_table_cloums = state_->s_.template get_table_columns<Table>();
 
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;  // 跳过主键列
@@ -70,7 +70,7 @@ struct insert_t : public statement_info_base_t {
     using Table      = value_type;
     state_->values_.bind_values_.clear();
     state_->columns_.clear();
-    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
+    auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     for (const auto& l_column : l_table_cloums) {
       if (l_column.primary_key_) continue;
       state_->columns_.push_back(std::make_shared<column_info_t>(l_column.ptr_));
@@ -95,7 +95,7 @@ struct insert_t : public statement_info_base_t {
 
     using value_type    = std::ranges::range_value_t<std::decay_t<T>>;
     using Table         = value_type;
-    auto l_table_cloums = state_->s_->template get_table_columns<Table>();
+    auto l_table_cloums = state_->s_.template get_table_columns<Table>();
     state_->values_.bind_values_.clear();
     for (const auto& value : values) {
       for (const auto& l_column : l_table_cloums) {
@@ -114,19 +114,19 @@ struct insert_t : public statement_info_base_t {
   }
   template <typename IntoTable>
   insert_t into() {
-    state_->into_table_name_ = state_->s_->get_table_name<IntoTable>();
+    state_->into_table_name_ = state_->s_.get_table_name<IntoTable>();
     return *this;
   }
 
   std::int64_t operator()();
-  std::string to_sql(const storage& s, const to_sql_ctx& in_ctx) const override;
-  void prepare(storage& s, const to_sql_ctx& ctx) override;
+  std::string to_sql(const session& s, const to_sql_ctx& in_ctx) const override;
+  void prepare(session& s, const to_sql_ctx& ctx) override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 
-inline auto insert(storage& s) -> insert_t {
+inline auto insert(session& s) -> insert_t {
   insert_t l_ret{};
-  l_ret.state_->s_ = &s;
+  l_ret.state_->s_ = s;
   return l_ret;
 }
 }  // namespace doodle::orm

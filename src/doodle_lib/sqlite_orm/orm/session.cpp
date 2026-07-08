@@ -9,11 +9,14 @@ session::session_data::~session_data() {
 }
 
 session::session(storage& s) : data_(std::make_shared<session_data>()) {
-  data_->connection_ = s.get_thread_db();
-  data_->s_          = &s;
+  if (!s.is_opened_) data_->connection_ = s.get_thread_db();
+  data_->s_ = &s;
+}
+sqlite_connection_ptr session::get_connection() const {
+  if (!data_ || !data_->connection_) throw std::runtime_error("Session is not connected to a database");
+  return data_->connection_;
 }
 
- 
 session::transaction_guard session::transaction() { return transaction_guard{*this}; }
 
 void session::drop_table(const std::string& table_name) {

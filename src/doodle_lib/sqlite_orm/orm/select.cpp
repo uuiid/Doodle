@@ -4,7 +4,7 @@
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 #include <doodle_lib/sqlite_orm/orm/select.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 #include "fwd.h"
 #include <fmt/base.h>
@@ -24,25 +24,25 @@ select_t select_t::order_by(const rank_info_t& rank_column, bool ascending) {
   return *this;
 }
 
-std::string select_t::to_sql(const storage& s, const to_sql_ctx& in_ctx) const {
+std::string select_t::to_sql(const session& in_s, const to_sql_ctx& in_ctx) const {
   auto l_ctx = in_ctx;
   l_ctx.ctx_ |= to_sql_ctx::select_sql;  // 强制使用 select_sql 上下文，以确保生成正确的 SQL 片段格式
   std::vector<std::string> l_column_names_str{};
   for (const auto& column_name_ptr : impl_->column_names_)
-    l_column_names_str.push_back(column_name_ptr->get_column_name(*impl_->s_, l_ctx));
+    l_column_names_str.push_back(column_name_ptr->get_column_name(in_s, l_ctx));
 
   std::string l_join_sql;
   for (const auto& join : impl_->joins_) {
     l_join_sql += fmt::format(
-        " {} {} {}", join.type_, join.join_table_info_->to_sql(*impl_->s_, l_ctx),
-        join.on_condition_->to_sql(*impl_->s_, l_ctx)
+        " {} {} {}", join.type_, join.join_table_info_->to_sql(in_s, l_ctx),
+        join.on_condition_->to_sql(in_s, l_ctx)
     );
   }
   std::string l_group_by_sql{};
   {
     std::vector<std::string> l_group_by_column_names{};
     for (const auto& group_by_column : impl_->group_bys_)
-      l_group_by_column_names.push_back(group_by_column->get_column_name(*impl_->s_, l_ctx));
+      l_group_by_column_names.push_back(group_by_column->get_column_name(in_s, l_ctx));
     if (!l_group_by_column_names.empty())
       l_group_by_sql = fmt::format(" GROUP BY {}", fmt::join(l_group_by_column_names, ", "));
   }
@@ -51,7 +51,7 @@ std::string select_t::to_sql(const storage& s, const to_sql_ctx& in_ctx) const {
   {
     std::vector<std::string> l_order_by_column_names{};
     for (const auto& order_by : impl_->order_bys_) {
-      std::string column_name = order_by.column_info_->get_column_name(*impl_->s_, l_ctx);
+      std::string column_name = order_by.column_info_->get_column_name(in_s, l_ctx);
       if (!order_by.ascending_) column_name += " DESC";
       l_order_by_column_names.push_back(std::move(column_name));
     }
@@ -64,8 +64,8 @@ std::string select_t::to_sql(const storage& s, const to_sql_ctx& in_ctx) const {
   std::string l_sql = fmt::format(
       "SELECT {col} FROM {tab} {join} {where} {group_by} {order_by} {limit}",
       fmt::arg("col", fmt::join(l_column_names_str, ", ")),
-      fmt::arg("tab", impl_->from_table_name_->to_sql(*impl_->s_, l_ctx)), fmt::arg("join", l_join_sql),
-      fmt::arg("where", impl_->wheres_ ? fmt::format("WHERE {}", impl_->wheres_->to_sql(*impl_->s_, l_ctx)) : ""),
+      fmt::arg("tab", impl_->from_table_name_->to_sql(in_s, l_ctx)), fmt::arg("join", l_join_sql),
+      fmt::arg("where", impl_->wheres_ ? fmt::format("WHERE {}", impl_->wheres_->to_sql(in_s, l_ctx)) : ""),
       fmt::arg("group_by", l_group_by_sql), fmt::arg("order_by", l_order_by_sql), fmt::arg("limit", l_limit_sql)
   );
   return l_sql;
@@ -78,15 +78,15 @@ void select_t::collect_bind_variants(bind_value_collector_t& bind_variants) cons
   impl_->from_table_name_->collect_bind_variants(bind_variants);
 }
 
-void select_t::prepare(storage& s, const to_sql_ctx& ctx) {
-  auto l_sql   = to_sql(*impl_->s_, ctx);
+void select_t::prepare(session& in_s, const to_sql_ctx& ctx) {
+  auto l_sql   = to_sql(in_s, ctx);
   impl_->stmt_ = std::make_shared<sqlite_stmt>();
-  impl_->stmt_->prepare(*impl_->s_, l_sql);
+  impl_->stmt_->prepare(in_s, l_sql);
   collect_bind_variants(impl_->bind_variants_);
 }
 void select_t::run() {
   if (!impl_->stmt_) {
-    prepare(*impl_->s_, to_sql_ctx{.ctx_ = to_sql_ctx::select_sql});
+    prepare(impl_->s_, to_sql_ctx{.ctx_ = to_sql_ctx::select_sql});
   }
   impl_->stmt_->reset_bind();
   for (const auto& val : impl_->bind_variants_.bind_values_) val.bind(*impl_->stmt_);

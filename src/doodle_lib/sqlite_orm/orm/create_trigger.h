@@ -73,7 +73,7 @@ struct create_trigger_t {
   create_trigger_t& statement(const delete_t& in_statement);
   create_trigger_t& statement(const insert_t& in_statement);
 
-  std::string to_sql(storage& s, const to_sql_ctx& ctx) const;
+  std::string to_sql(session& s, const to_sql_ctx& ctx) const;
 };
 
 }  // namespace doodle::orm

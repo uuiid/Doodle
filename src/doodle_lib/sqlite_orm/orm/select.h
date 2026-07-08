@@ -5,7 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/alias.h>
 #include <doodle_lib/sqlite_orm/orm/bind_value.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 #include <doodle_lib/sqlite_orm/orm/table_info.h>
 
 #include "fwd.h"
@@ -31,8 +31,8 @@ concept result_vector_value_constructible =
 
 struct select_t : public statement_info_base_t {
  protected:
-  friend class storage;
-  friend select_t select(storage& s);
+  friend class session;
+  friend select_t select(session& s);
 
   struct join_info_t {
     join_type type_{join_type::inner};
@@ -63,7 +63,7 @@ struct select_t : public statement_info_base_t {
     std::optional<std::size_t> limit_;
     std::optional<std::size_t> offset_;
     std::vector<column_info_ptr> group_bys_;
-    storage* s_{nullptr};
+    session s_{};
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
   };
@@ -73,7 +73,7 @@ struct select_t : public statement_info_base_t {
   void run();
 
  public:
-  explicit select_t(storage& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = &s; }
+  explicit select_t(session& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = s; }
   select_t() = default;
   template <typename FromTable>
   select_t from();
@@ -124,8 +124,8 @@ struct select_t : public statement_info_base_t {
   template <typename... TableColumns>
   select_t group_by(auto TableColumns::*... in_columns);
 
-  std::string to_sql(const storage& s, const to_sql_ctx& in_ctx) const override;
-  void prepare(storage& s, const to_sql_ctx& ctx) override;
+  std::string to_sql(const session& s, const to_sql_ctx& in_ctx) const override;
+  void prepare(session& s, const to_sql_ctx& ctx) override;
 
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
   template <typename... TableColumns>
@@ -217,7 +217,7 @@ struct select_t::result_type_t {
   std::optional<type> to_optional();
 };
 
-inline select_t select(storage& s) {
+inline select_t select(session& s) {
   select_t l_ret{s};
   return l_ret;
 }

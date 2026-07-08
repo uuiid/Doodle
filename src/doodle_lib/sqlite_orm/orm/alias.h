@@ -21,7 +21,7 @@ struct alias_column_info_t : public base_column_info_t {
       : ptr_(column_info), table_alias_name_(std::move(table_alias_name)) {}
 
   // 生成 SQL 时，别名列必须包含表别名以避免歧义
-  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string get_column_name(const session& s, const to_sql_ctx& ctx) const override;
   // void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
@@ -35,9 +35,9 @@ struct alias_info_t : public table_info_base_t {
 
   virtual ~alias_info_t() = default;
 
-  // std::string get_table_name(const storage& s) const override;
+  // std::string get_table_name(const session& s) const override;
 
-  std::string to_sql(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string to_sql(const session& s, const to_sql_ctx& ctx) const override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 
   template <typename Table, typename ValueType>
@@ -53,7 +53,7 @@ inline constexpr bool is_alias_t_v = std::is_base_of_v<alias_info_t, std::remove
 // fts5 rank
 
 struct rank_info_t : public base_column_info_t {
-  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string get_column_name(const session& s, const to_sql_ctx& ctx) const override;
   // void set_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
@@ -73,7 +73,7 @@ result_column_info_t<Table, ValueType, alias_column_info_t> old_(ValueType Table
 struct any_column_info_t : public base_column_info_t {
   table_info_base_ptr table_info_ptr_;
   explicit any_column_info_t(std::type_index in_table_index);
-  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string get_column_name(const session& s, const to_sql_ctx& ctx) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 template <typename Table>
@@ -84,7 +84,7 @@ auto any_column() {
 struct rowid_column_info_t : public base_column_info_t {
   table_info_base_ptr table_info_ptr_;
   explicit rowid_column_info_t(std::type_index in_table_index);
-  std::string get_column_name(const storage& s, const to_sql_ctx& ctx) const override;
+  std::string get_column_name(const session& s, const to_sql_ctx& ctx) const override;
   void set_struct_value(const sqlite_stmt& stmt, int columnIndex, const std::any& out_value) const override;
 };
 template <typename Table>
