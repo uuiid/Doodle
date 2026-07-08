@@ -5,6 +5,7 @@
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include "sqlite_orm/orm/bind_value.h"
+#include "sqlite_orm/orm/session.h"
 #include <fmt/format.h>
 #include <vector>
 
@@ -13,7 +14,7 @@ namespace doodle::orm {
 // operator_compare_t
 operator_compare_t::operator_compare_t() : data_impl_ptr_(std::make_shared<data_impl>()) {}
 
-std::string operator_compare_t::to_sql(const storage& s, const to_sql_ctx& ctx) const {
+std::string operator_compare_t::to_sql(const session& s, const to_sql_ctx& ctx) const {
   auto l_ctx = ctx;
   l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   return fmt::format(
@@ -57,7 +58,7 @@ operator_compare_t operator_compare_t::operator||(operator_compare_t&& other) co
 column_operations::to_str_value_t::to_str_value_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
 
 std::string column_operations::to_str_value_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx
+    column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, ctx);
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
@@ -71,7 +72,7 @@ void column_operations::to_str_value_t::collect_bind_variants(bind_value_collect
 column_operations::to_str_value_list_t::to_str_value_list_t(std::string fmt_str) : fmt_str_(std::move(fmt_str)) {}
 
 std::string column_operations::to_str_value_list_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx
+    column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, ctx);
   return fmt::vformat(fmt_str_, fmt::make_format_args(l_column_name));
@@ -86,7 +87,7 @@ column_operations::to_str_subquery_t::to_str_subquery_t(std::shared_ptr<select_t
     : subquery_ptr_(std::move(subquery_ptr)) {}
 
 std::string column_operations::to_str_subquery_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx
+    column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, ctx);
   if (is_not_in_) {
@@ -105,7 +106,7 @@ column_operations::to_str_compare_t::to_str_compare_t(std::string fmt_str, colum
     : fmt_str_(std::move(fmt_str)), other_column_ptr_(std::move(other_column_ptr)) {}
 
 std::string column_operations::to_str_compare_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx
+    column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {
   auto l_column_name       = in_ptr->get_column_name(s, ctx);
   auto l_other_column_name = other_column_ptr_->get_column_name(s, ctx);
@@ -117,7 +118,7 @@ void column_operations::to_str_compare_t::collect_bind_variants(bind_value_colle
 }
 
 std::string column_operations::column_to_str::to_str(
-    column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx
+    column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, ctx);
   return l_column_name;
@@ -143,7 +144,7 @@ column_operations::column_operations(rowid_column_info_t in_rowid_column)
 }
 
 std::string column_operations::to_str_expr_t::to_str(
-    column_info_ptr& in_ptr, const storage& s, const to_sql_ctx& ctx
+    column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {
   auto l_column_name = in_ptr->get_column_name(s, ctx);
   auto l_left_str    = left_->to_sql(s, ctx);
@@ -161,7 +162,7 @@ void column_operations::collect_bind_variants(bind_value_collector_t& bind_varia
   data_impl_ptr_->to_str_ptr_->collect_bind_variants(bind_variants);
 }
 
-std::string column_operations::to_sql(const storage& s, const to_sql_ctx& ctx) const {
+std::string column_operations::to_sql(const session& s, const to_sql_ctx& ctx) const {
   auto l_ctx = ctx;
   if (!data_impl_ptr_->is_set_operation_) {
     l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
@@ -169,7 +170,7 @@ std::string column_operations::to_sql(const storage& s, const to_sql_ctx& ctx) c
   return data_impl_ptr_->to_str_ptr_->to_str(data_impl_ptr_->ptr_shared_, s, l_ctx);
 }
 
-// std::string column_operations::get_column_name(const storage& s, const to_sql_ctx& ctx) const {
+// std::string column_operations::get_column_name(const session& s, const to_sql_ctx& ctx) const {
 //   return data_impl_ptr_->ptr_shared_->get_column_name(s, ctx);
 // }
 
@@ -277,7 +278,7 @@ expression_t column_operations::operator%(const std::int64_t& value) const {
 }
 
 dynamic_column_operations::dynamic_column_operations() = default;
-std::string dynamic_column_operations::to_sql(const storage& s, const to_sql_ctx& ctx) const {
+std::string dynamic_column_operations::to_sql(const session& s, const to_sql_ctx& ctx) const {
   auto l_ctx = ctx;
   l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   std::vector<std::string> l_sql_parts{};
@@ -294,7 +295,7 @@ void dynamic_column_operations::collect_bind_variants(bind_value_collector_t& bi
     operation->collect_bind_variants(bind_variants);
   }
 }
-// std::string dynamic_column_operations::get_column_name(const storage& /*s*/, const to_sql_ctx& ctx) const {
+// std::string dynamic_column_operations::get_column_name(const session& /*s*/, const to_sql_ctx& ctx) const {
 //   // 直接抛出异常，因为 dynamic_column_operations 不代表一个具体的列，无法生成列名
 //   throw std::runtime_error(
 //       "dynamic_column_operations does not represent a specific column and cannot generate a column name"
@@ -302,7 +303,7 @@ void dynamic_column_operations::collect_bind_variants(bind_value_collector_t& bi
 // }
 
 on_operations::on_operations() = default;
-std::string on_operations::to_sql(const storage& s, const to_sql_ctx& ctx) const {
+std::string on_operations::to_sql(const session& s, const to_sql_ctx& ctx) const {
   auto l_ctx = ctx;
   l_ctx.ctx_ |= to_sql_ctx::where_sql;  // 强制使用 where_sql 上下文，以确保生成正确的 SQL 片段格式
   if (expr_) {
@@ -317,7 +318,7 @@ void on_operations::collect_bind_variants(bind_value_collector_t& bind_variants)
 
 exists_operations::exists_operations() = default;
 exists_operations::exists_operations(std::shared_ptr<select_t> subquery_ptr) : subquery_ptr_(std::move(subquery_ptr)) {}
-std::string exists_operations::to_sql(const storage& s, const to_sql_ctx& ctx) const {
+std::string exists_operations::to_sql(const session& s, const to_sql_ctx& ctx) const {
   auto l_ctx = ctx;
   l_ctx.ctx_ &= ~to_sql_ctx::where_sql;  // 清除 where_sql 上下文标志,
   l_ctx.ctx_ |= to_sql_ctx::select_sql;  // 使用 select_sql 上下文以确保生成正确的 SQL 片段格式
