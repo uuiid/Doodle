@@ -253,30 +253,29 @@ sqlite3* storage::only_open_db() {
 sqlite_connection_ptr storage::get_thread_db() {
   constexpr auto kMaxIdleTime = std::chrono::minutes{5};  // 最大空闲时间，超过这个时间的连接将被关闭
   timed_connection l_entry{};
-
+  sqlite_connection_ptr l_connection;
   // 循环出队，跳过已超时的空闲连接（惰性回收）
   while (connection_queue_.pop(l_entry)) {
     --thread_db_count_;
     const auto l_idle = std::chrono::steady_clock::now() - l_entry.idle_since_;
-    if (l_idle < kMaxIdleTime) {
-      return std::move(l_entry.conn_);
-    }
+    if (l_idle < kMaxIdleTime) return std::move(l_entry.conn_);
+
     // 超时 → shared_ptr 析构，自动 sqlite3_close
     SPDLOG_LOGGER_DEBUG(
         g_logger_ctrl().get_main_error(), "回收空闲数据库连接 (空闲 {} 秒)",
         std::chrono::duration_cast<std::chrono::seconds>(l_idle).count()
     );
+    // 在这里保存一个超时的链接, 以便在没有可用连接时, 不需要直接创建新的连接, 而是可以使用这个超时的连接
+    l_connection = std::move(l_entry.conn_);
   }
 
   // 池中无可用连接或全部超时 → 新建
-  sqlite_connection_ptr l_connection;
-  if (!l_entry.conn_) {
+  if (!l_connection) {
     l_connection = std::make_shared<sqlite_connection_t>(only_open_db());
     SPDLOG_LOGGER_WARN(
         g_logger_ctrl().get_main_error(), "创建了一个新的线程数据库连接，当前池中连接数: {}", thread_db_count_ + 1
     );
-  } else
-    l_connection = std::move(l_entry.conn_);
+  }
   return l_connection;
 }
 
