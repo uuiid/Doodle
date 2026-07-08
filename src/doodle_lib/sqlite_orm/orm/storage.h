@@ -11,12 +11,10 @@
 
 #include <atomic>
 #include <chrono>
-#include <deque>
 #include <fmt/format.h>
 #include <functional>
 #include <map>
 #include <memory>
-#include <shared_mutex>
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
@@ -24,6 +22,7 @@
 #include <thread>
 #include <typeindex>
 #include <vector>
+
 
 namespace boost {
 // 为 std::thread::id 提供哈希函数
@@ -169,20 +168,6 @@ struct sqlite_connection_t {
 };
 using sqlite_connection_ptr = std::shared_ptr<sqlite_connection_t>;
 
-struct sqlite_connection_guard_t {
-  storage* s_{nullptr};
-  sqlite_connection_ptr connection_;
-  sqlite_connection_guard_t() = default;
-  explicit sqlite_connection_guard_t(storage& s);
-  ~sqlite_connection_guard_t();
-
-  // dis copy
-  sqlite_connection_guard_t(const sqlite_connection_guard_t&)            = delete;
-  sqlite_connection_guard_t& operator=(const sqlite_connection_guard_t&) = delete;
-
-  sqlite_connection_guard_t(sqlite_connection_guard_t&&)                 = default;
-  sqlite_connection_guard_t& operator=(sqlite_connection_guard_t&&)      = default;
-};
 struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
   std::int32_t bind_index_{0};  // sqlite bind index starts from 1, but we use 0-based index internally
@@ -241,17 +226,16 @@ class storage : public boost::noncopyable {
   friend struct select_t;
   friend struct insert_t;
   friend struct update_t;
-  friend struct sqlite_connection_guard_t;
   friend struct session;
 
   struct backup_t {
    private:
     sqlite3_backup* backup_{nullptr};
-    sqlite3* dest_db_{nullptr};
-    sqlite_connection_guard_t src_db_{};
+    sqlite_connection_ptr dest_db_{nullptr};
+    sqlite_connection_ptr src_db_{};
 
    public:
-    explicit backup_t(sqlite3* dest_db, sqlite_connection_guard_t src_db);
+    explicit backup_t(sqlite_connection_ptr dest_db, sqlite_connection_ptr src_db);
     std::int32_t step(int pages = -1);
     ~backup_t();
 
