@@ -54,9 +54,9 @@
 #include <optional>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
-
 #include <tuple>
 #include <vector>
+
 
 namespace doodle {
 
@@ -1374,12 +1374,10 @@ std::optional<entity_link> sqlite_database::get_entity_link(const uuid& in_entit
 boost::asio::awaitable<void> sqlite_database::mark_all_notifications_as_read(uuid in_user_id) {
   DOODLE_TO_SQLITE_THREAD();
   using namespace orm;
-  auto l_g = transaction();
   orm::update(*this)
       .from<notification>()
       .set(c(&notification::read_) = true)
       .where(c(&notification::person_id_) == in_user_id && c(&notification::read_) == false)();
-  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
@@ -1424,9 +1422,7 @@ std::vector<playlist_shot> sqlite_database::get_playlist_shot_entity(const uuid&
 boost::asio::awaitable<void> sqlite_database::remove_playlist_shot_for_playlist(const uuid& in_playlist_id) {
   using namespace orm;
   DOODLE_TO_SQLITE_THREAD();
-  auto l_g = transaction();
   delete_from(*this).from<playlist_shot>().where(c(&playlist_shot::playlist_id_) == in_playlist_id)();
-  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
@@ -1447,11 +1443,9 @@ boost::asio::awaitable<void> sqlite_database::remove_task_type_asset_type_link_b
   using namespace orm;
 
   DOODLE_TO_SQLITE_THREAD();
-  auto l_g = transaction();
   delete_from(*this)
       .from<task_type_asset_type_link>()
       .where(c(&task_type_asset_type_link::asset_type_id_) == in_asset_type_id)();
-  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
@@ -1501,7 +1495,6 @@ bool sqlite_database::is_entity_outsourced(
 boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid& in_sequence_id) {
   DOODLE_TO_SQLITE_THREAD();
   using namespace orm;
-  auto l_g        = transaction();
   auto l_shot     = alias<entity>("shot");
   auto l_sequence = alias<entity>("sequence");
   delete_from(*this)
@@ -1518,7 +1511,6 @@ boost::asio::awaitable<void> sqlite_database::remove_sequence_casting(const uuid
 
                  ))();
 
-  l_g.commit();
   DOODLE_TO_SELF();
   co_return;
 }
