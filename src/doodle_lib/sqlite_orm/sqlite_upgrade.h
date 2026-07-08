@@ -12,11 +12,11 @@ namespace doodle::details {
 
 class sqlite_upgrade {
  public:
-  virtual ~sqlite_upgrade()                      = default;
+  virtual ~sqlite_upgrade()                     = default;
   virtual void upgrade(sqlite_storage& in_data) = 0;
 };
 
-std::shared_ptr<sqlite_upgrade> upgrade_init(const FSys::path& in_db_path);
-std::shared_ptr<sqlite_upgrade> upgrade_1(const FSys::path& in_db_path);
+std::shared_ptr<sqlite_upgrade> upgrade_init();
+std::shared_ptr<sqlite_upgrade> upgrade_1();
 
 }  // namespace doodle::details

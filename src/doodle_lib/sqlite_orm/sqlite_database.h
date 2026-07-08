@@ -64,6 +64,8 @@ class sqlite_storage : public orm::storage {
 
  public:
   void regs_all();
+  // 升级
+  void upgrade();
 };
 
 class sqlite_database {

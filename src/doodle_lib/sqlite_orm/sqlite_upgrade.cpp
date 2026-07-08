@@ -29,7 +29,7 @@ constexpr std::size_t g_current_version = 11;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
-  explicit upgrade_init_t(const FSys::path& in_path) {}
+  explicit upgrade_init_t() {}
 
   static void full_fts_sync(sqlite_storage& in_data) {
     using namespace orm;
@@ -43,12 +43,12 @@ struct upgrade_init_t : sqlite_upgrade {
     in_data.pragma().user_version(g_current_version);
     auto l_session = sqlite_database{in_data.create_session()};
 
-#define DOODLE_ASSET_TYPE(class_name)                      \
-  for (const auto& v : class_name::get_all_constant()) {   \
+#define DOODLE_ASSET_TYPE(class_name)                        \
+  for (const auto& v : class_name::get_all_constant()) {     \
     if (l_session.uuid_to_id<class_name>(v.uuid_id_) == 0) { \
-      auto l_s = std::make_shared<class_name>(v);          \
+      auto l_s = std::make_shared<class_name>(v);            \
       l_session.install_unsafe<class_name>(l_s);             \
-    }                                                      \
+    }                                                        \
   }
 
     DOODLE_ASSET_TYPE(project_status)
@@ -84,7 +84,7 @@ struct project_data {
 }  // namespace
 
 struct upgrade_2_t : sqlite_upgrade {
-  explicit upgrade_2_t(const FSys::path& in_path) {}
+  explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
     if (in_data.pragma().user_version() == 2) {
       upgrade_init_t::full_fts_sync(in_data);
@@ -96,11 +96,7 @@ struct upgrade_2_t : sqlite_upgrade {
   ~upgrade_2_t() override = default;
 };
 
-std::shared_ptr<sqlite_upgrade> upgrade_init(const FSys::path& in_db_path) {
-  return std::make_shared<upgrade_init_t>(in_db_path);
-}
-std::shared_ptr<sqlite_upgrade> upgrade_1(const FSys::path& in_db_path) {
-  return std::make_shared<upgrade_2_t>(in_db_path);
-}
+std::shared_ptr<sqlite_upgrade> upgrade_init() { return std::make_shared<upgrade_init_t>(); }
+std::shared_ptr<sqlite_upgrade> upgrade_1() { return std::make_shared<upgrade_2_t>(); }
 
 }  // namespace doodle::details

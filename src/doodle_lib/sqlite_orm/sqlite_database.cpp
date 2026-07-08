@@ -903,19 +903,22 @@ void sqlite_storage::register_custom_extension(sqlite3* in_sqlite) {
 }
 void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
   storage::open_(in_path, in_flags);
+
+  regs_all();
+
+  // pragma().optimize(0x10002);
+}
+
+void sqlite_storage::upgrade() {
   pragma().foreign_keys(true);
   pragma().synchronous(1);
   pragma().recursive_triggers(true);
   pragma().journal_mode(orm::journal_mode_t::wal);
 
-  regs_all();
-  //   sync_schema();
-  auto l_list = {details::upgrade_init(in_path), details::upgrade_1(in_path)};
+  auto l_list = {details::upgrade_init(), details::upgrade_1()};
   for (auto&& i : l_list) {
     i->upgrade(*this);
   }
-
-  // pragma().optimize(0x10002);
 }
 
 boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {

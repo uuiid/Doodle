@@ -156,7 +156,7 @@ bool kitsu_supplement_main::init() {
     l_set.set_root("D:/sy_maigc");
     // 打开内存数据库
     l_set.database_->open();
-
+    l_set.database_->upgrade();
     // 初始化授权上下文
     g_ctx().emplace<authorization>(l_set.authorize_);
     // 初始化路由
@@ -179,6 +179,7 @@ bool kitsu_supplement_main::init() {
         l_args.kitsu_token_, l_args.kitsu_thumbnails_path_, l_args.kitsu_front_end_path_
     );
     l_set.database_->open(l_args.db_path_);
+    l_set.database_->upgrade();
     // 初始化授权上下文
     g_ctx().emplace<authorization>(l_set.authorize_);
     // 初始化路由
@@ -193,6 +194,7 @@ bool kitsu_supplement_main::init() {
 
   // 初始化数据库
   l_set.database_->open(l_args.db_path_);
+  l_set.database_->upgrade();
   //  初始化钉钉上下文
   g_ctx().emplace<dingding::dingding_company>();
   // 初始化 ssl
