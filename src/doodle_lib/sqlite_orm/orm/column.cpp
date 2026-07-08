@@ -1,6 +1,6 @@
 #include <doodle_lib/sqlite_orm/orm/column.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
+#include <doodle_lib/sqlite_orm/orm/session.h>
 
 namespace doodle::orm {
 std::string column_info_t::get_column_name(const session& s, const to_sql_ctx& ctx) const {
