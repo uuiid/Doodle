@@ -296,6 +296,7 @@ void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   std::call_once(l_flag, []() {
     sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, spdlog::default_logger_raw());
   });
+  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = in_path.generic_string();
@@ -333,7 +334,6 @@ fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
 }
 
 void storage::sync_schema() {
-  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 
   auto l_transaction = transaction();
   for (const auto& table : tables_) {
@@ -503,7 +503,6 @@ void storage::drop_view(const std::string& view_name) {
 
 bool storage::table_exists(const std::string& table_name) {
   if (table_name.empty()) throw std::invalid_argument("Table name cannot be empty");
-  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
   return select(*this)
       .columns(&sqlite_master_entry::name)
       .from<sqlite_master_entry>()
@@ -514,7 +513,6 @@ bool storage::table_exists(const std::string& table_name) {
 
 bool storage::index_exists(const std::string& index_name) {
   if (index_name.empty()) throw std::invalid_argument("Index name cannot be empty");
-  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 
   return select(*this)
       .columns(&sqlite_master_entry::name)
@@ -526,7 +524,6 @@ bool storage::index_exists(const std::string& index_name) {
 
 bool storage::trigger_exists(const std::string& trigger_name) {
   if (trigger_name.empty()) throw std::invalid_argument("Trigger name cannot be empty");
-  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 
   return select(*this)
       .columns(&sqlite_master_entry::name)
