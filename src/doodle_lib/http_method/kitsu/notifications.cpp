@@ -138,7 +138,7 @@ auto get_notifications_and_entity_and_comment_and_project_id_and_project_name_an
     const uuid& in_task_status_id, const std::optional<notification_type>& in_notification_type,
     const std::optional<bool>& in_read
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
 
   auto l_where = dynamic_column_operations{};
@@ -167,7 +167,7 @@ auto get_notifications_and_entity_and_comment_and_project_id_and_project_name_an
 }
 
 std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&comment_mentions::person_id_)
@@ -176,7 +176,7 @@ std::vector<uuid> get_comment_mentions_person_ids_by_comment_id(const uuid& in_c
       .to_vector();
 }
 std::vector<uuid> get_comment_department_mentions_department_ids_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&comment_department_mentions::department_id_)
@@ -189,7 +189,7 @@ auto get_last_notifications_query(const uuid& in_person_id, const data_user_noti
   ;
   if (in_person_id.is_nil())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "缺失查询参数"});
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   std::vector<data_user_notifications_get_result> l_ret{};
   // constexpr auto author = "author"_alias.for_<person>();
 
@@ -221,7 +221,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
   co_return in_handle->make_msg(nlohmann::json{} = l_ret);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_notification::put(session_data_ptr in_handle) {
-  auto& l_sql       = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_not        = std::make_shared<notification>(l_sql.get_by_uuid<notification>(id_));
   const bool l_read = in_handle->get_json().value<bool>("read", false);
 
@@ -241,7 +241,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_notifica
 boost::asio::awaitable<boost::beast::http::message_generator> actions_user_notifications_mark_all_as_read::post(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始将所有通知标记已读", person_.person_.email_,

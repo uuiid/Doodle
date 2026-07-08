@@ -28,7 +28,7 @@ namespace doodle::http {
 namespace {
 // 获取用户的待办事项后处理
 auto get_todo_post_process(std::vector<todo_t>& in_todos) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_task_ids =
       in_todos | ranges::views::transform([](const todo_t& in) { return in.uuid_id_; }) | ranges::to_vector;
@@ -84,7 +84,7 @@ auto get_todo_fun() {
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
   SPDLOG_LOGGER_WARN(
@@ -110,7 +110,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(session_data_ptr in_handle) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
   person_.check_task_action_access(*l_task);
 
@@ -130,7 +130,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign::put(session_data_ptr in_handle) {
-  auto& l_sql        = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_person_data = l_sql.get_by_uuid<person>(id_);
   auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
 
@@ -180,7 +180,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_as
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks::get(session_data_ptr in_handle) {
-  auto& sql = get_sqlite_database();
+  auto sql = get_sqlite_database();
   using namespace orm;
   auto l_prjs    = sql.get_person_projects(person_.person_);
   auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
@@ -197,7 +197,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_user_tasks::g
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_user_done_tasks::get(session_data_ptr in_handle) {
-  auto& sql = get_sqlite_database();
+  auto sql = get_sqlite_database();
   using namespace orm;
   auto l_prjs    = sql.get_person_projects(person_.person_);
   auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
@@ -226,7 +226,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::ge
       co_return in_handle->make_msg("[]"s);
       break;
   }
-  auto& sql = get_sqlite_database();
+  auto sql = get_sqlite_database();
   using namespace orm;
   auto l_prjs    = sql.get_person_projects(person_.person_);
   auto l_pej_ids = l_prjs | ranges::views::transform([](const project& in) { return in.uuid_id_; }) | ranges::to_vector;
@@ -245,7 +245,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::ge
 namespace {
 auto get_comments(const uuid& in_task_id) {
   using namespace doodle::orm;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   // 查询所有评论，按创建时间倒序
   auto l_comm = select(l_sql)
                     .columns(object<comment>())
@@ -532,7 +532,7 @@ struct data_tasks_open_tasks_get_args {
 
   std::vector<open_tasks_get_t> get() {
     std::vector<open_tasks_get_t> l_ret{};
-    auto& l_sql = get_sqlite_database();
+    auto l_sql = get_sqlite_database();
     using namespace orm;
     auto sequence = alias<entity>("sequence");
     auto episode  = alias<entity>("episode");
@@ -648,7 +648,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::delete
   co_return in_handle->make_msg_204();
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::get(session_data_ptr in_handle) {
-  auto& l_sql        = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   auto l_task        = l_sql.get_by_uuid<task>(id_);
   auto l_task_type   = l_sql.get_by_uuid<task_type>(l_task.task_type_id_);

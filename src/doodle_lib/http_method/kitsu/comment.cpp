@@ -27,7 +27,7 @@ namespace doodle::http {
 namespace {
 
 std::vector<uuid> get_comment_object_ids_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&comment::object_id_)
@@ -36,14 +36,14 @@ std::vector<uuid> get_comment_object_ids_by_comment_id(const uuid& in_comment_id
       .to_vector();
 }
 std::vector<uuid> get_task_project_ids_by_task_id(const uuid& in_task_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql).columns(&task::project_id_).from<task>().where(c(&task::uuid_id_) == in_task_id)().to_vector();
 }
 std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_person_id(
     const uuid& in_comment_id, const uuid& in_person_id
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&comment_acknoledgments::id_)
@@ -52,7 +52,7 @@ std::vector<std::int32_t> get_comment_acknowledgement_ids_by_comment_id_and_pers
       .to_vector();
 }
 std::vector<attachment_file> get_attachment_files_by_comment_id(const uuid& in_comment_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(object<attachment_file>())
@@ -72,7 +72,7 @@ boost::asio::awaitable<create_comment_result> create_comment(
 
   if (!in_task_id.is_nil()) in_comment->object_id_ = in_task_id;
 
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = in_task ? in_task : std::make_shared<task>(l_sql.get_by_uuid<task>(in_comment->object_id_));
 
   if (in_comment->task_status_id_.is_nil()) in_comment->task_status_id_ = l_task->task_status_id_;
@@ -221,7 +221,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_comm
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_tasks_comment_many::post(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始批量创建评论", person_.person_.email_,
@@ -257,7 +257,7 @@ struct actions_tasks_modify_date_comment_time_arg {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modify_date_comment::post(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -295,7 +295,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_modi
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comments_ack::post(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始评论 {} 点赞/取消点赞", person_.person_.email_,
@@ -349,7 +349,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_comment
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(session_data_ptr in_handle) {
-  auto& l_sql    = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_comment = l_sql.get_by_uuid<comment>(id_);
 
   nlohmann::json l_json{};
@@ -359,7 +359,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_comment::get(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> task_comment::delete_(session_data_ptr in_handle) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(task_id_));
   person_.check_delete_access(l_task->project_id_);
   SPDLOG_LOGGER_WARN(
@@ -381,7 +381,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_comment::dele
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_comment::put(session_data_ptr in_handle) {
   auto l_json    = in_handle->get_json();
-  auto& l_sql    = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_comment = std::make_shared<comment>(l_sql.get_by_uuid<comment>(id_));
 
   SPDLOG_LOGGER_WARN(

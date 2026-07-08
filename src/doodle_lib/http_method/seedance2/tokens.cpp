@@ -11,7 +11,7 @@ namespace sd2 = doodle::seedance2;
 // 设置当日人员剩余可使用的 token 数量
 boost::asio::awaitable<void> set_remaining_tokens_for_person(const person& in_person, std::int64_t in_tokens) {
   if (in_tokens == 0) co_return;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
 
@@ -45,7 +45,7 @@ boost::asio::awaitable<void> set_remaining_tokens_for_person(const person& in_pe
 // 设置当日人员剩余可使用的 token 数量
 boost::asio::awaitable<void> add_remaining_tokens_for_person(const person& in_person, std::int64_t in_tokens) {
   if (in_tokens == 0) co_return;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
 
@@ -78,7 +78,7 @@ boost::asio::awaitable<void> add_remaining_tokens_for_person(const person& in_pe
   co_return;
 }
 std::int64_t get_remaining_tokens_for_person(const person& in_person) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   chrono::year_month_day l_today = chrono::floor<chrono::days>(chrono::system_clock::now());
   auto l_tokens =
@@ -113,7 +113,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_instance, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_tokens_person_all, get) {
   person_.check_producer();
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
 
   std::map<uuid, std::int64_t> l_result_map{};

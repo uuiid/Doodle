@@ -33,7 +33,7 @@ namespace {
 std::shared_ptr<server_task_info> make_server_task_info_from_json(
     const nlohmann::json& in_json, const uuid& person_id, const uuid& task_id
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   auto l_ptr = std::make_shared<server_task_info>();
   in_json.get_to(*l_ptr);
@@ -67,7 +67,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_ue_assembly, post)
 
 namespace {
 export_fbx_arg_distributed::args shot_export_anim_fbx(const uuid& project_id, const uuid& in_task_id) {
-  auto& l_sql            = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task           = l_sql.get_by_uuid<task>(in_task_id);
   auto l_proj           = l_sql.get_by_uuid<project>(l_task.project_id_);
   auto l_entity         = l_sql.get_by_uuid<entity>(l_task.entity_id_);
@@ -98,7 +98,7 @@ export_fbx_arg_distributed::args shot_export_anim_fbx(const uuid& project_id, co
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_shots_run_export_anim_fbx, post) {
   person_.check_not_outsourcer();
-  auto& l_sql      = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_ptr      = make_server_task_info_from_json(in_handle->get_json(), person_.person_.uuid_id_, id_);
   l_ptr->type_    = server_task_info_type::export_fbx;
   l_ptr->command_ = shot_export_anim_fbx(project_id_, id_);

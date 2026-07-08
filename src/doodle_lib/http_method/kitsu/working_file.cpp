@@ -33,7 +33,7 @@ namespace doodle::http {
 namespace {
 bool entity_has_simulation_asset(const uuid& in_entity_id) {
   using namespace orm;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   return select(l_sql)
              .columns(count(&task::id_))
              .from<task>()
@@ -42,7 +42,7 @@ bool entity_has_simulation_asset(const uuid& in_entity_id) {
 }
 
 auto get_working_files_for_entity_sql(const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
 
   auto shot           = alias<entity>("shot");
@@ -72,7 +72,7 @@ auto get_working_files_for_entity_sql(const uuid& in_project_id, const uuid& in_
 }
 
 auto get_working_files_for_entity_sql(const uuid& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_jishu        = alias<entity>("jishu");
   auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
@@ -88,7 +88,7 @@ auto get_working_files_for_entity_sql(const uuid& in_entity_id) {
       .to_vector();
 }
 auto get_working_files_for_entity_sql(const std::vector<uuid>& in_entity_ids) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   auto l_jishu        = alias<entity>("jishu");
   auto l_kaishi_jishu = alias<entity>("kaishi_jishu");
@@ -305,7 +305,7 @@ std::vector<working_file_and_link> create_ground_working_files(
 std::vector<working_file_and_link> get_working_files_for_entity(
     const uuid& in_project_id, const uuid& in_shot_id, const uuid& in_sequence_id
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   std::vector<working_file_and_link> l_working_files{};
 
@@ -342,7 +342,7 @@ std::vector<working_file_and_link> get_working_files_for_entity(
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_shots_working_file::get(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的镜头 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
@@ -354,7 +354,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_sequences_working_file::get(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的序列 id ");
   if (l_sql.uuid_to_id<project>(project_id_) == 0)
@@ -365,7 +365,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_s
 boost::asio::awaitable<boost::beast::http::message_generator> actions_entity_working_file::get(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<entity>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_entity_ = l_sql.get_by_uuid<entity>(id_);
@@ -409,7 +409,7 @@ struct map_to_json {
 boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_entity_working_file_many::post(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_sql.uuid_to_id<project>(id_) == 0)
     co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未知的任务 id ");
   auto l_prj        = l_sql.get_by_uuid<project>(id_);

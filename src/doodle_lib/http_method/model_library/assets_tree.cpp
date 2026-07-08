@@ -74,7 +74,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   auto l_values = std::make_shared<std::vector<assets_helper::database_t>>(
       in_handle->get_json().get<std::vector<assets_helper::database_t>>()
   );
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   for (auto&& l_value : *l_values) {
     check_data(l_value);
     l_value.id_ = l_sql.uuid_to_id<assets_helper::database_t>(l_value.uuid_id_);
@@ -100,7 +100,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 ) {
   person_.check_supervisor();
   auto l_uuid = boost::lexical_cast<uuid>(id_);
-  auto& l_sql  = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_sql.has_assets_tree_assets_link(l_uuid) || l_sql.has_assets_tree_child(l_uuid))
     co_return in_handle->make_error_code_msg(boost::beast::http::status::bad_request, "该节点有子节点无法删除");
   SPDLOG_LOGGER_WARN(

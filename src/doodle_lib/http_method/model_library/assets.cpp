@@ -23,7 +23,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
 ) {
   person_.check_user();
   using namespace orm;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_list = select(l_sql)
                     .columns(object<assets_file_helper::database_t>())
                     .from<assets_file_helper::database_t>()()

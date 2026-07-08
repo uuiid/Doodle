@@ -43,7 +43,7 @@ FSys::path get_entity_character_model_maya_path(const project& in_prj_, const en
 
 namespace {
 std::string get_rig_person_last_name_for_entity(const uuid& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
 
   auto l_task_id =

@@ -19,7 +19,7 @@ namespace doodle::http::seedance2 {
 namespace sd2 = doodle::seedance2;
 namespace {
 std::vector<sd2::assets_group> get_sd2_assets_group_for_ai_studio(const uuid& in_ai_studio_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(object<sd2::assets_group>())
@@ -29,7 +29,7 @@ std::vector<sd2::assets_group> get_sd2_assets_group_for_ai_studio(const uuid& in
 }
 
 std::size_t get_sd2_assets_count_for_assets_group(const uuid& in_assets_group_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(count(&sd2::assets_entity::id_))
@@ -47,7 +47,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group, post) {
   if (l_group->label_.empty()) l_group->label_ = "group_";
   l_group->user_id_      = person_.person_.uuid_id_;
   l_group->ai_studio_id_ = person_.get_ai_studio_id();
-  auto& l_sql            = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   co_await l_sql.install(l_group);
 
   co_return in_handle->make_msg(nlohmann::json{} = *l_group);
@@ -56,13 +56,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group, get) {
   co_return in_handle->make_msg(nlohmann::json{} = get_sd2_assets_group_for_ai_studio(person_.get_ai_studio_id()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, get) {
-  auto& l_sql  = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_group = l_sql.get_by_uuid<sd2::assets_group>(group_id_);
   DOODLE_CHICK_HTTP(l_group.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   co_return in_handle->make_msg(nlohmann::json{} = l_group);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, put) {
-  auto& l_sql  = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_group = std::make_shared<sd2::assets_group>(l_sql.get_by_uuid<sd2::assets_group>(group_id_));
   DOODLE_CHICK_HTTP(l_group->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   SPDLOG_LOGGER_WARN(
@@ -77,7 +77,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, put) 
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_group_instance, delete_) {
-  auto& l_sql  = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_group = l_sql.get_by_uuid<sd2::assets_group>(group_id_);
   DOODLE_CHICK_HTTP(l_group.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足");
   DOODLE_CHICK_HTTP(l_group.uuid_id_ == person_.person_.uuid_id_ || person_.is_manager(), unauthorized, "权限不足");

@@ -55,7 +55,7 @@ namespace doodle::http {
 namespace {
 
 auto get_sequence_casting_for_entity(const uuid& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(
@@ -72,7 +72,7 @@ auto get_sequence_casting_for_entity(const uuid& in_entity_id) {
 }
 
 std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   using namespace orm;
   return select(l_sql)
@@ -82,7 +82,7 @@ std::vector<entity_link> get_entity_link_by_entity_id(const uuid& in_entity_id) 
       .to_vector();
 }
 std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& in_entity_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   using namespace orm;
   return select(l_sql)
@@ -93,7 +93,7 @@ std::vector<entity_link> get_entity_link_by_entity_id(const std::vector<uuid>& i
 }
 
 auto get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, const uuid& in_asset_type_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   auto asset   = alias<entity>("asset");
   auto l_where = dynamic_column_operations{};
@@ -117,7 +117,7 @@ auto get_sequence_casting_for_project_and_asset_type(const uuid& in_project_id, 
 auto get_sequence_casting_for_project_and_person_and_sequence(
     const uuid& in_project_id, const person& in_person, const uuid& in_sequence_id, const std::vector<uuid>& in_shot_ids
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   auto shot               = alias<entity>("shot");
   auto sequence           = alias<entity>("sequence");
@@ -161,7 +161,7 @@ struct actions_projects_casting_copy_select {
 actions_projects_casting_copy_select get_actions_projects_casting_copy_select(
     const uuid& in_source_project_id, const uuid& in_target_project_id
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   actions_projects_casting_copy_select l_ret{};
   auto shot             = alias<entity>("shot");
@@ -201,7 +201,7 @@ actions_projects_sequences_casting_ue_assembly_harvest_select_t
 actions_projects_sequences_casting_ue_assembly_harvest_select_t::get(
     const uuid& in_project_id, const uuid& in_sequence_id
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   auto shot     = alias<entity>("shot");
   auto sequence = alias<entity>("sequence");
@@ -365,7 +365,7 @@ struct data_project_asset_types_casting_result_map {
 data_project_asset_types_casting_result_map get_asset_type_casting(
     const uuid& in_project_id, const uuid& in_asset_type_id
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   data_project_asset_types_casting_result_map l_result{};
 
   for (auto&& [ent_link, entity_name_, entity_preview_file_id_, entity_project_id_, asset_type_name_] :
@@ -466,7 +466,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_entit
     session_data_ptr in_handle
 ) {
   person_.check_in_project(project_id_);
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_ent  = std::make_shared<entity>(l_sql.get_by_uuid<entity>(entity_id_));
   if (l_ent->entity_type_id_ == l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_episode}).uuid_id_)
     throw_exception(doodle_error{"不能将 Episode 作为实体类型进行操作"});
@@ -604,7 +604,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_c
       g_logger_ctrl().get_http(), "用户 {}({}) 开始替换 Casting project_id {} item_count {}", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, l_list.size()
   );
-  auto& l_sql                                              = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   std::shared_ptr<std::vector<entity_link>> l_entity_links = std::make_shared<std::vector<entity_link>>();
   std::vector<std::function<void()>> l_delay_events{};
   auto l_shot_linke = get_entity_link_by_entity_id(
@@ -652,7 +652,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
   auto l_arg = in_handle->get_json().get<actions_projects_casting_copy_arg>();
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto& l_sql                 = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   auto l_install_entity_links = std::make_shared<std::vector<entity_link>>();
   {
@@ -696,7 +696,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_casting_copy, post) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_projects_sequences_casting_ue_assembly_harvest, post) {
   person_.check_not_outsourcer();
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_seq  = l_sql.get_by_uuid<entity>(id_);
   auto l_prj  = l_sql.get_by_uuid<project>(project_id_);
   episodes l_episodes{l_seq};

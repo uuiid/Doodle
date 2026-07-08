@@ -51,7 +51,7 @@ struct task_extend : sd2::task {
 };
 
 auto get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(object<sd2::task>(), &entity::project_id_)
@@ -62,7 +62,7 @@ auto get_sd2_tasks_for_ai_studio(const uuid& in_ai_studio_id) {
 }
 
 auto get_sd2_tasks_for_person(const uuid& in_person_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(object<sd2::task>(), &entity::project_id_)
@@ -73,7 +73,7 @@ auto get_sd2_tasks_for_person(const uuid& in_person_id) {
 }
 
 auto get_task_for_shot_task_id(const uuid& in_task_id, const uuid& in_ai_studio_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(object<sd2::task>(), &entity::project_id_)
@@ -164,7 +164,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(user_seedance2_task, post) {
   if (get_remaining_tokens_for_person(person_.person_) <= 0)
     throw_exception(doodle_error{"当日可用token数量不足，请联系管理员"});
 
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
   auto l_task = std::make_shared<sd2::task>();
@@ -215,7 +215,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, get) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
@@ -227,7 +227,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_shot_task_instance, get) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
   auto l_studio = l_sql.get_by_uuid<ai_studio>(l_task.ai_studio_id_);
@@ -242,7 +242,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, put) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = std::make_shared<sd2::task>(l_sql.get_by_uuid<sd2::task>(id_));
   DOODLE_CHICK_HTTP(l_task->ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
   l_task->archived_ = true;
@@ -251,7 +251,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_instance, delete_) {
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
@@ -261,7 +261,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_thumbnail_task, get) {
   co_return in_handle->make_msg(l_file, kitsu::mime_type(l_file.extension()));
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_task = l_sql.get_by_uuid<sd2::task>(id_);
   DOODLE_CHICK_HTTP(l_task.ai_studio_id_ == person_.get_ai_studio_id(), unauthorized, "权限不足")
 
@@ -273,7 +273,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_pictures_task, get) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_task_fix, post) {
   person_.check_admin();
-  auto& l_sql   = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_tasks  = l_sql.get_all<sd2::task>();
   auto& l_ctx   = g_ctx().get<kitsu_ctx_t>();
   auto l_client = std::make_shared<seedance2_client>(*core_set::get_set().ctx_ptr);

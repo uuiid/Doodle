@@ -26,7 +26,7 @@ struct actions_tasks_clear_assignation_put_args {
 
 // 获取任务分配的人(连接表)
 std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_task_id, uuid in_person_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(object<assignees_table>())
@@ -36,7 +36,7 @@ std::optional<assignees_table> get_task_assignees_for_task_and_person(uuid in_ta
       .to_optional();
 }
 std::vector<std::int64_t> get_task_assignees_ids_for_task(uuid in_task_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&assignees_table::id_)
@@ -50,7 +50,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
     session_data_ptr in_handle
 ) {
   auto l_args = in_handle->get_json().get<actions_tasks_clear_assignation_put_args>();
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_args.task_id_.empty()) co_return in_handle->make_msg(nlohmann::json::array());
 
   auto l_task = l_sql.get_by_uuid<task>(l_args.task_id_.front());

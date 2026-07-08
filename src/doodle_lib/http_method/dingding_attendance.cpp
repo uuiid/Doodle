@@ -16,7 +16,6 @@
 
 #include <chrono>
 
-
 namespace doodle::http {
 namespace {
 /**
@@ -63,7 +62,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_json_1                 = in_handle->get_json();
   chrono::year_month_day l_date = l_json_1["work_date"].get<chrono::year_month_day>();
 
-  auto& l_sqlite                = get_sqlite_database();
+  auto l_sqlite                 = get_sqlite_database();
   auto l_user                   = l_sqlite.get_by_uuid<person>(id_);
   auto& l_d                     = g_ctx().get<dingding::dingding_company>();
   auto l_studio                 = l_sqlite.get_by_uuid<studio>(l_user.studio_id_);
@@ -107,13 +106,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
                                                                  : attendance_helper::att_enum::leave;
     default_logger_raw()->info("考勤数据 {} {}", l_obj.begin_time_, l_obj.end_time_);
     switch (l_type) {
-      case attendance_helper::att_enum::overtime: // 加班按照不满1小时直接舍弃
+      case attendance_helper::att_enum::overtime:  // 加班按照不满1小时直接舍弃
         l_duration      = chrono::floor<chrono::hours>(l_clock_overtime(l_obj.begin_time_, l_obj.end_time_));
         l_obj.end_time_ = l_clock_overtime.next_time(
             l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
         );
         break;
-      case attendance_helper::att_enum::leave: // 请假按照不满1小时按照1小时计算
+      case attendance_helper::att_enum::leave:  // 请假按照不满1小时按照1小时计算
         l_duration      = chrono::ceil<chrono::hours>(l_clock_leave(l_obj.begin_time_, l_obj.end_time_));
         l_obj.end_time_ = l_clock_leave.next_time(
             l_obj.begin_time_, chrono::duration_cast<business::work_clock2::duration_type>(l_duration)
@@ -203,7 +202,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
        l_day += chrono::days{1}) {
     l_date_list.emplace_back(l_day);
   }
-  auto& l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_user = l_sql.get_by_uuid<person>(user_id_);
   auto l_list = l_sql.get_attendance(l_user.uuid_id_, l_date_list);
   l_list |= ranges::actions::remove_if([](const attendance_helper::database_t& in_) {
@@ -224,7 +223,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   );
   if (l_data->type_ == attendance_helper::att_enum::max)
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "类型错误"});
-  auto& l_sql        = get_sqlite_database();
+  auto l_sql         = get_sqlite_database();
   auto l_user        = l_sql.get_by_uuid<person>(id_);
   l_data->person_id_ = l_user.uuid_id_;
 
@@ -245,7 +244,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   in_handle->get_json().get_to(*l_data);
 
   const chrono::year_month_day l_date{l_data->create_date_};
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   co_await l_sql.update(l_data);
   co_await recomputing_time(l_data->person_id_, chrono::year_month{l_date.year(), l_date.month()});
   co_return in_handle->make_msg((nlohmann::json{} = *l_data).dump());
@@ -253,7 +252,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
 boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendance_custom::delete_(
     session_data_ptr in_handle
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<attendance_helper::database_t>(id_);
   if (l_data.person_id_ != person_.person_.uuid_id_) person_.check_supervisor();
 

@@ -33,7 +33,7 @@
 namespace doodle::http {
 namespace {
 std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::http_jwt_t& in_user) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   std::vector<project_with_extra_data> l_projects{};
   auto l_select = select(l_sql).columns(object<project>());
@@ -142,7 +142,7 @@ std::vector<project_with_extra_data> get_project_for_user(const http_jwt_fun::ht
 }
 
 auto get_asset_types() {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
 
   using namespace orm;
   auto l_t = select(l_sql).columns(object<asset_type>()).from<asset_type>()().to_vector();
@@ -163,7 +163,7 @@ auto get_asset_types() {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
   using namespace orm;
-  auto& l_sql             = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   l_ret["asset_types"]    = get_asset_types();
   l_ret["custom_actions"] = nlohmann::json::value_t::array;
   l_ret["departments"]    = l_sql.get_all<department>();
@@ -237,7 +237,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
-  auto& l_sql       = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_old_person = l_sql.get_by_uuid<person>(id_);
   auto l_person     = std::make_shared<person>(l_old_person);
   auto l_json       = in_handle->get_json();
@@ -288,7 +288,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
-  auto& l_sql              = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
   auto l_json              = in_handle->get_json();
   const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
@@ -299,7 +299,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
-  auto& l_sql                = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_person              = std::make_shared<person>(l_sql.get_by_uuid<person>(person_.person_.uuid_id_));
   auto l_json                = in_handle->get_json();
   const auto& l_old_password = l_json.at("old_password").get_ref<const std::string&>();

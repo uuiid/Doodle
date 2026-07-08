@@ -14,7 +14,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_attachment_fi
     session_data_ptr in_handle
 ) {
   person_.check_not_outsourcer();
-  auto& l_sql            = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_attachment_file = l_sql.get_by_uuid<attachment_file>(id_);
 
   if (l_attachment_file.comment_id_.is_nil() && l_attachment_file.chat_message_id_.is_nil())

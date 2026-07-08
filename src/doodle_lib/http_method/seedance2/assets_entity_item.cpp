@@ -40,7 +40,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
 
   auto l_entity_item        = std::make_shared<sd2::assets_entity_item>();
   l_entity_item->parent_id_ = parent_id_;
-  auto& l_sql                = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   co_await l_sql.install(l_entity_item);
 
   if (auto l_ext = l_file.extension(); is_image_extension(l_ext)) {
@@ -110,7 +110,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_entity_item);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item_instance, delete_) {
-  auto& l_sql    = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_item   = l_sql.get_by_uuid<sd2::assets_entity_item>(id_);
   auto l_entity = l_sql.get_by_uuid<sd2::assets_entity>(l_item.parent_id_);
   person_.check_manager();
@@ -120,7 +120,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_item_instance,
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(seedance2_asset_library_entity_pictures_item, get) {
-  auto& l_sql  = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_item = l_sql.get_by_uuid<sd2::assets_entity_item>(id_);
   auto l_file = g_ctx().get<kitsu_ctx_t>().get_sd2_asset_library_entity_pictures_item_file(id_, l_item.file_extension_);
   DOODLE_CHICK_HTTP(FSys::exists(l_file), not_found, "文件不存在");

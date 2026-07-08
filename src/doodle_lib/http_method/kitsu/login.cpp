@@ -48,7 +48,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> organisations::get
 
 boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(session_data_ptr in_handle) {
   auto l_data = in_handle->get_json().get<login_data>();
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_data.email_.empty() || l_data.password_.empty())
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "email 或 password 为空"});
   auto l_p = std::make_shared<person>(get_sqlite_database().get_person_for_email(l_data.email_));

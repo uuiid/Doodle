@@ -43,7 +43,7 @@ void http_jwt_fun::parse_header(const session_data_ptr& in_handle) {
     );
   }
   auto l_uuid = from_uuid_str(l_jwt_decode.get_subject());
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   // default_logger_raw()->warn("{}", l_uuid);
   if (l_sql.uuid_to_id<person>(l_uuid) == 0)
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "请先注册"});
@@ -176,7 +176,7 @@ void http_jwt_fun::http_jwt_t::check_task_action_access(const uuid& in_task_id) 
 }
 void http_jwt_fun::http_jwt_t::check_task_status_access(const uuid& in_target_status_id) const {
   if (person_.role_ != person_role_type::user) return;
-  auto& l_sql  = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_stats = l_sql.get_by_uuid<task_status>(in_target_status_id);
   if (l_stats.is_artist_allowed_) return;
   throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
@@ -184,7 +184,7 @@ void http_jwt_fun::http_jwt_t::check_task_status_access(const uuid& in_target_st
 
 void http_jwt_fun::http_jwt_t::check_task_action_access(const task& in_task_id) const {
   if (person_.role_ == person_role_type::admin) return;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (!l_sql.is_person_in_project(person_, in_task_id.project_id_))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
   if (person_.role_ == person_role_type::manager || person_.role_ == person_role_type::producer ||
@@ -204,7 +204,7 @@ bool http_jwt_fun::http_jwt_t::is_task_department_access(const task& in_task_id,
   if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::producer ||
       person_.role_ == person_role_type::manager)
     return true;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (l_sql.is_person_in_project(person_, in_task_id.project_id_)) return true;
 
   auto l_task_type = l_sql.get_by_uuid<task_type>(in_task_id.task_type_id_);
@@ -225,14 +225,14 @@ void http_jwt_fun::http_jwt_t::check_delete_access(const uuid& in_project_id) co
   if (person_.role_ == person_role_type::admin || person_.role_ == person_role_type::producer ||
       person_.role_ == person_role_type::manager)
     return;
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   if (!l_sql.is_person_in_project(person_, in_project_id))
     throw_exception(http_request_error{boost::beast::http::status::unauthorized, "权限不足"});
 }
 
 namespace {
 uuid get_ai_studio_uuid_for_person(const uuid& in_person_id) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&ai_studio_person_role_link::ai_studio_id_)

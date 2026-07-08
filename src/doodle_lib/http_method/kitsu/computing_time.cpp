@@ -27,12 +27,12 @@
 namespace doodle::http {
 namespace {
 auto get_project_ids_and_names() {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql).columns(&project::uuid_id_, &project::name_).from<project>()();
 }
 auto get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(const std::vector<uuid>& in_task_ids) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(
@@ -50,7 +50,7 @@ auto get_tasks_and_entities_and_entity_asset_extend_and_project_by_task_ids(cons
 std::vector<std::int32_t> get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
     const uuid& in_person_id, const chrono::local_days& in_year_month
 ) {
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   using namespace orm;
   return select(l_sql)
       .columns(&work_xlsx_task_info_helper::database_t::id_)
@@ -132,7 +132,7 @@ std::vector<work_xlsx_task_info_helper_t> get_task_fulls(
   l_task_ids.reserve(in_data.size());
   for (auto&& l_item : in_data)
     if (!l_item.kitsu_task_ref_id_.is_nil()) l_task_ids.emplace_back(l_item.kitsu_task_ref_id_);
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   ;
   for (auto&& [uuid, name] : get_project_ids_and_names()) l_project_name_map.emplace(uuid, name);
 
@@ -279,7 +279,7 @@ business::work_clock2 create_time_clock(const chrono::year_month& in_year_month,
   l_holidaycn_time.set_clock(l_time_clock_);
 
   // 调整请假等调整
-  auto& l_sql = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   std::vector<chrono::local_days> l_days{};
   for (auto l_it = l_begin_time; l_it <= l_end_time; l_it += chrono::days{1}) l_days.emplace_back(l_it);
   for (auto&& l_att : l_sql.get_attendance(in_user_id, l_days)) {
@@ -516,7 +516,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> computing_time::po
   );
 
   auto l_block_ptr = std::make_shared<std::vector<work_xlsx_task_info_helper::database_t>>();
-  auto& l_sql      = get_sqlite_database();
+  auto l_sql = get_sqlite_database();
   auto l_ids       = get_work_xlsx_task_info_helper_database_t_id_by_person_id_and_year_month(
       l_user.uuid_id_, chrono::local_days{year_month_ / 1}
   );
