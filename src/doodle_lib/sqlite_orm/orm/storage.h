@@ -12,25 +12,14 @@
 #include <atomic>
 #include <chrono>
 #include <fmt/format.h>
-#include <functional>
 #include <map>
 #include <memory>
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
 #include <tbb/concurrent_queue.h>
-#include <thread>
 #include <typeindex>
 #include <vector>
-
-
-namespace boost {
-// 为 std::thread::id 提供哈希函数
-template <>
-struct hash<std::thread::id> {
-  std::size_t operator()(const std::thread::id& id) const noexcept { return std::hash<std::thread::id>{}(id); }
-};
-}  // namespace boost
 
 namespace doodle {
 
