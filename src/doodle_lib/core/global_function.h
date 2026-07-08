@@ -38,7 +38,7 @@ DOODLELIB_API details::logger_ctrl& g_logger_ctrl();
 DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_strand();
 DOODLELIB_API boost::asio::strand<boost::asio::io_context::executor_type>& g_pool_strand();
 DOODLELIB_API std::size_t get_hardware_concurrency();
-DOODLELIB_API sqlite_database& get_sqlite_database();
+DOODLELIB_API sqlite_database get_sqlite_database();
 DOODLELIB_API Ort::Env& get_ort_env();
 template <class... Ts>
 struct overloaded : Ts... {

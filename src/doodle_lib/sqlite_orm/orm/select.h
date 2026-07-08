@@ -32,7 +32,7 @@ concept result_vector_value_constructible =
 struct select_t : public statement_info_base_t {
  protected:
   friend class session;
-  friend select_t select(session& s);
+  friend select_t select(const session& s);
 
   struct join_info_t {
     join_type type_{join_type::inner};
@@ -73,7 +73,7 @@ struct select_t : public statement_info_base_t {
   void run();
 
  public:
-  explicit select_t(session& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = s; }
+  explicit select_t(const session& s) : impl_(std::make_shared<impl_t>()) { impl_->s_ = s; }
   select_t() = default;
   template <typename FromTable>
   select_t from();
@@ -217,7 +217,7 @@ struct select_t::result_type_t {
   std::optional<type> to_optional();
 };
 
-inline select_t select(session& s) {
+inline select_t select(const session& s) {
   select_t l_ret{s};
   return l_ret;
 }

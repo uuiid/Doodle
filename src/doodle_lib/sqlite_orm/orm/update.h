@@ -41,8 +41,8 @@ struct update_t : public statement_info_base_t {
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
   };
- 
-  friend update_t update(session& s);
+
+  friend update_t update(const session& s);
 
   std::shared_ptr<update_state_t> state_;
 
@@ -122,7 +122,7 @@ struct update_t : public statement_info_base_t {
   update_t operator()();
 };
 
-inline update_t update(session& s) {
+inline update_t update(const session& s) {
   update_t l_update{};
   l_update.state_->s_ = s;
   return l_update;

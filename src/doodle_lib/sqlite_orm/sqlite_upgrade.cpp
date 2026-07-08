@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 
-
 namespace doodle::details {
 namespace {
 constexpr std::size_t g_current_version = 11;
@@ -32,21 +31,23 @@ constexpr std::size_t g_current_version = 11;
 struct upgrade_init_t : sqlite_upgrade {
   explicit upgrade_init_t(const FSys::path& in_path) {}
 
-  static void full_fts_sync(sqlite_database& in_data) {
+  static void full_fts_sync(sqlite_storage& in_data) {
     using namespace orm;
-    insert(in_data).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild")();
+    auto l_s = in_data.create_session();
+    insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild")();
   }
 
-  void upgrade(sqlite_database& in_data) override {
+  void upgrade(sqlite_storage& in_data) override {
     if (in_data.pragma().user_version() != 0) return;
     in_data.sync_schema();
     in_data.pragma().user_version(g_current_version);
+    auto l_session = sqlite_database{in_data.create_session()};
 
 #define DOODLE_ASSET_TYPE(class_name)                      \
   for (const auto& v : class_name::get_all_constant()) {   \
-    if (in_data.uuid_to_id<class_name>(v.uuid_id_) == 0) { \
+    if (l_session.uuid_to_id<class_name>(v.uuid_id_) == 0) { \
       auto l_s = std::make_shared<class_name>(v);          \
-      in_data.install_unsafe<class_name>(l_s);             \
+      l_session.install_unsafe<class_name>(l_s);             \
     }                                                      \
   }
 
@@ -84,7 +85,7 @@ struct project_data {
 
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t(const FSys::path& in_path) {}
-  void upgrade(sqlite_database& in_data) override {
+  void upgrade(sqlite_storage& in_data) override {
     if (in_data.pragma().user_version() == 2) {
       upgrade_init_t::full_fts_sync(in_data);
       in_data.pragma().user_version(g_current_version);

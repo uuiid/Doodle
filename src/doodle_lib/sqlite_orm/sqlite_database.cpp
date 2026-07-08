@@ -60,7 +60,7 @@
 
 namespace doodle {
 
-void sqlite_database::regs_all() {
+void sqlite_storage::regs_all() {
   using namespace orm;
   reg_table<seedance2::assets_entity_item>("seedance2_assets_entity_item")
       .add_column("id", &seedance2::assets_entity_item::id_, primary_key(), autoincrement())
@@ -898,10 +898,10 @@ void sqlite_database::regs_all() {
       )
       .end();
 }
-void sqlite_database::register_custom_extension(sqlite3* in_sqlite) {
+void sqlite_storage::register_custom_extension(sqlite3* in_sqlite) {
   tokenizer::register_jieba_tokenizer(get_fts5_api(in_sqlite));
 }
-void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
+void sqlite_storage::open_(FSys::path in_path, std::int32_t in_flags) {
   storage::open_(in_path, in_flags);
   pragma().foreign_keys(true);
   pragma().synchronous(1);
@@ -918,15 +918,15 @@ void sqlite_database::open_(FSys::path in_path, std::int32_t in_flags) {
   // pragma().optimize(0x10002);
 }
 
-boost::asio::awaitable<void> sqlite_database::backup(FSys::path in_path) {
-  DOODLE_TO_SQLITE_THREAD()
-  // sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
-  // if (db_handle) sqlite3_wal_checkpoint_v2(db_handle, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
-  // if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
-  backup_to(in_path);
-  // impl_->storage_any_.vacuum();
-  DOODLE_TO_SELF();
-}
+// boost::asio::awaitable<void> sqlite_storage::backup(FSys::path in_path) {
+//   DOODLE_TO_SQLITE_THREAD()
+//   // sqlite3* db_handle = static_cast<sqlite3*>(impl_->raw_sqlite_handle_);
+//   // if (db_handle) sqlite3_wal_checkpoint_v2(db_handle, nullptr, SQLITE_CHECKPOINT_PASSIVE, nullptr, nullptr);
+//   // if (db_handle) sqlite3_exec(db_handle, "PRAGMA optimize;", nullptr, nullptr, nullptr);
+//   backup_to(in_path);
+//   // impl_->storage_any_.vacuum();
+//   DOODLE_TO_SELF();
+// }
 
 boost::asio::awaitable<void> sqlite_database::remove(orm::delete_t in_delete) {
   DOODLE_TO_SQLITE_THREAD()
@@ -975,7 +975,7 @@ std::vector<work_xlsx_task_info_helper::database_t> sqlite_database::get_work_xl
 
 person sqlite_database::get_person_for_email(const std::string& in_email) {
   using namespace orm;
-  auto l_p = select(get_sqlite_database())
+  auto l_p = select(*this)
                  .columns(object<person>())
                  .from<person>()
                  .where(c(&person::email_) == in_email)()

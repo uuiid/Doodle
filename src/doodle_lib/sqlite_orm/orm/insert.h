@@ -26,7 +26,7 @@ struct insert_t : public statement_info_base_t {
     std::shared_ptr<sqlite_stmt> stmt_;
   };
  
-  friend auto insert(session& s) -> insert_t;
+  friend auto insert(const session& s) -> insert_t;
   constexpr static std::int32_t g_max_batch_size_ = 100;  // SQLite的参数限制通常是999，预留一些空间给其他参数
 
   std::shared_ptr<insert_state_t> state_;
@@ -124,7 +124,7 @@ struct insert_t : public statement_info_base_t {
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
 
-inline auto insert(session& s) -> insert_t {
+inline auto insert(const session& s) -> insert_t {
   insert_t l_ret{};
   l_ret.state_->s_ = s;
   return l_ret;

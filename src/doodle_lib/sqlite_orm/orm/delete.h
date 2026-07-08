@@ -4,8 +4,8 @@
 
 #include <doodle_lib/sqlite_orm/orm/column_operations.h>
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
-#include <doodle_lib/sqlite_orm/orm/storage.h>
 #include <doodle_lib/sqlite_orm/orm/session.h>
+#include <doodle_lib/sqlite_orm/orm/storage.h>
 
 namespace doodle::orm {
 
@@ -18,8 +18,8 @@ struct delete_t : public statement_info_base_t {
     std::shared_ptr<sqlite_stmt> stmt_;
     bind_value_collector_t bind_variants_{};
   };
- 
-  friend delete_t delete_from(session& s);
+
+  friend delete_t delete_from(const session& s);
 
   std::shared_ptr<delete_state_t> state_;
 
@@ -44,7 +44,7 @@ struct delete_t : public statement_info_base_t {
   void prepare(session& s, const to_sql_ctx& ctx) override;
   void collect_bind_variants(bind_value_collector_t& bind_variants) const override;
 };
-inline delete_t delete_from(session& s) {
+inline delete_t delete_from(const session& s) {
   delete_t l_delete{};
   l_delete.state_->s_ = s;
   return l_delete;

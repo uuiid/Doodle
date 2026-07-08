@@ -89,10 +89,10 @@ std::size_t get_hardware_concurrency() {
       boost::numeric_cast<std::size_t>(std::thread::hardware_concurrency())
   );
 }
-sqlite_database& get_sqlite_database() {
+sqlite_database get_sqlite_database() {
   auto& db = core_set::get_set().database_;
   DOODLE_CHICK(db, "错误: 数据库未打开")
-  return *db;
+  return sqlite_database{db->create_session()};
 }
 Ort::Env& get_ort_env() {
   auto& env = core_set::get_set().ort_env_ptr_;
