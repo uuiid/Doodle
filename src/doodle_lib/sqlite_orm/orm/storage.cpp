@@ -13,9 +13,12 @@
 #include <doodle_lib/sqlite_orm/orm/storage_impl.h>
 
 #include <boost/lockfree/detail/uses_optional.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include <chrono>
 #include <fmt/format.h>
+#include <mutex>
 #include <set>
 #include <spdlog/spdlog.h>
 #include <sqlite3.h>
@@ -211,7 +214,8 @@ void reg_sqlite_master_entry(storage& s) {
       .add_column("sql", &sqlite_master_entry::sql);
 }
 }  // namespace
-storage::backup_t::backup_t(sqlite3* dest_db, sqlite_connection_guard_t src_db) : dest_db_(dest_db), src_db_(src_db) {}
+storage::backup_t::backup_t(sqlite3* dest_db, sqlite_connection_guard_t src_db)
+    : dest_db_(dest_db), src_db_(std::move(src_db)) {}
 std::int32_t storage::backup_t::step(int pages) {
   if (!backup_) {
     backup_ = sqlite3_backup_init(dest_db_, "main", src_db_.connection_->db_, "main");
@@ -247,22 +251,29 @@ sqlite3* storage::only_open_db() {
 }
 
 sqlite_connection_ptr storage::get_thread_db() {
+  // 获取锁
   sqlite_connection_ptr l_connection{};
   connection_queue_.pop(l_connection);
   if (!l_connection) {
     l_connection = std::make_shared<sqlite_connection_t>(only_open_db());
     SPDLOG_LOGGER_WARN(
-        g_logger_ctrl().get_main_error(), "创建了一个新的线程数据库连接，当前连接数: {}", connection_count_ + 1
+        g_logger_ctrl().get_main_error(), "创建了一个新的线程数据库连接，当前池中连接数: {}", thread_db_count_ + 1
     );
   } else
-    --connection_count_;
+    --thread_db_count_;
+
   return l_connection;
 }
 
 void storage::add_thread_db(const sqlite_connection_ptr& in_ptr) {
-  ++connection_count_;
   if (connection_queue_.push(in_ptr))
-    SPDLOG_LOGGER_ERROR(g_logger_ctrl().get_main_error(), "抛弃了一个线程数据库连接，因为连接池已满");
+    ++thread_db_count_;
+  else {
+    SPDLOG_LOGGER_WARN(
+        g_logger_ctrl().get_main_error(), "线程数据库连接池已满，当前池中连接数: {}",
+        boost::numeric_cast<std::int32_t>(thread_db_count_.load())
+    );
+  }
 }
 
 void storage::open_(FSys::path in_path, std::int32_t in_flags) {

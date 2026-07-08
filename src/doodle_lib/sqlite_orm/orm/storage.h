@@ -5,17 +5,21 @@
 #include <doodle_lib/sqlite_orm/orm/fwd.h>
 
 #include <boost/lockfree/lockfree_forward.hpp>
+#include <boost/lockfree/policies.hpp>
 #include <boost/lockfree/stack.hpp>
 #include <boost/unordered/concurrent_flat_map.hpp>
 
 #include <atomic>
+#include <deque>
 #include <fmt/format.h>
 #include <functional>
 #include <map>
 #include <memory>
+#include <shared_mutex>
 #include <sqlite3.h>
 #include <string>
 #include <string_view>
+#include <tbb/concurrent_queue.h>
 #include <thread>
 #include <typeindex>
 #include <vector>
@@ -157,6 +161,13 @@ struct sqlite_connection_guard_t {
   sqlite_connection_guard_t() = default;
   explicit sqlite_connection_guard_t(storage& s);
   ~sqlite_connection_guard_t();
+
+  // dis copy
+  sqlite_connection_guard_t(const sqlite_connection_guard_t&)            = delete;
+  sqlite_connection_guard_t& operator=(const sqlite_connection_guard_t&) = delete;
+
+  sqlite_connection_guard_t(sqlite_connection_guard_t&&)                 = default;
+  sqlite_connection_guard_t& operator=(sqlite_connection_guard_t&&)      = default;
 };
 struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
@@ -166,6 +177,14 @@ struct sqlite_stmt {
   sqlite_stmt() = default;
   explicit sqlite_stmt(storage& db, const std::string& sql);
   ~sqlite_stmt();
+
+  // dis copy
+  sqlite_stmt(const sqlite_stmt&)            = delete;
+  sqlite_stmt& operator=(const sqlite_stmt&) = delete;
+  // dis move
+  sqlite_stmt(sqlite_stmt&&)                 = delete;
+  sqlite_stmt& operator=(sqlite_stmt&&)      = delete;
+
   void prepare(storage& db, const std::string& sql);
   // 重置绑定参数索引，以便重用 sqlite_stmt 对象执行多次 SQL 语句
   void reset_bind();
@@ -219,6 +238,13 @@ class storage : public boost::noncopyable {
     explicit backup_t(sqlite3* dest_db, sqlite_connection_guard_t src_db);
     std::int32_t step(int pages = -1);
     ~backup_t();
+
+    // dis copy
+    backup_t(const backup_t&)            = delete;
+    backup_t& operator=(const backup_t&) = delete;
+
+    backup_t(backup_t&&)                 = default;
+    backup_t& operator=(backup_t&&)      = default;
   };
 
   std::vector<std::shared_ptr<table_info_base>> tables_;
@@ -229,8 +255,9 @@ class storage : public boost::noncopyable {
   FSys::path db_path_;
 
   pragma_t pragma_{*this};
-  boost::lockfree::stack<sqlite_connection_ptr, boost::lockfree::capacity<1024>> connection_queue_{};
-  std::atomic_int32_t connection_count_{0};
+  boost::lockfree::stack<sqlite_connection_ptr, boost::lockfree::capacity<128>> connection_queue_{};
+  std::atomic_char16_t thread_db_count_{0};
+
  protected:
   sqlite3* only_open_db();
 
