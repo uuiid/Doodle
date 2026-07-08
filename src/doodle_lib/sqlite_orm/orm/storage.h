@@ -149,10 +149,23 @@ enum class trigger_timing { before, after, instead_of };
 
 enum class trigger_event { insert, update, delete_ };
 
+namespace detail {
+// 表 sqlite_master 对应的结构体，用于查询数据库对象是否存在
+struct sqlite_master_entry {
+  std::string type;
+  std::string name;
+  std::string tbl_name;
+  std::int32_t rootpage;
+  std::string sql;
+};
+}  // namespace detail
+
 struct sqlite_connection_t {
   sqlite3* db_{nullptr};
   sqlite_connection_t(sqlite3* in_db) : db_(in_db) {}
   ~sqlite_connection_t() { sqlite3_close(db_); }
+
+  operator sqlite3*() const { return db_; }
 };
 using sqlite_connection_ptr = std::shared_ptr<sqlite_connection_t>;
 
@@ -172,11 +185,11 @@ struct sqlite_connection_guard_t {
 };
 struct sqlite_stmt {
   sqlite3_stmt* stmt_{nullptr};
-  sqlite_connection_guard_t db_{};
   std::int32_t bind_index_{0};  // sqlite bind index starts from 1, but we use 0-based index internally
  public:
   sqlite_stmt() = default;
-  explicit sqlite_stmt(storage& db, const std::string& sql);
+  explicit sqlite_stmt(const sqlite_connection_ptr& db, const std::string& sql);
+  explicit sqlite_stmt(const session& s, const std::string& sql);
   ~sqlite_stmt();
 
   // dis copy
@@ -186,7 +199,8 @@ struct sqlite_stmt {
   sqlite_stmt(sqlite_stmt&&)                 = delete;
   sqlite_stmt& operator=(sqlite_stmt&&)      = delete;
 
-  void prepare(storage& db, const std::string& sql);
+  void prepare(const sqlite_connection_ptr& db, const std::string& sql);
+  void prepare(const session& s, const std::string& sql);
   // 重置绑定参数索引，以便重用 sqlite_stmt 对象执行多次 SQL 语句
   void reset_bind();
   std::int32_t get_bind_index();
@@ -228,6 +242,7 @@ class storage : public boost::noncopyable {
   friend struct insert_t;
   friend struct update_t;
   friend struct sqlite_connection_guard_t;
+  friend struct session;
 
   struct backup_t {
    private:
@@ -298,6 +313,7 @@ class storage : public boost::noncopyable {
     auto backup = this->backup(dest_path);
     backup.step(-1);
   }
+  session create_session();
 
   template <typename T>
   bool has_reg_table();
@@ -311,42 +327,6 @@ class storage : public boost::noncopyable {
   template <typename T>
   std::string get_table_name() const;
   std::string get_table_name(std::type_index in_type_index) const;
-
-  // 事务相关
-  void begin_transaction();
-  void commit_transaction();
-  void rollback_transaction();
-
-  struct transaction_guard {
-    storage& s_;
-    bool committed_{false};
-    explicit transaction_guard(storage& s);
-    void commit();
-    void rollback();
-    ~transaction_guard();
-  };
-
-  transaction_guard transaction();
-
-  // 删除表
-  void drop_table(const std::string& table_name);
-  // 删除索引
-  void drop_index(const std::string& index_name);
-  // 删除触发器
-  void drop_trigger(const std::string& trigger_name);
-  // 删除view
-  void drop_view(const std::string& view_name);
-  // 检查表是否存在
-  bool table_exists(const std::string& table_name);
-  // 检查索引是否存在
-  bool index_exists(const std::string& index_name);
-  // 检查触发器是否存在
-  bool trigger_exists(const std::string& trigger_name);
-  // vacuum数据库
-  void vacuum();
-  // 运行任意SQL
-  void exec(std::string_view sql);
-  session create_session();
 };
 
 }  // namespace orm

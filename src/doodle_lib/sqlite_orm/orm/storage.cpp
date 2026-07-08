@@ -123,32 +123,33 @@ sqlite_connection_guard_t::~sqlite_connection_guard_t() {
     s_->add_thread_db(connection_);
   }
 }
-sqlite_stmt::sqlite_stmt(storage& db, const std::string& sql) { prepare(db, sql); }
+sqlite_stmt::sqlite_stmt(const sqlite_connection_ptr& db, const std::string& sql) { prepare(db, sql); }
+sqlite_stmt::sqlite_stmt(const session& s, const std::string& sql) { prepare(s, sql); }
 
 void sqlite_stmt::reset_bind() {
   if (bind_index_ == 0) return;  // 如果绑定索引已经是初始值，则不需要重置
   bind_index_ = 0;
   auto l_r    = sqlite3_reset(stmt_);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, sqlite3_db_handle(stmt_));
   l_r = sqlite3_clear_bindings(stmt_);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, sqlite3_db_handle(stmt_));
 }
 
 std::int32_t sqlite_stmt::get_bind_index() {
   ++bind_index_;
   return bind_index_;
 }
-void sqlite_stmt::prepare(storage& s, const std::string& sql) {
+void sqlite_stmt::prepare(const sqlite_connection_ptr& db, const std::string& sql) {
   if (stmt_) throw std::runtime_error("Statement already prepared");
   bind_index_ = 0;
-  db_         = sqlite_connection_guard_t{s};
 #ifndef NDEBUG
   SPDLOG_DEBUG("Preparing SQL statement: {}", sql);
 #endif
 
-  auto l_r = sqlite3_prepare_v2(db_.connection_->db_, sql.c_str(), sql.size(), &stmt_, nullptr);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
+  auto l_r = sqlite3_prepare_v2(*db, sql.c_str(), sql.size(), &stmt_, nullptr);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, (*db));
 }
+void sqlite_stmt::prepare(const session& s, const std::string& sql) { return prepare(s.connection_, sql); }
 std::int64_t sqlite_stmt::get_column_count() const { return sqlite3_column_count(stmt_); }
 bool sqlite_stmt::column_is_null(int columnIndex) const {
   return sqlite3_column_type(stmt_, columnIndex) == SQLITE_NULL;
@@ -156,37 +157,15 @@ bool sqlite_stmt::column_is_null(int columnIndex) const {
 
 void sqlite_stmt::step() {
   auto l_r = sqlite3_step(stmt_);
-  DOODLE_ORM_ERROR_SQLITE3(l_r, db_.connection_->db_);
+  DOODLE_ORM_ERROR_SQLITE3(l_r, sqlite3_db_handle(stmt_));
 }
 
 std::int32_t sqlite_stmt::step_not_throw() { return sqlite3_step(stmt_); }
-std::int64_t sqlite_stmt::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db_.connection_->db_); }
+std::int64_t sqlite_stmt::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(sqlite3_db_handle(stmt_)); }
 
 sqlite_stmt::~sqlite_stmt() { sqlite3_finalize(stmt_); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-storage::transaction_guard::transaction_guard(storage& s) : s_(s) { s_.begin_transaction(); }
-void storage::transaction_guard::commit() {
-  if (committed_) throw std::runtime_error("Transaction already committed");
-  s_.commit_transaction();
-  committed_ = true;
-}
-void storage::transaction_guard::rollback() {
-  if (committed_) throw std::runtime_error("Transaction already committed");
-  s_.rollback_transaction();
-  committed_ = true;
-}
-storage::transaction_guard::~transaction_guard() {
-  if (!committed_) {
-    try {
-      s_.rollback_transaction();
-    } catch (const std::exception& e) {
-      // 在析构函数中抛出异常是危险的，因为它可能在栈展开过程中被调用
-      // 这里我们选择捕获异常并记录日志，而不是让异常传播
-      SPDLOG_ERROR("Failed to rollback transaction in destructor: {}", e.what());
-    }
-  }
-}
 
 namespace {
 void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zMsg) {
@@ -196,16 +175,9 @@ void sqlite_database_error_log_callback(void* pArg, int iErrCode, const char* zM
 }  // namespace
 
 namespace {
-// 表 sqlite_master 对应的结构体，用于查询数据库对象是否存在
-struct sqlite_master_entry {
-  std::string type;
-  std::string name;
-  std::string tbl_name;
-  std::int32_t rootpage;
-  std::string sql;
-};
 
 void reg_sqlite_master_entry(storage& s) {
+  using namespace detail;
   s.reg_table<sqlite_master_entry>("sqlite_master")
       .add_column("type", &sqlite_master_entry::type)
       .add_column("name", &sqlite_master_entry::name)
@@ -296,7 +268,7 @@ void storage::open_(FSys::path in_path, std::int32_t in_flags) {
   std::call_once(l_flag, []() {
     sqlite3_config(SQLITE_CONFIG_LOG, sqlite_database_error_log_callback, spdlog::default_logger_raw());
   });
-  if (!has_reg_table<sqlite_master_entry>()) reg_sqlite_master_entry(*this);
+  if (!has_reg_table<detail::sqlite_master_entry>()) reg_sqlite_master_entry(*this);
 
   if (in_path.empty()) in_path = ":memory:";
   db_path_ = in_path.generic_string();
@@ -333,15 +305,13 @@ fts5_api* storage::get_fts5_api(sqlite3* in_sqlite) {
   return pRet;
 }
 
-session storage::create_session() {
-  return session{*this};
-}
+session storage::create_session() { return session{*this}; }
 
 void storage::sync_schema() {
-
-  auto l_transaction = transaction();
+  auto l_session     = create_session();
+  auto l_transaction = l_session.transaction();
   for (const auto& table : tables_) {
-    if (table_exists(table->name_)) {
+    if (l_session.table_exists(table->name_)) {
       SPDLOG_DEBUG("Table already exists, skipping creation: {}", table->name_);
       continue;
     }
@@ -350,7 +320,7 @@ void storage::sync_schema() {
       continue;
 
     auto l_create_table_sql = table->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_table_sql});
-    auto l_stmt             = sqlite_stmt(*this, l_create_table_sql);
+    auto l_stmt             = sqlite_stmt{l_session, l_create_table_sql};
     l_stmt.step();
   }
   std::set<create_index_base_t::index_info> l_existing_indexes;
@@ -362,25 +332,25 @@ void storage::sync_schema() {
         // 已经存在相同的索引，无需创建
         continue;
       }
-      if (index_exists(l_index_info.name_)) {
+      if (l_session.index_exists(l_index_info.name_)) {
         SPDLOG_DEBUG("Index already exists in database, skipping creation: {}", l_index_info.name_);
         l_existing_indexes.insert(l_index_info);
         continue;
       }
 
       auto l_create_index_sql = index->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_index_sql});
-      auto l_stmt             = sqlite_stmt(*this, l_create_index_sql);
+      auto l_stmt             = sqlite_stmt{l_session, l_create_index_sql};
       l_stmt.step();
     }
   }
   for (const auto& l_trigger : triggers_) {
-    if (trigger_exists(l_trigger->info_->name_)) {
+    if (l_session.trigger_exists(l_trigger->info_->name_)) {
       SPDLOG_DEBUG("Trigger already exists, skipping creation: {}", l_trigger->info_->name_);
       continue;
     }
 
     auto l_create_trigger_sql = l_trigger->to_sql(*this, to_sql_ctx{.ctx_ = to_sql_ctx::create_trigger_sql});
-    auto l_stmt               = sqlite_stmt(*this, l_create_trigger_sql);
+    auto l_stmt               = sqlite_stmt{l_session, l_create_trigger_sql};
     l_stmt.step();
   }
   l_transaction.commit();
@@ -415,26 +385,32 @@ void storage::pragma_t::foreign_keys(bool in_foreign_keys) { run("foreign_keys",
 void storage::pragma_t::locking_mode(bool in_exclusive) { run("locking_mode", in_exclusive ? "EXCLUSIVE" : "NORMAL"); }
 void storage::pragma_t::user_version(std::int32_t version) { run("user_version", version); }
 std::int32_t storage::pragma_t::user_version() {
+  auto l_session = s_.create_session();
   sqlite_stmt l_stmt{};
-  l_stmt.prepare(s_, "PRAGMA user_version;");
+  l_stmt.prepare(l_session, "PRAGMA user_version;");
   l_stmt.step();
   return l_stmt.get_column_value<std::int32_t>(0);
 }
 
 void storage::pragma_t::run(std::string_view in_pragma_sql, bool in_value) {
-  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
-  auto l_stmt = sqlite_stmt(s_, l_sql);
+  auto l_session = s_.create_session();
+
+  auto l_sql     = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value ? "ON" : "OFF");
+  auto l_stmt    = sqlite_stmt(l_session, l_sql);
   l_stmt.step();
 }
 
 void storage::pragma_t::run(std::string_view in_pragma_sql, std::string_view in_value) {
-  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
-  auto l_stmt = sqlite_stmt(s_, l_sql);
+  auto l_session = s_.create_session();
+
+  auto l_sql     = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_stmt    = sqlite_stmt(l_session, l_sql);
   l_stmt.step();
 }
 void storage::pragma_t::run(std::string_view in_pragma_sql, std::int32_t in_value) {
-  auto l_sql  = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
-  auto l_stmt = sqlite_stmt(s_, l_sql);
+  auto l_sql     = fmt::format("PRAGMA {} = {}", in_pragma_sql, in_value);
+  auto l_session = s_.create_session();
+  auto l_stmt    = sqlite_stmt(l_session, l_sql);
   l_stmt.step();
 }
 
@@ -449,20 +425,6 @@ std::string storage::get_table_name(std::type_index in_type_index) const {
   return tables_[l_table_index]->name_;
 }
 
-void storage::begin_transaction() {
-  auto l_stmt = sqlite_stmt{*this, "BEGIN TRANSACTION;"};
-  l_stmt.step();
-}
-
-void storage::commit_transaction() {
-  auto l_stmt = sqlite_stmt{*this, "COMMIT;"};
-  l_stmt.step();
-}
-void storage::rollback_transaction() {
-  auto l_stmt = sqlite_stmt{*this, "ROLLBACK;"};
-  l_stmt.step();
-}
-storage::transaction_guard storage::transaction() { return transaction_guard{*this}; }
 storage::pragma_t& storage::pragma() { return pragma_; }
 
 std::string storage::get_column_name(const table_columns_t& in_column, const to_sql_ctx& ctx) const {
@@ -484,68 +446,6 @@ std::string storage::get_column_name(const table_columns_t& in_column, const to_
   return fmt::format(R"("{}")", l_column.name_);
 }
 
-void storage::drop_table(const std::string& table_name) {
-  auto l_sql  = fmt::format("DROP TABLE IF EXISTS {}", table_name);
-  auto l_stmt = sqlite_stmt(*this, l_sql);
-  l_stmt.step();
-}
-void storage::drop_index(const std::string& index_name) {
-  auto l_sql  = fmt::format("DROP INDEX IF EXISTS {}", index_name);
-  auto l_stmt = sqlite_stmt(*this, l_sql);
-  l_stmt.step();
-}
-void storage::drop_trigger(const std::string& trigger_name) {
-  auto l_sql  = fmt::format("DROP TRIGGER IF EXISTS {}", trigger_name);
-  auto l_stmt = sqlite_stmt(*this, l_sql);
-  l_stmt.step();
-}
-void storage::drop_view(const std::string& view_name) {
-  auto l_sql  = fmt::format("DROP VIEW IF EXISTS {}", view_name);
-  auto l_stmt = sqlite_stmt(*this, l_sql);
-  l_stmt.step();
-}
-
-bool storage::table_exists(const std::string& table_name) {
-  if (table_name.empty()) throw std::invalid_argument("Table name cannot be empty");
-  return select(*this)
-      .columns(&sqlite_master_entry::name)
-      .from<sqlite_master_entry>()
-      .where(c(&sqlite_master_entry::type) == "table" && c(&sqlite_master_entry::name) == table_name)()
-      .to_optional()
-      .has_value();
-}
-
-bool storage::index_exists(const std::string& index_name) {
-  if (index_name.empty()) throw std::invalid_argument("Index name cannot be empty");
-
-  return select(*this)
-      .columns(&sqlite_master_entry::name)
-      .from<sqlite_master_entry>()
-      .where(c(&sqlite_master_entry::type) == "index" && c(&sqlite_master_entry::name) == index_name)()
-      .to_optional()
-      .has_value();
-}
-
-bool storage::trigger_exists(const std::string& trigger_name) {
-  if (trigger_name.empty()) throw std::invalid_argument("Trigger name cannot be empty");
-
-  return select(*this)
-      .columns(&sqlite_master_entry::name)
-      .from<sqlite_master_entry>()
-      .where(c(&sqlite_master_entry::type) == "trigger" && c(&sqlite_master_entry::name) == trigger_name)()
-      .to_optional()
-      .has_value();
-}
-
-void storage::vacuum() {
-  auto l_sql  = "VACUUM;";
-  auto l_stmt = sqlite_stmt(*this, l_sql);
-  l_stmt.step();
-}
-void storage::exec(std::string_view sql) {
-  auto l_stmt = sqlite_stmt(*this, std::string(sql));
-  l_stmt.step();
-}
 }  // namespace orm
 
 }  // namespace doodle
