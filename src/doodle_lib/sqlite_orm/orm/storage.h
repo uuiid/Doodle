@@ -10,6 +10,7 @@
 #include <boost/unordered/concurrent_flat_map.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <deque>
 #include <fmt/format.h>
 #include <functional>
@@ -251,11 +252,16 @@ class storage : public boost::noncopyable {
   std::map<std::type_index, std::size_t> type_to_table_index_;
   std::vector<std::shared_ptr<create_trigger_t>> triggers_;
 
+  struct timed_connection {
+    sqlite_connection_ptr conn_;
+    std::chrono::steady_clock::time_point idle_since_;
+  };
+
   std::atomic_bool finalized_{false};
   FSys::path db_path_;
 
   pragma_t pragma_{*this};
-  boost::lockfree::stack<sqlite_connection_ptr, boost::lockfree::capacity<128>> connection_queue_{};
+  boost::lockfree::stack<timed_connection, boost::lockfree::capacity<128>> connection_queue_{};
   std::atomic_char16_t thread_db_count_{0};
 
  protected:
