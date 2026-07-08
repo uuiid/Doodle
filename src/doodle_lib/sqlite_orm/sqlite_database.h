@@ -238,7 +238,7 @@ class sqlite_database {
 
     DOODLE_TO_SQLITE_THREAD();
 
-    // auto l_g    = transaction();
+    auto l_g    = session_.transaction();
     auto l_size = in_data->size();
     using namespace orm;
     auto l_insert = orm::insert(*this).into<T>();
@@ -256,7 +256,7 @@ class sqlite_database {
         }
       }
     }
-    // l_g.commit();
+    l_g.commit();
     DOODLE_TO_SELF();
 
     if constexpr (has_uuid_id<T>) {
@@ -285,7 +285,7 @@ class sqlite_database {
         in_.updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
 
     DOODLE_TO_SQLITE_THREAD();
-    // auto l_g = transaction();
+    auto l_g = session_.transaction();
     using namespace orm;
     auto l_update = orm::update(*this).from<T>();
     for (auto l_is_begin = true; auto&& i : *in_data) {
@@ -295,7 +295,7 @@ class sqlite_database {
       } else
         l_update.rebind(object<T>(i))();
     }
-    // l_g.commit();
+    l_g.commit();
     DOODLE_TO_SELF();
   }
 
@@ -303,7 +303,7 @@ class sqlite_database {
   boost::asio::awaitable<void> remove(std::vector<std::int64_t> in_data) {
     DOODLE_TO_SQLITE_THREAD();
     if (in_data.empty()) co_return;
-    // auto l_g = transaction();
+    auto l_g = session_.transaction();
     for (auto i = 0; i < in_data.size();) {
       auto l_end = std::min(i + g_step_size, in_data.size());
       std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
@@ -311,14 +311,14 @@ class sqlite_database {
       delete_from(*this).from<T>().where(c(&T::id_).in(l_v))();
       i = l_end;
     }
-    // l_g.commit();
+    l_g.commit();
     DOODLE_TO_SELF();
   }
   template <typename T>
   boost::asio::awaitable<void> remove(std::vector<std::int32_t> in_data) {
     DOODLE_TO_SQLITE_THREAD();
     if (in_data.empty()) co_return;
-    // auto l_g = transaction();
+    auto l_g = session_.transaction();
     for (auto i = 0; i < in_data.size();) {
       auto l_end = std::min(i + g_step_size, in_data.size());
       std::vector<std::int64_t> l_v{in_data.begin() + i, in_data.begin() + l_end};
@@ -326,7 +326,7 @@ class sqlite_database {
       delete_from(*this).from<T>().where(c(&T::id_).in(l_v))();
       i = l_end;
     }
-    // l_g.commit();
+    l_g.commit();
     DOODLE_TO_SELF();
   }
   template <typename T>
@@ -340,7 +340,7 @@ class sqlite_database {
   boost::asio::awaitable<void> remove(std::vector<uuid> in_data) {
     DOODLE_TO_SQLITE_THREAD();
     if (in_data.empty()) co_return;
-    // auto l_g = transaction();
+    auto l_g = session_.transaction();
     for (auto i = 0; i < in_data.size();) {
       auto l_end = std::min(i + g_step_size, in_data.size());
       std::vector<uuid> l_v{in_data.begin() + i, in_data.begin() + l_end};
@@ -348,7 +348,7 @@ class sqlite_database {
       delete_from(*this).from<T>().where(c(&T::uuid_id_).in(l_v))();
       i = l_end;
     }
-    // l_g.commit();
+    l_g.commit();
     DOODLE_TO_SELF();
   }
   template <typename T>
