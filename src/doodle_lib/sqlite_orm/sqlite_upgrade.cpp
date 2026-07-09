@@ -86,11 +86,7 @@ struct project_data {
 struct upgrade_2_t : sqlite_upgrade {
   explicit upgrade_2_t() {}
   void upgrade(sqlite_storage& in_data) override {
-    if (in_data.pragma().user_version() == 2) {
-      upgrade_init_t::full_fts_sync(in_data);
-      in_data.pragma().user_version(g_current_version);
-    }
-
+    upgrade_init_t::full_fts_sync(in_data);
     in_data.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;
