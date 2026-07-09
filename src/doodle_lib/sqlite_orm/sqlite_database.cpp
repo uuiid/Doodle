@@ -891,8 +891,11 @@ void sqlite_storage::regs_all() {
           orm::update(l_session)
               .from<entity_fts>()
               .set(
-                  c(&entity_fts::name_)        = new_(&entity::name_),
-                  c(&entity_fts::description_) = new_(&entity::description_)
+                  c(&entity_fts::name_)           = new_(&entity::name_),
+                  c(&entity_fts::description_)    = new_(&entity::description_),
+                  c(&entity_fts::project_id_)     = new_(&entity::project_id_),
+                  c(&entity_fts::entity_type_id_) = new_(&entity::entity_type_id_),
+                  c(&entity_fts::parent_id_)      = new_(&entity::parent_id_)
               )
               .where(c(&entity_fts::entity_id_) == old_(&entity::uuid_id_))
       )
