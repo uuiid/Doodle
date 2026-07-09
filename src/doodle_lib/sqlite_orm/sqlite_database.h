@@ -61,24 +61,27 @@ namespace doodle {
 class sqlite_storage : public orm::storage {
   void open_(FSys::path in_path, std::int32_t in_flags) override;
   void register_custom_extension(sqlite3* in_sqlite) override;
+  using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
+  strand_type strand_{boost::asio::make_strand(g_io_context())};
 
  public:
   void regs_all();
   // 升级
   void upgrade();
+  strand_type get_strand() { return strand_; }
 };
 
 class sqlite_database {
   using strand_type = boost::asio::strand<boost::asio::io_context::executor_type>;
-  strand_type strand_{boost::asio::make_strand(g_io_context())};
+  strand_type strand_;
   static constexpr std::size_t g_step_size{100};
   orm::session session_{};
 
  public:
   std::vector<uuid> get_temporal_type_ids();
 
-  sqlite_database() = default;
-  explicit sqlite_database(orm::session in_session) : session_(std::move(in_session)) {}
+  explicit sqlite_database(strand_type in_strand, orm::session in_session)
+      : strand_(std::move(in_strand)), session_(std::move(in_session)) {}
   ~sqlite_database() = default;
   // operator orm::session() { return session_; }
   operator orm::session() const { return session_; }
