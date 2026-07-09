@@ -143,7 +143,11 @@ column_operations::column_operations(rowid_column_info_t in_rowid_column)
   data_impl_ptr_->ptr_shared_ = std::make_shared<rowid_column_info_t>(std::move(in_rowid_column));
   data_impl_ptr_->to_str_ptr_ = std::make_shared<column_to_str>();
 }
-
+column_operations::column_operations(rank_info_t in_rank_column)
+    : data_impl_ptr_(std::make_shared<data_impl>()) {
+  data_impl_ptr_->ptr_shared_ = std::make_shared<rank_info_t>(std::move(in_rank_column));
+  data_impl_ptr_->to_str_ptr_ = std::make_shared<column_to_str>();
+}
 std::string column_operations::to_str_expr_t::to_str(
     column_info_ptr& in_ptr, const session& s, const to_sql_ctx& ctx
 ) const {

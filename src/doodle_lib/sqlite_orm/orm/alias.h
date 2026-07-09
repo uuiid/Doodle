@@ -93,6 +93,7 @@ auto rowid_column() {
 }
 template <typename T>
 inline constexpr bool is_alias_column_t_v = std::is_base_of_v<alias_column_info_t, std::remove_cvref_t<T>> ||
-                                            std::is_base_of_v<rowid_column_info_t, std::remove_cvref_t<T>>;
+                                            std::is_base_of_v<rowid_column_info_t, std::remove_cvref_t<T>> ||
+                                            std::is_base_of_v<rank_info_t, std::remove_cvref_t<T>>;
 
 }  // namespace doodle::orm

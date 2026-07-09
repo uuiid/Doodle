@@ -111,7 +111,6 @@ struct select_t : public statement_info_base_t {
   template <typename T>
     requires is_alias_column_t_v<std::decay_t<T>>
   select_t order_by(T&& alias_column, bool ascending = true);
-  select_t order_by(const rank_info_t& rank_column, bool ascending = true);
 
   select_t limit(std::size_t count) {
     impl_->limit_ = count;

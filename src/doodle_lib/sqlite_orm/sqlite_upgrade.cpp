@@ -14,6 +14,8 @@
 #include <doodle_lib/sqlite_orm/sqlite_upgrade.h>
 
 #include "core/core_set.h"
+#include "sqlite_orm/orm/alias.h"
+#include "sqlite_orm/orm/exception.h"
 #include <filesystem>
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -34,7 +36,12 @@ struct upgrade_init_t : sqlite_upgrade {
   static void full_fts_sync(sqlite_storage& in_data) {
     using namespace orm;
     auto l_s = in_data.create_session();
-    insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild")();
+    try {
+      insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "integrity-check")();
+    } catch (const sqlite_orm_exception& e) {
+      SPDLOG_WARN("FTS integrity check failed: {}", e.what());
+      insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild", c(rank()) = 1)();
+    }
   }
 
   void upgrade(sqlite_storage& in_data) override {
