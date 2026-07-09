@@ -19,9 +19,9 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <range/v3/view/unique.hpp>
-
 #include <tuple>
 #include <vector>
+
 
 namespace doodle::http {
 
@@ -84,7 +84,7 @@ auto get_todo_fun() {
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_links::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
 
   SPDLOG_LOGGER_WARN(
@@ -110,7 +110,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_l
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_task = std::make_shared<task>(l_sql.get_by_uuid<task>(id_));
   person_.check_task_action_access(*l_task);
 
@@ -130,7 +130,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::put(se
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> actions_persons_assign::put(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql         = get_sqlite_database();
   auto l_person_data = l_sql.get_by_uuid<person>(id_);
   auto l_task_ids    = in_handle->get_json()["task_ids"].get<std::vector<uuid>>();
 
@@ -245,7 +245,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> tasks_to_check::ge
 namespace {
 auto get_comments(const uuid& in_task_id) {
   using namespace doodle::orm;
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   // 查询所有评论，按创建时间倒序
   auto l_comm = select(l_sql)
                     .columns(object<comment>())
@@ -634,21 +634,23 @@ struct data_tasks_open_tasks_get_args {
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_open_tasks::get(session_data_ptr in_handle) {
   data_tasks_open_tasks_get_args l_args{};
   l_args.parse_args(in_handle->url_.params());
-  
+
   co_return in_handle->make_msg(nlohmann::json{} = l_args.get());
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks::delete_(session_data_ptr in_handle) {
-  auto l_task = get_sqlite_database().get_by_uuid<task>(id_);
+  auto l_sql  = get_sqlite_database();
+
+  auto l_task = l_sql.get_by_uuid<task>(id_);
   person_.check_delete_access(l_task.project_id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除任务 {} ", person_.person_.email_, person_.person_.get_full_name(),
       l_task.uuid_id_
   );
-  co_await get_sqlite_database().remove<task>(id_);
+  co_await l_sql.remove<task>(id_);
   co_return in_handle->make_msg_204();
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_tasks_full::get(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql         = get_sqlite_database();
 
   auto l_task        = l_sql.get_by_uuid<task>(id_);
   auto l_task_type   = l_sql.get_by_uuid<task_type>(l_task.task_type_id_);

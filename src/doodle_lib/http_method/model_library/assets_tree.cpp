@@ -55,12 +55,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   auto l_json = in_handle->get_json();
   std::shared_ptr<assets_helper::database_t> l_ptr =
       std::make_shared<assets_helper::database_t>(in_handle->get_json().get<assets_helper::database_t>());
+  auto l_sql                        = get_sqlite_database();
 
   if (!l_ptr->uuid_parent_.is_nil()) {
-    if (auto l_list = get_sqlite_database().uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_); l_list == 0)
+    if (auto l_list = l_sql.uuid_to_id<assets_helper::database_t>(l_ptr->uuid_parent_); l_list == 0)
       co_return in_handle->make_error_code_msg(boost::beast::http::status::not_found, "未找到父节点");
   }
-  co_await get_sqlite_database().install<assets_helper::database_t>(l_ptr);
+  co_await l_sql.install<assets_helper::database_t>(l_ptr);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 创建 资产库节点 {} (父节点 {}) ", person_.person_.email_,
       person_.person_.get_full_name(), l_ptr->uuid_id_, l_ptr->uuid_parent_
@@ -79,7 +80,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     check_data(l_value);
     l_value.id_ = l_sql.uuid_to_id<assets_helper::database_t>(l_value.uuid_id_);
   }
-  co_await get_sqlite_database().update_range<assets_helper::database_t>(l_values);
+  co_await l_sql.update_range<assets_helper::database_t>(l_values);
   co_return in_handle->make_msg(nlohmann::json{} = *l_values);
 }
 
@@ -87,11 +88,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
     http::session_data_ptr in_handle
 ) {
   person_.check_supervisor();
+  auto l_sql                        = get_sqlite_database();
+
   auto l_value =
-      std::make_shared<assets_helper::database_t>(get_sqlite_database().get_by_uuid<assets_helper::database_t>(id_));
+      std::make_shared<assets_helper::database_t>(l_sql.get_by_uuid<assets_helper::database_t>(id_));
   in_handle->get_json().get_to(*l_value);
   check_data(*l_value);
-  co_await get_sqlite_database().install<assets_helper::database_t>(l_value);
+  co_await l_sql.install<assets_helper::database_t>(l_value);
   co_return in_handle->make_msg(nlohmann::json{} = *l_value);
 }
 
@@ -113,7 +116,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> model_library_asse
   //   for (const auto& l_item : l_r) {
   //     l_rem->push_back(l_item.id_);
   //   }
-  //   co_await get_sqlite_database().remove<assets_file_helper::database_t>(l_rem);
+  //   co_await l_sql.remove<assets_file_helper::database_t>(l_rem);
   // }
   co_await l_sql.remove<assets_helper::database_t>(l_uuid);
 

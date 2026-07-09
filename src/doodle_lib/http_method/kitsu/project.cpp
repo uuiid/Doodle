@@ -17,7 +17,6 @@
 #include "kitsu_reg_url.h"
 #include <algorithm>
 
-
 namespace doodle::http {
 
 namespace {
@@ -88,14 +87,15 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_all::get(s
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::get(session_data_ptr in_handle) {
-  auto l_list = get_sqlite_database().get_by_uuid<project>(id_);
+  auto l_sql  = get_sqlite_database();
+  auto l_list = l_sql.get_by_uuid<project>(id_);
   nlohmann::json l_j{};
   l_j                        = l_list;
-  l_j["project_status_name"] = get_sqlite_database().get_by_uuid<project_status>(l_list.project_status_id_).name_;
+  l_j["project_status_name"] = l_sql.get_by_uuid<project_status>(l_list.project_status_id_).name_;
   co_return in_handle->make_msg(l_list);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_instance::put(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql     = get_sqlite_database();
   auto l_project = std::make_shared<project>(l_sql.get_by_uuid<project>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -114,7 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_insta
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects::post(session_data_ptr in_handle) {
   person_.check_manager();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_json = in_handle->get_json();
   auto l_prj  = std::make_shared<project>();
   l_json.get_to(*l_prj);
@@ -125,7 +125,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_projects::pos
   );
 
   l_prj->project_status_id_ = l_sql.get_project_status_open();
-  co_await get_sqlite_database().install(l_prj);
+  co_await l_sql.install(l_prj);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成创建项目 project_id {} name {}", person_.person_.email_,
@@ -142,14 +142,14 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   auto l_prj_task_type_link = std::make_shared<project_task_type_link>();
   l_json.get_to(*l_prj_task_type_link);
   l_prj_task_type_link->project_id_ = id_;
-
+  auto l_sql                        = get_sqlite_database();
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 任务类型 task_type_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_prj_task_type_link->task_type_id_
   );
 
-  if (auto l_t = get_sqlite_database().get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_); !l_t) {
-    co_await get_sqlite_database().install(l_prj_task_type_link);
+  if (auto l_t = l_sql.get_project_task_type_link(id_, l_prj_task_type_link->task_type_id_); !l_t) {
+    co_await l_sql.install(l_prj_task_type_link);
   }
 
   SPDLOG_LOGGER_WARN(
@@ -157,7 +157,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
       person_.person_.get_full_name(), id_, l_prj_task_type_link->task_type_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_sqlite_database().get_by_uuid<project>(id_));
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> project_settings_task_types::delete_(
     session_data_ptr in_handle
@@ -167,8 +167,10 @@ boost::asio::awaitable<boost::beast::http::message_generator> project_settings_t
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 项目 {} 的任务类型 {} ", person_.person_.email_,
       person_.person_.get_full_name(), project_id_, task_type_id_
   );
-  if (auto l_t = get_sqlite_database().get_project_task_type_link(project_id_, task_type_id_); l_t)
-    co_await get_sqlite_database().remove<project_task_status_link>(l_t->uuid_id_);
+  auto l_sql = get_sqlite_database();
+
+  if (auto l_t = l_sql.get_project_task_type_link(project_id_, task_type_id_); l_t)
+    co_await l_sql.remove<project_task_status_link>(l_t->uuid_id_);
   co_return in_handle->make_msg_204();
 }
 
@@ -184,18 +186,18 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 任务状态 task_status_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_status_id
   );
+  auto l_sql                              = get_sqlite_database();
 
   l_prj_task_status_link->project_id_     = id_;
   l_prj_task_status_link->task_status_id_ = l_status_id;
-  if (!get_sqlite_database().get_project_task_status_link(id_, l_status_id))
-    co_await get_sqlite_database().install(l_prj_task_status_link);
+  if (!l_sql.get_project_task_status_link(id_, l_status_id)) co_await l_sql.install(l_prj_task_status_link);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 任务状态 task_status_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_status_id
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_sqlite_database().get_by_uuid<project>(id_));
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_settings_asset_types::post(
     session_data_ptr in_handle
@@ -205,24 +207,25 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
   auto l_prj_asset_type_link            = std::make_shared<project_asset_type_link>();
   l_prj_asset_type_link->asset_type_id_ = l_json["asset_type_id"].get<uuid>();
   l_prj_asset_type_link->project_id_    = id_;
+  auto l_sql                            = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始设置项目 {} 资产类型 asset_type_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_prj_asset_type_link->asset_type_id_
   );
-  if (!get_sqlite_database().get_project_asset_type_link(id_, l_prj_asset_type_link->asset_type_id_))
-    co_await get_sqlite_database().install(l_prj_asset_type_link);
+  if (!l_sql.get_project_asset_type_link(id_, l_prj_asset_type_link->asset_type_id_))
+    co_await l_sql.install(l_prj_asset_type_link);
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成设置项目 {} 资产类型 asset_type_id {}", person_.person_.email_,
       person_.person_.get_full_name(), id_, l_prj_asset_type_link->asset_type_id_
   );
 
-  co_return in_handle->make_msg(nlohmann::json{} = get_sqlite_database().get_by_uuid<project>(id_));
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_by_uuid<project>(id_));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tasks::post(session_data_ptr in_handle) {
   person_.check_project_manager(project_id_);
-  auto l_sql = get_sqlite_database();
+  auto l_sql       = get_sqlite_database();
   auto l_task_type = l_sql.get_by_uuid<task_type>(task_type_id_);
   std::vector<entity> l_entities{};
   auto l_json = in_handle->get_json();
@@ -237,7 +240,6 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
     for (auto&& [l_k, l_v, l_has] : in_handle->url_.params())
       if (l_k == "id" && l_has) l_entities.emplace_back(l_sql.get_by_uuid<entity>(from_uuid_str(l_v)));
   auto l_task_status = l_sql.get_task_status_by_name(std::string{doodle_config::task_status_todo});
-
 
   if (l_entities.size() == 1) {
     auto l_task             = std::make_shared<task>();
@@ -314,7 +316,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_create_tas
 boost::asio::awaitable<boost::beast::http::message_generator> data_projects_team::post(session_data_ptr in_handle) {
   person_.check_project_manager(id_);
   auto l_add_team = in_handle->get_json()["person_id"].get<uuid>();
-  auto l_sql = get_sqlite_database();
+  auto l_sql      = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始向项目 {} 添加成员 {}", person_.person_.email_,
@@ -388,7 +390,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_setti
     session_data_ptr in_handle
 ) {
   person_.check_project_manager(id_);
-  auto l_sql = get_sqlite_database();
+  auto l_sql                   = get_sqlite_database();
   auto l_ptr                   = std::make_shared<project_status_automation_link>();
   l_ptr->project_id_           = id_;
   l_ptr->status_automation_id_ = in_handle->get_json().at("status_automation_id").get<uuid>();

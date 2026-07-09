@@ -107,7 +107,7 @@ void video_create_picture(const FSys::path& in_video_path, const uuid& in_task_i
 boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::shared_ptr<seedance2_client> in_client) {
   // 每隔5s 查询一次任务状态，直到任务完成或者失败
   boost::asio::steady_timer l_timer{g_io_context()};
-
+  auto l_sql = get_sqlite_database();
   while ((co_await boost::asio::this_coro::cancellation_state).cancelled() == boost::asio::cancellation_type::none) {
     l_timer.expires_after(5s);
     co_await l_timer.async_wait(boost::asio::use_awaitable);
@@ -122,7 +122,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
         l_status == sd2::task_status::expired || l_status == sd2::task_status::cancelled) {
       in_task->status_        = l_status;
       in_task->data_response_ = l_task_status;
-      co_await get_sqlite_database().update(in_task);
+      co_await l_sql.update(in_task);
       break;
     }
 #else
@@ -135,11 +135,11 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
   if (in_task->status_ == sd2::task_status::succeeded && in_task->data_response_.contains("usage") &&
       in_task->data_response_.at("usage").contains("completion_tokens")) {
     auto l_completion_tokens = in_task->data_response_.at("usage").at("completion_tokens").get<std::int64_t>();
-    auto l_person            = get_sqlite_database().get_by_uuid<person>(in_task->user_id_);
+    auto l_person            = l_sql.get_by_uuid<person>(in_task->user_id_);
     co_await add_remaining_tokens_for_person(l_person, in_task->completion_tokens_ - l_completion_tokens);
   } else {
     // 任务失败或者其他状态，返还 token
-    auto l_person = get_sqlite_database().get_by_uuid<person>(in_task->user_id_);
+    auto l_person = l_sql.get_by_uuid<person>(in_task->user_id_);
     co_await add_remaining_tokens_for_person(l_person, in_task->completion_tokens_);
   }
 
@@ -152,7 +152,7 @@ boost::asio::awaitable<void> run_task(std::shared_ptr<sd2::task> in_task, std::s
 #else
   in_task->status_ = sd2::task_status::succeeded;
 #endif
-  co_await get_sqlite_database().update(in_task);
+  co_await l_sql.update(in_task);
 
   socket_io::broadcast(
       socket_io::seedance2_task_update_broadcast_t{.task_id_ = in_task->uuid_id_, .status_ = in_task->status_}

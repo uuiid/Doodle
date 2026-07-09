@@ -40,7 +40,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> departments::get(s
 }
 boost::asio::awaitable<boost::beast::http::message_generator> departments_instance::put(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql            = get_sqlite_database();
   auto l_department_ptr = std::make_shared<department>(l_sql.get_by_uuid<department>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -64,7 +64,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> studios::get(sessi
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql    = get_sqlite_database();
   auto l_studio = std::make_shared<studio>();
   in_handle->get_json().get_to(*l_studio);
   DOODLE_CHICK(!l_studio->name_.empty(), "工作室名称不可为空");
@@ -81,7 +81,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios, post) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql    = get_sqlite_database();
   auto l_studio = l_sql.get_by_uuid<studio>(id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除 工作室 {}", person_.person_.email_, person_.person_.get_full_name(),
@@ -92,7 +92,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, delete_) {
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(studios_instance, put) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql        = get_sqlite_database();
   auto l_studio_ptr = std::make_shared<studio>(l_sql.get_by_uuid<studio>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -117,7 +117,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> task_types::get(se
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(task_types, post) {
   person_.check_admin();
   auto l_args = std::make_shared<task_type>(in_handle->get_json().get<task_type>());
-  co_await get_sqlite_database().install(l_args);
+  auto l_sql  = get_sqlite_database();
+  co_await l_sql.install(l_args);
   co_return in_handle->make_msg(nlohmann::json{} = *l_args);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> custom_actions::get(session_data_ptr in_handle) {
@@ -132,7 +133,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> status_automations
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(status_automations, post) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql               = get_sqlite_database();
   auto l_status_automation = std::make_shared<status_automation>();
   in_handle->get_json().get_to(*l_status_automation);
   SPDLOG_LOGGER_WARN(
@@ -151,7 +152,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql            = get_sqlite_database();
   auto l_asset_type_ptr = std::make_shared<asset_type>(l_sql.get_by_uuid<asset_type>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -184,7 +185,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_entity_types_
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql        = get_sqlite_database();
   auto l_asset_type = l_sql.get_by_uuid<asset_type>(id_);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 删除资产类型 {}", person_.person_.email_,
@@ -197,7 +198,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types_instance, delete_) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
   person_.check_admin();
   auto l_args = std::make_shared<asset_type>(in_handle->get_json().get<asset_type>());
-  co_await get_sqlite_database().install(l_args);
+  auto l_sql  = get_sqlite_database();
+  co_await l_sql.install(l_args);
   auto l_task_type_asset_type_link_list = std::make_shared<std::vector<task_type_asset_type_link>>();
 
   for (auto&& l_task_type_id : l_args->task_types_) {
@@ -208,14 +210,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_entity_types, post) {
         }
     );
   }
-  if (!l_task_type_asset_type_link_list->empty())
-    co_await get_sqlite_database().install_range(l_task_type_asset_type_link_list);
+  if (!l_task_type_asset_type_link_list->empty()) co_await l_sql.install_range(l_task_type_asset_type_link_list);
   co_return in_handle->make_msg(nlohmann::json{} = *l_args);
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_task_status::post(session_data_ptr in_handle) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>();
   in_handle->get_json().get_to(*l_status);
   SPDLOG_LOGGER_WARN(
@@ -233,7 +234,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_task_status_i
     session_data_ptr in_handle
 ) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql    = get_sqlite_database();
   auto l_status = std::make_shared<task_status>(l_sql.get_by_uuid<task_status>(id_));
 
   SPDLOG_LOGGER_WARN(
@@ -259,7 +260,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
       g_logger_ctrl().get_http(), "用户 {}({}) 开始备份数据库 filename {}", person_.person_.email_,
       person_.person_.get_full_name(), l_file.filename().generic_string()
   );
-  co_await get_sqlite_database().backup(l_file);
+  auto l_sql = get_sqlite_database();
+  co_await l_sql.backup(l_file);
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 完成备份数据库 filename {} size {}", person_.person_.email_,
       person_.person_.get_full_name(), l_file.filename().generic_string(),
@@ -269,7 +271,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_backup::pos
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_preview_files, get) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql          = get_sqlite_database();
   auto l_preview_file = l_sql.get_by_uuid<preview_file>(preview_file_id_);
   person_.check_in_project(l_preview_file.task_id_);
   person_.check_not_outsourcer();

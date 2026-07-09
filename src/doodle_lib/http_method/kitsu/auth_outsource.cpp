@@ -60,7 +60,7 @@ struct entity_outsource_studio_authorization : entity {
 
   static std::vector<entity_outsource_studio_authorization> get(const uuid& in_project_id) {
     auto l_sql = get_sqlite_database();
-    ;
+
     std::vector<entity_outsource_studio_authorization> l_ret{};
 
     std::map<uuid, std::size_t> l_entity_map{};
@@ -93,14 +93,14 @@ struct entity_outsource_studio_authorization : entity {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, get) {
   person_.check_producer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql       = get_sqlite_database();
   auto l_auth_list = entity_outsource_studio_authorization::get(project_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_auth_list);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
   person_.check_producer();
 
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_auth = std::make_shared<outsource_studio_authorization>();
   in_handle->get_json().get_to(*l_auth);
   SPDLOG_LOGGER_WARN(
@@ -117,7 +117,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_project_authorization_instance, get) {
   person_.check_producer();
 
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_auth = l_sql.get_by_uuid<outsource_studio_authorization>(authorization_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_auth);
 }

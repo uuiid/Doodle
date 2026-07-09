@@ -62,13 +62,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_json_1                 = in_handle->get_json();
   chrono::year_month_day l_date = l_json_1["work_date"].get<chrono::year_month_day>();
 
-  auto l_sqlite                 = get_sqlite_database();
-  auto l_user                   = l_sqlite.get_by_uuid<person>(id_);
+  auto l_sql                 = get_sqlite_database();
+  auto l_user                   = l_sql.get_by_uuid<person>(id_);
   auto& l_d                     = g_ctx().get<dingding::dingding_company>();
-  auto l_studio                 = l_sqlite.get_by_uuid<studio>(l_user.studio_id_);
+  auto l_studio                 = l_sql.get_by_uuid<studio>(l_user.studio_id_);
 
   // 查询缓存
-  auto l_attends                = l_sqlite.get_attendance(l_user.uuid_id_, chrono::local_days{l_date});
+  auto l_attends                = l_sql.get_attendance(l_user.uuid_id_, chrono::local_days{l_date});
   if (!l_attends.empty()) {
     auto& l_att = l_attends.front();
     if (chrono::system_clock::now() - l_att.update_time_.get_sys_time() < chrono::hours{1}) {
@@ -98,7 +98,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
   auto l_clock_overtime          = create_clock_overtime(l_date);  // 加班计算时间时钟
   auto l_clock_leave             = create_clock_leave(l_date);     // 请假计算时间时钟
   // 重新查询, 以调整协程期间可能变化的数据
-  l_attends                      = l_sqlite.get_attendance(l_user.uuid_id_, chrono::local_days{l_date});
+  l_attends                      = l_sql.get_attendance(l_user.uuid_id_, chrono::local_days{l_date});
   for (auto&& l_obj : l_attend) {
     // 重新使用开始时间和时间时间段计算时间
     chrono::hours l_duration{0};
@@ -167,20 +167,20 @@ boost::asio::awaitable<boost::beast::http::message_generator> dingding_attendanc
     };
     l_attendance_install_list->emplace_back(std::move(l_attendance));
   }
-  if (l_modify_user) co_await l_sqlite.update(std::make_shared<person>(l_user));
+  if (l_modify_user) co_await l_sql.update(std::make_shared<person>(l_user));
 
   if (!l_attends.empty()) {
     std::vector<std::int64_t> l_rem{};
     for (auto&& id : l_attends) {
       l_rem.emplace_back(id.id_);
     }
-    co_await l_sqlite.remove<attendance_helper::database_t>(l_rem);
+    co_await l_sql.remove<attendance_helper::database_t>(l_rem);
   }
   if (!l_attendance_update_list->empty()) {
-    co_await l_sqlite.update_range<attendance_helper::database_t>(l_attendance_update_list);
+    co_await l_sql.update_range<attendance_helper::database_t>(l_attendance_update_list);
   }
   if (!l_attendance_install_list->empty()) {
-    co_await l_sqlite.install_range<attendance_helper::database_t>(l_attendance_install_list);
+    co_await l_sql.install_range<attendance_helper::database_t>(l_attendance_install_list);
   }
 
   auto l_attendance_list = ranges::views::concat(*l_attendance_update_list, *l_attendance_install_list) |

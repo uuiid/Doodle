@@ -20,7 +20,7 @@ namespace doodle::http {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_all<server_task_info>();
   for (auto& l_job : l_jobs) {
     if (l_job.status_ == server_task_info_status::failed)
@@ -47,13 +47,13 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_jobs_log, put) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, get) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  auto l_job  = l_sql.get_by_uuid<server_task_info>(job_id_);
+  auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   l_job.get_last_line_log(g_ctx().get<kitsu_ctx_t>().get_jobs_logs_file(job_id_));
   co_return in_handle->make_msg(nlohmann::json{} = l_job);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql     = get_sqlite_database();
   auto l_job     = l_sql.get_by_uuid<server_task_info>(job_id_);
   auto l_json    = in_handle->get_json();
   auto l_job_ptr = std::make_shared<server_task_info>(l_job);
@@ -70,7 +70,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
     l_job_ptr->end_time_.reset();
     l_job_ptr->run_time_.reset();
   }
-  co_await get_sqlite_database().update(l_job_ptr);
+  co_await l_sql.update(l_job_ptr);
 
   if (l_job_ptr->run_computer_id_ != l_job.run_computer_id_) {
     SPDLOG_LOGGER_WARN(
@@ -85,9 +85,9 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, put) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_jobs_instance, delete_) {
   person_.check_not_outsourcer();
   auto l_sql = get_sqlite_database();
-  auto l_job  = l_sql.get_by_uuid<server_task_info>(job_id_);
+  auto l_job = l_sql.get_by_uuid<server_task_info>(job_id_);
   // 运行中, 并且小于 24 小时的无法删除
-  auto l_now  = chrono::system_clock::now();
+  auto l_now = chrono::system_clock::now();
   if (l_job.status_ == server_task_info_status::running &&
       l_now - l_job.run_time_.value_or(chrono::system_zoned_time{chrono::current_zone(), l_now}).get_sys_time() < 24h) {
     co_return in_handle->make_error_code_msg(

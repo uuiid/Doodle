@@ -25,10 +25,10 @@
 #include "sqlite_orm/orm/select.h"
 #include <optional>
 #include <spdlog/spdlog.h>
-
 #include <string>
 #include <sys/stat.h>
 #include <vector>
+
 
 namespace doodle::http {
 namespace {
@@ -114,7 +114,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> projects_assets_ne
       .source_id_      = l_data.source_id,
       .created_by_     = person_.person_.uuid_id_,
   });
-  auto l_sql = get_sqlite_database();
+  auto l_sql    = get_sqlite_database();
   co_await l_sql.install(l_entity);
   nlohmann::json l_json_ret{};
   l_json_ret = *l_entity;
@@ -317,7 +317,7 @@ struct make_with_tasks_sql_result_t {
   auto operator()() const {
     using namespace orm;
 
-    auto l_sql = get_sqlite_database();
+    auto l_sql               = get_sqlite_database();
     auto l_temporal_type_ids = l_sql.get_temporal_type_ids();
     auto l_sequence          = alias<entity>("sequence");
     auto l_episode           = alias<entity>("episode");
@@ -441,7 +441,7 @@ auto make_with_tasks_sql_result(person& in_person, const boost::urls::url& in_ur
   }
   std::vector<with_tasks_get_result_t> l_ret{};
 
-  auto l_sql = get_sqlite_database();
+  auto l_sql                    = get_sqlite_database();
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(l_data.person_, l_data.project_id_, {});
 
   l_ret.reserve(l_sql.get_project_entity_count(l_data.project_id_));
@@ -478,8 +478,8 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_assets_with_t
   co_return in_handle->make_msg(nlohmann::json{} = make_with_tasks_sql_result(person_.person_, in_handle->url_, {}));
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get(session_data_ptr in_handle) {
-  auto&& l_sql = get_sqlite_database();
-  auto l_t     = make_with_tasks_sql_result(person_.person_, in_handle->url_, id_);
+  auto l_sql = get_sqlite_database();
+  auto l_t   = make_with_tasks_sql_result(person_.person_, in_handle->url_, id_);
   if (l_t.empty())
     throw_exception(http_request_error{boost::beast::http::status::not_found, fmt::format("未找到资源 {}", id_)});
   auto l_ass                = l_sql.get_by_uuid<entity>(id_);
@@ -496,7 +496,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> asset_details::get
 }
 boost::asio::awaitable<boost::beast::http::message_generator> asset_details::delete_(session_data_ptr in_handle) {
   auto l_sql = get_sqlite_database();
-  auto l_ass  = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
+  auto l_ass = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   person_.check_delete_access(l_ass->project_id_);
   bool l_force{};
   for (auto&& l_i : in_handle->url_.params()) {

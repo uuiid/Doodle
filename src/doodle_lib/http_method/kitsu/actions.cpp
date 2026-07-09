@@ -64,9 +64,9 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_clea
   for (auto&& l_i : l_args.task_id_)
     if (!l_args.person_id_.is_nil()) {
       if (auto l_assign = get_task_assignees_for_task_and_person(l_i, l_args.person_id_); l_assign)
-        co_await get_sqlite_database().remove<assignees_table>(l_assign.value().id_);
+        co_await l_sql.remove<assignees_table>(l_assign.value().id_);
     } else {
-      co_await get_sqlite_database().remove<assignees_table>(get_task_assignees_ids_for_task(l_i));
+      co_await l_sql.remove<assignees_table>(get_task_assignees_ids_for_task(l_i));
     }
 
   SPDLOG_LOGGER_WARN(
