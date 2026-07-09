@@ -203,19 +203,6 @@ class sqlite_database {
     using namespace orm;
     orm::update(*this).from<T>().set(object<T>(*in_data)).where(c(&T::id_) == in_data->id_)();
   }
-  template <typename T>
-  void update_sync(std::shared_ptr<T> in_data) {
-    DOODLE_CHICK(in_data, "不可传入空指针");
-    if constexpr (has_uuid_id<T>) {
-      DOODLE_CHICK(!in_data->uuid_id_.is_nil(), "传入的数据实体 uuid_id_ 为空");
-      in_data->id_ = uuid_to_id<T>(in_data->uuid_id_);
-    }
-    DOODLE_CHICK(in_data->id_ != 0, "不可传入空指针");
-
-    if constexpr (has_updated_at<T>)
-      in_data->updated_at_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
-    boost::asio::post(strand_, [this, in_data = std::move(in_data)]() mutable { update_unsafe<T>(in_data); });
-  }
 
   /**
    *

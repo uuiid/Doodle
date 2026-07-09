@@ -15,12 +15,14 @@
 #include <boost/asio/buffers_iterator.hpp>
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/consign.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/beast/websocket/rfc6455.hpp>
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/lockfree/detail/uses_optional.hpp>
 #include <boost/lockfree/spsc_value.hpp>
 #include <boost/scope/scope_exit.hpp>
 
+#include "core/global_function.h"
 #include <atomic>
 #include <chrono>
 #include <fmt/ranges.h>
@@ -46,21 +48,21 @@ std::optional<computer> get_entity_computer_by_hardware_id(const uuid& in_hardwa
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql       = get_sqlite_database();
   auto l_computers = l_sql.get_all<computer>();
   co_return in_handle->make_msg(nlohmann::json{} = l_computers);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, get) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql      = get_sqlite_database();
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_computer);
 }
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, put) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql          = get_sqlite_database();
   auto l_computer     = l_sql.get_by_uuid<computer>(computer_id_);
   auto l_json         = in_handle->get_json();
   auto l_computer_ptr = std::make_shared<computer>(l_computer);
@@ -74,7 +76,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, put) {
 
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_computers_instance, delete_) {
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql      = get_sqlite_database();
   auto l_computer = l_sql.get_by_uuid<computer>(computer_id_);
   co_await l_sql.remove<computer>(computer_id_);
   socket_io::broadcast(socket_io::computer_delete_broadcast_t{.computer_id_ = computer_id_});
@@ -101,7 +103,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     auto l_computer_json            = l_json.get<computer>();
     computer_                       = std::make_shared<computer>(l_computer_json);
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-    auto l_sql = get_sqlite_database();
+    auto l_sql                      = get_sqlite_database();
     ;
     if (auto l_db_computer = get_entity_computer_by_hardware_id(computer_->hardware_id_); l_db_computer.has_value()) {
       *computer_         = l_db_computer.value();
@@ -119,11 +121,14 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
     begin_ping();
     boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
-      auto l_sql = get_sqlite_database();
+      auto l_sql                      = get_sqlite_database();
       computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
       computer_->status_              = computer_status::offline;
       computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-      l_sql.update_sync(computer_);
+      boost::asio::co_spawn(g_io_context(), [computer = computer_]() -> boost::asio::awaitable<void> {
+        auto l_sql = get_sqlite_database();
+        co_await l_sql.update(computer);
+      }, boost::asio::detached);
       socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
     }};
     try {
@@ -166,7 +171,7 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     }
   }
   boost::asio::awaitable<void> set_computer_status(std::reference_wrapper<computer> in_computer) {
-    auto l_sql = get_sqlite_database();
+    auto l_sql                      = get_sqlite_database();
     computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
     computer_->status_              = in_computer.get().status_;
     computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
@@ -264,7 +269,7 @@ boost::asio::awaitable<void> computers_assign_task::run_next_task_impl(
     std::shared_ptr<data_computers_socket_io_impl> in_computer
 ) {
   SPDLOG_LOGGER_INFO(g_logger_ctrl().get_http(), "让计算机 {} 执行下一个任务", in_computer->get_computer_id());
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_jobs = l_sql.get_server_tasks_by_submitted();
   if (l_jobs.empty()) {
     in_computer->set_computer_status(computer_status::online);
