@@ -218,7 +218,7 @@ public:
 // WB 地编导入
 
 USTRUCT()
-struct FDoodleParseFileImportData
+struct FDoodleLevelSequenceKey
 {
 	GENERATED_BODY()
 	FString ProjectName;
@@ -228,6 +228,23 @@ struct FDoodleParseFileImportData
 	int32_t StartTime{};
 	int32_t EndTime{};
 };
+
+
+USTRUCT()
+struct FDoodleParseFileImportData : public FDoodleLevelSequenceKey
+{
+	GENERATED_BODY()
+	bool IsCamera{};
+};
+
+USTRUCT()
+struct FDoodleListViewData : public FDoodleParseFileImportData
+{
+	GENERATED_BODY()
+	FString Path;
+	FString ImportPath;
+};
+
 
 UCLASS()
 class UDoodleBaseImport : public UObject
@@ -239,7 +256,8 @@ public:
 		FrameTick = TickRate.Numerator / Rate.Numerator;
 	}
 
-	FDoodleParseFileImportData ParseFileData{};
+	UPROPERTY()
+	TMap<FDoodleLevelSequenceKey, ULevelSequence*> LevelSequenceMap;
 
 	FFrameRate TickRate{60000, 1};
 	FFrameRate Rate{25, 1};
@@ -248,34 +266,57 @@ public:
 	FString ImportPathDir{};
 	static constexpr FFrameNumber Start{1001};
 
-	virtual FString GetImportPath() const
+	ULevelSequence* CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End);
+	void ImportFileCamera(const FDoodleListViewData& In_Path);
+	void ImportFileFbx(const FDoodleListViewData& In_Path);
+	void ImportFileAbc(const FDoodleListViewData& In_Path);
+
+	virtual void CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey)
+	{
+	}
+
+	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey);
+
+	virtual FString GetImportPath(const FDoodleParseFileImportData& In_Path) const
 	{
 		return {};
-	};
+	}
+
 	// 开始导入
-	virtual void ImportFiles()
+	virtual void ImportFile(const FDoodleListViewData& In_Path)
 	{
-	};
+		CreateOtherData(In_Path);
+	}
+
 	// 解析文件
-	FDoodleParseFileImportData& ParseFiles(const FString& InPath);
+	FDoodleListViewData ParseFiles(const FString& InPath);
 };
 
 UCLASS()
 class UDoodleLightImport : public UDoodleBaseImport
 {
 	GENERATED_BODY()
+
+	FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
+	void ImportFile(const FDoodleListViewData& In_Path) override;
 };
 
 UCLASS()
 class UDoodleVfxImport : public UDoodleBaseImport
 {
 	GENERATED_BODY()
+
+	FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
+	void ImportFile(const FDoodleListViewData& In_Path) override;
 };
 
 UCLASS()
 class UDoodleWbImport : public UDoodleBaseImport
 {
 	GENERATED_BODY()
+
+	FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
+	void ImportFile(const FDoodleListViewData& In_Path) override;
 };
 
 

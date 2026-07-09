@@ -432,7 +432,7 @@ void UDoodleFbxCameraImport_1::GenPathPrefix()
 	ImportPathDir = L_Folder / L_Base;
 }
 
-ULevelSequence* UDoodleBaseImportData::CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End)
+ULevelSequence* UDoodleBaseImport::CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End)
 {
 	ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *InCreatePath);
 
@@ -494,7 +494,7 @@ ULevelSequence* UDoodleBaseImportData::CreateLevelSequence(const FString& InCrea
 }
 
 
-void UDoodleFbxCameraImport_1::ImportFile()
+void UDoodleBaseImport::ImportFileCamera(const FDoodleListViewData& In_Path)
 {
 	/// ==== Phase 1: Init ====
 	FFrameNumber L_End{1200};
@@ -505,7 +505,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	L_Task_Scoped.EnterProgressFrame(
 		1, FText::Format(
 			LOCTEXT("Import_ImportingCameraFile1", "导入 \"{0}\"..."),
-			FText::FromString(FPaths::GetBaseFilename(ImportPath))
+			FText::FromString(FPaths::GetBaseFilename(In_Path.ImportPath))
 		)
 	);
 
@@ -517,7 +517,7 @@ void UDoodleFbxCameraImport_1::ImportFile()
 
 	UWorld* L_ShotLevel{};
 	{
-		FString PackageName = UPackageTools::SanitizePackageName(ImportPathDir) + ShotLevel_Suffix;
+		FString PackageName = GetLevelPath(In_Path);
 		L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
 		if (!L_ShotLevel)
 		{
@@ -543,13 +543,13 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	L_ImportFBXSettings->bReplaceTransformTrack = true;
 	L_ImportFBXSettings->bReduceKeys = false;
 
-	if (!MovieSceneToolHelpers::ReadyFBXForImport(ImportPath, L_ImportFBXSettings, InOutParams))
+	if (!MovieSceneToolHelpers::ReadyFBXForImport(In_Path.ImportPath, L_ImportFBXSettings, InOutParams))
 		return;
 
 
 	/// ==== Phase 4: Read FBX Time Range ====
 	UnFbx::FFbxImporter* L_FbxImporter = UnFbx::FFbxImporter::GetInstance();
-	L_FbxImporter->ImportFromFile(*ImportPath, FPaths::GetExtension(ImportPath));
+	L_FbxImporter->ImportFromFile(*In_Path.ImportPath, FPaths::GetExtension(In_Path.ImportPath));
 	ON_SCOPE_EXIT
 		{
 			L_FbxImporter->ReleaseScene();
@@ -569,7 +569,6 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *ImportPathDir);
 	if (!L_ShotSequence)
 	{
-		FirstImport = true;
 		L_ShotSequence = CreateLevelSequence(ImportPathDir, L_End);
 	}
 
@@ -721,7 +720,6 @@ void UDoodleFbxCameraImport_1::ImportFile()
 	}
 
 	UEditorAssetLibrary::SaveAsset(L_ShotSequence->GetPathName());
-
 	/// ==== Phase 13: Create Suffix-Specific Assets (Lig / WB) ====
 	{
 		const FString LigFolder1 = FString::Printf(TEXT("/Game/Shot/ep%.4d/map/Light_File/level"), Eps);
@@ -983,40 +981,43 @@ void UDoodleXgenImport_1::AssembleScene()
 }
 
 
-FDoodleParseFileImportData& UDoodleBaseImport::ParseFiles(const FString& InPath)
+FDoodleListViewData UDoodleBaseImport::ParseFiles(const FString& InPath)
 {
+	FDoodleListViewData L_Result{};
+	L_Result.Path = InPath;
 	FString BaseName = FPaths::GetBaseFilename(InPath);
+	L_Result.IsCamera = BaseName.Find("_camera_") != INDEX_NONE;
 	if (int32 L_Index = INDEX_NONE; BaseName.FindChar('_', L_Index) != INDEX_NONE)
-		ParseFileData.ProjectName = BaseName.LeftChop(BaseName.Len() - L_Index);
+		L_Result.ProjectName = BaseName.LeftChop(BaseName.Len() - L_Index);
 
 	const FRegexPattern L_Reg_Time_Pattern{LR"(_(\d+)-(\d+))"};
 	FRegexMatcher L_Reg_Time{L_Reg_Time_Pattern, BaseName};
-	ParseFileData.StartTime = {1000};
-	ParseFileData.EndTime = {1001};
+	L_Result.StartTime = {1000};
+	L_Result.EndTime = {1001};
 	if (L_Reg_Time.FindNext() && L_Reg_Time.GetEndLimit() > 2)
 	{
-		ParseFileData.StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
-		ParseFileData.EndTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
+		L_Result.StartTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(1));
+		L_Result.EndTime = FCString::Atoi64(*L_Reg_Time.GetCaptureGroup(2));
 	}
 	const FRegexPattern L_Reg_Ep_Pattern{LR"((ep|EP|Ep)_?(\d+))"};
 
 	if (FRegexMatcher L_Reg_Ep{L_Reg_Ep_Pattern, InPath}; L_Reg_Ep.FindNext())
 	{
-		ParseFileData.Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(2));
+		L_Result.Eps = FCString::Atoi64(*L_Reg_Ep.GetCaptureGroup(2));
 	}
 
 	const FRegexPattern L_Reg_ScPattern{LR"((sc|SC|Sc)_?(\d+)([a-zA-Z])?)"};
-
 	if (FRegexMatcher L_Reg_Sc{L_Reg_ScPattern, InPath}; L_Reg_Sc.FindNext())
 	{
-		ParseFileData.Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(2));
+		L_Result.Shot = FCString::Atoi64(*L_Reg_Sc.GetCaptureGroup(2));
 		if (L_Reg_Sc.GetEndLimit() > 3)
 		{
-			ParseFileData.ShotAb = L_Reg_Sc.GetCaptureGroup(3).ToUpper();
+			L_Result.ShotAb = L_Reg_Sc.GetCaptureGroup(3).ToUpper();
 		}
 	}
-
-	return ParseFileData;
+	L_Result.ImportPath = GetImportPath(L_Result);
+	check(!L_Result.ImportPath.IsEmpty());
+	return L_Result;
 }
 
 
