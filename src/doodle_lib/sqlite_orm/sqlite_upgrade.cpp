@@ -37,10 +37,10 @@ struct upgrade_init_t : sqlite_upgrade {
     using namespace orm;
     auto l_s = in_data.create_session();
     try {
-      insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "integrity-check")();
+      insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "integrity-check", c(rank()) = 1)();
     } catch (const sqlite_orm_exception& e) {
       SPDLOG_WARN("FTS integrity check failed: {}", e.what());
-      insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild", c(rank()) = 1)();
+      insert(l_s).into<entity_fts>().set(c(any_column<entity_fts>()) = "rebuild")();
     }
   }
 
