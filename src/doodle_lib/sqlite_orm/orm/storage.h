@@ -249,7 +249,7 @@ class storage : public boost::noncopyable {
   FSys::path db_path_;
 
   pragma_t pragma_{*this};
-  boost::lockfree::stack<timed_connection, boost::lockfree::capacity<128>> connection_queue_{};
+  boost::lockfree::stack<timed_connection, boost::lockfree::capacity<512>> connection_queue_{};
   std::atomic_char16_t thread_db_count_{0};
   bool is_opened_{false};
 
