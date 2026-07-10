@@ -23,207 +23,29 @@ ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
 
 class SDoodleImportFbxUI;
 
-
-USTRUCT()
-struct FDoodleUSkeletonData_1
-{
-public:
-	GENERATED_BODY()
-	FDoodleUSkeletonData_1()
-	{
-	};
-
-	FDoodleUSkeletonData_1(const TSet<FString>& InString, USkeleton* InSkin)
-		: BoneNames(InString)
-		, SkinObj(InSkin)
-	{
-	}
-
-	~FDoodleUSkeletonData_1()
-	{
-	}
-
-	TSet<FString> BoneNames;
-	USkeleton* SkinObj;
-	FString SkinTag;
-};
-
-class ULevelSequence;
-
-UCLASS()
-class UDoodleBaseImportData : public UObject
-{
-public:
-	GENERATED_BODY()
-	UDoodleBaseImportData()
-	{
-		FrameTick = TickRate.Numerator / Rate.Numerator;
-	};
-
-	explicit UDoodleBaseImportData(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
-		: ImportPath(InString)
-		, ImportUI(In_ImportUI)
-	{
-		FrameTick = TickRate.Numerator / Rate.Numerator;
-	}
-
-
-	/// @brief 导入的文件路径
-	FString ImportPath;
-	SDoodleImportFbxUI* ImportUI;
-
-	int64 Eps{};
-	int64 Shot{};
-	FString ShotAb{};
-
-	int32_t StartTime{};
-	int32_t EndTime{};
-	FFrameRate TickRate{60000, 1};
-	FFrameRate Rate{25, 1};
-	int32 FrameTick{};
-	/// @brief 导入后的路径
-	FString ImportPathDir{};
-	static constexpr FFrameNumber Start{1001};
-
-protected:
-	// 生成导入的路径
-	FString GetImportPath(const FString& In_Path_Prefix) const;
-
-	ULevelSequence* CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End);
-
-public:
-	// @brief获取文件名称中的开始和结束, 以及集数, 镜头号等等
-	void GenStartAndEndTime();
-	/**
-	 * @brief 根据导入的路径, 提取信息,  生成要导入ue4的路径
-	 *
-	 * @param In_Path 传入的路径(提取信息)
-	 */
-	virtual void GenPathPrefix()
-	{
-	};
-
-	virtual void ImportFile()
-	{
-	};
-
-	virtual void AssembleScene()
-	{
-	};
-
-	static FString GetPathPrefix(const FString& In_Path);
-};
-
-UCLASS()
-class UDoodleFbxImport_1 : public UDoodleBaseImportData
-{
-public:
-	GENERATED_BODY()
-	UDoodleFbxImport_1()
-	{
-	};
-
-	UDoodleFbxImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
-		: UDoodleBaseImportData(InString, In_ImportUI)
-		, SkinObj()
-	{
-	}
-
-
-	/// @brief 寻找到的骨骼
-	USkeleton* SkinObj;
-	UAnimSequence* AnimSeq;
-
-	USkeletalMesh* SkeletalMesh;
-	UDoodleFbxCameraImport_1* CameraImport;
-
-	bool OnlyAnim{true};
-	void GenPathPrefix() override;
-	void ImportFile() override;
-
-	void AssembleScene() override;
-
-	bool FindSkeleton(const TArray<FDoodleUSkeletonData_1> In_Skeleton);
-};
-
-UCLASS()
-class UDoodleFbxCameraImport_1 : public UDoodleBaseImportData
-{
-public:
-	GENERATED_BODY()
-	// 初次导入
-	bool FirstImport{false};
-	FString ShotLevel_Suffix{};
-
-	UDoodleFbxCameraImport_1()
-	{
-	};
-
-	UDoodleFbxCameraImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
-		: UDoodleBaseImportData(InString, In_ImportUI)
-	{
-	}
-
-
-	void GenPathPrefix() override;
-	void ImportFile() override;
-};
-
-UCLASS()
-class UDoodleAbcImport_1 : public UDoodleBaseImportData
-{
-public:
-	GENERATED_BODY()
-
-	UGeometryCache* GeometryCache;
-	UDoodleFbxCameraImport_1* CameraImport;
-
-	UDoodleAbcImport_1()
-	{
-	};
-
-	UDoodleAbcImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
-		: UDoodleBaseImportData(InString, In_ImportUI)
-	{
-	}
-
-
-	void GenPathPrefix() override;
-	void ImportFile() override;
-	void AssembleScene() override;
-};
-
-UCLASS()
-class UDoodleXgenImport_1 : public UDoodleBaseImportData
-{
-	GENERATED_BODY()
-
-public:
-	UDoodleXgenImport_1() = default;
-
-	explicit UDoodleXgenImport_1(const FString& InString, SDoodleImportFbxUI* In_ImportUI)
-		: UDoodleBaseImportData(InString, In_ImportUI)
-	{
-	}
-
-	void GenPathPrefix() override;
-	void ImportFile() override;
-
-	void AssembleScene() override;
-};
+ 
 
 // 基础的导入类
 // Lig 灯光导入
 // Vfx 特效导入
 // WB 地编导入
 
+enum class FDoodleImportType : uint8
+{
+	Camera,
+	Fbx,
+	AbcGeoCache,
+	AbcHair,
+	End
+};
+
 USTRUCT()
 struct FDoodleLevelSequenceKey
 {
 	GENERATED_BODY()
 	FString ProjectName;
-	int64 Eps{};
-	int64 Shot{};
+	int32 Eps{};
+	int32 Shot{};
 	FString ShotAb{};
 	int32_t StartTime{};
 	int32_t EndTime{};
@@ -234,7 +56,7 @@ USTRUCT()
 struct FDoodleParseFileImportData : public FDoodleLevelSequenceKey
 {
 	GENERATED_BODY()
-	bool IsCamera{};
+	FDoodleImportType IsCamera{};
 };
 
 USTRUCT()
@@ -277,23 +99,27 @@ public:
 	FFrameRate TickRate{60000, 1};
 	FFrameRate Rate{25, 1};
 	int32 FrameTick{};
-	/// @brief 导入后的路径
-	FString ImportPathDir{};
 	static constexpr FFrameNumber Start{1001};
+	SDoodleImportFbxUI* ImportUI;
 
-	ULevelSequence* CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End);
+	ULevelSequence* CreateLevelSequence(const FString& InCreatePath, const FFrameNumber& In_End) const;
 	void ImportFileCamera(const FDoodleListViewData& In_Path);
 	void ImportFileFbx(const FDoodleListViewData& In_Path);
 	void ImportFileAbc(const FDoodleListViewData& In_Path);
 
-	virtual void CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey)
+	virtual void CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 	{
 	}
 
-	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey)
+	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 	{
 		return {};
 	};
+
+	virtual FString GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
+	{
+		return {};
+	}
 
 	virtual FString GetImportPath(const FDoodleParseFileImportData& In_Path) const
 	{
@@ -306,6 +132,11 @@ public:
 		CreateOtherData(In_Path);
 	}
 
+	// 加载关卡
+	virtual void LoadLevelSequenceAndWorld(const FDoodleListViewData& In_Path)
+	{
+	}
+
 	// 解析文件
 	FDoodleListViewData ParseFiles(const FString& InPath);
 };
@@ -315,8 +146,11 @@ class UDoodleLightImport : public UDoodleBaseImport
 {
 	GENERATED_BODY()
 
-	FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
-	void ImportFile(const FDoodleListViewData& In_Path) override;
+public:
+	virtual FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
+	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
+	virtual FString GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
+	virtual void CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
 };
 
 UCLASS()
@@ -324,8 +158,11 @@ class UDoodleVfxImport : public UDoodleBaseImport
 {
 	GENERATED_BODY()
 
-	FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
-	void ImportFile(const FDoodleListViewData& In_Path) override;
+public:
+	virtual FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
+	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
+	virtual FString GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
+	virtual void CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
 };
 
 UCLASS()
@@ -333,8 +170,11 @@ class UDoodleWbImport : public UDoodleBaseImport
 {
 	GENERATED_BODY()
 
-	FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
-	void ImportFile(const FDoodleListViewData& In_Path) override;
+public:
+	virtual FString GetImportPath(const FDoodleParseFileImportData& In_Path) const override;
+	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
+	virtual FString GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
+	virtual void CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const override;
 };
 
 
