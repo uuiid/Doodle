@@ -212,6 +212,7 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
 	UAnimSequence* L_AnimSequence{};
 	USkeletalMesh* L_SkeletalMesh{};
+	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	if (TArray<UObject*> L_Objs = AssetToolsModule.Get().ImportAssetsAutomated(L_Data); !L_Objs.IsEmpty())
 	{
 		for (UObject* L_Obj : L_Objs)
@@ -219,18 +220,22 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 			if (L_Obj->IsA(UAnimSequence::StaticClass()))
 			{
 				L_AnimSequence = CastChecked<UAnimSequence>(L_Obj);
-				L_AnimSequence->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
-					L_AnimSequence, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
-				);
-				if (L_AnimSequence->IsDataModelValid())
-				{
-					L_AnimSequence->CompressCommandletVersion = 0;
-					L_AnimSequence->ClearAllCachedCookedPlatformData();
-					L_AnimSequence->CacheDerivedDataForCurrentPlatform();
-				}
+				L_SkeletalMesh = L_AnimSequence->GetSkeleton()->FindCompatibleMesh();
 			}
 			else if (L_Obj->IsA(USkeletalMesh::StaticClass()))
 			{
+				L_SkeletalMesh = CastChecked<USkeletalMesh>(L_Obj);
+				TArray<FAssetData> OutAssetData;
+				IAssetRegistry::Get()->GetAssetsByPath(FName(*In_Path.ImportPathDir), OutAssetData, false);
+				for (const FAssetData& Asset : OutAssetData)
+				{
+					EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
+					if (UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset()); Anim && Anim->GetSkeleton() == L_SkeletalMesh->GetSkeleton())
+					{
+						L_AnimSequence = Anim;
+						break;
+					}
+				}
 			}
 		}
 	}
@@ -238,6 +243,17 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 	if (!LevelSequenceMap.Contains(In_Path)) return;
 	if (!L_AnimSequence) return;
 	if (!L_SkeletalMesh) return;
+
+	L_AnimSequence->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+		L_AnimSequence, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
+	);
+	if (L_AnimSequence->IsDataModelValid())
+	{
+		L_AnimSequence->CompressCommandletVersion = 0;
+		L_AnimSequence->ClearAllCachedCookedPlatformData();
+		L_AnimSequence->CacheDerivedDataForCurrentPlatform();
+	}
+
 
 	auto L_ShotLevel = LevelSequenceMap[In_Path].LevelSequenceWorld;
 	auto L_ShotSequence = LevelSequenceMap[In_Path].LevelSequence;
@@ -263,8 +279,8 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 	AnimSection->SetPreRollFrames(50 * FrameTick);
 	L_Actor->Modify();
 	L_ShotLevel->Modify();
-	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	EditorAssetSubsystem->SaveLoadedAssets({L_ShotSequence, L_ShotLevel});
+	EditorAssetSubsystem->SaveDirectory(In_Path.ImportPathDir);
 }
 
 
@@ -710,7 +726,6 @@ void UDoodleBaseImport::ImportFile(const FDoodleListViewData& In_Path)
 	switch (In_Path.IsCamera)
 	{
 	case FDoodleImportType::Fbx:
-
 		ImportFileFbx(In_Path);
 		break;
 	case FDoodleImportType::AbcHair:
@@ -733,7 +748,7 @@ void UDoodleBaseImport::LoadLevelSequenceAndWorld(const FDoodleListViewData& In_
 	ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *In_Path.ImportPathDir);
 	auto L_World = GetWorldPath(In_Path);
 	UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *L_World);
-	if (!L_ShotSequence && !L_ShotLevel)
+	if (L_ShotSequence && L_ShotLevel)
 		LevelSequenceMap.Add(In_Path, FDoodleBaseImportValuePair{L_ShotSequence, L_ShotLevel});
 }
 
@@ -807,14 +822,14 @@ FString UDoodleLightImport::GetImportPath(const FDoodleParseFileImportData& In_P
 	{
 	case FDoodleImportType::Fbx:
 		return FString::Printf(
-			TEXT("/Game/Shot/ep%.4d/%s/%s/Import_Lig/Fbx%s"),
-			In_Path.Eps, *L_BaseName, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			TEXT("/Game/Shot/ep%.4d/%s/Import_Lig/Fbx_%s"),
+			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::AbcHair:
 	case FDoodleImportType::AbcGeoCache:
 		return FString::Printf(
-			TEXT("/Game/Shot/ep%.4d/%s/%s/Import_Lig/Abc%s"),
-			In_Path.Eps, *L_BaseName, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			TEXT("/Game/Shot/ep%.4d/%s/Import_Lig/Abc_%s"),
+			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::Camera:
 	case FDoodleImportType::End:
@@ -862,7 +877,7 @@ void UDoodleLightImport::CreateOtherData(const FDoodleLevelSequenceKey& In_Level
 		EditorAssetSubsystem->MakeDirectory(LigFolder2);
 	}
 
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s_Lig"),
+	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"),
 		*In_LevelSequenceKey.ProjectName.ToUpper(),
 		In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
@@ -902,14 +917,14 @@ FString UDoodleVfxImport::GetImportPath(const FDoodleParseFileImportData& In_Pat
 	{
 	case FDoodleImportType::Fbx:
 		return FString::Printf(
-			TEXT("/Game/Shot/ep%.4d/%s/%s/Import_Vfx/Fbx_%s"),
-			In_Path.Eps, *L_BaseName, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			TEXT("/Game/Shot/ep%.4d/%s/Import_Vfx/Fbx_%s"),
+			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::AbcHair:
 	case FDoodleImportType::AbcGeoCache:
 		return FString::Printf(
-			TEXT("/Game/Shot/ep%.4d/%s/%s/Import_Vfx/Abc_%s"),
-			In_Path.Eps, *L_BaseName, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			TEXT("/Game/Shot/ep%.4d/%s/Import_Vfx/Abc_%s"),
+			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::Camera:
 	case FDoodleImportType::End:
@@ -975,14 +990,14 @@ FString UDoodleWbImport::GetImportPath(const FDoodleParseFileImportData& In_Path
 	// );
 	case FDoodleImportType::Fbx:
 		return FString::Printf(
-			TEXT("/Game/Shot/ep%.4d/%s/%s/Import_WB/Fbx%s"),
-			In_Path.Eps, *L_BaseName, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			TEXT("/Game/Shot/ep%.4d/%s/Import_WB/Fbx_%s"),
+			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::AbcHair:
 	case FDoodleImportType::AbcGeoCache:
 		return FString::Printf(
-			TEXT("/Game/Shot/ep%.4d/%s/%s/Import_WB/Abc%s"),
-			In_Path.Eps, *L_BaseName, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			TEXT("/Game/Shot/ep%.4d/%s/Import_WB/Abc_%s"),
+			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::Camera:
 	case FDoodleImportType::End:
@@ -1194,7 +1209,7 @@ private:
 void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 {
 	const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
-	ImportCore = NewObject<UDoodleBaseImport>(GetTransientPackage(), NAME_None, RF_Transient);
+	ImportCore = NewObject<UDoodleLightImport>(GetTransientPackage(), NAME_None, RF_Transient);
 #if PLATFORM_WINDOWS
 	const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
 #else
@@ -1371,7 +1386,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 					                                                                         .DefaultLabel(LOCTEXT("Import File", "导入的文件"))
 
 					                                                                         + SHeaderRow::Column(TEXT("Import_Project"))
-					                                                                         .FillWidth(4.0f)
+					                                                                         .FillWidth(0.2f)
 					                                                                         .DefaultLabel(LOCTEXT("Import File", "项目"))
 
 					                                                                         + SHeaderRow::Column(TEXT("Ep_And_Shot"))
