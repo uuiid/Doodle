@@ -693,6 +693,38 @@ void ImportFile_xgen()
 	// EditorAssetSubsystem->SaveLoadedAssets(L_Geos);
 }
 
+void UDoodleBaseImport::ImportFile(const FDoodleListViewData& In_Path)
+{
+	switch (In_Path.IsCamera)
+	{
+	case FDoodleImportType::Fbx:
+	case FDoodleImportType::AbcGeoCache:
+		if (!LevelSequenceMap.Contains(In_Path))
+			LoadLevelSequenceAndWorld(In_Path);
+		break;
+	default:
+		break;
+	}
+	switch (In_Path.IsCamera)
+	{
+	case FDoodleImportType::Fbx:
+
+		ImportFileFbx(In_Path);
+		break;
+	case FDoodleImportType::AbcHair:
+		ImportFileAbc(In_Path);
+		break;
+	case FDoodleImportType::Camera:
+		ImportFileCamera(In_Path);
+		break;
+	case FDoodleImportType::AbcGeoCache:
+	case FDoodleImportType::End:
+	default:
+		break;
+	}
+	CreateOtherData(In_Path);
+}
+
 
 FDoodleListViewData UDoodleBaseImport::ParseFiles(const FString& InPath)
 {
@@ -1475,9 +1507,9 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
 			AddFile(Path);
 	}
 	// 优先相机
-	ListImportData.StableSort([](const FImportDataType::ElementType& In_R, const FImportDataType::ElementType& In_L)
+	ListImportData.StableSort([](const FImportDataType& In_R, const FImportDataType& In_L)
 		{
-			return In_R.IsCamera > In_L.IsCamera;
+			return In_R->IsCamera > In_L->IsCamera;
 		});
 	ListImportGui->RebuildList();
 

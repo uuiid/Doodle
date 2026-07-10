@@ -23,7 +23,6 @@ ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
 
 class SDoodleImportFbxUI;
 
- 
 
 // 基础的导入类
 // Lig 灯光导入
@@ -49,8 +48,50 @@ struct FDoodleLevelSequenceKey
 	FString ShotAb{};
 	int32_t StartTime{};
 	int32_t EndTime{};
+
+	friend bool operator==(const FDoodleLevelSequenceKey& Lhs, const FDoodleLevelSequenceKey& RHS)
+	{
+		return Tie(Lhs.ProjectName, Lhs.Eps, Lhs.Shot, Lhs.ShotAb, Lhs.StartTime, Lhs.EndTime) == Tie(RHS.ProjectName, RHS.Eps, RHS.Shot,
+			RHS.ShotAb, RHS.StartTime, RHS.EndTime);
+	}
+
+	friend bool operator!=(const FDoodleLevelSequenceKey& Lhs, const FDoodleLevelSequenceKey& RHS)
+	{
+		return !(Lhs == RHS);
+	}
+
+	friend bool operator<(const FDoodleLevelSequenceKey& Lhs, const FDoodleLevelSequenceKey& RHS)
+	{
+		return Tie(Lhs.ProjectName, Lhs.Eps, Lhs.Shot, Lhs.ShotAb, Lhs.StartTime, Lhs.EndTime) < Tie(RHS.ProjectName, RHS.Eps, RHS.Shot,
+			RHS.ShotAb, RHS.StartTime, RHS.EndTime);
+	}
+
+	friend bool operator<=(const FDoodleLevelSequenceKey& Lhs, const FDoodleLevelSequenceKey& RHS)
+	{
+		return !(RHS < Lhs);
+	}
+
+	friend bool operator>(const FDoodleLevelSequenceKey& Lhs, const FDoodleLevelSequenceKey& RHS)
+	{
+		return RHS < Lhs;
+	}
+
+	friend bool operator>=(const FDoodleLevelSequenceKey& Lhs, const FDoodleLevelSequenceKey& RHS)
+	{
+		return !(Lhs < RHS);
+	}
 };
 
+FORCEINLINE uint32 GetTypeHash(const FDoodleLevelSequenceKey& Key)
+{
+	uint32 Hash = FCrc::StrCrc32(*Key.ProjectName);
+	Hash = HashCombine(Hash, GetTypeHash(Key.Eps));
+	Hash = HashCombine(Hash, GetTypeHash(Key.Shot));
+	Hash = HashCombine(Hash, FCrc::StrCrc32(*Key.ShotAb));
+	Hash = HashCombine(Hash, GetTypeHash(Key.StartTime));
+	Hash = HashCombine(Hash, GetTypeHash(Key.EndTime));
+	return Hash;
+}
 
 USTRUCT()
 struct FDoodleParseFileImportData : public FDoodleLevelSequenceKey
@@ -127,15 +168,10 @@ public:
 	}
 
 	// 开始导入
-	virtual void ImportFile(const FDoodleListViewData& In_Path)
-	{
-		CreateOtherData(In_Path);
-	}
+	void ImportFile(const FDoodleListViewData& In_Path);
 
 	// 加载关卡
-	virtual void LoadLevelSequenceAndWorld(const FDoodleListViewData& In_Path)
-	{
-	}
+	void LoadLevelSequenceAndWorld(const FDoodleListViewData& In_Path);
 
 	// 解析文件
 	FDoodleListViewData ParseFiles(const FString& InPath);
