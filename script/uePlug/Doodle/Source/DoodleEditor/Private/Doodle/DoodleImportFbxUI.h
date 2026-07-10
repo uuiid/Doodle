@@ -238,7 +238,7 @@ public:
 
 	const FString& GetUserFolderName() const;
 
-	const FString& GetPathPrefix() const;
+
 	const EImportSuffix& GetDepartment() const;
 
 private:
@@ -257,7 +257,8 @@ private:
 
 	// @brief 导入文件
 	void ImportFile();
-
+	// 切换部门时, 重新计算列
+	void SwitchDepartment();
 
 	/**
 	 * @brief 添加文件

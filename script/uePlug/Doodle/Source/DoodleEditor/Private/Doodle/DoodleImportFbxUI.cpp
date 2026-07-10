@@ -120,7 +120,9 @@
 #include "Alembic/AbcGeom/All.h"
 #include "Alembic/Abc/IObject.h"
 #include "GroomCacheImportOptions.h"
+#include "InterchangeGenericAssetsPipeline.h"
 #include "ObjectTools.h"
+#include "SkeletonTreeBuilder.h"
 
 
 #define LOCTEXT_NAMESPACE "SDoodleImportFbxUI"
@@ -725,6 +727,15 @@ void UDoodleBaseImport::ImportFile(const FDoodleListViewData& In_Path)
 	CreateOtherData(In_Path);
 }
 
+void UDoodleBaseImport::LoadLevelSequenceAndWorld(const FDoodleListViewData& In_Path)
+{
+	auto L_LevelSequence = GetLevelPath(In_Path);
+	ULevelSequence* L_ShotSequence = LoadObject<ULevelSequence>(nullptr, *In_Path.ImportPathDir);
+	auto L_World = GetWorldPath(In_Path);
+	UWorld* L_ShotLevel = LoadObject<UWorld>(nullptr, *L_World);
+	if (!L_ShotSequence && !L_ShotLevel)
+		LevelSequenceMap.Add(In_Path, FDoodleBaseImportValuePair{L_ShotSequence, L_ShotLevel});
+}
 
 FDoodleListViewData UDoodleBaseImport::ParseFiles(const FString& InPath)
 {
@@ -1183,7 +1194,7 @@ private:
 void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 {
 	const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
-
+	ImportCore = NewObject<UDoodleBaseImport>(GetTransientPackage(), NAME_None, RF_Transient);
 #if PLATFORM_WINDOWS
 	const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
 #else
@@ -1437,6 +1448,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 
 void SDoodleImportFbxUI::AddReferencedObjects(FReferenceCollector& collector)
 {
+	collector.AddReferencedObject(ImportCore);
 }
 
 TSharedRef<SDockTab> SDoodleImportFbxUI::OnSpawnAction(const FSpawnTabArgs& SpawnTabArgs)
@@ -1447,6 +1459,35 @@ TSharedRef<SDockTab> SDoodleImportFbxUI::OnSpawnAction(const FSpawnTabArgs& Spaw
 		]; // 这里创建我们自己的界面
 }
 
+void SDoodleImportFbxUI::SwitchDepartment()
+{
+	switch (Department)
+	{
+	case EImportSuffix::Light:
+		ImportCore = NewObject<UDoodleLightImport>(GetTransientPackage(), NAME_None, RF_Transient);
+		break;
+	case EImportSuffix::Vfx:
+		ImportCore = NewObject<UDoodleVfxImport>(GetTransientPackage(), NAME_None, RF_Transient);
+		break;
+	case EImportSuffix::WorldBinding:
+		ImportCore = NewObject<UDoodleWbImport>(GetTransientPackage(), NAME_None, RF_Transient);
+		break;
+	default:
+		break;;
+	}
+	TArray<FString> L_AllPaths{};
+	for (auto&& i : ListImportData)
+		L_AllPaths.Emplace(i->Path);
+	ListImportData.Empty();
+	for (auto&& i : L_AllPaths)
+		AddFile(i);
+	// 优先相机
+	ListImportData.StableSort([](const FImportDataType& In_R, const FImportDataType& In_L)
+		{
+			return In_R->IsCamera > In_L->IsCamera;
+		});
+	ListImportGui->RebuildList();
+}
 
 void SDoodleImportFbxUI::ImportFile()
 {
