@@ -16,7 +16,7 @@ namespace UnFbx
 class UGeometryCache;
 
 UENUM()
-enum class EImportSuffix : uint8 { Lig = 0, Vfx, WB, End };
+enum class EImportSuffix : uint8 { Light = 0, Vfx, WorldBinding, End };
 
 ENUM_RANGE_BY_COUNT(EImportSuffix, EImportSuffix::End)
 
@@ -241,10 +241,25 @@ USTRUCT()
 struct FDoodleListViewData : public FDoodleParseFileImportData
 {
 	GENERATED_BODY()
+	// 要导入的文件
 	FString Path;
+	// 导入后的路径
 	FString ImportPath;
+	FString ImportPathDir;
+	UPROPERTY()
+	TObjectPtr<USkeleton> Skeleton;
 };
 
+USTRUCT()
+struct FDoodleBaseImportValuePair
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TObjectPtr<ULevelSequence> LevelSequence;
+	UPROPERTY()
+	TObjectPtr<UWorld> LevelSequenceWorld;
+};
 
 UCLASS()
 class UDoodleBaseImport : public UObject
@@ -257,7 +272,7 @@ public:
 	}
 
 	UPROPERTY()
-	TMap<FDoodleLevelSequenceKey, ULevelSequence*> LevelSequenceMap;
+	TMap<FDoodleLevelSequenceKey, FDoodleBaseImportValuePair> LevelSequenceMap;
 
 	FFrameRate TickRate{60000, 1};
 	FFrameRate Rate{25, 1};
@@ -275,7 +290,10 @@ public:
 	{
 	}
 
-	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey);
+	virtual FString GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey)
+	{
+		return {};
+	};
 
 	virtual FString GetImportPath(const FDoodleParseFileImportData& In_Path) const
 	{
@@ -329,7 +347,7 @@ public:
 
 	SLATE_END_ARGS()
 
-	using UDoodleBaseImportDataPtrType = TObjectPtr<UDoodleBaseImportData>;
+	using FImportDataType = TSharedPtr<FDoodleListViewData>;
 
 	// 这里是内容创建函数
 	void Construct(const FArguments& Arg);
@@ -345,38 +363,25 @@ public:
 	const FString& GetUserFolderName() const;
 
 	const FString& GetPathPrefix() const;
-	const EImportSuffix& GetPathSuffix() const;
+	const EImportSuffix& GetDepartment() const;
 
 private:
 	FString UserFolderName;
 	/// @brief 导入的列表
-	TSharedPtr<SListView<UDoodleBaseImportDataPtrType>> ListImportGui;
+	TSharedPtr<SListView<FImportDataType>> ListImportGui;
 	/// @brief 导入的列表数据
-	TArray<UDoodleBaseImportDataPtrType> ListImportData;
-
+	TArray<FImportDataType> ListImportData;
+	// 导入的核心类
+	TObjectPtr<UDoodleBaseImport> ImportCore;
 
 	/// 导入路径的后缀
-	FString Path_Prefix;
-	EImportSuffix Path_Suffix;
-	TArray<TSharedPtr<FString>> All_Path_Suffix{};
+	EImportSuffix Department{EImportSuffix::Light};
+	TArray<TSharedPtr<EImportSuffix>> All_Path_Suffix{};
 	ECheckBoxState OnlyCamera{ECheckBoxState::Unchecked};
 
-	// 判断fbx是否是相机fbx
-	bool IsCamera(const FString& In_File);
 	// @brief 导入文件
 	void ImportFile();
 
-	/**
-	 * @brief 根据传入的路径生成前缀
-	 *
-	 * @param In_Path_Prefix 传入的路径
-	 */
-	void GenPathPrefix(const FString& In_Path_Prefix, EImportSuffix In_Path_Suffix);
-	// 检查fbx是否只导入动画
-	void SetFbxOnlyAnim();
-
-	// 匹配相机和文件
-	void MatchCameraAndFile();
 
 	/**
 	 * @brief 添加文件
