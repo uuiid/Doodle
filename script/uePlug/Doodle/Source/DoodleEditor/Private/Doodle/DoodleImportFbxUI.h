@@ -124,7 +124,7 @@ struct FDoodleBaseImportValuePair
 	TObjectPtr<UWorld> LevelSequenceWorld;
 };
 
-UCLASS()
+UCLASS(Transient, Within=Package)
 class UDoodleBaseImport : public UObject
 {
 public:

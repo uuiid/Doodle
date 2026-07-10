@@ -740,6 +740,10 @@ void UDoodleBaseImport::ImportFile(const FDoodleListViewData& In_Path)
 		break;
 	}
 	CreateOtherData(In_Path);
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(
+		true, // bSaveMapPackages: 保存关卡
+		true // bSaveContentPackages: 保存内容资产（如材质、蓝图等）
+	);
 }
 
 void UDoodleBaseImport::LoadLevelSequenceAndWorld(const FDoodleListViewData& In_Path)
@@ -1499,7 +1503,7 @@ void SDoodleImportFbxUI::SwitchDepartment()
 	// 优先相机
 	ListImportData.StableSort([](const FImportDataType& In_R, const FImportDataType& In_L)
 		{
-			return In_R->IsCamera > In_L->IsCamera;
+			return In_R->IsCamera < In_L->IsCamera;
 		});
 	ListImportGui->RebuildList();
 }
@@ -1515,6 +1519,7 @@ void SDoodleImportFbxUI::ImportFile()
 		if (OnlyCamera == ECheckBoxState::Checked && i->IsCamera != FDoodleImportType::Camera) continue;
 		ImportCore->ImportFile(*i);
 	}
+	ImportCore->LevelSequenceMap.Empty();
 }
 
 
@@ -1565,7 +1570,7 @@ FReply SDoodleImportFbxUI::OnDrop(const FGeometry& InGeometry, const FDragDropEv
 	// 优先相机
 	ListImportData.StableSort([](const FImportDataType& In_R, const FImportDataType& In_L)
 		{
-			return In_R->IsCamera > In_L->IsCamera;
+			return In_R->IsCamera < In_L->IsCamera;
 		});
 	ListImportGui->RebuildList();
 
