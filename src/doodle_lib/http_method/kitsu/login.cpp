@@ -60,6 +60,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> auth_login::post(s
 
   if (!bcrypt::validatePassword(l_data.password_, l_p->password_)) {
     ++l_p->login_failed_attemps_;
+    l_p->last_login_failed_ = chrono::system_zoned_time{chrono::current_zone(), chrono::system_clock::now()};
     co_await l_sql.update(l_p);
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "密码错误"});
   }
