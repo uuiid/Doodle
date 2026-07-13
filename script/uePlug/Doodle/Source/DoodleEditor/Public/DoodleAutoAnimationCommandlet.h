@@ -68,7 +68,6 @@ public:
 
 
 	int RunAutoLight(const FString& InCondigPath);
-	int RunCheckFiles(const FString& InCondigPath);
 	int ImportRig(const FString& InCondigPath);
 
 private:

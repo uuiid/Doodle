@@ -84,6 +84,7 @@
 #include "Engine/SkeletalMeshLODSettings.h"
 // 导入需要
 
+#include "GroomAsset.h"
 #include "InterchangeGenericAnimationPipeline.h"
 #include "InterchangeManager.h"
 #include "InterchangeSourceData.h"
@@ -93,6 +94,10 @@
 #include "InterchangeGenericTexturePipeline.h"
 #include "GeometryCollection/GeometryCollectionParticlesData.h"
 #include "Nodes/InterchangeBaseNodeContainer.h"
+
+#include "GroomAsset.h"
+#include "GroomBindingAsset.h"
+#include "GroomBlueprintLibrary.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
 	: Super()
@@ -111,10 +116,6 @@ int32 UDoodleAutoAnimationCommandlet::Main(const FString& Params)
 	if (const FString& Key = TEXT("Params"); ParamsMap.Contains(Key))
 	{
 		return RunAutoLight(ParamsMap[Key]);
-	}
-	if (const FString& Key2 = TEXT("Check"); ParamsMap.Contains(Key2))
-	{
-		return RunCheckFiles(ParamsMap[Key2]);
 	}
 	if (const FString& Key3 = TEXT("ImportRig"); ParamsMap.Contains(Key3))
 	{
@@ -173,8 +174,14 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	FString L_Skin_Path = JsonObject->HasField(TEXT("skin_path"))
 		? JsonObject->GetStringField(TEXT("skin_path"))
 		: TEXT("");
+	FString L_Groom_Path = JsonObject->HasField(TEXT("groom_path"))
+		? JsonObject->GetStringField(TEXT("groom_path"))
+		: TEXT("");
+
+
 	const TObjectPtr<USkeleton> L_Skeleton = LoadObject<USkeleton>(nullptr, *L_Skin_Path);
 	TArray<UObject*> ImportedObjs = CreateCharacterImportTask(FbxPath, L_Skeleton, false);
+
 
 	if (ImportedObjs.IsEmpty())
 	{
@@ -208,151 +215,22 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 			L_Mat.MaterialSlotName = FName{L_Mat.MaterialSlotName.ToString() + L_BanBen_Suffix};
 			L_Mat.MaterialInterface = L_New_Material_Object;
 		}
-
-
-	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
-	return 0;
-}
-
-int UDoodleAutoAnimationCommandlet::RunCheckFiles(const FString& InCondigPath)
-{
-	FixMaterialParameterCollection();
-
-	//--------------------
-	TSharedPtr<FJsonObject> JsonObject;
-	if (FString JsonString; FFileHelper::LoadFileToString(JsonString, *InCondigPath))
-	{
-		const TSharedRef<TJsonReader<>> JsonReader = TJsonReaderFactory<>::Create(JsonString);
-		FJsonSerializer::Deserialize(JsonReader, JsonObject);
-	}
-
-	//--------------------
-	RenderMapPath = JsonObject->GetStringField(TEXT("render_map"));
-	CreateMapPath = JsonObject->GetStringField(TEXT("create_map"));
-	OriginalMapPath = JsonObject->HasField(TEXT("original_map"))
-		? JsonObject->GetStringField(TEXT("original_map"))
-		: FString{};
-	DestinationPath = JsonObject->GetStringField(TEXT("out_file_dir"));
-	ImportPath = JsonObject->GetStringField(TEXT("import_dir"));
-
-	SequencePath = JsonObject->GetStringField(TEXT("level_sequence_import"));
-	MoviePipelineConfigPath = JsonObject->GetStringField(TEXT("movie_pipeline_config"));
-
-	if (JsonObject->HasField(TEXT("import_files")))
-	{
-		const TSharedPtr<FJsonObject>& JsonFiles = JsonObject->GetObjectField(TEXT("import_files"));
-		const FString Path = JsonFiles->GetStringField(TEXT("path"));
-		const FString Type = JsonFiles->GetStringField(TEXT("type"));
-		if (FPaths::FileExists(Path))
-		{
-			EImportFilesType2 Type2 = EImportFilesType2::Camera;
-			if (Type == TEXT("cam")) Type2 = EImportFilesType2::Camera;
-			else if (Type == TEXT("char")) Type2 = EImportFilesType2::Character;
-			else if (Type == TEXT("geo")) Type2 = EImportFilesType2::Geometry;
-			ImportFiles.Add(FImportFiles2{Type2, Path});
-		}
-	}
-
-	if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("char_")) CheckFileType = ECheckFileType::Character;
-	else if (JsonObject->GetStringField(TEXT("check_type")) == TEXT("scene")) CheckFileType = ECheckFileType::Scene;
-	else CheckFileType = ECheckFileType::Scene;
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-
-
-	//--------------------
-	DeleteAsseet(RenderMapPath);
-	DeleteAsseet(CreateMapPath);
-	DeleteAsseet(SequencePath);
-	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
-
-	// 创建主要的关卡和关卡序列
-	OnCreateSequence();
-	OnCreateSequenceWorld();
-	// 加载渲染关卡
-	if (!OriginalMapPath.IsEmpty())
+	if (!L_Groom_Path.IsEmpty() && EditorAssetSubsystem->DoesDirectoryExist(L_Groom_Path))
 	{
-		EditorAssetSubsystem->DuplicateAsset(OriginalMapPath, RenderMapPath);
-		TheRenderWorld = LoadObject<UWorld>(nullptr, *RenderMapPath);
-		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld);
-		// FString Filename;
-		// FPackageName::TryConvertLongPackageNameToFilename(RenderMapPath, Filename);
-		UPackage* Package = LoadPackage(NULL, *RenderMapPath, 0);
-		TheRenderWorld = UWorld::FindWorldInPackage(Package);
-
-
-		// Clean up any previous world.  The world should have already been saved
-		UWorld* ExistingWorld = GEditor->GetEditorWorldContext().World();
-
-		GEngine->DestroyWorldContext(ExistingWorld);
-		ExistingWorld->DestroyWorld(true, TheRenderWorld);
-
-		GWorld = TheRenderWorld;
-
-		TheRenderWorld->WorldType = EWorldType::Editor;
-
-		FWorldContext& WorldContext = GEngine->CreateNewWorldContext(TheRenderWorld->WorldType);
-		WorldContext.SetCurrentWorld(TheRenderWorld);
-
-		// add the world to the root set so that the garbage collection to delete replaced actors doesn't garbage collect the whole world
-		TheRenderWorld->AddToRoot();
-
-		// initialize the levels in the world
-		TheRenderWorld->InitWorld(UWorld::InitializationValues().AllowAudioPlayback(false));
-		TheRenderWorld->GetWorldSettings()->PostEditChange();
-		TheRenderWorld->UpdateWorldComponents(true, false);
-
-		// UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
-		UGameplayStatics::FlushLevelStreaming(TheRenderWorld);
-	}
-	else
-	{
-		UWorldFactory* Factory = NewObject<UWorldFactory>();
-		UPackage* Pkg = CreatePackage(*RenderMapPath);
-		Pkg->FullyLoad();
-		Pkg->MarkPackageDirty();
-		const FString PackagePath = FPackageName::GetLongPackagePath(RenderMapPath);
-		const FString BaseFileName = FPaths::GetBaseFilename(RenderMapPath);
-		//---------------
-		const FAssetToolsModule& AssetToolsModule = FModuleManager::LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
-		TheRenderWorld = CastChecked<UWorld>(AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), Factory));
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
-		AssetRegistryModule.Get().AssetCreated(TheRenderWorld);
-		//------------------------
-		TheRenderWorld->Modify();
-		EditorAssetSubsystem->SaveLoadedAsset(TheRenderWorld, false);
-	}
-	// 创建标准环境
-	if (CheckFileType == ECheckFileType::Scene) ClearAllLight();
-	OnCreateCheckLight();
-
-	// 创建主要定序器
-	switch (CheckFileType)
-	{
-	case ECheckFileType::Character:
-		OnBuildCheckCharacter();
-		break;
-	case ECheckFileType::Scene:
-		OnBuildCheckScene();
-		break;
-	default:
-		break;
-	}
-
-	AddSequenceWorldToRenderWorld();
-	TArray<UObject*> AllLevels{TheLevelSequence, TheSequenceWorld, TheRenderWorld};
-	for (ULevelStreaming* StreamingLevel : TheRenderWorld->GetStreamingLevels())
-	{
-		if (const ULevel* Level = StreamingLevel->GetLoadedLevel(); Level)
+		// 生成 UGroomBindingAsset
+		TArray<FAssetData> OutAssetData;
+		FARFilter L_Filter{};
+		L_Filter.PackagePaths.Add(*L_Groom_Path);
+		L_Filter.ClassPaths.Add(UGroomAsset::StaticClass()->GetClassPathName());
+		IAssetRegistry::Get()->GetAssets(L_Filter, OutAssetData);
+		for (FAssetData& InAssetData : OutAssetData)
 		{
-			AllLevels.Add(StreamingLevel->GetLoadedLevel());
-			Level->GetPackage()->MarkPackageDirty();
+			UGroomBlueprintLibrary::CreateNewGroomBindingAsset(Cast<UGroomAsset>(InAssetData.GetAsset()), TmpSkeletalMesh);
 		}
 	}
 
-	EditorAssetSubsystem->SaveLoadedAssets(AllLevels, false);
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
-	// 创建渲染配置
-	OnSaveReanderConfig();
 	return 0;
 }
 
