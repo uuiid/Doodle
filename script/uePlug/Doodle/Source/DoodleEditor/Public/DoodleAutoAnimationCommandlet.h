@@ -89,8 +89,6 @@ private:
 
 	/// 主要灯光定序器中的导入数据
 	void OnBuildSequence();
-	/// 创建检查角色的定序器
-	void OnBuildCheckCharacter();
 	/// 创建检查场景的定序器
 	void OnBuildCheckScene();
 
