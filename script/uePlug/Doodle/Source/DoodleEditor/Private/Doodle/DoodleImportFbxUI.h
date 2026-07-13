@@ -8,6 +8,8 @@
 #include "DoodleImportFbxUI.generated.h"
 // clang-format on
 
+class ULevelSequence;
+class UWorld;
 namespace UnFbx
 {
 	class FFbxImporter;

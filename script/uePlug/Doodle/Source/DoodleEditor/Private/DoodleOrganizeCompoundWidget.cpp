@@ -10,6 +10,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetToolsModule.h"
 #include "AssetViewUtils.h"
+#include "GroomAsset.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 #include "ObjectTools.h"
@@ -17,6 +18,7 @@
 #include "Materials/MaterialInstance.h"
 #include "Materials/MaterialParameterCollection.h"
 #include "HAL/FileManager.h"
+#include "GroomBindingAsset.h"
 #include "PhysicsEngine/PhysicsAsset.h"
 
 const FName UDoodleOrganizeCompoundWidget::Name{ TEXT("DoodleOrganizeCompoundWidget") };
@@ -961,6 +963,11 @@ FReply UDoodleOrganizeCompoundWidget::GenerateModeFolders()
         {
             MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Material"));
         }
+    	else if (SelectedData.GetClass()->IsChildOf<UGroomAsset>() 
+    		|| SelectedData.GetClass()->IsChildOf<UGroomBindingAsset>())
+    	{
+    		MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Meshs/Groom"));
+    	}
         else if (SelectedData.GetClass() == UMaterial::StaticClass())
         {
             MakeDirectoryByTypeMode(FolderPath, SelectedData, TEXT("Material/Mu01"));
