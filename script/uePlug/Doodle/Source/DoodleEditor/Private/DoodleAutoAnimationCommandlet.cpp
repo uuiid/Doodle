@@ -825,7 +825,7 @@ TArray<UObject*> UDoodleAutoAnimationCommandlet::CreateCharacterImportTask(const
 	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->bImportOnlyAnimations = InSkeleton != nullptr;
 	L_AssetPipeline->CommonSkeletalMeshesAndAnimationsProperties->Skeleton = InSkeleton;
 	L_AssetPipeline->AnimationPipeline->bImportAnimations = bImportAnimations;
-	L_AssetPipeline->MaterialPipeline->bImportMaterials = true;
+	L_AssetPipeline->MaterialPipeline->bImportMaterials = false;
 	L_AssetPipeline->MaterialPipeline->SearchLocation = EInterchangeMaterialSearchLocation::UnderRoot;
 	L_AssetPipeline->MaterialPipeline->TexturePipeline->bImportTextures = false;
 	ImportParams.OverridePipelines.Add(L_AssetPipeline);
