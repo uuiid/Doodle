@@ -32,12 +32,14 @@ struct import_skin_file {
   FSys::path import_dir_{};
   std::string ban_ben_suffix_;  // 版本后缀, 用于查找材质时, 进行对应的版本转换
   FSys::path skin_path_;        // 对应的骨骼位置, 如果有的话使用同一根骨骼
+  FSys::path groom_path_;       // 对应的毛发位置, 如果有的话
 
   friend void to_json(nlohmann::json& j, const import_skin_file& p) {
     j["fbx_file"]       = p.fbx_file_;
     j["import_dir"]     = p.import_dir_;
     j["ban_ben_suffix"] = p.ban_ben_suffix_;
     j["skin_path"]      = p.skin_path_;
+    j["groom_path"]     = p.groom_path_;
   }
 };
 void fix_project(const FSys::path& in_project_path);
@@ -52,6 +54,7 @@ struct run_ue_assembly_asset_info {
   std::bitset<2> simulation_type_;  // 0: 带布料 1: 带毛发
   FSys::path ue_project_dir_;       // ue项目文件夹路径
   std::string ban_ben_suffix_;      // 版本后缀, 用于查找材质时, 进行对应的版本转换
+  FSys::path groom_path_;           // 毛发路径, 如果有的话
 
   // to json
   friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {

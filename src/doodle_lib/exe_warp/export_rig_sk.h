@@ -39,6 +39,7 @@ class export_rig_sk_arg : public async_task {
     std::map<std::string, std::string> rename_map_;   // 重命名映射
     std::string ban_ben_suffix_;                      // 版本后缀, 用于查找材质时, 进行对应的版本转换
     FSys::path skin_path_;                            // 对应的骨骼位置, 如果有的话使用同一根骨骼
+    FSys::path groom_path_;                           // 对应的毛发位置, 如果有的话
     // 是否创建评论
     bool create_task_comment_{false};
 
@@ -52,6 +53,7 @@ class export_rig_sk_arg : public async_task {
       j["ban_ben_suffix"]      = p.ban_ben_suffix_;
       j["create_task_comment"] = p.create_task_comment_;
       j["skin_path"]           = p.skin_path_;
+      j["groom_path"]          = p.groom_path_;
     }
     // from json
     friend void from_json(const nlohmann::json& j, data_t& p) {
@@ -63,6 +65,7 @@ class export_rig_sk_arg : public async_task {
       if (j.contains("ban_ben_suffix")) j.at("ban_ben_suffix").get_to(p.ban_ben_suffix_);
       if (j.contains("create_task_comment")) j.at("create_task_comment").get_to(p.create_task_comment_);
       if (j.contains("skin_path")) j.at("skin_path").get_to(p.skin_path_);
+      if (j.contains("groom_path")) j.at("groom_path").get_to(p.groom_path_);
     }
   };
   data_t impl_{};
