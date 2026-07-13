@@ -1016,6 +1016,10 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 		}
 	}
 	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheSequenceWorld});
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(
+		true, // bSaveMapPackages: 保存关卡
+		true // bSaveContentPackages: 保存内容资产（如材质、蓝图等）
+	);
 }
 
 void UDoodleAutoAnimationCommandlet::HideMaterials(const ASkeletalMeshActor* InActor) const
