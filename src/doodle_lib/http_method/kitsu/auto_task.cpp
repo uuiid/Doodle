@@ -335,6 +335,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value);
             l_ret.asset_infos_[l_idx].ban_ben_suffix_ =
                 l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
+            l_ret.asset_infos_[l_idx].groom_path_ = l_ret.asset_infos_[l_idx].skin_path_.parent_path() / "Groom";
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
