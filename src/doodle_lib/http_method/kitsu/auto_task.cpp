@@ -437,6 +437,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         "无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string()
     );
     l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
+    l_info.groom_path_ = conv_ue_game_path(l_info.groom_path_);
   }
 
   return l_ret;
