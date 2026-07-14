@@ -423,14 +423,13 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         (l_info.ue_project_dir_ / l_info.skin_path_).string()
 
     )
-    if (!l_info.groom_name_.empty()) {
+    if (!l_info.groom_name_.empty())
       DOODLE_CHICK_HTTP(
           !(l_info.type_ == import_and_render_ue_ns::import_ue_type::geo &&
             !FSys::exists(l_info.ue_project_dir_ / l_info.groom_path_)),
           bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
           (l_info.ue_project_dir_ / l_info.groom_path_).string()
       )
-    }
   }
 
   // #endif
