@@ -232,12 +232,10 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
       auto&& l_info = l_ret.asset_infos_[i];
       auto l_stem   = l_info.shot_output_path_.stem().string().substr(l_shot_file_name.size() + 1);  // add '_'
-      const static std::regex l_sim_output_key_regex{R"((.*)_cloth|hair|hair_[a-z_A-Z]+_\d+-\d+)"};
+      const static std::regex l_sim_output_key_regex{R"((.*)_(cloth|hair|hair_[a-z_A-Z]+)_\d+-\d+)"};
       std::smatch l_match;
       // remove _cloth or _hair or _hair_XXX
-      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
-        l_stem = l_match[1].str();
-      }
+      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) l_stem = l_match[1].str();
 
       if (auto l_it = std::ranges::find_if(
               l_ret.asset_infos_,

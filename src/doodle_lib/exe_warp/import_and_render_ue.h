@@ -66,6 +66,7 @@ struct run_ue_assembly_asset_info {
     j["ue_project_dir"]  = p.ue_project_dir_;
     j["ban_ben_suffix"]  = p.ban_ben_suffix_;
     j["groom_path"]      = p.groom_path_;
+    j["groom_name"]      = p.groom_name_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_asset_info& p) {
@@ -76,6 +77,7 @@ struct run_ue_assembly_asset_info {
     if (j.contains("ue_project_dir")) j.at("ue_project_dir").get_to(p.ue_project_dir_);
     if (j.contains("ban_ben_suffix")) j.at("ban_ben_suffix").get_to(p.ban_ben_suffix_);
     if (j.contains("groom_path")) j.at("groom_path").get_to(p.groom_path_);
+    if (j.contains("groom_name")) j.at("groom_name").get_to(p.groom_name_);
   }
 };
 struct file_copy_info {
