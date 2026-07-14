@@ -159,22 +159,21 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
 
       l_ret.asset_infos_.emplace_back(
-          import_and_render_ue_ns::run_ue_assembly_asset_info{
-              .shot_output_path_ = l_path.path(),
-              .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
-                                                                       : import_and_render_ue_ns::import_ue_type::geo
-          }
+          import_and_render_ue_ns::run_ue_assembly_asset_info{.shot_output_path_ = l_path.path()}
       );
       const static std::regex l_sim_output_key_regex{R"((.*)_(cloth|hair|hair_[a-z_A-Z]+)_\d+-\d+)"};
       std::smatch l_match;
       if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
         auto l_capture_group = l_match[2].str();
         if (l_capture_group == "cloth")
-          l_ret.asset_infos_.back().simulation_type_.set(0);
+          l_ret.asset_infos_.back().simulation_type_.set(0),
+              l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
         else if (l_capture_group == "hair")
-          l_ret.asset_infos_.back().simulation_type_.set(1);
+          l_ret.asset_infos_.back().simulation_type_.set(1),
+              l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
         else {
           l_ret.asset_infos_.back().simulation_type_.set(1);
+          l_ret.asset_infos_.back().type_       = import_and_render_ue_ns::import_ue_type::groom;
           l_ret.asset_infos_.back().groom_name_ = l_capture_group.substr(5);  // remove "hair_"
         }
       }
@@ -197,9 +196,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
     l_ret.asset_infos_.emplace_back(
         import_and_render_ue_ns::run_ue_assembly_asset_info{
-            .shot_output_path_ = l_path.path(),
-            .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
-                                                                     : import_and_render_ue_ns::import_ue_type::geo
+            .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
         }
     );
   }
@@ -231,7 +228,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   /// asset_info
   if (l_is_simulation_task) {
     for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-      if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::geo) continue;
+      if (l_ret.asset_infos_[i].type_ == import_and_render_ue_ns::import_ue_type::char_) continue;
 
       auto&& l_info = l_ret.asset_infos_[i];
       auto l_stem   = l_info.shot_output_path_.stem().string().substr(l_shot_file_name.size() + 1);  // add '_'
@@ -425,7 +422,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     )
     if (!l_info.groom_name_.empty())
       DOODLE_CHICK_HTTP(
-          !(l_info.type_ == import_and_render_ue_ns::import_ue_type::geo &&
+          !(l_info.type_ == import_and_render_ue_ns::import_ue_type::groom &&
             !FSys::exists(l_info.ue_project_dir_ / l_info.groom_path_)),
           bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
           (l_info.ue_project_dir_ / l_info.groom_path_).string()

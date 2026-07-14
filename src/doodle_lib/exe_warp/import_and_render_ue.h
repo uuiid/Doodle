@@ -46,7 +46,7 @@ struct import_skin_file {
 void fix_project(const FSys::path& in_project_path);
 void fix_config(const FSys::path& in_project_path);
 
-enum class import_ue_type { geo, char_ };
+enum class import_ue_type { geo, char_, groom };
 
 struct run_ue_assembly_asset_info {
   FSys::path shot_output_path_;     // 需要组装的fbx
@@ -178,6 +178,7 @@ NLOHMANN_JSON_SERIALIZE_ENUM(
     import_ue_type, {
                         {import_ue_type::geo, "geo"},
                         {import_ue_type::char_, "char"},
+                        {import_ue_type::groom, "groom"},
                     }
 );
 }  // namespace import_and_render_ue_ns
