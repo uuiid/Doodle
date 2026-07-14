@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
+#include <string>
 #include <vector>
 
 namespace doodle {
@@ -55,7 +56,7 @@ struct run_ue_assembly_asset_info {
   FSys::path ue_project_dir_;       // ue项目文件夹路径
   std::string ban_ben_suffix_;      // 版本后缀, 用于查找材质时, 进行对应的版本转换
   FSys::path groom_path_;           // 毛发路径, 如果有的话
-
+  std::string groom_name_;          // 毛发名称, 如果有的话
   // to json
   friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
     j["path"]            = p.shot_output_path_;

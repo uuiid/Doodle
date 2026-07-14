@@ -165,9 +165,19 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                                                                        : import_and_render_ue_ns::import_ue_type::geo
           }
       );
-
-      if (l_stem.find("_cloth") != std::string::npos) l_ret.asset_infos_.back().simulation_type_.set(0);
-      if (l_stem.find("_hair") != std::string::npos) l_ret.asset_infos_.back().simulation_type_.set(1);
+      const static std::regex l_sim_output_key_regex{R"((.*)_(cloth|hair|hair_[a-z_A-Z]+)_\d+-\d+)"};
+      std::smatch l_match;
+      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
+        auto l_capture_group = l_match[1].str();
+        if (l_capture_group == "cloth")
+          l_ret.asset_infos_.back().simulation_type_.set(0);
+        else if (l_capture_group == "hair")
+          l_ret.asset_infos_.back().simulation_type_.set(1);
+        else {
+          l_ret.asset_infos_.back().simulation_type_.set(1);
+          l_ret.asset_infos_.back().groom_name_ = l_capture_group.substr(5);  // remove "hair_"
+        }
+      }
 
       l_sim_output_key.emplace(l_stem);
     }
