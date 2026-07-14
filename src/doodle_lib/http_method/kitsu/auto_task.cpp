@@ -214,7 +214,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
     if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::char_) continue;
-    
+
     auto&& l_info = l_ret.asset_infos_[i];
     auto l_stem   = l_info.shot_output_path_.stem().string();
     auto l_key    = l_stem.substr(l_shot_file_name.size() + 1);             // add '_'
@@ -344,6 +344,9 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
             );
+            if (!l_ret.asset_infos_[l_idx].groom_name_.empty())
+              l_ret.asset_infos_[l_idx].groom_path_ =
+                  get_entity_character_ue_groom_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].groom_name_);
           }
         } else
           throw_exception(
@@ -420,7 +423,16 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         (l_info.ue_project_dir_ / l_info.skin_path_).string()
 
     )
+    if (!l_info.groom_name_.empty()) {
+      DOODLE_CHICK_HTTP(
+          !(l_info.type_ == import_and_render_ue_ns::import_ue_type::geo &&
+            !FSys::exists(l_info.ue_project_dir_ / l_info.groom_path_)),
+          bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
+          (l_info.ue_project_dir_ / l_info.groom_path_).string()
+      )
+    }
   }
+
   // #endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
