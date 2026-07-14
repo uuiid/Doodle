@@ -213,9 +213,12 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   // 构建对应的寻找 sk 的 key map
   std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
+    if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::char_) continue;
+    
     auto&& l_info = l_ret.asset_infos_[i];
     auto l_stem   = l_info.shot_output_path_.stem().string();
-    auto l_key    = l_stem.substr(l_shot_file_name.size() + 1);  // add '_'
+    auto l_key    = l_stem.substr(l_shot_file_name.size() + 1);             // add '_'
+    l_key         = l_key.substr(0, l_key.size() - l_file_end_str.size());  // remove "_{frame_in}-{frame_out}"
     // find _rig and _Low
     if (auto l_rig_post = l_key.find("_rig"); l_rig_post != std::string::npos) {
       l_key = l_key.substr(0, l_rig_post);
