@@ -30,12 +30,16 @@ FSys::path get_entity_ground_rig_maya_path(const project& in_prj_, const entity_
 FSys::path get_entity_ground_model_maya_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 /// 角色模型ue 路径
 FSys::path get_entity_character_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
-
 /// 角色模型 ue 名称
 FSys::path get_entity_character_ue_name(const entity_asset_extend_value& in_extend_);
 FSys::path get_entity_sim_character_ue_name(
     const entity_asset_extend_value& in_extend_, const std::bitset<2>& sim_type_ = simulation_status_cloth
 );
+/// 角色模型 ue groom 名称
+FSys::path get_entity_character_ue_groom_name(
+    const entity_asset_extend_value& in_extend_, std::string_view in_groom_name_
+);
+
 /// 道具模型ue 路径
 FSys::path get_entity_prop_ue_path(const project& in_prj_, const entity_asset_extend_value& in_extend_);
 FSys::path get_entity_prop_ue_public_files_path();
