@@ -168,7 +168,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       const static std::regex l_sim_output_key_regex{R"((.*)_(cloth|hair|hair_[a-z_A-Z]+)_\d+-\d+)"};
       std::smatch l_match;
       if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
-        auto l_capture_group = l_match[1].str();
+        auto l_capture_group = l_match[2].str();
         if (l_capture_group == "cloth")
           l_ret.asset_infos_.back().simulation_type_.set(0);
         else if (l_capture_group == "hair")
@@ -231,19 +231,12 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::geo) continue;
 
       auto&& l_info = l_ret.asset_infos_[i];
-      auto l_stem   = l_info.shot_output_path_.stem().string();
-      // remove _cloth or _hair
-      if (l_info.simulation_type_.test(0)) {
-        auto l_cloth_pos = l_stem.find("_cloth");
-        if (l_cloth_pos != std::string::npos) {
-          l_stem = l_stem.erase(l_cloth_pos, 6);
-        }
-      }
-      if (l_info.simulation_type_.test(1)) {
-        auto l_hair_pos = l_stem.find("_hair");
-        if (l_hair_pos != std::string::npos) {
-          l_stem = l_stem.erase(l_hair_pos, 5);
-        }
+      auto l_stem   = l_info.shot_output_path_.stem().string().substr(l_shot_file_name.size() + 1);  // add '_'
+      const static std::regex l_sim_output_key_regex{R"((.*)_cloth|hair|hair_[a-z_A-Z]+_\d+-\d+)"};
+      std::smatch l_match;
+      // remove _cloth or _hair or _hair_XXX
+      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
+        l_stem = l_match[1].str();
       }
 
       if (auto l_it = std::ranges::find_if(
