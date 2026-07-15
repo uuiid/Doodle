@@ -72,7 +72,7 @@ struct run_ue_assembly_asset_info {
     j["groom_name"]         = p.groom_name_;
     j["groom_and_bind_map"] = nlohmann::json::array();
     for (auto&& p : p.groom_and_bind_map_)
-      j["groom_and_bind_map"]["groom"] = p.first, j["groom_and_bind_map"]["bind"] = p.second;
+      j["groom_and_bind_map"].emplace_back(nlohmann::json{{"groom", p.first}, {"bind", p.second}});
   }
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_asset_info& p) {
