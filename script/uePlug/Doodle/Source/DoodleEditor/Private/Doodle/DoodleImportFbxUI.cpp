@@ -1252,6 +1252,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 {
 	const FSlateFontInfo Font = FAppStyle::GetFontStyle(TEXT("SourceControl.LoginWindow.Font"));
 	ImportCore = NewObject<UDoodleLightImport>(GetTransientPackage(), NAME_None, RF_Transient);
+	ImportCore->ImportUI = this;
 #if PLATFORM_WINDOWS
 	const FString FileFilterText = TEXT("fbx and abc |*.fbx;*.abc|fbx (*.fbx)|*.fbx|abc (*.abc)|*.abc");
 #else
@@ -1533,6 +1534,7 @@ void SDoodleImportFbxUI::SwitchDepartment()
 	default:
 		break;;
 	}
+	ImportCore->ImportUI = this;
 	TArray<FString> L_AllPaths{};
 	for (auto&& i : ListImportData)
 		L_AllPaths.Emplace(i->Path);
