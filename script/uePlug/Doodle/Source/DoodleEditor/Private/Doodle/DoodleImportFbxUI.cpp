@@ -229,7 +229,6 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 				IAssetRegistry::Get()->GetAssetsByPath(FName(*In_Path.ImportPathDir), OutAssetData, false);
 				for (const FAssetData& Asset : OutAssetData)
 				{
-					EditorAssetSubsystem->SaveLoadedAsset(Asset.GetAsset());
 					if (UAnimSequence* Anim = Cast<UAnimSequence>(Asset.GetAsset()); Anim && Anim->GetSkeleton() == L_SkeletalMesh->GetSkeleton())
 					{
 						L_AnimSequence = Anim;
@@ -239,7 +238,10 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 			}
 		}
 	}
-
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(
+		true, // bSaveMapPackages: 保存关卡
+		true // bSaveContentPackages: 保存内容资产（如材质、蓝图等）
+	);
 	if (!LevelSequenceMap.Contains(In_Path)) return;
 	if (!L_AnimSequence) return;
 	if (!L_SkeletalMesh) return;
@@ -381,7 +383,10 @@ void UDoodleBaseImport::ImportFileCamera(const FDoodleListViewData& In_Path)
 			L_ShotLevel = CastChecked<UWorld>(
 				AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
 
-			EditorAssetSubsystem->SaveLoadedAsset(L_ShotLevel, false);
+			UEditorLoadingAndSavingUtils::SaveDirtyPackages(
+				true, // bSaveMapPackages: 保存关卡
+				true // bSaveContentPackages: 保存内容资产（如材质、蓝图等）
+			);
 			L_ShotLevel = LoadObject<UWorld>(nullptr, *PackageName);
 		}
 	}
@@ -902,7 +907,6 @@ void UDoodleLightImport::CreateOtherData(const FDoodleLevelSequenceKey& In_Level
 	if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
 	{
 		ULevelSequence* L_LevelSequence = CreateLevelSequence(LigFolder3, In_LevelSequenceKey.EndTime);
-		EditorAssetSubsystem->SaveAsset(LigFolder3, false);
 	}
 	// 创建对应的 world
 	LigFolder3 += TEXT("_LV");
@@ -914,9 +918,11 @@ void UDoodleLightImport::CreateOtherData(const FDoodleLevelSequenceKey& In_Level
 			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
 		UWorld* L_Level = CastChecked<UWorld>(
 			AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
-
-		EditorAssetSubsystem->SaveLoadedAsset(L_Level, false);
 	}
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(
+		true, // bSaveMapPackages: 保存关卡
+		true // bSaveContentPackages: 保存内容资产（如材质、蓝图等）
+	);
 }
 
 
@@ -1064,10 +1070,10 @@ FString UDoodleWbImport::GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSeq
 void UDoodleWbImport::CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-		FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
-    		In_LevelSequenceKey.Shot,
-    		*In_LevelSequenceKey.ShotAb);
-	
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
+
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"),
 		*In_LevelSequenceKey.ProjectName.ToUpper(),
 		In_LevelSequenceKey.Eps,
@@ -1080,7 +1086,6 @@ void UDoodleWbImport::CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSeq
 	if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
 	{
 		ULevelSequence* L_LevelSequence = CreateLevelSequence(LigFolder3, In_LevelSequenceKey.EndTime);
-		EditorAssetSubsystem->SaveAsset(LigFolder3, false);
 	}
 	// 创建对应的 world
 	LigFolder3 += TEXT("_Zong");
@@ -1092,9 +1097,11 @@ void UDoodleWbImport::CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSeq
 			FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(TEXT("AssetTools"));
 		UWorld* L_Level = CastChecked<UWorld>(
 			AssetToolsModule.Get().CreateAsset(BaseFileName, PackagePath, UWorld::StaticClass(), NewObject<UWorldFactory>()));
-
-		EditorAssetSubsystem->SaveLoadedAsset(L_Level, false);
 	}
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(
+		true, // bSaveMapPackages: 保存关卡
+		true // bSaveContentPackages: 保存内容资产（如材质、蓝图等）
+	);
 }
 
 

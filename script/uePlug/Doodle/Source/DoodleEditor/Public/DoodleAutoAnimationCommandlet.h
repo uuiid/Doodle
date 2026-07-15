@@ -51,6 +51,9 @@ struct FImportFiles2
 
 	UPROPERTY()
 	FString GroomName;
+	
+	// UPROPERTY()
+	// TMap<UG>
 };
 
 USTRUCT()
