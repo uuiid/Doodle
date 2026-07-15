@@ -69,7 +69,8 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
       }
     }
 
-    if (auto l_gromm_dir = l_import_root / "groom"; FSys::exists(l_gromm_dir)) {
+    if (auto l_gromm_dir = l_ue_project.parent_path() / conv_normal_path(impl_.groom_path_);
+        FSys::exists(l_gromm_dir)) {
       auto l_end_str = fmt::format("{}_Binding", p.stem().generic_string());
       for (auto&& l_groom_file : FSys::recursive_directory_iterator(l_gromm_dir)) {
         if (auto l_stem = l_groom_file.path().stem().generic_string();

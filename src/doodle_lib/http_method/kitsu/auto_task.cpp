@@ -336,13 +336,14 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value);
             l_ret.asset_infos_[l_idx].ban_ben_suffix_ =
                 l_asset_extend.ban_ben_.empty() ? "" : fmt::format("_{}", l_asset_extend.ban_ben_);
-            l_ret.asset_infos_[l_idx].groom_path_ = l_ret.asset_infos_[l_idx].skin_path_.parent_path() / "Groom";
+            // l_ret.asset_infos_[l_idx].groom_bind_path_ = l_ret.asset_infos_[l_idx].skin_path_.parent_path() /
+            // "Groom";
             l_ret.ue_asset_path_.emplace_back(
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value) / doodle_config::ue4_content,
                 l_scene_ue_path / doodle_config::ue4_content
             );
             if (!l_ret.asset_infos_[l_idx].groom_name_.empty())
-              l_ret.asset_infos_[l_idx].groom_path_ =
+              l_ret.asset_infos_[l_idx].groom_bind_path_ =
                   get_entity_character_ue_groom_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].groom_name_);
           }
         } else
@@ -414,19 +415,27 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
   }
   for (auto&& l_info : l_ret.asset_infos_) {
     DOODLE_CHICK_HTTP(
-        !(l_info.type_ == import_and_render_ue_ns::import_ue_type::char_ &&
-          !FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)),
-        bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
+        !(!FSys::exists(l_info.ue_project_dir_ / l_info.skin_path_)), bad_request,
+        "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
         (l_info.ue_project_dir_ / l_info.skin_path_).string()
 
     )
     if (!l_info.groom_name_.empty())
       DOODLE_CHICK_HTTP(
           !(l_info.type_ == import_and_render_ue_ns::import_ue_type::groom &&
-            !FSys::exists(l_info.ue_project_dir_ / l_info.groom_path_)),
+            !FSys::exists(l_info.ue_project_dir_ / l_info.groom_bind_path_)),
           bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}", l_info.shot_output_path_.string(),
-          (l_info.ue_project_dir_ / l_info.groom_path_).string()
+          (l_info.ue_project_dir_ / l_info.groom_bind_path_).string()
       )
+    auto l_gromm_dir = (l_info.ue_project_dir_ / l_info.skin_path_).parent_path() / "Groom";
+    if (FSys::exists(l_gromm_dir)) {
+      std::vector<std::string> l_groom_files{};
+      for (auto&& l_groom_file : FSys::directory_iterator{l_gromm_dir}) {
+        if (l_groom_file.path().extension() == ".uasset" &&
+            !l_groom_file.path().stem().generic_string().ends_with("_Binding"))
+          l_groom_files.emplace_back(l_groom_file.path().string());
+      }
+    }
   }
 
   // #endif
@@ -436,8 +445,8 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         !(l_info.skin_path_.empty() && l_info.type_ == import_and_render_ue_ns::import_ue_type::char_), bad_request,
         "无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string()
     );
-    l_info.skin_path_ = conv_ue_game_path(l_info.skin_path_);
-    l_info.groom_path_ = conv_ue_game_path(l_info.groom_path_);
+    l_info.skin_path_  = conv_ue_game_path(l_info.skin_path_);
+    l_info.groom_bind_path_ = conv_ue_game_path(l_info.groom_bind_path_);
   }
 
   return l_ret;
