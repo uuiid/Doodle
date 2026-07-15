@@ -58,7 +58,7 @@ struct FImportFiles2
 	FString BanBenSuffix;
 
 	UPROPERTY()
-	FString GroomBindPath;
+	TObjectPtr<UGroomBindingAsset> GroomBind;
 
 	UPROPERTY()
 	FString GroomName;
@@ -130,7 +130,7 @@ private:
 	                                                                bool bImportAnimations = true);
 
 	/// 创建 groom 毛发
-	UGroomCache* CreateGroomImportTask(const FString& InAbcPath, const FString& InGroomAssetPath);
+	UGroomCache* CreateGroomImportTask(const FString& InAbcPath, const FSoftObjectPath& InGroomAssetPath);
 	// 修复材质属性
 	static void FixMaterialProperty();
 	/// 修复5.4版本的材质参数集问题

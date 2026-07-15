@@ -300,7 +300,19 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		FString L_GroomName = Obj->HasField(TEXT("groom_name"))
 			? Obj->GetStringField(TEXT("groom_name"))
 			: TEXT("");
-		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, L_Mesh, L_BanBenSuffix, L_GroomBindPath, L_GroomName});
+		ImportFiles.Add(FImportFiles2{
+			Type2, Path, L_Skeleton, L_Mesh, L_BanBenSuffix, LoadObject<UGroomBindingAsset>(this, *L_GroomBindPath), L_GroomName
+		});
+		if (Obj->HasField(TEXT("groom_and_bind_map")))
+		{
+			for (auto& L_Pair : Obj->GetArrayField(TEXT("groom_and_bind_map")))
+			{
+				auto L_AssetPath = L_Pair->AsObject()->GetStringField(TEXT("groom"));
+				auto L_AssetBindingPath = L_Pair->AsObject()->GetStringField(TEXT("bind"));
+				ImportFiles.Last().GroomMap.Add(LoadObject<UGroomAsset>(this, *L_AssetPath),
+					FImportFiles2GroomMapValue{LoadObject<UGroomBindingAsset>(this, *L_AssetBindingPath), nullptr});
+			}
+		}
 	}
 	if (ImportFiles.IsEmpty()) return 1;
 	// 排序 , 按照 ImportFiles::type 排序
@@ -896,7 +908,7 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 }
 
 
-UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString& InAbcPath, const FString& InGroomAssetPath)
+UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString& InAbcPath, const FSoftObjectPath& InGroomAssetPath)
 {
 	FString L_ImportPath = ImportPath / "Groom";
 	UAutomatedAssetImportData* L_Data = NewObject<UAutomatedAssetImportData>();
@@ -966,7 +978,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	TMap<TObjectPtr<USkeletalMesh>, AActor*> L_SK_Map;
-	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBindPath,GroomName,_] : ImportFiles)
+	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBind,GroomName,_] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -1085,15 +1097,14 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			break;
 		case EImportFilesType2::Groom:
 			{
-				UGroomCache* L_GroomCache = CreateGroomImportTask(Path, FPaths::GetPath(GroomBindPath) / GroomName);
+				UGroomCache* L_GroomCache = CreateGroomImportTask(Path, GroomBind->GetGroom());
 				if (!L_SK_Map.Contains(Mesh))
 					break;
 
 				AActor* L_Actor = L_SK_Map[Mesh];
-				UGroomAsset* L_GroomAsset = LoadObject<UGroomAsset>(L_Actor, GroomBindPath);
 				UGroomComponent* L_Com = CastChecked<UGroomComponent>(L_Actor->AddComponentByClass(UGroomComponent::StaticClass(), false,
 					FTransform::Identity, false));
-				L_Com->GroomAsset = L_GroomAsset;
+				L_Com->GroomAsset = GroomBind->GetGroom();
 				L_Com->GroomCache = L_GroomCache;
 			}
 			break;
