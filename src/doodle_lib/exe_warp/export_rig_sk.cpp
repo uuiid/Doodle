@@ -67,6 +67,17 @@ boost::asio::awaitable<void> export_rig_sk_arg::run() {
         FSys::remove(l_ufile);
       }
     }
+
+    if (auto l_gromm_dir = l_import_root / "groom"; FSys::exists(l_gromm_dir)) {
+      for (auto&& l_groom_file : FSys::recursive_directory_iterator(l_gromm_dir)) {
+        if (auto l_stem = l_groom_file.path().stem().generic_string();
+            l_groom_file.is_regular_file() && l_stem.find(p.stem().generic_string()) != std::string::npos) {
+          SPDLOG_LOGGER_WARN(logger_ptr_, "删除旧的groom资产 {}", l_groom_file.path());
+          FSys::remove(l_groom_file.path());
+        }
+      }
+    }
+
     nlohmann::json l_json{};
     l_json = import_and_render_ue_ns::import_skin_file{
         .fbx_file_       = p,
