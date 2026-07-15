@@ -24,6 +24,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace doodle {
@@ -57,16 +58,21 @@ struct run_ue_assembly_asset_info {
   std::string ban_ben_suffix_;      // 版本后缀, 用于查找材质时, 进行对应的版本转换
   FSys::path groom_bind_path_;      // 毛发路径, 如果有的话
   std::string groom_name_;          // 毛发名称, 如果有的话
+
+  std::vector<std::pair<FSys::path, FSys::path>> groom_and_bind_map_;  // 毛发和绑定的映射, 如果有的话
   // to json
   friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
-    j["path"]            = p.shot_output_path_;
-    j["skin_path"]       = p.skin_path_.generic_string();
-    j["type"]            = p.type_;
-    j["simulation_type"] = p.simulation_type_;
-    j["ue_project_dir"]  = p.ue_project_dir_;
-    j["ban_ben_suffix"]  = p.ban_ben_suffix_;
-    j["groom_bind_path"] = p.groom_bind_path_;
-    j["groom_name"]      = p.groom_name_;
+    j["path"]               = p.shot_output_path_;
+    j["skin_path"]          = p.skin_path_.generic_string();
+    j["type"]               = p.type_;
+    j["simulation_type"]    = p.simulation_type_;
+    j["ue_project_dir"]     = p.ue_project_dir_;
+    j["ban_ben_suffix"]     = p.ban_ben_suffix_;
+    j["groom_bind_path"]    = p.groom_bind_path_;
+    j["groom_name"]         = p.groom_name_;
+    j["groom_and_bind_map"] = nlohmann::json::array();
+    for (auto&& p : p.groom_and_bind_map_)
+      j["groom_and_bind_map"]["groom"] = p.first, j["groom_and_bind_map"]["bind"] = p.second;
   }
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_asset_info& p) {
@@ -78,6 +84,12 @@ struct run_ue_assembly_asset_info {
     if (j.contains("ban_ben_suffix")) j.at("ban_ben_suffix").get_to(p.ban_ben_suffix_);
     if (j.contains("groom_bind_path")) j.at("groom_bind_path").get_to(p.groom_bind_path_);
     if (j.contains("groom_name")) j.at("groom_name").get_to(p.groom_name_);
+    if (j.contains("groom_and_bind_map")) {
+      for (auto&& pair : j.at("groom_and_bind_map")) {
+        pair.at("groom").get_to(p.groom_and_bind_map_.emplace_back().first);
+        pair.at("bind").get_to(p.groom_and_bind_map_.back().second);
+      }
+    }
   }
 };
 struct file_copy_info {

@@ -43,6 +43,7 @@
 #include <range/v3/view/unique.hpp>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace doodle::http {
@@ -429,11 +430,24 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       )
     auto l_gromm_dir = (l_info.ue_project_dir_ / l_info.skin_path_).parent_path() / "Groom";
     if (FSys::exists(l_gromm_dir)) {
-      std::vector<std::string> l_groom_files{};
+      std::vector<FSys::path> l_groom_files{};
       for (auto&& l_groom_file : FSys::directory_iterator{l_gromm_dir}) {
         if (l_groom_file.path().extension() == ".uasset" &&
             !l_groom_file.path().stem().generic_string().ends_with("_Binding"))
-          l_groom_files.emplace_back(l_groom_file.path().string());
+          l_groom_files.emplace_back(l_groom_file.path());
+      }
+      // 组合对应的 binding 并检查
+      for (auto&& l_groom_file : l_groom_files) {
+        auto l_binding_file = l_groom_file.parent_path() /
+                              fmt::format("{}_{}_Binding.uasset", l_groom_file.stem(), l_info.skin_path_.stem());
+        DOODLE_CHICK_HTTP(
+            FSys::exists(l_binding_file), bad_request, "无法找到输出文件 {} 生成对应的 ue 资产路径: {}",
+            l_info.shot_output_path_.string(), l_binding_file.string()
+        )
+        // 专换为对应的 /Game/--  路径, 并插入map中
+        auto l_groom_game_file   = conv_ue_game_path(l_groom_file.lexically_relative(l_info.ue_project_dir_));
+        auto l_binding_game_file = conv_ue_game_path(l_binding_file.lexically_relative(l_info.ue_project_dir_));
+        l_info.groom_and_bind_map_.emplace_back(std::pair{l_groom_game_file, l_binding_game_file});
       }
     }
   }
@@ -445,7 +459,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         !(l_info.skin_path_.empty() && l_info.type_ == import_and_render_ue_ns::import_ue_type::char_), bad_request,
         "无法为输出文件 {} 生成对应的 ue 资产路径", l_info.shot_output_path_.string()
     );
-    l_info.skin_path_  = conv_ue_game_path(l_info.skin_path_);
+    l_info.skin_path_       = conv_ue_game_path(l_info.skin_path_);
     l_info.groom_bind_path_ = conv_ue_game_path(l_info.groom_bind_path_);
   }
 
