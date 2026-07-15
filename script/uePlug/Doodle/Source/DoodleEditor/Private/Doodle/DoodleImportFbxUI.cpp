@@ -728,13 +728,13 @@ void UDoodleBaseImport::ImportFile(const FDoodleListViewData& In_Path)
 	case FDoodleImportType::Fbx:
 		ImportFileFbx(In_Path);
 		break;
-	case FDoodleImportType::AbcHair:
+	case FDoodleImportType::AbcGeoCache:
 		ImportFileAbc(In_Path);
 		break;
 	case FDoodleImportType::Camera:
 		ImportFileCamera(In_Path);
 		break;
-	case FDoodleImportType::AbcGeoCache:
+	case FDoodleImportType::AbcHair:
 	case FDoodleImportType::End:
 	default:
 		break;
@@ -818,7 +818,7 @@ FDoodleListViewData UDoodleBaseImport::ParseFiles(const FString& InPath)
 
 FString UDoodleLightImport::GetImportPath(const FDoodleParseFileImportData& In_Path) const
 {
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
+	FString L_BaseName = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
 		In_Path.Shot,
 		*In_Path.ShotAb);
 
@@ -844,25 +844,31 @@ FString UDoodleLightImport::GetImportPath(const FDoodleParseFileImportData& In_P
 
 FString UDoodleLightImport::GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
 		TEXT("/Game/Shot/ep%.4d/%s/%s"),
-		In_LevelSequenceKey.Eps, *L_BaseName, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
 
 FString UDoodleLightImport::GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
 		TEXT("/Game/Shot/ep%.4d/%s/%s_Zong"),
-		In_LevelSequenceKey.Eps, *L_BaseName, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
 
@@ -880,14 +886,17 @@ void UDoodleLightImport::CreateOtherData(const FDoodleLevelSequenceKey& In_Level
 	{
 		EditorAssetSubsystem->MakeDirectory(LigFolder2);
 	}
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"),
+	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s_Lig"),
 		*In_LevelSequenceKey.ProjectName.ToUpper(),
 		In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 	FString L_Folder = FString::Printf(TEXT("/Game/Shot/ep%.4d/%s/Import_Lig"),
-		In_LevelSequenceKey.Eps, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld
 	);
 	FString LigFolder3 = L_Folder / L_BaseName;
 	if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
@@ -913,22 +922,25 @@ void UDoodleLightImport::CreateOtherData(const FDoodleLevelSequenceKey& In_Level
 
 FString UDoodleVfxImport::GetImportPath(const FDoodleParseFileImportData& In_Path) const
 {
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
 		In_Path.Shot,
 		*In_Path.ShotAb);
+	// FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
+	// 	In_Path.Shot,
+	// 	*In_Path.ShotAb);
 
 	switch (In_Path.IsCamera)
 	{
 	case FDoodleImportType::Fbx:
 		return FString::Printf(
 			TEXT("/Game/Shot/ep%.4d/%s/Import_Vfx/Fbx_%s"),
-			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			In_Path.Eps, *L_BaseNameOld, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::AbcHair:
 	case FDoodleImportType::AbcGeoCache:
 		return FString::Printf(
 			TEXT("/Game/Shot/ep%.4d/%s/Import_Vfx/Abc_%s"),
-			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			In_Path.Eps, *L_BaseNameOld, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::Camera:
 	case FDoodleImportType::End:
@@ -939,25 +951,31 @@ FString UDoodleVfxImport::GetImportPath(const FDoodleParseFileImportData& In_Pat
 
 FString UDoodleVfxImport::GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
 		TEXT("/Game/Shot/ep%.4d/%s/Import_WB/%s"),
-		In_LevelSequenceKey.Eps, *L_BaseName, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
 
 FString UDoodleVfxImport::GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
 		TEXT("/Game/Shot/ep%.4d/%s/Import_WB/%s_LV"),
-		In_LevelSequenceKey.Eps, *L_BaseName, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
 
@@ -982,9 +1000,12 @@ void UDoodleVfxImport::CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSe
 
 FString UDoodleWbImport::GetImportPath(const FDoodleParseFileImportData& In_Path) const
 {
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
 		In_Path.Shot,
 		*In_Path.ShotAb);
+	// FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_Path.ProjectName.ToUpper(), In_Path.Eps,
+	// 	In_Path.Shot,
+	// 	*In_Path.ShotAb);
 
 	switch (In_Path.IsCamera)
 	{
@@ -995,13 +1016,13 @@ FString UDoodleWbImport::GetImportPath(const FDoodleParseFileImportData& In_Path
 	case FDoodleImportType::Fbx:
 		return FString::Printf(
 			TEXT("/Game/Shot/ep%.4d/%s/Import_WB/Fbx_%s"),
-			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			In_Path.Eps, *L_BaseNameOld, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::AbcHair:
 	case FDoodleImportType::AbcGeoCache:
 		return FString::Printf(
 			TEXT("/Game/Shot/ep%.4d/%s/Import_WB/Abc_%s"),
-			In_Path.Eps, *L_BaseName, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
+			In_Path.Eps, *L_BaseNameOld, *FDateTime::Now().ToString(TEXT("%m_%d_%H_%M"))
 		);
 	case FDoodleImportType::Camera:
 	case FDoodleImportType::End:
@@ -1012,38 +1033,48 @@ FString UDoodleWbImport::GetImportPath(const FDoodleParseFileImportData& In_Path
 
 FString UDoodleWbImport::GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
 		TEXT("/Game/Shot/ep%.4d/%s/Import_WB/%s"),
-		In_LevelSequenceKey.Eps, *L_BaseName, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
 
 FString UDoodleWbImport::GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
+	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+		In_LevelSequenceKey.Shot,
+		*In_LevelSequenceKey.ShotAb);
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
 		TEXT("/Game/Shot/ep%.4d/%s/Import_WB/%s_LV"),
-		In_LevelSequenceKey.Eps, *L_BaseName, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
 
 void UDoodleWbImport::CreateOtherData(const FDoodleLevelSequenceKey& In_LevelSequenceKey) const
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
+		FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+    		In_LevelSequenceKey.Shot,
+    		*In_LevelSequenceKey.ShotAb);
+	
 	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"),
 		*In_LevelSequenceKey.ProjectName.ToUpper(),
 		In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 	FString L_Folder = FString::Printf(TEXT("/Game/Shot/ep%.4d/%s"),
-		In_LevelSequenceKey.Eps, *L_BaseName
+		In_LevelSequenceKey.Eps, *L_BaseNameOld
 	);
 	FString LigFolder3 = L_Folder / L_BaseName;
 	if (!EditorAssetSubsystem->DoesAssetExist(LigFolder3))
@@ -1273,6 +1304,7 @@ void SDoodleImportFbxUI::Construct(const FArguments& Arg)
 						[this](const TSharedPtr<EImportSuffix>& In, ESelectInfo::Type)
 							{
 								Department = *In;
+								SwitchDepartment();
 							})
 					.OnGenerateWidget_Lambda(
 						[this](const TSharedPtr<EImportSuffix>& In)
