@@ -100,6 +100,7 @@
 #include "GroomBlueprintLibrary.h"
 #include "GroomCache.h"
 #include "GroomCacheImportOptions.h"
+#include "GroomComponent.h"
 #include "ObjectTools.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
@@ -275,15 +276,16 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		else
 			return 1;
 		USkeleton* L_Skeleton{};
+		USkeletalMesh* L_Mesh{};
 		if (Obj->HasField(TEXT("skin_path")))
 		{
-			const FString Skin = Obj->GetStringField(TEXT("skin_path"));
-			if (!Skin.IsEmpty())
+			if (const FString Skin = Obj->GetStringField(TEXT("skin_path")); !Skin.IsEmpty())
 			{
 				UE_LOG(LogTemp, Log, TEXT("加载骨骼网格体 %s"), *Skin);
-				if (auto SkinMesh = LoadObject<USkeletalMesh>(nullptr, *Skin); SkinMesh)
+				if (const auto SkinMesh = LoadObject<USkeletalMesh>(nullptr, *Skin); SkinMesh)
 				{
 					L_Skeleton = SkinMesh->GetSkeleton();
+					L_Mesh = SkinMesh;
 					UE_LOG(LogTemp, Log, TEXT("获取骨骼 %s"), *L_Skeleton->GetFullName());
 				}
 			}
@@ -292,15 +294,21 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		FString L_BanBenSuffix = Obj->HasField(TEXT("ban_ben_suffix"))
 			? Obj->GetStringField(TEXT("ban_ben_suffix"))
 			: TEXT("");
-		FString L_GroomPath = Obj->HasField(TEXT("groom_path"))
-			? Obj->GetStringField(TEXT("groom_path"))
+		FString L_GroomBindPath = Obj->HasField(TEXT("groom_bind_path"))
+			? Obj->GetStringField(TEXT("groom_bind_path"))
 			: TEXT("");
 		FString L_GroomName = Obj->HasField(TEXT("groom_name"))
 			? Obj->GetStringField(TEXT("groom_name"))
 			: TEXT("");
-		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, L_BanBenSuffix, L_GroomPath, L_GroomName});
+		ImportFiles.Add(FImportFiles2{Type2, Path, L_Skeleton, L_Mesh, L_BanBenSuffix, L_GroomBindPath, L_GroomName});
 	}
 	if (ImportFiles.IsEmpty()) return 1;
+	// 排序 , 按照 ImportFiles::type 排序
+	ImportFiles.Sort([](const FImportFiles2& A, const FImportFiles2& B)
+		{
+			return static_cast<int32>(A.Type) < static_cast<int32>(B.Type);
+		}
+	);
 
 	//--------------------
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
@@ -957,11 +965,8 @@ UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString
 void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	TArray<UGeometryCache*> GeometryCaches;
-	TArray<UObject*> ImportTasks;
-	TArray<UObject*> ImportTasksAbc;
-	TMap<UObject*, FString> L_BanBenSuffixes;
-	for (const auto& [Type, Path, Skeleton, BanBen,GroomPath,GroomName] : ImportFiles)
+	TMap<TObjectPtr<USkeletalMesh>, AActor*> L_SK_Map;
+	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBindPath,GroomName] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -1029,16 +1034,16 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			break;
 		case EImportFilesType2::Character:
 			{
-				auto [TmpSkeletalMesh, AnimSeq] = CreateCharacterImportTask(Path, Skeleton, true);
-				if (!TmpSkeletalMesh) continue;
+				const auto AnimSeq = CreateCharacterImportTask(Path, Skeleton, true).Value;
+				if (!Mesh) continue;
 				if (!AnimSeq) continue;
 				//------------------
 				ASkeletalMeshActor* L_Actor = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
-				L_Actor->SetActorLabel(TmpSkeletalMesh->GetName());
-				L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
+				L_Actor->SetActorLabel(Mesh->GetName());
+				L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(Mesh);
 				L_Actor->GetSkeletalMeshComponent()->SetLightingChannels(false, true, false);
 				L_Actor->GetSkeletalMeshComponent()->SetReceivesDecals(false);
-
+				L_SK_Map.Add(Mesh, L_Actor);
 				//---------------------
 				const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
 				TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
@@ -1054,8 +1059,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				AnimSection->Modify();
 				//--------------------------Clone------------------------
 				ASkeletalMeshActor* L_Actor2 = TheSequenceWorld->SpawnActor<ASkeletalMeshActor>(FVector::ZeroVector, FRotator::ZeroRotator);
-				L_Actor2->SetActorLabel(TmpSkeletalMesh->GetName() + TEXT("_SH"));
-				L_Actor2->GetSkeletalMeshComponent()->SetSkeletalMesh(TmpSkeletalMesh);
+				L_Actor2->SetActorLabel(Mesh->GetName() + TEXT("_SH"));
+				L_Actor2->GetSkeletalMeshComponent()->SetSkeletalMesh(Mesh);
 				L_Actor2->GetSkeletalMeshComponent()->SetLightingChannels(true, false, false);
 				L_Actor2->GetSkeletalMeshComponent()->SetVisibility(false);
 				L_Actor2->GetSkeletalMeshComponent()->SetCastHiddenShadow(true);
@@ -1080,7 +1085,16 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			break;
 		case EImportFilesType2::Groom:
 			{
-				CreateGroomImportTask(Path, GroomPath / GroomName);
+				UGroomCache* L_GroomCache = CreateGroomImportTask(Path, FPaths::GetPath(GroomBindPath) / GroomName);
+				if (!L_SK_Map.Contains(Mesh))
+					break;
+
+				AActor* L_Actor = L_SK_Map[Mesh];
+				UGroomAsset* L_GroomAsset = LoadObject<UGroomAsset>(L_Actor, GroomBindPath);
+				UGroomComponent* L_Com = CastChecked<UGroomComponent>(L_Actor->AddComponentByClass(UGroomComponent::StaticClass(), false,
+					FTransform::Identity, false));
+				L_Com->GroomAsset = L_GroomAsset;
+				L_Com->GroomCache = L_GroomCache;
 			}
 			break;
 		}

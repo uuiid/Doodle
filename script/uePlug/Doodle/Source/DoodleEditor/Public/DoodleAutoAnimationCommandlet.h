@@ -20,8 +20,8 @@ UENUM()
 enum class EImportFilesType2
 {
 	Camera,
-	Geometry,
 	Character,
+	Geometry,
 	Groom,
 };
 
@@ -39,12 +39,15 @@ struct FImportFiles2
 
 	UPROPERTY()
 	TObjectPtr<USkeleton> Skeleton;
+	
+	UPROPERTY()
+	TObjectPtr<USkeletalMesh> Mesh;
 
 	UPROPERTY()
 	FString BanBenSuffix;
 
 	UPROPERTY()
-	FString GroomPath;
+	FString GroomBindPath;
 
 	UPROPERTY()
 	FString GroomName;
