@@ -974,11 +974,22 @@ UGroomCache* UDoodleAutoAnimationCommandlet::CreateGroomImportTask(const FString
 	return L_GroomCache;
 }
 
+namespace
+{
+	struct FImportFiles2GroomMapValue3
+	{
+		TMap<TObjectPtr<UGroomAsset>, FImportFiles2GroomMapValue> GroomMap;
+		TObjectPtr<AActor> Actor;
+		TObjectPtr<USkeletalMesh> SkeletonMesh;
+	};
+}
+
+
 void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
-	TMap<TObjectPtr<USkeletalMesh>, AActor*> L_SK_Map;
-	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBind,GroomName,_] : ImportFiles)
+	TMap<TObjectPtr<USkeletalMesh>, FImportFiles2GroomMapValue3> L_SK_Map;
+	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBind,GroomName,GroomMapValue] : ImportFiles)
 	{
 		switch (Type)
 		{
@@ -1055,7 +1066,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				L_Actor->GetSkeletalMeshComponent()->SetSkeletalMesh(Mesh);
 				L_Actor->GetSkeletalMeshComponent()->SetLightingChannels(false, true, false);
 				L_Actor->GetSkeletalMeshComponent()->SetReceivesDecals(false);
-				L_SK_Map.Add(Mesh, L_Actor);
+				L_SK_Map.Add(Mesh, FImportFiles2GroomMapValue3{GroomMapValue, L_Actor, Mesh});
 				//---------------------
 				const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
 				TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
@@ -1097,17 +1108,39 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 			break;
 		case EImportFilesType2::Groom:
 			{
-				UGroomCache* L_GroomCache = CreateGroomImportTask(Path, GroomBind->GetGroom());
 				if (!L_SK_Map.Contains(Mesh))
 					break;
+				UGroomCache* L_GroomCache = CreateGroomImportTask(Path, GroomBind->GetGroom());
 
-				AActor* L_Actor = L_SK_Map[Mesh];
-				UGroomComponent* L_Com = CastChecked<UGroomComponent>(L_Actor->AddComponentByClass(UGroomComponent::StaticClass(), false,
-					FTransform::Identity, false));
-				L_Com->GroomAsset = GroomBind->GetGroom();
-				L_Com->GroomCache = L_GroomCache;
+				FImportFiles2GroomMapValue3& L_Value = L_SK_Map[Mesh];
+				if (!L_Value.GroomMap.Contains(GroomBind->GetGroom()))
+				{
+					UE_LOG(LogTemp, Error, TEXT("GroomMap not contains %s"),
+						*GroomBind->GetGroom()->GetName());
+					break;
+				}
+				L_Value.GroomMap[GroomBind->GetGroom()].GroomCache = L_GroomCache;
 			}
 			break;
+		}
+	}
+	// 开始创建 Groom 绑定
+	for (auto&& [L_, L_Value] : L_SK_Map)
+	{
+		AActor* L_Actor = L_Value.Actor;
+		for (auto&& [L_GroomAsset, L_GroomCacheOrBind] : L_Value.GroomMap)
+		{
+			UGroomComponent* L_Com = CastChecked<UGroomComponent>(L_Actor->AddComponentByClass(UGroomComponent::StaticClass(), false,
+				FTransform::Identity, false));
+			L_Com->GroomAsset = L_GroomAsset;
+			if (L_GroomCacheOrBind.GroomCache)
+				L_Com->GroomCache = L_GroomCacheOrBind.GroomCache;
+			else if (L_GroomCacheOrBind.GroomBindingAsset)
+				L_Com->BindingAsset = L_GroomCacheOrBind.GroomBindingAsset;
+			else
+				UE_LOG(LogTemp, Error, TEXT("GroomMap not contains GroomCache or GroomBindingAsset for %s"),
+				*L_GroomAsset->GetName()
+			);
 		}
 	}
 
