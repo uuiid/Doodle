@@ -246,9 +246,9 @@ void UDoodleBaseImport::ImportFileFbx(const FDoodleListViewData& In_Path)
 	if (!L_AnimSequence) return;
 	if (!L_SkeletalMesh) return;
 
-	L_AnimSequence->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
-		L_AnimSequence, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
-	);
+	// L_AnimSequence->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+	// 	L_AnimSequence, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression")
+	// );
 	if (L_AnimSequence->IsDataModelValid())
 	{
 		L_AnimSequence->CompressCommandletVersion = 0;

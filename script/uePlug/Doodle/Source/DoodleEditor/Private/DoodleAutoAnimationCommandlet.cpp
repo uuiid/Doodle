@@ -879,18 +879,18 @@ TPair<USkeletalMesh*, UAnimSequence*> UDoodleAutoAnimationCommandlet::CreateChar
 			}
 		}
 	}
-	if (L_Results.Value) // 如果有动画, 设置动画的压缩设置
-	{
-		L_Results.Value->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
-			L_Results.Value, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
-		if (L_Results.Value->IsDataModelValid())
-		{
-			L_Results.Value->CompressCommandletVersion = 0;
-			L_Results.Value->ClearAllCachedCookedPlatformData();
-			L_Results.Value->CacheDerivedDataForCurrentPlatform();
-		}
-		(void)L_Results.Value->MarkPackageDirty();
-	}
+	// if (L_Results.Value) // 如果有动画, 设置动画的压缩设置
+	// {
+	// 	L_Results.Value->BoneCompressionSettings = LoadObject<UAnimBoneCompressionSettings>(
+	// 		L_Results.Value, TEXT("/Engine/Animation/DefaultRecorderBoneCompression.DefaultRecorderBoneCompression"));
+	// 	if (L_Results.Value->IsDataModelValid())
+	// 	{
+	// 		L_Results.Value->CompressCommandletVersion = 0;
+	// 		L_Results.Value->ClearAllCachedCookedPlatformData();
+	// 		L_Results.Value->CacheDerivedDataForCurrentPlatform();
+	// 	}
+	// 	(void)L_Results.Value->MarkPackageDirty();
+	// }
 
 	return L_Results;
 }
