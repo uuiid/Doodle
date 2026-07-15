@@ -15,6 +15,8 @@ class UGeometryCache;
 class USkeletalMesh;
 class UAnimSequence;
 class UGroomCache;
+class UGroomAsset;
+class UGroomBindingAsset;
 
 UENUM()
 enum class EImportFilesType2
@@ -25,6 +27,15 @@ enum class EImportFilesType2
 	Groom,
 };
 
+USTRUCT()
+struct FImportFiles2GroomMapValue
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	TObjectPtr<UGroomBindingAsset> GroomBindingAsset;
+	UPROPERTY()
+	TObjectPtr<UGroomCache> GroomCache;
+};
 
 USTRUCT()
 struct FImportFiles2
@@ -39,7 +50,7 @@ struct FImportFiles2
 
 	UPROPERTY()
 	TObjectPtr<USkeleton> Skeleton;
-	
+
 	UPROPERTY()
 	TObjectPtr<USkeletalMesh> Mesh;
 
@@ -51,9 +62,9 @@ struct FImportFiles2
 
 	UPROPERTY()
 	FString GroomName;
-	
-	// UPROPERTY()
-	// TMap<UG>
+
+	UPROPERTY()
+	TMap<TObjectPtr<UGroomAsset>, FImportFiles2GroomMapValue> GrommMap;
 };
 
 USTRUCT()
@@ -108,7 +119,7 @@ private:
 	void OnSaveReanderConfig();
 	/// 修改后处理框
 	void PostProcessVolumeConfig();
-	
+
 
 	/// 导入fbx中的相机
 	void ImportCamera(const FString& InFbxPath) const;
