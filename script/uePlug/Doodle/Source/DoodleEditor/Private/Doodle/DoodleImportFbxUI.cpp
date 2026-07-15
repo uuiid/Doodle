@@ -960,12 +960,12 @@ FString UDoodleVfxImport::GetLevelPath(const FDoodleLevelSequenceKey& In_LevelSe
 	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s_Vfx"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
-		TEXT("/Game/Shot/ep%.4d/%s/Import_WB/%s"),
+		TEXT("/Game/Shot/ep%.4d/%s/Import_Vfx/%s"),
 		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
@@ -975,12 +975,12 @@ FString UDoodleVfxImport::GetWorldPath(const FDoodleLevelSequenceKey& In_LevelSe
 	FString L_BaseNameOld = FString::Printf(TEXT("%s%.3d_sc%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
-	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
+	FString L_BaseName = FString::Printf(TEXT("%s_EP%.3d_SC%.3d%s_Vfx"), *In_LevelSequenceKey.ProjectName.ToUpper(), In_LevelSequenceKey.Eps,
 		In_LevelSequenceKey.Shot,
 		*In_LevelSequenceKey.ShotAb);
 
 	return FString::Printf(
-		TEXT("/Game/Shot/ep%.4d/%s/Import_WB/%s_LV"),
+		TEXT("/Game/Shot/ep%.4d/%s/Import_Vfx/%s_LV"),
 		In_LevelSequenceKey.Eps, *L_BaseNameOld, *L_BaseName
 	);
 }
