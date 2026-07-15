@@ -966,7 +966,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 {
 	UEditorAssetSubsystem* EditorAssetSubsystem = GEditor->GetEditorSubsystem<UEditorAssetSubsystem>();
 	TMap<TObjectPtr<USkeletalMesh>, AActor*> L_SK_Map;
-	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBindPath,GroomName] : ImportFiles)
+	for (const auto& [Type, Path, Skeleton, Mesh, BanBen,GroomBindPath,GroomName,_] : ImportFiles)
 	{
 		switch (Type)
 		{

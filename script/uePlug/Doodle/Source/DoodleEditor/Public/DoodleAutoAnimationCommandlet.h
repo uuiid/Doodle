@@ -64,7 +64,7 @@ struct FImportFiles2
 	FString GroomName;
 
 	UPROPERTY()
-	TMap<TObjectPtr<UGroomAsset>, FImportFiles2GroomMapValue> GrommMap;
+	TMap<TObjectPtr<UGroomAsset>, FImportFiles2GroomMapValue> GroomMap;
 };
 
 USTRUCT()
