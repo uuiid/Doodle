@@ -11,6 +11,10 @@
 #include "DoodleAutoAnimationCommandlet.generated.h"
 
 class ASkeletalMeshActor;
+class UGeometryCache;
+class USkeletalMesh;
+class UAnimSequence;
+class UGroomCache;
 
 UENUM()
 enum class EImportFilesType2
@@ -18,12 +22,7 @@ enum class EImportFilesType2
 	Camera,
 	Geometry,
 	Character,
-};
-
-enum class ECheckFileType
-{
-	Character,
-	Scene,
+	Groom,
 };
 
 
@@ -43,6 +42,12 @@ struct FImportFiles2
 
 	UPROPERTY()
 	FString BanBenSuffix;
+
+	UPROPERTY()
+	FString GroomPath;
+
+	UPROPERTY()
+	FString GroomName;
 };
 
 USTRUCT()
@@ -97,18 +102,18 @@ private:
 	void OnSaveReanderConfig();
 	/// 修改后处理框
 	void PostProcessVolumeConfig();
+	
 
 	/// 导入fbx中的相机
 	void ImportCamera(const FString& InFbxPath) const;
 	/// 创建几何缓存导入任务
-	TArray<UObject*> CreateGeometryImportTask(const FString& InFbxPath);
+	UGeometryCache* CreateGeometryImportTask(const FString& InFbxPath);
 	/// 创建角色导入任务
-	TArray<UObject*> CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
-	                                           bool bImportAnimations = true);
+	TPair<USkeletalMesh*, UAnimSequence*> CreateCharacterImportTask(const FString& InFbxPath, const TObjectPtr<USkeleton>& InSkeleton,
+	                                                                bool bImportAnimations = true);
 
-	/// 隐藏材质
-	void HideMaterials(const ASkeletalMeshActor* InActor) const;
-
+	/// 创建 groom 毛发
+	UGroomCache* CreateGroomImportTask(const FString& InAbcPath, const FString& InGroomAssetPath);
 	// 修复材质属性
 	static void FixMaterialProperty();
 	/// 修复5.4版本的材质参数集问题
@@ -151,8 +156,6 @@ private:
 	UPROPERTY()
 	TObjectPtr<ADirectionalLight> MainDirectionalLight;
 
-	// 检查文件类型
-	ECheckFileType CheckFileType;
 
 	// 输出大小
 	FImageSize ImageSize;
