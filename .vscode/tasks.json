@@ -163,7 +163,9 @@
       "type": "shell",
       "command": "${workspaceFolder}/build_script/deployment_server.ps1",
       "args": [
-        "${input:dep_opt}"
+        "${input:dep_opt}",
+        "-logs",
+        "${input:dep_logs}"
       ],
       "problemMatcher": [],
       "presentation": {
@@ -285,6 +287,12 @@
         "-BuildSd2",
         ""
       ]
+    },
+    {
+      "id": "dep_logs",
+      "type": "promptString",
+      "description": "更新日志",
+      "default": ""
     },
     {
       "id": "DB_Version",
