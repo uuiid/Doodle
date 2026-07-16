@@ -27,7 +27,7 @@
 
 namespace doodle::details {
 namespace {
-constexpr std::size_t g_current_version = 12;
+constexpr std::size_t g_current_version = 13;
 }
 
 struct upgrade_init_t : sqlite_upgrade {
@@ -101,6 +101,10 @@ struct upgrade_2_t : sqlite_upgrade {
       l_s.drop_trigger("entity_fts_update_trigger");
       in_data.sync_schema();
     }
+    if (in_data.pragma().user_version() == 12) {
+      in_data.sync_schema();
+    }
+
     in_data.pragma().user_version(g_current_version);
   }
   ~upgrade_2_t() override = default;

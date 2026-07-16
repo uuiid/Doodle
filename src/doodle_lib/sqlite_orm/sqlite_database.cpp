@@ -37,6 +37,7 @@
 #include <doodle_core/metadata/task.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
+#include <doodle_core/metadata/updata_logs.h>
 #include <doodle_core/metadata/user.h>
 #include <doodle_core/metadata/work_xlsx_task_info.h>
 #include <doodle_core/metadata/working_file.h>
@@ -57,6 +58,7 @@
 #include <sqlite3.h>
 #include <tuple>
 #include <vector>
+
 
 namespace doodle {
 
@@ -844,6 +846,14 @@ void sqlite_storage::regs_all() {
       .add_column("chat_token_discord", &organisation::chat_token_discord_)
       .add_column("dark_theme_by_default", &organisation::dark_theme_by_default_)
       .add_index(&organisation::uuid_id_);
+
+  reg_table<updata_logs>("updata_logs")
+      .add_column("id", &updata_logs::id_, primary_key(), autoincrement())
+      .add_column("uuid", &updata_logs::uuid_id_, not_null(), unique())
+      .add_column("log", &updata_logs::log_, not_null())
+      .add_column("created_at", &updata_logs::created_at_, not_null())
+      .add_column("updated_at", &updata_logs::updated_at_, not_null())
+      .add_index(&updata_logs::uuid_id_);
 
   reg_virtual_table<entity_fts>("entity_fts")
       .add_column("uuid", &entity_fts::entity_id_, unindexed())

@@ -45,7 +45,8 @@ target_sources(
         playlist.h
         ai_image_metadata.h
         kitsu_ctx_t.h
-
+        updata_logs.h
+        
         PRIVATE
         assets.cpp
         assets_file.cpp
