@@ -731,6 +731,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
         l_scene_ue_path / l_vfx_path2
 
     );
+    // 还要下载地编预调
+    auto l_light_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                         fmt::format("ep{:04}", l_episodes) /
+                         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_WB";
+    auto l_light_path3 =
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
+    auto l_light_path4 =
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
+    l_arg.download_file_list_.emplace_back(
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path2,
+        l_scene_ue_path / l_light_path2
+    );
+    l_arg.download_option_file_list_.emplace_back(
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path3,
+        l_scene_ue_path / l_light_path3
+    );
+    l_arg.download_option_file_list_.emplace_back(
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path4,
+        l_scene_ue_path / l_light_path4
+    );
   }
 
   // 开始填充上传列表
@@ -776,7 +800,33 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
         l_scene_ue_path / l_light_path4,
         l_prj.path_ / get_shots_lighting_ue_path(l_episode_entity) / l_uprj.stem() / l_light_path4
     );
-  } else {
+  } else if (l_task.task_type_id_ == task_type::get_ground_pretreatment_id()) {
+    auto l_light_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                         fmt::format("ep{:04}", l_episodes) /
+                         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_WB";
+    auto l_light_path3 =
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
+    auto l_light_path4 =
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path2,
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path2
+    );
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path3,
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path3
+    );
+    l_arg.update_file_list_.emplace_back(
+        l_scene_ue_path / l_light_path4,
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path4
+    );
+  }
+
+  else {
     throw_exception(http_request_error{boost::beast::http::status::bad_request, "仅支持灯光和特效任务同步信息获取"});
   }
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);

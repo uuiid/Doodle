@@ -1,12 +1,11 @@
 #pragma once
-#include <doodle_lib/doodle_lib_fwd.h>
-
 #include <doodle_lib/core/asyn_task.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 #include <doodle_lib/exe_warp/maya_exe.h>
 #include <doodle_lib/http_client/kitsu_client.h>
 
 #include <vector>
+
 
 namespace doodle {
 class DOODLELIB_API task_sync : public async_task {
@@ -46,13 +45,17 @@ class DOODLELIB_API task_sync : public async_task {
   struct args {
     std::vector<copy_info> update_file_list_{};
     std::vector<copy_info> download_file_list_{};
+    std::vector<copy_info> download_option_file_list_{};
     friend void from_json(const nlohmann::json& in_json, task_sync::args& out_obj) {
       in_json.at("update_file_list").get_to(out_obj.update_file_list_);
       in_json.at("download_file_list").get_to(out_obj.download_file_list_);
+      if (in_json.contains("download_option_file_list"))
+        in_json.at("download_option_file_list").get_to(out_obj.download_option_file_list_);
     }
     friend void to_json(nlohmann::json& out_json, const task_sync::args& in_obj) {
-      out_json["update_file_list"]   = in_obj.update_file_list_;
-      out_json["download_file_list"] = in_obj.download_file_list_;
+      out_json["update_file_list"]          = in_obj.update_file_list_;
+      out_json["download_file_list"]        = in_obj.download_file_list_;
+      out_json["download_option_file_list"] = in_obj.download_option_file_list_;
     }
 
     args& operator+=(const args& in_other);

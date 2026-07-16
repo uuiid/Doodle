@@ -417,6 +417,9 @@ FSys::path get_shots_effect_movie_path(const entity& episode_) {
 FSys::path get_shots_lighting_movie_path(const entity& episode_) {
   return FSys::path{"9_LIGHT"} / "Light_Mp4" / episode_.name_ / "Fix";
 }
+FSys::path get_shots_ground_pretreatment_movie_path(const entity& episode_) {
+  return FSys::path{"10_GROUND"} / "File" / episode_.name_;
+}
 // 自动灯光上传文件夹
 FSys::path get_shots_auto_lighting_upload_path(
     const episodes& episode_, const entity_asset_extend_value& ground_extend_

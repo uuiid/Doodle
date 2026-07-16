@@ -1,13 +1,12 @@
-#include <doodle_lib/exe_warp/task_sync.h>
-
-#include <doodle_lib/core/file_sys.h>
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/task_status.h>
 
+#include <doodle_lib/core/file_sys.h>
+#include <doodle_lib/exe_warp/task_sync.h>
 #include <doodle_lib/exe_warp/ue_exe.h>
 
-#include <http_client/kitsu_client.h>
 #include <filesystem>
+#include <http_client/kitsu_client.h>
 #include <vector>
 
 namespace doodle {
@@ -43,9 +42,13 @@ boost::asio::awaitable<void> task_sync::run() {
   }
   auto l_root = core_set::get_set().user_work_root_;
 
-  if (download_)
+  if (download_) {
     for (auto&& l_info : l_total_args.download_file_list_)
       FSys::copy_diff(l_info.from_path_, l_root / l_info.to_path_, logger_ptr_);
+    for (auto&& l_info : l_total_args.download_option_file_list_)
+      if (!FSys::exists(l_root / l_info.to_path_))
+        FSys::copy_diff(l_info.from_path_, l_root / l_info.to_path_, logger_ptr_);
+  }
 
   if (update_) {
     for (auto&& l_info : l_total_args.update_file_list_) {
