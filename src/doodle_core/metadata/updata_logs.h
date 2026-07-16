@@ -25,5 +25,7 @@ struct updata_logs {
     j["created_at"] = p.created_at_;
     j["updated_at"] = p.updated_at_;
   }
+  // from json
+  friend void from_json(const nlohmann::json& j, updata_logs& p) { j.at("log").get_to(p.log_); }
 };
 }  // namespace doodle

@@ -12,6 +12,15 @@
 #include <core/http/http_function.h>
 
 namespace doodle::http {
+// /api/data/updata-logs
+DOODLE_HTTP_JWT_FUN(data_updata_logs)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/data/production-specifications
+DOODLE_HTTP_JWT_FUN(data_production_specifications)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_END()
 // /api/auth/login
 DOODLE_HTTP_FUN(auth_login)
 DOODLE_HTTP_FUN_OVERRIDE(post)

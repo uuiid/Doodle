@@ -35,7 +35,6 @@
 #include "kitsu/kitsu_reg_url.h"
 #include "seedance2/reg.h"
 
-
 namespace doodle::http {
 
 http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
@@ -346,7 +345,8 @@ http_route_ptr create_kitsu_route_2(const FSys::path& in_root) {
       .reg_t<seedance2::seedance2_tokens_person_all>("/api/seedance2/tokens/person/all"_url)
       .reg_t<data_preview_files>("/api/data/preview-files/{}"_url(&data_preview_files::preview_file_id_))
       .reg_t<seedance2::seedance2_task_fix>("/api/seedance2/task/fix"_url)
-
+      .reg_t<data_updata_logs>("/api/data/updata-logs"_url)
+      .reg_t<data_production_specifications>("/api/data/production-specifications"_url)
 
       // 最后注册nodejs前端
       .reg_t<kitsu_front_end>(std::make_shared<kitsu_front_end_url_route_component>(), in_root)
@@ -504,6 +504,7 @@ std::string_view mime_type(const FSys::path& in_ext) {
   if (l_ext == "tar") return "application/x-tar";
   if (l_ext == "log") return "text/plain";
   if (l_ext == "mov") return "video/quicktime";
+  if (l_ext == "md") return "text/markdown";
   return "application/octet-stream";
 }
 

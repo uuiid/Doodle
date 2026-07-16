@@ -1,6 +1,8 @@
 //
 // Created by TD on 25-4-8.
 //
+#include "doodle_core/metadata/kitsu_ctx_t.h"
+#include "doodle_core/metadata/updata_logs.h"
 #include <doodle_core/exception/exception.h>
 #include <doodle_core/metadata/department.h>
 #include <doodle_core/metadata/entity_type.h>
@@ -25,6 +27,7 @@
 #include <boost/system/detail/error_code.hpp>
 
 #include "core/http/http_function.h"
+#include "http_method/kitsu.h"
 #include "kitsu_reg_url.h"
 #include <chrono>
 #include <core/http/http_session_data.h>
@@ -307,5 +310,30 @@ boost::asio::awaitable<boost::beast::http::message_generator> doodle_stop_server
       person_.person_.get_full_name()
   );
   co_return in_handle->make_msg(nlohmann::json{} = "server stopping");
+}
+
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, get) {
+  person_.check_admin();
+  using namespace orm;
+  auto l_sql = get_sqlite_database();
+  co_return in_handle->make_msg(nlohmann::json{} = l_sql.get_all<updata_logs>());
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
+  person_.check_admin();
+  using namespace orm;
+  auto l_sql         = get_sqlite_database();
+  auto l_updata_logs = std::make_shared<updata_logs>();
+  in_handle->get_json().get_to(*l_updata_logs);
+  co_await l_sql.install(l_updata_logs);
+  SPDLOG_LOGGER_WARN(
+      g_logger_ctrl().get_http(), "用户 {}({}) 完成创建更新日志 updata_logs_id {} log {}", person_.person_.email_,
+      person_.person_.get_full_name(), l_updata_logs->uuid_id_, l_updata_logs->log_
+  );
+  co_return in_handle->make_msg(nlohmann::json{} = *l_updata_logs);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
+  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_path = l_ctx.get_production_specifications_file();
+  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension())});
 }
 }  // namespace doodle::http

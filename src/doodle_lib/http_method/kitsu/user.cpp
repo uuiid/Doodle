@@ -14,6 +14,7 @@
 #include <doodle_core/metadata/studio.h>
 #include <doodle_core/metadata/task_status.h>
 #include <doodle_core/metadata/task_type.h>
+#include <doodle_core/metadata/updata_logs.h>
 #include <doodle_core/metadata/user.h>
 
 #include <doodle_lib/core/bcrypt/bcrypt.h>
@@ -163,7 +164,7 @@ auto get_asset_types() {
 boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(session_data_ptr in_handle) {
   nlohmann::json l_ret{};
   using namespace orm;
-  auto l_sql = get_sqlite_database();
+  auto l_sql              = get_sqlite_database();
   l_ret["asset_types"]    = get_asset_types();
   l_ret["custom_actions"] = nlohmann::json::value_t::array;
   l_ret["departments"]    = l_sql.get_all<department>();
@@ -195,6 +196,13 @@ boost::asio::awaitable<boost::beast::http::message_generator> user_context::get(
   l_ret["user_limit"]               = 9999;
   l_ret["search_filter_groups"]     = nlohmann::json::value_t::object;
   l_ret["search_filters"]           = nlohmann::json::value_t::object;
+  l_ret["log"]                      = select(l_sql)
+                     .columns(&updata_logs::log_)
+                     .from<updata_logs>()
+                     .order_by(&updata_logs::created_at_, false)
+                     .limit(1)()
+                     .to_optional()
+                     .value_or(std::string{});
 
   co_return in_handle->make_msg(l_ret);
 }
@@ -215,7 +223,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
   person_.check_admin();
   auto l_person       = std::make_shared<person>(in_handle->get_json().get<person>());
   l_person->timezone_ = chrono::current_zone()->name();
-  auto l_sql                        = get_sqlite_database();
+  auto l_sql          = get_sqlite_database();
 
   SPDLOG_LOGGER_WARN(
       g_logger_ctrl().get_http(), "用户 {}({}) 开始创建用户 email {}", person_.person_.email_,
@@ -238,7 +246,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person::post(
 }
 
 boost::asio::awaitable<boost::beast::http::message_generator> data_person_instance::put(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql        = get_sqlite_database();
   auto l_old_person = l_sql.get_by_uuid<person>(id_);
   auto l_person     = std::make_shared<person>(l_old_person);
   auto l_json       = in_handle->get_json();
@@ -289,7 +297,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_person_instan
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   person_.check_admin();
-  auto l_sql = get_sqlite_database();
+  auto l_sql               = get_sqlite_database();
   auto l_person            = std::make_shared<person>(l_sql.get_by_uuid<person>(person_id_));
   auto l_json              = in_handle->get_json();
   const auto& l_password   = l_json.at("password").get_ref<const std::string&>();
@@ -300,7 +308,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(actions_persons_change_password, post) {
   co_return in_handle->make_msg(nlohmann::json{} = *l_person);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(auth_change_password, post) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql                 = get_sqlite_database();
   auto l_person              = std::make_shared<person>(l_sql.get_by_uuid<person>(person_.person_.uuid_id_));
   auto l_json                = in_handle->get_json();
   const auto& l_old_password = l_json.at("old_password").get_ref<const std::string&>();
