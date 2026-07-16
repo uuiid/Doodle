@@ -73,8 +73,13 @@ struct task_type {
     // 9d71918b-cbf0-46bc-9c39-27177c9a950a
     return {{0x9d, 0x71, 0x91, 0x8b, 0xcb, 0xf0, 0x46, 0xbc, 0x9c, 0x39, 0x27, 0x17, 0x7c, 0x9a, 0x95, 0x0a}};
   }
+  /// 地编预调
+  constexpr static uuid get_ground_pretreatment_id() {
+    // 019f6a42-a49d-71cd-8037-d83da7e01f7c
+    return {{0x01, 0x9f, 0x6a, 0x42, 0xa4, 0x9d, 0x71, 0xcd, 0x80, 0x37, 0xd8, 0x3d, 0xa7, 0xe0, 0x1f, 0x7c}};
+  }
 
-  constexpr static std::array<task_type, 10> get_all_constant();
+  constexpr static std::array<task_type, 11> get_all_constant();
 
   // from json
   template <typename BasicJsonType>
@@ -107,7 +112,7 @@ struct task_type {
   }
 };
 
-constexpr std::array<task_type, 10> task_type::get_all_constant() {
+constexpr std::array<task_type, 11> task_type::get_all_constant() {
   // clang-format off
   return {
       task_type{.uuid_id_ = get_original_painting_id(), .name_ = "原画",    .short_name_ = "原画",      .for_entity_ = "Asset", },
@@ -120,6 +125,7 @@ constexpr std::array<task_type, 10> task_type::get_all_constant() {
       task_type{.uuid_id_ = get_lighting_id(),          .name_ = "灯光",    .short_name_= "灯光",  	  	.for_entity_= "Shot", },
       task_type{.uuid_id_ = get_animation_id(),         .name_ = "动画",    .short_name_= "动画",  	  	.for_entity_= "Shot", },
       task_type{.uuid_id_ = get_simulation_task_id(),   .name_ = "解算任务", .short_name_= "解算任务",   .for_entity_= "Shot", },
+      task_type{.uuid_id_ = get_ground_pretreatment_id(),   .name_ = "地编预调", .short_name_= "地编预调",   .for_entity_= "Shot", },
   };
   // clang-format on
 };
