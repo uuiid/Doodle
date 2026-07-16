@@ -6,11 +6,6 @@
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-# 如何为空打印错误并返回
-if ($logs -eq $null) {
-    Write-Host "请传入更新日志记录"
-    return;
-}
 
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
@@ -20,6 +15,11 @@ if ($BuildSd2) {
     return;
 }
 
+# 如何为空打印错误并返回
+if ($logs -eq $null) {
+    Write-Host "请传入更新日志记录"
+    return;
+}
 $DoodleOut = Convert-Path "$PSScriptRoot/../build/pack"
 Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
