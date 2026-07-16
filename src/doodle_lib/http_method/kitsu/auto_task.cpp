@@ -659,7 +659,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
       !l_uprj.empty(), bad_request, "未找到场景 {} 对应的 ue 工程文件，无法生成 ue 主工程路径", l_scene_asset.name_
   );
 
-  auto l_scene_ue_path = FSys::path{l_prj.code_} / fmt::format("EP{:04}", l_episodes) / l_uprj.stem();
+  auto l_scene_ue_path = FSys::path{l_prj.code_} / l_uprj.stem();
 
   /// 添加场景文件下载
   l_arg.download_file_list_.emplace_back(l_uprj, l_scene_ue_path / l_uprj.filename());
