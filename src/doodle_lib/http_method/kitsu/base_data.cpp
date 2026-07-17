@@ -33,6 +33,7 @@
 #include <core/http/http_session_data.h>
 #include <memory>
 #include <spdlog/spdlog.h>
+#include <string>
 #include <vector>
 
 namespace doodle::http {
@@ -334,6 +335,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
   auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
   auto l_path = l_ctx.get_production_specifications_file();
-  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = kitsu::mime_type(l_path.extension())});
+  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = std::string{kitsu::mime_type(l_path.extension())} + "; charset=utf-8"});
 }
 }  // namespace doodle::http
