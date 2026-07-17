@@ -312,6 +312,34 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       l_prj.path_ / get_entity_ground_ue_path(l_prj, l_scene_asset_extend_value) / doodle_config::ue4_config,
       l_scene_ue_path / doodle_config::ue4_config
   );
+  {
+    // 还需要检查地编预调的路径, 有的话, 复制一下, 并调整使用地编预调的总关卡
+    auto l_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                   fmt::format("ep{:04}", l_episodes) /
+                   fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_WB";
+    auto l_path3 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                   fmt::format("ep{:04}", l_episodes) /
+                   fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+                   fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
+    auto l_path4 =
+        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
+        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+        fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
+    if (auto l_source_path =
+            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path2;
+        FSys::exists(l_source_path))
+      l_ret.ue_asset_path_.emplace_back(l_source_path, l_scene_ue_path / l_path2);
+    if (auto l_source_path =
+            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path3;
+        FSys::exists(l_source_path))
+      l_ret.ue_asset_path_.emplace_back(l_source_path, l_scene_ue_path / l_path3);
+    if (auto l_source_path =
+            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path4;
+        FSys::exists(l_source_path)) {
+      l_ret.ue_asset_path_.emplace_back(l_source_path, l_scene_ue_path / l_path4);
+      l_ret.original_map_ = conv_ue_game_path(l_path4);
+    }
+  }
 
   {
     auto l_path = l_is_simulation_task ? get_shots_auto_lighting_upload_simulation_name(l_episodes, l_shot, l_prj.code_)
@@ -801,28 +829,28 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_tasks_sync
         l_prj.path_ / get_shots_lighting_ue_path(l_episode_entity) / l_uprj.stem() / l_light_path4
     );
   } else if (l_task.task_type_id_ == task_type::get_ground_pretreatment_id()) {
-    auto l_light_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
-                         fmt::format("ep{:04}", l_episodes) /
-                         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_WB";
-    auto l_light_path3 =
-        FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
-        fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
-        fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
-    auto l_light_path4 =
+    auto l_path2 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                   fmt::format("ep{:04}", l_episodes) /
+                   fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) / "Import_WB";
+    auto l_path3 = FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot /
+                   fmt::format("ep{:04}", l_episodes) /
+                   fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
+                   fmt::format("{}_EP{:03}_SC{:03}{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_uasset_ext);
+    auto l_path4 =
         FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
         fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
     l_arg.update_file_list_.emplace_back(
-        l_scene_ue_path / l_light_path2,
-        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path2
+        l_scene_ue_path / l_path2,
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path2
     );
     l_arg.update_file_list_.emplace_back(
-        l_scene_ue_path / l_light_path3,
-        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path3
+        l_scene_ue_path / l_path3,
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path3
     );
     l_arg.update_file_list_.emplace_back(
-        l_scene_ue_path / l_light_path4,
-        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_light_path4
+        l_scene_ue_path / l_path4,
+        l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path4
     );
   }
 
