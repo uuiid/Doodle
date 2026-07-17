@@ -263,6 +263,13 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	if (JsonObject->HasField(TEXT("camera_file_path")))
 		ImportFiles.Add(FImportFiles2{EImportFilesType2::Camera, JsonObject->GetStringField(TEXT("camera_file_path")), nullptr, {}});
 
+	if (FString L_GroundPretreatmentSequence = JsonObject->HasField(TEXT("ground_pretreatment_sequence"))
+		? JsonObject->GetStringField(TEXT("ground_pretreatment_sequence"))
+		: TEXT(""); !L_GroundPretreatmentSequence.IsEmpty())
+	{
+		GroundPretreatmentSequence = LoadObject<ULevelSequence>(this, *L_GroundPretreatmentSequence);
+	}
+
 	for (TArray<TSharedPtr<FJsonValue>> JsonFiles = JsonObject->GetArrayField(TEXT("files")); const TSharedPtr<FJsonValue>& JsonFile : JsonFiles)
 	{
 		TSharedPtr<FJsonObject> Obj = JsonFile->AsObject();
@@ -300,6 +307,7 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 		FString L_GroomName = Obj->HasField(TEXT("groom_name"))
 			? Obj->GetStringField(TEXT("groom_name"))
 			: TEXT("");
+
 		ImportFiles.Add(FImportFiles2{
 			Type2, Path, L_Skeleton, L_Mesh, L_BanBenSuffix, LoadObject<UGroomBindingAsset>(this, *L_GroomBindPath), L_GroomName
 		});
@@ -334,7 +342,6 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	DeleteAsseet(SequencePath);
 
 	FrameTick = TickRate.Numerator / Rate.Numerator;
-
 	// 创建主要的关卡和关卡序列
 	OnCreateSequence();
 	OnCreateSequenceWorld();
@@ -347,7 +354,7 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	OnBuildSequence();
 	CommandletHelpers::TickEngine(TheRenderWorld);
 	//---------------------
-
+	AddGroundPretreatmentSequence();
 	AddSequenceWorldToRenderWorld();
 	PostProcessVolumeConfig();
 	EditorAssetSubsystem->SaveLoadedAssets({TheLevelSequence, TheRenderWorld});
@@ -357,7 +364,23 @@ int UDoodleAutoAnimationCommandlet::RunAutoLight(const FString& InCondigPath)
 	return 0;
 }
 
-void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
+void UDoodleAutoAnimationCommandlet::AddGroundPretreatmentSequence() const
+{
+	if (!GroundPretreatmentSequence) return;
+
+	UMovieSceneSubTrack* NewTrack = TheLevelSequence->GetMovieScene()->FindTrack<UMovieSceneSubTrack>();
+	if (NewTrack)
+	{
+		TheLevelSequence->GetMovieScene()->RemoveTrack(*Cast<UMovieSceneTrack>(NewTrack));
+	}
+	NewTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSubTrack>();
+	UMovieSceneSubSection* NewSection = CastChecked<UMovieSceneSubSection>(NewTrack->CreateNewSection());
+	NewSection->SetSequence(GroundPretreatmentSequence);
+	NewSection->SetRange(TheLevelSequence->GetMovieScene()->GetPlaybackRange());
+	NewTrack->AddSection(*NewSection);
+}
+
+void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld() const
 {
 	ULevelStreaming* TempStreamingLevel = NewObject<ULevelStreaming>(TheRenderWorld, ULevelStreamingDynamic::StaticClass(), NAME_None, RF_NoFlags);
 	TempStreamingLevel->SetWorldAsset(TheSequenceWorld);
@@ -410,7 +433,7 @@ void UDoodleAutoAnimationCommandlet::AddSequenceWorldToRenderWorld()
 	// UGameplayStatics::OpenLevel(TheRenderWorld, FName{RenderMapPath});
 	UGameplayStatics::FlushLevelStreaming(TheRenderWorld);
 	CommandletHelpers::TickEngine(TheRenderWorld);
-	TheRenderWorld->MarkPackageDirty();
+	(void)TheRenderWorld->MarkPackageDirty();
 }
 
 
