@@ -118,13 +118,14 @@ struct run_ue_assembly_arg {
   std::int32_t begin_time_;
   std::int32_t end_time_;
   FSys::path out_file_dir_;
-  FSys::path original_map_;           // 主场景路径
-  FSys::path render_map_;             // 渲染关卡, 这个放置外面, 包含下面两个子关卡
-  FSys::path create_map_;             // 创建的关卡(放置骨骼网格体)
-  FSys::path import_dir_;             // 导入的fbx和abc路径
-  FSys::path movie_pipeline_config_;  // 电影管线配置
-  FSys::path level_sequence_import_;  // 渲染关卡序列(包的路径), 包括下面的子关卡
-  image_size size_;                   // 渲染的尺寸
+  FSys::path original_map_;                  // 主场景路径
+  FSys::path ground_pretreatment_sequence_;  // 地面预处理序列路径, 有的话, 要加入子序列中
+  FSys::path render_map_;                    // 渲染关卡, 这个放置外面, 包含下面两个子关卡
+  FSys::path create_map_;                    // 创建的关卡(放置骨骼网格体)
+  FSys::path import_dir_;                    // 导入的fbx和abc路径
+  FSys::path movie_pipeline_config_;         // 电影管线配置
+  FSys::path level_sequence_import_;         // 渲染关卡序列(包的路径), 包括下面的子关卡
+  image_size size_;                          // 渲染的尺寸
   bool layering_;
   FSys::path create_move_path_;  // 合成视屏的路径
   shot shot_;
@@ -135,29 +136,30 @@ struct run_ue_assembly_arg {
 
   // to josn
   friend void to_json(nlohmann::json& j, const run_ue_assembly_arg& p) {
-    j["files"]                 = p.asset_infos_;
-    j["camera_file_path"]      = p.camera_file_path_;
-    j["ue_main_project_path"]  = p.ue_main_project_path_;
-    j["ue_asset_path"]         = p.ue_asset_path_;
-    j["update_ue_path"]        = p.update_ue_path_;
-    j["clear_path"]            = p.clear_path_;
+    j["files"]                        = p.asset_infos_;
+    j["camera_file_path"]             = p.camera_file_path_;
+    j["ue_main_project_path"]         = p.ue_main_project_path_;
+    j["ue_asset_path"]                = p.ue_asset_path_;
+    j["update_ue_path"]               = p.update_ue_path_;
+    j["clear_path"]                   = p.clear_path_;
 
-    j["begin_time"]            = p.begin_time_;
-    j["end_time"]              = p.end_time_;
-    j["out_file_dir"]          = p.out_file_dir_;
-    j["original_map"]          = p.original_map_;
-    j["render_map"]            = p.render_map_;
-    j["create_map"]            = p.create_map_;
-    j["import_dir"]            = p.import_dir_;
-    j["movie_pipeline_config"] = p.movie_pipeline_config_;
-    j["level_sequence"]        = p.level_sequence_import_;
-    j["size"]                  = p.size_;
-    j["layering"]              = p.layering_;
-    j["create_move_path"]      = p.create_move_path_;
-    j["shot"]                  = p.shot_;
-    j["episodes"]              = p.episodes_;
-    j["shot_task_id"]          = p.shot_task_id_;
-    j["project_id"]            = p.project_id_;
+    j["begin_time"]                   = p.begin_time_;
+    j["end_time"]                     = p.end_time_;
+    j["out_file_dir"]                 = p.out_file_dir_;
+    j["original_map"]                 = p.original_map_;
+    j["render_map"]                   = p.render_map_;
+    j["create_map"]                   = p.create_map_;
+    j["import_dir"]                   = p.import_dir_;
+    j["movie_pipeline_config"]        = p.movie_pipeline_config_;
+    j["level_sequence"]               = p.level_sequence_import_;
+    j["size"]                         = p.size_;
+    j["layering"]                     = p.layering_;
+    j["create_move_path"]             = p.create_move_path_;
+    j["shot"]                         = p.shot_;
+    j["episodes"]                     = p.episodes_;
+    j["shot_task_id"]                 = p.shot_task_id_;
+    j["project_id"]                   = p.project_id_;
+    j["ground_pretreatment_sequence"] = p.ground_pretreatment_sequence_;
   }
   // from json
   friend void from_json(const nlohmann::json& j, run_ue_assembly_arg& p) {
@@ -184,6 +186,8 @@ struct run_ue_assembly_arg {
     j.at("episodes").get_to(p.episodes_);
     j.at("shot_task_id").get_to(p.shot_task_id_);
     j.at("project_id").get_to(p.project_id_);
+    if (j.contains("ground_pretreatment_sequence"))
+      j.at("ground_pretreatment_sequence").get_to(p.ground_pretreatment_sequence_);
   }
 };
 NLOHMANN_JSON_SERIALIZE_ENUM(
