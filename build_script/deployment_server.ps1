@@ -6,7 +6,9 @@
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-
+class update_logs {
+    [string]$log;
+}
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 if ($BuildSd2) {
@@ -30,7 +32,10 @@ if ($logs -ne $null) {
         "Authorization" = "Bearer $KitsuCookies"
         "Content-Type" = "application/json"
     }
-    Invoke-WebRequest -Uri "http://192.168.40.188/api/data/updata-logs" -Method Post -Headers $headers -Body "{""log"": ""$logs""}"
+    $logs_c = New-Object update_logs
+    $logs_c.log = $logs
+    $logs_json_s = $logs_c | ConvertTo-Json -Compress
+    Invoke-WebRequest -Uri "http://192.168.40.188/api/data/updata-logs" -Method Post -Headers $headers -Body $logs_json_s
 }
 
 
