@@ -19,7 +19,6 @@
 #include <boost/signals2/signal.hpp>
 
 #include <bitset>
-#include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
