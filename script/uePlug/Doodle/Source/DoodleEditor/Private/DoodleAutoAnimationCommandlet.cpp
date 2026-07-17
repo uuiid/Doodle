@@ -101,6 +101,8 @@
 #include "GroomCache.h"
 #include "GroomCacheImportOptions.h"
 #include "GroomComponent.h"
+#include "MovieSceneGroomCacheSection.h"
+#include "MovieSceneGroomCacheTrack.h"
 #include "ObjectTools.h"
 
 UDoodleAutoAnimationCommandlet::UDoodleAutoAnimationCommandlet()
@@ -1004,6 +1006,7 @@ namespace
 		TMap<TObjectPtr<UGroomAsset>, FImportFiles2GroomMapValue> GroomMap;
 		TObjectPtr<AActor> Actor;
 		TObjectPtr<USkeletalMesh> SkeletonMesh;
+		FGuid ActorGuid;
 	};
 }
 
@@ -1093,6 +1096,7 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				//---------------------
 				const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Actor->GetActorLabel(), L_Actor->GetClass());
 				TheLevelSequence->BindPossessableObject(L_GUID, *L_Actor, TheSequenceWorld);
+				L_SK_Map[Mesh].ActorGuid = L_GUID;
 				//-----------------------
 				UMovieSceneSpawnTrack* L_MovieSceneSpawnTrack = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneSpawnTrack>(L_GUID);
 				UMovieSceneSpawnSection* L_MovieSceneSpawnSection = CastChecked<UMovieSceneSpawnSection>(L_MovieSceneSpawnTrack->CreateNewSection());
@@ -1164,6 +1168,17 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 				UE_LOG(LogTemp, Error, TEXT("GroomMap not contains GroomCache or GroomBindingAsset for %s"),
 				*L_GroomAsset->GetName()
 			);
+			const FGuid L_GUID = TheLevelSequence->GetMovieScene()->AddPossessable(L_Com->GetName(), L_Com->GetClass());
+			if (FMovieScenePossessable* L_Poss = TheLevelSequence->GetMovieScene()->FindPossessable(L_GUID))
+			{
+				L_Poss->SetParent(L_Value.ActorGuid);
+			}
+
+			if (!L_GroomCacheOrBind.GroomCache) continue;
+			UMovieSceneGroomCacheTrack* L_Track = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGroomCacheTrack>();
+			UMovieSceneGroomCacheSection* L_GroomCacheSection = CastChecked<UMovieSceneGroomCacheSection>(L_Track->AddNewAnimation(L_Start * FrameTick, L_Com));
+			L_GroomCacheSection->SetPreRollFrames(50 * FrameTick);
+			L_GroomCacheSection->Modify();
 		}
 	}
 
