@@ -325,18 +325,16 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         FSys::path{doodle_config::ue4_content} / doodle_config::ue4_shot / fmt::format("ep{:04}", l_episodes) /
         fmt::format("{}{:03}_sc{:03}", l_prj.code_, l_episodes, l_shot) /
         fmt::format("{}_EP{:03}_SC{:03}_Zong{}", l_prj.code_, l_episodes, l_shot, doodle_config::ue4_umap_ext);
-    if (auto l_source_path =
-            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path2;
-        FSys::exists(l_source_path))
-      l_ret.ue_asset_path_.emplace_back(l_source_path, l_scene_ue_path / l_path2);
-    if (auto l_source_path =
-            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path3;
-        FSys::exists(l_source_path))
-      l_ret.ue_asset_path_.emplace_back(l_source_path, l_scene_ue_path / l_path3);
-    if (auto l_source_path =
+    if (auto l_source_path1 =
+            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path2,
+        l_source_path2 =
+            l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path3,
+        l_source_path3 =
             l_prj.path_ / get_shots_ground_pretreatment_movie_path(l_episode_entity) / l_uprj.stem() / l_path4;
-        FSys::exists(l_source_path)) {
-      l_ret.ue_asset_path_.emplace_back(l_source_path, l_scene_ue_path / l_path4);
+        FSys::exists(l_source_path1) && FSys::exists(l_source_path2) && FSys::exists(l_source_path3)) {
+      l_ret.ue_asset_path_.emplace_back(l_source_path1, l_scene_ue_path / l_path2);
+      l_ret.ue_asset_path_.emplace_back(l_source_path2, l_scene_ue_path / l_path3);
+      l_ret.ue_asset_path_.emplace_back(l_source_path3, l_scene_ue_path / l_path4);
       l_ret.original_map_ = conv_ue_game_path(l_path4);
     }
   }
