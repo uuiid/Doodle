@@ -8,6 +8,7 @@ target_sources(
         positional_encoding.h
         timestep_embedder.h
         transformer_encoder_block.h
+        twostage_denoiser.h
 
         
         PRIVATE
@@ -17,4 +18,5 @@ target_sources(
         linear_layer.cpp
         timestep_embedder.cpp
         transformer_encoder_block.cpp
+        twostage_denoiser.cpp
 )
