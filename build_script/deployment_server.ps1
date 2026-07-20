@@ -1,14 +1,10 @@
 ﻿param (
     [switch]$CopyServer,
-    [switch]$BuildSd2,
-    [string]$logs
+    [switch]$BuildSd2 
 )
 
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-class update_logs {
-    [string]$log;
-}
 
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
 if ($BuildSd2) {
@@ -26,18 +22,6 @@ Initialize-Doodle -OutPath $DoodleOut -BackupPdb:$CopyServer
 
 $NewSession = New-ServerPSSession
 $KitsuCookies = (Get-ItemProperty -Path HKLM:\SOFTWARE\Doodle -Name kitsu_cookies).kitsu_cookies;
-# 如何为空打印错误并返回
-if ($logs -ne $null) {
-    $headers = @{
-        "Authorization" = "Bearer $KitsuCookies"
-        "Content-Type" = "application/json"
-    }
-    $logs_c = New-Object update_logs
-    $logs_c.log = $logs
-    $logs_json_s = $logs_c | ConvertTo-Json -Compress
-    Invoke-WebRequest -Uri "http://192.168.40.188/api/data/updata-logs" -Method Post -Headers $headers -Body $logs_json_s
-}
-
 
 Invoke-Command -Session $NewSession -ArgumentList $KitsuCookies, $CopyServer -ScriptBlock {
     param ($KitsuCookies, $CopyServer)

@@ -163,9 +163,7 @@
       "type": "shell",
       "command": "${workspaceFolder}/build_script/deployment_server.ps1",
       "args": [
-        "${input:dep_opt}",
-        "-logs",
-        "${input:dep_logs}"
+        "${input:dep_opt}"
       ],
       "problemMatcher": [],
       "presentation": {
@@ -254,6 +252,15 @@
         "--config=${workspaceFolder}/build/my_debug_server.json"
       ],
       "problemMatcher": []
+    },
+    {
+      "label": "create logs",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/create_logs.ps1",
+      "args": [
+        "-logs",
+        "${input:dep_logs}"
+      ],
     }
   ],
   "inputs": [
