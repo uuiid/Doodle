@@ -161,7 +161,9 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
       l_ret.asset_infos_.emplace_back(
           import_and_render_ue_ns::run_ue_assembly_asset_info{
-              .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
+              .shot_output_path_ = l_path.path(),
+              .type_             = l_path.path().extension() == ".fbx" ? import_and_render_ue_ns::import_ue_type::char_
+                                                                       : import_and_render_ue_ns::import_ue_type::geo
           }
       );
       const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
