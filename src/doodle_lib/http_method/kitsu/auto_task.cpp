@@ -397,13 +397,11 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       if (l_asset_infos_key_map.contains(l_key)) {
         if (l_asset_extend.gui_dang_ && !l_asset_extend.kai_shi_ji_shu_.is_nil()) {
           for (auto&& l_idx : l_asset_infos_key_map[l_key]) {
-            if (l_ret.asset_infos_[l_idx].type_ == import_and_render_ue_ns::import_ue_type::char_)
-              l_ret.asset_infos_[l_idx].skin_path_ =
-                  l_ret.asset_infos_[l_idx].simulation_type_.any()
-                      ? get_entity_sim_character_ue_name(
-                            l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_
-                        )
-                      : get_entity_character_ue_name(l_asset_extend_value);
+            // if (l_ret.asset_infos_[l_idx].type_ == import_and_render_ue_ns::import_ue_type::char_)
+            l_ret.asset_infos_[l_idx].skin_path_ =
+                l_ret.asset_infos_[l_idx].simulation_type_.any()
+                    ? get_entity_sim_character_ue_name(l_asset_extend_value, l_ret.asset_infos_[l_idx].simulation_type_)
+                    : get_entity_character_ue_name(l_asset_extend_value);
             l_ret.asset_infos_[l_idx].ue_project_dir_ =
                 l_prj.path_ / get_entity_character_ue_path(l_prj, l_asset_extend_value);
             l_ret.asset_infos_[l_idx].ban_ben_suffix_ =
