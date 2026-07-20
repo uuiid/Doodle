@@ -59,6 +59,10 @@ struct run_ue_assembly_asset_info {
   std::string groom_name_;          // 毛发名称, 如果有的话
 
   std::vector<std::pair<FSys::path, FSys::path>> groom_and_bind_map_;  // 毛发和绑定的映射, 如果有的话
+
+  // 不需要序列化的
+  
+  std::string key_;
   // to json
   friend void to_json(nlohmann::json& j, const run_ue_assembly_asset_info& p) {
     j["path"]               = p.shot_output_path_;

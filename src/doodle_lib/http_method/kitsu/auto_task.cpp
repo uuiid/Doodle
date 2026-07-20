@@ -190,7 +190,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
           l_ret.asset_infos_.back().simulation_type_.set(1),
               l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
         else if (l_capture_group.starts_with("cloth_hair") || l_capture_group.starts_with("hair_cloth")) {
-          l_ret.asset_infos_.back().simulation_type_.set(1);
+          l_ret.asset_infos_.back().simulation_type_.set(0);
           l_ret.asset_infos_.back().simulation_type_.set(1);
         } else {
           if (l_capture_group.starts_with("cloth_")) l_ret.asset_infos_.back().simulation_type_.set(0);
@@ -231,7 +231,6 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     );
 
   // 构建对应的寻找 sk 的 key map
-  std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
   for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
     if (l_ret.asset_infos_[i].type_ != import_and_render_ue_ns::import_ue_type::char_) continue;
 
@@ -245,33 +244,52 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     } else if (auto l_low_post = l_key.find("_Low"); l_low_post != std::string::npos) {
       l_key = l_key.substr(0, l_low_post + 4);
     }
-    l_asset_infos_key_map[l_key].emplace_back(i);
+    l_ret.asset_infos_[i].key_ = l_key;
   }
   /// 如果是解算, 还需要构建对应的解算 abc 文件和 fbx 文件对, 并将 fbx 的 simulation_type_ 赋值给 char_ 类型的
   /// asset_info
+  // 解算文件对应的fbx文件的索引
   if (l_is_simulation_task) {
+    std::vector<std::pair<std::string, std::size_t>> l_output_key_and_idx{};
     for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
-      if (l_ret.asset_infos_[i].type_ == import_and_render_ue_ns::import_ue_type::char_) continue;
-
       auto&& l_info = l_ret.asset_infos_[i];
       auto l_stem   = l_info.shot_output_path_.stem().string().substr(l_shot_file_name.size() + 1);  // add '_'
       const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
       std::smatch l_match;
       // remove _cloth or _hair or _hair_XXX
-      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) l_stem = l_match[1].str();
+      if (std::regex_match(l_stem, l_match, l_sim_output_key_regex))
+        l_stem = l_match[1].str();
+      else {
+        const static std::regex l_sim_output_key_regex{R"((.*?)_\d+-\d+)"};
+        if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) l_stem = l_match[1].str();
+      }
+      l_output_key_and_idx.emplace_back(l_stem, i);
+    }
+    for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
+      if (l_ret.asset_infos_[i].type_ == import_and_render_ue_ns::import_ue_type::char_) continue;
+      auto&& l_info = l_ret.asset_infos_[i];
+      auto&& l_stem = l_output_key_and_idx[i].first;
 
       if (auto l_it = std::ranges::find_if(
-              l_ret.asset_infos_,
+              l_output_key_and_idx,
               [&](const auto& in_info) {
-                if (in_info.type_ != import_and_render_ue_ns::import_ue_type::char_) return false;
-                auto l_char_stem = in_info.shot_output_path_.stem().string();
-                return l_char_stem == l_stem;
+                auto&& [l_stem_v, l_idx] = in_info;
+                auto&& l_info            = l_ret.asset_infos_[l_idx];
+                if (l_info.type_ != import_and_render_ue_ns::import_ue_type::char_) return false;
+                return l_stem_v == l_stem;
               }
           );
-          l_it != l_ret.asset_infos_.end()) {
-        l_it->simulation_type_ |= l_info.simulation_type_;
+          l_it != l_output_key_and_idx.end()) {
+        l_ret.asset_infos_[l_it->second].simulation_type_ |= l_info.simulation_type_;
+        l_info.key_ = l_ret.asset_infos_[l_it->second].key_;
       }
     }
+  }
+  std::map<std::string, std::vector<std::size_t>> l_asset_infos_key_map{};
+  for (std::size_t i = 0; i < l_ret.asset_infos_.size(); ++i) {
+    auto&& l_info = l_ret.asset_infos_[i];
+    if (l_info.key_.empty()) continue;
+    l_asset_infos_key_map[l_info.key_].emplace_back(i);
   }
 
   auto l_assets = get_entity_and_entity_asset_extend_by_shot_id(l_shot_entity.uuid_id_);
@@ -462,7 +480,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     }
   }
 
-  // #ifdef NDEBUG
+#ifdef NDEBUG
   for (auto&& l_path : l_ret.ue_asset_path_) {
     DOODLE_CHICK_HTTP(!l_path.from_.empty(), bad_request, "UE 场景可能没有启动器等原因");
     DOODLE_CHICK_HTTP(FSys::exists(l_path.from_), bad_request, "UE 资产源路径不存在: {}", l_path.from_.string())
@@ -505,7 +523,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
     }
   }
 
-  // #endif
+#endif
 
   for (auto&& l_info : l_ret.asset_infos_) {
     DOODLE_CHICK_HTTP(
