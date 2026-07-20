@@ -9,7 +9,7 @@ namespace doodle::ai {
 
 void timestep_embedder::init(
     std::int64_t latent_dim,
-    const PositionalEncoding* pos_encoder,
+    const positional_encoding* pos_encoder,
     const FSys::path& linear1_weight,
     const FSys::path& linear1_bias,
     const FSys::path& linear2_weight,

@@ -25,7 +25,7 @@ namespace doodle::ai {
 /// motion_mask_mode 支持:
 ///   - "none" : 无运动 mask
 ///   - "concat" : motion_mask 与 x 拼接作为额外通道输入
-class TwostageDenoiser {
+class twostage_denoiser {
   // ---- 运动表示维度 ----
   std::int64_t global_root_dim_{};
   std::int64_t local_root_dim_{};
@@ -43,7 +43,7 @@ class TwostageDenoiser {
   std::function<Eigen::MatrixXf(const Eigen::MatrixXf&, const Eigen::VectorXi&)> global_root_to_local_root_fn_;
 
  public:
-  TwostageDenoiser() = default;
+  twostage_denoiser() = default;
 
   /// @brief 加载所有权重并初始化两个 transformer_encoder_block
   /// @param root_model_dir 根节点模型目录（包含 root_model 的 .npy 和 .onnx 文件）

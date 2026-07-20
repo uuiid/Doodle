@@ -17,7 +17,7 @@ namespace doodle::ai {
 /// 结构: PE -> Linear -> SiLU -> Linear
 class timestep_embedder {
   std::int64_t latent_dim_{};
-  const PositionalEncoding* sequence_pos_encoder_{};  // 非拥有引用
+  const positional_encoding* sequence_pos_encoder_{};  // 非拥有引用
   linear_layer linear1_;
   linear_layer linear2_;
 
@@ -33,7 +33,7 @@ class timestep_embedder {
   /// @param linear2_bias linear2 偏置路径
   void init(
       std::int64_t latent_dim,
-      const PositionalEncoding* pos_encoder,
+      const positional_encoding* pos_encoder,
       const FSys::path& linear1_weight,
       const FSys::path& linear1_bias,
       const FSys::path& linear2_weight,

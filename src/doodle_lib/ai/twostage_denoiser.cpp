@@ -10,7 +10,7 @@
 
 namespace doodle::ai {
 
-void TwostageDenoiser::load(
+void twostage_denoiser::load(
     const FSys::path& root_model_dir,
     const FSys::path& body_model_dir,
     std::int64_t latent_dim,
@@ -34,7 +34,7 @@ void TwostageDenoiser::load(
   const std::int64_t root_output_dim = global_root_dim_;
 
   SPDLOG_INFO(
-      "TwostageDenoiser 加载 root_model: input_dim={}, output_dim={}, latent_dim={}",
+      "twostage_denoiser 加载 root_model: input_dim={}, output_dim={}, latent_dim={}",
       root_input_dim, root_output_dim, latent_dim
   );
 
@@ -53,7 +53,7 @@ void TwostageDenoiser::load(
   const std::int64_t body_output_dim = input_dim_ - global_root_dim_;
 
   SPDLOG_INFO(
-      "TwostageDenoiser 加载 body_model: input_dim={}, output_dim={}, latent_dim={}, "
+      "twostage_denoiser 加载 body_model: input_dim={}, output_dim={}, latent_dim={}, "
       "local_motion_rep_dim={}",
       body_input_dim, body_output_dim, latent_dim, local_motion_rep_dim
   );
@@ -62,13 +62,13 @@ void TwostageDenoiser::load(
   body_model_.load(body_model_dir, latent_dim, num_text_tokens, use_text_mask, input_first_heading_angle);
 
   SPDLOG_INFO(
-      "TwostageDenoiser 加载完成: input_dim={}, global_root_dim={}, local_root_dim={}, "
+      "twostage_denoiser 加载完成: input_dim={}, global_root_dim={}, local_root_dim={}, "
       "motion_mask_mode={}",
       input_dim_, global_root_dim_, local_root_dim_, motion_mask_mode_
   );
 }
 
-Eigen::MatrixXf TwostageDenoiser::forward(
+Eigen::MatrixXf twostage_denoiser::forward(
     const Eigen::MatrixXf& x,
     const MatrixXb& x_pad_mask,
     const Eigen::MatrixXf& text_feat,
@@ -78,7 +78,7 @@ Eigen::MatrixXf TwostageDenoiser::forward(
     const Eigen::MatrixXf& motion_mask,
     const Eigen::MatrixXf& observed_motion
 ) {
-  DOODLE_CHICK(is_valid(), "TwostageDenoiser 未初始化");
+  DOODLE_CHICK(is_valid(), "twostage_denoiser 未初始化");
 
   const auto batch_size   = static_cast<Eigen::Index>(x_pad_mask.rows());
   const auto time_steps   = static_cast<Eigen::Index>(x_pad_mask.cols());
