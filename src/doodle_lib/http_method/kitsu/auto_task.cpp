@@ -162,17 +162,39 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       l_ret.asset_infos_.emplace_back(
           import_and_render_ue_ns::run_ue_assembly_asset_info{.shot_output_path_ = l_path.path()}
       );
-      const static std::regex l_sim_output_key_regex{R"((.*)_(cloth|hair|hair_[a-z_A-Z]+)_\d+-\d+)"};
+      const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
+      /*
+      ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_hair_cloth_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_cloth_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_hair_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_dasbxs_1001-1105
+      ZM_EP127_SC025_Ch006A_rig_ch_1001-1105
+      1. 先匹配出 cloth 或 hair 或 hair_XXX
+      2. 如果是 cloth, simulation_type_ = 0, type_ = geo
+      3. 如果是 hair, simulation_type_ = 1, type_ = geo
+      4. 如果是 hair_XXX, simulation_type_ = 1, type_ = groom, groom_name_ = XXX
+      5. 将匹配到的 cloth 或 hair 或 hair_XXX 去掉, 得到对应的 char_ 类型的 asset_info 的 stem, 并将 simulation_type_ |=
+      对应的值
+      */
+
       std::smatch l_match;
       if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) {
         auto l_capture_group = l_match[2].str();
+
         if (l_capture_group == "cloth")
           l_ret.asset_infos_.back().simulation_type_.set(0),
               l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
         else if (l_capture_group == "hair")
           l_ret.asset_infos_.back().simulation_type_.set(1),
               l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
-        else {
+        else if (l_capture_group.starts_with("cloth_hair") || l_capture_group.starts_with("hair_cloth")) {
+          l_ret.asset_infos_.back().simulation_type_.set(1);
+          l_ret.asset_infos_.back().simulation_type_.set(1);
+        } else {
+          if (l_capture_group.starts_with("cloth_")) l_ret.asset_infos_.back().simulation_type_.set(0);
+
           l_ret.asset_infos_.back().simulation_type_.set(1);
           l_ret.asset_infos_.back().type_       = import_and_render_ue_ns::import_ue_type::groom;
           l_ret.asset_infos_.back().groom_name_ = l_capture_group.substr(5);  // remove "hair_"
@@ -233,7 +255,7 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
 
       auto&& l_info = l_ret.asset_infos_[i];
       auto l_stem   = l_info.shot_output_path_.stem().string().substr(l_shot_file_name.size() + 1);  // add '_'
-      const static std::regex l_sim_output_key_regex{R"((.*)_(cloth|hair|hair_[a-z_A-Z]+)_\d+-\d+)"};
+      const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
       std::smatch l_match;
       // remove _cloth or _hair or _hair_XXX
       if (std::regex_match(l_stem, l_match, l_sim_output_key_regex)) l_stem = l_match[1].str();
