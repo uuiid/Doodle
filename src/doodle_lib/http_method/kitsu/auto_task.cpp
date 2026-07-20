@@ -193,11 +193,14 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
         else if (l_capture_group == "hair")
           l_ret.asset_infos_.back().simulation_type_.set(1),
               l_ret.asset_infos_.back().type_ = import_and_render_ue_ns::import_ue_type::geo;
-        else if (l_capture_group.starts_with("cloth_hair") || l_capture_group.starts_with("hair_cloth")) {
+        else if (l_capture_group == "cloth_hair" || l_capture_group == "hair_cloth") {
           l_ret.asset_infos_.back().simulation_type_.set(0);
           l_ret.asset_infos_.back().simulation_type_.set(1);
         } else {
-          if (l_capture_group.starts_with("cloth_")) l_ret.asset_infos_.back().simulation_type_.set(0);
+          if (l_capture_group.starts_with("cloth_")) {
+            l_ret.asset_infos_.back().simulation_type_.set(0);
+            l_capture_group = l_capture_group.substr(6);  // remove "cloth_"
+          }
 
           l_ret.asset_infos_.back().simulation_type_.set(1);
           l_ret.asset_infos_.back().type_       = import_and_render_ue_ns::import_ue_type::groom;
