@@ -13,12 +13,12 @@ namespace doodle::ai {
 
 /// @brief 使用 Eigen 实现的线性层 (y = xW^T + b)
 /// 权重从 .npy 文件加载（对应 PyTorch nn.Linear）
-class LinearLayer {
+class linear_layer {
   Eigen::MatrixXf weight_;  // [out_features, in_features]
   Eigen::VectorXf bias_;    // [out_features] 或空
 
  public:
-  LinearLayer() = default;
+  linear_layer() = default;
 
   /// @brief 从 .npy 文件加载权重和偏置
   /// @param weight_path weight.npy 路径

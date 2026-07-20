@@ -13,7 +13,7 @@
 
 namespace doodle::ai {
 
-void TransformerEncoderBlock::load(
+void transformer_encoder_block::load(
     const FSys::path& model_dir,
     std::int64_t latent_dim,
     std::int64_t num_text_tokens,
@@ -71,13 +71,13 @@ void TransformerEncoderBlock::load(
   );
 
   SPDLOG_INFO(
-      "TransformerEncoderBlock 加载完成: latent_dim={}, num_text_tokens={}, "
+      "transformer_encoder_block 加载完成: latent_dim={}, num_text_tokens={}, "
       "use_text_mask={}, input_first_heading_angle={}",
       latent_dim_, num_text_tokens_, use_text_mask_, input_first_heading_angle_
   );
 }
 
-void TransformerEncoderBlock::init_session() {
+void transformer_encoder_block::init_session() {
   Ort::SessionOptions session_options;
   session_options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
@@ -99,7 +99,7 @@ void TransformerEncoderBlock::init_session() {
   );
 }
 
-Eigen::MatrixXf TransformerEncoderBlock::forward(
+Eigen::MatrixXf transformer_encoder_block::forward(
     const Eigen::MatrixXf& x,
     const MatrixXb& x_pad_mask,
     const Eigen::MatrixXf& text_feat,
@@ -280,7 +280,7 @@ Eigen::MatrixXf TransformerEncoderBlock::forward(
   }
 
   // ---- 延迟初始化 ONNX session ----
-  std::call_once(session_init_flag_, &TransformerEncoderBlock::init_session, this);
+  std::call_once(session_init_flag_, &transformer_encoder_block::init_session, this);
 
   // ---- 准备 ONNX 输入 ----
   DOODLE_CHICK(!input_names_.empty(), "ONNX session 未正确初始化输入名称");

@@ -35,8 +35,8 @@ class TwostageDenoiser {
   std::string motion_mask_mode_{"none"};
 
   // ---- 两个 Transformer 编码器 ----
-  TransformerEncoderBlock root_model_;
-  TransformerEncoderBlock body_model_;
+  transformer_encoder_block root_model_;
+  transformer_encoder_block body_model_;
 
   // ---- 全局根节点 → 局部根节点转换函数 ----
   // 签名: (global_root [B*T, global_root_dim], lengths [B]) -> local_root [B*T, local_root_dim]
@@ -45,7 +45,7 @@ class TwostageDenoiser {
  public:
   TwostageDenoiser() = default;
 
-  /// @brief 加载所有权重并初始化两个 TransformerEncoderBlock
+  /// @brief 加载所有权重并初始化两个 transformer_encoder_block
   /// @param root_model_dir 根节点模型目录（包含 root_model 的 .npy 和 .onnx 文件）
   /// @param body_model_dir 身体模型目录（包含 body_model 的 .npy 和 .onnx 文件）
   /// @param latent_dim Transformer 潜在空间维度

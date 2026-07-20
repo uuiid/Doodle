@@ -15,14 +15,14 @@ namespace doodle::ai {
 /// @brief 扩散时间步编码器（对应 Python TimestepEmbedder）
 /// 将时间步索引编码为位置编码后，通过 MLP 映射到 latent 空间
 /// 结构: PE -> Linear -> SiLU -> Linear
-class TimestepEmbedder {
+class timestep_embedder {
   std::int64_t latent_dim_{};
   const PositionalEncoding* sequence_pos_encoder_{};  // 非拥有引用
-  LinearLayer linear1_;
-  LinearLayer linear2_;
+  linear_layer linear1_;
+  linear_layer linear2_;
 
  public:
-  TimestepEmbedder() = default;
+  timestep_embedder() = default;
 
   /// @brief 初始化时间步编码器
   /// @param latent_dim 潜在空间维度

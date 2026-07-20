@@ -32,18 +32,18 @@ using MatrixXb = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>;
 /// - sequence_pos_encoder: PositionalEncoding  — 非学习型位置编码
 /// - embed_timestep: TimestepEmbedder  — 扩散时间步编码
 /// - seqTransEncoder: ONNX 导出的 TransformerEncoder  — 主编码器
-class TransformerEncoderBlock {
+class transformer_encoder_block {
   // ---- Linear 层（npy 加载，Eigen 实现） ----
-  LinearLayer embed_text_;
-  LinearLayer input_linear_;
-  LinearLayer output_linear_;
-  LinearLayer linear_first_heading_angle_;
+  linear_layer embed_text_;
+  linear_layer input_linear_;
+  linear_layer output_linear_;
+  linear_layer linear_first_heading_angle_;
 
   // ---- 位置编码 ----
-  PositionalEncoding sequence_pos_encoder_;
+  positional_encoding sequence_pos_encoder_;
 
   // ---- 时间步编码 ----
-  TimestepEmbedder embed_timestep_;
+  timestep_embedder embed_timestep_;
 
   // ---- ONNX 参数 ----
   std::int64_t latent_dim_{};
@@ -63,7 +63,7 @@ class TransformerEncoderBlock {
   void init_session();
 
  public:
-  TransformerEncoderBlock() = default;
+  transformer_encoder_block() = default;
 
   /// @brief 加载所有权重并初始化 ONNX session
   /// @param model_dir 模型目录，包含以下文件:

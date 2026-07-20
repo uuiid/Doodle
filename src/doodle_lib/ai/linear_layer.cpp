@@ -9,10 +9,10 @@
 
 namespace doodle::ai {
 
-void LinearLayer::load(const FSys::path& weight_path, const FSys::path& bias_path) {
+void linear_layer::load(const FSys::path& weight_path, const FSys::path& bias_path) {
   // 加载权重
   auto l_data = cnpy::npy_load(weight_path.string());
-  DOODLE_CHICK(l_data.shape.size() >= 2, "LinearLayer 权重 shape 维度不足: {}", weight_path.string());
+  DOODLE_CHICK(l_data.shape.size() >= 2, "linear_layer 权重 shape 维度不足: {}", weight_path.string());
   std::int64_t rows = l_data.shape[0];
   std::int64_t cols = l_data.shape[1];
 
@@ -26,20 +26,20 @@ void LinearLayer::load(const FSys::path& weight_path, const FSys::path& bias_pat
   // 加载偏置（可选）
   if (!bias_path.empty()) {
     auto b_data = cnpy::npy_load(bias_path.string());
-    DOODLE_CHICK(b_data.shape.size() == 1, "LinearLayer 偏置 shape 应为 1D: {}", bias_path.string());
+    DOODLE_CHICK(b_data.shape.size() == 1, "linear_layer 偏置 shape 应为 1D: {}", bias_path.string());
     DOODLE_CHICK(
-        static_cast<std::int64_t>(b_data.shape[0]) == rows, "LinearLayer 偏置大小 {} 不匹配权重行数 {}: {}", b_data.shape[0],
-        rows, bias_path.string()
+        static_cast<std::int64_t>(b_data.shape[0]) == rows, "linear_layer 偏置大小 {} 不匹配权重行数 {}: {}",
+        b_data.shape[0], rows, bias_path.string()
     );
     Eigen::Map<Eigen::VectorXf> b_map(b_data.data<float>(), static_cast<Eigen::Index>(b_data.shape[0]));
     bias_ = b_map;
   }
 }
 
-Eigen::MatrixXf LinearLayer::forward(const Eigen::MatrixXf& input) const {
-  DOODLE_CHICK(is_valid(), "LinearLayer 未初始化");
+Eigen::MatrixXf linear_layer::forward(const Eigen::MatrixXf& input) const {
+  DOODLE_CHICK(is_valid(), "linear_layer 未初始化");
   DOODLE_CHICK(
-      input.cols() == in_features(), "LinearLayer 输入特征维度不匹配: 期望 {}, 实际 {}", in_features(), input.cols()
+      input.cols() == in_features(), "linear_layer 输入特征维度不匹配: 期望 {}, 实际 {}", in_features(), input.cols()
   );
 
   // y = x * W^T + b
@@ -52,16 +52,16 @@ Eigen::MatrixXf LinearLayer::forward(const Eigen::MatrixXf& input) const {
   return result;
 }
 
-Eigen::MatrixXf LinearLayer::forward_batched(
+Eigen::MatrixXf linear_layer::forward_batched(
     const Eigen::MatrixXf& input, std::int64_t batch_size, std::int64_t time_steps
 ) const {
   // input: [B*T, in_features]
-  DOODLE_CHICK(is_valid(), "LinearLayer 未初始化");
+  DOODLE_CHICK(is_valid(), "linear_layer 未初始化");
   DOODLE_CHICK(
-      input.cols() == in_features(), "LinearLayer 输入特征维度不匹配: 期望 {}, 实际 {}", in_features(), input.cols()
+      input.cols() == in_features(), "linear_layer 输入特征维度不匹配: 期望 {}, 实际 {}", in_features(), input.cols()
   );
   DOODLE_CHICK(
-      input.rows() == batch_size * time_steps, "LinearLayer 批大小不匹配: 期望 {}*{}={}, 实际 {}", batch_size,
+      input.rows() == batch_size * time_steps, "linear_layer 批大小不匹配: 期望 {}*{}={}, 实际 {}", batch_size,
       time_steps, batch_size * time_steps, input.rows()
   );
 

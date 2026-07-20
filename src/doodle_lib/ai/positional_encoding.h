@@ -13,18 +13,17 @@
 #include <cstdint>
 #include <vector>
 
-
 namespace doodle::ai {
 
 /// @brief 非学习型正弦位置编码（对应 Python PositionalEncoding）
 /// pe: [1, max_len, d_model] 的 sin/cos 编码表
-class PositionalEncoding {
+class positional_encoding {
   Eigen::MatrixXf pe_;  // [max_len, d_model]
   std::int64_t d_model_{};
   std::int64_t max_len_{};
 
  public:
-  PositionalEncoding() = default;
+  positional_encoding() = default;
 
   /// @brief 初始化位置编码表
   /// @param d_model 特征维度

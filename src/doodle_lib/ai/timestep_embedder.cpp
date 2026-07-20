@@ -7,7 +7,7 @@
 
 namespace doodle::ai {
 
-void TimestepEmbedder::init(
+void timestep_embedder::init(
     std::int64_t latent_dim,
     const PositionalEncoding* pos_encoder,
     const FSys::path& linear1_weight,
@@ -17,22 +17,22 @@ void TimestepEmbedder::init(
 ) {
   latent_dim_            = latent_dim;
   sequence_pos_encoder_  = pos_encoder;
-  DOODLE_CHICK(sequence_pos_encoder_ != nullptr, "TimestepEmbedder: pos_encoder 为空");
-  DOODLE_CHICK(sequence_pos_encoder_->d_model() == latent_dim, "TimestepEmbedder: PE 维度 {} 不匹配 latent_dim {}", sequence_pos_encoder_->d_model(), latent_dim);
+  DOODLE_CHICK(sequence_pos_encoder_ != nullptr, "timestep_embedder: pos_encoder 为空");
+  DOODLE_CHICK(sequence_pos_encoder_->d_model() == latent_dim, "timestep_embedder: PE 维度 {} 不匹配 latent_dim {}", sequence_pos_encoder_->d_model(), latent_dim);
 
   linear1_.load(linear1_weight, linear1_bias);
   linear2_.load(linear2_weight, linear2_bias);
 
   DOODLE_CHICK(linear1_.in_features() == latent_dim && linear1_.out_features() == latent_dim,
-      "TimestepEmbedder linear1 维度不匹配: 期望 [{},{}], 实际 [{},{}]",
+      "timestep_embedder linear1 维度不匹配: 期望 [{},{}], 实际 [{},{}]",
       latent_dim, latent_dim, linear1_.in_features(), linear1_.out_features());
   DOODLE_CHICK(linear2_.in_features() == latent_dim && linear2_.out_features() == latent_dim,
-      "TimestepEmbedder linear2 维度不匹配: 期望 [{},{}], 实际 [{},{}]",
+      "timestep_embedder linear2 维度不匹配: 期望 [{},{}], 实际 [{},{}]",
       latent_dim, latent_dim, linear2_.in_features(), linear2_.out_features());
 }
 
-Eigen::MatrixXf TimestepEmbedder::forward(const std::vector<std::int64_t>& timesteps) const {
-  DOODLE_CHICK(is_valid(), "TimestepEmbedder 未初始化");
+Eigen::MatrixXf timestep_embedder::forward(const std::vector<std::int64_t>& timesteps) const {
+  DOODLE_CHICK(is_valid(), "timestep_embedder 未初始化");
 
   auto batch_size = static_cast<Eigen::Index>(timesteps.size());
 
