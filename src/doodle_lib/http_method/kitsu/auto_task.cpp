@@ -160,23 +160,25 @@ import_and_render_ue_ns::run_ue_assembly_arg shot_render_light(const uuid& in_pr
       if (auto l_cam = l_stem.find("_camera_"); l_cam != std::string::npos) continue;
 
       l_ret.asset_infos_.emplace_back(
-          import_and_render_ue_ns::run_ue_assembly_asset_info{.shot_output_path_ = l_path.path()}
+          import_and_render_ue_ns::run_ue_assembly_asset_info{
+              .shot_output_path_ = l_path.path(), .type_ = import_and_render_ue_ns::import_ue_type::char_
+          }
       );
       const static std::regex l_sim_output_key_regex{R"((.*?)_((?:cloth|hair)(?:_[a-zA-Z]+)*)_\d+-\d+)"};
       /*
-      ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105
-      ZM_EP127_SC025_Ch006A_rig_ch_hair_cloth_1001-1105
-      ZM_EP127_SC025_Ch006A_rig_ch_cloth_1001-1105
-      ZM_EP127_SC025_Ch006A_rig_ch_hair_1001-1105
-      ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105
-      ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_dasbxs_1001-1105
-      ZM_EP127_SC025_Ch006A_rig_ch_1001-1105
-      1. 先匹配出 cloth 或 hair 或 hair_XXX
-      2. 如果是 cloth, simulation_type_ = 0, type_ = geo
-      3. 如果是 hair, simulation_type_ = 1, type_ = geo
-      4. 如果是 hair_XXX, simulation_type_ = 1, type_ = groom, groom_name_ = XXX
-      5. 将匹配到的 cloth 或 hair 或 hair_XXX 去掉, 得到对应的 char_ 类型的 asset_info 的 stem, 并将 simulation_type_ |=
-      对应的值
+        ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_1001-1105
+        ZM_EP127_SC025_Ch006A_rig_ch_hair_cloth_1001-1105
+        ZM_EP127_SC025_Ch006A_rig_ch_cloth_1001-1105
+        ZM_EP127_SC025_Ch006A_rig_ch_hair_1001-1105
+        ZM_EP127_SC025_Ch006A_rig_ch_hair_dasbxs_1001-1105
+        ZM_EP127_SC025_Ch006A_rig_ch_cloth_hair_dasbxs_1001-1105
+        ZM_EP127_SC025_Ch006A_rig_ch_1001-1105
+        1. 先匹配出 cloth 或 hair 或 hair_XXX
+        2. 如果是 cloth, simulation_type_ = 0, type_ = geo
+        3. 如果是 hair, simulation_type_ = 1, type_ = geo
+        4. 如果是 hair_XXX, simulation_type_ = 1, type_ = groom, groom_name_ = XXX
+        5. 将匹配到的 cloth 或 hair 或 hair_XXX 去掉, 得到对应的 char_ 类型的 asset_info 的 stem, 并将 simulation_type_
+        |= 对应的值
       */
 
       std::smatch l_match;
