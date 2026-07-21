@@ -629,9 +629,10 @@ MStatus xgen_abc_export::redoIt() {
         continue;
       }
 
-      auto l_out_path = maya_file_io::work_path(FSys::path{"fbx"} / maya_file_io::get_current_path().stem()) /
+      auto l_out_path = maya_file_io::work_path(FSys::path{"groom"} / maya_file_io::get_current_path().stem()) /
                         xgutil::stripNameSpace(l_des->name());
       l_out_path.replace_extension(".abc");
+      if (auto l_p = l_out_path.parent_path(); !FSys::exists(l_p)) FSys::create_directories(l_p);
       displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
       l_des_render->xgen_alembic_out_ptr_ =
           std::make_shared<xgen_alembic_out>(l_out_path, p_i->begin_time_, p_i->end_time_);
