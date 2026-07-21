@@ -613,8 +613,6 @@ struct xgen_render_des {
   std::vector<std::unique_ptr<xgen_render_face>> face_list_{};
 };
 MStatus xgen_abc_export::redoIt() {
-  auto l_abc_file_path_gen            = std::make_shared<reference_file_ns::generate_abc_file_path>();
-  l_abc_file_path_gen->begin_end_time = {p_i->begin_time_, p_i->end_time_};
   std::vector<std::unique_ptr<xgen_render_des>> l_render_list{};
   // 初始化渲染器
   for (auto&& i : p_i->palette_v) {
@@ -630,9 +628,10 @@ MStatus xgen_abc_export::redoIt() {
         );
         continue;
       }
-      l_abc_file_path_gen->add_external_string = xgutil::stripNameSpace(l_des->name());
 
-      auto l_out_path                          = (*l_abc_file_path_gen)(l_namespace);
+      auto l_out_path = maya_file_io::work_path(FSys::path{"fbx"} / maya_file_io::get_current_path().stem()) /
+                        xgutil::stripNameSpace(l_des->name());
+      l_out_path.replace_extension(".abc");
       displayInfo(conv::to_ms(fmt::format("导出路径 {}", l_out_path)));
       l_des_render->xgen_alembic_out_ptr_ =
           std::make_shared<xgen_alembic_out>(l_out_path, p_i->begin_time_, p_i->end_time_);
@@ -654,7 +653,6 @@ MStatus xgen_abc_export::redoIt() {
         auto& l_render_           = l_des_render->face_list_.emplace_back(std::make_unique<xgen_render_face>());
         l_render_->main_render    = std::make_unique<XgenRender>(this, l_des_render->xgen_alembic_out_ptr_, l_ptr);
         auto l_args               = p_i->create_render_args(i, l_des, l_ptr);
-        // displayInfo(l_args.c_str());
         l_render_->patch_renderer = std::unique_ptr<XGenRenderAPI::PatchRenderer>{
             XGenRenderAPI::PatchRenderer::init(l_render_->main_render.get(), l_args.c_str())
         };
@@ -695,7 +693,7 @@ void xgen_abc_export::parse_args(const MArgList& in_arg) {
   maya_chick(arg_data.getObjects(list));
   p_i->begin_time_ = arg_data.isFlagSet("-s") ? arg_data.flagArgumentMTime("-s", 0) : MAnimControl::minTime();
   p_i->end_time_   = arg_data.isFlagSet("-e") ? arg_data.flagArgumentMTime("-e", 0) : MAnimControl::maxTime();
-  if (arg_data.isFlagSet("-n")) p_i->end_time_ = p_i->begin_time_;
+  if (!arg_data.isFlagSet("-n")) p_i->end_time_ = p_i->begin_time_;
 
   MItSelectionList it_list{list, MFn::kDagNode, &status};
   maya_chick(status);
