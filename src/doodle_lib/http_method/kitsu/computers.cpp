@@ -121,15 +121,22 @@ class data_computers_socket_io_impl : public std::enable_shared_from_this<data_c
     co_await computers_assign_task::get_instance().register_computer(shared_from_this());
     begin_ping();
     boost::scope::scope_exit l_{[this, sh = shared_from_this()]() {
-      auto l_sql                      = get_sqlite_database();
-      computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
-      computer_->status_              = computer_status::offline;
-      computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
-      boost::asio::co_spawn(g_io_context(), [computer = computer_]() -> boost::asio::awaitable<void> {
-        auto l_sql = get_sqlite_database();
-        co_await l_sql.update(computer);
-      }, boost::asio::detached);
-      socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
+      try {
+        auto l_sql                      = get_sqlite_database();
+        computer_->name_                = l_sql.get_by_uuid<computer>(computer_->uuid_id_).name_;
+        computer_->status_              = computer_status::offline;
+        computer_->last_heartbeat_time_ = std::chrono::system_clock::now();
+        boost::asio::co_spawn(g_io_context(), [computer = computer_]() -> boost::asio::awaitable<void> {
+          auto l_sql = get_sqlite_database();
+          co_await l_sql.update(computer);
+        }, boost::asio::detached);
+        socket_io::broadcast(socket_io::computer_update_broadcast_t{.computer_id_ = computer_->uuid_id_});
+      } catch (...) {
+        SPDLOG_LOGGER_ERROR(
+            g_logger_ctrl().get_http(), "清理计算机 {} 状态时发生异常: {}", computer_->uuid_id_,
+            boost::current_exception_diagnostic_information()
+        );
+      }
     }};
     try {
       boost::scope::scope_exit l_{[this, sh = shared_from_this()]() { should_close_ = true; }};
