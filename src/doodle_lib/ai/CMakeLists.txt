@@ -6,6 +6,11 @@ target_sources(
         llm2vec_tokenizer.h
         llm2vec.h
         linear_layer.h
+        motion_rep/feature_utils.h
+        motion_rep/geometry.h
+        motion_rep/kimodo_motion_rep.h
+        motion_rep/motion_rep_base.h
+        motion_rep/skeleton.h
         positional_encoding.h
         timestep_embedder.h
         transformer_encoder_block.h
@@ -18,6 +23,11 @@ target_sources(
         llm2vec_tokenizer.cpp
         llm2vec.cpp
         linear_layer.cpp
+        motion_rep/feature_utils.cpp
+        motion_rep/geometry.cpp
+        motion_rep/kimodo_motion_rep.cpp
+        motion_rep/motion_rep_base.cpp
+        motion_rep/skeleton.cpp
         timestep_embedder.cpp
         transformer_encoder_block.cpp
         twostage_denoiser.cpp
