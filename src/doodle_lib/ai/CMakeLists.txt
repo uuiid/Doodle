@@ -1,6 +1,7 @@
 target_sources(
         doodle_lib
         PUBLIC 
+        classifier_free_guided_model.h
         hf_tokenizer.h
         llm2vec_tokenizer.h
         llm2vec.h
@@ -12,6 +13,7 @@ target_sources(
 
         
         PRIVATE
+        classifier_free_guided_model.cpp
         hf_tokenizer.cpp
         llm2vec_tokenizer.cpp
         llm2vec.cpp
