@@ -25,7 +25,7 @@ namespace doodle::ai {
 struct motion_stats {
   Eigen::VectorXf mean;  ///< [D] 均值
   Eigen::VectorXf std;   ///< [D] 标准差
-  float eps = 1e-5f;
+  static constexpr float eps = 1e-5f;
 
   /// @brief 从文件夹加载 mean.npy 和 std.npy
   void load(const FSys::path& folder);
