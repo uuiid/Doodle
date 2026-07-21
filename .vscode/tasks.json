@@ -130,7 +130,7 @@
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--workflow",
         "--preset",
-        "build_release",
+        "build_release"
       ],
       "problemMatcher": []
     },
@@ -222,7 +222,7 @@
         "C:/PROGRA~1/CMake/bin/cmake.exe",
         "--workflow",
         "--preset",
-        "Release_Maya_2020",
+        "Release_Maya_2020"
       ],
       "problemMatcher": []
     },
@@ -261,6 +261,23 @@
         "-logs",
         "${input:dep_logs}"
       ],
+      "problemMatcher": [
+        {
+          "owner": "powershell",
+          "severity": "error",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^At (.*):(\\d+) char:(\\d+)(.*)",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        }
+      ]
     }
   ],
   "inputs": [
