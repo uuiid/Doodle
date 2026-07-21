@@ -139,14 +139,14 @@ auto get_sequence_casting_for_project_and_person_and_sequence(
   return select(l_sql)
       .columns(
           object<entity_link>(), &entity::name_, &entity::preview_file_id_, &entity::project_id_, &asset_type::name_,
-          &entity_asset_extend_value::bian_hao_
+          &entity_asset_extend::bian_hao_
       )
       .from<entity_link>()
       .join(shot, &entity_link::entity_in_id_, shot->*&entity::uuid_id_)
       .join(sequence, shot->*&entity::parent_id_, sequence->*&entity::uuid_id_)
       .join<entity>(&entity_link::entity_out_id_, &entity::uuid_id_)
       .join<asset_type>(&entity::entity_type_id_, &asset_type::uuid_id_)
-      .join<entity_asset_extend_value>(&entity::uuid_id_, &entity_asset_extend_value::entity_id_)
+      .join<entity_asset_extend>(&entity::uuid_id_, &entity_asset_extend::entity_id_)
       .where(l_where)
       .order_by(sequence->*&entity::name_)
       .order_by(shot->*&entity::name_)
