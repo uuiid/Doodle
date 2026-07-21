@@ -6,6 +6,7 @@
 #include <doodle_core/exception/exception.h>
 
 #include "geometry.h"
+#include <cnpy.h>
 #include <fmt/format.h>
 #include <numeric>
 
@@ -21,9 +22,29 @@ void motion_stats::load(const FSys::path& folder) {
   DOODLE_CHICK(FSys::exists(mean_path), "mean.npy 不存在: {}", mean_path.string());
   DOODLE_CHICK(FSys::exists(std_path), "std.npy 不存在: {}", std_path.string());
 
-  // TODO: 实现 .npy 文件解析或使用现有工具
-  // 暂时留空，由上层调用 set_from_vectors() 设置
-  SPDLOG_WARN("motion_stats::load() 尚未实现 .npy 解析，请使用 set_from_vectors()");
+  // 加载 mean.npy（应为 1D 向量）
+  auto mean_data = cnpy::npy_load(mean_path.string());
+  DOODLE_CHICK(
+      mean_data.shape.size() == 1, "mean.npy shape 应为 1D，当前维度数: {}", mean_data.shape.size()
+  );
+  Eigen::Map<Eigen::VectorXf> mean_map(mean_data.data<float>(), static_cast<Eigen::Index>(mean_data.shape[0]));
+
+  // 加载 std.npy（应为 1D 向量）
+  auto std_data = cnpy::npy_load(std_path.string());
+  DOODLE_CHICK(
+      std_data.shape.size() == 1, "std.npy shape 应为 1D，当前维度数: {}", std_data.shape.size()
+  );
+  DOODLE_CHICK(
+      std_data.shape[0] == mean_data.shape[0],
+      "mean.npy 长度 {} 与 std.npy 长度 {} 不匹配", mean_data.shape[0], std_data.shape[0]
+  );
+  Eigen::Map<Eigen::VectorXf> std_map(std_data.data<float>(), static_cast<Eigen::Index>(std_data.shape[0]));
+
+  // 拷贝到成员变量
+  mean = mean_map;
+  std  = std_map;
+
+  SPDLOG_INFO("motion_stats 加载完成: dim={}", dim());
 }
 
 Eigen::MatrixXf motion_stats::normalize(const Eigen::MatrixXf& data) const {
@@ -123,7 +144,7 @@ Eigen::MatrixXf motion_rep_base::get_root_pos(
   // 需要子类定义中包含 "smooth_root_pos"
   const auto sit = feature_start_.find("smooth_root_pos");
   DOODLE_CHICK(sit != feature_start_.end(), "特征不含 smooth_root_pos  或 root_pos");
-  
+
   const std::int64_t start = sit->second;
   const std::int64_t end   = feature_end_.at("smooth_root_pos");
   return features.middleCols(start, end - start);
