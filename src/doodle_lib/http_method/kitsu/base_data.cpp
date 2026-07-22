@@ -371,7 +371,6 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, post) {
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version_instance, get) {
-  person_.check_admin();
   auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
   auto l_path = l_ctx.get_ue_plugins_file(version_major_, version_minor_, version_patch_);
   DOODLE_CHICK(FSys::exists(l_path), "UE 插件版本文件不存在");
