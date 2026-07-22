@@ -10,6 +10,7 @@
 
 #include <Eigen/Dense>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -84,8 +85,8 @@ class motion_rep_base {
   motion_stats body_stats_;         ///< 身体统计
   motion_stats combined_stats_;     ///< 合并统计（global_root + body）
 
-  // ---- 骨骼 ----
-  skeleton skeleton_;
+  // ---- 骨骼（共享指针） ----
+  std::shared_ptr<skeleton_base> skeleton_;
 
   // ======================================================================
   // 子类辅助方法
@@ -110,7 +111,8 @@ class motion_rep_base {
   [[nodiscard]] std::int64_t body_dim() const { return body_dim_; }
   [[nodiscard]] std::int64_t local_root_dim() const { return local_root_dim_; }
   [[nodiscard]] float fps() const { return fps_; }
-  [[nodiscard]] const skeleton& skel() const { return skeleton_; }
+  [[nodiscard]] const std::shared_ptr<skeleton_base>& skel() const { return skeleton_; }
+  [[nodiscard]] skeleton_base& skel_ref() const { return *skeleton_; }
 
   [[nodiscard]] std::int64_t feature_start(const std::string& name) const { return feature_start_.at(name); }
   [[nodiscard]] std::int64_t feature_end(const std::string& name) const { return feature_end_.at(name); }

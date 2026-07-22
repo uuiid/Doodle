@@ -53,18 +53,18 @@ Eigen::MatrixXf diff_angles(const Eigen::MatrixXf& angles, float fps) {
 // ======================================================================
 Eigen::MatrixXf compute_heading_angle(
     const Eigen::MatrixXf& posed_joints,
-    const skeleton& skel,
+    const skeleton_base& skel,
     std::int64_t batch_size,
     std::int64_t time_steps
 ) {
   const Eigen::Index total = posed_joints.rows();
-  const Eigen::Index J     = skel.nbjoints;
+  const Eigen::Index J     = skel.nbjoints_;
   DOODLE_CHICK(total == batch_size * time_steps, "总帧数不匹配");
   DOODLE_CHICK(posed_joints.cols() == J * 3, "列数不匹配 J*3");
-  DOODLE_CHICK(skel.hip_joint_idx.size() >= 2, "需要至少 2 个髋关节索引");
+  DOODLE_CHICK(skel.hip_joint_idx_.size() >= 2, "需要至少 2 个髋关节索引");
 
-  const std::int64_t r_hip = skel.hip_joint_idx[0];  // right hip
-  const std::int64_t l_hip = skel.hip_joint_idx[1];  // left hip
+  const std::int64_t r_hip = skel.hip_joint_idx_[0];  // right hip
+  const std::int64_t l_hip = skel.hip_joint_idx_[1];  // left hip
 
   Eigen::MatrixXf heading(batch_size, time_steps);
 
@@ -150,18 +150,18 @@ Eigen::MatrixXf compute_vel_angle(
 Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel(
     const Eigen::MatrixXf& positions,
     const Eigen::MatrixXf& velocity,
-    const skeleton& skel,
+    const skeleton_base& skel,
     std::int64_t batch_size,
     std::int64_t time_steps,
     float vel_thres,
     float height_thresh
 ) {
   const Eigen::Index total = positions.rows();
-  const Eigen::Index J     = skel.nbjoints;
+  const Eigen::Index J     = skel.nbjoints_;
 
   // 最多使用每侧 2 个脚关节
-  const auto fid_l = skel.left_foot_joint_idx;
-  const auto fid_r = skel.right_foot_joint_idx;
+  const auto fid_l = skel.left_foot_joint_idx_;
+  const auto fid_r = skel.right_foot_joint_idx_;
   const std::int64_t n_foot_l = (std::min)(static_cast<std::int64_t>(fid_l.size()), std::int64_t{2});
   const std::int64_t n_foot_r = (std::min)(static_cast<std::int64_t>(fid_r.size()), std::int64_t{2});
 

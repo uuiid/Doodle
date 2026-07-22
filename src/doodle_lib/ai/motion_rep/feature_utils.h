@@ -28,7 +28,7 @@ Eigen::MatrixXf diff_angles(const Eigen::MatrixXf& angles, float fps);
 /// @param time_steps T
 /// @return [B, T] 各帧头部朝向角（弧度）
 Eigen::MatrixXf compute_heading_angle(
-    const Eigen::MatrixXf& posed_joints, const skeleton& skel, std::int64_t batch_size, std::int64_t time_steps
+    const Eigen::MatrixXf& posed_joints, const skeleton_base& skel, std::int64_t batch_size, std::int64_t time_steps
 );
 
 // ======================================================================
@@ -69,7 +69,7 @@ Eigen::MatrixXf compute_vel_angle(const Eigen::MatrixXf& root_rot_angles, float 
 /// @param height_thresh 高度阈值
 /// @return [B*T, 4] 脚接触标签 [左跟, 左趾, 右跟, 右趾]
 Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_detect_from_pos_and_vel(
-    const Eigen::MatrixXf& positions, const Eigen::MatrixXf& velocity, const skeleton& skel, std::int64_t batch_size,
+    const Eigen::MatrixXf& positions, const Eigen::MatrixXf& velocity, const skeleton_base& skel, std::int64_t batch_size,
     std::int64_t time_steps, float vel_thres = 0.15f, float height_thresh = 0.10f
 );
 

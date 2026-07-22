@@ -7,14 +7,12 @@
 
 #include <Eigen/Dense>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 namespace doodle::ai {
-
-// 前向声明（用于 to_skeleton() 转换）
-struct skeleton;
 
 // ======================================================================
 // 骨骼基类（对应 Python SkeletonBase）
@@ -28,6 +26,7 @@ struct skeleton;
 /// 用法：
 /// @code
 ///   auto skel = skeleton_base::create_soma_skeleton_30("path/to/somaskel30");
+///   // skel 为 std::shared_ptr<skeleton_base>
 /// @endcode
 class skeleton_base {
  public:
@@ -108,33 +107,26 @@ class skeleton_base {
   void load_all_from_folder(const FSys::path& folder);
 
   // ======================================================================
-  // 向后兼容：转换为 lightweight skeleton struct
-  // ======================================================================
-
-  /// @brief 转换为现有的 lightweight skeleton 结构（用于 FK 等已有函数）
-  skeleton to_skeleton() const;
-
-  // ======================================================================
   // 检查
   // ======================================================================
 
   [[nodiscard]] bool is_valid() const { return nbjoints_ > 0 && neutral_joints_.size() > 0; }
 
   // ======================================================================
-  // 工厂函数：具体骨骼
+  // 工厂函数：具体骨骼（返回共享指针）
   // ======================================================================
 
   /// @brief 创建 SOMA 30 关节骨骼
-  static skeleton_base create_soma_skeleton_30(const FSys::path& folder = {});
+  static std::shared_ptr<skeleton_base> create_soma_skeleton_30(const FSys::path& folder = {});
 
   /// @brief 创建 SOMA 77 关节骨骼
-  static skeleton_base create_soma_skeleton_77(const FSys::path& folder = {});
+  static std::shared_ptr<skeleton_base> create_soma_skeleton_77(const FSys::path& folder = {});
 
   /// @brief 创建 G1 34 关节骨骼
-  static skeleton_base create_g1_skeleton_34(const FSys::path& folder = {});
+  static std::shared_ptr<skeleton_base> create_g1_skeleton_34(const FSys::path& folder = {});
 
   /// @brief 创建 SMPL-X 22 关节骨骼
-  static skeleton_base create_smplx_skeleton_22(const FSys::path& folder = {});
+  static std::shared_ptr<skeleton_base> create_smplx_skeleton_22(const FSys::path& folder = {});
 };
 
 }  // namespace doodle::ai

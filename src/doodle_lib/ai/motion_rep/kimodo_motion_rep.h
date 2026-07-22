@@ -51,10 +51,10 @@ struct motion_output {
 class kimodo_motion_rep : public motion_rep_base {
  public:
   /// @brief 构造函数
-  /// @param skel 骨骼定义
+  /// @param skel 骨骼定义（共享指针）
   /// @param in_fps 帧率
   /// @param stats_path 统计文件路径（可选，包含 global_root/ local_root/ body/ 子目录）
-  kimodo_motion_rep(skeleton skel, float in_fps = 30.0f, const FSys::path& stats_path = {});
+  kimodo_motion_rep(std::shared_ptr<skeleton_base> skel, float in_fps = 30.0f, const FSys::path& stats_path = {});
 
   // ======================================================================
   // 编码：局部旋转 + 根位置 → 平滑根特征（对应 Python __call__）

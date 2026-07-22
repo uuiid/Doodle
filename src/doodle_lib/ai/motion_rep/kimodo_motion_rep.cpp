@@ -12,13 +12,13 @@
 namespace doodle::ai {
 
 kimodo_motion_rep::kimodo_motion_rep(
-    skeleton skel,
+    std::shared_ptr<skeleton_base> skel,
     float in_fps,
     const FSys::path& stats_path
 ) {
   skeleton_    = std::move(skel);
   fps_         = in_fps;
-  nbjoints_    = skeleton_.nbjoints;
+  nbjoints_    = skeleton_->nbjoints_;
 
   // ---- 定义特征布局（对应 Python size_dict） ----
   feature_names_ = {
@@ -82,13 +82,13 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   }
 
   // ---- Step 1: FK ----
-  auto fk_res = fk(local_joint_rots, root_positions, skeleton_);
+  auto fk_res = fk(local_joint_rots, root_positions, *skeleton_);
   // fk_res.global_rot_mats: [B*T, J*9]
   // fk_res.posed_joints: [B*T, J*3]
   // fk_res.posed_joints_norootpos: [B*T, J*3]
 
   // ---- Step 2: 计算朝向角 ----
-  Eigen::MatrixXf heading_angle = compute_heading_angle(fk_res.posed_joints, skeleton_, batch_size, time_steps);
+  Eigen::MatrixXf heading_angle = compute_heading_angle(fk_res.posed_joints, *skeleton_, batch_size, time_steps);
 
   // global_root_heading = [cos(angle), sin(angle)]
   Eigen::MatrixXf global_root_heading(total, 2);
@@ -130,7 +130,7 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
 
   // ---- Step 6: 脚接触检测 ----
   auto foot_contacts_bool = foot_detect_from_pos_and_vel(
-      fk_res.posed_joints, velocities, skeleton_, batch_size, time_steps
+      fk_res.posed_joints, velocities, *skeleton_, batch_size, time_steps
   );
   Eigen::MatrixXf foot_contacts(total, 4);
   for (Eigen::Index i = 0; i < total; ++i) {
@@ -229,7 +229,7 @@ motion_output kimodo_motion_rep::decode(
   Eigen::MatrixXf global_rot_mats = cont6d_to_matrix(global_rot_data);  // [B*T, J*9]
 
   // ---- 全局旋转 → 局部旋转 ----
-  Eigen::MatrixXf local_rot_mats = global_rots_to_local_rots(global_rot_mats, skeleton_);
+  Eigen::MatrixXf local_rot_mats = global_rots_to_local_rots(global_rot_mats, *skeleton_);
 
   // ---- 从局部关节位置计算根位置 ----
   // posed_joints_from_pos = local_joints_positions
@@ -246,13 +246,13 @@ motion_output kimodo_motion_rep::decode(
 
   Eigen::MatrixXf root_positions(total, 3);
   for (Eigen::Index i = 0; i < total; ++i) {
-    root_positions(i, 0) = posed_joints_from_pos(i, skeleton_.root_idx * 3 + 0);
-    root_positions(i, 1) = posed_joints_from_pos(i, skeleton_.root_idx * 3 + 1);
-    root_positions(i, 2) = posed_joints_from_pos(i, skeleton_.root_idx * 3 + 2);
+    root_positions(i, 0) = posed_joints_from_pos(i, skeleton_->root_idx_ * 3 + 0);
+    root_positions(i, 1) = posed_joints_from_pos(i, skeleton_->root_idx_ * 3 + 1);
+    root_positions(i, 2) = posed_joints_from_pos(i, skeleton_->root_idx_ * 3 + 2);
   }
 
   // ---- FK 计算全局关节位置 ----
-  auto fk_res = fk(local_rot_mats, root_positions, skeleton_);
+  auto fk_res = fk(local_rot_mats, root_positions, *skeleton_);
 
   // ---- 脚接触二值化 ----
   Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_contacts_bool(total, 4);

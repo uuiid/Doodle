@@ -9,33 +9,6 @@
 
 namespace doodle::ai {
 
-void skeleton::build_joint_levels() {
-  joint_levels.clear();
-  if (nbjoints <= 0) return;
-
-  // 计算每个关节的深度
-  std::vector<std::int64_t> depths(static_cast<std::size_t>(nbjoints), 0);
-  std::int64_t max_depth = 0;
-
-  for (std::int64_t i = 0; i < nbjoints; ++i) {
-    std::int64_t depth = 0;
-    std::int64_t j     = i;
-    // 沿着父链回溯直到根
-    while (joint_parents[static_cast<std::size_t>(j)] != -1) {
-      j = joint_parents[static_cast<std::size_t>(j)];
-      ++depth;
-    }
-    depths[static_cast<std::size_t>(i)] = depth;
-    if (depth > max_depth) max_depth = depth;
-  }
-
-  // 按深度分组
-  joint_levels.resize(static_cast<std::size_t>(max_depth + 1));
-  for (std::int64_t i = 0; i < nbjoints; ++i) {
-    joint_levels[static_cast<std::size_t>(depths[static_cast<std::size_t>(i)])].push_back(i);
-  }
-}
-
 // ======================================================================
 // 辅助：将 3x3 矩阵的行展开向量（9元素）转换为 4x4 变换矩阵
 // ======================================================================
@@ -75,10 +48,10 @@ void matrix_4x4_to_9(const Eigen::Matrix4f& src, float* dst_9) {
 fk_result fk(
     const Eigen::MatrixXf& local_rot_mats,
     const Eigen::MatrixXf& root_positions,
-    const skeleton& skel
+    const skeleton_base& skel
 ) {
   const Eigen::Index total_frames = local_rot_mats.rows();
-  const Eigen::Index J            = skel.nbjoints;
+  const Eigen::Index J            = skel.nbjoints_;
   DOODLE_CHICK(local_rot_mats.cols() == J * 9, "local_rot_mats 列数 {} 不匹配 J*9 = {}", local_rot_mats.cols(), J * 9);
   DOODLE_CHICK(root_positions.rows() == total_frames, "root_positions 行数不匹配");
   DOODLE_CHICK(root_positions.cols() == 3, "root_positions 列数 != 3");
@@ -88,13 +61,8 @@ fk_result fk(
   result.posed_joints.resize(total_frames, J * 3);
   result.posed_joints_norootpos.resize(total_frames, J * 3);
 
-  // 构建 joint_levels（若尚未构建）
-  if (skel.joint_levels.empty()) {
-    auto skel_copy = skel;
-    skel_copy.build_joint_levels();
-    // 使用深拷贝后的 levels
-    return fk(local_rot_mats, root_positions, skel_copy);
-  }
+  // skeleton_base 的 joint_levels_ 已在 init_from_bone_hierarchy 中构建完成
+  DOODLE_CHICK(!skel.joint_levels_.empty(), "skeleton_base.joint_levels_ 为空，请先调用 init_from_bone_hierarchy");
 
   // 对每帧做 FK
   for (Eigen::Index f = 0; f < total_frames; ++f) {
@@ -106,7 +74,7 @@ fk_result fk(
     std::vector<Eigen::Matrix4f> transforms(static_cast<std::size_t>(J));
 
     // 第 0 层：根关节
-    const auto root_i = static_cast<std::size_t>(skel.root_idx);
+    const auto root_i = static_cast<std::size_t>(skel.root_idx_);
     {
       // 根关节的相对位置 = neutral_joints[root] 的偏移
       // 但 Python FK 中先减去了 pelvis_offset，所以这里相对位置为 0
@@ -125,18 +93,18 @@ fk_result fk(
     }
 
     // 后续层级：逐级计算
-    for (const auto& level : skel.joint_levels) {
+    for (const auto& level : skel.joint_levels_) {
       for (const auto& j_idx : level) {
-        if (j_idx == skel.root_idx) continue;
+        if (j_idx == skel.root_idx_) continue;
         const auto ji   = static_cast<std::size_t>(j_idx);
-        const auto pi   = static_cast<std::size_t>(skel.joint_parents[ji]);
+        const auto pi   = static_cast<std::size_t>(skel.joint_parents_[ji]);
         const auto& p_T = transforms[pi];
 
         // 相对位置 = neutral_joints[j] - neutral_joints[parent(j)]
         Eigen::Vector3f rel_joint;
-        rel_joint(0) = skel.neutral_joints(j_idx, 0) - skel.neutral_joints(static_cast<Eigen::Index>(pi), 0);
-        rel_joint(1) = skel.neutral_joints(j_idx, 1) - skel.neutral_joints(static_cast<Eigen::Index>(pi), 1);
-        rel_joint(2) = skel.neutral_joints(j_idx, 2) - skel.neutral_joints(static_cast<Eigen::Index>(pi), 2);
+        rel_joint(0) = skel.neutral_joints_(j_idx, 0) - skel.neutral_joints_(static_cast<Eigen::Index>(pi), 0);
+        rel_joint(1) = skel.neutral_joints_(j_idx, 1) - skel.neutral_joints_(static_cast<Eigen::Index>(pi), 1);
+        rel_joint(2) = skel.neutral_joints_(j_idx, 2) - skel.neutral_joints_(static_cast<Eigen::Index>(pi), 2);
 
         // 局部变换
         Eigen::Matrix4f local_T = Eigen::Matrix4f::Identity();
@@ -180,10 +148,10 @@ fk_result fk(
 // ======================================================================
 Eigen::MatrixXf global_rots_to_local_rots(
     const Eigen::MatrixXf& global_rot_mats,
-    const skeleton& skel
+    const skeleton_base& skel
 ) {
   const Eigen::Index total = global_rot_mats.rows();
-  const Eigen::Index J     = skel.nbjoints;
+  const Eigen::Index J     = skel.nbjoints_;
   DOODLE_CHICK(global_rot_mats.cols() == J * 9, "global_rot_mats 列数不匹配");
 
   Eigen::MatrixXf local_rot_mats(total, J * 9);
@@ -203,12 +171,12 @@ Eigen::MatrixXf global_rots_to_local_rots(
 
       Eigen::Matrix3f R_local;
 
-      if (j == skel.root_idx) {
+      if (j == skel.root_idx_) {
         // 根关节：局部 = 全局
         R_local = R_global;
       } else {
         // 非根关节：局部 = parent(R_global)^T * R_global[j]
-        const auto pi = static_cast<std::size_t>(skel.joint_parents[ji]);
+        const auto pi = static_cast<std::size_t>(skel.joint_parents_[ji]);
 
         Eigen::Matrix3f R_parent;
         R_parent(0, 0) = global_row[pi * 9 + 0]; R_parent(0, 1) = global_row[pi * 9 + 1]; R_parent(0, 2) = global_row[pi * 9 + 2];

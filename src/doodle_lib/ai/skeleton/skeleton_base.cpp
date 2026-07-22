@@ -4,7 +4,6 @@
 #include "skeleton_base.h"
 
 #include <doodle_core/exception/exception.h>
-#include <doodle_lib/ai/motion_rep/skeleton.h>
 
 #include <cnpy.h>
 #include <fmt/format.h>
@@ -239,23 +238,6 @@ void skeleton_base::load_all_from_folder(const FSys::path& folder) {
 }
 
 // ======================================================================
-// → lightweight skeleton (后向兼容)
-// ======================================================================
-
-skeleton skeleton_base::to_skeleton() const {
-  skeleton skel;
-  skel.nbjoints     = nbjoints_;
-  skel.root_idx     = root_idx_;
-  skel.joint_parents = joint_parents_;
-  skel.neutral_joints = neutral_joints_;
-  skel.left_foot_joint_idx  = left_foot_joint_idx_;
-  skel.right_foot_joint_idx = right_foot_joint_idx_;
-  skel.hip_joint_idx        = hip_joint_idx_;
-  skel.joint_levels         = joint_levels_;
-  return skel;
-}
-
-// ======================================================================
 // 工厂函数：具体骨骼
 // ======================================================================
 
@@ -320,11 +302,11 @@ void apply_semantic_groups(skeleton_base& skel, const semantic_groups& g) {
 // SOMASkeleton30
 // ======================================================================
 
-skeleton_base skeleton_base::create_soma_skeleton_30(const FSys::path& folder) {
-  skeleton_base skel;
-  skel.name_ = "somaskel30";
+std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(const FSys::path& folder) {
+  auto skel = std::make_shared<skeleton_base>();
+  skel->name_ = "somaskel30";
 
-  skel.init_from_bone_hierarchy({
+  skel->init_from_bone_hierarchy({
       {"Hips", ""},
       {"Spine1", "Hips"},
       {"Spine2", "Spine1"},
@@ -358,17 +340,17 @@ skeleton_base skeleton_base::create_soma_skeleton_30(const FSys::path& folder) {
   });
 
   auto g = resolve_semantic_groups(
-      skel,
+      *skel,
       {"LeftFoot", "LeftToeBase"},               // left foot
       {"RightFoot", "RightToeBase"},              // right foot
       {"LeftHand", "LeftHandMiddleEnd"},          // left hand
       {"RightHand", "RightHandMiddleEnd"},        // right hand
       {"RightLeg", "LeftLeg"}                     // hip [right, left]
   );
-  apply_semantic_groups(skel, g);
+  apply_semantic_groups(*skel, g);
 
   if (!folder.empty()) {
-    skel.load_all_from_folder(folder);
+    skel->load_all_from_folder(folder);
   }
 
   return skel;
@@ -378,11 +360,11 @@ skeleton_base skeleton_base::create_soma_skeleton_30(const FSys::path& folder) {
 // SOMASkeleton77
 // ======================================================================
 
-skeleton_base skeleton_base::create_soma_skeleton_77(const FSys::path& folder) {
-  skeleton_base skel;
-  skel.name_ = "somaskel77";
+std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_77(const FSys::path& folder) {
+  auto skel = std::make_shared<skeleton_base>();
+  skel->name_ = "somaskel77";
 
-  skel.init_from_bone_hierarchy({
+  skel->init_from_bone_hierarchy({
       {"Hips", ""},
       {"Spine1", "Hips"},
       {"Spine2", "Spine1"},
@@ -463,7 +445,7 @@ skeleton_base skeleton_base::create_soma_skeleton_77(const FSys::path& folder) {
   });
 
   auto g = resolve_semantic_groups(
-      skel,
+      *skel,
       {"LeftFoot", "LeftToeBase", "LeftToeEnd"},
       {"RightFoot", "RightToeBase", "RightToeEnd"},
       {"LeftHand", "LeftHandThumb1", "LeftHandThumb2", "LeftHandThumb3", "LeftHandThumbEnd",
@@ -478,10 +460,10 @@ skeleton_base skeleton_base::create_soma_skeleton_77(const FSys::path& folder) {
        "RightHandPinky1", "RightHandPinky2", "RightHandPinky3", "RightHandPinky4", "RightHandPinkyEnd"},
       {"RightLeg", "LeftLeg"}
   );
-  apply_semantic_groups(skel, g);
+  apply_semantic_groups(*skel, g);
 
   if (!folder.empty()) {
-    skel.load_all_from_folder(folder);
+    skel->load_all_from_folder(folder);
   }
 
   return skel;
@@ -491,11 +473,11 @@ skeleton_base skeleton_base::create_soma_skeleton_77(const FSys::path& folder) {
 // G1Skeleton34
 // ======================================================================
 
-skeleton_base skeleton_base::create_g1_skeleton_34(const FSys::path& folder) {
-  skeleton_base skel;
-  skel.name_ = "g1skel34";
+std::shared_ptr<skeleton_base> skeleton_base::create_g1_skeleton_34(const FSys::path& folder) {
+  auto skel = std::make_shared<skeleton_base>();
+  skel->name_ = "g1skel34";
 
-  skel.init_from_bone_hierarchy({
+  skel->init_from_bone_hierarchy({
       {"pelvis_skel", ""},
       {"left_hip_pitch_skel", "pelvis_skel"},
       {"left_hip_roll_skel", "left_hip_pitch_skel"},
@@ -533,17 +515,17 @@ skeleton_base skeleton_base::create_g1_skeleton_34(const FSys::path& folder) {
   });
 
   auto g = resolve_semantic_groups(
-      skel,
+      *skel,
       {"left_ankle_roll_skel", "left_toe_base"},
       {"right_ankle_roll_skel", "right_toe_base"},
       {"left_wrist_yaw_skel", "left_hand_roll_skel"},
       {"right_wrist_yaw_skel", "right_hand_roll_skel"},
       {"right_hip_pitch_skel", "left_hip_pitch_skel"}
   );
-  apply_semantic_groups(skel, g);
+  apply_semantic_groups(*skel, g);
 
   if (!folder.empty()) {
-    skel.load_all_from_folder(folder);
+    skel->load_all_from_folder(folder);
   }
 
   return skel;
@@ -553,11 +535,11 @@ skeleton_base skeleton_base::create_g1_skeleton_34(const FSys::path& folder) {
 // SMPLXSkeleton22
 // ======================================================================
 
-skeleton_base skeleton_base::create_smplx_skeleton_22(const FSys::path& folder) {
-  skeleton_base skel;
-  skel.name_ = "smplx22";
+std::shared_ptr<skeleton_base> skeleton_base::create_smplx_skeleton_22(const FSys::path& folder) {
+  auto skel = std::make_shared<skeleton_base>();
+  skel->name_ = "smplx22";
 
-  skel.init_from_bone_hierarchy({
+  skel->init_from_bone_hierarchy({
       {"pelvis", ""},
       {"left_hip", "pelvis"},
       {"right_hip", "pelvis"},
@@ -583,17 +565,17 @@ skeleton_base skeleton_base::create_smplx_skeleton_22(const FSys::path& folder) 
   });
 
   auto g = resolve_semantic_groups(
-      skel,
+      *skel,
       {"left_ankle", "left_foot"},
       {"right_ankle", "right_foot"},
       {"left_wrist"},
       {"right_wrist"},
       {"right_hip", "left_hip"}
   );
-  apply_semantic_groups(skel, g);
+  apply_semantic_groups(*skel, g);
 
   if (!folder.empty()) {
-    skel.load_all_from_folder(folder);
+    skel->load_all_from_folder(folder);
   }
 
   return skel;
