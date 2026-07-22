@@ -353,7 +353,7 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
     }
   }
   co_return in_handle->make_msg(
-      nlohmann::json{{"main_version", l_lines.empty() ? "" : l_lines[0]}, {"sub_versions", l_lines}}
+      nlohmann::json{{"main_version", l_lines.empty() ? "" : l_lines.back()}, {"sub_versions", l_lines}}
 
   );
 }
@@ -365,7 +365,8 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, post) {
   static const std::regex l_version_regex{R"(^\d+\.\d+\.\d+$)"};
   DOODLE_CHICK(std::regex_match(l_arg, l_version_regex), "版本号格式不正确, 应为 x.x.x, 例如 1.2.3");
   if (auto l_dir = l_path.parent_path(); !FSys::exists(l_dir)) FSys::create_directories(l_dir);
-  FSys::ofstream l_ofstream{l_path};
+  // 在文件末尾添加版本号
+  FSys::ofstream l_ofstream{l_path, FSys::ofstream::app};
   l_ofstream << l_arg << "\n";
   co_return in_handle->make_msg(nlohmann::json{} = l_arg);
 }
