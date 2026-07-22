@@ -278,6 +278,29 @@
           }
         }
       ]
+    },
+    {
+      "label": "create ue",
+      "type": "shell",
+      "command": "${workspaceFolder}/build_script/create_ue.ps1",
+      "args": [],
+      "problemMatcher": [
+        {
+          "owner": "powershell",
+          "severity": "error",
+          "fileLocation": [
+            "relative",
+            "${workspaceFolder}"
+          ],
+          "pattern": {
+            "regexp": "^At (.*):(\\d+) char:(\\d+)(.*)",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "message": 4
+          }
+        }
+      ]
     }
   ],
   "inputs": [

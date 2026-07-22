@@ -5,7 +5,6 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 Import-Module -Name $PSScriptRoot\DoodlePackageFun.psm1 -Force
  
 $DoodleBuildRoot = Convert-Path "$DoodleGitRoot/build/UE"
-$UEVersion = "5.5"
 if (-not (Test-Path $DoodleBuildRoot)) {
   New-Item -ItemType Directory -Path $DoodleBuildRoot | Out-Null
 }
