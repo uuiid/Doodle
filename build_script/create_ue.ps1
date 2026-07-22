@@ -25,4 +25,4 @@ $headers = @{
   "Authorization" = "Bearer $KitsuCookies"
   "Content-Type"  = "application/json"
 }
-Invoke-WebRequest -Uri "http://$DoodleIp/api/ue-plugins/version" -Method Post -Headers $headers -Body "$UEVersion.$DoodleVersionNum"
+Invoke-WebRequest -Uri "http://$DoodleIp/api/ue-plugins/version" -Method Post -Headers $headers -Body ("`"$UEVersion.$DoodleVersionNum`"")
