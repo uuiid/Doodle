@@ -19,7 +19,7 @@ $DoodleVersionNum = $DoodleVersion -split "\." | Select-Object -Last 1
 Compress-UEPlugins -UEVersion $UEVersion -MyVersion $DoodleVersionNum -DoodleGitRoot $DoodleGitRoot -OutPath $DoodleBuildRoot
 
 $target = "\\$DoodleIp\Dev\kitsu_data\ue_plugins"
-&Robocopy "$DoodleBuildRoot" "$target" /MIR /w:1 /NDL /NFL
+&Robocopy "$DoodleBuildRoot" "$target" /s /w:1 /NDL /NFL
  
 $headers = @{
   "Authorization" = "Bearer $KitsuCookies"
