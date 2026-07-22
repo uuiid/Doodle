@@ -18,6 +18,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <string>
 #include <tl/expected.hpp>
+#include <tuple>
 #include <vector>
 
 namespace doodle {
@@ -162,7 +163,7 @@ class kitsu_client {
   boost::asio::awaitable<nlohmann::json> get_task_sync_export_anim_fbx(uuid in_task_id) const;
 
   // get /api/ue-plugins/version
-  boost::asio::awaitable<std::string> get_ue_plugins_version() const;
+  boost::asio::awaitable<std::tuple<std::string, std::vector<std::string>>> get_ue_plugins_version() const;
 };
 
 }  // namespace doodle::kitsu

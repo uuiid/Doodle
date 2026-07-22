@@ -637,7 +637,7 @@ boost::asio::awaitable<void> kitsu_client::get_next_job(uuid in_computer_id) con
     throw_exception(doodle_error{"kitsu get next job error {} {}", l_res.result(), l_res.body()});
   co_return;
 }
-boost::asio::awaitable<std::string> kitsu_client::get_ue_plugins_version() const {
+boost::asio::awaitable<std::tuple<std::string, std::vector<std::string>>> kitsu_client::get_ue_plugins_version() const {
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
       boost::beast::http::verb::get, fmt::format("/api/ue-plugins/version"), 11
   };
@@ -648,7 +648,10 @@ boost::asio::awaitable<std::string> kitsu_client::get_ue_plugins_version() const
     throw_exception(doodle_error{"kitsu get ue plugins version error {} {}", l_res.result(), l_res.body()});
   auto l_json = nlohmann::json::parse(l_res.body());
   DOODLE_CHICK(l_json.contains("main_version"), "kitsu get ue plugins version error, not found version");
-  co_return l_json.at("main_version").get<std::string>();
+  DOODLE_CHICK(l_json.contains("sub_versions"), "kitsu get ue plugins version error, not found sub_versions");
+  co_return std::make_tuple(
+      l_json.at("main_version").get<std::string>(), l_json.at("sub_versions").get<std::vector<std::string>>()
+  );
 }
 
 }  // namespace doodle::kitsu
