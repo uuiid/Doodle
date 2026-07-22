@@ -5,28 +5,28 @@
 #include "ue_exe.h"
 
 #include <doodle_core/exception/exception.h>
-#include <doodle_lib/platform/win/register_file_type.h>
-#include <doodle_lib/core/core_set.h>
-#include <doodle_lib/logger/logger.h>
 
+#include <doodle_lib/core/core_set.h>
 #include <doodle_lib/exe_warp/async_read_pipe.h>
 #include <doodle_lib/exe_warp/windows_hide.h>
 #include <doodle_lib/http_client/kitsu_client.h>
+#include <doodle_lib/logger/logger.h>
+#include <doodle_lib/platform/win/register_file_type.h>
 
-#include <boost/asio/readable_pipe.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/experimental/parallel_group.hpp>
+#include <boost/asio/readable_pipe.hpp>
 #include <boost/process/process.hpp>
 #include <boost/scope/scope_exit.hpp>
 #include <boost/system.hpp>
 
-#include <fmt/core.h>
 #include <bit7z/bit7z.hpp>
 #include <bit7z/bit7zlibrary.hpp>
 #include <bit7z/bitfileextractor.hpp>
 #include <bit7z/bitformat.hpp>
 #include <filesystem>
+#include <fmt/core.h>
 #include <memory>
 #include <string>
 
@@ -71,10 +71,20 @@ void install_UnrealEngine5VLC(const FSys::path& path) {
   SPDLOG_INFO(fmt::format("install plug : {} --> {}", sourePath, path));
   copy(sourePath, path, FSys::copy_options::recursive | FSys::copy_options::update_existing);
 }
-
-boost::asio::awaitable<void> installUePath(const FSys::path& path) {
+std::string get_ue_plug_version() {
+  auto l_doodle_path = core_set::get_set().ue4_path / "Engine" / "Plugins" / "Doodle" / "Doodle.uplugin";
+  std::string l_version{};
+  if (FSys::exists(l_doodle_path)) {
+    auto l_json = nlohmann::json::parse(FSys::ifstream{l_doodle_path});
+    if (l_json.contains("VersionName")) l_version = l_json["VersionName"].get<std::string>();
+  }
+  return l_version;
+}
+boost::asio::awaitable<bool> installUePath(const FSys::path& path) {
   boost::scope::scope_exit l_scope{[] {}};
-  auto l_client   = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_client  = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
+  auto l_version = co_await l_client->get_ue_plugins_version();
+  if (l_version == get_ue_plug_version()) co_return false;
   auto l_path     = co_await l_client->get_ue_plugin(core_set::get_set().ue4_version);
   auto l_out_path = l_path.parent_path() / l_path.stem();
   if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
@@ -97,17 +107,9 @@ boost::asio::awaitable<void> installUePath(const FSys::path& path) {
 
   SPDLOG_INFO(fmt::format("install plug : {} --> {}", l_out_path, targetPath));
   copy(l_out_path, targetPath, FSys::copy_options::recursive | FSys::copy_options::update_existing);
+  co_return true;
 }
 
-bool chick_ue_plug() {
-  auto l_doodle_path = core_set::get_set().ue4_path / "Engine" / "Plugins" / "Doodle" / "Doodle.uplugin";
-  std::string l_version{};
-  if (FSys::exists(l_doodle_path)) {
-    auto l_json = nlohmann::json::parse(FSys::ifstream{l_doodle_path});
-    if (l_json.contains("VersionName")) l_version = l_json["VersionName"].get<std::string>();
-  }
-  return l_version == version::build_info::get().version_str;
-}
 }  // namespace
 
 namespace ue_exe_ns {
@@ -136,7 +138,6 @@ FSys::path find_ue_project_file(const FSys::path& in_path) {
   return find_u_pej(in_path);
 }
 
-boost::asio::awaitable<void> install_doodle_plug(const FSys::path& path) { return installUePath(path); }
 }  // namespace ue_exe_ns
 
 boost::asio::awaitable<void> async_run_ue(
@@ -148,13 +149,12 @@ boost::asio::awaitable<void> async_run_ue(
 
   in_logger->info("开始检查 UE 版本");
   if (in_time) in_time->start_time_ = std::chrono::system_clock::now();
-  if (chick_ue_plug()) {
-    in_logger->info("UE 插件已经是最新版本, 无需安装");
-  } else {
-    in_logger->info("UE 插件需要更新, 开始安装");
-    co_await ue_exe_ns::install_doodle_plug(core_set::get_set().ue4_path);
+
+  in_logger->info("UE 开始检查插件版本");
+  if (co_await installUePath(core_set::get_set().ue4_path))
     in_logger->info("UE 插件安装完成");
-  }
+  else
+    in_logger->info("UE 插件版本一致, 无需安装");
 
   auto l_ue_path = core_set::get_set().ue4_path / doodle_config::ue_path_obj;
   if (l_ue_path.empty()) throw_exception(doodle_error{"ue_exe 路径为空, 无法启动UE"});
@@ -165,13 +165,13 @@ boost::asio::awaitable<void> async_run_ue(
   for (auto&& l_it : boost::process::v2::environment::current()) {
     l_env.emplace(l_it.key(), l_it.value());
   }
-  l_env[L"UE-LocalDataCachePath"] = std::wstring{L"%GAMEDIR%DerivedDataCache"};
+  l_env[L"UE-LocalDataCachePath"]  = std::wstring{L"%GAMEDIR%DerivedDataCache"};
   l_env[L"UE-SharedDataCachePath"] = std::wstring{LR"(\\192.168.10.220\Global Shared DDC Path)"};
 
-  auto l_out_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
-  auto l_err_pipe                 = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
+  auto l_out_pipe                  = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
+  auto l_err_pipe                  = boost::asio::readable_pipe{co_await boost::asio::this_coro::executor};
 
-  auto l_process_ue               = boost::process::v2::process{
+  auto l_process_ue                = boost::process::v2::process{
       co_await boost::asio::this_coro::executor, l_ue_path, in_arg,
       boost::process::v2::process_stdio{nullptr, l_out_pipe, l_err_pipe}, boost::process::v2::process_environment{l_env}
   };

@@ -160,6 +160,9 @@ class kitsu_client {
   boost::asio::awaitable<void> get_next_job(uuid in_computer_id) const;
   // get /api/actions/tasks/{task_id}/sync/export-anim-fbx
   boost::asio::awaitable<nlohmann::json> get_task_sync_export_anim_fbx(uuid in_task_id) const;
+
+  // get /api/ue-plugins/version
+  boost::asio::awaitable<std::string> get_ue_plugins_version() const;
 };
 
 }  // namespace doodle::kitsu

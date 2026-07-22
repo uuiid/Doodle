@@ -4,14 +4,16 @@
 
 #pragma once
 
+#include <doodle_core/metadata/server_task_info.h>
+
 #include <doodle_lib/core/co_queue.h>
 #include <doodle_lib/doodle_lib_fwd.h>
-#include <doodle_core/metadata/server_task_info.h>
 
 #include <boost/asio.hpp>
 #include <boost/system.hpp>
 
 #include <memory>
+
 
 namespace doodle {
 namespace ue_exe_ns {
@@ -19,7 +21,6 @@ std::string get_file_version(const FSys::path& in_path);
 // 查找ue工程文件 D:/dss/xxx.uproject
 FSys::path find_ue_project_file(const FSys::path& in_path);
 
-boost::asio::awaitable<void> install_doodle_plug(const FSys::path& path);
 }  // namespace ue_exe_ns
 
 class ue_ctx {

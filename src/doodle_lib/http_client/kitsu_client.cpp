@@ -638,5 +638,18 @@ boost::asio::awaitable<void> kitsu_client::get_next_job(uuid in_computer_id) con
     throw_exception(doodle_error{"kitsu get next job error {} {}", l_res.result(), l_res.body()});
   co_return;
 }
+boost::asio::awaitable<std::string> kitsu_client::get_ue_plugins_version() const {
+  boost::beast::http::request<boost::beast::http::empty_body> l_req{
+      boost::beast::http::verb::get, fmt::format("/api/ue-plugins/version"), 11
+  };
+  set_req_headers(l_req);
+  boost::beast::http::response<boost::beast::http::string_body> l_res{};
+  co_await http_client_ptr_->read_and_write(l_req, l_res, boost::asio::use_awaitable);
+  if (l_res.result() != boost::beast::http::status::ok)
+    throw_exception(doodle_error{"kitsu get ue plugins version error {} {}", l_res.result(), l_res.body()});
+  auto l_json = nlohmann::json::parse(l_res.body());
+  DOODLE_CHICK(l_json.contains("main_version"), "kitsu get ue plugins version error, not found version");
+  co_return l_json.at("main_version").get<std::string>();
+}
 
 }  // namespace doodle::kitsu
