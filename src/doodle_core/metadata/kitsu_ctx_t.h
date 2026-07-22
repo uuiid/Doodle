@@ -32,6 +32,10 @@ struct kitsu_ctx_t {
   std::string domain_name_;
   // 获取制作规范 md文件
   FSys::path get_production_specifications_file() { return root_ / "production_specifications.md"; }
+  FSys::path get_ue_plugins_version_file() { return root_ / "ue_plugins_version.txt"; }
+  FSys::path get_ue_plugins_file(const std::int32_t in_major, const std::int32_t in_minor, const std::int32_t in_patch) {
+    return root_ / "ue_plugins" / fmt::format("UE_{}.{}.{}.zip", in_major, in_minor, in_patch);
+  }
 
   // seedance2_asset_library_entity_pictures_item
   FSys::path get_sd2_asset_library_entity_pictures_item_file(const uuid& in_uuid, const std::string& in_ext = {}) {

@@ -32,6 +32,7 @@
 #include <chrono>
 #include <core/http/http_session_data.h>
 #include <memory>
+#include <regex>
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
@@ -335,6 +336,46 @@ DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_updata_logs, post) {
 DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(data_production_specifications, get) {
   auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
   auto l_path = l_ctx.get_production_specifications_file();
-  co_return in_handle->make_msg(l_path, http_header_ctrl{.mine_type_ = std::string{kitsu::mime_type(l_path.extension())} + "; charset=utf-8"});
+  co_return in_handle->make_msg(
+      l_path, http_header_ctrl{.mine_type_ = std::string{kitsu::mime_type(l_path.extension())} + "; charset=utf-8"}
+  );
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, get) {
+  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_path = l_ctx.get_ue_plugins_version_file();
+
+  std::vector<std::string> l_lines{};
+  if (FSys::exists(l_path)) {
+    FSys::ifstream l_ifstream{l_path};
+    std::string l_line{};
+    while (std::getline(l_ifstream, l_line) && !l_line.empty()) {
+      l_lines.push_back(l_line);
+    }
+  }
+  co_return in_handle->make_msg(
+      nlohmann::json{{"main_version", l_lines.empty() ? "" : l_lines[0]}, {"sub_versions", l_lines}}
+
+  );
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version, post) {
+  person_.check_admin();
+  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_path = l_ctx.get_ue_plugins_version_file();
+  auto l_arg  = in_handle->get_json().get<std::string>();
+  static const std::regex l_version_regex{R"(^\d+\.\d+\.\d+$)"};
+  DOODLE_CHICK(std::regex_match(l_arg, l_version_regex), "版本号格式不正确, 应为 x.x.x, 例如 1.2.3");
+  if (auto l_dir = l_path.parent_path(); !FSys::exists(l_dir)) FSys::create_directories(l_dir);
+  FSys::ofstream l_ofstream{l_path};
+  l_ofstream << l_arg << "\n";
+  co_return in_handle->make_msg(nlohmann::json{} = l_arg);
+}
+DOODLE_HTTP_FUN_OVERRIDE_IMPLEMENT(ue_plugins_version_instance, get) {
+  person_.check_admin();
+  auto l_ctx  = g_ctx().get<kitsu_ctx_t>();
+  auto l_path = l_ctx.get_ue_plugins_file(version_major_, version_minor_, version_patch_);
+  DOODLE_CHICK(FSys::exists(l_path), "UE 插件版本文件不存在");
+  co_return in_handle->make_msg(
+      l_path, http_header_ctrl{.mine_type_ = std::string{kitsu::mime_type(l_path.extension())}}
+  );
 }
 }  // namespace doodle::http

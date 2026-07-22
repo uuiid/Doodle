@@ -10,6 +10,7 @@
 #include <doodle_lib/http_method/http_jwt_fun.h>
 
 #include <core/http/http_function.h>
+#include <string>
 
 namespace doodle::http {
 // /api/data/updata-logs
@@ -839,5 +840,17 @@ DOODLE_HTTP_FUN_OVERRIDE(post)
 DOODLE_HTTP_FUN_OVERRIDE(delete_)
 uuid ai_studio_id_{};
 uuid person_id_{};
+DOODLE_HTTP_FUN_END()
+// /api/ue_plugins/version
+DOODLE_HTTP_JWT_FUN(ue_plugins_version)
+DOODLE_HTTP_FUN_OVERRIDE(get)
+DOODLE_HTTP_FUN_OVERRIDE(post)
+DOODLE_HTTP_FUN_END()
+// /api/ue_plugins/version/{version_major}.{version_minor}.{version_patch}
+DOODLE_HTTP_JWT_FUN(ue_plugins_version_instance)
+std::int32_t version_major_{};
+std::int32_t version_minor_{};
+std::int32_t version_patch_{};
+DOODLE_HTTP_FUN_OVERRIDE(get)
 DOODLE_HTTP_FUN_END()
 }  // namespace doodle::http
