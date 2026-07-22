@@ -219,7 +219,7 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
   co_await async_run_ue(
       {arg_.ue_main_project_path_.generic_string(), "-windowed", "-log", "-AllowStdOutLogVerbosity", "-ForceLogFlush",
        "-Unattended", "-run=DoodleAutoAnimation", fmt::format("-Params={}", l_tmp_path)},
-      logger_ptr_, false, l_time_info
+      logger_ptr_, kitsu_client_, false, l_time_info
   );
   l_time_info->info_ = "导入文件";
   on_run_time_info_(*l_time_info);
@@ -242,7 +242,7 @@ boost::asio::awaitable<void> run_ue_assembly_base::run() {
            fmt::format(R"(-DoodleLevelSequence="{}")", arg_.level_sequence_import_),
            fmt::format(R"(-DoodleMoviePipelineConfig="{}")", arg_.movie_pipeline_config_), "-log",
            "-AllowStdOutLogVerbosity", "-ForceLogFlush", "-Unattended"},
-          logger_ptr_, false, l_time_info
+          logger_ptr_, kitsu_client_, false, l_time_info
       );
       break;
     } catch (const doodle_error& err) {

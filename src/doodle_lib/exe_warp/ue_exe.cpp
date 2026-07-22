@@ -80,12 +80,13 @@ std::string get_ue_plug_version() {
   }
   return l_version;
 }
-boost::asio::awaitable<bool> installUePath(const FSys::path& path) {
+boost::asio::awaitable<bool> installUePath(
+    std::shared_ptr<kitsu::kitsu_client> in_kitsu_client, const FSys::path& path
+) {
   boost::scope::scope_exit l_scope{[] {}};
-  auto l_client  = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
-  auto l_version = co_await l_client->get_ue_plugins_version();
+  auto l_version = co_await in_kitsu_client->get_ue_plugins_version();
   if (l_version == get_ue_plug_version()) co_return false;
-  auto l_path     = co_await l_client->get_ue_plugin(l_version);
+  auto l_path     = co_await in_kitsu_client->get_ue_plugin(l_version);
   auto l_out_path = l_path.parent_path() / l_path.stem();
   if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
   if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});
@@ -141,8 +142,8 @@ FSys::path find_ue_project_file(const FSys::path& in_path) {
 }  // namespace ue_exe_ns
 
 boost::asio::awaitable<void> async_run_ue(
-    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock,
-    std::shared_ptr<server_task_info::run_time_info_t> in_time
+    const std::vector<std::string>& in_arg, logger_ptr in_logger, std::shared_ptr<kitsu::kitsu_client> in_kitsu_client,
+    bool create_lock, std::shared_ptr<server_task_info::run_time_info_t> in_time
 ) {
   auto l_g = create_lock ? co_await g_ctx().get<ue_ctx>().queue_->queue(boost::asio::use_awaitable)
                          : awaitable_queue_limitation::queue_guard_ptr{};
@@ -151,7 +152,7 @@ boost::asio::awaitable<void> async_run_ue(
   if (in_time) in_time->start_time_ = std::chrono::system_clock::now();
 
   in_logger->info("UE 开始检查插件版本");
-  if (co_await installUePath(core_set::get_set().ue4_path))
+  if (co_await installUePath(in_kitsu_client, core_set::get_set().ue4_path))
     in_logger->info("UE 插件安装完成");
   else
     in_logger->info("UE 插件版本一致, 无需安装");

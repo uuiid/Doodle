@@ -8,12 +8,12 @@
 
 #include <doodle_lib/core/co_queue.h>
 #include <doodle_lib/doodle_lib_fwd.h>
+#include <doodle_lib/http_client/kitsu_client.h>
 
 #include <boost/asio.hpp>
 #include <boost/system.hpp>
 
 #include <memory>
-
 
 namespace doodle {
 namespace ue_exe_ns {
@@ -31,8 +31,8 @@ class ue_ctx {
 };
 
 boost::asio::awaitable<void> async_run_ue(
-    const std::vector<std::string>& in_arg, logger_ptr in_logger, bool create_lock = true,
-    std::shared_ptr<server_task_info::run_time_info_t> in_time = {}
+    const std::vector<std::string>& in_arg, logger_ptr in_logger, std::shared_ptr<kitsu::kitsu_client> in_kitsu_client,
+    bool create_lock = true, std::shared_ptr<server_task_info::run_time_info_t> in_time = {}
 );
 
 }  // namespace doodle
