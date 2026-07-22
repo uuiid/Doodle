@@ -202,8 +202,6 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 	FScopedSkeletalMeshPostEditChange ScopedPostEditChange(TmpSkeletalMesh);
 	check(TmpSkeletalMesh);
 
-	FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 3, true, false);
-	TmpSkeletalMesh->PostEditChange();
 
 	if (!L_BanBen_Suffix.IsEmpty())
 		for (auto&& L_Mat : TmpSkeletalMesh->GetMaterials())
@@ -227,7 +225,9 @@ int UDoodleAutoAnimationCommandlet::ImportRig(const FString& InCondigPath)
 			UGroomBlueprintLibrary::CreateNewGroomBindingAsset(Cast<UGroomAsset>(InAssetData.GetAsset()), TmpSkeletalMesh);
 		}
 	}
-
+	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
+	FLODUtilities::RegenerateLOD(TmpSkeletalMesh, GetTargetPlatformManagerRef().GetRunningTargetPlatform(), 3, true, false);
+	TmpSkeletalMesh->PostEditChange();
 	UEditorLoadingAndSavingUtils::SaveDirtyPackages(true, true);
 	return 0;
 }
@@ -1176,7 +1176,8 @@ void UDoodleAutoAnimationCommandlet::OnBuildSequence()
 
 			if (!L_GroomCacheOrBind.GroomCache) continue;
 			UMovieSceneGroomCacheTrack* L_Track = TheLevelSequence->GetMovieScene()->AddTrack<UMovieSceneGroomCacheTrack>();
-			UMovieSceneGroomCacheSection* L_GroomCacheSection = CastChecked<UMovieSceneGroomCacheSection>(L_Track->AddNewAnimation(L_Start * FrameTick, L_Com));
+			UMovieSceneGroomCacheSection* L_GroomCacheSection = CastChecked<UMovieSceneGroomCacheSection>(
+				L_Track->AddNewAnimation(L_Start * FrameTick, L_Com));
 			L_GroomCacheSection->SetPreRollFrames(50 * FrameTick);
 			L_GroomCacheSection->Modify();
 		}
