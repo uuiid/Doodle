@@ -85,7 +85,7 @@ boost::asio::awaitable<bool> installUePath(const FSys::path& path) {
   auto l_client  = std::make_shared<kitsu::kitsu_client>(core_set::get_set().server_ip);
   auto l_version = co_await l_client->get_ue_plugins_version();
   if (l_version == get_ue_plug_version()) co_return false;
-  auto l_path     = co_await l_client->get_ue_plugin(core_set::get_set().ue4_version);
+  auto l_path     = co_await l_client->get_ue_plugin(l_version);
   auto l_out_path = l_path.parent_path() / l_path.stem();
   if (!FSys::exists(l_out_path)) FSys::create_directories(l_out_path);
   if (l_path.empty()) throw_exception(doodle_error{"获取 UE 插件路径失败"});

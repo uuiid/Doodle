@@ -128,12 +128,11 @@ boost::asio::awaitable<uuid> kitsu_client::create_preview(
 }
 
 boost::asio::awaitable<FSys::path> kitsu_client::get_ue_plugin(std::string in_version) const {
-  auto l_file_name = fmt::format("Doodle_{}.{}.zip", version::build_info::get().version_str, in_version);
   auto l_mp_name   = fmt::format("{}.zip", core_set::get_set().get_uuid());
   auto l_temp_path = core_set::get_set().get_cache_root("ue_plugin") / l_mp_name;
 
   boost::beast::http::request<boost::beast::http::empty_body> l_req{
-      boost::beast::http::verb::get, fmt::format("/Plugins/{}", l_file_name), 11
+      boost::beast::http::verb::get, fmt::format("/api/ue-plugins/version/{}", in_version), 11
   };
   l_req.set(boost::beast::http::field::user_agent, BOOST_BEAST_VERSION_STRING);
   l_req.set(boost::beast::http::field::accept, "*/*");

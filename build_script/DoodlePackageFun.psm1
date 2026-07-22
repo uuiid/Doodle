@@ -35,23 +35,20 @@ function Add-Compensatory() {
 function Compress-UEPlugins() {
     param(
         [string]$UEVersion,
-        [string]$DoodleVersion,
+        [string]$MyVersion,
         [string]$DoodleGitRoot,
         [string]$OutPath
     )
 
-    if (-Not (Test-Path "$OutPath\dist\Plugins")) {
-        New-Item "$OutPath\dist\Plugins" -ItemType Directory
-    }
-    $UEPluginsPath = "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
+    $UEPluginsPath = "$OutPath\UE_$UEVersion.$MyVersion.zip"
     if (Test-Path $UEPluginsPath) {
         Write-Host "UE插件包已存在: $UEPluginsPath"
         return
     }
     $UEPluginsJsonPath = Convert-Path "$DoodleGitRoot/script/uePlug/$UEVersion/Plugins/Doodle/Doodle.uplugin"
     $UEPluginsJson = Get-Content -Path $UEPluginsJsonPath -Raw -Encoding UTF8 | ConvertFrom-Json
-    $UEPluginsJson.VersionName = $DoodleVersion
-    $UEPluginsJson.Version = [int]($DoodleVersion -replace "\.", "")
+    $UEPluginsJson.VersionName = $MyVersion
+    $UEPluginsJson.Version = [int]($MyVersion -replace "\.", "")
     # 判断属性 EnabledByDefault 是否存在
     if (-not $UEPluginsJson.PSObject.Properties["EnabledByDefault"]) {
         $UEPluginsJson | Add-Member -MemberType NoteProperty -Name "EnabledByDefault" -Value $true
@@ -62,7 +59,7 @@ function Compress-UEPlugins() {
 
     $UEPluginsJson | ConvertTo-Json | Set-Content -Path $UEPluginsJsonPath -Encoding UTF8
 
-    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\dist\Plugins\Doodle_$DoodleVersion.$UEVersion.zip"
+    Compress-Archive -Path "$DoodleGitRoot\script\uePlug\$UEVersion\Plugins\Doodle" -DestinationPath "$OutPath\UE_$UEVersion.$MyVersion.zip"
 }
 
 function Get-GitCommendID() {
@@ -166,8 +163,8 @@ function Initialize-Doodle {
     if ( -not $OnlyOne) {
         &Robocopy "$DoodleBuildRoot\video" "$OutPath\dist\video" /MIR /unilog+:$DoodleLogPath | Out-Null
         # 添加UE插件安装
-        Compress-UEPlugins -UEVersion "5.5" -DoodleVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
-        Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
+        # Compress-UEPlugins -UEVersion "5.5" -MyVersion $DoodleVersion -DoodleGitRoot $DoodleGitRoot -OutPath $OutPath
+        # Compress-Archive -Path $DoodleGitRoot\script\uePlug\SideFX_Labs -DestinationPath $OutPath\dist\Plugins\SideFX_Labs.zip -Force
         # 比较大小和修改日期复制
         if (-not (Test-Path "$OutPath\dist\Doodle-$DoodleVersion-win64.zip")) {
             # 复制一些脚本文件
@@ -302,8 +299,7 @@ function Compare-GitArchive {
     return $CombinedFile;
 }
 
-Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive, Initialize-Kitsu, Initialize-Sd2
-
+Export-ModuleMember -Function Initialize-Doodle , New-ServerPSSession , Compare-GitArchive, Initialize-Kitsu, Initialize-Sd2, Compress-UEPlugins
 
 function Nono {
     
