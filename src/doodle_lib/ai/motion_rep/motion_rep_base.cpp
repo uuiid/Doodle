@@ -24,19 +24,15 @@ void motion_stats::load(const FSys::path& folder) {
 
   // 加载 mean.npy（应为 1D 向量）
   auto mean_data = cnpy::npy_load(mean_path.string());
-  DOODLE_CHICK(
-      mean_data.shape.size() == 1, "mean.npy shape 应为 1D，当前维度数: {}", mean_data.shape.size()
-  );
+  DOODLE_CHICK(mean_data.shape.size() == 1, "mean.npy shape 应为 1D，当前维度数: {}", mean_data.shape.size());
   Eigen::Map<Eigen::VectorXf> mean_map(mean_data.data<float>(), static_cast<Eigen::Index>(mean_data.shape[0]));
 
   // 加载 std.npy（应为 1D 向量）
   auto std_data = cnpy::npy_load(std_path.string());
+  DOODLE_CHICK(std_data.shape.size() == 1, "std.npy shape 应为 1D，当前维度数: {}", std_data.shape.size());
   DOODLE_CHICK(
-      std_data.shape.size() == 1, "std.npy shape 应为 1D，当前维度数: {}", std_data.shape.size()
-  );
-  DOODLE_CHICK(
-      std_data.shape[0] == mean_data.shape[0],
-      "mean.npy 长度 {} 与 std.npy 长度 {} 不匹配", mean_data.shape[0], std_data.shape[0]
+      std_data.shape[0] == mean_data.shape[0], "mean.npy 长度 {} 与 std.npy 长度 {} 不匹配", mean_data.shape[0],
+      std_data.shape[0]
   );
   Eigen::Map<Eigen::VectorXf> std_map(std_data.data<float>(), static_cast<Eigen::Index>(std_data.shape[0]));
 
@@ -85,14 +81,14 @@ void motion_rep_base::build_slice_dict() {
   motion_rep_dim_ = offset;
 
   // 计算根切片和身体切片
-  if (!last_root_feature_.empty() && feature_end_.count(last_root_feature_)) {
-    global_root_dim_ = feature_end_.at(last_root_feature_);
-  } else {
-    // 默认根切片只包含第一个特征
-    global_root_dim_ = feature_sizes_.empty() ? 0 : feature_sizes_[0];
-  }
-
-  body_dim_ = motion_rep_dim_ - global_root_dim_;
+  DOODLE_CHICK(!feature_names_.empty(), "特征列表为空");
+  DOODLE_CHICK(!feature_sizes_.empty(), "特征大小列表为空");
+  DOODLE_CHICK(!last_root_feature_.empty(), "last_root_feature_ 为空");
+  DOODLE_CHICK(
+      feature_start_.contains(last_root_feature_), "last_root_feature_ {} 不在 feature_names_ 中", last_root_feature_
+  );
+  global_root_dim_ = feature_end_.at(last_root_feature_);
+  body_dim_        = motion_rep_dim_ - global_root_dim_;
 }
 
 void motion_rep_base::load_stats(const FSys::path& stats_path) {
@@ -109,18 +105,18 @@ void motion_rep_base::load_stats(const FSys::path& stats_path) {
   body_stats_.load(b_path);
 
   // 合并统计（global_root + body）
-  if (global_root_stats_.is_valid() && body_stats_.is_valid()) {
-    Eigen::VectorXf combined_mean(global_root_stats_.dim() + body_stats_.dim());
-    Eigen::VectorXf combined_std(global_root_stats_.dim() + body_stats_.dim());
+  DOODLE_CHICK(global_root_stats_.is_valid(), "global_root_stats_ 未初始化");
+  DOODLE_CHICK(body_stats_.is_valid(), "body_stats_ 未初始化");
+  Eigen::VectorXf combined_mean(global_root_stats_.dim() + body_stats_.dim());
+  Eigen::VectorXf combined_std(global_root_stats_.dim() + body_stats_.dim());
 
-    combined_mean.head(global_root_stats_.dim()) = global_root_stats_.mean;
-    combined_mean.tail(body_stats_.dim())        = body_stats_.mean;
+  combined_mean.head(global_root_stats_.dim()) = global_root_stats_.mean;
+  combined_mean.tail(body_stats_.dim())        = body_stats_.mean;
 
-    combined_std.head(global_root_stats_.dim())  = global_root_stats_.std;
-    combined_std.tail(body_stats_.dim())         = body_stats_.std;
+  combined_std.head(global_root_stats_.dim())  = global_root_stats_.std;
+  combined_std.tail(body_stats_.dim())         = body_stats_.std;
 
-    combined_stats_.set_from_vectors(combined_mean, combined_std);
-  }
+  combined_stats_.set_from_vectors(combined_mean, combined_std);
 }
 
 std::int64_t motion_rep_base::feature_size(const std::string& name) const {
