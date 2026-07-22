@@ -300,6 +300,9 @@
             "message": 4
           }
         }
+      ],
+      "dependsOn": [
+        "build UE plug"
       ]
     }
   ],
