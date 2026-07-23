@@ -1,7 +1,7 @@
 ---
 description: "审查Git提交/差异中的C++代码，检查逻辑错误、协程、空指针、线程安全等问题，输出结构化检查清单"
-agent: ask
-tools: [search, execute, web, browser, todo, read, vscode]
+agent: C++ Expert
+tools: [vscode, execute, read, agent, ms-azuretools.vscode-containers, ms-vscode.cpp-devtools, ms-vscode.cpptools, edit, search, web, browser, todo]
 ---
 
 # git审查

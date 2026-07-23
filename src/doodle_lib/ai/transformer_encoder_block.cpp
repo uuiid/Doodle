@@ -91,18 +91,10 @@ void transformer_encoder_block::init_session() {
 
   // ---- 名称匹配检查：验证输入名称符合预期 ----
   {
-    std::vector<std::string> expected_names = {"input", "attention_mask"};
+   const std::set<std::string> expected_names = {"input", "attention_mask", "position_ids"};
     for (const auto& name : input_names_) {
       // 检查是否是预期的输入名称
-      bool found = false;
-      for (const auto& expected : expected_names) {
-        if (name.find(expected) != std::string::npos ||
-            name.find("position_ids") != std::string::npos) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
+      if (!expected_names.contains(name)) {
         SPDLOG_WARN("seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [{}]",
                     name, fmt::join(expected_names, ", "));
       }
