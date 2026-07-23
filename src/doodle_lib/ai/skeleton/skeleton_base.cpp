@@ -12,6 +12,38 @@
 namespace doodle::ai {
 
 // ======================================================================
+// 辅助：矩阵操作（3x3 ↔ 4x4 转换）
+// ======================================================================
+namespace {
+
+void matrix_9_to_4x4(const float* src_9, Eigen::Matrix4f& dst) {
+  dst.setIdentity();
+  dst(0, 0) = src_9[0];
+  dst(0, 1) = src_9[1];
+  dst(0, 2) = src_9[2];
+  dst(1, 0) = src_9[3];
+  dst(1, 1) = src_9[4];
+  dst(1, 2) = src_9[5];
+  dst(2, 0) = src_9[6];
+  dst(2, 1) = src_9[7];
+  dst(2, 2) = src_9[8];
+}
+
+void matrix_4x4_to_9(const Eigen::Matrix4f& src, float* dst_9) {
+  dst_9[0] = src(0, 0);
+  dst_9[1] = src(0, 1);
+  dst_9[2] = src(0, 2);
+  dst_9[3] = src(1, 0);
+  dst_9[4] = src(1, 1);
+  dst_9[5] = src(1, 2);
+  dst_9[6] = src(2, 0);
+  dst_9[7] = src(2, 1);
+  dst_9[8] = src(2, 2);
+}
+
+}  // namespace
+
+// ======================================================================
 // 辅助：从 npy 文件加载矩阵
 // ======================================================================
 namespace {
@@ -467,6 +499,161 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_77(const FSys
   }
 
   return skel;
+}
+
+// ======================================================================
+// FK 成员方法
+// ======================================================================
+
+skeleton_base::fk_result skeleton_base::fk(
+    const Eigen::MatrixXf& local_rot_mats,
+    const Eigen::MatrixXf& root_positions
+) const {
+  const Eigen::Index total_frames = local_rot_mats.rows();
+  const Eigen::Index J            = nbjoints_;
+  DOODLE_CHICK(local_rot_mats.cols() == J * 9,
+               "local_rot_mats 列数 {} 不匹配 J*9 = {}", local_rot_mats.cols(), J * 9);
+  DOODLE_CHICK(root_positions.rows() == total_frames, "root_positions 行数不匹配");
+  DOODLE_CHICK(root_positions.cols() == 3, "root_positions 列数 != 3");
+
+  fk_result result;
+  result.global_rot_mats.resize(total_frames, J * 9);
+  result.posed_joints.resize(total_frames, J * 3);
+  result.posed_joints_norootpos.resize(total_frames, J * 3);
+
+  DOODLE_CHICK(!joint_levels_.empty(),
+               "skeleton_base.joint_levels_ 为空，请先调用 init_from_bone_hierarchy");
+
+  for (Eigen::Index f = 0; f < total_frames; ++f) {
+    const float* rot_row = local_rot_mats.row(f).data();
+    const float* pos_row = root_positions.row(f).data();
+
+    std::vector<Eigen::Matrix4f> transforms(static_cast<std::size_t>(J));
+
+    // 根关节
+    const auto root_i = static_cast<std::size_t>(root_idx_);
+    {
+      Eigen::Matrix4f local_T = Eigen::Matrix4f::Identity();
+      matrix_9_to_4x4(rot_row + root_i * 9, local_T);
+      transforms[root_i] = local_T;
+      transforms[root_i](0, 3) += pos_row[0];
+      transforms[root_i](1, 3) += pos_row[1];
+      transforms[root_i](2, 3) += pos_row[2];
+    }
+
+    // 逐层级计算
+    for (const auto& level : joint_levels_) {
+      for (const auto& j_idx : level) {
+        if (j_idx == root_idx_) continue;
+        const auto ji = static_cast<std::size_t>(j_idx);
+        const auto pi = static_cast<std::size_t>(joint_parents_[ji]);
+
+        // 相对位置 = neutral_joints[j] - neutral_joints[parent(j)]
+        Eigen::Vector3f rel_joint;
+        rel_joint(0) = neutral_joints_(j_idx, 0) -
+                       neutral_joints_(static_cast<Eigen::Index>(pi), 0);
+        rel_joint(1) = neutral_joints_(j_idx, 1) -
+                       neutral_joints_(static_cast<Eigen::Index>(pi), 1);
+        rel_joint(2) = neutral_joints_(j_idx, 2) -
+                       neutral_joints_(static_cast<Eigen::Index>(pi), 2);
+
+        Eigen::Matrix4f local_T = Eigen::Matrix4f::Identity();
+        matrix_9_to_4x4(rot_row + j_idx * 9, local_T);
+        local_T(0, 3) = rel_joint(0);
+        local_T(1, 3) = rel_joint(1);
+        local_T(2, 3) = rel_joint(2);
+
+        transforms[ji] = transforms[pi] * local_T;
+      }
+    }
+
+    // 提取结果
+    float* global_rot_out = result.global_rot_mats.row(f).data();
+    float* posed_out      = result.posed_joints.row(f).data();
+    float* posed_no_root  = result.posed_joints_norootpos.row(f).data();
+
+    for (Eigen::Index j = 0; j < J; ++j) {
+      const auto ji = static_cast<std::size_t>(j);
+      matrix_4x4_to_9(transforms[ji], global_rot_out + j * 9);
+
+      posed_out[j * 3 + 0] = transforms[ji](0, 3);
+      posed_out[j * 3 + 1] = transforms[ji](1, 3);
+      posed_out[j * 3 + 2] = transforms[ji](2, 3);
+
+      posed_no_root[j * 3 + 0] = transforms[ji](0, 3) - pos_row[0];
+      posed_no_root[j * 3 + 1] = transforms[ji](1, 3) - pos_row[1];
+      posed_no_root[j * 3 + 2] = transforms[ji](2, 3) - pos_row[2];
+    }
+  }
+
+  return result;
+}
+
+// ======================================================================
+// 全局旋转 → 局部旋转 成员方法
+// ======================================================================
+
+Eigen::MatrixXf skeleton_base::global_rots_to_local_rots(
+    const Eigen::MatrixXf& global_rot_mats
+) const {
+  const Eigen::Index total = global_rot_mats.rows();
+  const Eigen::Index J     = nbjoints_;
+  DOODLE_CHICK(global_rot_mats.cols() == J * 9, "global_rot_mats 列数不匹配");
+
+  Eigen::MatrixXf local_rot_mats(total, J * 9);
+
+  for (Eigen::Index f = 0; f < total; ++f) {
+    const float* global_row = global_rot_mats.row(f).data();
+    float* local_row        = local_rot_mats.row(f).data();
+
+    for (Eigen::Index j = 0; j < J; ++j) {
+      const auto ji = static_cast<std::size_t>(j);
+
+      Eigen::Matrix3f R_global;
+      R_global(0, 0) = global_row[j * 9 + 0];
+      R_global(0, 1) = global_row[j * 9 + 1];
+      R_global(0, 2) = global_row[j * 9 + 2];
+      R_global(1, 0) = global_row[j * 9 + 3];
+      R_global(1, 1) = global_row[j * 9 + 4];
+      R_global(1, 2) = global_row[j * 9 + 5];
+      R_global(2, 0) = global_row[j * 9 + 6];
+      R_global(2, 1) = global_row[j * 9 + 7];
+      R_global(2, 2) = global_row[j * 9 + 8];
+
+      Eigen::Matrix3f R_local;
+
+      if (j == root_idx_) {
+        R_local = R_global;
+      } else {
+        const auto pi = static_cast<std::size_t>(joint_parents_[ji]);
+
+        Eigen::Matrix3f R_parent;
+        R_parent(0, 0) = global_row[pi * 9 + 0];
+        R_parent(0, 1) = global_row[pi * 9 + 1];
+        R_parent(0, 2) = global_row[pi * 9 + 2];
+        R_parent(1, 0) = global_row[pi * 9 + 3];
+        R_parent(1, 1) = global_row[pi * 9 + 4];
+        R_parent(1, 2) = global_row[pi * 9 + 5];
+        R_parent(2, 0) = global_row[pi * 9 + 6];
+        R_parent(2, 1) = global_row[pi * 9 + 7];
+        R_parent(2, 2) = global_row[pi * 9 + 8];
+
+        R_local = R_parent.transpose() * R_global;
+      }
+
+      local_row[j * 9 + 0] = R_local(0, 0);
+      local_row[j * 9 + 1] = R_local(0, 1);
+      local_row[j * 9 + 2] = R_local(0, 2);
+      local_row[j * 9 + 3] = R_local(1, 0);
+      local_row[j * 9 + 4] = R_local(1, 1);
+      local_row[j * 9 + 5] = R_local(1, 2);
+      local_row[j * 9 + 6] = R_local(2, 0);
+      local_row[j * 9 + 7] = R_local(2, 1);
+      local_row[j * 9 + 8] = R_local(2, 2);
+    }
+  }
+
+  return local_rot_mats;
 }
 
 }  // namespace doodle::ai

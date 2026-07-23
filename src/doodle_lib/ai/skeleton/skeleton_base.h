@@ -122,6 +122,33 @@ class skeleton_base {
   /// @brief 创建 SOMA 77 关节骨骼
   static std::shared_ptr<skeleton_base> create_soma_skeleton_77(const FSys::path& folder = {});
 
+  // ======================================================================
+  // 前向运动学 (FK)
+  // ======================================================================
+
+  /// @brief 前向运动学结果
+  struct fk_result {
+    Eigen::MatrixXf global_rot_mats;         ///< [B*T, J*9] 全局旋转矩阵
+    Eigen::MatrixXf posed_joints;            ///< [B*T, J*3] 全局关节位置
+    Eigen::MatrixXf posed_joints_norootpos;  ///< [B*T, J*3] 无根偏移的关节位置
+  };
+
+  /// @brief 由局部旋转和根位置计算全局旋转和关节位置
+  /// @param local_rot_mats [B*T, J*9] 局部旋转矩阵
+  /// @param root_positions [B*T, 3] 根关节世界坐标
+  /// @return 全局旋转、全局关节位置、无根偏移关节位置
+  [[nodiscard]] fk_result fk(
+      const Eigen::MatrixXf& local_rot_mats,
+      const Eigen::MatrixXf& root_positions
+  ) const;
+
+  /// @brief 由全局旋转矩阵计算局部旋转（逆父级变换）
+  /// @param global_rot_mats [B*T, J*9] 全局旋转
+  /// @return [B*T, J*9] 局部旋转
+  [[nodiscard]] Eigen::MatrixXf global_rots_to_local_rots(
+      const Eigen::MatrixXf& global_rot_mats
+  ) const;
+
 };
 
 }  // namespace doodle::ai
