@@ -10,7 +10,6 @@ target_sources(
         motion_rep/geometry.h
         motion_rep/kimodo_motion_rep.h
         motion_rep/motion_rep_base.h
-        motion_rep/skeleton.h
         skeleton/skeleton_base.h
         positional_encoding.h
         timestep_embedder.h
@@ -28,7 +27,6 @@ target_sources(
         motion_rep/geometry.cpp
         motion_rep/kimodo_motion_rep.cpp
         motion_rep/motion_rep_base.cpp
-        motion_rep/skeleton.cpp
         skeleton/skeleton_base.cpp
         timestep_embedder.cpp
         transformer_encoder_block.cpp

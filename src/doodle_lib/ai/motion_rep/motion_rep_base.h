@@ -4,7 +4,7 @@
 #pragma once
 
 #include <doodle_lib/ai/motion_rep/feature_utils.h>
-#include <doodle_lib/ai/motion_rep/skeleton.h>
+#include <doodle_lib/ai/skeleton/skeleton_base.h>
 #include <doodle_lib/core/global_function.h>
 #include <doodle_lib/doodle_lib_fwd.h>
 
