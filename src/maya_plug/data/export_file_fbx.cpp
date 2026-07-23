@@ -31,9 +31,11 @@
 #include <maya/MApiNamespace.h>
 #include <maya/MDagModifier.h>
 #include <maya/MDagPath.h>
+#include <maya/MFnDependencyNode.h>
 #include <maya/MItDag.h>
 #include <memory>
 #include <range/v3/view/transform.hpp>
+#include <string_view>
 #include <vector>
 
 namespace doodle::maya_plug {
@@ -155,6 +157,19 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     l_path.pop();
     l_export_list.push_back(l_path);
   }
+
+  // 寻找 xgen xgmPalette 节点
+  bool l_has_xgen{false};
+  maya_chick(l_it.reset(l_main_path, MItDag::kDepthFirst, MFn::kPluginTransformNode));
+  for (; !l_it.isDone(); l_it.next()) {
+    MFnDependencyNode l_dep{};
+    maya_chick(l_dep.setObject(l_it.currentItem()));
+    if (l_dep.typeName() == "xgmPalette") {
+      l_has_xgen = true;
+      break;
+    }
+  }
+
   auto l_export_list_old = l_export_list;
   std::vector<FSys::path> l_ret{};
   auto l_stem             = maya_file_io::get_current_path().stem().generic_string();
@@ -163,7 +178,7 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
   auto l_export_sim_hair  = in_ref.get_all_hair_obj();
   if (!l_export_sim_cloth.empty()) {
     l_export_list = l_export_list_old;
-    // 排除 export_sim 中的物体
+    // 排除 布料
     std::erase_if(l_export_list, [&](const MDagPath& in) {
       return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end();
     });
@@ -177,9 +192,9 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     l_fbx_write.write(l_export_list, MAnimControl::minTime(), MAnimControl::maxTime());
     l_ret.emplace_back(l_file);
   }
-  if (!l_export_sim_hair.empty()) {
+  if (!l_export_sim_hair.empty() || l_has_xgen) {
     l_export_list = l_export_list_old;
-    // 排除 export_sim 中的物体
+    // 排除毛发
     std::erase_if(l_export_list_old, [&](const MDagPath& in) {
       return std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
     });
@@ -193,9 +208,9 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
     l_fbx_write.write(l_export_list_old, MAnimControl::minTime(), MAnimControl::maxTime());
     l_ret.emplace_back(l_file);
   }
-  if (!l_export_sim_cloth.empty() && !l_export_sim_hair.empty()) {
+  if (!l_export_sim_cloth.empty() && (!l_export_sim_hair.empty() || l_has_xgen)) {
     l_export_list = l_export_list_old;
-    // 排除 export_sim 中的物体
+    // 排除 布料和毛发
     std::erase_if(l_export_list, [&](const MDagPath& in) {
       return std::ranges::find(l_export_sim_cloth, in) != l_export_sim_cloth.end() ||
              std::ranges::find(l_export_sim_hair, in) != l_export_sim_hair.end();
@@ -212,7 +227,6 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
   }
   if (l_export_sim_cloth.empty() && l_export_sim_hair.empty()) {
     l_export_list = l_export_list_old;
-    // 排除 export_sim 中的物体
     display_info("导出选中物体 {}", fmt::join(l_export_list, "\n"));
 
     fbx_write l_fbx_write{};
