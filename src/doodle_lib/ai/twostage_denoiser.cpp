@@ -16,15 +16,21 @@ void twostage_denoiser::load(
     std::int64_t latent_dim,
     std::int64_t num_text_tokens,
     bool use_text_mask,
-    std::int64_t input_dim,
-    std::int64_t global_root_dim,
-    std::int64_t local_root_dim,
+    const std::shared_ptr<motion_rep_base>& motion_rep,
     const std::string& motion_mask_mode,
     bool input_first_heading_angle
 ) {
-  input_dim_         = input_dim;
-  global_root_dim_   = global_root_dim;
-  local_root_dim_    = local_root_dim;
+  DOODLE_CHICK(motion_rep != nullptr, "motion_rep 不能为空");
+  DOODLE_CHICK(
+      motion_rep->motion_rep_dim() > 0 && motion_rep->global_root_dim() > 0,
+      "motion_rep 维度无效: motion_rep_dim={}, global_root_dim={}",
+      motion_rep->motion_rep_dim(), motion_rep->global_root_dim()
+  );
+
+  motion_rep_        = motion_rep;
+  input_dim_         = motion_rep->motion_rep_dim();
+  global_root_dim_   = motion_rep->global_root_dim();
+  local_root_dim_    = motion_rep->local_root_dim();
   motion_mask_mode_  = motion_mask_mode;
 
   const bool will_concatenate = (motion_mask_mode_ == "concat");
@@ -162,23 +168,12 @@ Eigen::MatrixXf twostage_denoiser::forward(
   }
 
   // ---- 全局根节点 → 局部根节点转换 ----
-  Eigen::MatrixXf root_motion_local;  // [B*T, local_root_dim]
-  if (global_root_to_local_root_fn_) {
-    // 训练时 detach 梯度（C++ 推理无需 detach）
-    root_motion_local = global_root_to_local_root_fn_(root_motion_pred, lengths);
-  } else {
-    // 无转换函数时直接使用全局根节点（降级路径）
-    SPDLOG_WARN("global_root_to_local_root_fn 未设置，直接使用全局根节点作为局部根节点");
-    if (local_root_dim_ == global_root_dim_) {
-      root_motion_local = root_motion_pred;
-    } else {
-      // 截断或填充到 local_root_dim
-      const auto copy_dim = (std::min)(global_root_dim_, local_root_dim_);
-      root_motion_local.resize(total_frames, local_root_dim_);
-      root_motion_local.setZero();
-      root_motion_local.leftCols(copy_dim) = root_motion_pred.leftCols(copy_dim);
-    }
-  }
+  auto motion_rep = motion_rep_.lock();
+  DOODLE_CHICK(motion_rep != nullptr, "motion_rep 已失效（原始 shared_ptr 已释放）");
+
+  Eigen::MatrixXf root_motion_local = motion_rep->global_root_to_local_root(
+      root_motion_pred, true, batch_size, time_steps, lengths
+  );  // [B*T, local_root_dim]
 
   DOODLE_CHICK(
       root_motion_local.rows() == total_frames && root_motion_local.cols() == local_root_dim_,

@@ -3,13 +3,14 @@
 //
 #pragma once
 
+#include "motion_rep/motion_rep_base.h"
 #include "transformer_encoder_block.h"
 
 #include <doodle_lib/core/global_function.h>
 
 #include <Eigen/Dense>
 #include <cstdint>
-#include <functional>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -34,26 +35,23 @@ class twostage_denoiser {
   // ---- 配置 ----
   std::string motion_mask_mode_{"none"};
 
+  // ---- 运动表示（弱指针，防止循环引用） ----
+  std::weak_ptr<motion_rep_base> motion_rep_;
+
   // ---- 两个 Transformer 编码器 ----
   transformer_encoder_block root_model_;
   transformer_encoder_block body_model_;
-
-  // ---- 全局根节点 → 局部根节点转换函数 ----
-  // 签名: (global_root [B*T, global_root_dim], lengths [B]) -> local_root [B*T, local_root_dim]
-  std::function<Eigen::MatrixXf(const Eigen::MatrixXf&, const Eigen::VectorXi&)> global_root_to_local_root_fn_;
 
  public:
   twostage_denoiser() = default;
 
   /// @brief 加载所有权重并初始化两个 transformer_encoder_block
-  /// @param root_model_dir 根节点模型目录（包含 root_model 的 .npy 和 .onnx 文件）
-  /// @param body_model_dir 身体模型目录（包含 body_model 的 .npy 和 .onnx 文件）
+  /// @param root_model_dir 根节点模型目录
+  /// @param body_model_dir 身体模型目录
   /// @param latent_dim Transformer 潜在空间维度
   /// @param num_text_tokens 最大文本 token 数
   /// @param use_text_mask 是否使用文本 mask
-  /// @param input_dim 运动表示总维度（motion_rep_dim）
-  /// @param global_root_dim 全局根节点维度
-  /// @param local_root_dim 局部根节点维度
+  /// @param motion_rep 运动表示（从中推导 input_dim / global_root_dim / local_root_dim）
   /// @param motion_mask_mode 运动 mask 模式 ("none" 或 "concat")
   /// @param input_first_heading_angle 是否输入初始朝向角
   void load(
@@ -62,20 +60,10 @@ class twostage_denoiser {
       std::int64_t latent_dim,
       std::int64_t num_text_tokens,
       bool use_text_mask,
-      std::int64_t input_dim,
-      std::int64_t global_root_dim,
-      std::int64_t local_root_dim,
+      const std::shared_ptr<motion_rep_base>& motion_rep,
       const std::string& motion_mask_mode    = "none",
       bool input_first_heading_angle         = false
   );
-
-  /// @brief 设置全局根节点到局部根节点的转换函数
-  /// @param fn 转换函数，接收 (global_root [B*T, global_root_dim], lengths [B]) -> [B*T, local_root_dim]
-  void set_global_root_to_local_root_fn(
-      std::function<Eigen::MatrixXf(const Eigen::MatrixXf&, const Eigen::VectorXi&)> fn
-  ) {
-    global_root_to_local_root_fn_ = std::move(fn);
-  }
 
   /// @brief 正向传播（对应 Python forward）
   /// @param x [B*T, input_dim] 当前噪声运动（平坦化）

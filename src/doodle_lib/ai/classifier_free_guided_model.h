@@ -3,12 +3,14 @@
 //
 #pragma once
 
+#include "motion_rep/motion_rep_base.h"
 #include "twostage_denoiser.h"
 
 #include <doodle_lib/core/global_function.h>
 
 #include <Eigen/Dense>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,22 +43,13 @@ class classifier_free_guided_model {
       std::int64_t latent_dim,
       std::int64_t num_text_tokens,
       bool use_text_mask,
-      std::int64_t input_dim,
-      std::int64_t global_root_dim,
-      std::int64_t local_root_dim,
+      const std::shared_ptr<motion_rep_base>& motion_rep,
       const std::string& motion_mask_mode   = "none",
       bool input_first_heading_angle         = false
   );
 
   /// @brief 设置默认 cfg_type
   void set_cfg_type_default(const std::string& cfg_type) { cfg_type_default_ = cfg_type; }
-
-  /// @brief 设置全局根节点到局部根节点的转换函数（委托给内部 model_）
-  void set_global_root_to_local_root_fn(
-      std::function<Eigen::MatrixXf(const Eigen::MatrixXf&, const Eigen::VectorXi&)> fn
-  ) {
-    model_.set_global_root_to_local_root_fn(std::move(fn));
-  }
 
   /// @brief 带 CFG 的正向传播（对应 Python ClassifierFreeGuidedModel.forward）
   ///

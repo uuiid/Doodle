@@ -15,16 +15,14 @@ void classifier_free_guided_model::load(
     std::int64_t latent_dim,
     std::int64_t num_text_tokens,
     bool use_text_mask,
-    std::int64_t input_dim,
-    std::int64_t global_root_dim,
-    std::int64_t local_root_dim,
+    const std::shared_ptr<motion_rep_base>& motion_rep,
     const std::string& motion_mask_mode,
     bool input_first_heading_angle
 ) {
   model_.load(
       root_model_dir, body_model_dir,
       latent_dim, num_text_tokens, use_text_mask,
-      input_dim, global_root_dim, local_root_dim,
+      motion_rep,
       motion_mask_mode, input_first_heading_angle
   );
 }
