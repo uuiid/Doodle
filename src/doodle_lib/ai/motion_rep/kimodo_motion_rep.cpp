@@ -82,7 +82,7 @@ Eigen::MatrixXf kimodo_motion_rep::encode(
   }
 
   // ---- Step 1: FK ----
-  auto fk_res = fk(local_joint_rots, root_positions, *skeleton_);
+  auto fk_res = skeleton_->fk(local_joint_rots, root_positions);
   // fk_res.global_rot_mats: [B*T, J*9]
   // fk_res.posed_joints: [B*T, J*3]
   // fk_res.posed_joints_norootpos: [B*T, J*3]
@@ -229,7 +229,7 @@ motion_output kimodo_motion_rep::decode(
   Eigen::MatrixXf global_rot_mats = cont6d_to_matrix(global_rot_data);  // [B*T, J*9]
 
   // ---- 全局旋转 → 局部旋转 ----
-  Eigen::MatrixXf local_rot_mats = global_rots_to_local_rots(global_rot_mats, *skeleton_);
+  Eigen::MatrixXf local_rot_mats = skeleton_->global_rots_to_local_rots(global_rot_mats);
 
   // ---- 从局部关节位置计算根位置 ----
   // posed_joints_from_pos = local_joints_positions
@@ -252,7 +252,7 @@ motion_output kimodo_motion_rep::decode(
   }
 
   // ---- FK 计算全局关节位置 ----
-  auto fk_res = fk(local_rot_mats, root_positions, *skeleton_);
+  auto fk_res = skeleton_->fk(local_rot_mats, root_positions);
 
   // ---- 脚接触二值化 ----
   Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> foot_contacts_bool(total, 4);
