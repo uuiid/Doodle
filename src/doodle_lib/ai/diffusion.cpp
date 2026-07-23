@@ -21,7 +21,7 @@ namespace {
 
 /// @brief alpha_bar(t) = cos((t + 0.008) / 1.008 * pi / 2)^2
 [[nodiscard]] double alpha_bar(double t) {
-  const double arg = (t + 0.008) / 1.008 * std::numbers::pi_v<double> / 2.0;
+  const double arg = (t + 0.008) / 1.008 * std::numbers::pi / 2.0;
   return std::cos(arg) * std::cos(arg);
 }
 
@@ -29,17 +29,14 @@ namespace {
 /// @param num_diffusion_timesteps 总步数
 /// @param max_beta beta 上限
 /// @return [num_diffusion_timesteps] betas
-[[nodiscard]] std::vector<float> get_beta_schedule(
-    std::int64_t num_diffusion_timesteps,
-    float max_beta = 0.999f
-) {
+[[nodiscard]] std::vector<float> get_beta_schedule(std::int64_t num_diffusion_timesteps, float max_beta = 0.999f) {
   std::vector<float> betas(static_cast<std::size_t>(num_diffusion_timesteps));
   for (std::int64_t i = 0; i < num_diffusion_timesteps; ++i) {
-    const double t1 = static_cast<double>(i) / static_cast<double>(num_diffusion_timesteps);
-    const double t2 = static_cast<double>(i + 1) / static_cast<double>(num_diffusion_timesteps);
+    const double t1    = static_cast<double>(i) / static_cast<double>(num_diffusion_timesteps);
+    const double t2    = static_cast<double>(i + 1) / static_cast<double>(num_diffusion_timesteps);
 
     const double ratio = alpha_bar(t2) / alpha_bar(t1);
-    double beta       = 1.0 - ratio;
+    double beta        = 1.0 - ratio;
     if (beta > static_cast<double>(max_beta)) beta = static_cast<double>(max_beta);
     betas[static_cast<std::size_t>(i)] = static_cast<float>(beta);
   }
@@ -74,7 +71,7 @@ void diffusion::init(std::int64_t num_base_steps) {
   num_base_steps_ = num_base_steps;
 
   // ---- 基础 cosine beta schedule ----
-  betas_base_ = get_beta_schedule(num_base_steps);
+  betas_base_     = get_beta_schedule(num_base_steps);
 
   // ---- 基础累积 alpha: alpha_cumprod_base[i] = prod(1 - beta_base[j] for j in 0..i) ----
   // 先把 (1 - beta) 算出来
@@ -99,15 +96,13 @@ std::pair<std::vector<std::int64_t>, std::vector<std::int64_t>> diffusion::space
 
   const std::int64_t nsteps_train = num_base_steps_;
   // Python: frac_stride = (nsteps_train - 1) / max(1, num_denoising_steps - 1)
-  const double frac_stride =
-      static_cast<double>(nsteps_train - 1) / std::max(std::int64_t{1}, num_denoising_steps - 1);
+  const double frac_stride = static_cast<double>(nsteps_train - 1) / std::max(std::int64_t{1}, num_denoising_steps - 1);
 
   std::vector<std::int64_t> use_timesteps(static_cast<std::size_t>(num_denoising_steps));
   for (std::int64_t i = 0; i < num_denoising_steps; ++i) {
     // Python: torch.round(torch.arange(...) * frac_stride)
-    const double val = static_cast<double>(i) * frac_stride;
-    use_timesteps[static_cast<std::size_t>(i)] =
-        std::min(static_cast<std::int64_t>(std::round(val)), nsteps_train - 1);
+    const double val                           = static_cast<double>(i) * frac_stride;
+    use_timesteps[static_cast<std::size_t>(i)] = std::min(static_cast<std::int64_t>(std::round(val)), nsteps_train - 1);
   }
 
   // Python: map_tensor = torch.arange(nsteps_train)[use_timesteps]
@@ -121,11 +116,11 @@ std::pair<std::vector<std::int64_t>, std::vector<std::int64_t>> diffusion::space
 void diffusion::calc_diffusion_vars(const std::vector<std::int64_t>& use_timesteps) {
   DOODLE_CHICK(!alphas_cumprod_base_.empty(), "Diffusion 未初始化，alphas_cumprod_base_ 为空");
 
-  const auto n = use_timesteps.size();
+  const auto n       = use_timesteps.size();
   current_num_steps_ = static_cast<std::int64_t>(n);
 
   // 临时函数: 按 use_timesteps 索引取值
-  auto index_base = [&](const std::vector<float>& base, std::size_t idx) -> float {
+  auto index_base    = [&](const std::vector<float>& base, std::size_t idx) -> float {
     return base[static_cast<std::size_t>(use_timesteps[idx])];
   };
 
@@ -140,10 +135,10 @@ void diffusion::calc_diffusion_vars(const std::vector<std::int64_t>& use_timeste
   alphas_cumprod_prev_.resize(n);
   betas_.resize(n);
   for (std::size_t i = 0; i < n; ++i) {
-    const float last_ac = (i == 0) ? 1.0f : alphas_cumprod[i - 1];
+    const float last_ac     = (i == 0) ? 1.0f : alphas_cumprod[i - 1];
     alphas_cumprod_prev_[i] = last_ac;
     // betas = 1 - alphas_cumprod / last_alpha_cumprod
-    betas_[i] = (last_ac > 0.0f) ? (1.0f - alphas_cumprod[i] / last_ac) : 0.0f;
+    betas_[i]               = (last_ac > 0.0f) ? (1.0f - alphas_cumprod[i] / last_ac) : 0.0f;
   }
 
   // ---- alphas = 1 - betas ----
@@ -185,18 +180,16 @@ void diffusion::calc_diffusion_vars(const std::vector<std::int64_t>& use_timeste
   //     = sqrt(1 - alphas_cumprod) / sqrt(alphas_cumprod)
   sqrt_recipm1_alphas_cumprod_.resize(n);
   for (std::size_t i = 0; i < n; ++i) {
-    const float denom = alphas_cumprod[i] / (1.0f - alphas_cumprod[i]);
+    const float denom               = alphas_cumprod[i] / (1.0f - alphas_cumprod[i]);
     sqrt_recipm1_alphas_cumprod_[i] = rsqrt_clamped(denom);
   }
 
   // ---- posterior_variance = betas * (1 - alphas_cumprod_prev) / (1 - alphas_cumprod) ----
   posterior_variance_.resize(n);
   for (std::size_t i = 0; i < n; ++i) {
-    const float one_minus_ac     = 1.0f - alphas_cumprod[i];
+    const float one_minus_ac      = 1.0f - alphas_cumprod[i];
     const float one_minus_ac_prev = 1.0f - alphas_cumprod_prev_[i];
-    posterior_variance_[i] = (one_minus_ac > 0.0f)
-                                 ? betas_[i] * one_minus_ac_prev / one_minus_ac
-                                 : 0.0f;
+    posterior_variance_[i]        = (one_minus_ac > 0.0f) ? betas_[i] * one_minus_ac_prev / one_minus_ac : 0.0f;
   }
 
   // ---- sqrt_alphas_cumprod = rsqrt(1 / alphas_cumprod) = sqrt(alphas_cumprod) ----
@@ -209,15 +202,13 @@ void diffusion::calc_diffusion_vars(const std::vector<std::int64_t>& use_timeste
   //     = sqrt(1 - alphas_cumprod) ----
   sqrt_one_minus_alphas_cumprod_.resize(n);
   for (std::size_t i = 0; i < n; ++i) {
-    const float one_minus_ac = 1.0f - alphas_cumprod[i];
+    const float one_minus_ac          = 1.0f - alphas_cumprod[i];
     sqrt_one_minus_alphas_cumprod_[i] = std::sqrt(std::max(one_minus_ac, 0.0f));
   }
 }
 
 Eigen::MatrixXf diffusion::q_sample(
-    const Eigen::MatrixXf& x_start,
-    std::int64_t t,
-    const Eigen::MatrixXf& noise
+    const Eigen::MatrixXf& x_start, std::int64_t t, const Eigen::MatrixXf& noise
 ) const {
   DOODLE_CHICK(is_valid(), "Diffusion 未初始化");
   DOODLE_CHICK(static_cast<std::size_t>(t) < sqrt_alphas_cumprod_.size(), "t={} 超出范围", t);
@@ -248,9 +239,7 @@ Eigen::MatrixXf diffusion::q_sample(
 // ======================================================================
 
 Eigen::MatrixXf ddim_sampler::step(
-    const Eigen::MatrixXf& x_t,
-    const Eigen::MatrixXf& pred_xstart,
-    std::int64_t t
+    const Eigen::MatrixXf& x_t, const Eigen::MatrixXf& pred_xstart, std::int64_t t
 ) const {
   DOODLE_CHICK(diffusion_ != nullptr, "ddim_sampler 未关联 diffusion");
   DOODLE_CHICK(diffusion_->is_valid(), "关联的 diffusion 未初始化");
@@ -258,8 +247,7 @@ Eigen::MatrixXf ddim_sampler::step(
   const auto rows = x_t.rows();
   const auto cols = x_t.cols();
   DOODLE_CHICK(
-      pred_xstart.rows() == rows && pred_xstart.cols() == cols,
-      "pred_xstart shape [{}x{}] 不匹配 x_t [{}x{}]",
+      pred_xstart.rows() == rows && pred_xstart.cols() == cols, "pred_xstart shape [{}x{}] 不匹配 x_t [{}x{}]",
       pred_xstart.rows(), pred_xstart.cols(), rows, cols
   );
 
@@ -267,7 +255,7 @@ Eigen::MatrixXf ddim_sampler::step(
   // Python:
   //   eps = (sqrt_recip_alphas_cumprod[t] * x_t - pred_xstart)
   //         / sqrt_recipm1_alphas_cumprod[t]
-  const float recip_ac = diffusion_->sqrt_recip_alphas_cumprod(t);
+  const float recip_ac   = diffusion_->sqrt_recip_alphas_cumprod(t);
   const float recipm1_ac = diffusion_->sqrt_recipm1_alphas_cumprod(t);
 
   // eps = (recip_ac * x_t - pred_xstart) / recipm1_ac
@@ -284,8 +272,8 @@ Eigen::MatrixXf ddim_sampler::step(
   // Python:
   //   alpha_bar_prev = alphas_cumprod_prev[t]
   //   x = pred_xstart * sqrt(alpha_bar_prev) + sqrt(1 - alpha_bar_prev) * eps
-  const float ac_prev = diffusion_->alphas_cumprod_prev(t);
-  const float sqrt_ac_prev     = std::sqrt(ac_prev);
+  const float ac_prev           = diffusion_->alphas_cumprod_prev(t);
+  const float sqrt_ac_prev      = std::sqrt(ac_prev);
   const float sqrt_one_minus_ac = std::sqrt(std::max(1.0f - ac_prev, 0.0f));
 
   return sqrt_ac_prev * pred_xstart + sqrt_one_minus_ac * eps;
