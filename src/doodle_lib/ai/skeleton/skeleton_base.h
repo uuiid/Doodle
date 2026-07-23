@@ -122,11 +122,6 @@ class skeleton_base {
   /// @brief 创建 SOMA 77 关节骨骼
   static std::shared_ptr<skeleton_base> create_soma_skeleton_77(const FSys::path& folder = {});
 
-  /// @brief 创建 G1 34 关节骨骼
-  static std::shared_ptr<skeleton_base> create_g1_skeleton_34(const FSys::path& folder = {});
-
-  /// @brief 创建 SMPL-X 22 关节骨骼
-  static std::shared_ptr<skeleton_base> create_smplx_skeleton_22(const FSys::path& folder = {});
 };
 
 }  // namespace doodle::ai
