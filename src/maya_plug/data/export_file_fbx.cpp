@@ -35,6 +35,7 @@
 #include <maya/MItDag.h>
 #include <memory>
 #include <range/v3/view/transform.hpp>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -160,16 +161,18 @@ std::vector<FSys::path> export_file_fbx::export_rig(const reference_file& in_ref
 
   // 寻找 xgen xgmPalette 节点
   bool l_has_xgen{false};
+  std::string l_xgen_name{};
   maya_chick(l_it.reset(l_main_path, MItDag::kDepthFirst, MFn::kPluginTransformNode));
   for (; !l_it.isDone(); l_it.next()) {
     MFnDependencyNode l_dep{};
     maya_chick(l_dep.setObject(l_it.currentItem()));
     if (l_dep.typeName() == "xgmPalette") {
       l_has_xgen = true;
+      l_xgen_name = conv::to_s(l_dep.name());
       break;
     }
   }
-
+  display_info("检查到 xgen 节点 {} {}", l_has_xgen, l_xgen_name);
   auto l_export_list_old = l_export_list;
   std::vector<FSys::path> l_ret{};
   auto l_stem             = maya_file_io::get_current_path().stem().generic_string();
