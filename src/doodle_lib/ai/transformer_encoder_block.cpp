@@ -89,14 +89,17 @@ void transformer_encoder_block::init_session() {
   output_names_ = session_->GetOutputNames();
   io_binding_   = std::make_unique<Ort::IoBinding>(*session_);
 
-  // ---- 名称匹配检查：验证输入名称符合预期 ----
+  // ---- 名称匹配检查：验证输入名称符合预期（对应 to_onnx.py 的导出） ----
+  // TransformerEncoderWrapper 导出时输入名为 ["src", "src_key_padding_mask"]
   {
-   const std::set<std::string> expected_names = {"input", "attention_mask", "position_ids"};
+    const std::set<std::string> expected_names = {"src", "src_key_padding_mask"};
     for (const auto& name : input_names_) {
       // 检查是否是预期的输入名称
       if (!expected_names.contains(name)) {
-        SPDLOG_WARN("seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [{}]",
-                    name, fmt::join(expected_names, ", "));
+        SPDLOG_WARN(
+            "seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [{}]",
+            name, fmt::join(expected_names, ", ")
+        );
       }
     }
   }
@@ -317,59 +320,24 @@ Eigen::MatrixXf transformer_encoder_block::forward(
     }
   }
 
-  // ---- 名称匹配：按实际输入名绑定 ----
-  // 确定哪些输入名称对应 data（主序列）和 mask
-  // 常用的 ONNX 导出命名包括:
-  //   "input" / "x" / "xseq" / "input_ids"        → 序列数据
-  //   "attention_mask" / "mask" / "key_padding_mask" / "src_key_padding_mask" → mask
-  //   "position_ids" / "position_ids_1"            → 位置编码（可选）
-  std::string input_data_name;
-  std::string input_mask_name;
-  bool has_position_ids = false;
+  // ---- 名称匹配：按 to_onnx.py 导出的输入名绑定 ----
+  // TransformerEncoderWrapper 导出时输入名为:
+  //   "src"  — [B, T, D] 序列数据
+  //   "src_key_padding_mask" — [B, T] float mask (1.0=padding)
+  const std::string input_data_name = "src";
+  const std::string input_mask_name = "src_key_padding_mask";
 
+  // 验证 ONNX 模型确实包含预期的输入名
   for (const auto& name : input_names_) {
-    const auto lower = [&]() {
-      std::string s = name;
-      for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-      return s;
-    }();
-
-    if (lower.find("position_ids") != std::string::npos) {
-      has_position_ids = true;
-      continue;
-    }
-    if (lower.find("mask") != std::string::npos || lower.find("key_padding") != std::string::npos) {
-      input_mask_name = name;
-      continue;
-    }
-    // 默认：第一个非 mask/non-position_ids 的输入视作数据输入
-    if (input_data_name.empty()) {
-      input_data_name = name;
-    }
-  }
-
-  // 若未匹配到数据输入名称，回退到索引 0
-  if (input_data_name.empty() && !input_names_.empty()) {
-    input_data_name = input_names_[0];
-  }
-  // 若未匹配到 mask 输入名称且有多余输入，尝试用最后一个非 data 的输入
-  if (input_mask_name.empty() && input_names_.size() >= 2) {
-    // 取第一个名称不是 data 的输入
-    for (const auto& name : input_names_) {
-      if (name != input_data_name && name.find("position_ids") == std::string::npos) {
-        input_mask_name = name;
-        break;
-      }
-    }
-    // 兜底
-    if (input_mask_name.empty()) {
-      input_mask_name = (input_names_[0] == input_data_name && input_names_.size() > 1) ? input_names_[1] : input_names_[0];
-    }
+    if (name == input_data_name || name == input_mask_name) continue;
+    SPDLOG_WARN(
+        "seqTransEncoder ONNX 含未预期的输入 '{}', 期望: [src, src_key_padding_mask]", name
+    );
   }
 
   SPDLOG_DEBUG(
-      "ONNX 名称匹配: data='{}', mask='{}', position_ids={}, 全部输入: [{}]",
-      input_data_name, input_mask_name, has_position_ids, fmt::join(input_names_, ",")
+      "ONNX 名称绑定: data='{}', mask='{}', 全部输入: [{}]",
+      input_data_name, input_mask_name, fmt::join(input_names_, ",")
   );
 
   // 序列输入 shape: [B, total_len, latent_dim]
@@ -383,37 +351,16 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   io_binding_->BindInput(input_data_name.c_str(), data_tensor);
 
   if (!input_mask_name.empty()) {
-    // ONNX 的 mask 通常是 int64 或 bool 类型
-    // 用 std::vector<int64_t> 更通用
-    std::vector<std::int64_t> mask_int64(static_cast<std::size_t>(batch_size * total_len));
+    // ONNX 导出使用 float mask (1.0=padding, 0.0=attend), 见 TransformerEncoderWrapper
+    std::vector<float> mask_float(static_cast<std::size_t>(batch_size * total_len));
     for (std::size_t i = 0; i < mask_onnx.size(); ++i) {
-      mask_int64[i] = mask_onnx[i] ? 1 : 0;
+      mask_float[i] = mask_onnx[i] ? 1.0f : 0.0f;
     }
 
-    auto mask_tensor = Ort::Value::CreateTensor<std::int64_t>(
-        memory_info_, mask_int64.data(), mask_int64.size(), mask_shape.data(), mask_shape.size()
+    auto mask_tensor = Ort::Value::CreateTensor<float>(
+        memory_info_, mask_float.data(), mask_float.size(), mask_shape.data(), mask_shape.size()
     );
     io_binding_->BindInput(input_mask_name.c_str(), mask_tensor);
-  }
-
-  // ---- 绑定可选的 position_ids ----
-  if (has_position_ids) {
-    std::vector<std::int64_t> pos_ids(static_cast<std::size_t>(batch_size * total_len));
-    for (Eigen::Index b = 0; b < batch_size; ++b) {
-      for (Eigen::Index t = 0; t < total_len; ++t) {
-        pos_ids[static_cast<std::size_t>(b * total_len + t)] = t;
-      }
-    }
-    // 找到 position_ids 的输入名
-    for (const auto& name : input_names_) {
-      if (name.find("position_ids") != std::string::npos) {
-        auto pos_tensor = Ort::Value::CreateTensor<std::int64_t>(
-            memory_info_, pos_ids.data(), pos_ids.size(), mask_shape.data(), mask_shape.size()
-        );
-        io_binding_->BindInput(name.c_str(), pos_tensor);
-        break;
-      }
-    }
   }
 
   // ---- 运行 ONNX 推理 ----
