@@ -45,11 +45,11 @@ struct ai_train_binding_weights_post_args {
 }  // namespace
 
 struct ai_train_animation::impl {
-  std::shared_ptr<LLM2Vec> model_{};
+  std::shared_ptr<doodle::ai::LLM2Vec> model_{};
   impl() = default;
   std::once_flag init_flag_;
   void init() {
-    model_ = std::make_shared<LLM2Vec>(
+    model_ = std::make_shared<doodle::ai::LLM2Vec>(
         R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\model.onnx)",
         R"(D:\ai_mod\onnx-McGill-NLP--LLM2Vec-Meta-Llama-3-8B-Instruct-mntp\tokenizer.json)"
     );

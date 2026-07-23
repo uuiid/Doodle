@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <fmt/format.h>
 
-namespace doodle::http {
+namespace doodle::ai {
 
 llm2vec_tokenizer::llm2vec_tokenizer(const FSys::path& in_tokenizer_json_path) {
   FSys::ifstream l_file(in_tokenizer_json_path);
@@ -74,4 +74,4 @@ llm2vec_tokenizer::tokenize_result llm2vec_tokenizer::tokenize(
   return result;
 }
 
-}  // namespace doodle::http
+}  // namespace doodle::ai

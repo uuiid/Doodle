@@ -11,7 +11,7 @@
 
 #include "doodle_core/exception/exception.h"
 
-namespace doodle::http {
+namespace doodle::ai {
 
 LLM2Vec::LLM2Vec(const FSys::path& in_model_path, const FSys::path& in_tokenizer_json_path)
     : model_path_(in_model_path), tokenizer_json_path_(in_tokenizer_json_path) {
@@ -166,4 +166,4 @@ std::vector<float_t> LLM2Vec::operator()(const std::string& instruction, const s
   return apply_pooling(tokenized, output_data, seq_len, hidden_size);
 }
 
-}  // namespace doodle::http
+}  // namespace doodle::ai

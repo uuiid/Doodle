@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace doodle::http {
+namespace doodle::ai {
 
 /// @brief LLM2Vec 模型推理封装
 /// 对应 Python LLM2Vec 类
@@ -55,4 +55,4 @@ struct LLM2Vec {
   ) const;
 };
 
-}  // namespace doodle::http
+}  // namespace doodle::ai

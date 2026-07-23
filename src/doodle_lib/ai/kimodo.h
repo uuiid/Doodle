@@ -5,7 +5,7 @@
 
 #include "classifier_free_guided_model.h"
 #include "diffusion.h"
-#include "llm2vec.h"  // doodle::http::LLM2Vec
+#include "llm2vec.h"
 #include "motion_rep/kimodo_motion_rep.h"
 #include "skeleton/skeleton_base.h"
 
@@ -40,8 +40,8 @@ class kimodo {
   std::shared_ptr<kimodo_motion_rep> motion_rep_;  ///< 运动表示
   std::shared_ptr<skeleton_base> skeleton_;        ///< 骨骼 (用于输出转换)
 
-  // ---- 文本编码器（在 doodle::http 命名空间） ----
-  std::shared_ptr<doodle::http::LLM2Vec> text_encoder_;
+  // ---- 文本编码器 ----
+  std::shared_ptr<LLM2Vec> text_encoder_;
 
   // ---- 配置 ----
   std::string cfg_type_default_{"separated"};

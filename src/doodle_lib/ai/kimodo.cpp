@@ -72,7 +72,7 @@ void kimodo::load(
   SPDLOG_INFO("kimodo: denoiser (CFG) 加载完成");
 
   // ---- Step 5: 初始化文本编码器 ----
-  text_encoder_ = std::make_shared<doodle::http::LLM2Vec>(text_encoder_model_path, tokenizer_json_path);
+  text_encoder_ = std::make_shared<LLM2Vec>(text_encoder_model_path, tokenizer_json_path);
   DOODLE_CHICK(text_encoder_ != nullptr, "LLM2Vec 初始化失败");
   SPDLOG_INFO("kimodo: text_encoder 初始化完成");
 

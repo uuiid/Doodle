@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace doodle::http {
+namespace doodle::ai {
 
 /// @brief LLM2Vec 专用分词器
 /// 对应 Python LLM2Vec.tokenize() 的两步分词逻辑
@@ -39,4 +39,4 @@ struct llm2vec_tokenizer {
   tokenize_result tokenize(const std::string& instruction, const std::string& text);
 };
 
-}  // namespace doodle::http
+}  // namespace doodle::ai
