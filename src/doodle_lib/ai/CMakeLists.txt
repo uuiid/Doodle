@@ -4,6 +4,7 @@ target_sources(
         classifier_free_guided_model.h
         diffusion.h
         hf_tokenizer.h
+        kimodo.h
         llm2vec_tokenizer.h
         llm2vec.h
         linear_layer.h
@@ -22,6 +23,7 @@ target_sources(
         classifier_free_guided_model.cpp
         diffusion.cpp
         hf_tokenizer.cpp
+        kimodo.cpp
         llm2vec_tokenizer.cpp
         llm2vec.cpp
         linear_layer.cpp
