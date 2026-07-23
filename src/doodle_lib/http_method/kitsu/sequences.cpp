@@ -12,8 +12,6 @@
 #include <doodle_lib/sqlite_orm/sqlite_database.h>
 #include <doodle_lib/sqlite_orm/sqlite_select_data.h>
 
-
-
 namespace doodle::http {
 namespace {
 
@@ -56,7 +54,7 @@ get_get_entities_and_tasks_select_t get_get_entities_and_tasks_select_t::get(
   auto l_cout = select(l_sql)
                     .columns(&entity::parent_id_, count(&entity::parent_id_))
                     .from<entity>()
-                    .where(c(&entity::project_id_) == in_project_id)
+                    .where(c(&entity::project_id_) == in_project_id && c(&entity::canceled_) != true)
                     .group_by(&entity::parent_id_)()
                     .to_vector();
   return get_get_entities_and_tasks_select_t{.entity_and_task_and_person_id_ = l_rows, .sequence_and_cout_ = l_cout};
@@ -205,7 +203,7 @@ auto get_get_entities_and_tasks(
 
   auto l_row =
       get_get_entities_and_tasks_select_t::get(in_person, in_project_id, in_entity_type_id, in_offset, in_limit);
-  auto l_sql = get_sqlite_database();
+  auto l_sql                    = get_sqlite_database();
   auto l_subscriptions_for_user = l_sql.get_person_subscriptions(in_person, in_project_id, in_entity_type_id);
 
   std::map<uuid, sequences_with_tasks_result> l_entities_and_tasks_map{};
@@ -246,7 +244,7 @@ auto get_get_entities_and_tasks(
 
 }  // namespace
 boost::asio::awaitable<boost::beast::http::message_generator> sequences_with_tasks::get(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql     = get_sqlite_database();
   auto l_type_id = l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence});
 
   uuid l_project_uuid{};
@@ -280,7 +278,7 @@ struct data_project_sequences_args {
 boost::asio::awaitable<boost::beast::http::message_generator> data_project_sequences::post(session_data_ptr in_handle) {
   person_.check_in_project(id_);
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_args = in_handle->get_json().get<data_project_sequences_args>();
 
   SPDLOG_LOGGER_WARN(
@@ -318,21 +316,21 @@ boost::asio::awaitable<boost::beast::http::message_generator> data_project_seque
   person_.check_in_project(id_);
   auto l_sql = get_sqlite_database();
 
-  auto l_row  = get_entity_by_episode_id_and_project_id_and_name(
+  auto l_row = get_entity_by_episode_id_and_project_id_and_name(
       l_sql.get_entity_type_by_name(std::string{doodle_config::entity_type_sequence}).uuid_id_, {}, id_, {}
   );
 
   co_return in_handle->make_msg(nlohmann::json{} = l_row);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::get(session_data_ptr in_handle) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql  = get_sqlite_database();
   auto l_data = l_sql.get_by_uuid<entity>(id_);
   co_return in_handle->make_msg(nlohmann::json{} = l_data);
 }
 boost::asio::awaitable<boost::beast::http::message_generator> data_sequence_instance::delete_(
     session_data_ptr in_handle
 ) {
-  auto l_sql = get_sqlite_database();
+  auto l_sql      = get_sqlite_database();
   auto l_sequence = std::make_shared<entity>(l_sql.get_by_uuid<entity>(id_));
   if (!(l_sequence->created_by_ == person_.person_.uuid_id_ &&
         l_sql.is_person_in_project(person_.person_.uuid_id_, l_sequence->project_id_)))
@@ -371,7 +369,7 @@ boost::asio::awaitable<boost::beast::http::message_generator> actions_projects_t
 ) {
   person_.check_in_project(project_id_);
   person_.check_not_outsourcer();
-  auto l_sql = get_sqlite_database();
+  auto l_sql          = get_sqlite_database();
   auto l_task_type    = l_sql.get_by_uuid<task_type>(task_type_id_);
   auto l_type_name    = std::string{magic_enum::enum_name(entity_type_)};
   l_type_name.front() = std::toupper(l_type_name.front());
