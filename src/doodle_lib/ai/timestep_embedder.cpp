@@ -34,7 +34,7 @@ void timestep_embedder::init(
 Eigen::MatrixXf timestep_embedder::forward(const std::vector<std::int64_t>& timesteps) const {
   DOODLE_CHICK(is_valid(), "timestep_embedder 未初始化");
 
-  auto batch_size = static_cast<Eigen::Index>(timesteps.size());
+//   auto batch_size = static_cast<Eigen::Index>(timesteps.size());
 
   // 从位置编码表中查询时间步编码: [B, latent_dim]
   // 对应 Python: sequence_pos_encoder.pe.transpose(0, 1)[timesteps]
