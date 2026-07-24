@@ -8,6 +8,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cmath>
 #include <cstdint>
@@ -76,11 +77,10 @@ class positional_encoding {
   /// @param indices 时间步索引向量（每个值范围 [0, max_len)）
   /// @return [indices.size(), d_model]
   Eigen::MatrixXf lookup(const std::vector<std::int64_t>& indices) const {
-    Eigen::MatrixXf result(boost::numeric_cast<Eigen::Index>(indices.size()), d_model_);
-    for (Eigen::Index i = 0; i < boost::numeric_cast<Eigen::Index>(indices.size()); ++i) {
-      result.row(i) = pe_.row(indices[boost::numeric_cast<std::size_t>(i)]);
-    }
-    return result;
+    // 检查索引范围
+    for (const auto& idx : indices)
+      DOODLE_CHICK(idx >= 0 && idx < max_len_, "PositionalEncoding 索引 {} 超出范围 [0, {})", idx, max_len_);
+    return pe_(indices, Eigen::placeholders::all);
   }
 
   [[nodiscard]] std::int64_t d_model() const { return d_model_; }
