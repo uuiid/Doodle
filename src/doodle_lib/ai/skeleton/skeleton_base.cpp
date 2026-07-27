@@ -77,13 +77,12 @@ Eigen::MatrixXf load_npy_matrix(const FSys::path& file_path, std::int64_t expect
     DOODLE_CHICK(cols == expected_cols, "npy 文件 {} 列数 {} 不匹配预期 {}", file_path.string(), cols, expected_cols);
   }
 
-  Eigen::MatrixXf result(rows, cols);
-  const float* ptr = data.data<float>();
-  for (Eigen::Index r = 0; r < rows; ++r) {
-    for (Eigen::Index c = 0; c < cols; ++c) {
-      result(r, c) = ptr[static_cast<std::size_t>(r * cols + c)];
-    }
-  }
+  Eigen::Map<const Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> map(
+      data.data<float>(), rows, cols
+  );
+
+  Eigen::MatrixXf result{rows, cols};
+  result = map;
   return result;
 }
 
