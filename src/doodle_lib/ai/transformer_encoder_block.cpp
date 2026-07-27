@@ -128,6 +128,8 @@ Eigen::MatrixXf transformer_encoder_block::forward(
   // text_feat: [B*max_text_len, llm_dim]
   // text_feat_pad_mask: [B, max_text_len]  (在 collate 中可能已 pad 到 num_text_tokens)
   // timesteps: [B]
+  // first_heading_angle: [B] (可选)
+  
   const auto batch_size      = static_cast<Eigen::Index>(x_pad_mask.rows());
   const auto time_steps      = static_cast<Eigen::Index>(x_pad_mask.cols());
   const auto max_text_len    = static_cast<Eigen::Index>(text_feat_pad_mask.cols());
