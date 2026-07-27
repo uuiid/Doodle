@@ -663,6 +663,8 @@ std::vector<std::int64_t> skeleton_base::get_skel_slice(const skeleton_base& tar
 // ======================================================================
 
 Eigen::MatrixXf skeleton_base::to_soma_skeleton_77(const Eigen::MatrixXf& local_joint_rots_subset) const {
+  // local_joint_rots_subset size = [B * T, 30*9]
+
   DOODLE_CHICK(name_ == "somaskel30", "to_soma_skeleton_77 仅用于 somaskel30，当前为 '{}'", name_);
 
   // 懒加载 SOMA77 骨骼
