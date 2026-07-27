@@ -325,7 +325,11 @@ void apply_semantic_groups(skeleton_base& skel, const semantic_groups& g) {
 // SOMASkeleton30
 // ======================================================================
 
-std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(const FSys::path& folder) {
+std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(
+    const FSys::path& folder, const FSys::path& in_77_folder
+) {
+  DOODLE_CHICK(!folder.empty(), "创建 SOMASkeleton30 时必须提供 folder 路径");
+
   auto skel   = std::make_shared<skeleton_base>();
   skel->name_ = "somaskel30";
 
@@ -371,8 +375,11 @@ std::shared_ptr<skeleton_base> skeleton_base::create_soma_skeleton_30(const FSys
   );
   apply_semantic_groups(*skel, g);
 
-  if (!folder.empty()) {
-    skel->load_all_from_folder(folder);
+  skel->load_all_from_folder(folder);
+  if (!in_77_folder.empty()) {
+    skel->somaskel77_cache_ = skeleton_base::create_soma_skeleton_77(in_77_folder);
+  } else {
+    skel->somaskel77_cache_ = skeleton_base::create_soma_skeleton_77(folder / "somaskel77");
   }
 
   return skel;
@@ -634,6 +641,128 @@ Eigen::MatrixXf skeleton_base::global_rots_to_local_rots(const Eigen::MatrixXf& 
   }
 
   return local_rot_mats;
+}
+
+// ======================================================================
+// get_skel_slice
+// ======================================================================
+
+std::vector<std::int64_t> skeleton_base::get_skel_slice(const skeleton_base& target) const {
+  std::vector<std::int64_t> slice;
+  slice.reserve(bone_order_names_.size());
+  for (const auto& name : bone_order_names_) {
+    auto it = target.bone_index_.find(name);
+    DOODLE_CHICK(it != target.bone_index_.end(), "关节 '{}' 不在目标骨骼 '{}' 中", name, target.name_);
+    slice.push_back(it->second);
+  }
+  return slice;
+}
+
+// ======================================================================
+// to_soma_skeleton_77（SOMA30 → SOMA77 关节扩展）
+// ======================================================================
+
+Eigen::MatrixXf skeleton_base::to_soma_skeleton_77(const Eigen::MatrixXf& local_joint_rots_subset) const {
+  DOODLE_CHICK(name_ == "somaskel30", "to_soma_skeleton_77 仅用于 somaskel30，当前为 '{}'", name_);
+
+  // 懒加载 SOMA77 骨骼
+  if (!somaskel77_cache_) {
+    somaskel77_cache_ = create_soma_skeleton_77();
+  }
+  const auto& skel77              = *somaskel77_cache_;
+
+  const Eigen::Index total_frames = local_joint_rots_subset.rows();
+  const Eigen::Index J77          = 77;
+
+  // 验证 relaxed_hands_rest_pose 已加载
+  DOODLE_CHICK(
+      skel77.relaxed_hands_rest_pose_.size() > 0,
+      "SOMA77 未加载 relaxed_hands_rest_pose —— 请先调用 load_relaxed_hands_rest_pose 或提供有效文件夹"
+  );
+  DOODLE_CHICK(
+      skel77.relaxed_hands_rest_pose_.rows() == J77, "relaxed_hands_rest_pose 行数 {} != 77",
+      skel77.relaxed_hands_rest_pose_.rows()
+  );
+  DOODLE_CHICK(
+      skel77.relaxed_hands_rest_pose_.cols() == 9, "relaxed_hands_rest_pose 列数 {} != 9",
+      skel77.relaxed_hands_rest_pose_.cols()
+  );
+
+  // 将 relaxed_hands_rest_pose [77, 9] 重复 total_frames 次 → [BT, 77*9]
+  Eigen::MatrixXf result(total_frames, J77 * 9);
+  for (Eigen::Index f = 0; f < total_frames; ++f) {
+    Eigen::Map<Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>> row(result.row(f).data(), J77 * 9);
+    row = Eigen::Map<const Eigen::Matrix<float, 1, Eigen::Dynamic, Eigen::RowMajor>>(
+        skel77.relaxed_hands_rest_pose_.data(), J77 * 9
+    );
+  }
+
+  // 获取 SOMA30 → SOMA77 索引映射，填入 30 关节数据
+  auto skel_slice = get_skel_slice(skel77);
+  for (Eigen::Index f = 0; f < total_frames; ++f) {
+    for (std::size_t j = 0; j < skel_slice.size(); ++j) {
+      const auto idx77       = skel_slice[j];
+      const Eigen::Index j30 = static_cast<Eigen::Index>(j);
+      for (int k = 0; k < 9; ++k) {
+        result(f, idx77 * 9 + k) = local_joint_rots_subset(f, j30 * 9 + k);
+      }
+    }
+  }
+
+  return result;
+}
+
+// ======================================================================
+// output_to_soma_skeleton_77
+// ======================================================================
+
+skeleton_base::output_77_result skeleton_base::output_to_soma_skeleton_77(
+    const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions,
+    const std::optional<Eigen::MatrixXf>& foot_contacts
+) const {
+  // 1. 扩展局部旋转至 77 关节
+  auto local_rot_mats_77 = to_soma_skeleton_77(local_rot_mats);
+
+  // 2. 在 SOMA77 上运行 FK
+  DOODLE_CHICK(
+      somaskel77_cache_ != nullptr, "output_to_soma_skeleton_77: SOMA77 骨骼未创建 —— to_soma_skeleton_77 应已创建"
+  );
+  auto fk_res = somaskel77_cache_->fk(local_rot_mats_77, root_positions);
+
+  // 3. 组装结果
+  output_77_result result;
+  result.local_rot_mats  = std::move(local_rot_mats_77);
+  result.global_rot_mats = std::move(fk_res.global_rot_mats);
+  result.posed_joints    = std::move(fk_res.posed_joints);
+
+  // 4. 如果有 foot_contacts，从 4 通道扩展为 6 通道
+  //    输入 [..., 4]: [L_heel, L_toe, R_heel, R_toe]
+  //    输出 [..., 6]: [L_heel, L_toe, L_toe_end, R_heel, R_toe, R_toe_end]
+  //    toe_end 复制 toe_base 的值
+  if (foot_contacts.has_value()) {
+    const auto& fc           = foot_contacts.value();
+    const Eigen::Index nrows = fc.rows();
+    DOODLE_CHICK(fc.cols() == 4, "foot_contacts 列数应为 4，实际为 {}", fc.cols());
+
+    Eigen::MatrixXf fc_77(nrows, 6);
+    for (Eigen::Index i = 0; i < nrows; ++i) {
+      // L_heel = fc[0]
+      fc_77(i, 0) = fc(i, 0);
+      // L_toe = fc[1]
+      fc_77(i, 1) = fc(i, 1);
+      // L_toe_end = fc[1] (复制 L_toe)
+      fc_77(i, 2) = fc(i, 1);
+      // R_heel = fc[2]
+      fc_77(i, 3) = fc(i, 2);
+      // R_toe = fc[3]
+      fc_77(i, 4) = fc(i, 3);
+      // R_toe_end = fc[3] (复制 R_toe)
+      fc_77(i, 5) = fc(i, 3);
+    }
+    result.foot_contacts = std::move(fc_77);
+  }
+
+  return result;
 }
 
 }  // namespace doodle::ai

@@ -8,6 +8,7 @@
 #include <Eigen/Dense>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -117,7 +118,9 @@ class skeleton_base {
   // ======================================================================
 
   /// @brief 创建 SOMA 30 关节骨骼
-  static std::shared_ptr<skeleton_base> create_soma_skeleton_30(const FSys::path& folder = {});
+  static std::shared_ptr<skeleton_base> create_soma_skeleton_30(
+      const FSys::path& folder, const FSys::path& in_77_folder = {}
+  );
 
   /// @brief 创建 SOMA 77 关节骨骼
   static std::shared_ptr<skeleton_base> create_soma_skeleton_77(const FSys::path& folder = {});
@@ -137,18 +140,52 @@ class skeleton_base {
   /// @param local_rot_mats [B*T, J*9] 局部旋转矩阵
   /// @param root_positions [B*T, 3] 根关节世界坐标
   /// @return 全局旋转、全局关节位置、无根偏移关节位置
-  [[nodiscard]] fk_result fk(
-      const Eigen::MatrixXf& local_rot_mats,
-      const Eigen::MatrixXf& root_positions
-  ) const;
+  [[nodiscard]] fk_result fk(const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions) const;
 
   /// @brief 由全局旋转矩阵计算局部旋转（逆父级变换）
   /// @param global_rot_mats [B*T, J*9] 全局旋转
   /// @return [B*T, J*9] 局部旋转
-  [[nodiscard]] Eigen::MatrixXf global_rots_to_local_rots(
-      const Eigen::MatrixXf& global_rot_mats
+  [[nodiscard]] Eigen::MatrixXf global_rots_to_local_rots(const Eigen::MatrixXf& global_rot_mats) const;
+
+  // ======================================================================
+  // 骨骼间转换（SOMA30 ↔ SOMA77）
+  // ======================================================================
+
+  /// @brief 获取当前骨骼关节在目标骨骼中的索引映射。
+  ///        对应当前骨骼 bone_order_names_ 中每个关节，返回其在 target.bone_index_ 中的索引。
+  /// @param target 目标骨骼
+  /// @return 索引列表，顺序对应当前骨骼的 bone_order_names_
+  [[nodiscard]] std::vector<std::int64_t> get_skel_slice(const skeleton_base& target) const;
+
+  /// @brief SOMA30 → SOMA77 转换结果
+  struct output_77_result {
+    Eigen::MatrixXf local_rot_mats;                ///< [B*T, 77*9]
+    Eigen::MatrixXf global_rot_mats;               ///< [B*T, 77*9]
+    Eigen::MatrixXf posed_joints;                  ///< [B*T, 77*3]
+    std::optional<Eigen::MatrixXf> foot_contacts;  ///< [B*T, 6]（可选）
+  };
+
+  /// @brief 将 30 关节局部旋转扩展为 77 关节（含放松手部姿态）。
+  ///        仅在骨骼为 somaskel30 时有效。
+  /// @param local_joint_rots_subset [B*T, 30*9] 30 关节局部旋转矩阵
+  /// @return [B*T, 77*9] 77 关节局部旋转矩阵
+  [[nodiscard]] Eigen::MatrixXf to_soma_skeleton_77(const Eigen::MatrixXf& local_joint_rots_subset) const;
+
+  /// @brief 将 SOMA30 模型输出转换为 SOMA77 格式。
+  ///        扩展 local_rot_mats 至 77 关节，重新运行 FK 计算 global_rot_mats 和 posed_joints，
+  ///        如有 foot_contacts 则从 4 通道扩展为 6 通道（toe-end 复制 toe-base）。
+  /// @param local_rot_mats [B*T, 30*9] 30 关节局部旋转
+  /// @param root_positions [B*T, 3] 根关节位置
+  /// @param foot_contacts 可选 [B*T, 4]（L_heel, L_toe, R_heel, R_toe）
+  /// @return SOMA77 格式的输出
+  [[nodiscard]] output_77_result output_to_soma_skeleton_77(
+      const Eigen::MatrixXf& local_rot_mats, const Eigen::MatrixXf& root_positions,
+      const std::optional<Eigen::MatrixXf>& foot_contacts = std::nullopt
   ) const;
 
+ private:
+  /// @brief SOMA77 骨骼缓存（用于 SOMA30 → SOMA77 转换时懒加载）
+  mutable std::shared_ptr<skeleton_base> somaskel77_cache_;
 };
 
 }  // namespace doodle::ai
