@@ -19,6 +19,108 @@
 
 namespace doodle::ai {
 
+/// @brief Kimodo 模型配置（对应 model_config.json）
+struct kimodo_model_config {
+  std::string model_name_;
+  std::string skeleton_type_;
+  std::int32_t nb_joints_;
+  std::int32_t num_base_steps_;
+  std::string cfg_type_;
+  std::int32_t fps_;
+  std::int32_t motion_rep_dim_;
+  std::int32_t global_root_dim_;
+  std::int32_t local_root_dim_;
+  std::string motion_mask_mode_;
+  std::int32_t latent_dim_;
+  std::int32_t ff_size_;
+  std::int32_t num_layers_;
+  std::int32_t num_heads_;
+  std::string activation_;
+  double dropout_;
+  double pe_dropout_;
+  bool norm_first_;
+  bool use_text_mask_;
+  std::int32_t num_text_tokens_;
+  std::int32_t num_text_tokens_override_;
+  bool input_first_heading_angle_;
+  std::vector<std::int32_t> llm_shape_;
+  std::int32_t llm_dim_;
+
+  struct sub_module_config {
+    std::int32_t input_dim_;
+    std::int32_t output_dim_;
+
+    friend void from_json(const nlohmann::json& j, sub_module_config& p) {
+      j.at("input_dim").get_to(p.input_dim_);
+      j.at("output_dim").get_to(p.output_dim_);
+    }
+    friend void to_json(nlohmann::json& j, const sub_module_config& p) {
+      j["input_dim"]  = p.input_dim_;
+      j["output_dim"] = p.output_dim_;
+    }
+  };
+
+  sub_module_config root_;
+  sub_module_config body_;
+
+  friend void from_json(const nlohmann::json& j, kimodo_model_config& p) {
+    j.at("model_name").get_to(p.model_name_);
+    j.at("skeleton_type").get_to(p.skeleton_type_);
+    j.at("nb_joints").get_to(p.nb_joints_);
+    j.at("num_base_steps").get_to(p.num_base_steps_);
+    j.at("cfg_type").get_to(p.cfg_type_);
+    j.at("fps").get_to(p.fps_);
+    j.at("motion_rep_dim").get_to(p.motion_rep_dim_);
+    j.at("global_root_dim").get_to(p.global_root_dim_);
+    j.at("local_root_dim").get_to(p.local_root_dim_);
+    j.at("motion_mask_mode").get_to(p.motion_mask_mode_);
+    j.at("latent_dim").get_to(p.latent_dim_);
+    j.at("ff_size").get_to(p.ff_size_);
+    j.at("num_layers").get_to(p.num_layers_);
+    j.at("num_heads").get_to(p.num_heads_);
+    j.at("activation").get_to(p.activation_);
+    j.at("dropout").get_to(p.dropout_);
+    j.at("pe_dropout").get_to(p.pe_dropout_);
+    j.at("norm_first").get_to(p.norm_first_);
+    j.at("use_text_mask").get_to(p.use_text_mask_);
+    j.at("num_text_tokens").get_to(p.num_text_tokens_);
+    j.at("num_text_tokens_override").get_to(p.num_text_tokens_override_);
+    j.at("input_first_heading_angle").get_to(p.input_first_heading_angle_);
+    j.at("llm_shape").get_to(p.llm_shape_);
+    j.at("llm_dim").get_to(p.llm_dim_);
+    j.at("root").get_to(p.root_);
+    j.at("body").get_to(p.body_);
+  }
+  friend void to_json(nlohmann::json& j, const kimodo_model_config& p) {
+    j["model_name"]               = p.model_name_;
+    j["skeleton_type"]            = p.skeleton_type_;
+    j["nb_joints"]                = p.nb_joints_;
+    j["num_base_steps"]           = p.num_base_steps_;
+    j["cfg_type"]                 = p.cfg_type_;
+    j["fps"]                      = p.fps_;
+    j["motion_rep_dim"]           = p.motion_rep_dim_;
+    j["global_root_dim"]          = p.global_root_dim_;
+    j["local_root_dim"]           = p.local_root_dim_;
+    j["motion_mask_mode"]         = p.motion_mask_mode_;
+    j["latent_dim"]               = p.latent_dim_;
+    j["ff_size"]                  = p.ff_size_;
+    j["num_layers"]               = p.num_layers_;
+    j["num_heads"]                = p.num_heads_;
+    j["activation"]               = p.activation_;
+    j["dropout"]                  = p.dropout_;
+    j["pe_dropout"]               = p.pe_dropout_;
+    j["norm_first"]               = p.norm_first_;
+    j["use_text_mask"]            = p.use_text_mask_;
+    j["num_text_tokens"]          = p.num_text_tokens_;
+    j["num_text_tokens_override"] = p.num_text_tokens_override_;
+    j["input_first_heading_angle"] = p.input_first_heading_angle_;
+    j["llm_shape"]                = p.llm_shape_;
+    j["llm_dim"]                  = p.llm_dim_;
+    j["root"]                     = p.root_;
+    j["body"]                     = p.body_;
+  }
+};
+
 /// @brief Kimodo 主编排类（对应 Python Kimodo）
 ///
 /// 编排完整推理管线: 文本编码 → 去噪循环 → 运动解码。
